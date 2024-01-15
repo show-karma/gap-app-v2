@@ -1,0 +1,49 @@
+@font-face {
+  font-family: Helvetica;
+  font-weight: 300;
+  src: url("../fonts/HelveticaLight.woff2");
+}
+@font-face {
+  font-family: Helvetica;
+  font-weight: 400;
+  src: url("../fonts/HelveticaRegular.woff2");
+}
+@font-face {
+  font-family: Helvetica;
+  font-weight: 500;
+  src: url("../fonts/HelveticaMedium.woff2");
+}
+@font-face {
+  font-family: Helvetica;
+  font-weight: 700;
+  src: url("../fonts/HelveticaBold.woff2");
+}
+@font-face {
+  font-family: Helvetica;
+  font-weight: 800;
+  src: url("../fonts/HelveticaBlack.woff2");
+}
+
+html body {
+  @apply font-body antialiased;
+}
+
+h1 {
+  @apply font-display;
+}
+
+h2,
+h3,
+h4 {
+  @apply font-body;
+}
+
+:root {
+  --font-display: Helvetica;
+  --font-body: Helvetica;
+}
+
+.theme-animals {
+  --font-display: Helvetica;
+  --font-body: Helvetica;
+}
