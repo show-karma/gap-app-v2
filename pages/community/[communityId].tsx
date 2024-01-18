@@ -131,7 +131,7 @@ export default function Index() {
 
   return (
     <>
-      <div className="px-5 lg:px-12 py-5">
+      <div className="px-4 sm:px-6 lg:px-8 py-5">
         <div className="py-8 rounded-xl bg-primary-900 border border-primary-800 text-center">
           <div className="flex justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}

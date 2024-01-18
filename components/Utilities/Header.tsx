@@ -54,7 +54,7 @@ export default function Header() {
       >
         {({ open }) => (
           <>
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="px-4 sm:px-6 lg:px-8">
               <div className="relative flex justify-between lg:gap-8 xl:grid xl:grid-cols-12">
                 <div className="flex py-2 lg:inset-y-0 lg:left-0 lg:col-span-3 lg:static">
                   <Link className="flex-shrink-0" href="/">
@@ -102,44 +102,11 @@ export default function Header() {
                     )}
                   </Popover.Button>
                 </div>
-                <div className="hidden lg:flex lg:items-center lg:justify-end lg:gap-x-3 xl:col-span-5">
-                  <Popover className="relative">
-                    <Popover.Button className="flex items-center pl-3 pr-4 rounded-md bg-white dark:bg-zinc-900 text-sm font-semibold text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-800 focus:outline-primary-600">
-                      <svg
-                        viewBox="0 0 24 24"
-                        // width={48}
-                        className="h-auto w-10"
-                        fill="currentColor"
-                      >
-                        <path d="M19,9h-1h-1h-1h-1h-1v1v1h-1v-1V9h-1h-1h-1H9H8H7v1v1H6H5H4v1v1v1h1v-1v-1h1h1v1v1v1h1h1h1h1h1h1v-1v-1v-1h1v1v1v1h1h1h1h1 h1h1v-1v-1v-1v-1v-1V9H19z M9,14H8v-1v-1v-1v-1h1h1v1v1v1v1H9z M16,14h-1v-1v-1v-1v-1h1h1v1v1v1v1H16z"></path>
-                      </svg>
-                      <span>Explore</span>
-                    </Popover.Button>
 
-                    <Transition
-                      as={Fragment}
-                      enter="transition ease-out duration-200"
-                      enterFrom="opacity-0 translate-y-1"
-                      enterTo="opacity-100 translate-y-0"
-                      leave="transition ease-in duration-150"
-                      leaveFrom="opacity-100 translate-y-0"
-                      leaveTo="opacity-0 translate-y-1"
-                    >
-                      <Popover.Panel className="absolute left-1/2 z-10 mt-5 flex w-screen max-w-min -translate-x-1/2 px-4">
-                        <div className="w-56 shrink rounded-xl bg-white dark:bg-zinc-900 p-4 text-sm font-semibold leading-6 text-gray-900 dark:text-white shadow-lg ring-1 ring-gray-900/5">
-                          {links.map((link) => (
-                            <Link
-                              key={link.name}
-                              href={link.href}
-                              className="block p-2 hover:text-primary-600"
-                            >
-                              {link.name}
-                            </Link>
-                          ))}
-                        </div>
-                      </Popover.Panel>
-                    </Transition>
-                  </Popover>
+                <div className="hidden lg:flex lg:items-center lg:justify-end lg:gap-x-3 xl:col-span-5">
+                  <button className="rounded-md bg-white dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 shadow-sm hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
+                    Explore
+                  </button>
 
                   {/* Rainbowkit custom connect button start */}
                   <button className="rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100 shadow-sm hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900">
