@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import BlockiesSvg from "blockies-react-svg";
 import { Fragment, useState } from "react";
 import {
@@ -9,6 +9,7 @@ import {
   UserCircleIcon,
 } from "@heroicons/react/20/solid";
 import { Listbox, Transition } from "@headlessui/react";
+import fetchData from "@/utilities/fetchData";
 
 const categories = [
   { id: 1, name: "Arb - Community Growth" },
@@ -128,6 +129,29 @@ export default function Index() {
       account: "0x1234567890123456789012345678901234567890",
     },
   ];
+
+  // Call API
+  const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
+  const [data, setData] = useState<[]>([]); // Data returned from the API
+  const itemsPerPage = 12; // Set the total number of items you want returned from the API
+
+  const callAPI = async () => {
+    setLoading(true);
+    try {
+      const [data, error, pageInfo]: any = await fetchData(
+        `/droposals/minters?limit=${itemsPerPage}`
+      );
+      setData(data);
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
+  useEffect(() => {
+    // callAPI();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <>
