@@ -60,11 +60,7 @@ export default function App({ Component, pageProps }: AppProps) {
                     <Header />
                   </div>
                   <div className="h-[68px] w-full" />
-                  <div className="py-5 md:py-10">
-                    <div className="mx-auto max-w-3xl sm:px-6 lg:grid lg:max-w-7xl lg:grid-cols-12 lg:gap-8 lg:px-8">
-                      <Layout Component={Component} pageProps={pageProps} />
-                    </div>
-                  </div>
+                  <Layout Component={Component} pageProps={pageProps} />
                 </div>
                 <Footer />
               </div>

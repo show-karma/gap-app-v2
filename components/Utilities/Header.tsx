@@ -5,7 +5,6 @@ import { Popover, Transition } from "@headlessui/react";
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount } from "wagmi";
 import { MoonIcon, SunIcon } from "@heroicons/react/24/solid";
 import ThemeContext from "@/components/Providers/ThemeContext";
 
@@ -41,7 +40,6 @@ function classNames(...classes: string[]) {
 }
 
 export default function Header() {
-  const { address: walletAddress } = useAccount();
   const { currentTheme, changeCurrentTheme } = useContext(ThemeContext);
   return (
     <>
@@ -59,31 +57,15 @@ export default function Header() {
             <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
               <div className="relative flex justify-between lg:gap-8 xl:grid xl:grid-cols-12">
                 <div className="flex py-2 lg:inset-y-0 lg:left-0 lg:col-span-3 lg:static">
-                  <Link
-                    className="flex-shrink-0 flex items-center space-x-4"
-                    href="/"
-                  >
-                    <div className="flex items-center">
-                      <Image
-                        className="block w-10 h-auto"
-                        src="/logo/logo-dark.png"
-                        alt="Gap"
-                        width={464}
-                        height={500}
-                        priority={true}
-                      />
-                      <Image
-                        className="block w-10 h-auto"
-                        src="/logo/Gap-logo.svg"
-                        alt="Nouner"
-                        width={64}
-                        height={64}
-                        priority={true}
-                      />
-                    </div>
-                    <div className="text-gray-900 dark:text-white text-2xl">
-                      <h1>Gap</h1>
-                    </div>
+                  <Link className="flex-shrink-0" href="/">
+                    <Image
+                      className="block w-full h-auto"
+                      src="/logo/karma-gap-logo.svg"
+                      alt="Gap"
+                      width={228}
+                      height={52}
+                      priority={true}
+                    />
                   </Link>
                 </div>
                 <div className="hidden lg:block min-w-0 flex-1 md:px-8 lg:px-0 xl:col-span-4">
