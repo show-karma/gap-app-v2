@@ -13,6 +13,7 @@ import { INDEXER } from "@/utilities/indexer/list";
 import { useRouter } from "next/router";
 import { CommunityFeed } from "@/components/Feed";
 import { blo } from "blo";
+import { cn } from "@/utilities";
 
 const categories = [
   { id: 1, name: "Arb - Community Growth" },
@@ -185,7 +186,7 @@ export default function Index() {
                               <Listbox.Option
                                 key={category.id}
                                 className={({ active }) =>
-                                  classNames(
+                                  cn(
                                     active
                                       ? "bg-primary-600 text-white"
                                       : "text-gray-900",
@@ -197,7 +198,7 @@ export default function Index() {
                                 {({ selected, active }) => (
                                   <>
                                     <span
-                                      className={classNames(
+                                      className={cn(
                                         selected
                                           ? "font-semibold"
                                           : "font-normal",
@@ -209,7 +210,7 @@ export default function Index() {
 
                                     {selected ? (
                                       <span
-                                        className={classNames(
+                                        className={cn(
                                           active
                                             ? "text-white"
                                             : "text-primary-600",
@@ -266,7 +267,7 @@ export default function Index() {
                               <Listbox.Option
                                 key={sortOption.id}
                                 className={({ active }) =>
-                                  classNames(
+                                  cn(
                                     active
                                       ? "bg-primary-600 text-white"
                                       : "text-gray-900",
@@ -278,7 +279,7 @@ export default function Index() {
                                 {({ selected, active }) => (
                                   <>
                                     <span
-                                      className={classNames(
+                                      className={cn(
                                         selected
                                           ? "font-semibold"
                                           : "font-normal",
@@ -290,7 +291,7 @@ export default function Index() {
 
                                     {selected ? (
                                       <span
-                                        className={classNames(
+                                        className={cn(
                                           active
                                             ? "text-white"
                                             : "text-primary-600",
@@ -347,7 +348,7 @@ export default function Index() {
                               <Listbox.Option
                                 key={sortOption.id}
                                 className={({ active }) =>
-                                  classNames(
+                                  cn(
                                     active
                                       ? "bg-primary-600 text-white"
                                       : "text-gray-900",
@@ -359,7 +360,7 @@ export default function Index() {
                                 {({ selected, active }) => (
                                   <>
                                     <span
-                                      className={classNames(
+                                      className={cn(
                                         selected
                                           ? "font-semibold"
                                           : "font-normal",
@@ -371,7 +372,7 @@ export default function Index() {
 
                                     {selected ? (
                                       <span
-                                        className={classNames(
+                                        className={cn(
                                           active
                                             ? "text-white"
                                             : "text-primary-600",
