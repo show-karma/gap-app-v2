@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { Feed } from "@/types";
 import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer/list";
+import { INDEXER } from "@/utilities/indexer";
 import {
   ChatBubbleLeftEllipsisIcon,
   TagIcon,
@@ -139,7 +139,7 @@ export const CommunityFeed = () => {
                     />
                   </div>
                   <div className="feed remove-after flex w-full flex-col items-start gap-1">
-                    <p
+                    <div
                       className="line-clamp-2 w-full break-normal text-base font-normal text-black max-2xl:text-sm"
                       data-color-mode="light"
                     >
@@ -165,7 +165,7 @@ export const CommunityFeed = () => {
                           background: "none",
                         }}
                       />
-                    </p>
+                    </div>
                     {/* <p>{item.message}</p> */}
                     <div className="flex flex-row items-center gap-2">
                       <UserInfo

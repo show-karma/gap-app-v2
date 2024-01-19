@@ -9,10 +9,15 @@ import {
 } from "@heroicons/react/20/solid";
 import { Listbox, Transition } from "@headlessui/react";
 import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer/list";
+import { INDEXER } from "@/utilities/indexer";
 import { useRouter } from "next/router";
 import { CommunityFeed } from "@/components/Feed";
 import { blo } from "blo";
+import { cn, formatDate, zeroUID } from "@/utilities";
+import { Hex } from "viem";
+import { getGrants } from "@/utilities/sdk/communities";
+import { Grant } from "@show-karma/karma-gap-sdk";
+import { Spinner } from "../Utilities/Spinner";
 
 const categories = [
   { id: 1, name: "Arb - Community Growth" },
@@ -39,46 +44,7 @@ const statuses = [
   { id: 4, name: "Starting" },
 ];
 
-const cards = [
-  {
-    name: "Open Source Observer",
-    title: "Plurality labs - firestarters",
-    createdDate: "2022-01-01",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    badges: ["Badge1", "Badge2", "Badge3"],
-    createdBy: "0x1234567890123456789012345678901234567890",
-  },
-  {
-    name: "Open Source Enthusiast",
-    title: "Innovation labs - trailblazers",
-    createdDate: "2022-02-01",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    badges: ["Badge4", "Badge5", "Badge6"],
-    createdBy: "0x1234567890123456789012345678901234567890",
-  },
-  {
-    name: "Open Source Contributor",
-    title: "Tech labs - pioneers",
-    createdDate: "2022-03-01",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    badges: ["Badge7", "Badge8", "Badge9"],
-    createdBy: "0x1234567890123456789012345678901234567890",
-  },
-  {
-    name: "Open Source Contributor",
-    title: "Tech labs - pioneers",
-    createdDate: "2022-03-01",
-    description:
-      "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    badges: ["Badge7", "Badge8", "Badge9"],
-    createdBy: "0x1234567890123456789012345678901234567890",
-  },
-];
-
-export default function Index() {
+export default function CommunityGrants() {
   const router = useRouter();
   const communityId = router.query.communityId as string;
 
@@ -88,50 +54,36 @@ export default function Index() {
   const [selectedSort, setSelectedSort] = useState(sortOptions[1]);
   const [selectedStatus, setSelectedStatus] = useState(statuses[1]);
 
-  const [feed, setFeed] = useState<[]>([]);
-  const [feedLoading, setFeedLoading] = useState<boolean>(true);
   // Call API
   const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
-  const [data, setData] = useState<[]>([]); // Data returned from the API
+  const [grants, setGrants] = useState<Grant[]>([]); // Data returned from the API
   const itemsPerPage = 12; // Set the total number of items you want returned from the API
 
-  const callAPI = async () => {
-    setLoading(true);
-    try {
-      const [data, error, pageInfo]: any = await fetchData(
-        `/droposals/minters?limit=${itemsPerPage}`
-      );
-      setData(data);
-      setLoading(false);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    }
-  };
-
-  const callFeedAPI = async () => {
-    setFeedLoading(true);
-    try {
-      const [data, error, pageInfo]: any = await fetchData(
-        `${INDEXER.COMMUNITY.FEED(communityId as string)}?limit=${itemsPerPage}`
-      );
-      console.log(data);
-      setFeed(data);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    } finally {
-      setFeedLoading(false);
-    }
-  };
-
   useEffect(() => {
-    callFeedAPI();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const fetchGrants = async () => {
+      setLoading(true);
+      try {
+        if (!communityId || communityId === zeroUID) return;
+        const fetchedGrants = await getGrants(communityId as Hex);
+        if (fetchedGrants) {
+          setGrants(fetchedGrants.slice(0, itemsPerPage));
+          // setGrantsToShow(fetchedGrants.slice(0, pageLimit));
+        }
+      } catch (error) {
+        console.log("error", error);
+        setGrants([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchGrants();
+  }, [communityId]);
 
   return (
     <div className="w-9/12">
       <div className="flex items-center justify-between">
-        <div className="text-xl font-bold">Total Grants (151)</div>
+        <div className="text-xl font-bold">Total Grants ({grants.length})</div>
         <div className="flex items-center gap-x-5">
           {/* Filter by category start */}
           <Listbox
@@ -168,7 +120,7 @@ export default function Index() {
                         <Listbox.Option
                           key={category.id}
                           className={({ active }) =>
-                            classNames(
+                            cn(
                               active
                                 ? "bg-primary-600 text-white"
                                 : "text-gray-900",
@@ -180,7 +132,7 @@ export default function Index() {
                           {({ selected, active }) => (
                             <>
                               <span
-                                className={classNames(
+                                className={cn(
                                   selected ? "font-semibold" : "font-normal",
                                   "block truncate"
                                 )}
@@ -190,7 +142,7 @@ export default function Index() {
 
                               {selected ? (
                                 <span
-                                  className={classNames(
+                                  className={cn(
                                     active ? "text-white" : "text-primary-600",
                                     "absolute inset-y-0 right-0 flex items-center pr-4"
                                   )}
@@ -243,7 +195,7 @@ export default function Index() {
                         <Listbox.Option
                           key={sortOption.id}
                           className={({ active }) =>
-                            classNames(
+                            cn(
                               active
                                 ? "bg-primary-600 text-white"
                                 : "text-gray-900",
@@ -255,7 +207,7 @@ export default function Index() {
                           {({ selected, active }) => (
                             <>
                               <span
-                                className={classNames(
+                                className={cn(
                                   selected ? "font-semibold" : "font-normal",
                                   "block truncate"
                                 )}
@@ -265,7 +217,7 @@ export default function Index() {
 
                               {selected ? (
                                 <span
-                                  className={classNames(
+                                  className={cn(
                                     active ? "text-white" : "text-primary-600",
                                     "absolute inset-y-0 right-0 flex items-center pr-4"
                                   )}
@@ -320,7 +272,7 @@ export default function Index() {
                         <Listbox.Option
                           key={sortOption.id}
                           className={({ active }) =>
-                            classNames(
+                            cn(
                               active
                                 ? "bg-primary-600 text-white"
                                 : "text-gray-900",
@@ -332,7 +284,7 @@ export default function Index() {
                           {({ selected, active }) => (
                             <>
                               <span
-                                className={classNames(
+                                className={cn(
                                   selected ? "font-semibold" : "font-normal",
                                   "block truncate"
                                 )}
@@ -342,7 +294,7 @@ export default function Index() {
 
                               {selected ? (
                                 <span
-                                  className={classNames(
+                                  className={cn(
                                     active ? "text-white" : "text-primary-600",
                                     "absolute inset-y-0 right-0 flex items-center pr-4"
                                   )}
@@ -366,53 +318,61 @@ export default function Index() {
           {/* Status end */}
         </div>
       </div>
-      <div className="mt-8 grid grid-cols-4 gap-5">
-        {cards.map((card, index) => (
-          <div
-            key={index}
-            className="bg-white border border-gray-200 p-5 rounded-xl shadow-md"
-          >
-            <div className="text-lg font-bold">{card.name}</div>
-            <div className="text-sm text-gray-900">{card.title}</div>
-
-            <div className="mt-3 text-gray-600 text-sm font-semibold">
-              Summary
-            </div>
-            <div className="text-sm text-gray-900 text-ellipsis line-clamp-2">
-              {card.description}
-            </div>
-
-            <div className="mt-3 space-x-2">
-              {card.badges.map((badge, index) => (
-                <span
-                  className="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10"
-                  key={index}
-                >
-                  {badge}
-                </span>
-              ))}
-            </div>
-
-            <div className="mt-5 flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <span className="text-sm text-gray-600">Built by</span>
-                <span>
-                  <img
-                    src={blo(card.createdBy, 8)}
-                    alt={card.createdBy}
-                    className="h-12 w-12 rounded-md ring-4 ring-gray-50 dark:ring-black border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5"
-                  />
-                </span>
+      {loading ? (
+        <div className="w-full py-8 flex items-center justify-center">
+          <Spinner />
+        </div>
+      ) : (
+        <div className="mt-8 grid grid-cols-4 gap-5">
+          {grants.map((grant, index) => (
+            <div
+              key={index}
+              className="bg-white border border-gray-200 p-5 rounded-xl shadow-md"
+            >
+              <div className="text-lg font-bold">{grant.project?.title}</div>
+              <div className="text-sm text-gray-900">
+                {grant.details?.title}
               </div>
 
-              <div className="text-xs text-gray-600">
-                Created on &nbsp;
-                {new Date(card.createdDate).toLocaleDateString()}
+              <div className="mt-3 text-gray-600 text-sm font-semibold">
+                Summary
+              </div>
+              <div className="text-sm text-gray-900 text-ellipsis line-clamp-2">
+                {grant.details?.description}
+              </div>
+
+              <div className="mt-3 space-x-2">
+                {grant.categories?.map((category, index) => (
+                  <span
+                    className="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10"
+                    key={index}
+                  >
+                    {category}
+                  </span>
+                ))}
+              </div>
+
+              <div className="mt-5 flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600">Built by</span>
+                  <span>
+                    <img
+                      src={blo(grant.members[0], 8)}
+                      alt={grant.members[0]}
+                      className="h-12 w-12 rounded-md ring-4 ring-gray-50 dark:ring-black border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5"
+                    />
+                  </span>
+                </div>
+
+                <div className="text-xs text-gray-600">
+                  Created on &nbsp;
+                  {formatDate(grant.createdAt)}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import axios, { Method } from "axios";
-import { envVar } from "./enviromentVar";
+import { envVars } from "./enviromentVars";
 
 export default async function fetchData(
   endpoint: string,
@@ -9,7 +9,7 @@ export default async function fetchData(
 ) {
   try {
     const res = await axios.request({
-      url: `${envVar.NEXT_PUBLIC_GAP_INDEXER_URL}${endpoint}`,
+      url: `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${endpoint}`,
       method,
       headers: {},
       data: axiosData,
