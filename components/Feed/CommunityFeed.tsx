@@ -112,13 +112,13 @@ export const CommunityFeed = () => {
     <div className="w-3/12">
       <div className="text-xl font-bold">Community Feed</div>
       {/* Feed start */}
-      <div className="flow-root mt-10 bg-white border border-gray-200 py-2 px-5 rounded-xl shadow-md">
+      <div className="flow-root mt-10 bg-white border border-gray-200 py-2 px-5 rounded-xl shadow-md max-h-96 overflow-y-auto">
         {feedLoading ? (
           <div className="w-full justify-center flex py-2">
             <Spinner />
           </div>
         ) : (
-          <ul role="list" className="my-1">
+          <ul role="list">
             {feed.map((item, index) => {
               return (
                 <li

@@ -39,10 +39,6 @@ const statuses = [
   { id: 4, name: "Starting" },
 ];
 
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(" ");
-}
-
 const cards = [
   {
     name: "Open Source Observer",
