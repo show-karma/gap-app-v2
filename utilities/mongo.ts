@@ -1,10 +1,9 @@
-const { MongoClient } = require("mongodb");
-require("dotenv").config();
-
+// const { MongoClient } = require("mongodb");
+// require("dotenv").config();
 // Connection URL
-const client = new MongoClient(process.env.MONGODB_URL);
+// const client = new MongoClient(process.env.MONGODB_URL);
 
-const db = client.db(process.env.MONGODB_NAME || "neocast");
+// const db = client.db(process.env.MONGODB_NAME || "neocast");
 
-// Export db and client
-export { db, client };
+// // Export db and client
+// export { db, client };

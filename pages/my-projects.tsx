@@ -1,6 +1,6 @@
 import React from "react";
 import Head from "next/head";
-import BlockiesSvg from "blockies-react-svg";
+import { blo } from "blo";
 
 export default function MyProjects() {
   const cards = [
@@ -82,11 +82,9 @@ export default function MyProjects() {
                 <div className="flex items-center space-x-2">
                   <span className="text-sm text-gray-600">Built by</span>
                   <span>
-                    <BlockiesSvg
-                      address={card.createdBy}
-                      size={8}
-                      scale={10}
-                      caseSensitive={false}
+                    <img
+                      src={blo(card.createdBy, 8)}
+                      alt={card.createdBy}
                       className="h-12 w-12 rounded-md ring-4 ring-gray-50 dark:ring-black border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5"
                     />
                   </span>

@@ -1,5 +1,6 @@
 import "@/styles/globals.css";
 import "@/styles/index.scss";
+import "@uiw/react-markdown-preview/markdown.css";
 import "@rainbow-me/rainbowkit/styles.css";
 import type { AppProps } from "next/app";
 import { useEffect, useState } from "react";

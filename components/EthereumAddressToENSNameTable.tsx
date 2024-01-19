@@ -1,4 +1,4 @@
-import BlockiesSvg from "blockies-react-svg";
+import { blo } from "blo";
 import Link from "next/link";
 import React from "react";
 import { useEnsName } from "wagmi";
@@ -16,11 +16,9 @@ const EthereumAddressToENSName: React.FC<Props> = ({ address }) => {
   return (
     <Link href={`/player/${!ensName ? address : ensName}`}>
       <div className="flex items-center">
-        <BlockiesSvg
-          address={address}
-          size={8}
-          scale={10}
-          caseSensitive={false}
+        <img
+          src={blo(address, 8)}
+          alt={address}
           className="h-12 w-12 rounded-md ring-4 ring-gray-200 dark:ring-black border-1 border-gray-100 dark:border-zinc-900 sm:h-8 sm:w-8"
         />
         <div className="ml-4">
