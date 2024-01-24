@@ -1,19 +1,22 @@
 import axios, { Method } from "axios";
+import { envVars } from "./enviromentVars";
 
 export default async function fetchData(
   endpoint: string,
   method: Method = "GET",
-  axiosData = {}
+  axiosData = {},
+  params = {}
 ) {
   try {
     const res = await axios.request({
-      url: `${process.env.NEXT_PUBLIC_API_ROUTE}${endpoint}`,
+      url: `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${endpoint}`,
       method,
       headers: {},
       data: axiosData,
       timeout: 60000,
+      params,
     });
-    let resData = res.data.data;
+    let resData = res.data;
     let pageInfo = res.data.pageInfo || null;
     return [resData, null, pageInfo];
   } catch (err: any) {
