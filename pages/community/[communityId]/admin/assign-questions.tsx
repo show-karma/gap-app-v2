@@ -265,7 +265,7 @@ export default function AssignQuestions() {
                           return (
                             <Button
                               key={`${category.id}${question.id}`}
-                              className="flex h-max w-full max-w-2xl flex-row items-center justify-start gap-3 break-words bg-transparent px-0 py-1 text-left text-black transition-all duration-500 ease-in-out hover:bg-transparent"
+                              className="flex h-max w-full max-w-2xl flex-row items-center justify-start gap-3 break-words bg-transparent px-0 py-1 text-left text-black dark:text-white transition-all duration-500 ease-in-out hover:bg-transparent"
                               style={{
                                 opacity: isSelected ? 1 : 0.5,
                               }}
@@ -308,7 +308,7 @@ export default function AssignQuestions() {
                             isLoading={isSaving[category.id]}
                             disabled={isSaving[category.id]}
                             onClick={() => saveAssign(category)}
-                            className="bg-blue-500 px-4 py-2 rounded-md text-white hover:bg-blue-500"
+                            className="bg-blue-500 px-4 py-2 rounded-md text-white hover:bg-blue-500 dark:bg-blue-900"
                           >
                             Save questions
                           </Button>
