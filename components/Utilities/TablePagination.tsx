@@ -34,7 +34,7 @@ export default function TablePagination({
 
   return (
     <>
-      <div className="md:py-5 py-2 flex items-center justify-between border-t border-gray-200 dark:border-zinc-700">
+      <div className="md:py-5 py-2 px-4 flex items-center justify-between border-t border-gray-200 dark:border-zinc-700">
         <div className="flex-1 flex justify-between sm:hidden">
           <button
             onClick={() => {
@@ -90,7 +90,7 @@ export default function TablePagination({
                   setCurrentPage(currentPage - 1);
                 }}
                 disabled={currentPage === 1}
-                className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm font-medium text-gray-500 dark:hover:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-800 duration-200 ease-in-out"
+                className="relative inline-flex  disabled:opacity-40 items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm font-medium text-gray-500 dark:hover:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-800 duration-200 ease-in-out"
               >
                 <span className="sr-only">Previous</span>
                 <ArrowLeftIcon className="h-5 w-5" aria-hidden="true" />
@@ -100,7 +100,7 @@ export default function TablePagination({
                   return (
                     <button
                       key={`${page}-${index}`}
-                      className="bg-white dark:bg-zinc-900 border-gray-300 dark:border-zinc-700 text-gray-500 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-800 relative inline-flex items-center px-4 py-2 border text-sm font-medium duration-200 ease-in-out"
+                      className="bg-white  dark:bg-zinc-900 border-gray-300 dark:border-zinc-700 text-gray-500 dark:text-zinc-400 dark:hover:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-800 relative inline-flex items-center px-4 py-2 border text-sm font-medium duration-200 ease-in-out"
                     >
                       {DOTS}
                     </button>
@@ -124,7 +124,7 @@ export default function TablePagination({
                   setCurrentPage(currentPage + 1);
                 }}
                 disabled={currentPage === lastPage || lastPage === undefined}
-                className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm font-medium text-gray-500 dark:hover:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-800 duration-200 ease-in-out"
+                className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-sm font-medium text-gray-500 dark:hover:text-zinc-200 hover:bg-gray-50 dark:hover:bg-zinc-800 duration-200 ease-in-out disabled:opacity-40"
               >
                 <span className="sr-only">Next</span>
                 <ArrowRightIcon className="h-5 w-5" aria-hidden="true" />

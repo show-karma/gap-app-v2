@@ -9,17 +9,20 @@ import {
   RainbowKitProvider,
 } from "@rainbow-me/rainbowkit";
 import { configureChains, createConfig, WagmiConfig } from "wagmi";
-import { base, polygonMumbai } from "wagmi/chains";
 import { publicProvider } from "wagmi/providers/public";
 import Footer from "@/components/Utilities/Footer";
 import Header from "@/components/Utilities/Header";
 import ThemeContextWrapper from "@/components/Providers/ThemeContextWrapper";
+import { arbitrum, optimism, optimismGoerli, sepolia } from "viem/chains";
+import { Toaster } from "react-hot-toast";
 
 export default function App({ Component, pageProps }: AppProps) {
   const [ready, setReady] = useState(false);
 
   const deployedChains: any =
-    process.env.NEXT_PUBLIC_ENV === "staging" ? [polygonMumbai] : [base];
+    process.env.NEXT_PUBLIC_ENV === "production"
+      ? [optimism, arbitrum]
+      : [optimismGoerli, sepolia];
 
   const { publicClient, chains } = configureChains(deployedChains, [
     publicProvider(),
@@ -53,6 +56,7 @@ export default function App({ Component, pageProps }: AppProps) {
               borderRadius: "medium",
             })}
           >
+            <Toaster />
             <ThemeContextWrapper>
               <div className="min-h-screen flex flex-col justify-between h-full bg-gray-100 dark:bg-black dark:text-white">
                 <div>
