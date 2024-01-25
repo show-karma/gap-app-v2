@@ -7,6 +7,8 @@ import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { MoonIcon, PlusIcon, SunIcon } from "@heroicons/react/24/solid";
 import ThemeContext from "@/components/Providers/ThemeContext";
+import { ProjectDialog } from "../ProjectDialog";
+import { useAccount } from "wagmi";
 
 const links = [
   {
@@ -41,6 +43,7 @@ function classNames(...classes: string[]) {
 
 export default function Header() {
   const { currentTheme, changeCurrentTheme } = useContext(ThemeContext);
+  const { isConnected } = useAccount();
   return (
     <>
       <Popover
@@ -104,15 +107,14 @@ export default function Header() {
                 </div>
 
                 <div className="hidden lg:flex lg:items-center lg:justify-end lg:gap-x-3 xl:col-span-5">
-                  <button className="rounded-md bg-white dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 shadow-sm hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
-                    My Projects
-                  </button>
+                  {isConnected && (
+                    <button className="rounded-md bg-white dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 shadow-sm hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
+                      My Projects
+                    </button>
+                  )}
 
                   {/* Rainbowkit custom connect button start */}
-                  <button className="flex items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100 shadow-sm hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900">
-                    <PlusIcon className="h-4 w-4 text-primary-600" />
-                    New Project
-                  </button>
+                  {isConnected && <ProjectDialog />}
                   <ConnectButton.Custom>
                     {({
                       account,
