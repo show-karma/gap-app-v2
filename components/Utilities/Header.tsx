@@ -1,4 +1,4 @@
-import { Fragment, useContext } from "react";
+import { Fragment, useContext, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Popover, Transition } from "@headlessui/react";
@@ -9,6 +9,14 @@ import { MoonIcon, PlusIcon, SunIcon } from "@heroicons/react/24/solid";
 import ThemeContext from "@/components/Providers/ThemeContext";
 import { ProjectDialog } from "../ProjectDialog";
 import { useAccount } from "wagmi";
+import {
+  PAGES,
+  getCommunitiesOf,
+  getContractOwner,
+  useSigner,
+} from "@/utilities";
+import { useRouter } from "next/router";
+import { Community } from "@show-karma/karma-gap-sdk";
 
 const links = [
   {
@@ -43,7 +51,36 @@ function classNames(...classes: string[]) {
 
 export default function Header() {
   const { currentTheme, changeCurrentTheme } = useContext(ThemeContext);
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
+  const [isOwner, setIsOwner] = useState(false);
+  const [communitiesToAdmin, setCommunitiesToAdmin] = useState<Community[]>([]);
+  const signer = useSigner();
+
+  const isCommunityAdmin = communitiesToAdmin.length !== 0;
+
+  const getCommunities = async () => {
+    if (!address) return;
+
+    const communitiesOf = await getCommunitiesOf(address);
+
+    if (communitiesOf && communitiesOf.length !== 0) {
+      setCommunitiesToAdmin(communitiesOf);
+    } else {
+      setCommunitiesToAdmin([]);
+    }
+  };
+
+  useEffect(() => {
+    if (!signer) return;
+    getContractOwner(signer as any).then((owner) => {
+      setIsOwner(owner === address);
+    });
+  }, [signer]);
+
+  useEffect(() => {
+    getCommunities();
+  }, [address]);
+
   return (
     <>
       <Popover
@@ -108,10 +145,19 @@ export default function Header() {
 
                 <div className="hidden lg:flex lg:items-center lg:justify-end lg:gap-x-3 xl:col-span-5">
                   {isConnected && (
-                    <button className="rounded-md bg-white dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 shadow-sm hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
-                      My Projects
-                    </button>
+                    <Link href={PAGES.MY_PROJECTS}>
+                      <button className="rounded-md bg-white dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 shadow-sm hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
+                        My Projects
+                      </button>
+                    </Link>
                   )}
+                  {(isCommunityAdmin || isOwner) && isConnected ? (
+                    <Link href={PAGES.ADMIN.LIST}>
+                      <button className="rounded-md bg-white dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 shadow-sm hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
+                        Reviews
+                      </button>
+                    </Link>
+                  ) : null}
 
                   {/* Rainbowkit custom connect button start */}
                   {isConnected && <ProjectDialog />}

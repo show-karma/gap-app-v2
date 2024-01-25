@@ -12,6 +12,7 @@ import {
   appNetwork,
   cn,
   createNewProject,
+  getContractOwner,
   useSigner,
 } from "@/utilities";
 import { z } from "zod";
@@ -86,10 +87,18 @@ type ProjectDialogProps = {
 };
 
 export const ProjectDialog: FC<ProjectDialogProps> = ({ dataToUpdate }) => {
-  let [isOpen, setIsOpen] = useState(true);
+  let [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState(0);
 
-  const isOwner = true; // TODO: check if user is owner of project
+  const signer = useSigner();
+
+  const [isOwner, setIsOwner] = useState(false);
+  useEffect(() => {
+    if (!signer) return;
+    getContractOwner(signer as any).then((owner) => {
+      setIsOwner(owner === address);
+    });
+  }, [signer]);
 
   function closeModal() {
     setIsOpen(false);
@@ -461,7 +470,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({ dataToUpdate }) => {
   });
   const [isLoadingNewProject, setIsLoadingNewProject] = useState(false);
   const { openConnectModal } = useConnectModal();
-  const signer = useSigner();
   const router = useRouter();
 
   const onSubmit = async (data: SchemaType) => {
