@@ -6,6 +6,7 @@ export const PAGES = {
   },
   MY_PROJECTS: `/my-projects`,
   ADMIN: {
+    LIST: `/communities-to-admin`,
     ROOT: (community: string) => `/community/${community}/admin`,
     ASSIGN_QUESTIONS: (community: string) =>
       `/community/${community}/admin/assign-questions`,

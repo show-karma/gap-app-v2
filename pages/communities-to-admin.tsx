@@ -1,0 +1,74 @@
+/* eslint-disable @next/next/no-img-element */
+import React, { useEffect, useState } from "react";
+import Head from "next/head";
+import { blo } from "blo";
+import { useAccount } from "wagmi";
+import { Community } from "@show-karma/karma-gap-sdk";
+import { MESSAGES, PAGES, getCommunitiesOf } from "@/utilities";
+import Link from "next/link";
+import { Spinner } from "@/components/Utilities/Spinner";
+
+export default function CommunitiesToAdmin() {
+  const { address, isConnected } = useAccount();
+  const [communitiesToAdmin, setCommunitiesToAdmin] = useState<Community[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const getCommunities = async () => {
+    if (!address || !isConnected) {
+      setCommunitiesToAdmin([]);
+      return;
+    }
+
+    setIsLoading(true);
+    const communitiesOf = await getCommunitiesOf(address);
+
+    if (communitiesOf && communitiesOf.length !== 0) {
+      setCommunitiesToAdmin(communitiesOf);
+    } else {
+      setCommunitiesToAdmin([]);
+    }
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    getCommunities();
+  }, [address, isConnected]);
+
+  return (
+    <>
+      <Head>
+        <title>Gap</title>
+        <meta name="title" content="Gap" />
+      </Head>
+
+      <div className="px-4 sm:px-6 lg:px-8 py-5">
+        <div className="text-2xl font-bold">Communities to review</div>
+        <div className="mt-5 grid grid-cols-4 gap-5">
+          {communitiesToAdmin.length ? (
+            communitiesToAdmin.map((community) => (
+              <Link
+                href={PAGES.ADMIN.ROOT(community.uid)}
+                key={community.uid + community.details?.name}
+              >
+                <div className="flex w-full flex-col items-center justify-center rounded-lg p-4">
+                  <img
+                    src={community.details?.imageURL}
+                    className="h-[100px] w-full object-cover"
+                    alt={community.details?.name}
+                  />
+                  <p className="text-base font-normal text-black dark:text-white">
+                    {community.details?.name}
+                  </p>
+                </div>
+              </Link>
+            ))
+          ) : isLoading ? (
+            <Spinner />
+          ) : (
+            <p>{MESSAGES.REVIEWS.NOT_ADMIN}</p>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
