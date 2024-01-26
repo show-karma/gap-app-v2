@@ -20,6 +20,7 @@
     "@walletconnect/types": "^2.10.0",
     "axios": "^1.4.0",
     "blo": "^1.1.1",
+    "blockies-react-svg": "^0.0.13",
     "dotenv": "^16.3.1",
     "eslint": "8.42.0",
     "eslint-config-next": "13.4.4",

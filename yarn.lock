@@ -3044,6 +3044,11 @@ blob-to-it@^1.0.1:
   dependencies:
     browser-readablestream-to-it "^1.0.3"
 
+blockies-react-svg@^0.0.13:
+  version "0.0.13"
+  resolved "https://registry.npmmirror.com/blockies-react-svg/-/blockies-react-svg-0.0.13.tgz#785500bebdbe5e4aea8e094b3241f73669470b00"
+  integrity sha512-w3Upvq5xnO2m0KEf4QhExLDpPMlJZes0Oi5e1EaILTpU+TtDGipoqxJuGGMhFHl2Qg7cuw4P1pAgEMy+Y3nZrg==
+
 blockstore-core@^1.0.2:
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/blockstore-core/-/blockstore-core-1.0.5.tgz#2e34b6a7faae0d4b6c98dc8573c6f998eb457f36"
