@@ -41,7 +41,7 @@ export const NestedLayout = ({ children }: Props) => {
             </button>
             <button
               type="button"
-              className="ml-3 inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+              className="ml-3 inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
             >
               Create
             </button>
@@ -55,7 +55,7 @@ export const NestedLayout = ({ children }: Props) => {
             <select
               id="current-tab"
               name="current-tab"
-              className="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600"
+              className="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600"
             >
               {tabs.map((tab) => (
                 <option key={tab.name}>{tab.name}</option>
@@ -70,7 +70,7 @@ export const NestedLayout = ({ children }: Props) => {
                   href={tab.href}
                   className={classNames(
                     tab.href.split("/")[3] === router.pathname.split("/")[3]
-                      ? "border-indigo-500 text-indigo-600"
+                      ? "border-primary-500 text-primary-600"
                       : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
                     "whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium"
                   )}

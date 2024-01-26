@@ -62,7 +62,7 @@ export default function Index() {
         <div className="mx-auto max-w-7xl px-6 pb-24 pt-10 sm:pb-32 lg:flex lg:px-8 lg:py-20">
           <div className="mx-auto max-w-2xl lg:mx-0 lg:max-w-2xl lg:flex-shrink-0 lg:pt-8">
             <div className="mt-24 sm:mt-32 lg:mt-16">
-              <span className="rounded-full bg-indigo-600/10 px-3 py-1 text-sm font-semibold leading-6 text-indigo-600 ring-1 ring-inset ring-indigo-600/10">
+              <span className="rounded-full bg-primary-600/10 px-3 py-1 text-sm font-semibold leading-6 text-primary-600 ring-1 ring-inset ring-primary-600/10">
                 ONCHAIN PROTOCOL
               </span>
             </div>
@@ -84,7 +84,7 @@ export default function Index() {
             <div className="mt-10 flex items-center gap-x-6">
               <Link
                 href="/add"
-                className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                className="rounded-md bg-primary-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
               >
                 Add your project<span className="ml-2">→</span>
               </Link>
@@ -95,7 +95,7 @@ export default function Index() {
                   <div className="flow-root rounded-lg bg-gray-50 px-6 pb-8">
                     <div className="-mt-6">
                       <div>
-                        <span className="inline-flex items-center justify-center rounded-xl bg-indigo-500 p-3 shadow-lg">
+                        <span className="inline-flex items-center justify-center rounded-xl bg-primary-500 p-3 shadow-lg">
                           <feature.icon
                             className="h-8 w-8 text-white"
                             aria-hidden="true"

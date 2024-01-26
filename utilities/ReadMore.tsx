@@ -33,15 +33,12 @@ export const ReadMore = (props: Props) => {
         )}
       </div>
       {text.length - 1 > minimumText && (
-        <div
-          onClick={toggleReadMore}
-          className="read-or-hide mt-2 flex justify-center lg:justify-start"
-        >
+        <div onClick={toggleReadMore} className="read-or-hide mt-2">
           {isReadMore ? (
             <>
-              <div className="flex space-x-2 font-semibold dark:text-zinc-400 dark:hover:text-zinc-200 ease-in duration-200 cursor-pointer">
+              <div className="flex space-x-2 font-semibold dark:text-zinc-400 dark:hover:text-zinc-200 ease-in duration-200">
                 <ChevronDownIcon className="w-4 h-auto" />
-                <span>Read More</span>
+                <span className="cursor-pointer">Read More</span>
               </div>
             </>
           ) : (
