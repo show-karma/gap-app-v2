@@ -165,6 +165,9 @@ export const CommunityGrants = () => {
                             )
                           }
                           value={category}
+                          onClick={() => {
+                            setCurrentPage(1);
+                          }}
                         >
                           {({ selected, active }) => (
                             <>
@@ -242,6 +245,9 @@ export const CommunityGrants = () => {
                             )
                           }
                           value={sortOption}
+                          onClick={() => {
+                            setCurrentPage(1);
+                          }}
                         >
                           {({ selected, active }) => (
                             <>
@@ -319,6 +325,9 @@ export const CommunityGrants = () => {
                             )
                           }
                           value={statusOption}
+                          onClick={() => {
+                            setCurrentPage(1);
+                          }}
                         >
                           {({ selected, active }) => (
                             <>
