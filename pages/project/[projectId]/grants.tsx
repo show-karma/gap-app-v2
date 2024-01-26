@@ -1,10 +1,14 @@
-import React, { useEffect, useState } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
+import { Listbox, Transition } from "@headlessui/react";
 import { ProjectPageLayout } from ".";
 import { HomeIcon, UsersIcon } from "@heroicons/react/24/outline";
 import { FlagIcon } from "@heroicons/react/24/solid";
 import { ReadMore } from "@/utilities";
+import pluralize from "pluralize";
+import { cn } from "@/utilities";
 
 const navigation = [
   {
@@ -225,61 +229,155 @@ function GrantOverview() {
 }
 
 function GrantMilestonesAndUpdates() {
+  const [categoriesOptions, setCategoriesOptions] = useState<string[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+
   return (
-    <div className="mt-5 space-y-5">
-      <div className="p-5 bg-white border border-gray-200 rounded-xl shadow-md">
-        <div className="flex items-center justify-between">
-          <span className="inline-flex items-center gap-x-1 rounded-full bg-primary-50 px-2 py-1 text-xs font-semibold text-primary-600 uppercase ring-1 ring-inset ring-primary-500/10">
-            <FlagIcon className="h-4 w-4 text-primary-500" aria-hidden="true" />
-            Update 2
-          </span>
-          <div className="text-sm text-gray-600">
-            Posted on &nbsp;
-            <span className="font-semibold">January 25, 2024</span>
+    <div>
+      <div className="my-5 z-10 flex">
+        {/* Filter by category start */}
+        <Listbox
+          value={selectedCategories}
+          onChange={setSelectedCategories}
+          multiple
+        >
+          {({ open }) => (
+            <div className="flex items-center gap-x-2">
+              <Listbox.Label className="block text-sm font-medium leading-6 ">
+                Filter by milestones
+              </Listbox.Label>
+              <div className="relative flex-1 w-56">
+                <Listbox.Button className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
+                  <p className="block truncate">
+                    {selectedCategories.length > 0
+                      ? `${selectedCategories.length} 
+                        ${pluralize(
+                          "category",
+                          selectedCategories.length
+                        )} selected`
+                      : "Categories"}
+                  </p>
+                  <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                    <ChevronUpDownIcon
+                      className="h-5 w-5 text-gray-400"
+                      aria-hidden="true"
+                    />
+                  </span>
+                </Listbox.Button>
+
+                <Transition
+                  show={open}
+                  as={Fragment}
+                  leave="transition ease-in duration-100"
+                  leaveFrom="opacity-100"
+                  leaveTo="opacity-0"
+                >
+                  <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                    {categoriesOptions.map((category) => (
+                      <Listbox.Option
+                        key={category}
+                        className={({ active }) =>
+                          cn(
+                            active
+                              ? "bg-primary-600 text-white"
+                              : "text-gray-900",
+                            "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
+                          )
+                        }
+                        value={category}
+                        onClick={() => {
+                          setCurrentPage(1);
+                        }}
+                      >
+                        {({ selected, active }) => (
+                          <>
+                            <span
+                              className={cn(
+                                selected ? "font-semibold" : "font-normal",
+                                "block truncate"
+                              )}
+                            >
+                              {category}
+                            </span>
+
+                            {selected ? (
+                              <span
+                                className={cn(
+                                  active ? "text-white" : "text-primary-600",
+                                  "absolute inset-y-0 right-0 flex items-center pr-4"
+                                )}
+                              >
+                                <CheckIcon
+                                  className="h-5 w-5"
+                                  aria-hidden="true"
+                                />
+                              </span>
+                            ) : null}
+                          </>
+                        )}
+                      </Listbox.Option>
+                    ))}
+                  </Listbox.Options>
+                </Transition>
+              </div>
+            </div>
+          )}
+        </Listbox>
+        {/* Filter by category end */}
+      </div>
+      <div className="mt-5 space-y-5">
+        <div className="p-5 bg-white border border-gray-200 rounded-xl shadow-md">
+          <div className="flex items-center justify-between">
+            <span className="inline-flex items-center gap-x-1 rounded-full bg-primary-50 px-2 py-1 text-xs font-semibold text-primary-600 uppercase ring-1 ring-inset ring-primary-500/10">
+              <FlagIcon
+                className="h-4 w-4 text-primary-500"
+                aria-hidden="true"
+              />
+              Update 2
+            </span>
+            <div className="text-sm text-gray-600">
+              Posted on &nbsp;
+              <span className="font-semibold">January 25, 2024</span>
+            </div>
+          </div>
+
+          <div className="mt-3 text-lg font-semibold">Training is Ongoing</div>
+
+          <div className="mt-3">
+            <ReadMore>
+              Hello Community, My name is Oyeniyi Abiola Peace, I am the CEO of
+              Blockchain Innovation Hub. We are one of the grantees of the
+              Education, Community Growth and Events (Blockchain Innovation Hub
+              - A Three Month Bootcamp for Developers). This report summarizes
+              the activities completed so far for the BIH x Arbitrum Blockchain
+              Software Development Bootcamp. After successful partnerships,
+              event promotions, curriculum drafting and our first report, we
+              have concluded the selection process and started classes for the
+              Bootcamp. Out of approximately 800 registrations, we initially
+              selected 164 participants. We sent them a congratulatory email and
+              invited them to the last Twitter Space (BIH X Arbitrum Onboarding
+              call) scheduled for December 15th, 2023, at 7 pm. The final 100
+              participants were selected from the Twitter Space. Screenshot
+              2024-01-25 at 17.20.08|690x404 During the Onboarding call, we
+              provided a detailed explanation of the Bootcamp program and sent
+              out a form for everyone to fill out. The 100 selected participants
+              were then onboarded to the Bootcamp Workspace, where they can
+              access all the training materials and curriculum for the entire
+              program. They are also required to submit their assignments as
+              URLs using Notion. As scheduled, the first class of the Bootcamp
+              commenced on January 8th, 2024, as indicated in the curriculum.
+              Four classes were conducted consecutively during the first week,
+              from Monday, January 8th to Thursday, January 11th, 2024. In the
+              second week, only two classes were conducted on Monday, January
+              15th, and Thursday, January 18th, 2024. Similar to the first week,
+              four classes were completed consecutively in the third week, from
+              Monday, January 22nd to Thursday, January 25th, 2024. The
+              curriculum schedule and topics remained consistent throughout the
+              three-week period.
+            </ReadMore>
           </div>
         </div>
-
-        <div className="mt-3 text-lg font-semibold">Training is Ongoing</div>
-
-        <div className="mt-3">
-          <ReadMore>
-            Hello Community, My name is Oyeniyi Abiola Peace, I am the CEO of
-            Blockchain Innovation Hub. We are one of the grantees of the
-            Education, Community Growth and Events (Blockchain Innovation Hub -
-            A Three Month Bootcamp for Developers). This report summarizes the
-            activities completed so far for the BIH x Arbitrum Blockchain
-            Software Development Bootcamp. After successful partnerships, event
-            promotions, curriculum drafting and our first report, we have
-            concluded the selection process and started classes for the
-            Bootcamp. Out of approximately 800 registrations, we initially
-            selected 164 participants. We sent them a congratulatory email and
-            invited them to the last Twitter Space (BIH X Arbitrum Onboarding
-            call) scheduled for December 15th, 2023, at 7 pm. The final 100
-            participants were selected from the Twitter Space. Screenshot
-            2024-01-25 at 17.20.08|690x404 During the Onboarding call, we
-            provided a detailed explanation of the Bootcamp program and sent out
-            a form for everyone to fill out. The 100 selected participants were
-            then onboarded to the Bootcamp Workspace, where they can access all
-            the training materials and curriculum for the entire program. They
-            are also required to submit their assignments as URLs using Notion.
-            As scheduled, the first class of the Bootcamp commenced on January
-            8th, 2024, as indicated in the curriculum. Four classes were
-            conducted consecutively during the first week, from Monday, January
-            8th to Thursday, January 11th, 2024. In the second week, only two
-            classes were conducted on Monday, January 15th, and Thursday,
-            January 18th, 2024. Similar to the first week, four classes were
-            completed consecutively in the third week, from Monday, January 22nd
-            to Thursday, January 25th, 2024. The curriculum schedule and topics
-            remained consistent throughout the three-week period.
-          </ReadMore>
-        </div>
-      </div>
-      <div className="p-5 bg-white border border-gray-200 rounded-xl text-base font-semibold shadow-md">
-        What is the intended direct impact your project will have on the
-        ecosystem?
-      </div>
-      <div className="p-5 bg-white border border-gray-200 rounded-xl text-base font-semibold shadow-md">
-        What is the long-term impact of your grant?
       </div>
     </div>
   );
