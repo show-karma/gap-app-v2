@@ -39,7 +39,7 @@ import {
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
 const socialMediaInputStyle =
-  "bg-transparent border-none flex flex-1 p-2 focus-visible:outline-none dark:bg-zinc-900 dark:text-white";
+  "bg-transparent border-0 flex flex-1 p-2 focus:outline-none outline-none focus-visible:outline-none dark:bg-zinc-900 dark:text-white text-sm";
 const labelStyle =
   "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
@@ -393,7 +393,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({ dataToUpdate }) => {
               <input
                 id="members-input"
                 type="text"
-                className="flex flex-1 rounded border border-gray-400 bg-transparent p-2 px-4 focus-visible:outline-none max-sm:w-full"
+                className="flex flex-1 rounded-lg border border-gray-400 bg-transparent p-2 px-4 focus-visible:outline-none max-sm:w-full"
                 placeholder="ETH address, comma separated"
                 value={teamInput}
                 onChange={(e) => setTeamInput(e.target.value)}
@@ -401,7 +401,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({ dataToUpdate }) => {
               <button
                 type="button"
                 onClick={addMemberToArray}
-                className="bg-black px-12 py-2 text-white transition-all duration-300 ease-in-out disabled:opacity-40 max-sm:w-full"
+                className="bg-black px-12 py-2 rounded-lg text-white transition-all duration-300 ease-in-out disabled:opacity-40 max-sm:w-full"
                 disabled={!!teamInputError || !teamInput.length}
               >
                 Add
@@ -645,7 +645,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({ dataToUpdate }) => {
                     <div className="mt-4 flex flex-row justify-end gap-4">
                       <button
                         type="button"
-                        className="flex items-center flex-row gap-2 dark:border-white dark:text-secondary-100 justify-center rounded-md border bg-transparent border-black px-4 py-2 text-md font-medium text-black hover:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                        className="flex items-center flex-row gap-2 dark:border-white dark:text-secondary-100 justify-center rounded-md border bg-transparent border-gray-200 px-4 py-2 text-md font-medium text-black hover:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                         onClick={() => {
                           if (step === 0) {
                             closeModal();
