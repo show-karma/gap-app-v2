@@ -15,7 +15,6 @@ import { ProjectDialog } from "@/components/ProjectDialog";
 import formatCurrency from "@/utilities/formatCurrency";
 import pluralize from "pluralize";
 import ReactMarkdown from "react-markdown";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Pagination from "@/components/Utilities/Pagination";

@@ -1,63 +1,105 @@
+/* eslint-disable @next/next/no-img-element */
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ProjectPageLayout } from ".";
-import { HomeIcon, UsersIcon } from "@heroicons/react/24/outline";
 import { FlagIcon } from "@heroicons/react/24/solid";
-import { ReadMore } from "@/utilities";
-
-const navigation = [
-  {
-    name: "Arbitrum Good Citizen retrofunding round 1",
-    href: "/project/pin-save-decentralized-pinterest/grants?grantId=0xb7ff3368a18ea43386a15080173beb6a32b2fcf1ae0df9acf1b3e173a808ae8f&tab=overview",
-    icon: HomeIcon,
-    current: true,
-  },
-  {
-    name: "Blockchain Innovation Hub - A Three Month Bootcamp for Developers",
-    href: "#",
-    icon: UsersIcon,
-    current: false,
-  },
-];
-
-const tabs = [
-  {
-    name: "Overview",
-    href: "/project/pin-save-decentralized-pinterest/grants?grantId=0xb7ff3368a18ea43386a15080173beb6a32b2fcf1ae0df9acf1b3e173a808ae8f&tab=overview",
-    tabName: "overview",
-    current: true,
-  },
-  {
-    name: "Milestones & Updates",
-    href: "/project/pin-save-decentralized-pinterest/grants?grantId=0xb7ff3368a18ea43386a15080173beb6a32b2fcf1ae0df9acf1b3e173a808ae8f&tab=milestones-and-updates",
-    tabName: "milestones-and-updates",
-    current: false,
-  },
-  {
-    name: "Impact Criteria",
-    href: "/project/pin-save-decentralized-pinterest/grants?grantId=0xb7ff3368a18ea43386a15080173beb6a32b2fcf1ae0df9acf1b3e173a808ae8f&tab=impact-criteria",
-    tabName: "impact-criteria",
-    current: false,
-  },
-];
-
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(" ");
-}
+import { MESSAGES, PAGES, ReadMore, cn } from "@/utilities";
+import { useProjectStore } from "@/store";
+import { Grant } from "@show-karma/karma-gap-sdk";
+import ReactMarkdown from "react-markdown";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
+import formatCurrency from "@/utilities/formatCurrency";
+import { Hex } from "viem";
+import { GrantAllReviews, ReviewGrant } from "@/components/Pages";
 
 function GrantsPage() {
   const searchParams = useSearchParams();
+  const grantIdFromQueryParam = searchParams.get("grantId");
   const tabFromQueryParam = searchParams.get("tab");
   const [currentTab, setCurrentTab] = useState("Overview");
+  const [grant, setGrant] = useState<Grant | undefined>(undefined);
+  const project = useProjectStore((state) => state.project);
+  const navigation =
+    project?.grants?.map((item) => ({
+      uid: item.uid,
+      name: item.details?.title || "",
+      href: PAGES.PROJECT.GRANT(project.uid, item.uid),
+      icon: item.community.details?.imageURL || "",
+      current: item.uid === grantIdFromQueryParam || item.uid === grant?.uid,
+    })) || [];
 
   // UseEffect to check if current URL changes
   useEffect(() => {
-    console.log("tabFromQueryParam", tabFromQueryParam);
     if (tabFromQueryParam) {
       setCurrentTab(tabFromQueryParam);
     }
   }, [tabFromQueryParam]);
+
+  useEffect(() => {
+    if (project) {
+      if (grantIdFromQueryParam) {
+        const grantFound = project?.grants?.find(
+          (grant) =>
+            grant.uid?.toLowerCase() === grantIdFromQueryParam?.toLowerCase()
+        );
+        if (grantFound) {
+          setGrant(grantFound);
+          return;
+        }
+      }
+      setGrant(project?.grants?.[0]);
+    }
+  }, [project, grantIdFromQueryParam]);
+
+  const tabs = [
+    {
+      name: "Overview",
+      href: PAGES.PROJECT.TABS.OVERVIEW(
+        project?.uid as string,
+        grant?.uid as string
+      ),
+      tabName: "overview",
+      current: true,
+    },
+    {
+      name: "Milestones & Updates",
+      href: PAGES.PROJECT.TABS.MILESTONES(
+        project?.uid as string,
+        grant?.uid as string
+      ),
+      tabName: "milestones-and-updates",
+      current: false,
+    },
+    {
+      name: "Impact Criteria",
+      href: PAGES.PROJECT.TABS.IMPACT_CRITERIA(
+        project?.uid as string,
+        grant?.uid as string
+      ),
+      tabName: "impact-criteria",
+      current: false,
+    },
+    {
+      name: "Reviews",
+      href: PAGES.PROJECT.TABS.REVIEWS(
+        project?.uid as string,
+        grant?.uid as string
+      ),
+      tabName: "reviews",
+      current: false,
+    },
+    {
+      name: "Review this grant",
+      href: PAGES.PROJECT.TABS.REVIEW_THIS_GRANT(
+        project?.uid as string,
+        grant?.uid as string
+      ),
+      tabName: "review-this-grant",
+      current: false,
+    },
+  ];
 
   return (
     <div className="flex">
@@ -65,27 +107,28 @@ function GrantsPage() {
         <nav className="flex flex-1 flex-col" aria-label="Sidebar">
           <ul role="list" className="-mx-2 space-y-1">
             {navigation.map((item) => (
-              <li key={item.name}>
-                <a
+              <li key={item.uid}>
+                <Link
                   href={item.href}
-                  className={classNames(
+                  className={cn(
                     item.current
                       ? "bg-white text-primary-600 border border-gray-200"
                       : "text-gray-700 hover:text-primary-600 hover:bg-gray-50",
-                    "group flex items-center gap-x-5 rounded-xl px-4 py-2 text-sm leading-6 font-semibold"
+                    "group flex items-center gap-x-5 rounded-xl px-4 py-2 text-sm leading-6 font-semibold line-clamp-2"
                   )}
                 >
-                  <item.icon
-                    className={classNames(
+                  <img
+                    src={item.icon}
+                    alt=""
+                    className={cn(
                       item.current
                         ? "text-primary-600"
                         : "text-gray-400 group-hover:text-primary-600",
-                      "h-6 w-6 shrink-0"
+                      "h-6 w-6 shrink-0 rounded-full"
                     )}
-                    aria-hidden="true"
                   />
-                  <div className="w-8/12">{item.name}</div>
-                </a>
+                  <div className="w-full line-clamp-2">{item.name}</div>
+                </Link>
               </li>
             ))}
           </ul>
@@ -119,7 +162,7 @@ function GrantsPage() {
                 <Link
                   key={tab.name}
                   href={tab.href}
-                  className={classNames(
+                  className={cn(
                     tabFromQueryParam === tab.tabName
                       ? "text-gray-900"
                       : "text-gray-500 hover:text-gray-700",
@@ -131,7 +174,7 @@ function GrantsPage() {
                   <span>{tab.name}</span>
                   <span
                     aria-hidden="true"
-                    className={classNames(
+                    className={cn(
                       tabFromQueryParam === tab.tabName
                         ? "bg-primary-500"
                         : "bg-transparent",
@@ -145,11 +188,15 @@ function GrantsPage() {
         </div>
         {/* Grants tabs end */}
 
-        {currentTab === "overview" && <GrantOverview />}
+        {currentTab === "overview" && <GrantOverview grant={grant} />}
         {currentTab === "milestones-and-updates" && (
-          <GrantMilestonesAndUpdates />
+          <GrantMilestonesAndUpdates grant={grant} />
         )}
-        {currentTab === "impact-criteria" && <GrantImpactCriteria />}
+        {currentTab === "impact-criteria" && (
+          <GrantImpactCriteria grant={grant} />
+        )}
+        {currentTab === "reviews" && <GrantAllReviews grant={grant} />}
+        {currentTab === "review-this-grant" && <ReviewGrant grant={grant} />}
       </div>
     </div>
   );
@@ -159,13 +206,53 @@ GrantsPage.getLayout = ProjectPageLayout;
 
 export default GrantsPage;
 
-function GrantOverview() {
+interface GrantOverviewProps {
+  grant: Grant | undefined;
+}
+
+const isValidAmount = (amount?: string | undefined) => {
+  if (!amount) return undefined;
+
+  const number = Number(amount);
+  if (Number.isNaN(number)) return amount;
+
+  return formatCurrency(+amount);
+};
+
+const GrantOverview = ({ grant }: GrantOverviewProps) => {
+  const milestones = grant?.milestones;
+
+  const getPercentage = () => {
+    if (!milestones) return 0;
+
+    const total = milestones.length;
+    const completed = milestones.filter(
+      (milestone) => milestone.completed
+    ).length;
+
+    const percent = grant?.completed ? 100 : (completed / total) * 100;
+    return Number.isNaN(percent) ? 0 : +percent.toFixed(2);
+  };
+
+  const grantData: { stat?: number | string; title: string }[] = [
+    {
+      stat: isValidAmount(grant?.details?.amount),
+      title: "Total Grant Amount",
+    },
+    {
+      stat: grant?.details?.season,
+      title: "Season",
+    },
+    {
+      stat: grant?.details?.cycle,
+      title: "Cycle",
+    },
+  ];
+
   return (
     <>
       {/* Grant Overview Start */}
-      <div className="mt-5 text-xl font-semibold">
-        Blockchain Innovation Hub - A Three Month Bootcamp for Developers
-      </div>
+      <div className="mt-5 text-xl font-semibold">{grant?.details?.title}</div>
 
       <div className="mt-5 flex">
         <div className="w-9/12 p-5 mr-5 bg-white border border-gray-200 rounded-xl shadow-md">
@@ -173,27 +260,7 @@ function GrantOverview() {
             GRANT DESCRIPTION
           </div>
           <div className="mt-5 space-y-5">
-            <p>
-              We propose a three-month hybrid blockchain development bootcamp,
-              featuring a hackathon, to onboard quality developers into the
-              Arbitrum ecosystem. The program is divided into two tracks -
-              front-end and back-end development.
-            </p>
-            <p>
-              Front-end developers will learn how to integrate the Arbitrum SDK
-              into their applications and develop amazing web3 UI/UX. Back-end
-              developers, on the other hand, will focus on building scalable
-              backends using Node.js and integrating Arbitrum.
-            </p>
-            <p>Participants in both tracks will learn Solidity and Ether.js.</p>
-            <p>
-              Furthermore, a minimum of 8 hours per week is set aside for
-              learning to maximize impact. Physical sessions will be
-              live-streamed and recorded, allowing participants to contribute in
-              real-time and ensuring an all-round engagement. These recorded
-              classes can also serve as resources for anyone interested in
-              building on the Arbitrum chain in the future.
-            </p>
+            <ReactMarkdown>{grant?.details?.description}</ReactMarkdown>
           </div>
         </div>
         <div className="w-3/12">
@@ -201,20 +268,50 @@ function GrantOverview() {
             <div className="flex items-center justify-between p-5">
               <div className="font-semibold">Grant Overview</div>
               <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                50% Complete
+                {getPercentage()}% Complete
               </span>
             </div>
-            <div className="flex items-center justify-between p-5 border-t border-gray-200">
-              <div className="text-gray-500 text-base">Community</div>
-              <span className="inline-flex items-center gap-x-1 rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="https://pbs.twimg.com/profile_images/1653532864309239810/ZjT_zBAS_400x400.png"
-                  alt=""
-                  className="h-5 w-5 rounded-full"
-                />
-                <span className="text-base font-semibold">Arbitrum</span>
-              </span>
+            <div className="flex flex-col gap-4  px-5 pt-5 pb-5 border-t border-gray-200">
+              <Link
+                href={PAGES.COMMUNITY.ALL_GRANTS(grant?.community.uid as Hex)}
+                className="flex items-center justify-between"
+              >
+                <div className="text-gray-500 text-base">Community</div>
+                <span className="inline-flex items-center gap-x-1 rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={grant?.community.details?.imageURL}
+                    alt=""
+                    className="h-5 w-5 rounded-full"
+                  />
+                  <span className="text-base font-semibold">
+                    {grant?.community.details?.name}
+                  </span>
+                </span>
+              </Link>
+              {grant?.details?.proposalURL ? (
+                <div className="flex items-center justify-between">
+                  <div className="text-gray-500 text-base">Proposal</div>
+                  <ExternalLink
+                    href={grant?.details?.proposalURL}
+                    className="inline-flex items-center gap-x-1 rounded-md  px-2 py-1 text-xs font-medium text-blue-700"
+                  >
+                    <span className="text-base font-semibold">Details</span>
+                    <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                  </ExternalLink>
+                </div>
+              ) : null}
+              {grantData.map((data) =>
+                data.stat ? (
+                  <div
+                    key={data.title}
+                    className="flex flex-row items-center justify-between gap-2"
+                  >
+                    <h4 className={"text-gray-500 text-base"}>{data.title}</h4>
+                    <p className={"text-base font-semibold"}>{data.stat}</p>
+                  </div>
+                ) : null
+              )}
             </div>
           </div>
         </div>
@@ -222,9 +319,15 @@ function GrantOverview() {
       {/* Grant Overview End */}
     </>
   );
+};
+
+interface GrantMilestonesAndUpdatesProps {
+  grant: Grant | undefined;
 }
 
-function GrantMilestonesAndUpdates() {
+const GrantMilestonesAndUpdates = ({
+  grant,
+}: GrantMilestonesAndUpdatesProps) => {
   return (
     <div className="mt-5 space-y-5">
       <div className="p-5 bg-white border border-gray-200 rounded-xl shadow-md">
@@ -283,21 +386,31 @@ function GrantMilestonesAndUpdates() {
       </div>
     </div>
   );
+};
+
+interface GrantImpactCriteriaProps {
+  grant: Grant | undefined;
 }
 
-function GrantImpactCriteria() {
+const GrantImpactCriteria = ({ grant }: GrantImpactCriteriaProps) => {
+  const questions = grant?.details?.questions;
   return (
     <div className="mt-5 space-y-5 max-w-prose">
-      <div className="p-5 bg-white border border-gray-200 rounded-xl text-base font-semibold shadow-md">
-        How should the success of your grant be measured?
-      </div>
-      <div className="p-5 bg-white border border-gray-200 rounded-xl text-base font-semibold shadow-md">
-        What is the intended direct impact your project will have on the
-        ecosystem?
-      </div>
-      <div className="p-5 bg-white border border-gray-200 rounded-xl text-base font-semibold shadow-md">
-        What is the long-term impact of your grant?
-      </div>
+      {questions ? (
+        <div className="flex flex-col gap-4">
+          {questions.map((item) => (
+            <div
+              className="p-5 bg-white border border-gray-200 rounded-xl text-base font-semibold shadow-md"
+              key={item.query + item.explanation}
+            >
+              <h3>{item.query}</h3>
+              <p className="text-normal font-normal">{item.explanation}</p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p>{MESSAGES.GRANT.IMPACT_CRITERIA.EMPTY}</p>
+      )}
     </div>
   );
-}
+};

@@ -1,5 +1,6 @@
 import "@/styles/globals.css";
 import "@/styles/index.scss";
+import "@/components/Utilities/DynamicStars/styles.css";
 import "@rainbow-me/rainbowkit/styles.css";
 import type { AppProps } from "next/app";
 import { useEffect, useState } from "react";
@@ -8,7 +9,7 @@ import {
   getDefaultWallets,
   RainbowKitProvider,
 } from "@rainbow-me/rainbowkit";
-import { configureChains, createConfig, WagmiConfig } from "wagmi";
+import { configureChains, createConfig, useAccount, WagmiConfig } from "wagmi";
 import { publicProvider } from "wagmi/providers/public";
 import Footer from "@/components/Utilities/Footer";
 import Header from "@/components/Utilities/Header";

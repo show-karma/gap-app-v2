@@ -17,6 +17,7 @@ import {
 } from "@/utilities";
 import { useRouter } from "next/router";
 import { Community } from "@show-karma/karma-gap-sdk";
+import { useOwnerStore } from "@/store/owner";
 
 const links = [
   {
@@ -52,7 +53,6 @@ function classNames(...classes: string[]) {
 export default function Header() {
   const { currentTheme, changeCurrentTheme } = useContext(ThemeContext);
   const { isConnected, address } = useAccount();
-  const [isOwner, setIsOwner] = useState(false);
   const [communitiesToAdmin, setCommunitiesToAdmin] = useState<Community[]>([]);
   const signer = useSigner();
 
@@ -70,12 +70,21 @@ export default function Header() {
     }
   };
 
+  const isOwner = useOwnerStore((state) => state.isOwner);
+  const setIsOwner = useOwnerStore((state) => state.setIsOwner);
+
   useEffect(() => {
-    if (!signer) return;
-    getContractOwner(signer as any).then((owner) => {
-      setIsOwner(owner === address);
-    });
-  }, [signer]);
+    if (!signer || !address) {
+      setIsOwner(false);
+      return;
+    }
+    const setupOwner = async () => {
+      await getContractOwner(signer as any).then((owner) => {
+        setIsOwner(owner.toLowerCase() === address?.toLowerCase());
+      });
+    };
+    setupOwner();
+  }, [signer, address]);
 
   useEffect(() => {
     getCommunities();

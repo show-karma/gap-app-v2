@@ -1,53 +1,132 @@
+/* eslint-disable @next/next/no-img-element */
+import Link from "next/link";
 import { useRouter } from "next/router";
-import * as React from "react";
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
+import ProjectPage from "./project";
+import {
+  PAGES,
+  cn,
+  getContractOwner,
+  getProjectById,
+  getProjectOwner,
+  useSigner,
+  zeroUID,
+} from "@/utilities";
+import { useProjectStore } from "@/store";
+import { useAccount } from "wagmi";
+import { blo } from "blo";
+import { Project } from "@show-karma/karma-gap-sdk";
+import { useOwnerStore } from "@/store/owner";
 
 interface Props {
   children: ReactNode;
 }
 
-const tabs = [
-  { name: "Project", href: "/project/${projectId}" },
-  {
-    name: "Grants",
-    href: "/grants/?tab=grants&grantId=0xb7ff3368a18ea43386a15080173beb6a32b2fcf1ae0df9acf1b3e173a808ae8f%2Foverview",
-  },
-  { name: "Team", href: "/team" },
-];
-
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
 
-const ProjectPage = () => {
-  return <div>This is the Project Layout&apos;s landing page</div>;
-};
+const firstFiveMembers = (project: Project) =>
+  project.members.slice(0, 5).map((item) => item.recipient);
+const restMembersCounter = (project: Project) =>
+  project.members?.length ? project.members.length - 5 : 0;
 
 export const NestedLayout = ({ children }: Props) => {
   const router = useRouter();
+  const projectId = router.query.projectId as string;
+  const tabs = [
+    { name: "Project", href: PAGES.PROJECT.OVERVIEW(projectId) },
+    {
+      name: "Grants",
+      href: PAGES.PROJECT.GRANTS(projectId),
+    },
+    { name: "Team", href: PAGES.PROJECT.TEAM(projectId) },
+  ];
+  const project = useProjectStore((state) => state.project);
+  const loading = useProjectStore((state) => state.loading);
+  const setProject = useProjectStore((state) => state.setProject);
+  const setLoading = useProjectStore((state) => state.setLoading);
+  const setIsProjectOwner = useProjectStore((state) => state.setIsProjectOwner);
+
+  useEffect(() => {
+    if (projectId) {
+      const fetchProject = async () => {
+        try {
+          setLoading(true);
+          const fetchedProject = await getProjectById(projectId);
+
+          if (!fetchedProject || fetchedProject.uid === zeroUID) {
+            router.push(PAGES.NOT_FOUND);
+          }
+
+          setProject(fetchedProject);
+        } catch (error: any) {
+          console.log(error);
+          setProject(undefined);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchProject();
+    } else {
+      setProject(undefined);
+    }
+  }, [projectId]);
+
+  const signer = useSigner();
+  const { address } = useAccount();
+
+  useEffect(() => {
+    if (!signer || !project) {
+      setIsProjectOwner(false);
+      return;
+    }
+    const setupOwner = async () => {
+      const isOwner = await getProjectOwner(signer as any, project);
+      setIsProjectOwner(isOwner);
+    };
+    setupOwner();
+  }, [signer, project, address]);
+
   return (
     <div>
       <div className="relative border-b border-gray-200 pb-5 sm:pb-0">
-        <div className="px-4 sm:px-6 lg:px-8 pt-5 md:flex md:items-center md:justify-between">
-          <h1 className="text-2xl font-semibold leading-6 text-gray-900">
-            Blockchain Innovation Hub
+        <div className="px-4 sm:px-6 lg:px-8 md:flex py-8 md:items-center md:justify-between">
+          <h1
+            className={cn(
+              loading
+                ? "animate-pulse w-64 h-10 bg-gray-600 rounded-lg"
+                : "text-2xl font-semibold leading-6 text-gray-900"
+            )}
+          >
+            {loading ? "" : project?.details?.title}
           </h1>
-          <div className="mt-3 flex">
-            <button
-              type="button"
-              className="inline-flex items-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50"
-            >
-              Share
-            </button>
-            <button
-              type="button"
-              className="ml-3 inline-flex items-center rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-            >
-              Create
-            </button>
-          </div>
+          {project ? (
+            <div className="flex items-center space-x-2">
+              {firstFiveMembers(project).length ? (
+                <>
+                  <span className="text-sm text-gray-600">Built by</span>
+                  {firstFiveMembers(project).map((member, index) => (
+                    <span key={index}>
+                      <img
+                        src={blo(member, 8)}
+                        alt={member}
+                        className="h-12 w-12 rounded-md ring-4 ring-gray-50 dark:ring-black border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5"
+                      />
+                    </span>
+                  ))}
+                  {restMembersCounter(project) > 0 && (
+                    <p className="flex items-center justify-center h-12 w-12 rounded-md ring-4 ring-gray-50 dark:ring-black border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5">
+                      +
+                    </p>
+                  )}
+                </>
+              ) : null}
+            </div>
+          ) : null}
         </div>
-        <div className="mt-4">
+        <div className="mt-4 max-sm:px-4">
           <div className="sm:hidden">
             <label htmlFor="current-tab" className="sr-only">
               Select a tab
@@ -65,7 +144,7 @@ export const NestedLayout = ({ children }: Props) => {
           <div className="px-4 sm:px-6 lg:px-8 hidden sm:block">
             <nav className="-mb-px flex space-x-8">
               {tabs.map((tab) => (
-                <a
+                <Link
                   key={tab.name}
                   href={tab.href}
                   className={classNames(
@@ -76,13 +155,13 @@ export const NestedLayout = ({ children }: Props) => {
                   )}
                 >
                   {tab.name}
-                </a>
+                </Link>
               ))}
             </nav>
           </div>
         </div>
       </div>
-      <div className="px-4 sm:px-6 lg:px-8">{children}</div>
+      <div className="px-4 pb-20 sm:px-6 lg:px-8">{children}</div>
     </div>
   );
 };
@@ -91,6 +170,10 @@ export const ProjectPageLayout = (page: any) => (
   <NestedLayout>{page}</NestedLayout>
 );
 
-ProjectPage.getLayout = ProjectPageLayout;
+const ProjectPageIndex = () => {
+  return <ProjectPage />;
+};
 
-export default ProjectPage;
+ProjectPageIndex.getLayout = ProjectPageLayout;
+
+export default ProjectPageIndex;
