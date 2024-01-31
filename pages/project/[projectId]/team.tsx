@@ -9,7 +9,7 @@ import { Hex } from "viem";
 function TeamPage() {
   const project = useProjectStore((state) => state.project);
   return (
-    <div className="py-5">
+    <div className="">
       <div className="font-semibold">Built By</div>
       {project?.members.map((member) => (
         <div key={member.uid} className="mt-3 group block flex-shrink-0">

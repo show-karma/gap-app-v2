@@ -58,7 +58,7 @@ export const VotingPowerPopover: FC<VotingPowerPopoverProps> = ({
   }, [canFetch]);
 
   return (
-    <div className="w-full max-w-md px-4">
+    <div className="w-full max-w-md">
       <Popover className="relative">
         {({ open }) => {
           if (open) {

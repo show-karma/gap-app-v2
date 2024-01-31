@@ -31,8 +31,11 @@ export const ReviewGrant: FC<ReviewGrantProps> = ({ grant }) => {
   const { address } = useAccount();
 
   const [isFetching, setIsFetching] = useState(true);
+
   const [questions, setQuestions] = useState<Question[]>([]);
+
   const [alreadyReviewed, setAlreadyReviewed] = useState<boolean>(false);
+
   const [reviewerInfo, setReviewerInfo] = useState<ReviewerInfo>({
     choice: undefined,
     name: undefined,
@@ -121,7 +124,7 @@ export const ReviewGrant: FC<ReviewGrantProps> = ({ grant }) => {
   // );
 
   return (
-    <div className="mt-5 space-y-5 flex w-full justify-start">
+    <div className="space-y-5 flex w-full justify-start">
       <div className="flex w-full max-w-5xl flex-col items-start justify-start gap-1">
         <div className="flex w-full flex-row items-center justify-between gap-2">
           <div className="flex w-full flex-col items-start justify-between gap-6  border-b border-b-zinc-300 pb-8">

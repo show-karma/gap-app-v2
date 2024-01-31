@@ -4,7 +4,14 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ProjectPageLayout } from ".";
 import { FlagIcon } from "@heroicons/react/24/solid";
-import { MESSAGES, PAGES, ReadMore, cn } from "@/utilities";
+import {
+  MESSAGES,
+  PAGES,
+  ReadMore,
+  cn,
+  getQuestionsOf,
+  getReviewsOf,
+} from "@/utilities";
 import { useProjectStore } from "@/store";
 import { Grant } from "@show-karma/karma-gap-sdk";
 import ReactMarkdown from "react-markdown";
@@ -13,6 +20,13 @@ import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import formatCurrency from "@/utilities/formatCurrency";
 import { Hex } from "viem";
 import { GrantAllReviews, ReviewGrant } from "@/components/Pages";
+
+interface Tab {
+  name: string;
+  href: string;
+  tabName: string;
+  current: boolean;
+}
 
 function GrantsPage() {
   const searchParams = useSearchParams();
@@ -29,6 +43,7 @@ function GrantsPage() {
       icon: item.community.details?.imageURL || "",
       current: item.uid === grantIdFromQueryParam || item.uid === grant?.uid,
     })) || [];
+  const [tabs, setTabs] = useState<Tab[]>([]);
 
   // UseEffect to check if current URL changes
   useEffect(() => {
@@ -53,7 +68,7 @@ function GrantsPage() {
     }
   }, [project, grantIdFromQueryParam]);
 
-  const tabs = [
+  const defaultTabs = [
     {
       name: "Overview",
       href: PAGES.PROJECT.TABS.OVERVIEW(
@@ -81,25 +96,70 @@ function GrantsPage() {
       tabName: "impact-criteria",
       current: false,
     },
-    {
-      name: "Reviews",
-      href: PAGES.PROJECT.TABS.REVIEWS(
-        project?.uid as string,
-        grant?.uid as string
-      ),
-      tabName: "reviews",
-      current: false,
-    },
-    {
-      name: "Review this grant",
-      href: PAGES.PROJECT.TABS.REVIEW_THIS_GRANT(
-        project?.uid as string,
-        grant?.uid as string
-      ),
-      tabName: "review-this-grant",
-      current: false,
-    },
   ];
+
+  const mountTabs = async () => {
+    const firstTabs: Tab[] = [...defaultTabs];
+
+    if (!grant || !grant.categories?.length || grant.categories?.length <= 0) {
+      setTabs(firstTabs);
+      return;
+    }
+
+    const hasQuestions = await getQuestionsOf(grant.uid)
+      .then((data) => data.length > 0)
+      .catch(() => false);
+
+    const reviewTabs = [
+      {
+        name: "Reviews",
+        href: PAGES.PROJECT.TABS.REVIEWS(
+          project?.uid as string,
+          grant?.uid as string
+        ),
+        tabName: "reviews",
+        current: false,
+      },
+      {
+        name: "Review this grant",
+        href: PAGES.PROJECT.TABS.REVIEW_THIS_GRANT(
+          project?.uid as string,
+          grant?.uid as string
+        ),
+        tabName: "review-this-grant",
+        current: false,
+      },
+    ];
+
+    if (hasQuestions) {
+      const finalTabs = firstTabs.concat(reviewTabs);
+      setTabs(finalTabs);
+    } else {
+      const hasReviews = await getReviewsOf(grant.uid)
+        .then((data) => data.length > 0)
+        .catch(() => false);
+      if (hasReviews) {
+        const allReviewsTabTogether = firstTabs.concat([
+          {
+            name: "Reviews",
+            href: PAGES.PROJECT.TABS.REVIEWS(
+              project?.uid as string,
+              grant?.uid as string
+            ),
+            tabName: "reviews",
+            current: false,
+          },
+        ]);
+        setTabs(allReviewsTabTogether);
+        return;
+      }
+      setTabs(firstTabs);
+    }
+  };
+
+  useEffect(() => {
+    mountTabs();
+  }, [grant?.uid]);
 
   return (
     <div className="flex">
@@ -188,15 +248,17 @@ function GrantsPage() {
         </div>
         {/* Grants tabs end */}
 
-        {currentTab === "overview" && <GrantOverview grant={grant} />}
-        {currentTab === "milestones-and-updates" && (
-          <GrantMilestonesAndUpdates grant={grant} />
-        )}
-        {currentTab === "impact-criteria" && (
-          <GrantImpactCriteria grant={grant} />
-        )}
-        {currentTab === "reviews" && <GrantAllReviews grant={grant} />}
-        {currentTab === "review-this-grant" && <ReviewGrant grant={grant} />}
+        <div className="flex flex-col py-5">
+          {currentTab === "overview" && <GrantOverview grant={grant} />}
+          {currentTab === "milestones-and-updates" && (
+            <GrantMilestonesAndUpdates grant={grant} />
+          )}
+          {currentTab === "impact-criteria" && (
+            <GrantImpactCriteria grant={grant} />
+          )}
+          {currentTab === "reviews" && <GrantAllReviews grant={grant} />}
+          {currentTab === "review-this-grant" && <ReviewGrant grant={grant} />}
+        </div>
       </div>
     </div>
   );
@@ -252,7 +314,7 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
   return (
     <>
       {/* Grant Overview Start */}
-      <div className="mt-5 text-xl font-semibold">{grant?.details?.title}</div>
+      <div className="text-xl font-semibold">{grant?.details?.title}</div>
 
       <div className="mt-5 flex">
         <div className="w-9/12 p-5 mr-5 bg-white border border-gray-200 rounded-xl shadow-md">
@@ -329,7 +391,7 @@ const GrantMilestonesAndUpdates = ({
   grant,
 }: GrantMilestonesAndUpdatesProps) => {
   return (
-    <div className="mt-5 space-y-5">
+    <div className="space-y-5">
       <div className="p-5 bg-white border border-gray-200 rounded-xl shadow-md">
         <div className="flex items-center justify-between">
           <span className="inline-flex items-center gap-x-1 rounded-full bg-primary-50 px-2 py-1 text-xs font-semibold text-primary-600 uppercase ring-1 ring-inset ring-primary-500/10">
@@ -395,7 +457,7 @@ interface GrantImpactCriteriaProps {
 const GrantImpactCriteria = ({ grant }: GrantImpactCriteriaProps) => {
   const questions = grant?.details?.questions;
   return (
-    <div className="mt-5 space-y-5 max-w-prose">
+    <div className="space-y-5 max-w-prose">
       {questions ? (
         <div className="flex flex-col gap-4">
           {questions.map((item) => (

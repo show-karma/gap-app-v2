@@ -1,20 +1,24 @@
 /* eslint-disable react/no-unstable-nested-components */
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Grant } from "@show-karma/karma-gap-sdk";
-import { type FC, useState } from "react";
-import { useForm } from "react-hook-form";
+import { type FC, useState, Fragment } from "react";
+import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import ReactMarkdown from "react-markdown";
 import { Question } from "@/types";
 import { ReviewerInfo } from "@/types/reviewer";
-import { INDEXER, MESSAGES, additionalQuestion } from "@/utilities";
+import { INDEXER, MESSAGES, additionalQuestion, cn } from "@/utilities";
 import { useAccount } from "wagmi";
 import { useProjectStore } from "@/store";
 import fetchData from "@/utilities/fetchData";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { DynamicStars } from "@/components/Utilities/DynamicStars";
 import { Button } from "@/components/Utilities/Button";
+import { CheckIcon } from "@heroicons/react/20/solid";
+import { Listbox, Transition } from "@headlessui/react";
+import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
+import pluralize from "pluralize";
 
 interface ReviewFormProps {
   grant: Grant;
@@ -22,6 +26,19 @@ interface ReviewFormProps {
   alreadyReviewed: boolean;
   reviewerInfo: ReviewerInfo;
 }
+
+const possibleCategories = [
+  "Community Growth",
+  "ZK Tech",
+  "DeFi protocols",
+  "NFT projects",
+  "DAO Tools",
+  "L2 Tech",
+];
+
+const ErrorMessage = ({ message }: { message?: string }) => (
+  <p className="text-red-600 text-sm">{message}</p>
+);
 
 const FormSchema = z.object({
   questions: z.array(
@@ -36,6 +53,7 @@ const FormSchema = z.object({
     .object({
       choice: z.enum(["yes", "no"], {
         required_error: "You need to answer this.",
+        invalid_type_error: "You need to answer this.",
       }),
       name: z.string(),
       email: z.string().email({ message: "Invalid email" }),
@@ -207,6 +225,7 @@ export const ReviewForm: FC<ReviewFormProps> = ({
 
   const { watch } = form;
   const choice = watch("infos.choice");
+  const categories = watch("infos.categories");
 
   return alreadyReviewed || hasSubmitted ? (
     <div className="flex w-full max-w-max flex-col gap-3 rounded-xl border border-zinc-200 p-4">
@@ -245,29 +264,36 @@ export const ReviewForm: FC<ReviewFormProps> = ({
             </div>
 
             {additionalQuestion(question.questionId) ? null : (
-              <div
-                className="flex w-full max-w-max flex-row items-center gap-3 rounded p-3"
-                style={{
-                  backgroundColor:
-                    +(form.getValues("questions")[index]?.rating || 0) > 0
-                      ? "#EEF4FF"
-                      : "#F2F4F7",
-                }}
-                {...form.register(`questions.${index}.rating`)}
-              >
-                <p className="text-base font-bold text-gray-600">Rating</p>
-                <DynamicStars
-                  totalStars={5}
-                  rating={form.getValues("questions")[index]?.rating || 0}
-                  setRating={(rating) => {
-                    form.setValue(`questions.${index}.rating`, rating || 0);
+              <div className="flex flex-col gap-2  p-3">
+                <div
+                  className="flex w-full max-w-max flex-row items-center gap-3 rounded"
+                  style={{
+                    backgroundColor:
+                      +(form.getValues("questions")[index]?.rating || 0) > 0
+                        ? "#EEF4FF"
+                        : "#F2F4F7",
                   }}
+                  {...form.register(`questions.${index}.rating`)}
+                >
+                  <p className="text-base font-bold text-gray-600">Rating</p>
+                  <DynamicStars
+                    totalStars={5}
+                    rating={form.watch("questions")[index]?.rating || 0}
+                    setRating={(rating) => {
+                      form.setValue(`questions.${index}.rating`, rating || 0);
+                    }}
+                  />
+                  {+(form.getValues("questions")[index]?.rating || 0) > 0 ? (
+                    <p className="text-xl font-semibold text-gray-600 ">
+                      {form.getValues("questions")[index]?.rating}
+                    </p>
+                  ) : null}
+                </div>
+                <ErrorMessage
+                  message={
+                    form.formState.errors?.questions?.[index]?.rating?.message
+                  }
                 />
-                {+(form.getValues("questions")[index]?.rating || 0) > 0 ? (
-                  <p className="text-xl font-semibold text-gray-600 ">
-                    {form.getValues("questions")[index]?.rating}
-                  </p>
-                ) : null}
               </div>
             )}
           </div>
@@ -277,6 +303,11 @@ export const ReviewForm: FC<ReviewFormProps> = ({
               className="w-full rounded-lg border border-zinc-200 px-2 py-1"
               placeholder={MESSAGES.GRANT.REVIEW.FORM.PLACEHOLDERS.ANSWER}
               {...form.register(`questions.${index}.answer`)}
+            />
+            <ErrorMessage
+              message={
+                form.formState.errors?.questions?.[index]?.answer?.message
+              }
             />
           </div>
         </div>
@@ -309,10 +340,11 @@ export const ReviewForm: FC<ReviewFormProps> = ({
             No
           </label>
         </div>
+        <ErrorMessage message={form.formState.errors?.infos?.choice?.message} />
       </div>
       {choice === "yes" ? (
         <div className="flex flex-col gap-3">
-          <div>
+          <div className="flex flex-col gap-2">
             <label
               id="infos.name"
               className="text-base font-semibold text-black"
@@ -325,7 +357,7 @@ export const ReviewForm: FC<ReviewFormProps> = ({
               {...form.register("infos.name")}
             />
           </div>
-          <div>
+          <div className="flex flex-col gap-2">
             <label
               id="infos.email"
               className="text-base font-semibold text-black"
@@ -338,14 +370,100 @@ export const ReviewForm: FC<ReviewFormProps> = ({
               {...form.register("infos.email")}
             />
           </div>
-          <div>
-            <label
-              id="infos.categories"
-              className="text-base font-semibold text-black"
-            >
-              Enter your email address
-            </label>
-          </div>
+          <Controller
+            control={form.control}
+            name="infos.categories"
+            render={({ field: { onChange } }) => (
+              <Listbox
+                value={categories}
+                onChange={(value) => {
+                  onChange(value);
+                }}
+                multiple
+              >
+                {({ open }) => (
+                  <div className="flex flex-col items-start gap-2">
+                    <Listbox.Label className="text-base font-semibold text-black">
+                      What type of grants would you like to review? Choose all
+                      that apply
+                    </Listbox.Label>
+                    <div className="relative flex-1 w-56">
+                      <Listbox.Button className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
+                        <p className="block truncate">
+                          {categories && categories?.length > 0
+                            ? `${categories?.length} 
+                        ${pluralize("category", categories?.length)} selected`
+                            : "Categories"}
+                        </p>
+                        <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                          <ChevronUpDownIcon
+                            className="h-5 w-5 text-gray-400"
+                            aria-hidden="true"
+                          />
+                        </span>
+                      </Listbox.Button>
+
+                      <Transition
+                        show={open}
+                        as={Fragment}
+                        leave="transition ease-in duration-100"
+                        leaveFrom="opacity-100"
+                        leaveTo="opacity-0"
+                      >
+                        <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                          {possibleCategories?.map((category) => (
+                            <Listbox.Option
+                              key={category}
+                              className={({ active }) =>
+                                cn(
+                                  active
+                                    ? "bg-primary-600 text-white"
+                                    : "text-gray-900",
+                                  "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
+                                )
+                              }
+                              value={category}
+                            >
+                              {({ selected, active }) => (
+                                <>
+                                  <span
+                                    className={cn(
+                                      selected
+                                        ? "font-semibold"
+                                        : "font-normal",
+                                      "block truncate"
+                                    )}
+                                  >
+                                    {category}
+                                  </span>
+
+                                  {selected ? (
+                                    <span
+                                      className={cn(
+                                        active
+                                          ? "text-white"
+                                          : "text-primary-600",
+                                        "absolute inset-y-0 right-0 flex items-center pr-4"
+                                      )}
+                                    >
+                                      <CheckIcon
+                                        className="h-5 w-5"
+                                        aria-hidden="true"
+                                      />
+                                    </span>
+                                  ) : null}
+                                </>
+                              )}
+                            </Listbox.Option>
+                          ))}
+                        </Listbox.Options>
+                      </Transition>
+                    </div>
+                  </div>
+                )}
+              </Listbox>
+            )}
+          />
         </div>
       ) : null}
       <div className="flex w-full flex-row justify-end">

@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { MESSAGES, formatDate, getReviewsOf } from "@/utilities";
+import { MESSAGES, PAGES, formatDate, getReviewsOf } from "@/utilities";
 import { Grant } from "@show-karma/karma-gap-sdk";
 import ReactMarkdown from "react-markdown";
 import { Button } from "../Utilities/Button";
@@ -13,6 +13,7 @@ import EthereumAddressToENSName from "../EthereumAddressToENSName";
 import { useProjectStore } from "@/store";
 import { VotingPowerPopover } from "../VotingPowerPopover";
 import { blo } from "blo";
+import Link from "next/link";
 
 interface GrantAllReviewsProps {
   grant: Grant | undefined;
@@ -32,11 +33,11 @@ type Review = {
 export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
   const isProjectLoading = useProjectStore((state) => state.loading);
   if (isProjectLoading || !grant) {
-    <div className="mt-5 space-y-5 flex w-full flex-row items-center justify-start">
+    <div className="space-y-5 flex w-full flex-row items-center justify-start">
       <Spinner />
     </div>;
   }
-
+  const project = useProjectStore((state) => state.project);
   const [isFetching, setIsFetching] = useState(false);
   const [allReviews, setAllReviews] = useState<Review[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -92,7 +93,7 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
   // );
 
   return (
-    <div className="mt-5 space-y-5 flex w-full flex-col items-start justify-start gap-8">
+    <div className="space-y-5 flex w-full flex-col items-start justify-start gap-8">
       <div className="flex w-full max-w-5xl flex-col gap-8">
         <div className="flex w-full flex-col items-start justify-between gap-6  border-b border-b-zinc-300 pb-8">
           <h2 className="text-2xl font-normal">
@@ -248,7 +249,16 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
                   <p className="text-base font-normal">
                     {MESSAGES.GRANT.REVIEW.EMPTY_REVIEWS}
                   </p>
-                  <Button>Review this grant</Button>
+                  {grant && (
+                    <Link
+                      href={PAGES.PROJECT.TABS.REVIEW_THIS_GRANT(
+                        project?.details?.slug || project?.uid || "",
+                        grant?.uid || ""
+                      )}
+                    >
+                      <Button>Review this grant</Button>
+                    </Link>
+                  )}
                 </div>
               )}
             </div>

@@ -43,7 +43,7 @@ function ProjectPage() {
   };
 
   return (
-    <div className="flex flex-row gap-4 py-5">
+    <div className="flex flex-row gap-4">
       <div className=" flex flex-col flex-[3]">
         <div className="text-base flex flex-row gap-1">
           <span className="font-semibold">Owner:</span>
