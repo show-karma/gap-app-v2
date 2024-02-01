@@ -7,7 +7,7 @@ interface UpdateTagProps {
 }
 const UpdateTag: FC<UpdateTagProps> = ({ index }) => {
   return (
-    <div className="flex w-max flex-row gap-3 rounded-full bg-zinc-300 px-3 py-1 text-purple-700">
+    <div className="flex w-max flex-row gap-3 rounded-full bg-zinc-200 px-3 py-1 text-purple-700">
       <FlagIcon className="h-4 w-4" style={{ color: "#5720B7" }} />
       <p className="text-xs font-bold text-violet-800">UPDATE {index}</p>
     </div>

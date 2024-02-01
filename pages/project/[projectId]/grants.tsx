@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ProjectPageLayout } from ".";
 import { MESSAGES, PAGES, cn, getQuestionsOf, getReviewsOf } from "@/utilities";
-import { useGrantScreensStore, useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore, useProjectStore } from "@/store";
 import { Grant } from "@show-karma/karma-gap-sdk";
 import ReactMarkdown from "react-markdown";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -21,6 +21,11 @@ import {
 } from "@/components/Pages";
 import { CheckCircleIcon, PlusIcon } from "@heroicons/react/20/solid";
 import { Button } from "@/components/Utilities/Button";
+import { NewGrant } from "@/components/Pages/GrantMilestonesAndUpdates/screens";
+import { useRouter } from "next/router";
+import { GrantScreen } from "@/types/grant";
+import { NewMilestone } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewMilestone";
+import { NewGrantUpdate } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewGrantUpdate";
 
 interface Tab {
   name: string;
@@ -31,8 +36,8 @@ interface Tab {
 
 function GrantsPage() {
   const searchParams = useSearchParams();
-  const grantIdFromQueryParam = searchParams.get("grantId");
   const tabFromQueryParam = searchParams.get("tab");
+  const grantIdFromQueryParam = searchParams.get("grantId");
   const [currentTab, setCurrentTab] = useState("Overview");
   const [grant, setGrant] = useState<Grant | undefined>(undefined);
   const project = useProjectStore((state) => state.project);
@@ -46,7 +51,7 @@ function GrantsPage() {
       completed: item.completed,
     })) || [];
   const [tabs, setTabs] = useState<Tab[]>([]);
-  const changeScreen = useGrantScreensStore((state) => state.setGrantScreen);
+  const router = useRouter();
 
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
@@ -75,7 +80,12 @@ function GrantsPage() {
     }
   }, [project, grantIdFromQueryParam]);
 
-  const defaultTabs = [
+  const defaultTabs: {
+    name: string;
+    href: string;
+    tabName: GrantScreen;
+    current: boolean;
+  }[] = [
     {
       name: "Overview",
       href: PAGES.PROJECT.TABS.OVERVIEW(
@@ -87,9 +97,10 @@ function GrantsPage() {
     },
     {
       name: "Milestones & Updates",
-      href: PAGES.PROJECT.TABS.MILESTONES(
+      href: PAGES.PROJECT.TABS.SELECTED_TAB(
         project?.uid as string,
-        grant?.uid as string
+        grant?.uid as string,
+        "milestones-and-updates"
       ),
       tabName: "milestones-and-updates",
       current: false,
@@ -105,66 +116,70 @@ function GrantsPage() {
     },
   ];
 
-  const mountTabs = async () => {
-    const firstTabs: Tab[] = [...defaultTabs];
+  useEffect(() => {
+    const mountTabs = async () => {
+      const firstTabs: Tab[] = [...defaultTabs];
 
-    if (!grant || !grant.categories?.length || grant.categories?.length <= 0) {
-      setTabs(firstTabs);
-      return;
-    }
-
-    const hasQuestions = await getQuestionsOf(grant.uid)
-      .then((data) => data.length > 0)
-      .catch(() => false);
-
-    const reviewTabs = [
-      {
-        name: "Reviews",
-        href: PAGES.PROJECT.TABS.REVIEWS(
-          project?.uid as string,
-          grant?.uid as string
-        ),
-        tabName: "reviews",
-        current: false,
-      },
-      {
-        name: "Review this grant",
-        href: PAGES.PROJECT.TABS.REVIEW_THIS_GRANT(
-          project?.uid as string,
-          grant?.uid as string
-        ),
-        tabName: "review-this-grant",
-        current: false,
-      },
-    ];
-
-    if (hasQuestions) {
-      const finalTabs = firstTabs.concat(reviewTabs);
-      setTabs(finalTabs);
-    } else {
-      const hasReviews = await getReviewsOf(grant.uid)
-        .then((data) => data.length > 0)
-        .catch(() => false);
-      if (hasReviews) {
-        const allReviewsTabTogether = firstTabs.concat([
-          {
-            name: "Reviews",
-            href: PAGES.PROJECT.TABS.REVIEWS(
-              project?.uid as string,
-              grant?.uid as string
-            ),
-            tabName: "reviews",
-            current: false,
-          },
-        ]);
-        setTabs(allReviewsTabTogether);
+      if (
+        !grant ||
+        !grant.categories?.length ||
+        grant.categories?.length <= 0
+      ) {
+        setTabs(firstTabs);
         return;
       }
-      setTabs(firstTabs);
-    }
-  };
 
-  useEffect(() => {
+      const hasQuestions = await getQuestionsOf(grant.uid)
+        .then((data) => data.length > 0)
+        .catch(() => false);
+
+      const reviewTabs = [
+        {
+          name: "Reviews",
+          href: PAGES.PROJECT.TABS.REVIEWS(
+            project?.uid as string,
+            grant?.uid as string
+          ),
+          tabName: "reviews",
+          current: false,
+        },
+        {
+          name: "Review this grant",
+          href: PAGES.PROJECT.TABS.REVIEW_THIS_GRANT(
+            project?.uid as string,
+            grant?.uid as string
+          ),
+          tabName: "review-this-grant",
+          current: false,
+        },
+      ];
+
+      if (hasQuestions) {
+        const finalTabs = firstTabs.concat(reviewTabs);
+        setTabs(finalTabs);
+      } else {
+        const hasReviews = await getReviewsOf(grant.uid)
+          .then((data) => data.length > 0)
+          .catch(() => false);
+        if (hasReviews) {
+          const allReviewsTabTogether = firstTabs.concat([
+            {
+              name: "Reviews",
+              href: PAGES.PROJECT.TABS.REVIEWS(
+                project?.uid as string,
+                grant?.uid as string
+              ),
+              tabName: "reviews",
+              current: false,
+            },
+          ]);
+          setTabs(allReviewsTabTogether);
+          return;
+        }
+        setTabs(firstTabs);
+      }
+    };
+
     mountTabs();
   }, [grant?.uid]);
 
@@ -212,7 +227,17 @@ function GrantsPage() {
             {isAuthorized && (
               <li>
                 <Button
-                  onClick={() => changeScreen("create-grant")}
+                  onClick={() => {
+                    if (project) {
+                      router.push(
+                        PAGES.PROJECT.TABS.SELECTED_TAB(
+                          project?.uid || "",
+                          undefined,
+                          "create-grant"
+                        )
+                      );
+                    }
+                  }}
                   className="flex h-max w-full  flex-row items-center  hover:opacity-75 justify-center gap-3 rounded border border-[#155EEF] bg-[#155EEF] px-3 py-1 text-sm font-semibold text-white   max-sm:w-full"
                 >
                   <p>Add a new grant</p>
@@ -225,56 +250,58 @@ function GrantsPage() {
       </div>
       <div className="w-10/12 pl-5 py-5 border-l border-gray-200">
         {/* Grants tabs start */}
-        <div>
-          <div className="sm:hidden">
-            <label htmlFor="tabs" className="sr-only">
-              Select a tab
-            </label>
-            {/* Use an "onChange" listener to redirect the user to the selected tab URL. */}
-            <select
-              id="tabs"
-              name="tabs"
-              className="block w-full rounded-md border-gray-300 focus:border-primary-500 focus:ring-primary-500"
-              //   defaultValue={tabs.find((tab) => tab.current).name}
-            >
-              {tabs.map((tab) => (
-                <option key={tab.name}>{tab.name}</option>
-              ))}
-            </select>
-          </div>
-          <div className="hidden sm:block">
-            <nav
-              className="isolate flex divide-x divide-gray-200 rounded-lg shadow"
-              aria-label="Tabs"
-            >
-              {tabs.map((tab, tabIdx) => (
-                <Link
-                  key={tab.name}
-                  href={tab.href}
-                  className={cn(
-                    tabFromQueryParam === tab.tabName
-                      ? "text-gray-900"
-                      : "text-gray-500 hover:text-gray-700",
-                    tabIdx === 0 ? "rounded-l-lg" : "",
-                    tabIdx === tabs.length - 1 ? "rounded-r-lg" : "",
-                    "group relative min-w-0 flex-1 overflow-hidden bg-white py-4 px-4 text-center text-sm font-medium hover:bg-gray-50 focus:z-10"
-                  )}
-                >
-                  <span>{tab.name}</span>
-                  <span
-                    aria-hidden="true"
+        {currentTab !== "create-grant" && (
+          <div>
+            <div className="sm:hidden">
+              <label htmlFor="tabs" className="sr-only">
+                Select a tab
+              </label>
+              {/* Use an "onChange" listener to redirect the user to the selected tab URL. */}
+              <select
+                id="tabs"
+                name="tabs"
+                className="block w-full rounded-md border-gray-300 focus:border-primary-500 focus:ring-primary-500"
+                //   defaultValue={tabs.find((tab) => tab.current).name}
+              >
+                {tabs.map((tab) => (
+                  <option key={tab.name}>{tab.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="hidden sm:block">
+              <nav
+                className="isolate flex divide-x divide-gray-200 rounded-lg shadow"
+                aria-label="Tabs"
+              >
+                {tabs.map((tab, tabIdx) => (
+                  <Link
+                    key={tab.name}
+                    href={tab.href}
                     className={cn(
                       tabFromQueryParam === tab.tabName
-                        ? "bg-primary-500"
-                        : "bg-transparent",
-                      "absolute inset-x-0 bottom-0 h-0.5"
+                        ? "text-gray-900"
+                        : "text-gray-500 hover:text-gray-700",
+                      tabIdx === 0 ? "rounded-l-lg" : "",
+                      tabIdx === tabs.length - 1 ? "rounded-r-lg" : "",
+                      "group relative min-w-0 flex-1 overflow-hidden bg-white py-4 px-4 text-center text-sm font-medium hover:bg-gray-50 focus:z-10"
                     )}
-                  />
-                </Link>
-              ))}
-            </nav>
+                  >
+                    <span>{tab.name}</span>
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        tabFromQueryParam === tab.tabName
+                          ? "bg-primary-500"
+                          : "bg-transparent",
+                        "absolute inset-x-0 bottom-0 h-0.5"
+                      )}
+                    />
+                  </Link>
+                ))}
+              </nav>
+            </div>
           </div>
-        </div>
+        )}
         {/* Grants tabs end */}
 
         <div className="flex flex-col py-5">
@@ -287,6 +314,17 @@ function GrantsPage() {
           )}
           {currentTab === "reviews" && <GrantAllReviews grant={grant} />}
           {currentTab === "review-this-grant" && <ReviewGrant grant={grant} />}
+          {/*  */}
+          {(currentTab === "create-grant" || currentTab === "edit-grant") &&
+            project?.uid && (
+              <NewGrant grantToEdit={grant} projectUID={project.uid} />
+            )}
+          {(currentTab === "create-milestone" ||
+            currentTab === "edit-milestone") &&
+            grant && <NewMilestone grant={grant} />}
+          {currentTab === "grant-update" && grant && (
+            <NewGrantUpdate grant={grant} />
+          )}
         </div>
       </div>
     </div>
@@ -351,7 +389,7 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
         <div className="text-xl font-semibold">{grant?.details?.title}</div>
         {isAuthorized && project && grant && (
           <Link
-            href={PAGES.PROJECT.TABS.MILESTONES(
+            href={PAGES.PROJECT.TABS.SELECTED_TAB(
               project?.uid as string,
               grant?.uid as string,
               "edit-grant"

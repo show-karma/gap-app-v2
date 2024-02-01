@@ -107,6 +107,7 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
       await updateMilestoneCompletion(milestone, description)
         .then(() => {
           setIsUpdating(false);
+          cancelEditing(false);
         })
         .finally(() => {
           setIsSubmitLoading(false);
@@ -114,6 +115,7 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
     } else {
       await completeMilestone(milestone, description)
         .then(() => {
+          cancelEditing(false);
           setIsUpdating(false);
         })
         .finally(() => {
@@ -147,7 +149,7 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
             type="submit"
             isLoading={isSubmitLoading}
             disabled={isSubmitLoading}
-            className="flex h-min w-max flex-row gap-2 rounded bg-primary-500 px-4 py-2.5 hover:bg-primary-500"
+            className="flex h-min w-max flex-row gap-2 items-center rounded bg-primary-500 px-4 py-2.5 hover:bg-primary-500"
             onClick={() => {
               handleCompleteMilestone();
             }}
@@ -159,7 +161,7 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
               <PencilSquareIcon className="h-4 w-4" />
             ) : (
               <img
-                src="icons/rounded-check.svg"
+                src="/icons/rounded-check.svg"
                 className="h-4 w-4"
                 alt="Complete"
               />

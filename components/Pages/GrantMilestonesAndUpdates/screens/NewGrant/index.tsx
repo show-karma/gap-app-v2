@@ -3,15 +3,9 @@
 
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { useGrantScreensStore, useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore, useProjectStore } from "@/store";
 import { MilestoneWithCompleted } from "@/types/milestones";
-import {
-  MESSAGES,
-  PAGES,
-  appNetwork,
-  getContractOwner,
-  useSigner,
-} from "@/utilities";
+import { MESSAGES, PAGES, appNetwork, useSigner } from "@/utilities";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   GrantDetails,
@@ -35,6 +29,7 @@ import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useGap } from "@/hooks";
 import toast from "react-hot-toast";
 import { useRouter } from "next/router";
+import { useSearchParams } from "next/navigation";
 
 const labelStyle = "text-sm font-bold text-black";
 const inputStyle =
@@ -180,10 +175,9 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
   const { address } = useAccount();
   const signer = useSigner();
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const grantScreen = useGrantScreensStore((state) => state.grantScreen);
-  const handleGrantScreen = useGrantScreensStore(
-    (state) => state.setGrantScreen
-  );
+  const searchParams = useSearchParams();
+  const grantScreen = searchParams.get("tab");
+
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [milestones, setMilestones] = useState<MilestoneWithCompleted[]>([]);
   const [description, setDescription] = useState(
@@ -361,8 +355,13 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
         .then(async () => {
           // eslint-disable-next-line no-param-reassign
           toast.success(MESSAGES.GRANT.CREATE.SUCCESS);
-          router.push(PAGES.PROJECT.GRANT(selectedProject.uid, grant.uid));
-          handleGrantScreen("milestones-and-updates");
+          router.push(
+            PAGES.PROJECT.TABS.SELECTED_TAB(
+              selectedProject.uid,
+              grant.uid,
+              "overview"
+            )
+          );
           selectedProject?.grants.unshift(grant);
         });
     } catch (error) {
@@ -523,7 +522,16 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
           </h3>
           <Button
             className="bg-transparent p-4 hover:bg-transparent hover:opacity-75"
-            onClick={() => handleGrantScreen("milestones-and-updates")}
+            onClick={() => {
+              if (!selectedProject || !grantToEdit) return;
+              router.push(
+                PAGES.PROJECT.TABS.SELECTED_TAB(
+                  selectedProject.uid,
+                  grantToEdit.uid,
+                  "overview"
+                )
+              );
+            }}
           >
             <img src="/icons/close.svg" alt="Close" className="h-5 w-5 " />
           </Button>
@@ -821,7 +829,16 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
           <Button
             disabled={isSubmitting || isLoading}
             className="border border-blue-500 bg-transparent px-8 py-4 text-base font-bold text-blue-800 hover:bg-white hover:opacity-75"
-            onClick={() => handleGrantScreen("milestones-and-updates")}
+            onClick={() => {
+              if (!selectedProject || !grantToEdit) return;
+              router.push(
+                PAGES.PROJECT.TABS.SELECTED_TAB(
+                  selectedProject.uid,
+                  grantToEdit.uid,
+                  "overview"
+                )
+              );
+            }}
           >
             Cancel
           </Button>

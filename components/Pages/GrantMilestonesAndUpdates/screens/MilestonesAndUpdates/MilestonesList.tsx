@@ -5,7 +5,7 @@ import { type FC, useEffect, useMemo, useState, use } from "react";
 import { useGap } from "@/hooks/useGap";
 import { Button } from "@/components/Utilities/Button";
 import { useAccount, useNetwork } from "wagmi";
-import { useGrantScreensStore, useOwnerStore, useProjectStore } from "@/store";
+import { useOwnerStore, useProjectStore } from "@/store";
 import { isCommunityAdminOf, useSigner } from "@/utilities";
 import { GrantUpdate } from "./GrantUpdate";
 import { MilestoneDetails } from "./MilestoneDetails";
@@ -63,7 +63,6 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
   const { chain } = useNetwork();
   const { gap } = useGap();
   const { milestones } = grant;
-  const changeScreen = useGrantScreensStore((state) => state.setGrantScreen);
   const { updates } = grant;
 
   const [generalArray, setGeneralArray] = useState([] as any[]);

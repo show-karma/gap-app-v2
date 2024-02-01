@@ -1,14 +1,17 @@
 /* eslint-disable @next/next/no-img-element */
 import { Button } from "@/components/Utilities/Button";
-import { useGrantScreensStore, useOwnerStore, useProjectStore } from "@/store";
-import { MESSAGES, ReadMore, formatDate } from "@/utilities";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { MESSAGES, PAGES, ReadMore, formatDate } from "@/utilities";
 import { Grant } from "@show-karma/karma-gap-sdk";
 import { MilestonesList } from "./MilestonesList";
+import { useRouter } from "next/router";
 
-export const EmptyMilestone = () => {
+export const EmptyMilestone = ({ grant }: { grant?: Grant }) => {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const changeScreen = useGrantScreensStore((state) => state.setGrantScreen);
+  const router = useRouter();
+  const project = useProjectStore((state) => state.project);
+
   if (!isProjectOwner && !isContractOwner) {
     return (
       <div className="flex w-full items-center justify-center rounded-md border border-gray-200 px-6 py-10">
@@ -45,7 +48,17 @@ export const EmptyMilestone = () => {
           <div className="flex w-max flex-row flex-wrap gap-6 max-sm:w-full max-sm:flex-col">
             <Button
               className="items-center flex flex-row justify-center gap-2 rounded border border-blue-600 bg-primary-500 px-4 py-2.5 text-base font-semibold text-white hover:bg-primary-500"
-              onClick={() => changeScreen("create-milestone")}
+              onClick={() => {
+                if (project && grant) {
+                  router.push(
+                    PAGES.PROJECT.TABS.SELECTED_TAB(
+                      project.uid,
+                      grant.uid,
+                      "create-milestone"
+                    )
+                  );
+                }
+              }}
             >
               <img
                 src="/icons/plus.svg"
@@ -56,7 +69,17 @@ export const EmptyMilestone = () => {
             </Button>
             <Button
               className="items-center justify-center gap-2 rounded border border-black bg-white px-4 py-2.5 text-base font-semibold text-zinc-900 hover:bg-white"
-              onClick={() => changeScreen("update-grant")}
+              onClick={() => {
+                if (project && grant) {
+                  router.push(
+                    PAGES.PROJECT.TABS.SELECTED_TAB(
+                      project?.uid || "",
+                      grant.uid,
+                      "grant-update"
+                    )
+                  );
+                }
+              }}
             >
               Post an update
             </Button>
@@ -109,7 +132,8 @@ export const MilestonesAndUpdates = ({ grant }: MilestonesAndUpdatesProps) => {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isProjectOwner || isContractOwner;
-  const changeScreen = useGrantScreensStore((state) => state.setGrantScreen);
+  const project = useProjectStore((state) => state.project);
+  const router = useRouter();
 
   return (
     <div className="space-y-5">
@@ -129,7 +153,17 @@ export const MilestonesAndUpdates = ({ grant }: MilestonesAndUpdatesProps) => {
                     {isAuthorized ? (
                       <div className="flex items-center">
                         <Button
-                          onClick={() => changeScreen("update-grant")}
+                          onClick={() => {
+                            if (project) {
+                              router.push(
+                                PAGES.PROJECT.TABS.SELECTED_TAB(
+                                  project?.uid || "",
+                                  grant.uid,
+                                  "grant-update"
+                                )
+                              );
+                            }
+                          }}
                           className="flex h-max w-max text-zinc-900 flex-row items-center justify-center gap-3 rounded border border-black bg-transparent px-3 py-1 text-sm font-semibold hover:bg-transparent hover:opacity-75 max-sm:w-full"
                         >
                           <p>Post a grant update</p>
@@ -138,7 +172,17 @@ export const MilestonesAndUpdates = ({ grant }: MilestonesAndUpdatesProps) => {
                     ) : null}
                     {isAuthorized && (
                       <Button
-                        onClick={() => changeScreen("create-milestone")}
+                        onClick={() => {
+                          if (project) {
+                            router.push(
+                              PAGES.PROJECT.TABS.SELECTED_TAB(
+                                project?.uid || "",
+                                grant.uid,
+                                "create-milestone"
+                              )
+                            );
+                          }
+                        }}
                         className="flex h-max w-max  flex-row items-center  hover:opacity-75 justify-center gap-3 rounded border border-[#155EEF] bg-[#155EEF] px-3 py-1 text-sm font-semibold text-white   max-sm:w-full"
                       >
                         <p>Add a new milestone</p>
@@ -152,7 +196,7 @@ export const MilestonesAndUpdates = ({ grant }: MilestonesAndUpdatesProps) => {
           )}
         </div>
       ) : (
-        <EmptyMilestone />
+        <EmptyMilestone grant={grant} />
       )}
     </div>
   );

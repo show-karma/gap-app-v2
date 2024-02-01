@@ -54,7 +54,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
             <img
               className="h-4 w-4"
               alt="Update"
-              src="icons/alert-message-white.svg"
+              src="/icons/alert-message-white.svg"
             />
             <p className="text-xs font-bold text-white">UPDATE</p>
           </div>
@@ -84,7 +84,11 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
                   className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 hover:bg-transparent"
                   onClick={() => undoMilestoneCompletion(milestone)}
                 >
-                  <img src="icons/trash.svg" alt="Remove" className="h-5 w-5" />
+                  <img
+                    src="/icons/trash.svg"
+                    alt="Remove"
+                    className="h-5 w-5"
+                  />
                   Remove
                 </Button>
               </div>

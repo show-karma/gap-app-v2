@@ -47,8 +47,8 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
     }
     try {
       setIsLoading(true);
-      await transferOwnership(project, newOwner, signer).then(() => {
-        refreshProject();
+      await transferOwnership(project, newOwner, signer).then(async () => {
+        await refreshProject();
         toast.success("Ownership transferred successfully");
       });
     } catch (error) {
