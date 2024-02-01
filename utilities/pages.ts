@@ -21,8 +21,10 @@ export const PAGES = {
     TABS: {
       OVERVIEW: (project: string, grant: string) =>
         `/project/${project}/grants?grantId=${grant}&tab=overview`,
-      MILESTONES: (project: string, grant: string) =>
-        `/project/${project}/grants?grantId=${grant}&tab=milestones-and-updates`,
+      MILESTONES: (project: string, grant: string, grantTab?: string) =>
+        `/project/${project}/grants?grantId=${grant}&tab=milestones-and-updates${
+          grantTab ? `&grantTab=${grantTab}` : ""
+        }`,
       IMPACT_CRITERIA: (project: string, grant: string) =>
         `/project/${project}/grants?grantId=${grant}&tab=impact-criteria`,
       REVIEW_THIS_GRANT: (project: string, grant: string) =>

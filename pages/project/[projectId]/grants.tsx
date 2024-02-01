@@ -3,23 +3,24 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ProjectPageLayout } from ".";
-import { FlagIcon } from "@heroicons/react/24/solid";
-import {
-  MESSAGES,
-  PAGES,
-  ReadMore,
-  cn,
-  getQuestionsOf,
-  getReviewsOf,
-} from "@/utilities";
-import { useProjectStore } from "@/store";
+import { MESSAGES, PAGES, cn, getQuestionsOf, getReviewsOf } from "@/utilities";
+import { useGrantScreensStore, useOwnerStore, useProjectStore } from "@/store";
 import { Grant } from "@show-karma/karma-gap-sdk";
 import ReactMarkdown from "react-markdown";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
+import {
+  ArrowTopRightOnSquareIcon,
+  PencilSquareIcon,
+} from "@heroicons/react/24/outline";
 import formatCurrency from "@/utilities/formatCurrency";
 import { Hex } from "viem";
-import { GrantAllReviews, ReviewGrant } from "@/components/Pages";
+import {
+  GrantAllReviews,
+  GrantMilestonesAndUpdates,
+  ReviewGrant,
+} from "@/components/Pages";
+import { CheckCircleIcon, PlusIcon } from "@heroicons/react/20/solid";
+import { Button } from "@/components/Utilities/Button";
 
 interface Tab {
   name: string;
@@ -40,10 +41,16 @@ function GrantsPage() {
       uid: item.uid,
       name: item.details?.title || "",
       href: PAGES.PROJECT.GRANT(project.uid, item.uid),
-      icon: item.community.details?.imageURL || "",
+      icon: item.community?.details?.imageURL || "",
       current: item.uid === grantIdFromQueryParam || item.uid === grant?.uid,
+      completed: item.completed,
     })) || [];
   const [tabs, setTabs] = useState<Tab[]>([]);
+  const changeScreen = useGrantScreensStore((state) => state.setGrantScreen);
+
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
+  const isAuthorized = isProjectOwner || isContractOwner;
 
   // UseEffect to check if current URL changes
   useEffect(() => {
@@ -174,23 +181,45 @@ function GrantsPage() {
                     item.current
                       ? "bg-white text-primary-600 border border-gray-200"
                       : "text-gray-700 hover:text-primary-600 hover:bg-gray-50",
-                    "group flex items-center gap-x-5 rounded-xl px-4 py-2 text-sm leading-6 font-semibold line-clamp-2"
+                    "flex items-center rounded-xl text-sm leading-6 font-semibold w-full"
                   )}
                 >
-                  <img
-                    src={item.icon}
-                    alt=""
-                    className={cn(
-                      item.current
-                        ? "text-primary-600"
-                        : "text-gray-400 group-hover:text-primary-600",
-                      "h-6 w-6 shrink-0 rounded-full"
-                    )}
-                  />
-                  <div className="w-full line-clamp-2">{item.name}</div>
+                  <div className="flex flex-row w-full items-center gap-2 justify-between px-4 py-2">
+                    <div className="flex flex-row gap-4">
+                      <img
+                        src={item.icon}
+                        alt=""
+                        className={cn(
+                          item.current
+                            ? "text-primary-600"
+                            : "text-gray-400 group-hover:text-primary-600",
+                          "h-6 w-6 shrink-0 rounded-full"
+                        )}
+                      />
+                      <p className="line-clamp-2 break-words max-w-44">
+                        {item.name}
+                      </p>
+                    </div>
+                    <div className="w-6 min-w-6">
+                      {item?.completed && (
+                        <CheckCircleIcon className="w-5 h-5 text-green-600" />
+                      )}
+                    </div>
+                  </div>
                 </Link>
               </li>
             ))}
+            {isAuthorized && (
+              <li>
+                <Button
+                  onClick={() => changeScreen("create-grant")}
+                  className="flex h-max w-full  flex-row items-center  hover:opacity-75 justify-center gap-3 rounded border border-[#155EEF] bg-[#155EEF] px-3 py-1 text-sm font-semibold text-white   max-sm:w-full"
+                >
+                  <p>Add a new grant</p>
+                  <PlusIcon className="w-5 h-5" />
+                </Button>
+              </li>
+            )}
           </ul>
         </nav>
       </div>
@@ -283,6 +312,10 @@ const isValidAmount = (amount?: string | undefined) => {
 
 const GrantOverview = ({ grant }: GrantOverviewProps) => {
   const milestones = grant?.milestones;
+  const project = useProjectStore((state) => state.project);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
+  const isAuthorized = isProjectOwner || isContractOwner;
 
   const getPercentage = () => {
     if (!milestones) return 0;
@@ -314,7 +347,23 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
   return (
     <>
       {/* Grant Overview Start */}
-      <div className="text-xl font-semibold">{grant?.details?.title}</div>
+      <div className="flex flex-row gap-2 items-center flex-wrap">
+        <div className="text-xl font-semibold">{grant?.details?.title}</div>
+        {isAuthorized && project && grant && (
+          <Link
+            href={PAGES.PROJECT.TABS.MILESTONES(
+              project?.uid as string,
+              grant?.uid as string,
+              "edit-grant"
+            )}
+          >
+            <Button className="flex h-max flex-row gap-2 bg-zinc-800 p-2 text-white hover:bg-zinc-800 hover:text-white">
+              Edit grant
+              <PencilSquareIcon className="h-4 w-4" />
+            </Button>
+          </Link>
+        )}
+      </div>
 
       <div className="mt-5 flex">
         <div className="w-9/12 p-5 mr-5 bg-white border border-gray-200 rounded-xl shadow-md">
@@ -380,73 +429,6 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
       </div>
       {/* Grant Overview End */}
     </>
-  );
-};
-
-interface GrantMilestonesAndUpdatesProps {
-  grant: Grant | undefined;
-}
-
-const GrantMilestonesAndUpdates = ({
-  grant,
-}: GrantMilestonesAndUpdatesProps) => {
-  return (
-    <div className="space-y-5">
-      <div className="p-5 bg-white border border-gray-200 rounded-xl shadow-md">
-        <div className="flex items-center justify-between">
-          <span className="inline-flex items-center gap-x-1 rounded-full bg-primary-50 px-2 py-1 text-xs font-semibold text-primary-600 uppercase ring-1 ring-inset ring-primary-500/10">
-            <FlagIcon className="h-4 w-4 text-primary-500" aria-hidden="true" />
-            Update 2
-          </span>
-          <div className="text-sm text-gray-600">
-            Posted on &nbsp;
-            <span className="font-semibold">January 25, 2024</span>
-          </div>
-        </div>
-
-        <div className="mt-3 text-lg font-semibold">Training is Ongoing</div>
-
-        <div className="mt-3">
-          <ReadMore>
-            Hello Community, My name is Oyeniyi Abiola Peace, I am the CEO of
-            Blockchain Innovation Hub. We are one of the grantees of the
-            Education, Community Growth and Events (Blockchain Innovation Hub -
-            A Three Month Bootcamp for Developers). This report summarizes the
-            activities completed so far for the BIH x Arbitrum Blockchain
-            Software Development Bootcamp. After successful partnerships, event
-            promotions, curriculum drafting and our first report, we have
-            concluded the selection process and started classes for the
-            Bootcamp. Out of approximately 800 registrations, we initially
-            selected 164 participants. We sent them a congratulatory email and
-            invited them to the last Twitter Space (BIH X Arbitrum Onboarding
-            call) scheduled for December 15th, 2023, at 7 pm. The final 100
-            participants were selected from the Twitter Space. Screenshot
-            2024-01-25 at 17.20.08|690x404 During the Onboarding call, we
-            provided a detailed explanation of the Bootcamp program and sent out
-            a form for everyone to fill out. The 100 selected participants were
-            then onboarded to the Bootcamp Workspace, where they can access all
-            the training materials and curriculum for the entire program. They
-            are also required to submit their assignments as URLs using Notion.
-            As scheduled, the first class of the Bootcamp commenced on January
-            8th, 2024, as indicated in the curriculum. Four classes were
-            conducted consecutively during the first week, from Monday, January
-            8th to Thursday, January 11th, 2024. In the second week, only two
-            classes were conducted on Monday, January 15th, and Thursday,
-            January 18th, 2024. Similar to the first week, four classes were
-            completed consecutively in the third week, from Monday, January 22nd
-            to Thursday, January 25th, 2024. The curriculum schedule and topics
-            remained consistent throughout the three-week period.
-          </ReadMore>
-        </div>
-      </div>
-      <div className="p-5 bg-white border border-gray-200 rounded-xl text-base font-semibold shadow-md">
-        What is the intended direct impact your project will have on the
-        ecosystem?
-      </div>
-      <div className="p-5 bg-white border border-gray-200 rounded-xl text-base font-semibold shadow-md">
-        What is the long-term impact of your grant?
-      </div>
-    </div>
   );
 };
 

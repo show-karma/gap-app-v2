@@ -2,6 +2,7 @@ import "@/styles/globals.css";
 import "@/styles/index.scss";
 import "@/components/Utilities/DynamicStars/styles.css";
 import "@rainbow-me/rainbowkit/styles.css";
+import "react-day-picker/dist/style.css";
 import type { AppProps } from "next/app";
 import { useEffect, useState } from "react";
 import {

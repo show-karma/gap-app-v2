@@ -5,7 +5,7 @@ import { PlusIcon } from "@heroicons/react/24/solid";
 import { Button } from "./Utilities/Button";
 
 type DeleteDialogProps = {
-  title?: string;
+  title?: ReactNode;
   deleteFunction: () => Promise<void>;
   buttonElement?: {
     text: string;
@@ -22,7 +22,7 @@ export const DeleteDialog: FC<DeleteDialogProps> = ({
     icon: <PlusIcon className="h-4 w-4 text-primary-600" />,
     text: "New Project",
     styleClass:
-      "flex items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100 shadow-sm hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900",
+      "flex justify-center items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100 shadow-sm hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900",
   },
   isLoading,
 }) => {
@@ -75,7 +75,7 @@ export const DeleteDialog: FC<DeleteDialogProps> = ({
                   </Dialog.Title>
                   <div className="flex flex-row gap-4 mt-10 justify-end">
                     <Button
-                      className="text-zinc-900 text-lg bg-transparent border-black border  hover:bg-black hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
+                      className="text-zinc-900 text-lg bg-transparent border-black border  hover:bg-zinc-900 hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
                       onClick={closeModal}
                       disabled={isLoading}
                     >

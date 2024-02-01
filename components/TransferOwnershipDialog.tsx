@@ -118,7 +118,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
                   </div>
                   <div className="flex flex-row gap-4 mt-10 justify-end">
                     <Button
-                      className="text-zinc-900 text-lg bg-transparent border-black border  hover:bg-black hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
+                      className="text-zinc-900 text-lg bg-transparent border-black border  hover:bg-zinc-900 hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
                       onClick={closeModal}
                       disabled={isLoading}
                     >

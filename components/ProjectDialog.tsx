@@ -12,8 +12,6 @@ import {
   appNetwork,
   cn,
   createNewProject,
-  getContractOwner,
-  getProjectById,
   updateProject,
   useSigner,
 } from "@/utilities";
