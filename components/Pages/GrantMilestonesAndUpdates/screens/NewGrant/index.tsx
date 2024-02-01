@@ -815,7 +815,7 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
         <div className="flex w-full flex-row-reverse gap-8">
           <Button
             onClick={handleSubmit(onSubmit)}
-            className="flex items-center justify-start gap-3 rounded bg-blue-500 px-8 py-4 text-base font-bold text-white hover:bg-blue-500 hover:opacity-75"
+            className="flex items-center justify-start gap-3 rounded bg-blue-500 px-6 text-base font-bold text-white hover:bg-blue-500 hover:opacity-75"
             disabled={
               isSubmitting ||
               isLoading ||
@@ -828,7 +828,7 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
           </Button>
           <Button
             disabled={isSubmitting || isLoading}
-            className="border border-blue-500 bg-transparent px-8 py-4 text-base font-bold text-blue-800 hover:bg-white hover:opacity-75"
+            className="border border-blue-500 bg-transparent text-base px-6 font-bold text-blue-800 hover:bg-white hover:opacity-75"
             onClick={() => {
               if (!selectedProject || !grantToEdit) return;
               router.push(
