@@ -32,14 +32,57 @@ export const CommunityGrants = () => {
   const router = useRouter();
   const communityId = router.query.communityId as string;
   const [categoriesOptions, setCategoriesOptions] = useState<string[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  const [selectedSort, setSelectedSort] = useState<SortByOptions>(
-    "recent" as SortByOptions
-  );
-  const [selectedStatus, setSelectedStatus] = useState<StatusOptions>(
-    "all" as StatusOptions
-  );
+  // const [selectedSort, setSelectedSort] = useState<SortByOptions>(
+  //   "recent" as SortByOptions
+  // );
+  // const [selectedStatus, setSelectedStatus] = useState<StatusOptions>(
+  //   "all" as StatusOptions
+  // );
+  const selectedCategories = useMemo(() => {
+    return typeof router.query.categories === "string" &&
+      router.query.categories.length
+      ? (router.query.categories as string).split(",")
+      : [];
+  }, [router.query.categories]);
+  const selectedSort = (router.query.sort as SortByOptions) || "recent";
+  const selectedStatus = (router.query.status as StatusOptions) || "all";
+
+  const changeCategoriesQuery = (query: string[]) => {
+    router.push({
+      pathname: router.pathname,
+      query: {
+        communityId: communityId,
+        sort: selectedSort,
+        status: selectedStatus,
+        categories: query.length ? query.join(",") : undefined,
+      },
+    });
+  };
+
+  const changeSortQuery = (query: SortByOptions) => {
+    router.push({
+      pathname: router.pathname,
+      query: {
+        communityId: communityId,
+        sort: query,
+        status: selectedStatus,
+        categories: selectedCategories,
+      },
+    });
+  };
+
+  const changeStatusQuery = (query: StatusOptions) => {
+    router.push({
+      pathname: router.pathname,
+      query: {
+        communityId: communityId,
+        sort: selectedSort,
+        status: query,
+        categories: selectedCategories,
+      },
+    });
+  };
 
   // Call API
   const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
@@ -48,7 +91,7 @@ export const CommunityGrants = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalGrants, setTotalGrants] = useState(0);
 
-  useEffect(() => {
+  useMemo(() => {
     if (!communityId || communityId === zeroUID) return;
 
     const getCategories = async () => {
@@ -118,7 +161,10 @@ export const CommunityGrants = () => {
           {/* Filter by category start */}
           <Listbox
             value={selectedCategories}
-            onChange={setSelectedCategories}
+            // onChange={setSelectedCategories}
+            onChange={(values) => {
+              changeCategoriesQuery(values);
+            }}
             multiple
           >
             {({ open }) => (
@@ -206,7 +252,12 @@ export const CommunityGrants = () => {
           {/* Filter by category end */}
 
           {/* Sort start */}
-          <Listbox value={selectedSort} onChange={setSelectedSort}>
+          <Listbox
+            value={selectedSort}
+            onChange={(value) => {
+              changeSortQuery(value);
+            }}
+          >
             {({ open }) => (
               <div className="flex items-center gap-x-2">
                 <Listbox.Label className="block text-sm font-medium leading-6 ">
@@ -286,7 +337,12 @@ export const CommunityGrants = () => {
           {/* Sort end */}
 
           {/* Status start */}
-          <Listbox value={selectedStatus} onChange={setSelectedStatus}>
+          <Listbox
+            value={selectedStatus}
+            onChange={(value) => {
+              changeStatusQuery(value);
+            }}
+          >
             {({ open }) => (
               <div className="flex items-center gap-x-2">
                 <Listbox.Label className="block text-sm font-medium leading-6 ">
