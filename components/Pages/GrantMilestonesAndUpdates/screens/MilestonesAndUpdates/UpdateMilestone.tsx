@@ -137,6 +137,7 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
           <Button
             type="button"
             className="flex h-min w-max flex-row  gap-2 rounded border border-black bg-transparent px-4 py-2.5 text-base font-semibold text-black hover:bg-transparent"
+            disabled={isSubmitLoading}
             onClick={() => {
               setIsSubmitLoading(false);
               setIsUpdating(false);

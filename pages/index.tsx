@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import React from "react";
 import Head from "next/head";
 import Image from "next/image";
@@ -6,6 +7,151 @@ import Typed from "react-typed";
 import { CloudArrowUpIcon, LockClosedIcon } from "@heroicons/react/20/solid";
 import { defaultMetadata } from "@/utilities";
 import { NextSeo } from "next-seo";
+import { CheckIcon } from "@heroicons/react/24/outline";
+import { Button } from "@/components/Utilities/Button";
+import { ProjectDialog } from "@/components";
+
+const Presentation = () => {
+  const phrases = [
+    "Open Source",
+    "Public Goods",
+    "Community Funded",
+    "Crypto protocol",
+  ];
+  return (
+    <div className="flex flex-1 items-end gap-8 max-2xl:gap-4">
+      <div className="mt-12 flex w-full flex-row items-end justify-center gap-1 max-lg:mt-4">
+        <div className="flex w-full flex-[4]  flex-col  items-start">
+          <div className="flex flex-1 flex-col gap-8 pb-8 max-2xl:gap-6">
+            <h4 className="w-max rounded-3xl bg-[#EAECF5] dark:bg-slate-800 dark:text-blue-400 px-3 py-1 text-center text-base font-semibold text-indigo-900  max-2xl:text-sm">
+              ON-CHAIN PROTOCOL
+            </h4>
+
+            <div className="flex flex-col gap-1 pb-8 max-2xl:pb-1">
+              {/* <h2 className="text-6xl font-bold leading-[64px] text-gray-900 max-2xl:text-4xl max-2xl:leading-[36px] max-lg:text-3xl max-lg:leading-normal">
+                Visibility and <br />
+                accountability for
+              </h2>
+              <Typed
+                strings={phrases}
+                typeSpeed={100}
+                className="w-max bg-[#EAECF5] p-4 text-center text-6xl font-normal leading-[64px] text-gray-900 max-2xl:text-4xl max-2xl:leading-[36px] max-lg:text-3xl max-lg:leading-normal"
+                loop
+                backSpeed={50}
+              />
+              <h2 className="text-6xl font-bold leading-[64px] text-gray-900 max-2xl:text-4xl max-2xl:leading-[36px] max-lg:text-3xl max-lg:leading-normal">
+                projects
+              </h2> */}
+              <h1 className="text-6xl font-bold leading-[64px] text-gray-900 dark:text-gray-100 max-2xl:text-4xl max-2xl:leading-[36px] max-lg:text-3xl max-lg:leading-normal">
+                Visibility and <br />
+                accountability for <br className="mb-3" />
+                <Typed
+                  strings={phrases}
+                  typeSpeed={100}
+                  className="w-max bg-[#EAECF5] p-4 text-center text-6xl font-normal leading-[120px] dark:text-gray-100 dark:bg-gray-800 text-gray-900 max-2xl:text-4xl max-2xl:leading-[80px] max-lg:text-3xl max-lg:leading-[80px]"
+                  loop
+                  backSpeed={50}
+                />
+                <span className="text-6xl font-bold leading-[64px] text-gray-900 dark:text-gray-100 max-2xl:text-4xl max-2xl:leading-[36px] max-lg:text-3xl max-lg:leading-normal">
+                  <br /> projects
+                </span>
+              </h1>
+            </div>
+
+            <div className="w-max">
+              <ProjectDialog
+                buttonElement={{
+                  icon: (
+                    <img
+                      className="h-6 w-6 text-white"
+                      alt="Contact"
+                      src="/icons/arrow-right-2.svg"
+                    />
+                  ),
+                  iconSide: "right",
+                  text: "Add your project",
+                  styleClass:
+                    "flex rounded-md hover:opacity-75 transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-3 bg-[#101828] dark:bg-gray-700 px-7 py-4 text-lg font-semibold leading-7 text-white hover:bg-[#101828] max-2xl:px-5 max-2xl:text-base max-lg:text-sm",
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="flex w-full flex-1 flex-row flex-wrap gap-6 max-md:flex-col">
+            <div className="flex  min-w-min max-w-[500px] flex-1 flex-col items-start gap-3 rounded-3xl  text-gray-900 dark:text-gray-900 bg-[#D7F8EF] dark:bg-gray-400 px-8 py-6 max-2xl:px-6 max-lg:min-w-full">
+              <div className="flex items-center justify-center rounded-lg border border-black p-2 ">
+                <img
+                  src="/icons/coins-stacked.png"
+                  alt="Grantee"
+                  className="h-7 w-7"
+                />
+              </div>
+              <h2 className=" text-2xl font-bold max-2xl:text-xl">
+                For Grantees
+              </h2>
+              <ul className="">
+                <li className="flex w-full flex-row gap-4 break-words">
+                  <CheckIcon className="h-6 min-h-[24px] w-6 min-w-[24px]" />
+                  <p className="text-base font-normal">
+                    Self-Report on grant progress.
+                  </p>
+                </li>
+                <li className="flex w-full flex-row gap-4 break-words">
+                  <CheckIcon className="h-6 min-h-[24px] w-6 min-w-[24px]" />
+                  <p className="text-base font-normal">Build Reputation.</p>
+                </li>
+                <li className="flex w-full flex-row gap-4 break-words">
+                  <CheckIcon className="h-6 min-h-[24px] w-6 min-w-[24px]" />
+                  <p className="text-base font-normal">Receive more funding.</p>
+                </li>
+              </ul>
+            </div>
+            <div className="flex  min-w-min max-w-[500px] flex-1 flex-col items-start gap-3 rounded-3xl text-gray-900 dark:text-gray-900 bg-[#D7F8EF] dark:bg-gray-400 px-8 py-6 max-2xl:px-6 max-lg:min-w-full">
+              <div className="flex items-center justify-center rounded-lg border border-black p-2">
+                <img
+                  src="/icons/globe.png"
+                  alt="For Community + Grant Admins"
+                  className="h-7 w-7"
+                />
+              </div>
+              <h2 className="w-full break-words text-2xl font-bold  max-2xl:text-xl">
+                For Community + Grant Admins
+              </h2>
+              <ul>
+                <li className="flex w-full flex-row gap-4 break-words">
+                  <CheckIcon className="h-6 min-h-[24px] w-6 min-w-[24px]" />
+                  <p className="text-base font-normal ">
+                    Stay up-to-date on projects progress.
+                  </p>
+                </li>
+                <li className="flex w-full flex-row gap-4 break-words">
+                  <CheckIcon className="h-6 min-h-[24px] w-6 min-w-[24px]" />
+                  <p className="text-base font-normal ">
+                    Trigger payments based on milestone completion.
+                  </p>
+                </li>
+                <li className="flex w-full flex-row gap-4 break-words">
+                  <CheckIcon className="h-6 max-h-[24px] min-h-[24px] w-6 min-w-[24px] max-w-[24px]" />
+                  <p className="text-base font-normal ">
+                    Endorse projects, monitor fund usage and flag discrepancies.
+                  </p>
+                </li>
+              </ul>
+            </div>
+            <div />
+          </div>
+        </div>
+        <div className="flex h-full w-full max-w-[720px] flex-col justify-end max-2xl:max-w-[500px] max-xl:max-w-[360px] max-lg:hidden">
+          <img
+            className="aspect-auto h-[auto] w-full max-w-[720px]"
+            src="/images/homepage-artwork.png"
+            alt="Homepage artwork"
+          />
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export default function Index() {
   const projectTypes = [
@@ -109,7 +255,7 @@ export default function Index() {
         ]}
       />
 
-      <div className="relative isolate overflow-hidden bg-white">
+      {/* <div className="relative isolate overflow-hidden bg-white">
         <svg
           className="absolute inset-0 -z-10 h-full w-full stroke-gray-200 [mask-image:radial-gradient(100%_100%_at_top_right,white,transparent)]"
           aria-hidden="true"
@@ -199,6 +345,13 @@ export default function Index() {
               />
             </div>
           </div>
+        </div>
+      </div> */}
+      <div className="flex w-full flex-col items-center bg-white dark:bg-black">
+        <div className="flex w-full max-w-[1920px] flex-col gap-16 px-16 py-1 max-lg:px-8 max-md:px-4">
+          <Presentation />
+          {/* <Communities />
+          <WhatIsSolving /> */}
         </div>
       </div>
     </>

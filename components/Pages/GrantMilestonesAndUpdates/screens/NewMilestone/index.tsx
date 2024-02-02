@@ -121,7 +121,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
             PAGES.PROJECT.TABS.SELECTED_TAB(
               selectedProject?.uid as string,
               uid,
-              "overview"
+              "milestones-and-updates"
             )
           );
         });
@@ -151,7 +151,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
                 PAGES.PROJECT.TABS.SELECTED_TAB(
                   selectedProject?.uid as string,
                   uid,
-                  "overview"
+                  "milestones-and-updates"
                 )
               );
             }}

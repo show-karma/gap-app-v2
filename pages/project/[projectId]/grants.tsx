@@ -21,7 +21,10 @@ import {
 } from "@/components/Pages";
 import { CheckCircleIcon, PlusIcon } from "@heroicons/react/20/solid";
 import { Button } from "@/components/Utilities/Button";
-import { NewGrant } from "@/components/Pages/GrantMilestonesAndUpdates/screens";
+import {
+  EmptyGrantsSection,
+  NewGrant,
+} from "@/components/Pages/GrantMilestonesAndUpdates/screens";
 import { useRouter } from "next/router";
 import { GrantScreen } from "@/types/grant";
 import { NewMilestone } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewMilestone";
@@ -185,72 +188,74 @@ function GrantsPage() {
 
   return (
     <div className="flex">
-      <div className="w-2/12 pr-5 py-5">
-        <nav className="flex flex-1 flex-col" aria-label="Sidebar">
-          <ul role="list" className="-mx-2 space-y-1">
-            {navigation.map((item) => (
-              <li key={item.uid}>
-                <Link
-                  href={item.href}
-                  className={cn(
-                    item.current
-                      ? "bg-white text-primary-600 border border-gray-200"
-                      : "text-gray-700 hover:text-primary-600 hover:bg-gray-50",
-                    "flex items-center rounded-xl text-sm leading-6 font-semibold w-full"
-                  )}
-                >
-                  <div className="flex flex-row w-full items-center gap-2 justify-between px-4 py-2">
-                    <div className="flex flex-row gap-4">
-                      <img
-                        src={item.icon}
-                        alt=""
-                        className={cn(
-                          item.current
-                            ? "text-primary-600"
-                            : "text-gray-400 group-hover:text-primary-600",
-                          "h-6 w-6 shrink-0 rounded-full"
+      {project?.grants.length ? (
+        <div className="w-2/12 pr-5 py-5">
+          <nav className="flex flex-1 flex-col" aria-label="Sidebar">
+            <ul role="list" className="-mx-2 space-y-1">
+              {navigation.map((item) => (
+                <li key={item.uid}>
+                  <Link
+                    href={item.href}
+                    className={cn(
+                      item.current
+                        ? "bg-white text-primary-600 border border-gray-200"
+                        : "text-gray-700 hover:text-primary-600 hover:bg-gray-50",
+                      "flex items-center rounded-xl text-sm leading-6 font-semibold w-full"
+                    )}
+                  >
+                    <div className="flex flex-row w-full items-center gap-2 justify-between px-4 py-2">
+                      <div className="flex flex-row gap-4">
+                        <img
+                          src={item.icon}
+                          alt=""
+                          className={cn(
+                            item.current
+                              ? "text-primary-600"
+                              : "text-gray-400 group-hover:text-primary-600",
+                            "h-6 w-6 shrink-0 rounded-full"
+                          )}
+                        />
+                        <p className="line-clamp-2 break-words max-w-44">
+                          {item.name}
+                        </p>
+                      </div>
+                      <div className="w-6 min-w-6">
+                        {item?.completed && (
+                          <CheckCircleIcon className="w-5 h-5 text-green-600" />
                         )}
-                      />
-                      <p className="line-clamp-2 break-words max-w-44">
-                        {item.name}
-                      </p>
+                      </div>
                     </div>
-                    <div className="w-6 min-w-6">
-                      {item?.completed && (
-                        <CheckCircleIcon className="w-5 h-5 text-green-600" />
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              </li>
-            ))}
-            {isAuthorized && (
-              <li>
-                <Button
-                  onClick={() => {
-                    if (project) {
-                      router.push(
-                        PAGES.PROJECT.TABS.SELECTED_TAB(
-                          project?.uid || "",
-                          undefined,
-                          "create-grant"
-                        )
-                      );
-                    }
-                  }}
-                  className="flex h-max w-full  flex-row items-center  hover:opacity-75 justify-center gap-3 rounded border border-[#155EEF] bg-[#155EEF] px-3 py-1 text-sm font-semibold text-white   max-sm:w-full"
-                >
-                  <p>Add a new grant</p>
-                  <PlusIcon className="w-5 h-5" />
-                </Button>
-              </li>
-            )}
-          </ul>
-        </nav>
-      </div>
-      <div className="w-10/12 pl-5 py-5 border-l border-gray-200">
+                  </Link>
+                </li>
+              ))}
+              {isAuthorized && (
+                <li>
+                  <Button
+                    onClick={() => {
+                      if (project) {
+                        router.push(
+                          PAGES.PROJECT.TABS.SELECTED_TAB(
+                            project?.uid || "",
+                            undefined,
+                            "create-grant"
+                          )
+                        );
+                      }
+                    }}
+                    className="flex h-max w-full  flex-row items-center  hover:opacity-75 justify-center gap-3 rounded border border-[#155EEF] bg-[#155EEF] px-3 py-1 text-sm font-semibold text-white   max-sm:w-full"
+                  >
+                    <p>Add a new grant</p>
+                    <PlusIcon className="w-5 h-5" />
+                  </Button>
+                </li>
+              )}
+            </ul>
+          </nav>
+        </div>
+      ) : null}
+      <div className="flex-1 pl-5 pt-5 border-l border-gray-200 pb-20">
         {/* Grants tabs start */}
-        {currentTab !== "create-grant" && (
+        {project?.grants.length && currentTab !== "create-grant" ? (
           <div>
             <div className="sm:hidden">
               <label htmlFor="tabs" className="sr-only">
@@ -301,33 +306,40 @@ function GrantsPage() {
               </nav>
             </div>
           </div>
-        )}
+        ) : null}
         {/* Grants tabs end */}
-
-        <div className="flex flex-col py-5">
-          {currentTab === "milestones-and-updates" && (
-            <GrantMilestonesAndUpdates grant={grant} />
-          )}
-          {currentTab === "impact-criteria" && (
-            <GrantImpactCriteria grant={grant} />
-          )}
-          {currentTab === "reviews" && <GrantAllReviews grant={grant} />}
-          {currentTab === "review-this-grant" && <ReviewGrant grant={grant} />}
-          {/*  */}
-          {(currentTab === "create-grant" || currentTab === "edit-grant") &&
-            project?.uid && (
-              <NewGrant grantToEdit={grant} projectUID={project.uid} />
+        {project?.grants.length || currentTab === "create-grant" ? (
+          <div className="flex flex-col py-5">
+            {currentTab === "milestones-and-updates" && (
+              <GrantMilestonesAndUpdates grant={grant} />
             )}
-          {(currentTab === "create-milestone" ||
-            currentTab === "edit-milestone") &&
-            grant && <NewMilestone grant={grant} />}
-          {currentTab === "grant-update" && grant && (
-            <NewGrantUpdate grant={grant} />
-          )}
-          {(currentTab === "overview" || !currentTab) && (
-            <GrantOverview grant={grant} />
-          )}
-        </div>
+            {currentTab === "impact-criteria" && (
+              <GrantImpactCriteria grant={grant} />
+            )}
+            {currentTab === "reviews" && <GrantAllReviews grant={grant} />}
+            {currentTab === "review-this-grant" && (
+              <ReviewGrant grant={grant} />
+            )}
+            {/*  */}
+            {(currentTab === "create-grant" || currentTab === "edit-grant") &&
+              project?.uid && (
+                <NewGrant grantToEdit={grant} projectUID={project.uid} />
+              )}
+            {(currentTab === "create-milestone" ||
+              currentTab === "edit-milestone") &&
+              grant && <NewMilestone grant={grant} />}
+            {currentTab === "grant-update" && grant && (
+              <NewGrantUpdate grant={grant} />
+            )}
+            {(currentTab === "overview" || !currentTab) && (
+              <GrantOverview grant={grant} />
+            )}
+          </div>
+        ) : (
+          <div className="w-full py-5">
+            <EmptyGrantsSection />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -424,19 +436,19 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
             </div>
             <div className="flex flex-col gap-4  px-5 pt-5 pb-5 border-t border-gray-200">
               <Link
-                href={PAGES.COMMUNITY.ALL_GRANTS(grant?.community.uid as Hex)}
+                href={PAGES.COMMUNITY.ALL_GRANTS(grant?.community?.uid as Hex)}
                 className="flex items-center justify-between"
               >
                 <div className="text-gray-500 text-base">Community</div>
                 <span className="inline-flex items-center gap-x-1 rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={grant?.community.details?.imageURL}
+                    src={grant?.community?.details?.imageURL}
                     alt=""
                     className="h-5 w-5 rounded-full"
                   />
                   <span className="text-base font-semibold">
-                    {grant?.community.details?.name}
+                    {grant?.community?.details?.name}
                   </span>
                 </span>
               </Link>

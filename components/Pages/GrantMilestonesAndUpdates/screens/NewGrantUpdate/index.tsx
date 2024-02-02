@@ -150,7 +150,7 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
           <div className="flex w-full flex-row-reverse">
             <Button
               type="submit"
-              className="flex w-max flex-row bg-slate-600 text-slate-200"
+              className="flex w-max flex-row bg-slate-600 text-slate-200 hover:bg-slate-600 hover:text-slate-200"
               disabled={
                 isSubmitting ||
                 !isValid ||

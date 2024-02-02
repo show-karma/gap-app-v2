@@ -20,6 +20,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import Pagination from "@/components/Utilities/Pagination";
 import { NextSeo } from "next-seo";
+import { Spinner } from "@/components/Utilities/Spinner";
 
 const firstFiveMembers = (project: Project) =>
   project.members.slice(0, 5).map((item) => item.recipient);
@@ -209,27 +210,29 @@ export default function MyProjects() {
                     setCurrentPage={setPage}
                   />
                 </div>
-              ) : (
-                !isLoading && (
-                  <div className="flex w-full flex-row items-center justify-center">
-                    <div
-                      className="flex h-96 border-spacing-4 flex-col items-center justify-center gap-5 rounded border border-blue-600 bg-[#EEF4FF] px-8"
-                      style={{
-                        border: "dashed 2px #155EEF",
-                      }}
-                    >
-                      <p className="text-lg font-bold text-black">Attention!</p>
-                      <p className="w-max max-w-md  break-normal text-left text-lg font-normal text-black">
-                        We were unable to locate any projects associated with
-                        your wallet address: {address}. <br />
-                        To find your project, please use the search function
-                        above. If your project isn&apos;t listed, feel free to
-                        create a new one.
-                      </p>
-                      <ProjectDialog />
-                    </div>
+              ) : !isLoading ? (
+                <div className="flex w-full flex-row items-center justify-center">
+                  <div
+                    className="flex h-96 border-spacing-4 flex-col items-center justify-center gap-5 rounded border border-blue-600 bg-[#EEF4FF] px-8"
+                    style={{
+                      border: "dashed 2px #155EEF",
+                    }}
+                  >
+                    <p className="text-lg font-bold text-black">Attention!</p>
+                    <p className="w-max max-w-md  break-normal text-left text-lg font-normal text-black">
+                      We were unable to locate any projects associated with your
+                      wallet address: {address}. <br />
+                      To find your project, please use the search function
+                      above. If your project isn&apos;t listed, feel free to
+                      create a new one.
+                    </p>
+                    <ProjectDialog />
                   </div>
-                )
+                </div>
+              ) : (
+                <div className="flex items-center justify-center">
+                  <Spinner />
+                </div>
               )
             ) : (
               <div className="flex w-full items-center justify-center">

@@ -43,7 +43,7 @@ function ProjectPage() {
   };
 
   return (
-    <div className="flex flex-row gap-4 py-5">
+    <div className="flex flex-row gap-4 py-5 mb-20">
       <div className=" flex flex-col flex-[3]">
         <div className="text-base flex flex-row gap-1">
           <span className="font-semibold">Owner:</span>
@@ -81,13 +81,14 @@ function ProjectPage() {
         {isProjectOwner || isOwner ? (
           <div className="flex flex-row gap-2 flex-wrap">
             <ProjectDialog
+              key={project?.uid}
               buttonElement={{
                 icon: null,
                 text: "Edit project",
                 styleClass:
                   "rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600  disabled:opacity-75 transition-all ease-in-out duration-300",
               }}
-              isUpdate
+              projectToUpdate={project}
             />
             <TransferOwnershipDialog
               buttonElement={{

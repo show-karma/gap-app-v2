@@ -77,37 +77,44 @@ type ProjectDialogProps = {
   buttonElement?: {
     text: string;
     icon: ReactNode;
+    iconSide?: "left" | "right";
     styleClass: string;
   };
-  isUpdate?: boolean;
+  projectToUpdate?: Project;
 };
 
 export const ProjectDialog: FC<ProjectDialogProps> = ({
   buttonElement = {
     icon: <PlusIcon className="h-4 w-4 text-primary-600" />,
+    iconSide: "left",
     text: "New Project",
     styleClass:
-      "flex items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100 shadow-sm hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900",
+      "flex  min-w-max items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100 shadow-sm hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900",
   },
+  projectToUpdate,
 }) => {
-  const project = useProjectStore((state) => state.project);
   const dataToUpdate = {
-    description: project?.details?.description || "",
-    title: project?.details?.title || "",
-    imageURL: project?.details?.imageURL,
-    twitter: project?.details?.links?.find((link) => link.type === "twitter")
-      ?.url,
-    github: project?.details?.links?.find((link) => link.type === "github")
-      ?.url,
-    discord: project?.details?.links?.find((link) => link.type === "discord")
-      ?.url,
-    website: project?.details?.links?.find((link) => link.type === "website")
-      ?.url,
-    linkedin: project?.details?.links?.find((link) => link.type === "linkedin")
-      ?.url,
-    tags: project?.details?.tags.map((item) => item.name),
-    members: project?.members.map((item) => item.recipient),
-    recipient: project?.recipient,
+    description: projectToUpdate?.details?.description || "",
+    title: projectToUpdate?.details?.title || "",
+    imageURL: projectToUpdate?.details?.imageURL,
+    twitter: projectToUpdate?.details?.links?.find(
+      (link) => link.type === "twitter"
+    )?.url,
+    github: projectToUpdate?.details?.links?.find(
+      (link) => link.type === "github"
+    )?.url,
+    discord: projectToUpdate?.details?.links?.find(
+      (link) => link.type === "discord"
+    )?.url,
+    website: projectToUpdate?.details?.links?.find(
+      (link) => link.type === "website"
+    )?.url,
+    linkedin: projectToUpdate?.details?.links?.find(
+      (link) => link.type === "linkedin"
+    )?.url,
+    tags: projectToUpdate?.details?.tags.map((item) => item.name),
+    members: projectToUpdate?.members.map((item) => item.recipient),
+    recipient: projectToUpdate?.recipient,
   };
 
   let [isOpen, setIsOpen] = useState(false);
@@ -556,14 +563,14 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         openConnectModal?.();
         return;
       }
-      if (!address || !project) return;
+      if (!address || !projectToUpdate) return;
       const gap = getGapClient(appNetwork[0].id);
       if (!gap) return;
-      if (chain && chain.id !== project.chainID) {
-        await switchNetworkAsync?.(project.chainID);
+      if (chain && chain.id !== projectToUpdate.chainID) {
+        await switchNetworkAsync?.(projectToUpdate.chainID);
       }
       await updateProject(
-        project,
+        projectToUpdate,
         {
           title: data.title,
           description: description,
@@ -601,8 +608,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   return (
     <>
       <button onClick={openModal} className={buttonElement.styleClass}>
-        {buttonElement.icon}
+        {buttonElement.iconSide === "left" && buttonElement.icon}
         {buttonElement.text}
+        {buttonElement.iconSide === "right" && buttonElement.icon}
       </button>
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeModal}>
@@ -646,9 +654,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                   {dataToUpdate && (
                     <div className="mt-2">
                       <p className="text-sm text-gray-600 dark:text-zinc-300">
-                        We’ll start by outlining some basics about your project.
-                        Don’t worry about grants right now, you can add that
-                        from your Project Page once it’s been created.
+                        We’ll start by outlining some basics about your
+                        projectToUpdate. Don’t worry about grants right now, you
+                        can add that from your Project Page once it’s been
+                        created.
                       </p>
                     </div>
                   )}

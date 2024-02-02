@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { Fragment, useContext, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -13,11 +14,18 @@ import {
   PAGES,
   getCommunitiesOf,
   getContractOwner,
+  karmaLinks,
   useSigner,
 } from "@/utilities";
 import { useRouter } from "next/router";
 import { Community } from "@show-karma/karma-gap-sdk";
 import { useOwnerStore } from "@/store/owner";
+import { ExternalLink } from "./ExternalLink";
+import { SOCIALS } from "@/utilities/socials";
+import { DiscordIcon, MirrorIcon, TelegramIcon, TwitterIcon } from "../Icons";
+import { blo } from "blo";
+import { Hex } from "viem";
+import { Button } from "./Button";
 
 const links = [
   {
@@ -90,6 +98,30 @@ export default function Header() {
     getCommunities();
   }, [address]);
 
+  const socials = [
+    {
+      name: "twitter",
+      icon: <TwitterIcon className="h-6 w-6 object-contain" />,
+      href: SOCIALS.TWITTER,
+    },
+
+    {
+      name: "telegram",
+      icon: <TelegramIcon className="h-6 w-6 object-contain" />,
+      href: SOCIALS.TELEGRAM,
+    },
+    {
+      name: "discord",
+      icon: <DiscordIcon className="h-6 w-6 object-contain" />,
+      href: SOCIALS.DISCORD,
+    },
+    {
+      name: "mirror",
+      icon: <MirrorIcon className="h-6 w-6 object-contain" />,
+      href: SOCIALS.MIRROR,
+    },
+  ];
+
   return (
     <>
       <Popover
@@ -153,16 +185,21 @@ export default function Header() {
                 </div>
 
                 <div className="hidden lg:flex lg:items-center lg:justify-end lg:gap-x-3 xl:col-span-5">
+                  <ExternalLink href={karmaLinks.githubSDK}>
+                    <button className="rounded-md bg-white w-max dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 shadow-sm hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
+                      SDK Docs
+                    </button>
+                  </ExternalLink>
                   {isConnected && (
                     <Link href={PAGES.MY_PROJECTS}>
-                      <button className="rounded-md bg-white dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 shadow-sm hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
+                      <button className="rounded-md bg-white w-max dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 shadow-sm hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
                         My Projects
                       </button>
                     </Link>
                   )}
                   {(isCommunityAdmin || isOwner) && isConnected ? (
                     <Link href={PAGES.ADMIN.LIST}>
-                      <button className="rounded-md bg-white dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 shadow-sm hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
+                      <button className="rounded-md w-max bg-white dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 shadow-sm hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
                         Reviews
                       </button>
                     </Link>
@@ -228,12 +265,17 @@ export default function Header() {
                             }
 
                             return (
-                              <button
+                              <Button
                                 onClick={openAccountModal}
-                                className="rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                                className="flex w-max items-center flex-row gap-2 rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
                               >
                                 {account.displayName}
-                              </button>
+                                <img
+                                  src={blo(account.address as Hex)}
+                                  alt="avatar"
+                                  className="h-6 w-6 rounded-full"
+                                />
+                              </Button>
                             );
                           })()}
                         </div>
@@ -258,6 +300,21 @@ export default function Header() {
                     )}
                   </button>
                   {/* Color mode toggle end */}
+                  <div className="flex h-[40px] flex-row items-center gap-2 border-l border-l-[#dcdfea] pl-4">
+                    {socials.map((social) => {
+                      return (
+                        <ExternalLink
+                          key={social.name}
+                          href={social.href}
+                          className="text-black dark:text-white transition-all duration-500 ease-in-out"
+                        >
+                          <div className="flex h-6 w-6 items-center justify-center ">
+                            {social.icon}
+                          </div>
+                        </ExternalLink>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>

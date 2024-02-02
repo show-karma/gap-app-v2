@@ -523,7 +523,11 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
           <Button
             className="bg-transparent p-4 hover:bg-transparent hover:opacity-75"
             onClick={() => {
-              if (!selectedProject || !grantToEdit) return;
+              if (!selectedProject) return;
+              if (!grantToEdit) {
+                router.push(PAGES.PROJECT.GRANTS(selectedProject?.uid));
+                return;
+              }
               router.push(
                 PAGES.PROJECT.TABS.SELECTED_TAB(
                   selectedProject.uid,
@@ -830,7 +834,11 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
             disabled={isSubmitting || isLoading}
             className="border border-blue-500 bg-transparent text-base px-6 font-bold text-blue-800 hover:bg-white hover:opacity-75"
             onClick={() => {
-              if (!selectedProject || !grantToEdit) return;
+              if (!selectedProject) return;
+              if (!grantToEdit) {
+                router.push(PAGES.PROJECT.GRANTS(selectedProject?.uid));
+                return;
+              }
               router.push(
                 PAGES.PROJECT.TABS.SELECTED_TAB(
                   selectedProject.uid,

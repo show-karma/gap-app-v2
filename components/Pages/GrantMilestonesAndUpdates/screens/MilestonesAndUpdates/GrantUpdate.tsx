@@ -1,5 +1,5 @@
 import { ReadMore, formatDate } from "@/utilities";
-import { FlagIcon } from "@heroicons/react/20/solid";
+import { FlagIcon } from "@heroicons/react/24/outline";
 import type { FC } from "react";
 
 interface UpdateTagProps {
