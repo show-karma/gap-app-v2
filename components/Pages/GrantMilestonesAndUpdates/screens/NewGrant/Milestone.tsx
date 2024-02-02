@@ -6,6 +6,7 @@ import { MilestoneWithCompleted } from "@/types/milestones";
 import { formatDate } from "@/utilities";
 import { Popover } from "@headlessui/react";
 import { CalendarIcon, PencilIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
 import dynamic from "next/dynamic";
 import { type FC, useState } from "react";
@@ -25,9 +26,9 @@ const MarkdownPreview = dynamic(() => import("@uiw/react-markdown-preview"), {
   ssr: false,
 });
 
-const labelStyle = "text-sm font-bold text-black";
+const labelStyle = "text-sm font-bold";
 const inputStyle =
-  "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300";
+  "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white";
 
 const milestoneSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters" }),
@@ -83,11 +84,9 @@ export const Milestone: FC<MilestoneProps> = ({
   };
 
   return isEditing ? (
-    <div className="flex w-full flex-col gap-6 rounded-md bg-gray-200 px-4 py-6">
+    <div className="flex w-full flex-col gap-6 rounded-md bg-gray-200 dark:bg-zinc-700 px-4 py-6">
       <div className="flex w-full flex-row justify-between">
-        <h4 className="text-2xl font-bold text-black">
-          Add milestone {index + 1}
-        </h4>
+        <h4 className="text-2xl font-bold">Add milestone {index + 1}</h4>
         <Button
           onClick={() => removeMilestone(index)}
           className="bg-transparent p-4 hover:bg-transparent hover:opacity-75"
@@ -120,7 +119,7 @@ export const Milestone: FC<MilestoneProps> = ({
                 <label className={labelStyle}>End date</label>
                 <div>
                   <Popover className="relative">
-                    <Popover.Button className="w-max text-sm flex-row flex gap-2 items-center bg-white px-4 py-2 rounded-md">
+                    <Popover.Button className="w-max text-sm flex-row flex gap-2 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
                       {field.value ? (
                         formatDate(field.value)
                       ) : (
@@ -128,7 +127,7 @@ export const Milestone: FC<MilestoneProps> = ({
                       )}
                       <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                     </Popover.Button>
-                    <Popover.Panel className="absolute z-10 bg-white mt-4 rounded-md">
+                    <Popover.Panel className="absolute z-10 bg-white dark:bg-zinc-800 mt-4 rounded-md">
                       <DayPicker
                         mode="single"
                         selected={field.value}
@@ -182,7 +181,7 @@ export const Milestone: FC<MilestoneProps> = ({
           <Button
             type="submit"
             disabled={!isValid}
-            className="flex w-max flex-row bg-slate-700 text-slate-200"
+            className="flex w-max flex-row bg-slate-700 text-slate-200 dark:bg-slate-900"
           >
             Save Milestone
           </Button>
@@ -190,7 +189,7 @@ export const Milestone: FC<MilestoneProps> = ({
       </form>
     </div>
   ) : (
-    <div className="flex w-full flex-row justify-between gap-6 rounded-md bg-gray-200 px-4 py-6">
+    <div className="flex w-full flex-row justify-between gap-6 rounded-md bg-gray-200 dark:bg-zinc-800 px-4 py-6">
       <div className="flex w-full flex-col gap-2" data-color-mode="light">
         <div className="flex w-full  flex-row items-center justify-between gap-6">
           <div className="flex flex-col gap-2">
@@ -202,13 +201,13 @@ export const Milestone: FC<MilestoneProps> = ({
               onClick={() => switchEditing()}
               className="bg-transparent p-4 hover:bg-transparent hover:opacity-75"
             >
-              <PencilIcon className="h-5 w-5 text-zinc-900" />
+              <PencilIcon className="h-5 w-5 " />
             </Button>
             <Button
               onClick={() => removeMilestone(index)}
-              className="bg-transparent p-1 text-zinc-900 hover:bg-transparent hover:opacity-75"
+              className="bg-transparent p-1  hover:bg-transparent hover:opacity-75"
             >
-              <img src="/icons/close.svg" alt="Close" className="h-4 w-4" />
+              <XMarkIcon className="h-8 w-8" />
             </Button>
           </div>
         </div>

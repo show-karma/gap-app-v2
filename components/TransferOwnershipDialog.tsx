@@ -104,7 +104,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
                   <div className="flex flex-col gap-2 mt-8">
                     <label htmlFor="newOwner">New Owner Address</label>
                     <input
-                      className="rounded border border-zinc-300 px-2 py-1"
+                      className="rounded border border-zinc-300  dark:bg-zinc-800 px-2 py-1 text-black dark:text-white"
                       type="text"
                       id="newOwner"
                       onChange={(e) => setNewOwner(e.target.value)}
@@ -118,7 +118,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
                   </div>
                   <div className="flex flex-row gap-4 mt-10 justify-end">
                     <Button
-                      className="text-zinc-900 text-lg bg-transparent border-black border  hover:bg-zinc-900 hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
+                      className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
                       onClick={closeModal}
                       disabled={isLoading}
                     >

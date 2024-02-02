@@ -198,8 +198,8 @@ function GrantsPage() {
                     href={item.href}
                     className={cn(
                       item.current
-                        ? "bg-white text-primary-600 border border-gray-200"
-                        : "text-gray-700 hover:text-primary-600 hover:bg-gray-50",
+                        ? "bg-white dark:bg-zinc-800 dark:text-primary-300 dark:border-gray-700 text-primary-600 border border-gray-200"
+                        : "text-gray-700 hover:text-primary-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700",
                       "flex items-center rounded-xl text-sm leading-6 font-semibold w-full"
                     )}
                   >
@@ -275,32 +275,21 @@ function GrantsPage() {
             </div>
             <div className="hidden sm:block">
               <nav
-                className="isolate flex divide-x divide-gray-200 rounded-lg shadow"
+                className="isolate flex divide-x divide-gray-200 rounded-lg gap-1 py-1 px-1  bg-gray-200 dark:bg-zinc-900 shadow w-max transition-all duration-300 ease-in-out"
                 aria-label="Tabs"
               >
-                {tabs.map((tab, tabIdx) => (
+                {tabs.map((tab) => (
                   <Link
                     key={tab.name}
                     href={tab.href}
                     className={cn(
                       tabFromQueryParam === tab.tabName
-                        ? "text-gray-900"
-                        : "text-gray-500 hover:text-gray-700",
-                      tabIdx === 0 ? "rounded-l-lg" : "",
-                      tabIdx === tabs.length - 1 ? "rounded-r-lg" : "",
-                      "group relative min-w-0 flex-1 overflow-hidden bg-white py-4 px-4 text-center text-sm font-medium hover:bg-gray-50 focus:z-10"
+                        ? "text-gray-900 bg-white dark:bg-zinc-700 dark:text-zinc-100"
+                        : "text-gray-500 hover:text-gray-700 dark:text-zinc-400",
+                      "group relative min-w-0 w-max border-none overflow-hidden rounded-lg py-2 px-3 text-center text-sm font-medium hover:bg-gray-50 dark:hover:bg-zinc-800 dark:hover:text-white focus:z-10 transition-all duration-300 ease-in-out"
                     )}
                   >
                     <span>{tab.name}</span>
-                    <span
-                      aria-hidden="true"
-                      className={cn(
-                        tabFromQueryParam === tab.tabName
-                          ? "bg-primary-500"
-                          : "bg-transparent",
-                        "absolute inset-x-0 bottom-0 h-0.5"
-                      )}
-                    />
                   </Link>
                 ))}
               </nav>
@@ -418,7 +407,7 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
       </div>
 
       <div className="mt-5 flex">
-        <div className="w-9/12 p-5 mr-5 bg-white border border-gray-200 rounded-xl shadow-md">
+        <div className="w-9/12 p-5 mr-5 bg-white dark:bg-zinc-900 dark:border-gray-800 border border-gray-200 rounded-xl shadow-md text-black dark:text-zinc-100">
           <div className="text-base uppercase font-semibold">
             GRANT DESCRIPTION
           </div>
@@ -427,7 +416,7 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
           </div>
         </div>
         <div className="w-3/12">
-          <div className="border border-gray-200 rounded-xl bg-white shadow-md">
+          <div className="border border-gray-200 rounded-xl bg-white shadow-md dark:bg-zinc-900 dark:border-gray-800">
             <div className="flex items-center justify-between p-5">
               <div className="font-semibold">Grant Overview</div>
               <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
@@ -439,8 +428,10 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
                 href={PAGES.COMMUNITY.ALL_GRANTS(grant?.community?.uid as Hex)}
                 className="flex items-center justify-between"
               >
-                <div className="text-gray-500 text-base">Community</div>
-                <span className="inline-flex items-center gap-x-1 rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                <div className="text-gray-500 text-base dark:text-gray-300">
+                  Community
+                </div>
+                <span className="inline-flex items-center gap-x-2 rounded-md bg-blue-50 dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={grant?.community?.details?.imageURL}
@@ -454,10 +445,12 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
               </Link>
               {grant?.details?.proposalURL ? (
                 <div className="flex items-center justify-between">
-                  <div className="text-gray-500 text-base">Proposal</div>
+                  <div className="text-gray-500 text-base dark:text-gray-300">
+                    Proposal
+                  </div>
                   <ExternalLink
                     href={grant?.details?.proposalURL}
-                    className="inline-flex items-center gap-x-1 rounded-md  px-2 py-1 text-xs font-medium text-blue-700"
+                    className="inline-flex items-center gap-x-1 rounded-md  px-2 py-1 text-xs font-medium text-blue-700 dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500"
                   >
                     <span className="text-base font-semibold">Details</span>
                     <ArrowTopRightOnSquareIcon className="w-4 h-4" />
@@ -470,7 +463,11 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
                     key={data.title}
                     className="flex flex-row items-center justify-between gap-2"
                   >
-                    <h4 className={"text-gray-500 text-base"}>{data.title}</h4>
+                    <h4
+                      className={"text-gray-500 text-base dark:text-gray-300"}
+                    >
+                      {data.title}
+                    </h4>
                     <p className={"text-base font-semibold"}>{data.stat}</p>
                   </div>
                 ) : null

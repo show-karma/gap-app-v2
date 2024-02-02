@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useMemo, useState } from "react";
 import ProjectPage from "./project";
 import {
   PAGES,
@@ -17,6 +17,12 @@ import { useAccount } from "wagmi";
 import { blo } from "blo";
 import { Project } from "@show-karma/karma-gap-sdk";
 import { NextSeo } from "next-seo";
+import {
+  DiscordIcon,
+  GithubIcon,
+  TwitterIcon,
+  WebsiteIcon,
+} from "@/components";
 
 interface Props {
   children: ReactNode;
@@ -89,6 +95,55 @@ export const NestedLayout = ({ children }: Props) => {
     setupOwner();
   }, [signer, project, address]);
 
+  const socials = useMemo(() => {
+    const types = [
+      { name: "Twitter", prefix: "https://twitter.com/", icon: TwitterIcon },
+      { name: "Github", prefix: "https://github.com/", icon: GithubIcon },
+      { name: "Discord", prefix: "https://discord.gg/", icon: DiscordIcon },
+      { name: "Website", prefix: "https://", icon: WebsiteIcon },
+    ];
+
+    const isLink = (link?: string) => {
+      if (!link) return false;
+      if (
+        link.includes("http://") ||
+        link.includes("https://") ||
+        link.includes("www.")
+      ) {
+        return true;
+      }
+      return false;
+    };
+
+    return types
+      .map(({ name, prefix, icon }) => {
+        const hasUrl = project?.details?.links?.find(
+          (link) => link.type === name.toLowerCase()
+        )?.url;
+
+        if (hasUrl) {
+          if (name === "Twitter") {
+            const hasAt = hasUrl?.includes("@");
+            return {
+              name,
+              url: isLink(hasUrl)
+                ? hasUrl
+                : prefix + (hasAt ? hasUrl?.replace("@", "") || "" : hasUrl),
+              icon,
+            };
+          }
+          return {
+            name,
+            url: isLink(hasUrl) ? hasUrl : prefix + hasUrl,
+            icon,
+          };
+        }
+
+        return undefined;
+      })
+      .filter((social) => social);
+  }, [project]);
+
   return (
     <>
       <NextSeo
@@ -123,34 +178,61 @@ export const NestedLayout = ({ children }: Props) => {
               className={cn(
                 loading
                   ? "animate-pulse w-64 h-10 bg-gray-600 rounded-lg"
-                  : "text-2xl font-semibold leading-6 text-gray-900"
+                  : "text-2xl font-semibold leading-6 text-gray-900 dark:text-gray-200"
               )}
             >
               {loading ? "" : project?.details?.title}
             </h1>
-            {project ? (
-              <div className="flex items-center space-x-2">
-                {firstFiveMembers(project).length ? (
-                  <>
-                    <span className="text-sm text-gray-600">Built by</span>
-                    {firstFiveMembers(project).map((member, index) => (
-                      <span key={index}>
-                        <img
-                          src={blo(member, 8)}
-                          alt={member}
-                          className="h-12 w-12 rounded-md ring-4 ring-gray-50 dark:ring-black border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5"
-                        />
+            <div className="flex flex-row gap-10">
+              {project ? (
+                <div className="flex items-center space-x-2">
+                  {firstFiveMembers(project).length ? (
+                    <>
+                      <span className="text-base text-gray-600 dark:text-zinc-200">
+                        Built by
                       </span>
-                    ))}
-                    {restMembersCounter(project) > 0 && (
-                      <p className="flex items-center justify-center h-12 w-12 rounded-md ring-4 ring-gray-50 dark:ring-black border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5">
-                        +
-                      </p>
-                    )}
-                  </>
-                ) : null}
-              </div>
-            ) : null}
+                      {firstFiveMembers(project).map((member, index) => (
+                        <span key={index}>
+                          <img
+                            src={blo(member, 8)}
+                            alt={member}
+                            className="h-12 w-12 rounded-md ring-4 ring-gray-50 dark:ring-black border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5"
+                          />
+                        </span>
+                      ))}
+                      {restMembersCounter(project) > 0 && (
+                        <p className="flex items-center justify-center h-12 w-12 rounded-md ring-4 ring-gray-50 dark:ring-black border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5">
+                          +
+                        </p>
+                      )}
+                    </>
+                  ) : null}
+                </div>
+              ) : null}
+              {socials.length > 0 && (
+                <div className="flex flex-row gap-3 items-center">
+                  <p className="text-base font-normal leading-tight text-black dark:text-zinc-200">
+                    Socials
+                  </p>
+                  <div className="flex flex-row gap-4 items-center">
+                    {socials
+                      .filter((social) => social?.url)
+                      .map((social, index) => (
+                        <a
+                          key={social?.url || index}
+                          href={social?.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {social?.icon && (
+                            <social.icon className="h-5 w-5 fill-black dark:fill-zinc-200" />
+                          )}
+                        </a>
+                      ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
           <div className="mt-4 max-sm:px-4">
             <div className="sm:hidden">

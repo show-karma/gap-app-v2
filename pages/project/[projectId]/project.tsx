@@ -77,7 +77,7 @@ function ProjectPage() {
           <ReactMarkdown>{project?.details?.description}</ReactMarkdown>
         </div>
       </div>
-      <div className="flex flex-col flex-[1] gap-4">
+      <div className="flex flex-col flex-[1] gap-8">
         {isProjectOwner || isOwner ? (
           <div className="flex flex-row gap-2 flex-wrap">
             <ProjectDialog

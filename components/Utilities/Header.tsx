@@ -1,13 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
-import { Fragment, useContext, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Popover, Transition } from "@headlessui/react";
+import { Popover } from "@headlessui/react";
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { MoonIcon, PlusIcon, SunIcon } from "@heroicons/react/24/solid";
-import ThemeContext from "@/components/Providers/ThemeContext";
+import { MoonIcon, SunIcon } from "@heroicons/react/24/solid";
 import { ProjectDialog } from "../ProjectDialog";
 import { useAccount } from "wagmi";
 import {
@@ -26,6 +25,7 @@ import { DiscordIcon, MirrorIcon, TelegramIcon, TwitterIcon } from "../Icons";
 import { blo } from "blo";
 import { Hex } from "viem";
 import { Button } from "./Button";
+import { useTheme } from "next-themes";
 
 const links = [
   {
@@ -59,7 +59,7 @@ function classNames(...classes: string[]) {
 }
 
 export default function Header() {
-  const { currentTheme, changeCurrentTheme } = useContext(ThemeContext);
+  const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
   const { isConnected, address } = useAccount();
   const [communitiesToAdmin, setCommunitiesToAdmin] = useState<Community[]>([]);
   const signer = useSigner();

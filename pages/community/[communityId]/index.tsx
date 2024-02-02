@@ -103,10 +103,17 @@ export default function Index() {
     fetchDetails();
   }, [communityId, gap]);
 
+  const dynamicMetadata = {
+    title: `Karma GAP - ${community?.details?.name} community grants`,
+    description: `View the list of grants issued by ${
+      community?.details?.name || community?.uid
+    } and the grantee updates.`,
+  };
+
   return (
     <>
       <NextSeo
-        title={defaultMetadata.title}
+        title={dynamicMetadata.title || defaultMetadata.title}
         description={defaultMetadata.description}
         twitter={{
           handle: defaultMetadata.twitter.creator,
@@ -115,11 +122,11 @@ export default function Index() {
         }}
         openGraph={{
           url: defaultMetadata.openGraph.url,
-          title: defaultMetadata.title,
+          title: dynamicMetadata.title || defaultMetadata.title,
           description: defaultMetadata.description,
           images: defaultMetadata.openGraph.images.map((image) => ({
             url: image,
-            alt: defaultMetadata.title,
+            alt: dynamicMetadata.title || defaultMetadata.title,
           })),
           site_name: defaultMetadata.openGraph.siteName,
         }}

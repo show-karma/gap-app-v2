@@ -4,8 +4,12 @@ import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import Typed from "react-typed";
-import { CloudArrowUpIcon, LockClosedIcon } from "@heroicons/react/20/solid";
-import { defaultMetadata } from "@/utilities";
+import {
+  CloudArrowUpIcon,
+  LockClosedIcon,
+  PlusIcon,
+} from "@heroicons/react/20/solid";
+import { PAGES, chosenCommunities, defaultMetadata } from "@/utilities";
 import { NextSeo } from "next-seo";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components/Utilities/Button";
@@ -147,6 +151,155 @@ const Presentation = () => {
             src="/images/homepage-artwork.png"
             alt="Homepage artwork"
           />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const Communities = () => {
+  // const { communities } = useCommunity();
+
+  // const communitiesNameToShow = [
+  //   'optimism',
+  //   'gitcoin',
+  //   'arbitrum',
+  //   'ethereum-foundation',
+  // ];
+
+  // const communitiesToShow = communities.filter((community) =>
+  //   communitiesNameToShow.includes(
+  //     community.details?.slug ||
+  //       community.details?.name.toLowerCase() ||
+  //       community.uid
+  //   )
+  // );
+
+  return (
+    <div className="mb-8 mt-[80px] flex h-max w-full flex-row justify-center gap-4 max-md:flex-col">
+      <div className="flex h-max w-max flex-col gap-6 rounded-3xl bg-[#EAECF0] dark:bg-zinc-400 p-8 max-lg:w-full">
+        <div className="h-max w-max rounded-lg border border-black p-2">
+          <img src="/icons/globe.svg" alt="Globe" className="h-7 w-7" />
+        </div>
+        <h4 className="text-5xl font-bold leading-[50px] text-gray-900 max-lg:text-3xl">
+          Communities using GAP
+        </h4>
+      </div>
+      <div className="flex w-full flex-col items-center justify-center gap-8">
+        <div className="grid w-full grid-cols-4 max-md:grid-cols-2">
+          {chosenCommunities().map((community) => (
+            <Link
+              key={community.uid}
+              href={PAGES.COMMUNITY.ALL_GRANTS(community.slug || community.uid)}
+              className="flex h-full max-h-[166px] w-full flex-col items-center justify-center gap-2 rounded-2xl px-4 py-6 transition-all duration-300 ease-in-out hover:shadow-lg dark:hover:shadow-zinc-700"
+            >
+              <div>
+                <img
+                  alt={community.name}
+                  src={community.imageURL}
+                  className="h-20 w-20 rounded-full object-cover max-lg:h-10 max-lg:w-10 max-sm:h-6 max-sm:w-6"
+                />
+              </div>
+
+              <p className="line-clamp-1 text-center text-xl font-bold text-black dark:text-zinc-400 max-sm:text-base">
+                {community.name}
+              </p>
+            </Link>
+          ))}
+          <a
+            href="https://tally.so/r/wd0jeq"
+            target="_blank"
+            rel="noreferrer"
+            className="flex h-[166px] w-full flex-col items-center justify-center gap-2 rounded-2xl px-4 py-6 transition-all duration-300 ease-in-out"
+          >
+            <Button className="flex flex-row items-center gap-2 dark:border-slate-600 border border-black bg-white dark:bg-zinc-700 dark:text-white rounded-md p-4 text-sm font-semibold text-black hover:bg-white max-lg:text-xs">
+              Add your Community
+              <PlusIcon className="h-5 w-5" />
+            </Button>
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const WhatIsSolving = () => {
+  return (
+    <div className="mb-10 mt-16 flex flex-row flex-wrap gap-16 max-lg:flex-col">
+      <div className="flex max-w-full flex-1 flex-col gap-2.5 max-2xl:max-w-lg max-lg:max-w-full">
+        <h4 className="w-max rounded-3xl bg-[#EAECF5] dark:bg-slate-800 dark:text-blue-400 px-3 py-1 text-center text-base font-semibold text-indigo-900 max-2xl:text-sm">
+          100% ON-CHAIN
+        </h4>
+        <h2 className="text-4xl font-bold text-gray-900 dark:text-gray-100 max-sm:text-2xl">
+          Why are we building this?
+        </h2>
+        <p className="text-xl font-normal text-gray-900 dark:text-gray-100 max-sm:text-base">
+          Annually, the crypto ecosystem issues grants amounting to millions of
+          dollars. While this funding is crucial for ecosystem growth, it has
+          also introduced a range of issues.
+          <br />
+          <br />
+          The Grantee Accountability Protocol (GAP) is designed to address these
+          challenges by aiding grantees in building their reputation, assisting
+          communities in maintaining grantee accountability, and enabling third
+          parties to develop applications using this protocol.
+        </p>
+      </div>
+      <div className="flex flex-1 flex-col gap-6">
+        <div className="flex flex-row flex-wrap gap-6">
+          <div className="flex min-w-[280px]  flex-1 flex-col items-start gap-3 rounded-3xl bg-[#D7F8EF] dark:bg-slate-400 dark:text-zinc-900 px-8 py-6 max-2xl:px-6">
+            <div className="flex items-center justify-center rounded-lg border border-black p-2 ">
+              <img
+                src="/icons/coins-stacked.png"
+                alt="Grantee"
+                className="h-7 w-7"
+              />
+            </div>
+            <h3 className="text-2xl font-bold  max-2xl:text-xl">
+              Limited Accessibility
+            </h3>
+            <p>
+              Currently, it is challenging for grant teams and the community to
+              easily access and track project progress and milestones, as
+              information is scattered across forums and external links.
+            </p>
+          </div>
+          <div className="flex min-w-[280px]  flex-1 flex-col items-start gap-3 rounded-3xl bg-[#E0EAFF] dark:bg-gray-400 dark:text-zinc-900 px-8 py-6 max-2xl:px-6">
+            <div className="flex items-center justify-center rounded-lg border border-black p-2 ">
+              <img
+                src="/icons/coins-stacked.png"
+                alt="Grantee"
+                className="h-7 w-7"
+              />
+            </div>
+            <h3 className=" text-2xl font-bold  max-2xl:text-xl">
+              Reputation Portability
+            </h3>
+            <p>
+              Grantees who apply for grants from multiple organizations struggle
+              to establish and carry their reputation consistently across the
+              ecosystem. This is particularly difficult for individuals who are
+              new to the ecosystem and need opportunities to showcase their work
+              and build their reputation.
+            </p>
+          </div>
+        </div>
+        <div className="flex min-w-[280px] flex-1 flex-col items-start gap-3 rounded-3xl bg-[#EAECF0] dark:bg-neutral-400 dark:text-zinc-900 px-8 py-6 max-2xl:px-6">
+          <div className="flex items-center justify-center rounded-lg border border-black p-2 ">
+            <img
+              src="/icons/coins-stacked.png"
+              alt="Grantee"
+              className="h-7 w-7"
+            />
+          </div>
+          <h3 className=" text-2xl font-bold   max-2xl:text-xl">
+            Inadequate Data Structure
+          </h3>
+          <p>
+            The absence of structured data that can be accessed in a
+            permissionless manner hampers the development of applications and
+            analytical tools for evaluating grant impact and builder reputation.
+          </p>
         </div>
       </div>
     </div>
@@ -350,8 +503,8 @@ export default function Index() {
       <div className="flex w-full flex-col items-center bg-white dark:bg-black">
         <div className="flex w-full max-w-[1920px] flex-col gap-16 px-16 py-1 max-lg:px-8 max-md:px-4">
           <Presentation />
-          {/* <Communities />
-          <WhatIsSolving /> */}
+          <Communities />
+          <WhatIsSolving />
         </div>
       </div>
     </>

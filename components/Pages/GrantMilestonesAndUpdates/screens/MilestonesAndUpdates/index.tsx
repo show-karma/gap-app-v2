@@ -22,10 +22,10 @@ export const EmptyMilestone = ({ grant }: { grant?: Grant }) => {
             className="h-[185px] w-[438px] object-cover"
           />
           <div className="flex w-full flex-col items-center justify-center gap-3">
-            <p className="text-center text-lg font-semibold text-black ">
+            <p className="text-center text-lg font-semibold text-black dark:text-zinc-100">
               {MESSAGES.PROJECT.EMPTY.GRANTS.UPDATES}
             </p>
-            <p className="text-center text-lg font-normal text-black ">
+            <p className="text-center text-lg font-normal text-black dark:text-zinc-100">
               {MESSAGES.PROJECT.EMPTY.GRANTS.CTA_UPDATES}
             </p>
           </div>
@@ -42,12 +42,12 @@ export const EmptyMilestone = ({ grant }: { grant?: Grant }) => {
           className="h-[185px] w-[438px] object-cover"
         />
         <div className="flex w-full flex-col items-center justify-center gap-3">
-          <p className="text-center text-lg font-semibold text-black">
+          <p className="text-center text-lg font-semibold text-black dark:text-white">
             {MESSAGES.PROJECT.EMPTY.GRANTS.NOT_ADDED_MILESTONE}
           </p>
           <div className="flex w-max flex-row flex-wrap gap-6 max-sm:w-full max-sm:flex-col">
             <Button
-              className="items-center flex flex-row justify-center gap-2 rounded border border-blue-600 bg-primary-500 px-4 py-2.5 text-base font-semibold text-white hover:bg-primary-500"
+              className="items-center flex flex-row justify-center gap-2 rounded border border-blue-600 dark:bg-blue-800 bg-primary-500 px-4 py-2.5 text-base font-semibold text-white hover:bg-primary-500"
               onClick={() => {
                 if (project && grant) {
                   router.push(
@@ -68,7 +68,7 @@ export const EmptyMilestone = ({ grant }: { grant?: Grant }) => {
               Add a new Milestone
             </Button>
             <Button
-              className="items-center justify-center gap-2 rounded border border-black bg-white px-4 py-2.5 text-base font-semibold text-zinc-900 hover:bg-white"
+              className="items-center justify-center gap-2 rounded border dark:bg-zinc-800 dark:text-white border-black bg-white px-4 py-2.5 text-base font-semibold text-zinc-900 hover:bg-white"
               onClick={() => {
                 if (project && grant) {
                   router.push(
@@ -146,7 +146,7 @@ export const MilestonesAndUpdates = ({ grant }: MilestonesAndUpdatesProps) => {
             <div className="w-full flex flex-col gap-4">
               {isAuthorized ? (
                 <div className="flex w-full flex-row flex-wrap items-center justify-between gap-4 rounded border border-gray-200 bg-[#EEF4FF] p-4">
-                  <p className="text-base font-normal text-black max-sm:text-sm">
+                  <p className="text-base font-normal text-black max-sm:text-sm dark:text-white">
                     {MESSAGES.PROJECT.EMPTY.GRANTS.NOT_ADDED_MILESTONE}
                   </p>
                   <div className="flex flex-row justify-start gap-4 max-sm:w-full max-sm:flex-col">
@@ -164,7 +164,7 @@ export const MilestonesAndUpdates = ({ grant }: MilestonesAndUpdatesProps) => {
                               );
                             }
                           }}
-                          className="flex h-max w-max text-zinc-900 flex-row items-center justify-center gap-3 rounded border border-black bg-transparent px-3 py-1 text-sm font-semibold hover:bg-transparent hover:opacity-75 max-sm:w-full"
+                          className="flex h-max w-max dark:bg-zinc-800 dark:text-white text-zinc-900 flex-row items-center justify-center gap-3 rounded border border-black bg-transparent px-3 py-1 text-sm font-semibold hover:bg-transparent hover:opacity-75 max-sm:w-full"
                         >
                           <p>Post a grant update</p>
                         </Button>

@@ -6,7 +6,7 @@ import { useGap } from "@/hooks/useGap";
 import { Button } from "@/components/Utilities/Button";
 import { useAccount, useNetwork } from "wagmi";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { isCommunityAdminOf, useSigner } from "@/utilities";
+import { cn, isCommunityAdminOf, useSigner } from "@/utilities";
 import { GrantUpdate } from "./GrantUpdate";
 import { MilestoneDetails } from "./MilestoneDetails";
 
@@ -34,12 +34,12 @@ const TabButton: FC<TabButtonProps> = ({
   const isSelected = selectedType === tab;
   return (
     <Button
-      className="flex flex-row items-center gap-2 bg-transparent px-2 py-1 text-black hover:bg-white hover:text-black max-sm:text-sm"
-      style={{
-        backgroundColor: isSelected ? "white" : "",
-        color: isSelected ? "black" : "#667085",
-        border: isSelected ? "1px solid #EAECF0" : "",
-      }}
+      className={cn(
+        "flex flex-row my-0.5 items-center gap-2 bg-transparent px-2 py-1 shadow-none text-black hover:bg-white hover:text-black max-sm:text-sm",
+        isSelected
+          ? "text-black bg-white dark:bg-slate-600 dark:text-white"
+          : "text-gray-500"
+      )}
       onClick={() => {
         handleSelection(tab);
       }}
@@ -258,8 +258,10 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
         <div className=" flex flex-col items-start justify-start gap-0 ">
           <div className="flex w-full flex-row flex-wrap items-center justify-between gap-4 py-3">
             <div className="flex w-max flex-row flex-wrap items-center  gap-4 max-sm:flex-col max-sm:items-start max-sm:justify-start">
-              <p className="text-xs font-bold text-slate-600">MILESTONES</p>
-              <div className="flex flex-row flex-wrap gap-2 rounded bg-[#F2F4F7] px-2 py-1">
+              <p className="text-xs font-bold text-slate-600 dark:text-slate-200">
+                MILESTONES
+              </p>
+              <div className="flex flex-row flex-wrap gap-2 rounded bg-gray-200 dark:bg-gray-800 px-2 py-1">
                 <TabButton
                   handleSelection={() => handleSelection("completed")}
                   tab="completed"

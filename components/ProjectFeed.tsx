@@ -50,7 +50,7 @@ export const ProjectFeed = () => {
     <div className="w-full flex flex-col gap-2">
       <div className="font-semibold">Project Feed</div>
       {/* Feed start */}
-      <div className="flow-root bg-white border border-gray-200 py-2 px-5 rounded-xl shadow-md max-h-96 max-lg:max-h-64 max-lg:mt-4 overflow-y-auto">
+      <div className="flow-root mt-4 bg-white dark:bg-zinc-900 dark:border-gray-700 border border-gray-200 py-2 px-5 rounded-xl shadow-md max-h-96 max-lg:max-h-64 max-lg:mt-4 overflow-y-auto">
         <ul role="list">
           {feed.length ? (
             feed.map((item, index) => {
@@ -61,20 +61,20 @@ export const ProjectFeed = () => {
                 >
                   {index !== feed.length - 1 ? (
                     <span
-                      className="absolute left-4 max-2xl:left-7 top-10 -ml-px h-full w-0.5 bg-gray-200"
+                      className="absolute left-4 max-2xl:left-7 top-10 -ml-px h-full w-0.5 bg-gray-200 dark:bg-zinc-700"
                       aria-hidden="true"
                     />
                   ) : null}
-                  <div className="relative rounded-full bg-gray-100 p-2 text-gray-500">
+                  <div className="relative rounded-full bg-gray-100 p-2 text-gray-500 dark:bg-zinc-800 dark:text-zinc-200">
                     <img
                       alt={item.event}
                       src={feedIconDictionary(item.event, item.type)}
-                      className="h-[20px] w-[20px] min-h-[20px] min-w-[20px] text-gray-500 stroke-gray-500 fill-gray-500 max-md:h-[12px] max-md:w-[12px] max-md:min-h-[12px] max-md:min-w-[12px]"
+                      className="h-[20px] w-[20px] min-h-[20px] min-w-[20px] text-gray-500 stroke-gray-500 fill-gray-500 dark:text-gray-200 dark:stroke-gray-200 dark:fill-gray-200 max-md:h-[12px] max-md:w-[12px] max-md:min-h-[12px] max-md:min-w-[12px]"
                     />
                   </div>
                   <div className="feed remove-after flex w-full flex-col items-start gap-1">
                     <div
-                      className="line-clamp-2 w-full break-normal text-base font-normal text-black max-2xl:text-sm"
+                      className="line-clamp-2 w-full break-normal text-base font-normal text-black dark:text-zinc-100 max-2xl:text-sm"
                       data-color-mode="light"
                     >
                       <ReactMarkdown
@@ -83,11 +83,8 @@ export const ProjectFeed = () => {
                           strong: ({ children }) => {
                             return (
                               <ExternalLink
-                                className="text-black font-bold hover:underline"
+                                className="text-black font-bold hover:underline dark:text-zinc-100"
                                 href={getFeedHref(item)}
-                                style={{
-                                  color: "black",
-                                }}
                               >
                                 {children}
                               </ExternalLink>
@@ -102,12 +99,12 @@ export const ProjectFeed = () => {
                       <img
                         src={blo(item.attester as Hex, 8)}
                         alt={item.attester}
-                        className="h-5 w-5 rounded-md ring-4 ring-gray-50 dark:ring-black border-1 border-gray-100 dark:border-zinc-900"
+                        className="h-5 w-5 rounded-md ring-4 ring-gray-50 dark:ring-zinc-800  border-1 border-gray-100 dark:border-zinc-900"
                       />
-                      <p className="text-sm text-center font-bold text-black max-2xl:text-[13px]">
+                      <p className="text-sm text-center font-bold text-black dark:text-zinc-200 max-2xl:text-[13px]">
                         <EthereumAddressToENSName address={item.attester} />
                       </p>
-                      <span className="ml-1 text-sm font-normal text-gray-500 max-2xl:text-xs">
+                      <span className="ml-1 text-sm font-normal text-gray-500 dark:text-zinc-400 max-2xl:text-xs">
                         posted on {formatDate(item.timestamp)}
                       </span>
                     </div>
@@ -124,7 +121,7 @@ export const ProjectFeed = () => {
                 onClick={() => {
                   setPage((oldValue) => oldValue + 1);
                 }}
-                className="w-full h-max py-2 px-6 bg-gray-900 text-white rounded-md hover:opacity-75 transition-all ease-in-out duration-200"
+                className="w-full h-max py-2 px-6 bg-gray-900 dark:bg-slate-800 text-white rounded-md hover:opacity-75 transition-all ease-in-out duration-200"
               >
                 {feedLoading ? (
                   <div className="w-full justify-center flex py-2">

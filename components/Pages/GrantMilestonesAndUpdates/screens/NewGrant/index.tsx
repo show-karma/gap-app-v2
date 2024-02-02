@@ -30,12 +30,13 @@ import { useGap } from "@/hooks";
 import toast from "react-hot-toast";
 import { useRouter } from "next/router";
 import { useSearchParams } from "next/navigation";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 
-const labelStyle = "text-sm font-bold text-black";
+const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
-  "mt-2 w-full rounded-lg border border-gray-200 bg-transparent px-4 py-3 text-gray-900 placeholder:text-gray-300";
+  "mt-2 w-full rounded-lg border border-gray-200 bg-transparent px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:text-zinc-100 dark:border-gray-600";
 const textAreaStyle =
-  "mt-2 w-full rounded-lg border border-gray-200 bg-transparent px-4 py-3 text-gray-900 placeholder:text-gray-300";
+  "mt-2 w-full rounded-lg border border-gray-200 bg-transparent px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:text-zinc-100 dark:border-gray-600";
 
 const SUCCESS_QUESTIONS = ["How should the success of your grant be measured?"];
 
@@ -515,13 +516,13 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
 
   return (
     <div className="flex w-full flex-col items-start  justify-center">
-      <div className="flex w-full max-w-3xl flex-col items-start justify-start gap-6 rounded-lg border border-gray-200 bg-white px-6 pb-6 pt-5 max-lg:max-w-full">
-        <div className="flex w-full flex-row justify-between">
-          <h3 className="text-2xl font-bold text-black">
+      <div className="flex w-full max-w-3xl flex-col items-start justify-start gap-6 rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-zinc-900 px-6 pb-6 pt-5 max-lg:max-w-full">
+        <div className="flex w-full items-center flex-row justify-between">
+          <h3 className="text-2xl font-bold text-black dark:text-zinc-100">
             {grantScreen === "edit-grant" ? "Edit grant" : "Create a new grant"}
           </h3>
           <Button
-            className="bg-transparent p-4 hover:bg-transparent hover:opacity-75"
+            className="bg-transparent px-4 hover:bg-transparent hover:opacity-75"
             onClick={() => {
               if (!selectedProject) return;
               if (!grantToEdit) {
@@ -537,7 +538,7 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
               );
             }}
           >
-            <img src="/icons/close.svg" alt="Close" className="h-5 w-5 " />
+            <XMarkIcon className="h-8 w-8 " />
           </Button>
         </div>
         <form className="flex w-full flex-col gap-4">
@@ -638,12 +639,9 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
             <label htmlFor="grant-description" className={labelStyle}>
               Description
             </label>
-            <div
-              className="mt-2 w-full  bg-transparent"
-              data-color-mode="light"
-            >
+            <div className="mt-2 w-full bg-transparent dark:border-gray-600">
               <MarkdownEditor
-                className="bg-transparent"
+                className="bg-transparent dark:border-gray-600"
                 value={description}
                 onChange={(newValue: string) => setDescription(newValue || "")}
                 placeholderText="Add a brief description about this grant"
@@ -810,29 +808,16 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
               onClick={() => {
                 createMilestone();
               }}
-              className="border border-dashed border-blue-800 bg-transparent px-8 py-4 text-base font-bold text-blue-800 hover:bg-white hover:opacity-75"
+              className="border border-dashed dark:border-blue-300 dark:hover:bg-transparent dark:text-blue-200 border-blue-800 bg-transparent px-8 py-4 text-base font-bold text-blue-800 hover:bg-white hover:opacity-75"
             >
               Add milestone
             </button>
           </div>
         )}
-        <div className="flex w-full flex-row-reverse gap-8">
-          <Button
-            onClick={handleSubmit(onSubmit)}
-            className="flex items-center justify-start gap-3 rounded bg-blue-500 px-6 text-base font-bold text-white hover:bg-blue-500 hover:opacity-75"
-            disabled={
-              isSubmitting ||
-              isLoading ||
-              !isDescriptionValid ||
-              (grantScreen === "create-grant" && !isValid)
-            }
-            isLoading={isSubmitting || isLoading}
-          >
-            {grantScreen === "edit-grant" ? "Edit grant" : "Create grant"}
-          </Button>
+        <div className="flex w-full flex-row justify-end gap-8">
           <Button
             disabled={isSubmitting || isLoading}
-            className="border border-blue-500 bg-transparent text-base px-6 font-bold text-blue-800 hover:bg-white hover:opacity-75"
+            className="border dark:border-blue-300 dark:text-blue-400 border-blue-500 bg-transparent text-base px-6 font-bold text-blue-800 hover:bg-transparent hover:opacity-75"
             onClick={() => {
               if (!selectedProject) return;
               if (!grantToEdit) {
@@ -849,6 +834,19 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
             }}
           >
             Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit(onSubmit)}
+            className="flex items-center justify-start gap-3 rounded bg-blue-500 dark:bg-blue-900 px-6 text-base font-bold text-white hover:bg-blue-500 hover:opacity-75"
+            disabled={
+              isSubmitting ||
+              isLoading ||
+              !isDescriptionValid ||
+              (grantScreen === "create-grant" && !isValid)
+            }
+            isLoading={isSubmitting || isLoading}
+          >
+            {grantScreen === "edit-grant" ? "Edit grant" : "Create grant"}
           </Button>
         </div>
       </div>

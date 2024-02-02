@@ -1,4 +1,5 @@
 export * from "./checkNetworkIsValid";
+export * from "./chosenCommunities";
 export * from "./commons";
 export * from "./eas-wagmi-utils";
 export * from "./enviromentVars";
@@ -17,5 +18,6 @@ export * from "./ReadMore";
 export * from "./reduceText";
 export * from "./sdk";
 export * from "./shortAddress";
+export * from "./socials";
 export * from "./tabs";
 export * from "./tailwind";

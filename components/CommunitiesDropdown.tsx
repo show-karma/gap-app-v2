@@ -9,7 +9,7 @@ import {
   CommandInput,
   CommandItem,
 } from "cmdk";
-import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/outline";
+import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
 
 interface CommunitiesDropdownProps {
@@ -50,20 +50,20 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
-      <Popover.Trigger className="w-[240px] justify-between text-black flex flex-row gap-2 px-4 py-2 items-center bg-gray-100 rounded-md">
+      <Popover.Trigger className="w-[240px] justify-between text-black dark:text-white dark:bg-zinc-800 flex flex-row gap-2 px-4 py-2 items-center bg-gray-100 rounded-md">
         {value
           ? communitiesArray.find((community) => community.value === value)
               ?.label
           : "Select community"}
         <ChevronUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
       </Popover.Trigger>
-      <Popover.Content className="mt-4 w-[280px] bg-white shadow-lg max-h-60 overflow-y-auto overflow-x-hidden py-2">
+      <Popover.Content className="mt-4 w-[280px] bg-white dark:text-white dark:bg-zinc-800 shadow-lg max-h-60 overflow-y-auto overflow-x-hidden py-2">
         <Command>
           <CommandInput
-            className="rounded-md ml-2 mr-4"
+            className="rounded-md ml-2 mr-4 dark:text-white dark:bg-zinc-800"
             placeholder="Search community..."
           />
-          <CommandEmpty>No community found.</CommandEmpty>
+          <CommandEmpty className="px-4 py-2">No community found.</CommandEmpty>
           <CommandGroup>
             {communitiesArray.map((community) => (
               <CommandItem
@@ -73,11 +73,11 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
                   setOpen(false);
                   onSelectFunction(community.value, community.networkId);
                 }}
-                className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center py-2 px-4"
+                className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
               >
                 <CheckIcon
                   className={cn(
-                    "mr-2 h-4 w-4 text-black",
+                    "mr-2 h-4 w-4 text-black dark:text-white",
                     value === community.value ? "opacity-100" : "opacity-0"
                   )}
                 />
