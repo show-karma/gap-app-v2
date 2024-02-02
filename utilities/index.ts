@@ -1,3 +1,4 @@
+export * from "./checkNetworkIsValid";
 export * from "./commons";
 export * from "./eas-wagmi-utils";
 export * from "./enviromentVars";
@@ -10,7 +11,6 @@ export * from "./indexer";
 export * from "./karma";
 export * from "./messages";
 export * from "./meta";
-export * from "./mongo";
 export * from "./network";
 export * from "./pages";
 export * from "./ReadMore";
