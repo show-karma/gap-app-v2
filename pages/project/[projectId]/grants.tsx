@@ -38,7 +38,7 @@ function GrantsPage() {
   const searchParams = useSearchParams();
   const tabFromQueryParam = searchParams.get("tab");
   const grantIdFromQueryParam = searchParams.get("grantId");
-  const [currentTab, setCurrentTab] = useState("Overview");
+  const [currentTab, setCurrentTab] = useState("overview");
   const [grant, setGrant] = useState<Grant | undefined>(undefined);
   const project = useProjectStore((state) => state.project);
   const navigation =
@@ -305,7 +305,6 @@ function GrantsPage() {
         {/* Grants tabs end */}
 
         <div className="flex flex-col py-5">
-          {currentTab === "overview" && <GrantOverview grant={grant} />}
           {currentTab === "milestones-and-updates" && (
             <GrantMilestonesAndUpdates grant={grant} />
           )}
@@ -324,6 +323,9 @@ function GrantsPage() {
             grant && <NewMilestone grant={grant} />}
           {currentTab === "grant-update" && grant && (
             <NewGrantUpdate grant={grant} />
+          )}
+          {(currentTab === "overview" || !currentTab) && (
+            <GrantOverview grant={grant} />
           )}
         </div>
       </div>

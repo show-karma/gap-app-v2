@@ -7,6 +7,7 @@ import { PAGES, formatDate, formatPercentage } from "@/utilities";
 import pluralize from "pluralize";
 import Link from "next/link";
 import formatCurrency from "@/utilities/formatCurrency";
+import { motion } from "framer-motion";
 
 interface GrantCardProps {
   grant: Grant;
@@ -45,9 +46,23 @@ const updatesLength = (grant: Grant) =>
   grant.milestones.filter((milestone) => milestone.completed).length +
   grant.updates.length;
 
+const LinkMotion = motion(Link);
+
 export const GrantCard = ({ grant, index }: GrantCardProps) => {
   return (
-    <Link
+    <LinkMotion
+      initial={{
+        opacity: 0,
+        translateX: -10,
+        translateY: 0,
+      }}
+      animate={{ opacity: 1, translateX: 0, translateY: 0 }}
+      transition={{
+        type: "spring",
+        duration: 0.75,
+        delay: index * 0.03,
+      }}
+      exit={{ opacity: 0, translateX: -10, translateY: 0 }}
       href={PAGES.PROJECT.GRANT(
         grant.project?.slug || grant.refUID || "",
         grant.uid
@@ -140,6 +155,6 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
           ) : null}
         </div>
       </div>
-    </Link>
+    </LinkMotion>
   );
 };

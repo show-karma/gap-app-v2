@@ -6,7 +6,7 @@ import ProjectPage from "./project";
 import {
   PAGES,
   cn,
-  getContractOwner,
+  defaultMetadata,
   getProjectById,
   getProjectOwner,
   useSigner,
@@ -16,7 +16,7 @@ import { useProjectStore } from "@/store";
 import { useAccount } from "wagmi";
 import { blo } from "blo";
 import { Project } from "@show-karma/karma-gap-sdk";
-import { useOwnerStore } from "@/store/owner";
+import { NextSeo } from "next-seo";
 
 interface Props {
   children: ReactNode;
@@ -90,79 +90,107 @@ export const NestedLayout = ({ children }: Props) => {
   }, [signer, project, address]);
 
   return (
-    <div>
-      <div className="relative border-b border-gray-200 pb-5 sm:pb-0">
-        <div className="px-4 sm:px-6 lg:px-8 md:flex py-8 md:items-center md:justify-between">
-          <h1
-            className={cn(
-              loading
-                ? "animate-pulse w-64 h-10 bg-gray-600 rounded-lg"
-                : "text-2xl font-semibold leading-6 text-gray-900"
-            )}
-          >
-            {loading ? "" : project?.details?.title}
-          </h1>
-          {project ? (
-            <div className="flex items-center space-x-2">
-              {firstFiveMembers(project).length ? (
-                <>
-                  <span className="text-sm text-gray-600">Built by</span>
-                  {firstFiveMembers(project).map((member, index) => (
-                    <span key={index}>
-                      <img
-                        src={blo(member, 8)}
-                        alt={member}
-                        className="h-12 w-12 rounded-md ring-4 ring-gray-50 dark:ring-black border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5"
-                      />
-                    </span>
-                  ))}
-                  {restMembersCounter(project) > 0 && (
-                    <p className="flex items-center justify-center h-12 w-12 rounded-md ring-4 ring-gray-50 dark:ring-black border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5">
-                      +
-                    </p>
-                  )}
-                </>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
-        <div className="mt-4 max-sm:px-4">
-          <div className="sm:hidden">
-            <label htmlFor="current-tab" className="sr-only">
-              Select a tab
-            </label>
-            <select
-              id="current-tab"
-              name="current-tab"
-              className="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600"
+    <>
+      <NextSeo
+        title={defaultMetadata.title}
+        description={defaultMetadata.description}
+        twitter={{
+          handle: defaultMetadata.twitter.creator,
+          site: defaultMetadata.twitter.site,
+          cardType: "summary_large_image",
+        }}
+        openGraph={{
+          url: defaultMetadata.openGraph.url,
+          title: defaultMetadata.title,
+          description: defaultMetadata.description,
+          images: defaultMetadata.openGraph.images.map((image) => ({
+            url: image,
+            alt: defaultMetadata.title,
+          })),
+          site_name: defaultMetadata.openGraph.siteName,
+        }}
+        additionalLinkTags={[
+          {
+            rel: "icon",
+            href: "/favicon.png",
+          },
+        ]}
+      />
+      <div>
+        <div className="relative border-b border-gray-200 pb-5 sm:pb-0">
+          <div className="px-4 sm:px-6 lg:px-8 md:flex py-8 md:items-center md:justify-between">
+            <h1
+              className={cn(
+                loading
+                  ? "animate-pulse w-64 h-10 bg-gray-600 rounded-lg"
+                  : "text-2xl font-semibold leading-6 text-gray-900"
+              )}
             >
-              {tabs.map((tab) => (
-                <option key={tab.name}>{tab.name}</option>
-              ))}
-            </select>
+              {loading ? "" : project?.details?.title}
+            </h1>
+            {project ? (
+              <div className="flex items-center space-x-2">
+                {firstFiveMembers(project).length ? (
+                  <>
+                    <span className="text-sm text-gray-600">Built by</span>
+                    {firstFiveMembers(project).map((member, index) => (
+                      <span key={index}>
+                        <img
+                          src={blo(member, 8)}
+                          alt={member}
+                          className="h-12 w-12 rounded-md ring-4 ring-gray-50 dark:ring-black border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5"
+                        />
+                      </span>
+                    ))}
+                    {restMembersCounter(project) > 0 && (
+                      <p className="flex items-center justify-center h-12 w-12 rounded-md ring-4 ring-gray-50 dark:ring-black border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5">
+                        +
+                      </p>
+                    )}
+                  </>
+                ) : null}
+              </div>
+            ) : null}
           </div>
-          <div className="px-4 sm:px-6 lg:px-8 hidden sm:block">
-            <nav className="-mb-px flex space-x-8">
-              {tabs.map((tab) => (
-                <Link
-                  key={tab.name}
-                  href={tab.href}
-                  className={classNames(
-                    tab.href.split("/")[3] === router.pathname.split("/")[3]
-                      ? "border-primary-500 text-primary-600"
-                      : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
-                    "whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium"
-                  )}
-                >
-                  {tab.name}
-                </Link>
-              ))}
-            </nav>
+          <div className="mt-4 max-sm:px-4">
+            <div className="sm:hidden">
+              <label htmlFor="current-tab" className="sr-only">
+                Select a tab
+              </label>
+              <select
+                id="current-tab"
+                name="current-tab"
+                className="block w-full rounded-md border-0 py-1.5 pl-3 pr-10 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600"
+              >
+                {tabs.map((tab) => (
+                  <option key={tab.name}>{tab.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="px-4 sm:px-6 lg:px-8 hidden sm:block">
+              <nav className="-mb-px flex space-x-8">
+                {tabs.map((tab) => (
+                  <Link
+                    key={tab.name}
+                    href={tab.href}
+                    className={classNames(
+                      tab.href.split("/")[3]?.split("?")[0] ===
+                        router.pathname.split("/")[3]
+                        ? "border-primary-500 text-primary-600"
+                        : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
+                      "whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium"
+                    )}
+                  >
+                    {tab.name}
+                  </Link>
+                ))}
+              </nav>
+            </div>
           </div>
         </div>
+        <div className="px-4 pb-20 sm:px-6 lg:px-8">{children}</div>
       </div>
-      <div className="px-4 pb-20 sm:px-6 lg:px-8">{children}</div>
-    </div>
+    </>
   );
 };
 

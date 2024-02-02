@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import Typed from "react-typed";
 import { CloudArrowUpIcon, LockClosedIcon } from "@heroicons/react/20/solid";
+import { defaultMetadata } from "@/utilities";
+import { NextSeo } from "next-seo";
 
 export default function Index() {
   const projectTypes = [
@@ -30,10 +32,82 @@ export default function Index() {
 
   return (
     <>
-      <Head>
-        <title>Gap</title>
-        <meta name="title" content="Gap" />
-      </Head>
+      {/* <Head>
+        <title>{defaultMetadata.title}</title>
+        <meta name="description" content={defaultMetadata.description} />
+
+        <meta property="og:type" content="website" />
+        <meta
+          property="og:url"
+          content={defaultMetadata.openGraph.url}
+          key="ogurl"
+        />
+        <meta
+          property="og:image"
+          content={defaultMetadata.openGraph.images[0]}
+          key="ogimage"
+        />
+        <meta
+          property="og:site_name"
+          content={defaultMetadata.openGraph.siteName}
+          key="ogsitename"
+        />
+        <meta
+          property="og:title"
+          content={defaultMetadata.title}
+          key="ogtitle"
+        />
+        <meta
+          property="og:description"
+          content={defaultMetadata.description}
+          key="ogdesc"
+        />
+        <link rel="icon" href={"/favicon.png"} />
+
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content={defaultMetadata.twitter.site} />
+        <meta
+          property="twitter:title"
+          content={defaultMetadata.twitter.title}
+        />
+        <meta
+          property="twitter:description"
+          content={defaultMetadata.twitter.description}
+        />
+        <meta
+          property="twitter:image"
+          content={defaultMetadata.twitter.images[0]}
+        />
+        <meta
+          property="twitter:image"
+          content={defaultMetadata.twitter.images[0]}
+        />
+      </Head> */}
+      <NextSeo
+        title={defaultMetadata.title}
+        description={defaultMetadata.description}
+        twitter={{
+          handle: defaultMetadata.twitter.creator,
+          site: defaultMetadata.twitter.site,
+          cardType: "summary_large_image",
+        }}
+        openGraph={{
+          url: defaultMetadata.openGraph.url,
+          title: defaultMetadata.title,
+          description: defaultMetadata.description,
+          images: defaultMetadata.openGraph.images.map((image) => ({
+            url: image,
+            alt: defaultMetadata.title,
+          })),
+          site_name: defaultMetadata.openGraph.siteName,
+        }}
+        additionalLinkTags={[
+          {
+            rel: "icon",
+            href: "/favicon.png",
+          },
+        ]}
+      />
 
       <div className="relative isolate overflow-hidden bg-white">
         <svg

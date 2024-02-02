@@ -6,6 +6,7 @@ import {
   MESSAGES,
   PAGES,
   cn,
+  defaultMetadata,
   formatDate,
   reduceText,
   useSigner,
@@ -26,6 +27,7 @@ import toast from "react-hot-toast";
 import pluralize from "pluralize";
 import { Button } from "@/components/Utilities/Button";
 import Link from "next/link";
+import { NextSeo } from "next-seo";
 
 interface GrantEdited {
   uid: string;
@@ -224,6 +226,31 @@ export default function Index() {
 
   return (
     <>
+      <NextSeo
+        title={defaultMetadata.title}
+        description={defaultMetadata.description}
+        twitter={{
+          handle: defaultMetadata.twitter.creator,
+          site: defaultMetadata.twitter.site,
+          cardType: "summary_large_image",
+        }}
+        openGraph={{
+          url: defaultMetadata.openGraph.url,
+          title: defaultMetadata.title,
+          description: defaultMetadata.description,
+          images: defaultMetadata.openGraph.images.map((image) => ({
+            url: image,
+            alt: defaultMetadata.title,
+          })),
+          site_name: defaultMetadata.openGraph.siteName,
+        }}
+        additionalLinkTags={[
+          {
+            rel: "icon",
+            href: "/favicon.png",
+          },
+        ]}
+      />
       <div className="px-4 sm:px-6 lg:px-8 py-5">
         <div className="py-8 rounded-xl bg-black border border-primary-800 text-center flex flex-col gap-2 justify-center w-full items-center">
           <div className="flex justify-center">

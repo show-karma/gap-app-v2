@@ -1,5 +1,3 @@
-import type { Metadata } from "next";
-
 export const ogMeta = {
   url: "https://gap.karmahq.xyz/",
   siteName: "Karma GAP - Grantee Accountability Protocol",
@@ -18,7 +16,7 @@ export const twitterMeta = {
   images: ["https://gap.karmahq.xyzpreviews/homepage.png"],
 };
 
-export const defaultMetadata: Metadata = {
+export const defaultMetadata = {
   title: "Karma GAP - Grantee Accountability Protocol",
   icons: ["/favicon.png"],
   description:
