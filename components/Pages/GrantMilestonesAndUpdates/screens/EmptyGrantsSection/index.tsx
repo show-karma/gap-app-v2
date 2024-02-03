@@ -32,12 +32,12 @@ export const EmptyGrantsSection: FC = () => {
   return (
     <div className="flex flex-1 flex-row gap-6">
       <div
-        className="flex h-96 border-spacing-4 flex-col items-center justify-center gap-5 rounded border border-blue-600 bg-[#EEF4FF] px-8"
+        className="flex h-96 border-spacing-4 flex-col items-center justify-center gap-5 rounded border border-blue-600 dark:bg-zinc-900 bg-[#EEF4FF] px-8"
         style={{
           border: "dashed 2px #155EEF",
         }}
       >
-        <p className="w-max text-center text-lg font-semibold text-black">
+        <p className="w-max text-center text-lg font-semibold text-black dark:text-zinc-200">
           Go ahead and create your first grant
         </p>
         <Link
@@ -52,7 +52,7 @@ export const EmptyGrantsSection: FC = () => {
           Add a Grant
         </Link>
       </div>
-      <div className="flex w-full items-center justify-center rounded border border-gray-200 px-6 py-10">
+      <div className="flex w-full items-center justify-center rounded border border-gray-200 px-6 py-10 dark:bg-zinc-900">
         <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
           <img
             src="/images/comments.png"
@@ -60,10 +60,10 @@ export const EmptyGrantsSection: FC = () => {
             className="h-[185px] w-[438px] object-cover"
           />
           <div className="flex w-full flex-col items-center justify-center gap-3">
-            <p className="text-center text-lg font-semibold text-black ">
+            <p className="text-center text-lg font-semibold text-black dark:text-white">
               {`Milestones & updates space :)`}
             </p>
-            <p className="text-center text-base font-normal text-black ">
+            <p className="text-center text-base font-normal text-black dark:text-white">
               {MESSAGES.PROJECT.EMPTY.GRANTS.NOT_CREATED_USER}
             </p>
           </div>

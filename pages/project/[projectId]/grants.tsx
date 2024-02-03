@@ -209,7 +209,7 @@ function GrantsPage() {
   return (
     <div className="flex">
       {project?.grants.length ? (
-        <div className="w-2/12 pr-5 py-5">
+        <div className="w-2/12 pr-5 py-5 border-r border-r-gray-200">
           <nav className="flex flex-1 flex-col" aria-label="Sidebar">
             <ul role="list" className="-mx-2 space-y-1">
               {navigation.map((item) => (
@@ -273,10 +273,10 @@ function GrantsPage() {
           </nav>
         </div>
       ) : null}
-      <div className="flex-1 pl-5 pt-5 border-l border-gray-200 pb-20">
+      <div className="flex-1 pl-5 pt-5 pb-20">
         {/* Grants tabs start */}
         {project?.grants.length && currentTab !== "create-grant" ? (
-          <div>
+          <div className="">
             <div className="sm:hidden">
               <label htmlFor="tabs" className="sr-only">
                 Select a tab

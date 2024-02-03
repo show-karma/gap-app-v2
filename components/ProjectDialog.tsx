@@ -250,7 +250,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         />
         <p className="text-red-500">{errors.tags?.message}</p>
       </div> */}
-          {isOwner && !dataToUpdate && (
+          {isOwner && !projectToUpdate && (
             <div className="flex w-full flex-col gap-2">
               <label htmlFor="recipient-input" className={labelStyle}>
                 Recipient address
@@ -431,7 +431,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                     key={member}
                     className="flex w-full flex-row items-center justify-between truncate rounded border border-gray-400 p-2 max-sm:max-w-[330px]"
                   >
-                    <p className="w-min truncate font-sans font-normal text-slate-700">
+                    <p className="w-min truncate font-sans font-normal text-slate-700 dark:text-zinc-100">
                       {member}
                     </p>
                     <button
@@ -598,7 +598,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
   const onSubmit = async (data: SchemaType) => {
     if (!chain) return;
-    if (dataToUpdate) {
+    if (projectToUpdate) {
       updateThisProject(data);
     } else {
       createProject(data);
@@ -642,7 +642,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                     as="h3"
                     className="text-xl font-bold leading-6 text-gray-900 dark:text-zinc-100"
                   >
-                    {dataToUpdate ? "Edit project" : "Create a new project!"}
+                    {projectToUpdate ? "Edit project" : "Create a new project!"}
                   </Dialog.Title>
                   <button
                     type="button"
@@ -651,17 +651,16 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                   >
                     <XMarkIcon className="w-5 h-5" />
                   </button>
-                  {dataToUpdate && (
+                  {!projectToUpdate && (
                     <div className="mt-2">
                       <p className="text-sm text-gray-600 dark:text-zinc-300">
-                        We’ll start by outlining some basics about your
-                        projectToUpdate. Don’t worry about grants right now, you
-                        can add that from your Project Page once it’s been
-                        created.
+                        We’ll start by outlining some basics about your project.
+                        Don’t worry about grants right now, you can add that
+                        from your Project Page once it’s been created.
                       </p>
                     </div>
                   )}
-                  {dataToUpdate && (
+                  {!projectToUpdate && (
                     <div className="bg-yellow-100 flex flex-row gap-4 rounded-md text-sm px-4 py-2 items-center my-3 dark:bg-yellow-900  text-orange-900 dark:text-white">
                       <ExclamationTriangleIcon className="w-5 h-5" />
                       <p>
@@ -687,7 +686,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                               )}
                               onClick={() => setStep(index)}
                               disabled={
-                                dataToUpdate && index === categories.length - 1
+                                projectToUpdate &&
+                                index === categories.length - 1
                               }
                             >
                               <h5>{category.title}</h5>
@@ -732,10 +732,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                           </>
                         )}
                       </button>
-                      {step < 2 && !(dataToUpdate && step === 1) && (
+                      {step < 2 && !(projectToUpdate && step === 1) && (
                         <Button
                           type="button"
-                          className="flex disabled:opacity-50 flex-row dark:bg-primary-900 dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-primary-100 px-4 py-2 text-md font-medium text-primary-900 hover:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                          className="flex disabled:opacity-50 flex-row dark:bg-primary-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-primary-100 px-4 py-2 text-md font-medium text-primary-900 hover:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                           onClick={() => {
                             setStep((oldStep) =>
                               oldStep >= 2 ? oldStep : oldStep + 1
@@ -748,15 +748,17 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                           <ChevronRightIcon className="w-4 h-4" />
                         </Button>
                       )}
-                      {(step >= 2 || (dataToUpdate && step === 1)) && (
+                      {(step >= 2 || (projectToUpdate && step === 1)) && (
                         <Button
                           type={"submit"}
-                          className="flex disabled:opacity-50 flex-row dark:bg-primary-900 dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-primary-100 px-4 py-2 text-md font-medium text-primary-900 hover:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                          className="flex disabled:opacity-50 flex-row dark:bg-primary-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-primary-100 px-4 py-2 text-md font-medium text-primary-900 hover:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                           disabled={handleErrors() || isLoading}
                           isLoading={isLoading}
                         >
-                          {dataToUpdate ? "Update project" : "Create project"}
-                          {!dataToUpdate ? (
+                          {projectToUpdate
+                            ? "Update project"
+                            : "Create project"}
+                          {!projectToUpdate ? (
                             <ChevronRightIcon className="w-4 h-4" />
                           ) : null}
                         </Button>
