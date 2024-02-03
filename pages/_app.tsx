@@ -55,7 +55,7 @@ export default function App({ Component, pageProps }: AppProps) {
         })}
       >
         <Toaster />
-        <ThemeProvider attribute="class">
+        <ThemeProvider defaultTheme="light" attribute="class">
           <div className="min-h-screen flex flex-col justify-between h-full bg-gray-100 dark:bg-black dark:text-white">
             <div>
               <div className="fixed w-full bg-white dark:bg-black z-10">
