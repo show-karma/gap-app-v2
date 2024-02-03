@@ -25,7 +25,6 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
     try {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
         await switchNetworkAsync?.(milestone.chainID);
-        return;
       }
       await milestone
         .revoke(signer as any)

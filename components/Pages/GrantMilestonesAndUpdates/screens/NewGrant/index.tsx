@@ -289,9 +289,7 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
         uid: nullRef,
       });
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== communityNetworkId) {
-        console.info("switching network");
         await switchNetworkAsync?.(communityNetworkId);
-        return;
       }
       grant.details = new GrantDetails({
         data: {
@@ -379,7 +377,6 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
       setIsLoading(true);
       if (chain && chain.id !== oldGrant.chainID) {
         await switchNetworkAsync?.(oldGrant.chainID);
-        return;
       }
       oldGrant.setValues({
         communityUID: data.community,
@@ -515,14 +512,14 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
   const isDescriptionValid = !!description.length;
 
   return (
-    <div className="flex w-full flex-col items-start  justify-center">
+    <div className={"flex w-full flex-col items-start  justify-center"}>
       <div className="flex w-full max-w-3xl flex-col items-start justify-start gap-6 rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-zinc-900 px-6 pb-6 pt-5 max-lg:max-w-full">
         <div className="flex w-full items-center flex-row justify-between">
           <h3 className="text-2xl font-bold text-black dark:text-zinc-100">
             {grantScreen === "edit-grant" ? "Edit grant" : "Create a new grant"}
           </h3>
           <Button
-            className="bg-transparent px-4 hover:bg-transparent hover:opacity-75"
+            className="bg-transparent px-4 hover:bg-transparent hover:opacity-75 text-black dark:text-zinc-100"
             onClick={() => {
               if (!selectedProject) return;
               if (!grantToEdit) {

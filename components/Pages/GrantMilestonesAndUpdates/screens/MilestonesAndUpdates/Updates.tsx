@@ -30,7 +30,6 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
     try {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
         await switchNetworkAsync?.(milestone.chainID);
-        return;
       }
       await milestone.revokeCompletion(signer as any).then(async () => {
         toast.success(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS);

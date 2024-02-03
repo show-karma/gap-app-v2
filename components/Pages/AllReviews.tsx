@@ -133,12 +133,12 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
                 <>
                   {reviews.map((review, index) => (
                     <div
-                      className="flex flex-col items-start justify-start gap-6 rounded-lg bg-white px-3 py-4"
+                      className="flex flex-col items-start justify-start gap-6 rounded-lg bg-white dark:bg-zinc-800 px-3 py-4"
                       key={`${review.publicAddress}${+index}`}
                     >
                       <div className="flex w-full flex-row items-center justify-between gap-4">
                         <div className="flex flex-1 flex-row items-center justify-start gap-2">
-                          <p className="text-base font-normal text-black">
+                          <p className="text-base font-normal text-black dark:text-white">
                             Review by{" "}
                           </p>
                           {votingPowerCommunities.find(
@@ -174,7 +174,7 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
                                 alt={review.publicAddress}
                                 className="h-6 w-6 rounded-md"
                               />
-                              <p className="text-base font-body font-normal text-black">
+                              <p className="text-base font-body font-normal text-black dark:text-white">
                                 <EthereumAddressToENSName
                                   address={review.publicAddress}
                                 />

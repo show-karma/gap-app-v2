@@ -229,7 +229,7 @@ export const ReviewForm: FC<ReviewFormProps> = ({
 
   return alreadyReviewed || hasSubmitted ? (
     <div className="flex w-full max-w-max flex-col gap-3 rounded-xl border border-zinc-200 p-4">
-      <p className="text-base text-black">
+      <p className="text-base text-black dark:text-zinc-100">
         {MESSAGES.GRANT.REVIEW.ALREADY_REVIEWED}
       </p>
     </div>
@@ -246,10 +246,10 @@ export const ReviewForm: FC<ReviewFormProps> = ({
           <div className="flex w-full flex-row items-center justify-between gap-3 max-lg:flex-col max-lg:items-start">
             <div
               data-color-mode="light"
-              className="max-w-2xl text-base font-semibold text-black"
+              className="max-w-2xl text-base font-semibold text-black dark:text-zinc-100"
             >
               <ReactMarkdown
-                className="text-base font-semibold text-black"
+                className="text-base font-semibold text-black dark:text-zinc-100"
                 components={{
                   strong: ({ children, ...props }) => {
                     return <ExternalLink {...props}>{children}</ExternalLink>;
@@ -266,16 +266,12 @@ export const ReviewForm: FC<ReviewFormProps> = ({
             {additionalQuestion(question.questionId) ? null : (
               <div className="flex flex-col gap-2  p-3">
                 <div
-                  className="flex w-full max-w-max flex-row items-center gap-3 rounded"
-                  style={{
-                    backgroundColor:
-                      +(form.getValues("questions")[index]?.rating || 0) > 0
-                        ? "#EEF4FF"
-                        : "#F2F4F7",
-                  }}
+                  className="flex w-full max-w-max flex-row items-center gap-3 rounded dark:bg-transparent"
                   {...form.register(`questions.${index}.rating`)}
                 >
-                  <p className="text-base font-bold text-gray-600">Rating</p>
+                  <p className="text-base font-bold text-gray-600 dark:text-zinc-100">
+                    Rating
+                  </p>
                   <DynamicStars
                     totalStars={5}
                     rating={form.watch("questions")[index]?.rating || 0}
@@ -284,7 +280,7 @@ export const ReviewForm: FC<ReviewFormProps> = ({
                     }}
                   />
                   {+(form.getValues("questions")[index]?.rating || 0) > 0 ? (
-                    <p className="text-xl font-semibold text-gray-600 ">
+                    <p className="text-xl font-semibold text-gray-600 dark:text-zinc-100">
                       {form.getValues("questions")[index]?.rating}
                     </p>
                   ) : null}
@@ -300,7 +296,7 @@ export const ReviewForm: FC<ReviewFormProps> = ({
 
           <div>
             <textarea
-              className="w-full rounded-lg border border-zinc-200 px-2 py-1"
+              className="w-full rounded-lg border border-zinc-200 px-2 py-1 dark:bg-zinc-800 dark:text-white dark:border-zinc-600"
               placeholder={MESSAGES.GRANT.REVIEW.FORM.PLACEHOLDERS.ANSWER}
               {...form.register(`questions.${index}.answer`)}
             />
@@ -315,7 +311,7 @@ export const ReviewForm: FC<ReviewFormProps> = ({
       <div>
         <label
           id="infos.choice"
-          className="max-w-2xl text-base font-semibold text-black"
+          className="max-w-2xl text-base font-semibold text-black dark:text-zinc-100"
         >
           Would you be interested in reviewing grants across web3 ecosystem?
           Compensation will be provided for your efforts.
@@ -347,12 +343,12 @@ export const ReviewForm: FC<ReviewFormProps> = ({
           <div className="flex flex-col gap-2">
             <label
               id="infos.name"
-              className="text-base font-semibold text-black"
+              className="text-base font-semibold text-black dark:text-zinc-100"
             >
               Enter your name
             </label>
             <input
-              className="w-full max-w-sm rounded-lg border border-zinc-200 px-2 py-1"
+              className="w-full max-w-sm rounded-lg border border-zinc-200 px-2 py-1 dark:bg-zinc-800 dark:text-white dark:border-zinc-600"
               placeholder="Input your name"
               {...form.register("infos.name")}
             />
@@ -360,12 +356,12 @@ export const ReviewForm: FC<ReviewFormProps> = ({
           <div className="flex flex-col gap-2">
             <label
               id="infos.email"
-              className="text-base font-semibold text-black"
+              className="text-base font-semibold text-black dark:text-zinc-100"
             >
               Enter your email address
             </label>
             <input
-              className="w-full max-w-sm rounded-lg border border-zinc-200 px-2 py-1"
+              className="w-full max-w-sm rounded-lg border border-zinc-200 px-2 py-1 dark:bg-zinc-800 dark:text-white dark:border-zinc-600"
               placeholder="Input your email"
               {...form.register("infos.email")}
             />
@@ -383,18 +379,23 @@ export const ReviewForm: FC<ReviewFormProps> = ({
               >
                 {({ open }) => (
                   <div className="flex flex-col items-start gap-2">
-                    <Listbox.Label className="text-base font-semibold text-black">
+                    <Listbox.Label className="text-base font-semibold text-black dark:text-zinc-100">
                       What type of grants would you like to review? Choose all
                       that apply
                     </Listbox.Label>
                     <div className="relative flex-1 w-56">
-                      <Listbox.Button className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
-                        <p className="block truncate">
-                          {categories && categories?.length > 0
-                            ? `${categories?.length} 
-                        ${pluralize("category", categories?.length)} selected`
-                            : "Categories"}
-                        </p>
+                      <Listbox.Button className="relative w-full dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
+                        {categories && categories.length > 0 ? (
+                          <p className="flex flex-row gap-1">
+                            {categories?.length}
+                            <span>
+                              {pluralize("category", categories?.length)}{" "}
+                              selected
+                            </span>
+                          </p>
+                        ) : (
+                          <p>Categories</p>
+                        )}
                         <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                           <ChevronUpDownIcon
                             className="h-5 w-5 text-gray-400"
@@ -410,15 +411,15 @@ export const ReviewForm: FC<ReviewFormProps> = ({
                         leaveFrom="opacity-100"
                         leaveTo="opacity-0"
                       >
-                        <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                        <Listbox.Options className="absolute z-10 mt-1 dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                           {possibleCategories?.map((category) => (
                             <Listbox.Option
                               key={category}
                               className={({ active }) =>
                                 cn(
                                   active
-                                    ? "bg-primary-600 text-white"
-                                    : "text-gray-900",
+                                    ? "bg-primary-600 text-white dark:text-gray-300 dark:bg-zinc-900"
+                                    : "text-gray-900 dark:text-gray-200",
                                   "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
                                 )
                               }
@@ -442,7 +443,7 @@ export const ReviewForm: FC<ReviewFormProps> = ({
                                       className={cn(
                                         active
                                           ? "text-white"
-                                          : "text-primary-600",
+                                          : "text-primary-600 dark:text-primary-400",
                                         "absolute inset-y-0 right-0 flex items-center pr-4"
                                       )}
                                     >

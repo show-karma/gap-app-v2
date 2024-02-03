@@ -233,7 +233,7 @@ export const CommunityGrants = () => {
                                   className={cn(
                                     active
                                       ? "text-white"
-                                      : "text-primary-600 dark:text-primary-200",
+                                      : "text-primary-600 dark:text-primary-400",
                                     "absolute inset-y-0 right-0 flex items-center pr-4"
                                   )}
                                 >
@@ -320,7 +320,7 @@ export const CommunityGrants = () => {
                                   className={cn(
                                     active
                                       ? "text-white"
-                                      : "text-primary-600 dark:text-primary-200",
+                                      : "text-primary-600 dark:text-primary-400",
                                     "absolute inset-y-0 right-0 flex items-center pr-4"
                                   )}
                                 >
@@ -407,7 +407,7 @@ export const CommunityGrants = () => {
                                   className={cn(
                                     active
                                       ? "text-white"
-                                      : "text-primary-600 dark:text-primary-200",
+                                      : "text-primary-600 dark:text-primary-400",
                                     "absolute inset-y-0 right-0 flex items-center pr-4"
                                   )}
                                 >

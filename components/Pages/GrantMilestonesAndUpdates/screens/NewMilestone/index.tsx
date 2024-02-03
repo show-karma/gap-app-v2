@@ -112,7 +112,6 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
     try {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== chainID) {
         await switchNetworkAsync?.(chainID);
-        return;
       }
       await milestoneToAttest.attest(signer as any).then(async () => {
         toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS);

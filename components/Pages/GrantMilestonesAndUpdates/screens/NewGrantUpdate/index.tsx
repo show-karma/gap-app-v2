@@ -76,7 +76,6 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
     try {
       if (chain && chain.id !== grantToUpdate.chainID) {
         await switchNetworkAsync?.(grantToUpdate.chainID);
-        return;
       }
       await grantToUpdate
         .attestUpdate(signer as any, {

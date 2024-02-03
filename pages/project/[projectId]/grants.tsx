@@ -29,6 +29,10 @@ import { useRouter } from "next/router";
 import { GrantScreen } from "@/types/grant";
 import { NewMilestone } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewMilestone";
 import { NewGrantUpdate } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewGrantUpdate";
+import { useAccount } from "wagmi";
+import { GrantDelete } from "@/components/Pages/GrantMilestonesAndUpdates/GrantDelete";
+import { GrantCompleteButton } from "@/components/Pages/GrantMilestonesAndUpdates/GrantCompleteButton";
+import { GrantCompletion } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/CompleteGrant";
 
 interface Tab {
   name: string;
@@ -37,6 +41,13 @@ interface Tab {
   current: boolean;
 }
 
+const authorizedViews: GrantScreen[] = [
+  "create-milestone",
+  "create-grant",
+  "grant-update",
+  "edit-grant",
+  "complete-grant",
+];
 function GrantsPage() {
   const searchParams = useSearchParams();
   const tabFromQueryParam = searchParams.get("tab");
@@ -59,13 +70,22 @@ function GrantsPage() {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isProjectOwner || isContractOwner;
+  const { address } = useAccount();
 
   // UseEffect to check if current URL changes
   useEffect(() => {
     if (tabFromQueryParam) {
-      setCurrentTab(tabFromQueryParam);
+      if (
+        !isAuthorized &&
+        currentTab &&
+        authorizedViews.includes(currentTab as GrantScreen)
+      ) {
+        setCurrentTab("overview");
+      } else {
+        setCurrentTab(tabFromQueryParam);
+      }
     }
-  }, [tabFromQueryParam]);
+  }, [tabFromQueryParam, isAuthorized, address]);
 
   useEffect(() => {
     if (project) {
@@ -320,6 +340,9 @@ function GrantsPage() {
             {currentTab === "grant-update" && grant && (
               <NewGrantUpdate grant={grant} />
             )}
+            {currentTab === "complete-grant" && grant && project && (
+              <GrantCompletion project={project} grant={grant} />
+            )}
             {(currentTab === "overview" || !currentTab) && (
               <GrantOverview grant={grant} />
             )}
@@ -388,33 +411,43 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
   return (
     <>
       {/* Grant Overview Start */}
-      <div className="flex flex-row gap-2 items-center flex-wrap">
-        <div className="text-xl font-semibold">{grant?.details?.title}</div>
-        {isAuthorized && project && grant && (
-          <Link
-            href={PAGES.PROJECT.TABS.SELECTED_TAB(
-              project?.uid as string,
-              grant?.uid as string,
-              "edit-grant"
-            )}
-          >
-            <Button className="flex h-max flex-row gap-2 bg-zinc-800 p-2 text-white hover:bg-zinc-800 hover:text-white">
-              Edit grant
-              <PencilSquareIcon className="h-4 w-4" />
-            </Button>
-          </Link>
-        )}
+      <div className="flex flex-row gap-4 justify-between">
+        <div className="flex flex-row gap-2 items-center flex-wrap">
+          <div className="text-xl font-semibold">{grant?.details?.title}</div>
+          {isAuthorized && project && grant && (
+            <Link
+              href={PAGES.PROJECT.TABS.SELECTED_TAB(
+                project?.uid as string,
+                grant?.uid as string,
+                "edit-grant"
+              )}
+            >
+              <Button className="flex h-max flex-row gap-2 bg-zinc-800 p-2 text-white hover:bg-zinc-800 hover:text-white">
+                Edit grant
+                <PencilSquareIcon className="h-4 w-4" />
+              </Button>
+            </Link>
+          )}
+        </div>
+        <div className="flex flex-row gap-2">
+          {isAuthorized && project && grant ? (
+            <GrantCompleteButton project={project} grant={grant} />
+          ) : null}
+          {isAuthorized && grant ? <GrantDelete grant={grant} /> : null}
+        </div>
       </div>
 
       <div className="mt-5 flex">
-        <div className="w-9/12 p-5 mr-5 bg-white dark:bg-zinc-900 dark:border-gray-800 border border-gray-200 rounded-xl shadow-md text-black dark:text-zinc-100">
-          <div className="text-base uppercase font-semibold">
-            GRANT DESCRIPTION
+        {grant?.details?.description && (
+          <div className="w-9/12 p-5 mr-5 bg-white dark:bg-zinc-900 dark:border-gray-800 border border-gray-200 rounded-xl shadow-md text-black dark:text-zinc-100">
+            <div className="text-base uppercase font-semibold">
+              GRANT DESCRIPTION
+            </div>
+            <div className="mt-5 space-y-5">
+              <ReactMarkdown>{grant?.details?.description}</ReactMarkdown>
+            </div>
           </div>
-          <div className="mt-5 space-y-5">
-            <ReactMarkdown>{grant?.details?.description}</ReactMarkdown>
-          </div>
-        </div>
+        )}
         <div className="w-3/12">
           <div className="border border-gray-200 rounded-xl bg-white shadow-md dark:bg-zinc-900 dark:border-gray-800">
             <div className="flex items-center justify-between p-5">
@@ -428,7 +461,7 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
                 href={PAGES.COMMUNITY.ALL_GRANTS(grant?.community?.uid as Hex)}
                 className="flex items-center justify-between"
               >
-                <div className="text-gray-500 text-base dark:text-gray-300">
+                <div className="text-gray-500 text-base  font-semibold dark:text-gray-300">
                   Community
                 </div>
                 <span className="inline-flex items-center gap-x-2 rounded-md bg-blue-50 dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
@@ -445,7 +478,7 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
               </Link>
               {grant?.details?.proposalURL ? (
                 <div className="flex items-center justify-between">
-                  <div className="text-gray-500 text-base dark:text-gray-300">
+                  <div className="text-gray-500  font-semibold text-base dark:text-gray-300">
                     Proposal
                   </div>
                   <ExternalLink
@@ -464,11 +497,13 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
                     className="flex flex-row items-center justify-between gap-2"
                   >
                     <h4
-                      className={"text-gray-500 text-base dark:text-gray-300"}
+                      className={
+                        "text-gray-500  font-semibold text-base dark:text-gray-300"
+                      }
                     >
                       {data.title}
                     </h4>
-                    <p className={"text-base font-semibold"}>{data.stat}</p>
+                    <p className={"text-base"}>{data.stat}</p>
                   </div>
                 ) : null
               )}
@@ -493,7 +528,7 @@ const GrantImpactCriteria = ({ grant }: GrantImpactCriteriaProps) => {
         <div className="flex flex-col gap-4">
           {questions.map((item) => (
             <div
-              className="p-5 bg-white border border-gray-200 rounded-xl text-base font-semibold shadow-md"
+              className="p-5 bg-white border border-gray-200 dark:bg-zinc-800 dark:border-zinc-600 rounded-xl text-base font-semibold shadow-md text-black dark:text-zinc-100"
               key={item.query + item.explanation}
             >
               <h3>{item.query}</h3>
@@ -502,7 +537,9 @@ const GrantImpactCriteria = ({ grant }: GrantImpactCriteriaProps) => {
           ))}
         </div>
       ) : (
-        <p>{MESSAGES.GRANT.IMPACT_CRITERIA.EMPTY}</p>
+        <p className="text-black dark:text-zinc-100">
+          {MESSAGES.GRANT.IMPACT_CRITERIA.EMPTY}
+        </p>
       )}
     </div>
   );

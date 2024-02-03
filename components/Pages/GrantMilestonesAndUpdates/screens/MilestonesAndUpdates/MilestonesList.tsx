@@ -37,7 +37,7 @@ const TabButton: FC<TabButtonProps> = ({
       className={cn(
         "flex flex-row my-0.5 items-center gap-2 bg-transparent px-2 py-1 shadow-none text-black hover:bg-white hover:text-black max-sm:text-sm",
         isSelected
-          ? "text-black bg-white dark:bg-slate-600 dark:text-white"
+          ? "text-black bg-white dark:bg-zinc-600 dark:text-white"
           : "text-gray-500"
       )}
       onClick={() => {
@@ -261,7 +261,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
               <p className="text-xs font-bold text-slate-600 dark:text-slate-200">
                 MILESTONES
               </p>
-              <div className="flex flex-row flex-wrap gap-2 rounded bg-gray-200 dark:bg-gray-800 px-2 py-1">
+              <div className="flex flex-row flex-wrap gap-2 rounded bg-gray-200 dark:bg-zinc-800 px-2 py-1">
                 <TabButton
                   handleSelection={() => handleSelection("completed")}
                   tab="completed"
@@ -339,7 +339,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
             })}
             {!selectedTabArray.length && (
               <div className="flex h-max w-full items-center justify-center">
-                <p className="font-semibold text-black">
+                <p className="font-semibold text-black dark:text-white">
                   There are no {selectedMilestoneType} milestones.
                 </p>
               </div>

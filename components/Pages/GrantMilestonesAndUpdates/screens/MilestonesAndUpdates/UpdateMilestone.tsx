@@ -70,7 +70,6 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
     try {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
         await switchNetworkAsync?.(milestone.chainID);
-        return;
       }
       await milestone.complete(signer as any, text).then(async () => {
         toast.success(MESSAGES.MILESTONES.COMPLETE.SUCCESS);
@@ -89,7 +88,6 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
     try {
       if (chain && chain.id !== milestone.chainID) {
         await switchNetworkAsync?.(milestone.chainID);
-        return;
       }
       await milestone.complete(signer as any, text).then(async () => {
         toast.success(MESSAGES.MILESTONES.UPDATE_COMPLETION.SUCCESS);
