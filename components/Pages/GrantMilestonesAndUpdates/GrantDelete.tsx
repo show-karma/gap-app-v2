@@ -18,7 +18,6 @@ interface GrantDeleteProps {
 
 export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
   const [isDeletingGrant, setIsDeletingGrant] = useState(false);
-
   const signer = useSigner();
   const { address } = useAccount();
   const { chain } = useNetwork();
