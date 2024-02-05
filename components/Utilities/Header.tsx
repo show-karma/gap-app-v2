@@ -110,7 +110,30 @@ export default function Header() {
                 </div>
                 <div className="hidden lg:block min-w-0 flex-1 md:px-8 lg:px-0 xl:col-span-4">
                   <div className="flex items-center px-6 py-4 md:mx-auto md:max-w-3xl lg:mx-0 lg:max-w-none xl:px-0">
-                    <div className="w-full"></div>
+                    <div className="w-full">
+                      <form>
+                        <label htmlFor="userAddress" className="sr-only">
+                          Search
+                        </label>
+                        <div className="relative">
+                          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                            <MagnifyingGlassIcon
+                              className="h-5 w-5 text-gray-400"
+                              aria-hidden="true"
+                            />
+                          </div>
+                          <input
+                            id="search"
+                            name="search"
+                            autoComplete="off"
+                            required
+                            className="block w-full rounded-xl border-0 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 py-1.5 pl-10 pr-3 ring-1 ring-inset ring-gray-300 dark:ring-zinc-800 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:focus:ring-primary-600 sm:text-sm sm:leading-6 autofill:!bg-yellow-200"
+                            placeholder="Search projects..."
+                            type="text"
+                          />
+                        </div>
+                      </form>
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center md:absolute md:inset-y-0 md:right-0 lg:hidden">
@@ -199,7 +222,7 @@ export default function Header() {
                                 <button
                                   onClick={openConnectModal}
                                   type="button"
-                                  className="rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                                  className="rounded-md border border-primary-600 bg-white px-3 py-2 text-sm font-semibold text-primary-600 shadow-sm hover:bg-primary-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
                                 >
                                   Login
                                 </button>
