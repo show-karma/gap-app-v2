@@ -159,7 +159,7 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
                                     alt={review.publicAddress}
                                     className="h-6 w-6 items-center rounded-md"
                                   />
-                                  <p className="text-base font-body font-normal underline text-black">
+                                  <p className="text-base font-body font-normal underline text-black dark:text-zinc-100">
                                     <EthereumAddressToENSName
                                       address={review.publicAddress}
                                     />

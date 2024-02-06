@@ -179,7 +179,7 @@ export default function MyProjects() {
                                           <img
                                             src={blo(member, 8)}
                                             alt={member}
-                                            className="h-12 w-12 rounded-md ring-4 ring-gray-50 dark:ring-black border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5"
+                                            className="h-6 w-6 rounded-md ring-4 ring-gray-50 dark:ring-black border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5"
                                           />
                                         </span>
                                       )

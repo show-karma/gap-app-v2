@@ -19,9 +19,9 @@ const updateSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.GRANT.UPDATE.FORM.TITLE }),
 });
 
-const labelStyle = "text-sm font-bold text-black";
+const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
-  "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300";
+  "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300";
 
 type UpdateType = z.infer<typeof updateSchema>;
 
@@ -104,7 +104,9 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
     <div className="flex flex-1">
       <div className="flex w-full max-w-3xl flex-col gap-6 rounded-md bg-white dark:bg-zinc-900 px-4 py-6 max-lg:max-w-full">
         <div className="flex w-full flex-row justify-between">
-          <h4 className="text-2xl font-bold text-black">Post a grant update</h4>
+          <h4 className="text-2xl font-bold text-black dark:text-zinc-100">
+            Post a grant update
+          </h4>
           <Link
             className="bg-transparent p-4 hover:bg-transparent hover:opacity-75"
             href={PAGES.PROJECT.TABS.SELECTED_TAB(
@@ -133,7 +135,7 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
             <p className="text-base text-red-400">{errors.title?.message}</p>
           </div>
 
-          <div className="flex w-full flex-col">
+          <div className="flex w-full gap-2 flex-col">
             <label htmlFor="update-description" className={labelStyle}>
               Description
             </label>
@@ -149,7 +151,7 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
           <div className="flex w-full flex-row-reverse">
             <Button
               type="submit"
-              className="flex w-max flex-row bg-slate-600 text-slate-200 hover:bg-slate-600 hover:text-slate-200"
+              className="flex w-max flex-row bg-slate-600 text-slate-200 hover:bg-slate-800 hover:text-slate-200"
               disabled={
                 isSubmitting ||
                 !isValid ||

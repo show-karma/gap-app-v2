@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 
 export const additionalQuestion = (id?: number) => {
   if (!id) return false;
-  const generalId = process.env.NEXT_PUBLIC_ENV === "prod" ? 4 : 6;
+  const generalId = process.env.NEXT_PUBLIC_ENV === "production" ? 4 : 6;
   return id === generalId;
 };
 

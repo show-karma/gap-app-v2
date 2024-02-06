@@ -157,7 +157,7 @@ export const CommunityGrants = () => {
         <div className="text-xl font-bold">
           Total Grants {totalGrants ? `(${totalGrants})` : null}
         </div>
-        <div className="flex items-center gap-x-5">
+        <div className="flex items-center gap-x-5 flex-wrap gap-y-2">
           {/* Filter by category start */}
           <Listbox
             value={selectedCategories}
@@ -168,7 +168,7 @@ export const CommunityGrants = () => {
             multiple
           >
             {({ open }) => (
-              <div className="flex items-center gap-x-2">
+              <div className="flex items-center gap-x-2 max-sm:w-full max-sm:justify-between">
                 <Listbox.Label className="block text-sm font-medium leading-6 ">
                   Filter by category
                 </Listbox.Label>
@@ -263,7 +263,7 @@ export const CommunityGrants = () => {
             }}
           >
             {({ open }) => (
-              <div className="flex items-center gap-x-2">
+              <div className="flex items-center gap-x-2  max-sm:w-full max-sm:justify-between">
                 <Listbox.Label className="block text-sm font-medium leading-6 ">
                   Sort by
                 </Listbox.Label>
@@ -350,7 +350,7 @@ export const CommunityGrants = () => {
             }}
           >
             {({ open }) => (
-              <div className="flex items-center gap-x-2">
+              <div className="flex items-center gap-x-2  max-sm:w-full max-sm:justify-between">
                 <Listbox.Label className="block text-sm font-medium leading-6 ">
                   Status
                 </Listbox.Label>

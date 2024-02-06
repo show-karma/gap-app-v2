@@ -44,7 +44,7 @@ export const MilestoneDateStatus: FC<MilestoneDateStatusProps> = ({
 
   return (
     <div className="flex w-max flex-row items-center justify-center gap-4 max-lg:justify-start">
-      <p className="text-sm font-semibold text-gray-500">
+      <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">
         Due on {formatDate(milestone.endsAt * 1000)}
       </p>
       <div
@@ -63,9 +63,9 @@ interface MilestoneTagProps {
 }
 export const MilestoneTag: FC<MilestoneTagProps> = ({ index }) => {
   return (
-    <div className="flex w-max flex-row gap-3 rounded-full bg-[#F5F3FF] px-3 py-1 text-[#5720B7]">
-      <FlagIcon className="h-4 w-4" style={{ color: "#5720B7" }} />
-      <p className="text-xs font-bold text-violet-800">MILESTONE {index}</p>
+    <div className="flex w-max flex-row gap-3 rounded-full bg-[#F5F3FF] dark:bg-zinc-900 px-3 py-1 text-violet-800 dark:text-violet-100">
+      <FlagIcon className="h-4 w-4" />
+      <p className="text-xs font-bold ">MILESTONE {index}</p>
     </div>
   );
 };
@@ -86,7 +86,7 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
   const isAuthorized = isProjectOwner || isContractOwner;
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex w-full flex-1 flex-col rounded-lg border border-zinc-200 bg-white transition-all duration-200 ease-in-out">
+      <div className="flex w-full flex-1 flex-col rounded-lg border border-zinc-200 bg-white dark:bg-zinc-800 transition-all duration-200 ease-in-out">
         <div
           className="flex w-full flex-col py-4"
           style={{
@@ -101,7 +101,7 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
           <div className="flex w-full flex-row items-start justify-between px-4 max-lg:mb-4 max-lg:flex-col">
             <div className="flex flex-col gap-3">
               <MilestoneTag index={index} />
-              <h4 className="text-base font-bold leading-normal text-gray-700">
+              <h4 className="text-base font-bold leading-normal text-gray-700 dark:text-zinc-100">
                 {milestone.title}
               </h4>
             </div>

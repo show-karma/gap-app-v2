@@ -24,6 +24,7 @@ import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { Popover } from "@headlessui/react";
 import { DayPicker } from "react-day-picker";
 import { CalendarIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon } from "@heroicons/react/24/solid";
 
 const milestoneSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.MILESTONES.FORM.TITLE }),
@@ -32,9 +33,9 @@ const milestoneSchema = z.object({
   }),
 });
 
-const labelStyle = "text-sm font-bold text-black";
+const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
-  "mt-1 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300";
+  "mt-1 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100";
 
 type MilestoneType = z.infer<typeof milestoneSchema>;
 
@@ -140,9 +141,11 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
 
   return (
     <div className="flex flex-1">
-      <div className="flex w-full max-w-3xl flex-col gap-6 rounded-md bg-gray-200 px-4 py-6 max-lg:max-w-full">
-        <div className="flex w-full flex-row justify-between">
-          <h4 className="text-2xl font-bold text-black">Add milestone</h4>
+      <div className="flex w-full max-w-3xl flex-col gap-6 rounded-md bg-gray-200 dark:bg-zinc-900 px-4 py-6 max-lg:max-w-full">
+        <div className="flex w-full flex-row items-center justify-between">
+          <h4 className="text-2xl font-bold text-black dark:text-zinc-100">
+            Add milestone
+          </h4>
           <Button
             className="bg-transparent p-4 hover:bg-transparent hover:opacity-75"
             onClick={() => {
@@ -155,7 +158,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
               );
             }}
           >
-            <img src="/icons/close.svg" alt="Close" className="h-5 w-5 " />
+            <XMarkIcon className="h-8 w-8" />
           </Button>
         </div>
         <form
@@ -183,7 +186,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
                   <label className={labelStyle}>End date</label>
                   <div>
                     <Popover className="relative">
-                      <Popover.Button className="w-max text-sm flex-row flex gap-2 items-center bg-white px-4 py-2 rounded-md">
+                      <Popover.Button className="w-max text-sm flex-row flex gap-2 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
                         {field.value ? (
                           formatDate(field.value)
                         ) : (
@@ -191,7 +194,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
                         )}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                       </Popover.Button>
-                      <Popover.Panel className="absolute z-10 bg-white mt-4 rounded-md">
+                      <Popover.Panel className="absolute z-10 bg-white dark:bg-zinc-800 mt-4 rounded-md">
                         <DayPicker
                           mode="single"
                           selected={field.value}

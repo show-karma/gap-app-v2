@@ -2,7 +2,7 @@ export const ogMeta = {
   url: "https://gap.karmahq.xyz/",
   siteName: "Karma GAP - Grantee Accountability Protocol",
   type: "website",
-  images: ["https://gap.karmahq.xyzpreviews/homepage.png"],
+  images: ["https://gap.karmahq.xyz/assets/previews/homepage.png"],
 };
 
 export const twitterMeta = {
@@ -13,7 +13,7 @@ export const twitterMeta = {
   creator: "@karmahq_",
   creatorId: "1445787271513341963",
   site: "https://gap.karmahq.xyz",
-  images: ["https://gap.karmahq.xyzpreviews/homepage.png"],
+  images: ["https://gap.karmahq.xyz/assets/previews/homepage.png"],
 };
 
 export const defaultMetadata = {

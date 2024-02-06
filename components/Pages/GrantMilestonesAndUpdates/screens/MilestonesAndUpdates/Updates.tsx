@@ -3,7 +3,7 @@ import type { Milestone } from "@show-karma/karma-gap-sdk";
 import { type FC, useState } from "react";
 
 import { Button } from "@/components/Utilities/Button";
-import { PencilSquareIcon } from "@heroicons/react/24/outline";
+import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { MESSAGES, ReadMore, formatDate, useSigner } from "@/utilities";
 import { UpdateMilestone } from "./UpdateMilestone";
 import { useOwnerStore, useProjectStore } from "@/store";
@@ -47,9 +47,9 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
 
   if (milestone?.completed?.reason && !isEditing) {
     return (
-      <div className="flex flex-col gap-3 bg-[#F8F9FC] px-4 py-2 max-lg:max-w-2xl max-sm:max-w-[300px]">
+      <div className="flex flex-col gap-3 bg-[#F8F9FC] dark:bg-zinc-900 rounded-md px-4 py-2 max-lg:max-w-2xl max-sm:max-w-[300px]">
         <div className="flex w-full flex-row flex-wrap items-center justify-between gap-2">
-          <div className="flex w-max flex-row gap-2 rounded-full bg-[#5720B7] px-3 py-1">
+          <div className="flex w-max flex-row gap-2 rounded-full bg-[#5720B7] dark:bg-purple-900 px-3 py-1">
             <img
               className="h-4 w-4"
               alt="Update"
@@ -57,7 +57,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
             />
             <p className="text-xs font-bold text-white">UPDATE</p>
           </div>
-          <p className="text-sm font-semibold text-gray-500 ">
+          <p className="text-sm font-semibold text-gray-500 dark:text-zinc-100">
             Posted on {formatDate(milestone.completed.createdAt)}
           </p>
         </div>
@@ -72,7 +72,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
               <div className="flex w-max flex-row items-center gap-2">
                 <Button
                   type="button"
-                  className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 hover:bg-transparent"
+                  className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
                   onClick={() => handleEditing(true)}
                 >
                   <PencilSquareIcon className="h-5 w-5" />
@@ -80,14 +80,10 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
                 </Button>
                 <Button
                   type="button"
-                  className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 hover:bg-transparent"
+                  className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
                   onClick={() => undoMilestoneCompletion(milestone)}
                 >
-                  <img
-                    src="/icons/trash.svg"
-                    alt="Remove"
-                    className="h-5 w-5"
-                  />
+                  <TrashIcon className="h-5 w-5" />
                   Remove
                 </Button>
               </div>

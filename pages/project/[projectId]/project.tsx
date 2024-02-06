@@ -5,7 +5,15 @@ import { DeleteDialog, ProjectDialog, ProjectFeed } from "@/components";
 import { useOwnerStore } from "@/store/owner";
 import { useState } from "react";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
-import { MESSAGES, PAGES, deleteProject, useSigner } from "@/utilities";
+import {
+  MESSAGES,
+  PAGES,
+  defaultMetadata,
+  deleteProject,
+  getMetadata,
+  useSigner,
+  zeroUID,
+} from "@/utilities";
 import toast from "react-hot-toast";
 import { useRouter } from "next/router";
 import { TransferOwnershipDialog } from "@/components/TransferOwnershipDialog";
@@ -43,7 +51,7 @@ function ProjectPage() {
   };
 
   return (
-    <div className="flex flex-row gap-4 py-5 mb-20">
+    <div className="flex flex-row max-lg:flex-col-reverse gap-4 py-5 mb-20">
       <div className=" flex flex-col flex-[3]">
         <div className="text-base flex flex-row gap-1">
           <span className="font-semibold">Owner:</span>

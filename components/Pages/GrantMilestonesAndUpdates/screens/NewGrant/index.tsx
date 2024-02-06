@@ -177,7 +177,7 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
   const signer = useSigner();
   const isOwner = useOwnerStore((state) => state.isOwner);
   const searchParams = useSearchParams();
-  const grantScreen = searchParams.get("tab");
+  const grantScreen = searchParams?.get("tab");
 
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [milestones, setMilestones] = useState<MilestoneWithCompleted[]>([]);

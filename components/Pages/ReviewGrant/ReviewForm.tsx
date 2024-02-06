@@ -264,7 +264,7 @@ export const ReviewForm: FC<ReviewFormProps> = ({
             </div>
 
             {additionalQuestion(question.questionId) ? null : (
-              <div className="flex flex-col gap-2  p-3">
+              <div className="flex flex-col gap-2 p-3 max-lg:p-0">
                 <div
                   className="flex w-full max-w-max flex-row items-center gap-3 rounded dark:bg-transparent"
                   {...form.register(`questions.${index}.rating`)}

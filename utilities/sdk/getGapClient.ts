@@ -25,7 +25,7 @@ export const getGapClient = (useGasless = false) => {
   const apiUrl = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
   const cli = new GAP({
     network:
-      envVars.NEXT_PUBLIC_ENV === "prod" ? "optimism" : "optimism-goerli",
+      envVars.NEXT_PUBLIC_ENV === "production" ? "optimism" : "optimism-goerli",
     // uncomment to use the API client
     ...(apiUrl
       ? {

@@ -145,7 +145,7 @@ export const MilestonesAndUpdates = ({ grant }: MilestonesAndUpdatesProps) => {
           {grant && (
             <div className="w-full flex flex-col gap-4">
               {isAuthorized ? (
-                <div className="flex w-full flex-row flex-wrap items-center justify-between gap-4 rounded border border-gray-200 bg-[#EEF4FF] p-4">
+                <div className="flex w-full flex-row flex-wrap items-center justify-between gap-4 rounded border border-gray-200 bg-[#EEF4FF] dark:bg-zinc-800 p-4">
                   <p className="text-base font-normal text-black max-sm:text-sm dark:text-white">
                     {MESSAGES.PROJECT.EMPTY.GRANTS.NOT_ADDED_MILESTONE}
                   </p>
@@ -164,7 +164,7 @@ export const MilestonesAndUpdates = ({ grant }: MilestonesAndUpdatesProps) => {
                               );
                             }
                           }}
-                          className="flex h-max w-max dark:bg-zinc-800 dark:text-white text-zinc-900 flex-row items-center justify-center gap-3 rounded border border-black bg-transparent px-3 py-1 text-sm font-semibold hover:bg-transparent hover:opacity-75 max-sm:w-full"
+                          className="flex h-max w-max dark:bg-zinc-900 dark:text-white text-zinc-900 flex-row items-center justify-center gap-3 rounded border border-black bg-transparent px-3 py-1 text-sm font-semibold hover:bg-transparent hover:opacity-75 max-sm:w-full"
                         >
                           <p>Post a grant update</p>
                         </Button>
