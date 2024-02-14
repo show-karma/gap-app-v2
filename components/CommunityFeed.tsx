@@ -34,6 +34,7 @@ export const CommunityFeed = () => {
             communityId as string
           )}?limit=${itemsPerPage}`
         );
+        if (!data) return;
         setFeed(data.slice(0, itemsPerPage * page));
       } catch (error) {
         console.error("Error fetching data:", error);

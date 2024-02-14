@@ -6,7 +6,7 @@ import {
   lightTheme,
 } from "@rainbow-me/rainbowkit";
 import { appNetwork, envVars } from "@/utilities";
-import { customWalletConnectConnector } from "@/utilities/wagmi/walletConnectConnector";
+// import { customWalletConnectConnector } from "@/utilities/wagmi/walletConnectConnector";
 import { arbitrum, optimism, optimismGoerli, sepolia } from "wagmi/chains";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
