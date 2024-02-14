@@ -147,7 +147,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
             Add milestone
           </h4>
           <Button
-            className="bg-transparent p-4 hover:bg-transparent hover:opacity-75"
+            className="bg-transparent p-4 hover:bg-transparent hover:opacity-75 text-black dark:text-zinc-100"
             onClick={() => {
               router.push(
                 PAGES.PROJECT.TABS.SELECTED_TAB(

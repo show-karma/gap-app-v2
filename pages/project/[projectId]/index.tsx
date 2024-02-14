@@ -26,6 +26,7 @@ import {
 } from "@/components";
 import { Hex } from "viem";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
+import formatCurrency from "@/utilities/formatCurrency";
 
 interface Props {
   children: ReactNode;
@@ -150,7 +151,7 @@ export const NestedLayout = ({ children }: Props) => {
   return (
     <div>
       <div className="relative border-b border-gray-200 pb-5 sm:pb-0">
-        <div className="px-4 sm:px-6 lg:px-8 md:flex py-8 md:items-center md:justify-between flex flex-row max-lg:flex-col gap-4">
+        <div className="px-4 sm:px-6 lg:px-8 md:flex py-8 md:items-start md:justify-between flex flex-row max-lg:flex-col gap-4">
           <h1
             className={cn(
               loading
@@ -238,10 +239,15 @@ export const NestedLayout = ({ children }: Props) => {
                       router.pathname.split("/")[3]
                       ? "border-primary-500 text-primary-600"
                       : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
-                    "whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium"
+                    "whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium flex flex-row gap-2 items-center"
                   )}
                 >
                   {tab.name}
+                  {tab.name === "Grants" && project?.grants?.length ? (
+                    <div className="bg-zinc-200 dark:bg-zinc-800 dark:text-blue-300 px-1 py-1 rounded-full h-7 w-7 text-xs items-center flex flex-row justify-center">
+                      {formatCurrency(project?.grants?.length || 0)}
+                    </div>
+                  ) : null}
                 </Link>
               ))}
             </nav>

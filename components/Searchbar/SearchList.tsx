@@ -66,7 +66,7 @@ export const SearchList: React.FC<Props> = ({
             <div className="w-full text-center">No results found.</div>
             <div
               onClick={() => triggerCreateProjectModal()}
-              className="mt-2 cursor-pointer rounded-sm bg-brand-blue px-3 py-2 text-white"
+              className="mt-2 cursor-pointer rounded-sm bg-brand-blue px-3 py-2 text-white font-bold"
             >
               Create a project
             </div>

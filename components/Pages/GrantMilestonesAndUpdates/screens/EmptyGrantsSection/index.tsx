@@ -18,10 +18,10 @@ export const EmptyGrantsSection: FC = () => {
             className="h-[185px] w-[438px] object-cover"
           />
           <div className="flex w-full flex-col items-center justify-center gap-3">
-            <p className="text-center text-lg font-semibold text-black ">
+            <p className="text-center text-lg font-semibold text-black dark:text-zinc-100 ">
               Welcome to the Grants section!
             </p>
-            <p className="text-center text-base font-normal text-black ">
+            <p className="text-center text-base font-normal text-black dark:text-zinc-100 ">
               {MESSAGES.PROJECT.EMPTY.GRANTS.NOT_CREATED}
             </p>
           </div>
@@ -30,14 +30,14 @@ export const EmptyGrantsSection: FC = () => {
     );
   }
   return (
-    <div className="flex flex-1 flex-row gap-6">
+    <div className="flex flex-1 flex-row max-lg:flex-col gap-6">
       <div
         className="flex h-96 border-spacing-4 flex-col items-center justify-center gap-5 rounded border border-blue-600 dark:bg-zinc-900 bg-[#EEF4FF] px-8"
         style={{
           border: "dashed 2px #155EEF",
         }}
       >
-        <p className="w-max text-center text-lg font-semibold text-black dark:text-zinc-200">
+        <p className="w-full text-center text-lg break-words h-max font-semibold text-black dark:text-zinc-200">
           Go ahead and create your first grant
         </p>
         <Link

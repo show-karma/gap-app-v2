@@ -187,7 +187,9 @@ export default function Header() {
                   </Popover.Button>
                 </div>
 
-                <Searchbar />
+                <div className="hidden lg:flex">
+                  <Searchbar />
+                </div>
                 <div className="hidden lg:flex lg:items-center lg:justify-end lg:gap-x-3">
                   <ExternalLink href={karmaLinks.githubSDK}>
                     <button className="rounded-md bg-white w-max dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 shadow-sm hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
@@ -355,7 +357,9 @@ export default function Header() {
                     Search
                   </button>
                 </form> */}
-
+                <div className=" px-3">
+                  <Searchbar />
+                </div>
                 <div className="mt-8 px-3 flex flex-col gap-4">
                   <ExternalLink href={karmaLinks.githubSDK}>
                     <button className="rounded-md bg-white w-full dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 shadow-sm hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
