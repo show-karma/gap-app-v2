@@ -31,7 +31,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
     >
       <MDEditor
         className={cn(
-          "flex-1 bg-white dark:bg-zinc-900 dark:text-white text-black",
+          "flex-1 bg-white dark:bg-zinc-900 dark:text-white text-black dark:border-gray-600",
           className
         )}
         value={value}

@@ -4,9 +4,15 @@ import Head from "next/head";
 import { blo } from "blo";
 import { useAccount } from "wagmi";
 import { Community } from "@show-karma/karma-gap-sdk";
-import { MESSAGES, PAGES, getCommunitiesOf } from "@/utilities";
+import {
+  MESSAGES,
+  PAGES,
+  defaultMetadata,
+  getCommunitiesOf,
+} from "@/utilities";
 import Link from "next/link";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { NextSeo } from "next-seo";
 
 export default function CommunitiesToAdmin() {
   const { address, isConnected } = useAccount();
@@ -36,10 +42,31 @@ export default function CommunitiesToAdmin() {
 
   return (
     <>
-      <Head>
-        <title>Gap</title>
-        <meta name="title" content="Gap" />
-      </Head>
+      <NextSeo
+        title={defaultMetadata.title}
+        description={defaultMetadata.description}
+        twitter={{
+          handle: defaultMetadata.twitter.creator,
+          site: defaultMetadata.twitter.site,
+          cardType: "summary_large_image",
+        }}
+        openGraph={{
+          url: defaultMetadata.openGraph.url,
+          title: defaultMetadata.title,
+          description: defaultMetadata.description,
+          images: defaultMetadata.openGraph.images.map((image) => ({
+            url: image,
+            alt: defaultMetadata.title,
+          })),
+          site_name: defaultMetadata.openGraph.siteName,
+        }}
+        additionalLinkTags={[
+          {
+            rel: "icon",
+            href: "/favicon.png",
+          },
+        ]}
+      />
 
       <div className="px-4 sm:px-6 lg:px-8 py-5">
         <div className="text-2xl font-bold">Communities to review</div>

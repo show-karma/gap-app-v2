@@ -3,7 +3,7 @@ import { arbitrum, optimism, optimismGoerli, sepolia } from "viem/chains";
 import type { TNetwork } from "@show-karma/karma-gap-sdk";
 
 export const appNetwork: [Chain, Chain, ...Chain[]] =
-  process.env.NEXT_PUBLIC_ENV === "production"
+  process.env.NEXT_PUBLIC_ENV === "productionuction"
     ? [optimism, arbitrum]
     : [optimismGoerli, sepolia];
 

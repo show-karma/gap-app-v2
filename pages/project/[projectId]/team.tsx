@@ -1,34 +1,104 @@
+/* eslint-disable @next/next/no-img-element */
 import React from "react";
 import { ProjectPageLayout } from ".";
-import BlockiesSvg from "blockies-react-svg";
-import { shortAddress } from "@/utilities";
+import {
+  defaultMetadata,
+  getMetadata,
+  shortAddress,
+  zeroUID,
+} from "@/utilities";
+import { blo } from "blo";
+import { useProjectStore } from "@/store";
+import { Hex } from "viem";
+import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
+import { IProjectDetails } from "@show-karma/karma-gap-sdk";
+import { NextSeo } from "next-seo";
 
-function TeamPage() {
-  return (
-    <div className="py-5">
-      <div className="font-semibold">Built By</div>
-      <div className="mt-3 group block flex-shrink-0">
-        <div className="flex items-center">
-          <div>
-            <BlockiesSvg
-              className="inline-block h-9 w-9 rounded-md"
-              address={`0x0694e8C9D228435c1053FCDA01809196D82549D2`}
-              size={9}
-            />
-          </div>
-          <div className="ml-3">
-            <p className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
-              tarzanandjane.eth
-            </p>
-            <p className="text-xs font-medium text-gray-500 group-hover:text-gray-700">
-              {shortAddress("0x0694e8C9D228435c1053FCDA01809196D82549D2")}
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const { params } = context;
+  const projectId = params?.projectId as string;
+
+  const projectInfo = await getMetadata<IProjectDetails>(
+    "projects",
+    projectId as Hex
   );
+
+  if (projectInfo?.uid === zeroUID || !projectInfo) {
+    return {
+      notFound: true,
+    };
+  }
+  return {
+    props: {
+      projectTitle: projectInfo?.title || "",
+      projectDesc: projectInfo?.description?.substring(0, 80) || "",
+    },
+  };
 }
+const TeamPage = ({
+  projectTitle,
+  projectDesc,
+}: InferGetServerSidePropsType<typeof getServerSideProps>) => {
+  const dynamicMetadata = {
+    title: `Karma GAP - ${projectTitle}`,
+    description: projectDesc,
+  };
+  const project = useProjectStore((state) => state.project);
+  return (
+    <>
+      <NextSeo
+        title={dynamicMetadata.title || defaultMetadata.title}
+        description={dynamicMetadata.description || defaultMetadata.description}
+        twitter={{
+          handle: defaultMetadata.twitter.creator,
+          site: defaultMetadata.twitter.site,
+          cardType: "summary_large_image",
+        }}
+        openGraph={{
+          url: defaultMetadata.openGraph.url,
+          title: dynamicMetadata.title || defaultMetadata.title,
+          description:
+            dynamicMetadata.description || defaultMetadata.description,
+          images: defaultMetadata.openGraph.images.map((image) => ({
+            url: image,
+            alt: dynamicMetadata.title || defaultMetadata.title,
+          })),
+          site_name: defaultMetadata.openGraph.siteName,
+        }}
+        additionalLinkTags={[
+          {
+            rel: "icon",
+            href: "/favicon.png",
+          },
+        ]}
+      />
+      <div className="pt-5 pb-20">
+        <div className="font-semibold text-black dark:text-white">Built By</div>
+        {project?.members.map((member) => (
+          <div key={member.uid} className="mt-3 group block flex-shrink-0">
+            <div className="flex items-center">
+              <div>
+                <img
+                  src={blo((member.details?.name as Hex) || member.recipient)}
+                  alt={member.details?.name || member.recipient}
+                  className="inline-block h-9 w-9 rounded-md"
+                />
+              </div>
+              <div className="ml-3">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-400 ">
+                  {member.details?.name || member.recipient}
+                </p>
+                <p className="text-xs font-medium text-gray-500 dark:text-gray-300 ">
+                  {shortAddress(member.details?.name || member.recipient)}
+                </p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+};
 
 TeamPage.getLayout = ProjectPageLayout;
 

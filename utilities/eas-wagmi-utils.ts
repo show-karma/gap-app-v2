@@ -3,9 +3,9 @@
 import type { JsonRpcProvider, JsonRpcSigner } from "@ethersproject/providers";
 import type { PublicClient, WalletClient } from "@wagmi/core";
 import { providers } from "ethers";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { type HttpTransport } from "viem";
-import { usePublicClient, useWalletClient } from "wagmi";
+import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 
 export function publicClientToProvider(publicClient: PublicClient) {
   const { chain, transport } = publicClient;
@@ -38,9 +38,14 @@ export function walletClientToSigner(walletClient: WalletClient) {
 
 export function useSigner() {
   const { data: walletClient } = useWalletClient();
+  const { isConnected, address } = useAccount();
 
   const [signer, setSigner] = useState<JsonRpcSigner | undefined>(undefined);
-  useEffect(() => {
+  useMemo(() => {
+    if (!isConnected) {
+      setSigner(undefined);
+      return;
+    }
     async function getSigner() {
       if (!walletClient) return;
 
@@ -50,7 +55,7 @@ export function useSigner() {
     }
 
     getSigner();
-  }, [walletClient]);
+  }, [walletClient, address]);
   return signer;
 }
 

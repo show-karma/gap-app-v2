@@ -12,24 +12,29 @@ import {
 import { Community, ICommunityDetails } from "@show-karma/karma-gap-sdk";
 import { CommunityFeed, CommunityGrants } from "@/components";
 import { getMetadata } from "@/utilities/sdk/getMetadata";
-import { Metadata } from "next";
+import {
+  GetServerSidePropsContext,
+  InferGetServerSidePropsType,
+  Metadata,
+} from "next";
 import { Hex } from "viem";
 import { notFound } from "next/navigation";
 import Head from "next/head";
+import { NextSeo } from "next-seo";
 
 type Props = {
   params: {
-    communityID: string;
+    communityId: string;
   };
 };
 
 // export async function generateMetadata({ params }: Props): Promise<Metadata> {
-//   const { communityID } = params;
+//   const { communityId } = params;
 //   let name: string | undefined;
 //   try {
 //     const communityInfo = await getMetadata<ICommunityDetails>(
 //       "communities",
-//       communityID as Hex
+//       communityId as Hex
 //     );
 //     name = communityInfo?.name;
 //     // const imageURL = communityInfo?.details?.imageURL;
@@ -42,33 +47,54 @@ type Props = {
 
 //   return {
 //     ...defaultMetadata,
-//     title: `Karma GAP - ${name || communityID} community grants`,
+//     title: `Karma GAP - ${name || communityId} community grants`,
 //     description: `View the list of grants issued by ${
-//       name || communityID
+//       name || communityId
 //     } and the grantee updates.`,
 //     openGraph: {
 //       ...ogMeta,
-//       title: `Karma GAP - ${name || communityID} community grants`,
+//       title: `Karma GAP - ${name || communityId} community grants`,
 //       description: `View the list of grants issued by ${
-//         name || communityID
+//         name || communityId
 //       } and the grantee updates.`,
 //       // images: [imageURL || ''],
 //     },
 //     twitter: {
 //       ...twitterMeta,
 //       title: `Karma GAP - ${
-//         name || communityID || communityID
+//         name || communityId || communityId
 //       } community grants`,
 //       description: `View the list of grants issued by ${
-//         name || communityID
+//         name || communityId
 //       } and the grantee updates.`,
 //     },
 //   };
 // }
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const { params } = context;
+  const communityId = params?.communityId as string;
+  const communityInfo = await getMetadata<ICommunityDetails>(
+    "communities",
+    communityId as Hex
+  );
+  if (communityInfo?.uid === zeroUID || !communityInfo) {
+    return {
+      notFound: true,
+    };
+  }
+  return {
+    props: {
+      communityId,
+      communityName: communityInfo?.name || "",
+    },
+  };
+}
 
-export default function Index() {
+export default function Index({
+  communityId,
+  communityName,
+}: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const router = useRouter();
-  const communityId = router.query.communityId as string;
   const { gap } = useGap();
 
   // Call API
@@ -102,12 +128,41 @@ export default function Index() {
     fetchDetails();
   }, [communityId, gap]);
 
+  const dynamicMetadata = {
+    title: `Karma GAP - ${communityName} community grants`,
+    description: `View the list of grants issued by ${
+      communityName || communityId
+    } and the grantee updates.`,
+  };
+
   return (
     <>
-      <Head>
-        <title>Gap</title>
-        <meta name="title" content="Gap" />
-      </Head>
+      <NextSeo
+        title={dynamicMetadata.title || defaultMetadata.title}
+        description={dynamicMetadata.description || defaultMetadata.description}
+        twitter={{
+          handle: defaultMetadata.twitter.creator,
+          site: defaultMetadata.twitter.site,
+          cardType: "summary_large_image",
+        }}
+        openGraph={{
+          url: defaultMetadata.openGraph.url,
+          title: dynamicMetadata.title || defaultMetadata.title,
+          description:
+            dynamicMetadata.description || defaultMetadata.description,
+          images: defaultMetadata.openGraph.images.map((image) => ({
+            url: image,
+            alt: dynamicMetadata.title || defaultMetadata.title,
+          })),
+          site_name: defaultMetadata.openGraph.siteName,
+        }}
+        additionalLinkTags={[
+          {
+            rel: "icon",
+            href: "/favicon.png",
+          },
+        ]}
+      />
       <div className="px-4 sm:px-6 lg:px-8 py-5">
         <div className="py-8 rounded-xl bg-black border border-primary-800 text-center flex flex-col gap-2 justify-center w-full items-center">
           <div className="flex justify-center">

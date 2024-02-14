@@ -32,14 +32,57 @@ export const CommunityGrants = () => {
   const router = useRouter();
   const communityId = router.query.communityId as string;
   const [categoriesOptions, setCategoriesOptions] = useState<string[]>([]);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  const [selectedSort, setSelectedSort] = useState<SortByOptions>(
-    "recent" as SortByOptions
-  );
-  const [selectedStatus, setSelectedStatus] = useState<StatusOptions>(
-    "all" as StatusOptions
-  );
+  // const [selectedSort, setSelectedSort] = useState<SortByOptions>(
+  //   "recent" as SortByOptions
+  // );
+  // const [selectedStatus, setSelectedStatus] = useState<StatusOptions>(
+  //   "all" as StatusOptions
+  // );
+  const selectedCategories = useMemo(() => {
+    return typeof router.query.categories === "string" &&
+      router.query.categories.length
+      ? (router.query.categories as string).split(",")
+      : [];
+  }, [router.query.categories]);
+  const selectedSort = (router.query.sort as SortByOptions) || "recent";
+  const selectedStatus = (router.query.status as StatusOptions) || "all";
+
+  const changeCategoriesQuery = (query: string[]) => {
+    router.push({
+      pathname: router.pathname,
+      query: {
+        communityId: communityId,
+        sort: selectedSort,
+        status: selectedStatus,
+        categories: query.length ? query.join(",") : undefined,
+      },
+    });
+  };
+
+  const changeSortQuery = (query: SortByOptions) => {
+    router.push({
+      pathname: router.pathname,
+      query: {
+        communityId: communityId,
+        sort: query,
+        status: selectedStatus,
+        categories: selectedCategories,
+      },
+    });
+  };
+
+  const changeStatusQuery = (query: StatusOptions) => {
+    router.push({
+      pathname: router.pathname,
+      query: {
+        communityId: communityId,
+        sort: selectedSort,
+        status: query,
+        categories: selectedCategories,
+      },
+    });
+  };
 
   // Call API
   const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
@@ -48,7 +91,7 @@ export const CommunityGrants = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalGrants, setTotalGrants] = useState(0);
 
-  useEffect(() => {
+  useMemo(() => {
     if (!communityId || communityId === zeroUID) return;
 
     const getCategories = async () => {
@@ -114,29 +157,34 @@ export const CommunityGrants = () => {
         <div className="text-xl font-bold">
           Total Grants {totalGrants ? `(${totalGrants})` : null}
         </div>
-        <div className="flex items-center gap-x-5">
+        <div className="flex items-center gap-x-5 flex-wrap gap-y-2">
           {/* Filter by category start */}
           <Listbox
             value={selectedCategories}
-            onChange={setSelectedCategories}
+            // onChange={setSelectedCategories}
+            onChange={(values) => {
+              changeCategoriesQuery(values);
+            }}
             multiple
           >
             {({ open }) => (
-              <div className="flex items-center gap-x-2">
+              <div className="flex items-center gap-x-2 max-sm:w-full max-sm:justify-between">
                 <Listbox.Label className="block text-sm font-medium leading-6 ">
                   Filter by category
                 </Listbox.Label>
                 <div className="relative flex-1 w-56">
-                  <Listbox.Button className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
-                    <p className="block truncate">
-                      {selectedCategories.length > 0
-                        ? `${selectedCategories.length} 
-                        ${pluralize(
-                          "category",
-                          selectedCategories.length
-                        )} selected`
-                        : "Categories"}
-                    </p>
+                  <Listbox.Button className="relative w-full cursor-default rounded-md bg-white dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
+                    {selectedCategories.length > 0 ? (
+                      <p className="flex flex-row gap-1">
+                        {selectedCategories.length}
+                        <span>
+                          {pluralize("category", selectedCategories.length)}{" "}
+                          selected
+                        </span>
+                      </p>
+                    ) : (
+                      <p>Categories</p>
+                    )}
                     <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                       <ChevronUpDownIcon
                         className="h-5 w-5 text-gray-400"
@@ -152,15 +200,15 @@ export const CommunityGrants = () => {
                     leaveFrom="opacity-100"
                     leaveTo="opacity-0"
                   >
-                    <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                    <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-zinc-800 dark:text-zinc-200 py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                       {categoriesOptions.map((category) => (
                         <Listbox.Option
                           key={category}
                           className={({ active }) =>
                             cn(
                               active
-                                ? "bg-primary-600 text-white"
-                                : "text-gray-900",
+                                ? "bg-primary-600 text-white dark:text-gray-300 dark:bg-zinc-900"
+                                : "text-gray-900 dark:text-gray-200",
                               "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
                             )
                           }
@@ -183,7 +231,9 @@ export const CommunityGrants = () => {
                               {selected ? (
                                 <span
                                   className={cn(
-                                    active ? "text-white" : "text-primary-600",
+                                    active
+                                      ? "text-white"
+                                      : "text-primary-600 dark:text-primary-400",
                                     "absolute inset-y-0 right-0 flex items-center pr-4"
                                   )}
                                 >
@@ -206,14 +256,19 @@ export const CommunityGrants = () => {
           {/* Filter by category end */}
 
           {/* Sort start */}
-          <Listbox value={selectedSort} onChange={setSelectedSort}>
+          <Listbox
+            value={selectedSort}
+            onChange={(value) => {
+              changeSortQuery(value);
+            }}
+          >
             {({ open }) => (
-              <div className="flex items-center gap-x-2">
+              <div className="flex items-center gap-x-2  max-sm:w-full max-sm:justify-between">
                 <Listbox.Label className="block text-sm font-medium leading-6 ">
                   Sort by
                 </Listbox.Label>
                 <div className="relative flex-1 w-32">
-                  <Listbox.Button className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
+                  <Listbox.Button className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left  dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
                     <span className="block truncate">
                       {sortOptions[selectedSort]}
                     </span>
@@ -232,15 +287,15 @@ export const CommunityGrants = () => {
                     leaveFrom="opacity-100"
                     leaveTo="opacity-0"
                   >
-                    <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                    <Listbox.Options className="absolute  z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg dark:bg-zinc-800 dark:text-zinc-200 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                       {Object.keys(sortOptions).map((sortOption) => (
                         <Listbox.Option
                           key={sortOption}
                           className={({ active }) =>
                             cn(
                               active
-                                ? "bg-primary-600 text-white"
-                                : "text-gray-900",
+                                ? "bg-primary-600 text-white dark:text-gray-300 dark:bg-zinc-900"
+                                : "text-gray-900 dark:text-gray-200 ",
                               "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
                             )
                           }
@@ -263,7 +318,9 @@ export const CommunityGrants = () => {
                               {selected ? (
                                 <span
                                   className={cn(
-                                    active ? "text-white" : "text-primary-600",
+                                    active
+                                      ? "text-white"
+                                      : "text-primary-600 dark:text-primary-400",
                                     "absolute inset-y-0 right-0 flex items-center pr-4"
                                   )}
                                 >
@@ -286,14 +343,19 @@ export const CommunityGrants = () => {
           {/* Sort end */}
 
           {/* Status start */}
-          <Listbox value={selectedStatus} onChange={setSelectedStatus}>
+          <Listbox
+            value={selectedStatus}
+            onChange={(value) => {
+              changeStatusQuery(value);
+            }}
+          >
             {({ open }) => (
-              <div className="flex items-center gap-x-2">
+              <div className="flex items-center gap-x-2  max-sm:w-full max-sm:justify-between">
                 <Listbox.Label className="block text-sm font-medium leading-6 ">
                   Status
                 </Listbox.Label>
                 <div className="relative flex-1 w-36">
-                  <Listbox.Button className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
+                  <Listbox.Button className="relative w-full cursor-default  dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
                     <span className="block truncate">
                       {statuses[selectedStatus]}
                     </span>
@@ -312,15 +374,15 @@ export const CommunityGrants = () => {
                     leaveFrom="opacity-100"
                     leaveTo="opacity-0"
                   >
-                    <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                    <Listbox.Options className="absolute z-10 dark:bg-zinc-800 dark:text-zinc-200 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                       {Object.keys(statuses).map((statusOption) => (
                         <Listbox.Option
                           key={statusOption}
                           className={({ active }) =>
                             cn(
                               active
-                                ? "bg-primary-600 text-white"
-                                : "text-gray-900",
+                                ? "bg-primary-600 text-white dark:text-gray-300 dark:bg-zinc-900"
+                                : "text-gray-900 dark:text-gray-200",
                               "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
                             )
                           }
@@ -343,7 +405,9 @@ export const CommunityGrants = () => {
                               {selected ? (
                                 <span
                                   className={cn(
-                                    active ? "text-white" : "text-primary-600",
+                                    active
+                                      ? "text-white"
+                                      : "text-primary-600 dark:text-primary-400",
                                     "absolute inset-y-0 right-0 flex items-center pr-4"
                                   )}
                                 >

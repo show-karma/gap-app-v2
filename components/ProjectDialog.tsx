@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, useEffect, useState } from "react";
+import { FC, Fragment, ReactNode, useEffect, useState } from "react";
 import { Dialog, Tab, Transition } from "@headlessui/react";
 import {
   ChevronRightIcon,
@@ -12,7 +12,7 @@ import {
   appNetwork,
   cn,
   createNewProject,
-  getContractOwner,
+  updateProject,
   useSigner,
 } from "@/utilities";
 import { z } from "zod";
@@ -35,6 +35,8 @@ import {
   DiscordIcon,
   WebsiteIcon,
 } from "./Icons";
+import { useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store/owner";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -72,33 +74,55 @@ const schema = z.object({
 type SchemaType = z.infer<typeof schema>;
 
 type ProjectDialogProps = {
-  dataToUpdate?: {
-    title?: string;
-    recipient?: string;
-    description?: string;
-    imageURL?: string;
-    tags?: string[];
-    links?: {
-      type: string;
-      url: string;
-    }[];
-    members?: string[];
+  buttonElement?: {
+    text?: string;
+    icon?: ReactNode;
+    iconSide?: "left" | "right";
+    styleClass: string;
   };
+  projectToUpdate?: Project;
 };
 
-export const ProjectDialog: FC<ProjectDialogProps> = ({ dataToUpdate }) => {
+export const ProjectDialog: FC<ProjectDialogProps> = ({
+  buttonElement = {
+    icon: <PlusIcon className="h-4 w-4 text-primary-600" />,
+    iconSide: "left",
+    text: "New Project",
+    styleClass: "",
+  },
+  projectToUpdate,
+}) => {
+  const dataToUpdate = {
+    description: projectToUpdate?.details?.description || "",
+    title: projectToUpdate?.details?.title || "",
+    imageURL: projectToUpdate?.details?.imageURL,
+    twitter: projectToUpdate?.details?.links?.find(
+      (link) => link.type === "twitter"
+    )?.url,
+    github: projectToUpdate?.details?.links?.find(
+      (link) => link.type === "github"
+    )?.url,
+    discord: projectToUpdate?.details?.links?.find(
+      (link) => link.type === "discord"
+    )?.url,
+    website: projectToUpdate?.details?.links?.find(
+      (link) => link.type === "website"
+    )?.url,
+    linkedin: projectToUpdate?.details?.links?.find(
+      (link) => link.type === "linkedin"
+    )?.url,
+    tags: projectToUpdate?.details?.tags.map((item) => item.name),
+    members: projectToUpdate?.members.map((item) => item.recipient),
+    recipient: projectToUpdate?.recipient,
+  };
+
   let [isOpen, setIsOpen] = useState(false);
+  const refreshProject = useProjectStore((state) => state.refreshProject);
   const [step, setStep] = useState(0);
 
   const signer = useSigner();
 
-  const [isOwner, setIsOwner] = useState(false);
-  useEffect(() => {
-    if (!signer) return;
-    getContractOwner(signer as any).then((owner) => {
-      setIsOwner(owner === address);
-    });
-  }, [signer]);
+  const isOwner = useOwnerStore((state) => state.isOwner);
 
   function closeModal() {
     setIsOpen(false);
@@ -116,19 +140,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({ dataToUpdate }) => {
     resolver: zodResolver(schema),
     reValidateMode: "onChange",
     mode: "onChange",
-    defaultValues: {
-      title: dataToUpdate?.title || "",
-      recipient: dataToUpdate?.recipient || "",
-      twitter: dataToUpdate?.links?.find((link) => link.type === "twitter")
-        ?.url,
-      github: dataToUpdate?.links?.find((link) => link.type === "github")?.url,
-      discord: dataToUpdate?.links?.find((link) => link.type === "discord")
-        ?.url,
-      website: dataToUpdate?.links?.find((link) => link.type === "website")
-        ?.url,
-      linkedin: dataToUpdate?.links?.find((link) => link.type === "linkedin")
-        ?.url,
-    },
+    defaultValues: dataToUpdate,
   });
 
   const [description, setDescription] = useState(
@@ -237,13 +249,13 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({ dataToUpdate }) => {
         />
         <p className="text-red-500">{errors.tags?.message}</p>
       </div> */}
-          {isOwner && !dataToUpdate && (
+          {isOwner && !projectToUpdate && (
             <div className="flex w-full flex-col gap-2">
-              <label htmlFor="tags-input" className={labelStyle}>
+              <label htmlFor="recipient-input" className={labelStyle}>
                 Recipient address
               </label>
               <input
-                id="tags-input"
+                id="recipient-input"
                 type="text"
                 className={inputStyle}
                 placeholder="0xab...0xbf2"
@@ -418,7 +430,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({ dataToUpdate }) => {
                     key={member}
                     className="flex w-full flex-row items-center justify-between truncate rounded border border-gray-400 p-2 max-sm:max-w-[330px]"
                   >
-                    <p className="w-min truncate font-sans font-normal text-slate-700">
+                    <p className="w-min truncate font-sans font-normal text-slate-700 dark:text-zinc-100">
                       {member}
                     </p>
                     <button
@@ -468,15 +480,13 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({ dataToUpdate }) => {
   const { switchNetworkAsync } = useSwitchNetwork({
     chainId: appNetwork[0].id,
   });
-  const [isLoadingNewProject, setIsLoadingNewProject] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const { openConnectModal } = useConnectModal();
   const router = useRouter();
 
-  const onSubmit = async (data: SchemaType) => {
-    if (!chain) return;
-
+  const createProject = async (data: SchemaType) => {
     try {
-      setIsLoadingNewProject(true);
+      setIsLoading(true);
       if (!isConnected) {
         openConnectModal?.();
         return;
@@ -539,9 +549,58 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({ dataToUpdate }) => {
       closeModal();
     } catch (error) {
       console.log({ error });
-      toast.error(MESSAGES.PROJECT.CREATE.ERROR);
+      toast.error(MESSAGES.PROJECT.UPDATE.ERROR);
     } finally {
-      setIsLoadingNewProject(false);
+      setIsLoading(false);
+    }
+  };
+
+  const updateThisProject = async (data: SchemaType) => {
+    try {
+      setIsLoading(true);
+      if (!isConnected) {
+        openConnectModal?.();
+        return;
+      }
+      if (!address || !projectToUpdate) return;
+      const gap = getGapClient(appNetwork[0].id);
+      if (!gap) return;
+      if (chain && chain.id !== projectToUpdate.chainID) {
+        await switchNetworkAsync?.(projectToUpdate.chainID);
+      }
+      await updateProject(
+        projectToUpdate,
+        {
+          title: data.title,
+          description: description,
+          tags: dataToUpdate?.tags?.map((item) => ({ name: item })) || [],
+        },
+        {
+          discord: data.discord,
+          github: data.github,
+          linkedin: data.linkedin,
+          twitter: data.twitter,
+        },
+        signer
+      ).then(async () => {
+        toast.success(MESSAGES.PROJECT.UPDATE.SUCCESS);
+        closeModal();
+      });
+      refreshProject();
+    } catch (error) {
+      console.log({ error });
+      toast.error(MESSAGES.PROJECT.UPDATE.ERROR);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onSubmit = async (data: SchemaType) => {
+    if (!chain) return;
+    if (projectToUpdate) {
+      updateThisProject(data);
+    } else {
+      createProject(data);
     }
   };
 
@@ -549,10 +608,14 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({ dataToUpdate }) => {
     <>
       <button
         onClick={openModal}
-        className="flex items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100 shadow-sm hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900"
+        className={cn(
+          "flex justify-center min-w-max items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100 shadow-sm hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900",
+          buttonElement.styleClass
+        )}
       >
-        <PlusIcon className="h-4 w-4 text-primary-600" />
-        New Project
+        {buttonElement.iconSide === "left" && buttonElement.icon}
+        {buttonElement.text}
+        {buttonElement.iconSide === "right" && buttonElement.icon}
       </button>
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeModal}>
@@ -584,7 +647,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({ dataToUpdate }) => {
                     as="h3"
                     className="text-xl font-bold leading-6 text-gray-900 dark:text-zinc-100"
                   >
-                    Create a new project!
+                    {projectToUpdate ? "Edit project" : "Create a new project!"}
                   </Dialog.Title>
                   <button
                     type="button"
@@ -593,20 +656,24 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({ dataToUpdate }) => {
                   >
                     <XMarkIcon className="w-5 h-5" />
                   </button>
-                  <div className="mt-2">
-                    <p className="text-sm text-gray-600 dark:text-zinc-300">
-                      We’ll start by outlining some basics about your project.
-                      Don’t worry about grants right now, you can add that from
-                      your Project Page once it’s been created.
-                    </p>
-                  </div>
-                  <div className="bg-yellow-100 flex flex-row gap-4 rounded-md text-sm px-4 py-2 items-center my-3 dark:bg-yellow-900  text-orange-900 dark:text-white">
-                    <ExclamationTriangleIcon className="w-5 h-5" />
-                    <p>
-                      If you have already created this project in another
-                      platform, make sure you connect to the right wallet.
-                    </p>
-                  </div>
+                  {!projectToUpdate && (
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-600 dark:text-zinc-300">
+                        We’ll start by outlining some basics about your project.
+                        Don’t worry about grants right now, you can add that
+                        from your Project Page once it’s been created.
+                      </p>
+                    </div>
+                  )}
+                  {!projectToUpdate && (
+                    <div className="bg-yellow-100 flex flex-row gap-4 rounded-md text-sm px-4 py-2 items-center my-3 dark:bg-yellow-900  text-orange-900 dark:text-white">
+                      <ExclamationTriangleIcon className="w-5 h-5" />
+                      <p>
+                        If you have already created this project in another
+                        platform, make sure you connect to the right wallet.
+                      </p>
+                    </div>
+                  )}
                   {/* Screens start */}
                   <form onSubmit={handleSubmit(onSubmit)}>
                     <div className="w-full px-2 py-4 sm:px-0">
@@ -623,6 +690,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({ dataToUpdate }) => {
                                   : "text-zinc-600 dark:text-blue-100 border-t-4 border-t-zinc-400 hover:opacity-70"
                               )}
                               onClick={() => setStep(index)}
+                              disabled={
+                                projectToUpdate &&
+                                index === categories.length - 1
+                              }
                             >
                               <h5>{category.title}</h5>
                               <p className="text-zinc-600 dark:text-blue-100">
@@ -655,7 +726,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({ dataToUpdate }) => {
                             );
                           }
                         }}
-                        disabled={isLoadingNewProject}
+                        disabled={isLoading}
                       >
                         {step === 0 ? (
                           "Cancel"
@@ -666,31 +737,35 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({ dataToUpdate }) => {
                           </>
                         )}
                       </button>
-                      {step < 2 && (
+                      {step < 2 && !(projectToUpdate && step === 1) && (
                         <Button
                           type="button"
-                          className="flex disabled:opacity-50 flex-row dark:bg-primary-900 dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-primary-100 px-4 py-2 text-md font-medium text-primary-900 hover:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                          className="flex disabled:opacity-50 flex-row dark:bg-primary-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-primary-100 px-4 py-2 text-md font-medium text-primary-900 hover:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                           onClick={() => {
                             setStep((oldStep) =>
                               oldStep >= 2 ? oldStep : oldStep + 1
                             );
                           }}
-                          disabled={handleErrors() || isLoadingNewProject}
-                          isLoading={isLoadingNewProject}
+                          disabled={handleErrors() || isLoading}
+                          isLoading={isLoading}
                         >
                           Next
                           <ChevronRightIcon className="w-4 h-4" />
                         </Button>
                       )}
-                      {step >= 2 && (
+                      {(step >= 2 || (projectToUpdate && step === 1)) && (
                         <Button
                           type={"submit"}
-                          className="flex disabled:opacity-50 flex-row dark:bg-primary-900 dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-primary-100 px-4 py-2 text-md font-medium text-primary-900 hover:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                          disabled={handleErrors() || isLoadingNewProject}
-                          isLoading={isLoadingNewProject}
+                          className="flex disabled:opacity-50 flex-row dark:bg-primary-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-primary-100 px-4 py-2 text-md font-medium text-primary-900 hover:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                          disabled={handleErrors() || isLoading}
+                          isLoading={isLoading}
                         >
-                          {dataToUpdate ? "Update project" : "Create project"}
-                          <ChevronRightIcon className="w-4 h-4" />
+                          {projectToUpdate
+                            ? "Update project"
+                            : "Create project"}
+                          {!projectToUpdate ? (
+                            <ChevronRightIcon className="w-4 h-4" />
+                          ) : null}
                         </Button>
                       )}
                     </div>

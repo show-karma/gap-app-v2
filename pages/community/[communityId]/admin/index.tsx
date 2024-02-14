@@ -1,12 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { useGap } from "@/hooks";
-import { MESSAGES, PAGES, cn, useSigner, zeroUID } from "@/utilities";
+import {
+  MESSAGES,
+  PAGES,
+  cn,
+  defaultMetadata,
+  useSigner,
+  zeroUID,
+} from "@/utilities";
 import { Community } from "@show-karma/karma-gap-sdk";
 import { CommunityFeed, CommunityGrants } from "@/components";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
 import { useAccount } from "wagmi";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { NextSeo } from "next-seo";
 
 export default function Index() {
   const router = useRouter();
@@ -73,6 +81,31 @@ export default function Index() {
 
   return (
     <>
+      <NextSeo
+        title={defaultMetadata.title}
+        description={defaultMetadata.description}
+        twitter={{
+          handle: defaultMetadata.twitter.creator,
+          site: defaultMetadata.twitter.site,
+          cardType: "summary_large_image",
+        }}
+        openGraph={{
+          url: defaultMetadata.openGraph.url,
+          title: defaultMetadata.title,
+          description: defaultMetadata.description,
+          images: defaultMetadata.openGraph.images.map((image) => ({
+            url: image,
+            alt: defaultMetadata.title,
+          })),
+          site_name: defaultMetadata.openGraph.siteName,
+        }}
+        additionalLinkTags={[
+          {
+            rel: "icon",
+            href: "/favicon.png",
+          },
+        ]}
+      />
       <div className="px-4 sm:px-6 lg:px-8 py-5">
         <div className="py-8 rounded-xl bg-black border border-primary-800 text-center flex flex-col gap-2 justify-center w-full items-center">
           <div className="flex justify-center">
