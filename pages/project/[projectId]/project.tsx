@@ -4,7 +4,7 @@ import { useProjectStore } from "@/store";
 import { DeleteDialog, ProjectDialog, ProjectFeed } from "@/components";
 import { useOwnerStore } from "@/store/owner";
 import { useState } from "react";
-import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import {
   MESSAGES,
   PAGES,
@@ -23,9 +23,8 @@ function ProjectPage() {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isOwner = useOwnerStore((state) => state.isOwner);
   const [isDeleting, setIsDeleting] = useState(false);
-  const { address } = useAccount();
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { address, chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const router = useRouter();
   const signer = useSigner();
 
@@ -34,7 +33,7 @@ function ProjectPage() {
     setIsDeleting(true);
     try {
       if (chain && chain.id !== project.chainID) {
-        await switchNetworkAsync?.(project.chainID);
+        await switchChainAsync?.({ chainId: project.chainID });
       }
       await deleteProject(project, signer)
         .then(async () => {

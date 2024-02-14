@@ -9,7 +9,7 @@ import { UpdateMilestone } from "./UpdateMilestone";
 import { useOwnerStore, useProjectStore } from "@/store";
 import toast from "react-hot-toast";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 
 interface UpdatesProps {
   milestone: Milestone;
@@ -21,15 +21,15 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const handleEditing = (value: boolean) => {
     setIsEditing(value);
   };
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const signer = useSigner();
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
   const undoMilestoneCompletion = async (milestone: Milestone) => {
     try {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
-        await switchNetworkAsync?.(milestone.chainID);
+        await switchChainAsync?.({ chainId: milestone.chainID });
       }
       await milestone.revokeCompletion(signer as any).then(async () => {
         toast.success(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS);

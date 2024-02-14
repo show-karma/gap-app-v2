@@ -21,7 +21,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MarkdownEditor } from "./Utilities/MarkdownEditor";
 import { motion } from "framer-motion";
-import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Project, nullRef } from "@show-karma/karma-gap-sdk";
 import toast from "react-hot-toast";
@@ -475,11 +475,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     return false;
   };
 
-  const { isConnected, address } = useAccount();
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork({
-    chainId: appNetwork[0].id,
-  });
+  const { isConnected, address, chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const [isLoading, setIsLoading] = useState(false);
   const { openConnectModal } = useConnectModal();
   const router = useRouter();
@@ -503,7 +500,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         uid: nullRef,
       });
       if (chain && chain.id !== project.chainID) {
-        await switchNetworkAsync?.(project.chainID);
+        await switchChainAsync?.({ chainId: project.chainID });
       }
 
       await createNewProject(
@@ -566,7 +563,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       const gap = getGapClient(appNetwork[0].id);
       if (!gap) return;
       if (chain && chain.id !== projectToUpdate.chainID) {
-        await switchNetworkAsync?.(projectToUpdate.chainID);
+        await switchChainAsync?.({ chainId: projectToUpdate.chainID });
       }
       await updateProject(
         projectToUpdate,

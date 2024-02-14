@@ -13,7 +13,7 @@ import { z } from "zod";
 
 import { useOwnerStore, useProjectStore } from "@/store";
 import { MESSAGES, PAGES, formatDate, useSigner } from "@/utilities";
-import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import { useGap } from "@/hooks";
 import { Hex } from "viem";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
@@ -69,8 +69,8 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
   });
   const [isLoading, setIsLoading] = useState(false);
   const { gap } = useGap();
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const selectedProject = useProjectStore((state) => state.project);
   const router = useRouter();
 
@@ -112,7 +112,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
     }
     try {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== chainID) {
-        await switchNetworkAsync?.(chainID);
+        await switchChainAsync?.({ chainId: chainID });
       }
       await milestoneToAttest.attest(signer as any).then(async () => {
         toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS);

@@ -20,7 +20,7 @@ import type { FC } from "react";
 import { use, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Hex, isAddress } from "viem";
-import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
 import { Milestone as MilestoneComponent } from "./Milestone";
 
@@ -190,10 +190,9 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
   );
   const [isLoading, setIsLoading] = useState(false);
   const selectedProject = useProjectStore((state) => state.project);
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { switchChainAsync } = useSwitchChain();
   const { gap } = useGap();
-  const { isConnected } = useAccount();
+  const { isConnected, chain } = useAccount();
 
   function premade<T extends GenericQuestion>(
     type: QuestionType,
@@ -289,7 +288,7 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
         uid: nullRef,
       });
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== communityNetworkId) {
-        await switchNetworkAsync?.(communityNetworkId);
+        await switchChainAsync?.({ chainId: communityNetworkId });
       }
       grant.details = new GrantDetails({
         data: {
@@ -376,7 +375,7 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
     try {
       setIsLoading(true);
       if (chain && chain.id !== oldGrant.chainID) {
-        await switchNetworkAsync?.(oldGrant.chainID);
+        await switchChainAsync?.({ chainId: oldGrant.chainID });
       }
       oldGrant.setValues({
         communityUID: data.community,

@@ -10,7 +10,7 @@ import { TrashIcon } from "@heroicons/react/24/outline";
 import type { Grant } from "@show-karma/karma-gap-sdk";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 
 interface GrantDeleteProps {
   grant: Grant;
@@ -19,16 +19,15 @@ interface GrantDeleteProps {
 export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
   const [isDeletingGrant, setIsDeletingGrant] = useState(false);
   const signer = useSigner();
-  const { address } = useAccount();
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { address, chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
   const deleteGrant = async (grant: Grant) => {
     if (!address) return;
     try {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== grant.chainID) {
-        await switchNetworkAsync?.(grant.chainID);
+        await switchChainAsync?.({ chainId: grant.chainID });
       }
       await grant
         .revoke(signer as any)

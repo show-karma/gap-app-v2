@@ -1,14 +1,20 @@
 "use client";
 
 import type { JsonRpcProvider, JsonRpcSigner } from "@ethersproject/providers";
-import type { PublicClient, WalletClient } from "@wagmi/core";
 import { providers } from "ethers";
 import { useEffect, useMemo, useState } from "react";
-import { type HttpTransport } from "viem";
+import {
+  PublicClient,
+  type HttpTransport,
+  Client,
+  Transport,
+  Chain,
+  Account,
+} from "viem";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
 
-export function publicClientToProvider(publicClient: PublicClient) {
-  const { chain, transport } = publicClient;
+export function publicClientToProvider(client: Client<Transport, Chain>) {
+  const { chain, transport } = client;
   const network = {
     chainId: chain.id,
     name: chain.name,
@@ -16,15 +22,17 @@ export function publicClientToProvider(publicClient: PublicClient) {
   };
   if (transport.type === "fallback")
     return new providers.FallbackProvider(
-      (transport.transports as ReturnType<HttpTransport>[]).map(
+      (transport.transports as ReturnType<Transport>[]).map(
         ({ value }) => new providers.JsonRpcProvider(value?.url, network)
       )
     );
   return new providers.JsonRpcProvider(transport.url, network);
 }
 
-export function walletClientToSigner(walletClient: WalletClient) {
-  const { account, chain, transport } = walletClient;
+export function walletClientToSigner(
+  client: Client<Transport, Chain, Account>
+) {
+  const { account, chain, transport } = client;
   const network = {
     chainId: chain.id,
     name: chain.name,
@@ -32,7 +40,6 @@ export function walletClientToSigner(walletClient: WalletClient) {
   };
   const provider = new providers.Web3Provider(transport, network);
   const signer = provider.getSigner(account.address);
-
   return signer;
 }
 

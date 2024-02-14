@@ -12,4 +12,10 @@ export const envVars = {
   NEXT_PUBLIC_SPONSOR_URL: isDev
     ? "https://gapstagapi.karmahq.xyz/attestations/sponsored-txn"
     : "https://gapapi.karmahq.xyz/attestations/sponsored-txn",
+  ALCHEMY: {
+    OPTIMISM: process.env.NEXT_PUBLIC_ALCHEMY_OPTIMISM,
+    ARBITRUM: process.env.NEXT_PUBLIC_ALCHEMY_ARBITRUM,
+    SEPOLIA: process.env.NEXT_PUBLIC_ALCHEMY_SEPOLIA,
+  },
+  PROJECT_ID: process.env.NEXT_PUBLIC_PROJECT_ID || "",
 };

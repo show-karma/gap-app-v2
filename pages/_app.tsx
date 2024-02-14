@@ -7,12 +7,12 @@ import type { AppProps } from "next/app";
 import Footer from "@/components/Utilities/Footer";
 import Header from "@/components/Utilities/Header";
 import { Toaster } from "react-hot-toast";
-import WagmiProvider from "@/components/Utilities/WagmiProvider";
 import NextThemeProvider from "@/components/Utilities/NextThemeProvider";
+import WagmiWrapper from "@/components/Utilities/WagmiProvider";
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <WagmiProvider>
+    <WagmiWrapper>
       <Toaster />
       <NextThemeProvider>
         <div className="min-h-screen flex flex-col justify-between h-full bg-gray-100 dark:bg-black dark:text-white">
@@ -26,7 +26,7 @@ export default function App({ Component, pageProps }: AppProps) {
           <Footer />
         </div>
       </NextThemeProvider>
-    </WagmiProvider>
+    </WagmiWrapper>
   );
 }
 

@@ -15,7 +15,7 @@ import { useRouter } from "next/router";
 import type { FC } from "react";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 
 const labelStyle = "text-sm font-bold text-black";
 
@@ -32,8 +32,8 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const signer = useSigner();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();
@@ -50,7 +50,7 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
         !checkNetworkIsValid(chain?.id) ||
         chain?.id !== grantToComplete.chainID
       ) {
-        await switchNetworkAsync?.(grantToComplete.chainID);
+        await switchChainAsync?.({ chainId: grantToComplete.chainID });
       }
       await grantToComplete
         .complete(signer as any, {

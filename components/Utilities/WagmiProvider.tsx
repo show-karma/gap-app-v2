@@ -1,75 +1,91 @@
 "use client";
-import { WagmiConfig, configureChains, createConfig } from "wagmi";
+import { WagmiProvider, createConfig, http } from "wagmi";
 import {
   RainbowKitProvider,
   connectorsForWallets,
-  getDefaultWallets,
   lightTheme,
 } from "@rainbow-me/rainbowkit";
-import {
-  coinbaseWallet,
-  injectedWallet,
-  metaMaskWallet,
-  rainbowWallet,
-} from "@rainbow-me/rainbowkit/wallets";
-import { appNetwork } from "@/utilities";
-import { alchemyProvider } from "wagmi/providers/alchemy";
-import { publicProvider } from "wagmi/providers/public";
+import { appNetwork, envVars } from "@/utilities";
 import { customWalletConnectConnector } from "@/utilities/wagmi/walletConnectConnector";
+import { arbitrum, optimism, optimismGoerli, sepolia } from "wagmi/chains";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import {
+  rainbowWallet,
+  walletConnectWallet,
+  metaMaskWallet,
+  injectedWallet,
+  coinbaseWallet,
+} from "@rainbow-me/rainbowkit/wallets";
 
-const WagmiProvider = ({ children }: { children: React.ReactNode }) => {
-  const { chains, publicClient, webSocketPublicClient } = configureChains(
-    appNetwork as any,
-    [
-      process.env.NEXT_PUBLIC_ALCHEMY_KEY
-        ? alchemyProvider({
-            apiKey: process.env.NEXT_PUBLIC_ALCHEMY_KEY,
-          })
-        : publicProvider(),
-    ]
-  );
-
-  const connectors = connectorsForWallets([
+const connectors = connectorsForWallets(
+  [
     {
       groupName: "Recommended",
       wallets: [
-        metaMaskWallet({
-          chains,
-          projectId: process.env.NEXT_PUBLIC_PROJECT_ID || "",
-        }),
-        rainbowWallet({
-          chains,
-          projectId: process.env.NEXT_PUBLIC_PROJECT_ID || "",
-        }),
-        coinbaseWallet({
-          chains,
-          appName: `Karma GAP`,
-        }),
-        customWalletConnectConnector(chains),
-        injectedWallet({ chains }),
+        customWalletConnectConnector,
+        // walletConnectWallet,
+        metaMaskWallet,
+        rainbowWallet,
+        coinbaseWallet,
+        injectedWallet,
       ],
     },
-  ]);
+  ],
+  {
+    appName: "Karma GAP",
+    projectId: envVars.PROJECT_ID,
+    walletConnectParameters: {
+      metadata: {
+        name: "Karma GAP",
+        description: "Karma GAP",
+        url: "https://gap.karmahq.xyz",
+        icons: ["https://gap.karmahq.xyz/favicon.png"],
+      },
+    },
+  }
+);
 
-  const wagmiConfig = createConfig({
-    autoConnect: true,
-    connectors,
-    publicClient,
-    webSocketPublicClient,
-  });
+export const wagmiConfig = createConfig({
+  chains: appNetwork as any,
+  transports: {
+    [optimism.id]: envVars.ALCHEMY.OPTIMISM
+      ? http(envVars.ALCHEMY.OPTIMISM)
+      : http(),
+    [arbitrum.id]: envVars.ALCHEMY.ARBITRUM
+      ? http(envVars.ALCHEMY.ARBITRUM)
+      : http(),
+    [optimismGoerli.id]: http(),
+    [sepolia.id]: envVars.ALCHEMY.SEPOLIA
+      ? http(envVars.ALCHEMY.SEPOLIA)
+      : http(),
+  },
+  connectors,
+});
+const WagmiWrapper = ({ children }: { children: React.ReactNode }) => {
+  // const connectors = connectorsForWallets([
+  //   {
+  //     groupName: "Recommended",
+  //     wallets: [
+  //       customWalletConnectConnector(chains),
+  //     ],
+  //   },
+  // ]);
+
+  const queryClient = new QueryClient();
   return (
-    <WagmiConfig config={wagmiConfig}>
-      <RainbowKitProvider
-        chains={chains}
-        theme={lightTheme({
-          accentColor: "#E40536",
-          accentColorForeground: "white",
-          borderRadius: "medium",
-        })}
-      >
-        {children}
-      </RainbowKitProvider>
-    </WagmiConfig>
+    <WagmiProvider config={wagmiConfig}>
+      <QueryClientProvider client={queryClient}>
+        <RainbowKitProvider
+          theme={lightTheme({
+            accentColor: "#E40536",
+            accentColorForeground: "white",
+            borderRadius: "medium",
+          })}
+        >
+          {children}
+        </RainbowKitProvider>
+      </QueryClientProvider>
+    </WagmiProvider>
   );
 };
-export default WagmiProvider;
+export default WagmiWrapper;
