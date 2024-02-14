@@ -23,10 +23,10 @@ const connectors = connectorsForWallets(
       groupName: "Recommended",
       wallets: [
         // customWalletConnectConnector,
-        // walletConnectWallet,
+        walletConnectWallet,
         metaMaskWallet,
         rainbowWallet,
-        // coinbaseWallet,
+        coinbaseWallet,
         injectedWallet,
       ],
     },
