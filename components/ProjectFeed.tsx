@@ -32,6 +32,7 @@ export const ProjectFeed = () => {
         const [data, error, pageInfo]: any = await fetchData(
           `${INDEXER.PROJECT.FEED(projectId as string)}?limit=${itemsPerPage}`
         );
+        if (!data || !data.length) return;
         setFeed(data.slice(0, itemsPerPage * page));
       } catch (error) {
         console.error("Error fetching data:", error);
