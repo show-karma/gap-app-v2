@@ -456,11 +456,20 @@ export default function Header() {
                     </>
                   ) : null}
                 </div>
-
-                <div className="mt-8">
-                  <button className="block w-full rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100 shadow-sm hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900">
-                    Link Wallets
-                  </button>
+                <div className="flex h-[40px] flex-row items-center justify-center gap-2 border-t border-t-[#dcdfea] mt-4 pt-4">
+                  {socials.map((social) => {
+                    return (
+                      <ExternalLink
+                        key={social.name}
+                        href={social.href}
+                        className="text-black dark:text-white transition-all duration-500 ease-in-out"
+                      >
+                        <div className="flex h-6 w-6 items-center justify-center ">
+                          {social.icon}
+                        </div>
+                      </ExternalLink>
+                    );
+                  })}
                 </div>
               </div>
             </Popover.Panel>

@@ -45,7 +45,7 @@ export const CommunityGrants = () => {
       ? (router.query.categories as string).split(",")
       : [];
   }, [router.query.categories]);
-  const selectedSort = (router.query.sort as SortByOptions) || "recent";
+  const selectedSort = (router.query.sort as SortByOptions) || "milestones";
   const selectedStatus = (router.query.status as StatusOptions) || "all";
 
   const changeCategoriesQuery = (query: string[]) => {
