@@ -3,7 +3,6 @@ export * from "./CommunityFeed";
 export * from "./CommunityGrants";
 export * from "./DeleteDialog";
 export * from "./EthereumAddressToENSName";
-export * from "./EthereumAddressToENSNameTable";
 export * from "./GrantCard";
 export * from "./Icons";
 export * from "./Pages";
