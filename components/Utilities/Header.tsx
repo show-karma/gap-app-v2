@@ -26,6 +26,7 @@ import { blo } from "blo";
 import { Hex } from "viem";
 import { Button } from "./Button";
 import { useTheme } from "next-themes";
+import { Searchbar } from "../Searchbar";
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
@@ -115,7 +116,7 @@ export default function Header() {
         {({ open }) => (
           <>
             <div className="px-4 sm:px-6 lg:px-8">
-              <div className="relative flex lg:gap-8 flex-row justify-between">
+              <div className="relative flex lg:gap-8 flex-row justify-between items-center">
                 <div className="flex py-2 lg:inset-y-0 lg:left-0 lg:static">
                   <Link className="flex-shrink-0" href="/">
                     <Image
@@ -186,6 +187,7 @@ export default function Header() {
                   </Popover.Button>
                 </div>
 
+                <Searchbar />
                 <div className="hidden lg:flex lg:items-center lg:justify-end lg:gap-x-3">
                   <ExternalLink href={karmaLinks.githubSDK}>
                     <button className="rounded-md bg-white w-max dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 shadow-sm hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
