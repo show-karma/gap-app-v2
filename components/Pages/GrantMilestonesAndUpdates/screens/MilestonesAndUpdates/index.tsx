@@ -106,7 +106,7 @@ const GrantCompletionCard = ({ completion }: GrantCompletionCardProps) => {
               </h4>
             </div>
             <div className="flex flex-row items-center justify-center gap-4 max-lg:justify-start">
-              <p className="text-sm font-semibold text-gray-500">
+              <p className="text-sm font-semibold text-gray-500 dark:text-gray-800">
                 Grant completed on {formatDate(completion.createdAt)}
               </p>
             </div>
