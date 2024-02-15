@@ -26,7 +26,7 @@ const ipfsClient = new IpfsStorage(
 );
 
 const gelatoOpts = {
-  // sponsorUrl: envVars.NEXT_PUBLIC_SPONSOR_URL || "/api/sponsored-txn",
+  sponsorUrl: envVars.NEXT_PUBLIC_SPONSOR_URL || "/api/sponsored-txn",
   useGasless: false,
 };
 
