@@ -607,7 +607,7 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
               </span>
             </div>
             <div className="flex flex-col gap-4  px-5 pt-5 pb-5 border-t border-gray-200">
-              <Link
+              <a
                 href={PAGES.COMMUNITY.ALL_GRANTS(grant?.community?.uid as Hex)}
                 className="flex items-center justify-between"
               >
@@ -625,7 +625,7 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
                     {grant?.community?.details?.name}
                   </span>
                 </span>
-              </Link>
+              </a>
               {grant?.details?.proposalURL ? (
                 <div className="flex items-center justify-between">
                   <div className="text-gray-500  font-semibold text-base dark:text-gray-300">

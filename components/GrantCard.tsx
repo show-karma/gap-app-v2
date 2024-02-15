@@ -49,7 +49,7 @@ const LinkMotion = motion(Link);
 
 export const GrantCard = ({ grant, index }: GrantCardProps) => {
   return (
-    <LinkMotion
+    <motion.a
       initial={{
         opacity: 0,
         translateX: -10,
@@ -158,6 +158,6 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
           ) : null}
         </div>
       </div>
-    </LinkMotion>
+    </motion.a>
   );
 };
