@@ -1,14 +1,13 @@
 /* eslint-disable @next/next/no-img-element */
 import { Grant } from "@show-karma/karma-gap-sdk";
 import { blo } from "blo";
-import ReactMarkdown from "react-markdown";
 import { Hex } from "viem";
 import { PAGES, formatDate, formatPercentage } from "@/utilities";
 import pluralize from "pluralize";
 import Link from "next/link";
 import formatCurrency from "@/utilities/formatCurrency";
 import { motion } from "framer-motion";
-
+import { MarkdownPreview } from "./Utilities/MarkdownPreview";
 interface GrantCardProps {
   grant: Grant;
   index: number;
@@ -93,9 +92,7 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
           Summary
         </div>
         <div className="text-sm text-gray-900 dark:text-gray-400 text-ellipsis line-clamp-2">
-          <ReactMarkdown>
-            {grant.details?.description?.slice(0, 100)}
-          </ReactMarkdown>
+          <MarkdownPreview source={grant.details?.description?.slice(0, 100)} />
         </div>
       </div>
 
@@ -135,26 +132,28 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
       </div>
 
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center w-full flex-wrap gap-2">
           {firstFiveMembers(grant).length ? (
             <>
-              <span className="text-sm text-gray-600 dark:text-gray-200">
+              <span className="text-sm w-max min-w-max text-gray-600 dark:text-gray-200">
                 Built by
               </span>
-              {firstFiveMembers(grant).map((member, index) => (
-                <span key={index}>
-                  <img
-                    src={blo(member, 8)}
-                    alt={member}
-                    className="h-5 w-5 rounded-md ring-4 ring-gray-50 dark:ring-zinc-800 border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5"
-                  />
-                </span>
-              ))}
-              {restMembersCounter(grant) > 0 && (
-                <p className="flex items-center justify-center h-12 w-12 rounded-md ring-4 ring-gray-50 dark:ring-zinc-800 border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5">
-                  +
-                </p>
-              )}
+              <div className="flex flex-row gap-2 flex-1">
+                {firstFiveMembers(grant).map((member, index) => (
+                  <span key={index}>
+                    <img
+                      src={blo(member, 8)}
+                      alt={member}
+                      className="h-5 w-5 rounded-md ring-4 ring-gray-50 dark:ring-zinc-800 border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5"
+                    />
+                  </span>
+                ))}
+                {restMembersCounter(grant) > 0 && (
+                  <p className="flex items-center justify-center h-12 w-12 rounded-md ring-4 ring-gray-50 dark:ring-zinc-800 border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5">
+                    +
+                  </p>
+                )}
+              </div>
             </>
           ) : null}
         </div>

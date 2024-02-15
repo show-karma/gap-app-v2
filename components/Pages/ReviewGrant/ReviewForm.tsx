@@ -5,7 +5,6 @@ import { type FC, useState, Fragment } from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
-import ReactMarkdown from "react-markdown";
 import { Question } from "@/types";
 import { ReviewerInfo } from "@/types/reviewer";
 import { INDEXER, MESSAGES, additionalQuestion, cn } from "@/utilities";
@@ -19,6 +18,8 @@ import { CheckIcon } from "@heroicons/react/20/solid";
 import { Listbox, Transition } from "@headlessui/react";
 import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import pluralize from "pluralize";
+import dynamic from "next/dynamic";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 
 interface ReviewFormProps {
   grant: Grant;
@@ -248,7 +249,7 @@ export const ReviewForm: FC<ReviewFormProps> = ({
               data-color-mode="light"
               className="max-w-2xl text-base font-semibold text-black dark:text-zinc-100"
             >
-              <ReactMarkdown
+              <MarkdownPreview
                 className="text-base font-semibold text-black dark:text-zinc-100"
                 components={{
                   strong: ({ children, ...props }) => {
@@ -258,9 +259,8 @@ export const ReviewForm: FC<ReviewFormProps> = ({
                     return <ExternalLink {...props}>{children}</ExternalLink>;
                   },
                 }}
-              >
-                {question.query}
-              </ReactMarkdown>
+                source={question.query}
+              />
             </div>
 
             {additionalQuestion(question.questionId) ? null : (

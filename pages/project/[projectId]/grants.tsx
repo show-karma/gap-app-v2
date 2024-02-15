@@ -19,7 +19,6 @@ import {
   IGrantDetails,
   IProjectDetails,
 } from "@show-karma/karma-gap-sdk";
-import ReactMarkdown from "react-markdown";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import {
   ArrowTopRightOnSquareIcon,
@@ -48,6 +47,7 @@ import { GrantCompleteButton } from "@/components/Pages/GrantMilestonesAndUpdate
 import { GrantCompletion } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/CompleteGrant";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { NextSeo } from "next-seo";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 
 interface Tab {
   name: string;
@@ -594,7 +594,7 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
               GRANT DESCRIPTION
             </div>
             <div className="mt-5 space-y-5">
-              <ReactMarkdown>{grant?.details?.description}</ReactMarkdown>
+              <MarkdownPreview source={grant?.details?.description} />
             </div>
           </div>
         )}

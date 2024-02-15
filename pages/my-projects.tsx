@@ -15,12 +15,12 @@ import { Project } from "@show-karma/karma-gap-sdk";
 import { ProjectDialog } from "@/components/ProjectDialog";
 import formatCurrency from "@/utilities/formatCurrency";
 import pluralize from "pluralize";
-import ReactMarkdown from "react-markdown";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import Pagination from "@/components/Utilities/Pagination";
 import { NextSeo } from "next-seo";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 
 const firstFiveMembers = (project: Project) =>
   project.members.slice(0, 5).map((item) => item.recipient);
@@ -138,9 +138,9 @@ export default function MyProjects() {
                                 Summary
                               </div>
                               <div className="text-sm text-gray-900 dark:text-white text-ellipsis line-clamp-2">
-                                <ReactMarkdown>
-                                  {card.details?.description || ""}
-                                </ReactMarkdown>
+                                <MarkdownPreview
+                                  source={card.details?.description || ""}
+                                />
                               </div>
                             </div>
 

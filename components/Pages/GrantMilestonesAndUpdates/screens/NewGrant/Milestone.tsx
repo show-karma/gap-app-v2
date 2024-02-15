@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 
 import { MilestoneWithCompleted } from "@/types/milestones";
 import { formatDate } from "@/utilities";
@@ -8,7 +9,6 @@ import { Popover } from "@headlessui/react";
 import { CalendarIcon, PencilIcon } from "@heroicons/react/24/outline";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
-import dynamic from "next/dynamic";
 import { type FC, useState } from "react";
 import { DayPicker } from "react-day-picker";
 import type { SubmitHandler } from "react-hook-form";
@@ -21,10 +21,6 @@ interface MilestoneProps {
   removeMilestone: (index: number) => void;
   saveMilestone: (milestone: MilestoneWithCompleted, index: number) => void;
 }
-
-const MarkdownPreview = dynamic(() => import("@uiw/react-markdown-preview"), {
-  ssr: false,
-});
 
 const labelStyle = "text-sm font-bold";
 const inputStyle =

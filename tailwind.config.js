@@ -67,5 +67,10 @@ module.exports = {
       },
     },
   },
-  plugins: [require("@tailwindcss/forms"), require("autoprefixer")],
+  plugins: [
+    require("@tailwindcss/typography"),
+    require("postcss-nesting"),
+    require("@tailwindcss/forms"),
+    require("autoprefixer"),
+  ],
 };

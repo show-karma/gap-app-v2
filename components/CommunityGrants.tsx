@@ -99,7 +99,7 @@ export const CommunityGrants = () => {
         const [data]: any = await fetchData(
           INDEXER.COMMUNITY.CATEGORIES(communityId as string)
         );
-        if (data.length) {
+        if (data && data.length) {
           const categoriesToOrder = data.map(
             (category: { name: string }) => category.name
           );

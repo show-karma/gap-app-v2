@@ -8,10 +8,10 @@ import { Spinner } from "./Utilities/Spinner";
 import { ExternalLink } from "./Utilities/ExternalLink";
 import { feedIconDictionary, getFeedHref } from "@/utilities/feed";
 import { formatDate } from "@/utilities/formatDate";
-import ReactMarkdown from "react-markdown";
 import EthereumAddressToENSName from "./EthereumAddressToENSName";
 import { blo } from "blo";
 import { Hex } from "viem";
+import { MarkdownPreview } from "./Utilities/MarkdownPreview";
 
 export const CommunityFeed = () => {
   const router = useRouter();
@@ -82,7 +82,7 @@ export const CommunityFeed = () => {
                       className="line-clamp-2 w-full break-normal text-base font-normal text-black dark:text-zinc-100 max-2xl:text-sm"
                       data-color-mode="light"
                     >
-                      <ReactMarkdown
+                      <MarkdownPreview
                         components={{
                           // eslint-disable-next-line react/no-unstable-nested-components
                           strong: ({ children }) => {
@@ -96,9 +96,8 @@ export const CommunityFeed = () => {
                             );
                           },
                         }}
-                      >
-                        {item.message}
-                      </ReactMarkdown>
+                        source={item.message}
+                      />
                     </div>
                     <div className="flex flex-row items-center gap-1 flex-wrap">
                       <img

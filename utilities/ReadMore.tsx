@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
-import ReactMarkdown from "react-markdown";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
+import dynamic from "next/dynamic";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 
 interface Props {
   words?: any;
@@ -34,12 +35,14 @@ export const ReadMore = ({
     <div className="text">
       <div>
         {isReadMore ? (
-          <ReactMarkdown>
-            {text.slice(0, minimumText) +
-              (text.length >= minimumText ? "..." : "")}
-          </ReactMarkdown>
+          <MarkdownPreview
+            source={
+              text.slice(0, minimumText) +
+              (text.length >= minimumText ? "..." : "")
+            }
+          />
         ) : (
-          <ReactMarkdown>{text}</ReactMarkdown>
+          <MarkdownPreview source={text} />
         )}
       </div>
       {text.length - 1 > minimumText && (

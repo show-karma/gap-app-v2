@@ -4,7 +4,6 @@ import { ReadMore, formatDate } from "@/utilities";
 import { FlagIcon } from "@heroicons/react/24/outline";
 import type { Milestone } from "@show-karma/karma-gap-sdk";
 import { type FC } from "react";
-import ReactMarkdown from "react-markdown";
 import { Updates } from "./Updates";
 import { MilestoneDelete } from "./MilestoneDelete";
 import { useOwnerStore, useProjectStore } from "@/store";

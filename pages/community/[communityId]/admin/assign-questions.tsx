@@ -20,12 +20,17 @@ import { Question } from "@/types";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import { CheckIcon, ChevronLeftIcon } from "@heroicons/react/24/outline";
-import Markdown from "react-markdown";
+
 import { NoSymbolIcon } from "@heroicons/react/24/solid";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import fetchData from "@/utilities/fetchData";
 import { Button } from "@/components/Utilities/Button";
 import { NextSeo } from "next-seo";
+import dynamic from "next/dynamic";
+
+const MarkdownPreview = dynamic(() => import("@uiw/react-markdown-preview"), {
+  ssr: false,
+});
 
 type QuestionsAssigned = Record<string, number[]>;
 
@@ -313,7 +318,7 @@ export default function AssignQuestions() {
                                 )}
                               </div>
                               <div data-color-mode="light">
-                                <Markdown
+                                <MarkdownPreview
                                   components={{
                                     strong: ({ children, ...props }) => {
                                       return (
@@ -330,9 +335,8 @@ export default function AssignQuestions() {
                                       );
                                     },
                                   }}
-                                >
-                                  {question.query}
-                                </Markdown>
+                                  source={question.query}
+                                />
                               </div>
                             </Button>
                           );

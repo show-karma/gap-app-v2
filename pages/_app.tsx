@@ -3,6 +3,7 @@ import "@/styles/index.scss";
 import "@/components/Utilities/DynamicStars/styles.css";
 import "@rainbow-me/rainbowkit/styles.css";
 import "react-day-picker/dist/style.css";
+import "@uiw/react-markdown-preview/markdown.css";
 import type { AppProps } from "next/app";
 import Footer from "@/components/Utilities/Footer";
 import Header from "@/components/Utilities/Header";

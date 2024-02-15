@@ -1,22 +1,14 @@
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
-import ReactMarkdown from "react-markdown";
 import { useProjectStore } from "@/store";
 import { DeleteDialog, ProjectDialog, ProjectFeed } from "@/components";
 import { useOwnerStore } from "@/store/owner";
 import { useState } from "react";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
-import {
-  MESSAGES,
-  PAGES,
-  defaultMetadata,
-  deleteProject,
-  getMetadata,
-  useSigner,
-  zeroUID,
-} from "@/utilities";
+import { MESSAGES, PAGES, deleteProject, useSigner } from "@/utilities";
 import toast from "react-hot-toast";
 import { useRouter } from "next/router";
 import { TransferOwnershipDialog } from "@/components/TransferOwnershipDialog";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 
 function ProjectPage() {
   const project = useProjectStore((state) => state.project);
@@ -82,7 +74,7 @@ function ProjectPage() {
         <div className="mt-8 font-semibold">Description</div>
 
         <div className="mt-2 space-y-5">
-          <ReactMarkdown>{project?.details?.description}</ReactMarkdown>
+          <MarkdownPreview source={project?.details?.description} />
         </div>
       </div>
       <div className="flex flex-col flex-[1] gap-8">

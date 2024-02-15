@@ -1,7 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { MESSAGES, PAGES, formatDate, getReviewsOf } from "@/utilities";
 import { Grant } from "@show-karma/karma-gap-sdk";
-import ReactMarkdown from "react-markdown";
 import { Button } from "../Utilities/Button";
 import Pagination from "../Utilities/Pagination";
 import { Spinner } from "../Utilities/Spinner";
@@ -14,6 +13,7 @@ import { useProjectStore } from "@/store";
 import { VotingPowerPopover } from "../VotingPowerPopover";
 import { blo } from "blo";
 import Link from "next/link";
+import { MarkdownPreview } from "../Utilities/MarkdownPreview";
 
 interface GrantAllReviewsProps {
   grant: Grant | undefined;
@@ -195,7 +195,7 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
                           >
                             <div className="mb-2 flex w-full flex-row items-start justify-between gap-1">
                               <div data-color-mode="light">
-                                <ReactMarkdown
+                                <MarkdownPreview
                                   className="text-base font-bold"
                                   components={{
                                     strong: ({ children, ...props }) => {
@@ -213,9 +213,8 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
                                       );
                                     },
                                   }}
-                                >
-                                  {answer.query}
-                                </ReactMarkdown>
+                                  source={answer.query}
+                                />
                               </div>
                               {additionalQuestion(answer.questionId) ? null : (
                                 <p className="w-max min-w-max text-base font-normal">

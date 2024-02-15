@@ -5,3 +5,8 @@
 body * {
   @apply transition-colors duration-500;
 }
+.preview {
+  li {
+    @apply list-disc list-inside;
+  }
+}
