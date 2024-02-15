@@ -45,8 +45,6 @@ const updatesLength = (grant: Grant) =>
   grant.milestones.filter((milestone) => milestone.completed).length +
   grant.updates.length;
 
-const LinkMotion = motion(Link);
-
 export const GrantCard = ({ grant, index }: GrantCardProps) => {
   return (
     <motion.a

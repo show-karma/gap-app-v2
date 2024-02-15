@@ -17,7 +17,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useNetwork, useSwitchNetwork } from "wagmi";
 
-const labelStyle = "text-sm font-bold text-black";
+const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 
 interface GrantCompletionProps {
   grant: Grant;
@@ -86,9 +86,9 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
 
   return (
     <div className="mt-9 flex flex-1">
-      <div className="flex w-full max-w-3xl flex-col gap-6 rounded-md bg-gray-200 px-4 py-6 max-lg:max-w-full">
+      <div className="flex w-full max-w-3xl flex-col gap-6 rounded-md bg-gray-200 dark:bg-zinc-800 px-4 py-6 max-lg:max-w-full">
         <div className="flex w-full flex-row justify-between">
-          <h4 className="text-2xl font-bold text-black">
+          <h4 className="text-2xl font-bold text-black dark:text-zinc-100">
             Complete {grant.details?.title || shortAddress(grant.uid)} Grant
           </h4>
           <Link

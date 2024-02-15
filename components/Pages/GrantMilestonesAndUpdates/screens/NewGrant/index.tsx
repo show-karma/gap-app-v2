@@ -5,7 +5,14 @@ import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { MilestoneWithCompleted } from "@/types/milestones";
-import { MESSAGES, PAGES, appNetwork, useSigner } from "@/utilities";
+import {
+  MESSAGES,
+  PAGES,
+  appNetwork,
+  getSigner,
+  useSigner,
+  walletClientToSigner,
+} from "@/utilities";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   GrantDetails,
@@ -28,9 +35,10 @@ import { CommunitiesDropdown } from "@/components/CommunitiesDropdown";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useGap } from "@/hooks";
 import toast from "react-hot-toast";
-import { useRouter } from "next/router";
+import { NextRouter, useRouter } from "next/router";
 import { useSearchParams } from "next/navigation";
 import { XMarkIcon } from "@heroicons/react/24/outline";
+import { getWalletClient } from "@wagmi/core";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -269,6 +277,8 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
 
   const router = useRouter();
 
+  const { connector } = useAccount();
+
   const createNewGrant = async (
     data: NewGrantData,
     communityNetworkId: number
@@ -288,7 +298,8 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
         recipient: (data.recipient as Hex) || address,
         uid: nullRef,
       });
-      if (!checkNetworkIsValid(chain?.id) || chain?.id !== communityNetworkId) {
+      const chainId = await connector?.getChainId();
+      if (!checkNetworkIsValid(chainId) || chainId !== communityNetworkId) {
         await switchNetworkAsync?.(communityNetworkId);
       }
       grant.details = new GrantDetails({
@@ -349,8 +360,14 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
         return created;
       });
 
+      const walletClient = await getWalletClient({
+        chainId: communityNetworkId,
+      });
+      if (!walletClient) return;
+      const signer2 = walletClientToSigner(walletClient);
+      console.log(signer2);
       await grant
-        .attest(signer as any, selectedProject.chainID)
+        .attest(signer2 as any, selectedProject.chainID)
         .then(async () => {
           // eslint-disable-next-line no-param-reassign
           toast.success(MESSAGES.GRANT.CREATE.SUCCESS);
@@ -406,7 +423,7 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
     }
   };
 
-  const onSubmit = (data: GrantType) => {
+  const onSubmit = async (data: GrantType) => {
     let questions: {
       type: string;
       query: string;
@@ -832,6 +849,7 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
           >
             Cancel
           </Button>
+
           <Button
             onClick={handleSubmit(onSubmit)}
             className="flex items-center justify-start gap-3 rounded bg-blue-500 dark:bg-blue-900 px-6 text-base font-bold text-white hover:bg-blue-500 hover:opacity-75"

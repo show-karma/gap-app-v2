@@ -22,6 +22,7 @@
     "@types/react-dom": "18.2.4",
     "@uiw/react-markdown-preview": "^5.0.7",
     "@uiw/react-md-editor": "^4.0.3",
+    "@wagmi/core": "1.4.13",
     "@walletconnect/ethereum-provider": "^2.10.5",
     "@walletconnect/sign-client": "^2.10.0",
     "@walletconnect/types": "^2.10.0",
