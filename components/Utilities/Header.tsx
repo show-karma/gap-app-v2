@@ -7,7 +7,7 @@ import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { MoonIcon, SunIcon } from "@heroicons/react/24/solid";
-import { ProjectDialog } from "../ProjectDialog";
+
 import { useAccount } from "wagmi";
 import {
   PAGES,
@@ -27,6 +27,11 @@ import { Hex } from "viem";
 import { Button } from "./Button";
 import { useTheme } from "next-themes";
 import { Searchbar } from "../Searchbar";
+import dynamic from "next/dynamic";
+
+const ProjectDialog = dynamic(() =>
+  import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog)
+);
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");

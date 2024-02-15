@@ -26,11 +26,7 @@ import {
 } from "@heroicons/react/24/outline";
 import formatCurrency from "@/utilities/formatCurrency";
 import { Hex } from "viem";
-import {
-  GrantAllReviews,
-  GrantMilestonesAndUpdates,
-  ReviewGrant,
-} from "@/components/Pages";
+
 import { CheckCircleIcon, PlusIcon } from "@heroicons/react/20/solid";
 import { Button } from "@/components/Utilities/Button";
 import {
@@ -48,6 +44,9 @@ import { GrantCompletion } from "@/components/Pages/GrantMilestonesAndUpdates/sc
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { NextSeo } from "next-seo";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { GrantMilestonesAndUpdates } from "@/components/Pages/GrantMilestonesAndUpdates";
+import { GrantAllReviews } from "@/components/Pages/AllReviews";
+import { ReviewGrant } from "@/components/Pages/ReviewGrant";
 
 interface Tab {
   name: string;

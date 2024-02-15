@@ -18,15 +18,16 @@ import { useAccount } from "wagmi";
 import { blo } from "blo";
 import { IProjectDetails, Project } from "@show-karma/karma-gap-sdk";
 import { NextSeo } from "next-seo";
+
+import { Hex } from "viem";
+import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
+import formatCurrency from "@/utilities/formatCurrency";
 import {
   DiscordIcon,
   GithubIcon,
   TwitterIcon,
   WebsiteIcon,
-} from "@/components";
-import { Hex } from "viem";
-import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
-import formatCurrency from "@/utilities/formatCurrency";
+} from "@/components/Icons";
 
 interface Props {
   children: ReactNode;

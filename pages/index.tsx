@@ -10,7 +10,11 @@ import { PAGES, chosenCommunities, defaultMetadata } from "@/utilities";
 import { NextSeo } from "next-seo";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components/Utilities/Button";
-import { ProjectDialog } from "@/components";
+import dynamic from "next/dynamic";
+
+const ProjectDialog = dynamic(() =>
+  import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog)
+);
 
 const Presentation = () => {
   const phrases = [

@@ -10,17 +10,12 @@ import {
   zeroUID,
 } from "@/utilities";
 import { Community, ICommunityDetails } from "@show-karma/karma-gap-sdk";
-import { CommunityFeed, CommunityGrants } from "@/components";
 import { getMetadata } from "@/utilities/sdk/getMetadata";
-import {
-  GetServerSidePropsContext,
-  InferGetServerSidePropsType,
-  Metadata,
-} from "next";
+import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { Hex } from "viem";
-import { notFound } from "next/navigation";
-import Head from "next/head";
 import { NextSeo } from "next-seo";
+import { CommunityGrants } from "@/components/CommunityGrants";
+import { CommunityFeed } from "@/components/CommunityFeed";
 
 type Props = {
   params: {

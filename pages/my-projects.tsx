@@ -12,7 +12,6 @@ import {
   getProjectsOf,
 } from "@/utilities";
 import { Project } from "@show-karma/karma-gap-sdk";
-import { ProjectDialog } from "@/components/ProjectDialog";
 import formatCurrency from "@/utilities/formatCurrency";
 import pluralize from "pluralize";
 import Link from "next/link";
@@ -21,6 +20,11 @@ import Pagination from "@/components/Utilities/Pagination";
 import { NextSeo } from "next-seo";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import dynamic from "next/dynamic";
+
+const ProjectDialog = dynamic(() =>
+  import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog)
+);
 
 const firstFiveMembers = (project: Project) =>
   project.members.slice(0, 5).map((item) => item.recipient);

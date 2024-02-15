@@ -1,14 +1,28 @@
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 import { useProjectStore } from "@/store";
-import { DeleteDialog, ProjectDialog, ProjectFeed } from "@/components";
 import { useOwnerStore } from "@/store/owner";
 import { useState } from "react";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 import { MESSAGES, PAGES, deleteProject, useSigner } from "@/utilities";
 import toast from "react-hot-toast";
 import { useRouter } from "next/router";
-import { TransferOwnershipDialog } from "@/components/TransferOwnershipDialog";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { ProjectFeed } from "@/components/ProjectFeed";
+import dynamic from "next/dynamic";
+
+const ProjectDialog = dynamic(() =>
+  import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog)
+);
+
+const DeleteDialog = dynamic(() =>
+  import("@/components/DeleteDialog").then((mod) => mod.DeleteDialog)
+);
+
+const TransferOwnershipDialog = dynamic(() =>
+  import("@/components/TransferOwnershipDialog").then(
+    (mod) => mod.TransferOwnershipDialog
+  )
+);
 
 function ProjectPage() {
   const project = useProjectStore((state) => state.project);

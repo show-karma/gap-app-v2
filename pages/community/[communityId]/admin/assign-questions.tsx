@@ -11,11 +11,9 @@ import {
   zeroUID,
 } from "@/utilities";
 import { Community } from "@show-karma/karma-gap-sdk";
-import { CommunityFeed, CommunityGrants } from "@/components";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
 import { useAccount } from "wagmi";
 import { Spinner } from "@/components/Utilities/Spinner";
-import axios from "axios";
 import { Question } from "@/types";
 import toast from "react-hot-toast";
 import Link from "next/link";
