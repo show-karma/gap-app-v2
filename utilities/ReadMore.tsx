@@ -1,20 +1,28 @@
 import React, { useEffect, useState } from "react";
-import ReactMarkdown from "react-markdown";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
+import dynamic from "next/dynamic";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 
 interface Props {
   words?: any;
   children: string;
+  readMoreText?: string;
+  readLessText?: string;
 }
 
-export const ReadMore = (props: Props) => {
+export const ReadMore = ({
+  words,
+  children,
+  readMoreText = "Read more",
+  readLessText = "Read less",
+}: Props) => {
   const [isReadMore, setIsReadMore] = useState(true);
   const toggleReadMore = () => {
     setIsReadMore(!isReadMore);
   };
 
-  const text = props.children ? props.children : "";
-  const minimumText = props.words ? props.words : 240;
+  const text = children ? children : "";
+  const minimumText = words ? words : 240;
 
   useEffect(() => {
     if (text.length - 1 < minimumText) {
@@ -27,27 +35,29 @@ export const ReadMore = (props: Props) => {
     <div className="text">
       <div>
         {isReadMore ? (
-          <ReactMarkdown>{text.slice(0, minimumText) + "..."}</ReactMarkdown>
+          <MarkdownPreview
+            source={
+              text.slice(0, minimumText) +
+              (text.length >= minimumText ? "..." : "")
+            }
+          />
         ) : (
-          <ReactMarkdown>{text}</ReactMarkdown>
+          <MarkdownPreview source={text} />
         )}
       </div>
       {text.length - 1 > minimumText && (
-        <div
-          onClick={toggleReadMore}
-          className="read-or-hide mt-2 flex justify-center lg:justify-start"
-        >
+        <div onClick={toggleReadMore} className="read-or-hide mt-2">
           {isReadMore ? (
             <>
-              <div className="flex space-x-2 font-semibold dark:text-zinc-400 dark:hover:text-zinc-200 ease-in duration-200 cursor-pointer">
+              <div className="flex space-x-2 font-semibold dark:text-zinc-400 dark:hover:text-zinc-200 ease-in duration-200">
                 <ChevronDownIcon className="w-4 h-auto" />
-                <span>Read More</span>
+                <span className="cursor-pointer">{readMoreText}</span>
               </div>
             </>
           ) : (
             <div className="flex space-x-2 font-semibold dark:text-zinc-400 dark:hover:text-zinc-200 ease-in duration-200 cursor-pointer">
               <ChevronUpIcon className="w-4 h-auto" />
-              <span>Show Less</span>
+              <span>{readLessText}</span>
             </div>
           )}
         </div>

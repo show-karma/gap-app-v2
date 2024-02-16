@@ -1,48 +1,114 @@
-import { Fragment, useContext } from "react";
+/* eslint-disable @next/next/no-img-element */
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Popover, Transition } from "@headlessui/react";
-import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
+import { Popover } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { useAccount } from "wagmi";
 import { MoonIcon, SunIcon } from "@heroicons/react/24/solid";
-import ThemeContext from "@/components/Providers/ThemeContext";
 
-const links = [
-  {
-    name: "Analytics",
-    href: "/analytics",
-  },
-  {
-    name: "All Gardeners",
-    href: "/all-gardeners",
-  },
-  {
-    name: "All Prop House Winners",
-    href: "/all-prop-house-winners",
-  },
-  {
-    name: "All Droposal Minters",
-    href: "/all-droposal-minters",
-  },
-  {
-    name: "All OE Minters",
-    href: "/all-oe-minters",
-  },
-  {
-    name: "Roadmap",
-    href: "/roadmap",
-  },
-];
+import { useAccount } from "wagmi";
+import {
+  PAGES,
+  cn,
+  getCommunitiesOf,
+  getContractOwner,
+  karmaLinks,
+  useSigner,
+} from "@/utilities";
+import { Community } from "@show-karma/karma-gap-sdk";
+import { useOwnerStore } from "@/store/owner";
+import { ExternalLink } from "./ExternalLink";
+import { SOCIALS } from "@/utilities/socials";
+import { DiscordIcon, MirrorIcon, TelegramIcon, TwitterIcon } from "../Icons";
+import { blo } from "blo";
+import { Hex } from "viem";
+import { Button } from "./Button";
+import { useTheme } from "next-themes";
+import { Searchbar } from "../Searchbar";
+import dynamic from "next/dynamic";
+
+const ProjectDialog = dynamic(() =>
+  import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog)
+);
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
 
+const buttonStyle: HTMLButtonElement["className"] =
+  " rounded-md bg-white w-max dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 shadow-none hover:bg-transparent dark:hover:bg-opacity-75 dark:border-zinc-900";
+
 export default function Header() {
-  const { address: walletAddress } = useAccount();
-  const { currentTheme, changeCurrentTheme } = useContext(ThemeContext);
+  const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
+  const { isConnected, address } = useAccount();
+  const [communitiesToAdmin, setCommunitiesToAdmin] = useState<Community[]>([]);
+  const signer = useSigner();
+
+  const isCommunityAdmin = communitiesToAdmin.length !== 0;
+
+  const getCommunities = async () => {
+    if (!address) return;
+
+    const communitiesOf = await getCommunitiesOf(address);
+
+    if (communitiesOf && communitiesOf.length !== 0) {
+      setCommunitiesToAdmin(communitiesOf);
+    } else {
+      setCommunitiesToAdmin([]);
+    }
+  };
+
+  const isOwner = useOwnerStore((state) => state.isOwner);
+  const setIsOwner = useOwnerStore((state) => state.setIsOwner);
+
+  useEffect(() => {
+    if (!signer || !address) {
+      setIsOwner(false);
+      return;
+    }
+    const setupOwner = async () => {
+      await getContractOwner(signer as any).then((owner) => {
+        setIsOwner(owner.toLowerCase() === address?.toLowerCase());
+      });
+    };
+    setupOwner();
+  }, [signer, address]);
+
+  useEffect(() => {
+    getCommunities();
+  }, [address]);
+
+  const socials = [
+    {
+      name: "twitter",
+      icon: <TwitterIcon className="h-6 w-6 object-contain" />,
+      href: SOCIALS.TWITTER,
+    },
+
+    {
+      name: "telegram",
+      icon: <TelegramIcon className="h-6 w-6 object-contain" />,
+      href: SOCIALS.TELEGRAM,
+    },
+    {
+      name: "discord",
+      icon: <DiscordIcon className="h-6 w-6 object-contain" />,
+      href: SOCIALS.DISCORD,
+    },
+    {
+      name: "mirror",
+      icon: <MirrorIcon className="h-6 w-6 object-contain" />,
+      href: SOCIALS.MIRROR,
+    },
+  ];
+
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    setIsReady(true);
+  }, []);
+
   return (
     <>
       <Popover
@@ -56,41 +122,21 @@ export default function Header() {
       >
         {({ open }) => (
           <>
-            <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-              <div className="relative flex justify-between lg:gap-8 xl:grid xl:grid-cols-12">
-                <div className="flex py-2 lg:inset-y-0 lg:left-0 lg:col-span-3 lg:static">
-                  <Link
-                    className="flex-shrink-0 flex items-center space-x-4"
-                    href="/"
-                  >
-                    <div className="flex items-center">
-                      <Image
-                        className="block w-10 h-auto"
-                        src="/logo/logo-dark.png"
-                        alt="Gap"
-                        width={464}
-                        height={500}
-                        priority={true}
-                      />
-                      <Image
-                        className="block w-10 h-auto"
-                        src="/logo/Gap-logo.svg"
-                        alt="Nouner"
-                        width={64}
-                        height={64}
-                        priority={true}
-                      />
-                    </div>
-                    <div className="text-gray-900 dark:text-white text-2xl">
-                      <h1>Gap</h1>
-                    </div>
+            <div className="px-4 sm:px-6 lg:px-8">
+              <div className="relative flex lg:gap-8 justify-between items-center flex-row">
+                <div className="flex py-2 lg:inset-y-0 lg:left-0 lg:static">
+                  <Link className="flex-shrink-0" href="/">
+                    <Image
+                      className="block w-full h-auto"
+                      src="/logo/karma-gap-logo.svg"
+                      alt="Gap"
+                      width={228}
+                      height={52}
+                      priority={true}
+                    />
                   </Link>
                 </div>
-                <div className="hidden lg:block min-w-0 flex-1 md:px-8 lg:px-0 xl:col-span-4">
-                  <div className="flex items-center px-6 py-4 md:mx-auto md:max-w-3xl lg:mx-0 lg:max-w-none xl:px-0">
-                    <div className="w-full"></div>
-                  </div>
-                </div>
+
                 <div className="flex items-center md:absolute md:inset-y-0 md:right-0 lg:hidden">
                   {/* Color mode toggle start */}
                   <button
@@ -120,124 +166,111 @@ export default function Header() {
                     )}
                   </Popover.Button>
                 </div>
-                <div className="hidden lg:flex lg:items-center lg:justify-end lg:gap-x-3 xl:col-span-5">
-                  <Popover className="relative">
-                    <Popover.Button className="flex items-center pl-3 pr-4 rounded-md bg-white dark:bg-zinc-900 text-sm font-semibold text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-800 focus:outline-primary-600">
-                      <svg
-                        viewBox="0 0 24 24"
-                        // width={48}
-                        className="h-auto w-10"
-                        fill="currentColor"
-                      >
-                        <path d="M19,9h-1h-1h-1h-1h-1v1v1h-1v-1V9h-1h-1h-1H9H8H7v1v1H6H5H4v1v1v1h1v-1v-1h1h1v1v1v1h1h1h1h1h1h1v-1v-1v-1h1v1v1v1h1h1h1h1 h1h1v-1v-1v-1v-1v-1V9H19z M9,14H8v-1v-1v-1v-1h1h1v1v1v1v1H9z M16,14h-1v-1v-1v-1v-1h1h1v1v1v1v1H16z"></path>
-                      </svg>
-                      <span>Explore</span>
-                    </Popover.Button>
 
-                    <Transition
-                      as={Fragment}
-                      enter="transition ease-out duration-200"
-                      enterFrom="opacity-0 translate-y-1"
-                      enterTo="opacity-100 translate-y-0"
-                      leave="transition ease-in duration-150"
-                      leaveFrom="opacity-100 translate-y-0"
-                      leaveTo="opacity-0 translate-y-1"
-                    >
-                      <Popover.Panel className="absolute left-1/2 z-10 mt-5 flex w-screen max-w-min -translate-x-1/2 px-4">
-                        <div className="w-56 shrink rounded-xl bg-white dark:bg-zinc-900 p-4 text-sm font-semibold leading-6 text-gray-900 dark:text-white shadow-lg ring-1 ring-gray-900/5">
-                          {links.map((link) => (
-                            <Link
-                              key={link.name}
-                              href={link.href}
-                              className="block p-2 hover:text-primary-600"
+                <div className="hidden lg:flex">
+                  <Searchbar />
+                </div>
+                <div className="hidden lg:flex lg:items-center lg:justify-end lg:gap-x-3 py-3">
+                  <ExternalLink href={karmaLinks.githubSDK}>
+                    <button className={buttonStyle}>SDK Docs</button>
+                  </ExternalLink>
+                  <div className="rounded-none h-10 w-[1px] bg-zinc-300 mx-2" />
+                  {isReady ? (
+                    <>
+                      {(isCommunityAdmin || isOwner) && isConnected ? (
+                        <Link href={PAGES.ADMIN.LIST}>
+                          <button className={buttonStyle}>Admin</button>
+                        </Link>
+                      ) : null}
+                      {isConnected && (
+                        <Link href={PAGES.MY_PROJECTS}>
+                          <button className={buttonStyle}>My Projects</button>
+                        </Link>
+                      )}
+
+                      {/* Rainbowkit custom connect button start */}
+                      {isConnected && <ProjectDialog />}
+                      <ConnectButton.Custom>
+                        {({
+                          account,
+                          chain,
+                          openAccountModal,
+                          openChainModal,
+                          openConnectModal,
+                          authenticationStatus,
+                          mounted,
+                        }) => {
+                          // Note: If your app doesn't use authentication, you
+                          // can remove all 'authenticationStatus' checks
+                          const ready =
+                            mounted && authenticationStatus !== "loading";
+                          const connected =
+                            ready &&
+                            account &&
+                            chain &&
+                            (!authenticationStatus ||
+                              authenticationStatus === "authenticated");
+
+                          return (
+                            <div
+                              {...(!ready && {
+                                "aria-hidden": true,
+                                style: {
+                                  opacity: 0,
+                                  pointerEvents: "none",
+                                  userSelect: "none",
+                                },
+                              })}
                             >
-                              {link.name}
-                            </Link>
-                          ))}
-                        </div>
-                      </Popover.Panel>
-                    </Transition>
-                  </Popover>
+                              {(() => {
+                                if (!connected) {
+                                  return (
+                                    <button
+                                      onClick={openConnectModal}
+                                      type="button"
+                                      className="rounded-md border border-primary-600 dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-primary-600 shadow-sm hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                                    >
+                                      Login / Register
+                                    </button>
+                                  );
+                                }
 
-                  {/* Rainbowkit custom connect button start */}
-                  <button className="rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100 shadow-sm hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900">
-                    Link Wallets
-                  </button>
-                  <ConnectButton.Custom>
-                    {({
-                      account,
-                      chain,
-                      openAccountModal,
-                      openChainModal,
-                      openConnectModal,
-                      authenticationStatus,
-                      mounted,
-                    }) => {
-                      // Note: If your app doesn't use authentication, you
-                      // can remove all 'authenticationStatus' checks
-                      const ready =
-                        mounted && authenticationStatus !== "loading";
-                      const connected =
-                        ready &&
-                        account &&
-                        chain &&
-                        (!authenticationStatus ||
-                          authenticationStatus === "authenticated");
+                                if (chain.unsupported) {
+                                  return (
+                                    <button
+                                      onClick={openChainModal}
+                                      type="button"
+                                      className="flex w-max items-center flex-row gap-2 py-2 px-3 rounded-full bg-gray-600 p-0 pl-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                                    >
+                                      Wrong network
+                                    </button>
+                                  );
+                                }
 
-                      return (
-                        <div
-                          {...(!ready && {
-                            "aria-hidden": true,
-                            style: {
-                              opacity: 0,
-                              pointerEvents: "none",
-                              userSelect: "none",
-                            },
-                          })}
-                        >
-                          {(() => {
-                            if (!connected) {
-                              return (
-                                <button
-                                  onClick={openConnectModal}
-                                  type="button"
-                                  className="rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-                                >
-                                  Login
-                                </button>
-                              );
-                            }
-
-                            if (chain.unsupported) {
-                              return (
-                                <button
-                                  onClick={openChainModal}
-                                  type="button"
-                                  className="rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-                                >
-                                  Wrong network
-                                </button>
-                              );
-                            }
-
-                            return (
-                              <button
-                                onClick={openAccountModal}
-                                className="rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-                              >
-                                {account.displayName}
-                              </button>
-                            );
-                          })()}
-                        </div>
-                      );
-                    }}
-                  </ConnectButton.Custom>
+                                return (
+                                  <Button
+                                    onClick={openAccountModal}
+                                    className="flex w-max items-center flex-row gap-2 rounded-full bg-gray-500 p-0 pl-3 text-sm font-semibold text-white shadow-sm hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                                  >
+                                    {account.displayName}
+                                    <img
+                                      src={blo(account.address as Hex)}
+                                      alt="avatar"
+                                      className="h-10 w-10 rounded-full"
+                                    />
+                                  </Button>
+                                );
+                              })()}
+                            </div>
+                          );
+                        }}
+                      </ConnectButton.Custom>
+                    </>
+                  ) : null}
                   {/* Rainbowkit custom connect button end */}
                   {/* Color mode toggle start */}
                   <button
                     className="px-3 py-2.5 rounded-md bg-white dark:bg-zinc-900 text-sm font-semibold text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-800 focus:outline-primary-600"
-                    // onClick={() => toggleTheme()}
                     onClick={() =>
                       changeCurrentTheme(
                         currentTheme === "light" ? "dark" : "light"
@@ -251,13 +284,28 @@ export default function Header() {
                     )}
                   </button>
                   {/* Color mode toggle end */}
+                  <div className="flex h-[40px] flex-row items-center gap-2 border-l border-l-[#dcdfea] pl-4">
+                    {socials.map((social) => {
+                      return (
+                        <ExternalLink
+                          key={social.name}
+                          href={social.href}
+                          className="text-black dark:text-white transition-all duration-500 ease-in-out"
+                        >
+                          <div className="flex h-6 w-6 items-center justify-center ">
+                            {social.icon}
+                          </div>
+                        </ExternalLink>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             </div>
 
             <Popover.Panel as="nav" className="lg:hidden" aria-label="Global">
               <div className="mx-auto mt-6 max-w-3xl px-4 sm:px-6">
-                <form className="space-y-3">
+                {/* <form className="space-y-3">
                   <label htmlFor="userAddress" className="sr-only">
                     Search
                   </label>
@@ -282,24 +330,126 @@ export default function Header() {
                   >
                     Search
                   </button>
-                </form>
-
-                <div className="mt-8 px-3 space-y-5">
-                  {links.map((link) => (
-                    <Link
-                      key={link.name}
-                      href={link.href}
-                      className="block text-base font-bold text-gray-900 dark:text-white hover:underline"
-                    >
-                      {link.name}
-                    </Link>
-                  ))}
+                </form> */}
+                <div className=" px-3">
+                  <Searchbar />
                 </div>
+                <div className="mt-8 px-3 flex flex-col gap-4">
+                  <ExternalLink href={karmaLinks.githubSDK}>
+                    <button className="rounded-md bg-white w-full dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 shadow-sm hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
+                      SDK Docs
+                    </button>
+                  </ExternalLink>
+                  {isReady ? (
+                    <>
+                      {isConnected && (
+                        <Link href={PAGES.MY_PROJECTS}>
+                          <button className="rounded-md bg-white w-full dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 shadow-sm hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
+                            My Projects
+                          </button>
+                        </Link>
+                      )}
+                      {(isCommunityAdmin || isOwner) && isConnected ? (
+                        <Link href={PAGES.ADMIN.LIST}>
+                          <button className="rounded-md w-full bg-white dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 shadow-sm hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
+                            Admin
+                          </button>
+                        </Link>
+                      ) : null}
 
-                <div className="mt-8">
-                  <button className="block w-full rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100 shadow-sm hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900">
-                    Link Wallets
-                  </button>
+                      {isConnected && <ProjectDialog />}
+                      <ConnectButton.Custom>
+                        {({
+                          account,
+                          chain,
+                          openAccountModal,
+                          openChainModal,
+                          openConnectModal,
+                          authenticationStatus,
+                          mounted,
+                        }) => {
+                          // Note: If your app doesn't use authentication, you
+                          // can remove all 'authenticationStatus' checks
+                          const ready =
+                            mounted && authenticationStatus !== "loading";
+                          const connected =
+                            ready &&
+                            account &&
+                            chain &&
+                            (!authenticationStatus ||
+                              authenticationStatus === "authenticated");
+
+                          return (
+                            <div
+                              {...(!ready && {
+                                "aria-hidden": true,
+                                style: {
+                                  opacity: 0,
+                                  pointerEvents: "none",
+                                  userSelect: "none",
+                                },
+                              })}
+                            >
+                              {(() => {
+                                if (!connected) {
+                                  return (
+                                    <button
+                                      onClick={openConnectModal}
+                                      type="button"
+                                      className="rounded-md border max-lg:w-full max-lg:justify-center border-primary-600 dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-primary-600 shadow-sm hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                                    >
+                                      Login / Register
+                                    </button>
+                                  );
+                                }
+
+                                if (chain.unsupported) {
+                                  return (
+                                    <button
+                                      onClick={openChainModal}
+                                      type="button"
+                                      className="flex w-full justify-center items-center flex-row gap-2 py-2 px-3 rounded-full bg-gray-600 p-0 pl-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                                    >
+                                      Wrong network
+                                    </button>
+                                  );
+                                }
+
+                                return (
+                                  <Button
+                                    onClick={openAccountModal}
+                                    className="flex w-full py-1 justify-center items-center flex-row gap-2 rounded-full bg-gray-500 text-sm font-semibold text-white shadow-sm hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                                  >
+                                    {account.displayName}
+                                    <img
+                                      src={blo(account.address as Hex)}
+                                      alt="avatar"
+                                      className="h-8 w-8 rounded-full"
+                                    />
+                                  </Button>
+                                );
+                              })()}
+                            </div>
+                          );
+                        }}
+                      </ConnectButton.Custom>
+                    </>
+                  ) : null}
+                </div>
+                <div className="flex h-[40px] flex-row items-center justify-center gap-2 border-t border-t-[#dcdfea] mt-4 pt-4">
+                  {socials.map((social) => {
+                    return (
+                      <ExternalLink
+                        key={social.name}
+                        href={social.href}
+                        className="text-black dark:text-white transition-all duration-500 ease-in-out"
+                      >
+                        <div className="flex h-6 w-6 items-center justify-center ">
+                          {social.icon}
+                        </div>
+                      </ExternalLink>
+                    );
+                  })}
                 </div>
               </div>
             </Popover.Panel>
