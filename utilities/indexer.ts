@@ -38,5 +38,6 @@ export const INDEXER = {
   },
   GAP: {
     STATS: `/attestations/stats`,
+    WEEKLY_ACTIVE_USERS: `/attestations/wau`,
   },
 };

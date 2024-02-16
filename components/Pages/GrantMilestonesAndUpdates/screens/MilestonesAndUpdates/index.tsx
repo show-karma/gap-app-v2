@@ -145,7 +145,7 @@ export const MilestonesAndUpdates = ({ grant }: MilestonesAndUpdatesProps) => {
           {grant && (
             <div className="w-full flex flex-col gap-4">
               {isAuthorized ? (
-                <div className="flex w-full flex-row flex-wrap items-center justify-between gap-4 rounded border border-gray-200 bg-[#EEF4FF] dark:bg-zinc-800 p-4">
+                <div className="flex w-full flex-row flex-wrap items-center justify-between gap-4 rounded border border-gray-200 bg-blue-50 dark:bg-zinc-800 p-4">
                   <p className="text-base font-normal text-black max-sm:text-sm dark:text-white">
                     {MESSAGES.PROJECT.EMPTY.GRANTS.NOT_ADDED_MILESTONE}
                   </p>

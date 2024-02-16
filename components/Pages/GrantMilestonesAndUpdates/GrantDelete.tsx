@@ -66,7 +66,7 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
         icon: <TrashIcon className="w-6 h-6" />,
         text: "",
         styleClass:
-          "bg-red-500 text-white p-1 px-2 shadow-none hover:opacity-75 hover:bg-red-500",
+          "bg-transparent text-red-500 p-1 px-2 shadow-none hover:opacity-75 hover:bg-red-500",
       }}
       title={
         <p className="font-normal">

@@ -12,10 +12,13 @@ import EthereumAddressToENSName from "./EthereumAddressToENSName";
 import { blo } from "blo";
 import { Hex } from "viem";
 import { MarkdownPreview } from "./Utilities/MarkdownPreview";
+import { useTheme } from "next-themes";
+import { cn } from "@/utilities";
 
 export const CommunityFeed = () => {
   const router = useRouter();
   const communityId = router.query.communityId; // Get the communityId from the URL
+  const { theme } = useTheme();
 
   const [feed, setFeed] = useState<Feed[]>([]); // Set the initial feed state to an empty array
   const [feedLoading, setFeedLoading] = useState<boolean>(true); // Set the initial loading state to true
@@ -56,20 +59,19 @@ export const CommunityFeed = () => {
       </div>
       {/* Feed start */}
       <div className="flow-root mt-10 bg-white dark:bg-zinc-900 dark:border-gray-700 border border-gray-200 py-2 px-5 rounded-xl shadow-md max-h-96 max-lg:max-h-64 max-lg:mt-4 overflow-y-auto">
-        <ul role="list">
+        <ul>
           {feed.length ? (
             feed.map((item, index) => {
               return (
                 <li
                   key={item.uid + item.message + item.timestamp + item.type}
-                  className="relative flex w-full flex-row items-center gap-3 py-4 max-2xl:px-3 max-sm:px-3"
+                  className={cn(
+                    "relative flex w-full flex-row items-center gap-3 py-4 max-2xl:px-3 max-sm:px-3",
+                    index !== feed.length - 1
+                      ? " border-b border-b-gray-200 dark:border-b-gray-700"
+                      : ""
+                  )}
                 >
-                  {index !== feed.length - 1 ? (
-                    <span
-                      className="absolute left-4 max-2xl:left-7 top-10 -ml-px h-full w-0.5 bg-gray-200 dark:bg-zinc-700"
-                      aria-hidden="true"
-                    />
-                  ) : null}
                   <div className="relative rounded-full bg-gray-100 p-2 text-gray-500 dark:bg-zinc-800 dark:text-zinc-200">
                     <img
                       alt={item.event}
@@ -90,6 +92,9 @@ export const CommunityFeed = () => {
                               <ExternalLink
                                 className="text-black font-bold hover:underline dark:text-zinc-100"
                                 href={getFeedHref(item)}
+                                style={{
+                                  color: theme === "dark" ? "white" : "black",
+                                }}
                               >
                                 {children}
                               </ExternalLink>

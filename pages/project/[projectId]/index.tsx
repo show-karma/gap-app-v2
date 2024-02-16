@@ -157,7 +157,7 @@ export const NestedLayout = ({ children }: Props) => {
             className={cn(
               loading
                 ? "animate-pulse w-64 h-10 bg-gray-600 rounded-lg"
-                : "text-2xl font-semibold leading-6 text-gray-900 dark:text-gray-200"
+                : "text-4xl font-semibold leading-6 text-gray-900 dark:text-gray-200"
             )}
           >
             {loading ? "" : project?.details?.title}
@@ -240,12 +240,12 @@ export const NestedLayout = ({ children }: Props) => {
                       router.pathname.split("/")[3]
                       ? "border-primary-500 text-primary-600"
                       : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
-                    "whitespace-nowrap border-b-2 px-1 pb-4 text-sm font-medium flex flex-row gap-2 items-center"
+                    "whitespace-nowrap border-b-2 px-1 pb-2 text-base font-medium flex flex-row gap-2 items-center"
                   )}
                 >
                   {tab.name}
                   {tab.name === "Grants" && project?.grants?.length ? (
-                    <div className="bg-zinc-200 dark:bg-zinc-800 dark:text-blue-300 px-1 py-1 rounded-full h-7 w-7 text-xs items-center flex flex-row justify-center">
+                    <div className="bg-zinc-200 dark:bg-zinc-800 dark:text-blue-300 p-0.5 rounded-full h-6 w-6 text-xs items-center flex flex-row justify-center">
                       {formatCurrency(project?.grants?.length || 0)}
                     </div>
                   ) : null}

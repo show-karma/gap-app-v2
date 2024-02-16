@@ -76,7 +76,7 @@ const Presentation = () => {
                   iconSide: "right",
                   text: "Add your project",
                   styleClass:
-                    "flex rounded-md hover:opacity-75 transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-3 bg-[#101828] dark:bg-gray-700 px-7 py-4 text-lg font-semibold leading-7 text-white hover:bg-[#101828] max-2xl:px-5 max-2xl:text-base max-lg:text-sm",
+                    "flex rounded-md hover:opacity-75 border-none transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-3 bg-[#101828] dark:bg-gray-700 px-7 py-4 text-lg font-semibold leading-7 text-white hover:bg-[#101828] max-2xl:px-5 max-2xl:text-base max-lg:text-sm",
                 }}
               />
             </div>
@@ -259,7 +259,7 @@ const WhatIsSolving = () => {
             <h3 className="text-2xl font-bold  max-2xl:text-xl">
               Limited Accessibility
             </h3>
-            <p>
+            <p className="text-gray-700 dark:text-gray-700">
               Currently, it is challenging for grant teams and the community to
               easily access and track project progress and milestones, as
               information is scattered across forums and external links.
@@ -276,7 +276,7 @@ const WhatIsSolving = () => {
             <h3 className=" text-2xl font-bold  max-2xl:text-xl">
               Reputation Portability
             </h3>
-            <p>
+            <p className="text-gray-700 dark:text-gray-700">
               Grantees who apply for grants from multiple organizations struggle
               to establish and carry their reputation consistently across the
               ecosystem. This is particularly difficult for individuals who are
@@ -296,7 +296,7 @@ const WhatIsSolving = () => {
           <h3 className=" text-2xl font-bold   max-2xl:text-xl">
             Inadequate Data Structure
           </h3>
-          <p>
+          <p className="text-gray-700 dark:text-gray-700">
             The absence of structured data that can be accessed in a
             permissionless manner hampers the development of applications and
             analytical tools for evaluating grant impact and builder reputation.

@@ -121,7 +121,7 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
       <div className="gap-1 flex items-center justify-start flex-row flex-wrap">
         {grant.categories?.map((category, index) => (
           <span
-            className="inline-flex items-center rounded-md bg-blue-50 dark:bg-slate-800 dark:text-gray-200 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10"
+            className="inline-flex items-center rounded-md bg-blue-200 dark:bg-slate-800 dark:text-gray-200 px-2 py-1 text-xs font-medium text-gray-600 "
             key={index}
           >
             {category}

@@ -76,7 +76,7 @@ function ProjectPage() {
               {project?.details?.tags?.map((tag) => (
                 <span
                   key={tag.name}
-                  className="inline-flex items-center rounded-md bg-white border border-gray-200 px-2 py-1 text-xs font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10"
+                  className="inline-flex items-center rounded-md bg-gray-200 dark:bg-zinc-800 dark:text-zinc-200 px-2 py-1 text-sm font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10"
                 >
                   {tag.name}
                 </span>

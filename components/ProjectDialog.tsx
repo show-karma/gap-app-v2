@@ -85,7 +85,7 @@ type ProjectDialogProps = {
 
 export const ProjectDialog: FC<ProjectDialogProps> = ({
   buttonElement = {
-    icon: <PlusIcon className="h-4 w-4 text-primary-600" />,
+    icon: <PlusIcon className="h-4 w-4 text-white" />,
     iconSide: "left",
     text: "New Project",
     styleClass: "",
@@ -609,7 +609,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       <button
         onClick={openModal}
         className={cn(
-          "flex justify-center min-w-max items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100 shadow-sm hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900",
+          "flex justify-center min-w-max items-center gap-x-1 rounded-md bg-primary-500 border-2 border-primary-500 px-3 py-2 text-sm font-semibold text-white dark:text-zinc-100 shadow-sm hover:opacity-75 dark:hover:bg-primary-900",
           buttonElement.styleClass
         )}
       >

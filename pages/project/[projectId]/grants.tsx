@@ -350,7 +350,7 @@ const GrantsPage = ({
       />
       <div className="flex max-lg:flex-col">
         {project?.grants.length ? (
-          <div className="w-2/12 pr-5 py-5 border-r border-r-gray-200 max-lg:border-none max-lg:w-full max-lg:px-0">
+          <div className="w-2/12 pr-5 py-5 border-none max-lg:w-full max-lg:px-0">
             <nav className="flex flex-1 flex-col" aria-label="Sidebar">
               <ul role="list" className="space-y-2">
                 {navigation.map((item) => (
@@ -403,7 +403,7 @@ const GrantsPage = ({
                           );
                         }
                       }}
-                      className="flex h-max w-full  flex-row items-center  hover:opacity-75 justify-center gap-3 rounded border border-[#155EEF] bg-[#155EEF] px-3 py-1 text-sm font-semibold text-white   max-sm:w-full"
+                      className="flex h-max w-full  flex-row items-center  hover:opacity-75 justify-center gap-3 rounded border border-[#155EEF] bg-[#155EEF] px-3 py-2 text-sm font-semibold text-white   max-sm:w-full"
                     >
                       <p>Add a new grant</p>
                       <PlusIcon className="w-5 h-5" />
@@ -560,7 +560,7 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
   return (
     <>
       {/* Grant Overview Start */}
-      <div className="flex flex-row gap-4 justify-between max-md:flex-col">
+      <div className="flex flex-row gap-4 justify-between max-md:flex-col border-b border-b-zinc-900 dark:border-b-zinc-200 pb-4">
         <div className="flex flex-row gap-2 items-center">
           <div className="text-xl font-semibold">{grant?.details?.title}</div>
           {isAuthorized && project && grant && (
@@ -588,8 +588,8 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
 
       <div className="mt-5 flex flex-row max-lg:flex-col-reverse gap-4">
         {grant?.details?.description && (
-          <div className="w-9/12 max-lg:w-full p-5 mr-5 bg-white dark:bg-zinc-900 dark:border-gray-800 border border-gray-200 rounded-xl shadow-md text-black dark:text-zinc-100">
-            <div className="text-base uppercase font-semibold">
+          <div className="w-9/12 max-lg:w-full p-5 mr-5 bg-blue-100 dark:bg-zinc-900 dark:border-gray-800 border border-gray-200 rounded-xl shadow-md text-black dark:text-zinc-100">
+            <div className="text-sm text-zinc-500 uppercase font-semibold">
               GRANT DESCRIPTION
             </div>
             <div className="mt-5 space-y-5">

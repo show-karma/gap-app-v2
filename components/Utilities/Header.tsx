@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Popover } from "@headlessui/react";
-import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { MoonIcon, SunIcon } from "@heroicons/react/24/solid";
@@ -11,12 +10,12 @@ import { MoonIcon, SunIcon } from "@heroicons/react/24/solid";
 import { useAccount } from "wagmi";
 import {
   PAGES,
+  cn,
   getCommunitiesOf,
   getContractOwner,
   karmaLinks,
   useSigner,
 } from "@/utilities";
-import { useRouter } from "next/router";
 import { Community } from "@show-karma/karma-gap-sdk";
 import { useOwnerStore } from "@/store/owner";
 import { ExternalLink } from "./ExternalLink";
@@ -36,6 +35,9 @@ const ProjectDialog = dynamic(() =>
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ");
 }
+
+const buttonStyle: HTMLButtonElement["className"] =
+  " rounded-md bg-white w-max dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 shadow-none hover:bg-transparent dark:hover:bg-opacity-75 dark:border-zinc-900";
 
 export default function Header() {
   const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
@@ -121,7 +123,7 @@ export default function Header() {
         {({ open }) => (
           <>
             <div className="px-4 sm:px-6 lg:px-8">
-              <div className="relative flex lg:gap-8 flex-row justify-between items-center">
+              <div className="relative flex lg:gap-8 justify-between items-center flex-row">
                 <div className="flex py-2 lg:inset-y-0 lg:left-0 lg:static">
                   <Link className="flex-shrink-0" href="/">
                     <Image
@@ -134,34 +136,7 @@ export default function Header() {
                     />
                   </Link>
                 </div>
-                {/* <div className="hidden lg:block min-w-0 flex-1 md:px-8 lg:px-0 lg:gap-x-3 ">
-                  <div className="flex justify-center items-center px-6 py-4 w-full md:mx-auto md:max-w-3xl lg:mx-0 lg:max-w-none xl:px-0">
-                    <div className="flex flex-row justify-center w-full max-w-full">
-                      <form className="">
-                        <label htmlFor="userAddress" className="sr-only">
-                          Search
-                        </label>
-                        <div className="flex w-full">
-                          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                            <MagnifyingGlassIcon
-                              className="h-5 w-5 text-gray-400"
-                              aria-hidden="true"
-                            />
-                          </div>
-                          <input
-                            id="search"
-                            name="search"
-                            autoComplete="off"
-                            required
-                            className="block w-full max-w-[360px] rounded-xl border-0 bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 py-1.5 pl-4 pr-3 ring-1 ring-inset ring-gray-300 dark:ring-zinc-800 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:focus:ring-primary-600 sm:text-sm sm:leading-6 autofill:!bg-yellow-200"
-                            placeholder="Search projects..."
-                            type="text"
-                          />
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                </div> */}
+
                 <div className="flex items-center md:absolute md:inset-y-0 md:right-0 lg:hidden">
                   {/* Color mode toggle start */}
                   <button
@@ -195,28 +170,23 @@ export default function Header() {
                 <div className="hidden lg:flex">
                   <Searchbar />
                 </div>
-                <div className="hidden lg:flex lg:items-center lg:justify-end lg:gap-x-3">
+                <div className="hidden lg:flex lg:items-center lg:justify-end lg:gap-x-3 py-3">
                   <ExternalLink href={karmaLinks.githubSDK}>
-                    <button className="rounded-md bg-white w-max dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 shadow-sm hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
-                      SDK Docs
-                    </button>
+                    <button className={buttonStyle}>SDK Docs</button>
                   </ExternalLink>
+                  <div className="rounded-none h-10 w-[1px] bg-zinc-300 mx-2" />
                   {isReady ? (
                     <>
-                      {isConnected && (
-                        <Link href={PAGES.MY_PROJECTS}>
-                          <button className="rounded-md bg-white w-max dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 shadow-sm hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
-                            My Projects
-                          </button>
-                        </Link>
-                      )}
                       {(isCommunityAdmin || isOwner) && isConnected ? (
                         <Link href={PAGES.ADMIN.LIST}>
-                          <button className="rounded-md w-max bg-white dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 shadow-sm hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
-                            Admin
-                          </button>
+                          <button className={buttonStyle}>Admin</button>
                         </Link>
                       ) : null}
+                      {isConnected && (
+                        <Link href={PAGES.MY_PROJECTS}>
+                          <button className={buttonStyle}>My Projects</button>
+                        </Link>
+                      )}
 
                       {/* Rainbowkit custom connect button start */}
                       {isConnected && <ProjectDialog />}
@@ -258,9 +228,9 @@ export default function Header() {
                                     <button
                                       onClick={openConnectModal}
                                       type="button"
-                                      className="rounded-md border border-primary-600 dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-primary-600 shadow-sm hover:bg-primary-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                                      className="rounded-md border border-primary-600 dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-primary-600 shadow-sm hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
                                     >
-                                      Login
+                                      Login / Register
                                     </button>
                                   );
                                 }
@@ -270,7 +240,7 @@ export default function Header() {
                                     <button
                                       onClick={openChainModal}
                                       type="button"
-                                      className="rounded-md w-max bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                                      className="flex w-max items-center flex-row gap-2 py-2 px-3 rounded-full bg-gray-600 p-0 pl-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
                                     >
                                       Wrong network
                                     </button>
@@ -280,13 +250,13 @@ export default function Header() {
                                 return (
                                   <Button
                                     onClick={openAccountModal}
-                                    className="flex w-max items-center flex-row gap-2 rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                                    className="flex w-max items-center flex-row gap-2 rounded-full bg-gray-500 p-0 pl-3 text-sm font-semibold text-white shadow-sm hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
                                   >
                                     {account.displayName}
                                     <img
                                       src={blo(account.address as Hex)}
                                       alt="avatar"
-                                      className="h-6 w-6 rounded-full"
+                                      className="h-10 w-10 rounded-full"
                                     />
                                   </Button>
                                 );
@@ -301,7 +271,6 @@ export default function Header() {
                   {/* Color mode toggle start */}
                   <button
                     className="px-3 py-2.5 rounded-md bg-white dark:bg-zinc-900 text-sm font-semibold text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-800 focus:outline-primary-600"
-                    // onClick={() => toggleTheme()}
                     onClick={() =>
                       changeCurrentTheme(
                         currentTheme === "light" ? "dark" : "light"
@@ -427,9 +396,9 @@ export default function Header() {
                                     <button
                                       onClick={openConnectModal}
                                       type="button"
-                                      className="rounded-md border max-lg:w-full max-lg:justify-center border-primary-600 dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-primary-600 shadow-sm hover:bg-primary-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                                      className="rounded-md border max-lg:w-full max-lg:justify-center border-primary-600 dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-primary-600 shadow-sm hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
                                     >
-                                      Login
+                                      Login / Register
                                     </button>
                                   );
                                 }
@@ -439,7 +408,7 @@ export default function Header() {
                                     <button
                                       onClick={openChainModal}
                                       type="button"
-                                      className="rounded-md w-max max-lg:w-full max-lg:justify-center bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                                      className="flex w-full justify-center items-center flex-row gap-2 py-2 px-3 rounded-full bg-gray-600 p-0 pl-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
                                     >
                                       Wrong network
                                     </button>
@@ -449,13 +418,13 @@ export default function Header() {
                                 return (
                                   <Button
                                     onClick={openAccountModal}
-                                    className="max-lg:w-full max-lg:justify-center flex w-max items-center flex-row gap-2 rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                                    className="flex w-full py-1 justify-center items-center flex-row gap-2 rounded-full bg-gray-500 text-sm font-semibold text-white shadow-sm hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
                                   >
                                     {account.displayName}
                                     <img
                                       src={blo(account.address as Hex)}
                                       alt="avatar"
-                                      className="h-6 w-6 rounded-full"
+                                      className="h-8 w-8 rounded-full"
                                     />
                                   </Button>
                                 );

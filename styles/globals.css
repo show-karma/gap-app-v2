@@ -5,6 +5,12 @@
 body * {
   @apply transition-colors duration-500;
 }
+* {
+  @apply font-sans;
+}
+p {
+  @apply font-body;
+}
 .preview {
   li {
     @apply list-disc list-inside;

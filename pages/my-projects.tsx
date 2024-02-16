@@ -31,6 +31,22 @@ const firstFiveMembers = (project: Project) =>
 const restMembersCounter = (project: Project) =>
   project.members?.length ? project.members.length - 5 : 0;
 
+const pickColor = (index: number) => {
+  const cardColors = [
+    "#5FE9D0",
+    "#875BF7",
+    "#F97066",
+    "#FDB022",
+    "#A6EF67",
+    "#84ADFF",
+    "#EF6820",
+    "#EE46BC",
+    "#EEAAFD",
+    "#67E3F9",
+  ];
+  return cardColors[index % cardColors.length];
+};
+
 export default function MyProjects() {
   const { isConnected, address } = useAccount();
 
@@ -125,22 +141,30 @@ export default function MyProjects() {
                             delay: index * 0.03,
                           }}
                           exit={{ opacity: 0, translateX: -10, translateY: 0 }}
-                          className="bg-white dark:bg-zinc-900 dark:border-gray-900 border border-gray-200 py-5 px-5 rounded-xl shadow-md w-full hover:shadow-zinc-400 dark:hover:shadow-zinc-700 transition-all ease-in-out duration-200"
+                          className="h-full bg-white dark:bg-zinc-900 dark:border-gray-900 border border-gray-200 rounded-xl   pb-5 px-5 shadow-md w-full hover:shadow-zinc-400 dark:hover:shadow-zinc-700 transition-all ease-in-out duration-200"
                         >
                           <Link
                             href={PAGES.PROJECT.OVERVIEW(
                               card.details?.slug || card.uid
                             )}
-                            className="w-full flex flex-col justify-start gap-3"
+                            className="w-full flex flex-1 flex-col justify-start gap-3"
                           >
-                            <div className="text-lg font-bold line-clamp-1">
-                              {card.details?.title || card.uid}
+                            <div
+                              className="h-[4px] w-full rounded-full my-2.5"
+                              style={{
+                                background: pickColor(index),
+                              }}
+                            />
+                            <div className="flex flex-col gap-0">
+                              <div className="text-lg font-bold line-clamp-1 mb-0 pb-0">
+                                {card.details?.title || card.uid}
+                              </div>
+                              <div className=" dark:text-slate-400 mb-2 text-sm font-medium text-slate-500">
+                                {`Created on ${formatDate(card.createdAt)}`}
+                              </div>
                             </div>
 
-                            <div className="flex flex-col gap-1 flex-1">
-                              <div className=" text-gray-600  dark:text-gray-400 text-sm font-semibold">
-                                Summary
-                              </div>
+                            <div className="flex flex-col gap-1 flex-1 h-full">
                               <div className="text-sm text-gray-900 dark:text-white text-ellipsis line-clamp-2">
                                 <MarkdownPreview
                                   source={card.details?.description || ""}
@@ -195,11 +219,6 @@ export default function MyProjects() {
                                     )}
                                   </>
                                 ) : null}
-                              </div>
-
-                              <div className="text-xs text-gray-600 dark:text-gray-400">
-                                Created on &nbsp;
-                                {formatDate(card.createdAt)}
                               </div>
                             </div>
                           </Link>
