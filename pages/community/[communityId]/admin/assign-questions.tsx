@@ -124,7 +124,7 @@ export default function AssignQuestions() {
             const previousQuestions = data.reduce(
               (acc: QuestionsAssigned, category: Category) => {
                 acc[category.id] = category.questions.map(
-                  (question: Question) => question.id
+                  (question: Question) => Number(question.id)
                 );
                 return acc;
               },
@@ -298,7 +298,7 @@ export default function AssignQuestions() {
                         {questions.map((question) => {
                           const isSelected = questionsAssigned[
                             category.id
-                          ]?.includes(question.id);
+                          ]?.includes(+question.id);
                           return (
                             <Button
                               key={`${category.id}${question.id}`}
@@ -306,7 +306,7 @@ export default function AssignQuestions() {
                               style={{
                                 opacity: isSelected ? 1 : 0.5,
                               }}
-                              onClick={() => assign(category.id, question.id)}
+                              onClick={() => assign(category.id, +question.id)}
                             >
                               <div className="flex h-4 w-4 flex-col items-center justify-start">
                                 {isSelected ? (
