@@ -63,7 +63,11 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
         </div>
 
         <div className="flex flex-col items-start " data-color-mode="light">
-          <ReadMore readLessText="Read less" readMoreText="Read more">
+          <ReadMore
+            readLessText="Read less"
+            readMoreText="Read more"
+            side="left"
+          >
             {milestone.completed.reason}
           </ReadMore>
 

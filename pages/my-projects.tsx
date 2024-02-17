@@ -141,7 +141,7 @@ export default function MyProjects() {
                             delay: index * 0.03,
                           }}
                           exit={{ opacity: 0, translateX: -10, translateY: 0 }}
-                          className="h-full bg-white dark:bg-zinc-900 dark:border-gray-900 border border-gray-200 rounded-xl   pb-5 px-5 w-full transition-all ease-in-out duration-200"
+                          className="h-full bg-white dark:bg-zinc-900 dark:border-gray-900 border border-gray-200 rounded-xl   pb-5 w-full transition-all ease-in-out duration-200"
                         >
                           <Link
                             href={PAGES.PROJECT.OVERVIEW(
@@ -149,13 +149,16 @@ export default function MyProjects() {
                             )}
                             className="w-full flex flex-1 flex-col justify-start gap-3"
                           >
-                            <div
-                              className="h-[4px] w-full rounded-full mt-2.5"
-                              style={{
-                                background: pickColor(index),
-                              }}
-                            />
-                            <div className="flex flex-col gap-0">
+                            <div className="px-2 w-full mt-2.5">
+                              <div
+                                className=" h-[4px] w-full rounded-full"
+                                style={{
+                                  background: pickColor(index),
+                                }}
+                              />
+                            </div>
+
+                            <div className="px-5 flex flex-col gap-0">
                               <div className="font-body line-clamp-1 mb-0 pb-0 truncate text-base font-semibold text-gray-900 dark:text-gray-100">
                                 {card.details?.title || card.uid}
                               </div>
@@ -164,7 +167,7 @@ export default function MyProjects() {
                               </div>
                             </div>
 
-                            <div className="flex flex-col gap-1 flex-1 h-full">
+                            <div className="px-5 flex flex-col gap-1 flex-1 h-full">
                               <div className="line-clamp-2 text-base font-normal ">
                                 <MarkdownPreview
                                   source={card.details?.description || ""}
@@ -175,12 +178,13 @@ export default function MyProjects() {
                                         ? "white"
                                         : "rgb(71, 85, 105)",
                                     width: "100%",
+                                    fontSize: "16px",
                                   }}
                                 />
                               </div>
                             </div>
 
-                            <div className="flex min-h-[24px] w-full flex-row gap-2">
+                            <div className="px-5 flex min-h-[24px] w-full flex-row gap-2">
                               {total ? (
                                 <div className="flex h-7 items-center justify-start rounded-2xl bg-slate-50 px-3 py-1">
                                   <p className="text-center text-sm font-semibold leading-tight text-slate-600">
@@ -202,7 +206,7 @@ export default function MyProjects() {
                               ) : null}
                             </div>
 
-                            <div className="flex items-center justify-between">
+                            <div className="flex items-center justify-between px-5">
                               <div className="flex items-center space-x-2">
                                 {firstFiveMembers(card).length ? (
                                   <>
