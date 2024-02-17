@@ -12,6 +12,126 @@ p {
   @apply font-body;
 }
 
+.line-clamp-1 {
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+
+  * {
+    display: inline;
+  }
+  *::after {
+    content: " \A";
+    white-space: pre;
+  }
+  strong::after,
+  a::after,
+  del::after,
+  code::after {
+    content: "";
+    white-space: pre;
+  }
+}
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+
+  * {
+    display: inline;
+  }
+  *::after {
+    content: " \A";
+    white-space: pre;
+  }
+  strong::after,
+  a::after,
+  del::after,
+  code::after {
+    content: "";
+    white-space: pre;
+  }
+}
+.remove-after {
+  *::after {
+    content: none;
+    white-space: none;
+  }
+}
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  max-height: 73px;
+
+  * {
+    display: inline;
+  }
+  ul,
+  li {
+    display: list-item;
+  }
+  *::after {
+    content: " \A";
+    white-space: pre;
+  }
+  strong::after,
+  a::after,
+  del::after,
+  code::after {
+    content: "";
+    white-space: pre;
+  }
+}
+.line-clamp-4 {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+
+  * {
+    display: inline;
+  }
+  *::after {
+    content: " \A";
+    white-space: pre;
+  }
+  strong::after,
+  a::after,
+  del::after,
+  code::after {
+    content: "";
+    white-space: pre;
+  }
+}
+
+.wmde-markdown {
+  @apply bg-transparent;
+
+  @media (max-width: 1440px) {
+    @apply text-[14px];
+  }
+  h1 {
+    @apply text-lg font-bold border-none;
+  }
+  h2 {
+    @apply text-lg font-bold border-none;
+  }
+  h3 {
+    @apply text-base font-bold border-none;
+  }
+  h4,
+  h5,
+  h6,
+  h7,
+  h8 {
+    @apply text-base font-bold border-none;
+  }
+}
+
 .preview {
   li {
     @apply list-disc list-inside;

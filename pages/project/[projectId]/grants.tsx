@@ -26,6 +26,7 @@ import {
 } from "@heroicons/react/24/outline";
 import formatCurrency from "@/utilities/formatCurrency";
 import { Hex } from "viem";
+import markdownStyles from "@/styles/markdown.module.css";
 
 import { CheckCircleIcon, PlusIcon } from "@heroicons/react/20/solid";
 import { Button } from "@/components/Utilities/Button";
@@ -626,7 +627,10 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
               GRANT DESCRIPTION
             </h3>
             <div className="mt-2">
-              <MarkdownPreview source={grant?.details?.description} />
+              <MarkdownPreview
+                className={markdownStyles.wmdeMarkdown}
+                source={grant?.details?.description}
+              />
             </div>
           </div>
         )}

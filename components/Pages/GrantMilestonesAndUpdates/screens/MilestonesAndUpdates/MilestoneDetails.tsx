@@ -119,7 +119,7 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
           <div className="flex w-full flex-row items-start justify-between px-4 max-lg:mb-4 max-lg:flex-col">
             <div className="flex flex-col gap-3">
               <MilestoneTag index={index} />
-              <h4 className="text-base font-bold leading-normal text-gray-700 dark:text-zinc-100">
+              <h4 className="text-base font-bold leading-normal text-black dark:text-zinc-100">
                 {milestone.title}
               </h4>
             </div>
