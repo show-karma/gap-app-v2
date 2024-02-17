@@ -251,7 +251,7 @@ export default function Index() {
           },
         ]}
       />
-      <div className="px-4 sm:px-6 lg:px-8 py-5">
+      <div className="px-4 sm:px-6 lg:px-12 py-5">
         <div className="py-8 rounded-xl bg-black border border-primary-800 text-center flex flex-col gap-2 justify-center w-full items-center">
           <div className="flex justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
@@ -291,7 +291,7 @@ export default function Index() {
                     community?.details?.slug || (community?.uid as string)
                   )}
                 >
-                  <Button className=" flex flex-row items-center gap-2 px-4 py-2 bg-transparent rounded-md transition-all ease-in-out duration-200">
+                  <Button className=" flex flex-row items-center gap-2 px-4 py-2 bg-transparent text-black dark:text-white rounded-md transition-all ease-in-out duration-200">
                     <ChevronLeftIcon className="h-5 w-5" />
                     Return to admin page
                   </Button>

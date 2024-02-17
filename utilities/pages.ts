@@ -2,19 +2,20 @@ export const PAGES = {
   HOME: `/`,
   NOT_FOUND: `/404`,
   COMMUNITY: {
-    ALL_GRANTS: (community: string) => `/community/${community}`,
+    ALL_GRANTS: (community: string) => `/${community}`,
   },
   MY_PROJECTS: `/my-projects`,
   ADMIN: {
     LIST: `/communities-to-admin`,
-    ROOT: (community: string) => `/community/${community}/admin`,
+    ROOT: (community: string) => `/${community}/admin`,
     ASSIGN_QUESTIONS: (community: string) =>
-      `/community/${community}/admin/assign-questions`,
+      `/${community}/admin/assign-questions`,
     EDIT_CATEGORIES: (community: string) =>
-      `/community/${community}/admin/edit-categories`,
+      `/${community}/admin/edit-categories`,
   },
   PROJECT: {
     OVERVIEW: (project: string) => `/project/${project}`,
+    GRANTS_STANDALONE: (project: string) => `/project/${project}/grants`,
     GRANTS: (project: string) => `/project/${project}/grants?tab=overview`,
     GRANT: (project: string, grant: string) =>
       `/project/${project}/grants?grantId=${grant}&tab=overview`,

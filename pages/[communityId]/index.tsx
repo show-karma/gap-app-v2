@@ -16,6 +16,7 @@ import { Hex } from "viem";
 import { NextSeo } from "next-seo";
 import { CommunityGrants } from "@/components/CommunityGrants";
 import { CommunityFeed } from "@/components/CommunityFeed";
+import { communityColors } from "@/utilities/communityColors";
 
 type Props = {
   params: {
@@ -158,34 +159,42 @@ export default function Index({
           },
         ]}
       />
-      <div className="px-4 sm:px-6 lg:px-8 py-5">
-        <div className="py-8 rounded-xl bg-black border border-primary-800 text-center flex flex-col gap-2 justify-center w-full items-center">
+      <div className="flex w-full max-w-full flex-col justify-between gap-6 px-12 pb-7 pt-5 max-2xl:px-8 max-md:px-4">
+        <div
+          className="flex h-max w-full flex-col items-center justify-center gap-3 rounded-2xl p-6 max-lg:py-4"
+          style={{
+            backgroundColor:
+              communityColors[community?.uid.toLowerCase() || "black"] ||
+              "#000000",
+          }}
+        >
           <div className="flex justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
             <img
               src={community?.details?.imageURL}
               className={cn(
-                "h-14 w-14 rounded-full",
+                "h-14 w-14 rounded-full border border-white p-1 max-lg:h-8 max-lg:w-8",
                 loading ? "animate-pulse bg-gray-600" : ""
               )}
             />
           </div>
 
-          <div className="mt-3 text-3xl font-black text-white w-max flex flex-row gap-2">
+          <p className="text-3xl font-semibold text-white max-2xl:text-2xl max-lg:text-xl">
             <span
               className={cn(
+                "font-body",
                 loading
-                  ? "animate-pulse min-w-32 bg-gray-600 rounded-lg px-4 py-0"
+                  ? "animate-pulse min-w-32 bg-gray-600 rounded-lg px-4 py-0 mr-4"
                   : ""
               )}
             >
               {community ? community.details?.name : ""}
             </span>{" "}
             Community Grants
-          </div>
+          </p>
         </div>
 
-        <div className="mt-12 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
+        <div className="flex gap-8 flex-row max-lg:flex-col-reverse w-full">
           <CommunityGrants />
           <CommunityFeed />
         </div>
