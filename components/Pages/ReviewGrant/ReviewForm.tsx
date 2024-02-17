@@ -44,10 +44,10 @@ const ErrorMessage = ({ message }: { message?: string }) => (
 const FormSchema = z.object({
   questions: z.array(
     z.object({
-      id: z.number().min(0),
+      id: z.string(),
       rating: z.number().min(1, { message: MESSAGES.GRANT.REVIEW.FORM.RATING }),
       answer: z.string().optional(),
-      questionId: z.number().min(0),
+      questionId: z.string(),
     })
   ),
   infos: z
