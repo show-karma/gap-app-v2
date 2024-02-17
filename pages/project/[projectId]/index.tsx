@@ -152,7 +152,7 @@ export const NestedLayout = ({ children }: Props) => {
   return (
     <div>
       <div className="relative border-b border-gray-200 pb-5 sm:pb-0">
-        <div className="px-4 sm:px-6 lg:px-8 md:flex py-8 md:items-start md:justify-between flex flex-row max-lg:flex-col gap-4">
+        <div className="px-4 sm:px-6 lg:px-12 md:flex py-5 md:items-start md:justify-between flex flex-row max-lg:flex-col gap-4">
           <h1
             className={cn(
               loading
@@ -166,8 +166,8 @@ export const NestedLayout = ({ children }: Props) => {
             {project ? (
               <div className="flex items-center space-x-2 gap-y-4">
                 {firstFiveMembers(project).length ? (
-                  <>
-                    <span className="text-base text-gray-600 dark:text-zinc-200">
+                  <div className="flex flex-row gap-2 items-center">
+                    <span className="text-base font-body font-normal leading-tight text-black mr-6 dark:text-zinc-200">
                       Built by
                     </span>
                     {firstFiveMembers(project).map((member, index) => (
@@ -175,15 +175,15 @@ export const NestedLayout = ({ children }: Props) => {
                         key={index}
                         src={blo(member, 8)}
                         alt={member}
-                        className="h-6 w-6 m-0 rounded-md ring-4 ring-gray-50 dark:ring-black border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5"
+                        className="h-4 w-4 m-0 rounded-full border-1 border-gray-100 dark:border-zinc-900"
                       />
                     ))}
                     {restMembersCounter(project) > 0 && (
-                      <p className="flex items-center justify-center h-12 w-12 rounded-md ring-4 ring-gray-50 dark:ring-black border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5">
+                      <p className="flex items-center justify-center h-4 w-4 rounded-full dark:ring-black border border-1 border-gray-100 dark:border-zinc-900 ">
                         +
                       </p>
                     )}
-                  </>
+                  </div>
                 ) : null}
               </div>
             ) : null}
@@ -229,25 +229,25 @@ export const NestedLayout = ({ children }: Props) => {
               ))}
             </select>
           </div>
-          <div className="px-4 sm:px-6 lg:px-8 hidden sm:block">
-            <nav className="-mb-px flex space-x-8">
+          <div className="px-4 sm:px-6 lg:px-12 hidden sm:block">
+            <nav className="gap-10 flex flex-row">
               {tabs.map((tab) => (
                 <Link
                   key={tab.name}
                   href={tab.href}
                   className={classNames(
-                    "whitespace-nowrap border-b-2 px-3 pb-2 text-base flex flex-row gap-2 items-center",
+                    "whitespace-nowrap border-b-2 pb-2 text-base flex flex-row gap-2 items-center",
                     tab.href.split("/")[3]?.split("?")[0] ===
                       router.pathname.split("/")[3]
-                      ? "border-primary-500 text-gray-700 font-bold dark:text-gray-200"
-                      : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-200  font-medium"
+                      ? "border-blue-600 text-gray-700 font-bold  px-3 dark:text-gray-200"
+                      : "border-transparent text-gray-600  px-0 hover:border-gray-300 hover:text-gray-700 dark:text-gray-200 font-normal"
                   )}
                 >
                   {tab.name}
                   {tab.name === "Grants" && project?.grants?.length ? (
-                    <div className="bg-zinc-200 dark:bg-zinc-800 dark:text-blue-300 p-0.5 rounded-full h-6 w-6 text-xs items-center flex flex-row justify-center">
+                    <p className="rounded-2xl bg-gray-200 px-2.5 py-[2px] text-center text-sm font-medium leading-tight text-slate-700 dark:bg-slate-700 dark:text-zinc-300">
                       {formatCurrency(project?.grants?.length || 0)}
-                    </div>
+                    </p>
                   ) : null}
                 </Link>
               ))}
@@ -255,7 +255,7 @@ export const NestedLayout = ({ children }: Props) => {
           </div>
         </div>
       </div>
-      <div className="px-4 sm:px-6 lg:px-8">{children}</div>
+      <div className="px-4 sm:px-6 lg:px-12">{children}</div>
     </div>
   );
 };

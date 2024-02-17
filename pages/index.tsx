@@ -231,7 +231,7 @@ const WhatIsSolving = () => {
         <h4 className="w-max rounded-3xl bg-[#EAECF5] dark:bg-slate-800 dark:text-blue-400 px-3 py-1 text-center text-base font-semibold text-indigo-900 max-2xl:text-sm">
           100% ONCHAIN
         </h4>
-        <h2 className="text-4xl py-1 font-bold text-gray-900 dark:text-gray-100 max-sm:text-2xl">
+        <h2 className="text-4xl font-bold text-gray-900 dark:text-gray-100 max-sm:text-2xl">
           Why are we building this?
         </h2>
         <p className="text-xl font-normal text-gray-900 max-sm:text-base dark:text-gray-100">
@@ -256,7 +256,7 @@ const WhatIsSolving = () => {
                 className="h-7 w-7"
               />
             </div>
-            <h3 className="text-2xl font-bold  max-2xl:text-xl">
+            <h3 className="text-2xl font-bold max-2xl:text-xl text-black">
               Limited Accessibility
             </h3>
             <p className="text-gray-700 dark:text-gray-700">
@@ -273,7 +273,7 @@ const WhatIsSolving = () => {
                 className="h-7 w-7"
               />
             </div>
-            <h3 className="text-2xl font-bold  max-2xl:text-xl">
+            <h3 className="text-2xl font-bold  max-2xl:text-xl  text-black">
               Reputation Portability
             </h3>
             <p className="text-gray-700 dark:text-gray-700">
@@ -293,7 +293,7 @@ const WhatIsSolving = () => {
               className="h-7 w-7"
             />
           </div>
-          <h3 className="text-2xl font-bold max-2xl:text-xl">
+          <h3 className="text-2xl font-bold max-2xl:text-xl  text-black">
             Inadequate Data Structure
           </h3>
           <p className="text-gray-700 dark:text-gray-700">

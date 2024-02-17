@@ -42,7 +42,7 @@ export const Searchbar: FC = () => {
       <input
         type="text"
         placeholder="Search projects"
-        className="w-full min-w-[160px] bg-transparent px-1 py-2 text-gray-600 dark:text-gray-200 border-none border-b-zinc-800 outline-none focus:ring-0 max-[1300px]:min-w-full max-[1300px]:max-w-[140px]"
+        className="w-full min-w-[160px] bg-transparent placeholder:text-gray-400 px-1 py-2 text-gray-600 dark:text-gray-200 border-none border-b-zinc-800 outline-none focus:ring-0 max-[1300px]:min-w-full max-[1300px]:max-w-[140px]"
         onChange={(e) => debouncedSearch(e.target.value)}
         onFocus={() => projects.length > 0 && setIsSearchListOpen(true)}
       />

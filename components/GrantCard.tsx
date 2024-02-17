@@ -64,36 +64,38 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
         grant.project?.slug || grant.refUID || "",
         grant.uid
       )}
-      className="bg-white dark:bg-zinc-900 dark:border-gray-700 border border-gray-200 gap-3 px-5 pb-5 rounded-xl flex flex-col transition-all ease-in-out duration-200"
+      className="flex h-full w-full max-w-[320px] flex-col items-start justify-between gap-3 rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2 transition-all duration-300 ease-in-out hover:opacity-80"
     >
       <div className="w-full flex flex-col gap-1">
         <div
-          className="h-[4px] w-full rounded-full mt-2.5 mb-2.5"
+          className="h-[4px] w-full rounded-full mb-2.5"
           style={{
             background: pickColor(index),
           }}
         />
-        <div className="text-lg text-black dark:text-zinc-100 font-bold line-clamp-1">
-          {grant.project?.title}
-        </div>
-        <div className="text-sm text-gray-500 dark:text-gray-500 font-semibold line-clamp-1">
-          {grant.details?.title}
-        </div>
-        <div className="text-sm font-medium text-gray-400 ">
-          Created on &nbsp;
-          {formatDate(grant.createdAt)}
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-1 flex-1">
-        <div className="text-sm text-gray-900 dark:text-gray-400 text-ellipsis line-clamp-2">
-          <MarkdownPreview source={grant.details?.description?.slice(0, 100)} />
+        <div className="flex w-full flex-col px-3">
+          <p className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200  max-2xl:text-sm">
+            {grant.project?.title}
+          </p>
+          <p className="line-clamp-1 break-all text-sm font-semibold text-gray-500 dark:text-zinc-300 max-2xl:text-[13px]">
+            {grant.details?.title}
+          </p>
+          <p className="mb-2 text-sm font-medium text-gray-400  dark:text-zinc-400  max-2xl:text-[13px]">
+            Created on {formatDate(grant.createdAt)}
+          </p>
+          <div className="flex flex-col gap-1 flex-1 h-[64px]">
+            <div className="text-sm text-gray-900 dark:text-gray-400 text-ellipsis line-clamp-2">
+              <MarkdownPreview
+                source={grant.details?.description?.slice(0, 100)}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
       <div className="flex w-full flex-row flex-wrap justify-start gap-1">
-        <div className="flex h-max w-max items-center justify-start rounded-md bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
-          <p className="text-center text-xs font-semibold">
+        <div className="flex h-max w-max items-center justify-start rounded-full bg-slate-50   dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
+          <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
             <>
               {formatCurrency(grant.milestones?.length)}{" "}
               {pluralize("Milestone", grant.milestones?.length)}
@@ -101,14 +103,14 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
           </p>
         </div>
         {grant.milestones?.length ? (
-          <div className="flex h-max w-max items-center justify-start rounded-md bg-teal-50 dark:bg-teal-700 text-teal-600 dark:text-teal-200 px-3 py-1 max-2xl:px-2">
-            <p className="text-center text-xs font-semibold">
+          <div className="flex h-max w-max items-center justify-start rounded-full bg-teal-50 dark:bg-teal-700 text-teal-600 dark:text-teal-200 px-3 py-1 max-2xl:px-2">
+            <p className="text-center text-sm font-medium text-teal-600 dark:text-teal-100 max-2xl:text-[13px]">
               {milestonesPercentage(grant)}% completed
             </p>
           </div>
         ) : null}
-        <div className="flex h-max w-max items-center justify-start rounded-md bg-slate-50 dark:bg-slate-600 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
-          <p className="text-center text-xs font-semibold">
+        <div className="flex h-max w-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-600 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
+          <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
             {formatCurrency(updatesLength(grant))}{" "}
             {pluralize("Update", updatesLength(grant))}
           </p>
@@ -117,34 +119,36 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
 
       <div className="gap-1 flex items-center justify-start flex-row flex-wrap">
         {grant.categories?.map((category, index) => (
-          <span
-            className="inline-flex items-center rounded-md bg-blue-200 dark:bg-slate-800 dark:text-gray-200 px-2 py-1 text-xs font-medium text-gray-600 "
-            key={index}
+          <div
+            key={category}
+            className="flex h-max max-h-[64px] w-max items-center justify-start  rounded-2xl bg-blue-100 dark:bg-blue-900 dark:mix-blend-normal px-3 py-1 mix-blend-multiply  max-2xl:px-2"
           >
-            {category}
-          </span>
+            <div className="h-max max-h-[64px] w-max max-w-[260px] truncate break-words text-start text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
+              {category}
+            </div>
+          </div>
         ))}
       </div>
 
-      <div className="flex items-center justify-between">
+      <div className="flex px-3 items-center justify-between">
         <div className="flex items-center w-full flex-wrap gap-2">
           {firstFiveMembers(grant).length ? (
             <>
-              <span className="text-sm w-max min-w-max text-gray-600 dark:text-gray-200">
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-200">
                 Built by
-              </span>
+              </p>
               <div className="flex flex-row gap-2 flex-1">
                 {firstFiveMembers(grant).map((member, index) => (
                   <span key={index}>
                     <img
                       src={blo(member, 8)}
                       alt={member}
-                      className="h-5 w-5 rounded-md ring-4 ring-gray-50 dark:ring-zinc-800 border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5"
+                      className="h-5 w-5 rounded-full border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5"
                     />
                   </span>
                 ))}
                 {restMembersCounter(grant) > 0 && (
-                  <p className="flex items-center justify-center h-12 w-12 rounded-md ring-4 ring-gray-50 dark:ring-zinc-800 border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5">
+                  <p className="flex items-center justify-center h-12 w-12 rounded-full ring-4 ring-gray-50 dark:ring-zinc-800 border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5">
                     +
                   </p>
                 )}

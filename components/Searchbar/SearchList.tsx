@@ -45,7 +45,7 @@ export const SearchList: React.FC<Props> = ({
                     <div className="flex flex-row gap-1 items-center font-medium">
                       <img
                         src={blo(project.recipient)}
-                        className="w-4 h-4 rounded-full"
+                        className="w-4 h-4  rounded-full border-1 border-gray-100 dark:border-zinc-900"
                         alt="Recipient's Profile Picture"
                       />
                       <EthereumAddressToENSName address={project.recipient} />

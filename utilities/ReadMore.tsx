@@ -20,7 +20,7 @@ export const ReadMore = ({
   };
 
   const text = children ? children : "";
-  const minimumText = words ? words : 240;
+  const minimumText = words ? words : 400;
 
   useEffect(() => {
     if (text.length - 1 < minimumText) {

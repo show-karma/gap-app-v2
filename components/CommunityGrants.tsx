@@ -169,11 +169,11 @@ export const CommunityGrants = () => {
           >
             {({ open }) => (
               <div className="flex items-center gap-x-2 max-sm:w-full max-sm:justify-between">
-                <Listbox.Label className="block text-sm font-medium leading-6 ">
+                <Listbox.Label className="text-base font-semibold text-gray-900 dark:text-zinc-100 max-2xl:text-sm">
                   Filter by category
                 </Listbox.Label>
                 <div className="relative flex-1 w-56">
-                  <Listbox.Button className="relative w-full cursor-default rounded-md bg-white dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 py-1.5 pl-3 pr-10 text-left text-gray-900  ring-1 ring-inset ring-gray-300 sm:text-sm sm:leading-6">
+                  <Listbox.Button className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left  dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 text-gray-900   ring-1 ring-inset ring-gray-300 sm:text-sm sm:leading-6">
                     {selectedCategories.length > 0 ? (
                       <p className="flex flex-row gap-1">
                         {selectedCategories.length}
@@ -200,7 +200,7 @@ export const CommunityGrants = () => {
                     leaveFrom="opacity-100"
                     leaveTo="opacity-0"
                   >
-                    <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-zinc-800 dark:text-zinc-200 py-1 text-base focus:outline-none sm:text-sm">
+                    <Listbox.Options className="absolute  z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base  dark:bg-zinc-800 dark:text-zinc-200 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                       {categoriesOptions.map((category) => (
                         <Listbox.Option
                           key={category}
@@ -262,7 +262,7 @@ export const CommunityGrants = () => {
           >
             {({ open }) => (
               <div className="flex items-center gap-x-2  max-sm:w-full max-sm:justify-between">
-                <Listbox.Label className="block text-sm font-medium leading-6 ">
+                <Listbox.Label className="text-base font-semibold text-gray-900 dark:text-zinc-100 max-2xl:text-sm">
                   Sort by
                 </Listbox.Label>
                 <div className="relative flex-1 w-32">
@@ -347,7 +347,7 @@ export const CommunityGrants = () => {
           >
             {({ open }) => (
               <div className="flex items-center gap-x-2  max-sm:w-full max-sm:justify-between">
-                <Listbox.Label className="block text-sm font-medium leading-6 ">
+                <Listbox.Label className="text-base font-semibold text-gray-900 dark:text-zinc-100 max-2xl:text-sm">
                   Status
                 </Listbox.Label>
                 <div className="relative flex-1 w-36">

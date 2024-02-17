@@ -68,7 +68,7 @@ export default function CommunitiesToAdmin() {
         ]}
       />
 
-      <div className="px-4 sm:px-6 lg:px-8 py-5">
+      <div className="px-4 sm:px-6 lg:px-12 py-5">
         <div className="text-2xl font-bold">Communities to review</div>
         <div className="mt-5 grid grid-cols-4 gap-5">
           {communitiesToAdmin.length ? (

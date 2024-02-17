@@ -11,6 +11,7 @@ body * {
 p {
   @apply font-body;
 }
+
 .preview {
   li {
     @apply list-disc list-inside;

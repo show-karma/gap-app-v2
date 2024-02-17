@@ -108,8 +108,7 @@ export default function MyProjects() {
         ]}
       />
       <div>
-        <div className="px-4 sm:px-6 lg:px-8 py-5">
-          <div className="text-2xl font-bold">My Projects</div>
+        <div className="px-4 sm:px-6 lg:px-12 py-5">
           <div className="mt-5 w-full gap-5">
             {isConnected ? (
               myProjects.length > 0 ? (
@@ -157,10 +156,10 @@ export default function MyProjects() {
                               }}
                             />
                             <div className="flex flex-col gap-0">
-                              <div className="line-clamp-1 mb-0 pb-0 truncate text-base font-semibold text-gray-900 dark:text-gray-100">
+                              <div className="font-body line-clamp-1 mb-0 pb-0 truncate text-base font-semibold text-gray-900 dark:text-gray-100">
                                 {card.details?.title || card.uid}
                               </div>
-                              <div className=" dark:text-slate-400 mb-2 text-sm font-medium text-slate-500">
+                              <div className="font-body dark:text-slate-400 mb-2 text-sm font-medium text-slate-500">
                                 {`Created on ${formatDate(card.createdAt)}`}
                               </div>
                             </div>
@@ -183,7 +182,7 @@ export default function MyProjects() {
 
                             <div className="flex min-h-[24px] w-full flex-row gap-2">
                               {total ? (
-                                <div className="flex h-7 items-center justify-start rounded-2xl bg-slate-100 px-3 py-1">
+                                <div className="flex h-7 items-center justify-start rounded-2xl bg-slate-50 px-3 py-1">
                                   <p className="text-center text-sm font-semibold leading-tight text-slate-600">
                                     {formatCurrency(total)} total{" "}
                                     {pluralize("grants", total)}
@@ -207,7 +206,7 @@ export default function MyProjects() {
                               <div className="flex items-center space-x-2">
                                 {firstFiveMembers(card).length ? (
                                   <>
-                                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                                    <span className="font-body text-sm font-medium text-slate-500 dark:text-gray-400">
                                       Built by
                                     </span>
                                     {firstFiveMembers(card)?.map(
@@ -216,7 +215,7 @@ export default function MyProjects() {
                                           <img
                                             src={blo(member, 8)}
                                             alt={member}
-                                            className="h-6 w-6 rounded-md ring-4 ring-gray-50 dark:ring-black border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5"
+                                            className="h-6 w-6 rounded-full sm:h-5 sm:w-5  border-1 border-gray-100 dark:border-zinc-900"
                                           />
                                         </span>
                                       )

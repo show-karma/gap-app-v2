@@ -81,7 +81,7 @@ const TeamPage = ({
                 <img
                   src={blo((member.details?.name as Hex) || member.recipient)}
                   alt={member.details?.name || member.recipient}
-                  className="inline-block h-9 w-9 rounded-md"
+                  className="inline-block h-9 w-9 rounded-full"
                 />
               </div>
               <div className="ml-3">
