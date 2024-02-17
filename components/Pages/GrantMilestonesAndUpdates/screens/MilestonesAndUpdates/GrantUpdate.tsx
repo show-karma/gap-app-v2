@@ -1,15 +1,35 @@
 import { ReadMore, formatDate } from "@/utilities";
-import { FlagIcon } from "@heroicons/react/24/outline";
 import type { FC } from "react";
 
 interface UpdateTagProps {
   index: number;
 }
+const FlagIcon = () => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-4 w-4"
+    >
+      <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path>
+      <line x1="4" x2="4" y1="22" y2="15"></line>
+    </svg>
+  );
+};
 const UpdateTag: FC<UpdateTagProps> = ({ index }) => {
   return (
-    <div className="flex w-max flex-row gap-3 rounded-full bg-blue-50 px-3 py-1 text-violet-800 dark:text-violet-200 dark:bg-purple-700">
-      <FlagIcon className="h-4 w-4" />
-      <p className="text-xs font-bold text-violet-800">UPDATE {index}</p>
+    <div className="flex w-max flex-row gap-3 rounded-full  bg-[#F5F3FF] px-3 py-1 text-[#5720B7] dark:text-violet-100 dark:bg-purple-700">
+      <FlagIcon />
+      <p className="text-xs font-bold text-[#5720B7] dark:text-violet-100">
+        UPDATE {index}
+      </p>
     </div>
   );
 };

@@ -36,31 +36,31 @@ function HeroBlock() {
 const links = [
   {
     title: "All Grants",
-    href: "https://gap.karmahq.xyz/community/arbitrum",
+    href: "https://gap.karmahq.xyz/arbitrum",
   },
   {
     title: "Gaming",
-    href: "https://gap.karmahq.xyz/community/arbitrum/?categories=arb+-+gaming&status=all&sortBy=milestones",
+    href: "https://gap.karmahq.xyz/arbitrum/?categories=arb+-+gaming&status=all&sortBy=milestones",
   },
   {
     title: "Protocol",
-    href: "https://gap.karmahq.xyz/community/arbitrum/?categories=arb+-+protocol%2Carb+-+new+protocol&status=all&sortBy=milestones",
+    href: "https://gap.karmahq.xyz/arbitrum/?categories=arb+-+protocol%2Carb+-+new+protocol&status=all&sortBy=milestones",
   },
   {
     title: "Education & Community Growth",
-    href: "https://gap.karmahq.xyz/community/arbitrum/?categories=arb+-+education%2Carb+-+community+growth&status=all&sortBy=milestones",
+    href: "https://gap.karmahq.xyz/arbitrum/?categories=arb+-+education%2Carb+-+community+growth&status=all&sortBy=milestones",
   },
   {
     title: "DAO Contributors",
-    href: "https://gap.karmahq.xyz/community/arbitrum/?categories=arb+-+dao+contribution&status=all&sortBy=milestones",
+    href: "https://gap.karmahq.xyz/arbitrum/?categories=arb+-+dao+contribution&status=all&sortBy=milestones",
   },
   {
     title: "Data & Analytics",
-    href: "https://gap.karmahq.xyz/community/arbitrum/?categories=arb+-+data+%26+analytics&status=all&sortBy=milestones",
+    href: "https://gap.karmahq.xyz/arbitrum/?categories=arb+-+data+%26+analytics&status=all&sortBy=milestones",
   },
   {
     title: "Tools",
-    href: "https://gap.karmahq.xyz/community/arbitrum/?categories=arb+-+tool&status=all&sortBy=milestones",
+    href: "https://gap.karmahq.xyz/arbitrum/?categories=arb+-+tool&status=all&sortBy=milestones",
   },
 ];
 

@@ -154,7 +154,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
   return {
     props: {
-      metadataTitle: projectInfo?.title || "",
+      metadataTitle: `Karma GAP - ${projectInfo?.title}`,
       metadataDesc: projectInfo?.description?.substring(0, 80) || "",
     },
   };
@@ -221,6 +221,7 @@ const GrantsPage = ({
   const defaultTabs: {
     name: string;
     href: string;
+    alternativeHref?: string;
     tabName: GrantScreen;
     current: boolean;
   }[] = [
@@ -230,6 +231,7 @@ const GrantsPage = ({
         project?.uid as string,
         grant?.uid as string
       ),
+      alternativeHref: PAGES.PROJECT.GRANTS_STANDALONE(project?.uid as string),
       tabName: "overview",
       current: true,
     },
@@ -350,15 +352,35 @@ const GrantsPage = ({
       />
       <div className="flex max-lg:flex-col">
         {project?.grants.length ? (
-          <div className="w-2/12 pr-5 py-5 border-none max-lg:w-full max-lg:px-0">
-            <nav className="flex flex-1 flex-col" aria-label="Sidebar">
+          <div className="w-full max-w-[320px] py-5 border-none max-lg:w-full max-lg:px-0">
+            <nav className="flex flex-1 flex-col gap-4" aria-label="Sidebar">
               <div className="flex w-full min-w-[240px] flex-row items-center gap-2">
-                <img
-                  src="/icons/money-black.svg"
-                  className="h-5 w-5"
-                  alt="Grants"
-                />
-                <p className="text-xs font-bold text-black ">GRANTS</p>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 dark:text-zinc-300"
+                >
+                  <g clipPath="url(#clip0_2139_16649)">
+                    <path
+                      d="M5.66659 9.77648C5.66659 10.6356 6.36303 11.332 7.22214 11.332H8.66659C9.58706 11.332 10.3333 10.5858 10.3333 9.66536C10.3333 8.74489 9.58706 7.9987 8.66659 7.9987H7.33325C6.41278 7.9987 5.66659 7.25251 5.66659 6.33203C5.66659 5.41156 6.41278 4.66536 7.33325 4.66536H8.7777C9.63681 4.66536 10.3333 5.36181 10.3333 6.22092M7.99992 3.66536V4.66536M7.99992 11.332V12.332M14.6666 7.9987C14.6666 11.6806 11.6818 14.6654 7.99992 14.6654C4.31802 14.6654 1.33325 11.6806 1.33325 7.9987C1.33325 4.3168 4.31802 1.33203 7.99992 1.33203C11.6818 1.33203 14.6666 4.3168 14.6666 7.9987Z"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </g>
+                  <defs>
+                    <clipPath id="clip0_2139_16649">
+                      <rect width="16" height="16" fill="white" />
+                    </clipPath>
+                  </defs>
+                </svg>
+
+                <p className="text-xs font-bold text-black dark:text-zinc-300 ">
+                  GRANTS
+                </p>
               </div>
               <ul role="list" className="space-y-2 mt-8">
                 {navigation.map((item) => (
@@ -367,13 +389,13 @@ const GrantsPage = ({
                       href={item.href}
                       className={cn(
                         item.current
-                          ? "bg-[#eef4ff] dark:bg-zinc-800 dark:text-primary-300  text-primary-600"
+                          ? "bg-[#eef4ff] dark:bg-zinc-800 dark:text-primary-300  text-[#155eef]"
                           : "text-gray-700 hover:text-primary-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700",
-                        "flex items-center rounded-xl text-sm leading-6 font-semibold w-full"
+                        "flex items-center rounded-md text-sm leading-6 font-semibold w-full"
                       )}
                     >
                       <div className="flex flex-row w-full items-center gap-2 justify-between px-4 py-2">
-                        <div className="flex flex-row gap-4">
+                        <div className="flex flex-row items-center gap-2">
                           <img
                             src={item.icon}
                             alt=""
@@ -381,10 +403,10 @@ const GrantsPage = ({
                               item.current
                                 ? "text-primary-600"
                                 : "text-gray-400 group-hover:text-primary-600",
-                              "h-6 w-6 shrink-0 rounded-full"
+                              "h-5 w-5 shrink-0 rounded-full object-cover"
                             )}
                           />
-                          <p className="line-clamp-2 break-words max-w-44 text-left text-lg">
+                          <p className="line-clamp-2 break-normal font-medium text-left text-lg">
                             {item.name}
                           </p>
                         </div>
@@ -451,7 +473,7 @@ const GrantsPage = ({
               </div>
               <div className="hidden sm:block">
                 <nav
-                  className="isolate flex divide-x divide-gray-200 rounded-lg gap-1 py-1 px-1  bg-[#F2F4F7] dark:bg-zinc-900 w-max transition-all duration-300 ease-in-out"
+                  className="isolate flex gap-4 divide-x divide-gray-200 rounded-lg py-1 px-1  bg-[#F2F4F7] dark:bg-zinc-900 w-max transition-all duration-300 ease-in-out"
                   aria-label="Tabs"
                 >
                   {tabs.map((tab) => (
@@ -459,10 +481,11 @@ const GrantsPage = ({
                       key={tab.name}
                       href={tab.href}
                       className={cn(
-                        tabFromQueryParam === tab.tabName
+                        tabFromQueryParam === tab.tabName ||
+                          (tab.tabName === "overview" && !tabFromQueryParam)
                           ? "text-gray-900 bg-white dark:bg-zinc-700 dark:text-zinc-100"
                           : "text-gray-500 hover:text-gray-700 dark:text-zinc-400",
-                        "group relative min-w-0 w-max border-none overflow-hidden rounded-lg py-2 px-3 text-center text-sm font-medium hover:bg-gray-50 dark:hover:bg-zinc-800 dark:hover:text-white focus:z-10 transition-all duration-300 ease-in-out"
+                        "group relative min-w-0 w-max border-none overflow-hidden rounded-lg py-2 px-3 text-center text-sm font-semibold hover:bg-gray-50 dark:hover:bg-zinc-800 dark:hover:text-white focus:z-10 transition-all duration-300 ease-in-out"
                       )}
                     >
                       <span>{tab.name}</span>
@@ -570,7 +593,9 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
       {/* Grant Overview Start */}
       <div className="flex flex-row gap-4 justify-between max-md:flex-col border-b border-b-zinc-900 dark:border-b-zinc-200 pb-4">
         <div className="flex flex-row gap-2 items-center">
-          <div className="text-xl font-semibold">{grant?.details?.title}</div>
+          <div className="text-xl font-semibold text-black dark:text-zinc-100">
+            {grant?.details?.title}
+          </div>
           {isAuthorized && project && grant && (
             <Link
               href={PAGES.PROJECT.TABS.SELECTED_TAB(
@@ -594,18 +619,18 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
         </div>
       </div>
 
-      <div className="mt-5 flex flex-row max-lg:flex-col-reverse gap-4">
+      <div className="mt-5 flex flex-row max-lg:flex-col-reverse gap-4 ">
         {grant?.details?.description && (
-          <div className="w-9/12 max-lg:w-full p-5 mr-5 bg-[#EEF4FF] dark:bg-zinc-900 dark:border-gray-800 rounded-xl  text-black dark:text-zinc-100">
-            <div className="text-sm text-zinc-500 uppercase font-semibold">
+          <div className="w-8/12 max-lg:w-full p-5 gap-2 bg-[#EEF4FF] dark:bg-zinc-900 dark:border-gray-800 rounded-xl  text-black dark:text-zinc-100">
+            <h3 className="text-sm text-slate-600 dark:text-slate-400 uppercase font-semibold">
               GRANT DESCRIPTION
-            </div>
-            <div className="mt-5 space-y-5">
+            </h3>
+            <div className="mt-2">
               <MarkdownPreview source={grant?.details?.description} />
             </div>
           </div>
         )}
-        <div className="w-3/12 max-lg:w-full">
+        <div className="w-4/12 max-lg:w-full">
           <div className="border border-gray-200 rounded-xl bg-white  dark:bg-zinc-900 dark:border-gray-800">
             <div className="flex items-center justify-between p-5">
               <div className="font-semibold text-black dark:text-white">
@@ -617,29 +642,32 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
                   +getPercentage() > 0 ? "bg-blue-600" : "bg-gray-500"
                 }`}
               >
-                {getPercentage()}% Complete
+                {getPercentage()}% complete
               </span>
             </div>
             <div className="flex flex-col gap-4  px-5 pt-5 pb-5 border-t border-gray-200">
-              <a
-                href={PAGES.COMMUNITY.ALL_GRANTS(grant?.community?.uid as Hex)}
-                className="flex items-center justify-between"
-              >
+              <div className="flex items-center justify-between">
                 <div className="text-gray-500 text-base  font-semibold dark:text-gray-300">
                   Community
                 </div>
-                <span className="inline-flex items-center gap-x-2 rounded-full bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={grant?.community?.details?.imageURL}
-                    alt=""
-                    className="h-5 w-5 rounded-full"
-                  />
-                  <span className="max-w-xs truncate text-base font-semibold text-black dark:text-gray-100 max-md:text-sm">
-                    {grant?.community?.details?.name}
-                  </span>
-                </span>
-              </a>
+                <a
+                  href={PAGES.COMMUNITY.ALL_GRANTS(
+                    grant?.community?.uid as Hex
+                  )}
+                >
+                  <div className="inline-flex items-center gap-x-2 rounded-full bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={grant?.community?.details?.imageURL}
+                      alt=""
+                      className="h-5 w-5 rounded-full"
+                    />
+                    <p className="max-w-xs truncate text-base font-semibold text-black dark:text-gray-100 max-md:text-sm">
+                      {grant?.community?.details?.name}
+                    </p>
+                  </div>
+                </a>
+              </div>
               {grant?.details?.proposalURL ? (
                 <div className="flex items-center justify-between">
                   <div className="text-gray-500  font-semibold text-base dark:text-gray-300">

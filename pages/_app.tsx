@@ -21,7 +21,7 @@ export default function App({ Component, pageProps }: AppProps) {
             <div className="fixed w-full bg-white dark:bg-black z-10">
               <Header />
             </div>
-            <div className="h-[60px] w-full" />
+            <div className="h-[72px] w-full" />
             <Layout Component={Component} pageProps={pageProps} />
           </div>
           <Footer />

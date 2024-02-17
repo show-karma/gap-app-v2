@@ -157,7 +157,7 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
                                   <img
                                     src={blo(review.publicAddress as Hex, 8)}
                                     alt={review.publicAddress}
-                                    className="h-6 w-6 items-center rounded-md"
+                                    className="h-6 w-6 items-center rounded-full border-1 border-gray-100 dark:border-zinc-900"
                                   />
                                   <p className="text-base font-body font-normal underline text-black dark:text-zinc-100">
                                     <EthereumAddressToENSName
@@ -172,7 +172,7 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
                               <img
                                 src={blo(review.publicAddress as Hex, 8)}
                                 alt={review.publicAddress}
-                                className="h-6 w-6 rounded-md"
+                                className="h-6 w-6 rounded-full"
                               />
                               <p className="text-base font-body font-normal text-black dark:text-white">
                                 <EthereumAddressToENSName
