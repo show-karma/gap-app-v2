@@ -6,6 +6,7 @@ interface Props {
   children: string;
   readMoreText?: string;
   readLessText?: string;
+  side?: "left" | "right";
 }
 
 export const ReadMore = ({
@@ -13,6 +14,7 @@ export const ReadMore = ({
   children,
   readMoreText = "Read more",
   readLessText = "Read less",
+  side = "right",
 }: Props) => {
   const [isReadMore, setIsReadMore] = useState(true);
   const toggleReadMore = () => {
@@ -47,12 +49,22 @@ export const ReadMore = ({
         <div onClick={toggleReadMore} className="read-or-hide mt-2">
           {isReadMore ? (
             <>
-              <div className="text-sm font-semibold leading-tight text-blue-600 dark:text-blue-300 w-full flex justify-end">
+              <div
+                className="text-sm font-semibold leading-tight text-blue-600 dark:text-blue-300 w-full flex"
+                style={{
+                  justifyContent: side === "left" ? "flex-start" : "flex-end",
+                }}
+              >
                 <span className="cursor-pointer">{readMoreText}</span>
               </div>
             </>
           ) : (
-            <div className="text-sm font-semibold leading-tight text-blue-600 dark:text-blue-300 w-full flex justify-end">
+            <div
+              className="text-sm font-semibold leading-tight text-blue-600 dark:text-blue-300 w-full flex"
+              style={{
+                justifyContent: side === "left" ? "flex-start" : "flex-end",
+              }}
+            >
               <span className="cursor-pointer">{readLessText}</span>
             </div>
           )}
