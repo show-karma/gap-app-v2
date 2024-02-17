@@ -133,7 +133,7 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
                 <>
                   {reviews.map((review, index) => (
                     <div
-                      className="flex flex-col items-start justify-start gap-6 rounded-lg bg-white dark:bg-zinc-800 px-3 py-4"
+                      className="flex flex-col items-start justify-start gap-6 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-3 py-4"
                       key={`${review.publicAddress}${+index}`}
                     >
                       <div className="flex w-full flex-row items-center justify-between gap-4">

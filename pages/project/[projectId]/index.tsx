@@ -157,7 +157,7 @@ export const NestedLayout = ({ children }: Props) => {
             className={cn(
               loading
                 ? "animate-pulse w-64 h-10 bg-gray-600 rounded-lg"
-                : "text-4xl font-semibold leading-6 text-gray-900 dark:text-gray-200"
+                : "text-[32px] font-bold leading-tight text-black dark:text-zinc-100"
             )}
           >
             {loading ? "" : project?.details?.title}
@@ -236,11 +236,11 @@ export const NestedLayout = ({ children }: Props) => {
                   key={tab.name}
                   href={tab.href}
                   className={classNames(
+                    "whitespace-nowrap border-b-2 px-3 pb-2 text-base flex flex-row gap-2 items-center",
                     tab.href.split("/")[3]?.split("?")[0] ===
                       router.pathname.split("/")[3]
-                      ? "border-primary-500 text-primary-600"
-                      : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700",
-                    "whitespace-nowrap border-b-2 px-1 pb-2 text-base font-medium flex flex-row gap-2 items-center"
+                      ? "border-primary-500 text-gray-700 font-bold dark:text-gray-200"
+                      : "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-200  font-medium"
                   )}
                 >
                   {tab.name}

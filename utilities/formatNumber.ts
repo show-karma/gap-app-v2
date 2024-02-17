@@ -9,6 +9,6 @@ export const formatNumberPercentage = (numberToFormat: number | string) => {
 };
 
 export const formatPercentage = (numberToFormat: number | string) => {
-  const formattedNumber = Math.floor(+numberToFormat * 100) / 100;
+  const formattedNumber = Math.round(Math.floor(+numberToFormat * 100) / 100);
   return formattedNumber;
 };

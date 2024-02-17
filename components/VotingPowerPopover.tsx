@@ -83,7 +83,7 @@ export const VotingPowerPopover: FC<VotingPowerPopoverProps> = ({
                 leaveTo="opacity-0 translate-y-1"
               >
                 <Popover.Panel className="absolute z-10 mt-3 w-xl transform px-4 sm:px-0">
-                  <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black/5">
+                  <div className="overflow-hidden rounded-lg  ring-1 ring-black/5">
                     <div className="relative flex flex-col gap-4 bg-white py-4 justify-start items-start">
                       <p className="px-4 text-xl border-b border-b-gray-300 font-bold w-full">
                         Grant Reviewer

@@ -59,8 +59,10 @@ function ProjectPage() {
   return (
     <div className="flex flex-row max-lg:flex-col-reverse gap-4 py-5 mb-20">
       <div className=" flex flex-col flex-[3]">
-        <div className="text-base flex flex-row gap-1">
-          <span className="font-semibold">Owner:</span>
+        <div className="text-base flex flex-row gap-1 text-gray-900 dark:text-zinc-100">
+          <span className="text-base font-bold leading-normal text-gray-900 dark:text-zinc-100">
+            Owner:
+          </span>
           {project && (
             <EthereumAddressToENSName
               shouldTruncate={false}
@@ -71,12 +73,14 @@ function ProjectPage() {
 
         {project?.details?.tags.length ? (
           <div className="flex flex-col gap-2">
-            <div className="mt-5 font-semibold">Categories</div>
+            <div className="mt-8 text-base font-bold leading-normal text-gray-900 dark:text-zinc-100">
+              Categories
+            </div>
             <div className="flex items-center gap-x-1">
               {project?.details?.tags?.map((tag) => (
                 <span
                   key={tag.name}
-                  className="inline-flex items-center rounded-md bg-gray-200 dark:bg-zinc-800 dark:text-zinc-200 px-2 py-1 text-sm font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10"
+                  className="rounded bg-gray-100 px-2 py-1 text-sm  font-normal text-slate-700"
                 >
                   {tag.name}
                 </span>
@@ -85,9 +89,11 @@ function ProjectPage() {
           </div>
         ) : null}
 
-        <div className="mt-8 font-semibold">Description</div>
+        <div className="mt-8 text-base font-bold leading-normal text-black dark:text-zinc-100">
+          Description
+        </div>
 
-        <div className="mt-2 space-y-5">
+        <div className="mt-2 space-y-5 ">
           <MarkdownPreview source={project?.details?.description} />
         </div>
       </div>
@@ -100,7 +106,7 @@ function ProjectPage() {
                 icon: null,
                 text: "Edit project",
                 styleClass:
-                  "rounded-md bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600  disabled:opacity-75 transition-all ease-in-out duration-300",
+                  "rounded-md bg-black px-3 py-2 text-sm font-semibold text-white hover:bg-primary-500 border-none  disabled:opacity-75 transition-all ease-in-out duration-300",
               }}
               projectToUpdate={project}
             />

@@ -365,7 +365,6 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
       });
       if (!walletClient) return;
       const signer2 = walletClientToSigner(walletClient);
-      console.log(signer2);
       await grant
         .attest(signer2 as any, selectedProject.chainID)
         .then(async () => {
@@ -408,7 +407,12 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
         season: data.season,
         questions: data.questions,
       });
-      await oldGrant.details?.attest(signer as any).then(async () => {
+      const walletClient = await getWalletClient({
+        chainId: communityNetworkId,
+      });
+      if (!walletClient) return;
+      const signer2 = walletClientToSigner(walletClient);
+      await oldGrant.details?.attest(signer2 as any).then(async () => {
         // eslint-disable-next-line no-param-reassign
         toast.success(MESSAGES.GRANT.UPDATE.SUCCESS);
         await refreshProject().then(() => {

@@ -35,7 +35,7 @@ const TabButton: FC<TabButtonProps> = ({
   return (
     <Button
       className={cn(
-        "flex flex-row my-0.5 items-center gap-2 bg-transparent px-2 py-1 shadow-none text-black hover:bg-white hover:text-black max-sm:text-sm",
+        "flex flex-row my-0.5 items-center gap-2 bg-transparent px-2 py-1 font-medium text-black hover:bg-white hover:text-black max-sm:text-sm",
         isSelected
           ? "text-black bg-white dark:bg-zinc-600 dark:text-white"
           : "text-gray-500"
@@ -48,7 +48,7 @@ const TabButton: FC<TabButtonProps> = ({
       <p
         className="rounded-full px-2.5"
         style={{
-          background: isSelected ? "#EEF4FF" : "",
+          background: isSelected ? "#F2F4F7" : "",
           color: isSelected ? "#155EEF" : "#667085",
         }}
       >
@@ -261,7 +261,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
               <p className="text-xs font-bold text-slate-600 dark:text-slate-200">
                 MILESTONES
               </p>
-              <div className="flex flex-row flex-wrap gap-2 rounded bg-gray-200 dark:bg-zinc-800 px-2 py-1">
+              <div className="flex flex-row flex-wrap gap-2 rounded bg-[#F2F4F7] dark:bg-zinc-800 px-2 py-1">
                 <TabButton
                   handleSelection={() => handleSelection("completed")}
                   tab="completed"

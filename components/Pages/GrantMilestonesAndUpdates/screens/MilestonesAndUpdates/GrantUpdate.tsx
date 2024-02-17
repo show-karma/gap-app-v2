@@ -9,7 +9,7 @@ const UpdateTag: FC<UpdateTagProps> = ({ index }) => {
   return (
     <div className="flex w-max flex-row gap-3 rounded-full bg-blue-50 px-3 py-1 text-violet-800 dark:text-violet-200 dark:bg-purple-700">
       <FlagIcon className="h-4 w-4" />
-      <p className="text-xs font-bold ">UPDATE {index}</p>
+      <p className="text-xs font-bold text-violet-800">UPDATE {index}</p>
     </div>
   );
 };

@@ -234,7 +234,7 @@ const GrantsPage = ({
       current: true,
     },
     {
-      name: "Milestones & Updates",
+      name: "Milestones and Updates",
       href: PAGES.PROJECT.TABS.SELECTED_TAB(
         project?.uid as string,
         grant?.uid as string,
@@ -352,14 +352,22 @@ const GrantsPage = ({
         {project?.grants.length ? (
           <div className="w-2/12 pr-5 py-5 border-none max-lg:w-full max-lg:px-0">
             <nav className="flex flex-1 flex-col" aria-label="Sidebar">
-              <ul role="list" className="space-y-2">
+              <div className="flex w-full min-w-[240px] flex-row items-center gap-2">
+                <img
+                  src="/icons/money-black.svg"
+                  className="h-5 w-5"
+                  alt="Grants"
+                />
+                <p className="text-xs font-bold text-black ">GRANTS</p>
+              </div>
+              <ul role="list" className="space-y-2 mt-8">
                 {navigation.map((item) => (
                   <li key={item.uid}>
                     <Link
                       href={item.href}
                       className={cn(
                         item.current
-                          ? "bg-white dark:bg-zinc-800 dark:text-primary-300 dark:border-gray-700 text-primary-600 border border-gray-200"
+                          ? "bg-[#eef4ff] dark:bg-zinc-800 dark:text-primary-300  text-primary-600"
                           : "text-gray-700 hover:text-primary-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700",
                         "flex items-center rounded-xl text-sm leading-6 font-semibold w-full"
                       )}
@@ -376,7 +384,7 @@ const GrantsPage = ({
                               "h-6 w-6 shrink-0 rounded-full"
                             )}
                           />
-                          <p className="line-clamp-2 break-words max-w-44">
+                          <p className="line-clamp-2 break-words max-w-44 text-left text-lg">
                             {item.name}
                           </p>
                         </div>
@@ -443,7 +451,7 @@ const GrantsPage = ({
               </div>
               <div className="hidden sm:block">
                 <nav
-                  className="isolate flex divide-x divide-gray-200 rounded-lg gap-1 py-1 px-1  bg-gray-200 dark:bg-zinc-900 shadow w-max transition-all duration-300 ease-in-out"
+                  className="isolate flex divide-x divide-gray-200 rounded-lg gap-1 py-1 px-1  bg-[#F2F4F7] dark:bg-zinc-900 w-max transition-all duration-300 ease-in-out"
                   aria-label="Tabs"
                 >
                   {tabs.map((tab) => (
@@ -588,7 +596,7 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
 
       <div className="mt-5 flex flex-row max-lg:flex-col-reverse gap-4">
         {grant?.details?.description && (
-          <div className="w-9/12 max-lg:w-full p-5 mr-5 bg-blue-100 dark:bg-zinc-900 dark:border-gray-800 border border-gray-200 rounded-xl shadow-md text-black dark:text-zinc-100">
+          <div className="w-9/12 max-lg:w-full p-5 mr-5 bg-[#EEF4FF] dark:bg-zinc-900 dark:border-gray-800 rounded-xl  text-black dark:text-zinc-100">
             <div className="text-sm text-zinc-500 uppercase font-semibold">
               GRANT DESCRIPTION
             </div>
@@ -598,10 +606,17 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
           </div>
         )}
         <div className="w-3/12 max-lg:w-full">
-          <div className="border border-gray-200 rounded-xl bg-white shadow-md dark:bg-zinc-900 dark:border-gray-800">
+          <div className="border border-gray-200 rounded-xl bg-white  dark:bg-zinc-900 dark:border-gray-800">
             <div className="flex items-center justify-between p-5">
-              <div className="font-semibold">Grant Overview</div>
-              <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+              <div className="font-semibold text-black dark:text-white">
+                Grant Overview
+              </div>
+              {/* <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10"> */}
+              <span
+                className={`h-max items-center justify-center rounded-2xl  px-2 py-1 text-center text-xs font-medium leading-none text-white ${
+                  +getPercentage() > 0 ? "bg-blue-600" : "bg-gray-500"
+                }`}
+              >
                 {getPercentage()}% Complete
               </span>
             </div>
@@ -613,14 +628,14 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
                 <div className="text-gray-500 text-base  font-semibold dark:text-gray-300">
                   Community
                 </div>
-                <span className="inline-flex items-center gap-x-2 rounded-md bg-blue-50 dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
+                <span className="inline-flex items-center gap-x-2 rounded-full bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={grant?.community?.details?.imageURL}
                     alt=""
                     className="h-5 w-5 rounded-full"
                   />
-                  <span className="text-base font-semibold">
+                  <span className="max-w-xs truncate text-base font-semibold text-black dark:text-gray-100 max-md:text-sm">
                     {grant?.community?.details?.name}
                   </span>
                 </span>
@@ -652,7 +667,9 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
                     >
                       {data.title}
                     </h4>
-                    <p className={"text-base"}>{data.stat}</p>
+                    <p className={"text-base text-gray-900 dark:text-gray-100"}>
+                      {data.stat}
+                    </p>
                   </div>
                 ) : null
               )}
@@ -677,7 +694,7 @@ const GrantImpactCriteria = ({ grant }: GrantImpactCriteriaProps) => {
         <div className="flex flex-col gap-4">
           {questions.map((item) => (
             <div
-              className="p-5 bg-white border border-gray-200 dark:bg-zinc-800 dark:border-zinc-600 rounded-xl text-base font-semibold shadow-md text-black dark:text-zinc-100"
+              className="p-5 bg-white border border-gray-200 dark:bg-zinc-800 dark:border-zinc-600 rounded-xl text-base font-semibold  text-black dark:text-zinc-100"
               key={item.query + item.explanation}
             >
               <h3>{item.query}</h3>

@@ -73,7 +73,7 @@ const ReviewsGrant = () => (
         {links.map((item) => (
           <div
             key={item.href}
-            className="flex h-[150px] w-full flex-col text-blue-700 items-center justify-center gap-2 rounded-2xl px-4 py-6 shadow-lg transition-all duration-300 ease-in-out hover:shadow-xl"
+            className="flex h-[150px] w-full flex-col text-blue-700 items-center justify-center gap-2 rounded-2xl px-4 py-6  transition-all duration-300 ease-in-out "
           >
             <ExternalLink href={item.href}>{item.title}</ExternalLink>
           </div>

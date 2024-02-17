@@ -21,6 +21,7 @@ import { NextSeo } from "next-seo";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import dynamic from "next/dynamic";
+import { useTheme } from "next-themes";
 
 const ProjectDialog = dynamic(() =>
   import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog)
@@ -49,7 +50,7 @@ const pickColor = (index: number) => {
 
 export default function MyProjects() {
   const { isConnected, address } = useAccount();
-
+  const { theme: currentTheme } = useTheme();
   const [myProjects, setMyProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const itemsPerPage = 12;
@@ -141,7 +142,7 @@ export default function MyProjects() {
                             delay: index * 0.03,
                           }}
                           exit={{ opacity: 0, translateX: -10, translateY: 0 }}
-                          className="h-full bg-white dark:bg-zinc-900 dark:border-gray-900 border border-gray-200 rounded-xl   pb-5 px-5 shadow-md w-full hover:shadow-zinc-400 dark:hover:shadow-zinc-700 transition-all ease-in-out duration-200"
+                          className="h-full bg-white dark:bg-zinc-900 dark:border-gray-900 border border-gray-200 rounded-xl   pb-5 px-5 w-full transition-all ease-in-out duration-200"
                         >
                           <Link
                             href={PAGES.PROJECT.OVERVIEW(
@@ -150,13 +151,13 @@ export default function MyProjects() {
                             className="w-full flex flex-1 flex-col justify-start gap-3"
                           >
                             <div
-                              className="h-[4px] w-full rounded-full my-2.5"
+                              className="h-[4px] w-full rounded-full mt-2.5"
                               style={{
                                 background: pickColor(index),
                               }}
                             />
                             <div className="flex flex-col gap-0">
-                              <div className="text-lg font-bold line-clamp-1 mb-0 pb-0">
+                              <div className="line-clamp-1 mb-0 pb-0 truncate text-base font-semibold text-gray-900 dark:text-gray-100">
                                 {card.details?.title || card.uid}
                               </div>
                               <div className=" dark:text-slate-400 mb-2 text-sm font-medium text-slate-500">
@@ -165,9 +166,17 @@ export default function MyProjects() {
                             </div>
 
                             <div className="flex flex-col gap-1 flex-1 h-full">
-                              <div className="text-sm text-gray-900 dark:text-white text-ellipsis line-clamp-2">
+                              <div className="line-clamp-2 text-base font-normal ">
                                 <MarkdownPreview
                                   source={card.details?.description || ""}
+                                  style={{
+                                    backgroundColor: "transparent",
+                                    color:
+                                      currentTheme === "dark"
+                                        ? "white"
+                                        : "rgb(71, 85, 105)",
+                                    width: "100%",
+                                  }}
                                 />
                               </div>
                             </div>

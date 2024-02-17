@@ -82,7 +82,7 @@ export default function TablePagination({
           </div>
           <div>
             <nav
-              className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+              className="relative z-0 inline-flex rounded-md  -space-x-px"
               aria-label="Pagination"
             >
               <button
