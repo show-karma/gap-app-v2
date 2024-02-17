@@ -64,7 +64,9 @@ export const MilestoneTag: FC<MilestoneTagProps> = ({ index }) => {
   return (
     <div className="flex w-max flex-row gap-3 rounded-full bg-[#F5F3FF] dark:bg-zinc-900 px-3 py-1 text-violet-800 dark:text-violet-100">
       <FlagIcon className="h-4 w-4" />
-      <p className="text-xs font-bold ">MILESTONE {index}</p>
+      <p className="text-xs font-bold text-violet-800 dark:text-violet-400">
+        MILESTONE {index}
+      </p>
     </div>
   );
 };

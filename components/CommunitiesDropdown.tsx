@@ -57,7 +57,7 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
           : "Select community"}
         <ChevronUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
       </Popover.Trigger>
-      <Popover.Content className="mt-4 w-[280px] bg-white dark:text-white dark:bg-zinc-800 shadow-lg max-h-60 overflow-y-auto overflow-x-hidden py-2">
+      <Popover.Content className="mt-4 w-[280px] bg-white dark:text-white dark:bg-zinc-800  max-h-60 overflow-y-auto overflow-x-hidden py-2">
         <Command>
           <CommandInput
             className="rounded-md ml-2 mr-4 dark:text-white dark:bg-zinc-800"

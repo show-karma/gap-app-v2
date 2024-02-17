@@ -609,7 +609,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       <button
         onClick={openModal}
         className={cn(
-          "flex justify-center min-w-max items-center gap-x-1 rounded-md bg-primary-500 border-2 border-primary-500 px-3 py-2 text-sm font-semibold text-white dark:text-zinc-100 shadow-sm hover:opacity-75 dark:hover:bg-primary-900",
+          "flex justify-center min-w-max items-center gap-x-1 rounded-md bg-primary-500 border-2 border-primary-500 px-3 py-2 text-sm font-semibold text-white dark:text-zinc-100  hover:opacity-75 dark:hover:bg-primary-900",
           buttonElement.styleClass
         )}
       >
@@ -642,7 +642,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle shadow-xl transition-all">
+                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
                   <Dialog.Title
                     as="h3"
                     className="text-xl font-bold leading-6 text-gray-900 dark:text-zinc-100"

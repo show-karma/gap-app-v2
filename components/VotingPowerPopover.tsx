@@ -83,9 +83,9 @@ export const VotingPowerPopover: FC<VotingPowerPopoverProps> = ({
                 leaveTo="opacity-0 translate-y-1"
               >
                 <Popover.Panel className="absolute z-10 mt-3 w-xl transform px-4 sm:px-0">
-                  <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black/5">
+                  <div className="overflow-hidden rounded-lg  ring-1 ring-black/5">
                     <div className="relative flex flex-col gap-4 bg-white py-4 justify-start items-start">
-                      <p className="px-4 text-xl border-b border-b-gray-300 font-bold w-full">
+                      <p className="px-4 text-xl border-b  text-gray-900 border-b-gray-300 font-bold w-full">
                         Grant Reviewer
                       </p>
                       <div className="px-4 flex flex-col gap-2 items-center rounded-lg transition duration-150 ease-in-out hover:bg-gray-50 focus:outline-none focus-visible:ring focus-visible:ring-orange-500/50">
@@ -93,7 +93,7 @@ export const VotingPowerPopover: FC<VotingPowerPopoverProps> = ({
                           Delegate of {community.details?.name}:{" "}
                           <span>{isDelegate ? "Yes" : "No"}</span>
                         </p>
-                        <div className="flex flex-row gap-3 text-base font-medium">
+                        <div className="flex flex-row gap-3 text-base font-medium  text-gray-900">
                           <p>Voting power: </p>
                           <span>{`${formatCurrency(
                             +(delegatedVotes || 0)

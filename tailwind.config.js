@@ -28,6 +28,23 @@ module.exports = {
       sans: ["Open Sans"],
       body: ["Inter"],
     },
+    fontSize: {
+      xs: "0.75rem",
+      xsm: "0.813rem",
+      sm: "0.875rem",
+      base: "1rem",
+      lg: "1.125rem",
+      xl: "1.25rem",
+      "2xl": "1.5rem",
+      "3xl": "1.875rem",
+      "4xl": "2.25rem",
+      "5xl": "3rem",
+      "6xl": "4rem",
+      "tremor-label": ["0.75rem"],
+      "tremor-default": ["0.875rem", { lineHeight: "1.25rem" }],
+      "tremor-title": ["1.125rem", { lineHeight: "1.75rem" }],
+      "tremor-metric": ["1.875rem", { lineHeight: "2.25rem" }],
+    },
     extend: {
       colors: {
         tremor: {
@@ -111,12 +128,6 @@ module.exports = {
           "tremor-small": "0.375rem",
           "tremor-default": "0.5rem",
           "tremor-full": "9999px",
-        },
-        fontSize: {
-          "tremor-label": ["0.75rem", { lineHeight: "1rem" }],
-          "tremor-default": ["0.875rem", { lineHeight: "1.25rem" }],
-          "tremor-title": ["1.125rem", { lineHeight: "1.75rem" }],
-          "tremor-metric": ["1.875rem", { lineHeight: "2.25rem" }],
         },
       },
     },

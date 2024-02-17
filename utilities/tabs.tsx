@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 
-export const additionalQuestion = (id?: number) => {
+export const additionalQuestion = (id?: number | string) => {
   if (!id) return false;
   const generalId = process.env.NEXT_PUBLIC_ENV === "production" ? 4 : 6;
-  return id === generalId;
+  return +id === generalId;
 };
 
 export const votingPowerCommunities = ["Arb", "Arbitrum"];

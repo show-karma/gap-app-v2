@@ -8,14 +8,14 @@ const Preview = dynamic(() => import("@uiw/react-markdown-preview"), {
 export const MarkdownPreview: typeof Preview = (props) => {
   const { theme: currentTheme } = useTheme();
   return (
-    <div className="text-black dark:text-white prose preview w-full max-w-full">
+    <div className="preview w-full max-w-full">
       <Preview
-        {...props}
         style={{
           backgroundColor: "transparent",
-          color: currentTheme === "dark" ? "white" : "black",
+          color: currentTheme === "dark" ? "white" : "rgb(36, 41, 47)",
           width: "100%",
         }}
+        {...props}
       />
     </div>
   );

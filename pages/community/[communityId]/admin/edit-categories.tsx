@@ -291,7 +291,7 @@ export default function Index() {
                     community?.details?.slug || (community?.uid as string)
                   )}
                 >
-                  <Button className="dark:shadow-zinc-600 flex flex-row items-center gap-2 px-4 py-2 bg-transparent rounded-md shadow-none hover:shadow-lg transition-all ease-in-out duration-200">
+                  <Button className=" flex flex-row items-center gap-2 px-4 py-2 bg-transparent rounded-md transition-all ease-in-out duration-200">
                     <ChevronLeftIcon className="h-5 w-5" />
                     Return to admin page
                   </Button>
@@ -370,7 +370,7 @@ export default function Index() {
                               {({ open }) => (
                                 <div className="flex items-center gap-x-2">
                                   <div className="relative flex-1 w-56">
-                                    <Listbox.Button className=" dark:bg-zinc-800 dark:text-white relative w-full max-w-[200px] cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
+                                    <Listbox.Button className=" dark:bg-zinc-800 dark:text-white relative w-full max-w-[200px] cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900  ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
                                       <p className="block truncate">
                                         {categories.length > 0
                                           ? `${categories.length} 
@@ -392,15 +392,15 @@ export default function Index() {
                                       leaveFrom="opacity-100"
                                       leaveTo="opacity-0"
                                     >
-                                      <Listbox.Options className="dark:bg-zinc-800 dark:text-white absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                                      <Listbox.Options className="dark:bg-zinc-800 dark:text-white absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base  ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                                         {categoriesOptions.map((category) => (
                                           <Listbox.Option
                                             key={category.id}
                                             className={({ active }) =>
                                               cn(
                                                 active
-                                                  ? "bg-primary-600 text-white"
-                                                  : "text-gray-900 dark:text-zinc-200",
+                                                  ? "bg-gray-100 text-black dark:text-gray-300 dark:bg-zinc-900"
+                                                  : "text-gray-900 dark:text-gray-200 ",
                                                 "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
                                               )
                                             }
@@ -423,9 +423,7 @@ export default function Index() {
                                                   {selected ? (
                                                     <span
                                                       className={cn(
-                                                        active
-                                                          ? "text-white"
-                                                          : "text-primary-600",
+                                                        "text-primary-600 dark:text-primary-400",
                                                         "absolute inset-y-0 right-0 flex items-center pr-4"
                                                       )}
                                                     >

@@ -64,7 +64,7 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
         grant.project?.slug || grant.refUID || "",
         grant.uid
       )}
-      className="bg-white dark:bg-zinc-900 dark:border-gray-700 border border-gray-200 gap-3 px-5 pb-5 rounded-xl shadow-md flex flex-col transition-all ease-in-out duration-200 hover:shadow-lg"
+      className="bg-white dark:bg-zinc-900 dark:border-gray-700 border border-gray-200 gap-3 px-5 pb-5 rounded-xl flex flex-col transition-all ease-in-out duration-200"
     >
       <div className="w-full flex flex-col gap-1">
         <div
@@ -79,16 +79,13 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
         <div className="text-sm text-gray-500 dark:text-gray-500 font-semibold line-clamp-1">
           {grant.details?.title}
         </div>
-        <div className="text-sm text-gray-400 dark:text-slate-400 font-medium">
+        <div className="text-sm font-medium text-gray-400 ">
           Created on &nbsp;
           {formatDate(grant.createdAt)}
         </div>
       </div>
 
       <div className="flex flex-col gap-1 flex-1">
-        <div className="text-gray-600 dark:text-zinc-100 text-sm font-semibold">
-          Summary
-        </div>
         <div className="text-sm text-gray-900 dark:text-gray-400 text-ellipsis line-clamp-2">
           <MarkdownPreview source={grant.details?.description?.slice(0, 100)} />
         </div>

@@ -44,10 +44,10 @@ const ErrorMessage = ({ message }: { message?: string }) => (
 const FormSchema = z.object({
   questions: z.array(
     z.object({
-      id: z.number().min(0),
+      id: z.string(),
       rating: z.number().min(1, { message: MESSAGES.GRANT.REVIEW.FORM.RATING }),
       answer: z.string().optional(),
-      questionId: z.number().min(0),
+      questionId: z.string(),
     })
   ),
   infos: z
@@ -266,7 +266,10 @@ export const ReviewForm: FC<ReviewFormProps> = ({
             {additionalQuestion(question.questionId) ? null : (
               <div className="flex flex-col gap-2 p-3 max-lg:p-0">
                 <div
-                  className="flex w-full max-w-max flex-row items-center gap-3 rounded dark:bg-transparent"
+                  className="flex w-full max-w-max flex-row items-center gap-3 rounded dark:bg-transparent px-2.5 py-3"
+                  style={{
+                    backgroundColor: "rgb(242, 244, 247)",
+                  }}
                   {...form.register(`questions.${index}.rating`)}
                 >
                   <p className="text-base font-bold text-gray-600 dark:text-zinc-100">
@@ -384,7 +387,7 @@ export const ReviewForm: FC<ReviewFormProps> = ({
                       that apply
                     </Listbox.Label>
                     <div className="relative flex-1 w-56">
-                      <Listbox.Button className="relative w-full dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
+                      <Listbox.Button className="relative w-full dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900  ring-1 ring-inset ring-gray-300 sm:text-sm sm:leading-6">
                         {categories && categories.length > 0 ? (
                           <p className="flex flex-row gap-1">
                             {categories?.length}
@@ -411,15 +414,15 @@ export const ReviewForm: FC<ReviewFormProps> = ({
                         leaveFrom="opacity-100"
                         leaveTo="opacity-0"
                       >
-                        <Listbox.Options className="absolute z-10 mt-1 dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                        <Listbox.Options className="absolute z-10 mt-1 dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base  ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                           {possibleCategories?.map((category) => (
                             <Listbox.Option
                               key={category}
                               className={({ active }) =>
                                 cn(
                                   active
-                                    ? "bg-primary-600 text-white dark:text-gray-300 dark:bg-zinc-900"
-                                    : "text-gray-900 dark:text-gray-200",
+                                    ? "bg-gray-100 text-black dark:text-gray-300 dark:bg-zinc-900"
+                                    : "text-gray-900 dark:text-gray-200 ",
                                   "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
                                 )
                               }
@@ -441,9 +444,7 @@ export const ReviewForm: FC<ReviewFormProps> = ({
                                   {selected ? (
                                     <span
                                       className={cn(
-                                        active
-                                          ? "text-white"
-                                          : "text-primary-600 dark:text-primary-400",
+                                        "text-primary-600 dark:text-primary-400",
                                         "absolute inset-y-0 right-0 flex items-center pr-4"
                                       )}
                                     >

@@ -27,7 +27,7 @@ export const SearchList: React.FC<Props> = ({
 
   return (
     isOpen && (
-      <div className="absolute left-0 top-10 mt-3 max-h-64 min-w-full overflow-y-auto rounded-md bg-white dark:bg-zinc-800 py-4 shadow-md">
+      <div className="absolute left-0 top-10 mt-3 max-h-64 min-w-full overflow-y-auto rounded-md bg-white dark:bg-zinc-800 py-4 ">
         {data.length > 0 &&
           data.map((project) => (
             <Link

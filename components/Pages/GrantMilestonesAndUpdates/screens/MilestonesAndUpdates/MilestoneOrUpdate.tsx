@@ -7,7 +7,7 @@ interface MilestoneOrUpdateProps {
 }
 export const MilestoneOrUpdate = ({ grant }: MilestoneOrUpdateProps) => {
   return (
-    <div className="p-5 bg-white border border-gray-200 rounded-xl shadow-md">
+    <div className="p-5 bg-white border border-gray-200 rounded-xl ">
       <div className="flex items-center justify-between">
         <span className="inline-flex items-center gap-x-1 rounded-full bg-primary-50 px-2 py-1 text-xs font-semibold text-primary-600 uppercase ring-1 ring-inset ring-primary-500/10">
           <FlagIcon className="h-4 w-4 text-primary-500" aria-hidden="true" />

@@ -51,9 +51,11 @@ export const ProjectFeed = () => {
 
   return (
     <div className="w-full flex flex-col gap-2">
-      <div className="font-semibold">Project Feed</div>
+      <div className="text-lg font-bold text-zinc-700 max-2xl:text-base">
+        Project Feed
+      </div>
       {/* Feed start */}
-      <div className="flow-root mt-4 bg-white dark:bg-zinc-900 dark:border-gray-700 border border-gray-200 py-2 px-5 rounded-xl shadow-md max-h-96 max-lg:max-h-64 max-lg:mt-4 overflow-y-auto">
+      <div className="flow-root bg-white dark:bg-zinc-900 dark:border-gray-700 border border-gray-200 py-2 px-5 rounded-xl  max-h-96 max-lg:max-h-64 max-lg:mt-4 overflow-y-auto">
         <ul>
           {feed.length ? (
             feed.map((item, index) => {

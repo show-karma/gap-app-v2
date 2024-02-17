@@ -1,7 +1,9 @@
+/* eslint-disable @next/next/no-img-element */
 import Image from "next/image";
 import Link from "next/link";
 import { DiscordIcon, MirrorIcon, TelegramIcon, TwitterIcon } from "../Icons";
-import { SOCIALS } from "@/utilities";
+import { SOCIALS, karmaLinks } from "@/utilities";
+import { ExternalLink } from "./ExternalLink";
 
 const navigation = {
   social: [
@@ -30,20 +32,17 @@ const navigation = {
 
 export default function Footer() {
   return (
-    <footer id="contact" className="bg-gray-900 dark:bg-black">
-      <div className="px-6 py-20 sm:py-14 lg:px-8 flex items-center justify-between flex-row max-lg:flex-col gap-8">
+    <footer id="contact" className="bg-[#181b2a] dark:bg-black">
+      <div className="flex w-full flex-row items-center justify-between gap-8 bg-[#181b2a] px-16 max-lg:px-8 py-12 max-md:flex-col max-md:gap-10 max-md:px-4 max-md:py-12">
         <div>
           <div className="flex items-center gap-x-2">
-            <Image
-              src="/logo/logo-dark.png"
-              className="h-12 w-12 lg:h-auto lg:w-[50px] ml-0 inline"
-              width={464}
-              height={500}
-              alt="Gap"
+            <img
+              src="/images/karma-logo-dark.svg"
+              alt="Karma logo"
+              className="h-16 w-[160px]"
             />
-            <div className="text-white text-3xl font-black">karma</div>
           </div>
-          <div className="flex justify-center space-x-3">
+          <div className="flex flex-row items-center gap-2">
             {navigation.social.map((item) => (
               <Link
                 key={item.name}
@@ -58,16 +57,26 @@ export default function Footer() {
             ))}
           </div>
         </div>
-        <div className="text-gray-500 font-medium text-sm">
+        <p className="text-sm font-medium text-[#888ba2]">
           {" "}
           Copyright © {new Date().getFullYear()}
-        </div>
-        <div className="font-medium">
-          <div className="text-white uppercase text-sm font-semibold">
+        </p>
+        <div className="flex w-max flex-col items-start justify-end text-left">
+          <div className="mb-3 text-sm font-medium uppercase text-white">
             Resources
           </div>
-          <div className="mt-3 text-gray-500">SDK Docs</div>
-          <div className="text-gray-500">Sitemap</div>
+          <ExternalLink
+            href={karmaLinks.githubSDK}
+            className="text-[#A5A7C0] transition-all ease-in-out hover:text-gray-300"
+          >
+            SDK Docs
+          </ExternalLink>
+          <ExternalLink
+            href="/sitemap.xml"
+            className="text-[#A5A7C0] transition-all ease-in-out hover:text-gray-300"
+          >
+            Sitemap
+          </ExternalLink>
         </div>
       </div>
     </footer>
