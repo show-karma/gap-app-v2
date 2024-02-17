@@ -124,7 +124,7 @@ export default function AssignQuestions() {
             const previousQuestions = data.reduce(
               (acc: QuestionsAssigned, category: Category) => {
                 acc[category.id] = category.questions.map(
-                  (question: Question) => question.id
+                  (question: Question) => Number(question.id)
                 );
                 return acc;
               },
@@ -273,7 +273,7 @@ export default function AssignQuestions() {
                     community?.details?.slug || (community?.uid as string)
                   )}
                 >
-                  <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-transparent rounded-md shadow-none hover:shadow-lg transition-all ease-in-out duration-200">
+                  <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-transparent rounded-md transition-all ease-in-out duration-200">
                     <ChevronLeftIcon className="h-5 w-5" />
                     Return to admin page
                   </Button>
@@ -298,7 +298,7 @@ export default function AssignQuestions() {
                         {questions.map((question) => {
                           const isSelected = questionsAssigned[
                             category.id
-                          ]?.includes(question.id);
+                          ]?.includes(+question.id);
                           return (
                             <Button
                               key={`${category.id}${question.id}`}
@@ -306,7 +306,7 @@ export default function AssignQuestions() {
                               style={{
                                 opacity: isSelected ? 1 : 0.5,
                               }}
-                              onClick={() => assign(category.id, question.id)}
+                              onClick={() => assign(category.id, +question.id)}
                             >
                               <div className="flex h-4 w-4 flex-col items-center justify-start">
                                 {isSelected ? (
@@ -362,7 +362,7 @@ export default function AssignQuestions() {
                         community?.details?.slug || (community?.uid as string)
                       )}
                     >
-                      <Button className="flex flex-row items-center gap-2 px-10 py-8 bg-cyan-200 rounded-md shadow-md hover:shadow-lg transition-all ease-in-out duration-200">
+                      <Button className="flex flex-row items-center gap-2 px-10 py-8 bg-cyan-200 rounded-md transition-all ease-in-out duration-200">
                         <ChevronLeftIcon className="h-5 w-5" />
                         Return to admin page
                       </Button>
@@ -372,7 +372,7 @@ export default function AssignQuestions() {
                         community?.details?.slug || (community?.uid as string)
                       )}
                     >
-                      <Button className="px-10 py-8 bg-blue-200 rounded-md shadow-md hover:shadow-lg transition-all ease-in-out duration-200">
+                      <Button className="px-10 py-8 bg-blue-200 rounded-md transition-all ease-in-out duration-200">
                         Edit categories
                       </Button>
                     </Link>

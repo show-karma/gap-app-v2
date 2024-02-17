@@ -29,7 +29,7 @@ const Presentation = () => {
         <div className="flex w-full flex-[4]  flex-col  items-start">
           <div className="flex flex-1 flex-col gap-8 pb-8 max-2xl:gap-6">
             <h4 className="w-max rounded-3xl bg-[#EAECF5] dark:bg-slate-800 dark:text-blue-400 px-3 py-1 text-center text-base font-semibold text-indigo-900  max-2xl:text-sm">
-              ON-CHAIN PROTOCOL
+              ONCHAIN PROTOCOL
             </h4>
 
             <div className="flex flex-col gap-1 pb-8 max-2xl:pb-1">
@@ -83,7 +83,7 @@ const Presentation = () => {
           </div>
 
           <div className="flex w-full flex-1 flex-row flex-wrap gap-6 max-md:flex-col">
-            <div className="flex  min-w-min max-w-[500px] flex-1 flex-col items-start gap-3 rounded-3xl  text-gray-900 dark:text-gray-900 bg-[#D7F8EF] dark:bg-gray-400 px-8 py-6 max-2xl:px-6 max-lg:min-w-full">
+            <div className="flex  min-w-min max-w-[500px] flex-1 flex-col items-start gap-3 rounded-3xl  text-gray-900 dark:text-gray-900 bg-[#D7F8EF] px-8 py-6 max-2xl:px-6 max-lg:min-w-full">
               <div className="flex items-center justify-center rounded-lg border border-black p-2 ">
                 <img
                   src="/icons/coins-stacked.png"
@@ -91,10 +91,10 @@ const Presentation = () => {
                   className="h-7 w-7"
                 />
               </div>
-              <h2 className=" text-2xl font-bold max-2xl:text-xl">
+              <h2 className="text-2xl text-black font-bold max-2xl:text-xl">
                 For Grantees
               </h2>
-              <ul className="">
+              <ul className="text-gray-900">
                 <li className="flex w-full flex-row gap-4 break-words">
                   <CheckIcon className="h-6 min-h-[24px] w-6 min-w-[24px]" />
                   <p className="text-base font-normal">
@@ -111,7 +111,7 @@ const Presentation = () => {
                 </li>
               </ul>
             </div>
-            <div className="flex  min-w-min max-w-[500px] flex-1 flex-col items-start gap-3 rounded-3xl text-gray-900 dark:text-gray-900 bg-[#D7F8EF] dark:bg-gray-400 px-8 py-6 max-2xl:px-6 max-lg:min-w-full">
+            <div className="flex  min-w-min max-w-[500px] flex-1 flex-col items-start gap-3 rounded-3xl text-gray-900 dark:text-gray-900 bg-[#D7F8EF] px-8 py-6 max-2xl:px-6 max-lg:min-w-full">
               <div className="flex items-center justify-center rounded-lg border border-black p-2">
                 <img
                   src="/icons/globe.png"
@@ -119,10 +119,10 @@ const Presentation = () => {
                   className="h-7 w-7"
                 />
               </div>
-              <h2 className="w-full break-words text-2xl font-bold  max-2xl:text-xl">
+              <h2 className="w-full text-black break-words text-2xl font-bold  max-2xl:text-xl">
                 For Community + Grant Admins
               </h2>
-              <ul>
+              <ul className="text-gray-900">
                 <li className="flex w-full flex-row gap-4 break-words">
                   <CheckIcon className="h-6 min-h-[24px] w-6 min-w-[24px]" />
                   <p className="text-base font-normal ">
@@ -178,7 +178,7 @@ const Communities = () => {
 
   return (
     <div className="mb-8 mt-[80px] flex h-max w-full flex-row justify-center gap-4 max-md:flex-col max-lg:flex-wrap">
-      <div className="flex h-max w-max flex-col gap-6 rounded-3xl bg-[#EAECF0] dark:bg-zinc-400 p-8 max-lg:w-full">
+      <div className="flex h-max w-max flex-col gap-6 rounded-3xl  bg-[#EAECF0] dark:bg-zinc-400 p-8 max-lg:w-full">
         <div className="h-max w-max rounded-lg border border-black p-2">
           <img src="/icons/globe.svg" alt="Globe" className="h-7 w-7" />
         </div>
@@ -192,7 +192,7 @@ const Communities = () => {
             <a
               key={community.uid}
               href={PAGES.COMMUNITY.ALL_GRANTS(community.slug || community.uid)}
-              className="flex h-full max-h-[166px] w-full flex-col items-center justify-center gap-2 rounded-2xl px-4 py-6 transition-all duration-300 ease-in-out hover:shadow-lg dark:hover:shadow-zinc-700"
+              className="flex hover:shadow-md h-full max-h-[166px] w-full flex-col items-center justify-center gap-2 rounded-2xl px-4 py-6 transition-all duration-300 ease-in-out "
             >
               <div>
                 <img
@@ -229,12 +229,12 @@ const WhatIsSolving = () => {
     <div className="mb-10 mt-16 flex flex-row flex-wrap gap-16 max-lg:flex-col">
       <div className="flex max-w-full flex-1 flex-col gap-2.5 max-2xl:max-w-lg max-lg:max-w-full">
         <h4 className="w-max rounded-3xl bg-[#EAECF5] dark:bg-slate-800 dark:text-blue-400 px-3 py-1 text-center text-base font-semibold text-indigo-900 max-2xl:text-sm">
-          100% ON-CHAIN
+          100% ONCHAIN
         </h4>
-        <h2 className="text-4xl font-bold text-gray-900 dark:text-gray-100 max-sm:text-2xl">
+        <h2 className="text-4xl py-1 font-bold text-gray-900 dark:text-gray-100 max-sm:text-2xl">
           Why are we building this?
         </h2>
-        <p className="text-xl font-normal text-gray-900 dark:text-gray-100 max-sm:text-base">
+        <p className="text-xl font-normal text-gray-900 max-sm:text-base dark:text-gray-100">
           Annually, the crypto ecosystem issues grants amounting to millions of
           dollars. While this funding is crucial for ecosystem growth, it has
           also introduced a range of issues.
@@ -273,7 +273,7 @@ const WhatIsSolving = () => {
                 className="h-7 w-7"
               />
             </div>
-            <h3 className=" text-2xl font-bold  max-2xl:text-xl">
+            <h3 className="text-2xl font-bold  max-2xl:text-xl">
               Reputation Portability
             </h3>
             <p className="text-gray-700 dark:text-gray-700">
@@ -293,7 +293,7 @@ const WhatIsSolving = () => {
               className="h-7 w-7"
             />
           </div>
-          <h3 className=" text-2xl font-bold   max-2xl:text-xl">
+          <h3 className="text-2xl font-bold max-2xl:text-xl">
             Inadequate Data Structure
           </h3>
           <p className="text-gray-700 dark:text-gray-700">
@@ -458,7 +458,7 @@ export default function Index() {
             <div className="mt-10 flex items-center gap-x-6">
               <Link
                 href="/add"
-                className="rounded-md bg-primary-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                className="rounded-md bg-primary-600 px-3.5 py-2.5 text-sm font-semibold text-white  hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
               >
                 Add your project<span className="ml-2">→</span>
               </Link>
@@ -469,7 +469,7 @@ export default function Index() {
                   <div className="flow-root rounded-lg bg-gray-50 px-6 pb-8">
                     <div className="-mt-6">
                       <div>
-                        <span className="inline-flex items-center justify-center rounded-xl bg-primary-500 p-3 shadow-lg">
+                        <span className="inline-flex items-center justify-center rounded-xl bg-primary-500 p-3 ">
                           <feature.icon
                             className="h-8 w-8 text-white"
                             aria-hidden="true"

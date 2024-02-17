@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/outline";
-import dynamic from "next/dynamic";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 
 interface Props {
@@ -49,15 +47,13 @@ export const ReadMore = ({
         <div onClick={toggleReadMore} className="read-or-hide mt-2">
           {isReadMore ? (
             <>
-              <div className="flex space-x-2 font-semibold dark:text-zinc-400 dark:hover:text-zinc-200 ease-in duration-200">
-                <ChevronDownIcon className="w-4 h-auto" />
+              <div className="text-sm font-semibold leading-tight text-blue-600 dark:text-blue-300 w-full flex justify-end">
                 <span className="cursor-pointer">{readMoreText}</span>
               </div>
             </>
           ) : (
-            <div className="flex space-x-2 font-semibold dark:text-zinc-400 dark:hover:text-zinc-200 ease-in duration-200 cursor-pointer">
-              <ChevronUpIcon className="w-4 h-auto" />
-              <span>{readLessText}</span>
+            <div className="text-sm font-semibold leading-tight text-blue-600 dark:text-blue-300 w-full flex justify-end">
+              <span className="cursor-pointer">{readLessText}</span>
             </div>
           )}
         </div>

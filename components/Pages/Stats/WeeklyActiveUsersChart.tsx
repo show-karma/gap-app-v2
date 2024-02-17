@@ -28,7 +28,7 @@ export const WeeklyActiveUsersChart = () => {
       {isLoading ? (
         <p>Loading...</p>
       ) : (
-        <Card className="">
+        <Card className="min-w-[320px]">
           <Title className="flex flex-row flex-wrap items-center gap-2">
             Weekly Active Users
           </Title>

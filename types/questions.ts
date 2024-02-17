@@ -1,5 +1,5 @@
 export type Question = {
-  id: number;
+  id: string;
   query: string;
-  questionId?: number;
+  questionId?: string;
 };

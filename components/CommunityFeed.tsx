@@ -58,7 +58,7 @@ export const CommunityFeed = () => {
         Community Feed
       </div>
       {/* Feed start */}
-      <div className="flow-root mt-10 bg-white dark:bg-zinc-900 dark:border-gray-700 border border-gray-200 py-2 px-5 rounded-xl shadow-md max-h-96 max-lg:max-h-64 max-lg:mt-4 overflow-y-auto">
+      <div className="flow-root mt-10 bg-white dark:bg-zinc-900 dark:border-gray-700 border border-gray-200 py-2 px-5 rounded-xl  max-h-96 max-lg:max-h-64 max-lg:mt-4 overflow-y-auto">
         <ul>
           {feed.length ? (
             feed.map((item, index) => {

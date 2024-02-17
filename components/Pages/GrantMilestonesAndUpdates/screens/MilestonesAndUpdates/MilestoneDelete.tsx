@@ -54,7 +54,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
         text: "",
         icon: <TrashIcon className="text-red-500 w-5 h-5" />,
         styleClass:
-          "bg-transparent p-0 w-max h-max text-red-500 hover:bg-transparent shadow-none hover:shadow-none",
+          "bg-transparent p-0 w-max h-max text-red-500 hover:bg-transparent",
       }}
     />
   );
