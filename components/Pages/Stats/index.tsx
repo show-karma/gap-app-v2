@@ -232,7 +232,7 @@ export const Stats = () => {
                 chartProps={{
                   index: "Date",
                   categories: [dataNameDictionary[item.name].hint],
-                  colors: ["blue-500"],
+                  colors: ["blue"],
                   className: "mt-6 h-[240px] max-xl:h-[200px]",
                   yAxisWidth: 48,
                 }}

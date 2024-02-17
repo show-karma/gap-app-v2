@@ -5,6 +5,8 @@ export * from "./eas-wagmi-utils";
 export * from "./enviromentVars";
 export * from "./feed";
 export * from "./fetchData";
+export * from "./fetchENSNames";
+export * from "./fillDateRangeWithValues";
 export * from "./formatCurrency";
 export * from "./formatDate";
 export * from "./formatNumber";

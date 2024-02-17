@@ -16,12 +16,12 @@ export default function App({ Component, pageProps }: AppProps) {
     <WagmiProvider>
       <Toaster />
       <NextThemeProvider>
-        <div className="min-h-screen flex flex-col justify-between h-full bg-gray-100 dark:bg-black dark:text-white">
+        <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">
           <div>
             <div className="fixed w-full bg-white dark:bg-black z-10">
               <Header />
             </div>
-            <div className="h-[68px] w-full" />
+            <div className="h-[60px] w-full" />
             <Layout Component={Component} pageProps={pageProps} />
           </div>
           <Footer />

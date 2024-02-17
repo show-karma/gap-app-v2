@@ -37,7 +37,7 @@ function classNames(...classes: string[]) {
 }
 
 const buttonStyle: HTMLButtonElement["className"] =
-  " rounded-md bg-white w-max dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 shadow-none hover:bg-transparent dark:hover:bg-opacity-75 dark:border-zinc-900";
+  " rounded-md bg-white w-max dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 hover:bg-transparent dark:hover:bg-opacity-75 dark:border-zinc-900";
 
 export default function Header() {
   const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
@@ -116,22 +116,25 @@ export default function Header() {
         className={({ open }) =>
           classNames(
             open ? "fixed inset-0 z-40 overflow-y-auto" : "",
-            "bg-white dark:bg-black shadow-md lg:static lg:overflow-y-visible"
+            "bg-white dark:bg-black lg:static lg:overflow-y-visible"
           )
         }
       >
         {({ open }) => (
           <>
-            <div className="px-4 sm:px-6 lg:px-8">
+            <div className="px-4 sm:px-6 lg:px-8  border-b border-b-[#DFE1E6]">
               <div className="relative flex lg:gap-8 justify-between items-center flex-row">
-                <div className="flex py-2 lg:inset-y-0 lg:left-0 lg:static">
-                  <Link className="flex-shrink-0" href="/">
+                <div className="flex py-4 lg:inset-y-0 lg:left-0 lg:static">
+                  <Link
+                    className="flex-shrink-0 max-w-[180px] max-h-[40px]"
+                    href="/"
+                  >
                     <Image
                       className="block w-full h-auto"
                       src="/logo/karma-gap-logo.svg"
                       alt="Gap"
-                      width={228}
-                      height={52}
+                      width={180}
+                      height={40}
                       priority={true}
                     />
                   </Link>
@@ -195,7 +198,6 @@ export default function Header() {
                           account,
                           chain,
                           openAccountModal,
-                          openChainModal,
                           openConnectModal,
                           authenticationStatus,
                           mounted,
@@ -228,21 +230,9 @@ export default function Header() {
                                     <button
                                       onClick={openConnectModal}
                                       type="button"
-                                      className="rounded-md border border-primary-600 dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-primary-600 shadow-sm hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                                      className="rounded-md border border-primary-600 dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-primary-600 hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
                                     >
                                       Login / Register
-                                    </button>
-                                  );
-                                }
-
-                                if (chain.unsupported) {
-                                  return (
-                                    <button
-                                      onClick={openChainModal}
-                                      type="button"
-                                      className="flex w-max items-center flex-row gap-2 py-2 px-3 rounded-full bg-gray-600 p-0 pl-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-                                    >
-                                      Wrong network
                                     </button>
                                   );
                                 }
@@ -250,7 +240,7 @@ export default function Header() {
                                 return (
                                   <Button
                                     onClick={openAccountModal}
-                                    className="flex w-max items-center flex-row gap-2 rounded-full bg-gray-500 p-0 pl-3 text-sm font-semibold text-white shadow-sm hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                                    className="flex w-max items-center flex-row gap-2 rounded-full bg-gray-500 p-0 pl-3 text-sm font-semibold text-white hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
                                   >
                                     {account.displayName}
                                     <img
@@ -270,7 +260,7 @@ export default function Header() {
                   {/* Rainbowkit custom connect button end */}
                   {/* Color mode toggle start */}
                   <button
-                    className="px-3 py-2.5 rounded-md bg-white dark:bg-zinc-900 text-sm font-semibold text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-800 focus:outline-primary-600"
+                    className="px-3 py-2.5 rounded-md bg-white dark:bg-zinc-900 text-sm font-semibold text-gray-900 dark:text-white  ring-1 ring-inset ring-gray-300 dark:ring-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-800 focus:outline-primary-600"
                     onClick={() =>
                       changeCurrentTheme(
                         currentTheme === "light" ? "dark" : "light"
@@ -326,7 +316,7 @@ export default function Header() {
                   </div>
                   <button
                     type="submit"
-                    className="flex w-full items-center justify-center rounded-md border border-transparent bg-rose-600 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-rose-700"
+                    className="flex w-full items-center justify-center rounded-md border border-transparent bg-rose-600 px-4 py-2 text-base font-medium text-white  hover:bg-rose-700"
                   >
                     Search
                   </button>
@@ -336,7 +326,7 @@ export default function Header() {
                 </div>
                 <div className="mt-8 px-3 flex flex-col gap-4">
                   <ExternalLink href={karmaLinks.githubSDK}>
-                    <button className="rounded-md bg-white w-full dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 shadow-sm hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
+                    <button className="rounded-md bg-white w-full dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
                       SDK Docs
                     </button>
                   </ExternalLink>
@@ -344,14 +334,14 @@ export default function Header() {
                     <>
                       {isConnected && (
                         <Link href={PAGES.MY_PROJECTS}>
-                          <button className="rounded-md bg-white w-full dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 shadow-sm hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
+                          <button className="rounded-md bg-white w-full dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
                             My Projects
                           </button>
                         </Link>
                       )}
                       {(isCommunityAdmin || isOwner) && isConnected ? (
                         <Link href={PAGES.ADMIN.LIST}>
-                          <button className="rounded-md w-full bg-white dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 shadow-sm hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
+                          <button className="rounded-md w-full bg-white dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
                             Admin
                           </button>
                         </Link>
@@ -363,7 +353,6 @@ export default function Header() {
                           account,
                           chain,
                           openAccountModal,
-                          openChainModal,
                           openConnectModal,
                           authenticationStatus,
                           mounted,
@@ -396,21 +385,9 @@ export default function Header() {
                                     <button
                                       onClick={openConnectModal}
                                       type="button"
-                                      className="rounded-md border max-lg:w-full max-lg:justify-center border-primary-600 dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-primary-600 shadow-sm hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                                      className="rounded-md border max-lg:w-full max-lg:justify-center border-primary-600 dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-primary-600  hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
                                     >
                                       Login / Register
-                                    </button>
-                                  );
-                                }
-
-                                if (chain.unsupported) {
-                                  return (
-                                    <button
-                                      onClick={openChainModal}
-                                      type="button"
-                                      className="flex w-full justify-center items-center flex-row gap-2 py-2 px-3 rounded-full bg-gray-600 p-0 pl-3 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-                                    >
-                                      Wrong network
                                     </button>
                                   );
                                 }
@@ -418,7 +395,7 @@ export default function Header() {
                                 return (
                                   <Button
                                     onClick={openAccountModal}
-                                    className="flex w-full py-1 justify-center items-center flex-row gap-2 rounded-full bg-gray-500 text-sm font-semibold text-white shadow-sm hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                                    className="flex w-full py-1 justify-center items-center flex-row gap-2 rounded-full bg-gray-500 text-sm font-semibold text-white  hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
                                   >
                                     {account.displayName}
                                     <img
