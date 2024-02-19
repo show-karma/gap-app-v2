@@ -20,7 +20,6 @@ import { Hex, isAddress } from "viem";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MarkdownEditor } from "./Utilities/MarkdownEditor";
-import { motion } from "framer-motion";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Project, nullRef } from "@show-karma/karma-gap-sdk";
@@ -191,25 +190,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       title: "General info",
       desc: "These are the basics about your project",
       fields: (
-        <motion.div
-          initial={{
-            opacity: 0,
-            translateX: -10,
-            translateY: 0,
-          }}
-          animate={{ opacity: 1, translateX: 0, translateY: 0 }}
-          transition={{
-            type: "spring",
-            duration: 0.75,
-            delay: 0.03,
-          }}
-          exit={{
-            opacity: 0,
-            translateX: 10,
-            translateY: 0,
-          }}
-          className="flex w-full flex-col gap-8"
-        >
+        <div className="flex w-full flex-col gap-8">
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="name-input" className={labelStyle}>
               Name
@@ -264,32 +245,14 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               <p className="text-red-500">{errors.recipient?.message}</p>
             </div>
           )}
-        </motion.div>
+        </div>
       ),
     },
     {
       title: "Add your socials",
       desc: "Add your social accounts",
       fields: (
-        <motion.div
-          initial={{
-            opacity: 0,
-            translateX: -10,
-            translateY: 0,
-          }}
-          animate={{ opacity: 1, translateX: 0, translateY: 0 }}
-          transition={{
-            type: "spring",
-            duration: 0.75,
-            delay: 0.03,
-          }}
-          exit={{
-            opacity: 0,
-            translateX: 10,
-            translateY: 0,
-          }}
-          className="flex w-full flex-col gap-8"
-        >
+        <div className="flex w-full flex-col gap-8">
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="twitter-input" className={labelStyle}>
               Twitter
@@ -370,7 +333,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             </div>
             <p className="text-red-500">{errors.linkedin?.message}</p>
           </div>
-        </motion.div>
+        </div>
       ),
     },
     {
@@ -378,25 +341,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       title: "Team members",
       desc: "The wonderful people who built it",
       fields: (
-        <motion.div
-          initial={{
-            opacity: 0,
-            translateX: -10,
-            translateY: 0,
-          }}
-          animate={{ opacity: 1, translateX: 0, translateY: 0 }}
-          transition={{
-            type: "spring",
-            duration: 0.75,
-            delay: 0.03,
-          }}
-          exit={{
-            opacity: 0,
-            translateX: 10,
-            translateY: 0,
-          }}
-          className="flex w-full flex-col gap-8"
-        >
+        <div className="flex w-full flex-col gap-8">
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="members-input" className={labelStyle}>
               Invite team members
@@ -447,7 +392,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               </div>
             </div>
           </div>
-        </motion.div>
+        </div>
       ),
     },
   ];
