@@ -87,7 +87,7 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
           await refreshProject().then(() => {
             router.push(
               PAGES.PROJECT.TABS.SELECTED_TAB(
-                project.uid,
+                project.details?.slug || project.uid,
                 grantToUpdate.uid,
                 "milestones-and-updates"
               )
@@ -110,7 +110,7 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
           <Link
             className="bg-transparent p-4 hover:bg-transparent hover:opacity-75"
             href={PAGES.PROJECT.TABS.SELECTED_TAB(
-              project?.uid || "",
+              project?.details?.slug || project?.uid || "",
               grant.uid,
               "milestones-and-updates"
             )}
