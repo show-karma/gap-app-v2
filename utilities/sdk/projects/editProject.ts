@@ -47,10 +47,8 @@ export const updateProject = async (
       })),
     });
 
-    await project.details
-      ?.attest(signer as any)
-      .catch((error) => console.log(error));
+    await project.details?.attest(signer as any);
   } catch (error) {
-    console.log({ error });
+    throw error;
   }
 };

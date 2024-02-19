@@ -102,7 +102,7 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
 
   return (
     <div className="flex flex-1">
-      <div className="flex w-full max-w-3xl flex-col gap-6 rounded-md bg-white dark:bg-zinc-900 px-4 py-6 max-lg:max-w-full">
+      <div className="flex w-full max-w-3xl flex-col gap-6 rounded-md bg-gray-200 dark:bg-zinc-900  px-4 py-6 max-lg:max-w-full">
         <div className="flex w-full flex-row justify-between">
           <h4 className="text-2xl font-bold text-black dark:text-zinc-100">
             Post a grant update

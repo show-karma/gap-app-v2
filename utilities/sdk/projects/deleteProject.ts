@@ -10,7 +10,6 @@ export const deleteProject = async (project: Project, signer: any) => {
     if (!gap) return;
     await project.revoke(signer as any);
   } catch (error: any) {
-    console.log(error);
     throw new Error(error);
   }
 };

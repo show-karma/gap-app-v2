@@ -129,7 +129,7 @@ export const CommunityFeed = () => {
               );
             })
           ) : feedLoading ? null : (
-            <p className="text-base font-normal text-black dark:text-zinc-100">{`This community doesn't have any activity yet`}</p>
+            <p className="px-6 py-2 text-base font-normal text-black dark:text-zinc-100">{`This community doesn't have any activity yet`}</p>
           )}
           {feed.length && hasMore ? (
             <li className="mx-5 flex items-center justify-center">
