@@ -7,8 +7,8 @@ import { getMetadata } from "@/utilities/sdk/getMetadata";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { Hex } from "viem";
 import { NextSeo } from "next-seo";
-import { CommunityGrants } from "@/components/CommunityGrants";
-import { CommunityFeed } from "@/components/CommunityFeed";
+// import { CommunityGrants } from "@/components/CommunityGrants";
+// import { CommunityFeed } from "@/components/CommunityFeed";
 import { communityColors } from "@/utilities/communityColors";
 import dynamic from "next/dynamic";
 
@@ -17,6 +17,26 @@ type Props = {
     communityId: string;
   };
 };
+
+const CommunityFeed = dynamic(
+  () =>
+    import("../../components/CommunityFeed").then(
+      (component) => component.CommunityFeed
+    ),
+  {
+    loading: () => <p>Loading...</p>,
+  }
+);
+
+const CommunityGrants = dynamic(
+  () =>
+    import("../../components/CommunityGrants").then(
+      (component) => component.CommunityGrants
+    ),
+  {
+    loading: () => <p>Loading...</p>,
+  }
+);
 
 // export async function generateMetadata({ params }: Props): Promise<Metadata> {
 //   const { communityId } = params;
