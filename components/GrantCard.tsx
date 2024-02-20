@@ -2,9 +2,8 @@
 import { Grant } from "@show-karma/karma-gap-sdk";
 import { blo } from "blo";
 import { Hex } from "viem";
-import { PAGES, formatDate, formatPercentage } from "@/utilities";
+import { PAGES, formatPercentage, formatTimestamp } from "@/utilities";
 import pluralize from "pluralize";
-import Link from "next/link";
 import formatCurrency from "@/utilities/formatCurrency";
 import { motion } from "framer-motion";
 import { MarkdownPreview } from "./Utilities/MarkdownPreview";
@@ -75,13 +74,13 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
         />
         <div className="flex w-full flex-col px-3">
           <p className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200  max-2xl:text-sm">
-            {grant.project?.title}
+            {grant.project?.details?.data?.title}
           </p>
           <p className="line-clamp-1 break-all text-sm font-semibold text-gray-500 dark:text-zinc-300 max-2xl:text-[13px]">
             {grant.details?.title}
           </p>
           <p className="mb-2 text-sm font-medium text-gray-400  dark:text-zinc-400  max-2xl:text-[13px]">
-            Created on {formatDate(grant.createdAt)}
+            Created on {formatTimestamp(grant.createdAt)}
           </p>
           <div className="flex flex-col gap-1 flex-1 h-[64px]">
             <div className="text-sm text-gray-900 dark:text-gray-400 text-ellipsis line-clamp-2">
