@@ -96,7 +96,7 @@ export const createNewProject = async (
         router.push(PAGES.MY_PROJECTS);
       })
       .catch((error) => console.log(error));
-  } catch (error) {
-    console.log({ error });
+  } catch (error: any) {
+    throw new Error(error);
   }
 };

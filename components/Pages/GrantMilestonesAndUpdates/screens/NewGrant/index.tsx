@@ -372,7 +372,7 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
           toast.success(MESSAGES.GRANT.CREATE.SUCCESS);
           router.push(
             PAGES.PROJECT.TABS.SELECTED_TAB(
-              selectedProject.uid,
+              selectedProject.details?.slug || selectedProject.uid,
               grant.uid,
               "overview"
             )
@@ -416,7 +416,12 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
         // eslint-disable-next-line no-param-reassign
         toast.success(MESSAGES.GRANT.UPDATE.SUCCESS);
         await refreshProject().then(() => {
-          router.push(PAGES.PROJECT.GRANT(selectedProject.uid, oldGrant.uid));
+          router.push(
+            PAGES.PROJECT.GRANT(
+              selectedProject.details?.slug || selectedProject.uid,
+              oldGrant.uid
+            )
+          );
         });
       });
     } catch (error) {
@@ -544,12 +549,16 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
             onClick={() => {
               if (!selectedProject) return;
               if (!grantToEdit) {
-                router.push(PAGES.PROJECT.GRANTS(selectedProject?.uid));
+                router.push(
+                  PAGES.PROJECT.GRANTS(
+                    selectedProject.details?.slug || selectedProject?.uid
+                  )
+                );
                 return;
               }
               router.push(
                 PAGES.PROJECT.TABS.SELECTED_TAB(
-                  selectedProject.uid,
+                  selectedProject?.details?.slug || selectedProject.uid,
                   grantToEdit.uid,
                   "overview"
                 )
@@ -839,12 +848,16 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
             onClick={() => {
               if (!selectedProject) return;
               if (!grantToEdit) {
-                router.push(PAGES.PROJECT.GRANTS(selectedProject?.uid));
+                router.push(
+                  PAGES.PROJECT.GRANTS(
+                    selectedProject.details?.slug || selectedProject?.uid
+                  )
+                );
                 return;
               }
               router.push(
                 PAGES.PROJECT.TABS.SELECTED_TAB(
-                  selectedProject.uid,
+                  selectedProject.details?.slug || selectedProject.uid,
                   grantToEdit.uid,
                   "overview"
                 )

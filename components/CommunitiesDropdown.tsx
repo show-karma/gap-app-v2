@@ -57,10 +57,10 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
           : "Select community"}
         <ChevronUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
       </Popover.Trigger>
-      <Popover.Content className="mt-4 w-[280px] bg-white dark:text-white dark:bg-zinc-800  max-h-60 overflow-y-auto overflow-x-hidden py-2">
+      <Popover.Content className="mt-4 w-[280px] bg-white border border-zinc-200 dark:border-zinc-700 rounded-md dark:text-white dark:bg-zinc-800  max-h-60 overflow-y-auto overflow-x-hidden py-2">
         <Command>
           <CommandInput
-            className="rounded-md ml-2 mr-4 dark:text-white dark:bg-zinc-800"
+            className="rounded-md ml-2 mr-4 w-[240px] dark:text-white dark:bg-zinc-800"
             placeholder="Search community..."
           />
           <CommandEmpty className="px-4 py-2">No community found.</CommandEmpty>

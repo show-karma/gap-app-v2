@@ -43,7 +43,7 @@ export const EmptyGrantsSection: FC = () => {
         <Link
           className="items-center flex flex-row justify-center gap-2 rounded border border-blue-600 bg-blue-600 px-4 py-2.5 text-base font-semibold text-white hover:bg-blue-600"
           href={PAGES.PROJECT.TABS.SELECTED_TAB(
-            project?.uid || "",
+            project?.details?.slug || project?.uid || "",
             undefined,
             "create-grant"
           )}

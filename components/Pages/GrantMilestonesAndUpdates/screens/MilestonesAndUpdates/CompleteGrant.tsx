@@ -62,7 +62,7 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
           await refreshProject().then(() => {
             router.push(
               PAGES.PROJECT.TABS.SELECTED_TAB(
-                project?.uid || "",
+                project.details?.slug || project?.uid || "",
                 grantToComplete.uid,
                 "milestones-and-updates"
               )
@@ -93,7 +93,7 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
           </h4>
           <Link
             href={PAGES.PROJECT.TABS.SELECTED_TAB(
-              project?.uid || "",
+              project.details?.slug || project?.uid || "",
               grant.uid,
               "milestones-and-updates"
             )}
