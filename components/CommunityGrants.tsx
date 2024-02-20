@@ -434,7 +434,11 @@ export const CommunityGrants = () => {
         <div className="w-full flex flex-1 flex-col">
           <div className="my-8 grid grid-cols-3 gap-5 max-sm:grid-cols-1  max-md:grid-cols-1  max-lg:grid-cols-2 max-xl:grid-cols-3 2xl:grid-cols-4">
             {grants.map((grant, index) => (
-              <GrantCard index={index} key={grant.uid + +index} grant={grant} />
+              <GrantCard
+                index={index}
+                key={grant.uid + +index}
+                rawGrant={grant}
+              />
             ))}
           </div>
 
