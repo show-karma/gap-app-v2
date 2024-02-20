@@ -3,6 +3,7 @@
 import { getGAPWeeklyActiveUsers } from "@/utilities/indexer/stats";
 import { Card, LineChart, Title } from "@tremor/react";
 import { useEffect, useState } from "react";
+import { formatDate } from "@/utilities";
 
 export const WeeklyActiveUsersChart = () => {
   const [data, setData] = useState([]);
@@ -14,8 +15,11 @@ export const WeeklyActiveUsersChart = () => {
       const response: any = await getGAPWeeklyActiveUsers();
       const formattedData = response.map((item: any) => ({
         // eslint-disable-next-line no-underscore-dangle
-        Date: `Week ${item._id.week}, ${item._id.year}`,
-        "Weekly Active Users": item["Weekly Active Users"],
+        Date: `${formatDate(item.date.$date)} ${
+          item["percentileChange"] > 0 ? "🟢" : "🔴"
+        } ${parseInt(item["percentileChange"])}%`,
+        "Weekly Active Users": item["wau"],
+        "Percent Change": item["percentileChange"],
       }));
       setData(formattedData);
       setIsLoading(false);
@@ -24,7 +28,7 @@ export const WeeklyActiveUsersChart = () => {
   }, [setData, setIsLoading]);
 
   return (
-    <div className="flex w-auto flex-col items-center justify-center">
+    <div className="container  mx-auto sm:px-0 lg:px-20 w-full flex-col items-center justify-center">
       {isLoading ? (
         <p>Loading...</p>
       ) : (
