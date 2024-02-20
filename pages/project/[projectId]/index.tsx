@@ -45,19 +45,25 @@ const restMembersCounter = (project: Project) =>
 export const NestedLayout = ({ children }: Props) => {
   const router = useRouter();
   const projectId = router.query.projectId as string;
-  const tabs = [
-    { name: "Project", href: PAGES.PROJECT.OVERVIEW(projectId) },
-    {
-      name: "Grants",
-      href: PAGES.PROJECT.GRANTS(projectId),
-    },
-    { name: "Team", href: PAGES.PROJECT.TEAM(projectId) },
-  ];
   const project = useProjectStore((state) => state.project);
   const loading = useProjectStore((state) => state.loading);
   const setProject = useProjectStore((state) => state.setProject);
   const setLoading = useProjectStore((state) => state.setLoading);
   const setIsProjectOwner = useProjectStore((state) => state.setIsProjectOwner);
+  const tabs = [
+    {
+      name: "Project",
+      href: PAGES.PROJECT.OVERVIEW(project?.details?.slug || projectId),
+    },
+    {
+      name: "Grants",
+      href: PAGES.PROJECT.GRANTS(project?.details?.slug || projectId),
+    },
+    {
+      name: "Team",
+      href: PAGES.PROJECT.TEAM(project?.details?.slug || projectId),
+    },
+  ];
 
   useEffect(() => {
     if (projectId) {

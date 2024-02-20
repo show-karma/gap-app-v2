@@ -8,7 +8,7 @@ export const transferOwnership = async (
 ) => {
   try {
     await project.transferOwnership(signer, newOwner);
-  } catch (error) {
-    throw error;
+  } catch (error: any) {
+    throw new Error(error);
   }
 };

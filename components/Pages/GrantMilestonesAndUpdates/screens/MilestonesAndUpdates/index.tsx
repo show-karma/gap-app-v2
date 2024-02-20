@@ -52,7 +52,7 @@ export const EmptyMilestone = ({ grant }: { grant?: Grant }) => {
                 if (project && grant) {
                   router.push(
                     PAGES.PROJECT.TABS.SELECTED_TAB(
-                      project.uid,
+                      project.details?.slug || project.uid,
                       grant.uid,
                       "create-milestone"
                     )
@@ -73,7 +73,7 @@ export const EmptyMilestone = ({ grant }: { grant?: Grant }) => {
                 if (project && grant) {
                   router.push(
                     PAGES.PROJECT.TABS.SELECTED_TAB(
-                      project?.uid || "",
+                      project.details?.slug || project?.uid || "",
                       grant.uid,
                       "grant-update"
                     )
@@ -157,7 +157,7 @@ export const MilestonesAndUpdates = ({ grant }: MilestonesAndUpdatesProps) => {
                             if (project) {
                               router.push(
                                 PAGES.PROJECT.TABS.SELECTED_TAB(
-                                  project?.uid || "",
+                                  project.details?.slug || project?.uid || "",
                                   grant.uid,
                                   "grant-update"
                                 )
@@ -176,7 +176,7 @@ export const MilestonesAndUpdates = ({ grant }: MilestonesAndUpdatesProps) => {
                           if (project) {
                             router.push(
                               PAGES.PROJECT.TABS.SELECTED_TAB(
-                                project?.uid || "",
+                                project.details?.slug || project?.uid || "",
                                 grant.uid,
                                 "create-milestone"
                               )

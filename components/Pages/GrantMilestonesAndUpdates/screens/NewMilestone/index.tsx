@@ -119,7 +119,8 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
         await refreshProject().then(() => {
           router.push(
             PAGES.PROJECT.TABS.SELECTED_TAB(
-              selectedProject?.uid as string,
+              selectedProject?.details?.slug ||
+                (selectedProject?.uid as string),
               uid,
               "milestones-and-updates"
             )
@@ -151,7 +152,8 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
             onClick={() => {
               router.push(
                 PAGES.PROJECT.TABS.SELECTED_TAB(
-                  selectedProject?.uid as string,
+                  selectedProject?.details?.slug ||
+                    (selectedProject?.uid as string),
                   uid,
                   "milestones-and-updates"
                 )

@@ -15,7 +15,6 @@ import { Project } from "@show-karma/karma-gap-sdk";
 import formatCurrency from "@/utilities/formatCurrency";
 import pluralize from "pluralize";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import Pagination from "@/components/Utilities/Pagination";
 import { NextSeo } from "next-seo";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -127,20 +126,8 @@ export default function MyProjects() {
                         if (hasActive) active += 1;
                       });
                       return (
-                        <motion.div
+                        <div
                           key={index}
-                          initial={{
-                            opacity: 0,
-                            translateX: -10,
-                            translateY: 0,
-                          }}
-                          animate={{ opacity: 1, translateX: 0, translateY: 0 }}
-                          transition={{
-                            type: "spring",
-                            duration: 0.75,
-                            delay: index * 0.03,
-                          }}
-                          exit={{ opacity: 0, translateX: -10, translateY: 0 }}
                           className="h-full bg-white dark:bg-zinc-900 dark:border-gray-900 border border-gray-200 rounded-xl   pb-5 w-full transition-all ease-in-out duration-200"
                         >
                           <Link
@@ -234,7 +221,7 @@ export default function MyProjects() {
                               </div>
                             </div>
                           </Link>
-                        </motion.div>
+                        </div>
                       );
                     })}
                   </div>
