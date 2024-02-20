@@ -68,9 +68,11 @@ export const CommunityFeed = () => {
           {feed.length ? (
             feed.map((item, index) => {
               return (
-                <>
+                <div
+                  className="flex w-full flex-col"
+                  key={item.uid + item.message + item.timestamp + item.type}
+                >
                   <li
-                    key={item.uid + item.message + item.timestamp + item.type}
                     className={cn(
                       "relative flex w-full flex-row items-center gap-3 py-4 max-2xl:px-3 max-sm:px-3  px-5"
                     )}
@@ -125,7 +127,7 @@ export const CommunityFeed = () => {
                   {index !== feed.length - 1 ? (
                     <div className="border-b border-b-gray-200 dark:border-b-gray-700"></div>
                   ) : null}
-                </>
+                </div>
               );
             })
           ) : feedLoading ? null : (
