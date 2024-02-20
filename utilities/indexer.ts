@@ -12,8 +12,21 @@ export const INDEXER = {
   },
   COMMUNITY: {
     GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}`,
-    GRANTS: (communityIdOrSlug: string) =>
-      `/communities/${communityIdOrSlug}/grants`,
+    GRANTS: (
+      communityIdOrSlug: string,
+      {
+        page,
+        pageLimit,
+        categories,
+      }: {
+        page: number;
+        pageLimit: number;
+        categories?: string;
+      }
+    ) =>
+      `/communities/${communityIdOrSlug}/grants?page=${page}&pageLimit=${pageLimit}${
+        categories ? `&categories=${categories}` : ""
+      }`,
     FEED: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/feed`,
     CATEGORIES: (communityIdOrSlug: string) =>

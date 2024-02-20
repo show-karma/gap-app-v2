@@ -4,7 +4,7 @@ import { Fragment, useState } from "react";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 import { Listbox, Transition } from "@headlessui/react";
 import { useRouter } from "next/router";
-import { INDEXER, cn, formatDate, zeroUID } from "@/utilities";
+import { INDEXER, cn, zeroUID } from "@/utilities";
 import { Hex } from "viem";
 import { getGrants } from "@/utilities/sdk/communities";
 import { Grant } from "@show-karma/karma-gap-sdk";
@@ -14,6 +14,8 @@ import Pagination from "./Utilities/Pagination";
 import { SortByOptions, StatusOptions } from "@/types";
 import fetchData from "@/utilities/fetchData";
 import pluralize from "pluralize";
+import InfiniteScroll from "react-infinite-scroll-component";
+import { AutoSizer, Grid } from "react-virtualized";
 
 const sortOptions: Record<SortByOptions, string> = {
   recent: "Recent",
@@ -33,12 +35,6 @@ export const CommunityGrants = () => {
   const communityId = router.query.communityId as string;
   const [categoriesOptions, setCategoriesOptions] = useState<string[]>([]);
 
-  // const [selectedSort, setSelectedSort] = useState<SortByOptions>(
-  //   "recent" as SortByOptions
-  // );
-  // const [selectedStatus, setSelectedStatus] = useState<StatusOptions>(
-  //   "all" as StatusOptions
-  // );
   const selectedCategories = useMemo(() => {
     return typeof router.query.categories === "string" &&
       router.query.categories.length
@@ -47,6 +43,7 @@ export const CommunityGrants = () => {
   }, [router.query.categories]);
   const selectedSort = (router.query.sort as SortByOptions) || "milestones";
   const selectedStatus = (router.query.status as StatusOptions) || "all";
+  const [currentPage, setCurrentPage] = useState(0);
 
   const changeCategoriesQuery = (query: string[]) => {
     router.push({
@@ -88,8 +85,8 @@ export const CommunityGrants = () => {
   const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
   const [grants, setGrants] = useState<Grant[]>([]); // Data returned from the API
   const itemsPerPage = 12; // Set the total number of items you want returned from the API
-  const [currentPage, setCurrentPage] = useState(1);
   const [totalGrants, setTotalGrants] = useState(0);
+  const [haveMore, setHaveMore] = useState(true);
 
   useMemo(() => {
     if (!communityId || communityId === zeroUID) return;
@@ -119,19 +116,24 @@ export const CommunityGrants = () => {
     const fetchGrants = async () => {
       setLoading(true);
       try {
-        const fetchedGrants = await getGrants(communityId as Hex, {
-          sortBy: selectedSort,
-          status: selectedStatus,
-          categories: selectedCategories,
-        });
+        const fetchedGrants = await getGrants(
+          communityId as Hex,
+          {
+            sortBy: selectedSort,
+            status: selectedStatus,
+            categories: selectedCategories,
+          },
+          {
+            page: currentPage,
+            pageLimit: itemsPerPage,
+          }
+        );
         if (fetchedGrants) {
-          setTotalGrants(fetchedGrants.length);
-          setGrants(
-            fetchedGrants.slice(
-              itemsPerPage * (currentPage - 1),
-              itemsPerPage * currentPage
-            )
-          );
+          const newGrantList =
+            currentPage === 0 ? fetchedGrants : [...grants, ...fetchedGrants];
+          setHaveMore(fetchedGrants.length === itemsPerPage);
+          setTotalGrants(newGrantList.length);
+          setGrants(newGrantList);
         }
       } catch (error) {
         console.log("error", error);
@@ -143,13 +145,18 @@ export const CommunityGrants = () => {
 
     fetchGrants();
     getCategories();
-  }, [
-    communityId,
-    currentPage,
-    selectedSort,
-    selectedStatus,
-    selectedCategories,
-  ]);
+  }, [communityId, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [selectedSort, selectedStatus, selectedCategories]);
+
+  const loadMore = () => {
+    console.log("loadMOre");
+    if (!loading) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
   return (
     <div className="w-8/12 max-lg:w-full 2xl:w-9/12">
@@ -424,32 +431,101 @@ export const CommunityGrants = () => {
           {/* Status end */}
         </div>
       </div>
-      {loading ? (
-        // Loading state
-        <div className="w-full py-8 flex items-center justify-center">
-          <Spinner />
-        </div>
-      ) : (
-        // Data state
-        <div className="w-full flex flex-1 flex-col">
-          <div className="my-8 grid grid-cols-3 gap-5 max-sm:grid-cols-1  max-md:grid-cols-1  max-lg:grid-cols-2 max-xl:grid-cols-3 2xl:grid-cols-4">
-            {grants.map((grant, index) => (
-              <GrantCard
-                index={index}
-                key={grant.uid + +index}
-                rawGrant={grant}
-              />
-            ))}
-          </div>
+      <div className="h-full w-full my-8">
+        {grants.length > 0 ? (
+          // <div className="grid grid-cols-4 justify-items-center gap-3 pb-20 max-2xl:grid-cols-4 max-xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1">
+          //   {grants.map((grant, index) => {
+          //     return <GrantCard key={grant.uid} grant={grant} index={index} />;
+          //   })}
+          // </div>
 
-          <Pagination
-            currentPage={currentPage}
-            setCurrentPage={setCurrentPage}
-            postsPerPage={itemsPerPage}
-            totalPosts={totalGrants}
-          />
-        </div>
-      )}
+          <InfiniteScroll
+            dataLength={grants.length}
+            next={loadMore}
+            hasMore={haveMore}
+            loader={null}
+            className="h-full w-full"
+            style={{
+              width: "100%",
+              height: "100%",
+              minHeight:
+                grants.length > 4
+                  ? 360 * Math.ceil(grants.length / 4) + 180
+                  : 360 * 1.5,
+            }}
+          >
+            <AutoSizer>
+              {({ width }) => {
+                const columnCounter = Math.floor(width / 240)
+                  ? Math.floor(width / 240) > 4
+                    ? 4
+                    : Math.floor(width / 240)
+                  : 1;
+                const columnWidth = Math.floor(width / columnCounter);
+                const gutterSize = 20;
+                return (
+                  <Grid
+                    height={
+                      grants.length > 4
+                        ? 360 * Math.ceil(grants.length / 4) + 180
+                        : 360 * 1.5
+                    }
+                    width={width}
+                    rowCount={Math.ceil(grants.length / 4)}
+                    // rowHeight={cache.current.rowHeight}
+                    rowHeight={360}
+                    columnWidth={columnWidth - 20 < 240 ? 240 : columnWidth - 5}
+                    columnCount={columnCounter}
+                    cellRenderer={({ columnIndex, key, rowIndex, style }) => {
+                      const grant = grants[rowIndex * 4 + columnIndex];
+                      return (
+                        <div
+                          key={key}
+                          style={{
+                            ...style,
+                            left:
+                              columnIndex === 0
+                                ? +(style.left || 0)
+                                : +(style.left || 0) + gutterSize,
+                            width:
+                              columnIndex === 0
+                                ? +(style.width || 0)
+                                : +(style.width || 0) - gutterSize,
+                            top:
+                              rowIndex === 0
+                                ? +(style.top || 0)
+                                : +(style.top || 0) + gutterSize,
+                            height: +(style.height || 0) - gutterSize,
+                          }}
+                        >
+                          {grant && (
+                            <div
+                              style={{
+                                height: "100%",
+                              }}
+                            >
+                              <GrantCard
+                                index={rowIndex * 4 + columnIndex}
+                                key={grant.uid}
+                                rawGrant={grant}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }}
+                  />
+                );
+              }}
+            </AutoSizer>
+          </InfiniteScroll>
+        ) : null}
+        {loading ? (
+          <div className="w-full py-8 flex items-center justify-center">
+            <Spinner />
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 };

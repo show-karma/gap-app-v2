@@ -108,6 +108,7 @@ export const GrantCard = ({ rawGrant, index }: GrantCardProps) => {
             </p>
           </div>
         ) : null}
+
         <div className="flex h-max w-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-600 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
           <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
             {formatCurrency(
@@ -121,7 +122,7 @@ export const GrantCard = ({ rawGrant, index }: GrantCardProps) => {
         </div>
       </div>
 
-      <div className="gap-1 flex items-center justify-start flex-row flex-wrap">
+      <div className="gap-1 flex items-center justify-start flex-row flex-wrap overflow-y-auto">
         {grant.categories?.map((category, index) => (
           <div
             key={category}

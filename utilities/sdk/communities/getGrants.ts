@@ -1,10 +1,8 @@
 import type { Hex } from "@show-karma/karma-gap-sdk";
-
-import { getGapClient } from "@/hooks/useGap";
-
 import { SortByOptions, StatusOptions } from "@/types/filters";
-import { appNetwork } from "@/utilities/network";
 import { filterByCategory, filterByStatus, orderBySortBy } from "./grants";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 export const getGrants = async (
   uid: Hex,
@@ -12,18 +10,29 @@ export const getGrants = async (
     categories?: string[];
     sortBy?: SortByOptions;
     status?: StatusOptions;
+  },
+  paginationOps?: {
+    page: number;
+    pageLimit: number;
   }
 ) => {
   try {
-    const gap = getGapClient(appNetwork[0].id);
-    const grants = await gap.fetch.grantsByCommunity(uid);
+    // const grants = await gap.fetch.grantsByCommunity(uid);
+    const [grants] = await fetchData(
+      INDEXER.COMMUNITY.GRANTS(uid, {
+        page: paginationOps?.page || 0,
+        pageLimit: paginationOps?.pageLimit || 12,
+        categories: filter?.categories?.join(","),
+      })
+    );
     let grantsToFilter = [...grants];
     if (grantsToFilter.length === 0) {
       return [];
     }
-    if (filter?.categories?.length) {
-      grantsToFilter = filterByCategory(filter.categories, grantsToFilter);
-    }
+    // API returns all grants with categories, so we don't need to filter them anymore
+    // if (filter?.categories?.length) {
+    //   grantsToFilter = filterByCategory(filter.categories, grantsToFilter);
+    // }
     if (filter?.status) {
       grantsToFilter = filterByStatus(filter.status, grantsToFilter);
     }
