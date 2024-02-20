@@ -5,18 +5,10 @@ import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { MilestoneWithCompleted } from "@/types/milestones";
-import {
-  MESSAGES,
-  PAGES,
-  appNetwork,
-  getSigner,
-  useSigner,
-  walletClientToSigner,
-} from "@/utilities";
+import { MESSAGES, PAGES, appNetwork, walletClientToSigner } from "@/utilities";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   GrantDetails,
-  type Project,
   nullRef,
   GrantUpdate,
   Grant,
@@ -24,7 +16,7 @@ import {
   MilestoneCompleted,
 } from "@show-karma/karma-gap-sdk";
 import type { FC } from "react";
-import { use, useEffect, useState } from "react";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Hex, isAddress } from "viem";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
@@ -119,7 +111,6 @@ const grantSchema = z.object({
 type GrantType = z.infer<typeof grantSchema>;
 
 interface NewGrantProps {
-  projectUID: Project["uid"];
   grantToEdit?: Grant;
 }
 
@@ -180,9 +171,8 @@ interface NewGrantData {
   }[];
 }
 
-export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
+export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { address } = useAccount();
-  const signer = useSigner();
   const isOwner = useOwnerStore((state) => state.isOwner);
   const searchParams = useSearchParams();
   const grantScreen = searchParams?.get("tab");
