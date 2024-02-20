@@ -24,11 +24,11 @@ export const WeeklyActiveUsersChart = () => {
   }, [setData, setIsLoading]);
 
   return (
-    <div className="flex max-w-7xl flex-col items-center justify-center">
+    <div className="flex w-auto flex-col items-center justify-center">
       {isLoading ? (
         <p>Loading...</p>
       ) : (
-        <Card className="min-w-[320px]">
+        <Card className="min-w-[400px]">
           <Title className="flex flex-row flex-wrap items-center gap-2">
             Weekly Active Users
           </Title>
