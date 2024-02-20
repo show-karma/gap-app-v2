@@ -2,41 +2,20 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { useGap } from "@/hooks";
 import { PAGES, cn, defaultMetadata, zeroUID } from "@/utilities";
-import { Community, ICommunityDetails } from "@show-karma/karma-gap-sdk";
 import { getMetadata } from "@/utilities/sdk/getMetadata";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { Hex } from "viem";
 import { NextSeo } from "next-seo";
-// import { CommunityGrants } from "@/components/CommunityGrants";
-// import { CommunityFeed } from "@/components/CommunityFeed";
+import { Community, ICommunityDetails } from "@show-karma/karma-gap-sdk";
+import { CommunityGrants } from "@/components/CommunityGrants";
+import { CommunityFeed } from "@/components/CommunityFeed";
 import { communityColors } from "@/utilities/communityColors";
-import dynamic from "next/dynamic";
 
 type Props = {
   params: {
     communityId: string;
   };
 };
-
-const CommunityFeed = dynamic(
-  () =>
-    import("../../components/CommunityFeed").then(
-      (component) => component.CommunityFeed
-    ),
-  {
-    loading: () => <p>Loading...</p>,
-  }
-);
-
-const CommunityGrants = dynamic(
-  () =>
-    import("../../components/CommunityGrants").then(
-      (component) => component.CommunityGrants
-    ),
-  {
-    loading: () => <p>Loading...</p>,
-  }
-);
 
 // export async function generateMetadata({ params }: Props): Promise<Metadata> {
 //   const { communityId } = params;
