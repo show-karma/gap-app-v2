@@ -139,12 +139,20 @@ export default function Index() {
             </div>
           ) : isAdmin ? (
             <div className="flex flex-row flex-wrap gap-8">
-              <a href={PAGES.ADMIN.ASSIGN_QUESTIONS(communityId)}>
+              <a
+                href={PAGES.ADMIN.ASSIGN_QUESTIONS(
+                  community?.details?.slug || communityId
+                )}
+              >
                 <button className="px-10 py-8 bg-green-200 rounded-md  transition-all ease-in-out duration-200 dark:bg-green-900">
                   Assign questions
                 </button>
               </a>
-              <a href={PAGES.ADMIN.EDIT_CATEGORIES(communityId)}>
+              <a
+                href={PAGES.ADMIN.EDIT_CATEGORIES(
+                  community?.details?.slug || communityId
+                )}
+              >
                 <button className="px-10 py-8 bg-blue-200 rounded-md  transition-all ease-in-out duration-200 dark:bg-blue-900">
                   Edit categories
                 </button>

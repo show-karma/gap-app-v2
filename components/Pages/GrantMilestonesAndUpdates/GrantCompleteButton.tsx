@@ -35,7 +35,7 @@ export const GrantCompleteButton: FC<GrantCompleteProps> = ({
   return (
     <Link
       href={PAGES.PROJECT.TABS.SELECTED_TAB(
-        project.uid,
+        project.details?.slug || project.uid,
         grant.uid,
         "complete-grant"
       )}

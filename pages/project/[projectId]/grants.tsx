@@ -175,7 +175,7 @@ const GrantsPage = ({
     project?.grants?.map((item) => ({
       uid: item.uid,
       name: item.details?.title || "",
-      href: PAGES.PROJECT.GRANT(project.uid, item.uid),
+      href: PAGES.PROJECT.GRANT(project.details?.slug || project.uid, item.uid),
       icon: item.community?.details?.imageURL || "",
       current: item.uid === grantIdFromQueryParam || item.uid === grant?.uid,
       completed: item.completed,
@@ -229,17 +229,19 @@ const GrantsPage = ({
     {
       name: "Overview",
       href: PAGES.PROJECT.TABS.OVERVIEW(
-        project?.uid as string,
+        project?.details?.slug || (project?.uid as string),
         grant?.uid as string
       ),
-      alternativeHref: PAGES.PROJECT.GRANTS_STANDALONE(project?.uid as string),
+      alternativeHref: PAGES.PROJECT.GRANTS_STANDALONE(
+        project?.details?.slug || (project?.uid as string)
+      ),
       tabName: "overview",
       current: true,
     },
     {
       name: "Milestones and Updates",
       href: PAGES.PROJECT.TABS.SELECTED_TAB(
-        project?.uid as string,
+        project?.details?.slug || (project?.uid as string),
         grant?.uid as string,
         "milestones-and-updates"
       ),
@@ -249,7 +251,7 @@ const GrantsPage = ({
     {
       name: "Impact Criteria",
       href: PAGES.PROJECT.TABS.IMPACT_CRITERIA(
-        project?.uid as string,
+        project?.details?.slug || (project?.uid as string),
         grant?.uid as string
       ),
       tabName: "impact-criteria",
@@ -278,7 +280,7 @@ const GrantsPage = ({
         {
           name: "Reviews",
           href: PAGES.PROJECT.TABS.REVIEWS(
-            project?.uid as string,
+            project?.details?.slug || (project?.uid as string),
             grant?.uid as string
           ),
           tabName: "reviews",
@@ -287,7 +289,7 @@ const GrantsPage = ({
         {
           name: "Review this grant",
           href: PAGES.PROJECT.TABS.REVIEW_THIS_GRANT(
-            project?.uid as string,
+            project?.details?.slug || (project?.uid as string),
             grant?.uid as string
           ),
           tabName: "review-this-grant",
@@ -307,7 +309,7 @@ const GrantsPage = ({
             {
               name: "Reviews",
               href: PAGES.PROJECT.TABS.REVIEWS(
-                project?.uid as string,
+                project?.details?.slug || (project?.uid as string),
                 grant?.uid as string
               ),
               tabName: "reviews",
@@ -427,7 +429,7 @@ const GrantsPage = ({
                         if (project) {
                           router.push(
                             PAGES.PROJECT.TABS.SELECTED_TAB(
-                              project?.uid || "",
+                              project?.details?.slug || project?.uid || "",
                               undefined,
                               "create-grant"
                             )
@@ -600,7 +602,7 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
           {isAuthorized && project && grant && (
             <Link
               href={PAGES.PROJECT.TABS.SELECTED_TAB(
-                project?.uid as string,
+                project?.details?.slug || (project?.uid as string),
                 grant?.uid as string,
                 "edit-grant"
               )}
@@ -656,7 +658,8 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
                 </div>
                 <a
                   href={PAGES.COMMUNITY.ALL_GRANTS(
-                    grant?.community?.uid as Hex
+                    grant?.community?.details?.slug ||
+                      (grant?.community?.uid as Hex)
                   )}
                 >
                   <div className="inline-flex items-center gap-x-2 rounded-full bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900">

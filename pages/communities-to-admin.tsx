@@ -74,7 +74,9 @@ export default function CommunitiesToAdmin() {
           {communitiesToAdmin.length ? (
             communitiesToAdmin.map((community) => (
               <Link
-                href={PAGES.ADMIN.ROOT(community.uid)}
+                href={PAGES.ADMIN.ROOT(
+                  community.details?.slug || community.uid
+                )}
                 key={community.uid + community.details?.name}
               >
                 <div className="flex w-full flex-col items-center justify-center rounded-lg p-4">
