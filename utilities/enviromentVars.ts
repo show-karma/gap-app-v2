@@ -22,5 +22,4 @@ export const envVars = {
     SEPOLIA: process.env.NEXT_PUBLIC_ALCHEMY_SEPOLIA,
   },
   PROJECT_ID: process.env.NEXT_PUBLIC_PROJECT_ID || "",
-  SHOW_CACHED_DATA: process.env.NEXT_PUBLIC_SHOW_CACHED_DATA === "true",
 };
