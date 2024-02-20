@@ -512,10 +512,12 @@ const GrantsPage = ({
                 <ReviewGrant grant={grant} />
               )}
               {/*  */}
-              {(currentTab === "create-grant" || currentTab === "edit-grant") &&
-                project?.uid && (
-                  <NewGrant grantToEdit={grant} projectUID={project.uid} />
-                )}
+              {currentTab === "create-grant" && project?.uid && (
+                <NewGrant grantToEdit={grant} />
+              )}
+              {currentTab === "edit-grant" && project?.uid && grant && (
+                <NewGrant grantToEdit={grant} />
+              )}
               {(currentTab === "create-milestone" ||
                 currentTab === "edit-milestone") &&
                 grant && <NewMilestone grant={grant} />}
