@@ -1,14 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { useGap } from "@/hooks";
-import {
-  PAGES,
-  cn,
-  defaultMetadata,
-  ogMeta,
-  twitterMeta,
-  zeroUID,
-} from "@/utilities";
+import { PAGES, cn, defaultMetadata, zeroUID } from "@/utilities";
 import { Community, ICommunityDetails } from "@show-karma/karma-gap-sdk";
 import { getMetadata } from "@/utilities/sdk/getMetadata";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
@@ -17,6 +10,7 @@ import { NextSeo } from "next-seo";
 import { CommunityGrants } from "@/components/CommunityGrants";
 import { CommunityFeed } from "@/components/CommunityFeed";
 import { communityColors } from "@/utilities/communityColors";
+import dynamic from "next/dynamic";
 
 type Props = {
   params: {
