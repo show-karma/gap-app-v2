@@ -273,7 +273,7 @@ export default function AssignQuestions() {
                     community?.details?.slug || (community?.uid as string)
                   )}
                 >
-                  <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-transparent text-black dark:text-white rounded-md transition-all ease-in-out duration-200">
+                  <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
                     <ChevronLeftIcon className="h-5 w-5" />
                     Return to admin page
                   </Button>
@@ -362,7 +362,7 @@ export default function AssignQuestions() {
                         community?.details?.slug || (community?.uid as string)
                       )}
                     >
-                      <Button className="flex flex-row items-center gap-2 px-10 py-8 text-black dark:text-white bg-cyan-200 rounded-md transition-all ease-in-out duration-200">
+                      <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
                         <ChevronLeftIcon className="h-5 w-5" />
                         Return to admin page
                       </Button>
