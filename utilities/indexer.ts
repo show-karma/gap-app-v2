@@ -11,6 +11,7 @@ export const INDEXER = {
     },
   },
   COMMUNITY: {
+    GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}`,
     GRANTS: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/grants`,
     FEED: (communityIdOrSlug: string) =>

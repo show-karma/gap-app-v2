@@ -6,7 +6,7 @@ export default async function fetchData(
   method: Method = "GET",
   axiosData = {},
   params = {},
-  noCache: boolean | undefined = true
+  noCache: boolean | undefined = false
 ) {
   try {
     const res = await axios.request({
