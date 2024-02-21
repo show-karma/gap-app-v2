@@ -15,6 +15,7 @@ import { getMetadata } from "@/utilities/sdk/getMetadata";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { Hex } from "viem";
 import { NextSeo } from "next-seo";
+import { Community, ICommunityDetails } from "@show-karma/karma-gap-sdk";
 import { CommunityGrants } from "@/components/CommunityGrants";
 import { CommunityFeed } from "@/components/CommunityFeed";
 import { communityColors } from "@/utilities/communityColors";

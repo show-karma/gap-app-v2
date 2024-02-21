@@ -9,14 +9,12 @@ import {
   MESSAGES,
   PAGES,
   appNetwork,
-  getSigner,
   useSigner,
   walletClientToSigner,
 } from "@/utilities";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   GrantDetails,
-  type Project,
   nullRef,
   GrantUpdate,
   Grant,
@@ -24,7 +22,7 @@ import {
   MilestoneCompleted,
 } from "@show-karma/karma-gap-sdk";
 import type { FC } from "react";
-import { use, useEffect, useState } from "react";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Hex, isAddress } from "viem";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
@@ -35,7 +33,7 @@ import { CommunitiesDropdown } from "@/components/CommunitiesDropdown";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useGap } from "@/hooks";
 import toast from "react-hot-toast";
-import { NextRouter, useRouter } from "next/router";
+import { useRouter } from "next/router";
 import { useSearchParams } from "next/navigation";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { getWalletClient } from "@wagmi/core";
@@ -119,7 +117,6 @@ const grantSchema = z.object({
 type GrantType = z.infer<typeof grantSchema>;
 
 interface NewGrantProps {
-  projectUID: Project["uid"];
   grantToEdit?: Grant;
 }
 
@@ -180,7 +177,7 @@ interface NewGrantData {
   }[];
 }
 
-export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
+export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { address } = useAccount();
   const signer = useSigner();
   const isOwner = useOwnerStore((state) => state.isOwner);
@@ -364,9 +361,8 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
         chainId: communityNetworkId,
       });
       if (!walletClient) return;
-      const signer2 = walletClientToSigner(walletClient);
       await grant
-        .attest(signer2 as any, selectedProject.chainID)
+        .attest(signer as any, selectedProject.chainID)
         .then(async () => {
           // eslint-disable-next-line no-param-reassign
           toast.success(MESSAGES.GRANT.CREATE.SUCCESS);
@@ -411,8 +407,7 @@ export const NewGrant: FC<NewGrantProps> = ({ projectUID, grantToEdit }) => {
         chainId: communityNetworkId,
       });
       if (!walletClient) return;
-      const signer2 = walletClientToSigner(walletClient);
-      await oldGrant.details?.attest(signer2 as any).then(async () => {
+      await oldGrant.details?.attest(signer as any).then(async () => {
         // eslint-disable-next-line no-param-reassign
         toast.success(MESSAGES.GRANT.UPDATE.SUCCESS);
         await refreshProject().then(() => {

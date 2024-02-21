@@ -459,7 +459,7 @@ const GrantsPage = ({
                 <select
                   id="tabs"
                   name="tabs"
-                  className="block w-full rounded-md  dark:bg-zinc-900 border-gray-300 focus:border-primary-500 focus:ring-primary-500"
+                  className="block w-full rounded-md  dark:bg-zinc-900 border-gray-300 focus:border-brand-blue focus:ring-brand-blue"
                   //   defaultValue={tabs.find((tab) => tab.current).name}
                 >
                   {tabs.map((tab) => (
@@ -512,10 +512,12 @@ const GrantsPage = ({
                 <ReviewGrant grant={grant} />
               )}
               {/*  */}
-              {(currentTab === "create-grant" || currentTab === "edit-grant") &&
-                project?.uid && (
-                  <NewGrant grantToEdit={grant} projectUID={project.uid} />
-                )}
+              {currentTab === "create-grant" && project?.uid && (
+                <NewGrant grantToEdit={grant} />
+              )}
+              {currentTab === "edit-grant" && project?.uid && grant && (
+                <NewGrant grantToEdit={grant} />
+              )}
               {(currentTab === "create-milestone" ||
                 currentTab === "edit-milestone") &&
                 grant && <NewMilestone grant={grant} />}

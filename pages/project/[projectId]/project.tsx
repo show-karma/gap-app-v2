@@ -9,6 +9,7 @@ import { useRouter } from "next/router";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { ProjectFeed } from "@/components/ProjectFeed";
 import dynamic from "next/dynamic";
+import { useGap } from "@/hooks";
 
 const ProjectDialog = dynamic(() =>
   import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog)
@@ -34,6 +35,7 @@ function ProjectPage() {
   const { switchNetworkAsync } = useSwitchNetwork();
   const router = useRouter();
   const signer = useSigner();
+  const { gap } = useGap();
 
   const deleteFn = async () => {
     if (!address || !project) return;
@@ -42,7 +44,7 @@ function ProjectPage() {
       if (chain && chain.id !== project.chainID) {
         await switchNetworkAsync?.(project.chainID);
       }
-      await deleteProject(project, signer)
+      await deleteProject(project, signer, gap)
         .then(async () => {
           toast.success(MESSAGES.PROJECT.DELETE.SUCCESS);
           router.push(PAGES.MY_PROJECTS);
@@ -106,7 +108,7 @@ function ProjectPage() {
                 icon: null,
                 text: "Edit project",
                 styleClass:
-                  "rounded-md bg-black px-3 py-2 text-sm font-semibold text-white hover:bg-primary-500 border-none  disabled:opacity-75 transition-all ease-in-out duration-300",
+                  "rounded-md bg-black px-3 py-2 text-sm font-semibold text-white hover:bg-brand-blue border-none  disabled:opacity-75 transition-all ease-in-out duration-300",
               }}
               projectToUpdate={project}
             />

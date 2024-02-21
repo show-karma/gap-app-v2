@@ -142,9 +142,13 @@ export const GrantCard = ({ rawGrant, index }: GrantCardProps) => {
               <p className="text-sm font-medium text-slate-500 dark:text-slate-200">
                 Built by
               </p>
-              <div className="flex flex-row gap-2 flex-1">
-                {firstFiveMembers(grant.members).map((member, index) => (
-                  <span key={index}>
+              <div className="flex flex-row gap-0 flex-1">
+                {firstFiveMembers(grant).map((member, index) => (
+                  <span
+                    key={index}
+                    className="-mr-1.5"
+                    style={{ zIndex: 5 - index }}
+                  >
                     <img
                       src={blo(member, 8)}
                       alt={member}

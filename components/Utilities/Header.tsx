@@ -230,7 +230,7 @@ export default function Header() {
                                     <button
                                       onClick={openConnectModal}
                                       type="button"
-                                      className="rounded-md border border-primary-600 dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-primary-600 hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                                      className="rounded-md border border-brand-blue dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-brand-blue hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
                                     >
                                       Login / Register
                                     </button>
@@ -385,7 +385,7 @@ export default function Header() {
                                     <button
                                       onClick={openConnectModal}
                                       type="button"
-                                      className="rounded-md border max-lg:w-full max-lg:justify-center border-primary-600 dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-primary-600  hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                                      className="rounded-md border max-lg:w-full max-lg:justify-center border-brand-blue dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-brand-blue  hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
                                     >
                                       Login / Register
                                     </button>

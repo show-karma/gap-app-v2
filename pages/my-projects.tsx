@@ -194,28 +194,34 @@ export default function MyProjects() {
                             </div>
 
                             <div className="flex items-center justify-between px-5">
-                              <div className="flex items-center space-x-2">
+                              <div className="flex items-center gap-2">
                                 {firstFiveMembers(card).length ? (
                                   <>
                                     <span className="font-body text-sm font-medium text-slate-500 dark:text-gray-400">
                                       Built by
                                     </span>
-                                    {firstFiveMembers(card)?.map(
-                                      (member, index) => (
-                                        <span key={index}>
-                                          <img
-                                            src={blo(member, 8)}
-                                            alt={member}
-                                            className="h-6 w-6 rounded-full sm:h-5 sm:w-5  border-1 border-gray-100 dark:border-zinc-900"
-                                          />
-                                        </span>
-                                      )
-                                    )}
-                                    {restMembersCounter(card) > 0 && (
-                                      <p className="flex items-center justify-center h-12 w-12 rounded-md ring-4 ring-gray-50 dark:ring-black border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5">
-                                        +
-                                      </p>
-                                    )}
+                                    <div className="flex flex-row gap-0">
+                                      {firstFiveMembers(card)?.map(
+                                        (member, index) => (
+                                          <span
+                                            key={index}
+                                            className="-mr-1.5"
+                                            style={{ zIndex: 5 - index }}
+                                          >
+                                            <img
+                                              src={blo(member, 8)}
+                                              alt={member}
+                                              className="h-6 w-6 rounded-full sm:h-5 sm:w-5  border-1 border-gray-100 dark:border-zinc-900"
+                                            />
+                                          </span>
+                                        )
+                                      )}
+                                      {restMembersCounter(card) > 0 && (
+                                        <p className="flex items-center justify-center h-12 w-12 rounded-md ring-4 ring-gray-50 dark:ring-black border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5">
+                                          +
+                                        </p>
+                                      )}
+                                    </div>
                                   </>
                                 ) : null}
                               </div>

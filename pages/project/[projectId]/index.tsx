@@ -176,19 +176,22 @@ export const NestedLayout = ({ children }: Props) => {
                     <span className="text-base font-body font-normal leading-tight text-black mr-6 dark:text-zinc-200">
                       Built by
                     </span>
-                    {firstFiveMembers(project).map((member, index) => (
-                      <img
-                        key={index}
-                        src={blo(member, 8)}
-                        alt={member}
-                        className="h-4 w-4 m-0 rounded-full border-1 border-gray-100 dark:border-zinc-900"
-                      />
-                    ))}
-                    {restMembersCounter(project) > 0 && (
-                      <p className="flex items-center justify-center h-4 w-4 rounded-full dark:ring-black border border-1 border-gray-100 dark:border-zinc-900 ">
-                        +
-                      </p>
-                    )}
+                    <div className="flex flex-row gap-0">
+                      {firstFiveMembers(project).map((member, index) => (
+                        <img
+                          key={index}
+                          src={blo(member, 8)}
+                          alt={member}
+                          className="h-5 w-5 m-0 rounded-full border-1 border-gray-100 dark:border-zinc-900 -mr-1.5"
+                          style={{ zIndex: 5 - index }}
+                        />
+                      ))}
+                      {restMembersCounter(project) > 0 && (
+                        <p className="flex items-center justify-center h-5 w-5 rounded-full dark:ring-black border border-1 border-gray-100 dark:border-zinc-900 ">
+                          +
+                        </p>
+                      )}
+                    </div>
                   </div>
                 ) : null}
               </div>
