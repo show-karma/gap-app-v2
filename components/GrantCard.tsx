@@ -143,7 +143,7 @@ export const GrantCard = ({ rawGrant, index }: GrantCardProps) => {
                 Built by
               </p>
               <div className="flex flex-row gap-0 flex-1">
-                {firstFiveMembers(grant).map((member, index) => (
+                {firstFiveMembers(grant.members).map((member, index) => (
                   <span
                     key={index}
                     className="-mr-1.5"

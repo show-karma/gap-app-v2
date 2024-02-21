@@ -10,7 +10,6 @@ import {
   zeroUID,
   INDEXER,
 } from "@/utilities";
-import { Community, ICommunityDetails } from "@show-karma/karma-gap-sdk";
 import { getMetadata } from "@/utilities/sdk/getMetadata";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { Hex } from "viem";
