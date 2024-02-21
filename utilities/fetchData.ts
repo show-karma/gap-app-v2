@@ -12,7 +12,7 @@ export default async function fetchData(
     const res = await axios.request({
       url:
         `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${endpoint}` +
-        (noCache ? "?noCache=true" : ""),
+        (noCache ? `${endpoint.includes("?") ? "&" : "?"}noCache=true` : ""),
       method,
       headers: {},
       data: axiosData,
