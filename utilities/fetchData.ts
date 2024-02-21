@@ -5,11 +5,14 @@ export default async function fetchData(
   endpoint: string,
   method: Method = "GET",
   axiosData = {},
-  params = {}
+  params = {},
+  noCache: boolean | undefined = true
 ) {
   try {
     const res = await axios.request({
-      url: `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${endpoint}`,
+      url:
+        `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${endpoint}` +
+        (noCache ? `${endpoint.includes("?") ? "&" : "?"}noCache=true` : ""),
       method,
       headers: {},
       data: axiosData,

@@ -1,16 +1,19 @@
 const isDev = process.env.NEXT_PUBLIC_ENV === "staging";
 
+// const baseDevUrl = "https://gapstagapi.karmahq.xyz";
+const baseDevUrl = "https://a12d-3-223-152-43.ngrok-free.app";
+
 export const envVars = {
   NEXT_PUBLIC_ENV: process.env.NEXT_PUBLIC_ENV,
   NEXT_PUBLIC_KARMA_API: "https://api.karmahq.xyz/api",
   NEXT_PUBLIC_GAP_INDEXER_URL: isDev
-    ? "https://gapstagapi.karmahq.xyz"
+    ? baseDevUrl
     : "https://gapapi.karmahq.xyz",
   NEXT_PUBLIC_IPFS_SPONSOR_URL: isDev
-    ? "https://gapstagapi.karmahq.xyz/ipfs"
+    ? `${baseDevUrl}/ipfs`
     : "https://gapapi.karmahq.xyz/ipfs",
   NEXT_PUBLIC_SPONSOR_URL: isDev
-    ? "https://gapstagapi.karmahq.xyz/attestations/sponsored-txn"
+    ? `${baseDevUrl}/attestations/sponsored-txn`
     : "https://gapapi.karmahq.xyz/attestations/sponsored-txn",
   ALCHEMY: {
     OPTIMISM: process.env.NEXT_PUBLIC_ALCHEMY_OPTIMISM,
