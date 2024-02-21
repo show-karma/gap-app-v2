@@ -10,6 +10,7 @@ import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import {
   MESSAGES,
   appNetwork,
+  checkNetworkIsValid,
   cn,
   createNewProject,
   updateProject,
@@ -25,7 +26,7 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Project, nullRef } from "@show-karma/karma-gap-sdk";
 import toast from "react-hot-toast";
 import { useRouter } from "next/router";
-import { getGapClient } from "@/hooks";
+import { getGapClient, useGap } from "@/hooks";
 import { Button } from "./Utilities/Button";
 import {
   GithubIcon,
@@ -428,6 +429,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const { openConnectModal } = useConnectModal();
   const router = useRouter();
+  const { gap } = useGap();
 
   const createProject = async (data: SchemaType) => {
     try {
@@ -437,7 +439,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         return;
       }
       if (!address) return;
-      const gap = getGapClient(appNetwork[0].id);
       if (!gap) return;
       const project = new Project({
         data: {
@@ -447,7 +448,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         recipient: (data.recipient || address) as Hex,
         uid: nullRef,
       });
-      if (chain && chain.id !== project.chainID) {
+      if (!checkNetworkIsValid(chain?.id)) {
         await switchNetworkAsync?.(project.chainID);
       }
 
@@ -482,7 +483,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         },
         project,
         signer,
-        router
+        router,
+        gap
       );
 
       reset();
@@ -508,7 +510,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         return;
       }
       if (!address || !projectToUpdate) return;
-      const gap = getGapClient(appNetwork[0].id);
       if (!gap) return;
       if (chain && chain.id !== projectToUpdate.chainID) {
         await switchNetworkAsync?.(projectToUpdate.chainID);
@@ -526,7 +527,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           linkedin: data.linkedin,
           twitter: data.twitter,
         },
-        signer
+        signer,
+        gap
       ).then(async () => {
         toast.success(MESSAGES.PROJECT.UPDATE.SUCCESS);
         closeModal();
