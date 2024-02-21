@@ -10,7 +10,7 @@ import { getGrants } from "@/utilities/sdk/communities";
 import { Grant } from "@show-karma/karma-gap-sdk";
 import { Spinner } from "./Utilities/Spinner";
 import { GrantCard } from "./GrantCard";
-import Pagination from "./Utilities/Pagination";
+import { useQueryState } from "nuqs";
 import { SortByOptions, StatusOptions } from "@/types";
 import fetchData from "@/utilities/fetchData";
 import pluralize from "pluralize";
@@ -35,51 +35,37 @@ export const CommunityGrants = () => {
   const communityId = router.query.communityId as string;
   const [categoriesOptions, setCategoriesOptions] = useState<string[]>([]);
 
-  const selectedCategories = useMemo(() => {
-    return typeof router.query.categories === "string" &&
-      router.query.categories.length
-      ? (router.query.categories as string).split(",")
-      : [];
-  }, [router.query.categories]);
-  const selectedSort = (router.query.sort as SortByOptions) || "milestones";
-  const selectedStatus = (router.query.status as StatusOptions) || "all";
   const [currentPage, setCurrentPage] = useState(0);
 
-  const changeCategoriesQuery = (query: string[]) => {
-    router.push({
-      pathname: router.pathname,
-      query: {
-        communityId: communityId,
-        sort: selectedSort,
-        status: selectedStatus,
-        categories: query.length ? query.join(",") : undefined,
-      },
-    });
-  };
+  // const selectedCategories = useMemo(() => {
+  //   return typeof router.query.categories === "string" &&
+  //     router.query.categories.length
+  //     ? (router.query.categories as string).split(",")
+  //     : [];
+  // }, [router.query.categories]);
 
-  const changeSortQuery = (query: SortByOptions) => {
-    router.push({
-      pathname: router.pathname,
-      query: {
-        communityId: communityId,
-        sort: query,
-        status: selectedStatus,
-        categories: selectedCategories,
-      },
-    });
-  };
+  const [selectedCategories, changeCategoriesQuery] = useQueryState(
+    "categories",
+    {
+      defaultValue: [] as string[],
+      serialize: (value) => value?.join(","),
+      parse: (value) => (value ? value.split(",") : null),
+    }
+  );
 
-  const changeStatusQuery = (query: StatusOptions) => {
-    router.push({
-      pathname: router.pathname,
-      query: {
-        communityId: communityId,
-        sort: selectedSort,
-        status: query,
-        categories: selectedCategories,
-      },
-    });
-  };
+  const [selectedSort, changeSortQuery] = useQueryState("sortBy", {
+    defaultValue: "milestones" as SortByOptions,
+    serialize: (value) => value,
+    parse: (value) =>
+      value ? (value as SortByOptions) : ("milestones" as SortByOptions),
+  });
+
+  const [selectedStatus, changeStatusQuery] = useQueryState("status", {
+    defaultValue: "all" as StatusOptions,
+    serialize: (value) => value,
+    parse: (value) =>
+      value ? (value as StatusOptions) : ("all" as StatusOptions),
+  });
 
   // Call API
   const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
@@ -129,10 +115,8 @@ export const CommunityGrants = () => {
           }
         );
         if (fetchedGrants) {
-          const newGrantList =
-            currentPage === 0 ? fetchedGrants : [...grants, ...fetchedGrants];
           setHaveMore(fetchedGrants.length === itemsPerPage);
-          setGrants(newGrantList);
+          setGrants(fetchedGrants);
         }
       } catch (error) {
         console.log("error", error);
@@ -144,7 +128,7 @@ export const CommunityGrants = () => {
 
     fetchGrants();
     getCategories();
-  }, [communityId, currentPage]);
+  }, [communityId]);
 
   useEffect(() => {
     const getFullGrants = async () => {
@@ -165,14 +149,87 @@ export const CommunityGrants = () => {
     getFullGrants();
   }, [selectedSort, selectedStatus, selectedCategories]);
 
-  useEffect(() => {
-    setCurrentPage(0);
-  }, [selectedSort, selectedStatus, selectedCategories]);
+  const fetchGrantsWithFilters = async ({
+    categoriesToFilter = selectedCategories,
+    sortByToFilter = selectedSort,
+    statusToFilter = selectedStatus,
+  }) => {
+    setGrants([]);
+    setLoading(true);
+    const page = 0;
+    setCurrentPage(page);
+    try {
+      const fetchedGrants = await getGrants(
+        communityId as Hex,
+        {
+          sortBy: sortByToFilter,
+          status: statusToFilter,
+          categories: categoriesToFilter,
+        },
+        {
+          page,
+          pageLimit: itemsPerPage,
+        }
+      );
+      if (fetchedGrants) {
+        setHaveMore(fetchedGrants.length === itemsPerPage);
+        setGrants(fetchedGrants);
+      }
+    } catch (error) {
+      console.log("error", error);
+      setGrants([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const loadMore = () => {
-    console.log("loadMOre");
+  const changeSort = async (newValue: SortByOptions) => {
+    fetchGrantsWithFilters({ sortByToFilter: newValue });
+    changeSortQuery(newValue);
+  };
+  const changeStatus = async (newValue: StatusOptions) => {
+    fetchGrantsWithFilters({ statusToFilter: newValue });
+    changeStatusQuery(newValue);
+  };
+  const changeCategories = async (newValue: string[]) => {
+    fetchGrantsWithFilters({ categoriesToFilter: newValue });
+    changeCategoriesQuery(newValue);
+  };
+
+  const loadMore = async () => {
     if (!loading) {
-      setCurrentPage(currentPage + 1);
+      const newPage = currentPage + 1;
+      setCurrentPage(newPage);
+
+      const fetchNewGrants = async () => {
+        setLoading(true);
+        try {
+          const fetchedGrants = await getGrants(
+            communityId as Hex,
+            {
+              sortBy: selectedSort,
+              status: selectedStatus,
+              categories: selectedCategories,
+            },
+            {
+              page: newPage,
+              pageLimit: itemsPerPage,
+            }
+          );
+          if (fetchedGrants) {
+            const newGrantList =
+              newPage === 0 ? fetchedGrants : [...grants, ...fetchedGrants];
+            setHaveMore(fetchedGrants.length === itemsPerPage);
+            setGrants(newGrantList);
+          }
+        } catch (error) {
+          console.log("error", error);
+          setGrants([]);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchNewGrants();
     }
   };
 
@@ -188,7 +245,7 @@ export const CommunityGrants = () => {
             value={selectedCategories}
             // onChange={setSelectedCategories}
             onChange={(values) => {
-              changeCategoriesQuery(values);
+              changeCategories(values);
             }}
             multiple
           >
@@ -197,7 +254,7 @@ export const CommunityGrants = () => {
                 <Listbox.Label className="text-base font-semibold text-gray-900 dark:text-zinc-100 max-2xl:text-sm">
                   Filter by category
                 </Listbox.Label>
-                <div className="relative flex-1 w-56">
+                <div className="relative flex-1 w-48">
                   <Listbox.Button className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left  dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 text-gray-900   ring-1 ring-inset ring-gray-300 sm:text-sm sm:leading-6">
                     {selectedCategories.length > 0 ? (
                       <p className="flex flex-row gap-1">
@@ -282,7 +339,7 @@ export const CommunityGrants = () => {
           <Listbox
             value={selectedSort}
             onChange={(value) => {
-              changeSortQuery(value);
+              changeSort(value);
             }}
           >
             {({ open }) => (
@@ -367,7 +424,7 @@ export const CommunityGrants = () => {
           <Listbox
             value={selectedStatus}
             onChange={(value) => {
-              changeStatusQuery(value);
+              changeStatus(value);
             }}
           >
             {({ open }) => (

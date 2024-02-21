@@ -60,7 +60,7 @@ export const GrantCard = ({ rawGrant, index }: GrantCardProps) => {
   return (
     <a
       href={PAGES.PROJECT.GRANT(
-        grant.project?.details.data.slug || grant.refUID || "",
+        grant.project?.details?.data?.slug || grant.refUID || "",
         grant.uid
       )}
       className="flex h-full w-full max-w-[320px] flex-col items-start justify-between gap-3 rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2 transition-all duration-300 ease-in-out hover:opacity-80"
@@ -74,7 +74,7 @@ export const GrantCard = ({ rawGrant, index }: GrantCardProps) => {
         />
         <div className="flex w-full flex-col px-3">
           <p className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200  max-2xl:text-sm">
-            {grant.project?.details.data.title || grant.uid}
+            {grant.project?.details?.data?.title || grant.uid}
           </p>
           <p className="line-clamp-1 break-all text-sm font-semibold text-gray-500 dark:text-zinc-300 max-2xl:text-[13px]">
             {grant.details?.data.title}
