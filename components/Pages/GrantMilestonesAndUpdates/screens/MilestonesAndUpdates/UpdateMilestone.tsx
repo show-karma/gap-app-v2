@@ -30,7 +30,7 @@ const NotUpdatingCase: FC<NotUpdatingCaseProps> = ({
     <div className="flex flex-row items-center justify-end ">
       {!milestone.completed && !milestone.approved && milestone ? (
         <Button
-          className="flex items-center justify-center gap-2 rounded border border-blue-600 bg-primary-500 dark:bg-primary-700 dark:text-zinc-200 px-4 py-2.5 hover:bg-primary-500"
+          className="flex items-center justify-center gap-2 rounded border border-blue-600 bg-brand-blue dark:bg-primary-700 dark:text-zinc-200 px-4 py-2.5 hover:bg-brand-blue"
           onClick={() => setIsUpdating(true)}
         >
           <p className="text-sm font-semibold text-white">Post an update</p>
@@ -148,7 +148,7 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
             type="submit"
             isLoading={isSubmitLoading}
             disabled={isSubmitLoading}
-            className="flex h-min w-max flex-row gap-2 items-center rounded bg-primary-500 px-4 py-2.5 hover:bg-primary-500"
+            className="flex h-min w-max flex-row gap-2 items-center rounded bg-brand-blue px-4 py-2.5 hover:bg-brand-blue"
             onClick={() => {
               handleCompleteMilestone();
             }}

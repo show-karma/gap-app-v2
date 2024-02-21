@@ -106,7 +106,7 @@ function ProjectPage() {
                 icon: null,
                 text: "Edit project",
                 styleClass:
-                  "rounded-md bg-black px-3 py-2 text-sm font-semibold text-white hover:bg-primary-500 border-none  disabled:opacity-75 transition-all ease-in-out duration-300",
+                  "rounded-md bg-black px-3 py-2 text-sm font-semibold text-white hover:bg-brand-blue border-none  disabled:opacity-75 transition-all ease-in-out duration-300",
               }}
               projectToUpdate={project}
             />

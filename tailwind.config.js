@@ -54,6 +54,9 @@ module.exports = {
     },
     extend: {
       colors: {
+        brand: {
+          blue: "#4C6FFF",
+        },
         tremor: {
           brand: {
             faint: "#eff6ff", // blue-50
@@ -94,30 +97,6 @@ module.exports = {
           700: customColors("--c-primary-700"),
           800: customColors("--c-primary-800"),
           900: customColors("--c-primary-900"),
-        },
-        secondary: {
-          50: customColors("--c-secondary-50"),
-          100: customColors("--c-secondary-100"),
-          200: customColors("--c-secondary-200"),
-          300: customColors("--c-secondary-300"),
-          400: customColors("--c-secondary-400"),
-          500: customColors("--c-secondary-500"),
-          600: customColors("--c-secondary-600"),
-          700: customColors("--c-secondary-700"),
-          800: customColors("--c-secondary-800"),
-          900: customColors("--c-secondary-900"),
-        },
-        neutral: {
-          50: customColors("--c-neutral-50"),
-          100: customColors("--c-neutral-100"),
-          200: customColors("--c-neutral-200"),
-          300: customColors("--c-neutral-300"),
-          400: customColors("--c-neutral-400"),
-          500: customColors("--c-neutral-500"),
-          600: customColors("--c-neutral-600"),
-          700: customColors("--c-neutral-700"),
-          800: customColors("--c-neutral-800"),
-          900: customColors("--c-neutral-900"),
         },
         boxShadow: {
           "tremor-input": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
