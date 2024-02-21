@@ -20,11 +20,10 @@ export const updateProject = async (
     website?: string;
     linkedin?: string;
   },
-  signer: any
+  signer: any,
+  gap: any
 ) => {
   try {
-    const gap = getGapClient(appNetwork[0].id);
-    if (!gap) return;
     const slug =
       project.details?.slug || (await gap.generateSlug(newProjectInfo.title));
     const linkKeys = Object.keys(data);
