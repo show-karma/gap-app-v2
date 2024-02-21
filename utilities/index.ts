@@ -10,6 +10,7 @@ export * from "./fillDateRangeWithValues";
 export * from "./formatCurrency";
 export * from "./formatDate";
 export * from "./formatNumber";
+export * from "./formatTimestamp";
 export * from "./indexer";
 export * from "./karma";
 export * from "./messages";

@@ -31,7 +31,7 @@ const NotFoundPage: React.FC = () => {
           },
         ]}
       />
-      <div className="col-span-12 min-h-screen">
+      <div className="col-span-12 min-h-screen px-4 py-4">
         <h1 className="text-3xl mb-5">404 - Page Not Found</h1>
         <Link href="/">Go Home</Link>
       </div>
