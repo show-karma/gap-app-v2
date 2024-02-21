@@ -24,10 +24,10 @@ export const createNewProject = async (
   newProjectInfo: NewProjectData,
   project: Project,
   signer: any,
-  router: any
+  router: any,
+  gap: any
 ) => {
   try {
-    const gap = getGapClient(appNetwork[0].id);
     if (!gap) return;
 
     const slug = await gap.generateSlug(newProjectInfo.title);
