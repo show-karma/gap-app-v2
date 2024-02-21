@@ -459,7 +459,7 @@ const GrantsPage = ({
                 <select
                   id="tabs"
                   name="tabs"
-                  className="block w-full rounded-md  dark:bg-zinc-900 border-gray-300 focus:border-primary-500 focus:ring-primary-500"
+                  className="block w-full rounded-md  dark:bg-zinc-900 border-gray-300 focus:border-brand-blue focus:ring-brand-blue"
                   //   defaultValue={tabs.find((tab) => tab.current).name}
                 >
                   {tabs.map((tab) => (

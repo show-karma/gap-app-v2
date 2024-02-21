@@ -40,7 +40,7 @@ import { useOwnerStore } from "@/store/owner";
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
 const socialMediaInputStyle =
-  "bg-transparent border-0 flex flex-1 p-2 focus:outline-none outline-none focus-visible:outline-none dark:bg-zinc-900 dark:text-white text-sm";
+  "bg-transparent border-0 flex flex-1 p-2 focus:outline-none outline-none focus-visible:outline-none dark:bg-zinc-900 dark:text-white text-sm rounded-md";
 const labelStyle =
   "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
@@ -554,7 +554,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       <button
         onClick={openModal}
         className={cn(
-          "flex justify-center min-w-max items-center gap-x-1 rounded-md bg-primary-500 border-2 border-primary-500 px-3 py-2 text-sm font-semibold text-white dark:text-zinc-100  hover:opacity-75 dark:hover:bg-primary-900",
+          "flex justify-center min-w-max items-center gap-x-1 rounded-md bg-brand-blue border-2 border-brand-blue px-3 py-2 text-sm font-semibold text-white dark:text-zinc-100  hover:opacity-75 dark:hover:bg-primary-900",
           buttonElement.styleClass
         )}
       >
@@ -631,7 +631,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                               className={cn(
                                 "w-full pt-2.5 text-sm font-medium leading-5 items-start flex flex-col justify-start text-left duration-200 ease-in-out transition-all focus:outline-none focus-visible:outline-none focus-within:outline-none active:outline-none",
                                 index <= step
-                                  ? "text-blue-700 dark:text-blue-400 border-t-4 border-t-primary-500"
+                                  ? "text-blue-700 dark:text-blue-400 border-t-4 border-t-brand-blue"
                                   : "text-zinc-600 dark:text-blue-100 border-t-4 border-t-zinc-400 hover:opacity-70"
                               )}
                               onClick={() => setStep(index)}
@@ -661,7 +661,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                     <div className="mt-4 flex flex-row justify-end gap-4">
                       <button
                         type="button"
-                        className="flex items-center flex-row gap-2 dark:border-white dark:text-secondary-100 justify-center rounded-md border bg-transparent border-gray-200 px-4 py-2 text-md font-medium text-black hover:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                        className="flex items-center flex-row gap-2 dark:border-white dark:text-zinc-100 justify-center rounded-md border bg-transparent border-gray-200 px-4 py-2 text-md font-medium text-black hover:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                         onClick={() => {
                           if (step === 0) {
                             closeModal();
@@ -685,7 +685,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                       {step < 2 && !(projectToUpdate && step === 1) && (
                         <Button
                           type="button"
-                          className="flex disabled:opacity-50 flex-row dark:bg-primary-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-primary-100 px-4 py-2 text-md font-medium text-primary-900 hover:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                          className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                           onClick={() => {
                             setStep((oldStep) =>
                               oldStep >= 2 ? oldStep : oldStep + 1
@@ -701,7 +701,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                       {(step >= 2 || (projectToUpdate && step === 1)) && (
                         <Button
                           type={"submit"}
-                          className="flex disabled:opacity-50 flex-row dark:bg-primary-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-primary-100 px-4 py-2 text-md font-medium text-primary-900 hover:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                          className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                           disabled={handleErrors() || isLoading}
                           isLoading={isLoading}
                         >

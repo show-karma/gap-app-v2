@@ -5,7 +5,13 @@ import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { MilestoneWithCompleted } from "@/types/milestones";
-import { MESSAGES, PAGES, appNetwork, walletClientToSigner } from "@/utilities";
+import {
+  MESSAGES,
+  PAGES,
+  appNetwork,
+  useSigner,
+  walletClientToSigner,
+} from "@/utilities";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   GrantDetails,
@@ -27,7 +33,7 @@ import { CommunitiesDropdown } from "@/components/CommunitiesDropdown";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useGap } from "@/hooks";
 import toast from "react-hot-toast";
-import { NextRouter, useRouter } from "next/router";
+import { useRouter } from "next/router";
 import { useSearchParams } from "next/navigation";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { getWalletClient } from "@wagmi/core";
@@ -173,6 +179,7 @@ interface NewGrantData {
 
 export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { address } = useAccount();
+  const signer = useSigner();
   const isOwner = useOwnerStore((state) => state.isOwner);
   const searchParams = useSearchParams();
   const grantScreen = searchParams?.get("tab");
@@ -354,9 +361,8 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         chainId: communityNetworkId,
       });
       if (!walletClient) return;
-      const signer2 = walletClientToSigner(walletClient);
       await grant
-        .attest(signer2 as any, selectedProject.chainID)
+        .attest(signer as any, selectedProject.chainID)
         .then(async () => {
           // eslint-disable-next-line no-param-reassign
           toast.success(MESSAGES.GRANT.CREATE.SUCCESS);
@@ -401,8 +407,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         chainId: communityNetworkId,
       });
       if (!walletClient) return;
-      const signer2 = walletClientToSigner(walletClient);
-      await oldGrant.details?.attest(signer2 as any).then(async () => {
+      await oldGrant.details?.attest(signer as any).then(async () => {
         // eslint-disable-next-line no-param-reassign
         toast.success(MESSAGES.GRANT.UPDATE.SUCCESS);
         await refreshProject().then(() => {
