@@ -47,7 +47,7 @@ export const EmptyMilestone = ({ grant }: { grant?: Grant }) => {
           </p>
           <div className="flex w-max flex-row flex-wrap gap-6 max-sm:w-full max-sm:flex-col">
             <Button
-              className="items-center flex flex-row justify-center gap-2 rounded border border-blue-600 dark:bg-blue-800 bg-primary-500 px-4 py-2.5 text-base font-semibold text-white hover:bg-primary-500"
+              className="items-center flex flex-row justify-center gap-2 rounded border border-blue-600 dark:bg-blue-800 bg-brand-blue px-4 py-2.5 text-base font-semibold text-white hover:bg-brand-blue"
               onClick={() => {
                 if (project && grant) {
                   router.push(
