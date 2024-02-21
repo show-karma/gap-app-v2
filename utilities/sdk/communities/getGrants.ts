@@ -22,23 +22,25 @@ export const getGrants = async (
         page: paginationOps?.page,
         pageLimit: paginationOps?.pageLimit,
         categories: filter?.categories?.join(","),
+        sort: filter?.sortBy,
+        status: filter?.status,
       })
     );
     let grantsToFilter = [...grants];
     if (grantsToFilter.length === 0) {
       return [];
     }
-    // API returns all grants with categories, so we don't need to filter them anymore
+    // API returns all grants with filters and sorts, so we don't need to filter them anymore
     // if (filter?.categories?.length) {
     //   grantsToFilter = filterByCategory(filter.categories, grantsToFilter);
     // }
-    if (filter?.status) {
-      grantsToFilter = filterByStatus(filter.status, grantsToFilter);
-    }
+    // if (filter?.status) {
+    //   grantsToFilter = filterByStatus(filter.status, grantsToFilter);
+    // }
 
-    if (filter?.sortBy) {
-      grantsToFilter = orderBySortBy(filter.sortBy, grantsToFilter);
-    }
+    // if (filter?.sortBy) {
+    //   grantsToFilter = orderBySortBy(filter.sortBy, grantsToFilter);
+    // }
 
     return grantsToFilter;
   } catch (error) {

@@ -18,15 +18,21 @@ export const INDEXER = {
         page,
         pageLimit,
         categories,
+        sort,
+        status,
       }: {
         page?: number;
         pageLimit?: number;
         categories?: string;
+        sort?: string;
+        status?: string;
       }
     ) =>
       `/communities/${communityIdOrSlug}/grants?${
         page || page === 0 ? `&page=${page}` : ""
       }${pageLimit ? `&pageLimit=${pageLimit}` : ""}${
+        status ? `&status=${status}` : ""
+      }${sort ? `&sort=${sort}` : ""}${
         categories ? `&categories=${categories}` : ""
       }`,
     FEED: (communityIdOrSlug: string) =>
