@@ -1,6 +1,6 @@
 import type { Hex } from "@show-karma/karma-gap-sdk";
 import { SortByOptions, StatusOptions } from "@/types/filters";
-import { filterByCategory, filterByStatus, orderBySortBy } from "./grants";
+import { filterByStatus, orderBySortBy } from "./grants";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -17,11 +17,10 @@ export const getGrants = async (
   }
 ) => {
   try {
-    // const grants = await gap.fetch.grantsByCommunity(uid);
     const [grants] = await fetchData(
       INDEXER.COMMUNITY.GRANTS(uid, {
-        page: paginationOps?.page || 0,
-        pageLimit: paginationOps?.pageLimit || 12,
+        page: paginationOps?.page,
+        pageLimit: paginationOps?.pageLimit,
         categories: filter?.categories?.join(","),
       })
     );

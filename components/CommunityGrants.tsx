@@ -132,7 +132,6 @@ export const CommunityGrants = () => {
           const newGrantList =
             currentPage === 0 ? fetchedGrants : [...grants, ...fetchedGrants];
           setHaveMore(fetchedGrants.length === itemsPerPage);
-          setTotalGrants(newGrantList.length);
           setGrants(newGrantList);
         }
       } catch (error) {
@@ -146,6 +145,25 @@ export const CommunityGrants = () => {
     fetchGrants();
     getCategories();
   }, [communityId, currentPage]);
+
+  useEffect(() => {
+    const getFullGrants = async () => {
+      try {
+        const fetchedGrants = await getGrants(communityId as Hex, {
+          sortBy: selectedSort,
+          status: selectedStatus,
+          categories: selectedCategories,
+        });
+        if (fetchedGrants) {
+          setTotalGrants(fetchedGrants.length);
+        }
+      } catch (error) {
+        setTotalGrants(0);
+        console.log("error", error);
+      }
+    };
+    getFullGrants();
+  }, [selectedSort, selectedStatus, selectedCategories]);
 
   useEffect(() => {
     setCurrentPage(0);

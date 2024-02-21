@@ -19,12 +19,14 @@ export const INDEXER = {
         pageLimit,
         categories,
       }: {
-        page: number;
-        pageLimit: number;
+        page?: number;
+        pageLimit?: number;
         categories?: string;
       }
     ) =>
-      `/communities/${communityIdOrSlug}/grants?page=${page}&pageLimit=${pageLimit}${
+      `/communities/${communityIdOrSlug}/grants?${
+        page || page === 0 ? `&page=${page}` : ""
+      }${pageLimit ? `&pageLimit=${pageLimit}` : ""}${
         categories ? `&categories=${categories}` : ""
       }`,
     FEED: (communityIdOrSlug: string) =>
