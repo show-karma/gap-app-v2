@@ -33,14 +33,13 @@ export const getGapClient = (useGasless = false) => {
         }
       : {}),
 
-    // gelatoOpts: {
-    //   env_gelatoApiKey: "NEXT_GELATO_API_KEY",
-    //   sponsorUrl: envVars.NEXT_PUBLIC_SPONSOR_URL || "/api/sponsored-txn",
-    //   useGasless,
-    // },
+    gelatoOpts: {
+      env_gelatoApiKey: "NEXT_GELATO_API_KEY",
+      sponsorUrl: envVars.NEXT_PUBLIC_SPONSOR_URL || "/api/sponsored-txn",
+      useGasless,
+    },
     remoteStorage: ipfsClient,
   });
-  // GAP.useGasLess = useGasless;
-  GAP.useGasLess = false;
+  GAP.useGasLess = useGasless;
   return cli;
 };

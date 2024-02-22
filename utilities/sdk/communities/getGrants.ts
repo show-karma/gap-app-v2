@@ -1,10 +1,8 @@
 import type { Hex } from "@show-karma/karma-gap-sdk";
-
-import { getGapClient } from "@/hooks/useGap";
-
 import { SortByOptions, StatusOptions } from "@/types/filters";
-import { appNetwork } from "@/utilities/network";
-import { filterByCategory, filterByStatus, orderBySortBy } from "./grants";
+import { filterByStatus, orderBySortBy } from "./grants";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 export const getGrants = async (
   uid: Hex,
@@ -12,25 +10,37 @@ export const getGrants = async (
     categories?: string[];
     sortBy?: SortByOptions;
     status?: StatusOptions;
+  },
+  paginationOps?: {
+    page: number;
+    pageLimit: number;
   }
 ) => {
   try {
-    const gap = getGapClient(appNetwork[0].id);
-    const grants = await gap.fetch.grantsByCommunity(uid);
+    const [grants] = await fetchData(
+      INDEXER.COMMUNITY.GRANTS(uid, {
+        page: paginationOps?.page,
+        pageLimit: paginationOps?.pageLimit,
+        categories: filter?.categories?.join(","),
+        sort: filter?.sortBy,
+        status: filter?.status,
+      })
+    );
     let grantsToFilter = [...grants];
     if (grantsToFilter.length === 0) {
       return [];
     }
-    if (filter?.categories?.length) {
-      grantsToFilter = filterByCategory(filter.categories, grantsToFilter);
-    }
-    if (filter?.status) {
-      grantsToFilter = filterByStatus(filter.status, grantsToFilter);
-    }
+    // API returns all grants with filters and sorts, so we don't need to filter them anymore
+    // if (filter?.categories?.length) {
+    //   grantsToFilter = filterByCategory(filter.categories, grantsToFilter);
+    // }
+    // if (filter?.status) {
+    //   grantsToFilter = filterByStatus(filter.status, grantsToFilter);
+    // }
 
-    if (filter?.sortBy) {
-      grantsToFilter = orderBySortBy(filter.sortBy, grantsToFilter);
-    }
+    // if (filter?.sortBy) {
+    //   grantsToFilter = orderBySortBy(filter.sortBy, grantsToFilter);
+    // }
 
     return grantsToFilter;
   } catch (error) {

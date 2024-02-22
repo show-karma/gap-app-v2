@@ -1,7 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { useGap } from "@/hooks";
-import { PAGES, cn, defaultMetadata, zeroUID } from "@/utilities";
+import {
+  PAGES,
+  cn,
+  defaultMetadata,
+  ogMeta,
+  twitterMeta,
+  zeroUID,
+  INDEXER,
+} from "@/utilities";
 import { getMetadata } from "@/utilities/sdk/getMetadata";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { Hex } from "viem";
@@ -10,6 +18,7 @@ import { Community, ICommunityDetails } from "@show-karma/karma-gap-sdk";
 import { CommunityGrants } from "@/components/CommunityGrants";
 import { CommunityFeed } from "@/components/CommunityFeed";
 import { communityColors } from "@/utilities/communityColors";
+import fetchData from "@/utilities/fetchData";
 
 type Props = {
   params: {
@@ -95,12 +104,17 @@ export default function Index({
       if (!communityId || !gap) return;
       setLoading(true);
       try {
-        const result = await (communityId.startsWith("0x")
-          ? gap.fetch.communityById(communityId as `0x${string}`)
-          : gap.fetch.communityBySlug(communityId));
-        if (!result || result.uid === zeroUID)
+        // const result = await (communityId.startsWith("0x")
+        //   ? gap.fetch.communityById(communityId as `0x${string}`)
+        //   : gap.fetch.communityBySlug(communityId));
+
+        const [data, error, pageInfo]: any = await fetchData(
+          INDEXER.COMMUNITY.GET(communityId as string)
+        );
+
+        if (!data || data.uid === zeroUID)
           throw new Error("Community not found");
-        setCommunity(result);
+        setCommunity(data);
       } catch (error: any) {
         console.error("Error fetching data:", error);
         if (
@@ -164,7 +178,7 @@ export default function Index({
           <div className="flex justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
             <img
-              src={community?.details?.imageURL}
+              src={community?.details?.data?.imageURL}
               className={cn(
                 "h-14 w-14 rounded-full border border-white p-1 max-lg:h-8 max-lg:w-8",
                 loading ? "animate-pulse bg-gray-600" : ""
@@ -181,7 +195,7 @@ export default function Index({
                   : ""
               )}
             >
-              {community ? community.details?.name : ""}
+              {community ? community.details?.data?.name : ""}
             </span>{" "}
             Community Grants
           </p>
