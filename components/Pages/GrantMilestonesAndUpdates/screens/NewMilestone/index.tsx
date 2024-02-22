@@ -73,10 +73,8 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
   const { chain } = useNetwork();
   const { switchNetworkAsync } = useSwitchNetwork();
   const selectedProject = useProjectStore((state) => state.project);
-  const router = useRouter();
-  const [, changeTab] = useQueryState("tab");
-
   const refreshProject = useProjectStore((state) => state.refreshProject);
+  const [, changeTab] = useQueryState("tab");
 
   const onSubmit: SubmitHandler<MilestoneType> = async (data, event) => {
     event?.preventDefault();
@@ -142,14 +140,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
           <Button
             className="bg-transparent p-4 hover:bg-transparent hover:opacity-75 text-black dark:text-zinc-100"
             onClick={() => {
-              router.push(
-                PAGES.PROJECT.TABS.SELECTED_TAB(
-                  selectedProject?.details?.slug ||
-                    (selectedProject?.uid as string),
-                  uid,
-                  "milestones-and-updates"
-                )
-              );
+              changeTab("milestones-and-updates");
             }}
           >
             <XMarkIcon className="h-8 w-8" />

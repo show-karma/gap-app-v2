@@ -11,7 +11,7 @@ import {
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import type { Grant, Project } from "@show-karma/karma-gap-sdk";
 import Link from "next/link";
-import { useRouter } from "next/router";
+import { useQueryState } from "nuqs";
 import type { FC } from "react";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -36,7 +36,7 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
   const { switchNetworkAsync } = useSwitchNetwork();
   const signer = useSigner();
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const router = useRouter();
+  const [, changeTab] = useQueryState("tab");
 
   const markGrantAsComplete = async (
     grantToComplete: Grant,
@@ -60,13 +60,7 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
         .then(async () => {
           toast.success(MESSAGES.GRANT.MARK_AS_COMPLETE.SUCCESS);
           await refreshProject().then(() => {
-            router.push(
-              PAGES.PROJECT.TABS.SELECTED_TAB(
-                project.details?.slug || project?.uid || "",
-                grantToComplete.uid,
-                "milestones-and-updates"
-              )
-            );
+            changeTab("milestones-and-updates");
           });
         });
     } catch (error) {
@@ -91,16 +85,14 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
           <h4 className="text-2xl font-bold text-black dark:text-zinc-100">
             Complete {grant.details?.title || shortAddress(grant.uid)} Grant
           </h4>
-          <Link
-            href={PAGES.PROJECT.TABS.SELECTED_TAB(
-              project.details?.slug || project?.uid || "",
-              grant.uid,
-              "milestones-and-updates"
-            )}
+          <button
+            onClick={() => {
+              changeTab("overview");
+            }}
             className="bg-transparent p-4 hover:bg-transparent hover:opacity-75"
           >
             <XMarkIcon className="h-6 w-6 " />
-          </Link>
+          </button>
         </div>
         <div className="flex w-full flex-col gap-4">
           <div className="flex w-full flex-col gap-2">

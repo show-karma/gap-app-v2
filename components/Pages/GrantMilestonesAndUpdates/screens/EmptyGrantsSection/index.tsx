@@ -1,13 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
 import type { FC } from "react";
-
-import Link from "next/link";
 import { MESSAGES, PAGES } from "@/utilities";
 import { useProjectStore } from "@/store";
+import { useQueryState } from "nuqs";
 
 export const EmptyGrantsSection: FC = () => {
   const isProjectAdmin = useProjectStore((state) => state.isProjectOwner);
-  const project = useProjectStore((state) => state.project);
+  const [, changeTab] = useQueryState("tab");
   if (!isProjectAdmin) {
     return (
       <div className="flex w-full items-center justify-center rounded border border-gray-200 px-6 py-10">
@@ -40,17 +39,15 @@ export const EmptyGrantsSection: FC = () => {
         <p className="w-full text-center text-lg break-words h-max font-semibold text-black dark:text-zinc-200">
           Go ahead and create your first grant
         </p>
-        <Link
+        <button
           className="items-center flex flex-row justify-center gap-2 rounded border border-blue-600 bg-blue-600 px-4 py-2.5 text-base font-semibold text-white hover:bg-blue-600"
-          href={PAGES.PROJECT.TABS.SELECTED_TAB(
-            project?.details?.slug || project?.uid || "",
-            undefined,
-            "create-grant"
-          )}
+          onClick={() => {
+            changeTab("create-grant");
+          }}
         >
           <img src="/icons/plus.svg" alt="Add" className="relative h-5 w-5" />
           Add a Grant
-        </Link>
+        </button>
       </div>
       <div className="flex w-full items-center justify-center rounded border border-gray-200 px-6 py-10 dark:bg-zinc-900">
         <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
