@@ -14,6 +14,7 @@ import fetchData from "@/utilities/fetchData";
 import {
   INDEXER,
   MESSAGES,
+  additionalQuestion,
   getQuestionsOf,
   hasAlreadyReviewed,
 } from "@/utilities";
@@ -72,7 +73,17 @@ export const ReviewGrant: FC<ReviewGrantProps> = ({ grant }) => {
       setIsFetching(true);
       try {
         const data = await getQuestionsOf(grant.uid);
-        setQuestions(data);
+        // turn additional to last
+        const dataWithoutAdditional = data.filter((question: any) => {
+          return additionalQuestion(question?.id, question?.query) === false;
+        });
+        const additionals = data.filter(
+          (question: any) =>
+            additionalQuestion(question?.id, question?.query) === true
+        );
+
+        const allQuestions = [...dataWithoutAdditional, ...additionals];
+        setQuestions(allQuestions);
       } catch (error) {
         console.log(error);
         setQuestions([]);
