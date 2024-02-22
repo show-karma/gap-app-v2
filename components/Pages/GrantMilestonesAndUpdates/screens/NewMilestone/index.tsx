@@ -25,6 +25,7 @@ import { Popover } from "@headlessui/react";
 import { DayPicker } from "react-day-picker";
 import { CalendarIcon } from "@heroicons/react/24/outline";
 import { XMarkIcon } from "@heroicons/react/24/solid";
+import { useQueryState } from "nuqs";
 
 const milestoneSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.MILESTONES.FORM.TITLE }),
@@ -73,6 +74,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
   const { switchNetworkAsync } = useSwitchNetwork();
   const selectedProject = useProjectStore((state) => state.project);
   const router = useRouter();
+  const [, changeTab] = useQueryState("tab");
 
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
@@ -116,23 +118,13 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
       }
       await milestoneToAttest.attest(signer as any).then(async () => {
         toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS);
-        await refreshProject().then(() => {
-          router.push(
-            PAGES.PROJECT.TABS.SELECTED_TAB(
-              selectedProject?.details?.slug ||
-                (selectedProject?.uid as string),
-              uid,
-              "milestones-and-updates"
-            )
-          );
-        });
+        changeTab("milestones-and-updates");
+        const currentGrant = selectedProject?.grants.find(
+          (grant) => grant.uid === uid
+        );
+
+        currentGrant?.milestones?.push(milestoneToAttest);
       });
-
-      const currentGrant = selectedProject?.grants.find(
-        (grant) => grant.uid === uid
-      );
-
-      currentGrant?.milestones?.push(milestoneToAttest);
     } catch (error) {
       toast.error(MESSAGES.MILESTONES.CREATE.ERROR);
     } finally {

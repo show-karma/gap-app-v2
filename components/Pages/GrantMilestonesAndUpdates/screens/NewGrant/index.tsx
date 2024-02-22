@@ -393,6 +393,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       oldGrant.setValues({
         communityUID: data.community,
       });
+
       oldGrant.details?.setValues({
         amount: data.amount || "",
         description: data.description,
