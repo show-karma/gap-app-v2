@@ -403,10 +403,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         season: data.season,
         questions: data.questions,
       });
-      const walletClient = await getWalletClient({
-        chainId: communityNetworkId,
-      });
-      if (!walletClient) return;
+
       await oldGrant.details?.attest(signer as any).then(async () => {
         // eslint-disable-next-line no-param-reassign
         toast.success(MESSAGES.GRANT.UPDATE.SUCCESS);
