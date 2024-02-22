@@ -168,23 +168,24 @@ export const NestedLayout = ({ children }: Props) => {
           >
             {loading ? "" : project?.details?.title}
           </h1>
-          <div className="flex flex-row gap-10  items-center">
+          <div className="flex flex-row gap-10 max-lg:gap-4 flex-wrap max-lg:flex-col items-center max-lg:items-start">
             {project ? (
-              <div className="flex items-center space-x-2 gap-y-4">
+              <div className="flex flex-row items-center gap-3">
                 {firstFiveMembers(project).length ? (
                   <div className="flex flex-row gap-2 items-center">
                     <span className="text-base font-body font-normal leading-tight text-black mr-6 dark:text-zinc-200">
                       Built by
                     </span>
-                    <div className="flex flex-row gap-0">
+                    <div className="flex flex-row gap-0 items-center">
                       {firstFiveMembers(project).map((member, index) => (
-                        <img
-                          key={index}
-                          src={blo(member, 8)}
-                          alt={member}
-                          className="h-5 w-5 m-0 rounded-full border-1 border-gray-100 dark:border-zinc-900 -mr-1.5"
-                          style={{ zIndex: 5 - index }}
-                        />
+                        <div key={index} className="h-4 w-4 -mr-1.5">
+                          <img
+                            src={blo(member, 8)}
+                            alt={member}
+                            className="h-4 w-4 m-0 rounded-full border-1 border-gray-100 dark:border-zinc-900"
+                            style={{ zIndex: 5 - index }}
+                          />
+                        </div>
                       ))}
                       {restMembersCounter(project) > 0 && (
                         <p className="flex items-center justify-center h-5 w-5 rounded-full dark:ring-black border border-1 border-gray-100 dark:border-zinc-900 ">
@@ -222,24 +223,8 @@ export const NestedLayout = ({ children }: Props) => {
           </div>
         </div>
         <div className="mt-4 max-sm:px-4">
-          <div className="sm:hidden">
-            <label htmlFor="current-tab" className="sr-only">
-              Select a tab
-            </label>
-            <select
-              id="current-tab"
-              name="current-tab"
-              className="block w-full dark:bg-zinc-900 rounded-md border-0 py-1.5 pl-3 pr-10 ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-primary-600"
-            >
-              {tabs.map((tab) => (
-                <option key={tab.name} onClick={() => router.push(tab.href)}>
-                  {tab.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="px-4 sm:px-6 lg:px-12 hidden sm:block">
-            <nav className="gap-10 flex flex-row">
+          <div className="sm:px-6 lg:px-12  sm:block">
+            <nav className="gap-10 flex flex-row max-lg:flex-col max-lg:gap-4">
               {tabs.map((tab) => (
                 <Link
                   key={tab.name}
@@ -248,7 +233,7 @@ export const NestedLayout = ({ children }: Props) => {
                     "whitespace-nowrap border-b-2 pb-2 text-base flex flex-row gap-2 items-center",
                     tab.href.split("/")[3]?.split("?")[0] ===
                       router.pathname.split("/")[3]
-                      ? "border-blue-600 text-gray-700 font-bold  px-3 dark:text-gray-200"
+                      ? "border-blue-600 text-gray-700 font-bold px-3 dark:text-gray-200 max-lg:border-b-0 max-lg:border-l-2 max-lg:py-2"
                       : "border-transparent text-gray-600  px-0 hover:border-gray-300 hover:text-gray-700 dark:text-gray-200 font-normal"
                   )}
                 >

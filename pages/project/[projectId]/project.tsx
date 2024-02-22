@@ -59,18 +59,20 @@ function ProjectPage() {
   };
 
   return (
-    <div className="flex flex-row max-lg:flex-col-reverse gap-4 py-5 mb-20">
+    <div className="flex flex-row max-lg:flex-col gap-4 py-5 mb-20">
       <div className=" flex flex-col flex-[3]">
-        <div className="text-base flex flex-row gap-1 text-gray-900 dark:text-zinc-100">
-          <span className="text-base font-bold leading-normal text-gray-900 dark:text-zinc-100">
+        <div className="text-base flex flex-row gap-1 text-gray-900 dark:text-zinc-100 break-all">
+          <p className="text-base font-bold leading-normal text-gray-900 dark:text-zinc-100">
             Owner:
-          </span>
-          {project && (
-            <EthereumAddressToENSName
-              shouldTruncate={false}
-              address={project.recipient}
-            />
-          )}
+            <span className="font-normal ml-1">
+              {project && (
+                <EthereumAddressToENSName
+                  shouldTruncate={false}
+                  address={project.recipient}
+                />
+              )}
+            </span>
+          </p>
         </div>
 
         {project?.details?.tags.length ? (
@@ -108,7 +110,7 @@ function ProjectPage() {
                 icon: null,
                 text: "Edit project",
                 styleClass:
-                  "rounded-md bg-black px-3 py-2 text-sm font-semibold text-white hover:bg-brand-blue border-none  disabled:opacity-75 transition-all ease-in-out duration-300",
+                  "rounded-md bg-black px-3 py-2 text-sm font-semibold text-white border-none  disabled:opacity-75 transition-all ease-in-out duration-300",
               }}
               projectToUpdate={project}
             />
