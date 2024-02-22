@@ -1,20 +1,11 @@
 "use client";
 
 import type { JsonRpcProvider, JsonRpcSigner } from "@ethersproject/providers";
-import {
-  getWalletClient,
-  type PublicClient,
-  type WalletClient,
-} from "@wagmi/core";
+import type { PublicClient, WalletClient } from "@wagmi/core";
 import { providers } from "ethers";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { type HttpTransport } from "viem";
-import {
-  useAccount,
-  useNetwork,
-  usePublicClient,
-  useWalletClient,
-} from "wagmi";
+import { usePublicClient, useWalletClient } from "wagmi";
 
 export function publicClientToProvider(publicClient: PublicClient) {
   const { chain, transport } = publicClient;
@@ -45,27 +36,11 @@ export function walletClientToSigner(walletClient: WalletClient) {
   return signer;
 }
 
-export const getSigner = async (chainId: number) => {
-  const walletClient = await getWalletClient({
-    chainId,
-  });
-  if (!walletClient) return;
-  const signer = walletClientToSigner(walletClient);
-  return signer;
-};
-
 export function useSigner() {
   const { data: walletClient } = useWalletClient();
 
-  const { isConnected, address, connector } = useAccount();
-
   const [signer, setSigner] = useState<JsonRpcSigner | undefined>(undefined);
-  const { chain } = useNetwork();
-  useMemo(() => {
-    if (!isConnected) {
-      setSigner(undefined);
-      return;
-    }
+  useEffect(() => {
     async function getSigner() {
       if (!walletClient) return;
 
@@ -75,7 +50,7 @@ export function useSigner() {
     }
 
     getSigner();
-  }, [walletClient, address, connector, chain?.id]);
+  }, [walletClient]);
   return signer;
 }
 
