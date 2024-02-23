@@ -26,13 +26,10 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
         await switchNetworkAsync?.(milestone.chainID);
       }
-      await milestone
-        .revoke(signer as any)
-        .then(async () => {
-          toast.success(MESSAGES.MILESTONES.DELETE.SUCCESS);
-          await refreshProject();
-        })
-        .catch((error) => console.log(error));
+      await milestone.revoke(signer as any).then(async () => {
+        toast.success(MESSAGES.MILESTONES.DELETE.SUCCESS);
+        await refreshProject();
+      });
     } catch (error) {
       toast.error(MESSAGES.MILESTONES.DELETE.ERROR(milestone.title));
       throw error;

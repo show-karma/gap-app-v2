@@ -1,6 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ProjectPageLayout } from ".";
 import {
@@ -187,6 +186,7 @@ const GrantsPage = ({
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isProjectOwner || isContractOwner;
   const [, changeTab] = useQueryState("tab");
+  const [, changeGrantId] = useQueryState("grantId");
   const { address } = useAccount();
 
   // UseEffect to check if current URL changes
@@ -360,8 +360,10 @@ const GrantsPage = ({
               <ul role="list" className="space-y-2 mt-8">
                 {navigation.map((item) => (
                   <li key={item.uid}>
-                    <Link
-                      href={item.href}
+                    <button
+                      onClick={() => {
+                        changeGrantId(item.uid);
+                      }}
                       className={cn(
                         item.current
                           ? "bg-[#eef4ff] dark:bg-zinc-800 dark:text-primary-300  text-[#155eef]"
@@ -391,7 +393,7 @@ const GrantsPage = ({
                           )}
                         </div>
                       </div>
-                    </Link>
+                    </button>
                   </li>
                 ))}
                 {isAuthorized && (
@@ -527,14 +529,14 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
       stat: isValidAmount(grant?.details?.amount),
       title: "Total Grant Amount",
     },
-    {
-      stat: grant?.details?.season,
-      title: "Season",
-    },
-    {
-      stat: grant?.details?.cycle,
-      title: "Cycle",
-    },
+    // {
+    //   stat: grant?.details?.season,
+    //   title: "Season",
+    // },
+    // {
+    //   stat: grant?.details?.cycle,
+    //   title: "Cycle",
+    // },
   ];
 
   return (
