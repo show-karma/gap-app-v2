@@ -11,13 +11,14 @@
     "build-stats": "cross-env ANALYZE=true yarn build"
   },
   "dependencies": {
+    "@ethersproject/providers": "^5.7.2",
     "@headlessui/react": "^1.7.15",
     "@heroicons/react": "^2.0.18",
     "@hookform/resolvers": "^3.3.4",
     "@next/bundle-analyzer": "^14.1.0",
     "@radix-ui/react-popover": "^1.0.7",
     "@rainbow-me/rainbowkit": "^1.3.1",
-    "@show-karma/karma-gap-sdk": "git+https://github.com/show-karma/karma-gap-sdk.git#5eb91d2",
+    "@show-karma/karma-gap-sdk": "git+https://github.com/show-karma/karma-gap-sdk.git#a7c2081",
     "@tailwindcss/typography": "^0.5.10",
     "@tanstack/react-query": "^5.20.5",
     "@tremor/react": "^3.14.0",
@@ -30,6 +31,7 @@
     "clsx": "^2.1.0",
     "cmdk": "^0.2.1",
     "date-fns": "^3.3.1",
+    "ethers": "^6.11.1",
     "lodash.debounce": "^4.0.8",
     "lodash.groupby": "^4.6.0",
     "millify": "^6.1.0",

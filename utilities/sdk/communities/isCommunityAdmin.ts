@@ -13,10 +13,10 @@ export const isCommunityAdminOf = async (
   const resolver = await GAP.getCommunityResolver(signer, chainID).catch(
     () => null
   );
-  const response = await resolver?.functions
-    .isAdmin?.(uid as Hex, address)
+  const response = await resolver
+    ?.isAdmin?.(uid as Hex, address)
     .catch(() => null);
-  if (response && response[0]) return response[0];
+  if (response) return response;
   if (
     community &&
     community?.recipient.toLowerCase() === address?.toLowerCase()
