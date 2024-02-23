@@ -5,13 +5,7 @@ import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { MilestoneWithCompleted } from "@/types/milestones";
-import {
-  MESSAGES,
-  PAGES,
-  appNetwork,
-  useSigner,
-  walletClientToSigner,
-} from "@/utilities";
+import { MESSAGES, PAGES, appNetwork, useSigner } from "@/utilities";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   GrantDetails,
@@ -28,15 +22,15 @@ import { Hex, isAddress } from "viem";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 import { z } from "zod";
 import { Milestone as MilestoneComponent } from "./Milestone";
-
+import { useRouter } from "next/router";
 import { CommunitiesDropdown } from "@/components/CommunitiesDropdown";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useGap } from "@/hooks";
 import toast from "react-hot-toast";
-import { useRouter } from "next/router";
 import { useSearchParams } from "next/navigation";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { getWalletClient } from "@wagmi/core";
+import { useQueryState } from "nuqs";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -199,6 +193,8 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { switchNetworkAsync } = useSwitchNetwork();
   const { gap } = useGap();
   const { isConnected } = useAccount();
+
+  const [, changeTab] = useQueryState("tab");
 
   function premade<T extends GenericQuestion>(
     type: QuestionType,
@@ -366,13 +362,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         .then(async () => {
           // eslint-disable-next-line no-param-reassign
           toast.success(MESSAGES.GRANT.CREATE.SUCCESS);
-          router.push(
-            PAGES.PROJECT.TABS.SELECTED_TAB(
-              selectedProject.details?.slug || selectedProject.uid,
-              grant.uid,
-              "overview"
-            )
-          );
+          changeTab("overview");
           selectedProject?.grants.unshift(grant);
         });
     } catch (error) {
@@ -393,6 +383,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       oldGrant.setValues({
         communityUID: data.community,
       });
+
       oldGrant.details?.setValues({
         amount: data.amount || "",
         description: data.description,
@@ -537,7 +528,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             {grantScreen === "edit-grant" ? "Edit grant" : "Create a new grant"}
           </h3>
           <Button
-            className="bg-transparent px-4 hover:bg-transparent hover:opacity-75 text-black dark:text-zinc-100"
+            className="bg-transparent px-1 hover:bg-transparent hover:opacity-75 text-black dark:text-zinc-100"
             onClick={() => {
               if (!selectedProject) return;
               if (!grantToEdit) {
@@ -548,13 +539,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                 );
                 return;
               }
-              router.push(
-                PAGES.PROJECT.TABS.SELECTED_TAB(
-                  selectedProject?.details?.slug || selectedProject.uid,
-                  grantToEdit.uid,
-                  "overview"
-                )
-              );
+              changeTab("overview");
             }}
           >
             <XMarkIcon className="h-8 w-8 " />
@@ -847,13 +832,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                 );
                 return;
               }
-              router.push(
-                PAGES.PROJECT.TABS.SELECTED_TAB(
-                  selectedProject.details?.slug || selectedProject.uid,
-                  grantToEdit.uid,
-                  "overview"
-                )
-              );
+              changeTab("overview");
             }}
           >
             Cancel

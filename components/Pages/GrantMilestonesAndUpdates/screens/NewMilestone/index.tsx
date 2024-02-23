@@ -25,6 +25,7 @@ import { Popover } from "@headlessui/react";
 import { DayPicker } from "react-day-picker";
 import { CalendarIcon } from "@heroicons/react/24/outline";
 import { XMarkIcon } from "@heroicons/react/24/solid";
+import { useQueryState } from "nuqs";
 
 const milestoneSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.MILESTONES.FORM.TITLE }),
@@ -72,9 +73,8 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
   const { chain } = useNetwork();
   const { switchNetworkAsync } = useSwitchNetwork();
   const selectedProject = useProjectStore((state) => state.project);
-  const router = useRouter();
-
   const refreshProject = useProjectStore((state) => state.refreshProject);
+  const [, changeTab] = useQueryState("tab");
 
   const onSubmit: SubmitHandler<MilestoneType> = async (data, event) => {
     event?.preventDefault();
@@ -116,23 +116,13 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
       }
       await milestoneToAttest.attest(signer as any).then(async () => {
         toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS);
-        await refreshProject().then(() => {
-          router.push(
-            PAGES.PROJECT.TABS.SELECTED_TAB(
-              selectedProject?.details?.slug ||
-                (selectedProject?.uid as string),
-              uid,
-              "milestones-and-updates"
-            )
-          );
-        });
+        changeTab("milestones-and-updates");
+        const currentGrant = selectedProject?.grants.find(
+          (grant) => grant.uid === uid
+        );
+
+        currentGrant?.milestones?.push(milestoneToAttest);
       });
-
-      const currentGrant = selectedProject?.grants.find(
-        (grant) => grant.uid === uid
-      );
-
-      currentGrant?.milestones?.push(milestoneToAttest);
     } catch (error) {
       toast.error(MESSAGES.MILESTONES.CREATE.ERROR);
     } finally {
@@ -150,14 +140,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
           <Button
             className="bg-transparent p-4 hover:bg-transparent hover:opacity-75 text-black dark:text-zinc-100"
             onClick={() => {
-              router.push(
-                PAGES.PROJECT.TABS.SELECTED_TAB(
-                  selectedProject?.details?.slug ||
-                    (selectedProject?.uid as string),
-                  uid,
-                  "milestones-and-updates"
-                )
-              );
+              changeTab("milestones-and-updates");
             }}
           >
             <XMarkIcon className="h-8 w-8" />
@@ -188,7 +171,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
                   <label className={labelStyle}>End date</label>
                   <div>
                     <Popover className="relative">
-                      <Popover.Button className="w-max text-sm flex-row flex gap-2 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
+                      <Popover.Button className="max-lg:w-full w-max text-sm flex-row flex gap-2 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
                         {field.value ? (
                           formatDate(field.value)
                         ) : (
