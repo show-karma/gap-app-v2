@@ -19,6 +19,7 @@ export const PAGES = {
     GRANTS: (project: string) => `/project/${project}/grants?tab=overview`,
     GRANT: (project: string, grant: string) =>
       `/project/${project}/grants?grantId=${grant}&tab=overview`,
+    CONTACT_INFO: (project: string) => `/project/${project}/contact-info`,
     TABS: {
       OVERVIEW: (project: string, grant: string) =>
         `/project/${project}/grants?grantId=${grant}&tab=overview`,
