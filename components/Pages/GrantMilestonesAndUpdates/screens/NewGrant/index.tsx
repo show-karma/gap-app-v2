@@ -528,7 +528,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             {grantScreen === "edit-grant" ? "Edit grant" : "Create a new grant"}
           </h3>
           <Button
-            className="bg-transparent px-4 hover:bg-transparent hover:opacity-75 text-black dark:text-zinc-100"
+            className="bg-transparent px-1 hover:bg-transparent hover:opacity-75 text-black dark:text-zinc-100"
             onClick={() => {
               if (!selectedProject) return;
               if (!grantToEdit) {

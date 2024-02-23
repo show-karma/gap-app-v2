@@ -228,19 +228,16 @@ const GrantsPage = ({
   }[] = [
     {
       name: "Overview",
-
       tabName: "overview",
       current: true,
     },
     {
       name: "Milestones and Updates",
-
       tabName: "milestones-and-updates",
       current: false,
     },
     {
       name: "Impact Criteria",
-
       tabName: "impact-criteria",
       current: false,
     },
@@ -330,7 +327,7 @@ const GrantsPage = ({
       />
       <div className="flex max-lg:flex-col">
         {project?.grants.length ? (
-          <div className="w-full max-w-[320px] py-5 border-none max-lg:w-full max-lg:px-0">
+          <div className="w-full max-w-[320px] max-lg:max-w-full py-5 border-none max-lg:w-full max-lg:px-0">
             <nav className="flex flex-1 flex-col gap-4" aria-label="Sidebar">
               <div className="flex w-full min-w-[240px] flex-row items-center gap-2">
                 <svg
@@ -419,54 +416,29 @@ const GrantsPage = ({
         <div className="flex-1 pl-5 pt-5 pb-20 max-lg:px-0">
           {/* Grants tabs start */}
           {project?.grants.length && currentTab !== "create-grant" ? (
-            <div className="">
-              <div className="sm:hidden">
-                <label htmlFor="tabs" className="sr-only">
-                  Select a tab
-                </label>
-                {/* Use an "onChange" listener to redirect the user to the selected tab URL. */}
-                <select
-                  id="tabs"
-                  name="tabs"
-                  className="block w-full rounded-md  dark:bg-zinc-900 border-gray-300 focus:border-brand-blue focus:ring-brand-blue"
-                  //   defaultValue={tabs.find((tab) => tab.current).name}
-                >
-                  {tabs.map((tab) => (
-                    <option
-                      key={tab.name}
-                      onClick={() => {
-                        changeTab(tab.tabName);
-                      }}
-                    >
-                      {tab.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="hidden sm:block">
-                <nav
-                  className="isolate flex gap-4 divide-x divide-gray-200 rounded-lg py-1 px-1  bg-[#F2F4F7] dark:bg-zinc-900 w-max transition-all duration-300 ease-in-out"
-                  aria-label="Tabs"
-                >
-                  {tabs.map((tab) => (
-                    <button
-                      key={tab.name}
-                      onClick={() => {
-                        changeTab(tab.tabName);
-                      }}
-                      className={cn(
-                        tabFromQueryParam === tab.tabName ||
-                          (tab.tabName === "overview" && !tabFromQueryParam)
-                          ? "text-gray-900 bg-white dark:bg-zinc-700 dark:text-zinc-100"
-                          : "text-gray-500 hover:text-gray-700 dark:text-zinc-400",
-                        "group relative min-w-0 w-max border-none overflow-hidden rounded-lg py-2 px-3 text-center text-sm font-semibold hover:bg-gray-50 dark:hover:bg-zinc-800 dark:hover:text-white focus:z-10 transition-all duration-300 ease-in-out"
-                      )}
-                    >
-                      <span>{tab.name}</span>
-                    </button>
-                  ))}
-                </nav>
-              </div>
+            <div className="sm:block">
+              <nav
+                className="isolate flex flex-row max-lg:w-full flex-wrap gap-4 divide-x divide-gray-200 rounded-lg py-1 px-1  bg-[#F2F4F7] dark:bg-zinc-900 w-max transition-all duration-300 ease-in-out"
+                aria-label="Tabs"
+              >
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.name}
+                    onClick={() => {
+                      changeTab(tab.tabName);
+                    }}
+                    className={cn(
+                      tabFromQueryParam === tab.tabName ||
+                        (tab.tabName === "overview" && !tabFromQueryParam)
+                        ? "text-gray-900 bg-white dark:bg-zinc-700 dark:text-zinc-100"
+                        : "text-gray-500 hover:text-gray-700 dark:text-zinc-400",
+                      "group relative min-w-0 w-max border-none overflow-hidden rounded-lg py-2 px-3 text-center text-sm font-semibold hover:bg-gray-50 dark:hover:bg-zinc-800 dark:hover:text-white focus:z-10 transition-all duration-300 ease-in-out"
+                    )}
+                  >
+                    <span>{tab.name}</span>
+                  </button>
+                ))}
+              </nav>
             </div>
           ) : null}
           {/* Grants tabs end */}

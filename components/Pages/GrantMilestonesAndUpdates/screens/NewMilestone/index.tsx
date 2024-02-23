@@ -171,7 +171,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
                   <label className={labelStyle}>End date</label>
                   <div>
                     <Popover className="relative">
-                      <Popover.Button className="w-max text-sm flex-row flex gap-2 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
+                      <Popover.Button className="max-lg:w-full w-max text-sm flex-row flex gap-2 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
                         {field.value ? (
                           formatDate(field.value)
                         ) : (
