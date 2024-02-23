@@ -48,10 +48,10 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { GrantMilestonesAndUpdates } from "@/components/Pages/GrantMilestonesAndUpdates";
 import { GrantAllReviews } from "@/components/Pages/AllReviews";
 import { ReviewGrant } from "@/components/Pages/ReviewGrant";
+import { useQueryState } from "nuqs";
 
 interface Tab {
   name: string;
-  href: string;
   tabName: string;
   current: boolean;
 }
@@ -186,6 +186,7 @@ const GrantsPage = ({
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isProjectOwner || isContractOwner;
+  const [, changeTab] = useQueryState("tab");
   const { address } = useAccount();
 
   // UseEffect to check if current URL changes
@@ -221,39 +222,25 @@ const GrantsPage = ({
 
   const defaultTabs: {
     name: string;
-    href: string;
-    alternativeHref?: string;
+
     tabName: GrantScreen;
     current: boolean;
   }[] = [
     {
       name: "Overview",
-      href: PAGES.PROJECT.TABS.OVERVIEW(
-        project?.details?.slug || (project?.uid as string),
-        grant?.uid as string
-      ),
-      alternativeHref: PAGES.PROJECT.GRANTS_STANDALONE(
-        project?.details?.slug || (project?.uid as string)
-      ),
+
       tabName: "overview",
       current: true,
     },
     {
       name: "Milestones and Updates",
-      href: PAGES.PROJECT.TABS.SELECTED_TAB(
-        project?.details?.slug || (project?.uid as string),
-        grant?.uid as string,
-        "milestones-and-updates"
-      ),
+
       tabName: "milestones-and-updates",
       current: false,
     },
     {
       name: "Impact Criteria",
-      href: PAGES.PROJECT.TABS.IMPACT_CRITERIA(
-        project?.details?.slug || (project?.uid as string),
-        grant?.uid as string
-      ),
+
       tabName: "impact-criteria",
       current: false,
     },
@@ -279,19 +266,11 @@ const GrantsPage = ({
       const reviewTabs = [
         {
           name: "Reviews",
-          href: PAGES.PROJECT.TABS.REVIEWS(
-            project?.details?.slug || (project?.uid as string),
-            grant?.uid as string
-          ),
           tabName: "reviews",
           current: false,
         },
         {
           name: "Review this grant",
-          href: PAGES.PROJECT.TABS.REVIEW_THIS_GRANT(
-            project?.details?.slug || (project?.uid as string),
-            grant?.uid as string
-          ),
           tabName: "review-this-grant",
           current: false,
         },
@@ -308,10 +287,6 @@ const GrantsPage = ({
           const allReviewsTabTogether = firstTabs.concat([
             {
               name: "Reviews",
-              href: PAGES.PROJECT.TABS.REVIEWS(
-                project?.details?.slug || (project?.uid as string),
-                grant?.uid as string
-              ),
               tabName: "reviews",
               current: false,
             },
@@ -427,13 +402,7 @@ const GrantsPage = ({
                     <Button
                       onClick={() => {
                         if (project) {
-                          router.push(
-                            PAGES.PROJECT.TABS.SELECTED_TAB(
-                              project?.details?.slug || project?.uid || "",
-                              undefined,
-                              "create-grant"
-                            )
-                          );
+                          changeTab("create-grant");
                         }
                       }}
                       className="flex h-max w-full  flex-row items-center  hover:opacity-75 justify-center gap-3 rounded border border-[#155EEF] bg-[#155EEF] px-3 py-2 text-sm font-semibold text-white   max-sm:w-full"
@@ -466,7 +435,7 @@ const GrantsPage = ({
                     <option
                       key={tab.name}
                       onClick={() => {
-                        router.push(tab.href);
+                        changeTab(tab.tabName);
                       }}
                     >
                       {tab.name}
@@ -480,9 +449,11 @@ const GrantsPage = ({
                   aria-label="Tabs"
                 >
                   {tabs.map((tab) => (
-                    <Link
+                    <button
                       key={tab.name}
-                      href={tab.href}
+                      onClick={() => {
+                        changeTab(tab.tabName);
+                      }}
                       className={cn(
                         tabFromQueryParam === tab.tabName ||
                           (tab.tabName === "overview" && !tabFromQueryParam)
@@ -492,7 +463,7 @@ const GrantsPage = ({
                       )}
                     >
                       <span>{tab.name}</span>
-                    </Link>
+                    </button>
                   ))}
                 </nav>
               </div>
@@ -565,6 +536,7 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isProjectOwner || isContractOwner;
+  const [, changeTab] = useQueryState("tab");
 
   const getPercentage = () => {
     if (!milestones) return 0;
@@ -602,18 +574,15 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
             {grant?.details?.title}
           </div>
           {isAuthorized && project && grant && (
-            <Link
-              href={PAGES.PROJECT.TABS.SELECTED_TAB(
-                project?.details?.slug || (project?.uid as string),
-                grant?.uid as string,
-                "edit-grant"
-              )}
+            <button
+              onClick={() => {
+                changeTab("edit-grant");
+              }}
+              className="rounded-md items-center text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-35 hover:opacity-75 transition-all ease-in-out duration-300 flex h-max w-max flex-row gap-2 bg-zinc-800 p-2 text-white hover:bg-zinc-800 hover:text-white"
             >
-              <Button className="flex h-max w-max flex-row gap-2 bg-zinc-800 p-2 text-white hover:bg-zinc-800 hover:text-white">
-                Edit grant
-                <PencilSquareIcon className="h-4 w-4" />
-              </Button>
-            </Link>
+              Edit grant
+              <PencilSquareIcon className="h-4 w-4" />
+            </button>
           )}
         </div>
         <div className="flex flex-row gap-2">

@@ -2,11 +2,11 @@
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useProjectStore } from "@/store";
-import { MESSAGES, PAGES, useSigner } from "@/utilities";
+import { MESSAGES, useSigner } from "@/utilities";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Grant } from "@show-karma/karma-gap-sdk";
-import Link from "next/link";
 import { useRouter } from "next/router";
+import { useQueryState } from "nuqs";
 import type { FC } from "react";
 import { useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
@@ -42,7 +42,7 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
   const signer = useSigner();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
-
+  const [, changeTab] = useQueryState("tab");
   const {
     register,
     handleSubmit,
@@ -85,13 +85,7 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
         .then(async () => {
           toast.success(MESSAGES.GRANT.GRANT_UPDATE.SUCCESS);
           await refreshProject().then(() => {
-            router.push(
-              PAGES.PROJECT.TABS.SELECTED_TAB(
-                project.details?.slug || project.uid,
-                grantToUpdate.uid,
-                "milestones-and-updates"
-              )
-            );
+            changeTab("milestones-and-updates");
           });
         });
     } catch (error) {
@@ -107,16 +101,14 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
           <h4 className="text-2xl font-bold text-black dark:text-zinc-100">
             Post a grant update
           </h4>
-          <Link
+          <button
             className="bg-transparent p-4 hover:bg-transparent hover:opacity-75"
-            href={PAGES.PROJECT.TABS.SELECTED_TAB(
-              project?.details?.slug || project?.uid || "",
-              grant.uid,
-              "milestones-and-updates"
-            )}
+            onClick={() => {
+              changeTab("milestones-and-updates");
+            }}
           >
             <img src="/icons/close.svg" alt="Close" className="h-5 w-5 " />
-          </Link>
+          </button>
         </div>
         <form
           onSubmit={handleSubmit(onSubmit)}
