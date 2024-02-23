@@ -117,6 +117,7 @@ export const Stats = () => {
         <Spinner />
       ) : (
         <div className="flex w-full flex-col items-center justify-center gap-8">
+          <WeeklyActiveUsersChart />
           <div className="flex flex-row items-center gap-4">
             <h3 className="text-xl text-black">Select a period</h3>
             {/* <Select
@@ -215,6 +216,7 @@ export const Stats = () => {
               )}
             </Listbox>
           </div>
+
           <div className="grid w-full max-w-7xl grid-cols-3 justify-between gap-8 max-lg:grid-cols-2 max-sm:grid-cols-1">
             {data.map((item) => (
               <LineChart
@@ -238,8 +240,6 @@ export const Stats = () => {
               />
             ))}
           </div>
-
-          <WeeklyActiveUsersChart />
         </div>
       )}
     </div>
