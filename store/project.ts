@@ -10,6 +10,24 @@ interface ProjectStore {
   setLoading: (loading: boolean) => void;
   isProjectOwner: boolean;
   setIsProjectOwner: (isProjectOwner: boolean) => void;
+  projectContactInfo:
+    | {
+        name?: string;
+        email?: string;
+        telegram?: string;
+      }
+    | undefined;
+  setProjectContactInfo: (
+    contactInfo:
+      | {
+          name?: string;
+          email?: string;
+          telegram?: string;
+        }
+      | undefined
+  ) => void;
+  contactInfoLoading: boolean;
+  setContactInfoLoading: (value: boolean) => void;
 }
 
 export const useProjectStore = create<ProjectStore>((set, get) => ({
@@ -25,4 +43,9 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   setLoading: (loading: boolean) => set({ loading }),
   isProjectOwner: false,
   setIsProjectOwner: (isProjectOwner: boolean) => set({ isProjectOwner }),
+  projectContactInfo: undefined,
+  setProjectContactInfo: (contactInfo) =>
+    set({ projectContactInfo: contactInfo }),
+  contactInfoLoading: true,
+  setContactInfoLoading: (value) => set({ contactInfoLoading: value }),
 }));

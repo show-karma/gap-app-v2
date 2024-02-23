@@ -3,6 +3,7 @@ export const INDEXER = {
     QUESTIONS: `/questions`,
   },
   PROJECT: {
+    GET: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}`,
     FEED: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/feed`,
   },
   CATEGORIES: {
@@ -61,5 +62,9 @@ export const INDEXER = {
   GAP: {
     STATS: `/attestations/stats`,
     WEEKLY_ACTIVE_USERS: `/attestations/wau`,
+  },
+  NOTIFICATIONS: {
+    UPDATE: (idOrSlug: string) => `/projects/${idOrSlug}/update/contact`,
+    DELETE: (idOrSlug: string) => `/projects/${idOrSlug}/delete/contact`,
   },
 };

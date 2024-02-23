@@ -4,6 +4,7 @@ import { useRouter } from "next/router";
 import { ReactNode, useEffect, useMemo, useState } from "react";
 import ProjectPage from "./project";
 import {
+  INDEXER,
   PAGES,
   cn,
   defaultMetadata,
@@ -13,7 +14,7 @@ import {
   useSigner,
   zeroUID,
 } from "@/utilities";
-import { useProjectStore } from "@/store";
+import { useOwnerStore, useProjectStore } from "@/store";
 import { useAccount } from "wagmi";
 import { blo } from "blo";
 import { IProjectDetails, Project } from "@show-karma/karma-gap-sdk";
@@ -28,6 +29,8 @@ import {
   TwitterIcon,
   WebsiteIcon,
 } from "@/components/Icons";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
+import fetchData from "@/utilities/fetchData";
 
 interface Props {
   children: ReactNode;
@@ -50,7 +53,7 @@ export const NestedLayout = ({ children }: Props) => {
   const setProject = useProjectStore((state) => state.setProject);
   const setLoading = useProjectStore((state) => state.setLoading);
   const setIsProjectOwner = useProjectStore((state) => state.setIsProjectOwner);
-  const tabs = [
+  const publicTabs = [
     {
       name: "Project",
       href: PAGES.PROJECT.OVERVIEW(project?.details?.slug || projectId),
@@ -64,6 +67,39 @@ export const NestedLayout = ({ children }: Props) => {
       href: PAGES.PROJECT.TEAM(project?.details?.slug || projectId),
     },
   ];
+  const [tabs, setTabs] = useState<typeof publicTabs>(publicTabs);
+  const isOwner = useOwnerStore((state) => state.isOwner);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+
+  const isAuthorized = isOwner || isProjectOwner;
+  const setProjectContactInfo = useProjectStore(
+    (state) => state.setProjectContactInfo
+  );
+  const projectContactInfo = useProjectStore(
+    (state) => state.projectContactInfo
+  );
+  const setContactInfoLoading = useProjectStore(
+    (state) => state.setContactInfoLoading
+  );
+
+  useEffect(() => {
+    const mountTabs = () => {
+      if (isAuthorized) {
+        setTabs([
+          ...publicTabs,
+          {
+            name: "Contact Info",
+            href: PAGES.PROJECT.CONTACT_INFO(
+              project?.details?.slug || projectId
+            ),
+          },
+        ]);
+      } else {
+        setTabs(publicTabs);
+      }
+    };
+    mountTabs();
+  }, [isAuthorized]);
 
   useEffect(() => {
     if (projectId) {
@@ -90,6 +126,49 @@ export const NestedLayout = ({ children }: Props) => {
       setProject(undefined);
     }
   }, [projectId]);
+
+  useEffect(() => {
+    if (!projectId) return;
+    const getContactInfo = async () => {
+      setContactInfoLoading(true);
+      try {
+        const [data] = await fetchData(INDEXER.PROJECT.GET(projectId));
+        const contactInfo:
+          | {
+              attestationId: string;
+              createdAt: string;
+              email?: string;
+              id: string;
+              telegram?: string;
+              name?: string;
+              updatedAt: string;
+            }[] = data?.project_contact;
+        if (contactInfo) {
+          const orderArray = contactInfo.sort(
+            (a: any, b: any) => b.createdAt - a.createdAt
+          );
+          const last = orderArray[orderArray.length - 1];
+          const data = {
+            email: last.email,
+            name: last.name,
+            telegram: last.telegram,
+          };
+          setProjectContactInfo(data);
+        }
+      } catch (error) {
+        console.error(error);
+        setProjectContactInfo(undefined);
+      } finally {
+        setContactInfoLoading(false);
+      }
+    };
+    getContactInfo();
+  }, [projectId]);
+
+  const hasContactInfo = Boolean(
+    projectContactInfo?.name &&
+      (projectContactInfo?.email || projectContactInfo?.telegram)
+  );
 
   const signer = useSigner();
   const { address } = useAccount();
@@ -237,6 +316,9 @@ export const NestedLayout = ({ children }: Props) => {
                       : "border-transparent text-gray-600  px-0 hover:border-gray-300 hover:text-gray-700 dark:text-gray-200 font-normal"
                   )}
                 >
+                  {tab.name === "Contact Info" && !hasContactInfo ? (
+                    <ExclamationTriangleIcon className="w-4 h-4" />
+                  ) : null}
                   {tab.name}
                   {tab.name === "Grants" && project?.grants?.length ? (
                     <p className="rounded-2xl bg-gray-200 px-2.5 py-[2px] text-center text-sm font-medium leading-tight text-slate-700 dark:bg-slate-700 dark:text-zinc-300">
