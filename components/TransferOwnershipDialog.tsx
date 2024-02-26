@@ -28,7 +28,6 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
   const [newOwner, setNewOwner] = useState<string>();
   const [isLoading, setIsLoading] = useState(false);
   const [validAddress, setValidAddress] = useState(true);
-
   function closeModal() {
     setIsOpen(false);
   }
@@ -38,7 +37,6 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
   const signer = useSigner();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
-
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
 
   const transfer = async () => {
