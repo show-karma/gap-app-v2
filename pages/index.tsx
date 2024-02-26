@@ -175,7 +175,7 @@ const Communities = () => {
       <div className="flex w-full flex-col items-center justify-center gap-8">
         <div className="grid w-full grid-cols-4 max-md:grid-cols-2">
           {chosenCommunities().map((community) => (
-            <a
+            <Link
               key={community.uid}
               href={PAGES.COMMUNITY.ALL_GRANTS(community.slug || community.uid)}
               className="flex hover:shadow-md h-full max-h-[166px] w-full flex-col items-center justify-center gap-2 rounded-2xl px-4 py-6 transition-all duration-300 ease-in-out "
@@ -191,7 +191,7 @@ const Communities = () => {
               <p className="line-clamp-1 text-center text-xl font-bold text-black dark:text-zinc-400 max-sm:text-base">
                 {community.name}
               </p>
-            </a>
+            </Link>
           ))}
           <a
             href="https://tally.so/r/wd0jeq"
