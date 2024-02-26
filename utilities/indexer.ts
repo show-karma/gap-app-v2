@@ -63,8 +63,10 @@ export const INDEXER = {
     STATS: `/attestations/stats`,
     WEEKLY_ACTIVE_USERS: `/attestations/wau`,
   },
-  NOTIFICATIONS: {
-    UPDATE: (idOrSlug: string) => `/projects/${idOrSlug}/update/contact`,
+  SUBSCRIPTION: {
+    CREATE: (idOrSlug: string) => `/projects/${idOrSlug}/add/contact`,
+    UPDATE: (idOrSlug: string, contactId: string) =>
+      `/projects/${idOrSlug}/update/contact/${contactId}`,
     DELETE: (idOrSlug: string) => `/projects/${idOrSlug}/delete/contact`,
   },
 };

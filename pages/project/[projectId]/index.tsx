@@ -31,6 +31,7 @@ import {
 } from "@/components/Icons";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import fetchData from "@/utilities/fetchData";
+import { APIContact } from "@/types/project";
 
 interface Props {
   children: ReactNode;
@@ -76,11 +77,11 @@ export const NestedLayout = ({ children }: Props) => {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
 
   const isAuthorized = isOwner || isProjectOwner;
-  const setProjectContactInfo = useProjectStore(
-    (state) => state.setProjectContactInfo
+  const setProjectContactsInfo = useProjectStore(
+    (state) => state.setProjectContactsInfo
   );
-  const projectContactInfo = useProjectStore(
-    (state) => state.projectContactInfo
+  const projectContactsInfo = useProjectStore(
+    (state) => state.projectContactsInfo
   );
   const setContactInfoLoading = useProjectStore(
     (state) => state.setContactInfoLoading
@@ -137,42 +138,20 @@ export const NestedLayout = ({ children }: Props) => {
       setContactInfoLoading(true);
       try {
         const [data] = await fetchData(INDEXER.PROJECT.GET(projectId));
-        const contactInfo:
-          | {
-              attestationId: string;
-              createdAt: string;
-              email?: string;
-              id: string;
-              telegram?: string;
-              name?: string;
-              updatedAt: string;
-            }[] = data?.project_contact;
-        if (contactInfo) {
-          const orderArray = contactInfo.sort(
-            (a: any, b: any) => b.createdAt - a.createdAt
-          );
-          const last = orderArray[orderArray.length - 1];
-          const data = {
-            email: last.email,
-            name: last.name,
-            telegram: last.telegram,
-          };
-          setProjectContactInfo(data);
-        }
+        const contactInfo: APIContact[] = data?.project_contact;
+
+        setProjectContactsInfo(contactInfo);
       } catch (error) {
         console.error(error);
-        setProjectContactInfo(undefined);
+        setProjectContactsInfo(undefined);
       } finally {
         setContactInfoLoading(false);
       }
     };
     getContactInfo();
-  }, [projectId]);
+  }, [project]);
 
-  const hasContactInfo = Boolean(
-    projectContactInfo?.name &&
-      (projectContactInfo?.email || projectContactInfo?.telegram)
-  );
+  const hasContactInfo = Boolean(projectContactsInfo?.length);
 
   const signer = useSigner();
   const { address } = useAccount();

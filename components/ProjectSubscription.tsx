@@ -10,12 +10,16 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import axios from "axios";
 import { useRouter } from "next/router";
 import { Spinner } from "./Utilities/Spinner";
+import * as Popover from "@radix-ui/react-popover";
+import { Contact } from "@/types/project";
+import { ContactsDropdown } from "./Pages/Project/ContactsDropdown";
 
 const labelStyle = "text-sm font-bold";
 const inputStyle =
   "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white";
 
 const subscriptionShema = z.object({
+  id: z.string().min(1),
   name: z.string().min(3, "Name must be at least 3 characters long"),
   telegram: z.string(),
   email: z
@@ -29,32 +33,26 @@ const subscriptionShema = z.object({
 type FormType = z.infer<typeof subscriptionShema>;
 
 interface ProjectSubscriptionProps {
-  contactInfo?: {
-    name?: string;
-    email?: string;
-    telegram?: string;
-  };
+  existingContacts?: Contact[];
+  contactInfo?: Contact;
 }
 
 export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({
   contactInfo,
+  existingContacts,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const project = useProjectStore((state) => state.project);
 
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isProjectOwnerLoading = useProjectStore(
-    (state) => state.isProjectOwnerLoading
-  );
+
+  const refreshProject = useProjectStore((state) => state.refreshProject);
 
   const isAuthorized = isOwner || isProjectOwner;
-  const isAuthorizationLoading = isOwnerLoading || isProjectOwnerLoading;
-
-  console.log(isOwnerLoading, isProjectOwnerLoading);
 
   const dataToUpdate = {
+    id: contactInfo?.id || "0",
     name: contactInfo?.name || "",
     email: contactInfo?.email || "",
     telegram: contactInfo?.telegram || "",
@@ -62,6 +60,8 @@ export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors, isValid },
   } = useForm<FormType>({
     resolver: zodResolver(subscriptionShema),
@@ -77,17 +77,35 @@ export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({
         // remove all @ from the string
         data.telegram = data.telegram.replace(/@/g, "");
       }
-      await axios
-        .put(
-          envVars.NEXT_PUBLIC_GAP_INDEXER_URL +
-            INDEXER.NOTIFICATIONS.UPDATE(
-              project?.details?.slug || (project?.uid as string)
-            ),
-          { contacts: [data] }
-        )
-        .then(() => {
-          toast.success("Contact info updated successfully");
-        });
+      if (data.id === "0") {
+        await axios
+          .post(
+            envVars.NEXT_PUBLIC_GAP_INDEXER_URL +
+              INDEXER.SUBSCRIPTION.CREATE(
+                project?.details?.slug || (project?.uid as string)
+              ),
+            { contacts: [data] }
+          )
+          .then(() => {
+            toast.success("Contact info created successfully");
+            refreshProject();
+          });
+      } else {
+        await axios
+          .put(
+            envVars.NEXT_PUBLIC_GAP_INDEXER_URL +
+              INDEXER.SUBSCRIPTION.UPDATE(
+                project?.details?.slug || (project?.uid as string),
+                data.id
+              ),
+            data
+          )
+          .then(() => {
+            toast.success("Contact info updated successfully");
+
+            refreshProject();
+          });
+      }
       // const subscription = await fetchData(INDEXER.NOTIFICATIONS.UPDATE())
     } catch (error: any) {
       toast.error("Something went wrong. Please try again later.");
@@ -97,16 +115,21 @@ export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({
     }
   };
 
-  if (isAuthorizationLoading) {
-    return (
-      <div className="px-4 py-4 rounded-md border border-transparent dark:bg-zinc-800  dark:border flex flex-col gap-4 items-start">
-        <h3 className="text-xl font-bold leading-6 text-gray-900 dark:text-zinc-100">
-          Loading contact info...
-        </h3>
-        <Spinner />
-      </div>
-    );
-  }
+  const changeId = (value: string) => {
+    setValue("id", value, {
+      shouldValidate: true,
+    });
+    const contact = existingContacts?.find((contact) => contact.id === value);
+    setValue("name", contact?.name || "", {
+      shouldValidate: contact ? true : false,
+    });
+    setValue("email", contact?.email || "", {
+      shouldValidate: contact ? true : false,
+    });
+    setValue("telegram", contact?.telegram || "", {
+      shouldValidate: contact ? true : false,
+    });
+  };
 
   return isAuthorized ? (
     <div className="px-4 py-4 rounded-md border border-transparent dark:bg-zinc-800  dark:border flex flex-col gap-4 items-start">
@@ -121,6 +144,17 @@ export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <div className="flex w-full min-w-[320px] flex-col gap-2">
+          <div className="flex w-full flex-col gap-2">
+            <label htmlFor="id-input" className={labelStyle}>
+              Contact
+            </label>
+            <ContactsDropdown
+              contacts={existingContacts}
+              value={watch("id")}
+              onSelectFunction={changeId}
+            />
+            <p className="text-red-500">{errors.id?.message}</p>
+          </div>
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="name-input" className={labelStyle}>
               Name
