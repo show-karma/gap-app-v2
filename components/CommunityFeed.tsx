@@ -58,7 +58,7 @@ export const CommunityFeed = () => {
   }, [communityId, page]);
 
   return (
-    <div className="w-4/12 max-lg:w-full  2xl:w-3/12">
+    <div className="max-lg:hidden w-4/12 max-lg:w-full  2xl:w-3/12">
       <div className="text-lg font-bold text-zinc-700 dark:text-gray-200 max-2xl:text-base">
         Community Feed
       </div>
