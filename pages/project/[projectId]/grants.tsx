@@ -1,6 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { useEffect, useState } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ProjectPageLayout } from ".";
 import {
@@ -48,10 +47,10 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { GrantMilestonesAndUpdates } from "@/components/Pages/GrantMilestonesAndUpdates";
 import { GrantAllReviews } from "@/components/Pages/AllReviews";
 import { ReviewGrant } from "@/components/Pages/ReviewGrant";
+import { useQueryState } from "nuqs";
 
 interface Tab {
   name: string;
-  href: string;
   tabName: string;
   current: boolean;
 }
@@ -186,6 +185,8 @@ const GrantsPage = ({
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isProjectOwner || isContractOwner;
+  const [, changeTab] = useQueryState("tab");
+  const [, changeGrantId] = useQueryState("grantId");
   const { address } = useAccount();
 
   // UseEffect to check if current URL changes
@@ -221,39 +222,22 @@ const GrantsPage = ({
 
   const defaultTabs: {
     name: string;
-    href: string;
-    alternativeHref?: string;
+
     tabName: GrantScreen;
     current: boolean;
   }[] = [
     {
       name: "Overview",
-      href: PAGES.PROJECT.TABS.OVERVIEW(
-        project?.details?.slug || (project?.uid as string),
-        grant?.uid as string
-      ),
-      alternativeHref: PAGES.PROJECT.GRANTS_STANDALONE(
-        project?.details?.slug || (project?.uid as string)
-      ),
       tabName: "overview",
       current: true,
     },
     {
       name: "Milestones and Updates",
-      href: PAGES.PROJECT.TABS.SELECTED_TAB(
-        project?.details?.slug || (project?.uid as string),
-        grant?.uid as string,
-        "milestones-and-updates"
-      ),
       tabName: "milestones-and-updates",
       current: false,
     },
     {
       name: "Impact Criteria",
-      href: PAGES.PROJECT.TABS.IMPACT_CRITERIA(
-        project?.details?.slug || (project?.uid as string),
-        grant?.uid as string
-      ),
       tabName: "impact-criteria",
       current: false,
     },
@@ -279,19 +263,11 @@ const GrantsPage = ({
       const reviewTabs = [
         {
           name: "Reviews",
-          href: PAGES.PROJECT.TABS.REVIEWS(
-            project?.details?.slug || (project?.uid as string),
-            grant?.uid as string
-          ),
           tabName: "reviews",
           current: false,
         },
         {
           name: "Review this grant",
-          href: PAGES.PROJECT.TABS.REVIEW_THIS_GRANT(
-            project?.details?.slug || (project?.uid as string),
-            grant?.uid as string
-          ),
           tabName: "review-this-grant",
           current: false,
         },
@@ -308,10 +284,6 @@ const GrantsPage = ({
           const allReviewsTabTogether = firstTabs.concat([
             {
               name: "Reviews",
-              href: PAGES.PROJECT.TABS.REVIEWS(
-                project?.details?.slug || (project?.uid as string),
-                grant?.uid as string
-              ),
               tabName: "reviews",
               current: false,
             },
@@ -355,7 +327,7 @@ const GrantsPage = ({
       />
       <div className="flex max-lg:flex-col">
         {project?.grants.length ? (
-          <div className="w-full max-w-[320px] py-5 border-none max-lg:w-full max-lg:px-0">
+          <div className="w-full max-w-[320px] max-lg:max-w-full py-5 border-none max-lg:w-full max-lg:px-0">
             <nav className="flex flex-1 flex-col gap-4" aria-label="Sidebar">
               <div className="flex w-full min-w-[240px] flex-row items-center gap-2">
                 <svg
@@ -388,8 +360,10 @@ const GrantsPage = ({
               <ul role="list" className="space-y-2 mt-8">
                 {navigation.map((item) => (
                   <li key={item.uid}>
-                    <Link
-                      href={item.href}
+                    <button
+                      onClick={() => {
+                        changeGrantId(item.uid);
+                      }}
                       className={cn(
                         item.current
                           ? "bg-[#eef4ff] dark:bg-zinc-800 dark:text-primary-300  text-[#155eef]"
@@ -419,7 +393,7 @@ const GrantsPage = ({
                           )}
                         </div>
                       </div>
-                    </Link>
+                    </button>
                   </li>
                 ))}
                 {isAuthorized && (
@@ -427,13 +401,7 @@ const GrantsPage = ({
                     <Button
                       onClick={() => {
                         if (project) {
-                          router.push(
-                            PAGES.PROJECT.TABS.SELECTED_TAB(
-                              project?.details?.slug || project?.uid || "",
-                              undefined,
-                              "create-grant"
-                            )
-                          );
+                          changeTab("create-grant");
                         }
                       }}
                       className="flex h-max w-full  flex-row items-center  hover:opacity-75 justify-center gap-3 rounded border border-[#155EEF] bg-[#155EEF] px-3 py-2 text-sm font-semibold text-white   max-sm:w-full"
@@ -450,52 +418,29 @@ const GrantsPage = ({
         <div className="flex-1 pl-5 pt-5 pb-20 max-lg:px-0">
           {/* Grants tabs start */}
           {project?.grants.length && currentTab !== "create-grant" ? (
-            <div className="">
-              <div className="sm:hidden">
-                <label htmlFor="tabs" className="sr-only">
-                  Select a tab
-                </label>
-                {/* Use an "onChange" listener to redirect the user to the selected tab URL. */}
-                <select
-                  id="tabs"
-                  name="tabs"
-                  className="block w-full rounded-md  dark:bg-zinc-900 border-gray-300 focus:border-brand-blue focus:ring-brand-blue"
-                  //   defaultValue={tabs.find((tab) => tab.current).name}
-                >
-                  {tabs.map((tab) => (
-                    <option
-                      key={tab.name}
-                      onClick={() => {
-                        router.push(tab.href);
-                      }}
-                    >
-                      {tab.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="hidden sm:block">
-                <nav
-                  className="isolate flex gap-4 divide-x divide-gray-200 rounded-lg py-1 px-1  bg-[#F2F4F7] dark:bg-zinc-900 w-max transition-all duration-300 ease-in-out"
-                  aria-label="Tabs"
-                >
-                  {tabs.map((tab) => (
-                    <Link
-                      key={tab.name}
-                      href={tab.href}
-                      className={cn(
-                        tabFromQueryParam === tab.tabName ||
-                          (tab.tabName === "overview" && !tabFromQueryParam)
-                          ? "text-gray-900 bg-white dark:bg-zinc-700 dark:text-zinc-100"
-                          : "text-gray-500 hover:text-gray-700 dark:text-zinc-400",
-                        "group relative min-w-0 w-max border-none overflow-hidden rounded-lg py-2 px-3 text-center text-sm font-semibold hover:bg-gray-50 dark:hover:bg-zinc-800 dark:hover:text-white focus:z-10 transition-all duration-300 ease-in-out"
-                      )}
-                    >
-                      <span>{tab.name}</span>
-                    </Link>
-                  ))}
-                </nav>
-              </div>
+            <div className="sm:block">
+              <nav
+                className="isolate flex flex-row max-lg:w-full flex-wrap gap-4 divide-x divide-gray-200 rounded-lg py-1 px-1  bg-[#F2F4F7] dark:bg-zinc-900 w-max transition-all duration-300 ease-in-out"
+                aria-label="Tabs"
+              >
+                {tabs.map((tab) => (
+                  <button
+                    key={tab.name}
+                    onClick={() => {
+                      changeTab(tab.tabName);
+                    }}
+                    className={cn(
+                      tabFromQueryParam === tab.tabName ||
+                        (tab.tabName === "overview" && !tabFromQueryParam)
+                        ? "text-gray-900 bg-white dark:bg-zinc-700 dark:text-zinc-100"
+                        : "text-gray-500 hover:text-gray-700 dark:text-zinc-400",
+                      "group relative min-w-0 w-max border-none overflow-hidden rounded-lg py-2 px-3 text-center text-sm font-semibold hover:bg-gray-50 dark:hover:bg-zinc-800 dark:hover:text-white focus:z-10 transition-all duration-300 ease-in-out"
+                    )}
+                  >
+                    <span>{tab.name}</span>
+                  </button>
+                ))}
+              </nav>
             </div>
           ) : null}
           {/* Grants tabs end */}
@@ -565,6 +510,7 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isProjectOwner || isContractOwner;
+  const [, changeTab] = useQueryState("tab");
 
   const getPercentage = () => {
     if (!milestones) return 0;
@@ -583,14 +529,14 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
       stat: isValidAmount(grant?.details?.amount),
       title: "Total Grant Amount",
     },
-    {
-      stat: grant?.details?.season,
-      title: "Season",
-    },
-    {
-      stat: grant?.details?.cycle,
-      title: "Cycle",
-    },
+    // {
+    //   stat: grant?.details?.season,
+    //   title: "Season",
+    // },
+    // {
+    //   stat: grant?.details?.cycle,
+    //   title: "Cycle",
+    // },
   ];
 
   return (
@@ -602,18 +548,15 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
             {grant?.details?.title}
           </div>
           {isAuthorized && project && grant && (
-            <Link
-              href={PAGES.PROJECT.TABS.SELECTED_TAB(
-                project?.details?.slug || (project?.uid as string),
-                grant?.uid as string,
-                "edit-grant"
-              )}
+            <button
+              onClick={() => {
+                changeTab("edit-grant");
+              }}
+              className="rounded-md items-center text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-35 hover:opacity-75 transition-all ease-in-out duration-300 flex h-max w-max flex-row gap-2 bg-zinc-800 p-2 text-white hover:bg-zinc-800 hover:text-white"
             >
-              <Button className="flex h-max w-max flex-row gap-2 bg-zinc-800 p-2 text-white hover:bg-zinc-800 hover:text-white">
-                Edit grant
-                <PencilSquareIcon className="h-4 w-4" />
-              </Button>
-            </Link>
+              Edit grant
+              <PencilSquareIcon className="h-4 w-4" />
+            </button>
           )}
         </div>
         <div className="flex flex-row gap-2">

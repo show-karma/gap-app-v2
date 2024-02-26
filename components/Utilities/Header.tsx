@@ -63,16 +63,23 @@ export default function Header() {
 
   const isOwner = useOwnerStore((state) => state.isOwner);
   const setIsOwner = useOwnerStore((state) => state.setIsOwner);
+  const setIsOwnerLoading = useOwnerStore((state) => state.setIsOwnerLoading);
 
   useEffect(() => {
     if (!signer || !address) {
+      setIsOwnerLoading(false);
       setIsOwner(false);
       return;
     }
     const setupOwner = async () => {
-      await getContractOwner(signer as any).then((owner) => {
-        setIsOwner(owner.toLowerCase() === address?.toLowerCase());
-      });
+      setIsOwnerLoading(true);
+      await getContractOwner(signer as any)
+        .then((owner) => {
+          setIsOwner(owner.toLowerCase() === address?.toLowerCase());
+        })
+        .finally(() => {
+          setIsOwnerLoading(false);
+        });
     };
     setupOwner();
   }, [signer, address]);

@@ -311,7 +311,7 @@ export const ReviewForm: FC<ReviewFormProps> = ({
           </div>
         </div>
       ))}
-      <div>
+      <div className="mt-8">
         <label
           id="infos.choice"
           className="max-w-2xl text-base font-semibold text-black dark:text-zinc-100"

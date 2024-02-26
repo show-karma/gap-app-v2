@@ -235,11 +235,11 @@ export const CommunityGrants = () => {
 
   return (
     <div className="w-8/12 max-lg:w-full 2xl:w-9/12">
-      <div className="flex items-center justify-between flex-row max-lg:flex-col-reverse max-lg:justify-start max-lg:items-start gap-3 max-lg:gap-4">
+      <div className="flex items-center justify-between flex-row flex-wrap-reverse max-lg:flex-wrap max-lg:flex-col-reverse max-lg:justify-start max-lg:items-start gap-3 max-lg:gap-4">
         <div className="text-2xl font-semibold text-gray-900 dark:text-zinc-100 max-2xl:text-xl">
           Total Grants {totalGrants ? `(${totalGrants})` : null}
         </div>
-        <div className="flex items-center gap-x-5 flex-wrap gap-y-2">
+        <div className="flex items-center gap-x-3 flex-wrap gap-y-2">
           {/* Filter by category start */}
           <Listbox
             value={selectedCategories}

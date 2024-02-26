@@ -3,6 +3,7 @@ export const INDEXER = {
     QUESTIONS: `/questions`,
   },
   PROJECT: {
+    GET: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}`,
     FEED: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/feed`,
   },
   CATEGORIES: {
@@ -61,5 +62,11 @@ export const INDEXER = {
   GAP: {
     STATS: `/attestations/stats`,
     WEEKLY_ACTIVE_USERS: `/attestations/wau`,
+  },
+  SUBSCRIPTION: {
+    CREATE: (idOrSlug: string) => `/projects/${idOrSlug}/add/contact`,
+    UPDATE: (idOrSlug: string, contactId: string) =>
+      `/projects/${idOrSlug}/update/contact/${contactId}`,
+    DELETE: (idOrSlug: string) => `/projects/${idOrSlug}/delete/contact`,
   },
 };

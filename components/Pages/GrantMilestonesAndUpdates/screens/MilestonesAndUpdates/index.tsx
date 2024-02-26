@@ -5,12 +5,14 @@ import { MESSAGES, PAGES, ReadMore, formatDate } from "@/utilities";
 import { Grant } from "@show-karma/karma-gap-sdk";
 import { MilestonesList } from "./MilestonesList";
 import { useRouter } from "next/router";
+import { useQueryState } from "nuqs";
 
 export const EmptyMilestone = ({ grant }: { grant?: Grant }) => {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const router = useRouter();
   const project = useProjectStore((state) => state.project);
+  const [, changeTab] = useQueryState("tab");
 
   if (!isProjectOwner && !isContractOwner) {
     return (
@@ -50,13 +52,7 @@ export const EmptyMilestone = ({ grant }: { grant?: Grant }) => {
               className="items-center flex flex-row justify-center gap-2 rounded border border-blue-600 dark:bg-blue-800 bg-brand-blue px-4 py-2.5 text-base font-semibold text-white hover:bg-brand-blue"
               onClick={() => {
                 if (project && grant) {
-                  router.push(
-                    PAGES.PROJECT.TABS.SELECTED_TAB(
-                      project.details?.slug || project.uid,
-                      grant.uid,
-                      "create-milestone"
-                    )
-                  );
+                  changeTab("create-milestone");
                 }
               }}
             >
@@ -71,13 +67,7 @@ export const EmptyMilestone = ({ grant }: { grant?: Grant }) => {
               className="items-center justify-center gap-2 rounded border dark:bg-zinc-800 dark:text-white border-black bg-white px-4 py-2.5 text-base font-semibold text-zinc-900 hover:bg-white"
               onClick={() => {
                 if (project && grant) {
-                  router.push(
-                    PAGES.PROJECT.TABS.SELECTED_TAB(
-                      project.details?.slug || project?.uid || "",
-                      grant.uid,
-                      "grant-update"
-                    )
-                  );
+                  changeTab("grant-update");
                 }
               }}
             >
@@ -133,7 +123,7 @@ export const MilestonesAndUpdates = ({ grant }: MilestonesAndUpdatesProps) => {
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isProjectOwner || isContractOwner;
   const project = useProjectStore((state) => state.project);
-  const router = useRouter();
+  const [, changeTab] = useQueryState("tab");
 
   return (
     <div className="space-y-5">
@@ -155,13 +145,7 @@ export const MilestonesAndUpdates = ({ grant }: MilestonesAndUpdatesProps) => {
                         <Button
                           onClick={() => {
                             if (project) {
-                              router.push(
-                                PAGES.PROJECT.TABS.SELECTED_TAB(
-                                  project.details?.slug || project?.uid || "",
-                                  grant.uid,
-                                  "grant-update"
-                                )
-                              );
+                              changeTab("grant-update");
                             }
                           }}
                           className="flex h-max w-max dark:bg-zinc-900 dark:text-white text-zinc-900 flex-row items-center justify-center gap-3 rounded border border-black bg-transparent px-3 py-1 text-sm font-semibold hover:bg-transparent hover:opacity-75 max-sm:w-full"
@@ -174,13 +158,7 @@ export const MilestonesAndUpdates = ({ grant }: MilestonesAndUpdatesProps) => {
                       <Button
                         onClick={() => {
                           if (project) {
-                            router.push(
-                              PAGES.PROJECT.TABS.SELECTED_TAB(
-                                project.details?.slug || project?.uid || "",
-                                grant.uid,
-                                "create-milestone"
-                              )
-                            );
+                            changeTab("create-milestone");
                           }
                         }}
                         className="flex h-max w-max  flex-row items-center  hover:opacity-75 justify-center gap-3 rounded border border-[#155EEF] bg-[#155EEF] px-3 py-1 text-sm font-semibold text-white   max-sm:w-full"

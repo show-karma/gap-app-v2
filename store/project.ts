@@ -1,3 +1,4 @@
+import { Contact } from "@/types/project";
 import { getProjectById } from "@/utilities";
 import { Project } from "@show-karma/karma-gap-sdk";
 import { create } from "zustand";
@@ -10,6 +11,12 @@ interface ProjectStore {
   setLoading: (loading: boolean) => void;
   isProjectOwner: boolean;
   setIsProjectOwner: (isProjectOwner: boolean) => void;
+  isProjectOwnerLoading: boolean;
+  setIsProjectOwnerLoading: (loading: boolean) => void;
+  projectContactsInfo: Contact[] | undefined;
+  setProjectContactsInfo: (contacts: Contact[] | undefined) => void;
+  contactInfoLoading: boolean;
+  setContactInfoLoading: (value: boolean) => void;
 }
 
 export const useProjectStore = create<ProjectStore>((set, get) => ({
@@ -25,4 +32,11 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   setLoading: (loading: boolean) => set({ loading }),
   isProjectOwner: false,
   setIsProjectOwner: (isProjectOwner: boolean) => set({ isProjectOwner }),
+  projectContactsInfo: undefined,
+  setProjectContactsInfo: (contacts) => set({ projectContactsInfo: contacts }),
+  contactInfoLoading: true,
+  setContactInfoLoading: (value) => set({ contactInfoLoading: value }),
+  isProjectOwnerLoading: true,
+  setIsProjectOwnerLoading: (loading: boolean) =>
+    set({ isProjectOwnerLoading: loading }),
 }));

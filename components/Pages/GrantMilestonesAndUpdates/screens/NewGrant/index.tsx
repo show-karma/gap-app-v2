@@ -5,13 +5,7 @@ import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { MilestoneWithCompleted } from "@/types/milestones";
-import {
-  MESSAGES,
-  PAGES,
-  appNetwork,
-  useSigner,
-  walletClientToSigner,
-} from "@/utilities";
+import { MESSAGES, PAGES, appNetwork, useSigner } from "@/utilities";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   GrantDetails,
@@ -28,15 +22,15 @@ import { Hex, isAddress } from "viem";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 import { z } from "zod";
 import { Milestone as MilestoneComponent } from "./Milestone";
-
+import { useRouter } from "next/router";
 import { CommunitiesDropdown } from "@/components/CommunitiesDropdown";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useGap } from "@/hooks";
 import toast from "react-hot-toast";
-import { useRouter } from "next/router";
 import { useSearchParams } from "next/navigation";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { getWalletClient } from "@wagmi/core";
+import { useQueryState } from "nuqs";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -62,8 +56,8 @@ const grantSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.GRANT.FORM.TITLE }),
   amount: z.string().optional(),
   community: z.string().nonempty({ message: MESSAGES.GRANT.FORM.COMMUNITY }),
-  season: z.string(),
-  cycle: z.string(),
+  // season: z.string(),
+  // cycle: z.string(),
   linkToProposal: z
     .string()
     .url({
@@ -200,6 +194,8 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { gap } = useGap();
   const { isConnected } = useAccount();
 
+  const [, changeTab] = useQueryState("tab");
+
   function premade<T extends GenericQuestion>(
     type: QuestionType,
     questions: string[]
@@ -241,8 +237,8 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       title: grantScreen === "edit-grant" ? grantToEdit?.details?.title : "",
       amount: grantScreen === "edit-grant" ? grantToEdit?.details?.amount : "",
       community: grantScreen === "edit-grant" ? grantToEdit?.communityUID : "",
-      season: grantScreen === "edit-grant" ? grantToEdit?.details?.season : "",
-      cycle: grantScreen === "edit-grant" ? grantToEdit?.details?.cycle : "",
+      // season: grantScreen === "edit-grant" ? grantToEdit?.details?.season : "",
+      // cycle: grantScreen === "edit-grant" ? grantToEdit?.details?.cycle : "",
       linkToProposal:
         grantScreen === "edit-grant" ? grantToEdit?.details?.proposalURL : "",
       successQuestions: premade<SuccessQuestion>(
@@ -307,8 +303,8 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           title: data.title,
           assetAndChainId: ["0x0", 1],
           payoutAddress: address,
-          cycle: data.cycle,
-          season: data.season,
+          // cycle: data.cycle,
+          // season: data.season,
           questions: data.questions,
         },
         refUID: grant.uid,
@@ -366,13 +362,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         .then(async () => {
           // eslint-disable-next-line no-param-reassign
           toast.success(MESSAGES.GRANT.CREATE.SUCCESS);
-          router.push(
-            PAGES.PROJECT.TABS.SELECTED_TAB(
-              selectedProject.details?.slug || selectedProject.uid,
-              grant.uid,
-              "overview"
-            )
-          );
+          changeTab("overview");
           selectedProject?.grants.unshift(grant);
         });
     } catch (error) {
@@ -393,14 +383,15 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       oldGrant.setValues({
         communityUID: data.community,
       });
+
       oldGrant.details?.setValues({
         amount: data.amount || "",
         description: data.description,
         proposalURL: data.linkToProposal,
         title: data.title,
         payoutAddress: address,
-        cycle: data.cycle,
-        season: data.season,
+        // cycle: data.cycle,
+        // season: data.season,
         questions: data.questions,
       });
 
@@ -485,8 +476,8 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       title: data.title,
       milestones,
       community: data.community,
-      season: data.season,
-      cycle: data.cycle,
+      // season: data.season,
+      // cycle: data.cycle,
       recipient: data.recipient,
       grantUpdate,
       questions,
@@ -537,7 +528,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             {grantScreen === "edit-grant" ? "Edit grant" : "Create a new grant"}
           </h3>
           <Button
-            className="bg-transparent px-4 hover:bg-transparent hover:opacity-75 text-black dark:text-zinc-100"
+            className="bg-transparent px-1 hover:bg-transparent hover:opacity-75 text-black dark:text-zinc-100"
             onClick={() => {
               if (!selectedProject) return;
               if (!grantToEdit) {
@@ -548,13 +539,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                 );
                 return;
               }
-              router.push(
-                PAGES.PROJECT.TABS.SELECTED_TAB(
-                  selectedProject?.details?.slug || selectedProject.uid,
-                  grantToEdit.uid,
-                  "overview"
-                )
-              );
+              changeTab("overview");
             }}
           >
             <XMarkIcon className="h-8 w-8 " />
@@ -614,7 +599,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
               {errors.linkToProposal?.message}
             </p>
           </div>
-          <div className="flex w-full flex-col">
+          {/* <div className="flex w-full flex-col">
             <label htmlFor="grant-season" className={labelStyle}>
               Season (optional)
             </label>
@@ -625,8 +610,8 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
               {...register("season")}
             />
             <p className="text-base text-red-400">{errors.season?.message}</p>
-          </div>
-          <div className="flex w-full flex-col">
+          </div> */}
+          {/* <div className="flex w-full flex-col">
             <label htmlFor="grant-cycle" className={labelStyle}>
               Cycle (optional)
             </label>
@@ -637,7 +622,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
               {...register("cycle")}
             />
             <p className="text-base text-red-400">{errors.cycle?.message}</p>
-          </div>
+          </div> */}
 
           {isOwner && (
             <div className="flex w-full flex-col">
@@ -847,13 +832,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                 );
                 return;
               }
-              router.push(
-                PAGES.PROJECT.TABS.SELECTED_TAB(
-                  selectedProject.details?.slug || selectedProject.uid,
-                  grantToEdit.uid,
-                  "overview"
-                )
-              );
+              changeTab("overview");
             }}
           >
             Cancel

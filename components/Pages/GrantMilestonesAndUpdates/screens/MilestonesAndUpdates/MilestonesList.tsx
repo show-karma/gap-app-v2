@@ -79,10 +79,6 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
 
   const signer = useSigner();
 
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isAuthorized = isProjectOwner || isContractOwner;
-
   const checkIfAdmin = async () => {
     if (!chain?.id || !gap) return;
     try {
