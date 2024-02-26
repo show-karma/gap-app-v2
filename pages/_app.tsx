@@ -10,11 +10,13 @@ import Header from "@/components/Utilities/Header";
 import { Toaster } from "react-hot-toast";
 import WagmiProvider from "@/components/Utilities/WagmiProvider";
 import NextThemeProvider from "@/components/Utilities/NextThemeProvider";
+import NextNProgress from "nextjs-progressbar";
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
     <WagmiProvider>
       <Toaster />
+      <NextNProgress options={{ showSpinner: false }} />
       <NextThemeProvider>
         <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">
           <div>
