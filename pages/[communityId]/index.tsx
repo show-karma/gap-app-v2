@@ -72,7 +72,7 @@ export async function getStaticProps(context: GetStaticPropsContext) {
   return {
     props: {
       communityId,
-      communityName: (data as Community).details?.name || "",
+      communityName: (data as Community).details?.data?.name || "",
       community: data as Community,
     },
     revalidate: 5 * 60, // revalidate every 5 minutes
