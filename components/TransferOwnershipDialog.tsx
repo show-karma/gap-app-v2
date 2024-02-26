@@ -53,6 +53,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
       });
     } catch (error) {
       toast.error("Something went wrong. Please try again later.");
+      console.error(error);
     } finally {
       setIsLoading(false);
     }
