@@ -1,13 +1,15 @@
 /* eslint-disable @next/next/no-img-element */
 import type { FC } from "react";
 import { MESSAGES, PAGES } from "@/utilities";
-import { useProjectStore } from "@/store";
+import { useOwnerStore, useProjectStore } from "@/store";
 import { useQueryState } from "nuqs";
 
 export const EmptyGrantsSection: FC = () => {
   const isProjectAdmin = useProjectStore((state) => state.isProjectOwner);
+  const isOwner = useOwnerStore((state) => state.isOwner);
+  const isAuthorized = isProjectAdmin || isOwner;
   const [, changeTab] = useQueryState("tab");
-  if (!isProjectAdmin) {
+  if (!isAuthorized) {
     return (
       <div className="flex w-full items-center justify-center rounded border border-gray-200 px-6 py-10">
         <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
