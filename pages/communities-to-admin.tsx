@@ -13,32 +13,10 @@ import {
 import Link from "next/link";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { NextSeo } from "next-seo";
+import { useCommunitiesStore } from "@/store/communities";
 
 export default function CommunitiesToAdmin() {
-  const { address, isConnected } = useAccount();
-  const [communitiesToAdmin, setCommunitiesToAdmin] = useState<Community[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-
-  const getCommunities = async () => {
-    if (!address || !isConnected) {
-      setCommunitiesToAdmin([]);
-      return;
-    }
-
-    setIsLoading(true);
-    const communitiesOf = await getCommunitiesOf(address);
-
-    if (communitiesOf && communitiesOf.length !== 0) {
-      setCommunitiesToAdmin(communitiesOf);
-    } else {
-      setCommunitiesToAdmin([]);
-    }
-    setIsLoading(false);
-  };
-
-  useEffect(() => {
-    getCommunities();
-  }, [address, isConnected]);
+  const {communities: communitiesToAdmin, isLoading} = useCommunitiesStore();
 
   return (
     <>

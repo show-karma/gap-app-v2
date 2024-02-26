@@ -1,20 +1,8 @@
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/router";
-import { useGap } from "@/hooks";
-import {
-  PAGES,
-  cn,
-  defaultMetadata,
-  ogMeta,
-  twitterMeta,
-  zeroUID,
-  INDEXER,
-} from "@/utilities";
-import { getMetadata } from "@/utilities/sdk/getMetadata";
-import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
-import { Hex } from "viem";
+import React from "react";
+import { defaultMetadata, INDEXER } from "@/utilities";
+import { GetStaticPropsContext, InferGetServerSidePropsType } from "next";
 import { NextSeo } from "next-seo";
-import { Community, ICommunityDetails } from "@show-karma/karma-gap-sdk";
+import { Community } from "@show-karma/karma-gap-sdk";
 import { CommunityGrants } from "@/components/CommunityGrants";
 import { CommunityFeed } from "@/components/CommunityFeed";
 import { communityColors } from "@/utilities/communityColors";
@@ -68,69 +56,41 @@ type Props = {
 //     },
 //   };
 // }
-export async function getServerSideProps(context: GetServerSidePropsContext) {
+export async function getStaticProps(context: GetStaticPropsContext) {
   const { params } = context;
   const communityId = params?.communityId as string;
-  const communityInfo = await getMetadata<ICommunityDetails>(
-    "communities",
-    communityId as Hex
+  const [data, error, pageInfo]: any = await fetchData(
+    INDEXER.COMMUNITY.GET(communityId as string)
   );
-  if (communityInfo?.uid === zeroUID || !communityInfo) {
+
+  if (!data) {
     return {
       notFound: true,
     };
   }
+
   return {
     props: {
       communityId,
-      communityName: communityInfo?.name || "",
+      communityName: (data as Community).details?.data?.name || "",
+      community: data as Community,
     },
+    revalidate: 5 * 60, // revalidate every 5 minutes
+  };
+}
+
+export function getStaticPaths() {
+  return {
+    paths: [],
+    fallback: "blocking",
   };
 }
 
 export default function Index({
   communityId,
   communityName,
-}: InferGetServerSidePropsType<typeof getServerSideProps>) {
-  const router = useRouter();
-  const { gap } = useGap();
-
-  // Call API
-  const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
-  const [community, setCommunity] = useState<Community | undefined>(undefined); // Data returned from the API
-
-  useEffect(() => {
-    const fetchDetails = async () => {
-      if (!communityId || !gap) return;
-      setLoading(true);
-      try {
-        // const result = await (communityId.startsWith("0x")
-        //   ? gap.fetch.communityById(communityId as `0x${string}`)
-        //   : gap.fetch.communityBySlug(communityId));
-
-        const [data, error, pageInfo]: any = await fetchData(
-          INDEXER.COMMUNITY.GET(communityId as string)
-        );
-
-        if (!data || data.uid === zeroUID)
-          throw new Error("Community not found");
-        setCommunity(data);
-      } catch (error: any) {
-        console.error("Error fetching data:", error);
-        if (
-          error.message === "Community not found" ||
-          error.message.includes("422")
-        ) {
-          router.push(PAGES.NOT_FOUND);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDetails();
-  }, [communityId, gap]);
-
+  community,
+}: InferGetServerSidePropsType<typeof getStaticProps>) {
   const dynamicMetadata = {
     title: `Karma GAP - ${communityName} community grants`,
     description: `View the list of grants issued by ${
@@ -179,22 +139,14 @@ export default function Index({
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
             <img
               src={community?.details?.data?.imageURL}
-              className={cn(
-                "h-14 w-14 rounded-full border border-white p-1 max-lg:h-8 max-lg:w-8",
-                loading ? "animate-pulse bg-gray-600" : ""
-              )}
+              className={
+                "h-14 w-14 rounded-full border border-white p-1 max-lg:h-8 max-lg:w-8"
+              }
             />
           </div>
 
           <p className="text-3xl font-semibold text-white max-2xl:text-2xl max-lg:text-xl">
-            <span
-              className={cn(
-                "font-body",
-                loading
-                  ? "animate-pulse min-w-32 bg-gray-600 rounded-lg px-4 py-0 mr-4"
-                  : ""
-              )}
-            >
+            <span className={"font-body"}>
               {community ? community.details?.data?.name : ""}
             </span>{" "}
             Community Grants
