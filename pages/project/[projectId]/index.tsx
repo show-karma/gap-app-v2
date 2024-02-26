@@ -316,10 +316,10 @@ export const NestedLayout = ({ children }: Props) => {
                       : "border-transparent text-gray-600  px-0 hover:border-gray-300 hover:text-gray-700 dark:text-gray-200 font-normal"
                   )}
                 >
-                  {tab.name === "Contact Info" && !hasContactInfo ? (
-                    <ExclamationTriangleIcon className="w-4 h-4" />
-                  ) : null}
                   {tab.name}
+                  {tab.name === "Contact Info" && !hasContactInfo ? (
+                    <ExclamationTriangleIcon className="w-4 h-4 text-yellow-500" />
+                  ) : null}
                   {tab.name === "Grants" && project?.grants?.length ? (
                     <p className="rounded-2xl bg-gray-200 px-2.5 py-[2px] text-center text-sm font-medium leading-tight text-slate-700 dark:bg-slate-700 dark:text-zinc-300">
                       {formatCurrency(project?.grants?.length || 0)}
