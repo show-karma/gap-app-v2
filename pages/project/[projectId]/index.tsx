@@ -53,6 +53,10 @@ export const NestedLayout = ({ children }: Props) => {
   const setProject = useProjectStore((state) => state.setProject);
   const setLoading = useProjectStore((state) => state.setLoading);
   const setIsProjectOwner = useProjectStore((state) => state.setIsProjectOwner);
+  const setIsProjectOwnerLoading = useProjectStore(
+    (state) => state.setIsProjectOwnerLoading
+  );
+
   const publicTabs = [
     {
       name: "Project",
@@ -176,11 +180,16 @@ export const NestedLayout = ({ children }: Props) => {
   useEffect(() => {
     if (!signer || !project) {
       setIsProjectOwner(false);
+      setIsProjectOwnerLoading(false);
       return;
     }
     const setupOwner = async () => {
-      const isOwner = await getProjectOwner(signer as any, project);
-      setIsProjectOwner(isOwner);
+      setIsProjectOwnerLoading(true);
+      await getProjectOwner(signer as any, project)
+        .then((res) => {
+          setIsProjectOwner(res);
+        })
+        .finally(() => setIsProjectOwnerLoading(false));
     };
     setupOwner();
   }, [signer, project, address]);
