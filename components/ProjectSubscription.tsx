@@ -9,6 +9,7 @@ import { INDEXER, PAGES, envVars } from "@/utilities";
 import { useOwnerStore, useProjectStore } from "@/store";
 import axios from "axios";
 import { useRouter } from "next/router";
+import { Spinner } from "./Utilities/Spinner";
 
 const labelStyle = "text-sm font-bold";
 const inputStyle =
@@ -42,9 +43,16 @@ export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({
   const project = useProjectStore((state) => state.project);
 
   const isOwner = useOwnerStore((state) => state.isOwner);
+  const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isProjectOwnerLoading = useProjectStore(
+    (state) => state.isProjectOwnerLoading
+  );
 
   const isAuthorized = isOwner || isProjectOwner;
+  const isAuthorizationLoading = isOwnerLoading || isProjectOwnerLoading;
+
+  console.log(isOwnerLoading, isProjectOwnerLoading);
 
   const dataToUpdate = {
     name: contactInfo?.name || "",
@@ -88,6 +96,17 @@ export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({
       setIsLoading(false);
     }
   };
+
+  if (isAuthorizationLoading) {
+    return (
+      <div className="px-4 py-4 rounded-md border border-transparent dark:bg-zinc-800  dark:border flex flex-col gap-4 items-start">
+        <h3 className="text-xl font-bold leading-6 text-gray-900 dark:text-zinc-100">
+          Loading contact info...
+        </h3>
+        <Spinner />
+      </div>
+    );
+  }
 
   return isAuthorized ? (
     <div className="px-4 py-4 rounded-md border border-transparent dark:bg-zinc-800  dark:border flex flex-col gap-4 items-start">
