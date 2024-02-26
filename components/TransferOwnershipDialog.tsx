@@ -6,7 +6,7 @@ import { Button } from "./Utilities/Button";
 import toast from "react-hot-toast";
 import { isAddress } from "viem";
 import { transferOwnership, useSigner } from "@/utilities";
-import { useProjectStore } from "@/store";
+import { useOwnerStore, useProjectStore } from "@/store";
 
 type TransferOwnershipProps = {
   buttonElement?: {
@@ -39,6 +39,11 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isOwner = useOwnerStore((state) => state.isOwner);
+
+  const isAuthorized = isProjectOwner || isOwner;
+
   const transfer = async () => {
     if (!project) return;
     if (!newOwner || !isAddress(newOwner)) {
@@ -66,7 +71,11 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
 
   return (
     <>
-      <Button onClick={openModal} className={buttonElement.styleClass}>
+      <Button
+        disabled={!isAuthorized}
+        onClick={openModal}
+        className={buttonElement.styleClass}
+      >
         {buttonElement.icon}
         {buttonElement.text}
       </Button>
