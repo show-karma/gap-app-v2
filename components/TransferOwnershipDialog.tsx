@@ -5,8 +5,14 @@ import { PlusIcon } from "@heroicons/react/24/solid";
 import { Button } from "./Utilities/Button";
 import toast from "react-hot-toast";
 import { isAddress } from "viem";
-import { transferOwnership, useSigner } from "@/utilities";
+import {
+  appNetwork,
+  checkNetworkIsValid,
+  transferOwnership,
+  useSigner,
+} from "@/utilities";
 import { useOwnerStore, useProjectStore } from "@/store";
+import { useNetwork, useSwitchNetwork } from "wagmi";
 
 type TransferOwnershipProps = {
   buttonElement?: {
@@ -28,7 +34,6 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
   const [newOwner, setNewOwner] = useState<string>();
   const [isLoading, setIsLoading] = useState(false);
   const [validAddress, setValidAddress] = useState(true);
-
   function closeModal() {
     setIsOpen(false);
   }
@@ -36,11 +41,13 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
     setIsOpen(true);
   }
   const signer = useSigner();
+  const { chain } = useNetwork();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
-
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-
+  const { switchNetworkAsync } = useSwitchNetwork({
+    chainId: project?.chainID || appNetwork[0].id,
+  });
   const transfer = async () => {
     if (!project) return;
     if (!newOwner || !isAddress(newOwner)) {
@@ -49,6 +56,9 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
     }
     try {
       setIsLoading(true);
+      if (!checkNetworkIsValid(chain?.id)) {
+        await switchNetworkAsync?.(project.chainID);
+      }
       await transferOwnership(project, newOwner, signer).then(async () => {
         await refreshProject();
         toast.success("Ownership transferred successfully");
