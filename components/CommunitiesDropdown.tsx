@@ -89,5 +89,4 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
       </Popover.Content>
     </Popover.Root>
   );
-  return <p>a</p>;
 };

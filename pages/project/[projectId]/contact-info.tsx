@@ -16,9 +16,7 @@ import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { IProjectDetails } from "@show-karma/karma-gap-sdk";
 import { NextSeo } from "next-seo";
 import { ProjectSubscription } from "@/components/ProjectSubscription";
-import fetchData from "@/utilities/fetchData";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { useRouter } from "next/router";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { params } = context;
@@ -49,10 +47,16 @@ const ContactInfoPage = ({
     title: `Karma GAP - ${projectTitle}`,
     description: projectDesc,
   };
-  const contactInfo = useProjectStore((state) => state.projectContactInfo);
+  const contactsInfo = useProjectStore((state) => state.projectContactsInfo);
   const contactInfoLoading = useProjectStore(
     (state) => state.contactInfoLoading
   );
+
+  const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);
+  const isProjectOwnerLoading = useProjectStore(
+    (state) => state.isProjectOwnerLoading
+  );
+  const isAuthorizationLoading = isOwnerLoading || isProjectOwnerLoading;
 
   return (
     <>
@@ -83,10 +87,18 @@ const ContactInfoPage = ({
         ]}
       />
       <div className="pt-5 pb-20">
-        {contactInfoLoading ? (
-          <Spinner />
+        {contactInfoLoading || isAuthorizationLoading ? (
+          <div className="px-4 py-4 rounded-md border border-transparent dark:bg-zinc-800  dark:border flex flex-col gap-4 items-start">
+            <h3 className="text-xl font-bold leading-6 text-gray-900 dark:text-zinc-100">
+              Loading contact info...
+            </h3>
+            <Spinner />
+          </div>
         ) : (
-          <ProjectSubscription contactInfo={contactInfo} />
+          <ProjectSubscription
+            contactInfo={contactsInfo?.[contactsInfo.length - 1]}
+            existingContacts={contactsInfo}
+          />
         )}
       </div>
     </>
