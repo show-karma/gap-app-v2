@@ -163,7 +163,7 @@ export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({
               id="name-input"
               type="text"
               className={inputStyle}
-              placeholder='e.g. "John Smith"'
+              placeholder="John Smith"
               {...register("name")}
             />
             <p className="text-red-500">{errors.name?.message}</p>
@@ -176,7 +176,7 @@ export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({
               id="email-input"
               type="text"
               className={inputStyle}
-              placeholder='e.g. "john.smith@smith.co"'
+              placeholder="john.smith@smith.co"
               {...register("email")}
             />
             <p className="text-red-500">{errors.email?.message}</p>
@@ -189,7 +189,7 @@ export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({
               id="telegram-input"
               type="text"
               className={inputStyle}
-              placeholder='e.g. "@johnsmith"'
+              placeholder="johnsmith"
               {...register("telegram")}
             />
             <p className="text-red-500">{errors.telegram?.message}</p>
