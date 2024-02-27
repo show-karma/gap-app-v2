@@ -1,29 +1,35 @@
-import type { Chain } from "viem/chains";
-import { arbitrum, optimism, optimismGoerli, sepolia } from "viem/chains";
-import type { TNetwork } from "@show-karma/karma-gap-sdk";
+import type { Chain } from 'viem/chains';
+import { arbitrum, optimism, optimismSepolia, sepolia } from 'viem/chains';
+import type { TNetwork } from '@show-karma/karma-gap-sdk';
 
 export const appNetwork: [Chain, Chain, ...Chain[]] =
-  process.env.NEXT_PUBLIC_ENV === "production"
+  process.env.NEXT_PUBLIC_ENV === 'production'
     ? [optimism, arbitrum]
-    : [optimismGoerli, sepolia];
+    : [optimismSepolia, sepolia];
 
 export function getChainIdByName(name: string) {
   switch (name) {
-    case "mainnet":
+    case 'mainnet':
       return 1;
-    case "OP Mainnet":
+    case 'OP Mainnet':
       return 10;
-    case "optimism":
+    case 'optimism':
       return 10;
-    case "arbitrum":
+    case 'arbitrum':
       return 42161;
-    case "optimismGoerli":
+    case 'optimismGoerli':
       return 420;
-    case "Optimism Goerli":
+    case 'Optimism Goerli':
       return 420;
-    case "optimism-goerli":
+    case 'optimism-goerli':
       return 420;
-    case "sepolia":
+    case 'optimismSepolia':
+      return 11155420;
+    case 'Optimism Sepolia':
+      return 11155420;
+    case 'optimism-sepolia':
+      return 11155420;
+    case 'sepolia':
       return 11155111;
     default:
       throw new Error(`Unknown chain name: ${name}`);
@@ -35,13 +41,15 @@ export function getChainNameById(id: number): TNetwork {
     // case 1:
     //   return 'mainnet';
     case 10:
-      return "optimism";
+      return 'optimism';
     case 42161:
-      return "arbitrum";
+      return 'arbitrum';
     case 420:
-      return "optimism-goerli";
+      return 'optimism-goerli';
+    case 11155420:
+      return 'optimism-sepolia';
     case 11155111:
-      return "sepolia";
+      return 'sepolia';
     default: {
       const network = appNetwork[0].name;
       return getChainNameById(getChainIdByName(network));
