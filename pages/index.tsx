@@ -11,6 +11,7 @@ import { NextSeo } from "next-seo";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components/Utilities/Button";
 import dynamic from "next/dynamic";
+import { useTheme } from "next-themes";
 
 const ProjectDialog = dynamic(() =>
   import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog)
@@ -161,7 +162,7 @@ const Communities = () => {
   //       community.uid
   //   )
   // );
-
+  const { theme } = useTheme();
   return (
     <div className="mb-8 mt-[80px] flex h-max w-full flex-row justify-center gap-4 max-md:flex-col max-lg:flex-wrap">
       <div className="flex h-max w-max flex-col gap-6 rounded-3xl  bg-[#EAECF0] dark:bg-zinc-400 p-8 max-lg:w-full">
@@ -183,7 +184,11 @@ const Communities = () => {
               <div>
                 <img
                   alt={community.name}
-                  src={community.imageURL}
+                  src={
+                    theme === "light"
+                      ? community.imageURL.light
+                      : community.imageURL.dark
+                  }
                   className="h-20 w-20 rounded-full object-cover max-lg:h-10 max-lg:w-10 max-sm:h-6 max-sm:w-6"
                 />
               </div>
