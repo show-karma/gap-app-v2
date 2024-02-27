@@ -61,5 +61,12 @@ export const chosenCommunities = () => {
       imageURL:
         "https://pbs.twimg.com/profile_images/1576701761103966210/tRVx6Mxx_400x400.jpg",
     },
+    {
+      name: "Pokt",
+      slug: "pokt",
+      uid: "0x1be3b3cfd9ea03ef066beae8c0e94c289bf1eae8732bfcf82177ea4e848e61fa",
+      imageURL:
+        "https://assets-global.website-files.com/651fe0a9a906d151784935f8/65834b8745b60c35c76cab89_Logo-black.svg",
+    },
   ];
 };
