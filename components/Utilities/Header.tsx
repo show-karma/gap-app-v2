@@ -7,7 +7,7 @@ import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { MoonIcon, SunIcon } from "@heroicons/react/24/solid";
 
-import { useAccount } from "wagmi";
+import { ConnectorData, useAccount, useConnect, useDisconnect } from "wagmi";
 import {
   PAGES,
   cn,
@@ -27,6 +27,8 @@ import { Button } from "./Button";
 import { useTheme } from "next-themes";
 import { Searchbar } from "../Searchbar";
 import dynamic from "next/dynamic";
+import { useAuthStore } from "@/store/auth";
+import { useAuth } from "@/hooks/useAuth";
 
 const ProjectDialog = dynamic(() =>
   import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog)
@@ -115,6 +117,32 @@ export default function Header() {
   useEffect(() => {
     setIsReady(true);
   }, []);
+
+  const { authenticate, disconnect, softDisconnect } = useAuth();
+  const { connector: activeConnector } = useAccount();
+
+  useEffect(() => {
+    const handleConnectorUpdate = ({ account, chain }: ConnectorData) => {
+      if (account) {
+        console.log("account", account);
+        softDisconnect(account);
+      } else if (chain) {
+        console.log("new chain", chain);
+      }
+    };
+
+    if (activeConnector) {
+      activeConnector.on("change", handleConnectorUpdate);
+    }
+
+    return () => activeConnector?.off("change", handleConnectorUpdate) as any;
+  }, [activeConnector]);
+
+  useEffect(() => {
+    if (isConnected && isReady) {
+      authenticate();
+    }
+  }, [isConnected, isReady]);
 
   return (
     <>
@@ -246,7 +274,9 @@ export default function Header() {
 
                                 return (
                                   <Button
-                                    onClick={openAccountModal}
+                                    onClick={async () => {
+                                      disconnect();
+                                    }}
                                     className="flex w-max items-center flex-row gap-2 rounded-full bg-gray-500 p-0 pl-3 text-sm font-semibold text-white hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
                                   >
                                     {account.displayName}
@@ -401,7 +431,9 @@ export default function Header() {
 
                                 return (
                                   <Button
-                                    onClick={openAccountModal}
+                                    onClick={async () => {
+                                      disconnect();
+                                    }}
                                     className="flex w-full py-1 justify-center items-center flex-row gap-2 rounded-full bg-gray-500 text-sm font-semibold text-white  hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
                                   >
                                     {account.displayName}

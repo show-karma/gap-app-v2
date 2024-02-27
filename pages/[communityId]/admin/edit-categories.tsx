@@ -28,6 +28,7 @@ import pluralize from "pluralize";
 import { Button } from "@/components/Utilities/Button";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
+import { CategoryCreationDialog } from "@/components/Pages/Admin/CategoryCreationDialog";
 
 interface GrantEdited {
   uid: string;
@@ -43,9 +44,6 @@ type SimplifiedGrants = {
   grant: string;
   project: string;
   description: string;
-  milestones: number;
-  updates: number;
-  completed: number;
   createdOn: string;
   categories: string[];
   uid: string;
@@ -135,43 +133,47 @@ export default function Index() {
     checkIfAdmin();
   }, [address, isConnected, community?.uid, signer]);
 
+  const getCategories = async () => {
+    try {
+      const [data] = await fetchData(
+        INDEXER.GRANTS.CATEGORIES.ALL(communityId)
+      );
+      const orderedCategories = data.sort(
+        (a: CategoriesOptions, b: CategoriesOptions) => {
+          return a.name.localeCompare(b.name, "en");
+        }
+      );
+      setCategoriesOptions(orderedCategories);
+    } catch (error) {
+      setCategoriesOptions([]);
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
     if (!communityId || communityId === zeroUID) return;
-
-    const getCategories = async () => {
-      try {
-        const [data] = await fetchData(INDEXER.GRANTS.CATEGORIES.ALL);
-        const orderedCategories = data.sort(
-          (a: CategoriesOptions, b: CategoriesOptions) => {
-            return a.name.localeCompare(b.name, "en");
-          }
-        );
-        setCategoriesOptions(orderedCategories);
-      } catch (error) {
-        setCategoriesOptions([]);
-        console.error(error);
-      }
-    };
 
     const fetchGrants = async () => {
       setLoading(true);
       try {
-        const fetchedGrants = await getGrants(communityId as Hex);
+        const { grants: fetchedGrants } = await getGrants(communityId as Hex);
         if (fetchedGrants) {
           setTotalGrants(fetchedGrants.length);
+
           const mapSimplifiedGrants: SimplifiedGrants[] = fetchedGrants
             .slice(itemsPerPage * (currentPage - 1), itemsPerPage * currentPage)
-            .map((grant) => ({
-              grant: grant.details?.title || "",
-              project: grant.project?.title || "",
-              description: reduceText(grant.details?.description || ""),
-              milestones: grant.milestones?.length || 0,
-              updates: grant.updates.length,
-              completed: milestonesPercentage(grant),
-              createdOn: formatDate(grant.createdAt),
-              categories: grant.categories || [],
-              uid: grant.uid,
-            }));
+            .map(
+              (grant: any) =>
+                ({
+                  grant: grant.details?.data?.title || grant.uid || "",
+                  project: grant.project?.details?.data?.title || "",
+                  description: reduceText(
+                    grant.details?.data?.description || ""
+                  ),
+                  categories: grant.categories || [],
+                  uid: grant.uid,
+                } as SimplifiedGrants)
+            );
           setGrants(mapSimplifiedGrants);
         }
       } catch (error) {
@@ -194,31 +196,46 @@ export default function Index() {
     setGrantsEdited(newGrantsEdited);
   };
 
-  const saveEdits = () => {
+  const saveEdits = async () => {
     setIsSaving(true);
     try {
+      let hasError = false;
       const promises = grantsEdited.map((grant) => {
         return fetchData(INDEXER.GRANTS.CATEGORIES.UPDATE(grant.uid), "PUT", {
           categories: grant.categories,
-        }).then(() => {
-          // update grant
-          const grantToEdit = grants.find(
-            (item) => item.uid === grant.uid
-          ) as SimplifiedGrants;
-          grantToEdit.categories = grant.categories;
-          setGrants([...grants]);
+        })
+          .then(([res, error]) => {
+            if (error) {
+              hasError = true;
+            }
+            // update grant
+            const grantToEdit = grants.find(
+              (item) => item.uid === grant.uid
+            ) as SimplifiedGrants;
+            grantToEdit.categories = grant.categories;
+            setGrants([...grants]);
 
-          // update edited grants
-          const newGrantsEdited = grantsEdited.filter(
-            (item) => item.uid !== grant.uid
-          );
-          setGrantsEdited(newGrantsEdited);
-        });
+            // update edited grants
+            const newGrantsEdited = grantsEdited.filter(
+              (item) => item.uid !== grant.uid
+            );
+            setGrantsEdited(newGrantsEdited);
+          })
+          .catch((error) => {
+            console.error(error);
+            hasError = true;
+          });
       });
-      Promise.all(promises);
+      const teste = await Promise.all(promises);
+
+      if (hasError) {
+        throw new Error("Error updating categories");
+      }
+
       toast.success("Categories updated successfully.");
-    } catch {
+    } catch (error) {
       toast.error("Something went wrong, please try again later.");
+      console.log(error);
     } finally {
       setIsSaving(false);
     }
@@ -285,7 +302,7 @@ export default function Index() {
             </div>
           ) : isAdmin ? (
             <div className="w-full flex flex-col gap-8">
-              <div className="w-full flex flex-row items-center justify-start  max-w-4xl">
+              <div className="w-full flex flex-row items-center justify-between">
                 <Link
                   href={PAGES.ADMIN.ROOT(
                     community?.details?.slug || (community?.uid as string)
@@ -296,6 +313,9 @@ export default function Index() {
                     Return to admin page
                   </Button>
                 </Link>
+                <div className="flex">
+                  <CategoryCreationDialog refreshCategories={getCategories} />
+                </div>
               </div>
               <div className="flex flex-col justify-center w-full max-w-full overflow-x-auto rounded-md border">
                 <table className="pt-3 min-w-full divide-y dark:bg-zinc-900 divide-gray-300 dark:divide-zinc-800 dark:text-white">
@@ -344,12 +364,12 @@ export default function Index() {
                           className="dark:text-zinc-300 text-gray-900 px-4 py-4"
                         >
                           <td className="px-4 py-2 font-medium h-16">
-                            <div className=" max-w-[200px] line-clamp-2">
+                            <div className="max-w-full line-clamp-2">
                               {grant.project}
                             </div>
                           </td>
                           <td className="px-4 py-2">
-                            <div className=" max-w-[200px] line-clamp-2">
+                            <div className="max-w-full line-clamp-2">
                               {grant.grant}
                             </div>
                           </td>
@@ -392,7 +412,7 @@ export default function Index() {
                                       leaveFrom="opacity-100"
                                       leaveTo="opacity-0"
                                     >
-                                      <Listbox.Options className="dark:bg-zinc-800 dark:text-white absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base  ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                                      <Listbox.Options className="dark:bg-zinc-800 dark:text-white absolute z-10 mt-1 max-h-60 w-full max-w-max min-w-[200px] overflow-auto rounded-md bg-white py-1 text-base  ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                                         {categoriesOptions.map((category) => (
                                           <Listbox.Option
                                             key={category.id}
