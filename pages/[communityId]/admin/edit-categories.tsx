@@ -157,9 +157,10 @@ export default function Index() {
       setLoading(true);
       try {
         const fetchedGrants = await getGrants(communityId as Hex);
-        if (fetchedGrants) {
-          setTotalGrants(fetchedGrants.length);
+        if (fetchedGrants && fetchedGrants.data.length) {
+          setTotalGrants(prev => fetchedGrants.pageInfo.totalItems || prev);
           const mapSimplifiedGrants: SimplifiedGrants[] = fetchedGrants
+            .data
             .slice(itemsPerPage * (currentPage - 1), itemsPerPage * currentPage)
             .map((grant) => ({
               grant: grant.details?.title || "",

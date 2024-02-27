@@ -1,6 +1,6 @@
 import React from "react";
 import { defaultMetadata, INDEXER } from "@/utilities";
-import { GetStaticPropsContext, InferGetServerSidePropsType } from "next";
+import { GetStaticPropsContext, InferGetStaticPropsType } from "next";
 import { NextSeo } from "next-seo";
 import { Community } from "@show-karma/karma-gap-sdk";
 import { CommunityGrants } from "@/components/CommunityGrants";
@@ -59,11 +59,37 @@ type Props = {
 export async function getStaticProps(context: GetStaticPropsContext) {
   const { params } = context;
   const communityId = params?.communityId as string;
-  const [data, error, pageInfo]: any = await fetchData(
-    INDEXER.COMMUNITY.GET(communityId as string)
+  let community: Community | null = null;
+  let categoriesOptions: string[] = [];
+
+  await Promise.all(
+    [
+      async () => {
+        const [data, error, pageInfo]: any = await fetchData(
+          INDEXER.COMMUNITY.GET(communityId as string)
+        );
+
+        if (data) {
+          community = data as Community;
+        }
+      },
+      async () => {
+        const [data] = await fetchData(
+          INDEXER.COMMUNITY.CATEGORIES(communityId as string)
+        );
+        if (data && data.length) {
+          const categoriesToOrder = data.map(
+            (category: { name: string }) => category.name
+          );
+          categoriesOptions = categoriesToOrder.sort((a: string, b: string) => {
+            return a.localeCompare(b, "en");
+          });
+        }
+      },
+    ].map((func) => func())
   );
 
-  if (!data) {
+  if (!community) {
     return {
       notFound: true,
     };
@@ -72,8 +98,9 @@ export async function getStaticProps(context: GetStaticPropsContext) {
   return {
     props: {
       communityId,
-      communityName: (data as Community).details?.data?.name || "",
-      community: data as Community,
+      communityName: (community as Community)?.details?.data?.name || "",
+      community: community as Community,
+      categoriesOptions,
     },
     revalidate: 5 * 60, // revalidate every 5 minutes
   };
@@ -90,7 +117,8 @@ export default function Index({
   communityId,
   communityName,
   community,
-}: InferGetServerSidePropsType<typeof getStaticProps>) {
+  categoriesOptions,
+}: InferGetStaticPropsType<typeof getStaticProps>) {
   const dynamicMetadata = {
     title: `Karma GAP - ${communityName} community grants`,
     description: `View the list of grants issued by ${
@@ -154,7 +182,7 @@ export default function Index({
         </div>
 
         <div className="flex gap-8 flex-row max-lg:flex-col-reverse w-full">
-          <CommunityGrants />
+          <CommunityGrants categoriesOptions={categoriesOptions} />
           <CommunityFeed />
         </div>
       </div>

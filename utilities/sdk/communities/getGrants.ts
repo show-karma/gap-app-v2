@@ -1,8 +1,17 @@
-import type { Hex } from "@show-karma/karma-gap-sdk";
+import type { Grant, Hex } from "@show-karma/karma-gap-sdk";
 import { SortByOptions, StatusOptions } from "@/types/filters";
 import { filterByStatus, orderBySortBy } from "./grants";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+
+export interface GrantsResponse {
+  data: Grant[];
+  pageInfo: {
+    page: string;
+    pageLimit: string;
+    totalItems: number;
+  };
+}
 
 export const getGrants = async (
   uid: Hex,
@@ -15,7 +24,7 @@ export const getGrants = async (
     page: number;
     pageLimit: number;
   }
-) => {
+): Promise<GrantsResponse | null> => {
   try {
     const [grants] = await fetchData(
       INDEXER.COMMUNITY.GRANTS(uid, {
@@ -26,10 +35,6 @@ export const getGrants = async (
         status: filter?.status,
       })
     );
-    let grantsToFilter = [...grants];
-    if (grantsToFilter.length === 0) {
-      return [];
-    }
     // API returns all grants with filters and sorts, so we don't need to filter them anymore
     // if (filter?.categories?.length) {
     //   grantsToFilter = filterByCategory(filter.categories, grantsToFilter);
@@ -42,9 +47,9 @@ export const getGrants = async (
     //   grantsToFilter = orderBySortBy(filter.sortBy, grantsToFilter);
     // }
 
-    return grantsToFilter;
+    return grants;
   } catch (error) {
     console.log(error);
-    return [];
+    return null;
   }
 };

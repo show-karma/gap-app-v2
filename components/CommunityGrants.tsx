@@ -30,19 +30,17 @@ const statuses: Record<StatusOptions, string> = {
   starting: "Starting",
 };
 
-export const CommunityGrants = () => {
+interface CommunityGrantsProps {
+  categoriesOptions: string[];
+}
+
+export const CommunityGrants = ({
+  categoriesOptions,
+}: CommunityGrantsProps) => {
   const router = useRouter();
   const communityId = router.query.communityId as string;
-  const [categoriesOptions, setCategoriesOptions] = useState<string[]>([]);
 
   const [currentPage, setCurrentPage] = useState(0);
-
-  // const selectedCategories = useMemo(() => {
-  //   return typeof router.query.categories === "string" &&
-  //     router.query.categories.length
-  //     ? (router.query.categories as string).split(",")
-  //     : [];
-  // }, [router.query.categories]);
 
   const [selectedCategories, changeCategoriesQuery] = useQueryState(
     "categories",
@@ -74,32 +72,15 @@ export const CommunityGrants = () => {
   const [totalGrants, setTotalGrants] = useState(0);
   const [haveMore, setHaveMore] = useState(true);
 
-  useMemo(() => {
+  const selectedCategoriesIds = useMemo(
+    () => selectedCategories.join("_"),
+    [selectedCategories]
+  );
+
+  useEffect(() => {
     if (!communityId || communityId === zeroUID) return;
 
-    const getCategories = async () => {
-      try {
-        const [data]: any = await fetchData(
-          INDEXER.COMMUNITY.CATEGORIES(communityId as string)
-        );
-        if (data && data.length) {
-          const categoriesToOrder = data.map(
-            (category: { name: string }) => category.name
-          );
-          const orderedCategories = categoriesToOrder.sort(
-            (a: string, b: string) => {
-              return a.localeCompare(b, "en");
-            }
-          );
-          setCategoriesOptions(orderedCategories);
-        }
-      } catch (error) {
-        // setCategoriesOptions([]);
-        console.error(error);
-      }
-    };
-
-    const fetchGrants = async () => {
+    const fetchNewGrants = async () => {
       setLoading(true);
       try {
         const fetchedGrants = await getGrants(
@@ -107,16 +88,21 @@ export const CommunityGrants = () => {
           {
             sortBy: selectedSort,
             status: selectedStatus,
-            categories: selectedCategories,
+            categories: selectedCategoriesIds.split("_"),
           },
           {
             page: currentPage,
             pageLimit: itemsPerPage,
           }
         );
-        if (fetchedGrants) {
-          setHaveMore(fetchedGrants.length === itemsPerPage);
-          setGrants(fetchedGrants);
+        if (fetchedGrants && fetchedGrants.data) {
+          setHaveMore(fetchedGrants.data.length === itemsPerPage);
+          setGrants((prev) =>
+            currentPage === 0
+              ? fetchedGrants.data
+              : [...prev, ...fetchedGrants.data]
+          );
+          setTotalGrants((prev) => fetchedGrants.pageInfo.totalItems || prev);
         }
       } catch (error) {
         console.log("error", error);
@@ -125,74 +111,25 @@ export const CommunityGrants = () => {
         setLoading(false);
       }
     };
-
-    fetchGrants();
-    getCategories();
-  }, [communityId]);
-
-  useEffect(() => {
-    const getFullGrants = async () => {
-      try {
-        const fetchedGrants = await getGrants(communityId as Hex, {
-          sortBy: selectedSort,
-          status: selectedStatus,
-          categories: selectedCategories,
-        });
-        if (fetchedGrants) {
-          setTotalGrants(fetchedGrants.length);
-        }
-      } catch (error) {
-        setTotalGrants(0);
-        console.log("error", error);
-      }
-    };
-    getFullGrants();
-  }, [selectedSort, selectedStatus, selectedCategories]);
-
-  const fetchGrantsWithFilters = async ({
-    categoriesToFilter = selectedCategories,
-    sortByToFilter = selectedSort,
-    statusToFilter = selectedStatus,
-  }) => {
-    setGrants([]);
-    setLoading(true);
-    const page = 0;
-    setCurrentPage(page);
-    try {
-      const fetchedGrants = await getGrants(
-        communityId as Hex,
-        {
-          sortBy: sortByToFilter,
-          status: statusToFilter,
-          categories: categoriesToFilter,
-        },
-        {
-          page,
-          pageLimit: itemsPerPage,
-        }
-      );
-      if (fetchedGrants) {
-        setHaveMore(fetchedGrants.length === itemsPerPage);
-        setGrants(fetchedGrants);
-      }
-    } catch (error) {
-      console.log("error", error);
-      setGrants([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchNewGrants();
+  }, [
+    communityId,
+    selectedSort,
+    selectedStatus,
+    selectedCategoriesIds,
+    currentPage,
+  ]);
 
   const changeSort = async (newValue: SortByOptions) => {
-    fetchGrantsWithFilters({ sortByToFilter: newValue });
+    setCurrentPage(0);
     changeSortQuery(newValue);
   };
   const changeStatus = async (newValue: StatusOptions) => {
-    fetchGrantsWithFilters({ statusToFilter: newValue });
+    setCurrentPage(0);
     changeStatusQuery(newValue);
   };
   const changeCategories = async (newValue: string[]) => {
-    fetchGrantsWithFilters({ categoriesToFilter: newValue });
+    setCurrentPage(0);
     changeCategoriesQuery(newValue);
   };
 
@@ -200,36 +137,6 @@ export const CommunityGrants = () => {
     if (!loading) {
       const newPage = currentPage + 1;
       setCurrentPage(newPage);
-
-      const fetchNewGrants = async () => {
-        setLoading(true);
-        try {
-          const fetchedGrants = await getGrants(
-            communityId as Hex,
-            {
-              sortBy: selectedSort,
-              status: selectedStatus,
-              categories: selectedCategories,
-            },
-            {
-              page: newPage,
-              pageLimit: itemsPerPage,
-            }
-          );
-          if (fetchedGrants) {
-            const newGrantList =
-              newPage === 0 ? fetchedGrants : [...grants, ...fetchedGrants];
-            setHaveMore(fetchedGrants.length === itemsPerPage);
-            setGrants(newGrantList);
-          }
-        } catch (error) {
-          console.log("error", error);
-          setGrants([]);
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchNewGrants();
     }
   };
 
