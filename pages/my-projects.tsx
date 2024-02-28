@@ -103,7 +103,7 @@ export default function MyProjects() {
         additionalLinkTags={[
           {
             rel: "icon",
-            href: "/favicon.png",
+            href: "/images/favicon.png",
           },
         ]}
       />

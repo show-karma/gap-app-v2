@@ -122,7 +122,7 @@ export default function Index({
         additionalLinkTags={[
           {
             rel: "icon",
-            href: "/favicon.png",
+            href: "/images/favicon.png",
           },
         ]}
       />

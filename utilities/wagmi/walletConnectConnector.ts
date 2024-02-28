@@ -43,7 +43,7 @@ export const customWalletConnectConnector = (chains: Chain[]) =>
         name: "Karma GAP",
         description: "Karma GAP",
         url: "https://gap.karmahq.xyz",
-        icons: ["https://gap.karmahq.xyz/favicon.png"],
+        icons: ["https://gap.karmahq.xyz/images/favicon.png"],
       },
     },
   });
