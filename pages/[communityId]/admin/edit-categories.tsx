@@ -156,11 +156,10 @@ export default function Index() {
     const fetchGrants = async () => {
       setLoading(true);
       try {
-        const {grants: fetchedGrants} = await getGrants(communityId as Hex);
+        const { grants: fetchedGrants } = await getGrants(communityId as Hex);
         if (fetchedGrants) {
           setTotalGrants(fetchedGrants.length);
-
-          const mapSimplifiedGrants: SimplifiedGrants[] = fetchedGrants 
+          const mapSimplifiedGrants: SimplifiedGrants[] = fetchedGrants
             .slice(itemsPerPage * (currentPage - 1), itemsPerPage * currentPage)
             .map(
               (grant: any) =>
