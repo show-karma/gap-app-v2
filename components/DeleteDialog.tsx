@@ -13,6 +13,7 @@ type DeleteDialogProps = {
     styleClass: string;
   };
   isLoading: boolean;
+  afterFunction?: () => void;
 };
 
 export const DeleteDialog: FC<DeleteDialogProps> = ({
@@ -25,6 +26,7 @@ export const DeleteDialog: FC<DeleteDialogProps> = ({
       "flex justify-center items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100  hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900",
   },
   isLoading,
+  afterFunction,
 }) => {
   let [isOpen, setIsOpen] = useState(false);
 
@@ -34,6 +36,17 @@ export const DeleteDialog: FC<DeleteDialogProps> = ({
   function openModal() {
     setIsOpen(true);
   }
+
+  const handleFunction = async () => {
+    try {
+      await deleteFunction().then(() => {
+        afterFunction?.();
+      });
+      closeModal();
+    } catch (error) {
+      console.log(error);
+    }
+  };
 
   return (
     <>
@@ -83,7 +96,7 @@ export const DeleteDialog: FC<DeleteDialogProps> = ({
                     </Button>
                     <Button
                       className="text-white text-lg bg-red-600 border-black  hover:bg-red-600 hover:text-white"
-                      onClick={deleteFunction}
+                      onClick={handleFunction}
                       disabled={isLoading}
                       isLoading={isLoading}
                     >
