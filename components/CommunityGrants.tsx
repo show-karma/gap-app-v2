@@ -102,7 +102,7 @@ export const CommunityGrants = ({
               ? fetchedGrants.data
               : [...prev, ...fetchedGrants.data]
           );
-          setTotalGrants((prev) => fetchedGrants.pageInfo.totalItems || prev);
+          setTotalGrants((prev) => fetchedGrants?.pageInfo?.totalItems || prev);
         }
       } catch (error) {
         console.log("error", error);
