@@ -1,6 +1,5 @@
 import type { Hex } from "@show-karma/karma-gap-sdk";
 import { SortByOptions, StatusOptions } from "@/types/filters";
-import { filterByStatus, orderBySortBy } from "./grants";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -17,7 +16,7 @@ export const getGrants = async (
   }
 ) => {
   try {
-    const [grants] = await fetchData(
+    const [response] = await fetchData(
       INDEXER.COMMUNITY.GRANTS(uid, {
         page: paginationOps?.page,
         pageLimit: paginationOps?.pageLimit,
@@ -26,25 +25,12 @@ export const getGrants = async (
         status: filter?.status,
       })
     );
-    let grantsToFilter = [...grants];
-    if (grantsToFilter.length === 0) {
-      return [];
-    }
-    // API returns all grants with filters and sorts, so we don't need to filter them anymore
-    // if (filter?.categories?.length) {
-    //   grantsToFilter = filterByCategory(filter.categories, grantsToFilter);
-    // }
-    // if (filter?.status) {
-    //   grantsToFilter = filterByStatus(filter.status, grantsToFilter);
-    // }
+    const { data: grants, pageInfo } = response;
+    if (!grants || grants.length === 0) return { grants: [], pageInfo: {} };
 
-    // if (filter?.sortBy) {
-    //   grantsToFilter = orderBySortBy(filter.sortBy, grantsToFilter);
-    // }
-
-    return grantsToFilter;
+    return { grants, pageInfo };
   } catch (error) {
     console.log(error);
-    return [];
+    return { grants: [], pageInfo: {} };
   }
 };

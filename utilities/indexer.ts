@@ -7,8 +7,9 @@ export const INDEXER = {
     FEED: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/feed`,
   },
   CATEGORIES: {
+    CREATE: (idOrSlug: string) => `/categories/create/${idOrSlug}`,
     QUESTIONS: {
-      UPDATE: (idOrSlug: number) => `/categories/${idOrSlug}/questions`,
+      UPDATE: (idOrSlug: string) => `/categories/${idOrSlug}/questions`,
     },
   },
   COMMUNITY: {
@@ -55,7 +56,7 @@ export const INDEXER = {
       ALL: (grantUID: string) => `/grants/${grantUID}/questions/answer/feed`,
     },
     CATEGORIES: {
-      ALL: `/categories`,
+      ALL: (idOrSlug: string) => `/communities/${idOrSlug}/categories`,
       UPDATE: (grantUID: string) => `/grants/${grantUID}/update/categories`,
     },
   },
