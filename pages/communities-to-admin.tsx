@@ -16,7 +16,7 @@ import { NextSeo } from "next-seo";
 import { useCommunitiesStore } from "@/store/communities";
 
 export default function CommunitiesToAdmin() {
-  const {communities: communitiesToAdmin, isLoading} = useCommunitiesStore();
+  const { communities: communitiesToAdmin, isLoading } = useCommunitiesStore();
 
   return (
     <>
@@ -41,7 +41,7 @@ export default function CommunitiesToAdmin() {
         additionalLinkTags={[
           {
             rel: "icon",
-            href: "/favicon.png",
+            href: "/images/favicon.png",
           },
         ]}
       />

@@ -104,7 +104,7 @@ export const NestedLayout = ({ children }: Props) => {
       }
     };
     mountTabs();
-  }, [isAuthorized]);
+  }, [isAuthorized, project]);
 
   useEffect(() => {
     if (projectId) {
@@ -380,7 +380,7 @@ const ProjectPageIndex = ({
         additionalLinkTags={[
           {
             rel: "icon",
-            href: "/favicon.png",
+            href: "/images/favicon.png",
           },
         ]}
       />

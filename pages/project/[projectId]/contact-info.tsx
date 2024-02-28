@@ -82,7 +82,7 @@ const ContactInfoPage = ({
         additionalLinkTags={[
           {
             rel: "icon",
-            href: "/favicon.png",
+            href: "/images/favicon.png",
           },
         ]}
       />

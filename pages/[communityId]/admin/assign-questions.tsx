@@ -229,7 +229,7 @@ export default function AssignQuestions() {
         additionalLinkTags={[
           {
             rel: "icon",
-            href: "/favicon.png",
+            href: "/images/favicon.png",
           },
         ]}
       />
