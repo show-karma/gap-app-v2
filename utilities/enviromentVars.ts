@@ -1,5 +1,4 @@
 const isDev = process.env.NEXT_PUBLIC_ENV === "staging";
-
 const baseDevUrl = "https://gapstagapi.karmahq.xyz";
 // const baseDevUrl = "https://0ba5-3-223-152-43.ngrok-free.app";
 

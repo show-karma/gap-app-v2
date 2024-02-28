@@ -5,7 +5,6 @@ import { karmaAPI } from "../karma";
 export const isDelegateOf = async (community: string, address: string) => {
   try {
     const { data } = await axios.get(karmaAPI.findDelegate(community, address));
-    console.log("data", data);
     return data?.data.delegate;
   } catch (error: any) {
     console.log(

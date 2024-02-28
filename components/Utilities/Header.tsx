@@ -6,7 +6,6 @@ import { Popover } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { MoonIcon, SunIcon } from "@heroicons/react/24/solid";
-
 import { ConnectorData, useAccount, useConnect, useDisconnect } from "wagmi";
 import {
   PAGES,
@@ -18,6 +17,7 @@ import {
 } from "@/utilities";
 import { Community } from "@show-karma/karma-gap-sdk";
 import { useOwnerStore } from "@/store/owner";
+import { useCommunitiesStore } from "@/store/communities";
 import { ExternalLink } from "./ExternalLink";
 import { SOCIALS } from "@/utilities/socials";
 import { DiscordIcon, MirrorIcon, TelegramIcon, TwitterIcon } from "../Icons";
@@ -44,21 +44,23 @@ const buttonStyle: HTMLButtonElement["className"] =
 export default function Header() {
   const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
   const { isConnected, address } = useAccount();
-  const [communitiesToAdmin, setCommunitiesToAdmin] = useState<Community[]>([]);
+  const { communities, setCommunities, setIsLoading } = useCommunitiesStore();
   const signer = useSigner();
 
-  const isCommunityAdmin = communitiesToAdmin.length !== 0;
+  const isCommunityAdmin = communities.length !== 0;
 
   const getCommunities = async () => {
     if (!address) return;
 
+    setIsLoading(true);
     const communitiesOf = await getCommunitiesOf(address);
 
     if (communitiesOf && communitiesOf.length !== 0) {
-      setCommunitiesToAdmin(communitiesOf);
+      setCommunities(communitiesOf);
     } else {
-      setCommunitiesToAdmin([]);
+      setCommunities([]);
     }
+    setIsLoading(false);
   };
 
   const isOwner = useOwnerStore((state) => state.isOwner);

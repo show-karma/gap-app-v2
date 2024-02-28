@@ -9,6 +9,7 @@ import {
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import {
   MESSAGES,
+  PAGES,
   appNetwork,
   checkNetworkIsValid,
   cn,
@@ -514,6 +515,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       if (chain && chain.id !== projectToUpdate.chainID) {
         await switchNetworkAsync?.(projectToUpdate.chainID);
       }
+      const shouldRefresh = dataToUpdate.title === data.title;
       await updateProject(
         projectToUpdate,
         {
@@ -529,13 +531,19 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         },
         signer,
         gap
-      ).then(async () => {
+      ).then(async (res) => {
         toast.success(MESSAGES.PROJECT.UPDATE.SUCCESS);
         closeModal();
+        setStep(0);
+        if (shouldRefresh) {
+          refreshProject();
+        } else {
+          const project = res.details?.slug || res.uid;
+          router.push(PAGES.PROJECT.OVERVIEW(project));
+        }
       });
-      refreshProject();
     } catch (error) {
-      console.log({ error });
+      console.log(error);
       toast.error(MESSAGES.PROJECT.UPDATE.ERROR);
     } finally {
       setIsLoading(false);
