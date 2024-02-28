@@ -12,8 +12,9 @@ import { CheckIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components/Utilities/Button";
 import dynamic from "next/dynamic";
 
-const ProjectDialog = dynamic(() =>
-  import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog)
+const ProjectDialog = dynamic(
+  () => import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog),
+  { ssr: false }
 );
 
 const Presentation = () => {

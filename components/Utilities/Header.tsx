@@ -28,8 +28,9 @@ import { useTheme } from "next-themes";
 import { Searchbar } from "../Searchbar";
 import dynamic from "next/dynamic";
 
-const ProjectDialog = dynamic(() =>
-  import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog)
+const ProjectDialog = dynamic(
+  () => import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog),
+  { ssr: false }
 );
 
 function classNames(...classes: string[]) {
