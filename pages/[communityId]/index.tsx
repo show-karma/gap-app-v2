@@ -1,12 +1,13 @@
 import React from "react";
 import { defaultMetadata, INDEXER } from "@/utilities";
-import { GetStaticPropsContext, InferGetStaticPropsType } from "next";
+import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { NextSeo } from "next-seo";
 import { Community } from "@show-karma/karma-gap-sdk";
 import { CommunityGrants } from "@/components/CommunityGrants";
 import { CommunityFeed } from "@/components/CommunityFeed";
 import { communityColors } from "@/utilities/communityColors";
 import fetchData from "@/utilities/fetchData";
+import { SortByOptions, StatusOptions } from "@/types";
 
 type Props = {
   params: {
@@ -56,8 +57,8 @@ type Props = {
 //     },
 //   };
 // }
-export async function getStaticProps(context: GetStaticPropsContext) {
-  const { params } = context;
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const { query, params } = context;
   const communityId = params?.communityId as string;
   let community: Community | null = null;
   let categoriesOptions: string[] = [];
@@ -95,21 +96,22 @@ export async function getStaticProps(context: GetStaticPropsContext) {
     };
   }
 
+  const defaultSortBy = (query.sortBy || "milestones") as SortByOptions;
+  const defaultSelectedCategories = ((query.categories as string) || "")
+    .split(",")
+    .filter((category) => category.trim());
+  const defaultSelectedStatus = (query.status || "all") as StatusOptions;
+
   return {
     props: {
       communityId,
       communityName: (community as Community)?.details?.data?.name || "",
       community: community as Community,
       categoriesOptions,
+      defaultSortBy,
+      defaultSelectedCategories,
+      defaultSelectedStatus,
     },
-    revalidate: 5 * 60, // revalidate every 5 minutes
-  };
-}
-
-export function getStaticPaths() {
-  return {
-    paths: [],
-    fallback: "blocking",
   };
 }
 
@@ -118,7 +120,10 @@ export default function Index({
   communityName,
   community,
   categoriesOptions,
-}: InferGetStaticPropsType<typeof getStaticProps>) {
+  defaultSortBy,
+  defaultSelectedCategories,
+  defaultSelectedStatus,
+}: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const dynamicMetadata = {
     title: `Karma GAP - ${communityName} community grants`,
     description: `View the list of grants issued by ${
@@ -182,7 +187,12 @@ export default function Index({
         </div>
 
         <div className="flex gap-8 flex-row max-lg:flex-col-reverse w-full">
-          <CommunityGrants categoriesOptions={categoriesOptions} />
+          <CommunityGrants
+            categoriesOptions={categoriesOptions}
+            defaultSelectedCategories={defaultSelectedCategories}
+            defaultSortBy={defaultSortBy}
+            defaultSelectedStatus={defaultSelectedStatus}
+          />
           <CommunityFeed />
         </div>
       </div>

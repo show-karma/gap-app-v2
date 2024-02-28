@@ -32,10 +32,16 @@ const statuses: Record<StatusOptions, string> = {
 
 interface CommunityGrantsProps {
   categoriesOptions: string[];
+  defaultSelectedCategories: string[]
+  defaultSortBy: SortByOptions,
+  defaultSelectedStatus: StatusOptions
 }
 
 export const CommunityGrants = ({
   categoriesOptions,
+  defaultSelectedCategories,
+  defaultSortBy,
+  defaultSelectedStatus
 }: CommunityGrantsProps) => {
   const router = useRouter();
   const communityId = router.query.communityId as string;
@@ -45,21 +51,21 @@ export const CommunityGrants = ({
   const [selectedCategories, changeCategoriesQuery] = useQueryState(
     "categories",
     {
-      defaultValue: [] as string[],
+      defaultValue: defaultSelectedCategories,
       serialize: (value) => value?.join(","),
       parse: (value) => (value ? value.split(",") : null),
     }
   );
 
   const [selectedSort, changeSortQuery] = useQueryState("sortBy", {
-    defaultValue: "milestones" as SortByOptions,
+    defaultValue: defaultSortBy,
     serialize: (value) => value,
     parse: (value) =>
       value ? (value as SortByOptions) : ("milestones" as SortByOptions),
   });
 
   const [selectedStatus, changeStatusQuery] = useQueryState("status", {
-    defaultValue: "all" as StatusOptions,
+    defaultValue: defaultSelectedStatus,
     serialize: (value) => value,
     parse: (value) =>
       value ? (value as StatusOptions) : ("all" as StatusOptions),
