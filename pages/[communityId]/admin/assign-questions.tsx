@@ -30,10 +30,10 @@ const MarkdownPreview = dynamic(() => import("@uiw/react-markdown-preview"), {
   ssr: false,
 });
 
-type QuestionsAssigned = Record<string, number[]>;
+type QuestionsAssigned = Record<string, string[]>;
 
 interface Category {
-  id: number;
+  id: string;
   name: string;
   questions: Question[];
 }
@@ -124,7 +124,7 @@ export default function AssignQuestions() {
             const previousQuestions = data.reduce(
               (acc: QuestionsAssigned, category: Category) => {
                 acc[category.id] = category.questions.map(
-                  (question: Question) => Number(question.id)
+                  (question: Question) => question.id
                 );
                 return acc;
               },
@@ -160,7 +160,7 @@ export default function AssignQuestions() {
     }
   }, [community?.uid]);
 
-  const assign = (categoryID: number, question: number) => {
+  const assign = (categoryID: string, question: string) => {
     const newQuestions = { ...questionsAssigned };
 
     const categoryQuestions = newQuestions[categoryID] || [];
@@ -180,14 +180,18 @@ export default function AssignQuestions() {
   const saveAssign = async (category: Category) => {
     setIsSaving({ ...isSaving, [category.id]: true });
     try {
-      await fetchData(INDEXER.CATEGORIES.QUESTIONS.UPDATE(category.id), "PUT", {
-        idOrSlug: community?.uid,
-        questions: questionsAssigned[category.id],
-      }).then(() => {
-        toast.success(
-          MESSAGES.CATEGORIES.ASSIGN_QUESTIONS.SUCCESS(category.name)
-        );
-      });
+      const [data, error] = await fetchData(
+        INDEXER.CATEGORIES.QUESTIONS.UPDATE(category.id),
+        "PUT",
+        {
+          idOrSlug: community?.uid,
+          questions: questionsAssigned[category.id],
+        }
+      );
+      if (error) throw new Error("Error saving questions");
+      toast.success(
+        MESSAGES.CATEGORIES.ASSIGN_QUESTIONS.SUCCESS(category.name)
+      );
     } catch (error: any) {
       if (error?.response?.status === 409) {
         toast.error(
@@ -229,7 +233,7 @@ export default function AssignQuestions() {
         additionalLinkTags={[
           {
             rel: "icon",
-            href: "/favicon.png",
+            href: "/images/favicon.png",
           },
         ]}
       />
@@ -298,7 +302,8 @@ export default function AssignQuestions() {
                         {questions.map((question) => {
                           const isSelected = questionsAssigned[
                             category.id
-                          ]?.includes(+question.id);
+                          ]?.includes(question.id);
+                          console.log(questionsAssigned);
                           return (
                             <Button
                               key={`${category.id}${question.id}`}
@@ -306,7 +311,7 @@ export default function AssignQuestions() {
                               style={{
                                 opacity: isSelected ? 1 : 0.5,
                               }}
-                              onClick={() => assign(category.id, +question.id)}
+                              onClick={() => assign(category.id, question.id)}
                             >
                               <div className="flex h-4 w-4 flex-col items-center justify-start">
                                 {isSelected ? (

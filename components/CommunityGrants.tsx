@@ -75,8 +75,8 @@ export const CommunityGrants = ({
   const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
   const [grants, setGrants] = useState<Grant[]>([]); // Data returned from the API
   const itemsPerPage = 12; // Set the total number of items you want returned from the API
-  const [totalGrants, setTotalGrants] = useState(0);
-  const [haveMore, setHaveMore] = useState(true);
+  const [totalGrants, setTotalGrants] = useState(0); // Total number of grants
+  const [haveMore, setHaveMore] = useState(true); // Boolean to check if there are more grants to load
 
   const selectedCategoriesIds = useMemo(
     () => selectedCategories.join("_"),
@@ -89,7 +89,7 @@ export const CommunityGrants = ({
     const fetchNewGrants = async () => {
       setLoading(true);
       try {
-        const fetchedGrants = await getGrants(
+        const { grants: fetchedGrants, pageInfo } = await getGrants(
           communityId as Hex,
           {
             sortBy: selectedSort,
@@ -101,14 +101,14 @@ export const CommunityGrants = ({
             pageLimit: itemsPerPage,
           }
         );
-        if (fetchedGrants && fetchedGrants.data) {
-          setHaveMore(fetchedGrants.data.length === itemsPerPage);
+        if (fetchedGrants && fetchedGrants.length) {
+          setHaveMore(fetchedGrants.length === itemsPerPage);
           setGrants((prev) =>
             currentPage === 0
-              ? fetchedGrants.data
-              : [...prev, ...fetchedGrants.data]
+              ? fetchedGrants
+              : [...prev, ...fetchedGrants]
           );
-          setTotalGrants((prev) => fetchedGrants?.pageInfo?.totalItems || prev);
+          setTotalGrants((prev) => pageInfo?.totalItems || prev);
         }
       } catch (error) {
         console.log("error", error);
@@ -154,98 +154,100 @@ export const CommunityGrants = ({
         </div>
         <div className="flex items-center gap-x-3 flex-wrap gap-y-2">
           {/* Filter by category start */}
-          <Listbox
-            value={selectedCategories}
-            // onChange={setSelectedCategories}
-            onChange={(values) => {
-              changeCategories(values);
-            }}
-            multiple
-          >
-            {({ open }) => (
-              <div className="flex items-center gap-x-2 max-sm:w-full max-sm:justify-between">
-                <Listbox.Label className="text-base font-semibold text-gray-900 dark:text-zinc-100 max-2xl:text-sm">
-                  Filter by category
-                </Listbox.Label>
-                <div className="relative flex-1 w-max">
-                  <Listbox.Button className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left  dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 text-gray-900   ring-1 ring-inset ring-gray-300 sm:text-sm sm:leading-6">
-                    {selectedCategories.length > 0 ? (
-                      <p className="flex flex-row gap-1">
-                        {selectedCategories.length}
-                        <span>
-                          {pluralize("category", selectedCategories.length)}{" "}
-                          selected
-                        </span>
-                      </p>
-                    ) : (
-                      <p>Categories</p>
-                    )}
-                    <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                      <ChevronUpDownIcon
-                        className="h-5 w-5 text-gray-400"
-                        aria-hidden="true"
-                      />
-                    </span>
-                  </Listbox.Button>
+          {categoriesOptions.length ? (
+            <Listbox
+              value={selectedCategories}
+              // onChange={setSelectedCategories}
+              onChange={(values) => {
+                changeCategories(values);
+              }}
+              multiple
+            >
+              {({ open }) => (
+                <div className="flex items-center gap-x-2 max-sm:w-full max-sm:justify-between">
+                  <Listbox.Label className="text-base font-semibold text-gray-900 dark:text-zinc-100 max-2xl:text-sm">
+                    Filter by category
+                  </Listbox.Label>
+                  <div className="relative flex-1 w-max">
+                    <Listbox.Button className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left  dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 text-gray-900   ring-1 ring-inset ring-gray-300 sm:text-sm sm:leading-6">
+                      {selectedCategories.length > 0 ? (
+                        <p className="flex flex-row gap-1">
+                          {selectedCategories.length}
+                          <span>
+                            {pluralize("category", selectedCategories.length)}{" "}
+                            selected
+                          </span>
+                        </p>
+                      ) : (
+                        <p>Categories</p>
+                      )}
+                      <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                        <ChevronUpDownIcon
+                          className="h-5 w-5 text-gray-400"
+                          aria-hidden="true"
+                        />
+                      </span>
+                    </Listbox.Button>
 
-                  <Transition
-                    show={open}
-                    as={Fragment}
-                    leave="transition ease-in duration-100"
-                    leaveFrom="opacity-100"
-                    leaveTo="opacity-0"
-                  >
-                    <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-max overflow-auto rounded-md bg-white py-1 text-base  dark:bg-zinc-800 dark:text-zinc-200 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                      {categoriesOptions.map((category) => (
-                        <Listbox.Option
-                          key={category}
-                          className={({ active }) =>
-                            cn(
-                              active
-                                ? "bg-gray-100 text-black dark:text-gray-300 dark:bg-zinc-900"
-                                : "text-gray-900 dark:text-gray-200 ",
-                              "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
-                            )
-                          }
-                          value={category}
-                          onClick={() => {
-                            setCurrentPage(1);
-                          }}
-                        >
-                          {({ selected, active }) => (
-                            <>
-                              <span
-                                className={cn(
-                                  selected ? "font-semibold" : "font-normal",
-                                  "block truncate"
-                                )}
-                              >
-                                {category}
-                              </span>
-
-                              {selected ? (
+                    <Transition
+                      show={open}
+                      as={Fragment}
+                      leave="transition ease-in duration-100"
+                      leaveFrom="opacity-100"
+                      leaveTo="opacity-0"
+                    >
+                      <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-max overflow-auto rounded-md bg-white py-1 text-base  dark:bg-zinc-800 dark:text-zinc-200 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                        {categoriesOptions.map((category) => (
+                          <Listbox.Option
+                            key={category}
+                            className={({ active }) =>
+                              cn(
+                                active
+                                  ? "bg-gray-100 text-black dark:text-gray-300 dark:bg-zinc-900"
+                                  : "text-gray-900 dark:text-gray-200 ",
+                                "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
+                              )
+                            }
+                            value={category}
+                            onClick={() => {
+                              setCurrentPage(1);
+                            }}
+                          >
+                            {({ selected, active }) => (
+                              <>
                                 <span
                                   className={cn(
-                                    "text-blue-600 dark:text-blue-400",
-                                    "absolute inset-y-0 right-0 flex items-center pr-4"
+                                    selected ? "font-semibold" : "font-normal",
+                                    "block truncate"
                                   )}
                                 >
-                                  <CheckIcon
-                                    className="h-5 w-5"
-                                    aria-hidden="true"
-                                  />
+                                  {category}
                                 </span>
-                              ) : null}
-                            </>
-                          )}
-                        </Listbox.Option>
-                      ))}
-                    </Listbox.Options>
-                  </Transition>
+
+                                {selected ? (
+                                  <span
+                                    className={cn(
+                                      "text-blue-600 dark:text-blue-400",
+                                      "absolute inset-y-0 right-0 flex items-center pr-4"
+                                    )}
+                                  >
+                                    <CheckIcon
+                                      className="h-5 w-5"
+                                      aria-hidden="true"
+                                    />
+                                  </span>
+                                ) : null}
+                              </>
+                            )}
+                          </Listbox.Option>
+                        ))}
+                      </Listbox.Options>
+                    </Transition>
+                  </div>
                 </div>
-              </div>
-            )}
-          </Listbox>
+              )}
+            </Listbox>
+          ) : null}
           {/* Filter by category end */}
 
           {/* Sort start */}
