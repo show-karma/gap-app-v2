@@ -13,8 +13,9 @@ import { Button } from "@/components/Utilities/Button";
 import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
 
-const ProjectDialog = dynamic(() =>
-  import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog)
+const ProjectDialog = dynamic(
+  () => import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog),
+  { ssr: false }
 );
 
 const Presentation = () => {
