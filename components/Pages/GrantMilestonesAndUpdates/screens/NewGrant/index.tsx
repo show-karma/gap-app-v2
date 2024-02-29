@@ -5,13 +5,7 @@ import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { MilestoneWithCompleted } from "@/types/milestones";
-import {
-  MESSAGES,
-  PAGES,
-  appNetwork,
-  formatDate,
-  useSigner,
-} from "@/utilities";
+import { MESSAGES, PAGES, appNetwork, useSigner } from "@/utilities";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   GrantDetails,
@@ -34,11 +28,9 @@ import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useGap } from "@/hooks";
 import toast from "react-hot-toast";
 import { useSearchParams } from "next/navigation";
-import { CalendarIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { XMarkIcon } from "@heroicons/react/24/outline";
 import { getWalletClient } from "@wagmi/core";
 import { useQueryState } from "nuqs";
-import { Popover } from "@headlessui/react";
-import { DayPicker } from "react-day-picker";
 import { useAuthStore } from "@/store/auth";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
@@ -67,9 +59,6 @@ const grantSchema = z.object({
   community: z.string().nonempty({ message: MESSAGES.GRANT.FORM.COMMUNITY }),
   // season: z.string(),
   // cycle: z.string(),
-  startsAt: z.date({
-    required_error: MESSAGES.GRANT.FORM.DATE,
-  }),
   linkToProposal: z
     .string()
     .url({
@@ -189,6 +178,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const searchParams = useSearchParams();
   const grantScreen = searchParams?.get("tab");
+  const { isAuth } = useAuthStore();
 
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [milestones, setMilestones] = useState<MilestoneWithCompleted[]>([]);
@@ -205,7 +195,6 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { switchNetworkAsync } = useSwitchNetwork();
   const { gap } = useGap();
   const { isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
 
   const [, changeTab] = useQueryState("tab");
 
@@ -586,47 +575,6 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             <p className="text-base text-red-400">
               {errors.community?.message}
             </p>
-          </div>
-          <div className="flex w-full flex-col">
-            <Controller
-              name="startsAt"
-              control={form.control}
-              render={({ field, formState, fieldState }) => (
-                <div className="flex w-full flex-col gap-2">
-                  <label className={labelStyle}>Start Date</label>
-                  <div>
-                    <Popover className="relative">
-                      <Popover.Button className="max-lg:w-full w-max text-base flex-row flex gap-2 items-center bg-gray-100 dark:bg-zinc-800 px-4 py-2 rounded-md">
-                        {field.value ? (
-                          formatDate(field.value)
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Popover.Button>
-                      <Popover.Panel className="absolute z-10 border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 mt-4 rounded-md">
-                        <DayPicker
-                          mode="single"
-                          selected={field.value}
-                          onDayClick={(e) => {
-                            setValue("startsAt", e, { shouldValidate: true });
-                            field.onChange(e);
-                          }}
-                          disabled={(date) => {
-                            if (date < new Date("2000-01-01")) return true;
-                            return false;
-                          }}
-                          initialFocus
-                        />
-                      </Popover.Panel>
-                    </Popover>
-                  </div>
-                  <p className="text-base text-red-400">
-                    {formState.errors.startsAt?.message}
-                  </p>
-                </div>
-              )}
-            />
           </div>
           <div className="flex w-full flex-col">
             <label htmlFor="grant-amount" className={labelStyle}>

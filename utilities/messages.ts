@@ -53,7 +53,6 @@ export const MESSAGES = {
       LINK_TO_PROPOSAL: `This link must be a valid URL`,
       RECIPIENT: "Invalid address",
       COMMUNITY: "Community is required",
-      DATE: "Date is required",
     },
     GRANT_UPDATE: {
       SUCCESS: "Update was successfully added to the grant.",
