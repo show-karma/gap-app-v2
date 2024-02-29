@@ -51,6 +51,7 @@ export const useAuth = () => {
       return signedMessage;
     } catch (err) {
       // eslint-disable-next-line no-console
+      await disconnectAsync();
       console.log(err);
       return null;
     }
@@ -108,12 +109,12 @@ export const useAuth = () => {
       if (token) {
         saveToken(token);
       } else {
-        toast.error("Login failed: Signature and address don't match");
+        toast.error("Login failed");
         return;
       }
 
       return true;
-    } catch (error) {
+    } catch (error: any) {
       // eslint-disable-next-line no-console
       console.log(error);
       return;
