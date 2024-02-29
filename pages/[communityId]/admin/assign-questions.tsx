@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { use, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import { useGap } from "@/hooks";
 import {
@@ -25,6 +25,7 @@ import fetchData from "@/utilities/fetchData";
 import { Button } from "@/components/Utilities/Button";
 import { NextSeo } from "next-seo";
 import dynamic from "next/dynamic";
+import { useAuthStore } from "@/store/auth";
 
 const MarkdownPreview = dynamic(() => import("@uiw/react-markdown-preview"), {
   ssr: false,
@@ -41,6 +42,7 @@ interface Category {
 export default function AssignQuestions() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
+  const { isAuth } = useAuthStore();
   const communityId = router.query.communityId as string;
   const { gap } = useGap();
 
@@ -87,7 +89,7 @@ export default function AssignQuestions() {
 
     const checkIfAdmin = async () => {
       setLoading(true);
-      if (!community?.uid) return;
+      if (!community?.uid || !isAuth) return;
       try {
         const checkAdmin = await isCommunityAdminOf(
           community,
@@ -104,7 +106,7 @@ export default function AssignQuestions() {
     };
 
     checkIfAdmin();
-  }, [address, isConnected, community?.uid, signer]);
+  }, [address, isConnected, isAuth, community?.uid, signer]);
 
   useMemo(() => {
     if (community?.uid) {
