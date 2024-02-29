@@ -195,13 +195,13 @@ export const Milestone: FC<MilestoneProps> = ({
           <div className="flex w-max flex-row justify-center gap-4">
             <Button
               onClick={() => switchEditing()}
-              className="bg-transparent p-4 hover:bg-transparent hover:opacity-75"
+              className="bg-transparent text-black dark:text-white p-4 hover:bg-transparent hover:opacity-75"
             >
               <PencilIcon className="h-5 w-5 " />
             </Button>
             <Button
               onClick={() => removeMilestone(index)}
-              className="bg-transparent p-1  hover:bg-transparent hover:opacity-75"
+              className="bg-transparent text-black dark:text-white p-1  hover:bg-transparent hover:opacity-75"
             >
               <XMarkIcon className="h-8 w-8" />
             </Button>

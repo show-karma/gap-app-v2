@@ -321,7 +321,7 @@ const GrantsPage = ({
         additionalLinkTags={[
           {
             rel: "icon",
-            href: "/favicon.png",
+            href: "/images/favicon.png",
           },
         ]}
       />

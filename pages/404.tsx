@@ -27,7 +27,7 @@ const NotFoundPage: React.FC = () => {
         additionalLinkTags={[
           {
             rel: "icon",
-            href: "/favicon.png",
+            href: "/images/favicon.png",
           },
         ]}
       />

@@ -353,7 +353,7 @@ export default function Index() {
           content={defaultMetadata.description}
           key="ogdesc"
         />
-        <link rel="icon" href={"/favicon.png"} />
+        <link rel="icon" href={"/images/favicon.png"} />
 
         <meta property="twitter:card" content="summary_large_image" />
         <meta property="twitter:url" content={defaultMetadata.twitter.site} />
@@ -395,7 +395,7 @@ export default function Index() {
         additionalLinkTags={[
           {
             rel: "icon",
-            href: "/favicon.png",
+            href: "/images/favicon.png",
           },
         ]}
       />

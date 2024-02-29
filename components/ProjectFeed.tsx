@@ -128,7 +128,7 @@ export const ProjectFeed = () => {
               );
             })
           ) : feedLoading ? null : (
-            <p className="text-base font-normal text-black dark:text-zinc-100">{`This project doesn't have any activity yet`}</p>
+            <p className="text-base font-normal text-black dark:text-zinc-100 px-4">{`This project doesn't have any activity yet`}</p>
           )}
           {feed.length && hasMore ? (
             <li className="mx-5 flex items-center justify-center">

@@ -23,9 +23,13 @@ export const updateProject = async (
   signer: any,
   gap: any
 ) => {
+  const oldProjectData = JSON.parse(JSON.stringify(project.details?.data));
   try {
-    const slug =
+    let slug =
       project.details?.slug || (await gap.generateSlug(newProjectInfo.title));
+    if (project.details?.title !== newProjectInfo.title) {
+      slug = await gap.generateSlug(newProjectInfo.title);
+    }
     const linkKeys = Object.keys(data);
 
     const linksArray: ExternalLink = linkKeys.map((key) => {
@@ -47,7 +51,9 @@ export const updateProject = async (
     });
 
     await project.details?.attest(signer as any);
+    return project;
   } catch (error) {
+    project.details?.setValues(oldProjectData);
     throw error;
   }
 };

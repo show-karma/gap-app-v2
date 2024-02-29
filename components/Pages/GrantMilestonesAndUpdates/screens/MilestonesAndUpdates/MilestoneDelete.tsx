@@ -26,9 +26,22 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
         await switchNetworkAsync?.(milestone.chainID);
       }
+      const milestoneUID = milestone.uid;
       await milestone.revoke(signer as any).then(async () => {
         toast.success(MESSAGES.MILESTONES.DELETE.SUCCESS);
-        await refreshProject();
+        await refreshProject().then((res) => {
+          const grantUID = milestone.refUID;
+          const grant = res?.grants.find((g) => g.uid === grantUID);
+          const stillExist = grant?.milestones.find(
+            (m) => m.uid === milestoneUID
+          );
+          if (stillExist && grant?.milestones) {
+            const removedMilestone = grant?.milestones.filter(
+              (m) => m.uid !== milestoneUID
+            );
+            grant.milestones = removedMilestone;
+          }
+        });
       });
     } catch (error) {
       toast.error(MESSAGES.MILESTONES.DELETE.ERROR(milestone.title));
