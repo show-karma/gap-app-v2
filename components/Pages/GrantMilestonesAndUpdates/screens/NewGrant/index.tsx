@@ -32,6 +32,7 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 import { getWalletClient } from "@wagmi/core";
 import { useQueryState } from "nuqs";
 import { useGrantFormStore } from "./store";
+import { useAuthStore } from "@/store/auth";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -179,6 +180,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const searchParams = useSearchParams();
   const grantScreen = searchParams?.get("tab");
   const { milestonesForms: milestones, createMilestone } = useGrantFormStore();
+  const { isAuth } = useAuthStore();
 
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [description, setDescription] = useState(
@@ -286,7 +288,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
 
     try {
       setIsLoading(true);
-      if (!isConnected) return;
+      if (!isConnected || !isAuth) return;
       const grant = new Grant({
         data: {
           communityUID: data.community,

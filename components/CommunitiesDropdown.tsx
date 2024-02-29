@@ -50,14 +50,14 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
-      <Popover.Trigger className="w-[240px] justify-between text-black dark:text-white dark:bg-zinc-800 flex flex-row gap-2 px-4 py-2 items-center bg-gray-100 rounded-md">
+      <Popover.Trigger className="w-[240px]  justify-between text-black dark:text-white dark:bg-zinc-800 flex flex-row gap-2 px-4 py-2 items-center bg-gray-100 rounded-md">
         {value
           ? communitiesArray.find((community) => community.value === value)
               ?.label
           : "Select community"}
         <ChevronUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
       </Popover.Trigger>
-      <Popover.Content className="mt-4 w-[280px] bg-white border border-zinc-200 dark:border-zinc-700 rounded-md dark:text-white dark:bg-zinc-800  max-h-60 overflow-y-auto overflow-x-hidden py-2">
+      <Popover.Content className="mt-4 w-[280px] z-10 bg-white border border-zinc-200 dark:border-zinc-700 rounded-md dark:text-white dark:bg-zinc-800  max-h-60 overflow-y-auto overflow-x-hidden py-2">
         <Command>
           <CommandInput
             className="rounded-md ml-2 mr-4 w-[240px] dark:text-white dark:bg-zinc-800"

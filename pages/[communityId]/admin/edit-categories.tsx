@@ -29,6 +29,7 @@ import { Button } from "@/components/Utilities/Button";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
 import { CategoryCreationDialog } from "@/components/Pages/Admin/CategoryCreationDialog";
+import { useAuthStore } from "@/store/auth";
 
 interface GrantEdited {
   uid: string;
@@ -61,6 +62,7 @@ const milestonesPercentage = (grantToCalculate: Grant) => {
 export default function Index() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
+  const { isAuth } = useAuthStore();
   const communityId = router.query.communityId as string;
   const { gap } = useGap();
   const [grants, setGrants] = useState<SimplifiedGrants[]>([]);
@@ -114,7 +116,7 @@ export default function Index() {
 
     const checkIfAdmin = async () => {
       setLoading(true);
-      if (!community?.uid) return;
+      if (!community?.uid || !isAuth) return;
       try {
         const checkAdmin = await isCommunityAdminOf(
           community,
@@ -131,7 +133,7 @@ export default function Index() {
     };
 
     checkIfAdmin();
-  }, [address, isConnected, community?.uid, signer]);
+  }, [address, isConnected, isAuth, community?.uid, signer]);
 
   const getCategories = async () => {
     try {

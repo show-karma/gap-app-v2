@@ -30,8 +30,9 @@ import dynamic from "next/dynamic";
 import { useAuthStore } from "@/store/auth";
 import { useAuth } from "@/hooks/useAuth";
 
-const ProjectDialog = dynamic(() =>
-  import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog)
+const ProjectDialog = dynamic(
+  () => import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog),
+  { ssr: false }
 );
 
 function classNames(...classes: string[]) {
@@ -44,6 +45,7 @@ const buttonStyle: HTMLButtonElement["className"] =
 export default function Header() {
   const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
   const { isConnected, address } = useAccount();
+  const { isAuth } = useAuthStore();
   const { communities, setCommunities, setIsLoading } = useCommunitiesStore();
   const signer = useSigner();
 
@@ -68,7 +70,7 @@ export default function Header() {
   const setIsOwnerLoading = useOwnerStore((state) => state.setIsOwnerLoading);
 
   useEffect(() => {
-    if (!signer || !address) {
+    if (!signer || !address || !isAuth) {
       setIsOwnerLoading(false);
       setIsOwner(false);
       return;
@@ -84,7 +86,7 @@ export default function Header() {
         });
     };
     setupOwner();
-  }, [signer, address]);
+  }, [signer, address, isAuth]);
 
   useEffect(() => {
     getCommunities();
@@ -217,19 +219,21 @@ export default function Header() {
                   <div className="rounded-none h-10 w-[1px] bg-zinc-300 mx-2" />
                   {isReady ? (
                     <>
-                      {(isCommunityAdmin || isOwner) && isConnected ? (
+                      {(isCommunityAdmin || isOwner) &&
+                      isConnected &&
+                      isAuth ? (
                         <Link href={PAGES.ADMIN.LIST}>
                           <button className={buttonStyle}>Admin</button>
                         </Link>
                       ) : null}
-                      {isConnected && (
+                      {isConnected && isAuth && (
                         <Link href={PAGES.MY_PROJECTS}>
                           <button className={buttonStyle}>My Projects</button>
                         </Link>
                       )}
 
                       {/* Rainbowkit custom connect button start */}
-                      {isConnected && <ProjectDialog />}
+                      {isConnected && isAuth && <ProjectDialog />}
                       <ConnectButton.Custom>
                         {({
                           account,
@@ -262,7 +266,7 @@ export default function Header() {
                               })}
                             >
                               {(() => {
-                                if (!connected) {
+                                if (!connected || !isAuth) {
                                   return (
                                     <button
                                       onClick={openConnectModal}
@@ -371,14 +375,16 @@ export default function Header() {
                   </ExternalLink>
                   {isReady ? (
                     <>
-                      {isConnected && (
+                      {isConnected && isAuth && (
                         <Link href={PAGES.MY_PROJECTS}>
                           <button className="rounded-md bg-white w-full dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
                             My Projects
                           </button>
                         </Link>
                       )}
-                      {(isCommunityAdmin || isOwner) && isConnected ? (
+                      {(isCommunityAdmin || isOwner) &&
+                      isConnected &&
+                      isAuth ? (
                         <Link href={PAGES.ADMIN.LIST}>
                           <button className="rounded-md w-full bg-white dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
                             Admin
@@ -386,7 +392,7 @@ export default function Header() {
                         </Link>
                       ) : null}
 
-                      {isConnected && <ProjectDialog />}
+                      {isConnected && isAuth && <ProjectDialog />}
                       <ConnectButton.Custom>
                         {({
                           account,

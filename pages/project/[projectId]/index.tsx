@@ -32,6 +32,7 @@ import {
 import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import fetchData from "@/utilities/fetchData";
 import { APIContact } from "@/types/project";
+import { useAuthStore } from "@/store/auth";
 
 interface Props {
   children: ReactNode;
@@ -155,9 +156,10 @@ export const NestedLayout = ({ children }: Props) => {
 
   const signer = useSigner();
   const { address } = useAccount();
+  const { isAuth } = useAuthStore();
 
   useEffect(() => {
-    if (!signer || !project) {
+    if (!signer || !project || !isAuth) {
       setIsProjectOwner(false);
       setIsProjectOwnerLoading(false);
       return;
@@ -171,7 +173,7 @@ export const NestedLayout = ({ children }: Props) => {
         .finally(() => setIsProjectOwnerLoading(false));
     };
     setupOwner();
-  }, [signer, project, address]);
+  }, [signer, project, address, isAuth]);
 
   const socials = useMemo(() => {
     const types = [
