@@ -7,7 +7,7 @@ interface ProjectStore {
   project: Project | undefined;
   setProject: (project: Project | undefined) => void;
   loading: boolean;
-  refreshProject: () => Promise<void>;
+  refreshProject: () => Promise<Project | undefined>;
   setLoading: (loading: boolean) => void;
   isProjectOwner: boolean;
   setIsProjectOwner: (isProjectOwner: boolean) => void;
@@ -27,6 +27,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     if (!project) return;
     const refreshedProject = await getProjectById(project.uid);
     set({ project: refreshedProject });
+    return refreshedProject;
   },
   loading: false,
   setLoading: (loading: boolean) => set({ loading }),
