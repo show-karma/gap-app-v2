@@ -9,17 +9,16 @@ import { Popover } from "@headlessui/react";
 import { CalendarIcon, PencilIcon } from "@heroicons/react/24/outline";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type FC, useState } from "react";
+import { type FC, useState, useEffect } from "react";
 import { DayPicker } from "react-day-picker";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
+import { useGrantFormStore } from "./store";
 
 interface MilestoneProps {
   currentMilestone: MilestoneWithCompleted;
   index: number;
-  removeMilestone: (index: number) => void;
-  saveMilestone: (milestone: MilestoneWithCompleted, index: number) => void;
 }
 
 const labelStyle = "text-sm font-bold";
@@ -35,17 +34,18 @@ const milestoneSchema = z.object({
 
 type MilestoneType = z.infer<typeof milestoneSchema>;
 
-export const Milestone: FC<MilestoneProps> = ({
-  currentMilestone,
-  index,
-  removeMilestone,
-  saveMilestone,
-}) => {
+export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
   const form = useForm<z.infer<typeof milestoneSchema>>({
     resolver: zodResolver(milestoneSchema),
   });
+  const {
+    removeMilestone,
+    saveMilestone,
+    changeMilestoneForm,
+    switchMilestoneEditing,
+    milestonesForms,
+  } = useGrantFormStore();
 
-  const [isEditing, setEditing] = useState(true);
   const [description, setDescription] = useState("");
   const [update, setUpdate] = useState("");
 
@@ -53,6 +53,7 @@ export const Milestone: FC<MilestoneProps> = ({
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors, isValid },
   } = useForm<MilestoneType>({
     resolver: zodResolver(milestoneSchema),
@@ -61,7 +62,7 @@ export const Milestone: FC<MilestoneProps> = ({
   });
 
   const switchEditing = () => {
-    setEditing((oldValue) => !oldValue);
+    switchMilestoneEditing(index);
   };
 
   const onSubmit: SubmitHandler<MilestoneType> = (data, event) => {
@@ -76,10 +77,27 @@ export const Milestone: FC<MilestoneProps> = ({
       },
       index
     );
-    switchEditing();
   };
 
-  return isEditing ? (
+  useEffect(() => {
+    if (isValid) {
+      const title = watch("title") || currentMilestone.title;
+      const endsAt =
+        watch("endsAt").getTime() / 1000 || currentMilestone.endsAt;
+      changeMilestoneForm(index, {
+        isValid: isValid,
+        isEditing: milestonesForms[index].isEditing,
+        data: {
+          title,
+          description: description || currentMilestone.description,
+          endsAt,
+          completedText: update || currentMilestone.completedText,
+        },
+      });
+    }
+  }, [isValid, description, update]);
+
+  return milestonesForms[index].isEditing ? (
     <div className="flex w-full flex-col gap-6 rounded-md bg-gray-200 dark:bg-zinc-700 px-4 py-6">
       <div className="flex w-full flex-row justify-between">
         <h4 className="text-2xl font-bold">Add milestone {index + 1}</h4>
