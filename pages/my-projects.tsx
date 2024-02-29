@@ -21,9 +21,11 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
+import { useAuthStore } from "@/store/auth";
 
-const ProjectDialog = dynamic(() =>
-  import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog)
+const ProjectDialog = dynamic(
+  () => import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog),
+  { ssr: false }
 );
 
 const firstFiveMembers = (project: Project) =>
@@ -49,6 +51,7 @@ const pickColor = (index: number) => {
 
 export default function MyProjects() {
   const { isConnected, address } = useAccount();
+  const { isAuth } = useAuthStore();
   const { theme: currentTheme } = useTheme();
   const [myProjects, setMyProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -108,7 +111,7 @@ export default function MyProjects() {
       />
       <div className="px-4 sm:px-6 lg:px-12 py-5">
         <div className="mt-5 w-full gap-5">
-          {isConnected ? (
+          {isConnected && isAuth ? (
             myProjects.length > 0 ? (
               <div className="flex flex-col gap-4 justify-start">
                 <div className="grid grid-cols-4 gap-7 pb-4 max-xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1">
