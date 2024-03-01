@@ -28,6 +28,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { cn } from "@/utilities/tailwind";
 import { defaultMetadata } from "@/utilities/meta";
+import { useAuthStore } from "@/store/auth";
 
 interface Props {
   children: ReactNode;
@@ -151,9 +152,10 @@ export const NestedLayout = ({ children }: Props) => {
 
   const signer = useSigner();
   const { address } = useAccount();
+  const { isAuth } = useAuthStore();
 
   useEffect(() => {
-    if (!signer || !project) {
+    if (!signer || !project || !isAuth) {
       setIsProjectOwner(false);
       setIsProjectOwnerLoading(false);
       return;
@@ -167,7 +169,7 @@ export const NestedLayout = ({ children }: Props) => {
         .finally(() => setIsProjectOwnerLoading(false));
     };
     setupOwner();
-  }, [signer, project, address]);
+  }, [signer, project, address, isAuth]);
 
   const socials = useMemo(() => {
     const types = [

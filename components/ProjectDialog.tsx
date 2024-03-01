@@ -36,6 +36,7 @@ import { createNewProject, updateProject } from "@/utilities/sdk";
 import { appNetwork } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
+import { useAuthStore } from "@/store/auth";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -421,6 +422,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   };
 
   const { isConnected, address } = useAccount();
+  const { isAuth } = useAuthStore();
   const { chain } = useNetwork();
   const { switchNetworkAsync } = useSwitchNetwork({
     chainId: appNetwork[0].id,
@@ -433,7 +435,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const createProject = async (data: SchemaType) => {
     try {
       setIsLoading(true);
-      if (!isConnected) {
+      if (!isConnected || !isAuth) {
         openConnectModal?.();
         return;
       }
@@ -504,7 +506,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const updateThisProject = async (data: SchemaType) => {
     try {
       setIsLoading(true);
-      if (!isConnected) {
+      if (!isConnected || !isAuth) {
         openConnectModal?.();
         return;
       }

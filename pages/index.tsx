@@ -13,8 +13,9 @@ import { chosenCommunities } from "@/utilities/chosenCommunities";
 import { PAGES } from "@/utilities/pages";
 import { defaultMetadata } from "@/utilities/meta";
 
-const ProjectDialog = dynamic(() =>
-  import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog)
+const ProjectDialog = dynamic(
+  () => import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog),
+  { ssr: false }
 );
 
 const Presentation = () => {

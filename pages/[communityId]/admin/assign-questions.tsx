@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { use, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import { useGap } from "@/hooks";
 import { Community } from "@show-karma/karma-gap-sdk";
@@ -23,6 +23,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { defaultMetadata } from "@/utilities/meta";
 import { cn } from "@/utilities/tailwind";
+import { useAuthStore } from "@/store/auth";
 
 const MarkdownPreview = dynamic(() => import("@uiw/react-markdown-preview"), {
   ssr: false,
@@ -39,6 +40,7 @@ interface Category {
 export default function AssignQuestions() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
+  const { isAuth } = useAuthStore();
   const communityId = router.query.communityId as string;
   const { gap } = useGap();
 
@@ -85,7 +87,7 @@ export default function AssignQuestions() {
 
     const checkIfAdmin = async () => {
       setLoading(true);
-      if (!community?.uid) return;
+      if (!community?.uid || !isAuth) return;
       try {
         const checkAdmin = await isCommunityAdminOf(
           community,
@@ -102,7 +104,7 @@ export default function AssignQuestions() {
     };
 
     checkIfAdmin();
-  }, [address, isConnected, community?.uid, signer]);
+  }, [address, isConnected, isAuth, community?.uid, signer]);
 
   useMemo(() => {
     if (community?.uid) {

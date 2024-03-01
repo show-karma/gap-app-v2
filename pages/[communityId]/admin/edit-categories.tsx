@@ -26,6 +26,7 @@ import { reduceText } from "@/utilities/reduceText";
 import { defaultMetadata } from "@/utilities/meta";
 import { cn } from "@/utilities/tailwind";
 import { MESSAGES } from "@/utilities/messages";
+import { useAuthStore } from "@/store/auth";
 
 interface GrantEdited {
   uid: string;
@@ -58,6 +59,7 @@ const milestonesPercentage = (grantToCalculate: Grant) => {
 export default function Index() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
+  const { isAuth } = useAuthStore();
   const communityId = router.query.communityId as string;
   const { gap } = useGap();
   const [grants, setGrants] = useState<SimplifiedGrants[]>([]);
@@ -111,7 +113,7 @@ export default function Index() {
 
     const checkIfAdmin = async () => {
       setLoading(true);
-      if (!community?.uid) return;
+      if (!community?.uid || !isAuth) return;
       try {
         const checkAdmin = await isCommunityAdminOf(
           community,
@@ -128,7 +130,7 @@ export default function Index() {
     };
 
     checkIfAdmin();
-  }, [address, isConnected, community?.uid, signer]);
+  }, [address, isConnected, isAuth, community?.uid, signer]);
 
   const getCategories = async () => {
     try {
@@ -156,7 +158,6 @@ export default function Index() {
         const { grants: fetchedGrants } = await getGrants(communityId as Hex);
         if (fetchedGrants) {
           setTotalGrants(fetchedGrants.length);
-
           const mapSimplifiedGrants: SimplifiedGrants[] = fetchedGrants
             .slice(itemsPerPage * (currentPage - 1), itemsPerPage * currentPage)
             .map(

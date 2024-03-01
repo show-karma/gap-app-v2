@@ -12,10 +12,12 @@ import { PAGES } from "@/utilities/pages";
 import { defaultMetadata } from "@/utilities/meta";
 import { cn } from "@/utilities/tailwind";
 import { MESSAGES } from "@/utilities/messages";
+import { useAuthStore } from "@/store/auth";
 
 export default function Index() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
+  const { isAuth } = useAuthStore();
   const communityId = router.query.communityId as string;
   const { gap } = useGap();
 
@@ -57,7 +59,7 @@ export default function Index() {
 
     const checkIfAdmin = async () => {
       setLoading(true);
-      if (!community?.uid) return;
+      if (!community?.uid || !isAuth) return;
       try {
         const checkAdmin = await isCommunityAdminOf(
           community,
@@ -74,7 +76,7 @@ export default function Index() {
     };
 
     checkIfAdmin();
-  }, [address, isConnected, community?.uid, signer]);
+  }, [address, isConnected, isAuth, community?.uid, signer]);
 
   return (
     <>

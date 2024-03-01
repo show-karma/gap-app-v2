@@ -1,5 +1,5 @@
 import React from "react";
-import { GetStaticPropsContext, InferGetServerSidePropsType } from "next";
+import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { NextSeo } from "next-seo";
 import { Community } from "@show-karma/karma-gap-sdk";
 import { CommunityGrants } from "@/components/CommunityGrants";
@@ -8,6 +8,7 @@ import { communityColors } from "@/utilities/communityColors";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { defaultMetadata } from "@/utilities/meta";
+import { SortByOptions, StatusOptions } from "@/types";
 
 type Props = {
   params: {
@@ -57,33 +58,61 @@ type Props = {
 //     },
 //   };
 // }
-export async function getStaticProps(context: GetStaticPropsContext) {
-  const { params } = context;
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const { query, params } = context;
   const communityId = params?.communityId as string;
-  const [data, error, pageInfo]: any = await fetchData(
-    INDEXER.COMMUNITY.GET(communityId as string)
+  let community: Community | null = null;
+  let categoriesOptions: string[] = [];
+
+  await Promise.all(
+    [
+      async () => {
+        const [data, error, pageInfo]: any = await fetchData(
+          INDEXER.COMMUNITY.GET(communityId as string)
+        );
+
+        if (data) {
+          community = data as Community;
+        }
+      },
+      async () => {
+        const [data] = await fetchData(
+          INDEXER.COMMUNITY.CATEGORIES(communityId as string)
+        );
+        if (data && data.length) {
+          const categoriesToOrder = data.map(
+            (category: { name: string }) => category.name
+          );
+          categoriesOptions = categoriesToOrder.sort((a: string, b: string) => {
+            return a.localeCompare(b, "en");
+          });
+        }
+      },
+    ].map((func) => func())
   );
 
-  if (!data) {
+  if (!community) {
     return {
       notFound: true,
     };
   }
 
+  const defaultSortBy = (query.sortBy || "milestones") as SortByOptions;
+  const defaultSelectedCategories = ((query.categories as string) || "")
+    .split(",")
+    .filter((category) => category.trim());
+  const defaultSelectedStatus = (query.status || "all") as StatusOptions;
+
   return {
     props: {
       communityId,
-      communityName: (data as Community).details?.data?.name || "",
-      community: data as Community,
+      communityName: (community as Community)?.details?.data?.name || "",
+      community: community as Community,
+      categoriesOptions,
+      defaultSortBy,
+      defaultSelectedCategories,
+      defaultSelectedStatus,
     },
-    revalidate: 5 * 60, // revalidate every 5 minutes
-  };
-}
-
-export function getStaticPaths() {
-  return {
-    paths: [],
-    fallback: "blocking",
   };
 }
 
@@ -91,7 +120,11 @@ export default function Index({
   communityId,
   communityName,
   community,
-}: InferGetServerSidePropsType<typeof getStaticProps>) {
+  categoriesOptions,
+  defaultSortBy,
+  defaultSelectedCategories,
+  defaultSelectedStatus,
+}: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const dynamicMetadata = {
     title: `Karma GAP - ${communityName} community grants`,
     description: `View the list of grants issued by ${
@@ -155,7 +188,12 @@ export default function Index({
         </div>
 
         <div className="flex gap-8 flex-row max-lg:flex-col-reverse w-full">
-          <CommunityGrants />
+          <CommunityGrants
+            categoriesOptions={categoriesOptions}
+            defaultSelectedCategories={defaultSelectedCategories}
+            defaultSortBy={defaultSortBy}
+            defaultSelectedStatus={defaultSelectedStatus}
+          />
           <CommunityFeed />
         </div>
       </div>

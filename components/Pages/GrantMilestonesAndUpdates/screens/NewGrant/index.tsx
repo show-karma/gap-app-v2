@@ -34,6 +34,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { appNetwork } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
+import { useAuthStore } from "@/store/auth";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -180,6 +181,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const searchParams = useSearchParams();
   const grantScreen = searchParams?.get("tab");
+  const { isAuth } = useAuthStore();
 
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [milestones, setMilestones] = useState<MilestoneWithCompleted[]>([]);
@@ -284,7 +286,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
 
     try {
       setIsLoading(true);
-      if (!isConnected) return;
+      if (!isConnected || !isAuth) return;
       const grant = new Grant({
         data: {
           communityUID: data.community,

@@ -17,6 +17,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { getQuestionsOf, hasAlreadyReviewed } from "@/utilities/sdk";
 import { additionalQuestion } from "@/utilities/tabs";
 import { MESSAGES } from "@/utilities/messages";
+import { useAuthStore } from "@/store/auth";
 
 interface ReviewGrantProps {
   grant: Grant | undefined;
@@ -24,6 +25,7 @@ interface ReviewGrantProps {
 
 export const ReviewGrant: FC<ReviewGrantProps> = ({ grant }) => {
   const { isConnected } = useAccount();
+  const { isAuth } = useAuthStore();
   const { openConnectModal } = useConnectModal();
   const loading = useProjectStore((state) => state.loading);
   const { address } = useAccount();
@@ -118,7 +120,7 @@ export const ReviewGrant: FC<ReviewGrantProps> = ({ grant }) => {
     </div>;
   }
 
-  if (!isConnected) {
+  if (!isConnected || !isAuth) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3">
         <p>Please, connect your wallet.</p>

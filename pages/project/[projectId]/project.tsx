@@ -14,8 +14,9 @@ import { deleteProject } from "@/utilities/sdk";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 
-const ProjectDialog = dynamic(() =>
-  import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog)
+const ProjectDialog = dynamic(
+  () => import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog),
+  { ssr: false }
 );
 
 const DeleteDialog = dynamic(() =>
