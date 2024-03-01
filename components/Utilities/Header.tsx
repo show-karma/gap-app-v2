@@ -23,6 +23,7 @@ import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { getCommunitiesOf, getContractOwner } from "@/utilities/sdk";
 import { karmaLinks } from "@/utilities/karma";
 import { PAGES } from "@/utilities/pages";
+import { useAuthStore } from "@/store/auth";
 
 const ProjectDialog = dynamic(
   () => import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog),
