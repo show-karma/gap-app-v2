@@ -161,7 +161,6 @@ export default function Index() {
         const { grants: fetchedGrants } = await getGrants(communityId as Hex);
         if (fetchedGrants) {
           setTotalGrants(fetchedGrants.length);
-
           const mapSimplifiedGrants: SimplifiedGrants[] = fetchedGrants
             .slice(itemsPerPage * (currentPage - 1), itemsPerPage * currentPage)
             .map(
