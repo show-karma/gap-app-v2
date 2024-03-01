@@ -143,10 +143,10 @@ export default function Header() {
   }, [activeConnector]);
 
   useEffect(() => {
-    if (isConnected && isReady) {
+    if (isConnected && isReady && !isAuth) {
       authenticate();
     }
-  }, [isConnected, isReady]);
+  }, [isConnected, isReady, isAuth]);
 
   return (
     <>
