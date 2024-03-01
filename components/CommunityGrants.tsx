@@ -32,16 +32,16 @@ const statuses: Record<StatusOptions, string> = {
 
 interface CommunityGrantsProps {
   categoriesOptions: string[];
-  defaultSelectedCategories: string[]
-  defaultSortBy: SortByOptions,
-  defaultSelectedStatus: StatusOptions
+  defaultSelectedCategories: string[];
+  defaultSortBy: SortByOptions;
+  defaultSelectedStatus: StatusOptions;
 }
 
 export const CommunityGrants = ({
   categoriesOptions,
   defaultSelectedCategories,
   defaultSortBy,
-  defaultSelectedStatus
+  defaultSelectedStatus,
 }: CommunityGrantsProps) => {
   const router = useRouter();
   const communityId = router.query.communityId as string;
@@ -104,11 +104,13 @@ export const CommunityGrants = ({
         if (fetchedGrants && fetchedGrants.length) {
           setHaveMore(fetchedGrants.length === itemsPerPage);
           setGrants((prev) =>
-            currentPage === 0
-              ? fetchedGrants
-              : [...prev, ...fetchedGrants]
+            currentPage === 0 ? fetchedGrants : [...prev, ...fetchedGrants]
           );
           setTotalGrants((prev) => pageInfo?.totalItems || prev);
+        } else {
+          setHaveMore(false);
+          setGrants([]);
+          setTotalGrants(0);
         }
       } catch (error) {
         console.log("error", error);
