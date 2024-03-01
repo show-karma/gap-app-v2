@@ -1,8 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 import type { FC } from "react";
-import { MESSAGES, PAGES } from "@/utilities";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useQueryState } from "nuqs";
+import { MESSAGES } from "@/utilities/messages";
 
 export const EmptyGrantsSection: FC = () => {
   const isProjectAdmin = useProjectStore((state) => state.isProjectOwner);

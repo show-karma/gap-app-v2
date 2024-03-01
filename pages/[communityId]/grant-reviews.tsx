@@ -1,7 +1,9 @@
 import { grantReviewDictionary } from "@/components/Pages/GrantReviews/util";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useGap } from "@/hooks";
-import { PAGES, getMetadata, zeroUID } from "@/utilities";
+import { zeroUID } from "@/utilities/commons";
+import { PAGES } from "@/utilities/pages";
+import { getMetadata } from "@/utilities/sdk";
 import { Community, ICommunityDetails } from "@show-karma/karma-gap-sdk";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { useRouter } from "next/router";

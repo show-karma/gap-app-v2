@@ -1,15 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import { useGap } from "@/hooks";
-import {
-  INDEXER,
-  MESSAGES,
-  PAGES,
-  cn,
-  defaultMetadata,
-  useSigner,
-  zeroUID,
-} from "@/utilities";
 import { Community } from "@show-karma/karma-gap-sdk";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
 import { useAccount } from "wagmi";
@@ -25,6 +16,13 @@ import fetchData from "@/utilities/fetchData";
 import { Button } from "@/components/Utilities/Button";
 import { NextSeo } from "next-seo";
 import dynamic from "next/dynamic";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { zeroUID } from "@/utilities/commons";
+import { PAGES } from "@/utilities/pages";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { defaultMetadata } from "@/utilities/meta";
+import { cn } from "@/utilities/tailwind";
 
 const MarkdownPreview = dynamic(() => import("@uiw/react-markdown-preview"), {
   ssr: false,

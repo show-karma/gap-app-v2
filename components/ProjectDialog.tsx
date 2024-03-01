@@ -7,16 +7,7 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/solid";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import {
-  MESSAGES,
-  PAGES,
-  appNetwork,
-  checkNetworkIsValid,
-  cn,
-  createNewProject,
-  updateProject,
-  useSigner,
-} from "@/utilities";
+
 import { z } from "zod";
 import { Hex, isAddress } from "viem";
 import { useForm } from "react-hook-form";
@@ -38,6 +29,13 @@ import {
 } from "./Icons";
 import { useProjectStore } from "@/store";
 import { useOwnerStore } from "@/store/owner";
+import { MESSAGES } from "@/utilities/messages";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
+import { createNewProject, updateProject } from "@/utilities/sdk";
+import { appNetwork } from "@/utilities/network";
+import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";

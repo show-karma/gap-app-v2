@@ -1,11 +1,9 @@
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { useProjectStore } from "@/store";
-import {
-  MESSAGES,
-  checkNetworkIsValid,
-  shortAddress,
-  useSigner,
-} from "@/utilities";
+import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { MESSAGES } from "@/utilities/messages";
+import { shortAddress } from "@/utilities/shortAddress";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import type { Grant } from "@show-karma/karma-gap-sdk";
 import { useQueryState } from "nuqs";

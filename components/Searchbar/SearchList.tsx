@@ -6,8 +6,8 @@ import Link from "next/link";
 
 import { Spinner } from "../Utilities/Spinner";
 import EthereumAddressToENSName from "../EthereumAddressToENSName";
-import { PAGES } from "@/utilities";
 import { blo } from "blo";
+import { PAGES } from "@/utilities/pages";
 
 interface Props {
   data: Project[]; // Will be modular in the future

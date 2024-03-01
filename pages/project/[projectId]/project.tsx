@@ -3,13 +3,16 @@ import { useProjectStore } from "@/store";
 import { useOwnerStore } from "@/store/owner";
 import { useState } from "react";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
-import { MESSAGES, PAGES, deleteProject, useSigner } from "@/utilities";
 import toast from "react-hot-toast";
 import { useRouter } from "next/router";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { ProjectFeed } from "@/components/ProjectFeed";
 import dynamic from "next/dynamic";
 import { useGap } from "@/hooks";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { deleteProject } from "@/utilities/sdk";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
 
 const ProjectDialog = dynamic(() =>
   import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog)

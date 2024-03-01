@@ -1,4 +1,3 @@
-import { cn, shortAddress } from "@/utilities";
 import { FC, useEffect, useState } from "react";
 import { Community } from "@show-karma/karma-gap-sdk";
 import { useGap } from "@/hooks";
@@ -11,6 +10,8 @@ import {
 } from "cmdk";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
+import { shortAddress } from "@/utilities/shortAddress";
+import { cn } from "@/utilities/tailwind";
 
 interface CommunitiesDropdownProps {
   onSelectFunction: (value: string, networkId: number) => void;

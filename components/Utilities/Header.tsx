@@ -7,15 +7,6 @@ import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { MoonIcon, SunIcon } from "@heroicons/react/24/solid";
 import { ConnectorData, useAccount, useConnect, useDisconnect } from "wagmi";
-import {
-  PAGES,
-  cn,
-  getCommunitiesOf,
-  getContractOwner,
-  karmaLinks,
-  useSigner,
-} from "@/utilities";
-import { Community } from "@show-karma/karma-gap-sdk";
 import { useOwnerStore } from "@/store/owner";
 import { useCommunitiesStore } from "@/store/communities";
 import { ExternalLink } from "./ExternalLink";
@@ -27,8 +18,11 @@ import { Button } from "./Button";
 import { useTheme } from "next-themes";
 import { Searchbar } from "../Searchbar";
 import dynamic from "next/dynamic";
-import { useAuthStore } from "@/store/auth";
 import { useAuth } from "@/hooks/useAuth";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { getCommunitiesOf, getContractOwner } from "@/utilities/sdk";
+import { karmaLinks } from "@/utilities/karma";
+import { PAGES } from "@/utilities/pages";
 
 const ProjectDialog = dynamic(() =>
   import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog)

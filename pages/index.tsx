@@ -1,17 +1,17 @@
 /* eslint-disable @next/next/no-img-element */
 import React from "react";
-import Head from "next/head";
-import Image from "next/image";
 import Link from "next/link";
 import Typed from "react-typed";
 import { PlusIcon } from "@heroicons/react/24/solid";
 import { CloudArrowUpIcon, LockClosedIcon } from "@heroicons/react/20/solid";
-import { PAGES, chosenCommunities, defaultMetadata } from "@/utilities";
 import { NextSeo } from "next-seo";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components/Utilities/Button";
 import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
+import { chosenCommunities } from "@/utilities/chosenCommunities";
+import { PAGES } from "@/utilities/pages";
+import { defaultMetadata } from "@/utilities/meta";
 
 const ProjectDialog = dynamic(() =>
   import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog)

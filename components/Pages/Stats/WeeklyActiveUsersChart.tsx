@@ -1,9 +1,9 @@
 "use client";
 
+import { formatDate } from "@/utilities/formatDate";
 import { getGAPWeeklyActiveUsers } from "@/utilities/indexer/stats";
 import { Card, LineChart, Title } from "@tremor/react";
 import { useEffect, useState } from "react";
-import { formatDate } from "@/utilities";
 
 export const WeeklyActiveUsersChart = () => {
   const [data, setData] = useState([]);

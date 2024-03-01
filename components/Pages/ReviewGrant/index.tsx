@@ -11,15 +11,12 @@ import { useProjectStore } from "@/store";
 import { Question } from "@/types";
 import { ReviewerInfo } from "@/types/reviewer";
 import fetchData from "@/utilities/fetchData";
-import {
-  INDEXER,
-  MESSAGES,
-  additionalQuestion,
-  getQuestionsOf,
-  hasAlreadyReviewed,
-} from "@/utilities";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/Utilities/Button";
+import { INDEXER } from "@/utilities/indexer";
+import { getQuestionsOf, hasAlreadyReviewed } from "@/utilities/sdk";
+import { additionalQuestion } from "@/utilities/tabs";
+import { MESSAGES } from "@/utilities/messages";
 
 interface ReviewGrantProps {
   grant: Grant | undefined;

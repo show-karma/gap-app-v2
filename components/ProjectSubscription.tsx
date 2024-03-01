@@ -4,15 +4,12 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "./Utilities/Button";
 import toast from "react-hot-toast";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER, PAGES, envVars } from "@/utilities";
 import { useOwnerStore, useProjectStore } from "@/store";
 import axios from "axios";
-import { useRouter } from "next/router";
-import { Spinner } from "./Utilities/Spinner";
-import * as Popover from "@radix-ui/react-popover";
 import { Contact } from "@/types/project";
 import { ContactsDropdown } from "./Pages/Project/ContactsDropdown";
+import { envVars } from "@/utilities/enviromentVars";
+import { INDEXER } from "@/utilities/indexer";
 
 const labelStyle = "text-sm font-bold";
 const inputStyle =

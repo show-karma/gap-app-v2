@@ -1,5 +1,4 @@
 import React from "react";
-import { defaultMetadata, INDEXER } from "@/utilities";
 import { GetStaticPropsContext, InferGetServerSidePropsType } from "next";
 import { NextSeo } from "next-seo";
 import { Community } from "@show-karma/karma-gap-sdk";
@@ -7,6 +6,8 @@ import { CommunityGrants } from "@/components/CommunityGrants";
 import { CommunityFeed } from "@/components/CommunityFeed";
 import { communityColors } from "@/utilities/communityColors";
 import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { defaultMetadata } from "@/utilities/meta";
 
 type Props = {
   params: {

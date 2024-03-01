@@ -1,16 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { useEffect, useState } from "react";
-import Head from "next/head";
 import { blo } from "blo";
 import { useAccount } from "wagmi";
-import {
-  MESSAGES,
-  PAGES,
-  defaultMetadata,
-  formatDate,
-  getFeedHref,
-  getProjectsOf,
-} from "@/utilities";
 import { Project } from "@show-karma/karma-gap-sdk";
 import formatCurrency from "@/utilities/formatCurrency";
 import pluralize from "pluralize";
@@ -21,6 +12,11 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
+import { getProjectsOf } from "@/utilities/sdk";
+import { defaultMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
+import { formatDate } from "@/utilities/formatDate";
+import { MESSAGES } from "@/utilities/messages";
 
 const ProjectDialog = dynamic(() =>
   import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog)
