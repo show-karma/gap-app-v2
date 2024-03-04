@@ -108,9 +108,11 @@ export const CommunityGrants = ({
           );
           setTotalGrants((prev) => pageInfo?.totalItems || prev);
         } else {
-          setHaveMore(false);
-          setGrants([]);
-          setTotalGrants(0);
+          if (currentPage === 0) {
+            setHaveMore(false);
+            setGrants([]);
+            setTotalGrants(0);
+          }
         }
       } catch (error) {
         console.log("error", error);
