@@ -107,7 +107,8 @@ export const CommunityGrants = ({
             currentPage === 0 ? fetchedGrants : [...prev, ...fetchedGrants]
           );
           setTotalGrants((prev) => pageInfo?.totalItems || prev);
-        } else {
+        }
+        if (currentPage === 0 && (!fetchedGrants || !fetchedGrants.length)) {
           setHaveMore(false);
           setGrants([]);
           setTotalGrants(0);
