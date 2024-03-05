@@ -27,14 +27,17 @@ import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useGap } from "@/hooks";
 import toast from "react-hot-toast";
 import { useSearchParams } from "next/navigation";
-import { XMarkIcon } from "@heroicons/react/24/outline";
+import { CalendarIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { getWalletClient } from "@wagmi/core";
 import { useQueryState } from "nuqs";
 import { MESSAGES } from "@/utilities/messages";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { appNetwork } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
+import { Popover } from "@headlessui/react";
+import { DayPicker } from "react-day-picker";
 import { useAuthStore } from "@/store/auth";
+import { formatDate } from "@/utilities/formatDate";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -62,6 +65,9 @@ const grantSchema = z.object({
   community: z.string().nonempty({ message: MESSAGES.GRANT.FORM.COMMUNITY }),
   // season: z.string(),
   // cycle: z.string(),
+  startDate: z.date({
+    required_error: MESSAGES.GRANT.FORM.DATE,
+  }),
   linkToProposal: z
     .string()
     .url({
@@ -168,6 +174,7 @@ interface NewGrantData {
   cycle?: string;
   recipient?: string;
   grantUpdate?: string;
+  startDate?: number;
   questions: {
     type: string;
     query: string;
@@ -246,6 +253,10 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       // cycle: grantScreen === "edit-grant" ? grantToEdit?.details?.cycle : "",
       linkToProposal:
         grantScreen === "edit-grant" ? grantToEdit?.details?.proposalURL : "",
+      startDate:
+        grantScreen === "edit-grant" && grantToEdit?.details?.startDate
+          ? new Date(grantToEdit?.details?.startDate * 1000)
+          : undefined,
       successQuestions: premade<SuccessQuestion>(
         "SUCCESS_MEASURE",
         SUCCESS_QUESTIONS
@@ -311,6 +322,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           // cycle: data.cycle,
           // season: data.season,
           questions: data.questions,
+          startDate: data.startDate,
         },
         refUID: grant.uid,
         schema: gap.findSchema("GrantDetails"),
@@ -398,6 +410,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         // cycle: data.cycle,
         // season: data.season,
         questions: data.questions,
+        startDate: data.startDate,
       });
 
       await oldGrant.details?.attest(signer as any).then(async () => {
@@ -486,6 +499,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       recipient: data.recipient,
       grantUpdate,
       questions,
+      startDate: data.startDate.getTime() / 1000,
     };
     if (grantScreen === "edit-grant" && grantToEdit) {
       updateGrant(grantToEdit, newGrant);
@@ -578,6 +592,47 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             <p className="text-base text-red-400">
               {errors.community?.message}
             </p>
+          </div>
+          <div className="flex w-full flex-col">
+            <Controller
+              name="startDate"
+              control={form.control}
+              render={({ field, formState, fieldState }) => (
+                <div className="flex w-full flex-col gap-2">
+                  <label className={labelStyle}>Start Date</label>
+                  <div>
+                    <Popover className="relative">
+                      <Popover.Button className="max-lg:w-full w-max text-base flex-row flex gap-2 items-center bg-gray-100 dark:bg-zinc-800 px-4 py-2 rounded-md">
+                        {field.value ? (
+                          formatDate(field.value)
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Popover.Button>
+                      <Popover.Panel className="absolute z-10 border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 mt-4 rounded-md">
+                        <DayPicker
+                          mode="single"
+                          selected={field.value}
+                          onDayClick={(e) => {
+                            setValue("startDate", e, { shouldValidate: true });
+                            field.onChange(e);
+                          }}
+                          disabled={(date) => {
+                            if (date < new Date("2000-01-01")) return true;
+                            return false;
+                          }}
+                          initialFocus
+                        />
+                      </Popover.Panel>
+                    </Popover>
+                  </div>
+                  <p className="text-base text-red-400">
+                    {formState.errors.startDate?.message}
+                  </p>
+                </div>
+              )}
+            />
           </div>
           <div className="flex w-full flex-col">
             <label htmlFor="grant-amount" className={labelStyle}>
