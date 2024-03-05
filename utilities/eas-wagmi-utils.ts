@@ -1,6 +1,6 @@
 "use client";
 
-import { JsonRpcProvider, JsonRpcSigner } from "@ethersproject/providers";
+import type { JsonRpcProvider, JsonRpcSigner } from "@ethersproject/providers";
 import type { PublicClient, WalletClient } from "@wagmi/core";
 import { ethers } from "ethers";
 import { useEffect, useState } from "react";
