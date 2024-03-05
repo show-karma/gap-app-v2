@@ -4,12 +4,15 @@ import { type FC, useState } from "react";
 
 import { Button } from "@/components/Utilities/Button";
 import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { MESSAGES, ReadMore, formatDate, useSigner } from "@/utilities";
 import { UpdateMilestone } from "./UpdateMilestone";
 import { useOwnerStore, useProjectStore } from "@/store";
 import toast from "react-hot-toast";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useNetwork, useSwitchNetwork } from "wagmi";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { MESSAGES } from "@/utilities/messages";
+import { formatDate } from "@/utilities/formatDate";
+import { ReadMore } from "@/utilities/ReadMore";
 
 interface UpdatesProps {
   milestone: Milestone;

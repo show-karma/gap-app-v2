@@ -7,7 +7,7 @@ import _groupBy from "lodash.groupby";
 import { type FC, useMemo, useState } from "react";
 
 import type { StatChartData, StatPeriod } from "@/types";
-import { formatDate } from "@/utilities";
+import { formatDate } from "@/utilities/formatDate";
 
 interface StatChartProps {
   title: string;

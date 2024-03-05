@@ -2,16 +2,6 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ProjectPageLayout } from ".";
-import {
-  MESSAGES,
-  PAGES,
-  cn,
-  defaultMetadata,
-  getMetadata,
-  getQuestionsOf,
-  getReviewsOf,
-  zeroUID,
-} from "@/utilities";
 import { useOwnerStore, useProjectStore } from "@/store";
 import {
   Grant,
@@ -48,6 +38,13 @@ import { GrantMilestonesAndUpdates } from "@/components/Pages/GrantMilestonesAnd
 import { GrantAllReviews } from "@/components/Pages/AllReviews";
 import { ReviewGrant } from "@/components/Pages/ReviewGrant";
 import { useQueryState } from "nuqs";
+import { getMetadata, getQuestionsOf, getReviewsOf } from "@/utilities/sdk";
+import { zeroUID } from "@/utilities/commons";
+import { PAGES } from "@/utilities/pages";
+import { defaultMetadata } from "@/utilities/meta";
+import { cn } from "@/utilities/tailwind";
+import { MESSAGES } from "@/utilities/messages";
+import { formatDate } from "@/utilities/formatDate";
 
 interface Tab {
   name: string;
@@ -529,6 +526,12 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
       stat: isValidAmount(grant?.details?.amount),
       title: "Total Grant Amount",
     },
+    {
+      stat: grant?.details?.startDate
+        ? formatDate(grant?.details?.startDate * 1000)
+        : undefined,
+      title: "Start Date",
+    },
     // {
     //   stat: grant?.details?.season,
     //   title: "Season",
@@ -620,6 +623,7 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
                   </div>
                 </a>
               </div>
+
               {grant?.details?.proposalURL ? (
                 <div className="flex items-center justify-between">
                   <div className="text-gray-500  font-semibold text-base dark:text-gray-300">

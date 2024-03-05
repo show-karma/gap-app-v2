@@ -2,8 +2,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { DiscordIcon, MirrorIcon, TelegramIcon, TwitterIcon } from "../Icons";
-import { SOCIALS, karmaLinks } from "@/utilities";
 import { ExternalLink } from "./ExternalLink";
+import { SOCIALS } from "@/utilities/socials";
+import { karmaLinks } from "@/utilities/karma";
 
 const navigation = {
   social: [

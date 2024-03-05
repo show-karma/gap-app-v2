@@ -1,5 +1,4 @@
 /* eslint-disable @next/next/no-img-element */
-import { MESSAGES, PAGES, formatDate, getReviewsOf } from "@/utilities";
 import { Grant } from "@show-karma/karma-gap-sdk";
 import { Button } from "../Utilities/Button";
 import Pagination from "../Utilities/Pagination";
@@ -14,6 +13,10 @@ import { VotingPowerPopover } from "../VotingPowerPopover";
 import { blo } from "blo";
 import Link from "next/link";
 import { MarkdownPreview } from "../Utilities/MarkdownPreview";
+import { getReviewsOf } from "@/utilities/indexer/projects/getReviewsOf";
+import { formatDate } from "@/utilities/formatDate";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
 
 interface GrantAllReviewsProps {
   grant: Grant | undefined;

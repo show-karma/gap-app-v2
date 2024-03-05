@@ -2,10 +2,10 @@
 
 "use client";
 
-import { formatNumberPercentage, isDelegateOf } from "@/utilities";
 import formatCurrency from "@/utilities/formatCurrency";
+import { formatNumberPercentage } from "@/utilities/formatNumber";
+import { isDelegateOf } from "@/utilities/karma";
 import { Popover, Transition } from "@headlessui/react";
-import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import type { Community, Hex } from "@show-karma/karma-gap-sdk";
 import { type FC, type ReactNode, useEffect, useState, Fragment } from "react";
 

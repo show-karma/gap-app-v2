@@ -1,4 +1,4 @@
-import { cn } from "@/utilities";
+import { cn } from "@/utilities/tailwind";
 import type { FC } from "react";
 
 interface StarIconProps {
