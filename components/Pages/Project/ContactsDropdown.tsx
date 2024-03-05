@@ -1,4 +1,3 @@
-import { cn, shortAddress } from "@/utilities";
 import { FC, useState } from "react";
 import {
   Command,
@@ -10,6 +9,7 @@ import {
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
 import { Contact } from "@/types/project";
+import { cn } from "@/utilities/tailwind";
 
 interface ContactsDropdownProps {
   onSelectFunction: (value: string) => void;

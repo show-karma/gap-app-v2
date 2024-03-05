@@ -5,14 +5,12 @@ import { PlusIcon } from "@heroicons/react/24/solid";
 import { Button } from "./Utilities/Button";
 import toast from "react-hot-toast";
 import { isAddress } from "viem";
-import {
-  appNetwork,
-  checkNetworkIsValid,
-  transferOwnership,
-  useSigner,
-} from "@/utilities";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/store";
 import { useNetwork, useSwitchNetwork } from "wagmi";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { appNetwork } from "@/utilities/network";
+import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
+import { transferOwnership } from "@/utilities/sdk";
 
 type TransferOwnershipProps = {
   buttonElement?: {

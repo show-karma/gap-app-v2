@@ -12,7 +12,6 @@ import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { useOwnerStore, useProjectStore } from "@/store";
-import { MESSAGES, PAGES, formatDate, useSigner } from "@/utilities";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 import { useGap } from "@/hooks";
 import { Hex } from "viem";
@@ -26,6 +25,9 @@ import { DayPicker } from "react-day-picker";
 import { CalendarIcon } from "@heroicons/react/24/outline";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { useQueryState } from "nuqs";
+import { MESSAGES } from "@/utilities/messages";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { formatDate } from "@/utilities/formatDate";
 
 const milestoneSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.MILESTONES.FORM.TITLE }),

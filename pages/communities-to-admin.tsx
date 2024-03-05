@@ -1,19 +1,13 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { useEffect, useState } from "react";
 import Head from "next/head";
-import { blo } from "blo";
-import { useAccount } from "wagmi";
-import { Community } from "@show-karma/karma-gap-sdk";
-import {
-  MESSAGES,
-  PAGES,
-  defaultMetadata,
-  getCommunitiesOf,
-} from "@/utilities";
 import Link from "next/link";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { NextSeo } from "next-seo";
 import { useCommunitiesStore } from "@/store/communities";
+import { defaultMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
+import { MESSAGES } from "@/utilities/messages";
 
 export default function CommunitiesToAdmin() {
   const { communities: communitiesToAdmin, isLoading } = useCommunitiesStore();
