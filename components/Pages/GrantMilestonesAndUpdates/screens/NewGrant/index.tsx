@@ -67,7 +67,7 @@ const grantSchema = z.object({
   community: z.string().nonempty({ message: MESSAGES.GRANT.FORM.COMMUNITY }),
   // season: z.string(),
   // cycle: z.string(),
-  startsAt: z.date({
+  startDate: z.date({
     required_error: MESSAGES.GRANT.FORM.DATE,
   }),
   linkToProposal: z
@@ -176,6 +176,7 @@ interface NewGrantData {
   cycle?: string;
   recipient?: string;
   grantUpdate?: string;
+  startDate?: number;
   questions: {
     type: string;
     query: string;
@@ -254,6 +255,10 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       // cycle: grantScreen === "edit-grant" ? grantToEdit?.details?.cycle : "",
       linkToProposal:
         grantScreen === "edit-grant" ? grantToEdit?.details?.proposalURL : "",
+      startDate:
+        grantScreen === "edit-grant" && grantToEdit?.details?.startDate
+          ? new Date(grantToEdit?.details?.startDate * 1000)
+          : undefined,
       successQuestions: premade<SuccessQuestion>(
         "SUCCESS_MEASURE",
         SUCCESS_QUESTIONS
@@ -319,6 +324,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           // cycle: data.cycle,
           // season: data.season,
           questions: data.questions,
+          startDate: data.startDate,
         },
         refUID: grant.uid,
         schema: gap.findSchema("GrantDetails"),
@@ -406,6 +412,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         // cycle: data.cycle,
         // season: data.season,
         questions: data.questions,
+        startDate: data.startDate,
       });
 
       await oldGrant.details?.attest(signer as any).then(async () => {
@@ -494,6 +501,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       recipient: data.recipient,
       grantUpdate,
       questions,
+      startDate: data.startDate.getTime() / 1000,
     };
     if (grantScreen === "edit-grant" && grantToEdit) {
       updateGrant(grantToEdit, newGrant);
@@ -589,7 +597,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           </div>
           <div className="flex w-full flex-col">
             <Controller
-              name="startsAt"
+              name="startDate"
               control={form.control}
               render={({ field, formState, fieldState }) => (
                 <div className="flex w-full flex-col gap-2">
@@ -609,7 +617,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                           mode="single"
                           selected={field.value}
                           onDayClick={(e) => {
-                            setValue("startsAt", e, { shouldValidate: true });
+                            setValue("startDate", e, { shouldValidate: true });
                             field.onChange(e);
                           }}
                           disabled={(date) => {
@@ -622,7 +630,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                     </Popover>
                   </div>
                   <p className="text-base text-red-400">
-                    {formState.errors.startsAt?.message}
+                    {formState.errors.startDate?.message}
                   </p>
                 </div>
               )}
