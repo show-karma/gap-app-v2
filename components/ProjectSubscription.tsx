@@ -10,6 +10,7 @@ import { Contact } from "@/types/project";
 import { ContactsDropdown } from "./Pages/Project/ContactsDropdown";
 import { envVars } from "@/utilities/enviromentVars";
 import { INDEXER } from "@/utilities/indexer";
+import fetchData from "@/utilities/fetchData";
 
 const labelStyle = "text-sm font-bold";
 const inputStyle =
