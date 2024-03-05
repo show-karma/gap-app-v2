@@ -1,4 +1,4 @@
-import { cn } from "@/utilities";
+import { cn } from "@/utilities/tailwind";
 import { FC } from "react";
 
 interface SpinnerProps {

@@ -1,7 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
-import { defaultMetadata } from "@/utilities";
+import { defaultMetadata } from "@/utilities/meta";
 
 const NotFoundPage: React.FC = () => {
   return (

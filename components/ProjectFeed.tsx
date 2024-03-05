@@ -12,8 +12,9 @@ import EthereumAddressToENSName from "./EthereumAddressToENSName";
 import { blo } from "blo";
 import { Hex } from "viem";
 import { MarkdownPreview } from "./Utilities/MarkdownPreview";
-import { cn } from "@/utilities";
 import { useTheme } from "next-themes";
+import { cn } from "@/utilities/tailwind";
+
 export const ProjectFeed = () => {
   const router = useRouter();
   const projectId = router.query.projectId; // Get the projectId from the URL

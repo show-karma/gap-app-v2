@@ -2,17 +2,6 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ProjectPageLayout } from ".";
-import {
-  MESSAGES,
-  PAGES,
-  cn,
-  defaultMetadata,
-  formatDate,
-  getMetadata,
-  getQuestionsOf,
-  getReviewsOf,
-  zeroUID,
-} from "@/utilities";
 import { useOwnerStore, useProjectStore } from "@/store";
 import {
   Grant,
@@ -49,6 +38,13 @@ import { GrantMilestonesAndUpdates } from "@/components/Pages/GrantMilestonesAnd
 import { GrantAllReviews } from "@/components/Pages/AllReviews";
 import { ReviewGrant } from "@/components/Pages/ReviewGrant";
 import { useQueryState } from "nuqs";
+import { getMetadata, getQuestionsOf, getReviewsOf } from "@/utilities/sdk";
+import { zeroUID } from "@/utilities/commons";
+import { PAGES } from "@/utilities/pages";
+import { defaultMetadata } from "@/utilities/meta";
+import { cn } from "@/utilities/tailwind";
+import { MESSAGES } from "@/utilities/messages";
+import { formatDate } from "@/utilities/formatDate";
 
 interface Tab {
   name: string;

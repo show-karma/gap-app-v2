@@ -1,6 +1,6 @@
 import { ISitemapField, getServerSideSitemapLegacy } from "next-sitemap";
 import { GetServerSideProps } from "next";
-import { chosenCommunities } from "@/utilities";
+import { chosenCommunities } from "@/utilities/chosenCommunities";
 
 export const getServerSideProps: GetServerSideProps = async (ctx) => {
   const paths: ISitemapField[] = chosenCommunities().map((community) => ({

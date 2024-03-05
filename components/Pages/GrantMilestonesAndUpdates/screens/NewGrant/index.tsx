@@ -5,13 +5,6 @@ import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { MilestoneWithCompleted } from "@/types/milestones";
-import {
-  MESSAGES,
-  PAGES,
-  appNetwork,
-  formatDate,
-  useSigner,
-} from "@/utilities";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   GrantDetails,
@@ -37,9 +30,14 @@ import { useSearchParams } from "next/navigation";
 import { CalendarIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { getWalletClient } from "@wagmi/core";
 import { useQueryState } from "nuqs";
+import { MESSAGES } from "@/utilities/messages";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { appNetwork } from "@/utilities/network";
+import { PAGES } from "@/utilities/pages";
 import { Popover } from "@headlessui/react";
 import { DayPicker } from "react-day-picker";
 import { useAuthStore } from "@/store/auth";
+import { formatDate } from "@/utilities/formatDate";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =

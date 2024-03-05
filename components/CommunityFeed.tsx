@@ -13,7 +13,7 @@ import { blo } from "blo";
 import { Hex } from "viem";
 import { MarkdownPreview } from "./Utilities/MarkdownPreview";
 import { useTheme } from "next-themes";
-import { cn } from "@/utilities";
+import { cn } from "@/utilities/tailwind";
 
 export const CommunityFeed = () => {
   const router = useRouter();

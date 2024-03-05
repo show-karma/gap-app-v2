@@ -7,7 +7,6 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 import { Question } from "@/types";
 import { ReviewerInfo } from "@/types/reviewer";
-import { INDEXER, MESSAGES, additionalQuestion, cn } from "@/utilities";
 import { useAccount } from "wagmi";
 import { useProjectStore } from "@/store";
 import fetchData from "@/utilities/fetchData";
@@ -18,8 +17,11 @@ import { CheckIcon } from "@heroicons/react/20/solid";
 import { Listbox, Transition } from "@headlessui/react";
 import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import pluralize from "pluralize";
-import dynamic from "next/dynamic";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { MESSAGES } from "@/utilities/messages";
+import { additionalQuestion } from "@/utilities/tabs";
+import { INDEXER } from "@/utilities/indexer";
+import { cn } from "@/utilities/tailwind";
 
 interface ReviewFormProps {
   grant: Grant;

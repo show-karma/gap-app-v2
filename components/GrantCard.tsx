@@ -2,10 +2,12 @@
 import { Grant, GrantDetails, ProjectDetails } from "@show-karma/karma-gap-sdk";
 import { blo } from "blo";
 import { Hex } from "viem";
-import { PAGES, formatPercentage, formatDate } from "@/utilities";
 import pluralize from "pluralize";
 import formatCurrency from "@/utilities/formatCurrency";
 import { MarkdownPreview } from "./Utilities/MarkdownPreview";
+import { formatPercentage } from "@/utilities/formatNumber";
+import { PAGES } from "@/utilities/pages";
+import { formatDate } from "@/utilities/formatDate";
 
 interface GrantMongo extends Omit<Grant, "details" | "project"> {
   details: GrantDetails;

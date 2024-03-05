@@ -4,8 +4,9 @@
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { MESSAGES, getProjectById, useSigner } from "@/utilities";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { MESSAGES } from "@/utilities/messages";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import type { Milestone } from "@show-karma/karma-gap-sdk";
 import { type FC, useState } from "react";
