@@ -189,6 +189,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const searchParams = useSearchParams();
   const grantScreen = searchParams?.get("tab");
+  const { isAuth } = useAuthStore();
 
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [milestones, setMilestones] = useState<MilestoneWithCompleted[]>([]);
@@ -205,7 +206,6 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { switchNetworkAsync } = useSwitchNetwork();
   const { gap } = useGap();
   const { isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
 
   const [, changeTab] = useQueryState("tab");
 

@@ -1,7 +1,16 @@
-import type { Hex } from "@show-karma/karma-gap-sdk";
+import type { Grant, Hex } from "@show-karma/karma-gap-sdk";
 import { SortByOptions, StatusOptions } from "@/types/filters";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+
+export interface GrantsResponse {
+  grants: Grant[];
+  pageInfo: {
+    page?: string;
+    pageLimit?: string;
+    totalItems?: number;
+  };
+}
 
 export const getGrants = async (
   uid: Hex,
@@ -14,7 +23,7 @@ export const getGrants = async (
     page: number;
     pageLimit: number;
   }
-) => {
+): Promise<GrantsResponse> => {
   try {
     const [response] = await fetchData(
       INDEXER.COMMUNITY.GRANTS(uid, {
