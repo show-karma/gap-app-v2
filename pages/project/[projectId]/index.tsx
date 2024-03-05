@@ -138,10 +138,16 @@ export const NestedLayout = ({ children }: Props) => {
     const getContactInfo = async () => {
       setContactInfoLoading(true);
       try {
-        const [data] = await fetchData(INDEXER.PROJECT.GET(projectId));
-        const contactInfo: APIContact[] = data?.project_contact;
+        const [data] = await fetchData(
+          INDEXER.SUBSCRIPTION.GET(projectId),
+          "GET",
+          {},
+          {},
+          {},
+          true
+        );
 
-        setProjectContactsInfo(contactInfo);
+        setProjectContactsInfo(data);
       } catch (error) {
         console.error(error);
         setProjectContactsInfo(undefined);
