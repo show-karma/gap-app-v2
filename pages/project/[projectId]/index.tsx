@@ -29,6 +29,7 @@ import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { cn } from "@/utilities/tailwind";
 import { defaultMetadata } from "@/utilities/meta";
 import { useAuthStore } from "@/store/auth";
+import { Feed } from "@/types";
 
 interface Props {
   children: ReactNode;
@@ -152,7 +153,7 @@ export const NestedLayout = ({ children }: Props) => {
       }
     };
     getContactInfo();
-  }, [project]);
+  }, [projectId]);
 
   const hasContactInfo = Boolean(projectContactsInfo?.length);
 
@@ -334,27 +335,47 @@ export const ProjectPageLayout = (page: any) => (
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { params } = context;
   const projectId = params?.projectId as string;
+  let initialFeed: Feed[] = [];
+  let projectInfo: IProjectDetails | null = null;
 
-  const projectInfo = await getMetadata<IProjectDetails>(
-    "projects",
-    projectId as Hex
+  await Promise.all(
+    [
+      async () => {
+        const [data, error, pageInfo]: any = await fetchData(
+          `${INDEXER.PROJECT.FEED(projectId as string)}?limit=12`
+        );
+
+        initialFeed = (data as Feed[]) || [];
+      },
+      async () => {
+        const info = await getMetadata<IProjectDetails>(
+          "projects",
+          projectId as Hex
+        );
+        projectInfo = info as IProjectDetails;
+      },
+    ].map((func) => func())
   );
 
-  if (projectInfo?.uid === zeroUID || !projectInfo) {
+  if (!projectInfo) {
     return {
       notFound: true,
     };
   }
+
   return {
     props: {
-      projectTitle: projectInfo?.title || "",
-      projectDesc: projectInfo?.description?.substring(0, 80) || "",
+      initialFeed,
+      projectTitle: (projectInfo as IProjectDetails)?.title || "",
+      projectDesc:
+        (projectInfo as IProjectDetails)?.description?.substring(0, 80) || "",
     },
   };
 }
 const ProjectPageIndex = ({
   projectTitle,
   projectDesc,
+  initialFeed,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const dynamicMetadata = {
     title: `Karma GAP - ${projectTitle}`,
@@ -388,7 +409,7 @@ const ProjectPageIndex = ({
           },
         ]}
       />
-      <ProjectPage />
+      <ProjectPage initialFeed={initialFeed} />
     </>
   );
 };

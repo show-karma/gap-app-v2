@@ -13,6 +13,7 @@ import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { deleteProject } from "@/utilities/sdk";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
+import { Feed } from "@/types";
 
 const ProjectDialog = dynamic(
   () => import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog),
@@ -29,7 +30,11 @@ const TransferOwnershipDialog = dynamic(() =>
   )
 );
 
-function ProjectPage() {
+interface ProjectPageProps {
+  initialFeed: Feed[];
+}
+
+function ProjectPage({ initialFeed }: ProjectPageProps) {
   const project = useProjectStore((state) => state.project);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isOwner = useOwnerStore((state) => state.isOwner);
@@ -137,7 +142,7 @@ function ProjectPage() {
             />
           </div>
         ) : null}
-        <ProjectFeed />
+        <ProjectFeed initialFeed={initialFeed} />
       </div>
     </div>
   );
