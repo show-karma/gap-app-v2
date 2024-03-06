@@ -117,7 +117,7 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
         >
           <div className="flex w-full flex-col">
             <label htmlFor="update-title" className={labelStyle}>
-              Title
+              Title *
             </label>
             <input
               id="update-title"
@@ -130,7 +130,7 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
 
           <div className="flex w-full gap-2 flex-col">
             <label htmlFor="update-description" className={labelStyle}>
-              Description
+              Description *
             </label>
             <div className="w-full bg-transparent" data-color-mode="light">
               <MarkdownEditor

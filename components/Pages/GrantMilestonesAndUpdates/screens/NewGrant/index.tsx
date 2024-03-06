@@ -568,7 +568,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         <form className="flex w-full flex-col gap-4">
           <div className="flex w-full flex-col">
             <label htmlFor="grant-title" className={labelStyle}>
-              Grant title
+              Grant title *
             </label>
             <input
               id="grant-title"
@@ -580,7 +580,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           </div>
           <div className="flex w-full flex-col">
             <label htmlFor="grant-title" className={labelStyle}>
-              Community
+              Community *
             </label>
             <CommunitiesDropdown
               onSelectFunction={setCommunityValue}
@@ -600,7 +600,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
               control={form.control}
               render={({ field, formState, fieldState }) => (
                 <div className="flex w-full flex-col gap-2">
-                  <label className={labelStyle}>Start Date</label>
+                  <label className={labelStyle}>Start Date *</label>
                   <div>
                     <Popover className="relative">
                       <Popover.Button className="max-lg:w-full w-max text-base flex-row flex gap-2 items-center bg-gray-100 dark:bg-zinc-800 px-4 py-2 rounded-md">
@@ -688,7 +688,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           {isOwner && (
             <div className="flex w-full flex-col">
               <label htmlFor="tags-input" className={labelStyle}>
-                Recipient address
+                Recipient address (optional)
               </label>
               <input
                 id="tags-input"
@@ -702,7 +702,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           )}
           <div className="flex w-full flex-col">
             <label htmlFor="grant-description" className={labelStyle}>
-              Description
+              Description *
             </label>
             <div className="mt-2 w-full bg-transparent dark:border-gray-600">
               <MarkdownEditor
