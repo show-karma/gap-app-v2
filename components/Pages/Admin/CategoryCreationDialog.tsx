@@ -126,7 +126,7 @@ export const CategoryCreationDialog: FC<CategoryCreationDialogProps> = ({
                         htmlFor="milestone-title"
                         className={"text-sm font-bold"}
                       >
-                        Category name
+                        Category name *
                       </label>
                       <input
                         id="milestone-title"

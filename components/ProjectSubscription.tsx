@@ -195,7 +195,7 @@ export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({
           </div>
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="name-input" className={labelStyle}>
-              Name
+              Name *
             </label>
             <input
               id="name-input"
@@ -208,7 +208,7 @@ export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({
           </div>
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="email-input" className={labelStyle}>
-              E-mail
+              E-mail *
             </label>
             <input
               id="email-input"
