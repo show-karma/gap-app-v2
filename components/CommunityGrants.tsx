@@ -4,7 +4,6 @@ import { Fragment, useState } from "react";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 import { Listbox, Transition } from "@headlessui/react";
 import { useRouter } from "next/router";
-import { INDEXER, cn, zeroUID } from "@/utilities";
 import { Hex } from "viem";
 import { getGrants } from "@/utilities/sdk/communities";
 import { Grant } from "@show-karma/karma-gap-sdk";
@@ -16,6 +15,9 @@ import fetchData from "@/utilities/fetchData";
 import pluralize from "pluralize";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { AutoSizer, Grid } from "react-virtualized";
+import { cn } from "@/utilities/tailwind";
+import { zeroUID } from "@/utilities/commons";
+import { INDEXER } from "@/utilities/indexer";
 
 const sortOptions: Record<SortByOptions, string> = {
   recent: "Recent",
@@ -30,38 +32,42 @@ const statuses: Record<StatusOptions, string> = {
   starting: "Starting",
 };
 
-export const CommunityGrants = () => {
+interface CommunityGrantsProps {
+  categoriesOptions: string[];
+  defaultSelectedCategories: string[];
+  defaultSortBy: SortByOptions;
+  defaultSelectedStatus: StatusOptions;
+}
+
+export const CommunityGrants = ({
+  categoriesOptions,
+  defaultSelectedCategories,
+  defaultSortBy,
+  defaultSelectedStatus,
+}: CommunityGrantsProps) => {
   const router = useRouter();
   const communityId = router.query.communityId as string;
-  const [categoriesOptions, setCategoriesOptions] = useState<string[]>([]);
 
   const [currentPage, setCurrentPage] = useState(0);
-
-  // const selectedCategories = useMemo(() => {
-  //   return typeof router.query.categories === "string" &&
-  //     router.query.categories.length
-  //     ? (router.query.categories as string).split(",")
-  //     : [];
-  // }, [router.query.categories]);
 
   const [selectedCategories, changeCategoriesQuery] = useQueryState(
     "categories",
     {
-      defaultValue: [] as string[],
+      defaultValue: defaultSelectedCategories,
       serialize: (value) => value?.join(","),
       parse: (value) => (value ? value.split(",") : null),
     }
   );
 
   const [selectedSort, changeSortQuery] = useQueryState("sortBy", {
-    defaultValue: "milestones" as SortByOptions,
+    defaultValue: defaultSortBy,
     serialize: (value) => value,
     parse: (value) =>
       value ? (value as SortByOptions) : ("milestones" as SortByOptions),
   });
 
   const [selectedStatus, changeStatusQuery] = useQueryState("status", {
-    defaultValue: "all" as StatusOptions,
+    defaultValue: defaultSelectedStatus,
     serialize: (value) => value,
     parse: (value) =>
       value ? (value as StatusOptions) : ("all" as StatusOptions),
@@ -74,32 +80,15 @@ export const CommunityGrants = () => {
   const [totalGrants, setTotalGrants] = useState(0); // Total number of grants
   const [haveMore, setHaveMore] = useState(true); // Boolean to check if there are more grants to load
 
-  useMemo(() => {
+  const selectedCategoriesIds = useMemo(
+    () => selectedCategories.join("_"),
+    [selectedCategories]
+  );
+
+  useEffect(() => {
     if (!communityId || communityId === zeroUID) return;
 
-    const getCategories = async () => {
-      try {
-        const [data]: any = await fetchData(
-          INDEXER.COMMUNITY.CATEGORIES(communityId as string)
-        );
-        if (data && data.length) {
-          const categoriesToOrder = data.map(
-            (category: { name: string }) => category.name
-          );
-          const orderedCategories = categoriesToOrder.sort(
-            (a: string, b: string) => {
-              return a.localeCompare(b, "en");
-            }
-          );
-          setCategoriesOptions(orderedCategories);
-        }
-      } catch (error) {
-        // setCategoriesOptions([]);
-        console.error(error);
-      }
-    };
-
-    const fetchGrants = async () => {
+    const fetchNewGrants = async () => {
       setLoading(true);
       try {
         const { grants: fetchedGrants, pageInfo } = await getGrants(
@@ -107,18 +96,26 @@ export const CommunityGrants = () => {
           {
             sortBy: selectedSort,
             status: selectedStatus,
-            categories: selectedCategories,
+            categories: selectedCategoriesIds.split("_"),
           },
           {
             page: currentPage,
             pageLimit: itemsPerPage,
           }
         );
-        if (fetchedGrants) {
+        if (fetchedGrants && fetchedGrants.length) {
           setHaveMore(fetchedGrants.length === itemsPerPage);
-          setGrants(fetchedGrants);
+          setGrants((prev) =>
+            currentPage === 0 ? fetchedGrants : [...prev, ...fetchedGrants]
+          );
+          setTotalGrants((prev) => pageInfo?.totalItems || prev);
+        } else {
+          if (currentPage === 0) {
+            setHaveMore(false);
+            setGrants([]);
+            setTotalGrants(0);
+          }
         }
-        setTotalGrants(pageInfo.totalItems);
       } catch (error) {
         console.log("error", error);
         setGrants([]);
@@ -126,56 +123,25 @@ export const CommunityGrants = () => {
         setLoading(false);
       }
     };
-
-    fetchGrants();
-    getCategories();
-  }, [communityId]);
-
-  const fetchGrantsWithFilters = async ({
-    categoriesToFilter = selectedCategories,
-    sortByToFilter = selectedSort,
-    statusToFilter = selectedStatus,
-  }) => {
-    setGrants([]);
-    setLoading(true);
-    const page = 0;
-    setCurrentPage(page);
-    try {
-      const { grants: fetchedGrants, pageInfo } = await getGrants(
-        communityId as Hex,
-        {
-          sortBy: sortByToFilter,
-          status: statusToFilter,
-          categories: categoriesToFilter,
-        },
-        {
-          page,
-          pageLimit: itemsPerPage,
-        }
-      );
-      if (fetchedGrants) {
-        setHaveMore(fetchedGrants.length === itemsPerPage);
-        setGrants(fetchedGrants);
-      }
-      setTotalGrants(pageInfo.totalItems);
-    } catch (error) {
-      console.log("error", error);
-      setGrants([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchNewGrants();
+  }, [
+    communityId,
+    selectedSort,
+    selectedStatus,
+    selectedCategoriesIds,
+    currentPage,
+  ]);
 
   const changeSort = async (newValue: SortByOptions) => {
-    fetchGrantsWithFilters({ sortByToFilter: newValue });
+    setCurrentPage(0);
     changeSortQuery(newValue);
   };
   const changeStatus = async (newValue: StatusOptions) => {
-    fetchGrantsWithFilters({ statusToFilter: newValue });
+    setCurrentPage(0);
     changeStatusQuery(newValue);
   };
   const changeCategories = async (newValue: string[]) => {
-    fetchGrantsWithFilters({ categoriesToFilter: newValue });
+    setCurrentPage(0);
     changeCategoriesQuery(newValue);
   };
 
@@ -183,37 +149,6 @@ export const CommunityGrants = () => {
     if (!loading) {
       const newPage = currentPage + 1;
       setCurrentPage(newPage);
-
-      const fetchNewGrants = async () => {
-        setLoading(true);
-        try {
-          const { grants: fetchedGrants, pageInfo } = await getGrants(
-            communityId as Hex,
-            {
-              sortBy: selectedSort,
-              status: selectedStatus,
-              categories: selectedCategories,
-            },
-            {
-              page: newPage,
-              pageLimit: itemsPerPage,
-            }
-          );
-          if (fetchedGrants) {
-            const newGrantList =
-              newPage === 0 ? fetchedGrants : [...grants, ...fetchedGrants];
-            setHaveMore(fetchedGrants.length === itemsPerPage);
-            setGrants(newGrantList);
-          }
-          setTotalGrants(pageInfo.totalItems);
-        } catch (error) {
-          console.log("error", error);
-          setGrants([]);
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchNewGrants();
     }
   };
 

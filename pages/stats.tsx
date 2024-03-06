@@ -1,20 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { useRouter } from "next/router";
-import { useGap } from "@/hooks";
-import {
-  MESSAGES,
-  PAGES,
-  cn,
-  defaultMetadata,
-  useSigner,
-  zeroUID,
-} from "@/utilities";
-import { Community } from "@show-karma/karma-gap-sdk";
-import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
-import { useAccount } from "wagmi";
-import { Spinner } from "@/components/Utilities/Spinner";
+import React from "react";
 import { NextSeo } from "next-seo";
 import { Stats } from "@/components/Pages/Stats";
+import { defaultMetadata } from "@/utilities/meta";
 
 export default function Index() {
   return (

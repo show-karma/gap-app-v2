@@ -1,16 +1,12 @@
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useProjectStore } from "@/store";
-import {
-  MESSAGES,
-  PAGES,
-  checkNetworkIsValid,
-  shortAddress,
-  useSigner,
-} from "@/utilities";
+import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { MESSAGES } from "@/utilities/messages";
+import { shortAddress } from "@/utilities/shortAddress";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import type { Grant, Project } from "@show-karma/karma-gap-sdk";
-import Link from "next/link";
 import { useQueryState } from "nuqs";
 import type { FC } from "react";
 import { useState } from "react";

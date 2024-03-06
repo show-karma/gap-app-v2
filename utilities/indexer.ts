@@ -65,6 +65,7 @@ export const INDEXER = {
     WEEKLY_ACTIVE_USERS: `/attestations/wau`,
   },
   SUBSCRIPTION: {
+    GET: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/contacts`,
     CREATE: (idOrSlug: string) => `/projects/${idOrSlug}/add/contact`,
     UPDATE: (idOrSlug: string, contactId: string) =>
       `/projects/${idOrSlug}/update/contact/${contactId}`,

@@ -1,11 +1,13 @@
 /* eslint-disable @next/next/no-img-element */
 import { Button } from "@/components/Utilities/Button";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { MESSAGES, PAGES, ReadMore, formatDate } from "@/utilities";
 import { Grant } from "@show-karma/karma-gap-sdk";
 import { MilestonesList } from "./MilestonesList";
 import { useRouter } from "next/router";
 import { useQueryState } from "nuqs";
+import { MESSAGES } from "@/utilities/messages";
+import { ReadMore } from "@/utilities/ReadMore";
+import { formatDate } from "@/utilities/formatDate";
 
 export const EmptyMilestone = ({ grant }: { grant?: Grant }) => {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);

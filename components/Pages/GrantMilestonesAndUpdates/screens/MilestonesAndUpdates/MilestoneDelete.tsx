@@ -1,7 +1,8 @@
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { useProjectStore } from "@/store";
-import { MESSAGES, useSigner } from "@/utilities";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { MESSAGES } from "@/utilities/messages";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import type { Milestone } from "@show-karma/karma-gap-sdk";
 import { type FC, useState } from "react";

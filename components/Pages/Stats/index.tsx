@@ -13,10 +13,11 @@ import { WeeklyActiveUsersChart } from "./WeeklyActiveUsersChart";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { getGAPStats } from "@/utilities/indexer/stats";
 import { fillDateRangeWithValues } from "@/utilities/fillDateRangeWithValues";
-import { cn, formatDate } from "@/utilities";
 import { useRouter } from "next/router";
 import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/outline";
+import { formatDate } from "@/utilities/formatDate";
+import { cn } from "@/utilities/tailwind";
 
 // const valueFormatter = (number) =>
 //   `$ ${new Intl.NumberFormat('us').format(number).toString()}`;

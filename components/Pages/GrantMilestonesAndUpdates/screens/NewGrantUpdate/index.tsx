@@ -2,7 +2,8 @@
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useProjectStore } from "@/store";
-import { MESSAGES, useSigner } from "@/utilities";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { MESSAGES } from "@/utilities/messages";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Grant } from "@show-karma/karma-gap-sdk";
 import { useRouter } from "next/router";

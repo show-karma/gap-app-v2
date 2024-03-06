@@ -4,7 +4,7 @@ import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 
 import { MilestoneWithCompleted } from "@/types/milestones";
-import { formatDate } from "@/utilities";
+import { formatDate } from "@/utilities/formatDate";
 import { Popover } from "@headlessui/react";
 import { CalendarIcon, PencilIcon } from "@heroicons/react/24/outline";
 import { XMarkIcon } from "@heroicons/react/24/solid";

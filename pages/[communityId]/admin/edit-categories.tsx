@@ -1,17 +1,6 @@
 import React, { Fragment, useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { useGap } from "@/hooks";
-import {
-  INDEXER,
-  MESSAGES,
-  PAGES,
-  cn,
-  defaultMetadata,
-  formatDate,
-  reduceText,
-  useSigner,
-  zeroUID,
-} from "@/utilities";
 import { Community, Grant } from "@show-karma/karma-gap-sdk";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
 import { useAccount } from "wagmi";
@@ -29,6 +18,14 @@ import { Button } from "@/components/Utilities/Button";
 import Link from "next/link";
 import { NextSeo } from "next-seo";
 import { CategoryCreationDialog } from "@/components/Pages/Admin/CategoryCreationDialog";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { zeroUID } from "@/utilities/commons";
+import { PAGES } from "@/utilities/pages";
+import { INDEXER } from "@/utilities/indexer";
+import { reduceText } from "@/utilities/reduceText";
+import { defaultMetadata } from "@/utilities/meta";
+import { cn } from "@/utilities/tailwind";
+import { MESSAGES } from "@/utilities/messages";
 import { useAuthStore } from "@/store/auth";
 
 interface GrantEdited {
@@ -161,7 +158,6 @@ export default function Index() {
         const { grants: fetchedGrants } = await getGrants(communityId as Hex);
         if (fetchedGrants) {
           setTotalGrants(fetchedGrants.length);
-
           const mapSimplifiedGrants: SimplifiedGrants[] = fetchedGrants
             .slice(itemsPerPage * (currentPage - 1), itemsPerPage * currentPage)
             .map(

@@ -1,18 +1,16 @@
 /* eslint-disable @next/next/no-img-element */
 import React from "react";
 import { ProjectPageLayout } from ".";
-import {
-  defaultMetadata,
-  getMetadata,
-  shortAddress,
-  zeroUID,
-} from "@/utilities";
 import { blo } from "blo";
 import { useProjectStore } from "@/store";
 import { Hex } from "viem";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { IProjectDetails } from "@show-karma/karma-gap-sdk";
 import { NextSeo } from "next-seo";
+import { getMetadata } from "@/utilities/sdk";
+import { zeroUID } from "@/utilities/commons";
+import { defaultMetadata } from "@/utilities/meta";
+import { shortAddress } from "@/utilities/shortAddress";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { params } = context;

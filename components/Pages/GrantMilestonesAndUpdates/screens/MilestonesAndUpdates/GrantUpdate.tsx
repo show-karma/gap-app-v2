@@ -1,4 +1,5 @@
-import { ReadMore, formatDate } from "@/utilities";
+import { ReadMore } from "@/utilities/ReadMore";
+import { formatDate } from "@/utilities/formatDate";
 import type { FC } from "react";
 
 interface UpdateTagProps {
