@@ -31,6 +31,8 @@ import { defaultMetadata } from "@/utilities/meta";
 import { useAuthStore } from "@/store/auth";
 import { Feed } from "@/types";
 
+type ProjectDetailsWithUid = IProjectDetails & { uid: Hex };
+
 interface Props {
   children: ReactNode;
 }
@@ -336,7 +338,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { params } = context;
   const projectId = params?.projectId as string;
   let initialFeed: Feed[] = [];
-  let projectInfo: IProjectDetails | null = null;
+  let projectInfo: ProjectDetailsWithUid | null = null;
 
   await Promise.all(
     [
@@ -352,12 +354,12 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
           "projects",
           projectId as Hex
         );
-        projectInfo = info as IProjectDetails;
+        projectInfo = info as ProjectDetailsWithUid;
       },
     ].map((func) => func())
   );
 
-  if (!projectInfo) {
+  if (!projectInfo || (projectInfo as ProjectDetailsWithUid)?.uid === zeroUID) {
     return {
       notFound: true,
     };
@@ -366,9 +368,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   return {
     props: {
       initialFeed,
-      projectTitle: (projectInfo as IProjectDetails)?.title || "",
+      projectTitle: (projectInfo as ProjectDetailsWithUid)?.title || "",
       projectDesc:
-        (projectInfo as IProjectDetails)?.description?.substring(0, 80) || "",
+        (projectInfo as ProjectDetailsWithUid)?.description?.substring(0, 80) ||
+        "",
     },
   };
 }
