@@ -275,7 +275,7 @@ export const ReviewForm: FC<ReviewFormProps> = ({
                   {...form.register(`questions.${index}.rating`)}
                 >
                   <p className="text-base font-bold text-gray-600 dark:text-zinc-100">
-                    Rating
+                    Rating *
                   </p>
                   <DynamicStars
                     totalStars={5}
@@ -319,7 +319,7 @@ export const ReviewForm: FC<ReviewFormProps> = ({
           className="max-w-2xl text-base font-semibold text-black dark:text-zinc-100"
         >
           Would you be interested in reviewing grants across web3 ecosystem?
-          Compensation will be provided for your efforts.
+          Compensation will be provided for your efforts. *
         </label>
         <div className="flex flex-row items-center gap-8">
           <label className="flex flex-row items-center gap-2">
@@ -350,7 +350,7 @@ export const ReviewForm: FC<ReviewFormProps> = ({
               id="infos.name"
               className="text-base font-semibold text-black dark:text-zinc-100"
             >
-              Enter your name
+              Enter your name *
             </label>
             <input
               className="w-full max-w-sm rounded-lg border border-zinc-200 px-2 py-1 dark:bg-zinc-800 dark:text-white dark:border-zinc-600"
@@ -363,7 +363,7 @@ export const ReviewForm: FC<ReviewFormProps> = ({
               id="infos.email"
               className="text-base font-semibold text-black dark:text-zinc-100"
             >
-              Enter your email address
+              Enter your email address *
             </label>
             <input
               className="w-full max-w-sm rounded-lg border border-zinc-200 px-2 py-1 dark:bg-zinc-800 dark:text-white dark:border-zinc-600"
@@ -386,7 +386,7 @@ export const ReviewForm: FC<ReviewFormProps> = ({
                   <div className="flex flex-col items-start gap-2">
                     <Listbox.Label className="text-base font-semibold text-black dark:text-zinc-100">
                       What type of grants would you like to review? Choose all
-                      that apply
+                      that apply *
                     </Listbox.Label>
                     <div className="relative flex-1 w-56">
                       <Listbox.Button className="relative w-full dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900  ring-1 ring-inset ring-gray-300 sm:text-sm sm:leading-6">
