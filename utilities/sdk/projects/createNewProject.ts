@@ -71,31 +71,28 @@ export const createNewProject = async (
           })
       );
     }
-    return await project
-      .attest(signer as any)
-      .then(async () => {
-        let retries = 10;
-        let fetchedProject: Project | null = null;
-        while (retries > 0) {
-          // eslint-disable-next-line no-await-in-loop
-          fetchedProject = await (slug
-            ? gap.fetch.projectBySlug(slug)
-            : gap.fetch.projectById(project.uid as Hex)
-          ).catch(() => null);
-          if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
-            retries = 0;
-            toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
-            router.push(PAGES.PROJECT.GRANTS(slug || project.uid));
-            return;
-          }
-          retries -= 1;
-          // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-          await new Promise((resolve) => setTimeout(resolve, 1500));
+    return await project.attest(signer as any).then(async () => {
+      let retries = 10;
+      let fetchedProject: Project | null = null;
+      while (retries > 0) {
+        // eslint-disable-next-line no-await-in-loop
+        fetchedProject = await (slug
+          ? gap.fetch.projectBySlug(slug)
+          : gap.fetch.projectById(project.uid as Hex)
+        ).catch(() => null);
+        if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
+          retries = 0;
+          toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
+          router.push(PAGES.PROJECT.GRANTS(slug || project.uid));
+          return;
         }
-        toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
-        router.push(PAGES.MY_PROJECTS);
-      })
-      .catch((error) => console.log(error));
+        retries -= 1;
+        // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      }
+      toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
+      router.push(PAGES.MY_PROJECTS);
+    });
   } catch (error: any) {
     throw new Error(error);
   }
