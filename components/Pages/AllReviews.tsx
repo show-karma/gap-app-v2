@@ -13,10 +13,10 @@ import { VotingPowerPopover } from "../VotingPowerPopover";
 import { blo } from "blo";
 import Link from "next/link";
 import { MarkdownPreview } from "../Utilities/MarkdownPreview";
-import { getReviewsOf } from "@/utilities/indexer/projects/getReviewsOf";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
+import { getReviewsOf } from "@/utilities/sdk";
 
 interface GrantAllReviewsProps {
   grant: Grant | undefined;
