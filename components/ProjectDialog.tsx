@@ -7,16 +7,7 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/solid";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import {
-  MESSAGES,
-  PAGES,
-  appNetwork,
-  checkNetworkIsValid,
-  cn,
-  createNewProject,
-  updateProject,
-  useSigner,
-} from "@/utilities";
+
 import { z } from "zod";
 import { Hex, isAddress } from "viem";
 import { useForm } from "react-hook-form";
@@ -38,6 +29,13 @@ import {
 } from "./Icons";
 import { useProjectStore } from "@/store";
 import { useOwnerStore } from "@/store/owner";
+import { MESSAGES } from "@/utilities/messages";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
+import { createNewProject, updateProject } from "@/utilities/sdk";
+import { appNetwork } from "@/utilities/network";
+import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
 import { useAuthStore } from "@/store/auth";
 
 const inputStyle =
@@ -196,7 +194,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         <div className="flex w-full flex-col gap-8">
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="name-input" className={labelStyle}>
-              Name
+              Name *
             </label>
             <input
               id="name-input"
@@ -210,7 +208,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
           <div className="flex w-full flex-col gap-2" data-color-mode="light">
             <label htmlFor="desc-input" className={labelStyle}>
-              Description
+              Description *
             </label>
             <MarkdownEditor
               value={description}
@@ -258,7 +256,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         <div className="flex w-full flex-col gap-8">
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="twitter-input" className={labelStyle}>
-              Twitter
+              Twitter (optional)
             </label>
             <div className="flex w-full flex-row items-center gap-2 rounded-lg border border-gray-400 px-4 py-2">
               <TwitterIcon className="h-5 w-5" />
@@ -274,7 +272,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           </div>
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="github-input" className={labelStyle}>
-              Github
+              Github (optional)
             </label>
             <div className="flex w-full flex-row items-center gap-2 rounded-lg border border-gray-400 px-4 py-2">
               <GithubIcon className="h-5 w-5" />
@@ -290,7 +288,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           </div>
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="discord-input" className={labelStyle}>
-              Discord
+              Discord (optional)
             </label>
             <div className="flex w-full flex-row items-center gap-2 rounded-lg border border-gray-400 px-4 py-2">
               <DiscordIcon className="h-5 w-5" />
@@ -306,7 +304,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           </div>
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="website-input" className={labelStyle}>
-              Website
+              Website (optional)
             </label>
             <div className="flex w-full flex-row items-center gap-2 rounded-lg border border-gray-400 px-4 py-2">
               <WebsiteIcon className="h-5 w-5" />
@@ -322,7 +320,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           </div>
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="linkedin-input" className={labelStyle}>
-              Linkedin
+              LinkedIn (optional)
             </label>
             <div className="flex w-full flex-row items-center gap-2 rounded-lg border border-gray-400 px-4 py-2">
               <LinkedInIcon className="h-5 w-5 " />
@@ -347,7 +345,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         <div className="flex w-full flex-col gap-8">
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="members-input" className={labelStyle}>
-              Invite team members
+              Invite team members *
             </label>
             <div className="flex w-full flex-row items-center gap-2 max-sm:flex-col">
               <input

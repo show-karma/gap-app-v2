@@ -13,7 +13,7 @@ import {
   getChainIdByName,
   getChainNameById,
 } from "@/utilities/network";
-import { envVars } from "@/utilities";
+import { envVars } from "@/utilities/enviromentVars";
 
 const ipfsClient = new IpfsStorage(
   {

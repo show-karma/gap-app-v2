@@ -5,7 +5,6 @@ import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { MilestoneWithCompleted } from "@/types/milestones";
-import { MESSAGES, PAGES, appNetwork, useSigner } from "@/utilities";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   GrantDetails,
@@ -31,7 +30,15 @@ import { useSearchParams } from "next/navigation";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { getWalletClient } from "@wagmi/core";
 import { useQueryState } from "nuqs";
+import { useGrantFormStore } from "./store";
+import { MESSAGES } from "@/utilities/messages";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { appNetwork } from "@/utilities/network";
+import { PAGES } from "@/utilities/pages";
+import { Popover } from "@headlessui/react";
+import { DayPicker } from "react-day-picker";
 import { useAuthStore } from "@/store/auth";
+import { formatDate } from "@/utilities/formatDate";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -59,6 +66,9 @@ const grantSchema = z.object({
   community: z.string().nonempty({ message: MESSAGES.GRANT.FORM.COMMUNITY }),
   // season: z.string(),
   // cycle: z.string(),
+  startDate: z.date({
+    required_error: MESSAGES.GRANT.FORM.DATE,
+  }),
   linkToProposal: z
     .string()
     .url({
@@ -74,35 +84,35 @@ const grantSchema = z.object({
     ),
   successQuestions: z.array(
     z.object({
-      query: z.string().nonempty(),
+      query: z.string().min(1),
       explanation: z.string().optional(),
       type: z.literal("SUCCESS_MEASURE"),
     })
   ),
   impactQuestions: z.array(
     z.object({
-      query: z.string().nonempty(),
+      query: z.string().min(1),
       explanation: z.string().optional(),
       type: z.literal("IMPACT_MEASUREMENT"),
     })
   ),
   innovationQuestions: z.array(
     z.object({
-      query: z.string().nonempty(),
+      query: z.string().min(1),
       explanation: z.string().optional(),
       type: z.literal("INNOVATION"),
     })
   ),
   fundQuestions: z.array(
     z.object({
-      query: z.string().nonempty(),
+      query: z.string().min(1),
       explanation: z.string().optional(),
       type: z.literal("FUND_USAGE"),
     })
   ),
   timeframeQuestions: z.array(
     z.object({
-      query: z.string().nonempty(),
+      query: z.string().min(1),
       explanation: z.string().optional(),
       type: z.literal("TIMEFRAME"),
     })
@@ -165,6 +175,7 @@ interface NewGrantData {
   cycle?: string;
   recipient?: string;
   grantUpdate?: string;
+  startDate?: number;
   questions: {
     type: string;
     query: string;
@@ -178,10 +189,10 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const searchParams = useSearchParams();
   const grantScreen = searchParams?.get("tab");
+  const { milestonesForms: milestones, createMilestone } = useGrantFormStore();
   const { isAuth } = useAuthStore();
 
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const [milestones, setMilestones] = useState<MilestoneWithCompleted[]>([]);
   const [description, setDescription] = useState(
     grantScreen === "edit-grant" ? grantToEdit?.details?.description || "" : ""
   );
@@ -197,6 +208,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { isConnected } = useAccount();
 
   const [, changeTab] = useQueryState("tab");
+  const [, changeGrant] = useQueryState("grantId");
 
   function premade<T extends GenericQuestion>(
     type: QuestionType,
@@ -243,6 +255,10 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       // cycle: grantScreen === "edit-grant" ? grantToEdit?.details?.cycle : "",
       linkToProposal:
         grantScreen === "edit-grant" ? grantToEdit?.details?.proposalURL : "",
+      startDate:
+        grantScreen === "edit-grant" && grantToEdit?.details?.startDate
+          ? new Date(grantToEdit?.details?.startDate * 1000)
+          : undefined,
       successQuestions: premade<SuccessQuestion>(
         "SUCCESS_MEASURE",
         SUCCESS_QUESTIONS
@@ -269,6 +285,9 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     setValue,
     formState: { errors, isValid, isSubmitting },
   } = form;
+
+  const { saveMilestone, milestonesForms, clearMilestonesForms } =
+    useGrantFormStore();
 
   const router = useRouter();
 
@@ -308,6 +327,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           // cycle: data.cycle,
           // season: data.season,
           questions: data.questions,
+          startDate: data.startDate,
         },
         refUID: grant.uid,
         schema: gap.findSchema("GrantDetails"),
@@ -363,8 +383,10 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         .attest(signer as any, selectedProject.chainID)
         .then(async () => {
           // eslint-disable-next-line no-param-reassign
+          clearMilestonesForms();
           toast.success(MESSAGES.GRANT.CREATE.SUCCESS);
           changeTab("overview");
+          changeGrant(grant.uid);
           selectedProject?.grants.unshift(grant);
         });
     } catch (error) {
@@ -395,6 +417,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         // cycle: data.cycle,
         // season: data.season,
         questions: data.questions,
+        startDate: data.startDate,
       });
 
       await oldGrant.details?.attest(signer as any).then(async () => {
@@ -417,7 +440,21 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     }
   };
 
+  const allMilestonesValidated = milestones.every(
+    (milestone) => milestone.isValid === true
+  );
+
+  const saveAllMilestones = () => {
+    milestonesForms.forEach((milestone, index) => {
+      const { data, isValid } = milestone;
+      if (isValid) {
+        saveMilestone(data, index);
+      }
+    });
+  };
+
   const onSubmit = async (data: GrantType) => {
+    saveAllMilestones();
     let questions: {
       type: string;
       query: string;
@@ -471,46 +508,27 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         }))
       );
     }
+    const milestonesData = milestones.map((item) => item.data);
     const newGrant = {
       amount: data.amount,
       description,
       linkToProposal: data.linkToProposal,
       title: data.title,
-      milestones,
+      milestones: milestonesData,
       community: data.community,
       // season: data.season,
       // cycle: data.cycle,
       recipient: data.recipient,
       grantUpdate,
       questions,
+      startDate: data.startDate.getTime() / 1000,
     };
+    console.log(newGrant, "newGrant");
     if (grantScreen === "edit-grant" && grantToEdit) {
       updateGrant(grantToEdit, newGrant);
     } else {
       createNewGrant(newGrant, communityNetworkId);
     }
-  };
-
-  const createMilestone = () => {
-    const newMilestone: MilestoneWithCompleted = {
-      title: "",
-      description: "",
-      endsAt: 1,
-    };
-    const newMilestones = [...milestones, newMilestone];
-    setMilestones(newMilestones);
-  };
-
-  const removeMilestone = (index: number) => {
-    const newMilestones = [...milestones];
-    newMilestones.splice(index, 1);
-    setMilestones(newMilestones);
-  };
-
-  const saveMilestone = (milestone: MilestoneWithCompleted, index: number) => {
-    const newMilestones = [...milestones];
-    newMilestones[index] = milestone;
-    setMilestones(newMilestones);
   };
 
   const setCommunityValue = (value: string, networkId: number) => {
@@ -550,7 +568,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         <form className="flex w-full flex-col gap-4">
           <div className="flex w-full flex-col">
             <label htmlFor="grant-title" className={labelStyle}>
-              Grant title
+              Grant title *
             </label>
             <input
               id="grant-title"
@@ -562,7 +580,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           </div>
           <div className="flex w-full flex-col">
             <label htmlFor="grant-title" className={labelStyle}>
-              Community
+              Community *
             </label>
             <CommunitiesDropdown
               onSelectFunction={setCommunityValue}
@@ -575,6 +593,47 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             <p className="text-base text-red-400">
               {errors.community?.message}
             </p>
+          </div>
+          <div className="flex w-full flex-col">
+            <Controller
+              name="startDate"
+              control={form.control}
+              render={({ field, formState, fieldState }) => (
+                <div className="flex w-full flex-col gap-2">
+                  <label className={labelStyle}>Start Date *</label>
+                  <div>
+                    <Popover className="relative">
+                      <Popover.Button className="max-lg:w-full w-max text-base flex-row flex gap-2 items-center bg-gray-100 dark:bg-zinc-800 px-4 py-2 rounded-md">
+                        {field.value ? (
+                          formatDate(field.value)
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Popover.Button>
+                      <Popover.Panel className="absolute z-10 border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 mt-4 rounded-md">
+                        <DayPicker
+                          mode="single"
+                          selected={field.value}
+                          onDayClick={(e) => {
+                            setValue("startDate", e, { shouldValidate: true });
+                            field.onChange(e);
+                          }}
+                          disabled={(date) => {
+                            if (date < new Date("2000-01-01")) return true;
+                            return false;
+                          }}
+                          initialFocus
+                        />
+                      </Popover.Panel>
+                    </Popover>
+                  </div>
+                  <p className="text-base text-red-400">
+                    {formState.errors.startDate?.message}
+                  </p>
+                </div>
+              )}
+            />
           </div>
           <div className="flex w-full flex-col">
             <label htmlFor="grant-amount" className={labelStyle}>
@@ -629,7 +688,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           {isOwner && (
             <div className="flex w-full flex-col">
               <label htmlFor="tags-input" className={labelStyle}>
-                Recipient address
+                Recipient address (optional)
               </label>
               <input
                 id="tags-input"
@@ -643,7 +702,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           )}
           <div className="flex w-full flex-col">
             <label htmlFor="grant-description" className={labelStyle}>
-              Description
+              Description *
             </label>
             <div className="mt-2 w-full bg-transparent dark:border-gray-600">
               <MarkdownEditor
@@ -803,11 +862,9 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           <div className="flex w-full flex-col items-center justify-center gap-8 py-8">
             {milestones.map((milestone, index) => (
               <MilestoneComponent
-                currentMilestone={milestone}
+                currentMilestone={milestone.data}
                 key={+index}
                 index={index}
-                removeMilestone={removeMilestone}
-                saveMilestone={saveMilestone}
               />
             ))}
             <button
@@ -847,6 +904,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
               isSubmitting ||
               isLoading ||
               !isDescriptionValid ||
+              !allMilestonesValidated ||
               (grantScreen === "create-grant" && !isValid)
             }
             isLoading={isSubmitting || isLoading}

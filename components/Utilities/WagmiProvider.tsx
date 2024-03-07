@@ -3,7 +3,6 @@ import { WagmiConfig, configureChains, createConfig } from "wagmi";
 import {
   RainbowKitProvider,
   connectorsForWallets,
-  getDefaultWallets,
   lightTheme,
 } from "@rainbow-me/rainbowkit";
 import {
@@ -12,12 +11,12 @@ import {
   metaMaskWallet,
   rainbowWallet,
 } from "@rainbow-me/rainbowkit/wallets";
-import { appNetwork, envVars } from "@/utilities";
-import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
-import { publicProvider } from "wagmi/providers/public";
-import { customWalletConnectConnector } from "@/utilities/wagmi/walletConnectConnector";
 import { arbitrum, optimism, sepolia, optimismSepolia } from "viem/chains";
 import { alchemyProvider } from "wagmi/providers/alchemy";
+import { publicProvider } from "wagmi/providers/public";
+import { customWalletConnectConnector } from "@/utilities/wagmi/walletConnectConnector";
+import { appNetwork } from "@/utilities/network";
+import { envVars } from "@/utilities/enviromentVars";
 
 const WagmiProvider = ({ children }: { children: React.ReactNode }) => {
   const { chains, publicClient, webSocketPublicClient } = configureChains(

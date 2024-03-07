@@ -1,11 +1,12 @@
 "use client";
 
-import { ReadMore, formatDate } from "@/utilities";
 import type { Milestone } from "@show-karma/karma-gap-sdk";
 import { type FC } from "react";
 import { Updates } from "./Updates";
 import { MilestoneDelete } from "./MilestoneDelete";
 import { useOwnerStore, useProjectStore } from "@/store";
+import { formatDate } from "@/utilities/formatDate";
+import { ReadMore } from "@/utilities/ReadMore";
 
 interface MilestoneDateStatusProps {
   milestone: Milestone;

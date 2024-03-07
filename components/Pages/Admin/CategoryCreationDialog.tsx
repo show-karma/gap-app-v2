@@ -8,10 +8,10 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities";
 import { useRouter } from "next/router";
 import { useAuthStore } from "@/store/auth";
 import { useAuth } from "@/hooks/useAuth";
+import { INDEXER } from "@/utilities/indexer";
 
 type CategoryCreationDialogProps = {
   refreshCategories: () => Promise<void>;
@@ -126,7 +126,7 @@ export const CategoryCreationDialog: FC<CategoryCreationDialogProps> = ({
                         htmlFor="milestone-title"
                         className={"text-sm font-bold"}
                       >
-                        Category name
+                        Category name *
                       </label>
                       <input
                         id="milestone-title"

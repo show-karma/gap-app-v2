@@ -12,7 +12,6 @@ import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { useOwnerStore, useProjectStore } from "@/store";
-import { MESSAGES, PAGES, formatDate, useSigner } from "@/utilities";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 import { useGap } from "@/hooks";
 import { Hex } from "viem";
@@ -26,6 +25,9 @@ import { DayPicker } from "react-day-picker";
 import { CalendarIcon } from "@heroicons/react/24/outline";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { useQueryState } from "nuqs";
+import { MESSAGES } from "@/utilities/messages";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { formatDate } from "@/utilities/formatDate";
 
 const milestoneSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.MILESTONES.FORM.TITLE }),
@@ -152,7 +154,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
         >
           <div className="flex w-full flex-col">
             <label htmlFor="milestone-title" className={labelStyle}>
-              Milestone title
+              Milestone title *
             </label>
             <input
               id="milestone-title"
@@ -168,7 +170,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
               control={form.control}
               render={({ field, formState, fieldState }) => (
                 <div className="flex w-full flex-col gap-2">
-                  <label className={labelStyle}>End date</label>
+                  <label className={labelStyle}>End date *</label>
                   <div>
                     <Popover className="relative">
                       <Popover.Button className="max-lg:w-full w-max text-sm flex-row flex gap-2 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">

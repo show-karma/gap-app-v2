@@ -4,15 +4,13 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "./Utilities/Button";
 import toast from "react-hot-toast";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER, PAGES, envVars } from "@/utilities";
 import { useOwnerStore, useProjectStore } from "@/store";
 import axios from "axios";
-import { useRouter } from "next/router";
-import { Spinner } from "./Utilities/Spinner";
-import * as Popover from "@radix-ui/react-popover";
 import { Contact } from "@/types/project";
 import { ContactsDropdown } from "./Pages/Project/ContactsDropdown";
+import { envVars } from "@/utilities/enviromentVars";
+import { INDEXER } from "@/utilities/indexer";
+import fetchData from "@/utilities/fetchData";
 
 const labelStyle = "text-sm font-bold";
 const inputStyle =
@@ -78,33 +76,42 @@ export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({
         data.telegram = data.telegram.replace(/@/g, "");
       }
       if (data.id === "0") {
-        await axios
-          .post(
-            envVars.NEXT_PUBLIC_GAP_INDEXER_URL +
-              INDEXER.SUBSCRIPTION.CREATE(
-                project?.details?.slug || (project?.uid as string)
-              ),
-            { contacts: [data] }
-          )
-          .then(() => {
+        await fetchData(
+          INDEXER.SUBSCRIPTION.CREATE(
+            project?.details?.slug || (project?.uid as string)
+          ),
+          "POST",
+          { contacts: [data] },
+          {},
+          {},
+          true
+        ).then(([res, error]) => {
+          if (!error) {
             toast.success("Contact info created successfully");
             refreshProject();
-          });
+          } else {
+            toast.error("Something went wrong. Please try again later.");
+          }
+        });
       } else {
-        await axios
-          .put(
-            envVars.NEXT_PUBLIC_GAP_INDEXER_URL +
-              INDEXER.SUBSCRIPTION.UPDATE(
-                project?.details?.slug || (project?.uid as string),
-                data.id
-              ),
-            data
-          )
-          .then(() => {
+        await fetchData(
+          INDEXER.SUBSCRIPTION.UPDATE(
+            project?.details?.slug || (project?.uid as string),
+            data.id
+          ),
+          "PUT",
+          data,
+          {},
+          {},
+          true
+        ).then(([res, error]) => {
+          if (!error) {
             toast.success("Contact info updated successfully");
-
             refreshProject();
-          });
+          } else {
+            toast.error("Something went wrong. Please try again later.");
+          }
+        });
       }
       // const subscription = await fetchData(INDEXER.NOTIFICATIONS.UPDATE())
     } catch (error: any) {
@@ -112,6 +119,37 @@ export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({
       console.log(error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const [isDeleteLoading, setIsDeleteLoading] = useState(false);
+
+  const deleteContact = async () => {
+    setIsDeleteLoading(true);
+    try {
+      await fetchData(
+        INDEXER.SUBSCRIPTION.DELETE(
+          project?.details?.slug || (project?.uid as string)
+        ),
+        "DELETE",
+        { contacts: [contactInfo?.id] },
+        {},
+        {},
+        true
+      ).then(([res, error]) => {
+        if (!error) {
+          toast.success("Contact info deleted successfully");
+          refreshProject();
+        } else {
+          toast.error("Something went wrong. Please try again later.");
+        }
+      });
+      // const subscription = await fetchData(INDEXER.NOTIFICATIONS.UPDATE())
+    } catch (error: any) {
+      toast.error("Something went wrong. Please try again later.");
+      console.log(error);
+    } finally {
+      setIsDeleteLoading(false);
     }
   };
 
@@ -157,7 +195,7 @@ export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({
           </div>
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="name-input" className={labelStyle}>
-              Name
+              Name *
             </label>
             <input
               id="name-input"
@@ -170,7 +208,7 @@ export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({
           </div>
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="email-input" className={labelStyle}>
-              E-mail
+              E-mail *
             </label>
             <input
               id="email-input"
@@ -197,12 +235,23 @@ export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({
         </div>
         <Button
           isLoading={isLoading}
-          disabled={isLoading || !isValid || !isAuthorized}
+          disabled={isLoading || !isValid || !isAuthorized || isDeleteLoading}
           type="submit"
           className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
         >
           Save
         </Button>
+        {watch("id") === "0" ? null : (
+          <Button
+            isLoading={isDeleteLoading}
+            disabled={isLoading || !isValid || !isAuthorized || isDeleteLoading}
+            type="button"
+            onClick={deleteContact}
+            className="flex disabled:opacity-50 flex-row dark:bg-red-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-red-500 px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-red-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+          >
+            Delete this contact
+          </Button>
+        )}
       </form>
     </div>
   ) : (

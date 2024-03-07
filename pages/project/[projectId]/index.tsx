@@ -3,17 +3,6 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { ReactNode, useEffect, useMemo, useState } from "react";
 import ProjectPage from "./project";
-import {
-  INDEXER,
-  PAGES,
-  cn,
-  defaultMetadata,
-  getMetadata,
-  getProjectById,
-  getProjectOwner,
-  useSigner,
-  zeroUID,
-} from "@/utilities";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useAccount } from "wagmi";
 import { blo } from "blo";
@@ -32,6 +21,13 @@ import {
 import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import fetchData from "@/utilities/fetchData";
 import { APIContact } from "@/types/project";
+import { PAGES } from "@/utilities/pages";
+import { getMetadata, getProjectById, getProjectOwner } from "@/utilities/sdk";
+import { zeroUID } from "@/utilities/commons";
+import { INDEXER } from "@/utilities/indexer";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { cn } from "@/utilities/tailwind";
+import { defaultMetadata } from "@/utilities/meta";
 import { useAuthStore } from "@/store/auth";
 
 interface Props {
@@ -138,10 +134,16 @@ export const NestedLayout = ({ children }: Props) => {
     const getContactInfo = async () => {
       setContactInfoLoading(true);
       try {
-        const [data] = await fetchData(INDEXER.PROJECT.GET(projectId));
-        const contactInfo: APIContact[] = data?.project_contact;
+        const [data] = await fetchData(
+          INDEXER.SUBSCRIPTION.GET(projectId),
+          "GET",
+          {},
+          {},
+          {},
+          true
+        );
 
-        setProjectContactsInfo(contactInfo);
+        setProjectContactsInfo(data);
       } catch (error) {
         console.error(error);
         setProjectContactsInfo(undefined);

@@ -1,14 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { useEffect } from "react";
 import { ProjectPageLayout } from ".";
-import {
-  INDEXER,
-  PAGES,
-  defaultMetadata,
-  getMetadata,
-  shortAddress,
-  zeroUID,
-} from "@/utilities";
 import { blo } from "blo";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { Hex } from "viem";
@@ -17,6 +9,9 @@ import { IProjectDetails } from "@show-karma/karma-gap-sdk";
 import { NextSeo } from "next-seo";
 import { ProjectSubscription } from "@/components/ProjectSubscription";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { getMetadata } from "@/utilities/sdk";
+import { zeroUID } from "@/utilities/commons";
+import { defaultMetadata } from "@/utilities/meta";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { params } = context;

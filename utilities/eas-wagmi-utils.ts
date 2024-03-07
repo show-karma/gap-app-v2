@@ -2,7 +2,7 @@
 
 import type { JsonRpcProvider, JsonRpcSigner } from "@ethersproject/providers";
 import type { PublicClient, WalletClient } from "@wagmi/core";
-import { FallbackProvider, ethers } from "ethers";
+import { ethers } from "ethers";
 import { useEffect, useState } from "react";
 import { type HttpTransport } from "viem";
 import { usePublicClient, useWalletClient } from "wagmi";
