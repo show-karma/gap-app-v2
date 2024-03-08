@@ -38,8 +38,10 @@ export function getChainNameById(id: number): TNetwork {
       return "optimism";
     case 42161:
       return "arbitrum";
-    case 420:
-      return "optimism-goerli";
+    // case 420:
+    //   return "optimism-goerli";
+    case 11155420:
+      return "optimism-sepolia";
     case 11155111:
       return "sepolia";
     default: {
