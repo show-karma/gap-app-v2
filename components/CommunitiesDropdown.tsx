@@ -17,7 +17,6 @@ interface CommunitiesDropdownProps {
   onSelectFunction: (value: string, networkId: number) => void;
   previousValue?: string;
 }
-
 export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
   onSelectFunction,
   previousValue,

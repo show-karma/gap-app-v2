@@ -499,7 +499,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       closeModal();
     } catch (error) {
       console.log({ error });
-      toast.error(MESSAGES.PROJECT.UPDATE.ERROR);
+      toast.error(MESSAGES.PROJECT.CREATE.ERROR);
     } finally {
       setIsLoading(false);
     }
