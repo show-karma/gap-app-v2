@@ -8,7 +8,7 @@ export const appNetwork: [Chain, Chain, ...Chain[]] =
     : [sepolia, optimismSepolia];
 
 export function getChainIdByName(name: string) {
-  switch (name) {
+  switch (name.toLowerCase()) {
     case "mainnet":
       return 1;
     case "OP Mainnet":

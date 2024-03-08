@@ -2,10 +2,11 @@
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useProjectStore } from "@/store";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Grant } from "@show-karma/karma-gap-sdk";
+import { getWalletClient } from "@wagmi/core";
 import { useRouter } from "next/router";
 import { useQueryState } from "nuqs";
 import type { FC } from "react";
@@ -31,16 +32,12 @@ interface NewGrantUpdateProps {
 }
 
 export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
-  const form = useForm<z.infer<typeof updateSchema>>({
-    resolver: zodResolver(updateSchema),
-  });
   const [description, setDescription] = useState("");
 
   const router = useRouter();
   const { address } = useAccount();
   const { chain } = useNetwork();
   const { switchNetworkAsync } = useSwitchNetwork();
-  const signer = useSigner();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [, changeTab] = useQueryState("tab");
@@ -78,8 +75,13 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
       if (chain && chain.id !== grantToUpdate.chainID) {
         await switchNetworkAsync?.(grantToUpdate.chainID);
       }
+      const walletClient = await getWalletClient({
+        chainId: grantToUpdate.chainID,
+      });
+      if (!walletClient) return;
+      const walletSigner = await walletClientToSigner(walletClient);
       await grantToUpdate
-        .attestUpdate(signer as any, {
+        .attestUpdate(walletSigner as any, {
           text,
           title,
         })

@@ -1,10 +1,11 @@
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { useProjectStore } from "@/store";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import type { Milestone } from "@show-karma/karma-gap-sdk";
+import { getWalletClient } from "@wagmi/core";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";
 import { useNetwork, useSwitchNetwork } from "wagmi";
@@ -28,7 +29,12 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
         await switchNetworkAsync?.(milestone.chainID);
       }
       const milestoneUID = milestone.uid;
-      await milestone.revoke(signer as any).then(async () => {
+      const walletClient = await getWalletClient({
+        chainId: milestone.chainID,
+      });
+      if (!walletClient) return;
+      const walletSigner = await walletClientToSigner(walletClient);
+      await milestone.revoke(walletSigner).then(async () => {
         toast.success(MESSAGES.MILESTONES.DELETE.SUCCESS);
         await refreshProject().then((res) => {
           const grantUID = milestone.refUID;

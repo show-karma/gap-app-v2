@@ -13,7 +13,7 @@ import { z } from "zod";
 
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
-import { useGap } from "@/hooks";
+import { getGapClient, useGap } from "@/hooks";
 import { Hex } from "viem";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import toast from "react-hot-toast";
@@ -26,8 +26,9 @@ import { CalendarIcon } from "@heroicons/react/24/outline";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { useQueryState } from "nuqs";
 import { MESSAGES } from "@/utilities/messages";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { formatDate } from "@/utilities/formatDate";
+import { getWalletClient } from "@wagmi/core";
 
 const milestoneSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.MILESTONES.FORM.TITLE }),
@@ -84,6 +85,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
     setIsLoading(true);
     if (!address) return;
     if (!gap) throw new Error("Please, connect a wallet");
+    let gapClient = gap;
     const milestone = {
       title: data.title,
       description,
@@ -91,32 +93,38 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
       completedText: completedUpdate,
     };
 
-    const milestoneToAttest = new Milestone({
-      refUID: uid,
-      schema: gap.findSchema("Milestone"),
-      recipient: (recipient as Hex) || address,
-      data: {
-        description: milestone.description,
-        endsAt: milestone.endsAt,
-        title: milestone.title,
-      },
-    });
-    if (milestone.completedText) {
-      milestoneToAttest.completed = new MilestoneCompleted({
-        refUID: milestoneToAttest.uid,
-        schema: gap.findSchema("MilestoneCompleted"),
-        recipient: (recipient as Hex) || address,
-        data: {
-          reason: milestone.completedText,
-          type: "completed",
-        },
-      });
-    }
     try {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== chainID) {
         await switchNetworkAsync?.(chainID);
+        gapClient = getGapClient(chainID);
       }
-      await milestoneToAttest.attest(signer as any).then(async () => {
+      const milestoneToAttest = new Milestone({
+        refUID: uid,
+        schema: gapClient.findSchema("Milestone"),
+        recipient: (recipient as Hex) || address,
+        data: {
+          description: milestone.description,
+          endsAt: milestone.endsAt,
+          title: milestone.title,
+        },
+      });
+      if (milestone.completedText) {
+        milestoneToAttest.completed = new MilestoneCompleted({
+          refUID: milestoneToAttest.uid,
+          schema: gapClient.findSchema("MilestoneCompleted"),
+          recipient: (recipient as Hex) || address,
+          data: {
+            reason: milestone.completedText,
+            type: "completed",
+          },
+        });
+      }
+      const walletClient = await getWalletClient({
+        chainId: chainID,
+      });
+      if (!walletClient) return;
+      const walletSigner = await walletClientToSigner(walletClient);
+      await milestoneToAttest.attest(walletSigner as any).then(async () => {
         toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS);
         changeTab("milestones-and-updates");
         const currentGrant = selectedProject?.grants.find(
