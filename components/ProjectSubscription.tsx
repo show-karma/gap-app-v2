@@ -132,7 +132,7 @@ export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({
           project?.details?.slug || (project?.uid as string)
         ),
         "DELETE",
-        { contacts: [contactInfo?.id] },
+        { contacts: [watch("id")] },
         {},
         {},
         true
