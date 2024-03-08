@@ -17,7 +17,6 @@ export const getProjectById = async (
     if (!fetchedProject || fetchedProject.uid === zeroUID) {
       return;
     }
-
     return fetchedProject;
   } catch (error: any) {
     console.log(error);

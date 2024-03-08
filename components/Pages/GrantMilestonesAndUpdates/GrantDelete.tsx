@@ -1,11 +1,12 @@
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { useProjectStore } from "@/store";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { shortAddress } from "@/utilities/shortAddress";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import type { Grant } from "@show-karma/karma-gap-sdk";
+import { getWalletClient } from "@wagmi/core";
 import { useQueryState } from "nuqs";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";
@@ -31,8 +32,13 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== grant.chainID) {
         await switchNetworkAsync?.(grant.chainID);
       }
+      const walletClient = await getWalletClient({
+        chainId: grant.chainID,
+      });
+      if (!walletClient) return;
+      const walletSigner = await walletClientToSigner(walletClient);
       const grantUID = grant.uid;
-      await grant.revoke(signer as any).then(async () => {
+      await grant.revoke(walletSigner).then(async () => {
         toast.success(MESSAGES.GRANT.DELETE.SUCCESS);
         await refreshProject().then((res) => {
           const stillExist = res?.grants.find((g) => g.uid === grantUID);
