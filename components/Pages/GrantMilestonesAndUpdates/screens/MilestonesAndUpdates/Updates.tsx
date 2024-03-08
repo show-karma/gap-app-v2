@@ -9,10 +9,11 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import toast from "react-hot-toast";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useNetwork, useSwitchNetwork } from "wagmi";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { formatDate } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
+import { getWalletClient } from "@wagmi/core";
 
 interface UpdatesProps {
   milestone: Milestone;
@@ -34,7 +35,12 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
         await switchNetworkAsync?.(milestone.chainID);
       }
-      await milestone.revokeCompletion(signer as any).then(async () => {
+      const walletClient = await getWalletClient({
+        chainId: milestone.chainID,
+      });
+      if (!walletClient) return;
+      const walletSigner = await walletClientToSigner(walletClient);
+      await milestone.revokeCompletion(walletSigner as any).then(async () => {
         toast.success(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS);
         await refreshProject();
       });

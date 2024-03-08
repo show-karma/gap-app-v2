@@ -2,11 +2,12 @@ import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useProjectStore } from "@/store";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { shortAddress } from "@/utilities/shortAddress";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import type { Grant, Project } from "@show-karma/karma-gap-sdk";
+import { getWalletClient } from "@wagmi/core";
 import { useQueryState } from "nuqs";
 import type { FC } from "react";
 import { useState } from "react";
@@ -48,8 +49,13 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
       ) {
         await switchNetworkAsync?.(grantToComplete.chainID);
       }
+      const walletClient = await getWalletClient({
+        chainId: grantToComplete.chainID,
+      });
+      if (!walletClient) return;
+      const walletSigner = await walletClientToSigner(walletClient);
       await grantToComplete
-        .complete(signer as any, {
+        .complete(walletSigner, {
           title: data.title || "",
           text: data.text || "",
         })

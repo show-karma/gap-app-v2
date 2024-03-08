@@ -7,10 +7,11 @@ import toast from "react-hot-toast";
 import { isAddress } from "viem";
 import { useProjectStore } from "@/store";
 import { useNetwork, useSwitchNetwork } from "wagmi";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { appNetwork } from "@/utilities/network";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { transferOwnership } from "@/utilities/sdk";
+import { getWalletClient } from "@wagmi/core";
 
 type TransferOwnershipProps = {
   buttonElement?: {
@@ -54,20 +55,28 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
     }
     try {
       setIsLoading(true);
-      if (!checkNetworkIsValid(chain?.id)) {
+      if (!checkNetworkIsValid(chain?.id) || chain?.id !== project.chainID) {
         await switchNetworkAsync?.(project.chainID);
       }
-      await transferOwnership(project, newOwner, signer).then(async () => {
-        await refreshProject();
-        toast.success("Ownership transferred successfully");
+
+      const walletClient = await getWalletClient({
+        chainId: project.chainID,
       });
+      if (!walletClient) return;
+      const walletSigner = await walletClientToSigner(walletClient);
+      await transferOwnership(project, newOwner, walletSigner).then(
+        async () => {
+          await refreshProject();
+          toast.success("Ownership transferred successfully");
+        }
+      );
+      closeModal();
     } catch (error) {
       toast.error("Something went wrong. Please try again later.");
       console.error(error);
     } finally {
       setIsLoading(false);
     }
-    close();
   };
 
   useEffect(() => {
@@ -144,6 +153,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
                       onClick={transfer}
                       disabled={isLoading || !newOwner}
                       isLoading={isLoading}
+                      type="button"
                     >
                       Continue
                     </Button>

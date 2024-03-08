@@ -1,4 +1,5 @@
 import { getGapClient } from "@/hooks";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { appNetwork } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
@@ -10,6 +11,7 @@ import {
   ProjectDetails,
   nullRef,
 } from "@show-karma/karma-gap-sdk";
+import { getWalletClient } from "@wagmi/core";
 import toast from "react-hot-toast";
 import { Hex, zeroHash } from "viem";
 
@@ -23,7 +25,6 @@ export interface NewProjectData extends IProjectDetails {
 export const createNewProject = async (
   newProjectInfo: NewProjectData,
   project: Project,
-  signer: any,
   router: any,
   gap: any
 ) => {
@@ -71,31 +72,34 @@ export const createNewProject = async (
           })
       );
     }
-    return await project
-      .attest(signer as any)
-      .then(async () => {
-        let retries = 10;
-        let fetchedProject: Project | null = null;
-        while (retries > 0) {
-          // eslint-disable-next-line no-await-in-loop
-          fetchedProject = await (slug
-            ? gap.fetch.projectBySlug(slug)
-            : gap.fetch.projectById(project.uid as Hex)
-          ).catch(() => null);
-          if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
-            retries = 0;
-            toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
-            router.push(PAGES.PROJECT.GRANTS(slug || project.uid));
-            return;
-          }
-          retries -= 1;
-          // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-          await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    const walletClient = await getWalletClient({
+      chainId: project.chainID,
+    });
+    if (!walletClient) return;
+    const walletSigner = await walletClientToSigner(walletClient);
+    return await project.attest(walletSigner).then(async () => {
+      let retries = 10;
+      let fetchedProject: Project | null = null;
+      while (retries > 0) {
+        // eslint-disable-next-line no-await-in-loop
+        fetchedProject = await (slug
+          ? gap.fetch.projectBySlug(slug)
+          : gap.fetch.projectById(project.uid as Hex)
+        ).catch(() => null);
+        if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
+          retries = 0;
+          toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
+          router.push(PAGES.PROJECT.GRANTS(slug || project.uid));
+          return;
         }
-        toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
-        router.push(PAGES.MY_PROJECTS);
-      })
-      .catch((error) => console.log(error));
+        retries -= 1;
+        // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      }
+      toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
+      router.push(PAGES.MY_PROJECTS);
+    });
   } catch (error: any) {
     throw new Error(error);
   }

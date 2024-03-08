@@ -30,13 +30,14 @@ import {
 import { useProjectStore } from "@/store";
 import { useOwnerStore } from "@/store/owner";
 import { MESSAGES } from "@/utilities/messages";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { createNewProject, updateProject } from "@/utilities/sdk";
 import { appNetwork } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { useAuthStore } from "@/store/auth";
+import { getWalletClient } from "@wagmi/core";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -441,6 +442,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       }
       if (!address) return;
       if (!gap) return;
+      let gapClient = gap;
+      if (!checkNetworkIsValid(chain?.id)) {
+        await switchNetworkAsync?.(appNetwork[0].id);
+        gapClient = getGapClient(appNetwork[0].id);
+      }
       const project = new Project({
         data: {
           project: true,
@@ -449,9 +455,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         recipient: (data.recipient || address) as Hex,
         uid: nullRef,
       });
-      if (!checkNetworkIsValid(chain?.id)) {
-        await switchNetworkAsync?.(project.chainID);
-      }
 
       await createNewProject(
         {
@@ -483,9 +486,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           imageURL: "",
         },
         project,
-        signer,
         router,
-        gap
+        gapClient
       );
 
       reset();
@@ -504,6 +506,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   };
 
   const updateThisProject = async (data: SchemaType) => {
+    let gapClient = gap;
     try {
       setIsLoading(true);
       if (!isConnected || !isAuth) {
@@ -514,8 +517,14 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       if (!gap) return;
       if (chain && chain.id !== projectToUpdate.chainID) {
         await switchNetworkAsync?.(projectToUpdate.chainID);
+        gapClient = getGapClient(projectToUpdate.chainID);
       }
       const shouldRefresh = dataToUpdate.title === data.title;
+      const walletClient = await getWalletClient({
+        chainId: projectToUpdate.chainID,
+      });
+      if (!walletClient) return;
+      const walletSigner = await walletClientToSigner(walletClient);
       await updateProject(
         projectToUpdate,
         {
@@ -529,8 +538,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           linkedin: data.linkedin,
           twitter: data.twitter,
         },
-        signer,
-        gap
+        walletSigner,
+        gapClient
       ).then(async (res) => {
         toast.success(MESSAGES.PROJECT.UPDATE.SUCCESS);
         closeModal();
