@@ -27,7 +27,7 @@ import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useGap } from "@/hooks";
 import toast from "react-hot-toast";
 import { useSearchParams } from "next/navigation";
-import { XMarkIcon } from "@heroicons/react/24/outline";
+import { CalendarIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { getWalletClient } from "@wagmi/core";
 import { useQueryState } from "nuqs";
 import { useGrantFormStore } from "./store";
@@ -303,6 +303,10 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     try {
       setIsLoading(true);
       if (!isConnected || !isAuth) return;
+      const chainId = await connector?.getChainId();
+      if (!checkNetworkIsValid(chainId) || chainId !== communityNetworkId) {
+        await switchNetworkAsync?.(communityNetworkId);
+      }
       const grant = new Grant({
         data: {
           communityUID: data.community,
@@ -312,10 +316,6 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         recipient: (data.recipient as Hex) || address,
         uid: nullRef,
       });
-      const chainId = await connector?.getChainId();
-      if (!checkNetworkIsValid(chainId) || chainId !== communityNetworkId) {
-        await switchNetworkAsync?.(communityNetworkId);
-      }
       grant.details = new GrantDetails({
         data: {
           amount: data.amount || "",
