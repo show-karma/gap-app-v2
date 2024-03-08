@@ -5,10 +5,11 @@ import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import type { Milestone } from "@show-karma/karma-gap-sdk";
+import { getWalletClient } from "@wagmi/core";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";
 import { useNetwork, useSwitchNetwork } from "wagmi";
@@ -64,7 +65,6 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isProjectOwner || isContractOwner;
-  const signer = useSigner();
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
   const completeMilestone = async (milestone: Milestone, text?: string) => {
@@ -72,7 +72,12 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
         await switchNetworkAsync?.(milestone.chainID);
       }
-      await milestone.complete(signer as any, text).then(async () => {
+      const walletClient = await getWalletClient({
+        chainId: milestone.chainID,
+      });
+      if (!walletClient) return;
+      const walletSigner = await walletClientToSigner(walletClient);
+      await milestone.complete(walletSigner, text).then(async () => {
         toast.success(MESSAGES.MILESTONES.COMPLETE.SUCCESS);
         await refreshProject();
       });
@@ -90,7 +95,12 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
       if (chain && chain.id !== milestone.chainID) {
         await switchNetworkAsync?.(milestone.chainID);
       }
-      await milestone.complete(signer as any, text).then(async () => {
+      const walletClient = await getWalletClient({
+        chainId: milestone.chainID,
+      });
+      if (!walletClient) return;
+      const walletSigner = await walletClientToSigner(walletClient);
+      await milestone.complete(walletSigner, text).then(async () => {
         toast.success(MESSAGES.MILESTONES.UPDATE_COMPLETION.SUCCESS);
         await refreshProject();
       });

@@ -1,5 +1,5 @@
 import type { Chain } from "viem/chains";
-import { arbitrum, optimism, sepolia, optimismSepolia } from "viem/chains";
+import { arbitrum, optimism, optimismSepolia, sepolia } from "viem/chains";
 import type { TNetwork } from "@show-karma/karma-gap-sdk";
 
 export const appNetwork: [Chain, Chain, ...Chain[]] =
@@ -8,7 +8,7 @@ export const appNetwork: [Chain, Chain, ...Chain[]] =
     : [sepolia, optimismSepolia];
 
 export function getChainIdByName(name: string) {
-  switch (name) {
+  switch (name.toLowerCase()) {
     case "mainnet":
       return 1;
     case "OP Mainnet":

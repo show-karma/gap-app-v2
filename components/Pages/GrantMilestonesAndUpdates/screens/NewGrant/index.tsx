@@ -24,7 +24,7 @@ import { Milestone as MilestoneComponent } from "./Milestone";
 import { useRouter } from "next/router";
 import { CommunitiesDropdown } from "@/components/CommunitiesDropdown";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { useGap } from "@/hooks";
+import { getGapClient, useGap } from "@/hooks";
 import toast from "react-hot-toast";
 import { useSearchParams } from "next/navigation";
 import { CalendarIcon, XMarkIcon } from "@heroicons/react/24/outline";
@@ -32,7 +32,7 @@ import { getWalletClient } from "@wagmi/core";
 import { useQueryState } from "nuqs";
 import { useGrantFormStore } from "./store";
 import { MESSAGES } from "@/utilities/messages";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { appNetwork } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
 import { Popover } from "@headlessui/react";
@@ -299,20 +299,21 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   ) => {
     if (!address || !selectedProject) return;
     if (!gap) throw new Error("Please, connect a wallet");
-
+    let gapClient = gap;
     try {
       setIsLoading(true);
       if (!isConnected || !isAuth) return;
       const chainId = await connector?.getChainId();
       if (!checkNetworkIsValid(chainId) || chainId !== communityNetworkId) {
         await switchNetworkAsync?.(communityNetworkId);
+        gapClient = getGapClient(communityNetworkId);
       }
       const grant = new Grant({
         data: {
           communityUID: data.community,
         },
         refUID: selectedProject.uid,
-        schema: gap.findSchema("Grant"),
+        schema: gapClient.findSchema("Grant"),
         recipient: (data.recipient as Hex) || address,
         uid: nullRef,
       });
@@ -330,7 +331,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           startDate: data.startDate,
         },
         refUID: grant.uid,
-        schema: gap.findSchema("GrantDetails"),
+        schema: gapClient.findSchema("GrantDetails"),
         recipient: grant.recipient,
         uid: nullRef,
       });
@@ -342,7 +343,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                 text: data.grantUpdate || "",
                 title: "",
               },
-              schema: gap.findSchema("Milestone"),
+              schema: gapClient.findSchema("Milestone"),
               recipient: grant.recipient,
             }),
           ]
@@ -357,7 +358,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             endsAt: milestone.endsAt,
           },
           refUID: grant.uid,
-          schema: gap.findSchema("Milestone"),
+          schema: gapClient.findSchema("Milestone"),
           recipient: grant.recipient,
           uid: nullRef,
         });
@@ -368,7 +369,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
               type: "completed",
             },
             refUID: created.uid,
-            schema: gap.findSchema("MilestoneCompleted"),
+            schema: gapClient.findSchema("MilestoneCompleted"),
             recipient: grant.recipient,
           });
         }
@@ -379,8 +380,9 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         chainId: communityNetworkId,
       });
       if (!walletClient) return;
+      const walletSigner = await walletClientToSigner(walletClient);
       await grant
-        .attest(signer as any, selectedProject.chainID)
+        .attest(walletSigner as any, selectedProject.chainID)
         .then(async () => {
           // eslint-disable-next-line no-param-reassign
           clearMilestonesForms();
@@ -419,8 +421,12 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         questions: data.questions,
         startDate: data.startDate,
       });
-
-      await oldGrant.details?.attest(signer as any).then(async () => {
+      const walletClient = await getWalletClient({
+        chainId: oldGrant.chainID,
+      });
+      if (!walletClient) return;
+      const walletSigner = await walletClientToSigner(walletClient);
+      await oldGrant.details?.attest(walletSigner as any).then(async () => {
         // eslint-disable-next-line no-param-reassign
         toast.success(MESSAGES.GRANT.UPDATE.SUCCESS);
         await refreshProject().then(() => {
