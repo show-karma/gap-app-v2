@@ -35,7 +35,6 @@ const gapClients: Record<number, GAP> = {};
 export const getGapClient = (chainID: number): GAP => {
   const network = getChainNameById(chainID);
   const gapClient = gapClients[getChainIdByName(network)];
-
   if (!gapClient) {
     const apiUrl = envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
     const client = new GAP({
@@ -47,7 +46,7 @@ export const getGapClient = (chainID: number): GAP => {
             apiClient: new GapIndexerClient(apiUrl),
           }
         : {}),
-      gelatoOpts,
+      // gelatoOpts,
       remoteStorage: ipfsClient,
     });
     gapClients[chainID] = client;

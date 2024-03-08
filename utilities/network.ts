@@ -25,6 +25,12 @@ export function getChainIdByName(name: string) {
       return 420;
     case "sepolia":
       return 11155111;
+    case "Optimism Sepolia":
+      return 11155420;
+    case "optimism-sepolia":
+      return 11155420;
+    case "optimismSepolia":
+      return 11155420;
     default:
       throw new Error(`Unknown chain name: ${name}`);
   }
@@ -38,12 +44,10 @@ export function getChainNameById(id: number): TNetwork {
       return "optimism";
     case 42161:
       return "arbitrum";
-    // case 420:
-    //   return "optimism-goerli";
-    case 11155420:
-      return "optimism-sepolia";
     case 11155111:
       return "sepolia";
+    case 11155420:
+      return "optimism-sepolia";
     default: {
       const network = appNetwork[0].name;
       return getChainNameById(getChainIdByName(network));

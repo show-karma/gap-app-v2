@@ -11,20 +11,50 @@ import {
   metaMaskWallet,
   rainbowWallet,
 } from "@rainbow-me/rainbowkit/wallets";
-import { alchemyProvider } from "wagmi/providers/alchemy";
+import { arbitrum, optimism, sepolia, optimismSepolia } from "viem/chains";
 import { publicProvider } from "wagmi/providers/public";
 import { customWalletConnectConnector } from "@/utilities/wagmi/walletConnectConnector";
 import { appNetwork } from "@/utilities/network";
+import { envVars } from "@/utilities/enviromentVars";
+import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
 
 const WagmiProvider = ({ children }: { children: React.ReactNode }) => {
   const { chains, publicClient, webSocketPublicClient } = configureChains(
     appNetwork as any,
     [
-      process.env.NEXT_PUBLIC_ALCHEMY_KEY
-        ? alchemyProvider({
-            apiKey: process.env.NEXT_PUBLIC_ALCHEMY_KEY,
-          })
-        : publicProvider(),
+      jsonRpcProvider({
+        rpc(chain) {
+          if (chain.id === optimism.id) {
+            return {
+              http: envVars.RPC.OPTIMISM,
+              webSocket: chain.rpcUrls.default.webSocket?.[0],
+            };
+          }
+          if (chain.id === arbitrum.id) {
+            return {
+              http: envVars.RPC.ARBITRUM,
+              webSocket: chain.rpcUrls.default.webSocket?.[0],
+            };
+          }
+          if (chain.id === sepolia.id) {
+            return {
+              http: envVars.RPC.SEPOLIA,
+              webSocket: chain.rpcUrls.default.webSocket?.[0],
+            };
+          }
+          if (chain.id === optimismSepolia.id) {
+            return {
+              http: envVars.RPC.OPT_SEPOLIA,
+              webSocket: chain.rpcUrls.default.webSocket?.[0],
+            };
+          }
+          return {
+            http: chain.rpcUrls.default.http[0],
+            webSocket: chain.rpcUrls.default.webSocket?.[0],
+          };
+        },
+      }),
+      publicProvider(),
     ]
   );
 

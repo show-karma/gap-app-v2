@@ -49,7 +49,6 @@ export const updateProject = async (
         name: tag.name,
       })),
     });
-
     await project.details?.attest(signer as any);
     return project;
   } catch (error) {
