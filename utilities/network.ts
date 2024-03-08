@@ -1,11 +1,11 @@
 import type { Chain } from "viem/chains";
-import { arbitrum, optimism, optimismGoerli, sepolia } from "viem/chains";
+import { arbitrum, optimism, optimismSepolia, sepolia } from "viem/chains";
 import type { TNetwork } from "@show-karma/karma-gap-sdk";
 
 export const appNetwork: [Chain, Chain, ...Chain[]] =
   process.env.NEXT_PUBLIC_ENV === "production"
     ? [optimism, arbitrum]
-    : [optimismGoerli, sepolia];
+    : [sepolia, optimismSepolia];
 
 export function getChainIdByName(name: string) {
   switch (name) {
