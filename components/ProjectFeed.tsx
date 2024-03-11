@@ -15,12 +15,16 @@ import { MarkdownPreview } from "./Utilities/MarkdownPreview";
 import { useTheme } from "next-themes";
 import { cn } from "@/utilities/tailwind";
 
-export const ProjectFeed = () => {
+interface ProjectFeedProps {
+  initialFeed: Feed[]
+}
+
+export const ProjectFeed = ({initialFeed}: ProjectFeedProps) => {
   const router = useRouter();
   const projectId = router.query.projectId; // Get the projectId from the URL
 
-  const [feed, setFeed] = useState<Feed[]>([]); // Set the initial feed state to an empty array
-  const [feedLoading, setFeedLoading] = useState<boolean>(true); // Set the initial loading state to true
+  const [feed, setFeed] = useState<Feed[]>(initialFeed); // Set the initial feed state to an empty array
+  const [feedLoading, setFeedLoading] = useState<boolean>(false); // Set the initial loading state to true
   const itemsPerPage = 12; // Set the total number of items you want returned from the API
   const [page, setPage] = useState<number>(1);
   const { theme } = useTheme();
@@ -49,7 +53,7 @@ export const ProjectFeed = () => {
       }
     };
 
-    if (projectId) {
+    if (projectId && page > 1) {
       callFeedAPI();
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }
