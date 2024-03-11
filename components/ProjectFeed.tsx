@@ -19,7 +19,7 @@ interface ProjectFeedProps {
   initialFeed: Feed[]
 }
 
-export const ProjectFeed = ({initialFeed}: ProjectFeedProps) => {
+export const ProjectFeed = ({initialFeed = []}: ProjectFeedProps) => {
   const router = useRouter();
   const projectId = router.query.projectId; // Get the projectId from the URL
 
