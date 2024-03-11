@@ -24,14 +24,15 @@ import { Milestone as MilestoneComponent } from "./Milestone";
 import { useRouter } from "next/router";
 import { CommunitiesDropdown } from "@/components/CommunitiesDropdown";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { useGap } from "@/hooks";
+import { getGapClient, useGap } from "@/hooks";
 import toast from "react-hot-toast";
 import { useSearchParams } from "next/navigation";
 import { CalendarIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { getWalletClient } from "@wagmi/core";
 import { useQueryState } from "nuqs";
+import { useGrantFormStore } from "./store";
 import { MESSAGES } from "@/utilities/messages";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { appNetwork } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
 import { Popover } from "@headlessui/react";
@@ -83,35 +84,35 @@ const grantSchema = z.object({
     ),
   successQuestions: z.array(
     z.object({
-      query: z.string().nonempty(),
+      query: z.string().min(1),
       explanation: z.string().optional(),
       type: z.literal("SUCCESS_MEASURE"),
     })
   ),
   impactQuestions: z.array(
     z.object({
-      query: z.string().nonempty(),
+      query: z.string().min(1),
       explanation: z.string().optional(),
       type: z.literal("IMPACT_MEASUREMENT"),
     })
   ),
   innovationQuestions: z.array(
     z.object({
-      query: z.string().nonempty(),
+      query: z.string().min(1),
       explanation: z.string().optional(),
       type: z.literal("INNOVATION"),
     })
   ),
   fundQuestions: z.array(
     z.object({
-      query: z.string().nonempty(),
+      query: z.string().min(1),
       explanation: z.string().optional(),
       type: z.literal("FUND_USAGE"),
     })
   ),
   timeframeQuestions: z.array(
     z.object({
-      query: z.string().nonempty(),
+      query: z.string().min(1),
       explanation: z.string().optional(),
       type: z.literal("TIMEFRAME"),
     })
@@ -188,10 +189,10 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const searchParams = useSearchParams();
   const grantScreen = searchParams?.get("tab");
+  const { milestonesForms: milestones, createMilestone } = useGrantFormStore();
   const { isAuth } = useAuthStore();
 
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const [milestones, setMilestones] = useState<MilestoneWithCompleted[]>([]);
   const [description, setDescription] = useState(
     grantScreen === "edit-grant" ? grantToEdit?.details?.description || "" : ""
   );
@@ -207,6 +208,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { isConnected } = useAccount();
 
   const [, changeTab] = useQueryState("tab");
+  const [, changeGrant] = useQueryState("grantId");
 
   function premade<T extends GenericQuestion>(
     type: QuestionType,
@@ -284,6 +286,9 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     formState: { errors, isValid, isSubmitting },
   } = form;
 
+  const { saveMilestone, milestonesForms, clearMilestonesForms } =
+    useGrantFormStore();
+
   const router = useRouter();
 
   const { connector } = useAccount();
@@ -294,23 +299,24 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   ) => {
     if (!address || !selectedProject) return;
     if (!gap) throw new Error("Please, connect a wallet");
-
+    let gapClient = gap;
     try {
       setIsLoading(true);
       if (!isConnected || !isAuth) return;
+      const chainId = await connector?.getChainId();
+      if (!checkNetworkIsValid(chainId) || chainId !== communityNetworkId) {
+        await switchNetworkAsync?.(communityNetworkId);
+        gapClient = getGapClient(communityNetworkId);
+      }
       const grant = new Grant({
         data: {
           communityUID: data.community,
         },
         refUID: selectedProject.uid,
-        schema: gap.findSchema("Grant"),
+        schema: gapClient.findSchema("Grant"),
         recipient: (data.recipient as Hex) || address,
         uid: nullRef,
       });
-      const chainId = await connector?.getChainId();
-      if (!checkNetworkIsValid(chainId) || chainId !== communityNetworkId) {
-        await switchNetworkAsync?.(communityNetworkId);
-      }
       grant.details = new GrantDetails({
         data: {
           amount: data.amount || "",
@@ -325,7 +331,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           startDate: data.startDate,
         },
         refUID: grant.uid,
-        schema: gap.findSchema("GrantDetails"),
+        schema: gapClient.findSchema("GrantDetails"),
         recipient: grant.recipient,
         uid: nullRef,
       });
@@ -337,7 +343,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                 text: data.grantUpdate || "",
                 title: "",
               },
-              schema: gap.findSchema("Milestone"),
+              schema: gapClient.findSchema("Milestone"),
               recipient: grant.recipient,
             }),
           ]
@@ -352,7 +358,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             endsAt: milestone.endsAt,
           },
           refUID: grant.uid,
-          schema: gap.findSchema("Milestone"),
+          schema: gapClient.findSchema("Milestone"),
           recipient: grant.recipient,
           uid: nullRef,
         });
@@ -363,7 +369,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
               type: "completed",
             },
             refUID: created.uid,
-            schema: gap.findSchema("MilestoneCompleted"),
+            schema: gapClient.findSchema("MilestoneCompleted"),
             recipient: grant.recipient,
           });
         }
@@ -374,12 +380,15 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         chainId: communityNetworkId,
       });
       if (!walletClient) return;
+      const walletSigner = await walletClientToSigner(walletClient);
       await grant
-        .attest(signer as any, selectedProject.chainID)
+        .attest(walletSigner as any, selectedProject.chainID)
         .then(async () => {
           // eslint-disable-next-line no-param-reassign
+          clearMilestonesForms();
           toast.success(MESSAGES.GRANT.CREATE.SUCCESS);
           changeTab("overview");
+          changeGrant(grant.uid);
           selectedProject?.grants.unshift(grant);
         });
     } catch (error) {
@@ -412,8 +421,12 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         questions: data.questions,
         startDate: data.startDate,
       });
-
-      await oldGrant.details?.attest(signer as any).then(async () => {
+      const walletClient = await getWalletClient({
+        chainId: oldGrant.chainID,
+      });
+      if (!walletClient) return;
+      const walletSigner = await walletClientToSigner(walletClient);
+      await oldGrant.details?.attest(walletSigner as any).then(async () => {
         // eslint-disable-next-line no-param-reassign
         toast.success(MESSAGES.GRANT.UPDATE.SUCCESS);
         await refreshProject().then(() => {
@@ -433,7 +446,21 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     }
   };
 
+  const allMilestonesValidated = milestones.every(
+    (milestone) => milestone.isValid === true
+  );
+
+  const saveAllMilestones = () => {
+    milestonesForms.forEach((milestone, index) => {
+      const { data, isValid } = milestone;
+      if (isValid) {
+        saveMilestone(data, index);
+      }
+    });
+  };
+
   const onSubmit = async (data: GrantType) => {
+    saveAllMilestones();
     let questions: {
       type: string;
       query: string;
@@ -487,12 +514,13 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         }))
       );
     }
+    const milestonesData = milestones.map((item) => item.data);
     const newGrant = {
       amount: data.amount,
       description,
       linkToProposal: data.linkToProposal,
       title: data.title,
-      milestones,
+      milestones: milestonesData,
       community: data.community,
       // season: data.season,
       // cycle: data.cycle,
@@ -501,33 +529,12 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       questions,
       startDate: data.startDate.getTime() / 1000,
     };
+    console.log(newGrant, "newGrant");
     if (grantScreen === "edit-grant" && grantToEdit) {
       updateGrant(grantToEdit, newGrant);
     } else {
       createNewGrant(newGrant, communityNetworkId);
     }
-  };
-
-  const createMilestone = () => {
-    const newMilestone: MilestoneWithCompleted = {
-      title: "",
-      description: "",
-      endsAt: 1,
-    };
-    const newMilestones = [...milestones, newMilestone];
-    setMilestones(newMilestones);
-  };
-
-  const removeMilestone = (index: number) => {
-    const newMilestones = [...milestones];
-    newMilestones.splice(index, 1);
-    setMilestones(newMilestones);
-  };
-
-  const saveMilestone = (milestone: MilestoneWithCompleted, index: number) => {
-    const newMilestones = [...milestones];
-    newMilestones[index] = milestone;
-    setMilestones(newMilestones);
   };
 
   const setCommunityValue = (value: string, networkId: number) => {
@@ -567,7 +574,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         <form className="flex w-full flex-col gap-4">
           <div className="flex w-full flex-col">
             <label htmlFor="grant-title" className={labelStyle}>
-              Grant title
+              Grant title *
             </label>
             <input
               id="grant-title"
@@ -579,7 +586,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           </div>
           <div className="flex w-full flex-col">
             <label htmlFor="grant-title" className={labelStyle}>
-              Community
+              Community *
             </label>
             <CommunitiesDropdown
               onSelectFunction={setCommunityValue}
@@ -599,7 +606,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
               control={form.control}
               render={({ field, formState, fieldState }) => (
                 <div className="flex w-full flex-col gap-2">
-                  <label className={labelStyle}>Start Date</label>
+                  <label className={labelStyle}>Start Date *</label>
                   <div>
                     <Popover className="relative">
                       <Popover.Button className="max-lg:w-full w-max text-base flex-row flex gap-2 items-center bg-gray-100 dark:bg-zinc-800 px-4 py-2 rounded-md">
@@ -687,7 +694,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           {isOwner && (
             <div className="flex w-full flex-col">
               <label htmlFor="tags-input" className={labelStyle}>
-                Recipient address
+                Recipient address (optional)
               </label>
               <input
                 id="tags-input"
@@ -701,7 +708,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           )}
           <div className="flex w-full flex-col">
             <label htmlFor="grant-description" className={labelStyle}>
-              Description
+              Description *
             </label>
             <div className="mt-2 w-full bg-transparent dark:border-gray-600">
               <MarkdownEditor
@@ -861,11 +868,9 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           <div className="flex w-full flex-col items-center justify-center gap-8 py-8">
             {milestones.map((milestone, index) => (
               <MilestoneComponent
-                currentMilestone={milestone}
+                currentMilestone={milestone.data}
                 key={+index}
                 index={index}
-                removeMilestone={removeMilestone}
-                saveMilestone={saveMilestone}
               />
             ))}
             <button
@@ -905,6 +910,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
               isSubmitting ||
               isLoading ||
               !isDescriptionValid ||
+              !allMilestonesValidated ||
               (grantScreen === "create-grant" && !isValid)
             }
             isLoading={isSubmitting || isLoading}

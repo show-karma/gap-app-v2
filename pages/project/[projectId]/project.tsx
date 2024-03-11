@@ -9,11 +9,12 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { ProjectFeed } from "@/components/ProjectFeed";
 import dynamic from "next/dynamic";
 import { useGap } from "@/hooks";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { deleteProject } from "@/utilities/sdk";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { Feed } from "@/types";
+import { getWalletClient } from "@wagmi/core";
 
 const ProjectDialog = dynamic(
   () => import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog),
@@ -53,7 +54,12 @@ function ProjectPage({ initialFeed }: ProjectPageProps) {
       if (chain && chain.id !== project.chainID) {
         await switchNetworkAsync?.(project.chainID);
       }
-      await deleteProject(project, signer, gap)
+      const walletClient = await getWalletClient({
+        chainId: project.chainID,
+      });
+      if (!walletClient) return;
+      const walletSigner = await walletClientToSigner(walletClient);
+      await deleteProject(project, walletSigner, gap)
         .then(async () => {
           toast.success(MESSAGES.PROJECT.DELETE.SUCCESS);
           router.push(PAGES.MY_PROJECTS);

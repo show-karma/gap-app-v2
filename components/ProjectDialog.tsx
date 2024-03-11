@@ -30,13 +30,14 @@ import {
 import { useProjectStore } from "@/store";
 import { useOwnerStore } from "@/store/owner";
 import { MESSAGES } from "@/utilities/messages";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { createNewProject, updateProject } from "@/utilities/sdk";
 import { appNetwork } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { useAuthStore } from "@/store/auth";
+import { getWalletClient } from "@wagmi/core";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -194,7 +195,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         <div className="flex w-full flex-col gap-8">
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="name-input" className={labelStyle}>
-              Name
+              Name *
             </label>
             <input
               id="name-input"
@@ -208,7 +209,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
           <div className="flex w-full flex-col gap-2" data-color-mode="light">
             <label htmlFor="desc-input" className={labelStyle}>
-              Description
+              Description *
             </label>
             <MarkdownEditor
               value={description}
@@ -256,7 +257,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         <div className="flex w-full flex-col gap-8">
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="twitter-input" className={labelStyle}>
-              Twitter
+              Twitter (optional)
             </label>
             <div className="flex w-full flex-row items-center gap-2 rounded-lg border border-gray-400 px-4 py-2">
               <TwitterIcon className="h-5 w-5" />
@@ -272,7 +273,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           </div>
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="github-input" className={labelStyle}>
-              Github
+              Github (optional)
             </label>
             <div className="flex w-full flex-row items-center gap-2 rounded-lg border border-gray-400 px-4 py-2">
               <GithubIcon className="h-5 w-5" />
@@ -288,7 +289,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           </div>
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="discord-input" className={labelStyle}>
-              Discord
+              Discord (optional)
             </label>
             <div className="flex w-full flex-row items-center gap-2 rounded-lg border border-gray-400 px-4 py-2">
               <DiscordIcon className="h-5 w-5" />
@@ -304,7 +305,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           </div>
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="website-input" className={labelStyle}>
-              Website
+              Website (optional)
             </label>
             <div className="flex w-full flex-row items-center gap-2 rounded-lg border border-gray-400 px-4 py-2">
               <WebsiteIcon className="h-5 w-5" />
@@ -320,7 +321,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           </div>
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="linkedin-input" className={labelStyle}>
-              Linkedin
+              LinkedIn (optional)
             </label>
             <div className="flex w-full flex-row items-center gap-2 rounded-lg border border-gray-400 px-4 py-2">
               <LinkedInIcon className="h-5 w-5 " />
@@ -345,7 +346,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         <div className="flex w-full flex-col gap-8">
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="members-input" className={labelStyle}>
-              Invite team members
+              Invite team members *
             </label>
             <div className="flex w-full flex-row items-center gap-2 max-sm:flex-col">
               <input
@@ -441,6 +442,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       }
       if (!address) return;
       if (!gap) return;
+      let gapClient = gap;
+      if (!checkNetworkIsValid(chain?.id)) {
+        await switchNetworkAsync?.(appNetwork[0].id);
+        gapClient = getGapClient(appNetwork[0].id);
+      }
       const project = new Project({
         data: {
           project: true,
@@ -449,9 +455,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         recipient: (data.recipient || address) as Hex,
         uid: nullRef,
       });
-      if (!checkNetworkIsValid(chain?.id)) {
-        await switchNetworkAsync?.(project.chainID);
-      }
 
       await createNewProject(
         {
@@ -483,9 +486,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           imageURL: "",
         },
         project,
-        signer,
         router,
-        gap
+        gapClient
       );
 
       reset();
@@ -497,13 +499,14 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       closeModal();
     } catch (error) {
       console.log({ error });
-      toast.error(MESSAGES.PROJECT.UPDATE.ERROR);
+      toast.error(MESSAGES.PROJECT.CREATE.ERROR);
     } finally {
       setIsLoading(false);
     }
   };
 
   const updateThisProject = async (data: SchemaType) => {
+    let gapClient = gap;
     try {
       setIsLoading(true);
       if (!isConnected || !isAuth) {
@@ -514,8 +517,14 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       if (!gap) return;
       if (chain && chain.id !== projectToUpdate.chainID) {
         await switchNetworkAsync?.(projectToUpdate.chainID);
+        gapClient = getGapClient(projectToUpdate.chainID);
       }
       const shouldRefresh = dataToUpdate.title === data.title;
+      const walletClient = await getWalletClient({
+        chainId: projectToUpdate.chainID,
+      });
+      if (!walletClient) return;
+      const walletSigner = await walletClientToSigner(walletClient);
       await updateProject(
         projectToUpdate,
         {
@@ -529,8 +538,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           linkedin: data.linkedin,
           twitter: data.twitter,
         },
-        signer,
-        gap
+        walletSigner,
+        gapClient
       ).then(async (res) => {
         toast.success(MESSAGES.PROJECT.UPDATE.SUCCESS);
         closeModal();

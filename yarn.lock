@@ -14,7 +14,7 @@
 
 "@adraffy/ens-normalize@1.10.1":
   version "1.10.1"
-  resolved "https://registry.yarnpkg.com/@adraffy/ens-normalize/-/ens-normalize-1.10.1.tgz#63430d04bd8c5e74f8d7d049338f1cd9d4f02069"
+  resolved "https://registry.npmjs.org/@adraffy/ens-normalize/-/ens-normalize-1.10.1.tgz#63430d04bd8c5e74f8d7d049338f1cd9d4f02069"
   integrity sha512-96Z2IP3mYmF1Xg2cDm8f1gWGf/HUVedQ3FMifV4kG/PQ4yEP51xDtRAEfhVNt5f/uzpNkZHwWQuUcu6D6K+Ekw==
 
 "@adraffy/ens-normalize@1.9.2":
@@ -1981,9 +1981,10 @@
     "@sentry/types" "5.30.0"
     tslib "^1.9.3"
 
-"@show-karma/karma-gap-sdk@git+https://github.com/show-karma/karma-gap-sdk.git#83c0b07ab71532e260edf795d2e3414018953d51":
-  version "0.3.8"
-  resolved "git+https://github.com/show-karma/karma-gap-sdk.git#83c0b07ab71532e260edf795d2e3414018953d51"
+"@show-karma/karma-gap-sdk@^0.3.11":
+  version "0.3.11"
+  resolved "https://registry.yarnpkg.com/@show-karma/karma-gap-sdk/-/karma-gap-sdk-0.3.11.tgz#2b1621c296af025cc651043636d36163001dd6b3"
+  integrity sha512-X3i/nQQgL/bWBCK7DBgP8T7xyCV2x0W4xe4JMHNf8yk8jDkok9FRcjZ50A2vr/gtEO+PwTUkurOpMKJpEnfO2g==
   dependencies:
     "@ethereum-attestation-service/eas-sdk" "^1.4.2"
     "@gelatonetwork/relay-sdk" "^5.2.0"
@@ -5141,7 +5142,7 @@ ethereumjs-util@^6.0.0, ethereumjs-util@^6.2.1:
 
 ethers@6.11.0:
   version "6.11.0"
-  resolved "https://registry.yarnpkg.com/ethers/-/ethers-6.11.0.tgz#6d3e884ad36454c29d4662ae49439d5d04556c66"
+  resolved "https://registry.npmjs.org/ethers/-/ethers-6.11.0.tgz#6d3e884ad36454c29d4662ae49439d5d04556c66"
   integrity sha512-kPHNTnhVWiWU6AVo6CAeTjXEK24SpCXyZvwG9ROFjT0Vlux0EOhWKBAeC+45iDj80QNJTYaT1SDEmeunT0vDNw==
   dependencies:
     "@adraffy/ens-normalize" "1.10.1"
@@ -5203,7 +5204,7 @@ ethers@^5.7.1:
 
 ethers@^6.11.1:
   version "6.11.1"
-  resolved "https://registry.yarnpkg.com/ethers/-/ethers-6.11.1.tgz#96aae00b627c2e35f9b0a4d65c7ab658259ee6af"
+  resolved "https://registry.npmjs.org/ethers/-/ethers-6.11.1.tgz#96aae00b627c2e35f9b0a4d65c7ab658259ee6af"
   integrity sha512-mxTAE6wqJQAbp5QAe/+o+rXOID7Nw91OZXvgpjDa1r4fAbq2Nu314oEZSbjoRLacuCzs7kUC3clEvkCQowffGg==
   dependencies:
     "@adraffy/ens-normalize" "1.10.1"
@@ -6849,7 +6850,7 @@ jiti@^1.19.1, jiti@^1.21.0:
 
 js-base64@^3.7.6:
   version "3.7.7"
-  resolved "https://registry.yarnpkg.com/js-base64/-/js-base64-3.7.7.tgz#e51b84bf78fbf5702b9541e2cb7bfcb893b43e79"
+  resolved "https://registry.npmjs.org/js-base64/-/js-base64-3.7.7.tgz#e51b84bf78fbf5702b9541e2cb7bfcb893b43e79"
   integrity sha512-7rCnleh0z2CkXhH67J8K1Ytz0b2Y+yxTPL+/KOJoa20hfnVQ/3/T6W/KflYI4bRHRagNeXeU2bkNGI3v1oS/lw==
 
 js-sdsl@^4.1.4:
@@ -9562,7 +9563,7 @@ semver@^7.3.4, semver@^7.3.7, semver@^7.3.8:
 
 semver@^7.6.0:
   version "7.6.0"
-  resolved "https://registry.yarnpkg.com/semver/-/semver-7.6.0.tgz#1a46a4db4bffcccd97b743b5005c8325f23d4e2d"
+  resolved "https://registry.npmjs.org/semver/-/semver-7.6.0.tgz#1a46a4db4bffcccd97b743b5005c8325f23d4e2d"
   integrity sha512-EnwXhrlwXMk9gKu5/flx5sv/an57AkRplG3hTK68W7FRDN+k+OWBj65M7719OkA82XLBxrcX0KSHj+X5COhOVg==
   dependencies:
     lru-cache "^6.0.0"

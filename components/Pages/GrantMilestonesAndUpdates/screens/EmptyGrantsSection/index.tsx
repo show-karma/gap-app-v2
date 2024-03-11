@@ -5,9 +5,9 @@ import { useQueryState } from "nuqs";
 import { MESSAGES } from "@/utilities/messages";
 
 export const EmptyGrantsSection: FC = () => {
-  const isProjectAdmin = useProjectStore((state) => state.isProjectOwner);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const isAuthorized = isProjectAdmin || isOwner;
+  const isAuthorized = isProjectOwner || isOwner;
   const [, changeTab] = useQueryState("tab");
   if (!isAuthorized) {
     return (
