@@ -32,7 +32,7 @@ export function getChainIdByName(name: string) {
     case "optimismSepolia":
       return 11155420;
     default:
-      throw new Error(`Unknown chain name: ${name}`);
+      return appNetwork[0].id;
   }
 }
 
