@@ -23,7 +23,7 @@ export function publicClientToProvider(publicClient: PublicClient) {
   return new ethers.JsonRpcProvider(transport.url, network);
 }
 
-export function walletClientToSigner(walletClient: WalletClient) {
+export async function walletClientToSigner(walletClient: WalletClient) {
   const { account, chain, transport } = walletClient;
   const network = {
     chainId: chain.id,
@@ -31,7 +31,9 @@ export function walletClientToSigner(walletClient: WalletClient) {
     ensAddress: chain.contracts?.ensRegistry?.address,
   };
   const provider = new ethers.BrowserProvider(transport, network);
-  const signer = provider.getSigner(account.address);
+  const signer = await provider
+    .getSigner(account.address)
+    .catch(() => undefined);
 
   return signer;
 }
