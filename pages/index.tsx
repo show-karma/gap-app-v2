@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import Typed from "react-typed";
 import { PlusIcon } from "@heroicons/react/24/solid";
@@ -8,10 +8,10 @@ import { NextSeo } from "next-seo";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components/Utilities/Button";
 import dynamic from "next/dynamic";
-import { useTheme } from "next-themes";
 import { chosenCommunities } from "@/utilities/chosenCommunities";
 import { PAGES } from "@/utilities/pages";
 import { defaultMetadata } from "@/utilities/meta";
+import { ImageTheme } from "@/components/Utilities/ImageTheme";
 
 const ProjectDialog = dynamic(
   () => import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog),
@@ -163,7 +163,7 @@ const Communities = () => {
   //       community.uid
   //   )
   // );
-  const { theme } = useTheme();
+
   return (
     <div className="mb-8 mt-[80px] flex h-max w-full flex-row justify-center gap-4 max-md:flex-col max-lg:flex-wrap">
       <div className="flex h-max w-max flex-col gap-6 rounded-3xl  bg-[#EAECF0] dark:bg-zinc-400 p-8 max-lg:w-full">
@@ -182,17 +182,14 @@ const Communities = () => {
               href={PAGES.COMMUNITY.ALL_GRANTS(community.slug || community.uid)}
               className="flex hover:shadow-md h-full max-h-[166px] w-full flex-col items-center justify-center gap-2 rounded-2xl px-4 py-6 transition-all duration-300 ease-in-out "
             >
-              <div>
-                <img
-                  alt={community.name}
-                  src={
-                    theme === "light"
-                      ? community.imageURL.light
-                      : community.imageURL.dark
-                  }
-                  className="h-20 w-20 rounded-full object-cover max-lg:h-10 max-lg:w-10 max-sm:h-6 max-sm:w-6"
-                />
-              </div>
+              <ImageTheme
+                alt={community.name}
+                lightSrc={community.imageURL.light}
+                darkSrc={community.imageURL.dark}
+                className={
+                  "h-20 w-20 rounded-full object-cover max-lg:h-10 max-lg:w-10 max-sm:h-6 max-sm:w-6"
+                }
+              />
 
               <p className="line-clamp-1 text-center text-xl font-bold text-black dark:text-zinc-400 max-sm:text-base">
                 {community.name}
