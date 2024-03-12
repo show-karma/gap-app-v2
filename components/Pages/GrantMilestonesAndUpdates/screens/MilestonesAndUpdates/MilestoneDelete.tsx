@@ -8,7 +8,7 @@ import type { Milestone } from "@show-karma/karma-gap-sdk";
 import { getWalletClient } from "@wagmi/core";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";
-import { useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 
 interface MilestoneDeleteProps {
   milestone: Milestone;
@@ -17,16 +17,15 @@ interface MilestoneDeleteProps {
 export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
   const [isDeletingMilestone, setIsDeletingMilestone] = useState(false);
 
-  const { switchNetworkAsync } = useSwitchNetwork();
-  const { chain } = useNetwork();
-  const signer = useSigner();
+  const { switchChainAsync } = useSwitchChain();
+  const { chain } = useAccount();
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
   const deleteFn = async () => {
     setIsDeletingMilestone(true);
     try {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
-        await switchNetworkAsync?.(milestone.chainID);
+        await switchChainAsync?.({ chainId: milestone.chainID });
       }
       const milestoneUID = milestone.uid;
       const walletClient = await getWalletClient({

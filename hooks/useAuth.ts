@@ -5,10 +5,10 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import Cookies from "universal-cookie";
 import { useAccount, useDisconnect, useSignMessage } from "wagmi";
 import toast from "react-hot-toast";
-import { signMessage as sign } from "wagmi/actions";
 import { IExpirationStatus, ISession } from "@/types/auth";
 import { checkExpirationStatus } from "@/utilities/checkExpirationStatus";
 import { Hex } from "viem";
+import { useState } from "react";
 
 export const authCookiePath = "gap_auth";
 
@@ -39,15 +39,16 @@ const isTokenValid = (tokenValue: string | null) => {
 export const useAuth = () => {
   const { isConnected, address } = useAccount();
   const { openConnectModal } = useConnectModal();
-  const { setIsAuthenticating, setIsAuth } = useAuthStore();
+  const { setIsAuthenticating, setIsAuth, isAuthenticating } = useAuthStore();
   // const { signMessageAsync } = useSignMessage();
   const { disconnectAsync } = useDisconnect();
+  const { signMessageAsync } = useSignMessage();
 
   const cookies = new Cookies();
 
   const signMessage = async (messageToSign: string) => {
     try {
-      const signedMessage = await sign({ message: messageToSign });
+      const signedMessage = await signMessageAsync({ message: messageToSign });
       return signedMessage;
     } catch (err) {
       // eslint-disable-next-line no-console
@@ -85,10 +86,12 @@ export const useAuth = () => {
 
   const authenticate = async (newAddress = address) => {
     if (!isConnected || !newAddress) {
-      setIsAuthenticating(true);
       openConnectModal?.();
       return false;
     }
+    if (isAuthenticating) return;
+    setIsAuthenticating(true);
+
     try {
       if (typeof window !== "undefined") {
         const savedToken = cookies.get(authCookiePath);

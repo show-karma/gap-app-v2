@@ -18,7 +18,7 @@ import type { FC } from "react";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Hex, isAddress } from "viem";
-import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
 import { Milestone as MilestoneComponent } from "./Milestone";
 import { useRouter } from "next/router";
@@ -185,7 +185,6 @@ interface NewGrantData {
 
 export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { address } = useAccount();
-  const signer = useSigner();
   const isOwner = useOwnerStore((state) => state.isOwner);
   const searchParams = useSearchParams();
   const grantScreen = searchParams?.get("tab");
@@ -202,10 +201,9 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   );
   const [isLoading, setIsLoading] = useState(false);
   const selectedProject = useProjectStore((state) => state.project);
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { switchChainAsync } = useSwitchChain();
   const { gap } = useGap();
-  const { isConnected } = useAccount();
+  const { isConnected, chain } = useAccount();
 
   const [, changeTab] = useQueryState("tab");
   const [, changeGrant] = useQueryState("grantId");
@@ -305,7 +303,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       if (!isConnected || !isAuth) return;
       const chainId = await connector?.getChainId();
       if (!checkNetworkIsValid(chainId) || chainId !== communityNetworkId) {
-        await switchNetworkAsync?.(communityNetworkId);
+        await switchChainAsync?.({ chainId: communityNetworkId });
         gapClient = getGapClient(communityNetworkId);
       }
       const grant = new Grant({
@@ -404,7 +402,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     try {
       setIsLoading(true);
       if (chain && chain.id !== oldGrant.chainID) {
-        await switchNetworkAsync?.(oldGrant.chainID);
+        await switchChainAsync?.({ chainId: oldGrant.chainID });
       }
       oldGrant.setValues({
         communityUID: data.community,

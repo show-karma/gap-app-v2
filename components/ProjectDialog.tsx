@@ -13,7 +13,7 @@ import { Hex, isAddress } from "viem";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MarkdownEditor } from "./Utilities/MarkdownEditor";
-import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Project, nullRef } from "@show-karma/karma-gap-sdk";
 import toast from "react-hot-toast";
@@ -422,12 +422,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     return false;
   };
 
-  const { isConnected, address } = useAccount();
+  const { isConnected, address, chain } = useAccount();
   const { isAuth } = useAuthStore();
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork({
-    chainId: appNetwork[0].id,
-  });
+  const { switchChainAsync } = useSwitchChain();
   const [isLoading, setIsLoading] = useState(false);
   const { openConnectModal } = useConnectModal();
   const router = useRouter();
@@ -444,7 +441,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       if (!gap) return;
       let gapClient = gap;
       if (!checkNetworkIsValid(chain?.id)) {
-        await switchNetworkAsync?.(appNetwork[0].id);
+        await switchChainAsync?.({ chainId: appNetwork[0].id });
         gapClient = getGapClient(appNetwork[0].id);
       }
       const project = new Project({
@@ -516,7 +513,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       if (!address || !projectToUpdate) return;
       if (!gap) return;
       if (chain && chain.id !== projectToUpdate.chainID) {
-        await switchNetworkAsync?.(projectToUpdate.chainID);
+        await switchChainAsync?.({ chainId: projectToUpdate.chainID });
         gapClient = getGapClient(projectToUpdate.chainID);
       }
       const shouldRefresh = dataToUpdate.title === data.title;

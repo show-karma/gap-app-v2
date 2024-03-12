@@ -6,18 +6,17 @@ import {
   MilestoneCompleted,
 } from "@show-karma/karma-gap-sdk";
 import type { FC } from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import { getGapClient, useGap } from "@/hooks";
 import { Hex } from "viem";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import toast from "react-hot-toast";
-import { useRouter } from "next/router";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { Popover } from "@headlessui/react";
@@ -59,7 +58,6 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
   const [completedUpdate, setCompletedUpdate] = useState("");
 
   const { address } = useAccount();
-  const signer = useSigner();
 
   const {
     register,
@@ -73,8 +71,8 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
   });
   const [isLoading, setIsLoading] = useState(false);
   const { gap } = useGap();
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const selectedProject = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [, changeTab] = useQueryState("tab");
@@ -95,7 +93,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
 
     try {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== chainID) {
-        await switchNetworkAsync?.(chainID);
+        await switchChainAsync?.({ chainId: chainID });
         gapClient = getGapClient(chainID);
       }
       const milestoneToAttest = new Milestone({

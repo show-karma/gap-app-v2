@@ -10,7 +10,7 @@ import { getWalletClient } from "@wagmi/core";
 import { useQueryState } from "nuqs";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 
 interface GrantDeleteProps {
   grant: Grant;
@@ -18,10 +18,8 @@ interface GrantDeleteProps {
 
 export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
   const [isDeletingGrant, setIsDeletingGrant] = useState(false);
-  const signer = useSigner();
-  const { address } = useAccount();
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { address, chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [, setGrantTab] = useQueryState("grantId");
 
@@ -30,7 +28,7 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
     setIsDeletingGrant(true);
     try {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== grant.chainID) {
-        await switchNetworkAsync?.(grant.chainID);
+        await switchChainAsync?.({ chainId: grant.chainID });
       }
       const walletClient = await getWalletClient({
         chainId: grant.chainID,

@@ -2,14 +2,14 @@ import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 import { useProjectStore } from "@/store";
 import { useOwnerStore } from "@/store/owner";
 import { useState } from "react";
-import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import toast from "react-hot-toast";
 import { useRouter } from "next/router";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { ProjectFeed } from "@/components/ProjectFeed";
 import dynamic from "next/dynamic";
 import { useGap } from "@/hooks";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { deleteProject } from "@/utilities/sdk";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
@@ -40,11 +40,9 @@ function ProjectPage({ initialFeed }: ProjectPageProps) {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isOwner = useOwnerStore((state) => state.isOwner);
   const [isDeleting, setIsDeleting] = useState(false);
-  const { address } = useAccount();
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { address, chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const router = useRouter();
-  const signer = useSigner();
   const { gap } = useGap();
 
   const deleteFn = async () => {
@@ -52,7 +50,7 @@ function ProjectPage({ initialFeed }: ProjectPageProps) {
     setIsDeleting(true);
     try {
       if (chain && chain.id !== project.chainID) {
-        await switchNetworkAsync?.(project.chainID);
+        await switchChainAsync?.({ chainId: project.chainID });
       }
       const walletClient = await getWalletClient({
         chainId: project.chainID,

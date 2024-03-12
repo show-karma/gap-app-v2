@@ -12,7 +12,7 @@ import { useQueryState } from "nuqs";
 import type { FC } from "react";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 
@@ -29,9 +29,8 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork();
-  const signer = useSigner();
+  const { chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [, changeTab] = useQueryState("tab");
 
@@ -47,7 +46,7 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
         !checkNetworkIsValid(chain?.id) ||
         chain?.id !== grantToComplete.chainID
       ) {
-        await switchNetworkAsync?.(grantToComplete.chainID);
+        await switchChainAsync?.({ chainId: grantToComplete.chainID });
       }
       const walletClient = await getWalletClient({
         chainId: grantToComplete.chainID,

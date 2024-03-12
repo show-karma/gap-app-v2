@@ -4,7 +4,7 @@ import { type FC, useEffect, useMemo, useState, use } from "react";
 
 import { useGap } from "@/hooks/useGap";
 import { Button } from "@/components/Utilities/Button";
-import { useAccount, useNetwork } from "wagmi";
+import { useAccount } from "wagmi";
 import { GrantUpdate } from "./GrantUpdate";
 import { MilestoneDetails } from "./MilestoneDetails";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
@@ -60,8 +60,7 @@ const TabButton: FC<TabButtonProps> = ({
 };
 
 export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
-  const { address } = useAccount();
-  const { chain } = useNetwork();
+  const { address, chain } = useAccount();
   const { gap } = useGap();
   const { milestones } = grant;
   const { updates } = grant;

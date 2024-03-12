@@ -6,7 +6,7 @@ import { Popover } from "@headlessui/react";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { MoonIcon, SunIcon } from "@heroicons/react/24/solid";
-import { ConnectorData, useAccount, useConnect, useDisconnect } from "wagmi";
+import { useAccount, useConfig, useConnect, useDisconnect } from "wagmi";
 import { useOwnerStore } from "@/store/owner";
 import { useCommunitiesStore } from "@/store/communities";
 import { ExternalLink } from "./ExternalLink";
@@ -24,6 +24,8 @@ import { getCommunitiesOf, getContractOwner } from "@/utilities/sdk";
 import { karmaLinks } from "@/utilities/karma";
 import { PAGES } from "@/utilities/pages";
 import { useAuthStore } from "@/store/auth";
+import { watchAccount } from "@wagmi/core";
+import { config } from "./WagmiProvider";
 
 const ProjectDialog = dynamic(
   () => import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog),
@@ -121,21 +123,16 @@ export default function Header() {
   const { connector: activeConnector } = useAccount();
 
   useEffect(() => {
-    const handleConnectorUpdate = ({ account, chain }: ConnectorData) => {
-      if (account) {
-        console.log("account", account);
-        softDisconnect(account);
-      } else if (chain) {
-        console.log("new chain", chain);
-      }
-    };
-
-    if (activeConnector) {
-      activeConnector.on("change", handleConnectorUpdate);
-    }
-
-    return () => activeConnector?.off("change", handleConnectorUpdate) as any;
-  }, [activeConnector]);
+    const unwatch = watchAccount?.(config, {
+      onChange: (account, prevAccount) => {
+        console.log("account", account, prevAccount);
+        if (account.address !== prevAccount.address) {
+          softDisconnect(account.address);
+        }
+      },
+    });
+    return () => unwatch();
+  }, []);
 
   useEffect(() => {
     if (isConnected && isReady && !isAuth) {

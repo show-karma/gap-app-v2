@@ -14,7 +14,7 @@ import { useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
 
 const updateSchema = z.object({
@@ -34,10 +34,8 @@ interface NewGrantUpdateProps {
 export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
   const [description, setDescription] = useState("");
 
-  const router = useRouter();
-  const { address } = useAccount();
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { address, chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [, changeTab] = useQueryState("tab");
@@ -73,7 +71,7 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
     if (!address || !project) return;
     try {
       if (chain && chain.id !== grantToUpdate.chainID) {
-        await switchNetworkAsync?.(grantToUpdate.chainID);
+        await switchChainAsync?.({ chainId: grantToUpdate.chainID });
       }
       const walletClient = await getWalletClient({
         chainId: grantToUpdate.chainID,

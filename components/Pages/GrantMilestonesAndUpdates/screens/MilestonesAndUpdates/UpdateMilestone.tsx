@@ -12,7 +12,7 @@ import type { Milestone } from "@show-karma/karma-gap-sdk";
 import { getWalletClient } from "@wagmi/core";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";
-import { useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 
 interface NotUpdatingCaseProps {
   milestone: Milestone;
@@ -59,8 +59,8 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
   const selectedProject = useProjectStore((state) => state.project);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isSubmitLoading, setIsSubmitLoading] = useState(false);
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const [description, setDescription] = useState(previousDescription || "");
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
@@ -70,7 +70,7 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
   const completeMilestone = async (milestone: Milestone, text?: string) => {
     try {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
-        await switchNetworkAsync?.(milestone.chainID);
+        await switchChainAsync?.({ chainId: milestone.chainID });
       }
       const walletClient = await getWalletClient({
         chainId: milestone.chainID,
@@ -93,7 +93,7 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
   ) => {
     try {
       if (chain && chain.id !== milestone.chainID) {
-        await switchNetworkAsync?.(milestone.chainID);
+        await switchChainAsync?.({ chainId: milestone.chainID });
       }
       const walletClient = await getWalletClient({
         chainId: milestone.chainID,
