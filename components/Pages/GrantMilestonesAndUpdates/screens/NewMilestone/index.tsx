@@ -28,6 +28,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { formatDate } from "@/utilities/formatDate";
 import { getWalletClient } from "@wagmi/core";
+import { config } from "@/components/Utilities/WagmiProvider";
 
 const milestoneSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.MILESTONES.FORM.TITLE }),
@@ -117,7 +118,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
           },
         });
       }
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: chainID,
       });
       if (!walletClient) return;

@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { config } from "@/components/Utilities/WagmiProvider";
 import { useProjectStore } from "@/store";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
@@ -73,7 +74,7 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
       if (chain && chain.id !== grantToUpdate.chainID) {
         await switchChainAsync?.({ chainId: grantToUpdate.chainID });
       }
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: grantToUpdate.chainID,
       });
       if (!walletClient) return;

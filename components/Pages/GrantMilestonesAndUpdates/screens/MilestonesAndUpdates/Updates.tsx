@@ -14,6 +14,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { formatDate } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
 import { getWalletClient } from "@wagmi/core";
+import { config } from "@/components/Utilities/WagmiProvider";
 
 interface UpdatesProps {
   milestone: Milestone;
@@ -34,7 +35,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
         await switchChainAsync?.({ chainId: milestone.chainID });
       }
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: milestone.chainID,
       });
       if (!walletClient) return;

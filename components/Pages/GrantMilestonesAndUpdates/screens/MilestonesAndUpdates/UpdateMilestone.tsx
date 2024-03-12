@@ -3,6 +3,7 @@
 
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { config } from "@/components/Utilities/WagmiProvider";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -72,7 +73,7 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
         await switchChainAsync?.({ chainId: milestone.chainID });
       }
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: milestone.chainID,
       });
       if (!walletClient) return;
@@ -95,7 +96,7 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
       if (chain && chain.id !== milestone.chainID) {
         await switchChainAsync?.({ chainId: milestone.chainID });
       }
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: milestone.chainID,
       });
       if (!walletClient) return;

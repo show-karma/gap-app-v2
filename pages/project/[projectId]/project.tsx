@@ -15,6 +15,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { Feed } from "@/types";
 import { getWalletClient } from "@wagmi/core";
+import { config } from "@/components/Utilities/WagmiProvider";
 
 const ProjectDialog = dynamic(
   () => import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog),
@@ -52,7 +53,7 @@ function ProjectPage({ initialFeed }: ProjectPageProps) {
       if (chain && chain.id !== project.chainID) {
         await switchChainAsync?.({ chainId: project.chainID });
       }
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: project.chainID,
       });
       if (!walletClient) return;

@@ -39,6 +39,7 @@ import { Popover } from "@headlessui/react";
 import { DayPicker } from "react-day-picker";
 import { useAuthStore } from "@/store/auth";
 import { formatDate } from "@/utilities/formatDate";
+import { config } from "@/components/Utilities/WagmiProvider";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -374,7 +375,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         return created;
       });
 
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: communityNetworkId,
       });
       if (!walletClient) return;
@@ -419,7 +420,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         questions: data.questions,
         startDate: data.startDate,
       });
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: oldGrant.chainID,
       });
       if (!walletClient) return;

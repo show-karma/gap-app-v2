@@ -126,7 +126,7 @@ export default function Header() {
     const unwatch = watchAccount?.(config, {
       onChange: (account, prevAccount) => {
         console.log("account", account, prevAccount);
-        if (account.address !== prevAccount.address) {
+        if (account.address && account.address !== prevAccount.address) {
           softDisconnect(account.address);
         }
       },

@@ -1,3 +1,4 @@
+import { config } from "@/components/Utilities/WagmiProvider";
 import { getGapClient } from "@/hooks";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
@@ -73,7 +74,7 @@ export const createNewProject = async (
       );
     }
 
-    const walletClient = await getWalletClient({
+    const walletClient = await getWalletClient(config, {
       chainId: project.chainID,
     });
     if (!walletClient) return;

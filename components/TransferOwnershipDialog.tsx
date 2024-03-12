@@ -11,6 +11,7 @@ import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { transferOwnership } from "@/utilities/sdk";
 import { getWalletClient } from "@wagmi/core";
+import { config } from "./Utilities/WagmiProvider";
 
 type TransferOwnershipProps = {
   buttonElement?: {
@@ -56,7 +57,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
         await switchChainAsync?.({ chainId: project.chainID });
       }
 
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: project.chainID,
       });
       if (!walletClient) return;

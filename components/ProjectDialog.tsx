@@ -38,6 +38,7 @@ import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { useAuthStore } from "@/store/auth";
 import { getWalletClient } from "@wagmi/core";
+import { config } from "./Utilities/WagmiProvider";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -517,7 +518,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         gapClient = getGapClient(projectToUpdate.chainID);
       }
       const shouldRefresh = dataToUpdate.title === data.title;
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: projectToUpdate.chainID,
       });
       if (!walletClient) return;

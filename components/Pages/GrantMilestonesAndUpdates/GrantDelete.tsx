@@ -1,4 +1,5 @@
 import { DeleteDialog } from "@/components/DeleteDialog";
+import { config } from "@/components/Utilities/WagmiProvider";
 import { useProjectStore } from "@/store";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -30,7 +31,7 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== grant.chainID) {
         await switchChainAsync?.({ chainId: grant.chainID });
       }
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: grant.chainID,
       });
       if (!walletClient) return;

@@ -1,5 +1,6 @@
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { config } from "@/components/Utilities/WagmiProvider";
 import { useProjectStore } from "@/store";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -48,7 +49,7 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
       ) {
         await switchChainAsync?.({ chainId: grantToComplete.chainID });
       }
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: grantToComplete.chainID,
       });
       if (!walletClient) return;
