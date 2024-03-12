@@ -1,14 +1,15 @@
 import React from "react";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { NextSeo } from "next-seo";
-import { Community } from "@show-karma/karma-gap-sdk";
+import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { CommunityGrants } from "@/components/CommunityGrants";
 import { CommunityFeed } from "@/components/CommunityFeed";
 import { communityColors } from "@/utilities/communityColors";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { defaultMetadata } from "@/utilities/meta";
-import { SortByOptions, StatusOptions } from "@/types";
+import { type SortByOptions, type StatusOptions } from "@/types";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 
 type Props = {
   params: {
@@ -61,19 +62,14 @@ type Props = {
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { query, params } = context;
   const communityId = params?.communityId as string;
-  let community: Community | null = null;
+  let community: ICommunityResponse | null = null;
   let categoriesOptions: string[] = [];
 
   await Promise.all(
     [
       async () => {
-        const [data, error, pageInfo]: any = await fetchData(
-          INDEXER.COMMUNITY.GET(communityId as string)
-        );
-
-        if (data) {
-          community = data as Community;
-        }
+        const { data } = await gapIndexerApi.communityBySlug(communityId);
+        community = data;
       },
       async () => {
         const [data] = await fetchData(
@@ -106,8 +102,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   return {
     props: {
       communityId,
-      communityName: (community as Community)?.details?.data?.name || "",
-      community: community as Community,
+      communityName: (community as ICommunityResponse)?.details?.data?.name || "",
+      community: community as ICommunityResponse,
       categoriesOptions,
       defaultSortBy,
       defaultSelectedCategories,

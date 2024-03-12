@@ -1,16 +1,16 @@
 "use client";
 
-import type { Project } from "@show-karma/karma-gap-sdk";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import debounce from "lodash.debounce";
 import { type FC, useState } from "react";
 
 import { SearchList } from "./SearchList";
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
-import { searchProjects } from "@/utilities/sdk/projects/searchProjects";
+import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 
 export const Searchbar: FC = () => {
-  const [projects, setProjects] = useState<Project[]>([]);
+  const [projects, setProjects] = useState<IProjectResponse[]>([]);
   const [isSearchListOpen, setIsSearchListOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -28,8 +28,8 @@ export const Searchbar: FC = () => {
 
     setIsLoading(true);
     setIsSearchListOpen(true);
-    const result = await searchProjects(value);
-    setProjects(result);
+    const result = await gapIndexerApi.searchProjects(value);
+    setProjects(result.data);
     return setIsLoading(false);
   }, 500);
 

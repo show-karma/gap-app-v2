@@ -1,7 +1,5 @@
 import React, { use, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/router";
-import { useGap } from "@/hooks";
-import { Community } from "@show-karma/karma-gap-sdk";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
 import { useAccount } from "wagmi";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -24,6 +22,8 @@ import { MESSAGES } from "@/utilities/messages";
 import { defaultMetadata } from "@/utilities/meta";
 import { cn } from "@/utilities/tailwind";
 import { useAuthStore } from "@/store/auth";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 const MarkdownPreview = dynamic(() => import("@uiw/react-markdown-preview"), {
   ssr: false,
@@ -42,7 +42,7 @@ export default function AssignQuestions() {
   const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore();
   const communityId = router.query.communityId as string;
-  const { gap } = useGap();
+  // const { gap } = useGap();
 
   // Call API
   const [categories, setCategories] = useState<Category[]>([]);
@@ -51,18 +51,20 @@ export default function AssignQuestions() {
   );
   const [questions, setQuestions] = useState<Question[]>([]);
   const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
-  const [community, setCommunity] = useState<Community | undefined>(undefined); // Data returned from the API
+  const [community, setCommunity] = useState<ICommunityResponse | undefined>(
+    undefined
+  ); // Data returned from the API
   const [isAdmin, setIsAdmin] = useState<boolean>(false); // Data returned from the API
   const signer = useSigner();
 
   useEffect(() => {
     const fetchDetails = async () => {
-      if (!communityId || !gap) return;
+      if (!communityId) return;
       setLoading(true);
       try {
-        const result = await (communityId.startsWith("0x")
-          ? gap.fetch.communityById(communityId as `0x${string}`)
-          : gap.fetch.communityBySlug(communityId));
+        const { data: result } = await gapIndexerApi.communityBySlug(
+          communityId
+        );
         if (!result || result.uid === zeroUID)
           throw new Error("Community not found");
         setCommunity(result);
@@ -80,7 +82,7 @@ export default function AssignQuestions() {
     };
 
     fetchDetails();
-  }, [communityId, gap]);
+  }, [communityId]);
 
   useEffect(() => {
     if (!community) return;
@@ -116,7 +118,7 @@ export default function AssignQuestions() {
         try {
           const [data] = await fetchData(
             INDEXER.COMMUNITY.CATEGORIES(
-              (community?.details?.slug || community?.uid) as string
+              (community?.details?.data?.slug || community?.uid) as string
             )
           );
           if (data) {
@@ -242,7 +244,7 @@ export default function AssignQuestions() {
           <div className="flex justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
             <img
-              src={community?.details?.imageURL}
+              src={community?.details?.data?.imageURL}
               className={cn(
                 "h-14 w-14 rounded-full",
                 loading ? "animate-pulse bg-gray-600" : ""
@@ -258,7 +260,7 @@ export default function AssignQuestions() {
                   : ""
               )}
             >
-              {community && !loading ? community.details?.name : ""}
+              {community && !loading ? community.details?.data?.name : ""}
             </span>{" "}
             Admin
           </div>
@@ -274,7 +276,7 @@ export default function AssignQuestions() {
               <div className="w-full flex flex-row items-center justify-start  max-w-4xl">
                 <Link
                   href={PAGES.ADMIN.ROOT(
-                    community?.details?.slug || (community?.uid as string)
+                    community?.details?.data?.slug || (community?.uid as string)
                   )}
                 >
                   <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
@@ -364,7 +366,8 @@ export default function AssignQuestions() {
                   <div className="flex flex-row gap-10 items-center">
                     <Link
                       href={PAGES.ADMIN.ROOT(
-                        community?.details?.slug || (community?.uid as string)
+                        community?.details?.data?.slug ||
+                          (community?.uid as string)
                       )}
                     >
                       <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
@@ -374,7 +377,8 @@ export default function AssignQuestions() {
                     </Link>
                     <Link
                       href={PAGES.ADMIN.ASSIGN_QUESTIONS(
-                        community?.details?.slug || (community?.uid as string)
+                        community?.details?.data?.slug ||
+                          (community?.uid as string)
                       )}
                     >
                       <Button className="px-10 py-8 bg-blue-200 rounded-md transition-all ease-in-out duration-200">

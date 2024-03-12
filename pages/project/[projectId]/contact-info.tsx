@@ -5,7 +5,7 @@ import { blo } from "blo";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { Hex } from "viem";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
-import { IProjectDetails } from "@show-karma/karma-gap-sdk";
+import type { IProjectDetails } from "@show-karma/karma-gap-sdk";
 import { NextSeo } from "next-seo";
 import { ProjectSubscription } from "@/components/ProjectSubscription";
 import { Spinner } from "@/components/Utilities/Spinner";

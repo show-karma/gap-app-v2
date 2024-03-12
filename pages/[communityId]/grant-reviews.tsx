@@ -1,10 +1,11 @@
 import { grantReviewDictionary } from "@/components/Pages/GrantReviews/util";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { useGap } from "@/hooks";
 import { zeroUID } from "@/utilities/commons";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { PAGES } from "@/utilities/pages";
 import { getMetadata } from "@/utilities/sdk";
-import { Community, ICommunityDetails } from "@show-karma/karma-gap-sdk";
+import type { ICommunityDetails } from "@show-karma/karma-gap-sdk";
+import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
@@ -31,25 +32,26 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 function CommunityLanding({
   communityId,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
-  const [community, setCommunity] = useState<Community | undefined>(undefined); // Data returned from the API
+  const [community, setCommunity] = useState<ICommunityResponse | undefined>(
+    undefined
+  ); // Data returned from the API
   const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
   const router = useRouter();
-  const { gap } = useGap();
 
   if (communityId && !grantReviewDictionary[communityId]) {
-    const slug = community?.details?.slug;
+    const slug = community?.details?.data?.slug;
     if (!slug || (slug && !grantReviewDictionary[slug])) {
     }
   }
 
   useEffect(() => {
     const fetchDetails = async () => {
-      if (!communityId || !gap) return;
+      if (!communityId) return;
       setLoading(true);
       try {
-        const result = await (communityId.startsWith("0x")
-          ? gap.fetch.communityById(communityId as `0x${string}`)
-          : gap.fetch.communityBySlug(communityId));
+        const { data: result } = await gapIndexerApi.communityBySlug(
+          communityId
+        );
         if (!result || result.uid === zeroUID)
           throw new Error("Community not found");
         setCommunity(result);
@@ -67,7 +69,7 @@ function CommunityLanding({
     };
 
     fetchDetails();
-  }, [communityId, gap]);
+  }, [communityId]);
 
   return (
     <div className="mb-8 flex flex-col items-center px-12 py-8  max-xl:px-12 max-md:px-4">
@@ -75,7 +77,7 @@ function CommunityLanding({
         <Spinner />
       ) : (
         grantReviewDictionary[
-          (community?.details?.slug || community?.uid) as string
+          (community?.details?.data?.slug || community?.uid) as string
         ]
       )}
     </div>

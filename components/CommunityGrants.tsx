@@ -5,19 +5,17 @@ import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 import { Listbox, Transition } from "@headlessui/react";
 import { useRouter } from "next/router";
 import { Hex } from "viem";
-import { getGrants } from "@/utilities/sdk/communities";
-import { Grant } from "@show-karma/karma-gap-sdk";
+import { getGrants } from "@/utilities/sdk/communities/getGrants";
+import type { Grant } from "@show-karma/karma-gap-sdk";
 import { Spinner } from "./Utilities/Spinner";
 import { GrantCard } from "./GrantCard";
 import { useQueryState } from "nuqs";
 import { SortByOptions, StatusOptions } from "@/types";
-import fetchData from "@/utilities/fetchData";
 import pluralize from "pluralize";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { AutoSizer, Grid } from "react-virtualized";
 import { cn } from "@/utilities/tailwind";
 import { zeroUID } from "@/utilities/commons";
-import { INDEXER } from "@/utilities/indexer";
 
 const sortOptions: Record<SortByOptions, string> = {
   recent: "Recent",
