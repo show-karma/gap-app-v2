@@ -132,17 +132,17 @@ export const ReviewForm: FC<ReviewFormProps> = ({
 
   const orderedQuestions = [
     ...allQuestions.filter(
-      (question) => !additionalQuestion(question.questionId)
+      (question) => !additionalQuestion(question.questionId, question?.query)
     ),
     ...allQuestions.filter((question) =>
-      additionalQuestion(question.questionId)
+      additionalQuestion(question.questionId, question?.query)
     ),
   ];
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       questions: orderedQuestions.map((question) => {
-        if (additionalQuestion(question.questionId)) {
+        if (additionalQuestion(question.questionId, question?.query)) {
           return {
             id: question.id,
             rating: 1,
@@ -167,10 +167,12 @@ export const ReviewForm: FC<ReviewFormProps> = ({
   }: z.infer<typeof FormSchema>) => {
     setIsSaving(true);
     try {
-      const mountAnswers = dataQuestions.map((item) => {
+      const mountAnswers = dataQuestions.map((item: any) => {
         if (
           additionalQuestion(
-            allQuestions.find((question) => question.id === item.id)?.questionId
+            allQuestions.find((question) => question.id === item.id)
+              ?.questionId,
+            allQuestions.find((question) => question.id === item.id)?.query
           )
         ) {
           return {
@@ -265,7 +267,7 @@ export const ReviewForm: FC<ReviewFormProps> = ({
               />
             </div>
 
-            {additionalQuestion(question.questionId) ? null : (
+            {additionalQuestion(question.questionId, question?.query) ? null : (
               <div className="flex flex-col gap-2 p-3 max-lg:p-0">
                 <div
                   className="flex w-full max-w-max flex-row items-center gap-3 rounded dark:bg-transparent px-2.5 py-3"

@@ -24,6 +24,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { defaultMetadata } from "@/utilities/meta";
 import { cn } from "@/utilities/tailwind";
 import { useAuthStore } from "@/store/auth";
+import { QuestionCreationDialog } from "@/components/Pages/Admin/QuestionCreationDialog";
 
 const MarkdownPreview = dynamic(() => import("@uiw/react-markdown-preview"), {
   ssr: false,
@@ -143,7 +144,9 @@ export default function AssignQuestions() {
       const getQuestions = async () => {
         setLoading(true);
         try {
-          const [data] = await fetchData(INDEXER.GENERAL.QUESTIONS);
+          const [data] = await fetchData(
+            INDEXER.COMMUNITY.QUESTIONS(communityId)
+          );
           if (data) {
             setQuestions(data);
           }
@@ -210,6 +213,21 @@ export default function AssignQuestions() {
     }
   };
 
+  const refresh = async () => {
+    setLoading(true);
+    try {
+      const [data] = await fetchData(INDEXER.COMMUNITY.QUESTIONS(communityId));
+      if (data) {
+        setQuestions(data);
+      }
+    } catch (error) {
+      setQuestions([]);
+      console.error(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <>
       <NextSeo
@@ -271,7 +289,7 @@ export default function AssignQuestions() {
             </div>
           ) : isAdmin ? (
             <div className="flex w-full flex-1 flex-col items-center gap-8">
-              <div className="w-full flex flex-row items-center justify-start  max-w-4xl">
+              <div className="w-full flex flex-row items-center justify-between  max-w-4xl">
                 <Link
                   href={PAGES.ADMIN.ROOT(
                     community?.details?.slug || (community?.uid as string)
@@ -282,6 +300,7 @@ export default function AssignQuestions() {
                     Return to admin page
                   </Button>
                 </Link>
+                <QuestionCreationDialog refreshQuestions={refresh} />
               </div>
               {categories.length ? (
                 categories.map((category, index) => {
@@ -303,7 +322,6 @@ export default function AssignQuestions() {
                           const isSelected = questionsAssigned[
                             category.id
                           ]?.includes(question.id);
-                          console.log(questionsAssigned);
                           return (
                             <Button
                               key={`${category.id}${question.id}`}
@@ -363,21 +381,11 @@ export default function AssignQuestions() {
                   <p>{MESSAGES.CATEGORIES.ASSIGN_QUESTIONS.EMPTY}</p>
                   <div className="flex flex-row gap-10 items-center">
                     <Link
-                      href={PAGES.ADMIN.ROOT(
-                        community?.details?.slug || (community?.uid as string)
-                      )}
-                    >
-                      <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
-                        <ChevronLeftIcon className="h-5 w-5" />
-                        Return to admin page
-                      </Button>
-                    </Link>
-                    <Link
                       href={PAGES.ADMIN.ASSIGN_QUESTIONS(
                         community?.details?.slug || (community?.uid as string)
                       )}
                     >
-                      <Button className="px-10 py-8 bg-blue-200 rounded-md transition-all ease-in-out duration-200">
+                      <Button className="px-10 py-8 bg-brand-blue hover:bg-brand-blue rounded-md transition-all ease-in-out duration-200">
                         Edit categories
                       </Button>
                     </Link>
