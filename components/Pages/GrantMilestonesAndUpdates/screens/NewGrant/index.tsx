@@ -529,7 +529,6 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       questions,
       startDate: data.startDate.getTime() / 1000,
     };
-    console.log(newGrant, "newGrant");
     if (grantScreen === "edit-grant" && grantToEdit) {
       updateGrant(grantToEdit, newGrant);
     } else {
