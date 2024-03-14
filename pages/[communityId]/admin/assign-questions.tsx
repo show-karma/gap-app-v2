@@ -216,7 +216,7 @@ export default function AssignQuestions() {
   const refresh = async () => {
     setLoading(true);
     try {
-      const [data] = await fetchData(INDEXER.GENERAL.QUESTIONS);
+      const [data] = await fetchData(INDEXER.COMMUNITY.QUESTIONS(communityId));
       if (data) {
         setQuestions(data);
       }

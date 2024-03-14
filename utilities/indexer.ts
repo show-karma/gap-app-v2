@@ -1,7 +1,4 @@
 export const INDEXER = {
-  GENERAL: {
-    QUESTIONS: `/questions`,
-  },
   PROJECT: {
     GET: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}`,
     FEED: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/feed`,
