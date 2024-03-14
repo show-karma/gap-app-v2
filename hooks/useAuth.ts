@@ -134,7 +134,6 @@ export const useAuth = () => {
   };
 
   const softDisconnect = (newAddress: Hex) => {
-    console.log("softDisconnect");
     cookies.remove(authCookiePath, {
       path: "/",
     });

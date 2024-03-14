@@ -232,8 +232,6 @@ export const ReviewForm: FC<ReviewFormProps> = ({
   const choice = watch("infos.choice");
   const categories = watch("infos.categories");
 
-  console.log(form.formState.errors);
-
   return alreadyReviewed || hasSubmitted ? (
     <div className="flex w-full max-w-max flex-col gap-3 rounded-xl border border-zinc-200 p-4">
       <p className="text-base text-black dark:text-zinc-100">
