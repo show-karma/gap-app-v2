@@ -119,7 +119,10 @@ export const MESSAGES = {
     },
   },
   ADMIN: {
-    NOT_AUTHORIZED: "You must be Admin of this Community to see this page.",
+    NOT_AUTHORIZED: (uid: string) =>
+      `You must be Admin of this Community${
+        uid ? `(${uid})` : ""
+      } to see this page.`,
   },
   MY_PROJECTS: {
     NOT_CONNECTED: "Please login to view all your projects",

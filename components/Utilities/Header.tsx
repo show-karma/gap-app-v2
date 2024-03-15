@@ -47,7 +47,10 @@ export default function Header() {
   const isCommunityAdmin = communities.length !== 0;
 
   const getCommunities = async () => {
-    if (!address) return;
+    if (!address) {
+      setCommunities([]);
+      return;
+    }
 
     setIsLoading(true);
     const communitiesOf = await getCommunitiesOf(address);
@@ -124,6 +127,7 @@ export default function Header() {
     const handleConnectorUpdate = ({ account, chain }: ConnectorData) => {
       if (account) {
         console.log("account", account);
+
         softDisconnect(account);
       } else if (chain) {
         console.log("new chain", chain);
