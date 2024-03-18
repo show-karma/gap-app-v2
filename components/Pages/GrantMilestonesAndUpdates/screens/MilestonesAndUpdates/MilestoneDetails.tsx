@@ -143,7 +143,10 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
         </div>
         {(isAuthorized || milestone?.completed?.reason) && (
           <div className="mx-6 mt-4 rounded-lg bg-transparent pb-4">
-            <Updates milestone={milestone} />
+            <Updates
+              milestone={milestone}
+              isCommunityAdmin={isCommunityAdmin}
+            />
           </div>
         )}
       </div>

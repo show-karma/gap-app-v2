@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import type { Milestone } from "@show-karma/karma-gap-sdk";
-import { type FC, useState } from "react";
+import { type FC, useState, useEffect } from "react";
 
 import { Button } from "@/components/Utilities/Button";
 import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
@@ -14,12 +14,15 @@ import { MESSAGES } from "@/utilities/messages";
 import { formatDate } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
 import { getWalletClient } from "@wagmi/core";
+import { VerifyClaimDialog } from "./VerifyClaimDialog";
+import { VerifiedBadge } from "./VerifiedBadge";
 
 interface UpdatesProps {
   milestone: Milestone;
+  isCommunityAdmin: boolean;
 }
 
-export const Updates: FC<UpdatesProps> = ({ milestone }) => {
+export const Updates: FC<UpdatesProps> = ({ milestone, isCommunityAdmin }) => {
   const [isEditing, setIsEditing] = useState(false);
 
   const handleEditing = (value: boolean) => {
@@ -54,17 +57,28 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isProjectOwner || isContractOwner;
 
+  console.log(milestone);
+
   if (milestone?.completed?.reason && !isEditing) {
     return (
-      <div className="flex flex-col gap-3 bg-[#F8F9FC] dark:bg-zinc-900 rounded-md px-4 py-2 max-lg:max-w-2xl max-sm:max-w-[300px]">
+      <div className="flex flex-col gap-3 bg-[#F8F9FC] dark:bg-zinc-900 rounded-md px-4 py-2 max-lg:max-w-2xl max-sm:max-w-full">
         <div className="flex w-full flex-row flex-wrap items-center justify-between gap-2">
-          <div className="flex w-max flex-row gap-2 rounded-full bg-[#5720B7] dark:bg-purple-900 px-3 py-1">
-            <img
-              className="h-4 w-4"
-              alt="Update"
-              src="/icons/alert-message-white.svg"
+          <div className="flex flex-row gap-4 items-center flex-wrap">
+            <div className="flex items-center h-max w-max flex-row gap-2 rounded-full bg-[#5720B7] dark:bg-purple-900 px-3 py-1">
+              <img
+                className="h-4 w-4"
+                alt="Update"
+                src="/icons/alert-message-white.svg"
+              />
+              <p className="text-xs font-bold text-white">UPDATE</p>
+            </div>
+            {milestone?.verified?.length ? (
+              <VerifiedBadge verifications={milestone.verified} />
+            ) : null}
+            <VerifyClaimDialog
+              milestone={milestone}
+              isCommunityAdmin={isCommunityAdmin}
             />
-            <p className="text-xs font-bold text-white">UPDATE</p>
           </div>
           <p className="text-sm font-semibold text-gray-500 dark:text-zinc-100">
             Posted on {formatDate(milestone.completed.createdAt)}
