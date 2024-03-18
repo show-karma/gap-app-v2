@@ -15,7 +15,7 @@ import {
   MilestoneCompleted,
 } from "@show-karma/karma-gap-sdk";
 import type { FC } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Hex, isAddress } from "viem";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
@@ -39,6 +39,8 @@ import { Popover } from "@headlessui/react";
 import { DayPicker } from "react-day-picker";
 import { useAuthStore } from "@/store/auth";
 import { formatDate } from "@/utilities/formatDate";
+import { isCommunityAdminOf } from "@/utilities/sdk";
+import { useCommunityAdminStore } from "@/store/community";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -185,7 +187,7 @@ interface NewGrantData {
 
 export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { address } = useAccount();
-  const signer = useSigner();
+
   const isOwner = useOwnerStore((state) => state.isOwner);
   const searchParams = useSearchParams();
   const grantScreen = searchParams?.get("tab");
@@ -543,6 +545,10 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     });
   };
 
+  const isCommunityAdmin = useCommunityAdminStore(
+    (state) => state.isCommunityAdmin
+  );
+
   const isDescriptionValid = !!description.length;
 
   return (
@@ -690,7 +696,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             <p className="text-base text-red-400">{errors.cycle?.message}</p>
           </div> */}
 
-          {isOwner && (
+          {(isOwner || isCommunityAdmin) && (
             <div className="flex w-full flex-col">
               <label htmlFor="tags-input" className={labelStyle}>
                 Recipient address (optional)

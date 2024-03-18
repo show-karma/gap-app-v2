@@ -16,13 +16,13 @@ import { ReadMore } from "@/utilities/ReadMore";
 import { getWalletClient } from "@wagmi/core";
 import { VerifyClaimDialog } from "./VerifyClaimDialog";
 import { VerifiedBadge } from "./VerifiedBadge";
+import { useCommunityAdminStore } from "@/store/community";
 
 interface UpdatesProps {
   milestone: Milestone;
-  isCommunityAdmin: boolean;
 }
 
-export const Updates: FC<UpdatesProps> = ({ milestone, isCommunityAdmin }) => {
+export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const [isEditing, setIsEditing] = useState(false);
 
   const handleEditing = (value: boolean) => {
@@ -54,10 +54,13 @@ export const Updates: FC<UpdatesProps> = ({ milestone, isCommunityAdmin }) => {
   };
 
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isCommunityAdmin = useCommunityAdminStore(
+    (state) => state.isCommunityAdmin
+  );
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isAuthorized = isProjectOwner || isContractOwner;
+  const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
 
-  if (!isEditing) {
+  if (!isEditing && milestone?.completed) {
     return (
       <div className="flex flex-col gap-3 bg-[#F8F9FC] dark:bg-zinc-900 rounded-md px-4 py-2 max-lg:max-w-2xl max-sm:max-w-full">
         <div className="flex w-full flex-row flex-wrap items-center justify-between gap-2">
@@ -79,11 +82,11 @@ export const Updates: FC<UpdatesProps> = ({ milestone, isCommunityAdmin }) => {
             />
           </div>
           <p className="text-sm font-semibold text-gray-500 dark:text-zinc-100">
-            Posted on {formatDate(milestone.completed.createdAt)}
+            Posted on {formatDate(milestone?.completed?.createdAt)}
           </p>
         </div>
 
-        {milestone.completed.reason ? (
+        {milestone.completed?.reason ? (
           <div className="flex flex-col items-start " data-color-mode="light">
             <ReadMore
               readLessText="Read less"

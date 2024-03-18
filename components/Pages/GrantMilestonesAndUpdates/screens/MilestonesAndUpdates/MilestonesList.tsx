@@ -10,6 +10,7 @@ import { MilestoneDetails } from "./MilestoneDetails";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { isCommunityAdminOf } from "@/utilities/sdk";
 import { cn } from "@/utilities/tailwind";
+import { useCommunityAdminStore } from "@/store/community";
 
 interface MilestonesListProps {
   grant: Grant;
@@ -76,29 +77,9 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
     Tab | undefined
   >(undefined);
 
-  const [isCommunityAdmin, setIsCommunityAdmin] = useState(false);
-
-  const signer = useSigner();
-
-  const checkIfAdmin = async () => {
-    if (!chain?.id || !gap) return;
-    try {
-      const community = await gap.fetch.communityById(grant.communityUID);
-      const result = await isCommunityAdminOf(
-        community,
-        address as string,
-        signer
-      );
-      setIsCommunityAdmin(result);
-    } catch (error) {
-      console.log(error);
-      setIsCommunityAdmin(false);
-    }
-  };
-
-  useEffect(() => {
-    checkIfAdmin();
-  }, [address, grant.uid, signer]);
+  const isCommunityAdmin = useCommunityAdminStore(
+    (state) => state.isCommunityAdmin
+  );
 
   const getOrderedMerge = () => {
     const merged: any[] = [];
@@ -330,7 +311,6 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
                   key={item.object.uid}
                   milestone={item.object}
                   index={milestoneArray.length - mIndex}
-                  isCommunityAdmin={isCommunityAdmin}
                 />
               );
             })}
