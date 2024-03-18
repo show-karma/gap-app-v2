@@ -145,7 +145,7 @@ export const VerifyClaimDialog: FC<VerifyClaimDialogProps> = ({
                         className={
                           "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
                         }
-                        placeholder="Ex: What is the best way to build a community?"
+                        placeholder="Ex: I tested everything and can confirm everything works"
                         {...register("comment")}
                       />
                       <p className="text-base text-red-400">

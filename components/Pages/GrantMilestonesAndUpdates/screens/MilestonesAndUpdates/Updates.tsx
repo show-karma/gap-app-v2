@@ -57,9 +57,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone, isCommunityAdmin }) => {
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isProjectOwner || isContractOwner;
 
-  console.log(milestone);
-
-  if (milestone?.completed?.reason && !isEditing) {
+  if (!isEditing) {
     return (
       <div className="flex flex-col gap-3 bg-[#F8F9FC] dark:bg-zinc-900 rounded-md px-4 py-2 max-lg:max-w-2xl max-sm:max-w-full">
         <div className="flex w-full flex-row flex-wrap items-center justify-between gap-2">
@@ -85,38 +83,40 @@ export const Updates: FC<UpdatesProps> = ({ milestone, isCommunityAdmin }) => {
           </p>
         </div>
 
-        <div className="flex flex-col items-start " data-color-mode="light">
-          <ReadMore
-            readLessText="Read less"
-            readMoreText="Read more"
-            side="left"
-          >
-            {milestone.completed.reason}
-          </ReadMore>
+        {milestone.completed.reason ? (
+          <div className="flex flex-col items-start " data-color-mode="light">
+            <ReadMore
+              readLessText="Read less"
+              readMoreText="Read more"
+              side="left"
+            >
+              {milestone.completed.reason}
+            </ReadMore>
 
-          <div className="flex w-full flex-row items-center justify-end">
-            {isAuthorized ? (
-              <div className="flex w-max flex-row items-center gap-2">
-                <Button
-                  type="button"
-                  className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
-                  onClick={() => handleEditing(true)}
-                >
-                  <PencilSquareIcon className="h-5 w-5" />
-                  Edit
-                </Button>
-                <Button
-                  type="button"
-                  className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
-                  onClick={() => undoMilestoneCompletion(milestone)}
-                >
-                  <TrashIcon className="h-5 w-5" />
-                  Remove
-                </Button>
-              </div>
-            ) : null}
+            <div className="flex w-full flex-row items-center justify-end">
+              {isAuthorized ? (
+                <div className="flex w-max flex-row items-center gap-2">
+                  <Button
+                    type="button"
+                    className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
+                    onClick={() => handleEditing(true)}
+                  >
+                    <PencilSquareIcon className="h-5 w-5" />
+                    Edit
+                  </Button>
+                  <Button
+                    type="button"
+                    className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
+                    onClick={() => undoMilestoneCompletion(milestone)}
+                  >
+                    <TrashIcon className="h-5 w-5" />
+                    Remove
+                  </Button>
+                </div>
+              ) : null}
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
     );
   }
