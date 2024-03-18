@@ -79,6 +79,13 @@ export const VerifiedBadge: FC<VerifiedBadgeProps> = ({ verifications }) => {
   };
   const uniques = getUniqueVerifications(verifications);
 
+  // order by date
+  const orderedSort = uniques.sort((a, b) => {
+    if (a.createdAt < b.createdAt) return -1;
+    if (a.createdAt > b.createdAt) return 1;
+    return 0;
+  });
+
   return (
     <div className="flex flex-row items-center gap-2 flex-1">
       <img
@@ -88,7 +95,7 @@ export const VerifiedBadge: FC<VerifiedBadgeProps> = ({ verifications }) => {
       />
       <span className="text-sm font-semibold text-[#0E9384]">Verified</span>
       <div className="ml-2 flex flex-row -space-x-1 flex-wrap">
-        {uniques.map((verification) => (
+        {orderedSort.map((verification) => (
           <BlockieTooltip
             key={verification.uid}
             address={verification.attester as Hex}
