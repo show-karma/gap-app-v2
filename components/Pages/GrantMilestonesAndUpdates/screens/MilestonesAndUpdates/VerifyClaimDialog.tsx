@@ -96,15 +96,10 @@ export const VerifyClaimDialog: FC<VerifyClaimDialogProps> = ({
       <Button
         onClick={openModal}
         className={
-          "flex justify-center items-center gap-x-2 rounded-md bg-transparent dark:bg-transparent px-3 py-2 text-sm font-semibold text-[#0E9384] dark:text-green-100  hover:opacity-75 dark:hover:opacity-75 border border-green-200 dark:border-green-900 hover:bg-transparent"
+          "flex justify-center items-center gap-x-2 rounded-md bg-transparent dark:bg-transparent px-3 py-2 text-sm font-semibold text-red-600 dark:text-red-200  hover:opacity-75 dark:hover:opacity-75 border border-red-200 dark:border-red-900 hover:bg-transparent"
         }
       >
-        Verify claim
-        <img
-          alt="Verified Badge"
-          src={"/icons/milestone-verified-badge.svg"}
-          className="w-5 h-5"
-        />
+        Verify update
       </Button>
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeModal}>
@@ -145,7 +140,7 @@ export const VerifyClaimDialog: FC<VerifyClaimDialogProps> = ({
                         className={
                           "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
                         }
-                        placeholder="Ex: I tested everything and can confirm everything works"
+                        placeholder="I tested and can confirm it works as expected"
                         {...register("comment")}
                       />
                       <p className="text-base text-red-400">
@@ -161,12 +156,12 @@ export const VerifyClaimDialog: FC<VerifyClaimDialogProps> = ({
                         Cancel
                       </Button>
                       <Button
-                        className="text-white text-base bg-[#0E9384] border-black  hover:bg-[#0E9384] hover:text-white"
+                        className="text-white text-base bg-red-600 border-black  hover:bg-red-600 hover:text-white"
                         disabled={isLoading}
                         isLoading={isLoading}
                         type="submit"
                       >
-                        Verify claim
+                        Verify update
                       </Button>
                     </div>
                   </form>
