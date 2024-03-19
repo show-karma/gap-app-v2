@@ -27,7 +27,7 @@ import { useRouter } from "next/router";
 import { GrantScreen } from "@/types/grant";
 import { NewMilestone } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewMilestone";
 import { NewGrantUpdate } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewGrantUpdate";
-import { useAccount, useNetwork } from "wagmi";
+import { useAccount } from "wagmi";
 import { GrantDelete } from "@/components/Pages/GrantMilestonesAndUpdates/GrantDelete";
 import { GrantCompleteButton } from "@/components/Pages/GrantMilestonesAndUpdates/GrantCompleteButton";
 import { GrantCompletion } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/CompleteGrant";
@@ -312,7 +312,7 @@ const GrantsPage = ({
   );
 
   const signer = useSigner();
-  const { chain } = useNetwork();
+  const { chain } = useAccount();
   const { gap } = useGap();
 
   const checkIfAdmin = async () => {

@@ -13,12 +13,13 @@ import { useAuthStore } from "@/store/auth";
 import { useAuth } from "@/hooks/useAuth";
 import { INDEXER } from "@/utilities/indexer";
 import { Milestone } from "@show-karma/karma-gap-sdk";
-import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import { getWalletClient } from "@wagmi/core";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useProjectStore } from "@/store";
 import { MESSAGES } from "@/utilities/messages";
+import { config } from "@/components/Utilities/WagmiProvider";
 
 type VerifyClaimDialogProps = {
   milestone: Milestone;
@@ -61,16 +62,16 @@ export const VerifyClaimDialog: FC<VerifyClaimDialogProps> = ({
     (v) => v.attester?.toLowerCase() === address?.toLowerCase()
   );
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
     try {
       setIsLoading(true);
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
-        await switchNetworkAsync?.(milestone.chainID);
+        await switchChainAsync?.({ chainId: milestone.chainID });
       }
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: milestone.chainID,
       });
       if (!walletClient) return;

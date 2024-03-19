@@ -40,7 +40,6 @@ export const useAuth = () => {
   const { isConnected, address } = useAccount();
   const { openConnectModal } = useConnectModal();
   const { setIsAuthenticating, setIsAuth, isAuthenticating } = useAuthStore();
-  // const { signMessageAsync } = useSignMessage();
   const { disconnectAsync } = useDisconnect();
   const { signMessageAsync } = useSignMessage();
 
@@ -85,16 +84,6 @@ export const useAuth = () => {
   };
 
   const authenticate = async (newAddress = address) => {
-<<<<<<< HEAD
-    if (!isConnected || !newAddress) {
-      openConnectModal?.();
-      return false;
-    }
-    if (isAuthenticating) return;
-    setIsAuthenticating(true);
-
-=======
->>>>>>> dev
     try {
       if (isAuthenticating) return;
       setIsAuthenticating(true);
