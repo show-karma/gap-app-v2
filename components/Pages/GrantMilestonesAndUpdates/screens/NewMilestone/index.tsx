@@ -29,6 +29,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { formatDate } from "@/utilities/formatDate";
 import { getWalletClient } from "@wagmi/core";
+import { useCommunityAdminStore } from "@/store/community";
 
 const milestoneSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.MILESTONES.FORM.TITLE }),
@@ -78,6 +79,9 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
   const selectedProject = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [, changeTab] = useQueryState("tab");
+  const isCommunityAdmin = useCommunityAdminStore(
+    (state) => state.isCommunityAdmin
+  );
 
   const onSubmit: SubmitHandler<MilestoneType> = async (data, event) => {
     event?.preventDefault();
@@ -213,7 +217,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
               )}
             />
           </div>
-          {isOwner && (
+          {(isOwner || isCommunityAdmin) && (
             <div className="flex w-full flex-col gap-2">
               <label htmlFor="tags-input" className={labelStyle}>
                 Recipient address

@@ -1,6 +1,7 @@
 "use client";
 
 import { useOwnerStore, useProjectStore } from "@/store";
+import { useCommunityAdminStore } from "@/store/community";
 import { CheckCircleIcon } from "@heroicons/react/24/outline";
 import type { Grant, Project } from "@show-karma/karma-gap-sdk";
 import { useQueryState } from "nuqs";
@@ -19,7 +20,10 @@ export const GrantCompleteButton: FC<GrantCompleteProps> = ({
 }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isAuthorized = isOwner || isProjectOwner;
+  const isCommunityAdmin = useCommunityAdminStore(
+    (state) => state.isCommunityAdmin
+  );
+  const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
   const [, changeTab] = useQueryState("tab");
   if (grant.completed) {
     return (

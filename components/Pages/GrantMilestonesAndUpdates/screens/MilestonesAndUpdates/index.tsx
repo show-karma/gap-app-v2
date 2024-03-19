@@ -8,15 +8,20 @@ import { useQueryState } from "nuqs";
 import { MESSAGES } from "@/utilities/messages";
 import { ReadMore } from "@/utilities/ReadMore";
 import { formatDate } from "@/utilities/formatDate";
+import { useCommunityAdminStore } from "@/store/community";
 
 export const EmptyMilestone = ({ grant }: { grant?: Grant }) => {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
+  const isCommunityAdmin = useCommunityAdminStore(
+    (state) => state.isCommunityAdmin
+  );
+  const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
   const router = useRouter();
   const project = useProjectStore((state) => state.project);
   const [, changeTab] = useQueryState("tab");
 
-  if (!isProjectOwner && !isContractOwner) {
+  if (!isAuthorized) {
     return (
       <div className="flex w-full items-center justify-center rounded-md border border-gray-200 px-6 py-10">
         <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
@@ -123,7 +128,10 @@ export const MilestonesAndUpdates = ({ grant }: MilestonesAndUpdatesProps) => {
     grant?.milestones?.length || grant?.updates?.length;
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isAuthorized = isProjectOwner || isContractOwner;
+  const isCommunityAdmin = useCommunityAdminStore(
+    (state) => state.isCommunityAdmin
+  );
+  const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
   const project = useProjectStore((state) => state.project);
   const [, changeTab] = useQueryState("tab");
 
