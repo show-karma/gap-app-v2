@@ -40,7 +40,7 @@ const buttonStyle: HTMLButtonElement["className"] =
 export default function Header() {
   const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
   const { isConnected, address } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { isAuth, isAuthenticating } = useAuthStore();
   const { communities, setCommunities, setIsLoading } = useCommunitiesStore();
   const signer = useSigner();
 
@@ -127,7 +127,6 @@ export default function Header() {
     const handleConnectorUpdate = ({ account, chain }: ConnectorData) => {
       if (account) {
         console.log("account", account);
-
         softDisconnect(account);
       } else if (chain) {
         console.log("new chain", chain);
@@ -268,7 +267,18 @@ export default function Header() {
                                 if (!connected || !isAuth) {
                                   return (
                                     <button
-                                      onClick={openConnectModal}
+                                      onClick={() => {
+                                        if (isAuthenticating) return;
+                                        if (
+                                          !isAuth &&
+                                          connected &&
+                                          !isAuthenticating
+                                        ) {
+                                          authenticate();
+                                          return;
+                                        }
+                                        openConnectModal?.();
+                                      }}
                                       type="button"
                                       className="rounded-md border border-brand-blue dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-brand-blue hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
                                     >

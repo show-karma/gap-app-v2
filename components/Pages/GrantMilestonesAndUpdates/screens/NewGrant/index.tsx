@@ -388,6 +388,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         .then(async () => {
           // eslint-disable-next-line no-param-reassign
           clearMilestonesForms();
+          grant.community = await gap.fetch.communityById(grant.communityUID);
           toast.success(MESSAGES.GRANT.CREATE.SUCCESS);
           changeTab("overview");
           changeGrant(grant.uid);
