@@ -59,7 +59,6 @@ export const useGrantFormStore = create<GrantFormStore>((set, get) => ({
   changeMilestoneForm: (index: number, newValue: MilestonesForms) => {
     const { milestonesForms } = get();
     milestonesForms[index] = newValue;
-    console.log("changeMilestoneForm", milestonesForms[index]);
     set({ milestonesForms: milestonesForms });
   },
   setMilestonesForms: (milestonesForms: MilestonesForms[]) =>

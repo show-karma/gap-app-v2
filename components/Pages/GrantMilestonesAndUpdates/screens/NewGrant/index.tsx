@@ -15,7 +15,7 @@ import {
   MilestoneCompleted,
 } from "@show-karma/karma-gap-sdk";
 import type { FC } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Hex, isAddress } from "viem";
 import { useAccount, useSwitchChain } from "wagmi";
@@ -40,6 +40,7 @@ import { DayPicker } from "react-day-picker";
 import { useAuthStore } from "@/store/auth";
 import { formatDate } from "@/utilities/formatDate";
 import { config } from "@/components/Utilities/WagmiProvider";
+import { useCommunityAdminStore } from "@/store/community";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -385,6 +386,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         .then(async () => {
           // eslint-disable-next-line no-param-reassign
           clearMilestonesForms();
+          grant.community = await gap.fetch.communityById(grant.communityUID);
           toast.success(MESSAGES.GRANT.CREATE.SUCCESS);
           changeTab("overview");
           changeGrant(grant.uid);
@@ -528,7 +530,6 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       questions,
       startDate: data.startDate.getTime() / 1000,
     };
-    console.log(newGrant, "newGrant");
     if (grantScreen === "edit-grant" && grantToEdit) {
       updateGrant(grantToEdit, newGrant);
     } else {
@@ -542,6 +543,10 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       shouldValidate: true,
     });
   };
+
+  const isCommunityAdmin = useCommunityAdminStore(
+    (state) => state.isCommunityAdmin
+  );
 
   const isDescriptionValid = !!description.length;
 
@@ -690,7 +695,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             <p className="text-base text-red-400">{errors.cycle?.message}</p>
           </div> */}
 
-          {isOwner && (
+          {(isOwner || isCommunityAdmin) && (
             <div className="flex w-full flex-col">
               <label htmlFor="tags-input" className={labelStyle}>
                 Recipient address (optional)

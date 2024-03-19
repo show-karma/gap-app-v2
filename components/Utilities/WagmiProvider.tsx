@@ -5,7 +5,7 @@ import {
   connectorsForWallets,
   lightTheme,
 } from "@rainbow-me/rainbowkit";
-import { arbitrum, optimism, sepolia, optimismSepolia } from "viem/chains";
+import { arbitrum, optimism, optimismSepolia } from "viem/chains";
 import { appNetwork } from "@/utilities/network";
 
 import { envVars } from "@/utilities/enviromentVars";
@@ -46,7 +46,6 @@ export const config = createConfig({
   transports: {
     [arbitrum.id]: http(envVars.RPC.ARBITRUM),
     [optimism.id]: http(envVars.RPC.OPTIMISM),
-    [sepolia.id]: http(envVars.RPC.SEPOLIA),
     [optimismSepolia.id]: http(envVars.RPC.OPT_SEPOLIA),
   },
 });

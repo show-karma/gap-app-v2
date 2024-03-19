@@ -5,6 +5,7 @@ import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { config } from "@/components/Utilities/WagmiProvider";
 import { useOwnerStore, useProjectStore } from "@/store";
+import { useCommunityAdminStore } from "@/store/community";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
@@ -65,7 +66,10 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
   const [description, setDescription] = useState(previousDescription || "");
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isAuthorized = isProjectOwner || isContractOwner;
+  const isCommunityAdmin = useCommunityAdminStore(
+    (state) => state.isCommunityAdmin
+  );
+  const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
   const completeMilestone = async (milestone: Milestone, text?: string) => {

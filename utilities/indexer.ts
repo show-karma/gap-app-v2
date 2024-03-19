@@ -1,10 +1,10 @@
 export const INDEXER = {
-  GENERAL: {
-    QUESTIONS: `/questions`,
-  },
   PROJECT: {
     GET: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}`,
     FEED: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/feed`,
+  },
+  QUESTIONS: {
+    CREATE: (idOrSlug: string) => `/questions/create/${idOrSlug}`,
   },
   CATEGORIES: {
     CREATE: (idOrSlug: string) => `/categories/create/${idOrSlug}`,
@@ -41,6 +41,8 @@ export const INDEXER = {
       `/communities/${communityIdOrSlug}/feed`,
     CATEGORIES: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/categories`,
+    QUESTIONS: (communityIdOrSlug: string) =>
+      `/communities/${communityIdOrSlug}/questions`,
   },
   GRANTS: {
     BY_UID: (grantUID: string) => `/grants/${grantUID}`,

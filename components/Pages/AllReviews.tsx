@@ -59,10 +59,10 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
           ...review,
           answers: [
             ...review.answers.filter(
-              (answer) => !additionalQuestion(answer.questionId)
+              (answer) => !additionalQuestion(answer.questionId, answer.query)
             ),
             ...review.answers.filter((answer) =>
-              additionalQuestion(answer.questionId)
+              additionalQuestion(answer.questionId, answer.query)
             ),
           ],
         }));
@@ -219,7 +219,10 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
                                   source={answer.query}
                                 />
                               </div>
-                              {additionalQuestion(answer.questionId) ? null : (
+                              {additionalQuestion(
+                                answer.questionId,
+                                answer.query
+                              ) ? null : (
                                 <p className="w-max min-w-max text-base font-normal">
                                   {Array.from(
                                     { length: answer.rating },

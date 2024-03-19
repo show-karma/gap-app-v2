@@ -109,6 +109,10 @@ export const MESSAGES = {
       SUCCESS: "Milestone was successfully added to the grant.",
       ERROR: "There was an error creating the milestone. Please try again.",
     },
+    VERIFY: {
+      SUCCESS: "You have successfully verified the milestone.",
+      ERROR: "There was an error verifying the milestone. Please try again.",
+    },
     APPROVE: {
       SUCCESS: "You have successfully approved the milestone.",
       ERROR: "There was an error approving the milestone. Please try again.",
@@ -119,7 +123,10 @@ export const MESSAGES = {
     },
   },
   ADMIN: {
-    NOT_AUTHORIZED: "You must be Admin of this Community to see this page.",
+    NOT_AUTHORIZED: (uid: string) =>
+      `You must be Admin of this Community${
+        uid ? `(${uid})` : ""
+      } to see this page.`,
   },
   MY_PROJECTS: {
     NOT_CONNECTED: "Please login to view all your projects",

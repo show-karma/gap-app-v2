@@ -85,6 +85,7 @@ export const useAuth = () => {
   };
 
   const authenticate = async (newAddress = address) => {
+<<<<<<< HEAD
     if (!isConnected || !newAddress) {
       openConnectModal?.();
       return false;
@@ -92,7 +93,15 @@ export const useAuth = () => {
     if (isAuthenticating) return;
     setIsAuthenticating(true);
 
+=======
+>>>>>>> dev
     try {
+      if (isAuthenticating) return;
+      setIsAuthenticating(true);
+      if (!isConnected || !newAddress) {
+        openConnectModal?.();
+        return false;
+      }
       if (typeof window !== "undefined") {
         const savedToken = cookies.get(authCookiePath);
         if (savedToken) {
@@ -137,7 +146,6 @@ export const useAuth = () => {
   };
 
   const softDisconnect = (newAddress: Hex) => {
-    console.log("softDisconnect");
     cookies.remove(authCookiePath, {
       path: "/",
     });

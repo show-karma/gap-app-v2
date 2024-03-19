@@ -7,6 +7,7 @@ import { MilestoneDelete } from "./MilestoneDelete";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { formatDate } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
+import { useCommunityAdminStore } from "@/store/community";
 
 interface MilestoneDateStatusProps {
   milestone: Milestone;
@@ -92,17 +93,18 @@ export const MilestoneTag: FC<MilestoneTagProps> = ({ index }) => {
 interface MilestoneDetailsProps {
   milestone: Milestone;
   index: number;
-  isCommunityAdmin: boolean;
 }
 
 export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
   milestone,
   index,
-  isCommunityAdmin,
 }) => {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isAuthorized = isProjectOwner || isContractOwner;
+  const isCommunityAdmin = useCommunityAdminStore(
+    (state) => state.isCommunityAdmin
+  );
+  const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
   return (
     <div className="flex flex-col gap-2">
       <div className="flex w-full flex-1 flex-col rounded-lg border border-zinc-200 bg-white dark:bg-zinc-800 transition-all duration-200 ease-in-out">
@@ -141,7 +143,7 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
             </ReadMore>
           </div>
         </div>
-        {(isAuthorized || milestone?.completed?.reason) && (
+        {(isAuthorized || milestone?.completed) && (
           <div className="mx-6 mt-4 rounded-lg bg-transparent pb-4">
             <Updates milestone={milestone} />
           </div>

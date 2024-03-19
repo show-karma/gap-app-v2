@@ -15,17 +15,9 @@ export const isCommunityAdminOf = async (
   );
   const response = await resolver
     ?.isAdmin?.(uid as Hex, address)
-    .catch(() => null);
-  if (response && response[0]) return response[0];
-  if (
-    community &&
-    community?.recipient.toLowerCase() === address?.toLowerCase()
-  ) {
-    return true;
-  }
-  const communityInfo = await getCommunityDetails(uid as Hex);
-  if (communityInfo?.recipient.toLowerCase() === address?.toLowerCase()) {
-    return true;
-  }
-  return false;
+    .catch((error) => {
+      console.log("error", error);
+      return false;
+    });
+  return response;
 };

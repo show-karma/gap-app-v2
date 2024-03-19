@@ -27,7 +27,7 @@ import { useRouter } from "next/router";
 import { GrantScreen } from "@/types/grant";
 import { NewMilestone } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewMilestone";
 import { NewGrantUpdate } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewGrantUpdate";
-import { useAccount } from "wagmi";
+import { useAccount, useNetwork } from "wagmi";
 import { GrantDelete } from "@/components/Pages/GrantMilestonesAndUpdates/GrantDelete";
 import { GrantCompleteButton } from "@/components/Pages/GrantMilestonesAndUpdates/GrantCompleteButton";
 import { GrantCompletion } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/CompleteGrant";
@@ -38,13 +38,21 @@ import { GrantMilestonesAndUpdates } from "@/components/Pages/GrantMilestonesAnd
 import { GrantAllReviews } from "@/components/Pages/AllReviews";
 import { ReviewGrant } from "@/components/Pages/ReviewGrant";
 import { useQueryState } from "nuqs";
-import { getMetadata, getQuestionsOf, getReviewsOf } from "@/utilities/sdk";
+import {
+  getMetadata,
+  getQuestionsOf,
+  getReviewsOf,
+  isCommunityAdminOf,
+} from "@/utilities/sdk";
 import { zeroUID } from "@/utilities/commons";
 import { PAGES } from "@/utilities/pages";
 import { defaultMetadata } from "@/utilities/meta";
 import { cn } from "@/utilities/tailwind";
 import { MESSAGES } from "@/utilities/messages";
 import { formatDate } from "@/utilities/formatDate";
+import { useCommunityAdminStore } from "@/store/community";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { useGap } from "@/hooks";
 
 interface Tab {
   name: string;
@@ -181,6 +189,7 @@ const GrantsPage = ({
 
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
+
   const isAuthorized = isProjectOwner || isContractOwner;
   const [, changeTab] = useQueryState("tab");
   const [, changeGrantId] = useQueryState("grantId");
@@ -294,6 +303,43 @@ const GrantsPage = ({
 
     mountTabs();
   }, [grant?.uid]);
+
+  const setIsCommunityAdmin = useCommunityAdminStore(
+    (state) => state.setIsCommunityAdmin
+  );
+  const isCommunityAdminLoading = useCommunityAdminStore(
+    (state) => state.setIsCommunityAdminLoading
+  );
+
+  const signer = useSigner();
+  const { chain } = useNetwork();
+  const { gap } = useGap();
+
+  const checkIfAdmin = async () => {
+    setIsCommunityAdmin(false);
+    if (!chain?.id || !gap || !grant || !address || !signer) {
+      return;
+    }
+    isCommunityAdminLoading(true);
+    try {
+      const community = await gap.fetch.communityById(grant.communityUID);
+      const result = await isCommunityAdminOf(
+        community,
+        address as string,
+        signer
+      );
+      setIsCommunityAdmin(result);
+    } catch (error) {
+      console.log(error);
+      setIsCommunityAdmin(false);
+    } finally {
+      isCommunityAdminLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    checkIfAdmin();
+  }, [address, grant?.uid, signer]);
 
   return (
     <>
@@ -506,7 +552,10 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
   const project = useProjectStore((state) => state.project);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isAuthorized = isProjectOwner || isContractOwner;
+  const isCommunityAdmin = useCommunityAdminStore(
+    (state) => state.isCommunityAdmin
+  );
+  const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
   const [, changeTab] = useQueryState("tab");
 
   const getPercentage = () => {

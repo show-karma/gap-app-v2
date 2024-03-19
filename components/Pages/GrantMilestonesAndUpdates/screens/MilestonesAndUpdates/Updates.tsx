@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import type { Milestone } from "@show-karma/karma-gap-sdk";
-import { type FC, useState } from "react";
+import { type FC, useState, useEffect } from "react";
 
 import { Button } from "@/components/Utilities/Button";
 import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
@@ -15,6 +15,9 @@ import { formatDate } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
 import { getWalletClient } from "@wagmi/core";
 import { config } from "@/components/Utilities/WagmiProvider";
+import { VerifyClaimDialog } from "./VerifyClaimDialog";
+import { VerifiedBadge } from "./VerifiedBadge";
+import { useCommunityAdminStore } from "@/store/community";
 
 interface UpdatesProps {
   milestone: Milestone;
@@ -51,58 +54,72 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   };
 
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isCommunityAdmin = useCommunityAdminStore(
+    (state) => state.isCommunityAdmin
+  );
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isAuthorized = isProjectOwner || isContractOwner;
+  const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
 
-  if (milestone?.completed?.reason && !isEditing) {
+  if (!isEditing && milestone?.completed) {
     return (
-      <div className="flex flex-col gap-3 bg-[#F8F9FC] dark:bg-zinc-900 rounded-md px-4 py-2 max-lg:max-w-2xl max-sm:max-w-[300px]">
+      <div className="flex flex-col gap-3 bg-[#F8F9FC] dark:bg-zinc-900 rounded-md px-4 py-2 max-lg:max-w-2xl max-sm:max-w-full">
         <div className="flex w-full flex-row flex-wrap items-center justify-between gap-2">
-          <div className="flex w-max flex-row gap-2 rounded-full bg-[#5720B7] dark:bg-purple-900 px-3 py-1">
-            <img
-              className="h-4 w-4"
-              alt="Update"
-              src="/icons/alert-message-white.svg"
+          <div className="flex flex-row gap-4 items-center flex-wrap">
+            <div className="flex items-center h-max w-max flex-row gap-2 rounded-full bg-[#5720B7] dark:bg-purple-900 px-3 py-1">
+              <img
+                className="h-4 w-4"
+                alt="Update"
+                src="/icons/alert-message-white.svg"
+              />
+              <p className="text-xs font-bold text-white">UPDATE</p>
+            </div>
+            {milestone?.verified?.length ? (
+              <VerifiedBadge verifications={milestone.verified} />
+            ) : null}
+            <VerifyClaimDialog
+              milestone={milestone}
+              isCommunityAdmin={isCommunityAdmin}
             />
-            <p className="text-xs font-bold text-white">UPDATE</p>
           </div>
           <p className="text-sm font-semibold text-gray-500 dark:text-zinc-100">
-            Posted on {formatDate(milestone.completed.createdAt)}
+            Posted on {formatDate(milestone?.completed?.createdAt)}
           </p>
         </div>
 
-        <div className="flex flex-col items-start " data-color-mode="light">
-          <ReadMore
-            readLessText="Read less"
-            readMoreText="Read more"
-            side="left"
-          >
-            {milestone.completed.reason}
-          </ReadMore>
+        {milestone.completed?.reason ? (
+          <div className="flex flex-col items-start " data-color-mode="light">
+            <ReadMore
+              readLessText="Read less"
+              readMoreText="Read more"
+              side="left"
+            >
+              {milestone.completed.reason}
+            </ReadMore>
 
-          <div className="flex w-full flex-row items-center justify-end">
-            {isAuthorized ? (
-              <div className="flex w-max flex-row items-center gap-2">
-                <Button
-                  type="button"
-                  className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
-                  onClick={() => handleEditing(true)}
-                >
-                  <PencilSquareIcon className="h-5 w-5" />
-                  Edit
-                </Button>
-                <Button
-                  type="button"
-                  className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
-                  onClick={() => undoMilestoneCompletion(milestone)}
-                >
-                  <TrashIcon className="h-5 w-5" />
-                  Remove
-                </Button>
-              </div>
-            ) : null}
+            <div className="flex w-full flex-row items-center justify-end">
+              {isAuthorized ? (
+                <div className="flex w-max flex-row items-center gap-2">
+                  <Button
+                    type="button"
+                    className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
+                    onClick={() => handleEditing(true)}
+                  >
+                    <PencilSquareIcon className="h-5 w-5" />
+                    Edit
+                  </Button>
+                  <Button
+                    type="button"
+                    className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
+                    onClick={() => undoMilestoneCompletion(milestone)}
+                  >
+                    <TrashIcon className="h-5 w-5" />
+                    Remove
+                  </Button>
+                </div>
+              ) : null}
+            </div>
           </div>
-        </div>
+        ) : null}
       </div>
     );
   }
