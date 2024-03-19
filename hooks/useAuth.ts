@@ -39,7 +39,7 @@ const isTokenValid = (tokenValue: string | null) => {
 export const useAuth = () => {
   const { isConnected, address } = useAccount();
   const { openConnectModal } = useConnectModal();
-  const { setIsAuthenticating, setIsAuth } = useAuthStore();
+  const { setIsAuthenticating, setIsAuth, isAuthenticating } = useAuthStore();
   // const { signMessageAsync } = useSignMessage();
   const { disconnectAsync } = useDisconnect();
 
@@ -84,12 +84,13 @@ export const useAuth = () => {
   };
 
   const authenticate = async (newAddress = address) => {
-    if (!isConnected || !newAddress) {
-      setIsAuthenticating(true);
-      openConnectModal?.();
-      return false;
-    }
     try {
+      if (isAuthenticating) return;
+      setIsAuthenticating(true);
+      if (!isConnected || !newAddress) {
+        openConnectModal?.();
+        return false;
+      }
       if (typeof window !== "undefined") {
         const savedToken = cookies.get(authCookiePath);
         if (savedToken) {
