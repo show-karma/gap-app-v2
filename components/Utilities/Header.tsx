@@ -128,7 +128,6 @@ export default function Header() {
   useEffect(() => {
     const unwatch = watchAccount?.(config, {
       onChange: (account, prevAccount) => {
-        console.log("account", account, prevAccount);
         if (account.address && account.address !== prevAccount.address) {
           softDisconnect(account.address);
         }
