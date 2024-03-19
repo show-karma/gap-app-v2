@@ -123,7 +123,6 @@ export default function Header() {
   }, []);
 
   const { authenticate, disconnect, softDisconnect } = useAuth();
-  const { connector: activeConnector } = useAccount();
 
   useEffect(() => {
     const unwatch = watchAccount?.(config, {
