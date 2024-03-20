@@ -351,18 +351,18 @@
   dependencies:
     hardhat "2.19.1"
 
-"@ethereum-attestation-service/eas-sdk@^1.4.2":
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/@ethereum-attestation-service/eas-sdk/-/eas-sdk-1.5.0.tgz#8d6bd1752809597452c0dafc4e064d73a9e07945"
-  integrity sha512-n4da0lPUy2PCPLfmaMFoPj0yIPqFC5gcNR8TNziPXapLIBpKBA91Sa+mk+rtP3jbBT5KKyuuPbTNZ/1kJd+Qcw==
+"@ethereum-attestation-service/eas-sdk@1.4.2":
+  version "1.4.2"
+  resolved "https://registry.yarnpkg.com/@ethereum-attestation-service/eas-sdk/-/eas-sdk-1.4.2.tgz#1c0f2edbf2808832f04bdb18a8726ccb4e79e46f"
+  integrity sha512-5VBOtqUwhvUrJIuepz6Q9ZI01iafvkRcOYBylc8sECxbM7KYzjuv51c/Ztr8hw2Mvx4yMjkRWGA6VuH5CB1f0w==
   dependencies:
     "@ethereum-attestation-service/eas-contracts" "1.3.7"
-    ethers "^6.11.1"
+    ethers "^6.10.0"
     js-base64 "^3.7.6"
     lodash "^4.17.21"
     multiformats "9.9.0"
     pako "^2.1.0"
-    semver "^7.6.0"
+    semver "^7.5.4"
 
 "@ethersproject/abi@5.7.0", "@ethersproject/abi@^5.1.2", "@ethersproject/abi@^5.7.0":
   version "5.7.0"
@@ -2008,12 +2008,12 @@
     "@sentry/types" "5.30.0"
     tslib "^1.9.3"
 
-"@show-karma/karma-gap-sdk@^0.3.12":
-  version "0.3.12"
-  resolved "https://registry.yarnpkg.com/@show-karma/karma-gap-sdk/-/karma-gap-sdk-0.3.12.tgz#b0a9b846112cba803591679fcb691a84af4936fe"
-  integrity sha512-QEpSsRc5PKXhhFGRHyDgW9eQZZIaUpU9r+EFE7zsM+WSR+n74unbi98vvJ4a9VKPIvAqw33KIDxTBCU0pPFHyA==
+"@show-karma/karma-gap-sdk@^0.3.13":
+  version "0.3.13"
+  resolved "https://registry.yarnpkg.com/@show-karma/karma-gap-sdk/-/karma-gap-sdk-0.3.13.tgz#9a9fbdd5d1934cb22c5e4fbbde220f5f3b0908dc"
+  integrity sha512-mSvzGhVdT2Wf6XUpv8Vy3pSSvT7ghfI6l9WWE1Po0COIuWVqOeu6mc2h6QtsAuSZ1kYRigIyN9Psi3EsHCdezA==
   dependencies:
-    "@ethereum-attestation-service/eas-sdk" "^1.4.2"
+    "@ethereum-attestation-service/eas-sdk" "1.4.2"
     "@gelatonetwork/relay-sdk" "^5.2.0"
     "@types/sha256" "^0.2.0"
     axios "^1.4.0"
@@ -5229,7 +5229,7 @@ ethers@^5.7.1:
     "@ethersproject/web" "5.7.1"
     "@ethersproject/wordlists" "5.7.0"
 
-ethers@^6.11.1:
+ethers@^6.10.0, ethers@^6.11.1:
   version "6.11.1"
   resolved "https://registry.yarnpkg.com/ethers/-/ethers-6.11.1.tgz#96aae00b627c2e35f9b0a4d65c7ab658259ee6af"
   integrity sha512-mxTAE6wqJQAbp5QAe/+o+rXOID7Nw91OZXvgpjDa1r4fAbq2Nu314oEZSbjoRLacuCzs7kUC3clEvkCQowffGg==
@@ -9588,7 +9588,7 @@ semver@^7.3.4, semver@^7.3.7, semver@^7.3.8:
   dependencies:
     lru-cache "^6.0.0"
 
-semver@^7.6.0:
+semver@^7.5.4:
   version "7.6.0"
   resolved "https://registry.yarnpkg.com/semver/-/semver-7.6.0.tgz#1a46a4db4bffcccd97b743b5005c8325f23d4e2d"
   integrity sha512-EnwXhrlwXMk9gKu5/flx5sv/an57AkRplG3hTK68W7FRDN+k+OWBj65M7719OkA82XLBxrcX0KSHj+X5COhOVg==
