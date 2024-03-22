@@ -20,7 +20,7 @@ import { Button } from "@/components/Utilities/Button";
 import { useQueryState } from "nuqs";
 
 const headClasses =
-  "text-black dark:text-white text-xs font-medium uppercase text-left px-6 py-3";
+  "text-black dark:text-white text-xs font-medium uppercase text-left px-6 py-3 font-body";
 const cellClasses =
   "py-4 border-t border-t-black dark:border-t-white pr-6 px-6 max-w-[420px] max-sm:min-w-[200px]";
 
