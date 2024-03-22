@@ -71,6 +71,10 @@ export const NestedLayout = ({ children }: Props) => {
       name: "Team",
       href: PAGES.PROJECT.TEAM(project?.details?.slug || projectId),
     },
+    {
+      name: "Impact",
+      href: PAGES.PROJECT.IMPACT.ROOT(project?.details?.slug || projectId),
+    },
   ];
   const [tabs, setTabs] = useState<typeof publicTabs>(publicTabs);
   const isOwner = useOwnerStore((state) => state.isOwner);
@@ -116,7 +120,6 @@ export const NestedLayout = ({ children }: Props) => {
           if (!fetchedProject || fetchedProject.uid === zeroUID) {
             router.push(PAGES.NOT_FOUND);
           }
-
           setProject(fetchedProject);
         } catch (error: any) {
           console.log(error);

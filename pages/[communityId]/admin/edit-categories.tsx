@@ -224,7 +224,7 @@ export default function Index() {
             hasError = true;
           });
       });
-      const teste = await Promise.all(promises);
+      await Promise.all(promises);
 
       if (hasError) {
         throw new Error("Error updating categories");
