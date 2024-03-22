@@ -2,7 +2,7 @@ import { cn } from "@/utilities/tailwind";
 import { getFeedHref } from "@/utilities/feed";
 import { FC, useEffect, useState } from "react";
 import { Project, ProjectImpact } from "@show-karma/karma-gap-sdk";
-import { useGap } from "@/hooks";
+import { getGapClient, useGap } from "@/hooks";
 import { formatDate } from "@/utilities/formatDate";
 import { useSearchParams } from "next/navigation";
 import { AddImpactScreen } from "./AddImpactScreen";

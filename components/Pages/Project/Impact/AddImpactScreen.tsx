@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { useGap } from "@/hooks";
+import { getGapClient, useGap } from "@/hooks";
 import { useProjectStore } from "@/store";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { formatDate } from "@/utilities/formatDate";
@@ -70,14 +70,16 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
     const { work, completedAt } = data;
     if (!address || !project) return;
     setIsLoading(true);
+    let gapClient = gap;
     try {
       if (chain && chain.id !== project.chainID) {
         await switchNetworkAsync?.(project.chainID);
+        gapClient = getGapClient(project.chainID);
       }
       const walletClient = await getWalletClient({
         chainId: project.chainID,
       });
-      if (!walletClient) return;
+      if (!walletClient || !address || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
       const dataToAttest = {
         work,
@@ -89,7 +91,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
         data: dataToAttest,
         recipient: address,
         attester: address,
-        schema: gap!.findSchema("ProjectImpact"),
+        schema: gapClient!.findSchema("ProjectImpact"),
         refUID: project.uid,
         createdAt: new Date(),
       });
