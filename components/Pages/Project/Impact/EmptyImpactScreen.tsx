@@ -21,7 +21,7 @@ export const EmptyImpactScreen: FC = () => {
           />
           <div className="flex w-full flex-col items-center justify-center gap-3">
             <p className="text-center text-lg font-semibold text-black dark:text-zinc-100 ">
-              Welcome to the Impacts section!
+              Project Impact
             </p>
             <p className="text-center text-base font-normal text-black dark:text-zinc-100 ">
               {MESSAGES.PROJECT.EMPTY.IMPACTS.NOT_CREATED}
@@ -61,7 +61,7 @@ export const EmptyImpactScreen: FC = () => {
           />
           <div className="flex w-full flex-col items-center justify-center gap-3">
             <p className="text-center text-lg font-semibold text-black dark:text-white">
-              {`Impacts space :)`}
+              {`Project Impact`}
             </p>
             <p className="text-center text-base font-normal text-black dark:text-white">
               {MESSAGES.PROJECT.EMPTY.IMPACTS.NOT_CREATED_USER}

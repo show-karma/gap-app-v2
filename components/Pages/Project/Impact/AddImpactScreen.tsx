@@ -23,7 +23,6 @@ import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 import { z } from "zod";
 
 const updateSchema = z.object({
-  work: z.string().min(3, { message: MESSAGES.PROJECT.IMPACT.FORM.WORK }),
   completedAt: z.date({
     required_error: MESSAGES.PROJECT.IMPACT.FORM.DATE,
   }),
@@ -40,6 +39,7 @@ interface AddImpactScreenProps {}
 export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
   const [proof, setProof] = useState("");
   const [impact, setImpact] = useState("");
+  const [work, setWork] = useState("");
 
   const { address } = useAccount();
   const { chain } = useNetwork();
@@ -67,7 +67,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
   const onSubmit: SubmitHandler<UpdateType> = async (data, event) => {
     event?.preventDefault();
     event?.stopPropagation();
-    const { work, completedAt } = data;
+    const { completedAt } = data;
     if (!address || !project) return;
     setIsLoading(true);
     let gapClient = gap;
@@ -135,16 +135,17 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
           className="flex w-full flex-col gap-4"
         >
           <div className="flex w-full flex-col">
-            <label htmlFor="work-title" className={labelStyle}>
-              Work *
+            <label htmlFor="work" className={labelStyle}>
+              Explain the work you did *
             </label>
-            <input
-              id="work-title"
-              className={inputStyle}
-              placeholder="Ex: Mine the moon"
-              {...register("work")}
-            />
-            <p className="text-base text-red-400">{errors.work?.message}</p>
+            <div className="w-full bg-transparent" data-color-mode="light">
+              <MarkdownEditor
+                className="bg-transparent"
+                value={work}
+                onChange={(newValue: string) => setWork(newValue || "")}
+                placeholderText="Organized an onboarding event"
+              />
+            </div>
           </div>
           <div className="flex w-full flex-col">
             <Controller
@@ -192,27 +193,27 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
 
           <div className="flex w-full gap-2 flex-col">
             <label htmlFor="impact" className={labelStyle}>
-              Impact *
+              What impact did your work have? *
             </label>
             <div className="w-full bg-transparent" data-color-mode="light">
               <MarkdownEditor
                 className="bg-transparent"
                 value={impact}
                 onChange={(newValue: string) => setImpact(newValue || "")}
-                placeholderText="Ex: Describe how it impacts the project"
+                placeholderText="We onboarded 100 users on to the platform (Add as much details as possible)."
               />
             </div>
           </div>
           <div className="flex w-full gap-2 flex-col">
             <label htmlFor="proof" className={labelStyle}>
-              Proof *
+              Add Proof of Impact *
             </label>
             <div className="w-full bg-transparent" data-color-mode="light">
               <MarkdownEditor
                 className="bg-transparent"
                 value={proof}
                 onChange={(newValue: string) => setProof(newValue || "")}
-                placeholderText="Describe how to check the work done"
+                placeholderText="Add links to charts, videos, dashboards etc. that evaluators can check to verify your work and impact"
               />
             </div>
           </div>
@@ -224,6 +225,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
                 isSubmitting ||
                 !isValid ||
                 !isDescriptionValid ||
+                !work.length ||
                 !proof.length ||
                 !impact.length
               }

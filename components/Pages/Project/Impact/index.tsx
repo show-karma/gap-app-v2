@@ -18,6 +18,7 @@ import { getWalletClient } from "@wagmi/core";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { useQueryState } from "nuqs";
+import { ReadMore } from "@/utilities/ReadMore";
 
 const headClasses =
   "text-black dark:text-white text-xs font-medium uppercase text-left px-6 py-3 font-body";
@@ -27,7 +28,6 @@ const cellClasses =
 interface ImpactComponentProps {}
 
 export const ImpactComponent: FC<ImpactComponentProps> = () => {
-  const { gap } = useGap();
   const project = useProjectStore((state) => state.project);
   const [orderedImpacts, setOrderedImpacts] = useState<ProjectImpact[]>(
     project?.impacts || []
@@ -135,16 +135,20 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
                     <td
                       className={cn(
                         cellClasses,
-                        "text-black dark:text-white text-lg font-semibold"
+                        "text-black dark:text-white text-lg font-semibold align-top"
                       )}
                     >
-                      <p>{item.work}</p>
-                    </td>
-                    <td className={cn(cellClasses)}>
                       <div data-color-mode="light">
-                        <MarkdownPreview
-                          className="text-base font-normal"
-                          components={{
+                        {/* <MarkdownPreview
+                    
+                          source={item.work}
+                        /> */}
+                        <ReadMore
+                          readLessText="View less"
+                          readMoreText="View more"
+                          side="left"
+                          words={200}
+                          markdownComponents={{
                             a: ({ children, ...props }) => {
                               return (
                                 <ExternalLink
@@ -156,15 +160,21 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
                               );
                             },
                           }}
-                          source={item.impact}
-                        />
+                          markdownClass="text-black dark:text-white text-lg font-semibold "
+                        >
+                          {item.work}
+                        </ReadMore>
                       </div>
                     </td>
-                    <td className={cn(cellClasses)}>
+                    <td className={cn(cellClasses, "align-top")}>
                       <div data-color-mode="light">
-                        <MarkdownPreview
-                          className="text-base font-normal"
-                          components={{
+                        <ReadMore
+                          readLessText="View less"
+                          readMoreText="View more"
+                          side="left"
+                          words={200}
+                          markdownClass="text-base font-normal"
+                          markdownComponents={{
                             a: ({ children, ...props }) => {
                               return (
                                 <ExternalLink
@@ -176,12 +186,38 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
                               );
                             },
                           }}
-                          source={item.proof}
-                        />
+                        >
+                          {item.impact}
+                        </ReadMore>
+                      </div>
+                    </td>
+                    <td className={cn(cellClasses, "align-top")}>
+                      <div data-color-mode="light">
+                        <ReadMore
+                          readLessText="View less"
+                          readMoreText="View more"
+                          side="left"
+                          words={200}
+                          markdownClass="text-base font-normal"
+                          markdownComponents={{
+                            a: ({ children, ...props }) => {
+                              return (
+                                <ExternalLink
+                                  className="text-blue-500"
+                                  {...props}
+                                >
+                                  {children}
+                                </ExternalLink>
+                              );
+                            },
+                          }}
+                        >
+                          {item.proof}
+                        </ReadMore>
                       </div>
                     </td>
                     {isAuthorized ? (
-                      <td className={cn(cellClasses, "px-3")}>
+                      <td className={cn(cellClasses, "px-3 align-top")}>
                         <Button
                           type="button"
                           className="bg-transparent hover:bg-transparent hover:opacity-75"

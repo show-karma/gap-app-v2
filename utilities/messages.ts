@@ -169,9 +169,8 @@ export const MESSAGES = {
     },
     EMPTY: {
       IMPACTS: {
-        NOT_CREATED: `Check back in a few days and we’ll surely have something cool to
-          show you :)`,
-        NOT_CREATED_USER: `Create a new impact to show the world the impact of your work`,
+        NOT_CREATED: `Project owner is working on adding impact attestations. Check back in a few days :)`,
+        NOT_CREATED_USER: `Create a new impact attestation to show the world the impact of your work!`,
       },
       GRANTS: {
         NOT_CREATED: `Check back in a few days and we’ll surely have something cool to
