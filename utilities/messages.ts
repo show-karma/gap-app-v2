@@ -26,6 +26,7 @@ export const MESSAGES = {
       EMPTY: "The grantee has not defined any impact criteria yet.",
     },
     REVIEW: {
+      NOT_AUTHORIZED: "You are not authorized to review this grant.",
       EMPTY_REVIEWS: "No reviews yet, be the first to review this grant!",
       CAN_NOT_REVIEW: "This grant has not been configured for reviewing yet.",
       ALREADY_REVIEWED: "You have already reviewed this grant.",
