@@ -126,8 +126,8 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
             {orderedImpacts.length
               ? orderedImpacts.map((item) => (
                   <tr className="" key={item.uid}>
-                    <td className="pr-8 w-max max-sm:pr-4 max-w-max">
-                      <p className="w-28 max-w-max text-gray-500 text-sm font-medium ">
+                    <td className="pr-8">
+                      <p className="w-36 max-w-max text-gray-500 text-sm font-medium ">
                         {formatDate(item.data.completedAt * 1000)}
                       </p>
                     </td>
