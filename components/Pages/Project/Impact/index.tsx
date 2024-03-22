@@ -99,14 +99,16 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
   return (
     <div className="flex-row gap-2 flex">
       <div className="flex flex-3 w-full flex-col overflow-x-auto">
-        <div className="flex flex-row-reverse max-sm:flex-row">
-          <Button
-            onClick={() => changeTab("add-impact")}
-            className="bg-black text-white hover:bg-black dark:bg-zinc-800 w-max"
-          >
-            Add impact
-          </Button>
-        </div>
+        {isAuthorized ? (
+          <div className="flex flex-row-reverse max-sm:flex-row">
+            <Button
+              onClick={() => changeTab("add-impact")}
+              className="bg-black text-white hover:bg-black dark:bg-zinc-800 w-max"
+            >
+              Add impact
+            </Button>
+          </div>
+        ) : null}
         <table className="overflow-x-auto w-full">
           <thead>
             <tr>
