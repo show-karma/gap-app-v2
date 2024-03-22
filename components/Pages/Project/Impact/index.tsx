@@ -88,7 +88,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
   };
   const [, changeTab] = useQueryState("tab");
 
-  if (grantScreen === "add-impact") {
+  if (grantScreen === "add-impact" && isAuthorized) {
     return <AddImpactScreen />;
   }
 
