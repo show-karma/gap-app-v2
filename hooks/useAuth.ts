@@ -9,6 +9,9 @@ import { signMessage as sign } from "wagmi/actions";
 import { IExpirationStatus, ISession } from "@/types/auth";
 import { checkExpirationStatus } from "@/utilities/checkExpirationStatus";
 import { Hex } from "viem";
+import { useOnboarding } from "@/store/onboarding";
+import { PAGES } from "@/utilities/pages";
+import { useRouter } from "next/router";
 
 export const authCookiePath = "gap_auth";
 
@@ -42,7 +45,8 @@ export const useAuth = () => {
   const { setIsAuthenticating, setIsAuth, isAuthenticating } = useAuthStore();
   // const { signMessageAsync } = useSignMessage();
   const { disconnectAsync } = useDisconnect();
-
+  const { setIsOnboarding } = useOnboarding?.();
+  const router = useRouter();
   const cookies = new Cookies();
 
   const signMessage = async (messageToSign: string) => {
@@ -113,7 +117,8 @@ export const useAuth = () => {
         toast.error("Login failed");
         return;
       }
-
+      router.push(PAGES.MY_PROJECTS);
+      setIsOnboarding?.(true);
       return true;
     } catch (error: any) {
       // eslint-disable-next-line no-console
