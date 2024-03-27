@@ -15,10 +15,11 @@ import toast from "react-hot-toast";
 import { MESSAGES } from "@/utilities/messages";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { getWalletClient } from "@wagmi/core";
-import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { useQueryState } from "nuqs";
 import { ReadMore } from "@/utilities/ReadMore";
+import { config } from "@/components/Utilities/WagmiProvider";
 
 const headClasses =
   "text-black dark:text-white text-xs font-medium uppercase text-left px-6 py-3 font-body";
@@ -52,9 +53,8 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
 
   const grantScreen = searchParams?.get("tab");
 
-  const { address } = useAccount();
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { address, chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
 
   const [loading, setLoading] = useState<Record<string, boolean>>({});
 
@@ -63,9 +63,9 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
     try {
       setLoading({ ...loading, [impact.uid.toLowerCase()]: true });
       if (chain && chain.id !== project.chainID) {
-        await switchNetworkAsync?.(project.chainID);
+        await switchChainAsync?.({ chainId: project.chainID });
       }
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: project.chainID,
       });
       if (!walletClient) return;
