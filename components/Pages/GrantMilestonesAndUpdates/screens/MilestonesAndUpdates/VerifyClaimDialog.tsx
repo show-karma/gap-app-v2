@@ -1,29 +1,27 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, ReactNode, useEffect, useState } from "react";
+import { FC, Fragment, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import { PlusIcon } from "@heroicons/react/24/solid";
 import { Button } from "@/components/Utilities/Button";
 import { z } from "zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
-import fetchData from "@/utilities/fetchData";
 import { useRouter } from "next/router";
 import { useAuthStore } from "@/store/auth";
-import { useAuth } from "@/hooks/useAuth";
-import { INDEXER } from "@/utilities/indexer";
-import { Milestone } from "@show-karma/karma-gap-sdk";
 import { useAccount, useSwitchChain } from "wagmi";
+import { Milestone, MilestoneCompleted } from "@show-karma/karma-gap-sdk";
 import { getWalletClient } from "@wagmi/core";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useProjectStore } from "@/store";
 import { MESSAGES } from "@/utilities/messages";
 import { config } from "@/components/Utilities/WagmiProvider";
+import { getGapClient, useGap } from "@/hooks";
 
 type VerifyClaimDialogProps = {
   milestone: Milestone;
   isCommunityAdmin: boolean;
+  addVerifiedMilestone: (newVerified: MilestoneCompleted) => void;
 };
 
 const schema = z.object({
@@ -35,6 +33,7 @@ type SchemaType = z.infer<typeof schema>;
 export const VerifyClaimDialog: FC<VerifyClaimDialogProps> = ({
   milestone,
   isCommunityAdmin,
+  addVerifiedMilestone,
 }) => {
   let [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -64,21 +63,36 @@ export const VerifyClaimDialog: FC<VerifyClaimDialogProps> = ({
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const { chain } = useAccount();
   const { switchChainAsync } = useSwitchChain();
+  const { gap } = useGap();
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
+    let gapClient = gap;
+    if (!gap) throw new Error("Please, connect a wallet");
     try {
       setIsLoading(true);
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
         await switchChainAsync?.({ chainId: milestone.chainID });
+        gapClient = getGapClient(milestone.chainID);
       }
       const walletClient = await getWalletClient(config, {
         chainId: milestone.chainID,
       });
-      if (!walletClient) return;
+      if (!walletClient || !address || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
       await milestone.verify(walletSigner, data.comment).then(async () => {
         toast.success(MESSAGES.MILESTONES.VERIFY.SUCCESS);
-        await refreshProject();
+        const newVerified = new MilestoneCompleted({
+          data: {
+            type: "verified",
+            reason: data.comment,
+          },
+          schema: gapClient!.findSchema("MilestoneCompleted"),
+          recipient: address,
+          refUID: milestone.uid,
+          attester: address,
+        });
+        milestone.verified = [...milestone.verified, newVerified];
+        addVerifiedMilestone(newVerified);
       });
       closeModal();
     } catch (error) {

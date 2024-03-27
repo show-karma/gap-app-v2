@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import type { Milestone } from "@show-karma/karma-gap-sdk";
+import type { Milestone, MilestoneCompleted } from "@show-karma/karma-gap-sdk";
 import { type FC, useState, useEffect } from "react";
 
 import { Button } from "@/components/Utilities/Button";
@@ -60,6 +60,18 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
 
+  const [verifiedMilestones, setVerifiedMilestones] = useState<
+    MilestoneCompleted[]
+  >(milestone?.verified || []);
+
+  const addVerifiedMilestone = (newVerified: MilestoneCompleted) => {
+    setVerifiedMilestones([...verifiedMilestones, newVerified]);
+  };
+
+  useEffect(() => {
+    setVerifiedMilestones(milestone?.verified || []);
+  }, [milestone]);
+
   if (!isEditing && milestone?.completed) {
     return (
       <div className="flex flex-col gap-3 bg-[#F8F9FC] dark:bg-zinc-900 rounded-md px-4 py-2 max-lg:max-w-2xl max-sm:max-w-full">
@@ -73,11 +85,12 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
               />
               <p className="text-xs font-bold text-white">UPDATE</p>
             </div>
-            {milestone?.verified?.length ? (
-              <VerifiedBadge verifications={milestone.verified} />
+            {verifiedMilestones.length ? (
+              <VerifiedBadge verifications={verifiedMilestones} />
             ) : null}
             <VerifyClaimDialog
               milestone={milestone}
+              addVerifiedMilestone={addVerifiedMilestone}
               isCommunityAdmin={isCommunityAdmin}
             />
           </div>

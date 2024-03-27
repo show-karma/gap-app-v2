@@ -16,6 +16,8 @@ import { PAGES } from "@/utilities/pages";
 import { Feed } from "@/types";
 import { getWalletClient } from "@wagmi/core";
 import { config } from "@/components/Utilities/WagmiProvider";
+import { Button } from "@/components/Utilities/Button";
+import Link from "next/link";
 
 const ProjectDialog = dynamic(
   () => import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog),
@@ -45,6 +47,7 @@ function ProjectPage({ initialFeed }: ProjectPageProps) {
   const { switchChainAsync } = useSwitchChain();
   const router = useRouter();
   const { gap } = useGap();
+  const projectId = router.query.projectId as string;
 
   const deleteFn = async () => {
     if (!address || !project) return;
@@ -117,34 +120,45 @@ function ProjectPage({ initialFeed }: ProjectPageProps) {
       </div>
       <div className="flex flex-col flex-[1] gap-8">
         {isProjectOwner || isOwner ? (
-          <div className="flex flex-row gap-2 flex-wrap">
-            <ProjectDialog
-              key={project?.uid}
-              buttonElement={{
-                icon: null,
-                text: "Edit project",
-                styleClass:
-                  "rounded-md bg-black px-3 py-2 text-sm font-semibold text-white border-none  disabled:opacity-75 transition-all ease-in-out duration-300",
-              }}
-              projectToUpdate={project}
-            />
-            <TransferOwnershipDialog
-              buttonElement={{
-                icon: null,
-                text: "Transfer Ownership",
-                styleClass: "bg-red-600 hover:bg-red-500",
-              }}
-            />
-            <DeleteDialog
-              title="Are you sure you want to delete this project?"
-              deleteFunction={deleteFn}
-              isLoading={isDeleting}
-              buttonElement={{
-                icon: null,
-                text: "Delete project",
-                styleClass: "bg-red-600 hover:bg-red-500",
-              }}
-            />
+          <div className="flex flex-col gap-2 w-max">
+            <Link
+              href={PAGES.PROJECT.IMPACT.ADD_IMPACT(
+                project?.details?.slug || projectId
+              )}
+            >
+              <Button className="bg-brand-blue text-white hover:bg-black dark:bg-zinc-800 w-full items-center flex flex-row justify-center">
+                Add impact
+              </Button>
+            </Link>
+            <div className="flex flex-row gap-2 flex-wrap">
+              <ProjectDialog
+                key={project?.uid}
+                buttonElement={{
+                  icon: null,
+                  text: "Edit project",
+                  styleClass:
+                    "rounded-md bg-black px-3 py-2 text-sm font-semibold text-white border-none  disabled:opacity-75 transition-all ease-in-out duration-300",
+                }}
+                projectToUpdate={project}
+              />
+              <TransferOwnershipDialog
+                buttonElement={{
+                  icon: null,
+                  text: "Transfer Ownership",
+                  styleClass: "bg-red-600 hover:bg-red-500",
+                }}
+              />
+              <DeleteDialog
+                title="Are you sure you want to delete this project?"
+                deleteFunction={deleteFn}
+                isLoading={isDeleting}
+                buttonElement={{
+                  icon: null,
+                  text: "Delete project",
+                  styleClass: "bg-red-600 hover:bg-red-500",
+                }}
+              />
+            </div>
           </div>
         ) : null}
         <ProjectFeed initialFeed={initialFeed} />
