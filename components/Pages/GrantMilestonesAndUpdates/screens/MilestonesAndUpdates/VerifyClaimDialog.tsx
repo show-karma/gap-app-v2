@@ -6,7 +6,6 @@ import { z } from "zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
-import { useRouter } from "next/router";
 import { useAuthStore } from "@/store/auth";
 import { useAccount, useSwitchChain } from "wagmi";
 import { Milestone, MilestoneCompleted } from "@show-karma/karma-gap-sdk";
@@ -37,7 +36,6 @@ export const VerifyClaimDialog: FC<VerifyClaimDialogProps> = ({
 }) => {
   let [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
   const {
     register,
