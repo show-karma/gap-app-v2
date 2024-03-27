@@ -1,7 +1,7 @@
 /* eslint-disable react/no-unstable-nested-components */
 import { zodResolver } from "@hookform/resolvers/zod";
 import type { Grant } from "@show-karma/karma-gap-sdk";
-import { type FC, useState, Fragment } from "react";
+import { type FC, useState, Fragment, useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
@@ -22,11 +22,10 @@ import { MESSAGES } from "@/utilities/messages";
 import { additionalQuestion } from "@/utilities/tabs";
 import { INDEXER } from "@/utilities/indexer";
 import { cn } from "@/utilities/tailwind";
-import { Identity } from "@semaphore-protocol/identity";
-import { generateProof } from "@semaphore-protocol/proof";
-import { SemaphoreSubgraph } from "@semaphore-protocol/data";
-import { Group } from "@semaphore-protocol/core";
+import { useSearchParams } from "next/navigation";
+import { ExclamationTriangleIcon } from "@heroicons/react/20/solid";
 import { createHash } from "crypto";
+import { envVars } from "@/utilities/enviromentVars";
 
 interface ReviewFormAnonProps {
   grant: Grant;
@@ -125,6 +124,34 @@ const categories = [
   "L2 Tech",
 ];
 
+export default function AnonKarmaAlert() {
+  return (
+    <div className="my-2 shadow-inner rounded-xl bg-yellow-50 p-4">
+      <div className="flex">
+        <div className="flex-shrink-0">
+          <ExclamationTriangleIcon
+            className="h-5 w-5 text-yellow-400"
+            aria-hidden="true"
+          />
+        </div>
+        <div className="ml-3">
+          <h3 className="text-sm font-medium text-yellow-800">
+            Attention needed
+          </h3>
+          <div className="mt-2 text-sm text-yellow-700">
+            <p>
+              You are about to review this grant anonymously. You may start
+              reviewing the grant but you will have to prove you are a grantee
+              of this grant by generating a valid zkProof using{" "}
+              <span className="">AnonKarma</span> in order to submit a review.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
   grant,
   allQuestions,
@@ -132,15 +159,22 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
   reviewerInfo,
   zkgroup,
 }) => {
-  const [authorized, setAuthorized] = useState<boolean>(false);
-  const [zkPrivateKey, setZkPrivateKey] = useState<any>(null);
-  const [zkIdentity, setZkIdentity] = useState<any>(null);
-  const [isGeneratingProof, setIsGeneratingProof] = useState<boolean>(false);
-
+  const searchParams = useSearchParams();
   const { address } = useAccount();
   const project = useProjectStore((state) => state.project);
   const [hasSubmitted, setHasSubmitted] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [proof, setProof] = useState<any>(null);
+
+  useEffect(() => {
+    const proofEncoded = searchParams.get("proof");
+    if (proofEncoded) {
+      console.log("Proof received", proofEncoded);
+      setProof(JSON.parse(atob(proofEncoded)));
+    } else {
+      console.log("No proof received");
+    }
+  }, []);
 
   const orderedQuestions = [
     ...allQuestions.filter(
@@ -212,32 +246,29 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
       ).catch((error) => {
         console.log(error);
       });
-      setIsGeneratingProof(true);
-      const group = new Group(zkgroup?.members);
+
+      localStorage.setItem("mountAnswers", JSON.stringify(mountAnswers));
+
       const messageHash = createHash("sha256")
         .update(JSON.stringify(mountAnswers))
-        .digest("hex");
-      console.log(mountAnswers);
+        .digest("hex")
+        .slice(0, 12);
+      console.log("messageHash", messageHash);
+      const groupId = zkgroup.groupId;
+      const callbackUrl = window.location.href;
+      const anonKarmaUrl = `${envVars.ANON_KARMA_URL}?proofData=${btoa(
+        JSON.stringify({
+          groupId: String(groupId),
+          message: messageHash,
+          callbackUrl,
+          scope: "1",
+        })
+      )}`;
 
-      // Convert message hash to bytes32
-      // const messageHashBytes32 = ethers.utils.arrayify(`0x${messageHash}`);
-      const proof = await generateProof(zkIdentity, group, 1, 1);
-
-      await fetchData(INDEXER.GRANTS.REVIEWS.SEND_ANON(grant.uid), "POST", {
-        nullifier: proof?.nullifier,
-        proof: proof,
-        groupId: zkgroup?.groupId,
-        answers: mountAnswers,
-      }).then(() => {
-        setIsGeneratingProof(false);
-        toast.success(
-          MESSAGES.GRANT.REVIEW.SUCCESS(
-            project?.details?.title as string,
-            grant.details?.title as string
-          )
-        );
-        setHasSubmitted(true);
-      });
+      alert(
+        `Generating proof: \n${groupId}, \n${messageHash}, \n${callbackUrl} \n${anonKarmaUrl}`
+      );
+      window.open(anonKarmaUrl, "_blank");
     } catch (error) {
       console.log(error);
       toast.error(
@@ -246,11 +277,27 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
           grant.details?.title as string
         )
       );
-      setIsGeneratingProof(false);
     } finally {
       setIsSaving(false);
     }
   };
+
+  async function sendAnonAnswers(mountAnswers: any) {
+    await fetchData(INDEXER.GRANTS.REVIEWS.SEND_ANON(grant.uid), "POST", {
+      nullifier: proof?.nullifier,
+      proof: proof,
+      groupId: zkgroup?.groupId,
+      answers: mountAnswers,
+    }).then(() => {
+      toast.success(
+        MESSAGES.GRANT.REVIEW.SUCCESS(
+          project?.details?.title as string,
+          grant.details?.title as string
+        )
+      );
+      setHasSubmitted(true);
+    });
+  }
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
     saveReview(data);
@@ -268,60 +315,9 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
     </div>
   ) : (
     <section>
-      <div className="bg-white shadow sm:rounded-lg">
-        <div className="py-5">
-          <h3 className="text-base font-semibold leading-6 text-gray-900">
-            Prove you&apos;re authroized to review using zkProofs
-          </h3>
-          <div className="mt-2 max-w-xl text-sm text-gray-500">
-            <p>
-              Go to{" "}
-              <a
-                target="_blank"
-                className="font-bold text-primary-400"
-                href="https://anon.karmahq.xyz"
-              >
-                anon.karmahq.xyz
-              </a>{" "}
-              generate your private key and paste it here.
-            </p>
-          </div>
-          <div className="mt-5 sm:flex sm:items-center">
-            <div className="w-full sm:max-w-xs">
-              <label htmlFor="email" className="sr-only">
-                Private Key
-              </label>
-              <input
-                onChange={(e) => {
-                  setZkPrivateKey(e.target.value);
-                }}
-                type="text"
-                className="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-primary-500 sm:text-sm sm:leading-6"
-                placeholder="JT99XbbJKZGBI7Wzd0fvBWIXBhPGCqUzsSJKcgEHulc="
-              />
-            </div>
-            <button
-              onClick={() => {
-                if (zkPrivateKey) {
-                  const identity = new Identity(zkPrivateKey);
-                  setZkIdentity(identity);
+      {!proof && <AnonKarmaAlert />}
 
-                  if (zkIdentity) {
-                    setAuthorized(
-                      zkgroup?.members.includes(String(zkIdentity?.commitment))
-                    );
-                  }
-                }
-              }}
-              className="mt-3 inline-flex w-full items-center justify-center rounded-md bg-primary-400 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-500 sm:ml-3 sm:mt-0 sm:w-auto"
-            >
-              Authorize
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {authorized ? (
+      {!proof && !localStorage.getItem("mountAnswers") ? (
         <form
           onSubmit={form.handleSubmit(onSubmit)}
           className="flex w-full flex-col gap-3  rounded-xl"
@@ -569,22 +565,51 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
               />
             </div>
           ) : null}
-          <div className="flex w-full flex-row justify-end">
+          <div className="mt-5 flex flex-col  w-full justify-end items-end">
             <Button
+              onClick={() => {
+                saveReview(form.getValues());
+              }}
               type="submit"
-              className="w-max bg-primary-800 text-lg text-white hover:bg-primary-800"
+              className="mt-3 w-max text-nowrap bg-zinc-700 text-lg text-white hover:bg-primary-800"
               isLoading={isSaving}
             >
-              {isGeneratingProof ? "Generating proof..." : "Submit"}
+              Submit Review
             </Button>
           </div>
         </form>
       ) : (
-        <p className="text-base text-black dark:text-zinc-100">
-          {zkIdentity
-            ? MESSAGES.GRANT.REVIEW.NOT_AUTHORIZED
-            : "Authorzation pending..."}
-        </p>
+        <section>
+          <div className="w-full">
+            <p className="text-lg font-bold text-left mb-2">AnonKarma Proof</p>
+            <textarea
+              defaultValue={JSON.stringify(proof, null, 2)}
+              disabled
+              rows={6}
+              className="w-full mr-2 rounded-lg border border-zinc-200 px-2 py-1 dark:bg-zinc-800 dark:text-white dark:border-zinc-600"
+              placeholder={"Paste the proof here..."}
+            />
+          </div>
+          <Button
+            onClick={() => {
+              let cachedMountAnswers = localStorage.getItem("mountAnswers");
+              if (cachedMountAnswers) {
+                sendAnonAnswers(JSON.parse(cachedMountAnswers))
+                  .then(() => {
+                    alert("Answers sent anonymously!");
+                    localStorage.removeItem("mountAnswers");
+                  })
+                  .catch((e) => {
+                    alert("Error sending answers: " + e);
+                  });
+              }
+            }}
+            className="mt-3 w-max text-nowrap bg-zinc-700 text-lg text-white hover:bg-primary-800"
+            isLoading={isSaving}
+          >
+            Submit Review
+          </Button>
+        </section>
       )}
     </section>
   );

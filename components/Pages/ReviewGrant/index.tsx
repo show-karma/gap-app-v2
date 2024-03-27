@@ -2,11 +2,13 @@
 
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import type { Grant } from "@show-karma/karma-gap-sdk";
-import axios from "axios";
-import { type FC, useEffect, useState } from "react";
+import { Switch } from "@headlessui/react";
+import { type FC, useEffect, useState, Suspense } from "react";
 import { useAccount } from "wagmi";
 
 import { ReviewForm } from "./ReviewForm";
+import { ReviewFormAnon } from "./ReviewFormAnon";
+
 import { useProjectStore } from "@/store";
 import { Question } from "@/types";
 import { ReviewerInfo } from "@/types/reviewer";
@@ -23,7 +25,13 @@ interface ReviewGrantProps {
   grant: Grant | undefined;
 }
 
+function classNames(...classes: any) {
+  return classes.filter(Boolean).join(" ");
+}
+
 export const ReviewGrant: FC<ReviewGrantProps> = ({ grant }) => {
+  const [zkgroup, setZkGroup] = useState<any>(null);
+
   const { isConnected } = useAccount();
   const { isAuth } = useAuthStore();
   const { openConnectModal } = useConnectModal();
@@ -31,6 +39,7 @@ export const ReviewGrant: FC<ReviewGrantProps> = ({ grant }) => {
   const { address } = useAccount();
 
   const [isFetching, setIsFetching] = useState(true);
+  const [isAnonReview, setIsAnonReview] = useState(false);
 
   const [questions, setQuestions] = useState<Question[]>([]);
 
@@ -42,6 +51,26 @@ export const ReviewGrant: FC<ReviewGrantProps> = ({ grant }) => {
     email: undefined,
     categories: undefined,
   });
+
+  useEffect(() => {
+    // Check if zkgroup exists for the grant
+    (async () => {
+      try {
+        const [data] = await fetchData(
+          INDEXER.GRANTS.GET_ZK_GROUP(
+            String(grant?.chainID),
+            grant?.communityUID,
+            String(grant?.uid),
+            "1"
+          )
+        );
+        // console.log("zkgroup: ", data);
+        setZkGroup(data);
+      } catch (error) {
+        console.log(error);
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     const getReviewerInfo = async () => {
@@ -167,14 +196,49 @@ export const ReviewGrant: FC<ReviewGrantProps> = ({ grant }) => {
           <div className="flex w-full items-center justify-center">
             <Spinner />
           </div>
-        ) : questions.length && grant ? (
+        ) : questions.length && grant && zkgroup ? (
           <div className="mt-4 flex w-full flex-col justify-start gap-4 rounded-lg px-3">
-            <ReviewForm
-              grant={grant}
-              allQuestions={questions}
-              alreadyReviewed={alreadyReviewed}
-              reviewerInfo={reviewerInfo}
-            />
+            <div className="flex">
+              <Switch
+                checked={isAnonReview}
+                onChange={setIsAnonReview}
+                className={classNames(
+                  isAnonReview ? "bg-blue-600" : "bg-gray-200",
+                  "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                )}
+              >
+                <span className="sr-only">Use setting</span>
+                <span
+                  aria-hidden="true"
+                  className={classNames(
+                    isAnonReview ? "translate-x-5" : "translate-x-0",
+                    "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                  )}
+                />
+              </Switch>
+              <h5 className="ml-3">
+                Review this grant anonymously? (Using AnonKarma zkGroups)
+              </h5>
+            </div>
+
+            {!isAnonReview ? (
+              <ReviewForm
+                grant={grant}
+                allQuestions={questions}
+                alreadyReviewed={alreadyReviewed}
+                reviewerInfo={reviewerInfo}
+              />
+            ) : (
+              <Suspense>
+                <ReviewFormAnon
+                  grant={grant}
+                  allQuestions={questions}
+                  alreadyReviewed={alreadyReviewed}
+                  reviewerInfo={reviewerInfo}
+                  zkgroup={zkgroup}
+                />
+              </Suspense>
+            )}
           </div>
         ) : (
           <p>{MESSAGES.GRANT.REVIEW.CAN_NOT_REVIEW}</p>

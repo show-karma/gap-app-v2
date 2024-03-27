@@ -37,7 +37,7 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { GrantMilestonesAndUpdates } from "@/components/Pages/GrantMilestonesAndUpdates";
 import { GrantAllReviews } from "@/components/Pages/AllReviews";
 import { ReviewGrant } from "@/components/Pages/ReviewGrant";
-import { ReviewGrantAnon } from "@/components/Pages/ReviewGrantAnon";
+
 import { useQueryState } from "nuqs";
 import {
   getMetadata,
@@ -139,15 +139,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
             grantInfo?.title
           } grant`,
           description: `As a community contributor, you can review ${
-            projectInfo?.title || projectInfo?.uid
-          }'s ${grantInfo?.title} grant now!`,
-        },
-
-        "review-this-grant-anon": {
-          title: `Karma GAP - ${projectInfo?.title || projectInfo?.uid} - ${
-            grantInfo?.title
-          } grant`,
-          description: `As a community contributor, you can anonymously review ${
             projectInfo?.title || projectInfo?.uid
           }'s ${grantInfo?.title} grant now!`,
         },
@@ -285,11 +276,6 @@ const GrantsPage = ({
         {
           name: "Review this grant",
           tabName: "review-this-grant",
-          current: false,
-        },
-        {
-          name: "Review this grant anonymously",
-          tabName: "review-this-grant-anon",
           current: false,
         },
       ];
@@ -513,9 +499,6 @@ const GrantsPage = ({
               {currentTab === "reviews" && <GrantAllReviews grant={grant} />}
               {currentTab === "review-this-grant" && (
                 <ReviewGrant grant={grant} />
-              )}
-              {currentTab === "review-this-grant-anon" && (
-                <ReviewGrantAnon grant={grant} />
               )}
               {/*  */}
               {currentTab === "create-grant" && project?.uid && (

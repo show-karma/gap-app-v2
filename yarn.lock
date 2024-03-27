@@ -1962,15 +1962,6 @@
     "@semaphore-protocol/identity" "4.0.0-beta.6"
     "@semaphore-protocol/proof" "4.0.0-beta.6"
 
-"@semaphore-protocol/data@^4.0.0-beta.6":
-  version "4.0.0-beta.6"
-  resolved "https://registry.npmjs.org/@semaphore-protocol/data/-/data-4.0.0-beta.6.tgz#ca0b0f74736b36a8aaa9edc25dc4ded653ee5392"
-  integrity sha512-CIv5xjtmiaA3Wx63v/Ms0akLrd43djXEXTVwVnqG8+fj/uFnlpvtNoXuWZh7YPgpTDibBDuDfvje1OlhcUbrKg==
-  dependencies:
-    "@semaphore-protocol/utils" "4.0.0-beta.6"
-    axios "1.6.6"
-    ethers "6.11.0"
-
 "@semaphore-protocol/group@4.0.0-beta.6":
   version "4.0.0-beta.6"
   resolved "https://registry.npmjs.org/@semaphore-protocol/group/-/group-4.0.0-beta.6.tgz#1271fd89ba494833d4bc4264f74f243cc10a637f"
@@ -3726,15 +3717,6 @@ axios@0.27.2:
   dependencies:
     follow-redirects "^1.14.9"
     form-data "^4.0.0"
-
-axios@1.6.6:
-  version "1.6.6"
-  resolved "https://registry.npmjs.org/axios/-/axios-1.6.6.tgz#878db45401d91fe9e53aed8ac962ed93bde8dd1c"
-  integrity sha512-XZLZDFfXKM9U/Y/B4nNynfCRUqNyVZ4sBC/n9GDRCkq9vd2mIvKjKKsbIh1WPmHmNbg6ND7cTBY3Y2+u1G3/2Q==
-  dependencies:
-    follow-redirects "^1.15.4"
-    form-data "^4.0.0"
-    proxy-from-env "^1.1.0"
 
 axios@^1.4.0:
   version "1.6.5"
