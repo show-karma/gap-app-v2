@@ -351,18 +351,18 @@
   dependencies:
     hardhat "2.19.1"
 
-"@ethereum-attestation-service/eas-sdk@^1.4.2":
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/@ethereum-attestation-service/eas-sdk/-/eas-sdk-1.5.0.tgz#8d6bd1752809597452c0dafc4e064d73a9e07945"
-  integrity sha512-n4da0lPUy2PCPLfmaMFoPj0yIPqFC5gcNR8TNziPXapLIBpKBA91Sa+mk+rtP3jbBT5KKyuuPbTNZ/1kJd+Qcw==
+"@ethereum-attestation-service/eas-sdk@1.4.2":
+  version "1.4.2"
+  resolved "https://registry.yarnpkg.com/@ethereum-attestation-service/eas-sdk/-/eas-sdk-1.4.2.tgz#1c0f2edbf2808832f04bdb18a8726ccb4e79e46f"
+  integrity sha512-5VBOtqUwhvUrJIuepz6Q9ZI01iafvkRcOYBylc8sECxbM7KYzjuv51c/Ztr8hw2Mvx4yMjkRWGA6VuH5CB1f0w==
   dependencies:
     "@ethereum-attestation-service/eas-contracts" "1.3.7"
-    ethers "^6.11.1"
+    ethers "^6.10.0"
     js-base64 "^3.7.6"
     lodash "^4.17.21"
     multiformats "9.9.0"
     pako "^2.1.0"
-    semver "^7.6.0"
+    semver "^7.5.4"
 
 "@ethersproject/abi@5.7.0", "@ethersproject/abi@^5.1.2", "@ethersproject/abi@^5.7.0":
   version "5.7.0"
@@ -1953,54 +1953,55 @@
     "@noble/hashes" "~1.3.0"
     "@scure/base" "~1.1.0"
 
-"@semaphore-protocol/core@^4.0.0-beta.4":
-  version "4.0.0-beta.4"
-  resolved "https://registry.npmjs.org/@semaphore-protocol/core/-/core-4.0.0-beta.4.tgz#d42d4ad05275d6e1235674ab5bfc6753cf7dc88a"
-  integrity sha512-a8zWUxHpoAVL2ghIrhiX/vl3d5ihrsEOUjykFtP5Zb93IUxppfDwIA8J/80yq0sncLAowxz1dPhvSA7sj+7z3A==
+"@semaphore-protocol/core@^4.0.0-beta.6":
+  version "4.0.0-beta.6"
+  resolved "https://registry.npmjs.org/@semaphore-protocol/core/-/core-4.0.0-beta.6.tgz#b7d0b2b1bb73998fef39e23e399145ffa9813857"
+  integrity sha512-HHcGt4kq60MioWvGwhGGjaE30I/qNp8+AwZsIVD2Hdff+DrO/TLHftbgC6cUkvrAIDiUkUZTOVd+Mmkk5I3UGw==
   dependencies:
-    "@semaphore-protocol/group" "4.0.0-beta.4"
-    "@semaphore-protocol/identity" "4.0.0-beta.4"
-    "@semaphore-protocol/proof" "4.0.0-beta.4"
+    "@semaphore-protocol/group" "4.0.0-beta.6"
+    "@semaphore-protocol/identity" "4.0.0-beta.6"
+    "@semaphore-protocol/proof" "4.0.0-beta.6"
 
-"@semaphore-protocol/data@^4.0.0-beta.4":
-  version "4.0.0-beta.4"
-  resolved "https://registry.npmjs.org/@semaphore-protocol/data/-/data-4.0.0-beta.4.tgz#750e5342236c4e1eda0979c4f8b50d85394498d7"
-  integrity sha512-PdViVsx/CfJHFXOcj1EtoCPpURPGantn4BIentd63LXXDWaGk5xTVKnopiKYybp5qv2j3/IJQ5GSiOFZYZ/eaw==
+"@semaphore-protocol/data@^4.0.0-beta.6":
+  version "4.0.0-beta.6"
+  resolved "https://registry.npmjs.org/@semaphore-protocol/data/-/data-4.0.0-beta.6.tgz#ca0b0f74736b36a8aaa9edc25dc4ded653ee5392"
+  integrity sha512-CIv5xjtmiaA3Wx63v/Ms0akLrd43djXEXTVwVnqG8+fj/uFnlpvtNoXuWZh7YPgpTDibBDuDfvje1OlhcUbrKg==
   dependencies:
+    "@semaphore-protocol/utils" "4.0.0-beta.6"
     axios "1.6.6"
     ethers "6.11.0"
 
-"@semaphore-protocol/group@4.0.0-beta.4":
-  version "4.0.0-beta.4"
-  resolved "https://registry.npmjs.org/@semaphore-protocol/group/-/group-4.0.0-beta.4.tgz#bf41c4e2927ae98aca30f296c84c9a7e748c20dd"
-  integrity sha512-i2FirZrD77+ITddBm7u5bgzpTWBOoyBUxFnrZlIQ15J1iWKIqJYRFLrLsGAzJhlR9WIY4xkTLuQ6Y3moTlYBWA==
+"@semaphore-protocol/group@4.0.0-beta.6":
+  version "4.0.0-beta.6"
+  resolved "https://registry.npmjs.org/@semaphore-protocol/group/-/group-4.0.0-beta.6.tgz#1271fd89ba494833d4bc4264f74f243cc10a637f"
+  integrity sha512-cjrMYdFF3XJ1q6AWC9Xr3J5q6SFpU8AstHZHHQ9mIKJXxZBInBGmnhuI/8vsWPzw7NeMKV6w++AMINJeFIETQA==
   dependencies:
     "@zk-kit/imt" "2.0.0-beta.2"
 
-"@semaphore-protocol/identity@4.0.0-beta.4":
-  version "4.0.0-beta.4"
-  resolved "https://registry.npmjs.org/@semaphore-protocol/identity/-/identity-4.0.0-beta.4.tgz#cd1955e6c6bfc95fd600df1821895eed44198f6f"
-  integrity sha512-7XW5u2poo4aove5aSJ02cPEmoGT1vT0LXP4QR9kVpYizur3MHJgkx9YahhHOkGL1qikv8J9pj/OjUa9plKgjoA==
+"@semaphore-protocol/identity@4.0.0-beta.6":
+  version "4.0.0-beta.6"
+  resolved "https://registry.npmjs.org/@semaphore-protocol/identity/-/identity-4.0.0-beta.6.tgz#cad5c967d307e02a5335e48a683f88b6a2f2e565"
+  integrity sha512-gltFhVeDLXh4q/iNdPMoG+HGAXQ4xk3oIpp9eKQL34qpHS0EuYnYBr/eAf1YGzbL4n4w0rLe2t9aOS5D1H9pfg==
   dependencies:
     "@zk-kit/baby-jubjub" "0.3.0"
     "@zk-kit/eddsa-poseidon" "0.10.0"
     "@zk-kit/utils" "0.8.1"
     poseidon-lite "0.2.0"
 
-"@semaphore-protocol/proof@4.0.0-beta.4", "@semaphore-protocol/proof@^4.0.0-beta.4":
-  version "4.0.0-beta.4"
-  resolved "https://registry.npmjs.org/@semaphore-protocol/proof/-/proof-4.0.0-beta.4.tgz#c8d106fb811e719b3932810784df16470bbcee79"
-  integrity sha512-j64Qa1PJtjYq5W28RQQgMOOIMBhjtlE0tf+2fVSbD0mXCOZp8s2Ni1kCIJX+i1A5xys0vflGNPnD1grZQv/ekQ==
+"@semaphore-protocol/proof@4.0.0-beta.6":
+  version "4.0.0-beta.6"
+  resolved "https://registry.npmjs.org/@semaphore-protocol/proof/-/proof-4.0.0-beta.6.tgz#7ba99d489679a5f79ec1a8d704bc7b41a6b18168"
+  integrity sha512-HYQAyvylo+8atufLLKvWzW2ivApYPi5++BFaVIjXEXUpgVUbgcfMaw72eWsDS6cskeJ9p1OxwkwnZ2Gc2k/CBg==
   dependencies:
-    "@semaphore-protocol/utils" "4.0.0-beta.4"
+    "@semaphore-protocol/utils" "4.0.0-beta.6"
     "@zk-kit/utils" "0.8.1"
     ethers "6.10.0"
     snarkjs "0.7.3"
 
-"@semaphore-protocol/utils@4.0.0-beta.4":
-  version "4.0.0-beta.4"
-  resolved "https://registry.npmjs.org/@semaphore-protocol/utils/-/utils-4.0.0-beta.4.tgz#2325a587521cbf8a8945098ce85fd9cd073d7d7b"
-  integrity sha512-XqGZqix71UmFWJ9ct+Sm2JBloxF1UiZ4znNFe22N2uIHmEmObzWOdL9McbnNkNyJl6IxvlMciolXQ7sng2qI3Q==
+"@semaphore-protocol/utils@4.0.0-beta.6":
+  version "4.0.0-beta.6"
+  resolved "https://registry.npmjs.org/@semaphore-protocol/utils/-/utils-4.0.0-beta.6.tgz#38764c8f5337ace271597b48dfd5c8d43e3732fb"
+  integrity sha512-6lD4lu2uVJU35P/qKw0obaGtgzjNxbKCbg8rxoOggLV4Y410W8F5hcvn43/79bYCLHZTojBalIfUoqZXpp8mEQ==
   dependencies:
     ethers "^6.11.1"
 
@@ -2072,12 +2073,12 @@
     "@sentry/types" "5.30.0"
     tslib "^1.9.3"
 
-"@show-karma/karma-gap-sdk@^0.3.14":
-  version "0.3.14"
-  resolved "https://registry.yarnpkg.com/@show-karma/karma-gap-sdk/-/karma-gap-sdk-0.3.14.tgz#63348f291c46b0df255cd8f489c237cb410ebda6"
-  integrity sha512-/eyUx86Qx4xqTk1OkDQviN7hcK+2wEsddxCpUpbUSRBwqvSFZhdSnxz4bysPlcubnKGrBpEc+9eK/lCGvdaA+Q==
+"@show-karma/karma-gap-sdk@^0.3.16":
+  version "0.3.16"
+  resolved "https://registry.yarnpkg.com/@show-karma/karma-gap-sdk/-/karma-gap-sdk-0.3.16.tgz#09ce8c45e624c0ee314554c5ad160ae28b685cba"
+  integrity sha512-9HUl0DGvD8XebdZknOqdp0XhBUWpeQBWQY6PzLvlNXv3v7ySwkpfLUbwr1MGO5UqKb5fuYB6z+8k1VtbyiIy5A==
   dependencies:
-    "@ethereum-attestation-service/eas-sdk" "^1.4.2"
+    "@ethereum-attestation-service/eas-sdk" "1.4.2"
     "@gelatonetwork/relay-sdk" "^5.2.0"
     "@types/sha256" "^0.2.0"
     axios "^1.4.0"
@@ -5430,9 +5431,9 @@ ethers@^5.7.1:
     "@ethersproject/web" "5.7.1"
     "@ethersproject/wordlists" "5.7.0"
 
-ethers@^6.11.1:
+ethers@^6.10.0, ethers@^6.11.1:
   version "6.11.1"
-  resolved "https://registry.yarnpkg.com/ethers/-/ethers-6.11.1.tgz#96aae00b627c2e35f9b0a4d65c7ab658259ee6af"
+  resolved "https://registry.npmjs.org/ethers/-/ethers-6.11.1.tgz#96aae00b627c2e35f9b0a4d65c7ab658259ee6af"
   integrity sha512-mxTAE6wqJQAbp5QAe/+o+rXOID7Nw91OZXvgpjDa1r4fAbq2Nu314oEZSbjoRLacuCzs7kUC3clEvkCQowffGg==
   dependencies:
     "@adraffy/ens-normalize" "1.10.1"
@@ -9900,7 +9901,7 @@ semver@^7.3.4, semver@^7.3.7, semver@^7.3.8:
   dependencies:
     lru-cache "^6.0.0"
 
-semver@^7.6.0:
+semver@^7.5.4:
   version "7.6.0"
   resolved "https://registry.yarnpkg.com/semver/-/semver-7.6.0.tgz#1a46a4db4bffcccd97b743b5005c8325f23d4e2d"
   integrity sha512-EnwXhrlwXMk9gKu5/flx5sv/an57AkRplG3hTK68W7FRDN+k+OWBj65M7719OkA82XLBxrcX0KSHj+X5COhOVg==

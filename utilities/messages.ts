@@ -149,12 +149,30 @@ export const MESSAGES = {
       SUCCESS: "Member deleted successfully",
       ERROR: "There was an error deleting members. Please try again",
     },
+    IMPACT: {
+      SUCCESS: "Impact added successfully",
+      ERROR: "There was an error adding impact. Please try again",
+      REMOVE: {
+        SUCCESS: "Impact removed successfully",
+        ERROR: "There was an error removing impact. Please try again",
+      },
+      FORM: {
+        WORK: "Work is required",
+        IMPACT: "Impact is required",
+        DATE: "Date is required",
+        PROOF: "Proof is required",
+      },
+    },
     TRANSFER_OWNERSHIP: {
       SUCCESS: (newOwner: string) =>
         `Ownership transferred successfully to ${newOwner}. Updating our systems.`,
       ERROR: "There was an error transferring ownership. Please try again",
     },
     EMPTY: {
+      IMPACTS: {
+        NOT_CREATED: `Project owner is working on adding impact attestations. Check back in a few days :)`,
+        NOT_CREATED_USER: `Create a new impact attestation to show the world the impact of your work!`,
+      },
       GRANTS: {
         NOT_CREATED: `Check back in a few days and we’ll surely have something cool to
           show you :)`,

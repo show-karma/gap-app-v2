@@ -20,6 +20,11 @@ export const PAGES = {
     GRANT: (project: string, grant: string) =>
       `/project/${project}/grants?grantId=${grant}&tab=overview`,
     CONTACT_INFO: (project: string) => `/project/${project}/contact-info`,
+    IMPACT: {
+      ROOT: (project: string) => `/project/${project}/impact`,
+      ADD_IMPACT: (project: string) =>
+        `/project/${project}/impact?tab=add-impact`,
+    },
     TABS: {
       OVERVIEW: (project: string, grant: string) =>
         `/project/${project}/grants?grantId=${grant}&tab=overview`,
