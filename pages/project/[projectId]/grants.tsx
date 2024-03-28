@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ProjectPageLayout } from ".";
 import { useOwnerStore, useProjectStore } from "@/store";
@@ -37,6 +37,7 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { GrantMilestonesAndUpdates } from "@/components/Pages/GrantMilestonesAndUpdates";
 import { GrantAllReviews } from "@/components/Pages/AllReviews";
 import { ReviewGrant } from "@/components/Pages/ReviewGrant";
+
 import { useQueryState } from "nuqs";
 import {
   getMetadata,
@@ -497,7 +498,9 @@ const GrantsPage = ({
               )}
               {currentTab === "reviews" && <GrantAllReviews grant={grant} />}
               {currentTab === "review-this-grant" && (
-                <ReviewGrant grant={grant} />
+                <Suspense>
+                  <ReviewGrant grant={grant} />
+                </Suspense>
               )}
               {/*  */}
               {currentTab === "create-grant" && project?.uid && (
