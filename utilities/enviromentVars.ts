@@ -1,6 +1,5 @@
 const isDev = process.env.NEXT_PUBLIC_ENV === "staging";
-// const baseDevUrl = "https://gapstagapi.karmahq.xyz";
-const baseDevUrl = "http://127.0.0.1:3002";
+const baseDevUrl = "https://gapstagapi.karmahq.xyz";
 
 export const envVars = {
   NEXT_PUBLIC_ENV: process.env.NEXT_PUBLIC_ENV,
@@ -21,5 +20,4 @@ export const envVars = {
   },
   PROJECT_ID: process.env.NEXT_PUBLIC_PROJECT_ID || "",
   ANON_KARMA_URL: "https://anon.karmahq.xyz",
-  // ANON_KARMA_URL: "http://localhost:3001",
 };
