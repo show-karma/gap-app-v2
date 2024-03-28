@@ -265,10 +265,16 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
         })
       )}`;
 
-      alert(
-        `Generating proof: \n${groupId}, \n${messageHash}, \n${callbackUrl} \n${anonKarmaUrl}`
-      );
-      window.open(anonKarmaUrl, "_blank");
+      if (
+        confirm(
+          `Generating proof: You will be sent to the following AnonKarma url to generate your proof anonymously...\n\n${anonKarmaUrl}`
+        )
+      ) {
+        console.log("User confirmed the proof generation, opening url...");
+        window.open(anonKarmaUrl, "_blank");
+      } else {
+        console.log("User cancelled the proof generation");
+      }
     } catch (error) {
       console.log(error);
       toast.error(
@@ -317,7 +323,7 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
     <section>
       {!proof && <AnonKarmaAlert />}
 
-      {!proof && !localStorage.getItem("mountAnswers") ? (
+      {!proof ? (
         <form
           onSubmit={form.handleSubmit(onSubmit)}
           className="flex w-full flex-col gap-3  rounded-xl"
@@ -594,10 +600,11 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
             onClick={() => {
               let cachedMountAnswers = localStorage.getItem("mountAnswers");
               if (cachedMountAnswers) {
+                alert("Found cached answers, sending...");
                 sendAnonAnswers(JSON.parse(cachedMountAnswers))
                   .then(() => {
                     alert("Answers sent anonymously!");
-                    localStorage.removeItem("mountAnswers");
+                    // localStorage.removeItem("mountAnswers");
                   })
                   .catch((e) => {
                     alert("Error sending answers: " + e);

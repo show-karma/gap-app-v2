@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ProjectPageLayout } from ".";
 import { useOwnerStore, useProjectStore } from "@/store";
@@ -498,7 +498,9 @@ const GrantsPage = ({
               )}
               {currentTab === "reviews" && <GrantAllReviews grant={grant} />}
               {currentTab === "review-this-grant" && (
-                <ReviewGrant grant={grant} />
+                <Suspense>
+                  <ReviewGrant grant={grant} />
+                </Suspense>
               )}
               {/*  */}
               {currentTab === "create-grant" && project?.uid && (

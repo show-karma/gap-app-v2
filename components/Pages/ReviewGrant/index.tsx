@@ -20,6 +20,7 @@ import { getQuestionsOf, hasAlreadyReviewed } from "@/utilities/sdk";
 import { additionalQuestion } from "@/utilities/tabs";
 import { MESSAGES } from "@/utilities/messages";
 import { useAuthStore } from "@/store/auth";
+import { useSearchParams } from "next/navigation";
 
 interface ReviewGrantProps {
   grant: Grant | undefined;
@@ -30,6 +31,8 @@ function classNames(...classes: any) {
 }
 
 export const ReviewGrant: FC<ReviewGrantProps> = ({ grant }) => {
+  const searchParams = useSearchParams();
+
   const [zkgroup, setZkGroup] = useState<any>(null);
 
   const { isConnected } = useAccount();
@@ -40,7 +43,7 @@ export const ReviewGrant: FC<ReviewGrantProps> = ({ grant }) => {
 
   const [isFetching, setIsFetching] = useState(true);
   const [isAnonReview, setIsAnonReview] = useState(false);
-
+  const [proof, setProof] = useState<any>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
 
   const [alreadyReviewed, setAlreadyReviewed] = useState<boolean>(false);
@@ -51,6 +54,16 @@ export const ReviewGrant: FC<ReviewGrantProps> = ({ grant }) => {
     email: undefined,
     categories: undefined,
   });
+
+  useEffect(() => {
+    const proofEncoded = searchParams.get("proof");
+    if (proofEncoded) {
+      console.log("Proof received", proofEncoded);
+      setProof(JSON.parse(atob(proofEncoded)));
+    } else {
+      console.log("No proof received");
+    }
+  }, []);
 
   useEffect(() => {
     // Check if zkgroup exists for the grant
@@ -198,46 +211,54 @@ export const ReviewGrant: FC<ReviewGrantProps> = ({ grant }) => {
           </div>
         ) : questions.length && grant && zkgroup ? (
           <div className="mt-4 flex w-full flex-col justify-start gap-4 rounded-lg px-3">
-            <div className="flex">
-              <Switch
-                checked={isAnonReview}
-                onChange={setIsAnonReview}
-                className={classNames(
-                  isAnonReview ? "bg-blue-600" : "bg-gray-200",
-                  "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
-                )}
-              >
-                <span className="sr-only">Use setting</span>
-                <span
-                  aria-hidden="true"
+            {!proof && (
+              <div className="flex">
+                <Switch
+                  checked={isAnonReview}
+                  onChange={setIsAnonReview}
                   className={classNames(
-                    isAnonReview ? "translate-x-5" : "translate-x-0",
-                    "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                    isAnonReview ? "bg-blue-600" : "bg-gray-200",
+                    "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
                   )}
-                />
-              </Switch>
-              <h5 className="ml-3">
-                Review this grant anonymously? (Using AnonKarma zkGroups)
-              </h5>
-            </div>
+                >
+                  <span className="sr-only">Use setting</span>
+                  <span
+                    aria-hidden="true"
+                    className={classNames(
+                      isAnonReview ? "translate-x-5" : "translate-x-0",
+                      "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"
+                    )}
+                  />
+                </Switch>
+                <h5 className="ml-3">
+                  Review this grant anonymously? (Using AnonKarma zkGroups)
+                </h5>
+              </div>
+            )}
 
-            {!isAnonReview ? (
+            {isAnonReview ? (
+              <ReviewFormAnon
+                grant={grant}
+                allQuestions={questions}
+                alreadyReviewed={alreadyReviewed}
+                reviewerInfo={reviewerInfo}
+                zkgroup={zkgroup}
+              />
+            ) : proof ? (
+              <ReviewFormAnon
+                grant={grant}
+                allQuestions={questions}
+                alreadyReviewed={alreadyReviewed}
+                reviewerInfo={reviewerInfo}
+                zkgroup={zkgroup}
+              />
+            ) : (
               <ReviewForm
                 grant={grant}
                 allQuestions={questions}
                 alreadyReviewed={alreadyReviewed}
                 reviewerInfo={reviewerInfo}
               />
-            ) : (
-              <Suspense>
-                <ReviewFormAnon
-                  grant={grant}
-                  allQuestions={questions}
-                  alreadyReviewed={alreadyReviewed}
-                  reviewerInfo={reviewerInfo}
-                  zkgroup={zkgroup}
-                />
-              </Suspense>
             )}
           </div>
         ) : (

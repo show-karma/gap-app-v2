@@ -65,6 +65,8 @@ export const INDEXER = {
       USER_ANSWERED: (grantUID: string, publicAddress: string) =>
         `/grants/${grantUID}/questions/answer/${publicAddress}`,
       ALL: (grantUID: string) => `/grants/${grantUID}/questions/answer/feed`,
+      ALL_ANON: (grantUID: string) =>
+        `/grants/${grantUID}/questions/answer/feed-anon`,
     },
     CATEGORIES: {
       ALL: (idOrSlug: string) => `/communities/${idOrSlug}/categories`,
