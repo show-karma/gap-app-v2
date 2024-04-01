@@ -26,11 +26,14 @@ export const MESSAGES = {
       EMPTY: "The grantee has not defined any impact criteria yet.",
     },
     REVIEW: {
+      NOT_AUTHORIZED: "You are not authorized to review this grant.",
       EMPTY_REVIEWS: "No reviews yet, be the first to review this grant!",
       CAN_NOT_REVIEW: "This grant has not been configured for reviewing yet.",
       ALREADY_REVIEWED: "You have already reviewed this grant.",
       SUCCESS: (projectName: string, grantName: string) =>
         `Your review of ${projectName} - ${grantName} was succesfully saved.`,
+      ANON_REVIEW_ALREADY_EXISTS: (projectName: string, grantName: string) =>
+        `You have already submitted an anonymous review for ${projectName} - ${grantName}.`,
       ERROR: (projectName: string, grantName: string) =>
         `Your review of ${projectName} - ${grantName} couldn't be saved.`,
       FORM: {

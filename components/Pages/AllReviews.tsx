@@ -16,7 +16,7 @@ import { MarkdownPreview } from "../Utilities/MarkdownPreview";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
-import { getReviewsOf } from "@/utilities/sdk";
+import { getReviewsOf, getAnonReviewsOf } from "@/utilities/sdk";
 
 interface GrantAllReviewsProps {
   grant: Grant | undefined;
@@ -32,6 +32,17 @@ type Review = {
   publicAddress: string;
   createdAt: string;
 };
+type AnonReview = {
+  answers: {
+    query: string;
+    rating: number;
+    answer: string;
+    questionId: number;
+    createdAt: string;
+  }[];
+  nullifier: string;
+  createdAt: string;
+};
 
 export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
   const isProjectLoading = useProjectStore((state) => state.loading);
@@ -42,9 +53,13 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
   }
   const project = useProjectStore((state) => state.project);
   const [isFetching, setIsFetching] = useState(false);
+  const [isFetchingAnon, setIsFetchingAnon] = useState(false);
   const [allReviews, setAllReviews] = useState<Review[]>([]);
+  const [allAnonReviews, setAllAnonReviews] = useState<AnonReview[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [anonReviews, setAnonReviews] = useState<AnonReview[]>([]);
   const [page, setPage] = useState(1);
+  const [pageAnon, setPageAnon] = useState(1);
   const pageLimit = 10;
 
   useEffect(() => {
@@ -80,7 +95,41 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
         setIsFetching(false);
       }
     };
+
+    const getReviewsAnon = async () => {
+      setIsFetchingAnon(true);
+      if (!grant) return;
+      try {
+        const data: AnonReview[] = await getAnonReviewsOf(grant.uid);
+        const orderedData = data.map((review) => ({
+          ...review,
+
+          answers: [
+            ...review.answers.filter(
+              (answer) => !additionalQuestion(answer.questionId, answer.query)
+            ),
+            ...review.answers.filter((answer) =>
+              additionalQuestion(answer.questionId, answer.query)
+            ),
+          ],
+        }));
+        const sortByDate = (a: AnonReview, b: AnonReview) =>
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+        const sortedData = orderedData.sort(sortByDate);
+        setAllAnonReviews(sortedData);
+        const slicedData = sortedData.slice(0, pageLimit);
+
+        setAnonReviews(slicedData);
+      } catch (error) {
+        console.log(error);
+        setAnonReviews([]);
+      } finally {
+        setIsFetchingAnon(false);
+      }
+    };
+
     getReviews();
+    getReviewsAnon();
   }, [grant]);
 
   useEffect(() => {
@@ -89,6 +138,12 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
       page * pageLimit
     );
     setReviews(slicedData);
+
+    const slicedAnonData = allAnonReviews.slice(
+      (pageAnon - 1) * pageLimit,
+      pageAnon * pageLimit
+    );
+    setAnonReviews(slicedAnonData);
   }, [page]);
 
   // const hasSpecific = grant.categories?.find(
@@ -125,15 +180,126 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
               </div>
             ) : null} */}
         </div>
-        {isFetching ? (
+        {isFetching && isFetchingAnon ? (
           <div className="flex w-full flex-row justify-center">
             <Spinner />
           </div>
         ) : (
           <div className="flex w-full flex-col items-start gap-6">
             <div className="flex w-full flex-1 flex-col gap-3">
-              {reviews.length ? (
+              {reviews.length || anonReviews.length ? (
                 <>
+                  {anonReviews.map((review, index) => (
+                    <div
+                      className="flex flex-col items-start justify-start gap-6 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-3 py-4"
+                      key={`${review.nullifier}${+index}`}
+                    >
+                      <div className="flex w-full flex-row items-center justify-between gap-4">
+                        <div className="flex flex-1 flex-row items-center justify-start gap-2">
+                          <p className="text-base font-normal text-black dark:text-white">
+                            Review by Anon User 🕵️
+                          </p>
+                          {votingPowerCommunities.find(
+                            (item) =>
+                              item.toLowerCase() ===
+                                grant?.community?.details?.name?.toLowerCase() ||
+                              item.toLowerCase() ===
+                                grant?.community?.details?.slug?.toLowerCase()
+                          ) ? (
+                            grant?.community ? (
+                              <VotingPowerPopover
+                                reviewer={review.nullifier}
+                                community={grant.community}
+                              >
+                                <div className="flex flex-row gap-3 bg-transparent p-0 hover:bg-transparent">
+                                  <img
+                                    src={blo(
+                                      "0x0000000000000000000000000000000000000000" as Hex,
+                                      8
+                                    )}
+                                    alt={review.nullifier}
+                                    className="h-6 w-6 items-center rounded-full border-1 border-gray-100 dark:border-zinc-900"
+                                  />
+                                  <p className="text-base font-body font-normal underline text-black dark:text-zinc-100">
+                                    <EthereumAddressToENSName
+                                      address={review.nullifier}
+                                    />
+                                  </p>
+                                </div>
+                              </VotingPowerPopover>
+                            ) : null
+                          ) : (
+                            <div className="flex flex-row gap-3 items-center bg-transparent p-0 hover:bg-transparent">
+                              <img
+                                src={blo(review.nullifier as Hex, 8)}
+                                alt={review.nullifier}
+                                className="h-6 w-6 rounded-full"
+                              />
+                              <p className="text-base font-body font-normal text-black dark:text-white">
+                                <EthereumAddressToENSName
+                                  address={review.nullifier}
+                                />
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        <p className="w-max text-base">
+                          {formatDate(review.answers[0]?.createdAt)}{" "}
+                        </p>
+                      </div>
+                      <div className="flex w-full flex-col gap-5">
+                        {review.answers.map((answer) => (
+                          <div
+                            className="flex w-full flex-col justify-start border-l-2 border-zinc-300 pl-2.5"
+                            key={answer.query}
+                          >
+                            <div className="mb-2 flex w-full flex-row items-start justify-between gap-1">
+                              <div data-color-mode="light">
+                                <MarkdownPreview
+                                  className="text-base font-bold"
+                                  components={{
+                                    strong: ({ children, ...props }) => {
+                                      return (
+                                        <ExternalLink {...props}>
+                                          {children}
+                                        </ExternalLink>
+                                      );
+                                    },
+                                    a: ({ children, ...props }) => {
+                                      return (
+                                        <ExternalLink {...props}>
+                                          {children}
+                                        </ExternalLink>
+                                      );
+                                    },
+                                  }}
+                                  source={answer.query}
+                                />
+                              </div>
+                              {additionalQuestion(
+                                answer.questionId,
+                                answer.query
+                              ) ? null : (
+                                <p className="w-max min-w-max text-base font-normal">
+                                  {Array.from(
+                                    { length: answer.rating },
+                                    (_, i) => (
+                                      <span key={i}>★</span>
+                                    )
+                                  )}
+                                </p>
+                              )}
+                            </div>
+
+                            <p className="text-base font-normal">
+                              {answer.answer}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
                   {reviews.map((review, index) => (
                     <div
                       className="flex flex-col items-start justify-start gap-6 rounded-lg bg-zinc-100 dark:bg-zinc-800 px-3 py-4"
