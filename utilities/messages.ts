@@ -32,6 +32,8 @@ export const MESSAGES = {
       ALREADY_REVIEWED: "You have already reviewed this grant.",
       SUCCESS: (projectName: string, grantName: string) =>
         `Your review of ${projectName} - ${grantName} was succesfully saved.`,
+      ANON_REVIEW_ALREADY_EXISTS: (projectName: string, grantName: string) =>
+        `You have already submitted an anonymous review for ${projectName} - ${grantName}.`,
       ERROR: (projectName: string, grantName: string) =>
         `Your review of ${projectName} - ${grantName} couldn't be saved.`,
       FORM: {
