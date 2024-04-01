@@ -77,10 +77,16 @@ export const ReviewGrant: FC<ReviewGrantProps> = ({ grant }) => {
             "1"
           )
         );
-        // console.log("zkgroup: ", data);
-        setZkGroup(data);
+
+        if (data) {
+          console.log(
+            `zkgroup: ${JSON.stringify(data)} found for this grant`,
+            data
+          );
+          setZkGroup(data);
+        }
       } catch (error) {
-        console.log(error);
+        console.error("Error in finding zkgroup for this grant", error);
       }
     })();
   }, []);
@@ -163,10 +169,55 @@ export const ReviewGrant: FC<ReviewGrantProps> = ({ grant }) => {
   }
 
   if (!isConnected || !isAuth) {
-    return (
+    // Check if zkgroup is enabled for this grant
+    return !zkgroup ? (
       <div className="flex flex-1 flex-col items-center justify-center gap-3">
         <p>Please, connect your wallet.</p>
         <Button onClick={openConnectModal}>Connect wallet</Button>
+      </div>
+    ) : (
+      // Render this when no wallet is connected
+      <div className="space-y-5 flex w-full justify-start">
+        <div className="flex w-full max-w-5xl flex-col items-start justify-start gap-1">
+          <div className="flex w-full flex-row items-center justify-between gap-2">
+            <div className="flex w-full flex-col items-start justify-between gap-6  border-b border-b-zinc-300 pb-8">
+              <h2 className="text-2xl font-normal">Review Grant</h2>
+              <div className="flex flex-col gap-2">
+                <h3 className="text-lg font-bold">Goal of review</h3>
+                <p>
+                  {`The purpose of the review is to evaluate the extent to which the
+  contributions of grantees have aligned with and advanced the
+  DAO's mission of spearheading the evolution of decentralized
+  technologies and governance.`}
+                </p>
+                <p>
+                  {`This review aims to assess the impact, relevance, and
+  effectiveness of the grantees' past work in supporting the DAO's
+  objectives, ensuring that the retroactive funding recognizes and
+  encourages meaningful and impactful contributions within the DAO
+  ecosystem.`}
+                </p>
+              </div>
+            </div>
+          </div>
+          {loading || isFetching ? (
+            <div className="flex w-full items-center justify-center">
+              <Spinner />
+            </div>
+          ) : questions.length && grant && zkgroup ? (
+            <div className="mt-4 flex w-full flex-col justify-start gap-4 rounded-lg px-3">
+              <ReviewFormAnon
+                grant={grant}
+                allQuestions={questions}
+                alreadyReviewed={alreadyReviewed}
+                reviewerInfo={reviewerInfo}
+                zkgroup={zkgroup}
+              />
+            </div>
+          ) : (
+            <p>{MESSAGES.GRANT.REVIEW.CAN_NOT_REVIEW}</p>
+          )}
+        </div>
       </div>
     );
   }

@@ -294,15 +294,35 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
       proof: proof,
       groupId: zkgroup?.groupId,
       answers: mountAnswers,
-    }).then(() => {
-      toast.success(
-        MESSAGES.GRANT.REVIEW.SUCCESS(
-          project?.details?.title as string,
-          grant.details?.title as string
-        )
-      );
-      setHasSubmitted(true);
-    });
+    })
+      .then((response) => {
+        const [data] = response;
+        if (data?.success == true) {
+          toast.success(
+            MESSAGES.GRANT.REVIEW.SUCCESS(
+              project?.details?.title as string,
+              grant.details?.title as string
+            )
+          );
+          setHasSubmitted(true);
+        } else {
+          toast.error(
+            MESSAGES.GRANT.REVIEW.ANON_REVIEW_ALREADY_EXISTS(
+              project?.details?.title as string,
+              grant.details?.title as string
+            )
+          );
+        }
+      })
+      .catch((error) => {
+        console.log("Error in storing anon reviews: ", error);
+        toast.error(
+          MESSAGES.GRANT.REVIEW.ERROR(
+            project?.details?.title as string,
+            grant.details?.title as string
+          )
+        );
+      });
   }
 
   function onSubmit(data: z.infer<typeof FormSchema>) {
@@ -588,6 +608,13 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
         <section>
           <div className="w-full">
             <p className="text-lg font-bold text-left mb-2">AnonKarma Proof</p>
+            <p className="mb-2">
+              Your saved answers are ready to be submitted.{" "}
+            </p>
+            {/* <div>
+              <h3>Your saved answers</h3>
+              <p>{localStorage.getItem("mountAnswers")}</p>
+            </div> */}
             <textarea
               defaultValue={JSON.stringify(proof, null, 2)}
               disabled
