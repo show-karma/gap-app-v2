@@ -292,6 +292,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
                     title={item.object.title}
                     description={item.object.text}
                     date={item.object.createdAt}
+                    update={item.object}
                   />
                 );
               }
