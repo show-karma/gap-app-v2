@@ -16,12 +16,13 @@ import { cn } from "@/utilities/tailwind";
 interface CommunitiesDropdownProps {
   onSelectFunction: (value: string, networkId: number) => void;
   previousValue?: string;
+  communities: Community[];
 }
 export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
   onSelectFunction,
   previousValue,
+  communities,
 }) => {
-  const [communities, setCommunities] = useState<Community[]>([]);
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(previousValue || "");
 
@@ -30,23 +31,6 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
     label: community.details?.name || shortAddress(community.uid),
     networkId: community.chainID,
   }));
-
-  const { gap } = useGap();
-  useEffect(() => {
-    const fetchCommunities = async () => {
-      try {
-        if (!gap) throw new Error("Gap not initialized");
-        const result = await gap.fetch.communities();
-        setCommunities(result);
-        return result;
-      } catch (error) {
-        console.log(error);
-        setCommunities([]);
-        return undefined;
-      }
-    };
-    fetchCommunities();
-  }, []);
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>

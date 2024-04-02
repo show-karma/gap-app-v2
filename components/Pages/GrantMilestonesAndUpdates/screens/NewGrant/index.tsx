@@ -13,6 +13,7 @@ import {
   Grant,
   Milestone,
   MilestoneCompleted,
+  Community,
 } from "@show-karma/karma-gap-sdk";
 import type { FC } from "react";
 import { useEffect, useState } from "react";
@@ -41,6 +42,7 @@ import { useAuthStore } from "@/store/auth";
 import { formatDate } from "@/utilities/formatDate";
 import { isCommunityAdminOf } from "@/utilities/sdk";
 import { useCommunityAdminStore } from "@/store/community";
+import * as Tooltip from "@radix-ui/react-tooltip";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -202,6 +204,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const [communityNetworkId, setCommunityNetworkId] = useState<number>(
     appNetwork[0].id
   );
+  const [isCommunityAllowed, setIsCommunityAllowed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const selectedProject = useProjectStore((state) => state.project);
   const { chain } = useNetwork();
@@ -551,6 +554,72 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   );
 
   const isDescriptionValid = !!description.length;
+  const signer = useSigner();
+
+  const [allCommunities, setAllCommunities] = useState<Community[]>([]);
+
+  const community = form.getValues("community");
+
+  useEffect(() => {
+    const fetchCommunities = async () => {
+      try {
+        if (!gap) throw new Error("Gap not initialized");
+        const result = await gap.fetch.communities();
+        setAllCommunities(result);
+        return result;
+      } catch (error) {
+        console.log(error);
+        setAllCommunities([]);
+        return undefined;
+      }
+    };
+    fetchCommunities();
+  }, []);
+
+  useEffect(() => {
+    if (isOwner) {
+      setIsCommunityAllowed(true);
+      return;
+    }
+    async function checkCommunityAdmin() {
+      try {
+        const findCommunity = allCommunities.find(
+          (item) => item.uid.toLowerCase() === community.toLowerCase()
+        );
+        if (!findCommunity) return setIsCommunityAllowed(false);
+        const result = await isCommunityAdminOf(
+          findCommunity as Community,
+          address as string,
+          signer
+        );
+        setIsCommunityAllowed(result);
+      } catch {
+        setIsCommunityAllowed(false);
+      }
+    }
+    if (isCommunityAdmin && community) {
+      checkCommunityAdmin();
+    }
+  }, [isCommunityAdmin, community]);
+
+  const actionButtonDisable =
+    isSubmitting ||
+    isLoading ||
+    !isDescriptionValid ||
+    !allMilestonesValidated ||
+    (grantScreen === "create-grant" && !isValid) ||
+    (!isCommunityAllowed && isCommunityAdmin);
+
+  const handleButtonDisableMessage = () => {
+    if (!isCommunityAllowed && isCommunityAdmin)
+      return "You are not admin of this community.";
+    if (grantScreen === "create-grant" && !isValid)
+      return "Please fill all required(*) fields.";
+    if (isSubmitting || isLoading) return "Please wait...";
+    if (!isDescriptionValid) return "Description is required.";
+    if (!allMilestonesValidated) return "All milestones must be filled.";
+    return "";
+  };
 
   return (
     <div className={"flex w-full flex-col items-start  justify-center"}>
@@ -601,6 +670,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                   ? grantToEdit?.communityUID
                   : undefined
               }
+              communities={allCommunities}
             />
             <p className="text-base text-red-400">
               {errors.community?.message}
@@ -697,7 +767,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             <p className="text-base text-red-400">{errors.cycle?.message}</p>
           </div> */}
 
-          {(isOwner || isCommunityAdmin) && (
+          {(isOwner || (isCommunityAdmin && isCommunityAllowed)) && (
             <div className="flex w-full flex-col">
               <label htmlFor="tags-input" className={labelStyle}>
                 Recipient address (optional)
@@ -909,20 +979,33 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             Cancel
           </Button>
 
-          <Button
-            onClick={handleSubmit(onSubmit)}
-            className="flex items-center justify-start gap-3 rounded bg-blue-500 dark:bg-blue-900 px-6 text-base font-bold text-white hover:bg-blue-500 hover:opacity-75"
-            disabled={
-              isSubmitting ||
-              isLoading ||
-              !isDescriptionValid ||
-              !allMilestonesValidated ||
-              (grantScreen === "create-grant" && !isValid)
-            }
-            isLoading={isSubmitting || isLoading}
-          >
-            {grantScreen === "edit-grant" ? "Edit grant" : "Create grant"}
-          </Button>
+          <Tooltip.Provider>
+            <Tooltip.Root delayDuration={0}>
+              <Tooltip.Trigger asChild>
+                <div className="h-max">
+                  <Button
+                    onClick={handleSubmit(onSubmit)}
+                    className="flex items-center justify-start gap-3 rounded bg-blue-500 dark:bg-blue-900 px-6 text-base font-bold text-white hover:bg-blue-500 hover:opacity-75"
+                    disabled={actionButtonDisable}
+                    isLoading={isSubmitting || isLoading}
+                  >
+                    {grantScreen === "edit-grant"
+                      ? "Edit grant"
+                      : "Create grant"}
+                  </Button>
+                </div>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content className="TooltipContent" sideOffset={5}>
+                  {actionButtonDisable ? (
+                    <div className="px-2 bg-red-100 rounded-md py-2">
+                      <p>{handleButtonDisableMessage()}</p>
+                    </div>
+                  ) : null}
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+          </Tooltip.Provider>
         </div>
       </div>
     </div>

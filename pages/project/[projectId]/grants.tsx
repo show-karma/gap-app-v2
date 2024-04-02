@@ -190,8 +190,11 @@ const GrantsPage = ({
 
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
+  const isCommunityAdmin = useCommunityAdminStore(
+    (state) => state.isCommunityAdmin
+  );
 
-  const isAuthorized = isProjectOwner || isContractOwner;
+  const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
   const [, changeTab] = useQueryState("tab");
   const [, changeGrantId] = useQueryState("grantId");
   const { address } = useAccount();
