@@ -138,6 +138,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
         currentGrant?.milestones?.push(milestoneToAttest);
       });
     } catch (error) {
+      console.error(error);
       toast.error(MESSAGES.MILESTONES.CREATE.ERROR);
     } finally {
       setIsLoading(false);
