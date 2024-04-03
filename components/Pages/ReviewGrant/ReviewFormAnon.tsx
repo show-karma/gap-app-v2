@@ -226,12 +226,13 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
             explanation: item.answer,
             rating: 0,
           };
+        } else {
+          return {
+            questionId: item.id,
+            explanation: item.answer,
+            rating: +item.rating,
+          };
         }
-        return {
-          questionId: item.id,
-          explanation: item.answer,
-          rating: +item.rating,
-        };
       });
 
       await fetchData(
@@ -247,33 +248,51 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
         console.log(error);
       });
 
-      localStorage.setItem("mountAnswers", JSON.stringify(mountAnswers));
-
-      const messageHash = createHash("sha256")
-        .update(JSON.stringify(mountAnswers))
-        .digest("hex")
-        .slice(0, 12);
-      console.log("messageHash", messageHash);
-      const groupId = zkgroup.groupId;
-      const callbackUrl = window.location.href;
-      const anonKarmaUrl = `${envVars.ANON_KARMA_URL}?proofData=${btoa(
-        JSON.stringify({
-          groupId: String(groupId),
-          message: messageHash,
-          callbackUrl,
-          scope: "1",
-        })
-      )}`;
-
       if (
-        confirm(
-          `Generating proof: You will be sent to the following AnonKarma url to generate your proof anonymously...\n\n${anonKarmaUrl}`
-        )
+        JSON.stringify(mountAnswers) === localStorage.getItem("mountAnswers")
       ) {
-        console.log("User confirmed the proof generation, opening url...");
-        window.open(anonKarmaUrl, "_blank");
+        console.log("No changes in answers, not sending to AnonKarma");
+        let cachedMountAnswers = localStorage.getItem("mountAnswers");
+        if (cachedMountAnswers) {
+          sendAnonAnswers(JSON.parse(cachedMountAnswers))
+            .then(() => {
+              alert("Answers sent anonymously with proof!");
+              // localStorage.removeItem("mountAnswers");
+            })
+            .catch((e) => {
+              alert("Error sending answers: " + e);
+            });
+        }
       } else {
-        console.log("User cancelled the proof generation");
+        console.log("Changes in answers, sending to AnonKarma");
+        localStorage.setItem("mountAnswers", JSON.stringify(mountAnswers));
+
+        const messageHash = createHash("sha256")
+          .update(JSON.stringify(mountAnswers))
+          .digest("hex")
+          .slice(0, 12);
+        console.log("messageHash", messageHash);
+        const groupId = zkgroup.groupId;
+        const callbackUrl = window.location.href;
+        const anonKarmaUrl = `${envVars.ANON_KARMA_URL}?proofData=${btoa(
+          JSON.stringify({
+            groupId: String(groupId),
+            message: messageHash,
+            callbackUrl,
+            scope: "1",
+          })
+        )}`;
+
+        if (
+          confirm(
+            `Generating proof: You will be sent to the following AnonKarma url to generate your proof anonymously...\n\n${anonKarmaUrl}`
+          )
+        ) {
+          console.log("User confirmed the proof generation, opening url...");
+          window.open(anonKarmaUrl, "_blank");
+        } else {
+          console.log("User cancelled the proof generation");
+        }
       }
     } catch (error) {
       console.log(error);
@@ -332,6 +351,23 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
   const { watch } = form;
   const choice = watch("infos.choice");
   const categories = watch("infos.categories");
+
+  useEffect(() => {
+    // For rendering locally cached answers
+    const savedAnswers = JSON.parse(
+      localStorage.getItem("mountAnswers") || "{}"
+    );
+    if (savedAnswers) {
+      console.log("Found saved answers: ", savedAnswers);
+      for (let i = 0; i < savedAnswers.length; i++) {
+        form.setValue(`questions.${i}.rating`, savedAnswers[i].rating || 0);
+        form.setValue(
+          `questions.${i}.answer`,
+          savedAnswers[i].explanation || ""
+        );
+      }
+    }
+  }, []);
 
   return alreadyReviewed || hasSubmitted ? (
     <div className="flex w-full max-w-max flex-col gap-3 rounded-xl border border-zinc-200 p-4">
@@ -611,15 +647,280 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
             <p className="mb-2">
               Your saved answers are ready to be submitted.{" "}
             </p>
-            {/* <div>
-              <h3>Your saved answers</h3>
-              <p>{localStorage.getItem("mountAnswers")}</p>
-            </div> */}
+            <div>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="flex w-full flex-col gap-3  rounded-xl"
+              >
+                {orderedQuestions.map((question, index) => (
+                  <div
+                    key={`${question.query}${question.id}`}
+                    className="flex w-full flex-col gap-2"
+                  >
+                    <div className="flex w-full flex-row items-center justify-between gap-3 max-lg:flex-col max-lg:items-start">
+                      <div
+                        data-color-mode="light"
+                        className="max-w-2xl text-base font-semibold text-black dark:text-zinc-100"
+                      >
+                        <MarkdownPreview
+                          className="text-base font-semibold text-black dark:text-zinc-100"
+                          components={{
+                            strong: ({ children, ...props }) => {
+                              return (
+                                <ExternalLink {...props}>
+                                  {children}
+                                </ExternalLink>
+                              );
+                            },
+                            a: ({ children, ...props }) => {
+                              return (
+                                <ExternalLink {...props}>
+                                  {children}
+                                </ExternalLink>
+                              );
+                            },
+                          }}
+                          source={question.query}
+                        />
+                      </div>
+
+                      {additionalQuestion(
+                        question.questionId,
+                        question?.query
+                      ) ? null : (
+                        <div className="flex flex-col gap-2 p-3 max-lg:p-0">
+                          <div
+                            className="flex w-full max-w-max flex-row items-center gap-3 rounded dark:bg-transparent px-2.5 py-3"
+                            style={{
+                              backgroundColor: "rgb(242, 244, 247)",
+                            }}
+                            {...form.register(`questions.${index}.rating`)}
+                          >
+                            <p className="text-base font-bold text-gray-600 dark:text-zinc-100">
+                              Rating *
+                            </p>
+                            <DynamicStars
+                              totalStars={5}
+                              rating={
+                                form.watch("questions")[index]?.rating || 0
+                              }
+                              setRating={(rating) => {
+                                form.setValue(
+                                  `questions.${index}.rating`,
+                                  rating || 0
+                                );
+                              }}
+                            />
+                            {+(
+                              form.getValues("questions")[index]?.rating || 0
+                            ) > 0 ? (
+                              <p className="text-xl font-semibold text-gray-600 dark:text-zinc-100">
+                                {form.getValues("questions")[index]?.rating}
+                              </p>
+                            ) : null}
+                          </div>
+                          <ErrorMessage
+                            message={
+                              form.formState.errors?.questions?.[index]?.rating
+                                ?.message
+                            }
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div>
+                      <textarea
+                        className="w-full rounded-lg border border-zinc-200 px-2 py-1 dark:bg-zinc-800 dark:text-white dark:border-zinc-600"
+                        placeholder={
+                          MESSAGES.GRANT.REVIEW.FORM.PLACEHOLDERS.ANSWER
+                        }
+                        {...form.register(`questions.${index}.answer`)}
+                      />
+                      <ErrorMessage
+                        message={
+                          form.formState.errors?.questions?.[index]?.answer
+                            ?.message
+                        }
+                      />
+                    </div>
+                  </div>
+                ))}
+                <div className="mt-8">
+                  <label
+                    id="infos.choice"
+                    className="max-w-2xl text-base font-semibold text-black dark:text-zinc-100"
+                  >
+                    Would you be interested in reviewing grants across web3
+                    ecosystem? Compensation will be provided for your efforts. *
+                  </label>
+                  <div className="flex flex-row items-center gap-8">
+                    <label className="flex flex-row items-center gap-2">
+                      <input
+                        className="text-base font-normal"
+                        {...form.register("infos.choice")}
+                        type="radio"
+                        value="yes"
+                      />
+                      Yes
+                    </label>
+                    <label className="flex flex-row items-center gap-2">
+                      <input
+                        className="text-base font-normal"
+                        {...form.register("infos.choice")}
+                        type="radio"
+                        value="no"
+                      />
+                      No
+                    </label>
+                  </div>
+                  <ErrorMessage
+                    message={form.formState.errors?.infos?.choice?.message}
+                  />
+                </div>
+                {choice === "yes" ? (
+                  <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-2">
+                      <label
+                        id="infos.name"
+                        className="text-base font-semibold text-black dark:text-zinc-100"
+                      >
+                        Enter your name *
+                      </label>
+                      <input
+                        className="w-full max-w-sm rounded-lg border border-zinc-200 px-2 py-1 dark:bg-zinc-800 dark:text-white dark:border-zinc-600"
+                        placeholder="Input your name"
+                        {...form.register("infos.name")}
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <label
+                        id="infos.email"
+                        className="text-base font-semibold text-black dark:text-zinc-100"
+                      >
+                        Enter your email address *
+                      </label>
+                      <input
+                        className="w-full max-w-sm rounded-lg border border-zinc-200 px-2 py-1 dark:bg-zinc-800 dark:text-white dark:border-zinc-600"
+                        placeholder="Input your email"
+                        {...form.register("infos.email")}
+                      />
+                    </div>
+                    <Controller
+                      control={form.control}
+                      name="infos.categories"
+                      render={({ field: { onChange } }) => (
+                        <Listbox
+                          value={categories}
+                          onChange={(value) => {
+                            onChange(value);
+                          }}
+                          multiple
+                        >
+                          {({ open }) => (
+                            <div className="flex flex-col items-start gap-2">
+                              <Listbox.Label className="text-base font-semibold text-black dark:text-zinc-100">
+                                What type of grants would you like to review?
+                                Choose all that apply *
+                              </Listbox.Label>
+                              <div className="relative flex-1 w-56">
+                                <Listbox.Button className="relative w-full dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900  ring-1 ring-inset ring-gray-300 sm:text-sm sm:leading-6">
+                                  {categories && categories.length > 0 ? (
+                                    <p className="flex flex-row gap-1">
+                                      {categories?.length}
+                                      <span>
+                                        {pluralize(
+                                          "category",
+                                          categories?.length
+                                        )}{" "}
+                                        selected
+                                      </span>
+                                    </p>
+                                  ) : (
+                                    <p>Categories</p>
+                                  )}
+                                  <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                                    <ChevronUpDownIcon
+                                      className="h-5 w-5 text-gray-400"
+                                      aria-hidden="true"
+                                    />
+                                  </span>
+                                </Listbox.Button>
+
+                                <Transition
+                                  show={open}
+                                  as={Fragment}
+                                  leave="transition ease-in duration-100"
+                                  leaveFrom="opacity-100"
+                                  leaveTo="opacity-0"
+                                >
+                                  <Listbox.Options className="absolute z-10 mt-1 dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base  ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                                    {possibleCategories?.map((category) => (
+                                      <Listbox.Option
+                                        key={category}
+                                        className={({ active }) =>
+                                          cn(
+                                            active
+                                              ? "bg-gray-100 text-black dark:text-gray-300 dark:bg-zinc-900"
+                                              : "text-gray-900 dark:text-gray-200 ",
+                                            "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
+                                          )
+                                        }
+                                        value={category}
+                                      >
+                                        {({ selected, active }) => (
+                                          <>
+                                            <span
+                                              className={cn(
+                                                selected
+                                                  ? "font-semibold"
+                                                  : "font-normal",
+                                                "block truncate"
+                                              )}
+                                            >
+                                              {category}
+                                            </span>
+
+                                            {selected ? (
+                                              <span
+                                                className={cn(
+                                                  "text-primary-600 dark:text-primary-400",
+                                                  "absolute inset-y-0 right-0 flex items-center pr-4"
+                                                )}
+                                              >
+                                                <CheckIcon
+                                                  className="h-5 w-5"
+                                                  aria-hidden="true"
+                                                />
+                                              </span>
+                                            ) : null}
+                                          </>
+                                        )}
+                                      </Listbox.Option>
+                                    ))}
+                                  </Listbox.Options>
+                                </Transition>
+                              </div>
+                            </div>
+                          )}
+                        </Listbox>
+                      )}
+                    />
+                  </div>
+                ) : null}
+              </form>
+            </div>
+
+            <h2 className="font-bold mt-10">Encoded proof generated:</h2>
+            <p className="mt-1">
+              You will have to generate a proof again if you had made changes to
+              the answers above
+            </p>
             <textarea
-              defaultValue={JSON.stringify(proof, null, 2)}
+              defaultValue={btoa(JSON.stringify(proof, null, 2))}
               disabled
               rows={6}
-              className="w-full mr-2 rounded-lg border border-zinc-200 px-2 py-1 dark:bg-zinc-800 dark:text-white dark:border-zinc-600"
+              className="w-full mt-4 mr-2 rounded-lg border border-zinc-200 px-2 py-1 dark:bg-zinc-800 dark:text-white dark:border-zinc-600"
               placeholder={"Paste the proof here..."}
             />
           </div>
@@ -641,7 +942,7 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
             className="mt-3 w-max text-nowrap bg-zinc-700 text-lg text-white hover:bg-primary-800"
             isLoading={isSaving}
           >
-            Submit Review
+            Submit Review with Proof
           </Button>
         </section>
       )}
