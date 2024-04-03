@@ -29,8 +29,7 @@ const WelcomeStep = () => {
             Welcome to Karma GAP!
           </h1>
           <p className="text-base font-normal text-black dark:text-zinc-400">
-            {`Welcome to Karma GAP!
-We're thrilled to have you join our community of builders. This is a 30 second walkthrough to help you utilize GAP effectively.`}
+            {`We're thrilled to have you join our community of builders. This is a 30 second walkthrough to help you utilize GAP effectively.`}
           </p>
         </div>
 
