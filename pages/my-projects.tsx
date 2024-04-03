@@ -262,7 +262,7 @@ export default function MyProjects() {
             )
           ) : (
             <div className="flex w-full items-center justify-center">
-              <p className="text-base font-normal text-black">
+              <p className="text-base font-normal text-black dark:text-white">
                 {MESSAGES.MY_PROJECTS.NOT_CONNECTED}
               </p>
             </div>

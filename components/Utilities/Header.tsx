@@ -24,6 +24,7 @@ import { getCommunitiesOf, getContractOwner } from "@/utilities/sdk";
 import { karmaLinks } from "@/utilities/karma";
 import { PAGES } from "@/utilities/pages";
 import { useAuthStore } from "@/store/auth";
+import { OnboardingDialog } from "../OnboardingDialog";
 
 const ProjectDialog = dynamic(
   () => import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog),
@@ -489,6 +490,7 @@ export default function Header() {
           </>
         )}
       </Popover>
+      <OnboardingDialog/>
     </>
   );
 }
