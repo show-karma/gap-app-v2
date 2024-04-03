@@ -16,7 +16,7 @@ const WelcomeStep = () => {
       <img
         src="/images/karma-gap-onboarding-welcome.png"
         alt="logo"
-        className="h-[420px] w-72 rounded-full max-md:hidden"
+        className="h-[320px] w-[320px] max-sm:hidden"
       />
       <div className="flex flex-col gap-6">
         <img
@@ -28,20 +28,55 @@ const WelcomeStep = () => {
           <h1 className="text-3xl font-bold max-sm:text-2xl">
             Welcome to Karma GAP!
           </h1>
-          <p className="text-base font-normal text-[#667085] dark:text-zinc-400">
-            {`We're thrilled to have you join our community of innovators and creators. Let's get you started in just a couple of steps.`}
+          <p className="text-base font-normal text-black dark:text-zinc-400">
+            {`Welcome to Karma GAP!
+We're thrilled to have you join our community of builders. This is a 30 second walkthrough to help you utilize GAP effectively.`}
           </p>
         </div>
+
+        <div className="flex flex-row gap-4 mt-2 justify-end max-sm:flex-col">
+          <Button
+            className="text-white text-lg bg-black border-black max-sm:justify-center flex flex-row gap-2 items-center hover:bg-black hover:text-white py-2.5 px-10 rounded-sm"
+            onClick={() => changeOnboardingStep("first")}
+          >
+            Next <ChevronRightIcon className="h-5 w-5" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+const FirstStep = () => {
+  const { changeOnboardingStep } = useOnboarding();
+  return (
+    <div className="flex flex-row gap-6 items-center">
+      <img
+        src="/images/karma-gap-onboarding-welcome.png"
+        alt="logo"
+        className="h-[320px] w-[320px] max-sm:hidden"
+      />
+      <div className="flex flex-col gap-6">
         <div className="mt-4 flex flex-col gap-0">
           <h3 className="text-sm font-semibold text-[#344054] dark:text-zinc-200">
             STEP 1
           </h3>
           <h4 className="text-black dark:text-white font-bold text-xl">
-            Create Your Project
+            Add your project/personal profile
           </h4>
-          <p className="text-base font-normal text-[#1D2939]  dark:text-zinc-300">{`Creating your project is the first big step. But don't worry, it's a one-time thing!`}</p>
+          <div className="flex flex-col gap-4">
+            <p className="text-base font-normal text-[#1D2939]  dark:text-zinc-300">{`Creating a project is the first big step. Add details about your project, social links and your team members. 
+You do this just once!`}</p>
+            <p className="text-base font-normal text-[#1D2939]  dark:text-zinc-300">{`Note: Don't add your grant details here. This is to just tell the entire world how awesome your project is :)`}</p>
+          </div>
         </div>
-        <div className="flex flex-row gap-4 mt-2 justify-end max-sm:flex-col">
+        <div className="flex flex-row gap-4 mt-12 justify-end max-sm:flex-col">
+          <Button
+            className="text-black text-lg bg-white border max-sm:justify-center border-black dark:border-none flex flex-row gap-2 items-center hover:bg-white hover:text-black py-2.5 px-10 rounded-sm"
+            onClick={() => changeOnboardingStep("welcome")}
+          >
+            <ChevronLeftIcon className="h-5 w-5" />
+            Back
+          </Button>
           <Button
             className="text-white text-lg bg-black border-black max-sm:justify-center flex flex-row gap-2 items-center hover:bg-black hover:text-white py-2.5 px-10 rounded-sm"
             onClick={() => changeOnboardingStep("grants")}
@@ -60,7 +95,7 @@ const GrantStep = () => {
       <img
         src="/images/karma-gap-onboarding-adding-grants.png"
         alt="logo"
-        className="h-[284px] w-64 rounded-full max-sm:hidden"
+        className="h-[320px] w-[320px] max-sm:hidden"
       />
       <div className="flex flex-col gap-6">
         <div className="mt-4 flex flex-col gap-0">
@@ -70,13 +105,15 @@ const GrantStep = () => {
           <h4 className="text-black dark:text-white font-bold text-xl">
             Adding Grants
           </h4>
-          <p className="text-base font-normal text-[#1D2939] dark:text-zinc-400">{`Once you’ve created your project, you can add all the grants you've received showcasing the incredible support you've garnered along the way. Link these grants to your project to let everyone know about your fantastic backers.`}</p>
-          <p className="text-base font-normal text-[#1D2939] dark:text-zinc-400">{`And that’s it! Welcome to the future of collaboration, innovation, and community! Let's make amazing things happen together.`}</p>
+          <div className="flex flex-col gap-4">
+            <p className="text-base font-normal text-[#1D2939] dark:text-zinc-400">{`Once you've created your project, you can now add a grant you've received. You can add as many grants as you like. They will all be linked to your project!`}</p>
+            <p className="text-base font-normal text-[#1D2939] dark:text-zinc-400">{`While you are at it, go ahead and answer some questions about impact and how you plan to use those funds.`}</p>
+          </div>
         </div>
         <div className="flex flex-row gap-4 mt-12 justify-end max-sm:flex-col">
           <Button
             className="text-black text-lg bg-white border max-sm:justify-center border-black dark:border-none flex flex-row gap-2 items-center hover:bg-white hover:text-black py-2.5 px-10 rounded-sm"
-            onClick={() => changeOnboardingStep("welcome")}
+            onClick={() => changeOnboardingStep("first")}
           >
             <ChevronLeftIcon className="h-5 w-5" />
             Back
@@ -100,7 +137,7 @@ const UpdatesStep = () => {
         <img
           src="/images/karma-gap-onboarding-updates.png"
           alt="logo"
-          className="h-[320px] w-[320px] rounded-full max-sm:hidden"
+          className="h-[320px] w-[320px] max-sm:hidden"
         />
         <div className="flex flex-col gap-6 mt-6 max-sm:mt-0">
           <div className="mt-4 flex flex-col gap-0">
@@ -179,6 +216,8 @@ export const OnboardingDialog: FC = () => {
     switch (onboardingStep) {
       case "welcome":
         return <WelcomeStep />;
+      case "first":
+        return <FirstStep />;
       case "grants":
         return <GrantStep />;
       case "updates":
