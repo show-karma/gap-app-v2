@@ -180,7 +180,7 @@ const StructureStep = () => {
         <img
           src="/images/karma-gap-onboarding-structure.png"
           alt="logo"
-          className="max-h-[480px] max-w-[480px] max-sm:max-h-[280px] max-sm:max-w-[320px] w-auto h-auto  rounded-full"
+          className="max-h-[480px] max-w-[480px] max-sm:max-h-[280px] max-sm:max-w-[320px] w-auto h-auto my-8"
         />
       </div>
       <div className="flex flex-row gap-4 justify-end max-sm:flex-col">
