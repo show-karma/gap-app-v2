@@ -102,13 +102,16 @@ const UpdatesStep = () => {
           alt="logo"
           className="h-[320px] w-[320px] rounded-full max-sm:hidden"
         />
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6 mt-6 max-sm:mt-0">
           <div className="mt-4 flex flex-col gap-0">
             <h4 className="text-black dark:text-white font-bold text-xl">
-              On Updates and Milestones
+              Add Milestones and updates
             </h4>
-            <p className="text-base font-normal text-[#1D2939] dark:text-zinc-400">{`Updates are lorem ipsum dolor sit amet consectetur. Mi fringilla libero dictumst at. Sit vitae vel gravida pulvinar enim lacinia pellentesque rutrum facilisis. Ipsum consectetur lobortis vestibulum cursus tortor duis vitae in. Nisi auctor penatibus lorem morbi molestie elit est scelerisque vel.`}</p>
-            <p className="text-base font-normal text-[#1D2939] dark:text-zinc-400">{`On the other hand, milestones are olutpat tristique sed lorem dictum et neque netus purus tortor. Aliquet amet id cursus morbi elementum. Proin facilisis augue aliquet sodales in. Nulla elit euismod congue tortor aliquam eu ut integer ultricies.`}</p>
+            <div className="flex flex-col gap-4">
+              <p className="text-base font-normal text-[#1D2939] dark:text-zinc-400">{`This is where you create milestones explaining everything you plan to accomplish through this grant.`}</p>
+              <p className="text-base font-normal text-[#1D2939] dark:text-zinc-400">{`When you complete a milestone, you can post an update on that milestone! This is a great way to keep the community and program managers updated on your progress.`}</p>
+              <p className="text-base font-normal text-[#1D2939] dark:text-zinc-400">{`It's that simple :)`}</p>
+            </div>
           </div>
         </div>
       </div>
