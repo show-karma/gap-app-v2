@@ -102,7 +102,7 @@ const GrantStep = () => {
             STEP 2
           </h3>
           <h4 className="text-black dark:text-white font-bold text-xl">
-            Adding Grants
+            Add Grant
           </h4>
           <div className="flex flex-col gap-4">
             <p className="text-base font-normal text-[#1D2939] dark:text-zinc-400">{`Once you've created your project, you can now add a grant you've received. You can add as many grants as you like. They will all be linked to your project!`}</p>
