@@ -1,6 +1,11 @@
 import { create } from "zustand";
 
-export type OnboardingSteps = "welcome" | "grants" | "updates" | "structure";
+export type OnboardingSteps =
+  | "welcome"
+  | "first"
+  | "grants"
+  | "updates"
+  | "structure";
 
 interface OnboardingStore {
   isOnboardingOpen: boolean;
