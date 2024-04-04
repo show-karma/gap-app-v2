@@ -604,7 +604,6 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       allCommunities.length &&
       (community || communityIdEdit)
     ) {
-      console.log(community, communityIdEdit);
       checkCommunityAdmin(community || communityIdEdit);
     }
   }, [
