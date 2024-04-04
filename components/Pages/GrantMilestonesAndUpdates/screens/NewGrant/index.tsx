@@ -597,16 +597,20 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         setIsCommunityAllowed(false);
       }
     }
+    const communityIdEdit =
+      grantScreen === "edit-grant" ? grantToEdit?.communityUID : null;
     if (
       isCommunityAdminOfSome &&
       allCommunities.length &&
-      (community || grantToEdit?.communityUID)
+      (community || communityIdEdit)
     ) {
-      checkCommunityAdmin(community || grantToEdit?.communityUID);
+      console.log(community, communityIdEdit);
+      checkCommunityAdmin(community || communityIdEdit);
     }
   }, [
     isCommunityAdminOfSome,
     community,
+    grantScreen,
     grantToEdit?.communityUID,
     allCommunities,
     address,
