@@ -48,7 +48,7 @@ export default function Header() {
   const isCommunityAdmin = communities.length !== 0;
 
   const getCommunities = async () => {
-    if (!address) {
+    if (!address || !isAuth) {
       setCommunities([]);
       return;
     }
@@ -89,7 +89,7 @@ export default function Header() {
 
   useEffect(() => {
     getCommunities();
-  }, [address]);
+  }, [address, isAuth]);
 
   const socials = [
     {

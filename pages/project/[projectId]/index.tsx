@@ -25,11 +25,12 @@ import { PAGES } from "@/utilities/pages";
 import { getMetadata, getProjectById, getProjectOwner } from "@/utilities/sdk";
 import { zeroUID } from "@/utilities/commons";
 import { INDEXER } from "@/utilities/indexer";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { cn } from "@/utilities/tailwind";
 import { defaultMetadata } from "@/utilities/meta";
 import { useAuthStore } from "@/store/auth";
 import { Feed } from "@/types";
+import { getWalletClient } from "@wagmi/core";
 
 type ProjectDetailsWithUid = IProjectDetails & { uid: Hex };
 
@@ -163,25 +164,42 @@ export const NestedLayout = ({ children }: Props) => {
   const hasContactInfo = Boolean(projectContactsInfo?.length);
 
   const signer = useSigner();
-  const { address } = useAccount();
+  const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore();
 
   useEffect(() => {
-    if (!signer || !project || !isAuth) {
+    if (!project || !project?.chainID || !isAuth || !isConnected) {
       setIsProjectOwner(false);
       setIsProjectOwnerLoading(false);
       return;
     }
+
     const setupOwner = async () => {
-      setIsProjectOwnerLoading(true);
-      await getProjectOwner(signer as any, project)
-        .then((res) => {
-          setIsProjectOwner(res);
-        })
-        .finally(() => setIsProjectOwnerLoading(false));
+      try {
+        setIsProjectOwnerLoading(true);
+        const walletClient = await getWalletClient({
+          chainId: project.chainID,
+        });
+        if (!walletClient) return;
+        const walletSigner = await walletClientToSigner(walletClient);
+        if (!walletSigner) {
+          setIsProjectOwner(false);
+          setIsProjectOwnerLoading(false);
+          return;
+        }
+        await getProjectOwner(walletSigner, project)
+          .then((res) => {
+            setIsProjectOwner(res);
+          })
+          .finally(() => setIsProjectOwnerLoading(false));
+      } catch {
+        setIsProjectOwner(false);
+      } finally {
+        setIsProjectOwnerLoading(false);
+      }
     };
     setupOwner();
-  }, [signer, project, address, isAuth]);
+  }, [project?.uid, address, isAuth]);
 
   const socials = useMemo(() => {
     const types = [

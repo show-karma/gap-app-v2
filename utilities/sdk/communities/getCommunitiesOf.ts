@@ -6,7 +6,7 @@ import { appNetwork } from "@/utilities/network";
 export const getCommunitiesOf = async (address: Hex) => {
   try {
     const gap = getGapClient(appNetwork[0].id);
-    const communities = await gap.fetch.communitiesOf(address);
+    const communities = await gap.fetch.communitiesAdminOf(address);
     return communities;
   } catch (error) {
     console.log(error);
