@@ -43,6 +43,7 @@ import { formatDate } from "@/utilities/formatDate";
 import { isCommunityAdminOf } from "@/utilities/sdk";
 import { useCommunityAdminStore } from "@/store/community";
 import * as Tooltip from "@radix-ui/react-tooltip";
+import { useCommunitiesStore } from "@/store/communities";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -549,9 +550,8 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     });
   };
 
-  const isCommunityAdmin = useCommunityAdminStore(
-    (state) => state.isCommunityAdmin
-  );
+  const { communities } = useCommunitiesStore();
+  const isCommunityAdminOfSome = communities.length !== 0;
 
   const isDescriptionValid = !!description.length;
   const signer = useSigner();
@@ -581,10 +581,10 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       setIsCommunityAllowed(true);
       return;
     }
-    async function checkCommunityAdmin() {
+    async function checkCommunityAdmin(communityToSearch: string) {
       try {
         const findCommunity = allCommunities.find(
-          (item) => item.uid.toLowerCase() === community.toLowerCase()
+          (item) => item.uid.toLowerCase() === communityToSearch.toLowerCase()
         );
         if (!findCommunity) return setIsCommunityAllowed(false);
         const result = await isCommunityAdminOf(
@@ -597,24 +597,33 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         setIsCommunityAllowed(false);
       }
     }
-    if (isCommunityAdmin && community) {
-      checkCommunityAdmin();
+    if (
+      isCommunityAdminOfSome &&
+      allCommunities.length &&
+      (community || grantToEdit?.communityUID)
+    ) {
+      checkCommunityAdmin(community || grantToEdit?.communityUID);
     }
-  }, [isCommunityAdmin, community]);
+  }, [
+    isCommunityAdminOfSome,
+    community,
+    grantToEdit?.communityUID,
+    allCommunities,
+    address,
+  ]);
 
   const actionButtonDisable =
     isSubmitting ||
     isLoading ||
     !isDescriptionValid ||
     !allMilestonesValidated ||
-    (grantScreen === "create-grant" && !isValid) ||
-    (!isCommunityAllowed && isCommunityAdmin);
+    !isValid ||
+    (!isCommunityAllowed && isCommunityAdminOfSome);
 
   const handleButtonDisableMessage = () => {
-    if (!isCommunityAllowed && isCommunityAdmin)
+    if (!isValid) return "Please fill all required(*) fields.";
+    if (!isCommunityAllowed && isCommunityAdminOfSome)
       return "You are not admin of this community.";
-    if (grantScreen === "create-grant" && !isValid)
-      return "Please fill all required(*) fields.";
     if (isSubmitting || isLoading) return "Please wait...";
     if (!isDescriptionValid) return "Description is required.";
     if (!allMilestonesValidated) return "All milestones must be filled.";
@@ -767,7 +776,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             <p className="text-base text-red-400">{errors.cycle?.message}</p>
           </div> */}
 
-          {(isOwner || (isCommunityAdmin && isCommunityAllowed)) && (
+          {(isOwner || (isCommunityAdminOfSome && isCommunityAllowed)) && (
             <div className="flex w-full flex-col">
               <label htmlFor="tags-input" className={labelStyle}>
                 Recipient address (optional)

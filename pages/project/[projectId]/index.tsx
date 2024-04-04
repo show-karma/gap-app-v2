@@ -181,7 +181,7 @@ export const NestedLayout = ({ children }: Props) => {
         .finally(() => setIsProjectOwnerLoading(false));
     };
     setupOwner();
-  }, [signer, project, address, isAuth]);
+  }, [signer, project?.uid, address, isAuth]);
 
   const socials = useMemo(() => {
     const types = [

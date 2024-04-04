@@ -55,6 +55,7 @@ import { useCommunityAdminStore } from "@/store/community";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { useGap } from "@/hooks";
 import { useAuthStore } from "@/store/auth";
+import { useCommunitiesStore } from "@/store/communities";
 
 interface Tab {
   name: string;
@@ -194,7 +195,8 @@ const GrantsPage = ({
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );
-
+  const { communities } = useCommunitiesStore();
+  const isCommunityAdminOfSome = communities.length !== 0;
   const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
   const [, changeTab] = useQueryState("tab");
   const [, changeGrantId] = useQueryState("grantId");
@@ -447,7 +449,7 @@ const GrantsPage = ({
                     </button>
                   </li>
                 ))}
-                {isAuthorized && (
+                {(isAuthorized || isCommunityAdminOfSome) && (
                   <li>
                     <Button
                       onClick={() => {
