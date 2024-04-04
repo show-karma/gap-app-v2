@@ -54,6 +54,7 @@ import { formatDate } from "@/utilities/formatDate";
 import { useCommunityAdminStore } from "@/store/community";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { useGap } from "@/hooks";
+import { useAuthStore } from "@/store/auth";
 
 interface Tab {
   name: string;
@@ -311,20 +312,23 @@ const GrantsPage = ({
   const setIsCommunityAdmin = useCommunityAdminStore(
     (state) => state.setIsCommunityAdmin
   );
-  const isCommunityAdminLoading = useCommunityAdminStore(
+  const setIsCommunityAdminLoading = useCommunityAdminStore(
     (state) => state.setIsCommunityAdminLoading
   );
 
   const signer = useSigner();
   const { chain } = useNetwork();
   const { gap } = useGap();
+  const { isAuth } = useAuthStore();
 
   const checkIfAdmin = async () => {
     setIsCommunityAdmin(false);
-    if (!chain?.id || !gap || !grant || !address || !signer) {
+    if (!chain?.id || !gap || !grant || !address || !signer || !isAuth) {
+      setIsCommunityAdmin(false);
+      setIsCommunityAdminLoading(false);
       return;
     }
-    isCommunityAdminLoading(true);
+    setIsCommunityAdminLoading(true);
     try {
       const community = await gap.fetch.communityById(grant.communityUID);
       const result = await isCommunityAdminOf(
@@ -337,13 +341,13 @@ const GrantsPage = ({
       console.log(error);
       setIsCommunityAdmin(false);
     } finally {
-      isCommunityAdminLoading(false);
+      setIsCommunityAdminLoading(false);
     }
   };
 
   useEffect(() => {
     checkIfAdmin();
-  }, [address, grant?.uid, signer]);
+  }, [address, grant?.uid, signer, isAuth]);
 
   return (
     <>
