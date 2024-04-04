@@ -168,29 +168,35 @@ export const NestedLayout = ({ children }: Props) => {
   const { isAuth } = useAuthStore();
 
   useEffect(() => {
-    if (!project || !isAuth || !isConnected) {
+    if (!project || !project?.chainID || !isAuth || !isConnected) {
       setIsProjectOwner(false);
       setIsProjectOwnerLoading(false);
       return;
     }
 
     const setupOwner = async () => {
-      setIsProjectOwnerLoading(true);
-      const walletClient = await getWalletClient({
-        chainId: project.chainID,
-      });
-      if (!walletClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
-      if (!walletSigner) {
+      try {
+        setIsProjectOwnerLoading(true);
+        const walletClient = await getWalletClient({
+          chainId: project.chainID,
+        });
+        if (!walletClient) return;
+        const walletSigner = await walletClientToSigner(walletClient);
+        if (!walletSigner) {
+          setIsProjectOwner(false);
+          setIsProjectOwnerLoading(false);
+          return;
+        }
+        await getProjectOwner(walletSigner, project)
+          .then((res) => {
+            setIsProjectOwner(res);
+          })
+          .finally(() => setIsProjectOwnerLoading(false));
+      } catch {
         setIsProjectOwner(false);
+      } finally {
         setIsProjectOwnerLoading(false);
-        return;
       }
-      await getProjectOwner(walletSigner, project)
-        .then((res) => {
-          setIsProjectOwner(res);
-        })
-        .finally(() => setIsProjectOwnerLoading(false));
     };
     setupOwner();
   }, [project?.uid, address, isAuth]);

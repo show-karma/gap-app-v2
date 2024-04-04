@@ -44,6 +44,7 @@ import { isCommunityAdminOf } from "@/utilities/sdk";
 import { useCommunityAdminStore } from "@/store/community";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { useCommunitiesStore } from "@/store/communities";
+import { cn } from "@/utilities/tailwind";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -259,6 +260,10 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       community: grantScreen === "edit-grant" ? grantToEdit?.communityUID : "",
       // season: grantScreen === "edit-grant" ? grantToEdit?.details?.season : "",
       // cycle: grantScreen === "edit-grant" ? grantToEdit?.details?.cycle : "",
+      recipient:
+        grantScreen === "edit-grant"
+          ? grantToEdit?.recipient
+          : selectedProject?.recipient,
       linkToProposal:
         grantScreen === "edit-grant" ? grantToEdit?.details?.proposalURL : "",
       startDate:
@@ -467,6 +472,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   };
 
   const onSubmit = async (data: GrantType) => {
+    console.log(data);
     saveAllMilestones();
     let questions: {
       type: string;
@@ -779,17 +785,23 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             <p className="text-base text-red-400">{errors.cycle?.message}</p>
           </div> */}
 
-          {(isOwner || (isCommunityAdminOfSome && isCommunityAllowed)) && (
+          {(isOwner || isCommunityAdminOfSome) && (
             <div className="flex w-full flex-col">
               <label htmlFor="tags-input" className={labelStyle}>
-                Recipient address (optional)
+                Recipient address
               </label>
               <input
                 id="tags-input"
                 type="text"
-                className={inputStyle}
+                className={cn(
+                  inputStyle,
+                  "text-gray-500 dark:text-gray-300 cursor-not-allowed"
+                )}
                 placeholder="0xab...0xbf2"
-                {...register("recipient")}
+                // {...register("recipient")}
+                readOnly
+                disabled
+                value={form.getValues("recipient")}
               />
               <p className="text-red-500">{errors.recipient?.message}</p>
             </div>
