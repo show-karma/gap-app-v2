@@ -472,7 +472,6 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   };
 
   const onSubmit = async (data: GrantType) => {
-    console.log(data);
     saveAllMilestones();
     let questions: {
       type: string;
