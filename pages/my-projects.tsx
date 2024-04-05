@@ -244,12 +244,14 @@ export default function MyProjects() {
                       );
                     })}
                   </div>
-                  <Pagination
-                    currentPage={page}
-                    postsPerPage={itemsPerPage}
-                    totalPosts={totalProjects}
-                    setCurrentPage={setPage}
-                  />
+                  {totalProjects > itemsPerPage ? (
+                    <Pagination
+                      currentPage={page}
+                      postsPerPage={itemsPerPage}
+                      totalPosts={totalProjects}
+                      setCurrentPage={setPage}
+                    />
+                  ) : null}
                 </div>
               ) : !isLoading ? (
                 <div className="flex w-full flex-row items-center justify-center">
@@ -275,7 +277,7 @@ export default function MyProjects() {
                   <Spinner />
                 </div>
               )}
-              <div className="flex  justify-center items-center w-full">
+              <div className="flex mt-20 justify-center items-center w-full">
                 <OnboardingButton />
               </div>
             </div>
