@@ -16,8 +16,12 @@ interface OnboardingStore {
 
 export const useOnboarding = create<OnboardingStore>((set, get) => ({
   isOnboardingOpen: false,
-  setIsOnboarding: (isOnboardingOpen: boolean) =>
-    set({ isOnboardingOpen, onboardingStep: "welcome" }),
+  setIsOnboarding: (isOnboardingOpen: boolean) => {
+    set({ isOnboardingOpen });
+    setTimeout(() => {
+      set({ onboardingStep: "welcome" });
+    }, 200);
+  },
   onboardingStep: "welcome",
   changeOnboardingStep: (onboardingStep: OnboardingSteps) => {
     set({ onboardingStep });

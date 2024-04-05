@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment } from "react";
+import { FC, Fragment, useEffect } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { Button } from "./Utilities/Button";
 import { useOnboarding } from "@/store/onboarding";
@@ -8,9 +8,23 @@ import {
   ChevronRightIcon,
   XMarkIcon,
 } from "@heroicons/react/24/solid";
+import { useMixpanel } from "@/hooks/useMixpanel";
+import { useAccount } from "wagmi";
 
 const WelcomeStep = () => {
-  const { changeOnboardingStep } = useOnboarding();
+  const { changeOnboardingStep, isOnboardingOpen } = useOnboarding();
+  const { address } = useAccount();
+  const { mixpanel } = useMixpanel();
+
+  useEffect(() => {
+    if (mixpanel && isOnboardingOpen) {
+      mixpanel.reportEvent({
+        event: "onboarding.navigation",
+        properties: { address },
+      });
+    }
+  }, [mixpanel]);
+
   return (
     <div className="flex flex-row gap-6 items-center">
       <img
@@ -47,6 +61,17 @@ const WelcomeStep = () => {
 };
 const FirstStep = () => {
   const { changeOnboardingStep } = useOnboarding();
+  const { address } = useAccount();
+  const { mixpanel } = useMixpanel();
+
+  useEffect(() => {
+    if (mixpanel) {
+      mixpanel.reportEvent({
+        event: "onboarding.navigation",
+        properties: { address },
+      });
+    }
+  }, [mixpanel]);
   return (
     <div className="flex flex-row gap-6 items-center">
       <img
@@ -89,6 +114,17 @@ You do this just once!`}</p>
 };
 const GrantStep = () => {
   const { changeOnboardingStep } = useOnboarding();
+  const { address } = useAccount();
+  const { mixpanel } = useMixpanel();
+
+  useEffect(() => {
+    if (mixpanel) {
+      mixpanel.reportEvent({
+        event: "onboarding.navigation",
+        properties: { address },
+      });
+    }
+  }, [mixpanel]);
   return (
     <div className="flex flex-row gap-6 items-start pt-6">
       <img
@@ -130,6 +166,19 @@ const GrantStep = () => {
 };
 const UpdatesStep = () => {
   const { changeOnboardingStep } = useOnboarding();
+
+  const { address } = useAccount();
+  const { mixpanel } = useMixpanel();
+
+  useEffect(() => {
+    if (mixpanel) {
+      mixpanel.reportEvent({
+        event: "onboarding.navigation",
+        properties: { address },
+      });
+    }
+  }, [mixpanel]);
+
   return (
     <div className="flex flex-col">
       <div className="flex flex-row gap-6 items-start pt-6">
@@ -171,6 +220,19 @@ const UpdatesStep = () => {
 };
 const StructureStep = () => {
   const { changeOnboardingStep, setIsOnboarding } = useOnboarding();
+
+  const { address } = useAccount();
+  const { mixpanel } = useMixpanel();
+
+  useEffect(() => {
+    if (mixpanel) {
+      mixpanel.reportEvent({
+        event: "onboarding.navigation",
+        properties: { address },
+      });
+    }
+  }, [mixpanel]);
+
   return (
     <div className="flex flex-col">
       <div className="flex flex-col gap-6 items-center justify-center pt-6">
@@ -209,7 +271,9 @@ export const OnboardingDialog: FC = () => {
     onboardingStep,
   } = useOnboarding();
 
-  const closeModal = () => setIsOnboarding(false);
+  const closeModal = () => {
+    setIsOnboarding(false);
+  };
 
   const handleRender = () => {
     switch (onboardingStep) {
