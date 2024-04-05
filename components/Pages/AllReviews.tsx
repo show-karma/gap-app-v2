@@ -408,12 +408,14 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
                       </div>
                     </div>
                   ))}
-                  <Pagination
-                    currentPage={page}
-                    setCurrentPage={setPage}
-                    postsPerPage={pageLimit}
-                    totalPosts={allReviews.length}
-                  />
+                  {allReviews.length > pageLimit ? (
+                    <Pagination
+                      currentPage={page}
+                      setCurrentPage={setPage}
+                      postsPerPage={pageLimit}
+                      totalPosts={allReviews.length}
+                    />
+                  ) : null}
                 </>
               ) : (
                 <div className="flex w-full flex-col items-center justify-center gap-2">

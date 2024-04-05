@@ -68,10 +68,10 @@ export const NestedLayout = ({ children }: Props) => {
       name: "Grants",
       href: PAGES.PROJECT.GRANTS(project?.details?.slug || projectId),
     },
-    {
-      name: "Team",
-      href: PAGES.PROJECT.TEAM(project?.details?.slug || projectId),
-    },
+    // {
+    //   name: "Team",
+    //   href: PAGES.PROJECT.TEAM(project?.details?.slug || projectId),
+    // },
     {
       name: "Impact",
       href: PAGES.PROJECT.IMPACT.ROOT(project?.details?.slug || projectId),
@@ -264,7 +264,7 @@ export const NestedLayout = ({ children }: Props) => {
             {loading ? "" : project?.details?.title}
           </h1>
           <div className="flex flex-row gap-10 max-lg:gap-4 flex-wrap max-lg:flex-col items-center max-lg:items-start">
-            {project ? (
+            {/* {project ? (
               <div className="flex flex-row items-center gap-3">
                 {firstFiveMembers(project).length ? (
                   <div className="flex flex-row gap-2 items-center">
@@ -291,7 +291,7 @@ export const NestedLayout = ({ children }: Props) => {
                   </div>
                 ) : null}
               </div>
-            ) : null}
+            ) : null} */}
             {socials.length > 0 && (
               <div className="flex flex-row gap-3 items-center">
                 <p className="text-base font-normal leading-tight text-black dark:text-zinc-200">
