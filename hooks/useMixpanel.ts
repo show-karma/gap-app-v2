@@ -18,8 +18,8 @@ export const useMixpanel = (prefix = "gap"): IUseMixpanel => {
 
   useEffect(() => {
     if (
-      process.env.NEXT_PUBLIC_MIXPANEL_KEY
-      //   && process.env.NEXT_PUBLIC_ENV === "production"
+      process.env.NEXT_PUBLIC_MIXPANEL_KEY &&
+      process.env.NEXT_PUBLIC_ENV === "production"
     ) {
       mp.init(process.env.NEXT_PUBLIC_MIXPANEL_KEY);
       setMixpanel(mp);
