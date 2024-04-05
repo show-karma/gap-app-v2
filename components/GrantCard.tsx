@@ -137,7 +137,8 @@ export const GrantCard = ({ rawGrant, index }: GrantCardProps) => {
         ))}
       </div>
 
-      <div className="flex px-3 items-center justify-between">
+      <div className="h-1" />
+      {/* <div className="flex px-3 items-center justify-between">
         <div className="flex items-center w-full flex-wrap gap-2">
           {firstFiveMembers(grant.members).length ? (
             <>
@@ -167,7 +168,7 @@ export const GrantCard = ({ rawGrant, index }: GrantCardProps) => {
             </>
           ) : null}
         </div>
-      </div>
+      </div> */}
     </a>
   );
 };
