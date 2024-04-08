@@ -56,6 +56,8 @@ import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { useGap } from "@/hooks";
 import { useAuthStore } from "@/store/auth";
 import { useCommunitiesStore } from "@/store/communities";
+import { chainImgDictionary } from "@/utilities/chainImgDictionary";
+import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 
 interface Tab {
   name: string;
@@ -683,6 +685,27 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
                     </p>
                   </div>
                 </a>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="text-gray-500 text-base  font-semibold dark:text-gray-300">
+                  Network
+                </div>
+
+                <div className="inline-flex items-center gap-x-2 rounded-full bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={chainImgDictionary(
+                      grant?.community?.details?.chainID as number
+                    )}
+                    alt=""
+                    className="h-5 w-5 rounded-full"
+                  />
+                  <p className="max-w-xs truncate text-base font-semibold text-black dark:text-gray-100 max-md:text-sm">
+                    {chainNameDictionary(
+                      grant?.community?.details?.chainID as number
+                    )}
+                  </p>
+                </div>
               </div>
 
               {grant?.details?.proposalURL ? (

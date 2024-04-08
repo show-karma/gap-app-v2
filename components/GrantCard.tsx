@@ -8,6 +8,9 @@ import { MarkdownPreview } from "./Utilities/MarkdownPreview";
 import { formatPercentage } from "@/utilities/formatNumber";
 import { PAGES } from "@/utilities/pages";
 import { formatDate } from "@/utilities/formatDate";
+import { chainImgDictionary } from "@/utilities/chainImgDictionary";
+import { chainNameDictionary } from "@/utilities/chainNameDictionary";
+import * as Tooltip from "@radix-ui/react-tooltip";
 
 interface GrantMongo extends Omit<Grant, "details" | "project"> {
   details: GrantDetails;
@@ -58,24 +61,46 @@ const updatesLength = (
 
 export const GrantCard = ({ rawGrant, index }: GrantCardProps) => {
   const grant = rawGrant as unknown as GrantMongo;
-
   return (
     <a
       href={PAGES.PROJECT.GRANT(
         grant.project?.details?.data?.slug || grant.refUID || "",
         grant.uid
       )}
-      className="flex h-full w-full max-w-[320px] flex-col items-start justify-between gap-3 rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2 transition-all duration-300 ease-in-out hover:opacity-80"
+      className="flex h-full w-full max-w-[320px] relative flex-col items-start justify-between gap-3 rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2 transition-all duration-300 ease-in-out hover:opacity-80"
     >
-      <div className="w-full flex flex-col gap-1">
+      <div className="w-full flex flex-col gap-1 ">
         <div
           className="h-[4px] w-full rounded-full mb-2.5"
           style={{
             background: pickColor(index),
           }}
         />
+        {rawGrant ? (
+          <div className="absolute z-3 top-1 right-1">
+            <Tooltip.Provider>
+              <Tooltip.Root delayDuration={0}>
+                <Tooltip.Trigger>
+                  <div className="p-1 bg-white dark:bg-zinc-900 rounded-full border border-zinc-100 dark:border-zinc-600">
+                    <img
+                      className="w-6 h-6 min-w-6 min-h-6"
+                      src={chainImgDictionary(rawGrant.chainID)}
+                      alt={chainNameDictionary(rawGrant.chainID) || ""}
+                    />
+                  </div>
+                </Tooltip.Trigger>
+                <Tooltip.Portal>
+                  <Tooltip.Content className="relative border border-zinc-100 dark:border-zinc-600 bg-white text-black dark:bg-zinc-900 dark:text-white px-2 py-2 rounded-md">
+                    {chainNameDictionary(rawGrant.chainID)}
+                    <Tooltip.Arrow />
+                  </Tooltip.Content>
+                </Tooltip.Portal>
+              </Tooltip.Root>
+            </Tooltip.Provider>
+          </div>
+        ) : null}
         <div className="flex w-full flex-col px-3">
-          <p className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200  max-2xl:text-sm">
+          <p className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200  max-2xl:text-sm mr-1">
             {grant.project?.details?.data?.title || grant.uid}
           </p>
           <p className="line-clamp-1 break-all text-sm font-semibold text-gray-500 dark:text-zinc-300 max-2xl:text-[13px]">

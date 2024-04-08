@@ -620,17 +620,25 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     address,
   ]);
 
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+
   const actionButtonDisable =
     isSubmitting ||
     isLoading ||
     !isDescriptionValid ||
     !allMilestonesValidated ||
     !isValid ||
-    (!isCommunityAllowed && isCommunityAdminOfSome);
+    (!isCommunityAllowed &&
+      isCommunityAdminOfSome &&
+      !(isOwner || isProjectOwner));
 
   const handleButtonDisableMessage = () => {
     if (!isValid) return "Please fill all required(*) fields.";
-    if (!isCommunityAllowed && isCommunityAdminOfSome)
+    if (
+      !isCommunityAllowed &&
+      isCommunityAdminOfSome &&
+      !(isOwner || isProjectOwner)
+    )
       return "You are not admin of this community.";
     if (isSubmitting || isLoading) return "Please wait...";
     if (!isDescriptionValid) return "Description is required.";

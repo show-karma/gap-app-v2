@@ -5,9 +5,11 @@ export const chainNameDictionary = (chainId: number) => {
     case 42161:
       return "Arbitrum One";
     case 420:
-      return "Optimism";
+      return "Optimism Goerli";
     case 11155420:
-      return "Optimism";
+      return "Optimism Sepolia";
+    case 11155111:
+      return "Sepolia";
     default:
       return "";
   }
