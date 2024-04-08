@@ -91,23 +91,25 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
                   setOpen(false);
                   onSelectFunction(community.value, community.networkId);
                 }}
-                className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
+                className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
               >
                 <CheckIcon
                   className={cn(
-                    "mr-2 h-4 w-4 text-black dark:text-white",
+                    "mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white",
                     value === community.value ? "opacity-100" : "opacity-0"
                   )}
                 />
-                <div className="flex flex-row gap-2 items-center">
+                <div className="flex flex-row gap-2 items-center justify-start">
                   <Tooltip.Provider>
                     <Tooltip.Root delayDuration={0}>
                       <Tooltip.Trigger>
-                        <img
-                          src={chainImgDictionary(community.networkId)}
-                          alt={chainNameDictionary(community.networkId)}
-                          className="w-5 h-5"
-                        />
+                        <div className="min-w-5 min-h-5 w-5 h-5 m-0">
+                          <img
+                            src={chainImgDictionary(community.networkId)}
+                            alt={chainNameDictionary(community.networkId)}
+                            className="min-w-5 min-h-5 w-5 h-5 m-0"
+                          />
+                        </div>
                       </Tooltip.Trigger>
                       <Tooltip.Portal>
                         <Tooltip.Content className="z-20 bg-white text-black dark:bg-zinc-900 dark:text-white px-2 py-2 rounded-md">
@@ -117,7 +119,9 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
                       </Tooltip.Portal>
                     </Tooltip.Root>
                   </Tooltip.Provider>
-                  {community.label}
+                  <p className="line-clamp-2 w-full break-normal">
+                    {community.label}
+                  </p>
                 </div>
               </CommandItem>
             ))}
