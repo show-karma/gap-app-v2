@@ -12,6 +12,7 @@ import { Hex } from "viem";
 import { useOnboarding } from "@/store/onboarding";
 import { PAGES } from "@/utilities/pages";
 import { useRouter } from "next/router";
+import { useMixpanel } from "./useMixpanel";
 
 export const authCookiePath = "gap_auth";
 
@@ -48,6 +49,7 @@ export const useAuth = () => {
   const { setIsOnboarding } = useOnboarding?.();
   const router = useRouter();
   const cookies = new Cookies();
+  const { mixpanel } = useMixpanel();
 
   const signMessage = async (messageToSign: string) => {
     try {
@@ -119,6 +121,16 @@ export const useAuth = () => {
       }
       router.push(PAGES.MY_PROJECTS);
       setIsOnboarding?.(true);
+      if (address) {
+        mixpanel.reportEvent({
+          event: "onboarding:popup",
+          properties: { address },
+        });
+        mixpanel.reportEvent({
+          event: "onboarding:navigation",
+          properties: { address, id: "welcome" },
+        });
+      }
       return true;
     } catch (error: any) {
       // eslint-disable-next-line no-console

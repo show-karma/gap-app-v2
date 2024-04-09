@@ -20,6 +20,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { useAuthStore } from "@/store/auth";
 import { Button } from "@/components/Utilities/Button";
 import { useOnboarding } from "@/store/onboarding";
+import { useMixpanel } from "@/hooks/useMixpanel";
 
 const ProjectDialog = dynamic(
   () => import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog),
@@ -49,9 +50,24 @@ const pickColor = (index: number) => {
 
 const OnboardingButton = () => {
   const { setIsOnboarding } = useOnboarding();
+  const { mixpanel } = useMixpanel();
+  const { address } = useAccount();
+
   return (
     <Button
-      onClick={() => setIsOnboarding(true)}
+      onClick={() => {
+        setIsOnboarding(true);
+        if (address) {
+          mixpanel.reportEvent({
+            event: "onboarding:popup",
+            properties: { address },
+          });
+          mixpanel.reportEvent({
+            event: "onboarding:navigation",
+            properties: { address, id: "welcome" },
+          });
+        }
+      }}
       className="w-max h-max bg-transparent dark:bg-transparent hover:bg-transparent text-black border border-black"
     >
       GAP Platform Walkthrough
