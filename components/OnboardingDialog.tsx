@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, useEffect } from "react";
+import { FC, Fragment, useEffect, useMemo } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { Button } from "./Utilities/Button";
 import { useOnboarding } from "@/store/onboarding";
@@ -10,20 +10,11 @@ import {
 } from "@heroicons/react/24/solid";
 import { useMixpanel } from "@/hooks/useMixpanel";
 import { useAccount } from "wagmi";
+import { Hex } from "viem";
 
 const WelcomeStep = () => {
-  const { changeOnboardingStep, isOnboardingOpen } = useOnboarding();
   const { address } = useAccount();
-  const { mixpanel } = useMixpanel();
-
-  useEffect(() => {
-    if (mixpanel && isOnboardingOpen) {
-      mixpanel.reportEvent({
-        event: "onboarding.navigation",
-        properties: { address },
-      });
-    }
-  }, [mixpanel]);
+  const { changeOnboardingStep, isOnboardingOpen } = useOnboarding();
 
   return (
     <div className="flex flex-row gap-6 items-center">
@@ -50,7 +41,7 @@ const WelcomeStep = () => {
         <div className="flex flex-row gap-4 mt-2 justify-end max-sm:flex-col">
           <Button
             className="text-white text-lg bg-black border-black max-sm:justify-center flex flex-row gap-2 items-center hover:bg-black hover:text-white py-2.5 px-10 rounded-sm"
-            onClick={() => changeOnboardingStep("first")}
+            onClick={() => changeOnboardingStep("project", address as Hex)}
           >
             Next <ChevronRightIcon className="h-5 w-5" />
           </Button>
@@ -62,16 +53,6 @@ const WelcomeStep = () => {
 const FirstStep = () => {
   const { changeOnboardingStep } = useOnboarding();
   const { address } = useAccount();
-  const { mixpanel } = useMixpanel();
-
-  useEffect(() => {
-    if (mixpanel) {
-      mixpanel.reportEvent({
-        event: "onboarding.navigation",
-        properties: { address },
-      });
-    }
-  }, [mixpanel]);
   return (
     <div className="flex flex-row gap-6 items-center">
       <img
@@ -96,14 +77,14 @@ You do this just once!`}</p>
         <div className="flex flex-row gap-4 mt-12 justify-end max-sm:flex-col">
           <Button
             className="text-black text-lg bg-white border max-sm:justify-center border-black dark:border-none flex flex-row gap-2 items-center hover:bg-white hover:text-black py-2.5 px-10 rounded-sm"
-            onClick={() => changeOnboardingStep("welcome")}
+            onClick={() => changeOnboardingStep("welcome", address as Hex)}
           >
             <ChevronLeftIcon className="h-5 w-5" />
             Back
           </Button>
           <Button
             className="text-white text-lg bg-black border-black max-sm:justify-center flex flex-row gap-2 items-center hover:bg-black hover:text-white py-2.5 px-10 rounded-sm"
-            onClick={() => changeOnboardingStep("grants")}
+            onClick={() => changeOnboardingStep("grants", address as Hex)}
           >
             Next <ChevronRightIcon className="h-5 w-5" />
           </Button>
@@ -115,16 +96,7 @@ You do this just once!`}</p>
 const GrantStep = () => {
   const { changeOnboardingStep } = useOnboarding();
   const { address } = useAccount();
-  const { mixpanel } = useMixpanel();
 
-  useEffect(() => {
-    if (mixpanel) {
-      mixpanel.reportEvent({
-        event: "onboarding.navigation",
-        properties: { address },
-      });
-    }
-  }, [mixpanel]);
   return (
     <div className="flex flex-row gap-6 items-start pt-6">
       <img
@@ -148,14 +120,16 @@ const GrantStep = () => {
         <div className="flex flex-row gap-4 mt-12 justify-end max-sm:flex-col">
           <Button
             className="text-black text-lg bg-white border max-sm:justify-center border-black dark:border-none flex flex-row gap-2 items-center hover:bg-white hover:text-black py-2.5 px-10 rounded-sm"
-            onClick={() => changeOnboardingStep("first")}
+            onClick={() => changeOnboardingStep("project", address as Hex)}
           >
             <ChevronLeftIcon className="h-5 w-5" />
             Back
           </Button>
           <Button
             className="text-white text-lg bg-black border-black max-sm:justify-center flex flex-row gap-2 items-center hover:bg-black hover:text-white py-2.5 px-10 rounded-sm"
-            onClick={() => changeOnboardingStep("updates")}
+            onClick={() =>
+              changeOnboardingStep("updates-milestones", address as Hex)
+            }
           >
             Next <ChevronRightIcon className="h-5 w-5" />
           </Button>
@@ -168,16 +142,6 @@ const UpdatesStep = () => {
   const { changeOnboardingStep } = useOnboarding();
 
   const { address } = useAccount();
-  const { mixpanel } = useMixpanel();
-
-  useEffect(() => {
-    if (mixpanel) {
-      mixpanel.reportEvent({
-        event: "onboarding.navigation",
-        properties: { address },
-      });
-    }
-  }, [mixpanel]);
 
   return (
     <div className="flex flex-col">
@@ -203,14 +167,14 @@ const UpdatesStep = () => {
       <div className="flex flex-row gap-4 justify-end max-sm:mt-10 max-sm:flex-col">
         <Button
           className="text-black text-lg bg-white border max-sm:justify-center border-black dark:border-none flex flex-row gap-2 items-center hover:bg-white hover:text-black py-2.5 px-10 rounded-sm"
-          onClick={() => changeOnboardingStep("grants")}
+          onClick={() => changeOnboardingStep("grants", address as Hex)}
         >
           <ChevronLeftIcon className="h-5 w-5" />
           Back
         </Button>
         <Button
           className="max-sm:justify-center text-white text-lg bg-black border-black flex flex-row gap-2 items-center hover:bg-black hover:text-white py-2.5 px-10 rounded-sm"
-          onClick={() => changeOnboardingStep("structure")}
+          onClick={() => changeOnboardingStep("structure", address as Hex)}
         >
           Next <ChevronRightIcon className="h-5 w-5" />
         </Button>
@@ -222,16 +186,6 @@ const StructureStep = () => {
   const { changeOnboardingStep, setIsOnboarding } = useOnboarding();
 
   const { address } = useAccount();
-  const { mixpanel } = useMixpanel();
-
-  useEffect(() => {
-    if (mixpanel) {
-      mixpanel.reportEvent({
-        event: "onboarding.navigation",
-        properties: { address },
-      });
-    }
-  }, [mixpanel]);
 
   return (
     <div className="flex flex-col">
@@ -248,7 +202,9 @@ const StructureStep = () => {
       <div className="flex flex-row gap-4 justify-end max-sm:flex-col">
         <Button
           className="text-black text-lg  bg-white max-sm:justify-center border border-black dark:border-none flex flex-row gap-2 items-center hover:bg-white hover:text-black py-2.5 px-10 rounded-sm"
-          onClick={() => changeOnboardingStep("updates")}
+          onClick={() =>
+            changeOnboardingStep("updates-milestones", address as Hex)
+          }
         >
           <ChevronLeftIcon className="h-5 w-5" />
           Back
@@ -279,11 +235,11 @@ export const OnboardingDialog: FC = () => {
     switch (onboardingStep) {
       case "welcome":
         return <WelcomeStep />;
-      case "first":
+      case "project":
         return <FirstStep />;
       case "grants":
         return <GrantStep />;
-      case "updates":
+      case "updates-milestones":
         return <UpdatesStep />;
       case "structure":
         return <StructureStep />;
