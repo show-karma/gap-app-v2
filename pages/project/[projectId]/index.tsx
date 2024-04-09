@@ -185,7 +185,6 @@ export const NestedLayout = ({ children }: Props) => {
 
         await getProjectOwner(walletSigner || signer, project)
           .then((res) => {
-            console.log("res", res);
             setIsProjectOwner(res);
           })
           .finally(() => setIsProjectOwnerLoading(false));
