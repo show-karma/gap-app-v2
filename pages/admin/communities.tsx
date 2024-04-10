@@ -20,7 +20,7 @@ import { blo } from "blo";
 export default function Communities() {
   const [allCommunities, setAllCommunities] = useState<Community[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [copiedText, copy] = useCopyToClipboard();
+  const [, copy] = useCopyToClipboard();
 
   const { gap } = useGap();
   useEffect(() => {
@@ -55,6 +55,8 @@ export default function Communities() {
       });
   };
 
+  const { communities: communitiesToAdmin } = useCommunitiesStore();
+
   return (
     <>
       <NextSeo
@@ -84,50 +86,56 @@ export default function Communities() {
       />
 
       <div className="px-4 sm:px-6 lg:px-12 py-5">
-        <div className="text-2xl font-bold">
-          All Communities{" "}
-          {allCommunities.length ? `(${allCommunities.length})` : ""}
-        </div>
-        <div className="mt-5 grid grid-cols-4 max-sm:grid-cols-1 max-md:grid-cols-2 max-lg:grid-cols-3 gap-5">
-          {allCommunities.length ? (
-            allCommunities.map((community) => (
-              <div
-                key={community.uid + community.details?.name}
-                className="flex w-full flex-col items-center justify-center rounded-lg p-4"
-              >
-                <Link
-                  href={PAGES.ADMIN.ROOT(
-                    community.details?.slug || community.uid
-                  )}
-                >
-                  <img
-                    src={community.details?.imageURL || blo(community.uid)}
-                    className="h-[100px] w-full object-cover mb-2"
-                    alt={""}
-                  />
-                </Link>
-                <p className="text-lg font-normal text-black dark:text-white font-semibold">
-                  {community.details?.name ? community.details?.name : null}
-                </p>
-                <div className="flex flex-row gap-2 items-center">
-                  <p className="text-sm font-normal text-black dark:text-white w-full break-all">
-                    ({community.uid})
-                  </p>
-                  <Button
-                    className="p-1 bg-transparent flex flex-col gap-2 hover:bg-transparent dark:hover:bg-transparent text-base font-normal text-black dark:text-white"
-                    onClick={() => {
-                      handleCopy(community.uid);
-                    }}
+        {communitiesToAdmin.length ? (
+          <>
+            <div className="text-2xl font-bold">
+              All Communities{" "}
+              {allCommunities.length ? `(${allCommunities.length})` : ""}
+            </div>
+            <div className="mt-5 grid grid-cols-4 max-sm:grid-cols-1 max-md:grid-cols-2 max-lg:grid-cols-3 gap-5">
+              {allCommunities.length ? (
+                allCommunities.map((community) => (
+                  <div
+                    key={community.uid + community.details?.name}
+                    className="flex w-full flex-col items-center justify-center rounded-lg p-4"
                   >
-                    <ClipboardDocumentIcon className="h-5 w-5 text-black dark:text-white" />
-                  </Button>
-                </div>
-              </div>
-            ))
-          ) : isLoading ? (
-            <Spinner />
-          ) : null}
-        </div>
+                    <Link
+                      href={PAGES.ADMIN.ROOT(
+                        community.details?.slug || community.uid
+                      )}
+                    >
+                      <img
+                        src={community.details?.imageURL || blo(community.uid)}
+                        className="h-[100px] w-full object-cover mb-2"
+                        alt={""}
+                      />
+                    </Link>
+                    <p className="text-lg font-normal text-black dark:text-white font-semibold">
+                      {community.details?.name ? community.details?.name : null}
+                    </p>
+                    <div className="flex flex-row gap-2 items-center">
+                      <p className="text-sm font-normal text-black dark:text-white w-full break-all">
+                        ({community.uid})
+                      </p>
+                      <Button
+                        className="p-1 bg-transparent flex flex-col gap-2 hover:bg-transparent dark:hover:bg-transparent text-base font-normal text-black dark:text-white"
+                        onClick={() => {
+                          handleCopy(community.uid);
+                        }}
+                      >
+                        <ClipboardDocumentIcon className="h-5 w-5 text-black dark:text-white" />
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              ) : isLoading ? (
+                <Spinner />
+              ) : null}
+            </div>
+          </>
+        ) : (
+          <p>{MESSAGES.REVIEWS.NOT_ADMIN}</p>
+        )}
       </div>
     </>
   );
