@@ -663,7 +663,7 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
               </span>
             </div>
             <div className="flex flex-col gap-4  px-5 pt-5 pb-5 border-t border-gray-200">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <div className="text-gray-500 text-base  font-semibold dark:text-gray-300">
                   Community
                 </div>
@@ -673,14 +673,14 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
                       (grant?.community?.uid as Hex)
                   )}
                 >
-                  <div className="inline-flex items-center gap-x-2 rounded-full bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900">
+                  <div className="w-full inline-flex items-center gap-x-2 rounded-3xl bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={grant?.community?.details?.imageURL}
                       alt=""
                       className="h-5 w-5 rounded-full"
                     />
-                    <p className="max-w-xs truncate text-base font-semibold text-black dark:text-gray-100 max-md:text-sm">
+                    <p className="max-w-xs truncate text-base font-semibold text-black dark:text-gray-100 max-md:text-sm w-full break-words whitespace-break-spaces">
                       {grant?.community?.details?.name}
                     </p>
                   </div>
