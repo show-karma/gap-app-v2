@@ -16,6 +16,9 @@ import { ClipboardDocumentIcon } from "@heroicons/react/20/solid";
 import { Button } from "@/components/Utilities/Button";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { blo } from "blo";
+import { LinkIcon } from "@heroicons/react/24/solid";
+import { chainImgDictionary } from "@/utilities/chainImgDictionary";
+import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 
 export default function Communities() {
   const [allCommunities, setAllCommunities] = useState<Community[]>([]);
@@ -92,42 +95,73 @@ export default function Communities() {
               All Communities{" "}
               {allCommunities.length ? `(${allCommunities.length})` : ""}
             </div>
-            <div className="mt-5 grid grid-cols-4 max-sm:grid-cols-1 max-md:grid-cols-2 max-lg:grid-cols-3 gap-5">
+            <div className="mt-5 w-full gap-5">
               {allCommunities.length ? (
-                allCommunities.map((community) => (
-                  <div
-                    key={community.uid + community.details?.name}
-                    className="flex w-full flex-col items-center justify-center rounded-lg p-4"
-                  >
-                    <Link
-                      href={PAGES.ADMIN.ROOT(
-                        community.details?.slug || community.uid
-                      )}
-                    >
-                      <img
-                        src={community.details?.imageURL || blo(community.uid)}
-                        className="h-[100px] w-full object-cover mb-2"
-                        alt={""}
-                      />
-                    </Link>
-                    <p className="text-lg font-normal text-black dark:text-white font-semibold">
-                      {community.details?.name ? community.details?.name : null}
-                    </p>
-                    <div className="flex flex-row gap-2 items-center">
-                      <p className="text-sm font-normal text-black dark:text-white w-full break-all">
-                        ({community.uid})
-                      </p>
-                      <Button
-                        className="p-1 bg-transparent flex flex-col gap-2 hover:bg-transparent dark:hover:bg-transparent text-base font-normal text-black dark:text-white"
-                        onClick={() => {
-                          handleCopy(community.uid);
-                        }}
-                      >
-                        <ClipboardDocumentIcon className="h-5 w-5 text-black dark:text-white" />
-                      </Button>
-                    </div>
-                  </div>
-                ))
+                <table className="border-x border-x-zinc-300 border-y border-y-zinc-300">
+                  <thead className="border-x border-x-zinc-300 border-y border-y-zinc-300">
+                    <tr className="divide-x">
+                      <th>Img</th>
+                      <th>Name</th>
+                      <th>UUID</th>
+                      <th className="px-4 text-center">Community page</th>
+                      <th className="px-4 text-center">Admin page</th>
+                      <th>Network</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-x">
+                    {allCommunities.map((community) => (
+                      <tr className="divide-x" key={community.uid}>
+                        <td>
+                          <img
+                            src={
+                              community.details?.imageURL || blo(community.uid)
+                            }
+                            className="h-[64px] w-[100px] w-full object-cover"
+                            alt={community.details?.name || community.uid}
+                          />
+                        </td>
+                        <td className="max-w-60 px-4">
+                          {community.details?.name}
+                        </td>
+                        <td className="max-w-96 break-all px-4">
+                          {community.uid}
+                        </td>
+                        <td className="text-center px-4">
+                          <Link
+                            href={PAGES.ADMIN.ROOT(
+                              community.details?.slug || community.uid
+                            )}
+                            className="flex flex-row items-center gap-1.5 text-blue-500"
+                          >
+                            Community
+                            <LinkIcon className="w-4 h-4" />
+                          </Link>
+                        </td>
+                        <td className="text-center  px-4">
+                          <Link
+                            href={PAGES.ADMIN.ROOT(
+                              community.details?.slug || community.uid
+                            )}
+                            className="flex flex-row items-center gap-1.5 text-blue-500"
+                          >
+                            Admin
+                            <LinkIcon className="w-4 h-4" />
+                          </Link>
+                        </td>
+                        <td className=" px-4">
+                          <div className="flex flex-row gap-2 items-center">
+                            <img
+                              src={chainImgDictionary(community.chainID)}
+                              alt={chainNameDictionary(community.chainID)}
+                              className="w-5 h-5"
+                            />
+                            <p>{chainNameDictionary(community.chainID)}</p>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               ) : isLoading ? (
                 <Spinner />
               ) : null}
