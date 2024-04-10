@@ -88,7 +88,7 @@ export default function Communities() {
           All Communities{" "}
           {allCommunities.length ? `(${allCommunities.length})` : ""}
         </div>
-        <div className="mt-5 grid grid-cols-4 gap-5">
+        <div className="mt-5 grid grid-cols-4 max-sm:grid-cols-1 max-md:grid-cols-2 max-lg:grid-cols-3 gap-5">
           {allCommunities.length ? (
             allCommunities.map((community) => (
               <div
