@@ -169,7 +169,6 @@ export const NestedLayout = ({ children }: Props) => {
 
   useEffect(() => {
     if (!project || !project?.chainID || !isAuth || !isConnected) {
-      console.log("aqui");
       setIsProjectOwner(false);
       setIsProjectOwnerLoading(false);
       return;
@@ -181,14 +180,11 @@ export const NestedLayout = ({ children }: Props) => {
         const walletClient = await getWalletClient({
           chainId: project.chainID,
         });
-        console.log("walletClient", walletClient);
         if (!walletClient) return;
         const walletSigner = await walletClientToSigner(walletClient);
-        console.log("walletSigner", walletSigner);
 
         await getProjectOwner(walletSigner || signer, project)
           .then((res) => {
-            console.log("res", res);
             setIsProjectOwner(res);
           })
           .finally(() => setIsProjectOwnerLoading(false));
