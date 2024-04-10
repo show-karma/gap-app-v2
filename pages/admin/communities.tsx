@@ -1,6 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { useEffect, useState } from "react";
-import Head from "next/head";
 import Link from "next/link";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { NextSeo } from "next-seo";
@@ -10,11 +9,6 @@ import { PAGES } from "@/utilities/pages";
 import { MESSAGES } from "@/utilities/messages";
 import { Community } from "@show-karma/karma-gap-sdk";
 import { useGap } from "@/hooks";
-import toast from "react-hot-toast";
-import { shortAddress } from "@/utilities/shortAddress";
-import { ClipboardDocumentIcon } from "@heroicons/react/20/solid";
-import { Button } from "@/components/Utilities/Button";
-import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { blo } from "blo";
 import { LinkIcon } from "@heroicons/react/24/solid";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
@@ -23,7 +17,6 @@ import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 export default function Communities() {
   const [allCommunities, setAllCommunities] = useState<Community[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [, copy] = useCopyToClipboard();
 
   const { gap } = useGap();
   useEffect(() => {
@@ -48,17 +41,8 @@ export default function Communities() {
     fetchCommunities();
   }, []);
 
-  const handleCopy = (text: string) => {
-    copy(text)
-      .then(() => {
-        toast.success(`Copied ${shortAddress(text)} to clipboard!`);
-      })
-      .catch((error) => {
-        toast.error(`Failed to copy! ${error}`);
-      });
-  };
-
-  const { communities: communitiesToAdmin } = useCommunitiesStore();
+  const { communities: communitiesToAdmin, isLoading: isLoadingCommunities } =
+    useCommunitiesStore();
 
   return (
     <>
@@ -90,7 +74,7 @@ export default function Communities() {
 
       <div className="px-4 sm:px-6 lg:px-12 py-5">
         {communitiesToAdmin.length ? (
-          <>
+          <div className="flex flex-col gap-2">
             <div className="text-2xl font-bold">
               All Communities{" "}
               {allCommunities.length ? `(${allCommunities.length})` : ""}
@@ -116,7 +100,7 @@ export default function Communities() {
                             src={
                               community.details?.imageURL || blo(community.uid)
                             }
-                            className="h-[64px] w-[100px] w-full object-cover"
+                            className="h-[64px] w-[100px] object-cover"
                             alt={community.details?.name || community.uid}
                           />
                         </td>
@@ -128,7 +112,7 @@ export default function Communities() {
                         </td>
                         <td className="text-center px-4">
                           <Link
-                            href={PAGES.ADMIN.ROOT(
+                            href={PAGES.COMMUNITY.ALL_GRANTS(
                               community.details?.slug || community.uid
                             )}
                             className="flex flex-row items-center gap-1.5 text-blue-500"
@@ -162,11 +146,11 @@ export default function Communities() {
                     ))}
                   </tbody>
                 </table>
-              ) : isLoading ? (
+              ) : isLoading || isLoadingCommunities ? (
                 <Spinner />
               ) : null}
             </div>
-          </>
+          </div>
         ) : (
           <p>{MESSAGES.REVIEWS.NOT_ADMIN}</p>
         )}
