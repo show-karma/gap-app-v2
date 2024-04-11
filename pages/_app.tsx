@@ -8,28 +8,33 @@ import type { AppProps } from "next/app";
 import Footer from "@/components/Utilities/Footer";
 import Header from "@/components/Utilities/Header";
 import { Toaster } from "react-hot-toast";
-import WagmiProvider from "@/components/Utilities/WagmiProvider";
+import WagmiProvider, {
+  wagmiConfig,
+} from "@/components/Utilities/WagmiProvider";
 import NextThemeProvider from "@/components/Utilities/NextThemeProvider";
 import NextNProgress from "nextjs-progressbar";
+import { WagmiConfig } from "wagmi";
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <WagmiProvider>
-      <Toaster />
-      <NextNProgress options={{ showSpinner: false }} />
-      <NextThemeProvider>
-        <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">
-          <div>
-            <div className="fixed w-full bg-white dark:bg-black z-10">
-              <Header />
+    <WagmiConfig config={wagmiConfig}>
+      <WagmiProvider>
+        <Toaster />
+        <NextNProgress options={{ showSpinner: false }} />
+        <NextThemeProvider>
+          <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">
+            <div>
+              <div className="fixed w-full bg-white dark:bg-black z-10">
+                <Header />
+              </div>
+              <div className="h-[72px] w-full" />
+              <Layout Component={Component} pageProps={pageProps} />
             </div>
-            <div className="h-[72px] w-full" />
-            <Layout Component={Component} pageProps={pageProps} />
+            <Footer />
           </div>
-          <Footer />
-        </div>
-      </NextThemeProvider>
-    </WagmiProvider>
+        </NextThemeProvider>
+      </WagmiProvider>
+    </WagmiConfig>
   );
 }
 
