@@ -191,7 +191,7 @@ const StructureStep = () => {
     <div className="flex flex-col">
       <div className="flex flex-col gap-6 items-center justify-center pt-6">
         <h3 className="text-black font-bold text-xl dark:text-white">
-          This is the structure of our projects
+          Components of the Karma GAP Platform
         </h3>
         <img
           src="/images/karma-gap-onboarding-structure.png"
