@@ -2064,10 +2064,9 @@
     "@sentry/types" "5.30.0"
     tslib "^1.9.3"
 
-"@show-karma/karma-gap-sdk@^0.3.19":
+"@show-karma/karma-gap-sdk@git+https://github.com/show-karma/karma-gap-sdk.git#0ab7926e22061528f37621160dfbe458a9987574":
   version "0.3.19"
-  resolved "https://registry.yarnpkg.com/@show-karma/karma-gap-sdk/-/karma-gap-sdk-0.3.19.tgz#8579430b69c512f5a48dcfbf0b5545fe8b866171"
-  integrity sha512-3ousz0siUjHz408Zq6omsky8WDy5TfqRjsZxm1eH3RWQzfqI2BJ1uBHcCofGFvTSkQSo+tIPZLfX3fdVGJFLBA==
+  resolved "git+https://github.com/show-karma/karma-gap-sdk.git#0ab7926e22061528f37621160dfbe458a9987574"
   dependencies:
     "@ethereum-attestation-service/eas-sdk" "1.4.2"
     "@gelatonetwork/relay-sdk" "^5.2.0"

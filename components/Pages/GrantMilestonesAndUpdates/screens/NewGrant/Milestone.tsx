@@ -27,9 +27,27 @@ const inputStyle =
 
 const milestoneSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters" }),
-  endsAt: z.date({
-    required_error: "Date is required.",
-  }),
+  dates: z
+    .object({
+      endsAt: z.date({
+        required_error: "Date is required.",
+      }),
+      startsAt: z.date().optional(),
+    })
+    .refine(
+      (data) => {
+        const endsAt = data.endsAt.getTime() / 1000;
+        const startsAt = data.startsAt
+          ? data.startsAt.getTime() / 1000
+          : undefined;
+
+        return startsAt && startsAt <= endsAt;
+      },
+      {
+        message: "Start date must be before the end date",
+        path: ["dates", "startsAt"],
+      }
+    ),
 });
 
 type MilestoneType = z.infer<typeof milestoneSchema>;
@@ -72,7 +90,10 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
       {
         title: data.title,
         description,
-        endsAt: data.endsAt.getTime() / 1000,
+        endsAt: data.dates.endsAt.getTime() / 1000,
+        startsAt: data.dates.startsAt
+          ? data.dates.startsAt.getTime() / 1000
+          : undefined,
         completedText: update,
       },
       index
@@ -83,7 +104,10 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
     if (isValid) {
       const title = watch("title") || currentMilestone.title;
       const endsAt =
-        watch("endsAt").getTime() / 1000 || currentMilestone.endsAt;
+        watch("dates.endsAt").getTime() / 1000 || currentMilestone.endsAt;
+      const startsAt = watch("dates.startsAt")
+        ? watch("dates.startsAt")!.getTime() / 1000
+        : currentMilestone.startsAt;
       changeMilestoneForm(index, {
         isValid: isValid,
         isEditing: milestonesForms[index].isEditing,
@@ -91,6 +115,7 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
           title,
           description: description || currentMilestone.description,
           endsAt,
+          startsAt,
           completedText: update || currentMilestone.completedText,
         },
       });
@@ -124,46 +149,96 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
           />
           <p className="text-base text-red-400">{errors.title?.message}</p>
         </div>
-        <div className="flex w-full flex-row justify-between gap-4">
-          <Controller
-            name="endsAt"
-            control={form.control}
-            render={({ field, formState, fieldState }) => (
-              <div className="flex w-full flex-col gap-2">
-                <label className={labelStyle}>End date *</label>
-                <div>
-                  <Popover className="relative">
-                    <Popover.Button className="w-max text-sm flex-row flex gap-2 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
-                      {field.value ? (
-                        formatDate(field.value)
-                      ) : (
-                        <span>Pick a date</span>
-                      )}
-                      <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                    </Popover.Button>
-                    <Popover.Panel className="absolute z-10 bg-white dark:bg-zinc-800 mt-4 rounded-md">
-                      <DayPicker
-                        mode="single"
-                        selected={field.value}
-                        onDayClick={(e) => {
-                          setValue("endsAt", e, { shouldValidate: true });
-                          field.onChange(e);
-                        }}
-                        disabled={(date) => {
-                          if (date < new Date("2000-01-01")) return true;
-                          return false;
-                        }}
-                        initialFocus
-                      />
-                    </Popover.Panel>
-                  </Popover>
+
+        <div className="flex w-full flex-row items-center justify-between gap-4">
+          <div className="flex w-full flex-row justify-between gap-4">
+            <Controller
+              name="dates.startsAt"
+              control={form.control}
+              render={({ field, formState, fieldState }) => (
+                <div className="flex w-full flex-col gap-2">
+                  <label className={labelStyle}>Start date (optional)</label>
+                  <div>
+                    <Popover className="relative">
+                      <Popover.Button className="w-max text-sm flex-row flex gap-2 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
+                        {field.value ? (
+                          formatDate(field.value)
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Popover.Button>
+                      <Popover.Panel className="absolute z-10 bg-white dark:bg-zinc-800 mt-4 rounded-md">
+                        <DayPicker
+                          mode="single"
+                          selected={field.value}
+                          onDayClick={(e) => {
+                            setValue("dates.startsAt", e, {
+                              shouldValidate: true,
+                            });
+                            field.onChange(e);
+                          }}
+                          disabled={(date) => {
+                            if (date < new Date("2000-01-01")) return true;
+                            return false;
+                          }}
+                          initialFocus
+                        />
+                      </Popover.Panel>
+                    </Popover>
+                  </div>
+                  <p className="text-base text-red-400">
+                    {formState.errors.dates?.startsAt?.message}
+                  </p>
                 </div>
-                <p className="text-base text-red-400">
-                  {formState.errors.endsAt?.message}
-                </p>
-              </div>
-            )}
-          />
+              )}
+            />
+          </div>
+          <div className="flex w-full flex-row justify-between gap-4">
+            <Controller
+              name="dates.endsAt"
+              control={form.control}
+              render={({ field, formState, fieldState }) => (
+                <div className="flex w-full flex-col gap-2">
+                  <label className={labelStyle}>End date *</label>
+                  <div>
+                    <Popover className="relative">
+                      <Popover.Button className="w-max text-sm flex-row flex gap-2 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
+                        {field.value ? (
+                          formatDate(field.value)
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Popover.Button>
+                      <Popover.Panel className="absolute z-10 bg-white dark:bg-zinc-800 mt-4 rounded-md">
+                        <DayPicker
+                          mode="single"
+                          selected={field.value}
+                          onDayClick={(e) => {
+                            setValue("dates.endsAt", e, {
+                              shouldValidate: true,
+                            });
+                            field.onChange(e);
+                          }}
+                          disabled={(date) => {
+                            if (date < new Date("2000-01-01")) return true;
+                            const startsAt = watch("dates.startsAt");
+                            if (startsAt && date < startsAt) return true;
+                            return false;
+                          }}
+                          initialFocus
+                        />
+                      </Popover.Panel>
+                    </Popover>
+                  </div>
+                  <p className="text-base text-red-400">
+                    {formState.errors.dates?.endsAt?.message}
+                  </p>
+                </div>
+              )}
+            />
+          </div>
         </div>
         <div className="flex w-full flex-col">
           <label htmlFor="milestone-description" className={labelStyle}>
@@ -208,7 +283,12 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
         <div className="flex w-full  flex-row items-center justify-between gap-6">
           <div className="flex flex-col gap-2">
             <h3 className="text-lg font-bold">{currentMilestone.title}</h3>
-            <p>{formatDate(currentMilestone.endsAt * 1000)}</p>
+            <p>
+              {currentMilestone.startsAt
+                ? `${formatDate(currentMilestone.startsAt * 1000)} - `
+                : null}
+              {formatDate(currentMilestone.endsAt * 1000)}
+            </p>
           </div>
           <div className="flex w-max flex-row justify-center gap-4">
             <Button
