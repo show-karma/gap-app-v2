@@ -18,82 +18,80 @@ import { appNetwork } from "@/utilities/network";
 import { envVars } from "@/utilities/enviromentVars";
 import { jsonRpcProvider } from "wagmi/providers/jsonRpc";
 
-const WagmiProvider = ({ children }: { children: React.ReactNode }) => {
-  const { chains, publicClient, webSocketPublicClient } = configureChains(
-    appNetwork as any,
-    [
-      jsonRpcProvider({
-        rpc(chain) {
-          if (chain.id === optimism.id) {
-            return {
-              http: envVars.RPC.OPTIMISM,
-              webSocket: chain.rpcUrls.default.webSocket?.[0],
-            };
-          }
-          if (chain.id === arbitrum.id) {
-            return {
-              http: envVars.RPC.ARBITRUM,
-              webSocket: chain.rpcUrls.default.webSocket?.[0],
-            };
-          }
-
-          if (chain.id === optimismSepolia.id) {
-            return {
-              http: envVars.RPC.OPT_SEPOLIA,
-              webSocket: chain.rpcUrls.default.webSocket?.[0],
-            };
-          }
+const { chains, publicClient, webSocketPublicClient } = configureChains(
+  appNetwork as any,
+  [
+    jsonRpcProvider({
+      rpc(chain) {
+        if (chain.id === optimism.id) {
           return {
-            http: chain.rpcUrls.default.http[0],
+            http: envVars.RPC.OPTIMISM,
             webSocket: chain.rpcUrls.default.webSocket?.[0],
           };
-        },
+        }
+        if (chain.id === arbitrum.id) {
+          return {
+            http: envVars.RPC.ARBITRUM,
+            webSocket: chain.rpcUrls.default.webSocket?.[0],
+          };
+        }
+
+        if (chain.id === optimismSepolia.id) {
+          return {
+            http: envVars.RPC.OPT_SEPOLIA,
+            webSocket: chain.rpcUrls.default.webSocket?.[0],
+          };
+        }
+        return {
+          http: chain.rpcUrls.default.http[0],
+          webSocket: chain.rpcUrls.default.webSocket?.[0],
+        };
+      },
+    }),
+    publicProvider(),
+  ]
+);
+
+const connectors = connectorsForWallets([
+  {
+    groupName: "Recommended",
+    wallets: [
+      metaMaskWallet({
+        chains,
+        projectId: process.env.NEXT_PUBLIC_PROJECT_ID || "",
       }),
-      publicProvider(),
-    ]
-  );
+      rainbowWallet({
+        chains,
+        projectId: process.env.NEXT_PUBLIC_PROJECT_ID || "",
+      }),
+      coinbaseWallet({
+        chains,
+        appName: `Karma GAP`,
+      }),
+      customWalletConnectConnector(chains),
+      injectedWallet({ chains }),
+    ],
+  },
+]);
 
-  const connectors = connectorsForWallets([
-    {
-      groupName: "Recommended",
-      wallets: [
-        metaMaskWallet({
-          chains,
-          projectId: process.env.NEXT_PUBLIC_PROJECT_ID || "",
-        }),
-        rainbowWallet({
-          chains,
-          projectId: process.env.NEXT_PUBLIC_PROJECT_ID || "",
-        }),
-        coinbaseWallet({
-          chains,
-          appName: `Karma GAP`,
-        }),
-        customWalletConnectConnector(chains),
-        injectedWallet({ chains }),
-      ],
-    },
-  ]);
-
-  const wagmiConfig = createConfig({
-    autoConnect: true,
-    connectors,
-    publicClient,
-    webSocketPublicClient,
-  });
+export const wagmiConfig = createConfig({
+  autoConnect: true,
+  connectors,
+  publicClient,
+  webSocketPublicClient,
+});
+const WagmiProvider = ({ children }: { children: React.ReactNode }) => {
   return (
-    <WagmiConfig config={wagmiConfig}>
-      <RainbowKitProvider
-        chains={chains}
-        theme={lightTheme({
-          accentColor: "#E40536",
-          accentColorForeground: "white",
-          borderRadius: "medium",
-        })}
-      >
-        {children}
-      </RainbowKitProvider>
-    </WagmiConfig>
+    <RainbowKitProvider
+      chains={chains}
+      theme={lightTheme({
+        accentColor: "#E40536",
+        accentColorForeground: "white",
+        borderRadius: "medium",
+      })}
+    >
+      {children}
+    </RainbowKitProvider>
   );
 };
 export default WagmiProvider;
