@@ -8,11 +8,16 @@ import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
 import { TrashIcon } from "@heroicons/react/24/outline";
-import { GrantUpdate as Update } from "@show-karma/karma-gap-sdk";
+import {
+  GrantUpdateStatus,
+  GrantUpdate as Update,
+} from "@show-karma/karma-gap-sdk";
 import { getWalletClient } from "@wagmi/core";
-import { useState, type FC } from "react";
+import { useEffect, useState, type FC } from "react";
 import toast from "react-hot-toast";
 import { useNetwork, useSwitchNetwork } from "wagmi";
+import { VerifyGrantUpdateDialog } from "./VerifyGrantUpdateDialog";
+import { VerifiedBadge } from "./VerifiedBadge";
 
 interface UpdateTagProps {
   index: number;
@@ -98,10 +103,32 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
 
   const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
 
+  const [verifiedUpdate, setVerifiedUpdate] = useState<GrantUpdateStatus[]>(
+    update?.verified || []
+  );
+
+  const addVerifiedUpdate = (newVerified: GrantUpdateStatus) => {
+    setVerifiedUpdate([...verifiedUpdate, newVerified]);
+  };
+
+  useEffect(() => {
+    setVerifiedUpdate(update?.verified || []);
+  }, [update]);
+
   return (
     <div className="flex w-full flex-1 flex-col gap-4 rounded-lg border border-zinc-200 dark:bg-zinc-800 dark:border-zinc-700 bg-white p-4 transition-all duration-200 ease-in-out  max-sm:px-2">
       <div className="flex flex-row items-center justify-between">
-        <UpdateTag index={index} />
+        <div className="flex flex-row gap-3 items-center">
+          <UpdateTag index={index} />
+          {verifiedUpdate.length ? (
+            <VerifiedBadge verifications={verifiedUpdate} />
+          ) : null}
+          <VerifyGrantUpdateDialog
+            grantUpdate={update}
+            isCommunityAdmin={isCommunityAdmin}
+            addVerifiedUpdate={addVerifiedUpdate}
+          />
+        </div>
         <div className="flex flex-row gap-3 items-center">
           <p className="text-sm font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
             Posted on {formatDate(date)}
