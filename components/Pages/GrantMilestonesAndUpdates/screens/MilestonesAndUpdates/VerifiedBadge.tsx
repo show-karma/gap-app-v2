@@ -1,5 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
-import { Hex, MilestoneCompleted } from "@show-karma/karma-gap-sdk";
+import {
+  GrantUpdateStatus,
+  Hex,
+  MilestoneCompleted,
+} from "@show-karma/karma-gap-sdk";
 import { blo } from "blo";
 import { FC, useEffect } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
@@ -7,7 +11,7 @@ import { useENSNames } from "@/store/ensNames";
 import { formatDate } from "@/utilities/formatDate";
 
 interface VerifiedBadgeProps {
-  verifications: MilestoneCompleted[];
+  verifications: MilestoneCompleted[] | GrantUpdateStatus[];
 }
 
 const BlockieTooltip = ({
@@ -61,9 +65,14 @@ const BlockieTooltip = ({
 };
 
 export const VerifiedBadge: FC<VerifiedBadgeProps> = ({ verifications }) => {
-  const getUniqueVerifications = (verifications: MilestoneCompleted[]) => {
+  const getUniqueVerifications = (
+    verifications: MilestoneCompleted[] | GrantUpdateStatus[]
+  ) => {
     // get unique and by last date
-    const uniqueVerifications: Record<Hex, MilestoneCompleted> = {};
+    const uniqueVerifications: Record<
+      Hex,
+      MilestoneCompleted | GrantUpdateStatus
+    > = {};
     verifications.forEach((verification) => {
       if (!verification.attester) return;
       if (!uniqueVerifications[verification.attester]) {

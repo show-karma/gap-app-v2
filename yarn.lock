@@ -2236,10 +2236,10 @@
     "@sentry/cli" "^1.77.1"
     webpack-sources "^2.0.0 || ^3.0.0"
 
-"@show-karma/karma-gap-sdk@^0.3.17":
-  version "0.3.17"
-  resolved "https://registry.yarnpkg.com/@show-karma/karma-gap-sdk/-/karma-gap-sdk-0.3.17.tgz#b3e75f957b8d5297e93245128ed153db41e19d59"
-  integrity sha512-sDZKBiZEXEdk3eHJJ97N+NVigZImSZdm7K4yoYuU51xjgac3k6RgQugcQAG9PGAaQtzaXR/CR8+fc3vlNhQV8g==
+"@show-karma/karma-gap-sdk@^0.3.19":
+  version "0.3.19"
+  resolved "https://registry.yarnpkg.com/@show-karma/karma-gap-sdk/-/karma-gap-sdk-0.3.19.tgz#8579430b69c512f5a48dcfbf0b5545fe8b866171"
+  integrity sha512-3ousz0siUjHz408Zq6omsky8WDy5TfqRjsZxm1eH3RWQzfqI2BJ1uBHcCofGFvTSkQSo+tIPZLfX3fdVGJFLBA==
   dependencies:
     "@ethereum-attestation-service/eas-sdk" "1.4.2"
     "@gelatonetwork/relay-sdk" "^5.2.0"
