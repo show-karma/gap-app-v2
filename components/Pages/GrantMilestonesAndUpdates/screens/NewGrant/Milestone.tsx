@@ -41,7 +41,7 @@ const milestoneSchema = z.object({
           ? data.startsAt.getTime() / 1000
           : undefined;
 
-        return startsAt && startsAt <= endsAt;
+        return startsAt ? startsAt <= endsAt : true;
       },
       {
         message: "Start date must be before the end date",
