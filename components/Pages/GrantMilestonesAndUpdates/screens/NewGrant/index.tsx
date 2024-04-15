@@ -367,6 +367,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             title: milestone.title,
             description: milestone.description,
             endsAt: milestone.endsAt,
+            startsAt: milestone.startsAt,
           },
           refUID: grant.uid,
           schema: gapClient.findSchema("Milestone"),
