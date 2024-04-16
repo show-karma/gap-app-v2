@@ -11,13 +11,11 @@ import { Spinner } from "./Utilities/Spinner";
 import { GrantCard } from "./GrantCard";
 import { useQueryState } from "nuqs";
 import { SortByOptions, StatusOptions } from "@/types";
-import fetchData from "@/utilities/fetchData";
 import pluralize from "pluralize";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { AutoSizer, Grid } from "react-virtualized";
 import { cn } from "@/utilities/tailwind";
 import { zeroUID } from "@/utilities/commons";
-import { INDEXER } from "@/utilities/indexer";
 
 const sortOptions: Record<SortByOptions, string> = {
   recent: "Recent",
@@ -440,17 +438,12 @@ export const CommunityGrants = ({
             next={loadMore}
             hasMore={haveMore}
             loader={null}
-            className="h-full w-full"
             style={{
               width: "100%",
               height: "100%",
-              minHeight:
-                grants.length > 4
-                  ? 360 * Math.ceil(grants.length / 4) + 180
-                  : 360 * 1.5,
             }}
           >
-            <AutoSizer>
+            <AutoSizer disableHeight>
               {({ width }) => {
                 const columnCounter = Math.floor(width / 240)
                   ? Math.floor(width / 240) > 4
@@ -459,21 +452,18 @@ export const CommunityGrants = ({
                   : 1;
                 const columnWidth = Math.floor(width / columnCounter);
                 const gutterSize = 20;
+                const height = Math.ceil(grants.length / columnCounter) * 360;
                 return (
                   <Grid
-                    height={
-                      grants.length > 4
-                        ? 360 * Math.ceil(grants.length / 4) + 180
-                        : 360 * 1.5
-                    }
+                    height={height + 120}
                     width={width}
-                    rowCount={Math.ceil(grants.length / 4)}
-                    // rowHeight={cache.current.rowHeight}
+                    rowCount={Math.ceil(grants.length / columnCounter)}
                     rowHeight={360}
                     columnWidth={columnWidth - 20 < 240 ? 240 : columnWidth - 5}
                     columnCount={columnCounter}
                     cellRenderer={({ columnIndex, key, rowIndex, style }) => {
-                      const grant = grants[rowIndex * 4 + columnIndex];
+                      const grant =
+                        grants[rowIndex * columnCounter + columnIndex];
                       return (
                         <div
                           key={key}

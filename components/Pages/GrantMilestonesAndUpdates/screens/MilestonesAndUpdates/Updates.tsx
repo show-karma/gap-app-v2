@@ -14,7 +14,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { formatDate } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
 import { getWalletClient } from "@wagmi/core";
-import { VerifyClaimDialog } from "./VerifyClaimDialog";
+import { VerifyMilestoneUpdateDialog } from "./VerifyMilestoneUpdateDialog";
 import { VerifiedBadge } from "./VerifiedBadge";
 import { useCommunityAdminStore } from "@/store/community";
 
@@ -88,7 +88,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
             {verifiedMilestones.length ? (
               <VerifiedBadge verifications={verifiedMilestones} />
             ) : null}
-            <VerifyClaimDialog
+            <VerifyMilestoneUpdateDialog
               milestone={milestone}
               addVerifiedMilestone={addVerifiedMilestone}
               isCommunityAdmin={isCommunityAdmin}

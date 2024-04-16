@@ -33,9 +33,27 @@ import { useCommunityAdminStore } from "@/store/community";
 
 const milestoneSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.MILESTONES.FORM.TITLE }),
-  endsAt: z.date({
-    required_error: MESSAGES.MILESTONES.FORM.DATE,
-  }),
+  dates: z
+    .object({
+      endsAt: z.date({
+        required_error: MESSAGES.MILESTONES.FORM.DATE,
+      }),
+      startsAt: z.date().optional(),
+    })
+    .refine(
+      (data) => {
+        const endsAt = data.endsAt.getTime() / 1000;
+        const startsAt = data.startsAt
+          ? data.startsAt.getTime() / 1000
+          : undefined;
+
+        return startsAt ? startsAt <= endsAt : true;
+      },
+      {
+        message: "Start date must be before the end date",
+        path: ["dates", "startsAt"],
+      }
+    ),
 });
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
@@ -66,6 +84,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
     register,
     handleSubmit,
     setValue,
+    watch,
     formState: { errors, isSubmitting, isValid },
   } = useForm<MilestoneType>({
     resolver: zodResolver(milestoneSchema),
@@ -93,7 +112,10 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
     const milestone = {
       title: data.title,
       description,
-      endsAt: data.endsAt.getTime() / 1000,
+      endsAt: data.dates.endsAt.getTime() / 1000,
+      startsAt: data.dates.startsAt
+        ? data.dates.startsAt.getTime() / 1000
+        : undefined,
       completedText: completedUpdate,
     };
 
@@ -109,6 +131,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
         data: {
           description: milestone.description,
           endsAt: milestone.endsAt,
+          startsAt: milestone.startsAt,
           title: milestone.title,
         },
       });
@@ -138,6 +161,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
         currentGrant?.milestones?.push(milestoneToAttest);
       });
     } catch (error) {
+      console.error(error);
       toast.error(MESSAGES.MILESTONES.CREATE.ERROR);
     } finally {
       setIsLoading(false);
@@ -176,46 +200,95 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
             />
             <p className="text-base text-red-400">{errors.title?.message}</p>
           </div>
-          <div className="flex w-full flex-row justify-between gap-4">
-            <Controller
-              name="endsAt"
-              control={form.control}
-              render={({ field, formState, fieldState }) => (
-                <div className="flex w-full flex-col gap-2">
-                  <label className={labelStyle}>End date *</label>
-                  <div>
-                    <Popover className="relative">
-                      <Popover.Button className="max-lg:w-full w-max text-sm flex-row flex gap-2 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
-                        {field.value ? (
-                          formatDate(field.value)
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Popover.Button>
-                      <Popover.Panel className="absolute z-10 bg-white dark:bg-zinc-800 mt-4 rounded-md">
-                        <DayPicker
-                          mode="single"
-                          selected={field.value}
-                          onDayClick={(e) => {
-                            setValue("endsAt", e, { shouldValidate: true });
-                            field.onChange(e);
-                          }}
-                          disabled={(date) => {
-                            if (date < new Date("2000-01-01")) return true;
-                            return false;
-                          }}
-                          initialFocus
-                        />
-                      </Popover.Panel>
-                    </Popover>
+          <div className="flex w-full flex-row items-center justify-between gap-4">
+            <div className="flex w-full flex-row justify-between gap-4">
+              <Controller
+                name="dates.startsAt"
+                control={form.control}
+                render={({ field, formState, fieldState }) => (
+                  <div className="flex w-full flex-col gap-2">
+                    <label className={labelStyle}>Start date (optional)</label>
+                    <div>
+                      <Popover className="relative">
+                        <Popover.Button className="max-lg:w-full w-max text-sm flex-row flex gap-2 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
+                          {field.value ? (
+                            formatDate(field.value)
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Popover.Button>
+                        <Popover.Panel className="absolute z-10 bg-white dark:bg-zinc-800 mt-4 rounded-md">
+                          <DayPicker
+                            mode="single"
+                            selected={field.value}
+                            onDayClick={(e) => {
+                              setValue("dates.startsAt", e, {
+                                shouldValidate: true,
+                              });
+                              field.onChange(e);
+                            }}
+                            disabled={(date) => {
+                              if (date < new Date("2000-01-01")) return true;
+                              return false;
+                            }}
+                            initialFocus
+                          />
+                        </Popover.Panel>
+                      </Popover>
+                    </div>
+                    <p className="text-base text-red-400">
+                      {formState.errors.dates?.startsAt?.message}
+                    </p>
                   </div>
-                  <p className="text-base text-red-400">
-                    {formState.errors.endsAt?.message}
-                  </p>
-                </div>
-              )}
-            />
+                )}
+              />
+            </div>
+            <div className="flex w-full flex-row justify-between gap-4">
+              <Controller
+                name="dates.endsAt"
+                control={form.control}
+                render={({ field, formState, fieldState }) => (
+                  <div className="flex w-full flex-col gap-2">
+                    <label className={labelStyle}>End date *</label>
+                    <div>
+                      <Popover className="relative">
+                        <Popover.Button className="max-lg:w-full w-max text-sm flex-row flex gap-2 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
+                          {field.value ? (
+                            formatDate(field.value)
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Popover.Button>
+                        <Popover.Panel className="absolute z-10 bg-white dark:bg-zinc-800 mt-4 rounded-md">
+                          <DayPicker
+                            mode="single"
+                            selected={field.value}
+                            onDayClick={(e) => {
+                              setValue("dates.endsAt", e, {
+                                shouldValidate: true,
+                              });
+                              field.onChange(e);
+                            }}
+                            disabled={(date) => {
+                              if (date < new Date("2000-01-01")) return true;
+                              const startsAt = watch("dates.startsAt");
+                              if (startsAt && date < startsAt) return true;
+                              return false;
+                            }}
+                            initialFocus
+                          />
+                        </Popover.Panel>
+                      </Popover>
+                    </div>
+                    <p className="text-base text-red-400">
+                      {formState.errors.dates?.endsAt?.message}
+                    </p>
+                  </div>
+                )}
+              />
+            </div>
           </div>
           {(isOwner || isCommunityAdmin) && (
             <div className="flex w-full flex-col gap-2">

@@ -26,11 +26,14 @@ export const MESSAGES = {
       EMPTY: "The grantee has not defined any impact criteria yet.",
     },
     REVIEW: {
+      NOT_AUTHORIZED: "You are not authorized to review this grant.",
       EMPTY_REVIEWS: "No reviews yet, be the first to review this grant!",
       CAN_NOT_REVIEW: "This grant has not been configured for reviewing yet.",
       ALREADY_REVIEWED: "You have already reviewed this grant.",
       SUCCESS: (projectName: string, grantName: string) =>
         `Your review of ${projectName} - ${grantName} was succesfully saved.`,
+      ANON_REVIEW_ALREADY_EXISTS: (projectName: string, grantName: string) =>
+        `You have already submitted an anonymous review for ${projectName} - ${grantName}.`,
       ERROR: (projectName: string, grantName: string) =>
         `Your review of ${projectName} - ${grantName} couldn't be saved.`,
       FORM: {
@@ -58,6 +61,15 @@ export const MESSAGES = {
     GRANT_UPDATE: {
       SUCCESS: "Update was successfully added to the grant.",
       ERROR: "There was an error creating the update. Please try again.",
+      UNDO: {
+        SUCCESS: "Grant Update successfully removed",
+        ERROR: "There was an error undoing the grant update. Please try again",
+      },
+      VERIFY: {
+        SUCCESS: "You have successfully verified the grant update.",
+        ERROR:
+          "There was an error verifying the grant update. Please try again.",
+      },
     },
     UPDATE: {
       SUCCESS: "Your grant was edited successfully!",

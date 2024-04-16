@@ -45,6 +45,13 @@ export const INDEXER = {
       `/communities/${communityIdOrSlug}/questions`,
   },
   GRANTS: {
+    GET_ZK_GROUP: (
+      chainID: string,
+      communityUID: string,
+      grantUID: string,
+      scope: string
+    ) =>
+      `/semaphores/groups/check?chainID=${chainID}&communityUID=${communityUID}&grantUID=${grantUID}&scope=${scope}`,
     BY_UID: (grantUID: string) => `/grants/${grantUID}`,
     REVIEWS: {
       REVIEWER: {
@@ -52,10 +59,14 @@ export const INDEXER = {
         SAVE: (publicAddress: string) => `/reviewer/${publicAddress}/infos`,
       },
       SEND: (grantUID: string) => `/grants/${grantUID}/questions/answer`,
+      SEND_ANON: (grantUID: string) =>
+        `/grants/${grantUID}/questions/answer-anon`,
       QUESTIONS: (grantUID: string) => `/grants/${grantUID}/questions`,
       USER_ANSWERED: (grantUID: string, publicAddress: string) =>
         `/grants/${grantUID}/questions/answer/${publicAddress}`,
       ALL: (grantUID: string) => `/grants/${grantUID}/questions/answer/feed`,
+      ALL_ANON: (grantUID: string) =>
+        `/grants/${grantUID}/questions/answer/feed-anon`,
     },
     CATEGORIES: {
       ALL: (idOrSlug: string) => `/communities/${idOrSlug}/categories`,
