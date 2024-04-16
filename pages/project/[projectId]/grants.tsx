@@ -521,32 +521,34 @@ const GrantsPage = ({
         ) : null}
         <div className="flex-1 pl-5 pt-5 pb-20 max-lg:px-0 max-lg:pt-0">
           {/* Grants tabs start */}
-          <div className="flex flex-row gap-4 justify-between max-md:flex-col border-b border-b-zinc-900 dark:border-b-zinc-200 pb-2 mb-4">
-            <div className="flex flex-row gap-2 items-center">
-              <div className="text-xl font-semibold text-black dark:text-zinc-100">
-                {grant?.details?.title}
+          {project?.grants.length ? (
+            <div className="flex flex-row gap-4 justify-between max-md:flex-col border-b border-b-zinc-900 dark:border-b-zinc-200 pb-2 mb-4">
+              <div className="flex flex-row gap-2 items-center">
+                <div className="text-xl font-semibold text-black dark:text-zinc-100">
+                  {grant?.details?.title}
+                </div>
+                {isAuthorized && project && grant && (
+                  <button
+                    onClick={() => {
+                      changeTab("edit-grant");
+                    }}
+                    className="rounded-md items-center text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-35 hover:opacity-75 transition-all ease-in-out duration-300 flex h-max w-max flex-row gap-2 bg-zinc-800 p-2 text-white hover:bg-zinc-800 hover:text-white"
+                  >
+                    Edit grant
+                    <PencilSquareIcon className="h-4 w-4" />
+                  </button>
+                )}
               </div>
-              {isAuthorized && project && grant && (
-                <button
-                  onClick={() => {
-                    changeTab("edit-grant");
-                  }}
-                  className="rounded-md items-center text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-35 hover:opacity-75 transition-all ease-in-out duration-300 flex h-max w-max flex-row gap-2 bg-zinc-800 p-2 text-white hover:bg-zinc-800 hover:text-white"
-                >
-                  Edit grant
-                  <PencilSquareIcon className="h-4 w-4" />
-                </button>
-              )}
+              {isAuthorized && grant ? (
+                <div className="flex flex-row gap-2">
+                  {project ? (
+                    <GrantCompleteButton project={project} grant={grant} />
+                  ) : null}
+                  <GrantDelete grant={grant} />
+                </div>
+              ) : null}
             </div>
-            {isAuthorized && grant ? (
-              <div className="flex flex-row gap-2">
-                {project ? (
-                  <GrantCompleteButton project={project} grant={grant} />
-                ) : null}
-                <GrantDelete grant={grant} />
-              </div>
-            ) : null}
-          </div>
+          ) : null}
           {project?.grants.length && currentTab !== "create-grant" ? (
             <div className="sm:block">
               <nav
