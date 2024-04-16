@@ -121,7 +121,7 @@ function ProjectPage({ initialFeed }: ProjectPageProps) {
       </div>
       <div className="flex flex-col flex-[1] gap-8">
         {isProjectOwner || isOwner ? (
-          <div className="flex flex-col gap-2 w-max">
+          <div className="flex flex-col gap-2 w-max max-lg:w-full max-lg:max-w-80">
             <Link
               href={PAGES.PROJECT.IMPACT.ADD_IMPACT(
                 project?.details?.slug || projectId
@@ -131,7 +131,7 @@ function ProjectPage({ initialFeed }: ProjectPageProps) {
                 Add impact
               </Button>
             </Link>
-            <div className="flex flex-row gap-2 flex-wrap">
+            <div className="flex flex-row gap-2 flex-wrap max-lg:flex-col w-full max-lg:max-w-80">
               <ProjectDialog
                 key={project?.uid}
                 buttonElement={{
@@ -146,7 +146,8 @@ function ProjectPage({ initialFeed }: ProjectPageProps) {
                 buttonElement={{
                   icon: null,
                   text: "Transfer Ownership",
-                  styleClass: "bg-red-600 hover:bg-red-500",
+                  styleClass:
+                    "bg-red-600 items-center justify-center hover:bg-red-500",
                 }}
               />
               <DeleteDialog
@@ -156,7 +157,8 @@ function ProjectPage({ initialFeed }: ProjectPageProps) {
                 buttonElement={{
                   icon: null,
                   text: "Delete project",
-                  styleClass: "bg-red-600 hover:bg-red-500",
+                  styleClass:
+                    "bg-red-600 items-center justify-center hover:bg-red-500",
                 }}
               />
             </div>
