@@ -519,7 +519,7 @@ const GrantsPage = ({
             </nav>
           </div>
         ) : null}
-        <div className="flex-1 pl-5 pt-5 pb-20 max-lg:px-0">
+        <div className="flex-1 pl-5 pt-5 pb-20 max-lg:px-0 max-lg:pt-0">
           {/* Grants tabs start */}
           <div className="flex flex-row gap-4 justify-between max-md:flex-col border-b border-b-zinc-900 dark:border-b-zinc-200 pb-2 mb-4">
             <div className="flex flex-row gap-2 items-center">
