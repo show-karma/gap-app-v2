@@ -538,6 +538,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           github: data.github,
           linkedin: data.linkedin,
           twitter: data.twitter,
+          website: data.website,
         },
         walletSigner,
         gapClient
