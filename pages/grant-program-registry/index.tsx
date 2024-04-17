@@ -2,49 +2,103 @@
 import React from "react";
 import { NextSeo } from "next-seo";
 import { defaultMetadata } from "@/utilities/meta";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Dropdown from "@/components/DropDown";
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
-
-const people = [
-  {
-    name: "Lindsay Walton",
-    title: "Front-end Developer",
-    department: "Optimization",
-    email: "lindsay.walton@example.com",
-    role: "Member",
-    image:
-      "https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
-  },
-  {
-    name: "Lindsay Walton",
-    title: "Front-end Developer",
-    department: "Optimization",
-    email: "lindsay.walton@example.com",
-    role: "Member",
-    image:
-      "https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
-  },
-  {
-    name: "Lindsay Walton",
-    title: "Front-end Developer",
-    department: "Optimization",
-    email: "lindsay.walton@example.com",
-    role: "Member",
-    image:
-      "https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
-  },
-  // More people...
-];
+import axios from "axios";
+import { envVars } from "@/utilities/enviromentVars";
+import { chainNameDictionary } from "@/utilities/chainNameDictionary";
+import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 
 const grantTypes = ["Defi", "zk", "NFT", "Research", "Climate", "Regen"];
 
+type GrantProgram = {
+  project: {
+    chainId: number;
+    name: string;
+    metadata: any;
+  };
+  chainId: number;
+  id: string;
+  roundMetadata: any;
+  strategyName: string;
+  tags: string[];
+  matchAmount: string;
+  fundedAmount: string;
+  fundedAmountInUsd: string;
+  matchAmountInUsd: string;
+  applicationsEndTime: string;
+  applicationsStartTime: string;
+};
+
 export default function GrantProgramRegistry({}) {
+  const [grants, setGrants] = useState<GrantProgram[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedGrantType, setSelectedGrantType] = useState("All");
   const dynamicMetadata = {
     title: `Karma GAP - Grant Program Aggregator`,
     description: `View the list of grant programs issued by various communities.`,
   };
+
+  function getGrantPrograms() {
+    axios
+      .post(envVars.NEXT_PUBLIC_ALLO_V2_GRAPHQL_URL, {
+        query: `
+        query Query($first: Int, $filter: RoundFilter) {
+          rounds(first: $first, filter: $filter) {
+            project {
+              name
+              metadata
+              chainId
+            }
+            chainId
+            id
+            roundMetadata
+            strategyName
+            tags
+            matchAmount
+            fundedAmount
+            fundedAmountInUsd
+            matchAmountInUsd
+            applicationsEndTime
+            applicationsStartTime
+          }
+        }               
+      `,
+        variables: {
+          filter: {
+            chainId: {
+              in: [10, 11155111, 42161],
+            },
+            tags: {
+              contains: "allo-v2",
+            },
+            strategyName: {
+              notEqualTo: "",
+            },
+          },
+          first: 10,
+        },
+      })
+      .then((response) => {
+        setLoading(false);
+        setGrants(response.data.data?.rounds);
+      })
+      .catch((error) => {
+        setLoading(false);
+        console.log(error);
+      });
+  }
+
+  useEffect(() => {
+    getGrantPrograms();
+
+    if (loading) {
+      console.log("Loading...");
+    } else {
+      console.log("Grants loaded!", grants);
+    }
+  }, []);
 
   return (
     <>
@@ -106,7 +160,7 @@ export default function GrantProgramRegistry({}) {
           ))}
         </div>
 
-        <div className="px-4 sm:px-6 lg:px-8 container">
+        <div className="px-10 mx-10">
           <div className="sm:flex sm:items-center p-3 flex justify-between rounded-xl ring-zinc-400 ring-1">
             <div className="flex items-center justify-center">
               <div className="w-full max-w-lg lg:max-w-xs">
@@ -147,7 +201,25 @@ export default function GrantProgramRegistry({}) {
                         scope="col"
                         className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0"
                       >
-                        Ecosystems
+                        Ecosystem
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                      >
+                        Community
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                      >
+                        Name
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                      >
+                        Description
                       </th>
                       <th
                         scope="col"
@@ -159,67 +231,104 @@ export default function GrantProgramRegistry({}) {
                         scope="col"
                         className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
                       >
-                        Status
+                        Categories
                       </th>
                       <th
                         scope="col"
                         className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
                       >
-                        Role
+                        Start date
                       </th>
                       <th
                         scope="col"
-                        className="relative py-3.5 pl-3 pr-4 sm:pr-0"
+                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
                       >
-                        <span className="sr-only">Edit</span>
+                        End date
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                      >
+                        Type
+                      </th>
+                      <th
+                        scope="col"
+                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                      >
+                        RPFs
                       </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">
-                    {people.map((person) => (
-                      <tr key={person.email}>
+                    {grants.map((grant) => (
+                      <tr key={grant.id}>
+                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500">
+                          {chainNameDictionary(grant.chainId)}
+                        </td>
                         <td className="whitespace-nowrap py-5 pl-4 pr-3 text-sm sm:pl-0">
                           <div className="flex items-center">
                             <div className="h-11 w-11 flex-shrink-0">
                               <img
                                 className="h-11 w-11 rounded-full"
                                 src={
-                                  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQX64rf6RZIeMNplTWflA1WKvfpdG3ZWM_vYAY6gZqlEA&s"
+                                  grant.project?.metadata?.logoImg
+                                    ? `https://${grant.project?.metadata?.logoImg}.ipfs.dweb.link`
+                                    : chainImgDictionary(grant.project?.chainId)
                                 }
                                 alt=""
                               />
                             </div>
                             <div className="ml-4">
                               <div className="font-medium text-gray-900">
-                                Arb Gaming Bounty
+                                {grant.project?.name}
                               </div>
                               <div className="mt-1 text-gray-500">
-                                www.grantname.xyz
+                                {grant.project?.metadata?.website}
                               </div>
                             </div>
                           </div>
                         </td>
                         <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500">
-                          <div className="text-gray-900">{person.title}</div>
-                          <div className="mt-1 text-gray-500">
-                            {person.department}
+                          {grant.roundMetadata.name}
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500">
+                          <div className="w-100">
+                            {grant.roundMetadata?.eligibility?.description?.slice(
+                              0,
+                              50
+                            )}
                           </div>
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500">
-                          <span className="inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20">
-                            Active
+                          ...{" "}
+                          <span className="font-bold ">
+                            show full description
                           </span>
+                        </td>{" "}
+                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500">
+                          {parseFloat(grant?.matchAmountInUsd).toFixed(2)} USD
                         </td>
                         <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500">
-                          {person.role}
+                          {grant.tags.map((tag, index) => (
+                            <span
+                              key={index}
+                              className="mr-1 inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20"
+                            >
+                              {tag}
+                            </span>
+                          ))}
                         </td>
-                        <td className="relative whitespace-nowrap py-5 pl-3 pr-4 text-right text-sm font-medium sm:pr-0">
-                          <a
-                            href="#"
-                            className="text-indigo-600 hover:text-indigo-900"
-                          >
-                            Edit<span className="sr-only">, {person.name}</span>
-                          </a>
+                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500">
+                          {grant?.applicationsStartTime}
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500">
+                          {grant?.applicationsEndTime}
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500">
+                          {grant.strategyName
+                            ?.replaceAll("Strategy", "")
+                            ?.replaceAll("allov2.", "")}
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500">
+                          ✅
                         </td>
                       </tr>
                     ))}

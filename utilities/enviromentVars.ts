@@ -7,6 +7,9 @@ export const envVars = {
   NEXT_PUBLIC_GAP_INDEXER_URL: isDev
     ? baseDevUrl
     : "https://gapapi.karmahq.xyz",
+  NEXT_PUBLIC_ALLO_V2_GRAPHQL_URL: isDev
+    ? "https://indexer-staging.fly.dev/graphql"
+    : "https://grants-stack-indexer-v2.gitcoin.co/graphql",
   NEXT_PUBLIC_IPFS_SPONSOR_URL: isDev
     ? `${baseDevUrl}/ipfs`
     : "https://gapapi.karmahq.xyz/ipfs",
