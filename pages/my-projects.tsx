@@ -148,7 +148,7 @@ export default function MyProjects() {
                       card.grants?.forEach((grant) => {
                         total += 1;
                         const hasActive = grant.milestones.find(
-                          (milestone) =>
+                          (milestone: any) =>
                             (milestone.completed && !milestone.approved) ||
                             !milestone.completed
                         );
@@ -161,8 +161,8 @@ export default function MyProjects() {
                         >
                           <Link
                             href={PAGES.PROJECT.OVERVIEW(
-                            card.details?.data.slug || card.uid
-                          )}
+                              card.details?.data.slug || card.uid
+                            )}
                             className="w-full flex flex-1 flex-col justify-start gap-3"
                           >
                             <div className="px-2 w-full mt-2.5">
