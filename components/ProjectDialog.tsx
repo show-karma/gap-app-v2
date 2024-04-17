@@ -183,9 +183,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     setTeamInputError(MESSAGES.PROJECT_FORM.MEMBERS);
   };
 
-  useEffect(() => {
-    checkTeamError();
-  }, [teamInput]);
+  // useEffect(() => {
+  //   checkTeamError();
+  // }, [teamInput]);
 
   const categories = [
     {
@@ -338,65 +338,65 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         </div>
       ),
     },
-    {
-      id: "teamMembers",
-      title: "Team members",
-      desc: "The wonderful people who built it",
-      fields: (
-        <div className="flex w-full flex-col gap-8">
-          <div className="flex w-full flex-col gap-2">
-            <label htmlFor="members-input" className={labelStyle}>
-              Invite team members *
-            </label>
-            <div className="flex w-full flex-row items-center gap-2 max-sm:flex-col">
-              <input
-                id="members-input"
-                type="text"
-                className="flex flex-1 rounded-lg border border-gray-400 bg-transparent p-2 px-4 focus-visible:outline-none max-sm:w-full"
-                placeholder="ETH address, comma separated"
-                value={teamInput}
-                onChange={(e) => setTeamInput(e.target.value)}
-              />
-              <button
-                type="button"
-                onClick={addMemberToArray}
-                className="bg-black px-12 py-2 rounded-lg text-white transition-all duration-300 ease-in-out disabled:opacity-40 max-sm:w-full"
-                disabled={!!teamInputError || !teamInput.length}
-              >
-                Add
-              </button>
-            </div>
-            <p className="text-red-500">{teamInputError}</p>
-            <div className="flex w-full flex-col items-center gap-4">
-              {team.length ? (
-                <div className="mt-2 h-1 w-20 rounded-full bg-gray-400" />
-              ) : null}
-              <div className="flex w-full flex-col gap-2">
-                {team.map((member) => (
-                  <div
-                    key={member}
-                    className="flex w-full flex-row items-center justify-between truncate rounded border border-gray-400 p-2 max-sm:max-w-[330px]"
-                  >
-                    <p className="w-min truncate font-sans font-normal text-slate-700 dark:text-zinc-100">
-                      {member}
-                    </p>
-                    <button
-                      type="button"
-                      className="border border-black bg-white px-8 py-2 text-black transition-all duration-300 ease-in-out disabled:opacity-40"
-                      onClick={() =>
-                        setTeam((prev) => prev.filter((m) => m !== member))
-                      }
-                    >
-                      Remove
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      ),
-    },
+    // {
+    //   id: "teamMembers",
+    //   title: "Team members",
+    //   desc: "The wonderful people who built it",
+    //   fields: (
+    //     <div className="flex w-full flex-col gap-8">
+    //       <div className="flex w-full flex-col gap-2">
+    //         <label htmlFor="members-input" className={labelStyle}>
+    //           Invite team members *
+    //         </label>
+    //         <div className="flex w-full flex-row items-center gap-2 max-sm:flex-col">
+    //           <input
+    //             id="members-input"
+    //             type="text"
+    //             className="flex flex-1 rounded-lg border border-gray-400 bg-transparent p-2 px-4 focus-visible:outline-none max-sm:w-full"
+    //             placeholder="ETH address, comma separated"
+    //             value={teamInput}
+    //             onChange={(e) => setTeamInput(e.target.value)}
+    //           />
+    //           <button
+    //             type="button"
+    //             onClick={addMemberToArray}
+    //             className="bg-black px-12 py-2 rounded-lg text-white transition-all duration-300 ease-in-out disabled:opacity-40 max-sm:w-full"
+    //             disabled={!!teamInputError || !teamInput.length}
+    //           >
+    //             Add
+    //           </button>
+    //         </div>
+    //         <p className="text-red-500">{teamInputError}</p>
+    //         <div className="flex w-full flex-col items-center gap-4">
+    //           {team.length ? (
+    //             <div className="mt-2 h-1 w-20 rounded-full bg-gray-400" />
+    //           ) : null}
+    //           <div className="flex w-full flex-col gap-2">
+    //             {team.map((member) => (
+    //               <div
+    //                 key={member}
+    //                 className="flex w-full flex-row items-center justify-between truncate rounded border border-gray-400 p-2 max-sm:max-w-[330px]"
+    //               >
+    //                 <p className="w-min truncate font-sans font-normal text-slate-700 dark:text-zinc-100">
+    //                   {member}
+    //                 </p>
+    //                 <button
+    //                   type="button"
+    //                   className="border border-black bg-white px-8 py-2 text-black transition-all duration-300 ease-in-out disabled:opacity-40"
+    //                   onClick={() =>
+    //                     setTeam((prev) => prev.filter((m) => m !== member))
+    //                   }
+    //                 >
+    //                   Remove
+    //                 </button>
+    //               </div>
+    //             ))}
+    //           </div>
+    //         </div>
+    //       </div>
+    //     </div>
+    //   ),
+    // },
   ];
 
   const handleErrors = () => {
@@ -413,11 +413,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         !!errors?.linkedin
       );
     }
-    if (step === 2) {
-      return (
-        !!teamInputError || !team.length || !isValid || !isDescriptionValid
-      );
-    }
+    // if (step === 2) {
+    //   return (
+    //     !!teamInputError || !team.length || !isValid || !isDescriptionValid
+    //   );
+    // }
 
     return false;
   };
@@ -460,7 +460,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         {
           ...data,
           description,
-          members: team.map((item) => item as Hex),
+          // members: team.map((item) => item as Hex),
+          members: [(data.recipient || address) as Hex],
           links: [
             {
               type: "twitter",
@@ -537,6 +538,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           github: data.github,
           linkedin: data.linkedin,
           twitter: data.twitter,
+          website: data.website,
         },
         walletSigner,
         gapClient
@@ -701,7 +703,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                           </>
                         )}
                       </button>
-                      {step < 2 && !(projectToUpdate && step === 1) && (
+                      {step < 1 && (
                         <Button
                           type="button"
                           className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
@@ -717,7 +719,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                           <ChevronRightIcon className="w-4 h-4" />
                         </Button>
                       )}
-                      {(step >= 2 || (projectToUpdate && step === 1)) && (
+                      {step === 1 && (
                         <Button
                           type={"submit"}
                           className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"

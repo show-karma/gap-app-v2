@@ -26,11 +26,14 @@ export const MESSAGES = {
       EMPTY: "The grantee has not defined any impact criteria yet.",
     },
     REVIEW: {
+      NOT_AUTHORIZED: "You are not authorized to review this grant.",
       EMPTY_REVIEWS: "No reviews yet, be the first to review this grant!",
       CAN_NOT_REVIEW: "This grant has not been configured for reviewing yet.",
       ALREADY_REVIEWED: "You have already reviewed this grant.",
       SUCCESS: (projectName: string, grantName: string) =>
         `Your review of ${projectName} - ${grantName} was succesfully saved.`,
+      ANON_REVIEW_ALREADY_EXISTS: (projectName: string, grantName: string) =>
+        `You have already submitted an anonymous review for ${projectName} - ${grantName}.`,
       ERROR: (projectName: string, grantName: string) =>
         `Your review of ${projectName} - ${grantName} couldn't be saved.`,
       FORM: {
@@ -58,6 +61,15 @@ export const MESSAGES = {
     GRANT_UPDATE: {
       SUCCESS: "Update was successfully added to the grant.",
       ERROR: "There was an error creating the update. Please try again.",
+      UNDO: {
+        SUCCESS: "Grant Update successfully removed",
+        ERROR: "There was an error undoing the grant update. Please try again",
+      },
+      VERIFY: {
+        SUCCESS: "You have successfully verified the grant update.",
+        ERROR:
+          "There was an error verifying the grant update. Please try again.",
+      },
     },
     UPDATE: {
       SUCCESS: "Your grant was edited successfully!",
@@ -109,6 +121,10 @@ export const MESSAGES = {
       SUCCESS: "Milestone was successfully added to the grant.",
       ERROR: "There was an error creating the milestone. Please try again.",
     },
+    VERIFY: {
+      SUCCESS: "You have successfully verified the milestone.",
+      ERROR: "There was an error verifying the milestone. Please try again.",
+    },
     APPROVE: {
       SUCCESS: "You have successfully approved the milestone.",
       ERROR: "There was an error approving the milestone. Please try again.",
@@ -119,7 +135,10 @@ export const MESSAGES = {
     },
   },
   ADMIN: {
-    NOT_AUTHORIZED: "You must be Admin of this Community to see this page.",
+    NOT_AUTHORIZED: (uid: string) =>
+      `You must be Admin of this Community${
+        uid ? `(${uid})` : ""
+      } to see this page.`,
   },
   MY_PROJECTS: {
     NOT_CONNECTED: "Please login to view all your projects",
@@ -141,12 +160,30 @@ export const MESSAGES = {
       SUCCESS: "Member deleted successfully",
       ERROR: "There was an error deleting members. Please try again",
     },
+    IMPACT: {
+      SUCCESS: "Impact added successfully",
+      ERROR: "There was an error adding impact. Please try again",
+      REMOVE: {
+        SUCCESS: "Impact removed successfully",
+        ERROR: "There was an error removing impact. Please try again",
+      },
+      FORM: {
+        WORK: "Work is required",
+        IMPACT: "Impact is required",
+        DATE: "Date is required",
+        PROOF: "Proof is required",
+      },
+    },
     TRANSFER_OWNERSHIP: {
       SUCCESS: (newOwner: string) =>
         `Ownership transferred successfully to ${newOwner}. Updating our systems.`,
       ERROR: "There was an error transferring ownership. Please try again",
     },
     EMPTY: {
+      IMPACTS: {
+        NOT_CREATED: `Project owner is working on adding impact attestations. Check back in a few days :)`,
+        NOT_CREATED_USER: `Create a new impact attestation to show the world the impact of your work!`,
+      },
       GRANTS: {
         NOT_CREATED: `Check back in a few days and we’ll surely have something cool to
           show you :)`,

@@ -161,7 +161,7 @@ export default function Index() {
             </div>
           ) : (
             <div className="flex w-full items-center justify-center">
-              <p>{MESSAGES.ADMIN.NOT_AUTHORIZED}</p>
+              <p>{MESSAGES.ADMIN.NOT_AUTHORIZED(community?.uid || "")}</p>
             </div>
           )}
         </div>

@@ -13,9 +13,10 @@ import {
   Grant,
   Milestone,
   MilestoneCompleted,
+  Community,
 } from "@show-karma/karma-gap-sdk";
 import type { FC } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Hex, isAddress } from "viem";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
@@ -39,6 +40,11 @@ import { Popover } from "@headlessui/react";
 import { DayPicker } from "react-day-picker";
 import { useAuthStore } from "@/store/auth";
 import { formatDate } from "@/utilities/formatDate";
+import { isCommunityAdminOf } from "@/utilities/sdk";
+import { useCommunityAdminStore } from "@/store/community";
+import * as Tooltip from "@radix-ui/react-tooltip";
+import { useCommunitiesStore } from "@/store/communities";
+import { cn } from "@/utilities/tailwind";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -185,7 +191,7 @@ interface NewGrantData {
 
 export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { address } = useAccount();
-  const signer = useSigner();
+
   const isOwner = useOwnerStore((state) => state.isOwner);
   const searchParams = useSearchParams();
   const grantScreen = searchParams?.get("tab");
@@ -200,6 +206,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const [communityNetworkId, setCommunityNetworkId] = useState<number>(
     appNetwork[0].id
   );
+  const [isCommunityAllowed, setIsCommunityAllowed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const selectedProject = useProjectStore((state) => state.project);
   const { chain } = useNetwork();
@@ -253,6 +260,10 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       community: grantScreen === "edit-grant" ? grantToEdit?.communityUID : "",
       // season: grantScreen === "edit-grant" ? grantToEdit?.details?.season : "",
       // cycle: grantScreen === "edit-grant" ? grantToEdit?.details?.cycle : "",
+      recipient:
+        grantScreen === "edit-grant"
+          ? grantToEdit?.recipient
+          : selectedProject?.recipient,
       linkToProposal:
         grantScreen === "edit-grant" ? grantToEdit?.details?.proposalURL : "",
       startDate:
@@ -356,6 +367,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             title: milestone.title,
             description: milestone.description,
             endsAt: milestone.endsAt,
+            startsAt: milestone.startsAt,
           },
           refUID: grant.uid,
           schema: gapClient.findSchema("Milestone"),
@@ -386,6 +398,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         .then(async () => {
           // eslint-disable-next-line no-param-reassign
           clearMilestonesForms();
+          grant.community = await gap.fetch.communityById(grant.communityUID);
           toast.success(MESSAGES.GRANT.CREATE.SUCCESS);
           changeTab("overview");
           changeGrant(grant.uid);
@@ -529,7 +542,6 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       questions,
       startDate: data.startDate.getTime() / 1000,
     };
-    console.log(newGrant, "newGrant");
     if (grantScreen === "edit-grant" && grantToEdit) {
       updateGrant(grantToEdit, newGrant);
     } else {
@@ -544,7 +556,96 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     });
   };
 
+  const { communities } = useCommunitiesStore();
+  const isCommunityAdminOfSome = communities.length !== 0;
+
   const isDescriptionValid = !!description.length;
+  const signer = useSigner();
+
+  const [allCommunities, setAllCommunities] = useState<Community[]>([]);
+
+  const community = form.getValues("community");
+
+  useEffect(() => {
+    const fetchCommunities = async () => {
+      try {
+        if (!gap) throw new Error("Gap not initialized");
+        const result = await gap.fetch.communities();
+        setAllCommunities(result);
+        return result;
+      } catch (error) {
+        console.log(error);
+        setAllCommunities([]);
+        return undefined;
+      }
+    };
+    fetchCommunities();
+  }, []);
+
+  useEffect(() => {
+    if (isOwner) {
+      setIsCommunityAllowed(true);
+      return;
+    }
+    async function checkCommunityAdmin(communityToSearch: string) {
+      try {
+        const findCommunity = allCommunities.find(
+          (item) => item.uid.toLowerCase() === communityToSearch.toLowerCase()
+        );
+        if (!findCommunity) return setIsCommunityAllowed(false);
+        const result = await isCommunityAdminOf(
+          findCommunity as Community,
+          address as string,
+          signer
+        );
+        setIsCommunityAllowed(result);
+      } catch {
+        setIsCommunityAllowed(false);
+      }
+    }
+    const communityIdEdit =
+      grantScreen === "edit-grant" ? grantToEdit?.communityUID : null;
+    if (
+      isCommunityAdminOfSome &&
+      allCommunities.length &&
+      (community || communityIdEdit)
+    ) {
+      checkCommunityAdmin(community || communityIdEdit);
+    }
+  }, [
+    isCommunityAdminOfSome,
+    community,
+    grantScreen,
+    grantToEdit?.communityUID,
+    allCommunities,
+    address,
+  ]);
+
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+
+  const actionButtonDisable =
+    isSubmitting ||
+    isLoading ||
+    !isDescriptionValid ||
+    !allMilestonesValidated ||
+    !isValid ||
+    (!isCommunityAllowed &&
+      isCommunityAdminOfSome &&
+      !(isOwner || isProjectOwner));
+
+  const handleButtonDisableMessage = () => {
+    if (!isValid) return "Please fill all required(*) fields.";
+    if (
+      !isCommunityAllowed &&
+      isCommunityAdminOfSome &&
+      !(isOwner || isProjectOwner)
+    )
+      return "You are not admin of this community.";
+    if (isSubmitting || isLoading) return "Please wait...";
+    if (!isDescriptionValid) return "Description is required.";
+    if (!allMilestonesValidated) return "All milestones must be filled.";
+    return "";
+  };
 
   return (
     <div className={"flex w-full flex-col items-start  justify-center"}>
@@ -595,6 +696,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                   ? grantToEdit?.communityUID
                   : undefined
               }
+              communities={allCommunities}
             />
             <p className="text-base text-red-400">
               {errors.community?.message}
@@ -691,17 +793,23 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             <p className="text-base text-red-400">{errors.cycle?.message}</p>
           </div> */}
 
-          {isOwner && (
+          {(isOwner || isCommunityAdminOfSome) && (
             <div className="flex w-full flex-col">
               <label htmlFor="tags-input" className={labelStyle}>
-                Recipient address (optional)
+                Recipient address
               </label>
               <input
                 id="tags-input"
                 type="text"
-                className={inputStyle}
+                className={cn(
+                  inputStyle,
+                  "text-gray-500 dark:text-gray-300 cursor-not-allowed"
+                )}
                 placeholder="0xab...0xbf2"
-                {...register("recipient")}
+                // {...register("recipient")}
+                readOnly
+                disabled
+                value={form.getValues("recipient")}
               />
               <p className="text-red-500">{errors.recipient?.message}</p>
             </div>
@@ -903,20 +1011,33 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             Cancel
           </Button>
 
-          <Button
-            onClick={handleSubmit(onSubmit)}
-            className="flex items-center justify-start gap-3 rounded bg-blue-500 dark:bg-blue-900 px-6 text-base font-bold text-white hover:bg-blue-500 hover:opacity-75"
-            disabled={
-              isSubmitting ||
-              isLoading ||
-              !isDescriptionValid ||
-              !allMilestonesValidated ||
-              (grantScreen === "create-grant" && !isValid)
-            }
-            isLoading={isSubmitting || isLoading}
-          >
-            {grantScreen === "edit-grant" ? "Edit grant" : "Create grant"}
-          </Button>
+          <Tooltip.Provider>
+            <Tooltip.Root delayDuration={0}>
+              <Tooltip.Trigger asChild>
+                <div className="h-max">
+                  <Button
+                    onClick={handleSubmit(onSubmit)}
+                    className="flex items-center justify-start gap-3 rounded bg-blue-500 dark:bg-blue-900 px-6 text-base font-bold text-white hover:bg-blue-500 hover:opacity-75"
+                    disabled={actionButtonDisable}
+                    isLoading={isSubmitting || isLoading}
+                  >
+                    {grantScreen === "edit-grant"
+                      ? "Edit grant"
+                      : "Create grant"}
+                  </Button>
+                </div>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content className="TooltipContent" sideOffset={5}>
+                  {actionButtonDisable ? (
+                    <div className="px-2 bg-red-100 rounded-md py-2">
+                      <p>{handleButtonDisableMessage()}</p>
+                    </div>
+                  ) : null}
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+          </Tooltip.Provider>
         </div>
       </div>
     </div>

@@ -1,7 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
-import React, { useEffect } from "react";
+import React from "react";
 import { ProjectPageLayout } from ".";
-import { blo } from "blo";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { Hex } from "viem";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";

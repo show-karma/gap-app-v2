@@ -25,6 +25,7 @@ import { PAGES } from "@/utilities/pages";
 import { useAuthStore } from "@/store/auth";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { getContractOwner } from "@/utilities/sdk/getContractOwner";
+import { OnboardingDialog } from "../OnboardingDialog";
 
 const ProjectDialog = dynamic(
   () => import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog),
@@ -41,14 +42,17 @@ const buttonStyle: HTMLButtonElement["className"] =
 export default function Header() {
   const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
   const { isConnected, address } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { isAuth, isAuthenticating } = useAuthStore();
   const { communities, setCommunities, setIsLoading } = useCommunitiesStore();
   const signer = useSigner();
 
   const isCommunityAdmin = communities.length !== 0;
 
   const getCommunities = async () => {
-    if (!address) return;
+    if (!address || !isAuth) {
+      setCommunities([]);
+      return;
+    }
 
     setIsLoading(true);
     const communitiesOf = await gapIndexerApi.communitiesOf(address, false);
@@ -86,7 +90,7 @@ export default function Header() {
 
   useEffect(() => {
     getCommunities();
-  }, [address]);
+  }, [address, isAuth]);
 
   const socials = [
     {
@@ -265,7 +269,18 @@ export default function Header() {
                                 if (!connected || !isAuth) {
                                   return (
                                     <button
-                                      onClick={openConnectModal}
+                                      onClick={() => {
+                                        if (isAuthenticating) return;
+                                        if (
+                                          !isAuth &&
+                                          connected &&
+                                          !isAuthenticating
+                                        ) {
+                                          authenticate();
+                                          return;
+                                        }
+                                        openConnectModal?.();
+                                      }}
                                       type="button"
                                       className="rounded-md border border-brand-blue dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-brand-blue hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
                                     >
@@ -476,6 +491,7 @@ export default function Header() {
           </>
         )}
       </Popover>
+      <OnboardingDialog/>
     </>
   );
 }

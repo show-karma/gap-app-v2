@@ -9,6 +9,10 @@ import { signMessage as sign } from "wagmi/actions";
 import { IExpirationStatus, ISession } from "@/types/auth";
 import { checkExpirationStatus } from "@/utilities/checkExpirationStatus";
 import { Hex } from "viem";
+import { useOnboarding } from "@/store/onboarding";
+import { PAGES } from "@/utilities/pages";
+import { useRouter } from "next/router";
+import { useMixpanel } from "./useMixpanel";
 
 export const authCookiePath = "gap_auth";
 
@@ -39,11 +43,13 @@ const isTokenValid = (tokenValue: string | null) => {
 export const useAuth = () => {
   const { isConnected, address } = useAccount();
   const { openConnectModal } = useConnectModal();
-  const { setIsAuthenticating, setIsAuth } = useAuthStore();
+  const { setIsAuthenticating, setIsAuth, isAuthenticating } = useAuthStore();
   // const { signMessageAsync } = useSignMessage();
   const { disconnectAsync } = useDisconnect();
-
+  const { setIsOnboarding } = useOnboarding?.();
+  const router = useRouter();
   const cookies = new Cookies();
+  const { mixpanel } = useMixpanel();
 
   const signMessage = async (messageToSign: string) => {
     try {
@@ -84,12 +90,13 @@ export const useAuth = () => {
   };
 
   const authenticate = async (newAddress = address) => {
-    if (!isConnected || !newAddress) {
-      setIsAuthenticating(true);
-      openConnectModal?.();
-      return false;
-    }
     try {
+      if (isAuthenticating) return;
+      setIsAuthenticating(true);
+      if (!isConnected || !newAddress) {
+        openConnectModal?.();
+        return false;
+      }
       if (typeof window !== "undefined") {
         const savedToken = cookies.get(authCookiePath);
         if (savedToken) {
@@ -112,7 +119,18 @@ export const useAuth = () => {
         toast.error("Login failed");
         return;
       }
-
+      router.push(PAGES.MY_PROJECTS);
+      setIsOnboarding?.(true);
+      if (address) {
+        mixpanel.reportEvent({
+          event: "onboarding:popup",
+          properties: { address },
+        });
+        mixpanel.reportEvent({
+          event: "onboarding:navigation",
+          properties: { address, id: "welcome" },
+        });
+      }
       return true;
     } catch (error: any) {
       // eslint-disable-next-line no-console
@@ -134,7 +152,6 @@ export const useAuth = () => {
   };
 
   const softDisconnect = (newAddress: Hex) => {
-    console.log("softDisconnect");
     cookies.remove(authCookiePath, {
       path: "/",
     });

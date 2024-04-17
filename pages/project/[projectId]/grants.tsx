@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { ProjectPageLayout } from ".";
 import { useOwnerStore, useProjectStore } from "@/store";
@@ -27,7 +27,7 @@ import { useRouter } from "next/router";
 import { GrantScreen } from "@/types/grant";
 import { NewMilestone } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewMilestone";
 import { NewGrantUpdate } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewGrantUpdate";
-import { useAccount } from "wagmi";
+import { useAccount, useNetwork } from "wagmi";
 import { GrantDelete } from "@/components/Pages/GrantMilestonesAndUpdates/GrantDelete";
 import { GrantCompleteButton } from "@/components/Pages/GrantMilestonesAndUpdates/GrantCompleteButton";
 import { GrantCompletion } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/CompleteGrant";
@@ -37,14 +37,28 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { GrantMilestonesAndUpdates } from "@/components/Pages/GrantMilestonesAndUpdates";
 import { GrantAllReviews } from "@/components/Pages/AllReviews";
 import { ReviewGrant } from "@/components/Pages/ReviewGrant";
+
 import { useQueryState } from "nuqs";
-import { getMetadata, getQuestionsOf, getReviewsOf } from "@/utilities/sdk";
+import {
+  getMetadata,
+  getQuestionsOf,
+  getReviewsOf,
+  isCommunityAdminOf,
+} from "@/utilities/sdk";
 import { zeroUID } from "@/utilities/commons";
 import { PAGES } from "@/utilities/pages";
 import { defaultMetadata } from "@/utilities/meta";
 import { cn } from "@/utilities/tailwind";
 import { MESSAGES } from "@/utilities/messages";
 import { formatDate } from "@/utilities/formatDate";
+import { useCommunityAdminStore } from "@/store/community";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { useGap } from "@/hooks";
+import { useAuthStore } from "@/store/auth";
+import { useCommunitiesStore } from "@/store/communities";
+import { chainImgDictionary } from "@/utilities/chainImgDictionary";
+import { chainNameDictionary } from "@/utilities/chainNameDictionary";
+import { GrantsAccordion } from "@/components/GrantsAccordion";
 
 interface Tab {
   name: string;
@@ -181,7 +195,12 @@ const GrantsPage = ({
 
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isAuthorized = isProjectOwner || isContractOwner;
+  const isCommunityAdmin = useCommunityAdminStore(
+    (state) => state.isCommunityAdmin
+  );
+  const { communities } = useCommunitiesStore();
+  const isCommunityAdminOfSome = communities.length !== 0;
+  const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
   const [, changeTab] = useQueryState("tab");
   const [, changeGrantId] = useQueryState("grantId");
   const { address } = useAccount();
@@ -295,6 +314,46 @@ const GrantsPage = ({
     mountTabs();
   }, [grant?.uid]);
 
+  const setIsCommunityAdmin = useCommunityAdminStore(
+    (state) => state.setIsCommunityAdmin
+  );
+  const setIsCommunityAdminLoading = useCommunityAdminStore(
+    (state) => state.setIsCommunityAdminLoading
+  );
+
+  const signer = useSigner();
+  const { chain } = useNetwork();
+  const { gap } = useGap();
+  const { isAuth } = useAuthStore();
+
+  const checkIfAdmin = async () => {
+    setIsCommunityAdmin(false);
+    if (!chain?.id || !gap || !grant || !address || !signer || !isAuth) {
+      setIsCommunityAdmin(false);
+      setIsCommunityAdminLoading(false);
+      return;
+    }
+    setIsCommunityAdminLoading(true);
+    try {
+      const community = await gap.fetch.communityById(grant.communityUID);
+      const result = await isCommunityAdminOf(
+        community,
+        address as string,
+        signer
+      );
+      setIsCommunityAdmin(result);
+    } catch (error) {
+      console.log(error);
+      setIsCommunityAdmin(false);
+    } finally {
+      setIsCommunityAdminLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    checkIfAdmin();
+  }, [address, grant?.uid, signer, isAuth]);
+
   return (
     <>
       <NextSeo
@@ -325,7 +384,55 @@ const GrantsPage = ({
       <div className="flex max-lg:flex-col">
         {project?.grants.length ? (
           <div className="w-full max-w-[320px] max-lg:max-w-full py-5 border-none max-lg:w-full max-lg:px-0">
-            <nav className="flex flex-1 flex-col gap-4" aria-label="Sidebar">
+            <div className=" lg:hidden">
+              <GrantsAccordion>
+                {navigation.map((item) => (
+                  <div key={item.uid}>
+                    <button
+                      onClick={() => {
+                        changeGrantId(item.uid);
+                      }}
+                      className={cn(
+                        " text-[#155eef] hover:text-primary-600",
+                        "flex items-center rounded-md text-sm leading-6 font-semibold w-full"
+                      )}
+                    >
+                      <div className="flex flex-row w-full items-center gap-2 justify-between">
+                        <div className="flex flex-row items-center">
+                          <p className="line-clamp-2 break-normal font-medium text-left text-base underline">
+                            {item.name}
+                          </p>
+                        </div>
+                        <div className="w-6 min-w-6">
+                          {item?.completed && (
+                            <CheckCircleIcon className="w-5 h-5 text-green-600" />
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                ))}
+                {(isAuthorized || isCommunityAdminOfSome) && (
+                  <div className="mt-4">
+                    <Button
+                      onClick={() => {
+                        if (project) {
+                          changeTab("create-grant");
+                        }
+                      }}
+                      className="flex h-max w-full  flex-row items-center  hover:opacity-75 justify-center gap-3 rounded border border-[#155EEF] bg-[#155EEF] px-3 py-2 text-sm font-semibold text-white   max-sm:w-full"
+                    >
+                      <p>Add a new grant</p>
+                      <PlusIcon className="w-5 h-5" />
+                    </Button>
+                  </div>
+                )}
+              </GrantsAccordion>
+            </div>
+            <nav
+              className="flex flex-1 flex-col gap-4 max-lg:hidden"
+              aria-label="Sidebar"
+            >
               <div className="flex w-full min-w-[240px] flex-row items-center gap-2">
                 <svg
                   width="16"
@@ -393,7 +500,7 @@ const GrantsPage = ({
                     </button>
                   </li>
                 ))}
-                {isAuthorized && (
+                {(isAuthorized || isCommunityAdminOfSome) && (
                   <li>
                     <Button
                       onClick={() => {
@@ -412,8 +519,36 @@ const GrantsPage = ({
             </nav>
           </div>
         ) : null}
-        <div className="flex-1 pl-5 pt-5 pb-20 max-lg:px-0">
+        <div className="flex-1 pl-5 pt-5 pb-20 max-lg:px-0 max-lg:pt-0">
           {/* Grants tabs start */}
+          {project?.grants.length ? (
+            <div className="flex flex-row gap-4 justify-between max-md:flex-col border-b border-b-zinc-900 dark:border-b-zinc-200 pb-2 mb-4">
+              <div className="flex flex-row gap-2 items-center">
+                <div className="text-xl font-semibold text-black dark:text-zinc-100">
+                  {grant?.details?.title}
+                </div>
+                {isAuthorized && project && grant && (
+                  <button
+                    onClick={() => {
+                      changeTab("edit-grant");
+                    }}
+                    className="rounded-md items-center text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-35 hover:opacity-75 transition-all ease-in-out duration-300 flex h-max w-max flex-row gap-2 bg-zinc-800 p-2 text-white hover:bg-zinc-800 hover:text-white"
+                  >
+                    Edit grant
+                    <PencilSquareIcon className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              {isAuthorized && grant ? (
+                <div className="flex flex-row gap-2">
+                  {project ? (
+                    <GrantCompleteButton project={project} grant={grant} />
+                  ) : null}
+                  <GrantDelete grant={grant} />
+                </div>
+              ) : null}
+            </div>
+          ) : null}
           {project?.grants.length && currentTab !== "create-grant" ? (
             <div className="sm:block">
               <nav
@@ -451,7 +586,9 @@ const GrantsPage = ({
               )}
               {currentTab === "reviews" && <GrantAllReviews grant={grant} />}
               {currentTab === "review-this-grant" && (
-                <ReviewGrant grant={grant} />
+                <Suspense>
+                  <ReviewGrant grant={grant} />
+                </Suspense>
               )}
               {/*  */}
               {currentTab === "create-grant" && project?.uid && (
@@ -506,7 +643,10 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
   const project = useProjectStore((state) => state.project);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isAuthorized = isProjectOwner || isContractOwner;
+  const isCommunityAdmin = useCommunityAdminStore(
+    (state) => state.isCommunityAdmin
+  );
+  const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
   const [, changeTab] = useQueryState("tab");
 
   const getPercentage = () => {
@@ -545,30 +685,6 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
   return (
     <>
       {/* Grant Overview Start */}
-      <div className="flex flex-row gap-4 justify-between max-md:flex-col border-b border-b-zinc-900 dark:border-b-zinc-200 pb-4">
-        <div className="flex flex-row gap-2 items-center">
-          <div className="text-xl font-semibold text-black dark:text-zinc-100">
-            {grant?.details?.title}
-          </div>
-          {isAuthorized && project && grant && (
-            <button
-              onClick={() => {
-                changeTab("edit-grant");
-              }}
-              className="rounded-md items-center text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-35 hover:opacity-75 transition-all ease-in-out duration-300 flex h-max w-max flex-row gap-2 bg-zinc-800 p-2 text-white hover:bg-zinc-800 hover:text-white"
-            >
-              Edit grant
-              <PencilSquareIcon className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-        <div className="flex flex-row gap-2">
-          {isAuthorized && project && grant ? (
-            <GrantCompleteButton project={project} grant={grant} />
-          ) : null}
-          {isAuthorized && grant ? <GrantDelete grant={grant} /> : null}
-        </div>
-      </div>
 
       <div className="mt-5 flex flex-row max-lg:flex-col-reverse gap-4 ">
         {grant?.details?.description && (
@@ -600,7 +716,7 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
               </span>
             </div>
             <div className="flex flex-col gap-4  px-5 pt-5 pb-5 border-t border-gray-200">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <div className="text-gray-500 text-base  font-semibold dark:text-gray-300">
                   Community
                 </div>
@@ -610,18 +726,39 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
                       (grant?.community?.uid as Hex)
                   )}
                 >
-                  <div className="inline-flex items-center gap-x-2 rounded-full bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900">
+                  <div className="w-full inline-flex items-center gap-x-2 rounded-3xl bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={grant?.community?.details?.imageURL}
                       alt=""
                       className="h-5 w-5 rounded-full"
                     />
-                    <p className="max-w-xs truncate text-base font-semibold text-black dark:text-gray-100 max-md:text-sm">
+                    <p className="max-w-xs truncate text-base font-semibold text-black dark:text-gray-100 max-md:text-sm w-full break-words whitespace-break-spaces">
                       {grant?.community?.details?.name}
                     </p>
                   </div>
                 </a>
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <div className="text-gray-500 text-base  font-semibold dark:text-gray-300">
+                  Network
+                </div>
+
+                <div className="inline-flex items-center gap-x-2 rounded-full bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={chainImgDictionary(
+                      grant?.community?.details?.chainID as number
+                    )}
+                    alt=""
+                    className="h-5 w-5 rounded-full"
+                  />
+                  <p className="max-w-xs truncate text-base font-semibold text-black dark:text-gray-100 max-md:text-sm  w-full break-words whitespace-break-spaces">
+                    {chainNameDictionary(
+                      grant?.community?.details?.chainID as number
+                    )}
+                  </p>
+                </div>
               </div>
 
               {grant?.details?.proposalURL ? (

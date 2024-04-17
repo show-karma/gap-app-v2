@@ -226,7 +226,7 @@ export default function Index() {
             hasError = true;
           });
       });
-      const teste = await Promise.all(promises);
+      await Promise.all(promises);
 
       if (hasError) {
         throw new Error("Error updating categories");
@@ -491,7 +491,7 @@ export default function Index() {
             </div>
           ) : (
             <div className="flex w-full items-center justify-center">
-              <p>{MESSAGES.ADMIN.NOT_AUTHORIZED}</p>
+              <p>{MESSAGES.ADMIN.NOT_AUTHORIZED(community?.uid || "")}</p>
             </div>
           )}
         </div>

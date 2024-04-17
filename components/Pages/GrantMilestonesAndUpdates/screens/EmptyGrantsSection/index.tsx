@@ -3,11 +3,19 @@ import type { FC } from "react";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useQueryState } from "nuqs";
 import { MESSAGES } from "@/utilities/messages";
+import { useCommunityAdminStore } from "@/store/community";
+import { useCommunitiesStore } from "@/store/communities";
 
 export const EmptyGrantsSection: FC = () => {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const isAuthorized = isProjectOwner || isOwner;
+  const isCommunityAdmin = useCommunityAdminStore(
+    (state) => state.isCommunityAdmin
+  );
+  const { communities } = useCommunitiesStore();
+  const isCommunityAdminOfSome = communities.length !== 0;
+  const isAuthorized =
+    isProjectOwner || isOwner || isCommunityAdmin || isCommunityAdminOfSome;
   const [, changeTab] = useQueryState("tab");
   if (!isAuthorized) {
     return (

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { MarkdownPreviewProps } from "@uiw/react-markdown-preview";
 
 interface Props {
   words?: any;
@@ -7,6 +8,8 @@ interface Props {
   readMoreText?: string;
   readLessText?: string;
   side?: "left" | "right";
+  markdownClass?: MarkdownPreviewProps["className"];
+  markdownComponents?: MarkdownPreviewProps["components"];
 }
 
 export const ReadMore = ({
@@ -15,6 +18,8 @@ export const ReadMore = ({
   readMoreText = "Read more",
   readLessText = "Read less",
   side = "right",
+  markdownClass,
+  markdownComponents,
 }: Props) => {
   const [isReadMore, setIsReadMore] = useState(true);
   const toggleReadMore = () => {
@@ -36,13 +41,19 @@ export const ReadMore = ({
       <div>
         {isReadMore ? (
           <MarkdownPreview
+            className={markdownClass}
+            components={markdownComponents}
             source={
               text.slice(0, minimumText) +
               (text.length >= minimumText ? "..." : "")
             }
           />
         ) : (
-          <MarkdownPreview source={text} />
+          <MarkdownPreview
+            className={markdownClass}
+            components={markdownComponents}
+            source={text}
+          />
         )}
       </div>
       {text.length - 1 > minimumText && (
