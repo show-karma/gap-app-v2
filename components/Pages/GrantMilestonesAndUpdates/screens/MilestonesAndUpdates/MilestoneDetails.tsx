@@ -65,7 +65,11 @@ export const MilestoneDateStatus: FC<MilestoneDateStatusProps> = ({
   return (
     <div className="flex w-max flex-row items-center justify-center gap-4 max-lg:justify-start">
       <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">
-        Due on {formatDate(milestone.endsAt * 1000)}
+        {milestone.startsAt
+          ? `${formatDate(milestone.startsAt * 1000)} - ${formatDate(
+              milestone.endsAt * 1000
+            )}`
+          : `Due on ${formatDate(milestone.endsAt * 1000)}`}
       </p>
       <div
         className={`flex items-center justify-start rounded-2xl px-2 py-1 ${statusBg[status]}`}

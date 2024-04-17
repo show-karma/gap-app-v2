@@ -65,6 +65,11 @@ export const MESSAGES = {
         SUCCESS: "Grant Update successfully removed",
         ERROR: "There was an error undoing the grant update. Please try again",
       },
+      VERIFY: {
+        SUCCESS: "You have successfully verified the grant update.",
+        ERROR:
+          "There was an error verifying the grant update. Please try again.",
+      },
     },
     UPDATE: {
       SUCCESS: "Your grant was edited successfully!",

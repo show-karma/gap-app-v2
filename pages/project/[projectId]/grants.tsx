@@ -58,6 +58,7 @@ import { useAuthStore } from "@/store/auth";
 import { useCommunitiesStore } from "@/store/communities";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
+import { GrantsAccordion } from "@/components/GrantsAccordion";
 
 interface Tab {
   name: string;
@@ -383,7 +384,55 @@ const GrantsPage = ({
       <div className="flex max-lg:flex-col">
         {project?.grants.length ? (
           <div className="w-full max-w-[320px] max-lg:max-w-full py-5 border-none max-lg:w-full max-lg:px-0">
-            <nav className="flex flex-1 flex-col gap-4" aria-label="Sidebar">
+            <div className=" lg:hidden">
+              <GrantsAccordion>
+                {navigation.map((item) => (
+                  <div key={item.uid}>
+                    <button
+                      onClick={() => {
+                        changeGrantId(item.uid);
+                      }}
+                      className={cn(
+                        " text-[#155eef] hover:text-primary-600",
+                        "flex items-center rounded-md text-sm leading-6 font-semibold w-full"
+                      )}
+                    >
+                      <div className="flex flex-row w-full items-center gap-2 justify-between">
+                        <div className="flex flex-row items-center">
+                          <p className="line-clamp-2 break-normal font-medium text-left text-base underline">
+                            {item.name}
+                          </p>
+                        </div>
+                        <div className="w-6 min-w-6">
+                          {item?.completed && (
+                            <CheckCircleIcon className="w-5 h-5 text-green-600" />
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                  </div>
+                ))}
+                {(isAuthorized || isCommunityAdminOfSome) && (
+                  <div className="mt-4">
+                    <Button
+                      onClick={() => {
+                        if (project) {
+                          changeTab("create-grant");
+                        }
+                      }}
+                      className="flex h-max w-full  flex-row items-center  hover:opacity-75 justify-center gap-3 rounded border border-[#155EEF] bg-[#155EEF] px-3 py-2 text-sm font-semibold text-white   max-sm:w-full"
+                    >
+                      <p>Add a new grant</p>
+                      <PlusIcon className="w-5 h-5" />
+                    </Button>
+                  </div>
+                )}
+              </GrantsAccordion>
+            </div>
+            <nav
+              className="flex flex-1 flex-col gap-4 max-lg:hidden"
+              aria-label="Sidebar"
+            >
               <div className="flex w-full min-w-[240px] flex-row items-center gap-2">
                 <svg
                   width="16"
@@ -470,8 +519,36 @@ const GrantsPage = ({
             </nav>
           </div>
         ) : null}
-        <div className="flex-1 pl-5 pt-5 pb-20 max-lg:px-0">
+        <div className="flex-1 pl-5 pt-5 pb-20 max-lg:px-0 max-lg:pt-0">
           {/* Grants tabs start */}
+          {project?.grants.length ? (
+            <div className="flex flex-row gap-4 justify-between max-md:flex-col border-b border-b-zinc-900 dark:border-b-zinc-200 pb-2 mb-4">
+              <div className="flex flex-row gap-2 items-center">
+                <div className="text-xl font-semibold text-black dark:text-zinc-100">
+                  {grant?.details?.title}
+                </div>
+                {isAuthorized && project && grant && (
+                  <button
+                    onClick={() => {
+                      changeTab("edit-grant");
+                    }}
+                    className="rounded-md items-center text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-35 hover:opacity-75 transition-all ease-in-out duration-300 flex h-max w-max flex-row gap-2 bg-zinc-800 p-2 text-white hover:bg-zinc-800 hover:text-white"
+                  >
+                    Edit grant
+                    <PencilSquareIcon className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              {isAuthorized && grant ? (
+                <div className="flex flex-row gap-2">
+                  {project ? (
+                    <GrantCompleteButton project={project} grant={grant} />
+                  ) : null}
+                  <GrantDelete grant={grant} />
+                </div>
+              ) : null}
+            </div>
+          ) : null}
           {project?.grants.length && currentTab !== "create-grant" ? (
             <div className="sm:block">
               <nav
@@ -608,30 +685,6 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
   return (
     <>
       {/* Grant Overview Start */}
-      <div className="flex flex-row gap-4 justify-between max-md:flex-col border-b border-b-zinc-900 dark:border-b-zinc-200 pb-4">
-        <div className="flex flex-row gap-2 items-center">
-          <div className="text-xl font-semibold text-black dark:text-zinc-100">
-            {grant?.details?.title}
-          </div>
-          {isAuthorized && project && grant && (
-            <button
-              onClick={() => {
-                changeTab("edit-grant");
-              }}
-              className="rounded-md items-center text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-35 hover:opacity-75 transition-all ease-in-out duration-300 flex h-max w-max flex-row gap-2 bg-zinc-800 p-2 text-white hover:bg-zinc-800 hover:text-white"
-            >
-              Edit grant
-              <PencilSquareIcon className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-        <div className="flex flex-row gap-2">
-          {isAuthorized && project && grant ? (
-            <GrantCompleteButton project={project} grant={grant} />
-          ) : null}
-          {isAuthorized && grant ? <GrantDelete grant={grant} /> : null}
-        </div>
-      </div>
 
       <div className="mt-5 flex flex-row max-lg:flex-col-reverse gap-4 ">
         {grant?.details?.description && (
@@ -686,7 +739,7 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
                   </div>
                 </a>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-2">
                 <div className="text-gray-500 text-base  font-semibold dark:text-gray-300">
                   Network
                 </div>
@@ -700,7 +753,7 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
                     alt=""
                     className="h-5 w-5 rounded-full"
                   />
-                  <p className="max-w-xs truncate text-base font-semibold text-black dark:text-gray-100 max-md:text-sm">
+                  <p className="max-w-xs truncate text-base font-semibold text-black dark:text-gray-100 max-md:text-sm  w-full break-words whitespace-break-spaces">
                     {chainNameDictionary(
                       grant?.community?.details?.chainID as number
                     )}

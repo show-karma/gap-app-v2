@@ -1,27 +1,21 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, ReactNode, useEffect, useState } from "react";
+import { FC, Fragment, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import { PlusIcon } from "@heroicons/react/24/solid";
 import { Button } from "@/components/Utilities/Button";
 import { z } from "zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
-import fetchData from "@/utilities/fetchData";
-import { useRouter } from "next/router";
 import { useAuthStore } from "@/store/auth";
-import { useAuth } from "@/hooks/useAuth";
-import { INDEXER } from "@/utilities/indexer";
 import { Milestone, MilestoneCompleted } from "@show-karma/karma-gap-sdk";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 import { getWalletClient } from "@wagmi/core";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { useProjectStore } from "@/store";
 import { MESSAGES } from "@/utilities/messages";
 import { getGapClient, useGap } from "@/hooks";
 
-type VerifyClaimDialogProps = {
+type VerifyMilestoneUpdateDialogProps = {
   milestone: Milestone;
   isCommunityAdmin: boolean;
   addVerifiedMilestone: (newVerified: MilestoneCompleted) => void;
@@ -33,14 +27,11 @@ const schema = z.object({
 
 type SchemaType = z.infer<typeof schema>;
 
-export const VerifyClaimDialog: FC<VerifyClaimDialogProps> = ({
-  milestone,
-  isCommunityAdmin,
-  addVerifiedMilestone,
-}) => {
+export const VerifyMilestoneUpdateDialog: FC<
+  VerifyMilestoneUpdateDialogProps
+> = ({ milestone, isCommunityAdmin, addVerifiedMilestone }) => {
   let [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
   const {
     register,
@@ -63,7 +54,6 @@ export const VerifyClaimDialog: FC<VerifyClaimDialogProps> = ({
   const hasVerifiedThis = milestone?.verified?.find(
     (v) => v.attester?.toLowerCase() === address?.toLowerCase()
   );
-  const refreshProject = useProjectStore((state) => state.refreshProject);
   const { chain } = useNetwork();
   const { switchNetworkAsync } = useSwitchNetwork();
   const { gap } = useGap();
@@ -174,7 +164,7 @@ export const VerifyClaimDialog: FC<VerifyClaimDialogProps> = ({
                         Cancel
                       </Button>
                       <Button
-                        className="text-white text-base bg-red-600 border-black  hover:bg-red-600 hover:text-white"
+                        className="text-white text-base bg-blue-600 border-black  hover:bg-blue-600 hover:text-white"
                         disabled={isLoading}
                         isLoading={isLoading}
                         type="submit"

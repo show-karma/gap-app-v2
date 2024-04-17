@@ -5,7 +5,6 @@ import { ReactNode, useEffect, useMemo, useState } from "react";
 import ProjectPage from "./project";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useAccount } from "wagmi";
-import { blo } from "blo";
 import { IProjectDetails, Project } from "@show-karma/karma-gap-sdk";
 import { NextSeo } from "next-seo";
 
@@ -15,12 +14,12 @@ import formatCurrency from "@/utilities/formatCurrency";
 import {
   DiscordIcon,
   GithubIcon,
+  LinkedInIcon,
   TwitterIcon,
   WebsiteIcon,
 } from "@/components/Icons";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import fetchData from "@/utilities/fetchData";
-import { APIContact } from "@/types/project";
 import { PAGES } from "@/utilities/pages";
 import { getMetadata, getProjectById, getProjectOwner } from "@/utilities/sdk";
 import { zeroUID } from "@/utilities/commons";
@@ -181,7 +180,9 @@ export const NestedLayout = ({ children }: Props) => {
           chainId: project.chainID,
         });
         if (!walletClient) return;
-        const walletSigner = await walletClientToSigner(walletClient);
+        const walletSigner = await walletClientToSigner(walletClient).catch(
+          () => undefined
+        );
 
         await getProjectOwner(walletSigner || signer, project)
           .then((res) => {
@@ -199,10 +200,11 @@ export const NestedLayout = ({ children }: Props) => {
 
   const socials = useMemo(() => {
     const types = [
-      { name: "Twitter", prefix: "https://twitter.com/", icon: TwitterIcon },
-      { name: "Github", prefix: "https://github.com/", icon: GithubIcon },
-      { name: "Discord", prefix: "https://discord.gg/", icon: DiscordIcon },
+      { name: "Twitter", prefix: "twitter.com/", icon: TwitterIcon },
+      { name: "Github", prefix: "github.com/", icon: GithubIcon },
+      { name: "Discord", prefix: "discord.gg/", icon: DiscordIcon },
       { name: "Website", prefix: "https://", icon: WebsiteIcon },
+      { name: "LinkedIn", prefix: "linkedin.com/", icon: LinkedInIcon },
     ];
 
     const isLink = (link?: string) => {
@@ -217,6 +219,24 @@ export const NestedLayout = ({ children }: Props) => {
       return false;
     };
 
+    const addPrefix = (link: string) => `https://${link}`;
+
+    const formatPrefix = (prefix: string, link: string) => {
+      const firstWWW = link.slice(0, 4) === "www.";
+      if (firstWWW) {
+        return addPrefix(link);
+      }
+      const alreadyHasPrefix = link.includes(prefix);
+      if (alreadyHasPrefix) {
+        if (isLink(link)) {
+          return link;
+        }
+        return addPrefix(link);
+      }
+
+      return isLink(prefix + link) ? prefix + link : addPrefix(prefix + link);
+    };
+
     return types
       .map(({ name, prefix, icon }) => {
         const hasUrl = project?.details?.links?.find(
@@ -226,17 +246,21 @@ export const NestedLayout = ({ children }: Props) => {
         if (hasUrl) {
           if (name === "Twitter") {
             const hasAt = hasUrl?.includes("@");
+            const url = hasAt ? hasUrl?.replace("@", "") || "" : hasUrl;
             return {
               name,
               url: isLink(hasUrl)
                 ? hasUrl
-                : prefix + (hasAt ? hasUrl?.replace("@", "") || "" : hasUrl),
+                : hasUrl.includes(prefix)
+                ? addPrefix(url)
+                : prefix + url,
               icon,
             };
           }
+
           return {
             name,
-            url: isLink(hasUrl) ? hasUrl : prefix + hasUrl,
+            url: formatPrefix(prefix, hasUrl),
             icon,
           };
         }
@@ -248,7 +272,7 @@ export const NestedLayout = ({ children }: Props) => {
 
   return (
     <div>
-      <div className="relative border-b border-gray-200 pb-5 sm:pb-0">
+      <div className="relative border-b border-gray-200 ">
         <div className="px-4 sm:px-6 lg:px-12 md:flex py-5 md:items-start md:justify-between flex flex-row max-lg:flex-col gap-4">
           <h1
             className={cn(
@@ -290,7 +314,7 @@ export const NestedLayout = ({ children }: Props) => {
             ) : null} */}
             {socials.length > 0 && (
               <div className="flex flex-row gap-3 items-center">
-                <p className="text-base font-normal leading-tight text-black dark:text-zinc-200">
+                <p className="text-base font-normal leading-tight text-black dark:text-zinc-200 max-lg:hidden">
                   Socials
                 </p>
                 <div className="flex flex-row gap-4 items-center">
@@ -304,7 +328,7 @@ export const NestedLayout = ({ children }: Props) => {
                         rel="noopener noreferrer"
                       >
                         {social?.icon && (
-                          <social.icon className="h-5 w-5 fill-black dark:fill-zinc-200" />
+                          <social.icon className="h-5 w-5 fill-black text-black dark:text-white dark:fill-zinc-200" />
                         )}
                       </a>
                     ))}
@@ -315,7 +339,7 @@ export const NestedLayout = ({ children }: Props) => {
         </div>
         <div className="mt-4 max-sm:px-4">
           <div className="sm:px-6 lg:px-12  sm:block">
-            <nav className="gap-10 flex flex-row max-lg:flex-col max-lg:gap-4">
+            <nav className="gap-10 flex flex-row w-full items-center max-lg:gap-8 overflow-scroll">
               {tabs.map((tab) => (
                 <Link
                   key={tab.name}
@@ -324,7 +348,7 @@ export const NestedLayout = ({ children }: Props) => {
                     "whitespace-nowrap border-b-2 pb-2 text-base flex flex-row gap-2 items-center",
                     tab.href.split("/")[3]?.split("?")[0] ===
                       router.pathname.split("/")[3]
-                      ? "border-blue-600 text-gray-700 font-bold px-3 dark:text-gray-200 max-lg:border-b-0 max-lg:border-l-2 max-lg:py-2"
+                      ? "border-blue-600 text-gray-700 font-bold px-0 dark:text-gray-200 max-lg:border-b-2"
                       : "border-transparent text-gray-600  px-0 hover:border-gray-300 hover:text-gray-700 dark:text-gray-200 font-normal"
                   )}
                 >
