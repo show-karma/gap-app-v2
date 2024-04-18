@@ -77,7 +77,6 @@ export const EndorsementList: FC = () => {
   const [totalEndorsements, setTotalEndorsements] = useState<number>(0);
 
   const { populateEnsNames } = useENSNames();
-  console.log(project);
 
   useMemo(() => {
     const endorsements = project?.endorsements || [];
