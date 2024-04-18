@@ -111,7 +111,7 @@ export const EndorsementList: FC = () => {
       setHandledEndorsements(sliced);
     };
     checkUniqueEndorsements();
-  }, [project, page]);
+  }, [endorsements, populateEnsNames, page]);
 
   return (
     <div className="w-full flex flex-col gap-3">
