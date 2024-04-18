@@ -271,7 +271,7 @@ export const NestedLayout = ({ children }: Props) => {
       .filter((social) => social);
   }, [project]);
 
-  const hasAlreadyEndorsed = project?.endorsements.find(
+  const hasAlreadyEndorsed = project?.endorsements?.find(
     (item) => item.recipient?.toLowerCase() === address?.toLowerCase()
   );
 
