@@ -30,6 +30,7 @@ import { defaultMetadata } from "@/utilities/meta";
 import { useAuthStore } from "@/store/auth";
 import { Feed } from "@/types";
 import { getWalletClient } from "@wagmi/core";
+import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
 
 type ProjectDetailsWithUid = IProjectDetails & { uid: Hex };
 
@@ -270,6 +271,10 @@ export const NestedLayout = ({ children }: Props) => {
       .filter((social) => social);
   }, [project]);
 
+  const hasAlreadyEndorsed = project?.endorsements.find(
+    (item) => item.recipient?.toLowerCase() === address?.toLowerCase()
+  );
+
   return (
     <div>
       <div className="relative border-b border-gray-200 ">
@@ -335,6 +340,15 @@ export const NestedLayout = ({ children }: Props) => {
                 </div>
               </div>
             )}
+            {isConnected && isAuth && !hasAlreadyEndorsed ? (
+              <EndorsementDialog
+                buttonElement={{
+                  text: "Endorse this project",
+                  styleClass:
+                    "hover:bg-white dark:hover:bg-black border border-black bg-white text-black dark:bg-black dark:text-white px-4 rounded-md py-2 w-max",
+                }}
+              />
+            ) : null}
           </div>
         </div>
         <div className="mt-4 max-sm:px-4">

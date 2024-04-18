@@ -1,5 +1,5 @@
 import { useAuthStore } from "@/store/auth";
-import { FC } from "react";
+import { FC, useState } from "react";
 import { useAccount } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { EndorsementDialog } from "./EndorsementDialog";

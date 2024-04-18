@@ -5,14 +5,19 @@ import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useProjectStore } from "@/store";
 import { shortAddress } from "@/utilities/shortAddress";
+import { getWalletClient } from "@wagmi/core";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { ProjectEndorsement } from "@show-karma/karma-gap-sdk";
+import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
+import { getGapClient, useGap } from "@/hooks";
+import { useRouter } from "next/navigation";
+import { PAGES } from "@/utilities/pages";
 
 type EndorsementDialogProps = {
   buttonElement?: {
     text: string;
     styleClass: string;
   };
-  isLoading: boolean;
-  afterFunction?: () => void;
 };
 
 export const EndorsementDialog: FC<EndorsementDialogProps> = ({
@@ -21,12 +26,18 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = ({
     styleClass:
       "flex justify-center items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100  hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900",
   },
-  isLoading,
-  afterFunction,
 }) => {
+  const [isLoading, setIsLoading] = useState(false);
+
   let [isOpen, setIsOpen] = useState(false);
   const [comment, setComment] = useState<string>("");
   const project = useProjectStore((state) => state.project);
+  const { switchNetworkAsync } = useSwitchNetwork();
+  const { gap } = useGap();
+  const { chain } = useNetwork();
+  const { address } = useAccount();
+  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const router = useRouter();
 
   function closeModal() {
     setIsOpen(false);
@@ -36,13 +47,40 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = ({
   }
 
   const handleFunction = async () => {
+    let gapClient = gap;
+    setIsLoading(true);
     try {
-      // await deleteFunction().then(() => {
-      //   afterFunction?.();
-      // });
+      if (!project) return;
+      if (chain && chain.id !== project.chainID) {
+        await switchNetworkAsync?.(project.chainID);
+        gapClient = getGapClient(project.chainID);
+      }
+      const walletClient = await getWalletClient({
+        chainId: project?.chainID,
+      });
+      if (!walletClient || !address || !gapClient) return;
+      const walletSigner = await walletClientToSigner(walletClient);
+      const endorsement = new ProjectEndorsement({
+        data: {
+          comment,
+        },
+        schema: gapClient!.findSchema("ProjectEndorsement"),
+        refUID: project?.uid,
+        recipient: address,
+      });
+      await endorsement.attest(walletSigner).then(() => {
+        refreshProject();
+        router.push(
+          PAGES.PROJECT.IMPACT.ROOT(
+            (project.details?.slug || project?.uid) as string
+          )
+        );
+      });
       closeModal();
     } catch (error) {
       console.log(error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -84,7 +122,9 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = ({
                     You are endorsing{" "}
                     <b>
                       {project?.details?.title ||
-                        shortAddress(project?.uid as string)}
+                        (project?.uid
+                          ? shortAddress(project?.uid as string)
+                          : "this project")}
                     </b>
                   </Dialog.Title>
                   <div className="mt-8 flex flex-col gap-2">
