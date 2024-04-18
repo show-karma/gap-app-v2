@@ -68,7 +68,6 @@ const EndorsementRow: FC<EndorsementRowProps> = ({ endorsement }) => {
 
 export const EndorsementList: FC = () => {
   const project = useProjectStore((state) => state.project);
-  const endorsements = project?.endorsements || [];
   const [handledEndorsements, setHandledEndorsements] = useState<
     ProjectEndorsement[]
   >([]);
@@ -78,8 +77,10 @@ export const EndorsementList: FC = () => {
   const [totalEndorsements, setTotalEndorsements] = useState<number>(0);
 
   const { populateEnsNames } = useENSNames();
+  console.log(project);
 
   useMemo(() => {
+    const endorsements = project?.endorsements || [];
     const allAddresses = endorsements.map(
       (endorsement) => endorsement.recipient
     );
@@ -111,7 +112,7 @@ export const EndorsementList: FC = () => {
       setHandledEndorsements(sliced);
     };
     checkUniqueEndorsements();
-  }, [endorsements, populateEnsNames, page]);
+  }, [project?.endorsements, populateEnsNames, page]);
 
   return (
     <div className="w-full flex flex-col gap-3">
