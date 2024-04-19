@@ -31,6 +31,8 @@ import { useAuthStore } from "@/store/auth";
 import { Feed } from "@/types";
 import { getWalletClient } from "@wagmi/core";
 import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
+import { Button } from "@/components/Utilities/Button";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 type ProjectDetailsWithUid = IProjectDetails & { uid: Hex };
 
@@ -164,7 +166,7 @@ export const NestedLayout = ({ children }: Props) => {
   const hasContactInfo = Boolean(projectContactsInfo?.length);
 
   const signer = useSigner();
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, isConnecting } = useAccount();
   const { isAuth } = useAuthStore();
 
   useEffect(() => {
@@ -274,6 +276,40 @@ export const NestedLayout = ({ children }: Props) => {
   const hasAlreadyEndorsed = project?.endorsements?.find(
     (item) => item.recipient?.toLowerCase() === address?.toLowerCase()
   );
+  const { openConnectModal } = useConnectModal();
+
+  const handleEndorse = () => {
+    if (!isConnected || !isAuth) {
+      return (
+        <Button
+          className="hover:bg-white dark:hover:bg-black border border-black bg-white text-black dark:bg-black dark:text-white px-4 rounded-md py-2 w-max"
+          onClick={() => {
+            if (!isConnecting) {
+              openConnectModal?.();
+            }
+          }}
+        >
+          Connect to endorse
+        </Button>
+      );
+    }
+    if (!hasAlreadyEndorsed) {
+      return (
+        <EndorsementDialog
+          buttonElement={{
+            text: "Endorse this project",
+            styleClass:
+              "hover:bg-white dark:hover:bg-black border border-black bg-white text-black dark:bg-black dark:text-white px-4 rounded-md py-2 w-max",
+          }}
+        />
+      );
+    } else {
+      <Button className="hover:bg-white dark:hover:bg-black border border-black bg-white text-black dark:bg-black dark:text-white px-4 rounded-md py-2 w-max">
+        Already endorsed this project
+      </Button>;
+    }
+    return null;
+  };
 
   return (
     <div>
@@ -340,15 +376,7 @@ export const NestedLayout = ({ children }: Props) => {
                 </div>
               </div>
             )}
-            {isConnected && isAuth && !hasAlreadyEndorsed ? (
-              <EndorsementDialog
-                buttonElement={{
-                  text: "Endorse this project",
-                  styleClass:
-                    "hover:bg-white dark:hover:bg-black border border-black bg-white text-black dark:bg-black dark:text-white px-4 rounded-md py-2 w-max",
-                }}
-              />
-            ) : null}
+            {handleEndorse()}
           </div>
         </div>
         <div className="mt-4 max-sm:px-4">
