@@ -1,17 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
 import { useEffect, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { Popover } from "@headlessui/react";
-import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { MoonIcon, SunIcon } from "@heroicons/react/24/solid";
-import { ConnectorData, useAccount, useConnect, useDisconnect } from "wagmi";
+import { ConnectorData, useAccount } from "wagmi";
 import { useOwnerStore } from "@/store/owner";
 import { useCommunitiesStore } from "@/store/communities";
 import { ExternalLink } from "./ExternalLink";
-import { SOCIALS } from "@/utilities/socials";
-import { DiscordIcon, MirrorIcon, TelegramIcon, TwitterIcon } from "../Icons";
 import { blo } from "blo";
 import { Hex } from "viem";
 import { Button } from "./Button";
@@ -25,6 +20,10 @@ import { karmaLinks } from "@/utilities/karma";
 import { PAGES } from "@/utilities/pages";
 import { useAuthStore } from "@/store/auth";
 import { OnboardingDialog } from "../OnboardingDialog";
+import { ColorModeToggle } from "./ColorModeToggle";
+import { SocialList } from "./Socials";
+import { MobilePopOverButton } from "./MobilePopoverButton";
+import { KarmaGap } from "./KarmaGapLogo";
 
 const ProjectDialog = dynamic(
   () => import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog),
@@ -91,30 +90,6 @@ export default function Header() {
     getCommunities();
   }, [address, isAuth]);
 
-  const socials = [
-    {
-      name: "twitter",
-      icon: <TwitterIcon className="h-6 w-6 object-contain" />,
-      href: SOCIALS.TWITTER,
-    },
-
-    {
-      name: "telegram",
-      icon: <TelegramIcon className="h-6 w-6 object-contain" />,
-      href: SOCIALS.TELEGRAM,
-    },
-    {
-      name: "discord",
-      icon: <DiscordIcon className="h-6 w-6 object-contain" />,
-      href: SOCIALS.DISCORD,
-    },
-    {
-      name: "mirror",
-      icon: <MirrorIcon className="h-6 w-6 object-contain" />,
-      href: SOCIALS.MIRROR,
-    },
-  ];
-
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
@@ -162,50 +137,22 @@ export default function Header() {
           <>
             <div className="px-4 sm:px-6 lg:px-12  border-b border-b-[#DFE1E6]">
               <div className="relative flex lg:gap-8 justify-between items-center flex-row">
-                <div className="flex py-4 lg:inset-y-0 lg:left-0 lg:static">
-                  <Link
-                    className="flex-shrink-0 max-w-[180px] max-h-[40px]"
-                    href="/"
-                  >
-                    <Image
-                      className="block w-full h-auto"
-                      src="/logo/karma-gap-logo.svg"
-                      alt="Gap"
-                      width={180}
-                      height={40}
-                      priority={true}
-                    />
-                  </Link>
-                </div>
+                <KarmaGap />
 
                 <div className="flex items-center md:absolute md:inset-y-0 md:right-0 lg:hidden">
                   {/* Color mode toggle start */}
-                  <button
-                    className="relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-rose-500"
-                    // onClick={() => toggleTheme()}
+                  <ColorModeToggle
+                    currentTheme={currentTheme}
                     onClick={() =>
                       changeCurrentTheme(
                         currentTheme === "light" ? "dark" : "light"
                       )
                     }
-                  >
-                    {currentTheme === "dark" ? (
-                      <SunIcon className="h-6 w-6 text-gray-500 dark:text-zinc-200" />
-                    ) : (
-                      <MoonIcon className="h-6 w-6 text-gray-500 dark:text-zinc-200" />
-                    )}
-                  </button>
+                  />
                   {/* Color mode toggle end */}
+
                   {/* Mobile menu button */}
-                  <Popover.Button className="ml-2 relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-500 focus:bg-white dark:focus:bg-black focus:outline-none focus:ring-2 focus:ring-inset focus:ring-rose-500">
-                    <span className="absolute -inset-0.5" />
-                    <span className="sr-only">Open menu</span>
-                    {open ? (
-                      <XMarkIcon className="block h-6 w-6" aria-hidden="true" />
-                    ) : (
-                      <Bars3Icon className="block h-6 w-6" aria-hidden="true" />
-                    )}
-                  </Popover.Button>
+                  <MobilePopOverButton open={open} />
                 </div>
 
                 <div className="hidden lg:flex">
@@ -311,69 +258,24 @@ export default function Header() {
                     </>
                   ) : null}
                   {/* Rainbowkit custom connect button end */}
+
                   {/* Color mode toggle start */}
-                  <button
-                    className="px-3 py-2.5 rounded-md bg-white dark:bg-zinc-900 text-sm font-semibold text-gray-900 dark:text-white  ring-1 ring-inset ring-gray-300 dark:ring-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-800 focus:outline-primary-600"
+                  <ColorModeToggle
+                    currentTheme={currentTheme}
                     onClick={() =>
                       changeCurrentTheme(
                         currentTheme === "light" ? "dark" : "light"
                       )
                     }
-                  >
-                    {currentTheme === "dark" ? (
-                      <SunIcon className="h-4 w-4 text-gray-500 dark:text-zinc-200" />
-                    ) : (
-                      <MoonIcon className="h-4 w-4 text-gray-500 dark:text-zinc-200" />
-                    )}
-                  </button>
+                  />
                   {/* Color mode toggle end */}
-                  <div className="flex h-[40px] flex-row items-center gap-2 border-l border-l-[#dcdfea] pl-4">
-                    {socials.map((social) => {
-                      return (
-                        <ExternalLink
-                          key={social.name}
-                          href={social.href}
-                          className="text-black dark:text-white transition-all duration-500 ease-in-out"
-                        >
-                          <div className="flex h-6 w-6 items-center justify-center ">
-                            {social.icon}
-                          </div>
-                        </ExternalLink>
-                      );
-                    })}
-                  </div>
+                  <SocialList />
                 </div>
               </div>
             </div>
 
             <Popover.Panel as="nav" className="lg:hidden" aria-label="Global">
               <div className="mx-auto mt-6 max-w-3xl px-4 sm:px-6">
-                {/* <form className="space-y-3">
-                  <label htmlFor="userAddress" className="sr-only">
-                    Search
-                  </label>
-                  <div className="relative">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                      <MagnifyingGlassIcon
-                        className="h-5 w-5 text-gray-400"
-                        aria-hidden="true"
-                      />
-                    </div>
-                    <input
-                      id="search"
-                      name="userAddress"
-                      className="block w-full rounded-lg border-0 bg-white dark:bg-zinc-900 py-1.5 pl-10 pr-3 ring-1 ring-inset ring-gray-300 dark:ring-zinc-800 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-rose-500 sm:text-sm sm:leading-6"
-                      placeholder="Look up a Nouner..."
-                      type="text"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    className="flex w-full items-center justify-center rounded-md border border-transparent bg-rose-600 px-4 py-2 text-base font-medium text-white  hover:bg-rose-700"
-                  >
-                    Search
-                  </button>
-                </form> */}
                 <div className=" px-3">
                   <Searchbar />
                 </div>
@@ -470,27 +372,13 @@ export default function Header() {
                     </>
                   ) : null}
                 </div>
-                <div className="flex h-[40px] flex-row items-center justify-center gap-2 border-t border-t-[#dcdfea] mt-4 pt-4">
-                  {socials.map((social) => {
-                    return (
-                      <ExternalLink
-                        key={social.name}
-                        href={social.href}
-                        className="text-black dark:text-white transition-all duration-500 ease-in-out"
-                      >
-                        <div className="flex h-6 w-6 items-center justify-center ">
-                          {social.icon}
-                        </div>
-                      </ExternalLink>
-                    );
-                  })}
-                </div>
+                <SocialList />
               </div>
             </Popover.Panel>
           </>
         )}
       </Popover>
-      <OnboardingDialog/>
+      <OnboardingDialog />
     </>
   );
 }
