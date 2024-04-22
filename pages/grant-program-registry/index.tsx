@@ -68,7 +68,10 @@ export default function GrantProgramRegistry({}) {
         variables: {
           filter: {
             chainId: {
-              in: [10, 11155111, 42161],
+              in:
+                envVars.NEXT_PUBLIC_ENV === "staging"
+                  ? [10, 42161]
+                  : [11155111],
             },
             tags: {
               contains: "allo-v2",
