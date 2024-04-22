@@ -17,6 +17,7 @@ import { Feed } from "@/types";
 import { getWalletClient } from "@wagmi/core";
 import { Button } from "@/components/Utilities/Button";
 import Link from "next/link";
+import { EndorsementList } from "@/components/Pages/Project/Impact/EndorsementList";
 
 const ProjectDialog = dynamic(
   () => import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog),
@@ -33,11 +34,7 @@ const TransferOwnershipDialog = dynamic(() =>
   )
 );
 
-interface ProjectPageProps {
-  initialFeed: Feed[];
-}
-
-function ProjectPage({ initialFeed }: ProjectPageProps) {
+function ProjectPage() {
   const project = useProjectStore((state) => state.project);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isOwner = useOwnerStore((state) => state.isOwner);
@@ -78,7 +75,7 @@ function ProjectPage({ initialFeed }: ProjectPageProps) {
 
   return (
     <div className="flex flex-row max-lg:flex-col gap-4 py-5 mb-20">
-      <div className=" flex flex-col flex-[3]">
+      <div className=" flex flex-col w-8/12 max-lg:w-full">
         <div className="text-base flex flex-row gap-1 text-gray-900 dark:text-zinc-100 break-all">
           <p className="text-base font-bold leading-normal text-gray-900 dark:text-zinc-100">
             Owner:
@@ -119,19 +116,19 @@ function ProjectPage({ initialFeed }: ProjectPageProps) {
           <MarkdownPreview source={project?.details?.description} />
         </div>
       </div>
-      <div className="flex flex-col flex-[1] gap-8">
+      <div className="flex flex-col w-4/12 gap-8 max-lg:w-full">
         {isProjectOwner || isOwner ? (
-          <div className="flex flex-col gap-2 w-max max-lg:w-full max-lg:max-w-80">
+          <div className="flex flex-col gap-2 max-w-full w-full max-lg:max-w-80 2xl:max-w-max">
             <Link
               href={PAGES.PROJECT.IMPACT.ADD_IMPACT(
                 project?.details?.slug || projectId
               )}
             >
-              <Button className="bg-brand-blue text-white hover:bg-black dark:bg-zinc-800 w-full items-center flex flex-row justify-center">
+              <Button className="bg-brand-blue text-white hover:bg-black dark:bg-zinc-800 w-full items-center flex flex-row justify-center max-w-full">
                 Add impact
               </Button>
             </Link>
-            <div className="flex flex-row gap-2 flex-wrap max-lg:flex-col w-full max-lg:max-w-80">
+            <div className="flex flex-row justify-between gap-2 flex-wrap max-lg:flex-col w-full max-lg:max-w-80">
               <ProjectDialog
                 key={project?.uid}
                 buttonElement={{
@@ -164,7 +161,9 @@ function ProjectPage({ initialFeed }: ProjectPageProps) {
             </div>
           </div>
         ) : null}
-        <ProjectFeed initialFeed={initialFeed} />
+        <div className="flex w-full">
+          <EndorsementList />
+        </div>
       </div>
     </div>
   );

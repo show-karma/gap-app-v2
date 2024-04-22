@@ -12,7 +12,7 @@ export const EmptyImpactScreen: FC = () => {
   const [, changeTab] = useQueryState("tab");
   if (!isAuthorized) {
     return (
-      <div className="flex w-full items-center justify-center rounded border border-gray-200 px-6 py-10">
+      <div className="flex h-max flex-1 items-center justify-center rounded border border-gray-200 px-6 py-10">
         <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
           <img
             src="/images/comments.png"
@@ -32,7 +32,7 @@ export const EmptyImpactScreen: FC = () => {
     );
   }
   return (
-    <div className="flex flex-1 flex-row max-lg:flex-col gap-6">
+    <div className="flex h-max flex-1 flex-row max-lg:flex-col gap-6">
       <div
         className="flex h-96 border-spacing-4 flex-col items-center justify-center gap-5 rounded border border-blue-600 dark:bg-zinc-900 bg-[#EEF4FF] px-8"
         style={{
