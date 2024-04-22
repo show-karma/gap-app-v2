@@ -293,22 +293,22 @@ export const NestedLayout = ({ children }: Props) => {
         </Button>
       );
     }
-    if (!hasAlreadyEndorsed) {
+    if (hasAlreadyEndorsed) {
       return (
-        <EndorsementDialog
-          buttonElement={{
-            text: "Endorse this project",
-            styleClass:
-              "hover:bg-white dark:hover:bg-black border border-black bg-white text-black dark:bg-black dark:text-white px-4 rounded-md py-2 w-max",
-          }}
-        />
+        <Button className="hover:bg-white dark:hover:bg-black border border-black bg-white text-black dark:bg-black dark:text-white px-4 rounded-md py-2 w-max">
+          Already endorsed this project
+        </Button>
       );
-    } else {
-      <Button className="hover:bg-white dark:hover:bg-black border border-black bg-white text-black dark:bg-black dark:text-white px-4 rounded-md py-2 w-max">
-        Already endorsed this project
-      </Button>;
     }
-    return null;
+    return (
+      <EndorsementDialog
+        buttonElement={{
+          text: "Endorse this project",
+          styleClass:
+            "hover:bg-white dark:hover:bg-black border border-black bg-white text-black dark:bg-black dark:text-white px-4 rounded-md py-2 w-max",
+        }}
+      />
+    );
   };
 
   return (
@@ -420,18 +420,10 @@ export const ProjectPageLayout = (page: any) => (
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { params } = context;
   const projectId = params?.projectId as string;
-  let initialFeed: Feed[] = [];
   let projectInfo: ProjectDetailsWithUid | null = null;
 
   await Promise.all(
     [
-      async () => {
-        const [data, error, pageInfo]: any = await fetchData(
-          `${INDEXER.PROJECT.FEED(projectId as string)}?limit=12`
-        );
-
-        initialFeed = (data as Feed[]) || [];
-      },
       async () => {
         const info = await getMetadata<IProjectDetails>(
           "projects",
@@ -450,7 +442,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   return {
     props: {
-      initialFeed,
       projectTitle: (projectInfo as ProjectDetailsWithUid)?.title || "",
       projectDesc:
         (projectInfo as ProjectDetailsWithUid)?.description?.substring(0, 80) ||
@@ -461,7 +452,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const ProjectPageIndex = ({
   projectTitle,
   projectDesc,
-  initialFeed,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const dynamicMetadata = {
     title: `Karma GAP - ${projectTitle}`,
@@ -495,7 +485,7 @@ const ProjectPageIndex = ({
           },
         ]}
       />
-      <ProjectPage initialFeed={initialFeed} />
+      <ProjectPage />
     </>
   );
 };

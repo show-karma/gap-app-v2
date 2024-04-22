@@ -97,7 +97,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
   return (
     <div className="flex-row gap-4 flex">
       {orderedImpacts.length ? (
-        <div className="flex w-8/12 flex-col overflow-x-auto">
+        <div className="flex w-full flex-col overflow-x-auto">
           {isAuthorized ? (
             <div className="flex flex-row-reverse max-sm:flex-row">
               <Button
@@ -238,9 +238,6 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
       ) : (
         <EmptyImpactScreen />
       )}
-      <div className="flex w-4/12">
-        <EndorsementList />
-      </div>
     </div>
   );
 };
