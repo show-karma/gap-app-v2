@@ -1,17 +1,17 @@
 import { StateStorage, createJSONStorage, persist } from "zustand/middleware";
 
 import { create } from "zustand";
-import {
-  ICommunityResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 type PartialCommunity = {
   uid: string;
-  details: {
-    name: string;
-    slug: string;
-    imageURL: string;
-  } | undefined;
+  details:
+    | {
+        name: string;
+        slug: string;
+        imageURL: string;
+      }
+    | undefined;
 };
 
 interface CommunitiesStore {
@@ -42,9 +42,9 @@ function mapCommunity(community: ICommunityResponse) {
     uid: community.uid,
     details: community.details
       ? {
-          name: community.details.data.name!,
-          slug: community.details.data.slug!,
-          imageURL: community.details.data.imageURL,
+          name: community.details.data?.name!,
+          slug: community.details.data?.slug!,
+          imageURL: community.details.data?.imageURL,
         }
       : undefined,
   };
