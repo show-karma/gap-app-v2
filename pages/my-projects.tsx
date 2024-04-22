@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import { blo } from "blo";
 import { useAccount } from "wagmi";
-import { Project } from "@show-karma/karma-gap-sdk";
 import formatCurrency from "@/utilities/formatCurrency";
 import pluralize from "pluralize";
 import Link from "next/link";
@@ -12,12 +11,13 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
-import { getProjectsOf } from "@/utilities/sdk";
 import { defaultMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
 import { useAuthStore } from "@/store/auth";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { Button } from "@/components/Utilities/Button";
 import { useOnboarding } from "@/store/onboarding";
 import { useMixpanel } from "@/hooks/useMixpanel";
@@ -27,9 +27,9 @@ const ProjectDialog = dynamic(
   { ssr: false }
 );
 
-const firstFiveMembers = (project: Project) =>
+const firstFiveMembers = (project: IProjectResponse) =>
   project.members.slice(0, 5).map((item) => item.recipient);
-const restMembersCounter = (project: Project) =>
+const restMembersCounter = (project: IProjectResponse) =>
   project.members?.length ? project.members.length - 5 : 0;
 
 const pickColor = (index: number) => {
@@ -79,7 +79,7 @@ export default function MyProjects() {
   const { isConnected, address } = useAccount();
   const { isAuth } = useAuthStore();
   const { theme: currentTheme } = useTheme();
-  const [myProjects, setMyProjects] = useState<Project[]>([]);
+  const [myProjects, setMyProjects] = useState<IProjectResponse[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const itemsPerPage = 12;
   const [page, setPage] = useState<number>(1);
@@ -90,7 +90,7 @@ export default function MyProjects() {
       if (!address) return;
       setIsLoading(true);
       try {
-        const projectsOf = await getProjectsOf(address);
+        const { data: projectsOf } = await gapIndexerApi.projectsOf(address);
         setTotalProjects(projectsOf.length);
         const projectsPiece = projectsOf.slice(
           itemsPerPage * (page - 1),
@@ -148,7 +148,7 @@ export default function MyProjects() {
                       card.grants?.forEach((grant) => {
                         total += 1;
                         const hasActive = grant.milestones.find(
-                          (milestone) =>
+                          (milestone: any) =>
                             (milestone.completed && !milestone.approved) ||
                             !milestone.completed
                         );
@@ -161,7 +161,7 @@ export default function MyProjects() {
                         >
                           <Link
                             href={PAGES.PROJECT.OVERVIEW(
-                              card.details?.slug || card.uid
+                              card.details?.data.slug || card.uid
                             )}
                             className="w-full flex flex-1 flex-col justify-start gap-3"
                           >
@@ -176,7 +176,7 @@ export default function MyProjects() {
 
                             <div className="px-5 flex flex-col gap-0">
                               <div className="font-body line-clamp-1 mb-0 pb-0 truncate text-base font-semibold text-gray-900 dark:text-gray-100">
-                                {card.details?.title || card.uid}
+                                {card.details?.data.title || card.uid}
                               </div>
                               <div className="font-body dark:text-slate-400 mb-2 text-sm font-medium text-slate-500">
                                 {`Created on ${formatDate(card.createdAt)}`}
@@ -186,7 +186,7 @@ export default function MyProjects() {
                             <div className="px-5 flex flex-col gap-1 flex-1 h-full">
                               <div className="line-clamp-2 text-base font-normal ">
                                 <MarkdownPreview
-                                  source={card.details?.description || ""}
+                                  source={card.details?.data.description || ""}
                                   style={{
                                     backgroundColor: "transparent",
                                     color:

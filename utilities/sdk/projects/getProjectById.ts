@@ -1,7 +1,7 @@
 import { getGapClient } from "@/hooks";
 import { zeroUID } from "@/utilities/commons";
 import { appNetwork } from "@/utilities/network";
-import { Project } from "@show-karma/karma-gap-sdk";
+import type { Project } from "@show-karma/karma-gap-sdk";
 import { Hex } from "viem";
 
 export const getProjectById = async (

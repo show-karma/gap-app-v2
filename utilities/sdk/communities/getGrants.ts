@@ -1,5 +1,5 @@
 import type { Grant, Hex } from "@show-karma/karma-gap-sdk";
-import { SortByOptions, StatusOptions } from "@/types/filters";
+import type { SortByOptions, StatusOptions } from "@/types/filters";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 

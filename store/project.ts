@@ -1,6 +1,6 @@
 import { Contact } from "@/types/project";
 import { getProjectById } from "@/utilities/sdk";
-import { Project } from "@show-karma/karma-gap-sdk";
+import type { Project } from "@show-karma/karma-gap-sdk";
 import { create } from "zustand";
 
 interface ProjectStore {

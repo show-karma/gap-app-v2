@@ -1,7 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { useGap } from "@/hooks";
-import { Community } from "@show-karma/karma-gap-sdk";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
 import { useAccount } from "wagmi";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -13,28 +11,31 @@ import { defaultMetadata } from "@/utilities/meta";
 import { cn } from "@/utilities/tailwind";
 import { MESSAGES } from "@/utilities/messages";
 import { useAuthStore } from "@/store/auth";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 export default function Index() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore();
   const communityId = router.query.communityId as string;
-  const { gap } = useGap();
 
   // Call API
   const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
-  const [community, setCommunity] = useState<Community | undefined>(undefined); // Data returned from the API
+  const [community, setCommunity] = useState<ICommunityResponse | undefined>(
+    undefined
+  ); // Data returned from the API
   const [isAdmin, setIsAdmin] = useState<boolean>(false); // Data returned from the API
   const signer = useSigner();
 
   useEffect(() => {
     const fetchDetails = async () => {
-      if (!communityId || !gap) return;
+      if (!communityId) return;
       setLoading(true);
       try {
-        const result = await (communityId.startsWith("0x")
-          ? gap.fetch.communityById(communityId as `0x${string}`)
-          : gap.fetch.communityBySlug(communityId));
+        const { data: result } = await gapIndexerApi.communityBySlug(
+          communityId
+        );
         if (!result || result.uid === zeroUID)
           throw new Error("Community not found");
         setCommunity(result);
@@ -52,7 +53,7 @@ export default function Index() {
     };
 
     fetchDetails();
-  }, [communityId, gap]);
+  }, [communityId]);
 
   useEffect(() => {
     if (!community) return;
@@ -62,7 +63,7 @@ export default function Index() {
       if (!community?.uid || !isAuth) return;
       try {
         const checkAdmin = await isCommunityAdminOf(
-          community,
+          { uid: community.uid, chainID: community.chainID },
           address as string,
           signer
         );
@@ -110,7 +111,7 @@ export default function Index() {
           <div className="flex justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
             <img
-              src={community?.details?.imageURL}
+              src={community?.details?.data.imageURL}
               className={cn(
                 "h-14 w-14 rounded-full",
                 loading ? "animate-pulse bg-gray-600" : ""
@@ -126,7 +127,7 @@ export default function Index() {
                   : ""
               )}
             >
-              {community && !loading ? community.details?.name : ""}
+              {community && !loading ? community.details?.data.name : ""}
             </span>{" "}
             Admin
           </div>
@@ -141,7 +142,7 @@ export default function Index() {
             <div className="flex flex-row flex-wrap gap-8">
               <a
                 href={PAGES.ADMIN.ASSIGN_QUESTIONS(
-                  community?.details?.slug || communityId
+                  community?.details?.data.slug || communityId
                 )}
               >
                 <button className="px-10 py-8 bg-green-200 rounded-md  transition-all ease-in-out duration-200 dark:bg-green-900">
@@ -150,7 +151,7 @@ export default function Index() {
               </a>
               <a
                 href={PAGES.ADMIN.EDIT_CATEGORIES(
-                  community?.details?.slug || communityId
+                  community?.details?.data.slug || communityId
                 )}
               >
                 <button className="px-10 py-8 bg-blue-200 rounded-md  transition-all ease-in-out duration-200 dark:bg-blue-900">

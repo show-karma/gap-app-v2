@@ -1,11 +1,10 @@
 import React, { Fragment, useEffect, useState } from "react";
 import { useRouter } from "next/router";
-import { useGap } from "@/hooks";
-import { Community, Grant } from "@show-karma/karma-gap-sdk";
+import type { Grant } from "@show-karma/karma-gap-sdk";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
 import { useAccount } from "wagmi";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { getGrants } from "@/utilities/sdk/communities";
+import { getGrants } from "@/utilities/sdk/communities/getGrants";
 import { Hex } from "viem";
 import fetchData from "@/utilities/fetchData";
 import TablePagination from "@/components/Utilities/TablePagination";
@@ -27,6 +26,8 @@ import { defaultMetadata } from "@/utilities/meta";
 import { cn } from "@/utilities/tailwind";
 import { MESSAGES } from "@/utilities/messages";
 import { useAuthStore } from "@/store/auth";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 interface GrantEdited {
   uid: string;
@@ -61,7 +62,6 @@ export default function Index() {
   const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore();
   const communityId = router.query.communityId as string;
-  const { gap } = useGap();
   const [grants, setGrants] = useState<SimplifiedGrants[]>([]);
   const [categoriesOptions, setCategoriesOptions] = useState<
     CategoriesOptions[]
@@ -77,18 +77,20 @@ export default function Index() {
 
   // Call API
   const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
-  const [community, setCommunity] = useState<Community | undefined>(undefined); // Data returned from the API
+  const [community, setCommunity] = useState<ICommunityResponse | undefined>(
+    undefined
+  ); // Data returned from the API
   const [isAdmin, setIsAdmin] = useState<boolean>(false); // Data returned from the API
   const signer = useSigner();
 
   useEffect(() => {
     const fetchDetails = async () => {
-      if (!communityId || !gap) return;
+      if (!communityId) return;
       setLoading(true);
       try {
-        const result = await (communityId.startsWith("0x")
-          ? gap.fetch.communityById(communityId as `0x${string}`)
-          : gap.fetch.communityBySlug(communityId));
+        const { data: result } = await gapIndexerApi.communityBySlug(
+          communityId
+        );
         if (!result || result.uid === zeroUID)
           throw new Error("Community not found");
         setCommunity(result);
@@ -106,7 +108,7 @@ export default function Index() {
     };
 
     fetchDetails();
-  }, [communityId, gap]);
+  }, [communityId]);
 
   useEffect(() => {
     if (!community) return;
@@ -271,7 +273,7 @@ export default function Index() {
           <div className="flex justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
             <img
-              src={community?.details?.imageURL}
+              src={community?.details?.data?.imageURL}
               className={cn(
                 "h-14 w-14 rounded-full",
                 loading ? "animate-pulse bg-gray-600" : ""
@@ -287,7 +289,7 @@ export default function Index() {
                   : ""
               )}
             >
-              {community && !loading ? community.details?.name : ""}
+              {community && !loading ? community.details?.data?.name : ""}
             </span>{" "}
             Admin
           </div>
@@ -303,7 +305,7 @@ export default function Index() {
               <div className="w-full flex flex-row items-center justify-between">
                 <Link
                   href={PAGES.ADMIN.ROOT(
-                    community?.details?.slug || (community?.uid as string)
+                    community?.details?.data?.slug || (community?.uid as string)
                   )}
                 >
                   <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
