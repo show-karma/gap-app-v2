@@ -119,7 +119,9 @@ export const useAuth = () => {
         toast.error("Login failed");
         return;
       }
-      router.push(PAGES.MY_PROJECTS);
+      if (router.asPath === "/") {
+        router.push(PAGES.MY_PROJECTS);
+      }
       setIsOnboarding?.(true);
       if (address) {
         mixpanel.reportEvent({

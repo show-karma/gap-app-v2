@@ -20,10 +20,11 @@ import { Searchbar } from "../Searchbar";
 import dynamic from "next/dynamic";
 import { useAuth } from "@/hooks/useAuth";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
-import { getCommunitiesOf, getContractOwner } from "@/utilities/sdk";
 import { karmaLinks } from "@/utilities/karma";
 import { PAGES } from "@/utilities/pages";
 import { useAuthStore } from "@/store/auth";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { getContractOwner } from "@/utilities/sdk/getContractOwner";
 import { OnboardingDialog } from "../OnboardingDialog";
 
 const ProjectDialog = dynamic(
@@ -54,10 +55,11 @@ export default function Header() {
     }
 
     setIsLoading(true);
-    const communitiesOf = await getCommunitiesOf(address);
+    const communitiesOf = await gapIndexerApi.communitiesOf(address, false);
 
-    if (communitiesOf && communitiesOf.length !== 0) {
-      setCommunities(communitiesOf);
+    if (communitiesOf.data && communitiesOf.data.length !== 0) {
+      console.log(communitiesOf.data);
+      setCommunities(communitiesOf.data);
     } else {
       setCommunities([]);
     }
@@ -490,7 +492,7 @@ export default function Header() {
           </>
         )}
       </Popover>
-      <OnboardingDialog/>
+      <OnboardingDialog />
     </>
   );
 }

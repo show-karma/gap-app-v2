@@ -1,17 +1,22 @@
-import { Community, CommunityDetails } from "@show-karma/karma-gap-sdk";
 import { StateStorage, createJSONStorage, persist } from "zustand/middleware";
 
 import { create } from "zustand";
-type PartialDetails = Pick<CommunityDetails, 'slug' | 'name' | 'imageURL'>
+import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 type PartialCommunity = {
   uid: string;
-  details: PartialDetails | undefined
+  details:
+    | {
+        name: string;
+        slug: string;
+        imageURL: string;
+      }
+    | undefined;
 };
 
 interface CommunitiesStore {
   communities: PartialCommunity[];
-  setCommunities: (communities: Community[]) => void;
+  setCommunities: (communities: ICommunityResponse[]) => void;
   isLoading: boolean;
   setIsLoading: (isLoading: boolean) => void;
 }
@@ -20,7 +25,7 @@ export const useCommunitiesStore = create(
   persist<CommunitiesStore>(
     (set, get) => ({
       communities: [],
-      setCommunities: (communities: Community[]) =>
+      setCommunities: (communities: ICommunityResponse[]) =>
         set({ communities: communities.map(mapCommunity) }),
       isLoading: false,
       setIsLoading: (isLoading: boolean) => set({ isLoading }),
@@ -32,14 +37,16 @@ export const useCommunitiesStore = create(
   )
 );
 
-function mapCommunity(community: Community) {
+function mapCommunity(community: ICommunityResponse) {
   const mappedData: PartialCommunity = {
     uid: community.uid,
-    details: community.details ? {
-      name: community.details.name,
-      slug: community.details.slug,
-      imageURL: community.details.imageURL
-    } :  undefined,
+    details: community.details
+      ? {
+          name: community.details.data?.name!,
+          slug: community.details.data?.slug!,
+          imageURL: community.details.data?.imageURL,
+        }
+      : undefined,
   };
   return mappedData;
 }
