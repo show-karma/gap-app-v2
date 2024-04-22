@@ -41,17 +41,9 @@ const EndorsementRow: FC<EndorsementRowProps> = ({ endorsement }) => {
             </p>
           </div>
         </div>
-        {endorsement.comment && (
-          <button
-            className="text-[#004EEB] font-semibold text-sm min-w-max w-max"
-            onClick={() => setOpenComment(!openComment)}
-          >
-            {openComment ? "Hide" : "View"} comment
-          </button>
-        )}
       </div>
-      {openComment && (
-        <div className="text-left px-6 flex flex-row items-start">
+      {endorsement.comment ? (
+        <div className="text-left px-0 flex flex-row items-start">
           <p className="text-sm text-[#344054] dark:text-zinc-100  font-normal">
             <div
               className="w-full break-normal text-base font-normal text-black dark:text-zinc-100 max-2xl:text-sm"
@@ -61,7 +53,7 @@ const EndorsementRow: FC<EndorsementRowProps> = ({ endorsement }) => {
             </div>
           </p>
         </div>
-      )}
+      ) : null}
     </div>
   );
 };

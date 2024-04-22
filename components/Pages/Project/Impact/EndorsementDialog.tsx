@@ -71,7 +71,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = ({
       await endorsement.attest(walletSigner).then(() => {
         refreshProject();
         router.push(
-          PAGES.PROJECT.IMPACT.ROOT(
+          PAGES.PROJECT.OVERVIEW(
             (project.details?.slug || project?.uid) as string
           )
         );

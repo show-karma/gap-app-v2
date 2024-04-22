@@ -118,7 +118,7 @@ function ProjectPage() {
       </div>
       <div className="flex flex-col w-4/12 gap-8 max-lg:w-full">
         {isProjectOwner || isOwner ? (
-          <div className="flex flex-col gap-2 max-w-max w-full max-lg:max-w-80">
+          <div className="flex flex-col gap-2 max-w-full w-full max-lg:max-w-80 2xl:max-w-max">
             <Link
               href={PAGES.PROJECT.IMPACT.ADD_IMPACT(
                 project?.details?.slug || projectId
@@ -128,7 +128,7 @@ function ProjectPage() {
                 Add impact
               </Button>
             </Link>
-            <div className="flex flex-row gap-2 flex-wrap max-lg:flex-col w-full max-lg:max-w-80">
+            <div className="flex flex-row justify-between gap-2 flex-wrap max-lg:flex-col w-full max-lg:max-w-80">
               <ProjectDialog
                 key={project?.uid}
                 buttonElement={{

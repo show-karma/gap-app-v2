@@ -289,26 +289,22 @@ export const NestedLayout = ({ children }: Props) => {
             }
           }}
         >
-          Connect to endorse
+          Endorse this project
         </Button>
       );
     }
-    if (hasAlreadyEndorsed) {
+    if (!hasAlreadyEndorsed) {
       return (
-        <Button className="hover:bg-white dark:hover:bg-black border border-black bg-white text-black dark:bg-black dark:text-white px-4 rounded-md py-2 w-max">
-          Already endorsed this project
-        </Button>
+        <EndorsementDialog
+          buttonElement={{
+            text: "Endorse this project",
+            styleClass:
+              "hover:bg-white dark:hover:bg-black border border-black bg-white text-black dark:bg-black dark:text-white px-4 rounded-md py-2 w-max",
+          }}
+        />
       );
     }
-    return (
-      <EndorsementDialog
-        buttonElement={{
-          text: "Endorse this project",
-          styleClass:
-            "hover:bg-white dark:hover:bg-black border border-black bg-white text-black dark:bg-black dark:text-white px-4 rounded-md py-2 w-max",
-        }}
-      />
-    );
+    return null;
   };
 
   return (
