@@ -118,13 +118,13 @@ function ProjectPage() {
       </div>
       <div className="flex flex-col w-4/12 gap-8 max-lg:w-full">
         {isProjectOwner || isOwner ? (
-          <div className="flex flex-col gap-2 w-full max-lg:w-full max-lg:max-w-80">
+          <div className="flex flex-col gap-2 max-w-max w-full max-lg:max-w-80">
             <Link
               href={PAGES.PROJECT.IMPACT.ADD_IMPACT(
                 project?.details?.slug || projectId
               )}
             >
-              <Button className="bg-brand-blue text-white hover:bg-black dark:bg-zinc-800 w-full items-center flex flex-row justify-center">
+              <Button className="bg-brand-blue text-white hover:bg-black dark:bg-zinc-800 w-full items-center flex flex-row justify-center max-w-full">
                 Add impact
               </Button>
             </Link>
