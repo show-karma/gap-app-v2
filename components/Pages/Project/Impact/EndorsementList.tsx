@@ -18,7 +18,6 @@ interface EndorsementRowProps {
 }
 
 const EndorsementRow: FC<EndorsementRowProps> = ({ endorsement }) => {
-  const [openComment, setOpenComment] = useState(false);
   const { ensNames } = useENSNames();
 
   return (
