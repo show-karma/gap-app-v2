@@ -382,10 +382,10 @@ export default function GrantProgramRegistry({}) {
                               </div>
                             </div>
                           </td>
-                          <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300 text-wrap max-w-[285px]">
+                          <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300 text-wrap max-w-[285px]">
                             {grant.roundMetadata.name}
                           </td>
-                          <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-400 max-w-[285px]">
+                          <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-400 max-w-[285px]">
                             <div className="w-100 text-wrap">
                               {grant.roundMetadata?.eligibility?.description?.slice(
                                 0,
@@ -396,10 +396,10 @@ export default function GrantProgramRegistry({}) {
                               Show full description
                             </button>
                           </td>{" "}
-                          <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300">
+                          <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
                             ${formatCurrency(+grant?.matchAmountInUsd)}
                           </td>
-                          <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300">
+                          <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
                             <div className="w-full flex flex-row flex-wrap gap-1">
                               {grant.tags.map((tag, index) => (
                                 <span
@@ -411,20 +411,20 @@ export default function GrantProgramRegistry({}) {
                               ))}
                             </div>
                           </td>
-                          <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300">
+                          <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
                             {formatDate(grant?.applicationsStartTime)}
                           </td>
-                          <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300">
+                          <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
                             {formatDate(grant?.applicationsEndTime)}
                           </td>
-                          <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300">
+                          <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
                             <img
                               className="w-6 h-6 text-black dark:text-white"
                               src="/icons/crosshair.svg"
                               alt={grant.project?.name}
                             />
                           </td>
-                          <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300">
+                          <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
                             <CheckCircleIcon className="text-black w-6.5 h-6.5 dark:text-zinc-100" />
                           </td>
                         </tr>
