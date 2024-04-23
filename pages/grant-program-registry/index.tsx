@@ -263,64 +263,64 @@ export default function GrantProgramRegistry({}) {
                 <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
                   <table className="min-w-full divide-y divide-gray-300">
                     <thead>
-                      <tr>
+                      <tr className="">
                         <th
                           scope="col"
-                          className="py-3.5 pl-4 pr-3 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0"
+                          className="py-3.5 pl-4 pr-3 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body"
                         >
                           Ecosystem
                         </th>
                         <th
                           scope="col"
-                          className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100"
+                          className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
                         >
                           Community
                         </th>
                         <th
                           scope="col"
-                          className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100"
+                          className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
                         >
                           Name
                         </th>
                         <th
                           scope="col"
-                          className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100"
+                          className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
                         >
                           Description
                         </th>
                         <th
                           scope="col"
-                          className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100"
+                          className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
                         >
                           Budget
                         </th>
                         <th
                           scope="col"
-                          className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100"
+                          className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
                         >
                           Categories
                         </th>
                         <th
                           scope="col"
-                          className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100"
+                          className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
                         >
                           Start date
                         </th>
                         <th
                           scope="col"
-                          className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100"
+                          className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
                         >
                           End date
                         </th>
                         <th
                           scope="col"
-                          className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100"
+                          className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
                         >
                           Type
                         </th>
                         <th
                           scope="col"
-                          className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100"
+                          className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
                         >
                           RPFs
                         </th>
