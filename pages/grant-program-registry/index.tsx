@@ -367,7 +367,7 @@ export default function GrantProgramRegistry({}) {
                               </div>
                               <a
                                 href={`https://grantname.xyz`}
-                                className="font-semibold text-blue-700"
+                                className="font-semibold text-base text-blue-700"
                               >
                                 {/* {grant.project?.metadata?.website} */}
                                 www.grantname.xyz
@@ -424,7 +424,7 @@ export default function GrantProgramRegistry({}) {
                             />
                           </td>
                           <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-                            <CheckCircleIcon className="text-black w-6.5 h-6.5 dark:text-zinc-100" />
+                            <CheckCircleIcon className="text-black w-6 h-6 dark:text-zinc-100" />
                           </td>
                         </tr>
                       ))}
