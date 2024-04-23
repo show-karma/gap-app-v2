@@ -383,8 +383,7 @@ export default function GrantProgramRegistry({}) {
                             </div>
                           </td>
                           <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300 text-wrap max-w-[285px]">
-                            {/* {grant.roundMetadata.name} */}
-                            Mollitia et dolor repellendus ratione. Ipsa volupt
+                            {grant.roundMetadata.name}
                           </td>
                           <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-400 max-w-[285px]">
                             <div className="w-100 text-wrap">
