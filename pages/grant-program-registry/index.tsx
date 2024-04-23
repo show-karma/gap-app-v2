@@ -24,6 +24,8 @@ const grantTypes = [
 ];
 const statuses = ["All", "Active", "Inactive"];
 
+const EVMs = ["Arbitrum One", "Optimism"];
+
 type GrantProgram = {
   project: {
     chainId: number;
@@ -327,7 +329,9 @@ export default function GrantProgramRegistry({}) {
                       <tr key={grant.id}>
                         <td className="">
                           <span className="whitespace-nowrap px-3 py-1 text-sm rounded-full text-blue-700 bg-[#EFF8FF] border border-[#B2DDFF] mr-2">
-                            {chainNameDictionary(grant.chainId)}
+                            {EVMs.includes(chainNameDictionary(grant.chainId))
+                              ? "EVM"
+                              : chainNameDictionary(grant.chainId)}
                           </span>
                         </td>
                         <td className="whitespace-nowrap py-5 pl-4 pr-3 text-sm sm:pl-0  max-w-[285px]">
@@ -356,10 +360,13 @@ export default function GrantProgramRegistry({}) {
                               <div className="font-medium text-gray-900 dark:text-zinc-100">
                                 {grant.project?.name}
                               </div>
-                              <div className="font-semibold text-blue-700">
+                              <a
+                                href={`https://grantname.xyz`}
+                                className="font-semibold text-blue-700"
+                              >
                                 {/* {grant.project?.metadata?.website} */}
                                 www.grantname.xyz
-                              </div>
+                              </a>
                               <img
                                 className="w-6 h-6 text-black dark:text-white dark:hidden"
                                 src="/icons/globe.svg"
@@ -384,9 +391,9 @@ export default function GrantProgramRegistry({}) {
                               50
                             )}
                           </div>
-                          <span className="font-bold text-blue-600 text-sm">
+                          <button className="font-bold text-blue-600 text-sm">
                             Show full description
-                          </span>
+                          </button>
                         </td>{" "}
                         <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300">
                           ${formatCurrency(+grant?.matchAmountInUsd)}
