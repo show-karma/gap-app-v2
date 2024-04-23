@@ -9,8 +9,20 @@ import axios from "axios";
 import { envVars } from "@/utilities/enviromentVars";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
+import { CheckCircleIcon, CheckIcon } from "@heroicons/react/24/solid";
+import { formatDate } from "@/utilities/formatDate";
+import formatCurrency from "@/utilities/formatCurrency";
 
-const grantTypes = ["Defi", "zk", "NFT", "Research", "Climate", "Regen"];
+const grantTypes = [
+  "All Categories",
+  "Defi",
+  "zk",
+  "NFT",
+  "Research",
+  "Climate",
+  "Regen",
+];
+const statuses = ["All", "Active", "Inactive"];
 
 type GrantProgram = {
   project: {
@@ -34,7 +46,8 @@ type GrantProgram = {
 export default function GrantProgramRegistry({}) {
   const [grants, setGrants] = useState<GrantProgram[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedGrantType, setSelectedGrantType] = useState("All");
+  const [selectedGrantType, setSelectedGrantType] = useState("All Categories");
+  const [status, setStatus] = useState("All");
   const dynamicMetadata = {
     title: `Karma GAP - Grant Program Aggregator`,
     description: `View the list of grant programs issued by various communities.`,
@@ -132,62 +145,109 @@ export default function GrantProgramRegistry({}) {
         ]}
       />
       <section className="my-10 flex w-full max-w-full flex-col justify-between items-center gap-6 px-12 pb-7 pt-5 max-2xl:px-8 max-md:px-4">
-        <div className="grid grid-cols-1 gap-2">
-          <h1 className="text-3xl font-bold text-center">
-            The best Grant program list you&apos;ll find out there
-          </h1>
-          <div className="flex justify-center">
-            {" "}
-            <p className="text-center text-lg max-w-5xl">
-              Explore our handpicked grants for innovators and creators from
+        <div className="flex flex-row max-lg:gap-10  max-md:flex-col gap-32 justify-between w-full">
+          <div className="flex flex-1 flex-col gap-3 items-start justify-start text-left">
+            <h1 className="text-2xl tracking-[-0.72px] 2xl:text-4xl font-bold text-start text-black dark:text-white">
+              {`The best grant program directory you’ll find`}
+            </h1>
+            <p className="text-start text-lg max-w-5xl text-black dark:text-white">
+              Explore our handpicked grants for innovators and creators: from
               tech pioneers to community leaders, we have a grant to elevate
-              your project.
+              your project. Did we miss your program/bounty? Add it{" "}
+              <a className="text-blue-700 dark:text-blue-400 underline">
+                here.
+              </a>
             </p>
+            <button className="mt-3 bg-[#0E101B] dark:bg-slate-800 text-white px-10 py-2.5 rounded-lg">
+              Add your program
+            </button>
+          </div>
+          <div className="h-44 w-[1px] bg-[#98A2B3] max-md:w-full max-md:h-[1px]" />
+          <div className="flex flex-1 flex-col gap-2 items-center max-sm:items-start">
+            <div className="flex flex-1 flex-col gap-2 items-start">
+              <p className="text-[#101828] dark:text-white font-body font-semibold text-xl">
+                Be the first to know a new program launches
+              </p>
+              <div className="flex flex-row gap-4 max-sm:flex-col max-sm:w-full">
+                <input
+                  className="border rounded-lg w-full max-w-96 text-base px-3.5 py-3 border-black  max-sm:w-full dark:border-white bg-transparent dark:text-white text-black placeholder:dark:text-zinc-500 placeholder:text-zinc-800"
+                  placeholder="Enter your e-mail"
+                />
+                <button className="bg-[#0E101B] w-max text-base dark:bg-slate-800 max-sm:w-full text-white px-10 py-2.5 rounded-lg">
+                  Subscribe
+                </button>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="text-center">
-          <p className="mb-2">Grant Types</p>
-          {grantTypes.map((type) => (
-            <span
-              onClick={() => setSelectedGrantType(type)}
-              key={type}
-              className={`px-3 py-1 mx-1 my-2 text-sm font-semibold rounded-full cursor-pointer ${
-                selectedGrantType === type
-                  ? "bg-zinc-700 text-white"
-                  : "border border-zinc-800 text-gray-600"
-              }`}
-            >
-              {type}
-            </span>
-          ))}
+        <div className="flex flex-row items-center justify-end max-sm:justify-start gap-10  flex-wrap w-full">
+          <div className="flex flex-row items-center gap-2 flex-wrap">
+            <p className="text-black dark:text-white font-semibold">
+              Grant Types
+            </p>
+            {grantTypes.map((type) => (
+              <button
+                onClick={() => setSelectedGrantType(type)}
+                key={type}
+                className={`px-3 py-1 mx-1 my-2 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${
+                  selectedGrantType === type
+                    ? "bg-black text-white dark:bg-white dark:text-black"
+                    : "border border-black text-black dark:border-white dark:text-white"
+                }`}
+              >
+                {type}
+                {selectedGrantType === type ? (
+                  <CheckIcon className="w-4 h-4" />
+                ) : null}
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-row items-center gap-2  flex-wrap">
+            <p className="text-black dark:text-white font-semibold">Status</p>
+            {statuses.map((type) => (
+              <button
+                onClick={() => setStatus(type)}
+                key={type}
+                className={`px-3 py-1 mx-1 my-2 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${
+                  status === type
+                    ? "bg-black text-white dark:bg-white dark:text-black"
+                    : "border border-black text-black dark:border-white dark:text-white"
+                }`}
+              >
+                {type}
+                {status === type ? <CheckIcon className="w-4 h-4" /> : null}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="px-10 mx-10">
-          <div className="sm:flex sm:items-center p-3 flex justify-between rounded-xl ring-zinc-400 ring-1">
+        <div className="w-full">
+          <div className="sm:flex sm:items-center p-3 flex max-sm:flex-col flex-row gap-3 flex-wrap justify-between rounded-[4px] bg-[#F2F4F7]">
             <div className="flex items-center justify-center">
               <div className="w-full max-w-lg lg:max-w-xs">
                 <label htmlFor="search" className="sr-only">
                   Search
                 </label>
                 <div className="relative">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                  <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
                     <MagnifyingGlassIcon
-                      className="h-5 w-5 text-gray-400"
+                      className="h-5 w-5 text-black dark:text-white"
                       aria-hidden="true"
                     />
                   </div>
                   <input
                     id="search"
                     name="search"
-                    className="block w-full rounded-md border-0 bg-white py-1.5 pl-10 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    className="block w-full rounded-md border-0 bg-white py-1.5 pr-10 pl-3 text-black dark:text-white  placeholder:text-zinc-900  sm:text-sm sm:leading-6"
                     placeholder="Search"
                     type="search"
                   />
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="flex flex-wrap flex-row gap-2">
+              <Dropdown />
               <Dropdown />
               <Dropdown />
               <Dropdown />
@@ -202,136 +262,160 @@ export default function GrantProgramRegistry({}) {
                     <tr>
                       <th
                         scope="col"
-                        className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0"
+                        className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100 sm:pl-0"
                       >
                         Ecosystem
                       </th>
                       <th
                         scope="col"
-                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
                       >
                         Community
                       </th>
                       <th
                         scope="col"
-                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
                       >
                         Name
                       </th>
                       <th
                         scope="col"
-                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
                       >
                         Description
                       </th>
                       <th
                         scope="col"
-                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
                       >
                         Budget
                       </th>
                       <th
                         scope="col"
-                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
                       >
                         Categories
                       </th>
                       <th
                         scope="col"
-                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
                       >
                         Start date
                       </th>
                       <th
                         scope="col"
-                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
                       >
                         End date
                       </th>
                       <th
                         scope="col"
-                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
                       >
                         Type
                       </th>
                       <th
                         scope="col"
-                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
                       >
                         RPFs
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-200 bg-white">
+                  <tbody className="divide-y divide-gray-200 ">
                     {grants.map((grant) => (
                       <tr key={grant.id}>
-                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500">
-                          {chainNameDictionary(grant.chainId)}
+                        <td className="">
+                          <span className="whitespace-nowrap px-3 py-1 text-sm rounded-full text-blue-700 bg-[#EFF8FF] border border-[#B2DDFF] mr-2">
+                            {chainNameDictionary(grant.chainId)}
+                          </span>
                         </td>
-                        <td className="whitespace-nowrap py-5 pl-4 pr-3 text-sm sm:pl-0">
-                          <div className="flex items-center">
+                        <td className="whitespace-nowrap py-5 pl-4 pr-3 text-sm sm:pl-0  max-w-[285px]">
+                          <div className="flex items-center gap-4">
                             <div className="h-11 w-11 flex-shrink-0">
-                              <img
-                                className="h-11 w-11 rounded-full"
-                                src={
-                                  grant.project?.metadata?.logoImg
-                                    ? `https://${grant.project?.metadata?.logoImg}.ipfs.dweb.link`
-                                    : chainImgDictionary(grant.project?.chainId)
-                                }
-                                alt=""
-                              />
+                              {grant.project?.metadata?.logoImg ||
+                              chainImgDictionary(grant.project?.chainId) ? (
+                                <img
+                                  className="h-11 w-11 rounded-full"
+                                  src={
+                                    grant.project?.metadata?.logoImg
+                                      ? `https://${grant.project?.metadata?.logoImg}.ipfs.dweb.link`
+                                      : chainImgDictionary(
+                                          grant.project?.chainId
+                                        )
+                                  }
+                                  alt={grant.project?.chainId}
+                                />
+                              ) : (
+                                <div className="h-11 w-11 rounded-full bg-gray-200" />
+                              )}
                             </div>
-                            <div className="ml-4">
-                              <div className="font-medium text-gray-900">
+                            <div className="flex flex-col gap-1">
+                              <div className="font-medium text-gray-900 dark:text-zinc-100">
                                 {grant.project?.name}
                               </div>
-                              <div className="mt-1 text-gray-500">
-                                {grant.project?.metadata?.website}
+                              <div className="font-semibold text-blue-700">
+                                {/* {grant.project?.metadata?.website} */}
+                                www.grantname.xyz
                               </div>
+                              <img
+                                className="w-6 h-6 text-black dark:text-white dark:hidden"
+                                src="/icons/globe.svg"
+                                alt={grant.project?.name}
+                              />
+                              <img
+                                className="w-6 h-6 text-black dark:text-white hidden dark:block"
+                                src="/icons/globe-white.svg"
+                                alt={grant.project?.name}
+                              />
                             </div>
                           </div>
                         </td>
-                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500">
-                          {grant.roundMetadata.name}
+                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300 text-wrap max-w-[285px]">
+                          {/* {grant.roundMetadata.name} */}
+                          Mollitia et dolor repellendus ratione. Ipsa volupt
                         </td>
-                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500">
-                          <div className="w-100">
+                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-400 max-w-[285px]">
+                          <div className="w-100 text-wrap">
                             {grant.roundMetadata?.eligibility?.description?.slice(
                               0,
                               50
                             )}
                           </div>
-                          ...{" "}
-                          <span className="font-bold ">
-                            show full description
+                          <span className="font-bold text-blue-600 text-sm">
+                            Show full description
                           </span>
                         </td>{" "}
-                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500">
-                          {parseFloat(grant?.matchAmountInUsd).toFixed(2)} USD
+                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300">
+                          ${formatCurrency(+grant?.matchAmountInUsd)}
                         </td>
-                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500">
-                          {grant.tags.map((tag, index) => (
-                            <span
-                              key={index}
-                              className="mr-1 inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20"
-                            >
-                              {tag}
-                            </span>
-                          ))}
+                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300">
+                          <div className="w-full flex flex-row flex-wrap gap-1">
+                            {grant.tags.map((tag, index) => (
+                              <span
+                                key={index}
+                                className="mr-1 inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
                         </td>
-                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500">
-                          {grant?.applicationsStartTime}
+                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300">
+                          {formatDate(grant?.applicationsStartTime)}
                         </td>
-                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500">
-                          {grant?.applicationsEndTime}
+                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300">
+                          {formatDate(grant?.applicationsEndTime)}
                         </td>
-                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500">
-                          {grant.strategyName
-                            ?.replaceAll("Strategy", "")
-                            ?.replaceAll("allov2.", "")}
+                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300">
+                          <img
+                            className="w-6 h-6 text-black dark:text-white"
+                            src="/icons/crosshair.svg"
+                            alt={grant.project?.name}
+                          />
                         </td>
-                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500">
-                          ✅
+                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300">
+                          <CheckCircleIcon className="text-black w-6.5 h-6.5 dark:text-zinc-100" />
                         </td>
                       </tr>
                     ))}
