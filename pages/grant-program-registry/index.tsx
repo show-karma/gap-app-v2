@@ -266,61 +266,61 @@ export default function GrantProgramRegistry({}) {
                       <tr>
                         <th
                           scope="col"
-                          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100 sm:pl-0"
+                          className="py-3.5 pl-4 pr-3 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0"
                         >
                           Ecosystem
                         </th>
                         <th
                           scope="col"
-                          className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
+                          className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100"
                         >
                           Community
                         </th>
                         <th
                           scope="col"
-                          className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
+                          className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100"
                         >
                           Name
                         </th>
                         <th
                           scope="col"
-                          className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
+                          className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100"
                         >
                           Description
                         </th>
                         <th
                           scope="col"
-                          className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
+                          className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100"
                         >
                           Budget
                         </th>
                         <th
                           scope="col"
-                          className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
+                          className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100"
                         >
                           Categories
                         </th>
                         <th
                           scope="col"
-                          className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
+                          className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100"
                         >
                           Start date
                         </th>
                         <th
                           scope="col"
-                          className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
+                          className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100"
                         >
                           End date
                         </th>
                         <th
                           scope="col"
-                          className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
+                          className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100"
                         >
                           Type
                         </th>
                         <th
                           scope="col"
-                          className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
+                          className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100"
                         >
                           RPFs
                         </th>
