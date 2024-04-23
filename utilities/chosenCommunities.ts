@@ -92,5 +92,34 @@ export const chosenCommunities = () => {
         dark: "https://assets-global.website-files.com/651fe0a9a906d151784935f8/65834b82b9320b87496e82bc_Logo-white.svg",
       },
     },
+    {
+      name: "Glo Dollar",
+      slug: "glodollar",
+      uid: "0x78e493fec641879ea6ab95c0d5d61c96df0622df5da38c627f0e0b171709da78",
+      imageURL: {
+        light: "https://s3.amazonaws.com/showkarma.xyz/assets/glodollar.jpeg",
+        dark: "https://s3.amazonaws.com/showkarma.xyz/assets/glodollar.jpeg",
+      },
+    },
+    {
+      name: "Fractal Visions",
+      slug: "fractal-visions",
+      uid: "0xca43f36c16dd11d92857e90e504db221de4a15b2fd59f08556055490c1baafaa",
+      imageURL: {
+        light:
+          "https://pbs.twimg.com/profile_images/1704751282567942144/7ezsuJ2Z_400x400.jpg",
+        dark: "https://pbs.twimg.com/profile_images/1704751282567942144/7ezsuJ2Z_400x400.jpg",
+      },
+    },
+    {
+      name: "OpenCivics",
+      slug: "opencivics",
+      uid: "0x22dd5bed20dc47c3608d3b872351a672fe1b5cfd8f2a4d7854fd81e88bd821c9",
+      imageURL: {
+        light:
+          "https://substackcdn.com/image/fetch/w_1456,c_limit,f_webp,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fca26ac94-67d3-4a26-82c1-54d5c606f7ce_1456x1048.png",
+        dark: "https://substackcdn.com/image/fetch/w_1456,c_limit,f_webp,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fca26ac94-67d3-4a26-82c1-54d5c606f7ce_1456x1048.png",
+      },
+    },
   ];
 };
