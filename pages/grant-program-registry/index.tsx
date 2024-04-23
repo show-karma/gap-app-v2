@@ -12,6 +12,7 @@ import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { CheckCircleIcon, CheckIcon } from "@heroicons/react/24/solid";
 import { formatDate } from "@/utilities/formatDate";
 import formatCurrency from "@/utilities/formatCurrency";
+import { Spinner } from "@/components/Utilities/Spinner";
 
 const grantTypes = [
   "All Categories",
@@ -256,183 +257,189 @@ export default function GrantProgramRegistry({}) {
             </div>
           </div>
 
-          <div className="mt-8 flow-root">
-            <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-              <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                <table className="min-w-full divide-y divide-gray-300">
-                  <thead>
-                    <tr>
-                      <th
-                        scope="col"
-                        className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100 sm:pl-0"
-                      >
-                        Ecosystem
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
-                      >
-                        Community
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
-                      >
-                        Name
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
-                      >
-                        Description
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
-                      >
-                        Budget
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
-                      >
-                        Categories
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
-                      >
-                        Start date
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
-                      >
-                        End date
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
-                      >
-                        Type
-                      </th>
-                      <th
-                        scope="col"
-                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
-                      >
-                        RPFs
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-200 ">
-                    {grants.map((grant) => (
-                      <tr key={grant.id}>
-                        <td className="">
-                          <span className="whitespace-nowrap px-3 py-1 text-sm rounded-full text-blue-700 bg-[#EFF8FF] border border-[#B2DDFF] mr-2">
-                            {EVMs.includes(chainNameDictionary(grant.chainId))
-                              ? "EVM"
-                              : chainNameDictionary(grant.chainId)}
-                          </span>
-                        </td>
-                        <td className="whitespace-nowrap py-5 pl-4 pr-3 text-sm sm:pl-0  max-w-[285px]">
-                          <div className="flex items-center gap-4">
-                            <div className="h-11 w-11 flex-shrink-0">
-                              {grant.project?.metadata?.logoImg ||
-                              chainImgDictionary(grant.project?.chainId) ? (
+          {!loading ? (
+            <div className="mt-8 flow-root">
+              <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                  <table className="min-w-full divide-y divide-gray-300">
+                    <thead>
+                      <tr>
+                        <th
+                          scope="col"
+                          className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100 sm:pl-0"
+                        >
+                          Ecosystem
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
+                        >
+                          Community
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
+                        >
+                          Name
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
+                        >
+                          Description
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
+                        >
+                          Budget
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
+                        >
+                          Categories
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
+                        >
+                          Start date
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
+                        >
+                          End date
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
+                        >
+                          Type
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-zinc-100"
+                        >
+                          RPFs
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-200 ">
+                      {grants.map((grant) => (
+                        <tr key={grant.id}>
+                          <td className="">
+                            <span className="whitespace-nowrap px-3 py-1 text-sm rounded-full text-blue-700 bg-[#EFF8FF] border border-[#B2DDFF] mr-2">
+                              {EVMs.includes(chainNameDictionary(grant.chainId))
+                                ? "EVM"
+                                : chainNameDictionary(grant.chainId)}
+                            </span>
+                          </td>
+                          <td className="whitespace-nowrap py-5 pl-4 pr-3 text-sm sm:pl-0  max-w-[285px]">
+                            <div className="flex items-center gap-4">
+                              <div className="h-11 w-11 flex-shrink-0">
+                                {grant.project?.metadata?.logoImg ||
+                                chainImgDictionary(grant.project?.chainId) ? (
+                                  <img
+                                    className="h-11 w-11 rounded-full"
+                                    src={
+                                      grant.project?.metadata?.logoImg
+                                        ? `https://${grant.project?.metadata?.logoImg}.ipfs.dweb.link`
+                                        : chainImgDictionary(
+                                            grant.project?.chainId
+                                          )
+                                    }
+                                    alt={chainNameDictionary(
+                                      grant.project?.chainId
+                                    )}
+                                  />
+                                ) : (
+                                  <div className="h-11 w-11 rounded-full bg-gray-200" />
+                                )}
+                              </div>
+                              <div className="flex flex-col gap-1">
+                                <div className="font-medium text-gray-900 dark:text-zinc-100">
+                                  {grant.project?.name}
+                                </div>
+                                <a
+                                  href={`https://grantname.xyz`}
+                                  className="font-semibold text-blue-700"
+                                >
+                                  {/* {grant.project?.metadata?.website} */}
+                                  www.grantname.xyz
+                                </a>
                                 <img
-                                  className="h-11 w-11 rounded-full"
-                                  src={
-                                    grant.project?.metadata?.logoImg
-                                      ? `https://${grant.project?.metadata?.logoImg}.ipfs.dweb.link`
-                                      : chainImgDictionary(
-                                          grant.project?.chainId
-                                        )
-                                  }
-                                  alt={chainNameDictionary(
-                                    grant.project?.chainId
-                                  )}
+                                  className="w-6 h-6 text-black dark:text-white dark:hidden"
+                                  src="/icons/globe.svg"
+                                  alt={grant.project?.name}
                                 />
-                              ) : (
-                                <div className="h-11 w-11 rounded-full bg-gray-200" />
+                                <img
+                                  className="w-6 h-6 text-black dark:text-white hidden dark:block"
+                                  src="/icons/globe-white.svg"
+                                  alt={grant.project?.name}
+                                />
+                              </div>
+                            </div>
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300 text-wrap max-w-[285px]">
+                            {/* {grant.roundMetadata.name} */}
+                            Mollitia et dolor repellendus ratione. Ipsa volupt
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-400 max-w-[285px]">
+                            <div className="w-100 text-wrap">
+                              {grant.roundMetadata?.eligibility?.description?.slice(
+                                0,
+                                50
                               )}
                             </div>
-                            <div className="flex flex-col gap-1">
-                              <div className="font-medium text-gray-900 dark:text-zinc-100">
-                                {grant.project?.name}
-                              </div>
-                              <a
-                                href={`https://grantname.xyz`}
-                                className="font-semibold text-blue-700"
-                              >
-                                {/* {grant.project?.metadata?.website} */}
-                                www.grantname.xyz
-                              </a>
-                              <img
-                                className="w-6 h-6 text-black dark:text-white dark:hidden"
-                                src="/icons/globe.svg"
-                                alt={grant.project?.name}
-                              />
-                              <img
-                                className="w-6 h-6 text-black dark:text-white hidden dark:block"
-                                src="/icons/globe-white.svg"
-                                alt={grant.project?.name}
-                              />
+                            <button className="font-bold text-blue-600 text-sm">
+                              Show full description
+                            </button>
+                          </td>{" "}
+                          <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300">
+                            ${formatCurrency(+grant?.matchAmountInUsd)}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300">
+                            <div className="w-full flex flex-row flex-wrap gap-1">
+                              {grant.tags.map((tag, index) => (
+                                <span
+                                  key={index}
+                                  className="mr-1 inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
                             </div>
-                          </div>
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300 text-wrap max-w-[285px]">
-                          {/* {grant.roundMetadata.name} */}
-                          Mollitia et dolor repellendus ratione. Ipsa volupt
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-400 max-w-[285px]">
-                          <div className="w-100 text-wrap">
-                            {grant.roundMetadata?.eligibility?.description?.slice(
-                              0,
-                              50
-                            )}
-                          </div>
-                          <button className="font-bold text-blue-600 text-sm">
-                            Show full description
-                          </button>
-                        </td>{" "}
-                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300">
-                          ${formatCurrency(+grant?.matchAmountInUsd)}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300">
-                          <div className="w-full flex flex-row flex-wrap gap-1">
-                            {grant.tags.map((tag, index) => (
-                              <span
-                                key={index}
-                                className="mr-1 inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20"
-                              >
-                                {tag}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300">
-                          {formatDate(grant?.applicationsStartTime)}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300">
-                          {formatDate(grant?.applicationsEndTime)}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300">
-                          <img
-                            className="w-6 h-6 text-black dark:text-white"
-                            src="/icons/crosshair.svg"
-                            alt={grant.project?.name}
-                          />
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300">
-                          <CheckCircleIcon className="text-black w-6.5 h-6.5 dark:text-zinc-100" />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300">
+                            {formatDate(grant?.applicationsStartTime)}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300">
+                            {formatDate(grant?.applicationsEndTime)}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300">
+                            <img
+                              className="w-6 h-6 text-black dark:text-white"
+                              src="/icons/crosshair.svg"
+                              alt={grant.project?.name}
+                            />
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-5 text-sm text-gray-500 dark:text-zinc-300">
+                            <CheckCircleIcon className="text-black w-6.5 h-6.5 dark:text-zinc-100" />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div className="py-10 px-4 justify-center flex items-center">
+              <Spinner />
+            </div>
+          )}
         </div>
       </section>
     </>
