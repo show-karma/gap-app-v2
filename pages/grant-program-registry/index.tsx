@@ -358,32 +358,31 @@ export default function GrantProgramRegistry({}) {
                                   <div className="h-11 w-11 rounded-full bg-gray-200" />
                                 )}
                               </div>
-                              <div className="flex flex-col gap-1">
-                                <div className="font-medium text-gray-900 dark:text-zinc-100">
-                                  {grant.project?.name}
-                                </div>
-                                <a
-                                  href={`https://grantname.xyz`}
-                                  className="font-semibold text-blue-700"
-                                >
-                                  {/* {grant.project?.metadata?.website} */}
-                                  www.grantname.xyz
-                                </a>
-                                <img
-                                  className="w-6 h-6 text-black dark:text-white dark:hidden"
-                                  src="/icons/globe.svg"
-                                  alt={grant.project?.name}
-                                />
-                                <img
-                                  className="w-6 h-6 text-black dark:text-white hidden dark:block"
-                                  src="/icons/globe-white.svg"
-                                  alt={grant.project?.name}
-                                />
-                              </div>
                             </div>
                           </td>
                           <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300 text-wrap max-w-[285px]">
-                            {grant.roundMetadata.name}
+                            <div className="flex flex-col gap-1">
+                              <div className="font-semibold text-base text-gray-900 underline dark:text-zinc-100">
+                                {grant.roundMetadata.name}
+                              </div>
+                              <a
+                                href={`https://grantname.xyz`}
+                                className="font-semibold text-blue-700"
+                              >
+                                {/* {grant.project?.metadata?.website} */}
+                                www.grantname.xyz
+                              </a>
+                              <img
+                                className="w-6 h-6 text-black dark:text-white dark:hidden"
+                                src="/icons/globe.svg"
+                                alt={grant.project?.name}
+                              />
+                              <img
+                                className="w-6 h-6 text-black dark:text-white hidden dark:block"
+                                src="/icons/globe-white.svg"
+                                alt={grant.project?.name}
+                              />
+                            </div>
                           </td>
                           <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-400 max-w-[285px]">
                             <div className="w-100 text-wrap">
