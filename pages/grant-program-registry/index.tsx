@@ -344,7 +344,9 @@ export default function GrantProgramRegistry({}) {
                                           grant.project?.chainId
                                         )
                                   }
-                                  alt={grant.project?.chainId}
+                                  alt={chainNameDictionary(
+                                    grant.project?.chainId
+                                  )}
                                 />
                               ) : (
                                 <div className="h-11 w-11 rounded-full bg-gray-200" />
