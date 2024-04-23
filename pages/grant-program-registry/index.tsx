@@ -226,7 +226,7 @@ export default function GrantProgramRegistry({}) {
         </div>
 
         <div className="w-full">
-          <div className="sm:flex sm:items-center p-3 flex max-sm:flex-col flex-row gap-3 flex-wrap justify-between rounded-[4px] bg-[#F2F4F7]">
+          <div className="sm:flex sm:items-center p-3 flex max-sm:flex-col flex-row gap-3 flex-wrap justify-between rounded-[4px] bg-[#F2F4F7] dark:bg-zinc-900">
             <div className="flex items-center justify-center">
               <div className="w-full max-w-lg lg:max-w-xs">
                 <label htmlFor="search" className="sr-only">
@@ -242,7 +242,7 @@ export default function GrantProgramRegistry({}) {
                   <input
                     id="search"
                     name="search"
-                    className="block w-full rounded-md border-0 bg-white py-1.5 pr-10 pl-3 text-black dark:text-white  placeholder:text-zinc-900  sm:text-sm sm:leading-6"
+                    className="block w-full rounded-md border-0 bg-white dark:bg-zinc-600 py-1.5 pr-10 pl-3 text-black dark:text-white dark:placeholder:text-zinc-100  placeholder:text-zinc-900  sm:text-sm sm:leading-6"
                     placeholder="Search"
                     type="search"
                   />
