@@ -13,6 +13,8 @@ import { CheckCircleIcon, CheckIcon } from "@heroicons/react/24/solid";
 import { formatDate } from "@/utilities/formatDate";
 import formatCurrency from "@/utilities/formatCurrency";
 import { Spinner } from "@/components/Utilities/Spinner";
+import Link from "next/link";
+import { PAGES } from "@/utilities/pages";
 
 const grantTypes = [
   "All Categories",
@@ -161,9 +163,11 @@ export default function GrantProgramRegistry({}) {
                 here.
               </a>
             </p>
-            <button className="mt-3 bg-[#0E101B] dark:bg-slate-800 text-white px-10 py-2.5 rounded-lg">
-              Add your program
-            </button>
+            <Link href={PAGES.REGISTRY.ADD_PROGRAM}>
+              <button className="mt-3 bg-[#0E101B] dark:bg-slate-800 text-white px-10 py-2.5 rounded-lg">
+                Add your program
+              </button>
+            </Link>
           </div>
           <div className="h-44 w-[1px] bg-[#98A2B3] max-md:w-full max-md:h-[1px]" />
           <div className="flex flex-1 flex-col gap-2 items-center max-sm:items-start">
