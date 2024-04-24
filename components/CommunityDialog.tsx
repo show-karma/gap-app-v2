@@ -147,7 +147,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
   const [description, setDescription] = useState(
     dataToUpdate?.description || ""
   );
-  const [selectedChainId, setSelectedChainId] = useState(1115510);
+  const [selectedChainId, setSelectedChainId] = useState(11155420);
 
   return (
     <>
@@ -237,9 +237,9 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
                             console.log(e.target.value);
                           }}
                         >
-                          <option value={1115510}>1115510</option>
-                          <option value={10}>10</option>
-                          <option value={10}>1</option>
+                          <option value={11155420}>Optimism Sepolia</option>
+                          <option value={10}>Optimism</option>
+                          <option value={10}>Mainnet</option>
                         </select>
                       </div>
 
