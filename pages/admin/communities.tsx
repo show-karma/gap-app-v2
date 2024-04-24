@@ -13,6 +13,7 @@ import { blo } from "blo";
 import { LinkIcon } from "@heroicons/react/24/solid";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
+import { CommunityDialog } from "@/components/CommunityDialog";
 
 export default function Communities() {
   const [allCommunities, setAllCommunities] = useState<Community[]>([]);
@@ -75,9 +76,13 @@ export default function Communities() {
       <div className="px-4 sm:px-6 lg:px-12 py-5">
         {communitiesToAdmin.length ? (
           <div className="flex flex-col gap-2">
-            <div className="text-2xl font-bold">
-              All Communities{" "}
-              {allCommunities.length ? `(${allCommunities.length})` : ""}
+            <div className="flex justify-between">
+              <div className="text-2xl font-bold">
+                All Communities{" "}
+                {allCommunities.length ? `(${allCommunities.length})` : ""}
+              </div>
+
+              <CommunityDialog />
             </div>
             <div className="mt-5 w-full gap-5">
               {allCommunities.length ? (

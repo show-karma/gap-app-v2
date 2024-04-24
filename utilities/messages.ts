@@ -8,6 +8,12 @@ export const MESSAGES = {
     },
     MEMBERS: "Invalid address",
   },
+  COMMUNITY_FORM: {
+    TITLE: "Title must be at least 3 characters",
+    IMAGE_URL: "ENTER a valid Image url",
+    DESCRIPTION: "Enter a valid description",
+    SLUG: "Slug  must be at least 3 characters",
+  },
   CATEGORIES: {
     ASSIGN_QUESTIONS: {
       EMPTY: `Please assign categories to grants before assigning review questions.`,
