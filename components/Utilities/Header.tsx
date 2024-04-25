@@ -58,7 +58,6 @@ export default function Header() {
     const communitiesOf = await gapIndexerApi.communitiesOf(address, false);
 
     if (communitiesOf.data && communitiesOf.data.length !== 0) {
-      console.log(communitiesOf.data);
       setCommunities(communitiesOf.data);
     } else {
       setCommunities([]);
