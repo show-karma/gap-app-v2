@@ -76,29 +76,7 @@ export const GrantCard = ({ rawGrant, index }: GrantCardProps) => {
             background: pickColor(index),
           }}
         />
-        {rawGrant ? (
-          <div className="absolute z-3 top-1 right-1">
-            <Tooltip.Provider>
-              <Tooltip.Root delayDuration={0}>
-                <Tooltip.Trigger>
-                  <div className="p-1 bg-white dark:bg-zinc-900 rounded-full border border-zinc-100 dark:border-zinc-600">
-                    <img
-                      className="w-6 h-6 min-w-6 min-h-6"
-                      src={chainImgDictionary(rawGrant.chainID)}
-                      alt={chainNameDictionary(rawGrant.chainID) || ""}
-                    />
-                  </div>
-                </Tooltip.Trigger>
-                <Tooltip.Portal>
-                  <Tooltip.Content className="relative border border-zinc-100 dark:border-zinc-600 bg-white text-black dark:bg-zinc-900 dark:text-white px-2 py-2 rounded-md">
-                    {chainNameDictionary(rawGrant.chainID)}
-                    <Tooltip.Arrow />
-                  </Tooltip.Content>
-                </Tooltip.Portal>
-              </Tooltip.Root>
-            </Tooltip.Provider>
-          </div>
-        ) : null}
+
         <div className="flex w-full flex-col px-3">
           <p className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200  max-2xl:text-sm mr-1">
             {grant.project?.details?.data?.title || grant.uid}
