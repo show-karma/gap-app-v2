@@ -5,13 +5,15 @@ import {
   MilestoneCompleted,
 } from "@show-karma/karma-gap-sdk";
 import { blo } from "blo";
-import { FC, useEffect } from "react";
+import { FC, useEffect, useState } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { useENSNames } from "@/store/ensNames";
 import { formatDate } from "@/utilities/formatDate";
+import { VerificationsDialog } from "./VerificationsDialog";
 
 interface VerifiedBadgeProps {
   verifications: MilestoneCompleted[] | GrantUpdateStatus[];
+  milestoneName: string;
 }
 
 const BlockieTooltip = ({
@@ -64,7 +66,10 @@ const BlockieTooltip = ({
   );
 };
 
-export const VerifiedBadge: FC<VerifiedBadgeProps> = ({ verifications }) => {
+export const VerifiedBadge: FC<VerifiedBadgeProps> = ({
+  verifications,
+  milestoneName,
+}) => {
   const getUniqueVerifications = (
     verifications: MilestoneCompleted[] | GrantUpdateStatus[]
   ) => {
@@ -95,6 +100,12 @@ export const VerifiedBadge: FC<VerifiedBadgeProps> = ({ verifications }) => {
     return 0;
   });
 
+  const [isOpenDialog, setIsOpenDialog] = useState(false);
+
+  const openDialog = () => setIsOpenDialog(true);
+
+  const closeDialog = () => setIsOpenDialog(false);
+
   return (
     <div className="flex flex-row items-center gap-2 flex-1">
       <img
@@ -103,16 +114,38 @@ export const VerifiedBadge: FC<VerifiedBadgeProps> = ({ verifications }) => {
         className="w-6 h-6"
       />
       <span className="text-sm font-semibold text-[#0E9384]">Verified</span>
-      <div className="ml-2 flex flex-row -space-x-1 flex-wrap">
+      {/* {milestoneName ? ( */}
+      <VerificationsDialog
+        verifications={orderedSort}
+        isOpen={isOpenDialog}
+        closeDialog={closeDialog}
+        milestoneName={milestoneName}
+      />
+      <button
+        className="ml-2 flex flex-row -space-x-1 flex-wrap"
+        onClick={openDialog}
+      >
         {orderedSort.map((verification) => (
-          <BlockieTooltip
-            key={verification.uid}
-            address={verification.attester as Hex}
-            date={verification.createdAt}
-            reason={verification.reason}
+          <img
+            key={verification.attester}
+            src={blo(verification.attester as Hex, 8)}
+            alt={verification.attester}
+            className="h-8 w-8 min-h-8 min-w-8 rounded-full ring-2 ring-white dark:ring-gray-800"
           />
         ))}
-      </div>
+      </button>
+      {/* // ) : (
+      //   <div className="ml-2 flex flex-row -space-x-1 flex-wrap">
+      //     {orderedSort.map((verification) => (
+      //       <BlockieTooltip
+      //         key={verification.uid}
+      //         address={verification.attester as Hex}
+      //         date={verification.createdAt}
+      //         reason={verification.reason}
+      //       />
+      //     ))}
+      //   </div>
+      // )} */}
     </div>
   );
 };
