@@ -86,7 +86,10 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
               <p className="text-xs font-bold text-white">UPDATE</p>
             </div>
             {verifiedMilestones.length ? (
-              <VerifiedBadge verifications={verifiedMilestones} />
+              <VerifiedBadge
+                verifications={verifiedMilestones}
+                milestoneName={milestone.title}
+              />
             ) : null}
             <VerifyMilestoneUpdateDialog
               milestone={milestone}
