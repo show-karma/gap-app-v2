@@ -77,8 +77,9 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
     setIsDialogOpen(true);
   };
 
-  const closeDialog = () => {
+  const closeDialog = async () => {
     setIsDialogOpen(false);
+    await refreshProject();
   };
 
   const completeMilestone = async (milestone: Milestone, text?: string) => {
@@ -93,9 +94,8 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
       const walletSigner = await walletClientToSigner(walletClient);
       await milestone.complete(walletSigner, text).then(async () => {
         toast.success(MESSAGES.MILESTONES.COMPLETE.SUCCESS);
-        await refreshProject().then(() => {
-          openDialog();
-        });
+
+        openDialog();
       });
     } catch (error) {
       console.log(error);
