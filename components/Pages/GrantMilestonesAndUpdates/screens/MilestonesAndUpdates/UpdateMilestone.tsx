@@ -93,8 +93,8 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
       const walletSigner = await walletClientToSigner(walletClient);
       await milestone.complete(walletSigner, text).then(async () => {
         toast.success(MESSAGES.MILESTONES.COMPLETE.SUCCESS);
-        await refreshProject();
         openDialog();
+        await refreshProject();
       });
     } catch (error) {
       console.log(error);
