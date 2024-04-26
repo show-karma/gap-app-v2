@@ -80,6 +80,8 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
   const closeDialog = async () => {
     setIsDialogOpen(false);
     await refreshProject();
+    cancelEditing(false);
+    setIsUpdating(false);
   };
 
   const completeMilestone = async (milestone: Milestone, text?: string) => {
@@ -94,7 +96,6 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
       const walletSigner = await walletClientToSigner(walletClient);
       await milestone.complete(walletSigner, text).then(async () => {
         toast.success(MESSAGES.MILESTONES.COMPLETE.SUCCESS);
-
         openDialog();
       });
     } catch (error) {
@@ -138,14 +139,9 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
           setIsSubmitLoading(false);
         });
     } else {
-      await completeMilestone(milestone, description)
-        .then(() => {
-          cancelEditing(false);
-          setIsUpdating(false);
-        })
-        .finally(() => {
-          setIsSubmitLoading(false);
-        });
+      await completeMilestone(milestone, description).finally(() => {
+        setIsSubmitLoading(false);
+      });
     }
   };
 

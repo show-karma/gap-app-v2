@@ -35,6 +35,14 @@ export const ShareDialog: FC<ShareDialogProps> = ({
     (item) => item.uid.toLowerCase() === milestoneRefUID.toLowerCase()
   );
 
+  const shareURI =
+    encodeURI(`https://twitter.com/intent/post?text=🎉 We have just completed a milestone on ${
+      grant?.details?.title
+    } grant \n Excited to be making progress towards our goals.\nCheck out our achievement here -> https://gap.karmahq.xyz/project/${
+      (project?.details?.slug || project?.uid) as string
+    }/grants?grantId=${grant?.uid}&tab=milestones-and-updates
+                    `);
+
   return (
     <Transition appear show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={closeDialog}>
@@ -80,16 +88,7 @@ export const ShareDialog: FC<ShareDialogProps> = ({
                       couldn't be prouder of your progress. Keep up the
                       fantastic work!`}
                     </p>
-                    <ExternalLink
-                      href={`
-                    https://twitter.com/intent/post?text=%F0%9F%8E%89+We+have+just+completed+a+major+milestone+on+${
-                      grant?.details?.title
-                    }+grant%21%0AExcited+to+be+making+progress+towards+my+goals.%0ACheck+out+our+achievement+here+-%3E+https://gap.karmahq.xyz/project/${
-                        (project?.details?.slug || project?.uid) as string
-                      }/grants?grantId=${grant?.uid}&tab=milestones-and-updates
-                    `}
-                      //   href={`https://twitter.com/intent/post?text=🎉 We have just completed a major milestone on ${grant?.details?.title} grant! \n\nExcited to be making progress towards my goals. Check out our achievement here -> `}
-                    >
+                    <ExternalLink href={shareURI}>
                       <Button className="px-5 py-3 text-white bg-[#155EEF] dark:bg-[#155EEF] text-sm font-semibold mt-5">
                         Share Your Success on X
                       </Button>
