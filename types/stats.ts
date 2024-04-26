@@ -1,6 +1,8 @@
 export type IAttestationStatsNames =
   | "milestones"
   | "projects"
+  | "projectImpacts"
+  | "projectEndorsements"
   | "grants"
   | "communities"
   | "grantUpdates"
