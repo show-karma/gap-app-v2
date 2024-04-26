@@ -37,7 +37,7 @@ const dataNameDictionary: Record<IAttestationStatsNames, DictionaryValue> = {
     hint: "Project Impacts created",
   },
   projectEndorsements: {
-    title: "Total projects endorsed created by ",
+    title: "Total projects endorsements created by ",
     hint: "Project Endorsement created",
   },
   grants: { title: "Total grants created by ", hint: "Grants created" },
