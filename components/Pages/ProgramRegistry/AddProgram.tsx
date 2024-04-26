@@ -15,6 +15,11 @@ import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
 import { NFTStorage } from "nft.storage";
 import { AlloRegistry } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/AlloRegistry";
+import axios from "axios";
+import { getWalletClient } from "@wagmi/core";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { appNetwork } from "@/utilities/network";
+import { useAccount } from "wagmi";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -94,13 +99,23 @@ export default function AddProgram() {
     // });
   };
 
+  const { address } = useAccount();
+
   const createProgram = async () => {
     try {
-      const ipfsStorage = new NFTStorage({
-        token: keys.ipfsToken,
-      });
+      const data = await axios.get("/api/ipfs");
+      const { message: reqToken } = data.data;
+      // const ipfsStorage = new NFTStorage({
+      //   token: keys.ipfsToken,
+      // });
 
-      const alloRegistry = new AlloRegistry(signer, ipfsStorage);
+      const walletClient = await getWalletClient({
+        chainId: appNetwork[0].id,
+      });
+      if (!walletClient) return;
+      const walletSigner = await walletClientToSigner(walletClient);
+
+      const alloRegistry = new AlloRegistry(walletSigner as any, reqToken);
 
       const nonce = 2;
       const name = "Karma Test Program 2";
@@ -121,7 +136,7 @@ export default function AddProgram() {
         categories: ["dapps", "infra"],
         tags: ["grant-program-registry"],
       };
-      const owner = wallet.address;
+      const owner = address as string;
 
       const response = await alloRegistry.createProgram(
         nonce,
@@ -453,7 +468,11 @@ export default function AddProgram() {
           </div>
         </div>
         <div className="flex flex-row justify-start">
-          <Button type="submit" className="px-3 py-3 text-base">
+          <Button
+            // type="submit"
+            onClick={createProgram}
+            className="px-3 py-3 text-base"
+          >
             Create program
           </Button>
         </div>
