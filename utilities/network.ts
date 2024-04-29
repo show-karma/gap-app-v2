@@ -17,6 +17,8 @@ export function getChainIdByName(name: string) {
       return 10;
     case "arbitrum":
       return 42161;
+    case "ArbitrumOne":
+      return 42161;
     case "optimismGoerli":
       return 420;
     case "Optimism Goerli":

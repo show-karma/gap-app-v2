@@ -16,12 +16,13 @@ import { Community, nullRef } from "@show-karma/karma-gap-sdk";
 import { Button } from "./Utilities/Button";
 import { useProjectStore } from "@/store";
 import { MESSAGES } from "@/utilities/messages";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
-import { appNetwork } from "@/utilities/network";
+import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { appNetwork, getChainIdByName } from "@/utilities/network";
 import { cn } from "@/utilities/tailwind";
 import { useAuthStore } from "@/store/auth";
 import { getGapClient, useGap } from "@/hooks";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
+import { getWalletClient } from "@wagmi/core";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -98,13 +99,10 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
     console.log("data", data);
     if (!gap) return;
     let gapClient = gap;
-    if (!checkNetworkIsValid(chain?.id)) {
-      await switchNetworkAsync?.(appNetwork[0].id);
-      gapClient = getGapClient(appNetwork[0].id);
-    }
 
-    if (chain?.id != selectedChainId) {
-      await switchNetworkAsync?.(selectedChainId);
+    if (chain?.id != getChainIdByName(selectedChain)) {
+      await switchNetworkAsync?.(getChainIdByName(selectedChain));
+      gapClient = getGapClient(getChainIdByName(selectedChain));
     }
 
     try {
@@ -120,6 +118,13 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
       if (await gapClient.fetch.slugExists(data.slug as string)) {
         data.slug = await gapClient.generateSlug(data.slug as string);
       }
+      // console.log(getChainIdByName(selectedChain));
+
+      // const walletClient = await getWalletClient({
+      //   chainId: getChainIdByName(selectedChain),
+      // });
+      // if (!walletClient) return;
+      // const walletSigner = await walletClientToSigner(walletClient);
 
       await newCommunity.attest(signer, {
         name: data.name,
@@ -147,7 +152,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
   const [description, setDescription] = useState(
     dataToUpdate?.description || ""
   );
-  const [selectedChainId, setSelectedChainId] = useState(11155420);
+  const [selectedChain, setSelectedChain] = useState("optimismSepolia");
 
   return (
     <>
@@ -226,20 +231,22 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
                       </div>
                       <div className="flex w-full flex-col gap-2">
                         <label htmlFor="select-input" className={labelStyle}>
-                          ChainId *
+                          Chain *
                         </label>
                         <select
                           id="select-input"
                           className={inputStyle}
-                          value={selectedChainId}
+                          value={selectedChain}
                           onChange={(e) => {
-                            setSelectedChainId(parseInt(e.target.value));
+                            setSelectedChain(e.target.value);
                             console.log(e.target.value);
                           }}
                         >
-                          <option value={11155420}>Optimism Sepolia</option>
-                          <option value={10}>Optimism</option>
-                          <option value={10}>Mainnet</option>
+                          <option value={"optimismSepolia"}>
+                            Optimism Sepolia
+                          </option>
+                          <option value={"optimism"}>Optimism</option>
+                          <option value={"arbitrum"}>Arbitrum One</option>
                         </select>
                       </div>
 

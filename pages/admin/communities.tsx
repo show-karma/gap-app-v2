@@ -14,6 +14,7 @@ import { LinkIcon } from "@heroicons/react/24/solid";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { CommunityDialog } from "@/components/CommunityDialog";
+import { formatDate } from "@/utilities/formatDate";
 
 export default function Communities() {
   const [allCommunities, setAllCommunities] = useState<Community[]>([]);
@@ -26,6 +27,7 @@ export default function Communities() {
         if (!gap) throw new Error("Gap not initialized");
         setIsLoading(true);
         const result = await gap.fetch.communities();
+
         result.sort((a, b) =>
           (a.details?.name || a.uid).localeCompare(b.details?.name || b.uid)
         );
@@ -91,6 +93,7 @@ export default function Communities() {
                     <tr className="divide-x">
                       <th>Img</th>
                       <th>Name</th>
+                      <th>Created</th>
                       <th>UUID</th>
                       <th className="px-4 text-center">Community page</th>
                       <th className="px-4 text-center">Admin page</th>
@@ -112,6 +115,12 @@ export default function Communities() {
                         <td className="max-w-60 px-4">
                           {community.details?.name}
                         </td>
+                        <td className="max-w-60 px-4">
+                          {formatDate(
+                            Object(community?.createdAt)?.$timestamp?.t * 1000
+                          )}
+                        </td>
+
                         <td className="max-w-96 break-all px-4">
                           {community.uid}
                         </td>
