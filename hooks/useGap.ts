@@ -17,7 +17,7 @@ import { envVars } from "@/utilities/enviromentVars";
 
 const ipfsClient = new IpfsStorage(
   {
-    token: "",
+    token: envVars.IPFS_TOKEN,
   },
   {
     url: envVars.NEXT_PUBLIC_IPFS_SPONSOR_URL || "",

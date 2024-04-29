@@ -22,5 +22,6 @@ export const envVars = {
     OPT_SEPOLIA: process.env.NEXT_PUBLIC_RPC_OPTIMISM_SEPOLIA as string,
   },
   PROJECT_ID: process.env.NEXT_PUBLIC_PROJECT_ID || "",
+  IPFS_TOKEN: process.env.NEXT_PUBLIC_IPFS_TOKEN || "",
   ANON_KARMA_URL: "https://anon.karmahq.xyz",
 };

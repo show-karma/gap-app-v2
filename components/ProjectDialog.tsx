@@ -443,15 +443,17 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       if (!address) return;
       if (!gap) return;
       let gapClient = gap;
-      if (!checkNetworkIsValid(chain?.id)) {
+
+      if (chain && !checkNetworkIsValid(chain?.id)) {
         await switchNetworkAsync?.(appNetwork[0].id);
         gapClient = getGapClient(appNetwork[0].id);
       }
+
       const project = new Project({
         data: {
           project: true,
         },
-        schema: gap.findSchema("Project"),
+        schema: gapClient.findSchema("Project"),
         recipient: (data.recipient || address) as Hex,
         uid: nullRef,
       });

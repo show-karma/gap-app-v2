@@ -121,7 +121,10 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
         <div className="flex flex-row gap-3 items-center">
           <UpdateTag index={index} />
           {verifiedUpdate.length ? (
-            <VerifiedBadge verifications={verifiedUpdate} />
+            <VerifiedBadge
+              verifications={verifiedUpdate}
+              milestoneName={`Update ${index}`}
+            />
           ) : null}
           <VerifyGrantUpdateDialog
             grantUpdate={update}

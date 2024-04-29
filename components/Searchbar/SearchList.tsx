@@ -1,16 +1,16 @@
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
-import type { Project } from "@show-karma/karma-gap-sdk";
 import Link from "next/link";
 
 import { Spinner } from "../Utilities/Spinner";
 import EthereumAddressToENSName from "../EthereumAddressToENSName";
 import { blo } from "blo";
 import { PAGES } from "@/utilities/pages";
+import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 interface Props {
-  data: Project[]; // Will be modular in the future
+  data: IProjectResponse[]; // Will be modular in the future
   isOpen: boolean;
   isLoading: boolean;
 }
@@ -27,16 +27,18 @@ export const SearchList: React.FC<Props> = ({
 
   return (
     isOpen && (
-      <div className="absolute left-0 top-10 mt-3 max-h-64 min-w-full overflow-y-auto rounded-md bg-white dark:bg-zinc-800 py-4 ">
+      <div className="absolute left-0 top-10 mt-3 max-h-64 min-w-full overflow-y-auto rounded-md bg-white dark:bg-zinc-800 py-4 border border-zinc-200">
         {data.length > 0 &&
           data.map((project) => (
             <Link
               key={project.uid}
-              href={PAGES.PROJECT.GRANTS(project.details?.slug || project.uid)}
+              href={PAGES.PROJECT.GRANTS(
+                project.details?.data.slug || project.uid
+              )}
             >
               <div className=":last:border-b-0 cursor-pointer select-none border-b border-slate-100 px-4 py-2 transition hover:bg-slate-200 dark:hover:bg-zinc-700">
                 <b className="max-w-full text-ellipsis font-bold text-black dark:text-zinc-100">
-                  {project.details?.title}
+                  {project.details?.data.title}
                 </b>
                 <br />
                 <div className="text-gray-500 dark:text-gray-200">
