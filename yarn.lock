@@ -2228,9 +2228,9 @@
     "@sentry/cli" "^1.77.1"
     webpack-sources "^2.0.0 || ^3.0.0"
 
-"@show-karma/karma-gap-sdk@git+https://github.com/show-karma/karma-gap-sdk.git#b703ff221cf6047f58f45919af2653e87828069f":
+"@show-karma/karma-gap-sdk@git+https://github.com/show-karma/karma-gap-sdk.git#8c11fc16979193c42f6965c626167ae2ff4c46fd":
   version "0.3.24"
-  resolved "git+https://github.com/show-karma/karma-gap-sdk.git#b703ff221cf6047f58f45919af2653e87828069f"
+  resolved "git+https://github.com/show-karma/karma-gap-sdk.git#8c11fc16979193c42f6965c626167ae2ff4c46fd"
   dependencies:
     "@ethereum-attestation-service/eas-sdk" "1.4.2"
     "@gelatonetwork/relay-sdk" "^5.2.0"

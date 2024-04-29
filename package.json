@@ -20,7 +20,7 @@
     "@rainbow-me/rainbowkit": "^1.3.1",
     "@semaphore-protocol/core": "^4.0.0-beta.6",
     "@sentry/nextjs": "7.105.0",
-    "@show-karma/karma-gap-sdk": "git+https://github.com/show-karma/karma-gap-sdk.git#b703ff221cf6047f58f45919af2653e87828069f",
+    "@show-karma/karma-gap-sdk": "git+https://github.com/show-karma/karma-gap-sdk.git#8c11fc16979193c42f6965c626167ae2ff4c46fd",
     "@tailwindcss/typography": "^0.5.10",
     "@tanstack/react-query": "^5.20.5",
     "@tremor/react": "^3.14.0",
