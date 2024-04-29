@@ -163,20 +163,25 @@ export default function Header() {
           <>
             <div className="px-4 sm:px-6 lg:px-12  border-b border-b-[#DFE1E6]">
               <div className="relative flex lg:gap-8 justify-between items-center flex-row">
-                <div className="flex py-4 lg:inset-y-0 lg:left-0 lg:static">
-                  <Link
-                    className="flex-shrink-0 max-w-[180px] max-h-[40px]"
-                    href="/"
-                  >
-                    <Image
-                      className="block w-full h-auto"
-                      src="/logo/karma-gap-logo.svg"
-                      alt="Gap"
-                      width={180}
-                      height={40}
-                      priority={true}
-                    />
-                  </Link>
+                <div className="flex flex-row gap-52 items-center">
+                  <div className="flex py-4 lg:inset-y-0 lg:left-0 lg:static">
+                    <Link
+                      className="flex-shrink-0 max-w-[180px] max-h-[40px]"
+                      href="/"
+                    >
+                      <Image
+                        className="block w-full h-auto"
+                        src="/logo/karma-gap-logo.svg"
+                        alt="Gap"
+                        width={180}
+                        height={40}
+                        priority={true}
+                      />
+                    </Link>
+                  </div>
+                  <div className="hidden lg:flex min-w-max w-[400px] max-xl:w-[180px]">
+                    <Searchbar />
+                  </div>
                 </div>
 
                 <div className="flex items-center md:absolute md:inset-y-0 md:right-0 lg:hidden">
@@ -209,14 +214,8 @@ export default function Header() {
                   </Popover.Button>
                 </div>
 
-                <div className="hidden lg:flex">
-                  <Searchbar />
-                </div>
                 <div className="hidden lg:flex lg:items-center lg:justify-end lg:gap-x-3 py-3">
-                  <ExternalLink href={karmaLinks.githubSDK}>
-                    <button className={buttonStyle}>SDK Docs</button>
-                  </ExternalLink>
-                  <div className="rounded-none h-10 w-[1px] bg-zinc-300 mx-2" />
+                  {/* <div className="rounded-none h-10 w-[1px] bg-zinc-300 mx-2" /> */}
                   {isReady ? (
                     <>
                       {(isCommunityAdmin || isOwner) &&
@@ -379,11 +378,6 @@ export default function Header() {
                   <Searchbar />
                 </div>
                 <div className="mt-8 px-3 flex flex-col gap-4">
-                  <ExternalLink href={karmaLinks.githubSDK}>
-                    <button className="rounded-md bg-white w-full dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
-                      SDK Docs
-                    </button>
-                  </ExternalLink>
                   {isReady ? (
                     <>
                       {isConnected && isAuth && (
