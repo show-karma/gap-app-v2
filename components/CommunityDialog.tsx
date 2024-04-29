@@ -96,16 +96,14 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
   const { gap } = useGap();
 
   const createCommunity = async (data: SchemaType) => {
-    console.log("data", data);
     if (!gap) return;
     let gapClient = gap;
 
-    if (chain?.id != getChainIdByName(selectedChain)) {
-      await switchNetworkAsync?.(getChainIdByName(selectedChain));
-      gapClient = getGapClient(getChainIdByName(selectedChain));
-    }
-
     try {
+      if (chain?.id != getChainIdByName(selectedChain)) {
+        await switchNetworkAsync?.(getChainIdByName(selectedChain));
+        gapClient = getGapClient(getChainIdByName(selectedChain));
+      }
       const newCommunity = new Community({
         data: {
           community: true,
@@ -118,15 +116,14 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
       if (await gapClient.fetch.slugExists(data.slug as string)) {
         data.slug = await gapClient.generateSlug(data.slug as string);
       }
-      // console.log(getChainIdByName(selectedChain));
 
-      // const walletClient = await getWalletClient({
-      //   chainId: getChainIdByName(selectedChain),
-      // });
-      // if (!walletClient) return;
-      // const walletSigner = await walletClientToSigner(walletClient);
+      const walletClient = await getWalletClient({
+        chainId: getChainIdByName(selectedChain),
+      });
+      if (!walletClient) return;
+      const walletSigner = await walletClientToSigner(walletClient);
 
-      await newCommunity.attest(signer, {
+      await newCommunity.attest(walletSigner as any, {
         name: data.name,
         description: description as string,
         imageURL: data.imageURL as string,
@@ -142,7 +139,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
       setIsLoading(true); // Set loading state to true
       await createCommunity(data); // Call the createCommunity function
       setIsLoading(false); // Reset loading state
-      closeModal(); // Close the dialog upon successful submission
+      // closeModal(); // Close the dialog upon successful submission
     } catch (error) {
       console.error("Error creating community:", error);
       setIsLoading(false); // Reset loading state
