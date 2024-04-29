@@ -11,7 +11,7 @@ import {
   metaMaskWallet,
   rainbowWallet,
 } from "@rainbow-me/rainbowkit/wallets";
-import { arbitrum, optimism, optimismSepolia } from "viem/chains";
+import { arbitrum, baseSepolia, optimism, optimismSepolia } from "viem/chains";
 import { publicProvider } from "wagmi/providers/public";
 import { customWalletConnectConnector } from "@/utilities/wagmi/walletConnectConnector";
 import { appNetwork } from "@/utilities/network";
@@ -36,6 +36,12 @@ const { chains, publicClient, webSocketPublicClient } = configureChains(
           };
         }
 
+        if (chain.id === baseSepolia.id) {
+          return {
+            http: envVars.RPC.BASE_SEPOLIA,
+            webSocket: chain.rpcUrls.default.webSocket?.[0],
+          };
+        }
         if (chain.id === optimismSepolia.id) {
           return {
             http: envVars.RPC.OPT_SEPOLIA,
