@@ -13,31 +13,34 @@ import { blo } from "blo";
 import { LinkIcon } from "@heroicons/react/24/solid";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
+import { CommunityDialog } from "@/components/CommunityDialog";
+import { formatDate } from "@/utilities/formatDate";
 
 export default function Communities() {
   const [allCommunities, setAllCommunities] = useState<Community[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const { gap } = useGap();
+  const fetchCommunities = async () => {
+    try {
+      if (!gap) throw new Error("Gap not initialized");
+      setIsLoading(true);
+      const result = await gap.fetch.communities();
+
+      result.sort((a, b) =>
+        (a.details?.name || a.uid).localeCompare(b.details?.name || b.uid)
+      );
+      setAllCommunities(result);
+      return result;
+    } catch (error) {
+      console.log(error);
+      setAllCommunities([]);
+      return undefined;
+    } finally {
+      setIsLoading(false);
+    }
+  };
   useEffect(() => {
-    const fetchCommunities = async () => {
-      try {
-        if (!gap) throw new Error("Gap not initialized");
-        setIsLoading(true);
-        const result = await gap.fetch.communities();
-        result.sort((a, b) =>
-          (a.details?.name || a.uid).localeCompare(b.details?.name || b.uid)
-        );
-        setAllCommunities(result);
-        return result;
-      } catch (error) {
-        console.log(error);
-        setAllCommunities([]);
-        return undefined;
-      } finally {
-        setIsLoading(false);
-      }
-    };
     fetchCommunities();
   }, []);
 
@@ -75,9 +78,13 @@ export default function Communities() {
       <div className="px-4 sm:px-6 lg:px-12 py-5">
         {communitiesToAdmin.length ? (
           <div className="flex flex-col gap-2">
-            <div className="text-2xl font-bold">
-              All Communities{" "}
-              {allCommunities.length ? `(${allCommunities.length})` : ""}
+            <div className="flex justify-between">
+              <div className="text-2xl font-bold">
+                All Communities{" "}
+                {allCommunities.length ? `(${allCommunities.length})` : ""}
+              </div>
+
+              <CommunityDialog refreshCommunities={fetchCommunities} />
             </div>
             <div className="mt-5 w-full gap-5">
               {allCommunities.length ? (
@@ -86,6 +93,7 @@ export default function Communities() {
                     <tr className="divide-x">
                       <th>Img</th>
                       <th>Name</th>
+                      <th>Created</th>
                       <th>UUID</th>
                       <th className="px-4 text-center">Community page</th>
                       <th className="px-4 text-center">Admin page</th>
@@ -107,6 +115,12 @@ export default function Communities() {
                         <td className="max-w-60 px-4">
                           {community.details?.name}
                         </td>
+                        <td className="max-w-60 px-4">
+                          {formatDate(
+                            Object(community?.createdAt)?.$timestamp?.t * 1000
+                          )}
+                        </td>
+
                         <td className="max-w-96 break-all px-4">
                           {community.uid}
                         </td>
