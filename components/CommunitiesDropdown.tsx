@@ -61,7 +61,7 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
               alt={""}
               className="w-5 h-5"
             />
-            <div className="flex flex-row gap-3  items-center justify-start  flex-1">
+            <div className="flex flex-row gap-1  items-center justify-start  flex-1">
               <p>
                 {
                   communitiesArray.find(
@@ -70,7 +70,7 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
                 }{" "}
               </p>
               <div className="flex flex-row gap-1 items-center">
-                -
+                <p>-</p>
                 <img
                   src={chainImgDictionary(
                     communitiesArray.find(
@@ -82,9 +82,9 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
                       (community) => community.value === value
                     )?.networkId as number
                   )}
-                  className="min-w-5 min-h-5 w-5 h-5 m-0 rounded-full ml-1"
+                  className="min-w-4 min-h-4 w-4 h-4 m-0 rounded-full"
                 />
-                <p className="ml-1 w-max text-[13px]">Network</p>
+                <p className="w-max text-xs">Network</p>
               </div>
             </div>
           </div>
@@ -125,18 +125,18 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
                       className="min-w-5 min-h-5 w-5 h-5 m-0 rounded-full"
                     />
                   </div>
-                  <div className="flex flex-row gap-3  items-center justify-start  flex-1">
+                  <div className="flex flex-row gap-1  items-center justify-start  flex-1">
                     <p className="line-clamp-2 text-sm max-w-full break-normal">
                       {community.label}
                     </p>
                     <div className="flex flex-row gap-1 items-center">
-                      -
+                      <p className="w-max text-[7px]">on</p>
                       <img
                         src={chainImgDictionary(community.networkId)}
                         alt={chainNameDictionary(community.networkId)}
-                        className="min-w-5 min-h-5 w-5 h-5 m-0 rounded-full"
+                        className="min-w-2.5 min-h-2.5 w-2.5 h-2.5 m-0 rounded-full"
                       />
-                      <p className="ml-1 w-max text-[13px]">Network</p>
+                      <p className="w-max text-[7px]">Network</p>
                     </div>
                   </div>
                 </div>

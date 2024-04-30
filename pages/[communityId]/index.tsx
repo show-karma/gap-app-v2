@@ -102,7 +102,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   return {
     props: {
       communityId,
-      communityName: (community as ICommunityResponse)?.details?.data?.name || "",
+      communityName:
+        (community as ICommunityResponse)?.details?.data?.name || "",
       community: community as ICommunityResponse,
       categoriesOptions,
       defaultSortBy,
