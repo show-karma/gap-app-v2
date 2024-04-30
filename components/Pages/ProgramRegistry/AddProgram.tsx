@@ -15,11 +15,11 @@ import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
 import { NFTStorage } from "nft.storage";
 import { AlloRegistry } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/AlloRegistry";
-import axios from "axios";
 import { getWalletClient } from "@wagmi/core";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { appNetwork } from "@/utilities/network";
 import { useAccount } from "wagmi";
+import { envVars } from "@/utilities/enviromentVars";
+import { useRouter } from "next/router";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -28,9 +28,11 @@ const inputStyle =
 const createProgramSchema = z.object({
   name: z.string().min(3, { message: MESSAGES.REGISTRY.FORM.NAME }),
   budget: z.string().min(3, { message: MESSAGES.REGISTRY.FORM.BUDGET }),
-  website: z.string().url().optional(),
-  twitter: z.string().url().optional(),
-  discord: z.string().url().optional(),
+  logo: z.string().url().optional().or(z.literal("")),
+  banner: z.string().url().optional().or(z.literal("")),
+  website: z.string().url().optional().or(z.literal("")),
+  twitter: z.string().url().optional().or(z.literal("")),
+  discord: z.string().url().optional().or(z.literal("")),
   amountDistributed: z
     .string()
     .min(3, { message: MESSAGES.REGISTRY.FORM.AMOUNT_DISTRIBUTED }),
@@ -38,8 +40,8 @@ const createProgramSchema = z.object({
   categories: z.string().min(3, { message: MESSAGES.REGISTRY.FORM.CATEGORIES }),
   ecosystems: z.string().min(3, { message: MESSAGES.REGISTRY.FORM.ECOSYSTEMS }),
   bounties: z.string().min(3, { message: MESSAGES.REGISTRY.FORM.BOUNTIES }),
-  howManyApplicants: z.number().int(),
-  howManyGrants: z.number().int(),
+  howManyApplicants: z.coerce.number().int("Must be a integer"),
+  howManyGrants: z.coerce.number().int("Must be a integer"),
   linkToDetails: z.string().url(),
   dates: z
     .object({
@@ -68,9 +70,7 @@ type CreateProgramType = z.infer<typeof createProgramSchema>;
 
 export default function AddProgram() {
   const [description, setDescription] = useState("");
-  //   const [categories, setCategories] = useState([]);
-  //   const [ecosystems, setEcosystems] = useState([]);
-  //   const [bounties, setBounties] = useState([]);
+  const router = useRouter();
 
   const {
     register,
@@ -87,68 +87,74 @@ export default function AddProgram() {
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const onSubmit: SubmitHandler<CreateProgramType> = async (data, event) => {
-    event?.preventDefault();
-    event?.stopPropagation();
-    setIsLoading(true);
-    // await createGrant(grant, {
-    //   title: data.title,
-    //   text: description,
-    // }).finally(() => {
-    //   setIsLoading(false);
-    // });
-  };
-
   const { address } = useAccount();
 
-  const createProgram = async () => {
+  const createProgram = async (data: CreateProgramType) => {
+    setIsLoading(true);
     try {
-      const data = await axios.get("/api/ipfs");
-      const { message: reqToken } = data.data;
-      // const ipfsStorage = new NFTStorage({
-      //   token: keys.ipfsToken,
-      // });
+      const ipfsStorage = new NFTStorage({
+        token: envVars.IPFS_TOKEN,
+      });
 
       const walletClient = await getWalletClient({
-        chainId: appNetwork[0].id,
+        chainId: 11155111,
       });
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
 
-      const alloRegistry = new AlloRegistry(walletSigner as any, reqToken);
+      const alloRegistry = new AlloRegistry(walletSigner as any, ipfsStorage);
 
-      const nonce = 2;
-      const name = "Karma Test Program 2";
+      const nonce = Math.floor(Math.random() * 1000000 + 1);
+      const name = data.name;
       const metadata = {
         title: name,
-        description: `Karma Test Program: This is a test program to test the functionality of the Karma platform.`,
-        website: "https://karma.fund",
-        projectTwitter: "karma_fund",
-        logoImg: "bafkreigf5egjxs3zbafr4d24kj5tf7idktfjc737xolx5h6dj7hnf77nde",
-        bannerImg:
-          "bafkreid5rccqi6q4xgv4cj5ofrzfmswf7fn2525e5hducvh3r56lstoi74",
+        description: description,
+        programBudget: data.budget,
+        amountDistributedToDate: data.amountDistributed,
+        grantSize: data.grantSize,
+        applicantsNumber: data.howManyApplicants,
+        grantsIssued: data.howManyGrants,
+        linkToDetails: data.linkToDetails,
+        startDate: data.dates.startsAt,
+        endDate: data.dates.endsAt,
+        projectTwitter: data.twitter || "",
+        website: data.website || "",
+        discord: data.discord,
+        categories: data.categories.split(","),
+        ecosystems: data.ecosystems.split(","),
+        bounties: data.bounties.split(","),
+        logoImg: data.logo || "",
+        bannerImg: data.banner || "",
         logoImgData: {},
         bannerImgData: {},
         credentials: {},
         createdAt: new Date().getTime(),
 
         // TODO: Additional metadata
-        categories: ["dapps", "infra"],
         tags: ["grant-program-registry"],
       };
       const owner = address as string;
 
-      const response = await alloRegistry.createProgram(
-        nonce,
-        name,
-        metadata,
-        owner,
-        [owner]
-      );
+      const response = await alloRegistry
+        .createProgram(nonce + 1, name, metadata, owner, [owner])
+        .catch((error) => {
+          throw new Error(error);
+        });
       console.log(response);
+      toast.success("Program created successfully");
+      router.push(PAGES.REGISTRY.ROOT);
     } catch (error) {
       console.log(error);
+      toast.error("An error occurred while creating the program");
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const onSubmit: SubmitHandler<CreateProgramType> = async (data, event) => {
+    event?.preventDefault();
+    event?.stopPropagation();
+    await createProgram(data);
   };
 
   return (
@@ -170,7 +176,10 @@ export default function AddProgram() {
           to the community.
         </p>
       </div>
-      <form className="gap-4 rounded-lg bg-zinc-200 px-4 py-6 w-full max-w-max flex-col flex">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="gap-4 rounded-lg bg-zinc-200 px-4 py-6 w-full max-w-max flex-col flex"
+      >
         <div className=" grid grid-cols-2 w-full gap-4">
           <div className="flex flex-col gap-2">
             <div className="flex w-full flex-col gap-1">
@@ -381,6 +390,30 @@ export default function AddProgram() {
               </div>
             </div>
             <div className="flex w-full flex-col gap-1">
+              <label htmlFor="program-logo" className={labelStyle}>
+                Program logo (optional)
+              </label>
+              <input
+                id="program-logo"
+                className={inputStyle}
+                placeholder="Ex: https://google.photos/program"
+                {...register("logo")}
+              />
+              <p className="text-base text-red-400">{errors.logo?.message}</p>
+            </div>
+            <div className="flex w-full flex-col gap-1">
+              <label htmlFor="program-banner" className={labelStyle}>
+                Program banner (optional)
+              </label>
+              <input
+                id="program-banner"
+                className={inputStyle}
+                placeholder="Ex: https://google.photos/program-banner"
+                {...register("banner")}
+              />
+              <p className="text-base text-red-400">{errors.banner?.message}</p>
+            </div>
+            <div className="flex w-full flex-col gap-1">
               <label htmlFor="program-twitter" className={labelStyle}>
                 Twitter
               </label>
@@ -469,8 +502,8 @@ export default function AddProgram() {
         </div>
         <div className="flex flex-row justify-start">
           <Button
-            // type="submit"
-            onClick={createProgram}
+            isLoading={isLoading}
+            type="submit"
             className="px-3 py-3 text-base"
           >
             Create program

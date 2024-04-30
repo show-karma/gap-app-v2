@@ -159,9 +159,12 @@ export default function GrantProgramRegistry({}) {
               Explore our handpicked grants for innovators and creators: from
               tech pioneers to community leaders, we have a grant to elevate
               your project. Did we miss your program/bounty? Add it{" "}
-              <a className="text-blue-700 dark:text-blue-400 underline">
+              <Link
+                href={PAGES.REGISTRY.ADD_PROGRAM}
+                className="text-blue-700 dark:text-blue-400 underline"
+              >
                 here.
-              </a>
+              </Link>
             </p>
             <Link href={PAGES.REGISTRY.ADD_PROGRAM}>
               <button className="mt-3 bg-[#0E101B] dark:bg-slate-800 text-white px-10 py-2.5 rounded-lg">
