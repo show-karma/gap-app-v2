@@ -4,8 +4,8 @@ import type { TNetwork } from "@show-karma/karma-gap-sdk";
 
 export const appNetwork: [Chain, ...Chain[]] =
   process.env.NEXT_PUBLIC_ENV === "production"
-    ? [optimism, arbitrum]
-    : [optimismSepolia];
+    ? [optimism, arbitrum, optimismSepolia]
+    : [optimismSepolia, optimism, arbitrum];
 
 export function getChainIdByName(name: string) {
   switch (name.toLowerCase()) {
@@ -16,6 +16,10 @@ export function getChainIdByName(name: string) {
     case "optimism":
       return 10;
     case "arbitrum":
+      return 42161;
+    case "arbitrum-one":
+      return 42161;
+    case "ArbitrumOne":
       return 42161;
     case "optimismGoerli":
       return 420;
