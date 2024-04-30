@@ -23,6 +23,8 @@ import { useAuthStore } from "@/store/auth";
 import { getGapClient, useGap } from "@/hooks";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { getWalletClient } from "@wagmi/core";
+import toast from "react-hot-toast";
+import { useCommunitiesStore } from "@/store/communities";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -44,7 +46,8 @@ type ProjectDialogProps = {
     iconSide?: "left" | "right";
     styleClass: string;
   };
-  CreateCommuninty?: Community;
+  createCommuninity?: Community;
+  refreshCommunities: () => void;
 };
 
 export const CommunityDialog: FC<ProjectDialogProps> = ({
@@ -54,13 +57,14 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
     text: "New Community",
     styleClass: "",
   },
-  CreateCommuninty,
+  createCommuninity,
+  refreshCommunities,
 }) => {
   const dataToUpdate = {
-    description: CreateCommuninty?.details?.description || "",
-    name: CreateCommuninty?.details?.name || "",
-    imageURL: CreateCommuninty?.details?.imageURL || "",
-    slug: CreateCommuninty?.details?.slug || "",
+    description: createCommuninity?.details?.description || "",
+    name: createCommuninity?.details?.name || "",
+    imageURL: createCommuninity?.details?.imageURL || "",
+    slug: createCommuninity?.details?.slug || "",
   };
 
   const [isOpen, setIsOpen] = useState(false);
@@ -92,12 +96,14 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const { openConnectModal } = useConnectModal();
   const signer = useSigner();
+  const { setCommunities } = useCommunitiesStore();
 
   const { gap } = useGap();
 
   const createCommunity = async (data: SchemaType) => {
     if (!gap) return;
     let gapClient = gap;
+    setIsLoading(true); // Set loading state to true
 
     try {
       if (chain?.id != getChainIdByName(selectedChain)) {
@@ -123,27 +129,27 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
 
-      await newCommunity.attest(walletSigner as any, {
-        name: data.name,
-        description: description as string,
-        imageURL: data.imageURL as string,
-        slug: data.slug as string,
-      });
+      await newCommunity
+        .attest(walletSigner as any, {
+          name: data.name,
+          description: description as string,
+          imageURL: data.imageURL as string,
+          slug: data.slug as string,
+        })
+        .then(() => {
+          toast.success("Community created successfully!");
+          refreshCommunities();
+          closeModal(); // Close the dialog upon successful submission
+        });
     } catch (error) {
-      console.log(error);
+      console.error("Error creating community:", error);
+    } finally {
+      setIsLoading(false); // Reset loading state
     }
   };
 
   const onSubmit = async (data: SchemaType) => {
-    try {
-      setIsLoading(true); // Set loading state to true
-      await createCommunity(data); // Call the createCommunity function
-      setIsLoading(false); // Reset loading state
-      // closeModal(); // Close the dialog upon successful submission
-    } catch (error) {
-      console.error("Error creating community:", error);
-      setIsLoading(false); // Reset loading state
-    }
+    await createCommunity(data); // Call the createCommunity function
   };
 
   const [description, setDescription] = useState(
@@ -203,7 +209,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
                   >
                     <XMarkIcon className="w-5 h-5" />
                   </button>
-                  {!CreateCommuninty && (
+                  {!createCommuninity && (
                     <div className="mt-2">
                       <p className="text-sm text-gray-600 dark:text-zinc-300">
                         Fill out these details to create a new Community
@@ -212,7 +218,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
                   )}
 
                   <form onSubmit={handleSubmit(onSubmit)}>
-                    <div className="w-full px-2 py-4 sm:px-0">
+                    <div className="flex flex-col w-full px-2 py-4 gap-1 sm:px-0">
                       <div className="flex w-full flex-col gap-2">
                         <label htmlFor="name-input" className={labelStyle}>
                           Name *
@@ -236,7 +242,6 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
                           value={selectedChain}
                           onChange={(e) => {
                             setSelectedChain(e.target.value);
-                            console.log(e.target.value);
                           }}
                         >
                           <option value={"optimismSepolia"}>

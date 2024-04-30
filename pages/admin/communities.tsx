@@ -21,26 +21,26 @@ export default function Communities() {
   const [isLoading, setIsLoading] = useState(true);
 
   const { gap } = useGap();
-  useEffect(() => {
-    const fetchCommunities = async () => {
-      try {
-        if (!gap) throw new Error("Gap not initialized");
-        setIsLoading(true);
-        const result = await gap.fetch.communities();
+  const fetchCommunities = async () => {
+    try {
+      if (!gap) throw new Error("Gap not initialized");
+      setIsLoading(true);
+      const result = await gap.fetch.communities();
 
-        result.sort((a, b) =>
-          (a.details?.name || a.uid).localeCompare(b.details?.name || b.uid)
-        );
-        setAllCommunities(result);
-        return result;
-      } catch (error) {
-        console.log(error);
-        setAllCommunities([]);
-        return undefined;
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      result.sort((a, b) =>
+        (a.details?.name || a.uid).localeCompare(b.details?.name || b.uid)
+      );
+      setAllCommunities(result);
+      return result;
+    } catch (error) {
+      console.log(error);
+      setAllCommunities([]);
+      return undefined;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  useEffect(() => {
     fetchCommunities();
   }, []);
 
@@ -84,7 +84,7 @@ export default function Communities() {
                 {allCommunities.length ? `(${allCommunities.length})` : ""}
               </div>
 
-              <CommunityDialog />
+              <CommunityDialog refreshCommunities={fetchCommunities} />
             </div>
             <div className="mt-5 w-full gap-5">
               {allCommunities.length ? (
