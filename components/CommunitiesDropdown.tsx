@@ -61,20 +61,32 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
               alt={""}
               className="w-5 h-5"
             />
-            <p>
-              {
-                communitiesArray.find((community) => community.value === value)
-                  ?.label
-              }{" "}
-              <span className="ml-1 w-max text-[13px]">
-                -{" "}
-                {chainNameDictionary(
+            <div className="flex flex-row gap-3  items-center justify-start  flex-1">
+              <p>
+                {
                   communitiesArray.find(
                     (community) => community.value === value
-                  )?.networkId as number
-                )}
-              </span>
-            </p>
+                  )?.label
+                }{" "}
+              </p>
+              <div className="flex flex-row gap-1 items-center">
+                -
+                <img
+                  src={chainImgDictionary(
+                    communitiesArray.find(
+                      (community) => community.value === value
+                    )?.networkId as number
+                  )}
+                  alt={chainNameDictionary(
+                    communitiesArray.find(
+                      (community) => community.value === value
+                    )?.networkId as number
+                  )}
+                  className="min-w-5 min-h-5 w-5 h-5 m-0 rounded-full ml-1"
+                />
+                <p className="ml-1 w-max text-[13px]">Network</p>
+              </div>
+            </div>
           </div>
         ) : (
           "Select community"
@@ -84,7 +96,7 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
       <Popover.Content className="mt-4 w-[360px] z-10 bg-white border border-zinc-200 dark:border-zinc-700 rounded-md dark:text-white dark:bg-zinc-800  max-h-60 overflow-y-auto overflow-x-hidden py-2">
         <Command>
           <CommandInput
-            className="rounded-md ml-2 mr-4 w-[240px] dark:text-white dark:bg-zinc-800"
+            className="rounded-md ml-2 mr-4 w-[320px] dark:text-white dark:bg-zinc-800"
             placeholder="Search community..."
           />
           <CommandEmpty className="px-4 py-2">No community found.</CommandEmpty>
@@ -114,12 +126,18 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
                     />
                   </div>
                   <div className="flex flex-row gap-3  items-center justify-start  flex-1">
-                    <p className="line-clamp-2 text-sm w-full break-normal">
+                    <p className="line-clamp-2 text-sm max-w-full break-normal">
                       {community.label}
-                      <span className="ml-1 w-max text-[13px]">
-                        - {chainNameDictionary(community.networkId)}
-                      </span>
                     </p>
+                    <div className="flex flex-row gap-1 items-center">
+                      -
+                      <img
+                        src={chainImgDictionary(community.networkId)}
+                        alt={chainNameDictionary(community.networkId)}
+                        className="min-w-5 min-h-5 w-5 h-5 m-0 rounded-full"
+                      />
+                      <p className="ml-1 w-max text-[13px]">Network</p>
+                    </div>
                   </div>
                 </div>
               </CommandItem>
