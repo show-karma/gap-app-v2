@@ -70,7 +70,7 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
                 }{" "}
               </p>
               <div className="flex flex-row gap-1 items-center">
-                <p>-</p>
+                <p className="w-max text-[7px]">on</p>
                 <img
                   src={chainImgDictionary(
                     communitiesArray.find(
@@ -82,9 +82,9 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
                       (community) => community.value === value
                     )?.networkId as number
                   )}
-                  className="min-w-4 min-h-4 w-4 h-4 m-0 rounded-full"
+                  className="min-w-2.5 min-h-2.5 w-2.5 h-2.5 m-0 rounded-full"
                 />
-                <p className="w-max text-xs">Network</p>
+                <p className="w-max text-[7px]">Network</p>
               </div>
             </div>
           </div>
