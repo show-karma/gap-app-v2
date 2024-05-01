@@ -117,6 +117,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
                 <th className={cn("", headClasses)}>Work</th>
                 <th className={cn("", headClasses)}>Impact</th>
                 <th className={cn("", headClasses)}>Proof</th>
+                <th className={cn("", headClasses)}>Verifications</th>
                 {isAuthorized ? (
                   <th className={cn(headClasses, "w-20")}></th>
                 ) : null}
