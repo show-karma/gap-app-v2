@@ -8,22 +8,26 @@ import EthereumAddressToENSName from "../EthereumAddressToENSName";
 import { blo } from "blo";
 import { PAGES } from "@/utilities/pages";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useMobileStore } from "@/store/mobile";
 
 interface Props {
   data: IProjectResponse[]; // Will be modular in the future
   isOpen: boolean;
   isLoading: boolean;
+  closeSearchList: () => void;
 }
 
 export const SearchList: React.FC<Props> = ({
   data = [],
   isOpen = false,
   isLoading = true,
+  closeSearchList,
 }) => {
   const triggerCreateProjectModal = () => {
     const el = document?.getElementById("new-project-button");
     if (el) el.click();
   };
+  const { isMobileMenuOpen, setIsMobileMenuOpen } = useMobileStore();
 
   return (
     isOpen && (
@@ -35,6 +39,10 @@ export const SearchList: React.FC<Props> = ({
               href={PAGES.PROJECT.GRANTS(
                 project.details?.data.slug || project.uid
               )}
+              onClick={() => {
+                closeSearchList();
+                setIsMobileMenuOpen(false);
+              }}
             >
               <div className=":last:border-b-0 cursor-pointer select-none border-b border-slate-100 px-4 py-2 transition hover:bg-slate-200 dark:hover:bg-zinc-700">
                 <b className="max-w-full text-ellipsis font-bold text-black dark:text-zinc-100">
