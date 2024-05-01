@@ -123,7 +123,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
           {verifiedUpdate.length ? (
             <VerifiedBadge
               verifications={verifiedUpdate}
-              milestoneName={`Update ${index}`}
+              title={`Update ${index} - Reviews`}
             />
           ) : null}
           <VerifyGrantUpdateDialog

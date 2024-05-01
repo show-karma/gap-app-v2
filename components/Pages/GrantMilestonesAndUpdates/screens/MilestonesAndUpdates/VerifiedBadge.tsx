@@ -10,10 +10,14 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 import { useENSNames } from "@/store/ensNames";
 import { formatDate } from "@/utilities/formatDate";
 import { VerificationsDialog } from "./VerificationsDialog";
+import { ProjectImpactStatus } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
 
 interface VerifiedBadgeProps {
-  verifications: MilestoneCompleted[] | GrantUpdateStatus[];
-  milestoneName: string;
+  verifications:
+    | MilestoneCompleted[]
+    | GrantUpdateStatus[]
+    | ProjectImpactStatus[];
+  title: string;
 }
 
 const BlockieTooltip = ({
@@ -68,15 +72,22 @@ const BlockieTooltip = ({
 
 export const VerifiedBadge: FC<VerifiedBadgeProps> = ({
   verifications,
-  milestoneName,
+  title,
 }) => {
+  const [orderedSort, setOrderedSort] = useState<
+    (MilestoneCompleted | GrantUpdateStatus | ProjectImpactStatus)[]
+  >([]);
+
   const getUniqueVerifications = (
-    verifications: MilestoneCompleted[] | GrantUpdateStatus[]
+    verifications:
+      | MilestoneCompleted[]
+      | GrantUpdateStatus[]
+      | ProjectImpactStatus[]
   ) => {
     // get unique and by last date
     const uniqueVerifications: Record<
       Hex,
-      MilestoneCompleted | GrantUpdateStatus
+      MilestoneCompleted | GrantUpdateStatus | ProjectImpactStatus
     > = {};
     verifications.forEach((verification) => {
       if (!verification.attester) return;
@@ -91,20 +102,26 @@ export const VerifiedBadge: FC<VerifiedBadgeProps> = ({
     });
     return Object.values(uniqueVerifications);
   };
-  const uniques = getUniqueVerifications(verifications);
 
-  // order by date
-  const orderedSort = uniques.sort((a, b) => {
-    if (a.createdAt < b.createdAt) return -1;
-    if (a.createdAt > b.createdAt) return 1;
-    return 0;
-  });
+  useEffect(() => {
+    const uniques = getUniqueVerifications(verifications);
+
+    // order by date
+    const sorted = uniques.sort((a, b) => {
+      if (a.createdAt < b.createdAt) return 1;
+      if (a.createdAt > b.createdAt) return -1;
+      return 0;
+    });
+    setOrderedSort(sorted);
+  }, [verifications]);
 
   const [isOpenDialog, setIsOpenDialog] = useState(false);
 
   const openDialog = () => setIsOpenDialog(true);
 
   const closeDialog = () => setIsOpenDialog(false);
+
+  const hasMore = orderedSort.length > 4;
 
   return (
     <div className="flex flex-row items-center gap-2 flex-1">
@@ -114,18 +131,17 @@ export const VerifiedBadge: FC<VerifiedBadgeProps> = ({
         className="w-6 h-6"
       />
       <span className="text-sm font-semibold text-[#0E9384]">Verified</span>
-      {/* {milestoneName ? ( */}
       <VerificationsDialog
         verifications={orderedSort}
         isOpen={isOpenDialog}
         closeDialog={closeDialog}
-        milestoneName={milestoneName}
+        title={title}
       />
       <button
         className="ml-2 flex flex-row -space-x-1 flex-wrap"
         onClick={openDialog}
       >
-        {orderedSort.map((verification) => (
+        {orderedSort.slice(0, 4).map((verification) => (
           <img
             key={verification.attester}
             src={blo(verification.attester as Hex, 8)}
@@ -133,19 +149,12 @@ export const VerifiedBadge: FC<VerifiedBadgeProps> = ({
             className="h-8 w-8 min-h-8 min-w-8 rounded-full ring-2 ring-white dark:ring-gray-800"
           />
         ))}
+        {hasMore ? (
+          <div className="text-2xl text-zinc-900 dark:text-white flex h-8 w-8 min-h-8 min-w-8 rounded-full ring-2 ring-zinc-200 dark:ring-gray-700 bg-white dark:bg-gray-800 justify-center items-center">
+            +
+          </div>
+        ) : null}
       </button>
-      {/* // ) : (
-      //   <div className="ml-2 flex flex-row -space-x-1 flex-wrap">
-      //     {orderedSort.map((verification) => (
-      //       <BlockieTooltip
-      //         key={verification.uid}
-      //         address={verification.attester as Hex}
-      //         date={verification.createdAt}
-      //         reason={verification.reason}
-      //       />
-      //     ))}
-      //   </div>
-      // )} */}
     </div>
   );
 };
