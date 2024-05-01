@@ -15,6 +15,7 @@ import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { CommunityDialog } from "@/components/CommunityDialog";
 import { formatDate } from "@/utilities/formatDate";
+import { AddAdmin } from "@/components/AddAdminDialog";
 
 export default function Communities() {
   const [allCommunities, setAllCommunities] = useState<Community[]>([]);
@@ -98,6 +99,8 @@ export default function Communities() {
                       <th className="px-4 text-center">Community page</th>
                       <th className="px-4 text-center">Admin page</th>
                       <th>Network</th>
+                      <th>Admins</th>
+                      <th>Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-x">
@@ -112,7 +115,7 @@ export default function Communities() {
                             alt={community.details?.name || community.uid}
                           />
                         </td>
-                        <td className="max-w-60 px-4">
+                        <td className="max-w-40 px-4">
                           {community.details?.name}
                         </td>
                         <td className="max-w-60 px-4">
@@ -121,7 +124,7 @@ export default function Communities() {
                           )}
                         </td>
 
-                        <td className="max-w-96 break-all px-4">
+                        <td className=" max-w-80 break-all px-4">
                           {community.uid}
                         </td>
                         <td className="text-center px-4">
@@ -155,6 +158,12 @@ export default function Communities() {
                             />
                             <p>{chainNameDictionary(community.chainID)}</p>
                           </div>
+                        </td>
+                        <td>
+                          <p>0x00000000000</p>
+                        </td>
+                        <td>
+                          <AddAdmin />
                         </td>
                       </tr>
                     ))}
