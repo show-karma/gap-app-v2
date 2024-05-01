@@ -24,13 +24,10 @@ export const ImpactVerifications: FC<ImpactVerificationsProps> = ({
   };
 
   return (
-    <div className="flex flex-row gap-3 items-center justify-start mx-3">
+    <div className="flex flex-row gap-3 items-center justify-start ml-3 min-w-max max-w-full">
       {verifieds.length ? (
         <div className="w-max max-w-full">
-          <VerifiedBadge
-            verifications={[...verifieds, ...verifieds, ...verifieds]}
-            title="Reviews"
-          />
+          <VerifiedBadge verifications={verifieds} title="Reviews" />
         </div>
       ) : null}
       <VerifyImpactDialog impact={impact} addVerification={addVerification} />

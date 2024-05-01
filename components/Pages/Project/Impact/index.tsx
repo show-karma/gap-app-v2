@@ -117,7 +117,6 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
                 <th className={cn("", headClasses)}>Work</th>
                 <th className={cn("", headClasses)}>Impact</th>
                 <th className={cn("", headClasses)}>Proof</th>
-                <th className={cn("", headClasses)}>Verifications</th>
                 {isAuthorized ? (
                   <th className={cn(headClasses, "w-20")}></th>
                 ) : null}
@@ -127,12 +126,12 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
               {orderedImpacts.length
                 ? orderedImpacts.map((item) => (
                     <tr className="" key={item.uid}>
-                      <td className="pr-8">
+                      <td className="pr-2">
                         <p className="w-36 max-w-max text-gray-500 text-sm font-medium ">
                           {formatDate(item.data.completedAt * 1000)}
                         </p>
                       </td>
-                      <td className="pr-8 max-sm:pr-4 border-l border-l-zinc-400" />
+                      <td className="pr-2 max-sm:pr-2 border-l border-l-zinc-400" />
                       <td
                         className={cn(
                           cellClasses,

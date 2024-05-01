@@ -103,19 +103,21 @@ export const VerifiedBadge: FC<VerifiedBadgeProps> = ({
     return Object.values(uniqueVerifications);
   };
 
+  const [isOpenDialog, setIsOpenDialog] = useState(false);
+
   useEffect(() => {
     const uniques = getUniqueVerifications(verifications);
 
     // order by date
     const sorted = uniques.sort((a, b) => {
-      if (a.createdAt < b.createdAt) return 1;
-      if (a.createdAt > b.createdAt) return -1;
+      if (new Date(a.createdAt).getTime() < new Date(b.createdAt).getTime())
+        return 1;
+      if (new Date(a.createdAt).getTime() > new Date(b.createdAt).getTime())
+        return -1;
       return 0;
     });
     setOrderedSort(sorted);
   }, [verifications]);
-
-  const [isOpenDialog, setIsOpenDialog] = useState(false);
 
   const openDialog = () => setIsOpenDialog(true);
 
@@ -150,8 +152,8 @@ export const VerifiedBadge: FC<VerifiedBadgeProps> = ({
           />
         ))}
         {hasMore ? (
-          <div className="text-2xl text-zinc-900 dark:text-white flex h-8 w-8 min-h-8 min-w-8 rounded-full ring-2 ring-zinc-200 dark:ring-gray-700 bg-white dark:bg-gray-800 justify-center items-center">
-            +
+          <div className="text-xs text-zinc-900 dark:text-white flex h-8 w-8 min-h-8 min-w-8 rounded-full ring-2 ring-zinc-200 dark:ring-gray-700 bg-white dark:bg-gray-800 justify-center items-center">
+            + {orderedSort.length - 4}
           </div>
         ) : null}
       </button>

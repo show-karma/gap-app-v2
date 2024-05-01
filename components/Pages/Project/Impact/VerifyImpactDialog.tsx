@@ -62,9 +62,11 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
   }
   const { address, isConnected } = useAccount();
 
-  const hasVerifiedThis = impact?.verified?.find(
-    (v) => v.attester?.toLowerCase() === address?.toLowerCase()
-  );
+  const hasVerifiedThis = address
+    ? impact?.verified?.find(
+        (v) => v.attester?.toLowerCase() === address?.toLowerCase()
+      )
+    : null;
   const { chain } = useNetwork();
   const { switchNetworkAsync } = useSwitchNetwork();
   const { gap } = useGap();
