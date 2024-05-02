@@ -12,17 +12,20 @@ import { useAccount } from "wagmi";
 import { useAuthStore } from "@/store/auth";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useEffect, useState } from "react";
+import { useMobileStore } from "@/store/mobile";
 
 interface Props {
   data: IProjectResponse[]; // Will be modular in the future
   isOpen: boolean;
   isLoading: boolean;
+  closeSearchList: () => void;
 }
 
 export const SearchList: React.FC<Props> = ({
   data = [],
   isOpen = false,
   isLoading = true,
+  closeSearchList,
 }) => {
   const { isConnected } = useAccount();
   const { isAuth } = useAuthStore();
@@ -46,6 +49,7 @@ export const SearchList: React.FC<Props> = ({
       setShouldOpen(false);
     }
   }, [isAuth, isConnected, shouldOpen]);
+  const { isMobileMenuOpen, setIsMobileMenuOpen } = useMobileStore();
 
   return (
     isOpen && (
@@ -57,6 +61,10 @@ export const SearchList: React.FC<Props> = ({
               href={PAGES.PROJECT.GRANTS(
                 project.details?.data.slug || project.uid
               )}
+              onClick={() => {
+                closeSearchList();
+                setIsMobileMenuOpen(false);
+              }}
             >
               <div className=":last:border-b-0 cursor-pointer select-none border-b border-slate-100 px-4 py-2 transition hover:bg-slate-200 dark:hover:bg-zinc-700">
                 <b className="max-w-full text-ellipsis font-bold text-black dark:text-zinc-100">
