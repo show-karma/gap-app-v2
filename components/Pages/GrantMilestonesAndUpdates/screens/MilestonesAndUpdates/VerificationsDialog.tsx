@@ -10,19 +10,24 @@ import { blo } from "blo";
 import { Hex } from "viem";
 import { useENSNames } from "@/store/ensNames";
 import { formatDate } from "@/utilities/formatDate";
+import { ProjectImpactStatus } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
 
 interface VerificationsDialogProps {
-  verifications: (MilestoneCompleted | GrantUpdateStatus)[];
+  verifications: (
+    | MilestoneCompleted
+    | GrantUpdateStatus
+    | ProjectImpactStatus
+  )[];
   isOpen: boolean;
   closeDialog: () => void;
-  milestoneName: string;
+  title: string;
 }
 
 export const VerificationsDialog: FC<VerificationsDialogProps> = ({
   verifications,
   isOpen,
   closeDialog,
-  milestoneName,
+  title,
 }) => {
   const { ensNames, populateEnsNames } = useENSNames();
   useEffect(() => {
@@ -63,10 +68,8 @@ export const VerificationsDialog: FC<VerificationsDialogProps> = ({
                 </button>
                 <div className="flex flex-col gap-6">
                   <div className="flex flex-col gap-3">
-                    <h1 className="text-xl font-bold  font-body">
-                      {milestoneName} - Reviews
-                    </h1>
-                    <div className="flex flex-col border border-gray-200 divide-gray-200 rounded-xl gap-1 divide-y">
+                    <h1 className="text-xl font-bold  font-body">{title}</h1>
+                    <div className="flex flex-col border border-gray-200 divide-gray-200 rounded-xl gap-1 divide-y max-h-[420px] overflow-y-auto">
                       {verifications.map((verification) => (
                         <div
                           key={verification.attester}

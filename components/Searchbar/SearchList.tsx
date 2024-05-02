@@ -8,6 +8,10 @@ import EthereumAddressToENSName from "../EthereumAddressToENSName";
 import { blo } from "blo";
 import { PAGES } from "@/utilities/pages";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useAccount } from "wagmi";
+import { useAuthStore } from "@/store/auth";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useEffect, useState } from "react";
 import { useMobileStore } from "@/store/mobile";
 
 interface Props {
@@ -23,10 +27,28 @@ export const SearchList: React.FC<Props> = ({
   isLoading = true,
   closeSearchList,
 }) => {
+  const { isConnected } = useAccount();
+  const { isAuth } = useAuthStore();
+  const { openConnectModal } = useConnectModal();
+  const [shouldOpen, setShouldOpen] = useState(false);
+
   const triggerCreateProjectModal = () => {
+    if (!isConnected || !isAuth) {
+      openConnectModal?.();
+      setShouldOpen(true);
+      return;
+    }
     const el = document?.getElementById("new-project-button");
     if (el) el.click();
   };
+
+  useEffect(() => {
+    if (shouldOpen && isAuth && isConnected) {
+      const el = document?.getElementById("new-project-button");
+      if (el) el.click();
+      setShouldOpen(false);
+    }
+  }, [isAuth, isConnected, shouldOpen]);
   const { isMobileMenuOpen, setIsMobileMenuOpen } = useMobileStore();
 
   return (
