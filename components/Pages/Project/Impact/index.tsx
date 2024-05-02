@@ -1,13 +1,13 @@
 import { cn } from "@/utilities/tailwind";
-import { getFeedHref } from "@/utilities/feed";
 import { FC, useEffect, useState } from "react";
-import { Project, ProjectImpact } from "@show-karma/karma-gap-sdk";
-import { getGapClient, useGap } from "@/hooks";
+import {
+  ProjectImpact,
+  ProjectImpactStatus,
+} from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
 import { formatDate } from "@/utilities/formatDate";
 import { useSearchParams } from "next/navigation";
 import { AddImpactScreen } from "./AddImpactScreen";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { EmptyImpactScreen } from "./EmptyImpactScreen";
 import { TrashIcon } from "@heroicons/react/24/outline";
@@ -19,8 +19,9 @@ import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { useQueryState } from "nuqs";
 import { ReadMore } from "@/utilities/ReadMore";
-import { EmptyEndorsmentList } from "./EmptyEndorsmentList";
-import { EndorsementList } from "./EndorsementList";
+import { VerifyImpactDialog } from "./VerifyImpactDialog";
+import { VerifiedBadge } from "../../GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifiedBadge";
+import { ImpactVerifications } from "./ImpactVerifications";
 
 const headClasses =
   "text-black dark:text-white text-xs font-medium uppercase text-left px-6 py-3 font-body";
@@ -116,6 +117,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
                 <th className={cn("", headClasses)}>Work</th>
                 <th className={cn("", headClasses)}>Impact</th>
                 <th className={cn("", headClasses)}>Proof</th>
+                <th className={cn("", headClasses)}>Verifications</th>
                 {isAuthorized ? (
                   <th className={cn(headClasses, "w-20")}></th>
                 ) : null}
@@ -125,12 +127,12 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
               {orderedImpacts.length
                 ? orderedImpacts.map((item) => (
                     <tr className="" key={item.uid}>
-                      <td className="pr-8">
+                      <td className="pr-2">
                         <p className="w-36 max-w-max text-gray-500 text-sm font-medium ">
                           {formatDate(item.data.completedAt * 1000)}
                         </p>
                       </td>
-                      <td className="pr-8 max-sm:pr-4 border-l border-l-zinc-400" />
+                      <td className="pr-2 max-sm:pr-2 border-l border-l-zinc-400" />
                       <td
                         className={cn(
                           cellClasses,
@@ -214,6 +216,9 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
                             {item.proof}
                           </ReadMore>
                         </div>
+                      </td>
+                      <td className={cn(cellClasses, "px-3 align-top")}>
+                        <ImpactVerifications impact={item} />
                       </td>
                       {isAuthorized ? (
                         <td className={cn(cellClasses, "px-3 align-top")}>
