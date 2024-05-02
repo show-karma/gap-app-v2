@@ -2,6 +2,7 @@ const isDev = process.env.NEXT_PUBLIC_ENV === "staging";
 const baseDevUrl = "https://gapstagapi.karmahq.xyz";
 
 export const envVars = {
+  isDev,
   NEXT_PUBLIC_ENV: process.env.NEXT_PUBLIC_ENV,
   NEXT_PUBLIC_KARMA_API: "https://api.karmahq.xyz/api",
   NEXT_PUBLIC_GAP_INDEXER_URL: isDev
@@ -17,6 +18,7 @@ export const envVars = {
     OPTIMISM: process.env.NEXT_PUBLIC_RPC_OPTIMISM as string,
     ARBITRUM: process.env.NEXT_PUBLIC_RPC_ARBITRUM as string,
     OPT_SEPOLIA: process.env.NEXT_PUBLIC_RPC_OPTIMISM_SEPOLIA as string,
+    BASE_SEPOLIA: process.env.NEXT_PUBLIC_RPC_BASE_SEPOLIA as string,
     CELO: process.env.NEXT_PUBLIC_RPC_OPTIMISM_SEPOLIA as string,
   },
   PROJECT_ID: process.env.NEXT_PUBLIC_PROJECT_ID || "",
