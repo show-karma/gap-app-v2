@@ -1,5 +1,5 @@
 import type { Chain } from "viem/chains";
-import { arbitrum, optimism, optimismSepolia, sepolia } from "viem/chains";
+import { arbitrum, celo, optimism, optimismSepolia } from "viem/chains";
 import type { TNetwork } from "@show-karma/karma-gap-sdk";
 
 export const appNetwork: [Chain, ...Chain[]] =
