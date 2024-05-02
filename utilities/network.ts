@@ -1,11 +1,11 @@
 import type { Chain } from "viem/chains";
-import { arbitrum, baseSepolia, optimism, optimismSepolia } from "viem/chains";
+import { arbitrum, celo, optimism, optimismSepolia, baseSepolia } from "viem/chains";
 import type { TNetwork } from "@show-karma/karma-gap-sdk";
 
 export const appNetwork: [Chain, ...Chain[]] =
   process.env.NEXT_PUBLIC_ENV === "production"
-    ? [optimism, arbitrum]
-    : [optimismSepolia, baseSepolia];
+    ? [optimism, arbitrum, optimismSepolia, celo]
+    : [optimismSepolia, optimism, arbitrum, baseSepolia];
 
 export function getChainIdByName(name: string) {
   switch (name.toLowerCase()) {
@@ -16,6 +16,10 @@ export function getChainIdByName(name: string) {
     case "optimism":
       return 10;
     case "arbitrum":
+      return 42161;
+    case "arbitrum-one":
+      return 42161;
+    case "ArbitrumOne":
       return 42161;
     case "optimismGoerli":
       return 420;
@@ -35,6 +39,8 @@ export function getChainIdByName(name: string) {
       return 84532;
     case "basesepolia":
       return 84532;
+    case "celo":
+      return 42220;
     default:
       return appNetwork[0].id;
   }
@@ -52,6 +58,8 @@ export function getChainNameById(id: number): TNetwork {
       return "optimism-sepolia";
     case 84532:
       return "base-sepolia";
+    case 42220:
+      return "celo";
     default: {
       const network = appNetwork[0].name;
       return getChainNameById(getChainIdByName(network));

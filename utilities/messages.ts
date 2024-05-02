@@ -8,6 +8,12 @@ export const MESSAGES = {
     },
     MEMBERS: "Invalid address",
   },
+  COMMUNITY_FORM: {
+    TITLE: "Title must be at least 3 characters",
+    IMAGE_URL: "ENTER a valid Image url",
+    DESCRIPTION: "Enter a valid description",
+    SLUG: "Slug  must be at least 3 characters",
+  },
   CATEGORIES: {
     ASSIGN_QUESTIONS: {
       EMPTY: `Please assign categories to grants before assigning review questions.`,
@@ -172,6 +178,10 @@ export const MESSAGES = {
         IMPACT: "Impact is required",
         DATE: "Date is required",
         PROOF: "Proof is required",
+      },
+      VERIFY: {
+        SUCCESS: "You have successfully verified the milestone.",
+        ERROR: "There was an error verifying the milestone. Please try again.",
       },
     },
     TRANSFER_OWNERSHIP: {
