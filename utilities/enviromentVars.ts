@@ -2,6 +2,7 @@ const isDev = process.env.NEXT_PUBLIC_ENV === "staging";
 const baseDevUrl = "https://gapstagapi.karmahq.xyz";
 
 export const envVars = {
+  isDev,
   NEXT_PUBLIC_ENV: process.env.NEXT_PUBLIC_ENV,
   NEXT_PUBLIC_KARMA_API: "https://api.karmahq.xyz/api",
   NEXT_PUBLIC_GAP_INDEXER_URL: isDev
