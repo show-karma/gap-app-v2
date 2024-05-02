@@ -88,7 +88,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
             {verifiedMilestones.length ? (
               <VerifiedBadge
                 verifications={verifiedMilestones}
-                milestoneName={milestone.title}
+                title={`${milestone.title} - Reviews`}
               />
             ) : null}
             <VerifyMilestoneUpdateDialog

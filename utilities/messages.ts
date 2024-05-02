@@ -179,6 +179,10 @@ export const MESSAGES = {
         DATE: "Date is required",
         PROOF: "Proof is required",
       },
+      VERIFY: {
+        SUCCESS: "You have successfully verified the milestone.",
+        ERROR: "There was an error verifying the milestone. Please try again.",
+      },
     },
     TRANSFER_OWNERSHIP: {
       SUCCESS: (newOwner: string) =>
