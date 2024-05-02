@@ -2318,6 +2318,7 @@
     "@sentry/cli" "^1.77.1"
     webpack-sources "^2.0.0 || ^3.0.0"
 
+
 "@show-karma/karma-gap-sdk@^0.3.26":
   version "0.3.26"
   resolved "https://registry.yarnpkg.com/@show-karma/karma-gap-sdk/-/karma-gap-sdk-0.3.26.tgz#8c8e16cdbfc7f8f283a2c792f5f0079b164000da"

@@ -17,6 +17,7 @@ export const envVars = {
     OPTIMISM: process.env.NEXT_PUBLIC_RPC_OPTIMISM as string,
     ARBITRUM: process.env.NEXT_PUBLIC_RPC_ARBITRUM as string,
     OPT_SEPOLIA: process.env.NEXT_PUBLIC_RPC_OPTIMISM_SEPOLIA as string,
+    BASE_SEPOLIA: process.env.NEXT_PUBLIC_RPC_BASE_SEPOLIA as string,
     CELO: process.env.NEXT_PUBLIC_RPC_OPTIMISM_SEPOLIA as string,
   },
   PROJECT_ID: process.env.NEXT_PUBLIC_PROJECT_ID || "",
