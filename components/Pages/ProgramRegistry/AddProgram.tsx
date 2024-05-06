@@ -44,7 +44,7 @@ const createProgramSchema = z.object({
   discord: z.string().url().optional().or(z.literal("")),
   amountDistributed: z
     .string()
-    .min(3, { message: MESSAGES.REGISTRY.FORM.AMOUNT_DISTRIBUTED }),
+    .min(0, { message: MESSAGES.REGISTRY.FORM.AMOUNT_DISTRIBUTED }),
   grantSize: z.coerce.number().int("Must be a integer"),
   howManyApplicants: z.coerce.number().int("Must be a integer"),
   howManyGrants: z.coerce.number().int("Must be a integer"),
@@ -454,7 +454,7 @@ export default function AddProgram() {
             </div>
             <div className="flex w-full flex-col gap-1">
               <label htmlFor="program-twitter" className={labelStyle}>
-                Twitter
+                Twitter (optional)
               </label>
               <input
                 id="program-twitter"
@@ -468,7 +468,7 @@ export default function AddProgram() {
             </div>
             <div className="flex w-full flex-col  gap-1">
               <label htmlFor="program-discord" className={labelStyle}>
-                Discord
+                Discord (optional)
               </label>
               <input
                 id="program-discord"
@@ -482,7 +482,7 @@ export default function AddProgram() {
             </div>
             <div className="flex w-full flex-col  gap-1">
               <label htmlFor="program-website" className={labelStyle}>
-                Website
+                Website (optional)
               </label>
               <input
                 id="program-website"
@@ -533,7 +533,7 @@ export default function AddProgram() {
             </div>
             <div className="flex w-full flex-col  gap-1">
               <label htmlFor="program-types" className={labelStyle}>
-                Type *
+                Types *
               </label>
               <Dropdown
                 list={grantTypes}
