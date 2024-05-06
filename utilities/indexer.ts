@@ -1,4 +1,10 @@
 export const INDEXER = {
+  REGISTRY: {
+    GET_ALL: "/registry",
+    GET_ALL_PENDING: "/registry/pending",
+    APPROVE: "/registry/approve",
+    UPDATE: "/registry/updateMetadata",
+  },
   PROJECT: {
     GET: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}`,
     FEED: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/feed`,

@@ -2,6 +2,7 @@ import "@/styles/globals.css";
 import "@/styles/index.scss";
 import "@/components/Utilities/DynamicStars/styles.css";
 import "@rainbow-me/rainbowkit/styles.css";
+import "rc-slider/assets/index.css";
 import "react-day-picker/dist/style.css";
 import "@uiw/react-markdown-preview/markdown.css";
 import type { AppProps } from "next/app";

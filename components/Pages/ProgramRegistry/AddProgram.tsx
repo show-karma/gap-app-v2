@@ -3,7 +3,7 @@ import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { Dispatch, useState } from "react";
 import { MESSAGES } from "@/utilities/messages";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { Popover } from "@headlessui/react";
@@ -17,9 +17,18 @@ import { NFTStorage } from "nft.storage";
 import { AlloRegistry } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/AlloRegistry";
 import { getWalletClient } from "@wagmi/core";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { useAccount } from "wagmi";
+import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 import { envVars } from "@/utilities/enviromentVars";
 import { useRouter } from "next/router";
+import { Dropdown } from "@/components/Utilities/Dropdown";
+import {
+  categories,
+  communities,
+  ecosystems,
+  grantTypes,
+} from "@/pages/grant-program-registry";
+import { useAuthStore } from "@/store/auth";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -36,10 +45,7 @@ const createProgramSchema = z.object({
   amountDistributed: z
     .string()
     .min(3, { message: MESSAGES.REGISTRY.FORM.AMOUNT_DISTRIBUTED }),
-  grantSize: z.string().min(3, { message: MESSAGES.REGISTRY.FORM.GRANT_SIZE }),
-  categories: z.string().min(3, { message: MESSAGES.REGISTRY.FORM.CATEGORIES }),
-  ecosystems: z.string().min(3, { message: MESSAGES.REGISTRY.FORM.ECOSYSTEMS }),
-  bounties: z.string().min(3, { message: MESSAGES.REGISTRY.FORM.BOUNTIES }),
+  grantSize: z.coerce.number().int("Must be a integer"),
   howManyApplicants: z.coerce.number().int("Must be a integer"),
   howManyGrants: z.coerce.number().int("Must be a integer"),
   linkToDetails: z.string().url(),
@@ -71,6 +77,10 @@ type CreateProgramType = z.infer<typeof createProgramSchema>;
 export default function AddProgram() {
   const [description, setDescription] = useState("");
   const router = useRouter();
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedEcosystems, setSelectedEcosystems] = useState<string[]>([]);
+  const [selectedCommunities, setSelectedCommunities] = useState<string[]>([]);
+  const [selectedGrantTypes, setSelectedGrantTypes] = useState<string[]>([]);
 
   const {
     register,
@@ -85,13 +95,41 @@ export default function AddProgram() {
     mode: "onChange",
   });
 
+  const onChangeGeneric = (
+    value: string,
+    setToChange: Dispatch<React.SetStateAction<string[]>>
+  ) => {
+    setToChange((oldArray) => {
+      const newArray = [...oldArray];
+      if (newArray.includes(value)) {
+        const filteredArray = newArray.filter((item) => item !== value);
+        return filteredArray;
+      } else {
+        newArray.push(value);
+      }
+      return newArray;
+    });
+  };
+
   const [isLoading, setIsLoading] = useState(false);
 
-  const { address } = useAccount();
+  const { address, isConnected } = useAccount();
+  const { isAuth } = useAuthStore();
+  const { chain } = useNetwork();
+  const { switchNetworkAsync } = useSwitchNetwork();
+  const { openConnectModal } = useConnectModal();
 
   const createProgram = async (data: CreateProgramType) => {
     setIsLoading(true);
     try {
+      if (!isConnected || !isAuth) {
+        openConnectModal?.();
+        return;
+      }
+      if (chain && chain.id !== 11155111) {
+        await switchNetworkAsync?.(11155111);
+      }
+
       const ipfsStorage = new NFTStorage({
         token: envVars.IPFS_TOKEN,
       });
@@ -120,9 +158,10 @@ export default function AddProgram() {
         projectTwitter: data.twitter || "",
         website: data.website || "",
         discord: data.discord,
-        categories: data.categories.split(","),
-        ecosystems: data.ecosystems.split(","),
-        bounties: data.bounties.split(","),
+        categories: selectedCategories,
+        communities: selectedCommunities,
+        ecosystems: selectedEcosystems,
+        grantTypes: selectedGrantTypes,
         logoImg: data.logo || "",
         bannerImg: data.banner || "",
         logoImgData: {},
@@ -135,12 +174,11 @@ export default function AddProgram() {
       };
       const owner = address as string;
 
-      const response = await alloRegistry
+      await alloRegistry
         .createProgram(nonce + 1, name, metadata, owner, [owner])
         .catch((error) => {
           throw new Error(error);
         });
-      console.log(response);
       toast.success("Program created successfully");
       router.push(PAGES.REGISTRY.ROOT);
     } catch (error) {
@@ -239,9 +277,10 @@ export default function AddProgram() {
                 Grant size *
               </label>
               <input
+                type="number"
                 id="program-grant-size"
                 className={inputStyle}
-                placeholder="Ex: 80K OP"
+                placeholder="Ex: 80000"
                 {...register("grantSize")}
               />
               <p className="text-base text-red-400">
@@ -460,43 +499,49 @@ export default function AddProgram() {
               <label htmlFor="program-categories" className={labelStyle}>
                 Categories *
               </label>
-              <input
-                id="program-categories"
-                className={inputStyle}
-                placeholder="Ex: Ethereum, Chain-supply, Mobile"
-                {...register("categories")}
+              <Dropdown
+                list={categories}
+                selected={selectedCategories}
+                onChangeListener={onChangeGeneric}
+                setToChange={setSelectedCategories}
+                unselectedText="Select categories"
               />
-              <p className="text-base text-red-400">
-                {errors.categories?.message}
-              </p>
+            </div>
+            <div className="flex w-full flex-col  gap-1">
+              <label htmlFor="program-communities" className={labelStyle}>
+                Communities *
+              </label>
+              <Dropdown
+                list={communities}
+                selected={selectedCommunities}
+                onChangeListener={onChangeGeneric}
+                setToChange={setSelectedCommunities}
+                unselectedText="Select communities"
+              />
             </div>
             <div className="flex w-full flex-col  gap-1">
               <label htmlFor="program-ecosystems" className={labelStyle}>
                 Ecosystems *
               </label>
-              <input
-                id="program-ecosystems"
-                className={inputStyle}
-                placeholder="Ex: Green Finance, DeFi, NFTs"
-                {...register("ecosystems")}
+              <Dropdown
+                list={ecosystems}
+                selected={selectedEcosystems}
+                onChangeListener={onChangeGeneric}
+                setToChange={setSelectedEcosystems}
+                unselectedText="Select ecosystems"
               />
-              <p className="text-base text-red-400">
-                {errors.ecosystems?.message}
-              </p>
             </div>
             <div className="flex w-full flex-col  gap-1">
-              <label htmlFor="program-bounties" className={labelStyle}>
-                Bounties *
+              <label htmlFor="program-types" className={labelStyle}>
+                Type *
               </label>
-              <input
-                id="program-bounties"
-                className={inputStyle}
-                placeholder="Ex: Red bounty, Blue bounty, Green bounty"
-                {...register("bounties")}
+              <Dropdown
+                list={grantTypes}
+                selected={selectedGrantTypes}
+                onChangeListener={onChangeGeneric}
+                setToChange={setSelectedGrantTypes}
+                unselectedText="Select types"
               />
-              <p className="text-base text-red-400">
-                {errors.bounties?.message}
-              </p>
             </div>
           </div>
         </div>
@@ -505,6 +550,14 @@ export default function AddProgram() {
             isLoading={isLoading}
             type="submit"
             className="px-3 py-3 text-base"
+            disabled={
+              !isValid ||
+              isSubmitting ||
+              selectedCategories.length === 0 ||
+              selectedCommunities.length === 0 ||
+              selectedEcosystems.length === 0 ||
+              selectedGrantTypes.length === 0
+            }
           >
             Create program
           </Button>
