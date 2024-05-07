@@ -16,13 +16,11 @@ export const GrantSizeSlider: FC<SliderProps> = ({
 }) => {
   return (
     <Popover.Root>
-      <Popover.Trigger>
-        <Button className="relative min-w-40 max-w-52 w-full hover:bg-white cursor-default rounded-md bg-white dark:bg-zinc-800 dark:text-zinc-100 py-3 pl-4 pr-12 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
-          <span className="block truncate font-normal">Grant Sizes</span>
-          <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-            <ChevronDown className="h-5 w-5 text-black dark:text-white" />
-          </span>
-        </Button>
+      <Popover.Trigger className="relative max-w-40 w-full hover:bg-white cursor-default rounded-md bg-white dark:bg-zinc-800 dark:text-zinc-100 py-3 pl-4 pr-12 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
+        <span className="block truncate font-normal">Grant Sizes</span>
+        <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+          <ChevronDown className="h-5 w-5 text-black dark:text-white" />
+        </span>
       </Popover.Trigger>
       <Popover.Content>
         <div className="flex flex-col gap-4 bg-white px-4 pt-2 pb-4 border mt-1 rounded-md min-w-52">

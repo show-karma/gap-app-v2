@@ -164,7 +164,6 @@ export default function GrantProgramRegistry({}) {
           }`
       ).then(([res, error]) => {
         if (!error && res) {
-          console.log(res);
           setGrants(res);
           setOffset(0);
           setHasMore(res.length === pageSize);
@@ -210,7 +209,6 @@ export default function GrantProgramRegistry({}) {
           }`
       ).then(([res, error]) => {
         if (!error && res) {
-          console.log(res);
           setGrants((oldArray) => [...oldArray, ...res]);
           setHasMore(res.length === pageSize);
         }
@@ -372,7 +370,7 @@ export default function GrantProgramRegistry({}) {
         </div>
 
         <div className="w-full">
-          <div className="sm:flex sm:items-center p-3 flex max-sm:flex-col flex-row gap-3 flex-wrap justify-between rounded-[4px] bg-[#F2F4F7] dark:bg-zinc-900">
+          <div className="sm:items-center p-3 flex max-sm:flex-col flex-row gap-3 flex-wrap justify-between rounded-[4px] bg-[#F2F4F7] dark:bg-zinc-900">
             <div className="w-full max-w-[450px] max-lg:max-w-xs">
               <label htmlFor="search" className="sr-only">
                 Search
@@ -394,7 +392,7 @@ export default function GrantProgramRegistry({}) {
                 />
               </div>
             </div>
-            <div className="flex flex-wrap flex-row gap-2">
+            <div className="flex flex-row gap-2 w-max max-md:flex-wrap">
               <GrantSizeSlider
                 value={selectedGrantSize}
                 onChangeListener={changeGrantSize}
