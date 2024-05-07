@@ -23,18 +23,6 @@
   integrity sha512-0h+FrQDqe2Wn+IIGFkTCd4aAwTJ+7834Ek1COohCyV26AXhwQ7WQaz+4F/nLOeVl/3BtWHOHLPsq46V8YB46Eg==
 
 "@allo-team/allo-v2-sdk@^1.0.63":
-  version "1.0.67"
-  resolved "https://registry.yarnpkg.com/@allo-team/allo-v2-sdk/-/allo-v2-sdk-1.0.67.tgz#1c32e3b55e020a5d73dd741060dbc1f536f59e88"
-  integrity sha512-q1+1AfkGFRkmYrP7lK/c0ggiVb2eOzfv05nFpJiReTgRL9aL2ubSmnLF492jSphvPcAe5nj9nNZ1peKzO3qLlA==
-  dependencies:
-    "@typechain/hardhat" "^9.1.0"
-    dotenv "^16.3.1"
-    events "^3.3.0"
-    hardhat "^2.19.5"
-    mocha "^10.3.0"
-    viem "^1.19.9"
-
-"@allo-team/allo-v2-sdk@^1.0.63":
   version "1.0.69"
   resolved "https://registry.yarnpkg.com/@allo-team/allo-v2-sdk/-/allo-v2-sdk-1.0.69.tgz#2c3e64e4ee8d0126861a9102b132004604d3ed66"
   integrity sha512-uSZ7Z7rZhuxg8AH5aqDIt6HC4ENh2zF+7uG385E3ig0zKwyTqyVczx8BL5rwmdzhmCPqMov6/YfdHcNXproCKg==
@@ -2387,9 +2375,9 @@
     "@sentry/cli" "^1.77.1"
     webpack-sources "^2.0.0 || ^3.0.0"
 
-"@show-karma/karma-gap-sdk@git+https://github.com/show-karma/karma-gap-sdk.git#b975300":
-  version "0.3.23"
-  resolved "git+https://github.com/show-karma/karma-gap-sdk.git#b975300c0ec1662183feb76fc81ce92502845f1e"
+"@show-karma/karma-gap-sdk@git+https://github.com/show-karma/karma-gap-sdk.git#a3873c":
+  version "0.3.26"
+  resolved "git+https://github.com/show-karma/karma-gap-sdk.git#a3873c903929ed57f718d3839ca90f4a75e02dd1"
   dependencies:
     "@allo-team/allo-v2-sdk" "^1.0.63"
     "@ethereum-attestation-service/eas-sdk" "1.4.2"

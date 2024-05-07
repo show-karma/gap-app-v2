@@ -5,6 +5,7 @@ import {
   optimism,
   optimismSepolia,
   baseSepolia,
+  sepolia,
 } from "viem/chains";
 import type { TNetwork } from "@show-karma/karma-gap-sdk";
 
