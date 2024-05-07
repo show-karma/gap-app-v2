@@ -42,10 +42,10 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
         previewOptions={{
           rehypePlugins: [[rehypeSanitize]],
         }}
-        highlightEnable={false}
         overflow={false}
         textareaProps={{
           placeholder: placeholderText,
+          spellCheck: true,
           style: { height: "100%", minHeight: "100%" },
         }}
       />
