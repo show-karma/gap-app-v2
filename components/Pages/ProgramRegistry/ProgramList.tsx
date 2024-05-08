@@ -3,6 +3,8 @@ import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import Image from "next/image";
 import { FC } from "react";
+import * as Tooltip from "@radix-ui/react-tooltip";
+import { registryHelper } from "./helper";
 
 export type GrantProgram = {
   _id: {
@@ -129,118 +131,222 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
         </tr>
       </thead>
       <tbody className="divide-y divide-gray-200 ">
-        {grantPrograms.map((grant, index) => (
-          <tr key={grant?.programId! + index}>
-            <td>
-              <div className="w-full max-w-52 grid-cols-2 grid gap-2">
-                {grant.metadata?.networks?.map((network, index) => (
-                  <span
-                    key={index}
-                    className="whitespace-nowrap px-3 py-1 text-[11px] truncate text-center w-full rounded-full text-blue-700 bg-[#EFF8FF] border border-[#B2DDFF] mr-2"
-                  >
-                    {network}
-                  </span>
-                ))}
-              </div>
-            </td>
-            <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300 text-wrap max-w-[285px]">
-              <div className="flex flex-row gap-3">
-                <div className="flex flex-col gap-1">
-                  <div className="font-semibold text-base text-gray-900 underline dark:text-zinc-100">
-                    {grant?.metadata?.title}
-                  </div>
-                  {grant.metadata?.website ? (
-                    <a
-                      href={`https://grantname.xyz`}
-                      className="font-semibold text-base text-blue-700"
-                    >
-                      {grant.metadata?.website}
-                    </a>
-                  ) : null}
-                  {grant.metadata?.website ? (
-                    <>
-                      <Image
-                        className="w-5 h-5 text-black dark:text-white dark:hidden"
-                        width={20}
-                        height={20}
-                        src="/icons/globe.svg"
-                        alt={grant.metadata?.website}
-                      />
-                      <Image
-                        width={20}
-                        height={20}
-                        className="w-5 h-5 text-black dark:text-white hidden dark:block"
-                        src="/icons/globe-white.svg"
-                        alt={grant.metadata?.website}
-                      />
-                    </>
+        {grantPrograms.map((grant, index) => {
+          const firstNetworks = grant.metadata?.networks?.slice(0, 4);
+          const restNetworks = grant.metadata?.networks?.slice(4);
+          return (
+            <tr key={grant?.programId! + index}>
+              <td>
+                <div className="w-full max-w-44 flex flex-row flex-wrap gap-1 my-2">
+                  {firstNetworks?.map((network, index) => (
+                    <Tooltip.Provider key={network}>
+                      <Tooltip.Root delayDuration={0.5}>
+                        <Tooltip.Trigger asChild>
+                          <div className="w-7 h-7 rounded-full flex justify-center items-center">
+                            {registryHelper.networkImages[
+                              network.toLowerCase()
+                            ] ? (
+                              <Image
+                                width={24}
+                                height={24}
+                                src={
+                                  registryHelper.networkImages[
+                                    network.toLowerCase()
+                                  ].light
+                                }
+                                alt={network}
+                                className="rounded-full w-6 h-6"
+                              />
+                            ) : (
+                              <div className="w-7 h-7 rounded-full flex justify-center items-center bg-gray-500" />
+                            )}
+                          </div>
+                        </Tooltip.Trigger>
+                        <Tooltip.Portal>
+                          <Tooltip.Content
+                            className="TooltipContent bg-[#101828] rounded-lg text-white p-3 max-w-[360px]"
+                            sideOffset={5}
+                            side="bottom"
+                          >
+                            <div className="flex flex-col gap-3">
+                              <div className="flex flex-row gap-2 items-center">
+                                {registryHelper.networkImages[
+                                  network.toLowerCase()
+                                ] ? (
+                                  <Image
+                                    width={24}
+                                    height={24}
+                                    src={
+                                      registryHelper.networkImages[
+                                        network.toLowerCase()
+                                      ].dark
+                                    }
+                                    alt={network}
+                                    className="rounded-full w-6 h-6"
+                                  />
+                                ) : (
+                                  <div className="w-7 h-7 rounded-full flex justify-center items-center bg-gray-500" />
+                                )}
+                                <p key={network}>{network}</p>
+                              </div>
+                            </div>
+                            <Tooltip.Arrow className="TooltipArrow" />
+                          </Tooltip.Content>
+                        </Tooltip.Portal>
+                      </Tooltip.Root>
+                    </Tooltip.Provider>
+                  ))}
+                  {restNetworks?.length ? (
+                    <Tooltip.Provider>
+                      <Tooltip.Root delayDuration={0.5}>
+                        <Tooltip.Trigger asChild>
+                          <p
+                            key={index}
+                            className="whitespace-nowrap rounded-full w-7 h-7 items-center flex flex-col justify-center px-1 py-1 text-[11px] truncate text-center text-blue-700 bg-[#EFF8FF] border border-[#B2DDFF] mr-2"
+                          >
+                            +{restNetworks.length}
+                          </p>
+                        </Tooltip.Trigger>
+                        <Tooltip.Portal>
+                          <Tooltip.Content
+                            className="TooltipContent bg-[#101828] rounded-lg text-white p-3 max-w-[360px]"
+                            sideOffset={5}
+                            side="bottom"
+                          >
+                            <div className="flex flex-col gap-3">
+                              {restNetworks.map((item) => (
+                                <div
+                                  key={item}
+                                  className="flex flex-row gap-2 items-center"
+                                >
+                                  {registryHelper.networkImages[
+                                    item.toLowerCase()
+                                  ] ? (
+                                    <Image
+                                      width={24}
+                                      height={24}
+                                      src={
+                                        registryHelper.networkImages[
+                                          item.toLowerCase()
+                                        ].dark
+                                      }
+                                      alt={item}
+                                      className="rounded-full w-6 h-6"
+                                    />
+                                  ) : (
+                                    <div className="w-7 h-7 rounded-full flex justify-center items-center bg-gray-500" />
+                                  )}
+                                  <p key={item}>{item}</p>
+                                </div>
+                              ))}
+                            </div>
+                            <Tooltip.Arrow className="TooltipArrow" />
+                          </Tooltip.Content>
+                        </Tooltip.Portal>
+                      </Tooltip.Root>
+                    </Tooltip.Provider>
                   ) : null}
                 </div>
-              </div>
-            </td>
-            <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-400 max-w-[285px]">
-              <div
-                className="w-[320px] max-w-[320px] text-wrap"
-                data-color-mode="light"
-              >
-                <ReadMore
-                  readLessText="Show less description"
-                  readMoreText="Show full description"
-                  side="left"
-                  words={50}
+              </td>
+              <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300 text-wrap max-w-[285px]">
+                <div className="flex flex-row gap-3">
+                  <div className="flex flex-col gap-1">
+                    <div className="font-semibold text-base text-gray-900 underline dark:text-zinc-100">
+                      {grant?.metadata?.title}
+                    </div>
+                    {grant.metadata?.website ? (
+                      <a
+                        href={`https://grantname.xyz`}
+                        className="font-semibold text-base text-blue-700"
+                      >
+                        {grant.metadata?.website}
+                      </a>
+                    ) : null}
+                    {grant.metadata?.website ? (
+                      <>
+                        <Image
+                          className="w-5 h-5 text-black dark:text-white dark:hidden"
+                          width={20}
+                          height={20}
+                          src="/icons/globe.svg"
+                          alt={grant.metadata?.website}
+                        />
+                        <Image
+                          width={20}
+                          height={20}
+                          className="w-5 h-5 text-black dark:text-white hidden dark:block"
+                          src="/icons/globe-white.svg"
+                          alt={grant.metadata?.website}
+                        />
+                      </>
+                    ) : null}
+                  </div>
+                </div>
+              </td>
+              <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-400 max-w-[285px]">
+                <div
+                  className="w-[320px] max-w-[320px] text-wrap"
+                  data-color-mode="light"
                 >
-                  {grant.metadata?.description!}
-                </ReadMore>
-              </div>
-            </td>{" "}
-            <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-              {grant?.metadata?.programBudget
-                ? formatCurrency(+grant?.metadata?.programBudget) === "NaN"
-                  ? grant?.metadata?.programBudget
-                  : `$${formatCurrency(+grant?.metadata?.programBudget)}`
-                : ""}
-            </td>
-            <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-              {grant?.metadata?.grantSize
-                ? formatCurrency(+grant?.metadata?.grantSize) === "NaN"
-                  ? grant?.metadata?.grantSize
-                  : `$${formatCurrency(+grant?.metadata?.grantSize)}`
-                : ""}
-            </td>
-            <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-              <div className="w-full flex flex-row flex-wrap gap-1">
-                {grant.metadata?.categories?.map((category, index) => (
+                  <ReadMore
+                    readLessText="Show less description"
+                    readMoreText="Show full description"
+                    side="left"
+                    words={50}
+                  >
+                    {grant.metadata?.description!}
+                  </ReadMore>
+                </div>
+              </td>{" "}
+              <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
+                {grant?.metadata?.programBudget
+                  ? formatCurrency(+grant?.metadata?.programBudget) === "NaN"
+                    ? grant?.metadata?.programBudget
+                    : `$${formatCurrency(+grant?.metadata?.programBudget)}`
+                  : ""}
+              </td>
+              <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
+                {grant?.metadata?.grantSize
+                  ? formatCurrency(+grant?.metadata?.grantSize) === "NaN"
+                    ? grant?.metadata?.grantSize
+                    : `$${formatCurrency(+grant?.metadata?.grantSize)}`
+                  : ""}
+              </td>
+              <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
+                <div className="w-full flex flex-row flex-wrap gap-1">
+                  {grant.metadata?.categories?.map((category, index) => (
+                    <span
+                      key={index}
+                      className="mr-1 inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20"
+                    >
+                      {category}
+                    </span>
+                  ))}
+                </div>
+              </td>
+              <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
+                {grant?.metadata?.startDate
+                  ? formatDate(grant?.metadata?.startDate)
+                  : ""}
+              </td>
+              <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
+                {grant?.metadata?.endDate
+                  ? formatDate(grant?.metadata?.endDate)
+                  : ""}
+              </td>
+              <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
+                {grant.metadata?.grantTypes?.map((category, index) => (
                   <span
                     key={index}
-                    className="mr-1 inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20"
+                    className="mr-1 inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20"
                   >
                     {category}
                   </span>
                 ))}
-              </div>
-            </td>
-            <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-              {grant?.metadata?.startDate
-                ? formatDate(grant?.metadata?.startDate)
-                : ""}
-            </td>
-            <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-              {grant?.metadata?.endDate
-                ? formatDate(grant?.metadata?.endDate)
-                : ""}
-            </td>
-            <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-              {grant.metadata?.grantTypes?.map((category, index) => (
-                <span
-                  key={index}
-                  className="mr-1 inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20"
-                >
-                  {category}
-                </span>
-              ))}
-            </td>
-          </tr>
-        ))}
+              </td>
+            </tr>
+          );
+        })}
       </tbody>
     </table>
   );

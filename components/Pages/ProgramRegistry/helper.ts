@@ -18,6 +18,80 @@ const networks = [
   "zCash",
 ];
 
+const networkImages: Record<
+  string,
+  {
+    light: string;
+    dark: string;
+  }
+> = {
+  aleo: {
+    light: "/images/networks/aleph-zero-light.svg",
+    dark: "/images/networks/aleph-zero-dark.svg",
+  },
+  "aleph zero": {
+    light: "/images/networks/aleph-zero-light.svg",
+    dark: "/images/networks/aleph-zero-dark.svg",
+  },
+  bitcoin: {
+    light: "/images/networks/bitcoin.svg",
+    dark: "/images/networks/bitcoin.svg",
+  },
+  cardano: {
+    light: "/images/networks/cardano.svg",
+    dark: "/images/networks/cardano.svg",
+  },
+  "cosmos/ibc": {
+    light: "/images/networks/cosmos.svg",
+    dark: "/images/networks/cosmos.svg",
+  },
+  evm: {
+    light: "/images/networks/ethereum.svg",
+    dark: "/images/networks/ethereum.svg",
+  },
+  farcaster: {
+    light: "/images/networks/farcaster.svg",
+    dark: "/images/networks/farcaster.svg",
+  },
+  near: {
+    light: "/images/networks/near.svg",
+    dark: "/images/networks/near.svg",
+  },
+  nouns: {
+    light: "/images/networks/nouns.jpeg",
+    dark: "/images/networks/nouns.jpeg",
+  },
+  polkadot: {
+    light: "/images/networks/polkadot.svg",
+    dark: "/images/networks/polkadot.svg",
+  },
+  ripple: {
+    light: "/images/networks/ripple.svg",
+    dark: "/images/networks/ripple.svg",
+  },
+  solana: {
+    light: "/images/networks/solana.svg",
+    dark: "/images/networks/solana.svg",
+  },
+  stellar: {
+    light: "/images/networks/stellar-light.svg",
+    dark: "/images/networks/stellar-dark.svg",
+  },
+  ton: { light: "/images/networks/ton.svg", dark: "/images/networks/ton.svg" },
+  tezos: {
+    light: "/images/networks/tezos.svg",
+    dark: "/images/networks/tezos.svg",
+  },
+  tron: {
+    light: "/images/networks/tron.svg",
+    dark: "/images/networks/tron.svg",
+  },
+  zcash: {
+    light: "/images/networks/zcash.svg",
+    dark: "/images/networks/zcash.svg",
+  },
+};
+
 const organizations = [
   "4EVERLAND",
   "88mph",
@@ -324,4 +398,5 @@ export const registryHelper = {
   categories,
   grantTypes,
   grantSizes,
+  networkImages,
 };
