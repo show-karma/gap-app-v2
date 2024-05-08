@@ -138,7 +138,7 @@ export default function GrantProgramRegistry({}) {
               ? `&minGrantSize=${selectedGrantSize[0]}`
               : ""
           }${
-            selectedGrantSize[1] !== 10000000
+            selectedGrantSize[1] !== 1000000
               ? `&maxGrantSize=${selectedGrantSize[1]}`
               : ""
           }${
