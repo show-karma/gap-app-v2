@@ -1,9 +1,6 @@
 import { ReadMore } from "@/utilities/ReadMore";
-import { chainImgDictionary } from "@/utilities/chainImgDictionary";
-import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
-import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import { FC } from "react";
 
@@ -128,13 +125,12 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
       <tbody className="divide-y divide-gray-200 ">
         {grantPrograms.map((grant, index) => (
           <tr key={grant?.programId! + index}>
-            <td className="max-w-64">
-              <div className="w-full max-w-64 grid grid-cols-2 gap-2">
-                {/* {["Alchemy", "Solana", "Celo", "Base"]?.map( */}
+            <td>
+              <div className="w-full max-w-52 grid-cols-2 grid gap-2">
                 {grant.metadata?.networks?.map((network, index) => (
                   <span
                     key={index}
-                    className="whitespace-nowrap px-3 py-1 text-[11px] rounded-full text-blue-700 bg-[#EFF8FF] border border-[#B2DDFF] mr-2"
+                    className="whitespace-nowrap px-3 py-1 text-[11px] truncate text-center w-full rounded-full text-blue-700 bg-[#EFF8FF] border border-[#B2DDFF] mr-2"
                   >
                     {network}
                   </span>

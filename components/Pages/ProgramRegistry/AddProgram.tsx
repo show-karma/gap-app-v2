@@ -228,7 +228,7 @@ export default function AddProgram() {
               />
               <p className="text-base text-red-400">{errors.name?.message}</p>
             </div>
-            <div className="flex w-full flex-col  gap-1">
+            <div className="flex w-full flex-col max-w-[480px] gap-1">
               <label htmlFor="program-description" className={labelStyle}>
                 Description (optional)
               </label>

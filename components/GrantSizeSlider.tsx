@@ -1,7 +1,6 @@
 import { FC } from "react";
 import * as Popover from "@radix-ui/react-popover";
 import { ChevronDown } from "./Icons/ChevronDown";
-import { Button } from "./Utilities/Button";
 import Slider from "rc-slider";
 import formatCurrency from "@/utilities/formatCurrency";
 
@@ -17,7 +16,7 @@ export const GrantSizeSlider: FC<SliderProps> = ({
   return (
     <Popover.Root>
       <Popover.Trigger className="relative max-w-40 w-full hover:bg-white cursor-default rounded-md bg-white dark:bg-zinc-800 dark:text-zinc-100 py-3 pl-4 pr-12 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
-        <span className="block truncate font-normal">Grant Size</span>
+        <p className="block truncate font-normal">Grant Size</p>
         <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
           <ChevronDown className="h-5 w-5 text-black dark:text-white" />
         </span>

@@ -20,6 +20,7 @@ import {
   ProgramList,
 } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
+import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 
 const statuses = ["Active", "Inactive"];
 
@@ -331,31 +332,47 @@ export default function GrantProgramRegistry({}) {
                 />
               </div>
             </div>
-            <div className="flex flex-row gap-2 w-max max-md:flex-wrap">
+            <div className="flex flex-row gap-2 w-max flex-1 max-md:flex-wrap max-md:flex-col justify-end">
               <GrantSizeSlider
                 value={selectedGrantSize}
                 onChangeListener={changeGrantSize}
               />
-              <Dropdown
+
+              <SearchDropdown
                 list={registryHelper.networks}
-                onChangeListener={onChangeGeneric}
-                setToChange={setSelectedNetworks}
-                unselectedText="All Networks"
+                onSelectFunction={(value: string) =>
+                  onChangeGeneric(value, setSelectedNetworks)
+                }
+                cleanFunction={() => {
+                  setSelectedNetworks([]);
+                }}
+                type={"Networks"}
                 selected={selectedNetworks}
+                // imageDictionary={}
               />
-              <Dropdown
+              <SearchDropdown
                 list={registryHelper.ecosystems}
-                onChangeListener={onChangeGeneric}
-                setToChange={setSelectedEcosystems}
-                unselectedText="All Ecosystems"
+                onSelectFunction={(value: string) =>
+                  onChangeGeneric(value, setSelectedEcosystems)
+                }
+                cleanFunction={() => {
+                  setSelectedEcosystems([]);
+                }}
+                type={"Ecosystems"}
                 selected={selectedEcosystems}
+                // imageDictionary={}
               />
-              <Dropdown
+              <SearchDropdown
                 list={registryHelper.grantTypes}
-                onChangeListener={onChangeGeneric}
-                setToChange={setSelectedGrantTypes}
-                unselectedText="All Grant Types"
+                onSelectFunction={(value: string) =>
+                  onChangeGeneric(value, setSelectedGrantTypes)
+                }
+                cleanFunction={() => {
+                  setSelectedGrantTypes([]);
+                }}
+                type={"Grant Types"}
                 selected={selectedGrantTypes}
+                // imageDictionary={}
               />
             </div>
           </div>
