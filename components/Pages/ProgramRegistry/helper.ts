@@ -315,10 +315,13 @@ const ecosystems = [
 const categories = ["DEX", "DeFi"];
 const grantTypes = ["Retroactive", "Proactive", "Bounty"];
 
+const grantSizes = [0, 1000000];
+
 export const registryHelper = {
   networks,
   organizations,
   ecosystems,
   categories,
   grantTypes,
+  grantSizes,
 };

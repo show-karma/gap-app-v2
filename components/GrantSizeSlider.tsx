@@ -3,6 +3,7 @@ import * as Popover from "@radix-ui/react-popover";
 import { ChevronDown } from "./Icons/ChevronDown";
 import Slider from "rc-slider";
 import formatCurrency from "@/utilities/formatCurrency";
+import { registryHelper } from "./Pages/ProgramRegistry/helper";
 
 interface SliderProps {
   value: number[];
@@ -30,9 +31,9 @@ export const GrantSizeSlider: FC<SliderProps> = ({
           <Slider
             range
             className={"relative flex w-full items-center"}
-            min={0}
-            max={1000000}
-            step={1000}
+            min={registryHelper.grantSizes[0]}
+            max={registryHelper.grantSizes[1]}
+            step={50000}
             value={value}
             onChange={(e: any) => onChangeListener(e)}
           />

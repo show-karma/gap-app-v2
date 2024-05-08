@@ -100,6 +100,12 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
             scope="col"
             className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
           >
+            Grant Size
+          </th>
+          <th
+            scope="col"
+            className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
+          >
             Categories
           </th>
           <th
@@ -192,6 +198,13 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
                 ? formatCurrency(+grant?.metadata?.programBudget) === "NaN"
                   ? grant?.metadata?.programBudget
                   : `$${formatCurrency(+grant?.metadata?.programBudget)}`
+                : ""}
+            </td>
+            <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
+              {grant?.metadata?.grantSize
+                ? formatCurrency(+grant?.metadata?.grantSize) === "NaN"
+                  ? grant?.metadata?.grantSize
+                  : `$${formatCurrency(+grant?.metadata?.grantSize)}`
                 : ""}
             </td>
             <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">

@@ -33,7 +33,9 @@ export default function GrantProgramRegistry({}) {
   const [status, setStatus] = useState("");
 
   const [searchInput, setSearchInput] = useState("");
-  const [selectedGrantSize, setSelectedGrantSize] = useState([0, 1000000]);
+  const [selectedGrantSize, setSelectedGrantSize] = useState(
+    registryHelper.grantSizes
+  );
   const [selectedNetworks, setSelectedNetworks] = useState<string[]>([]);
   const [selectedEcosystems, setSelectedEcosystems] = useState<string[]>([]);
   const [selectedGrantTypes, setSelectedGrantTypes] = useState<string[]>([]);
@@ -89,11 +91,11 @@ export default function GrantProgramRegistry({}) {
               ? `&ecosystems=${selectedEcosystems.join(",")}`
               : ""
           }${
-            selectedGrantSize[0] !== 0
+            selectedGrantSize[0] !== registryHelper.grantSizes[0]
               ? `&minGrantSize=${selectedGrantSize[0]}`
               : ""
           }${
-            selectedGrantSize[1] !== 1000000
+            selectedGrantSize[1] !== registryHelper.grantSizes[1]
               ? `&maxGrantSize=${selectedGrantSize[1]}`
               : ""
           }${
@@ -134,11 +136,11 @@ export default function GrantProgramRegistry({}) {
               ? `&ecosystems=${selectedEcosystems.join(",")}`
               : ""
           }${
-            selectedGrantSize[0] !== 0
+            selectedGrantSize[0] !== registryHelper.grantSizes[0]
               ? `&minGrantSize=${selectedGrantSize[0]}`
               : ""
           }${
-            selectedGrantSize[1] !== 1000000
+            selectedGrantSize[1] !== registryHelper.grantSizes[1]
               ? `&maxGrantSize=${selectedGrantSize[1]}`
               : ""
           }${
