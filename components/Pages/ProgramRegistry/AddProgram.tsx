@@ -186,7 +186,7 @@ export default function AddProgram() {
       </div>
       <form
         onSubmit={handleSubmit(onSubmit)}
-        className="gap-4 rounded-lg bg-zinc-200 px-4 py-6 w-full max-w-max flex-col flex"
+        className="gap-4 rounded-lg bg-zinc-200 dark:bg-zinc-800 px-4 py-6 w-full max-w-max flex-col flex"
       >
         <div className=" grid grid-cols-2 w-full gap-4">
           <div className="flex flex-col gap-2">
