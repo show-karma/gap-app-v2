@@ -14,6 +14,7 @@
     "@headlessui/react": "^1.7.15",
     "@heroicons/react": "^2.0.18",
     "@hookform/resolvers": "^3.3.4",
+    "@hypercerts-org/sdk": "^2.0.0-alpha.5",
     "@next/bundle-analyzer": "^14.1.0",
     "@radix-ui/react-popover": "^1.0.7",
     "@radix-ui/react-tooltip": "^1.0.7",
