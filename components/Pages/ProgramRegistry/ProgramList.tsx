@@ -29,6 +29,7 @@ export type GrantProgram = {
     startDate?: string;
     categories?: string[];
     ecosystems?: string[];
+    networks?: string[];
     grantTypes?: string[];
     credentials?: {};
     description?: string;
@@ -69,13 +70,14 @@ interface ProgramListProps {
 }
 
 export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
+  console.log(grantPrograms);
   return (
     <table className="min-w-full divide-y divide-gray-300 h-full">
       <thead>
         <tr className="">
           <th
             scope="col"
-            className="py-3.5 pl-4 pr-3 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body"
+            className="py-3.5 pl-4 pr-3 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64"
           >
             Ecosystem
           </th>
@@ -128,18 +130,16 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
         {grantPrograms.map((grant, index) => (
           <tr key={grant?.programId! + index}>
             <td className="max-w-64">
-              <div className="w-full">
-                {/* {grant.metadata?.ecosystems?.map((ecosystem, index) => ( */}
-                {["Alchemy", "Solana", "Celo", "Base"]?.map(
-                  (ecosystem, index) => (
-                    <span
-                      key={index}
-                      className="whitespace-nowrap px-3 py-1 text-[11px] rounded-full text-blue-700 bg-[#EFF8FF] border border-[#B2DDFF] mr-2"
-                    >
-                      {ecosystem}
-                    </span>
-                  )
-                )}
+              <div className="w-full max-w-64 grid grid-cols-2 gap-2">
+                {/* {["Alchemy", "Solana", "Celo", "Base"]?.map( */}
+                {grant.metadata?.networks?.map((network, index) => (
+                  <span
+                    key={index}
+                    className="whitespace-nowrap px-3 py-1 text-[11px] rounded-full text-blue-700 bg-[#EFF8FF] border border-[#B2DDFF] mr-2"
+                  >
+                    {network}
+                  </span>
+                ))}
               </div>
             </td>
             <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300 text-wrap max-w-[285px]">
