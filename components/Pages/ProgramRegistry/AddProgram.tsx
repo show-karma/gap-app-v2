@@ -21,14 +21,10 @@ import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 import { envVars } from "@/utilities/enviromentVars";
 import { useRouter } from "next/router";
 import { Dropdown } from "@/components/Utilities/Dropdown";
-import {
-  categories,
-  communities,
-  ecosystems,
-  grantTypes,
-} from "@/pages/grant-program-registry";
+
 import { useAuthStore } from "@/store/auth";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { registryHelper } from "./helper";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -36,15 +32,15 @@ const inputStyle =
 
 const createProgramSchema = z.object({
   name: z.string().min(3, { message: MESSAGES.REGISTRY.FORM.NAME }),
-  budget: z.string().min(3, { message: MESSAGES.REGISTRY.FORM.BUDGET }),
   logo: z.string().url().optional().or(z.literal("")),
   banner: z.string().url().optional().or(z.literal("")),
   website: z.string().url().optional().or(z.literal("")),
   twitter: z.string().url().optional().or(z.literal("")),
   discord: z.string().url().optional().or(z.literal("")),
-  amountDistributed: z
-    .string()
-    .min(0, { message: MESSAGES.REGISTRY.FORM.AMOUNT_DISTRIBUTED }),
+  budget: z.coerce.number().min(1, { message: MESSAGES.REGISTRY.FORM.BUDGET }),
+  amountDistributed: z.coerce
+    .number()
+    .min(1, { message: MESSAGES.REGISTRY.FORM.AMOUNT_DISTRIBUTED }),
   grantSize: z.coerce.number().int("Must be a integer"),
   howManyApplicants: z.coerce.number().int("Must be a integer"),
   howManyGrants: z.coerce.number().int("Must be a integer"),
@@ -78,8 +74,8 @@ export default function AddProgram() {
   const [description, setDescription] = useState("");
   const router = useRouter();
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [selectedNetworks, setSelectedNetworks] = useState<string[]>([]);
   const [selectedEcosystems, setSelectedEcosystems] = useState<string[]>([]);
-  const [selectedCommunities, setSelectedCommunities] = useState<string[]>([]);
   const [selectedGrantTypes, setSelectedGrantTypes] = useState<string[]>([]);
 
   const {
@@ -159,8 +155,8 @@ export default function AddProgram() {
         website: data.website || "",
         discord: data.discord,
         categories: selectedCategories,
-        communities: selectedCommunities,
         ecosystems: selectedEcosystems,
+        networks: selectedNetworks,
         grantTypes: selectedGrantTypes,
         logoImg: data.logo || "",
         bannerImg: data.banner || "",
@@ -250,7 +246,8 @@ export default function AddProgram() {
               <input
                 id="program-budget"
                 className={inputStyle}
-                placeholder="Ex: 100K OP"
+                placeholder="Ex: 100500"
+                type="number"
                 {...register("budget")}
               />
               <p className="text-base text-red-400">{errors.budget?.message}</p>
@@ -265,7 +262,8 @@ export default function AddProgram() {
               <input
                 id="program-amount-distributed"
                 className={inputStyle}
-                placeholder="Ex: 80K OP"
+                placeholder="Ex: 804150"
+                type="number"
                 {...register("amountDistributed")}
               />
               <p className="text-base text-red-400">
@@ -500,7 +498,7 @@ export default function AddProgram() {
                 Categories *
               </label>
               <Dropdown
-                list={categories}
+                list={registryHelper.categories}
                 selected={selectedCategories}
                 onChangeListener={onChangeGeneric}
                 setToChange={setSelectedCategories}
@@ -508,23 +506,11 @@ export default function AddProgram() {
               />
             </div>
             <div className="flex w-full flex-col  gap-1">
-              <label htmlFor="program-communities" className={labelStyle}>
-                Communities *
-              </label>
-              <Dropdown
-                list={communities}
-                selected={selectedCommunities}
-                onChangeListener={onChangeGeneric}
-                setToChange={setSelectedCommunities}
-                unselectedText="Select communities"
-              />
-            </div>
-            <div className="flex w-full flex-col  gap-1">
               <label htmlFor="program-ecosystems" className={labelStyle}>
                 Ecosystems *
               </label>
               <Dropdown
-                list={ecosystems}
+                list={registryHelper.ecosystems}
                 selected={selectedEcosystems}
                 onChangeListener={onChangeGeneric}
                 setToChange={setSelectedEcosystems}
@@ -532,11 +518,23 @@ export default function AddProgram() {
               />
             </div>
             <div className="flex w-full flex-col  gap-1">
+              <label htmlFor="program-networks" className={labelStyle}>
+                Networks *
+              </label>
+              <Dropdown
+                list={registryHelper.networks}
+                selected={selectedNetworks}
+                onChangeListener={onChangeGeneric}
+                setToChange={setSelectedNetworks}
+                unselectedText="Select networks"
+              />
+            </div>
+            <div className="flex w-full flex-col  gap-1">
               <label htmlFor="program-types" className={labelStyle}>
                 Types *
               </label>
               <Dropdown
-                list={grantTypes}
+                list={registryHelper.grantTypes}
                 selected={selectedGrantTypes}
                 onChangeListener={onChangeGeneric}
                 setToChange={setSelectedGrantTypes}
@@ -554,8 +552,8 @@ export default function AddProgram() {
               !isValid ||
               isSubmitting ||
               selectedCategories.length === 0 ||
-              selectedCommunities.length === 0 ||
               selectedEcosystems.length === 0 ||
+              selectedNetworks.length === 0 ||
               selectedGrantTypes.length === 0
             }
           >

@@ -5,13 +5,7 @@ import { NextSeo } from "next-seo";
 import { defaultMetadata } from "@/utilities/meta";
 import { useState, useEffect } from "react";
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
-import axios from "axios";
-import { envVars } from "@/utilities/enviromentVars";
-import { chainNameDictionary } from "@/utilities/chainNameDictionary";
-import { chainImgDictionary } from "@/utilities/chainImgDictionary";
-import { CheckCircleIcon, CheckIcon } from "@heroicons/react/24/solid";
-import { formatDate } from "@/utilities/formatDate";
-import formatCurrency from "@/utilities/formatCurrency";
+import { CheckIcon } from "@heroicons/react/24/solid";
 import { Spinner } from "@/components/Utilities/Spinner";
 import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
@@ -20,73 +14,17 @@ import { Dropdown } from "@/components/Utilities/Dropdown";
 import { GrantSizeSlider } from "@/components/GrantSizeSlider";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { ReadMore } from "@/utilities/ReadMore";
 import InfiniteScroll from "react-infinite-scroll-component";
+import {
+  GrantProgram,
+  ProgramList,
+} from "@/components/Pages/ProgramRegistry/ProgramList";
+import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
 
-type GrantProgram = {
-  _id: {
-    $oid: string;
-  };
-  name?: string;
-  createdAtBlock?: string;
-  createdByAddress?: string;
-  metadata?: {
-    tags?: string[];
-    type?: string;
-    title?: string;
-    discord?: string;
-    endDate?: string;
-    logoImg?: string;
-    website?: string;
-    bounties?: string[];
-    bannerImg?: string;
-    createdAt?: number;
-    grantSize?: string;
-    startDate?: string;
-    categories?: string[];
-    ecosystems?: string[];
-    credentials?: {};
-    description?: string;
-    logoImgData?: string;
-    grantsIssued?: number;
-    bannerImgData?: string;
-    linkToDetails?: string;
-    programBudget?: string;
-    projectTwitter?: string;
-    applicantsNumber?: number;
-    amountDistributedToDate?: string;
-  };
-  tags?: string[];
-  updatedAtBlock?: string;
-  projectNumber?: null;
-  projectType?: string;
-  registryAddress?: string;
-  anchorAddress?: string;
-  programId?: string;
-  chainID?: number;
-  isValid?: boolean;
-  createdAt: {
-    $timestamp: {
-      t: number;
-      i: number;
-    };
-  };
-  updatedAt: {
-    $timestamp: {
-      t: number;
-      i: number;
-    };
-  };
-};
-
-export const categories = ["DEX", "DeFi"];
 const statuses = ["Active", "Inactive"];
-export const ecosystems = ["EVM", "Solana", "Cosmos", "NEAR"];
-export const communities = ["Arbitrum", "Optimism", "Gitcoin"];
-export const grantTypes = ["Retroactive", "Proactive", "Bounty"];
 
 export default function GrantProgramRegistry({}) {
-  const [grants, setGrants] = useState<GrantProgram[]>([]);
+  const [grantPrograms, setGrantPrograms] = useState<GrantProgram[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
 
@@ -94,9 +32,9 @@ export default function GrantProgramRegistry({}) {
   const [status, setStatus] = useState("");
 
   const [searchInput, setSearchInput] = useState("");
-  const [selectedGrantSize, setSelectedGrantSize] = useState([0, 10000000]);
+  const [selectedGrantSize, setSelectedGrantSize] = useState([0, 1000000]);
+  const [selectedNetworks, setSelectedNetworks] = useState<string[]>([]);
   const [selectedEcosystems, setSelectedEcosystems] = useState<string[]>([]);
-  const [selectedCommunities, setSelectedCommunities] = useState<string[]>([]);
   const [selectedGrantTypes, setSelectedGrantTypes] = useState<string[]>([]);
 
   const debouncedSearch = debounce((value: string) => {
@@ -125,7 +63,7 @@ export default function GrantProgramRegistry({}) {
 
   const dynamicMetadata = {
     title: `Karma GAP - Grant Program Aggregator`,
-    description: `View the list of grant programs issued by various communities.`,
+    description: `View the list of grant programs issued by various ecosystems.`,
   };
 
   const pageSize = 10;
@@ -142,19 +80,19 @@ export default function GrantProgramRegistry({}) {
           }${
             selectedGrantTypes.length ? `&grantTypes=${selectedGrantTypes}` : ""
           }${status ? `&status=${status}` : ""}${
-            selectedEcosystems.length
-              ? `&ecosystems=${selectedEcosystems.join(",")}`
+            selectedNetworks.length
+              ? `&networks=${selectedNetworks.join(",")}`
               : ""
           }${
-            selectedCommunities.length
-              ? `&communities=${selectedCommunities.join(",")}`
+            selectedEcosystems.length
+              ? `&ecosystems=${selectedEcosystems.join(",")}`
               : ""
           }${
             selectedGrantSize[0] !== 0
               ? `&minGrantSize=${selectedGrantSize[0]}`
               : ""
           }${
-            selectedGrantSize[1] !== 10000000
+            selectedGrantSize[1] !== 1000000
               ? `&maxGrantSize=${selectedGrantSize[1]}`
               : ""
           }${
@@ -164,7 +102,7 @@ export default function GrantProgramRegistry({}) {
           }`
       ).then(([res, error]) => {
         if (!error && res) {
-          setGrants(res);
+          setGrantPrograms(res);
           setOffset(0);
           setHasMore(res.length === pageSize);
         }
@@ -187,12 +125,12 @@ export default function GrantProgramRegistry({}) {
           }${
             selectedGrantTypes.length ? `&grantTypes=${selectedGrantTypes}` : ""
           }${status ? `&status=${status}` : ""}${
-            selectedEcosystems.length
-              ? `&ecosystems=${selectedEcosystems.join(",")}`
+            selectedNetworks.length
+              ? `&networks=${selectedNetworks.join(",")}`
               : ""
           }${
-            selectedCommunities.length
-              ? `&communities=${selectedCommunities.join(",")}`
+            selectedEcosystems.length
+              ? `&ecosystems=${selectedEcosystems.join(",")}`
               : ""
           }${
             selectedGrantSize[0] !== 0
@@ -209,7 +147,7 @@ export default function GrantProgramRegistry({}) {
           }`
       ).then(([res, error]) => {
         if (!error && res) {
-          setGrants((oldArray) => [...oldArray, ...res]);
+          setGrantPrograms((oldArray) => [...oldArray, ...res]);
           setHasMore(res.length === pageSize);
         }
       });
@@ -222,13 +160,14 @@ export default function GrantProgramRegistry({}) {
 
   useEffect(() => {
     getGrantPrograms();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     searchInput,
     selectedCategory,
     status,
     selectedGrantSize,
+    selectedNetworks,
     selectedEcosystems,
-    selectedCommunities,
     selectedGrantTypes,
   ]);
 
@@ -320,7 +259,7 @@ export default function GrantProgramRegistry({}) {
                 <CheckIcon className="w-4 h-4" />
               ) : null}
             </button>
-            {categories.map((type) => (
+            {registryHelper.categories.map((type) => (
               <button
                 onClick={() => {
                   onChangeGeneric(type, setSelectedCategory);
@@ -398,21 +337,21 @@ export default function GrantProgramRegistry({}) {
                 onChangeListener={changeGrantSize}
               />
               <Dropdown
-                list={ecosystems}
+                list={registryHelper.networks}
+                onChangeListener={onChangeGeneric}
+                setToChange={setSelectedNetworks}
+                unselectedText="All Networks"
+                selected={selectedNetworks}
+              />
+              <Dropdown
+                list={registryHelper.ecosystems}
                 onChangeListener={onChangeGeneric}
                 setToChange={setSelectedEcosystems}
                 unselectedText="All Ecosystems"
                 selected={selectedEcosystems}
               />
               <Dropdown
-                list={communities}
-                onChangeListener={onChangeGeneric}
-                setToChange={setSelectedCommunities}
-                unselectedText="All Communities"
-                selected={selectedCommunities}
-              />
-              <Dropdown
-                list={grantTypes}
+                list={registryHelper.grantTypes}
                 onChangeListener={onChangeGeneric}
                 setToChange={setSelectedGrantTypes}
                 unselectedText="All Grant Types"
@@ -422,12 +361,12 @@ export default function GrantProgramRegistry({}) {
           </div>
 
           {!loading ? (
-            grants.length ? (
+            grantPrograms.length ? (
               <div className="mt-8 flow-root">
                 <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                   <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
                     <InfiniteScroll
-                      dataLength={grants.length}
+                      dataLength={grantPrograms.length}
                       next={() => {
                         fetchMoreData();
                       }}
@@ -443,194 +382,7 @@ export default function GrantProgramRegistry({}) {
                         overflow: "hidden",
                       }}
                     >
-                      <table className="min-w-full divide-y divide-gray-300 h-full">
-                        <thead>
-                          <tr className="">
-                            <th
-                              scope="col"
-                              className="py-3.5 pl-4 pr-3 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body"
-                            >
-                              Ecosystem
-                            </th>
-
-                            <th
-                              scope="col"
-                              className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
-                            >
-                              Name
-                            </th>
-                            <th
-                              scope="col"
-                              className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
-                            >
-                              Description
-                            </th>
-                            <th
-                              scope="col"
-                              className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
-                            >
-                              Budget
-                            </th>
-                            <th
-                              scope="col"
-                              className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
-                            >
-                              Categories
-                            </th>
-                            <th
-                              scope="col"
-                              className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
-                            >
-                              Start date
-                            </th>
-                            <th
-                              scope="col"
-                              className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
-                            >
-                              End date
-                            </th>
-                            <th
-                              scope="col"
-                              className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
-                            >
-                              Type
-                            </th>
-                            <th
-                              scope="col"
-                              className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
-                            >
-                              RPFs
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-200 ">
-                          {grants.map((grant, index) => (
-                            <tr key={grant?.programId! + index}>
-                              <td className="">
-                                {grant.metadata?.ecosystems?.map(
-                                  (ecosystem, index) => (
-                                    <span
-                                      key={index}
-                                      className="whitespace-nowrap px-3 py-1 text-sm rounded-full text-blue-700 bg-[#EFF8FF] border border-[#B2DDFF] mr-2"
-                                    >
-                                      {ecosystem}
-                                    </span>
-                                  )
-                                )}
-                              </td>
-                              <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300 text-wrap max-w-[285px]">
-                                <div className="flex flex-row gap-3">
-                                  <div className="flex items-center gap-4">
-                                    <div className="h-8 w-8 flex-shrink-0">
-                                      {grant.metadata?.logoImg ||
-                                      chainImgDictionary(grant.chainID!) ? (
-                                        <img
-                                          className="h-8 w-8 rounded-full"
-                                          src={chainImgDictionary(
-                                            grant.chainID!
-                                          )}
-                                          alt={chainNameDictionary(
-                                            grant.chainID!
-                                          )}
-                                        />
-                                      ) : (
-                                        <div className="h-8 w-8 rounded-full bg-gray-200" />
-                                      )}
-                                    </div>
-                                  </div>
-                                  <div className="flex flex-col gap-1">
-                                    <div className="font-semibold text-base text-gray-900 underline dark:text-zinc-100">
-                                      {grant?.metadata?.title}
-                                    </div>
-                                    {grant.metadata?.website ? (
-                                      <a
-                                        href={`https://grantname.xyz`}
-                                        className="font-semibold text-base text-blue-700"
-                                      >
-                                        {grant.metadata?.website}
-                                      </a>
-                                    ) : null}
-                                    {grant.metadata?.website ? (
-                                      <>
-                                        <img
-                                          className="w-5 h-5 text-black dark:text-white dark:hidden"
-                                          src="/icons/globe.svg"
-                                          alt={grant.metadata?.website}
-                                        />
-                                        <img
-                                          className="w-5 h-5 text-black dark:text-white hidden dark:block"
-                                          src="/icons/globe-white.svg"
-                                          alt={grant.metadata?.website}
-                                        />
-                                      </>
-                                    ) : null}
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-400 max-w-[285px]">
-                                <div
-                                  className="w-[320px] max-w-[320px] text-wrap"
-                                  data-color-mode="light"
-                                >
-                                  <ReadMore
-                                    readLessText="Show less description"
-                                    readMoreText="Show full description"
-                                    side="left"
-                                    words={50}
-                                  >
-                                    {grant.metadata?.description!}
-                                  </ReadMore>
-                                </div>
-                              </td>{" "}
-                              <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-                                {grant?.metadata?.programBudget
-                                  ? formatCurrency(
-                                      +grant?.metadata?.programBudget
-                                    ) === "NaN"
-                                    ? grant?.metadata?.programBudget
-                                    : `$${formatCurrency(
-                                        +grant?.metadata?.programBudget
-                                      )}`
-                                  : ""}
-                              </td>
-                              <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-                                <div className="w-full flex flex-row flex-wrap gap-1">
-                                  {grant.metadata?.categories?.map(
-                                    (category, index) => (
-                                      <span
-                                        key={index}
-                                        className="mr-1 inline-flex items-center rounded-md bg-green-50 px-2 py-1 text-xs font-medium text-green-700 ring-1 ring-inset ring-green-600/20"
-                                      >
-                                        {category}
-                                      </span>
-                                    )
-                                  )}
-                                </div>
-                              </td>
-                              <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-                                {grant?.metadata?.startDate
-                                  ? formatDate(grant?.metadata?.startDate)
-                                  : ""}
-                              </td>
-                              <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-                                {grant?.metadata?.endDate
-                                  ? formatDate(grant?.metadata?.endDate)
-                                  : ""}
-                              </td>
-                              <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-                                <img
-                                  className="w-6 h-6 text-black dark:text-white"
-                                  src="/icons/crosshair.svg"
-                                  alt={grant.metadata?.title}
-                                />
-                              </td>
-                              <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-                                <CheckCircleIcon className="text-black w-6 h-6 dark:text-zinc-100" />
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                      <ProgramList grantPrograms={grantPrograms} />
                     </InfiniteScroll>
                   </div>
                 </div>

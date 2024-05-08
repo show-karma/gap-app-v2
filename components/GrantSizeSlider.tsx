@@ -17,7 +17,7 @@ export const GrantSizeSlider: FC<SliderProps> = ({
   return (
     <Popover.Root>
       <Popover.Trigger className="relative max-w-40 w-full hover:bg-white cursor-default rounded-md bg-white dark:bg-zinc-800 dark:text-zinc-100 py-3 pl-4 pr-12 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
-        <span className="block truncate font-normal">Grant Sizes</span>
+        <span className="block truncate font-normal">Grant Size</span>
         <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
           <ChevronDown className="h-5 w-5 text-black dark:text-white" />
         </span>
@@ -32,7 +32,7 @@ export const GrantSizeSlider: FC<SliderProps> = ({
             range
             className={"relative flex w-full items-center"}
             min={0}
-            max={10000000}
+            max={1000000}
             step={1000}
             value={value}
             onChange={(e: any) => onChangeListener(e)}
