@@ -26,8 +26,8 @@ const networkImages: Record<
   }
 > = {
   aleo: {
-    light: "/images/networks/aleph-zero-light.svg",
-    dark: "/images/networks/aleph-zero-dark.svg",
+    light: "/images/networks/aleo-light.svg",
+    dark: "/images/networks/aleo-dark.svg",
   },
   "aleph zero": {
     light: "/images/networks/aleph-zero-light.svg",

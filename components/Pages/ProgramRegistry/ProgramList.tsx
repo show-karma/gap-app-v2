@@ -146,17 +146,30 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
                             {registryHelper.networkImages[
                               network.toLowerCase()
                             ] ? (
-                              <Image
-                                width={24}
-                                height={24}
-                                src={
-                                  registryHelper.networkImages[
-                                    network.toLowerCase()
-                                  ].light
-                                }
-                                alt={network}
-                                className="rounded-full w-6 h-6"
-                              />
+                              <>
+                                <Image
+                                  width={24}
+                                  height={24}
+                                  src={
+                                    registryHelper.networkImages[
+                                      network.toLowerCase()
+                                    ].light
+                                  }
+                                  alt={network}
+                                  className="rounded-full w-6 h-6  dark:hidden"
+                                />
+                                <Image
+                                  width={24}
+                                  height={24}
+                                  src={
+                                    registryHelper.networkImages[
+                                      network.toLowerCase()
+                                    ].dark
+                                  }
+                                  alt={network}
+                                  className="rounded-full w-6 h-6  hidden dark:block"
+                                />
+                              </>
                             ) : (
                               <div className="w-7 h-7 rounded-full flex justify-center items-center bg-gray-500" />
                             )}
