@@ -70,7 +70,6 @@ interface ProgramListProps {
 }
 
 export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
-  console.log(grantPrograms);
   return (
     <table className="min-w-full divide-y divide-gray-300 h-full">
       <thead>
@@ -79,7 +78,7 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
             scope="col"
             className="py-3.5 pl-4 pr-3 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64"
           >
-            Ecosystem
+            Networks
           </th>
 
           <th
