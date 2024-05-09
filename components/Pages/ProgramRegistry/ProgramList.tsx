@@ -110,18 +110,7 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
           >
             Categories
           </th>
-          <th
-            scope="col"
-            className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
-          >
-            Start date
-          </th>
-          <th
-            scope="col"
-            className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
-          >
-            End date
-          </th>
+
           <th
             scope="col"
             className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
@@ -336,16 +325,6 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
                     </span>
                   ))}
                 </div>
-              </td>
-              <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-                {grant?.metadata?.startDate
-                  ? formatDate(grant?.metadata?.startDate)
-                  : ""}
-              </td>
-              <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-                {grant?.metadata?.endDate
-                  ? formatDate(grant?.metadata?.endDate)
-                  : ""}
               </td>
               <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
                 {grant.metadata?.grantTypes?.map((category, index) => (
