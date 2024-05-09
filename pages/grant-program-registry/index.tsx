@@ -204,7 +204,6 @@ const GrantProgramRegistry = ({
   };
 
   useEffect(() => {
-    console.log("useEffect");
     const getGrantPrograms = async () => {
       setLoading(true);
       setOffset(0);
