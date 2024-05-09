@@ -22,6 +22,7 @@ import { Dropdown } from "@/components/Utilities/Dropdown";
 import { useAuthStore } from "@/store/auth";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { registryHelper } from "./helper";
+import { SearchDropdown } from "./SearchDropdown";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -57,9 +58,6 @@ export default function AddProgram() {
   const {
     register,
     handleSubmit,
-    setValue,
-    control,
-    watch,
     formState: { errors, isSubmitting, isValid },
   } = useForm<CreateProgramType>({
     resolver: zodResolver(createProgramSchema),
@@ -379,48 +377,70 @@ export default function AddProgram() {
               <label htmlFor="program-categories" className={labelStyle}>
                 Categories *
               </label>
-              <Dropdown
+              <SearchDropdown
                 list={registryHelper.categories}
+                onSelectFunction={(value: string) =>
+                  onChangeGeneric(value, setSelectedCategories)
+                }
+                cleanFunction={() => {
+                  setSelectedCategories([]);
+                }}
+                type={"Categories"}
                 selected={selectedCategories}
-                onChangeListener={onChangeGeneric}
-                setToChange={setSelectedCategories}
-                unselectedText="Select categories"
+                prefixUnselected="Select"
               />
             </div>
             <div className="flex w-full flex-col  gap-1">
               <label htmlFor="program-ecosystems" className={labelStyle}>
                 Ecosystems *
               </label>
-              <Dropdown
+              <SearchDropdown
                 list={registryHelper.ecosystems}
+                onSelectFunction={(value: string) =>
+                  onChangeGeneric(value, setSelectedEcosystems)
+                }
+                cleanFunction={() => {
+                  setSelectedEcosystems([]);
+                }}
+                type={"Ecosystems"}
                 selected={selectedEcosystems}
-                onChangeListener={onChangeGeneric}
-                setToChange={setSelectedEcosystems}
-                unselectedText="Select ecosystems"
+                prefixUnselected="Select"
               />
             </div>
             <div className="flex w-full flex-col  gap-1">
               <label htmlFor="program-networks" className={labelStyle}>
                 Networks *
               </label>
-              <Dropdown
+
+              <SearchDropdown
                 list={registryHelper.networks}
+                imageDictionary={registryHelper.networkImages}
+                onSelectFunction={(value: string) =>
+                  onChangeGeneric(value, setSelectedNetworks)
+                }
+                cleanFunction={() => {
+                  setSelectedNetworks([]);
+                }}
+                type={"Networks"}
                 selected={selectedNetworks}
-                onChangeListener={onChangeGeneric}
-                setToChange={setSelectedNetworks}
-                unselectedText="Select networks"
+                prefixUnselected="Select"
               />
             </div>
             <div className="flex w-full flex-col  gap-1">
               <label htmlFor="program-types" className={labelStyle}>
                 Types *
               </label>
-              <Dropdown
+              <SearchDropdown
                 list={registryHelper.grantTypes}
+                onSelectFunction={(value: string) =>
+                  onChangeGeneric(value, setSelectedGrantTypes)
+                }
+                cleanFunction={() => {
+                  setSelectedGrantTypes([]);
+                }}
+                type={"Grant Types"}
                 selected={selectedGrantTypes}
-                onChangeListener={onChangeGeneric}
-                setToChange={setSelectedGrantTypes}
-                unselectedText="Select types"
+                prefixUnselected="Select"
               />
             </div>
           </div>

@@ -18,9 +18,16 @@ interface SearchDropdownProps {
   onSelectFunction: (value: string) => void;
   selected: string[];
   list: string[];
-  imageDictionary?: Record<string, string>;
+  imageDictionary?: Record<
+    string,
+    {
+      light: string;
+      dark: string;
+    }
+  >;
   type: string;
   cleanFunction: () => void;
+  prefixUnselected?: string;
 }
 export const SearchDropdown: FC<SearchDropdownProps> = ({
   onSelectFunction,
@@ -29,12 +36,13 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
   imageDictionary,
   type,
   cleanFunction,
+  prefixUnselected = "All",
 }) => {
   const [open, setOpen] = useState(false);
 
   const parsedArray = list.map((item) => ({
     value: item,
-    image: imageDictionary?.[item],
+    image: imageDictionary?.[item.toLowerCase()],
   }));
 
   const sortedList = parsedArray.sort((a, b) => {
@@ -57,7 +65,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
                   type,
                   selected.length
                 ).toLowerCase()} selected`
-              : `All ${type}`}
+              : `${prefixUnselected} ${type}`}
           </p>
           <span>
             <ChevronDown className="h-5 w-5 text-black dark:text-white" />
@@ -113,9 +121,16 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
                       <Image
                         width={20}
                         height={20}
-                        src={item.image}
+                        src={item.image.light}
                         alt={""}
-                        className="min-w-5 min-h-5 w-5 h-5 m-0 rounded-full"
+                        className="min-w-5 min-h-5 w-5 h-5 m-0 rounded-full block dark:hidden"
+                      />
+                      <Image
+                        width={20}
+                        height={20}
+                        src={item.image.dark}
+                        alt={""}
+                        className="min-w-5 min-h-5 w-5 h-5 m-0 rounded-full hidden dark:block"
                       />
                     </div>
                   ) : null}

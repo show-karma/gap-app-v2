@@ -350,7 +350,7 @@ export default function GrantProgramRegistry({}) {
                 }}
                 type={"Networks"}
                 selected={selectedNetworks}
-                // imageDictionary={}
+                imageDictionary={registryHelper.networkImages}
               />
               <SearchDropdown
                 list={registryHelper.ecosystems}
