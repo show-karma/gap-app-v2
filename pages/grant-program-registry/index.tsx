@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import React, { Dispatch } from "react";
+import React, { Dispatch, FC, useMemo } from "react";
 import { NextSeo } from "next-seo";
 import { defaultMetadata } from "@/utilities/meta";
 import { useState, useEffect } from "react";
@@ -10,7 +10,6 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
 import debounce from "lodash.debounce";
-import { Dropdown } from "@/components/Utilities/Dropdown";
 import { GrantSizeSlider } from "@/components/GrantSizeSlider";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -21,24 +20,112 @@ import {
 } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
+import { useQueryState } from "nuqs";
+import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 
 const statuses = ["Active", "Inactive"];
 
-export default function GrantProgramRegistry({}) {
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const { query } = context;
+  const defaultNetworks = ((query.networks as string) || "")
+    .split(",")
+    .filter((category) => category.trim());
+  const defaultEcosystems = ((query.ecosystems as string) || "")
+    .split(",")
+    .filter((ecosystem) => ecosystem.trim());
+  const defaultGrantTypes = ((query.grantTypes as string) || "")
+    .split(",")
+    .filter((grantType) => grantType.trim());
+  const defaultGrantSize = query.grantSize
+    ? ((query.grantSize as string) || "")
+        .split(",")
+        .filter((grantType) => grantType.trim())
+        .map((item) => (isNaN(Number(item)) ? 0 : +item))
+        .slice(0, 2)
+    : registryHelper.grantSizes;
+
+  const defaultCategories = ((query.categories as string) || "")
+    .split(",")
+    .filter((category) => category.trim());
+  const defaultStatuses = (query.status as string) || "";
+  const defaultName = (query.name as string) || "";
+
+  return {
+    props: {
+      defaultNetworks,
+      defaultEcosystems,
+      defaultGrantTypes,
+      defaultGrantSize,
+      defaultCategories,
+      defaultStatuses,
+      defaultName,
+    },
+  };
+}
+
+const GrantProgramRegistry = ({
+  defaultNetworks,
+  defaultEcosystems,
+  defaultGrantTypes,
+  defaultGrantSize,
+  defaultCategories,
+  defaultStatuses,
+  defaultName,
+}: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const [grantPrograms, setGrantPrograms] = useState<GrantProgram[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
 
-  const [selectedCategory, setSelectedCategory] = useState<string[]>([]);
-  const [status, setStatus] = useState("");
+  const [selectedCategory, setSelectedCategory] = useQueryState("categories", {
+    defaultValue: defaultCategories,
+    serialize: (value) => (value.length ? value?.join(",") : ""),
+    parse: (value) => (value.length > 0 ? value.split(",") : []),
+  });
+  const [status, setStatus] = useQueryState("status", {
+    defaultValue: defaultStatuses,
+  });
 
-  const [searchInput, setSearchInput] = useState("");
-  const [selectedGrantSize, setSelectedGrantSize] = useState(
-    registryHelper.grantSizes
+  const [searchInput, setSearchInput] = useQueryState("name", {
+    defaultValue: defaultStatuses,
+    throttleMs: 500,
+  });
+  const [selectedGrantSize, setSelectedGrantSize] = useQueryState<number[]>(
+    "grantSize",
+    {
+      defaultValue: defaultGrantSize,
+      serialize: (value) => value.join(","),
+      parse: (value) => {
+        const isValid = value.split(",").every((item) => !isNaN(Number(item)));
+        if (isValid) {
+          return value.split(",").map((item) => +item);
+        } else {
+          return registryHelper.grantSizes;
+        }
+      },
+    }
   );
-  const [selectedNetworks, setSelectedNetworks] = useState<string[]>([]);
-  const [selectedEcosystems, setSelectedEcosystems] = useState<string[]>([]);
-  const [selectedGrantTypes, setSelectedGrantTypes] = useState<string[]>([]);
+
+  const [selectedNetworks, setSelectedNetworks] = useQueryState("networks", {
+    defaultValue: defaultNetworks,
+    serialize: (value) => (value.length ? value?.join(",") : ""),
+    parse: (value) => (value.length > 0 ? value.split(",") : []),
+  });
+  const [selectedEcosystems, setSelectedEcosystems] = useQueryState(
+    "ecosystems",
+    {
+      defaultValue: defaultEcosystems,
+      serialize: (value) => (value.length ? value?.join(",") : ""),
+      parse: (value) => (value.length > 0 ? value.split(",") : []),
+    }
+  );
+  const [selectedGrantTypes, setSelectedGrantTypes] = useQueryState(
+    "grantTypes",
+    {
+      defaultValue: defaultGrantTypes,
+      serialize: (value) => (value.length ? value?.join(",") : ""),
+      parse: (value) => (value.length > 0 ? value.split(",") : []),
+    }
+  );
 
   const debouncedSearch = debounce((value: string) => {
     setSearchInput(value);
@@ -71,51 +158,6 @@ export default function GrantProgramRegistry({}) {
 
   const pageSize = 10;
   const [offset, setOffset] = useState(0);
-
-  async function getGrantPrograms() {
-    setLoading(true);
-    setOffset(0);
-    try {
-      await fetchData(
-        INDEXER.REGISTRY.GET_ALL +
-          `?limit=${pageSize}&offset=0${
-            searchInput ? `&name=${searchInput}` : ""
-          }${
-            selectedGrantTypes.length ? `&grantTypes=${selectedGrantTypes}` : ""
-          }${status ? `&status=${status}` : ""}${
-            selectedNetworks.length
-              ? `&networks=${selectedNetworks.join(",")}`
-              : ""
-          }${
-            selectedEcosystems.length
-              ? `&ecosystems=${selectedEcosystems.join(",")}`
-              : ""
-          }${
-            selectedGrantSize[0] !== registryHelper.grantSizes[0]
-              ? `&minGrantSize=${selectedGrantSize[0]}`
-              : ""
-          }${
-            selectedGrantSize[1] !== registryHelper.grantSizes[1]
-              ? `&maxGrantSize=${selectedGrantSize[1]}`
-              : ""
-          }${
-            selectedCategory.length
-              ? `&categories=${selectedCategory.join(",")}`
-              : ""
-          }`
-      ).then(([res, error]) => {
-        if (!error && res) {
-          setGrantPrograms(res);
-          setOffset(0);
-          setHasMore(res.length === pageSize);
-        }
-      });
-    } catch (error: any) {
-      console.log(error);
-    } finally {
-      setLoading(false);
-    }
-  }
 
   const fetchMoreData = async () => {
     try {
@@ -162,6 +204,53 @@ export default function GrantProgramRegistry({}) {
   };
 
   useEffect(() => {
+    console.log("useEffect");
+    const getGrantPrograms = async () => {
+      setLoading(true);
+      setOffset(0);
+      try {
+        await fetchData(
+          INDEXER.REGISTRY.GET_ALL +
+            `?limit=${pageSize}&offset=0${
+              searchInput ? `&name=${searchInput}` : ""
+            }${
+              selectedGrantTypes.length
+                ? `&grantTypes=${selectedGrantTypes}`
+                : ""
+            }${status ? `&status=${status}` : ""}${
+              selectedNetworks.length
+                ? `&networks=${selectedNetworks.join(",")}`
+                : ""
+            }${
+              selectedEcosystems.length
+                ? `&ecosystems=${selectedEcosystems.join(",")}`
+                : ""
+            }${
+              selectedGrantSize[0] !== registryHelper.grantSizes[0]
+                ? `&minGrantSize=${selectedGrantSize[0]}`
+                : ""
+            }${
+              selectedGrantSize[1] !== registryHelper.grantSizes[1]
+                ? `&maxGrantSize=${selectedGrantSize[1]}`
+                : ""
+            }${
+              selectedCategory.length
+                ? `&categories=${selectedCategory.join(",")}`
+                : ""
+            }`
+        ).then(([res, error]) => {
+          if (!error && res) {
+            setGrantPrograms(res);
+            setHasMore(res.length === pageSize);
+          }
+        });
+      } catch (error: any) {
+        console.log(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     getGrantPrograms();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
@@ -330,6 +419,7 @@ export default function GrantProgramRegistry({}) {
                   className="block w-full rounded-full border-0 bg-white dark:bg-zinc-600 py-1.5 pr-10 pl-3 text-black dark:text-white dark:placeholder:text-zinc-100  placeholder:text-zinc-900  sm:text-sm sm:leading-6"
                   placeholder="Search"
                   type="search"
+                  defaultValue={searchInput}
                   onChange={(e) => debouncedSearch(e.target.value)}
                 />
               </div>
@@ -422,4 +512,6 @@ export default function GrantProgramRegistry({}) {
       </section>
     </>
   );
-}
+};
+
+export default GrantProgramRegistry;

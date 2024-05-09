@@ -386,7 +386,17 @@ const ecosystems = [
   "ZetaChain",
   "Zilliqa",
 ];
-const categories = ["DEX", "DeFi"];
+const categories = [
+  "DEX",
+  "DeFi",
+  "GameFi",
+  "NFT",
+  "Lend/Borrow",
+  "Communities",
+  "Research",
+  "Yield Farming",
+  "Infrastructure",
+];
 const grantTypes = ["Retroactive", "Proactive", "Bounty"];
 
 const grantSizes = [0, 1000000];
