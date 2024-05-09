@@ -9,8 +9,14 @@ import {
 import { blo } from "blo";
 import { Hex } from "viem";
 import { useENSNames } from "@/store/ensNames";
+import { useProjectStore } from "@/store/project";
 import { formatDate } from "@/utilities/formatDate";
 import { ProjectImpactStatus } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
+import {
+  Tabs,
+  TabContent,
+  TabTrigger
+} from "@/components/Utilities/Tabs";
 
 interface VerificationsDialogProps {
   verifications: (
@@ -23,16 +29,59 @@ interface VerificationsDialogProps {
   title: string;
 }
 
+interface VerificationsItemProps {
+  verification: (
+    | MilestoneCompleted
+    | GrantUpdateStatus
+    | ProjectImpactStatus
+  );
+}
+
+const VerificationItem = ({ verification }: VerificationsItemProps) => {
+  const { ensNames } = useENSNames();
+
+  return (
+    <div className="flex flex-col items-start gap-1.5 p-4">
+      <div className="flex flex-row gap-3 items-center">
+        <img
+          src={blo(verification.attester as Hex, 8)}
+          alt={verification.attester}
+          className="h-8 w-8 min-h-8 min-w-8 rounded-full"
+        />
+        <p className="text-sm font-bold text-[#101828] font-body dark:text-zinc-200">
+          {ensNames[verification.attester as Hex]?.name ||
+            verification.attester}
+          <span className="ml-1 font-normal font-body text-[#344054] dark:text-zinc-300">
+            reviewed on {formatDate(verification.createdAt)}
+          </span>
+        </p>
+      </div>
+      <p className="pl-11 text-base font-normal text-[#344054] dark:text-zinc-300">
+        {verification.reason}
+      </p>
+    </div>
+  );
+}
+
 export const VerificationsDialog: FC<VerificationsDialogProps> = ({
   verifications,
   isOpen,
   closeDialog,
   title,
 }) => {
-  const { ensNames, populateEnsNames } = useENSNames();
+  const project = useProjectStore((state) => state.project);
+  const { populateEnsNames } = useENSNames();
   useEffect(() => {
     populateEnsNames(verifications.map((v) => v.attester as string));
-  }, [verifications]);
+  }, [populateEnsNames, verifications]);
+
+  const adminVerifications = useMemo(() => (
+    verifications.filter((item) => item.attester?.toUpperCase() === project?.attester?.toUpperCase())
+  ), [verifications, project]);
+  const memberVerifications = useMemo(() => (
+    verifications.filter((item) => item.attester?.toUpperCase() !== project?.attester?.toUpperCase())
+  ), [verifications, project]);
+
   return (
     <Transition appear show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={closeDialog}>
@@ -68,33 +117,35 @@ export const VerificationsDialog: FC<VerificationsDialogProps> = ({
                 </button>
                 <div className="flex flex-col gap-6">
                   <div className="flex flex-col gap-3">
-                    <h1 className="text-xl font-bold  font-body">{title}</h1>
-                    <div className="flex flex-col border border-gray-200 divide-gray-200 rounded-xl gap-1 divide-y max-h-[420px] overflow-y-auto">
-                      {verifications.map((verification) => (
-                        <div
-                          key={verification.attester}
-                          className="flex flex-col items-start gap-1.5 p-4"
-                        >
-                          <div className="flex flex-row gap-3 items-center">
-                            <img
-                              src={blo(verification.attester as Hex, 8)}
-                              alt={verification.attester}
-                              className="h-8 w-8 min-h-8 min-w-8 rounded-full"
+                    <h1 className="text-xl font-bold font-body">{title}</h1>
+                    <Tabs defaultTab="admins">
+                      <div className="flex flex-wrap w-max gap-2 rounded bg-[#F2F4F7] dark:bg-zinc-800 px-2 py-1">
+                        <TabTrigger value="admins" icon={adminVerifications.length}>
+                          Community Admins
+                        </TabTrigger>
+                        <TabTrigger value="members" icon={memberVerifications.length}>
+                          Community Members
+                        </TabTrigger>
+                      </div>
+                      <div className="flex flex-col border border-gray-200 divide-gray-200 rounded-xl gap-1 divide-y max-h-[420px] overflow-y-auto">
+                        <TabContent value="admins">
+                          {adminVerifications.map((verification) => (
+                            <VerificationItem
+                              key={verification.attester}
+                              verification={verification}
                             />
-                            <p className="text-sm font-bold text-[#101828] font-body dark:text-zinc-200">
-                              {ensNames[verification.attester as Hex]?.name ||
-                                verification.attester}
-                              <span className="ml-1 font-normal font-body text-[#344054] dark:text-zinc-300">
-                                reviewed on {formatDate(verification.createdAt)}
-                              </span>
-                            </p>
-                          </div>
-                          <p className="pl-11 text-base font-normal text-[#344054] dark:text-zinc-300">
-                            {verification.reason}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
+                          ))}
+                        </TabContent>
+                        <TabContent value="members">
+                          {memberVerifications.map((verification) => (
+                            <VerificationItem
+                              key={verification.attester}
+                              verification={verification}
+                            />
+                          ))}
+                        </TabContent>
+                      </div>
+                    </Tabs>
                   </div>
                 </div>
               </Dialog.Panel>
