@@ -86,7 +86,7 @@ const GrantProgramRegistry = ({
   });
 
   const [searchInput, setSearchInput] = useQueryState("name", {
-    defaultValue: defaultStatuses,
+    defaultValue: defaultName,
     throttleMs: 500,
   });
   const [selectedGrantSize, setSelectedGrantSize] = useQueryState<number[]>(
