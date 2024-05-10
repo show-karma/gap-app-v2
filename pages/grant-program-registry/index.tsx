@@ -96,7 +96,19 @@ const GrantProgramRegistry = ({
   });
   const [minGrantSize, setMinGrantSize] = useQueryState("minGrantSize", {
     throttleMs: 500,
-    defaultValue: defaultGrantSize[0].toString(),
+    defaultValue: defaultGrantSize[0].toString() as any,
+    parse: (value) => {
+      if (value === defaultGrantSize[0].toString()) {
+        return null;
+      }
+      return value;
+    },
+    serialize: (value) => {
+      if (value === defaultGrantSize[0].toString()) {
+        return null;
+      }
+      return value;
+    },
   });
   const [maxGrantSize, setMaxGrantSize] = useQueryState("maxGrantSize", {
     throttleMs: 500,
