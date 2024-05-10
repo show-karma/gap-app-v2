@@ -30,8 +30,6 @@ const inputStyle =
 
 const createProgramSchema = z.object({
   name: z.string().min(3, { message: MESSAGES.REGISTRY.FORM.NAME }),
-  logo: z.string().url().optional().or(z.literal("")),
-  banner: z.string().url().optional().or(z.literal("")),
   website: z.string().url().optional().or(z.literal("")),
   twitter: z.string().url().optional().or(z.literal("")),
   discord: z.string().url().optional().or(z.literal("")),
@@ -39,12 +37,9 @@ const createProgramSchema = z.object({
   blog: z.string().url().optional().or(z.literal("")),
   forum: z.string().url().optional().or(z.literal("")),
   budget: z.coerce.number().min(1, { message: MESSAGES.REGISTRY.FORM.BUDGET }),
-  amountDistributed: z.coerce
-    .number()
-    .min(1, { message: MESSAGES.REGISTRY.FORM.AMOUNT_DISTRIBUTED }),
+  amountDistributed: z.coerce.number().optional(),
   grantSize: z.coerce.number().int("Must be a integer"),
-  howManyApplicants: z.coerce.number().int("Must be a integer"),
-  howManyGrants: z.coerce.number().int("Must be a integer"),
+  grantsToDate: z.coerce.number().int("Must be a integer").optional(),
   linkToDetails: z.string().url(),
 });
 
@@ -123,8 +118,7 @@ export default function AddProgram() {
         programBudget: data.budget,
         amountDistributedToDate: data.amountDistributed,
         grantSize: data.grantSize,
-        applicantsNumber: data.howManyApplicants,
-        grantsIssued: data.howManyGrants,
+        grantsToDate: data.grantsToDate,
         linkToDetails: data.linkToDetails,
         website: data.website || "",
         projectTwitter: data.twitter || "",
@@ -140,8 +134,8 @@ export default function AddProgram() {
         ecosystems: selectedEcosystems,
         networks: selectedNetworks,
         grantTypes: selectedGrantTypes,
-        logoImg: data.logo || "",
-        bannerImg: data.banner || "",
+        logoImg: "",
+        bannerImg: "",
         logoImgData: {},
         bannerImgData: {},
         credentials: {},
@@ -239,7 +233,7 @@ export default function AddProgram() {
                 htmlFor="program-amount-distributed"
                 className={labelStyle}
               >
-                Amount distributed to date *
+                Amount distributed to date (optional)
               </label>
               <input
                 id="program-amount-distributed"
@@ -268,41 +262,23 @@ export default function AddProgram() {
               </p>
             </div>
             <div className="flex w-full flex-col  gap-1">
-              <label
-                htmlFor="program-how-many-applicants"
-                className={labelStyle}
-              >
-                How many applicants through the site *
+              <label htmlFor="program-grants-issued" className={labelStyle}>
+                Grants issued to date (optional)
               </label>
               <input
-                id="program-how-many-applicants"
-                type="number"
-                className={inputStyle}
-                placeholder="Ex: 120"
-                {...register("howManyApplicants")}
-              />
-              <p className="text-base text-red-400">
-                {errors.howManyApplicants?.message}
-              </p>
-            </div>
-            <div className="flex w-full flex-col  gap-1">
-              <label htmlFor="program-how-many-grants" className={labelStyle}>
-                How many grants issued *
-              </label>
-              <input
-                id="program-how-many-grants"
+                id="program-grants-issued"
                 type="number"
                 className={inputStyle}
                 placeholder="Ex: 60"
-                {...register("howManyGrants")}
+                {...register("grantsToDate")}
               />
               <p className="text-base text-red-400">
-                {errors.howManyGrants?.message}
+                {errors.grantsToDate?.message}
               </p>
             </div>
             <div className="flex w-full flex-col  gap-1">
               <label htmlFor="program-links-to-details" className={labelStyle}>
-                Links to details page *
+                Link to program details *
               </label>
               <input
                 id="program-links-to-details"
@@ -316,30 +292,6 @@ export default function AddProgram() {
             </div>
           </div>
           <div className="flex flex-col gap-2">
-            <div className="flex w-full flex-col gap-1">
-              <label htmlFor="program-logo" className={labelStyle}>
-                Program logo (optional)
-              </label>
-              <input
-                id="program-logo"
-                className={inputStyle}
-                placeholder="Ex: https://google.photos/program"
-                {...register("logo")}
-              />
-              <p className="text-base text-red-400">{errors.logo?.message}</p>
-            </div>
-            <div className="flex w-full flex-col gap-1">
-              <label htmlFor="program-banner" className={labelStyle}>
-                Program banner (optional)
-              </label>
-              <input
-                id="program-banner"
-                className={inputStyle}
-                placeholder="Ex: https://google.photos/program-banner"
-                {...register("banner")}
-              />
-              <p className="text-base text-red-400">{errors.banner?.message}</p>
-            </div>
             <div className="flex w-full flex-col gap-1">
               <label htmlFor="program-twitter" className={labelStyle}>
                 Twitter (optional)
@@ -408,7 +360,7 @@ export default function AddProgram() {
             </div>
             <div className="flex w-full flex-col  gap-1">
               <label htmlFor="program-website" className={labelStyle}>
-                Website (optional)
+                Program Website (optional)
               </label>
               <input
                 id="program-website"
