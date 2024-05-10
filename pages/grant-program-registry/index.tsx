@@ -20,7 +20,12 @@ import {
 } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
-import { useQueryState } from "nuqs";
+import {
+  parseAsFloat,
+  parseAsInteger,
+  useQueryState,
+  useQueryStates,
+} from "nuqs";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 
 const statuses = ["Active", "Inactive"];
@@ -89,21 +94,26 @@ const GrantProgramRegistry = ({
     defaultValue: defaultName,
     throttleMs: 500,
   });
-  const [selectedGrantSize, setSelectedGrantSize] = useQueryState<number[]>(
-    "grantSize",
-    {
-      defaultValue: defaultGrantSize,
-      serialize: (value) => value.join(","),
-      parse: (value) => {
-        const isValid = value.split(",").every((item) => !isNaN(Number(item)));
-        if (isValid) {
-          return value.split(",").map((item) => +item);
-        } else {
-          return registryHelper.grantSizes;
-        }
-      },
-    }
-  );
+  const [minGrantSize, setMinGrantSize] = useQueryState("minGrantSize", {
+    throttleMs: 500,
+    defaultValue: defaultGrantSize[0].toString(),
+  });
+  const [maxGrantSize, setMaxGrantSize] = useQueryState("maxGrantSize", {
+    throttleMs: 500,
+    defaultValue: defaultGrantSize[1].toString() as any,
+    parse: (value) => {
+      if (value === defaultGrantSize[1].toString()) {
+        return null;
+      }
+      return value;
+    },
+    serialize: (value) => {
+      if (value === defaultGrantSize[1].toString()) {
+        return null;
+      }
+      return value;
+    },
+  });
 
   const [selectedNetworks, setSelectedNetworks] = useQueryState("networks", {
     defaultValue: defaultNetworks,
@@ -132,7 +142,8 @@ const GrantProgramRegistry = ({
   }, 500);
 
   const changeGrantSize = (value: number[]) => {
-    setSelectedGrantSize(value);
+    setMinGrantSize(value[0].toString());
+    setMaxGrantSize(value[1].toString());
   };
 
   const onChangeGeneric = (
@@ -178,12 +189,12 @@ const GrantProgramRegistry = ({
               ? `&ecosystems=${selectedEcosystems.join(",")}`
               : ""
           }${
-            selectedGrantSize[0] !== registryHelper.grantSizes[0]
-              ? `&minGrantSize=${selectedGrantSize[0]}`
+            minGrantSize !== registryHelper.grantSizes[0].toString()
+              ? `&minGrantSize=${minGrantSize}`
               : ""
           }${
-            selectedGrantSize[1] !== registryHelper.grantSizes[1]
-              ? `&maxGrantSize=${selectedGrantSize[1]}`
+            maxGrantSize !== registryHelper.grantSizes[1].toString()
+              ? `&maxGrantSize=${maxGrantSize}`
               : ""
           }${
             selectedCategory.length
@@ -225,12 +236,12 @@ const GrantProgramRegistry = ({
                 ? `&ecosystems=${selectedEcosystems.join(",")}`
                 : ""
             }${
-              selectedGrantSize[0] !== registryHelper.grantSizes[0]
-                ? `&minGrantSize=${selectedGrantSize[0]}`
+              minGrantSize !== registryHelper.grantSizes[0].toString()
+                ? `&minGrantSize=${minGrantSize}`
                 : ""
             }${
-              selectedGrantSize[1] !== registryHelper.grantSizes[1]
-                ? `&maxGrantSize=${selectedGrantSize[1]}`
+              maxGrantSize !== registryHelper.grantSizes[1].toString()
+                ? `&maxGrantSize=${maxGrantSize}`
                 : ""
             }${
               selectedCategory.length
@@ -256,7 +267,8 @@ const GrantProgramRegistry = ({
     searchInput,
     selectedCategory,
     status,
-    selectedGrantSize,
+    minGrantSize,
+    maxGrantSize,
     selectedNetworks,
     selectedEcosystems,
     selectedGrantTypes,
@@ -425,7 +437,10 @@ const GrantProgramRegistry = ({
             </div>
             <div className="flex flex-row gap-2 w-max flex-1 max-md:flex-wrap max-md:flex-col justify-end">
               <GrantSizeSlider
-                value={selectedGrantSize}
+                value={[
+                  +minGrantSize,
+                  maxGrantSize ? +maxGrantSize : registryHelper.grantSizes[1],
+                ]}
                 onChangeListener={changeGrantSize}
               />
 

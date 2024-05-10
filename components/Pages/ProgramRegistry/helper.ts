@@ -399,7 +399,7 @@ const categories = [
 ];
 const grantTypes = ["Retroactive", "Proactive", "Bounty"];
 
-const grantSizes = [0, 1000000];
+const grantSizes = [0, 250000];
 
 export const registryHelper = {
   networks,

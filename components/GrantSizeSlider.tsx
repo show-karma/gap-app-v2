@@ -27,6 +27,9 @@ export const GrantSizeSlider: FC<SliderProps> = ({
           <p>
             Grant Size: ${formatCurrency(value[0])} - $
             {formatCurrency(value[1])}
+            {value[1].toString() === registryHelper.grantSizes[1].toString()
+              ? "+"
+              : ""}
           </p>
           <Slider
             range
