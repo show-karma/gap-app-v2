@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Dispatch, useState } from "react";
 import { MESSAGES } from "@/utilities/messages";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { ArrowLeftIcon, CalendarIcon } from "@heroicons/react/24/solid";
+import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import { Button } from "@/components/Utilities/Button";
 import Link from "next/link";
 import { PAGES } from "@/utilities/pages";

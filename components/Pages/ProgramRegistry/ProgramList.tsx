@@ -5,6 +5,11 @@ import Image from "next/image";
 import { FC } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { registryHelper } from "./helper";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { DiscordIcon, TwitterIcon } from "@/components/Icons";
+import { DiscussionIcon } from "@/components/Icons/Discussion";
+import { BlogIcon } from "@/components/Icons/Blog";
+import { OrganizationIcon } from "@/components/Icons/Organization";
 
 export type GrantProgram = {
   _id: {
@@ -17,10 +22,16 @@ export type GrantProgram = {
     tags?: string[];
     type?: string;
     title?: string;
-    discord?: string;
     endDate?: string;
     logoImg?: string;
-    website?: string;
+    socialLinks?: {
+      blog?: string;
+      forum?: string;
+      twitter?: string;
+      discord?: string;
+      website?: string;
+      orgWebsite?: string;
+    };
     bounties?: string[];
     bannerImg?: string;
     createdAt?: number;
@@ -79,7 +90,6 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
           >
             Networks
           </th>
-
           <th
             scope="col"
             className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
@@ -88,7 +98,7 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
           </th>
           <th
             scope="col"
-            className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
+            className="px-3 py-3.5 text-left w-[420px] text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
           >
             Description
           </th>
@@ -100,7 +110,7 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
           </th>
           <th
             scope="col"
-            className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
+            className="px-3 py-3.5 text-left text-sm w-[120px] font-bold text-gray-900 dark:text-zinc-100 font-body"
           >
             Grant Size
           </th>
@@ -126,7 +136,7 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
           return (
             <tr key={grant?.programId! + index}>
               <td>
-                <div className="w-full max-w-44 flex flex-row flex-wrap gap-1 my-2">
+                <div className="w-full max-w-44 flex flex-row flex-wrap gap-1 my-2 items-center">
                   {firstNetworks?.map((network, index) => (
                     <Tooltip.Provider key={network}>
                       <Tooltip.Root delayDuration={0.5}>
@@ -137,26 +147,26 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
                             ] ? (
                               <>
                                 <Image
-                                  width={24}
-                                  height={24}
+                                  width={20}
+                                  height={20}
                                   src={
                                     registryHelper.networkImages[
                                       network.toLowerCase()
                                     ].light
                                   }
                                   alt={network}
-                                  className="rounded-full w-6 h-6  dark:hidden"
+                                  className="rounded-full w-5 h-5  dark:hidden"
                                 />
                                 <Image
-                                  width={24}
-                                  height={24}
+                                  width={20}
+                                  height={20}
                                   src={
                                     registryHelper.networkImages[
                                       network.toLowerCase()
                                     ].dark
                                   }
                                   alt={network}
-                                  className="rounded-full w-6 h-6  hidden dark:block"
+                                  className="rounded-full w-5 h-5  hidden dark:block"
                                 />
                               </>
                             ) : (
@@ -176,20 +186,22 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
                                   network.toLowerCase()
                                 ] ? (
                                   <Image
-                                    width={24}
-                                    height={24}
+                                    width={16}
+                                    height={16}
                                     src={
                                       registryHelper.networkImages[
                                         network.toLowerCase()
                                       ].dark
                                     }
                                     alt={network}
-                                    className="rounded-full w-6 h-6"
+                                    className="rounded-full w-4 h-4"
                                   />
                                 ) : (
-                                  <div className="w-7 h-7 rounded-full flex justify-center items-center bg-gray-500" />
+                                  <div className="w-4 h-4 rounded-full flex justify-center items-center bg-gray-500" />
                                 )}
-                                <p key={network}>{network}</p>
+                                <p className="text-sm text-white" key={network}>
+                                  {network}
+                                </p>
                               </div>
                             </div>
                             <Tooltip.Arrow className="TooltipArrow" />
@@ -204,7 +216,7 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
                         <Tooltip.Trigger asChild>
                           <p
                             key={index}
-                            className="whitespace-nowrap rounded-full w-7 h-7 items-center flex flex-col justify-center px-1 py-1 text-[11px] truncate text-center text-blue-700 bg-[#EFF8FF] border border-[#B2DDFF] mr-2"
+                            className="whitespace-nowrap rounded-full w-6 h-6 items-center flex flex-col justify-center px-1 py-1 text-[11px] truncate text-center text-blue-700 bg-[#EFF8FF] border border-[#B2DDFF] mr-2"
                           >
                             +{restNetworks.length}
                           </p>
@@ -225,20 +237,22 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
                                     item.toLowerCase()
                                   ] ? (
                                     <Image
-                                      width={24}
-                                      height={24}
+                                      width={16}
+                                      height={16}
                                       src={
                                         registryHelper.networkImages[
                                           item.toLowerCase()
                                         ].dark
                                       }
                                       alt={item}
-                                      className="rounded-full w-6 h-6"
+                                      className="rounded-full w-4 h-4"
                                     />
                                   ) : (
-                                    <div className="w-7 h-7 rounded-full flex justify-center items-center bg-gray-500" />
+                                    <div className="w-4 h-4 rounded-full flex justify-center items-center bg-gray-500" />
                                   )}
-                                  <p key={item}>{item}</p>
+                                  <p className="text-sm text-white" key={item}>
+                                    {item}
+                                  </p>
                                 </div>
                               ))}
                             </div>
@@ -253,41 +267,89 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
               <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300 text-wrap max-w-[285px]">
                 <div className="flex flex-row gap-3">
                   <div className="flex flex-col gap-1">
-                    <div className="font-semibold text-base text-gray-900 underline dark:text-zinc-100">
-                      {grant?.metadata?.title}
-                    </div>
-                    {grant.metadata?.website ? (
-                      <a
-                        href={`https://grantname.xyz`}
-                        className="font-semibold text-base text-blue-700"
+                    {grant.metadata?.socialLinks?.website ? (
+                      <ExternalLink
+                        href={grant.metadata?.socialLinks?.website}
+                        className="w-max"
                       >
-                        {grant.metadata?.website}
-                      </a>
-                    ) : null}
-                    {grant.metadata?.website ? (
-                      <>
-                        <Image
-                          className="w-5 h-5 text-black dark:text-white dark:hidden"
-                          width={20}
-                          height={20}
-                          src="/icons/globe.svg"
-                          alt={grant.metadata?.website}
-                        />
-                        <Image
-                          width={20}
-                          height={20}
-                          className="w-5 h-5 text-black dark:text-white hidden dark:block"
-                          src="/icons/globe-white.svg"
-                          alt={grant.metadata?.website}
-                        />
-                      </>
-                    ) : null}
+                        <div className="font-semibold text-base text-gray-900 underline dark:text-zinc-100">
+                          {grant?.metadata?.title}
+                        </div>
+                      </ExternalLink>
+                    ) : (
+                      <div className="font-semibold text-base text-gray-900 dark:text-zinc-100">
+                        {grant?.metadata?.title}
+                      </div>
+                    )}
+                    <div className="flex flex-row gap-1 w-full">
+                      {grant.metadata?.socialLinks?.website ? (
+                        <ExternalLink
+                          href={grant.metadata?.socialLinks?.website}
+                          className="w-max"
+                        >
+                          <Image
+                            className="w-5 h-5 text-black dark:text-white dark:hidden"
+                            width={20}
+                            height={20}
+                            src="/icons/globe.svg"
+                            alt={grant.metadata?.socialLinks?.website}
+                          />
+                          <Image
+                            width={20}
+                            height={20}
+                            className="w-5 h-5 text-black dark:text-white hidden dark:block"
+                            src="/icons/globe-white.svg"
+                            alt={grant.metadata?.socialLinks?.website}
+                          />
+                        </ExternalLink>
+                      ) : null}
+                      {grant.metadata?.socialLinks?.twitter ? (
+                        <ExternalLink
+                          href={grant.metadata?.socialLinks?.twitter}
+                          className="w-max"
+                        >
+                          <TwitterIcon className="w-5 h-5 text-black dark:text-white" />
+                        </ExternalLink>
+                      ) : null}
+                      {grant.metadata?.socialLinks?.discord ? (
+                        <ExternalLink
+                          href={grant.metadata?.socialLinks?.discord}
+                          className="w-max"
+                        >
+                          <DiscordIcon className="w-5 h-5 text-black dark:text-white" />
+                        </ExternalLink>
+                      ) : null}
+                      {grant.metadata?.socialLinks?.forum ? (
+                        <ExternalLink
+                          href={grant.metadata?.socialLinks?.forum}
+                          className="w-max"
+                        >
+                          <DiscussionIcon className="w-5 h-5 text-black dark:text-white" />
+                        </ExternalLink>
+                      ) : null}
+                      {grant.metadata?.socialLinks?.blog ? (
+                        <ExternalLink
+                          href={grant.metadata?.socialLinks?.blog}
+                          className="w-max"
+                        >
+                          <BlogIcon className="w-5 h-5 text-black dark:text-white" />
+                        </ExternalLink>
+                      ) : null}
+                      {grant.metadata?.socialLinks?.orgWebsite ? (
+                        <ExternalLink
+                          href={grant.metadata?.socialLinks?.orgWebsite}
+                          className="w-max"
+                        >
+                          <OrganizationIcon className="w-5 h-5 text-black dark:text-white" />
+                        </ExternalLink>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
               </td>
               <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-400 max-w-[285px]">
                 <div
-                  className="w-[320px] max-w-[320px] text-wrap"
+                  className="w-[420px] max-w-[420px] text-wrap"
                   data-color-mode="light"
                 >
                   <ReadMore
