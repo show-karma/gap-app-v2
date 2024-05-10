@@ -126,6 +126,8 @@ export default function AddProgram() {
         applicantsNumber: data.howManyApplicants,
         grantsIssued: data.howManyGrants,
         linkToDetails: data.linkToDetails,
+        website: data.website || "",
+        projectTwitter: data.twitter || "",
         socialLinks: {
           twitter: data.twitter || "",
           website: data.website || "",
