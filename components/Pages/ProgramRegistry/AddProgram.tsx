@@ -35,6 +35,9 @@ const createProgramSchema = z.object({
   website: z.string().url().optional().or(z.literal("")),
   twitter: z.string().url().optional().or(z.literal("")),
   discord: z.string().url().optional().or(z.literal("")),
+  orgWebsite: z.string().url().optional().or(z.literal("")),
+  blog: z.string().url().optional().or(z.literal("")),
+  forum: z.string().url().optional().or(z.literal("")),
   budget: z.coerce.number().min(1, { message: MESSAGES.REGISTRY.FORM.BUDGET }),
   amountDistributed: z.coerce
     .number()
@@ -125,7 +128,10 @@ export default function AddProgram() {
         linkToDetails: data.linkToDetails,
         projectTwitter: data.twitter || "",
         website: data.website || "",
-        discord: data.discord,
+        discord: data.discord || "",
+        orgWebsite: data.orgWebsite || "",
+        blog: data.blog || "",
+        forum: data.forum || "",
         categories: selectedCategories,
         ecosystems: selectedEcosystems,
         networks: selectedNetworks,
@@ -356,6 +362,44 @@ export default function AddProgram() {
               />
               <p className="text-base text-red-400">
                 {errors.discord?.message}
+              </p>
+            </div>
+            <div className="flex w-full flex-col  gap-1">
+              <label htmlFor="program-blog" className={labelStyle}>
+                Blog (optional)
+              </label>
+              <input
+                id="program-blog"
+                className={inputStyle}
+                placeholder="Ex: https://blog.program.co/program"
+                {...register("blog")}
+              />
+              <p className="text-base text-red-400">{errors.blog?.message}</p>
+            </div>
+            <div className="flex w-full flex-col  gap-1">
+              <label htmlFor="program-forum" className={labelStyle}>
+                Forum (optional)
+              </label>
+              <input
+                id="program-forum"
+                className={inputStyle}
+                placeholder="Ex: https://forum.program.co/program"
+                {...register("forum")}
+              />
+              <p className="text-base text-red-400">{errors.forum?.message}</p>
+            </div>
+            <div className="flex w-full flex-col  gap-1">
+              <label htmlFor="program-org" className={labelStyle}>
+                Organization website (optional)
+              </label>
+              <input
+                id="program-org"
+                className={inputStyle}
+                placeholder="Ex: https://org.program.co/program"
+                {...register("orgWebsite")}
+              />
+              <p className="text-base text-red-400">
+                {errors.orgWebsite?.message}
               </p>
             </div>
             <div className="flex w-full flex-col  gap-1">
