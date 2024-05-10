@@ -86,13 +86,7 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
         <tr className="">
           <th
             scope="col"
-            className="py-3.5 pl-4 pr-3 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64"
-          >
-            Networks
-          </th>
-          <th
-            scope="col"
-            className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
+            className="py-3.5 px-3 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
           >
             Name
           </th>
@@ -101,6 +95,12 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
             className="px-3 py-3.5 text-left w-[420px] text-sm font-bold text-gray-900 dark:text-zinc-100 font-body"
           >
             Description
+          </th>
+          <th
+            scope="col"
+            className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64"
+          >
+            Networks
           </th>
           <th
             scope="col"
@@ -135,6 +135,104 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
           const restNetworks = grant.metadata?.networks?.slice(4);
           return (
             <tr key={grant?.programId! + index}>
+              <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300 text-wrap max-w-[285px]">
+                <div className="flex flex-row gap-3">
+                  <div className="flex flex-col gap-1">
+                    {grant.metadata?.socialLinks?.website ? (
+                      <ExternalLink
+                        href={grant.metadata?.socialLinks?.website}
+                        className="w-max"
+                      >
+                        <div className="font-semibold text-base text-gray-900 underline dark:text-zinc-100">
+                          {grant?.metadata?.title}
+                        </div>
+                      </ExternalLink>
+                    ) : (
+                      <div className="font-semibold text-base text-gray-900 dark:text-zinc-100">
+                        {grant?.metadata?.title}
+                      </div>
+                    )}
+                    <div className="flex flex-row gap-1 w-full">
+                      {grant.metadata?.socialLinks?.website ? (
+                        <ExternalLink
+                          href={grant.metadata?.socialLinks?.website}
+                          className="w-max"
+                        >
+                          <Image
+                            className="w-5 h-5 text-black dark:text-white dark:hidden"
+                            width={20}
+                            height={20}
+                            src="/icons/globe.svg"
+                            alt={grant.metadata?.socialLinks?.website}
+                          />
+                          <Image
+                            width={20}
+                            height={20}
+                            className="w-5 h-5 text-black dark:text-white hidden dark:block"
+                            src="/icons/globe-white.svg"
+                            alt={grant.metadata?.socialLinks?.website}
+                          />
+                        </ExternalLink>
+                      ) : null}
+                      {grant.metadata?.socialLinks?.twitter ? (
+                        <ExternalLink
+                          href={grant.metadata?.socialLinks?.twitter}
+                          className="w-max"
+                        >
+                          <TwitterIcon className="w-5 h-5 text-black dark:text-white" />
+                        </ExternalLink>
+                      ) : null}
+                      {grant.metadata?.socialLinks?.discord ? (
+                        <ExternalLink
+                          href={grant.metadata?.socialLinks?.discord}
+                          className="w-max"
+                        >
+                          <DiscordIcon className="w-5 h-5 text-black dark:text-white" />
+                        </ExternalLink>
+                      ) : null}
+                      {grant.metadata?.socialLinks?.forum ? (
+                        <ExternalLink
+                          href={grant.metadata?.socialLinks?.forum}
+                          className="w-max"
+                        >
+                          <DiscussionIcon className="w-5 h-5 text-black dark:text-white" />
+                        </ExternalLink>
+                      ) : null}
+                      {grant.metadata?.socialLinks?.blog ? (
+                        <ExternalLink
+                          href={grant.metadata?.socialLinks?.blog}
+                          className="w-max"
+                        >
+                          <BlogIcon className="w-5 h-5 text-black dark:text-white" />
+                        </ExternalLink>
+                      ) : null}
+                      {grant.metadata?.socialLinks?.orgWebsite ? (
+                        <ExternalLink
+                          href={grant.metadata?.socialLinks?.orgWebsite}
+                          className="w-max"
+                        >
+                          <OrganizationIcon className="w-5 h-5 text-black dark:text-white" />
+                        </ExternalLink>
+                      ) : null}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-400 max-w-[285px]">
+                <div
+                  className="w-[420px] max-w-[420px] text-wrap pr-8"
+                  data-color-mode="light"
+                >
+                  <ReadMore
+                    readLessText="Show less description"
+                    readMoreText="Show full description"
+                    side="left"
+                    words={50}
+                  >
+                    {grant.metadata?.description!}
+                  </ReadMore>
+                </div>
+              </td>
               <td>
                 <div className="w-full max-w-44 flex flex-row flex-wrap gap-1 my-2 items-center">
                   {firstNetworks?.map((network, index) => (
@@ -264,104 +362,6 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
                   ) : null}
                 </div>
               </td>
-              <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300 text-wrap max-w-[285px]">
-                <div className="flex flex-row gap-3">
-                  <div className="flex flex-col gap-1">
-                    {grant.metadata?.socialLinks?.website ? (
-                      <ExternalLink
-                        href={grant.metadata?.socialLinks?.website}
-                        className="w-max"
-                      >
-                        <div className="font-semibold text-base text-gray-900 underline dark:text-zinc-100">
-                          {grant?.metadata?.title}
-                        </div>
-                      </ExternalLink>
-                    ) : (
-                      <div className="font-semibold text-base text-gray-900 dark:text-zinc-100">
-                        {grant?.metadata?.title}
-                      </div>
-                    )}
-                    <div className="flex flex-row gap-1 w-full">
-                      {grant.metadata?.socialLinks?.website ? (
-                        <ExternalLink
-                          href={grant.metadata?.socialLinks?.website}
-                          className="w-max"
-                        >
-                          <Image
-                            className="w-5 h-5 text-black dark:text-white dark:hidden"
-                            width={20}
-                            height={20}
-                            src="/icons/globe.svg"
-                            alt={grant.metadata?.socialLinks?.website}
-                          />
-                          <Image
-                            width={20}
-                            height={20}
-                            className="w-5 h-5 text-black dark:text-white hidden dark:block"
-                            src="/icons/globe-white.svg"
-                            alt={grant.metadata?.socialLinks?.website}
-                          />
-                        </ExternalLink>
-                      ) : null}
-                      {grant.metadata?.socialLinks?.twitter ? (
-                        <ExternalLink
-                          href={grant.metadata?.socialLinks?.twitter}
-                          className="w-max"
-                        >
-                          <TwitterIcon className="w-5 h-5 text-black dark:text-white" />
-                        </ExternalLink>
-                      ) : null}
-                      {grant.metadata?.socialLinks?.discord ? (
-                        <ExternalLink
-                          href={grant.metadata?.socialLinks?.discord}
-                          className="w-max"
-                        >
-                          <DiscordIcon className="w-5 h-5 text-black dark:text-white" />
-                        </ExternalLink>
-                      ) : null}
-                      {grant.metadata?.socialLinks?.forum ? (
-                        <ExternalLink
-                          href={grant.metadata?.socialLinks?.forum}
-                          className="w-max"
-                        >
-                          <DiscussionIcon className="w-5 h-5 text-black dark:text-white" />
-                        </ExternalLink>
-                      ) : null}
-                      {grant.metadata?.socialLinks?.blog ? (
-                        <ExternalLink
-                          href={grant.metadata?.socialLinks?.blog}
-                          className="w-max"
-                        >
-                          <BlogIcon className="w-5 h-5 text-black dark:text-white" />
-                        </ExternalLink>
-                      ) : null}
-                      {grant.metadata?.socialLinks?.orgWebsite ? (
-                        <ExternalLink
-                          href={grant.metadata?.socialLinks?.orgWebsite}
-                          className="w-max"
-                        >
-                          <OrganizationIcon className="w-5 h-5 text-black dark:text-white" />
-                        </ExternalLink>
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
-              </td>
-              <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-400 max-w-[285px]">
-                <div
-                  className="w-[420px] max-w-[420px] text-wrap"
-                  data-color-mode="light"
-                >
-                  <ReadMore
-                    readLessText="Show less description"
-                    readMoreText="Show full description"
-                    side="left"
-                    words={50}
-                  >
-                    {grant.metadata?.description!}
-                  </ReadMore>
-                </div>
-              </td>{" "}
               <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
                 {grant?.metadata?.programBudget
                   ? formatCurrency(+grant?.metadata?.programBudget) === "NaN"
