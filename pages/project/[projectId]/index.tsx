@@ -127,6 +127,7 @@ export const NestedLayout = ({ children }: Props) => {
         } catch (error: any) {
           console.log(error);
           setProject(undefined);
+          router.push(PAGES.NOT_FOUND);
         } finally {
           setLoading(false);
         }
@@ -453,15 +454,15 @@ const ProjectPageIndex = ({
     title: `Karma GAP - ${projectTitle}`,
     description: projectDesc,
   };
-  if (!projectTitle) {
-    // Project is undefined, return null or any other fallback component
-    return (
-      <div className="col-span-12 min-h-screen px-4 py-4">
-        <h1 className="text-3xl mb-5">404 - Project Not Found</h1>
-        <Link href="/">Go Home</Link>
-      </div>
-    );
-  }
+  // if (!projectTitle) {
+  //   // Project is undefined, return null or any other fallback component
+  //   return (
+  //     <div className="col-span-12 min-h-screen px-4 py-4">
+  //       <h1 className="text-3xl mb-5">404 - Project Not Found</h1>
+  //       <Link href="/">Go Home</Link>
+  //     </div>
+  //   );
+  // }
   return (
     <>
       <NextSeo
