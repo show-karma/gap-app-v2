@@ -28,6 +28,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { useAuthStore } from "@/store/auth";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
 
 interface GrantEdited {
   uid: string;
@@ -46,6 +47,8 @@ type SimplifiedGrants = {
   createdOn: string;
   categories: string[];
   uid: string;
+  projectUid: string;
+  projectSlug: string;
 };
 
 const milestonesPercentage = (grantToCalculate: Grant) => {
@@ -172,6 +175,8 @@ export default function Index() {
                   ),
                   categories: grant.categories || [],
                   uid: grant.uid,
+                  projectUid: grant.project?.uid || "",
+                  projectSlug: grant.project?.details?.data?.slug || "",
                 } as SimplifiedGrants)
             );
           setGrants(mapSimplifiedGrants);
@@ -364,14 +369,25 @@ export default function Index() {
                           className="dark:text-zinc-300 text-gray-900 px-4 py-4"
                         >
                           <td className="px-4 py-2 font-medium h-16">
-                            <div className="max-w-full line-clamp-2">
+                            <ExternalLink
+                              href={PAGES.PROJECT.OVERVIEW(
+                                grant.projectSlug || grant.projectUid
+                              )}
+                              className="max-w-full line-clamp-2 underline"
+                            >
                               {grant.project}
-                            </div>
+                            </ExternalLink>
                           </td>
                           <td className="px-4 py-2">
-                            <div className="max-w-full line-clamp-2">
+                            <ExternalLink
+                              href={PAGES.PROJECT.GRANT(
+                                grant.projectSlug || grant.projectUid,
+                                grant.uid
+                              )}
+                              className="max-w-full line-clamp-2 underline w-max"
+                            >
                               {grant.grant}
-                            </div>
+                            </ExternalLink>
                           </td>
                           <td className="px-4 py-2">
                             <div className=" max-w-[200px] line-clamp-2">

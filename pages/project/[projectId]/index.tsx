@@ -125,7 +125,13 @@ export const NestedLayout = ({ children }: Props) => {
           }
           setProject(fetchedProject);
         } catch (error: any) {
-          console.log(error);
+          if (
+            error.message.includes("422") ||
+            error?.response?.statusCode === 422 ||
+            error?.response?.message.toLowerCase().includes("not found")
+          ) {
+            router.push(PAGES.NOT_FOUND);
+          }
           setProject(undefined);
         } finally {
           setLoading(false);
@@ -453,6 +459,15 @@ const ProjectPageIndex = ({
     title: `Karma GAP - ${projectTitle}`,
     description: projectDesc,
   };
+  // if (!projectTitle) {
+  //   // Project is undefined, return null or any other fallback component
+  //   return (
+  //     <div className="col-span-12 min-h-screen px-4 py-4">
+  //       <h1 className="text-3xl mb-5">404 - Project Not Found</h1>
+  //       <Link href="/">Go Home</Link>
+  //     </div>
+  //   );
+  // }
   return (
     <>
       <NextSeo
@@ -481,7 +496,8 @@ const ProjectPageIndex = ({
           },
         ]}
       />
-      <ProjectPage />
+
+      {<ProjectPage />}
     </>
   );
 };
