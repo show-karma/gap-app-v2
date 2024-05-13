@@ -126,9 +126,7 @@ export const NestedLayout = ({ children }: Props) => {
           setProject(fetchedProject);
         } catch (error: any) {
           console.log(error.message);
-          if (
-            error.message === "AxiosError: Request failed with status code 422"
-          ) {
+          if (error.message.includes("422")) {
             router.push(PAGES.NOT_FOUND);
           }
           setProject(undefined);
