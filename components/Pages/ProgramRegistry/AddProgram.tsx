@@ -148,11 +148,18 @@ export default function AddProgram() {
       };
       const owner = address as string;
 
-      await alloRegistry
+      const hasRegistry = await alloRegistry
         .createProgram(nonce + 1, name, metadata, owner, [owner])
+        .then((res) => {
+          console.log("res", res);
+          return res;
+        })
         .catch((error) => {
           throw new Error(error);
         });
+      if (!hasRegistry) {
+        throw new Error("Error creating program");
+      }
       toast.success("Program created successfully");
       router.push(PAGES.REGISTRY.ROOT);
     } catch (error) {
