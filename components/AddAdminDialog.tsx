@@ -12,7 +12,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { MarkdownEditor } from "./Utilities/MarkdownEditor";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { Community, nullRef } from "@show-karma/karma-gap-sdk";
+import { Community, GAP, nullRef } from "@show-karma/karma-gap-sdk";
 import { Button } from "./Utilities/Button";
 import { useProjectStore } from "@/store";
 import { MESSAGES } from "@/utilities/messages";
@@ -35,24 +35,26 @@ const schema = z.object({
 
 type SchemaType = z.infer<typeof schema>;
 
-type ProjectDialogProps = {
+type AddAdminDialogProps = {
   buttonElement?: {
     text?: string;
     icon?: ReactNode;
     iconSide?: "left" | "right";
     styleClass: string;
   };
-  CreateCommuninty?: Community;
+  UUID: `0x${string}`;
+  chainid: number;
 };
 
-export const AddAdmin: FC<ProjectDialogProps> = ({
+export const AddAdmin: FC<AddAdminDialogProps> = ({
   buttonElement = {
     icon: <PlusIcon className="h-4 w-4 text-white" />,
     iconSide: "left",
     text: "Add Admin",
     styleClass: "",
   },
-  CreateCommuninty,
+  UUID,
+  chainid,
 }) => {
   const dataToUpdate = {
     address: "0x000",
@@ -79,10 +81,31 @@ export const AddAdmin: FC<ProjectDialogProps> = ({
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  const { chain } = useNetwork();
+  const { switchNetworkAsync } = useSwitchNetwork({
+    chainId: appNetwork[0].id,
+  });
 
   const addAdmin = async (data: SchemaType) => {
+    if (chain?.id != chainid) {
+      await switchNetworkAsync?.(chainid);
+    }
+    const walletClient = await getWalletClient({
+      chainId: chainid,
+    });
+    if (!walletClient) return;
+    const walletSigner = await walletClientToSigner(walletClient);
     try {
       console.log(data.address);
+
+      const communityResolver = (await GAP.getCommunityResolver(
+        walletSigner
+      )) as any;
+      const communityResponse = await communityResolver.enlist(
+        UUID,
+        data.address
+      );
+      console.log(communityResponse);
     } catch (error) {
       console.log(error);
     }
@@ -93,7 +116,7 @@ export const AddAdmin: FC<ProjectDialogProps> = ({
       setIsLoading(true); // Set loading state to true
       await addAdmin(data); // Call the addAdmin function
       setIsLoading(false); // Reset loading state
-      // closeModal(); // Close the dialog upon successful submission
+      closeModal(); // Close the dialog upon successful submission
     } catch (error) {
       console.error("Error Adding Community Admin:", error);
       setIsLoading(false); // Reset loading state
@@ -152,13 +175,13 @@ export const AddAdmin: FC<ProjectDialogProps> = ({
                   >
                     <XMarkIcon className="w-5 h-5" />
                   </button>
-                  {!CreateCommuninty && (
+                  {
                     <div className="mt-2">
                       <p className="text-sm text-gray-600 dark:text-zinc-300">
                         Fill out these details to add a new Community admin
                       </p>
                     </div>
-                  )}
+                  }
 
                   <form onSubmit={handleSubmit(onSubmit)}>
                     <div className="w-full px-2 py-4 sm:px-0">

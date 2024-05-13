@@ -163,7 +163,10 @@ export default function Communities() {
                           <p>0x00000000000</p>
                         </td>
                         <td>
-                          <AddAdmin />
+                          <AddAdmin
+                            UUID={community.uid}
+                            chainid={community.chainID}
+                          />
                         </td>
                       </tr>
                     ))}
