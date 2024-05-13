@@ -50,6 +50,7 @@ export const Searchbar: FC = () => {
         data={projects}
         isOpen={isSearchListOpen}
         isLoading={isLoading}
+        closeSearchList={closeSearchList}
       />
     </div>
   );

@@ -121,5 +121,14 @@ export const chosenCommunities = () => {
         dark: "https://substackcdn.com/image/fetch/w_1456,c_limit,f_webp,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fca26ac94-67d3-4a26-82c1-54d5c606f7ce_1456x1048.png",
       },
     },
+    {
+      name: "Climate Coordination",
+      slug: "climate-coordination-network",
+      uid: "0x5657dbe027418111401a194dab2226fa06a647f42f7da340b869c4906f556b09",
+      imageURL: {
+        light: "https://pbs.twimg.com/profile_images/1778107539047030784/egzhv4lT_400x400.jpg",
+        dark: "https://pbs.twimg.com/profile_images/1778107539047030784/egzhv4lT_400x400.jpg",
+      }
+    }
   ];
 };

@@ -25,6 +25,8 @@ import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { getWalletClient } from "@wagmi/core";
 import toast from "react-hot-toast";
 import { useCommunitiesStore } from "@/store/communities";
+import { envVars } from "@/utilities/enviromentVars";
+import { title } from "process";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -106,9 +108,9 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
     setIsLoading(true); // Set loading state to true
 
     try {
-      if (chain?.id != getChainIdByName(selectedChain)) {
-        await switchNetworkAsync?.(getChainIdByName(selectedChain));
-        gapClient = getGapClient(getChainIdByName(selectedChain));
+      if (chain?.id != selectedChain) {
+        await switchNetworkAsync?.(selectedChain);
+        gapClient = getGapClient(selectedChain);
       }
       const newCommunity = new Community({
         data: {
@@ -124,7 +126,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
       }
 
       const walletClient = await getWalletClient({
-        chainId: getChainIdByName(selectedChain),
+        chainId: selectedChain,
       });
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
@@ -143,6 +145,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
         });
     } catch (error) {
       console.error("Error creating community:", error);
+      toast.error("Error creating community");
     } finally {
       setIsLoading(false); // Reset loading state
     }
@@ -155,7 +158,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
   const [description, setDescription] = useState(
     dataToUpdate?.description || ""
   );
-  const [selectedChain, setSelectedChain] = useState("optimismSepolia");
+  const [selectedChain, setSelectedChain] = useState(appNetwork[0].id);
 
   return (
     <>
@@ -241,14 +244,14 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
                           className={inputStyle}
                           value={selectedChain}
                           onChange={(e) => {
-                            setSelectedChain(e.target.value);
+                            setSelectedChain(+e.target.value);
                           }}
                         >
-                          <option value={"optimismSepolia"}>
-                            Optimism Sepolia
-                          </option>
-                          <option value={"optimism"}>Optimism</option>
-                          <option value={"arbitrum"}>Arbitrum One</option>
+                          {appNetwork.map((chain) => (
+                            <option key={chain.id} value={chain.id}>
+                              {chain.name}
+                            </option>
+                          ))}
                         </select>
                       </div>
 
