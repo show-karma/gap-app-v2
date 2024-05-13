@@ -35,7 +35,8 @@ export type GrantProgram = {
     bounties?: string[];
     bannerImg?: string;
     createdAt?: number;
-    grantSize?: string;
+    minGrantSize?: string;
+    maxGrantSize?: string;
     startDate?: string;
     categories?: string[];
     ecosystems?: string[];
@@ -370,10 +371,10 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
                   : ""}
               </td>
               <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-                {grant?.metadata?.grantSize
-                  ? formatCurrency(+grant?.metadata?.grantSize) === "NaN"
-                    ? grant?.metadata?.grantSize
-                    : `$${formatCurrency(+grant?.metadata?.grantSize)}`
+                {grant?.metadata?.minGrantSize && grant?.metadata?.maxGrantSize
+                  ? `$${formatCurrency(
+                      +grant?.metadata?.minGrantSize
+                    )} - $${formatCurrency(+grant?.metadata?.maxGrantSize)}`
                   : ""}
               </td>
               <td className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">

@@ -38,7 +38,8 @@ const createProgramSchema = z.object({
   forum: z.string().url().optional().or(z.literal("")),
   budget: z.coerce.number().min(1, { message: MESSAGES.REGISTRY.FORM.BUDGET }),
   amountDistributed: z.coerce.number().optional(),
-  grantSize: z.coerce.number().int("Must be a integer"),
+  minGrantSize: z.coerce.number().int("Must be a integer"),
+  maxGrantSize: z.coerce.number().int("Must be a integer"),
   grantsToDate: z.coerce.number().int("Must be a integer").optional(),
   linkToDetails: z.string().url(),
 });
@@ -117,7 +118,8 @@ export default function AddProgram() {
         description: description,
         programBudget: data.budget,
         amountDistributedToDate: data.amountDistributed,
-        grantSize: data.grantSize,
+        minGrantSize: data.minGrantSize,
+        maxGrantSize: data.maxGrantSize,
         grantsToDate: data.grantsToDate,
         linkToDetails: data.linkToDetails,
         website: data.website || "",
@@ -247,18 +249,33 @@ export default function AddProgram() {
               </p>
             </div>
             <div className="flex w-full flex-col  gap-1">
-              <label htmlFor="program-grant-size" className={labelStyle}>
-                Grant size *
+              <label htmlFor="program-min-grant-size" className={labelStyle}>
+                Min Grant size *
               </label>
               <input
                 type="number"
-                id="program-grant-size"
+                id="program-min-grant-size"
                 className={inputStyle}
                 placeholder="Ex: 80000"
-                {...register("grantSize")}
+                {...register("minGrantSize")}
               />
               <p className="text-base text-red-400">
-                {errors.grantSize?.message}
+                {errors.minGrantSize?.message}
+              </p>
+            </div>
+            <div className="flex w-full flex-col  gap-1">
+              <label htmlFor="program-max-grant-size" className={labelStyle}>
+                Max Grant size *
+              </label>
+              <input
+                type="number"
+                id="program-max-grant-size"
+                className={inputStyle}
+                placeholder="Ex: 80000"
+                {...register("maxGrantSize")}
+              />
+              <p className="text-base text-red-400">
+                {errors.maxGrantSize?.message}
               </p>
             </div>
             <div className="flex w-full flex-col  gap-1">

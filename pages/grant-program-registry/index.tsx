@@ -20,12 +20,7 @@ import {
 } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
-import {
-  parseAsFloat,
-  parseAsInteger,
-  useQueryState,
-  useQueryStates,
-} from "nuqs";
+import { useQueryState } from "nuqs";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 
 const statuses = ["Active", "Inactive"];
