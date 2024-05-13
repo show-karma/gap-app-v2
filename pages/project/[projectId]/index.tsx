@@ -125,8 +125,11 @@ export const NestedLayout = ({ children }: Props) => {
           }
           setProject(fetchedProject);
         } catch (error: any) {
-          console.log(error.message);
-          if (error.message.includes("422")) {
+          if (
+            error.message.includes("422") ||
+            error?.response?.statusCode === 422 ||
+            error?.response?.message.toLowerCase().includes("not found")
+          ) {
             router.push(PAGES.NOT_FOUND);
           }
           setProject(undefined);
