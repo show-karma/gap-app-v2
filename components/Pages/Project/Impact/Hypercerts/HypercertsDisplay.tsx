@@ -1,4 +1,4 @@
-import tokensUnderOwner from "../../../../utilities/hypercerts/tokensUnderOwner";
+import tokensUnderOwnerQuery from "../../../../../utilities/hypercerts/tokensUnderOwner";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
@@ -49,9 +49,11 @@ export default function HypertCerts() {
     }, []);
 
     return (
+      <div>
+        <img className="w-[25rem] pt-3 -ml-10" src={metadata.image} alt="" />
+        {/*
       <div className="flex justify-start items-start">
-        <img className="h-50 w-100 pt-3 -ml-9" src={metadata.image} alt="" />
-        {/* <div className="flex justify-start items-start">
+         <div className="flex justify-start items-start">
          {metadata.hypercert && (
             <div className="mt-4 bg-gray-100 rounded-lg shadow-sm p-4">
               <h3 className="text-base font-medium text-gray-900">Hypercert</h3>
@@ -114,20 +116,22 @@ export default function HypertCerts() {
               </div>
             </div>
           )} 
-        </div>*/}
+        </div>
+        </div>
+      */}
       </div>
     );
   };
 
   useEffect(() => {
-    hypercertsClient.indexer
-      .fractionsByOwner("0x0cfecb5D359E6C59ABd1d2Aa794F52C15055f451")
-      .then((fractions) => {
-        console.log("Fractions: ", fractions);
-      })
-      .catch((error) => {
-        console.error("Error: ", error);
-      });
+    // hypercertsClient.indexer
+    //   .fractionsByOwner("0x5a4830885f12438e00d8f4d98e9fe083e707698c")
+    //   .then((fractions) => {
+    //     console.log("Fractions: ", fractions);
+    //   })
+    //   .catch((error) => {
+    //     console.error("Error: ", error);
+    //   });
   }, []);
 
   useEffect(() => {
@@ -136,15 +140,8 @@ export default function HypertCerts() {
     (async () => {
       axios
         .post(
-          "https://api.thegraph.com/subgraphs/name/hypercerts-admin/hypercerts-optimism-mainnet",
-          {
-            query: tokensUnderOwner(
-              "0xebe73e2b4a3e53d4051cc8563d357678ce735a31"
-            ).query,
-            variables: tokensUnderOwner(
-              "0xebe73e2b4a3e53d4051cc8563d357678ce735a31"
-            ).variables,
-          }
+          "https://api.thegraph.com/subgraphs/name/hypercerts-admin/hypercerts-sepolia",
+          tokensUnderOwnerQuery("0x5a4830885f12438e00d8f4d98e9fe083e707698c")
         )
         .then((res) => {
           setData(res.data.data.claims);
@@ -152,25 +149,21 @@ export default function HypertCerts() {
     })();
   }, []);
   return (
-    <div className="flex">
+    <section className="flex flex-col justify-center items-start mb-5">
+      <h1 className="font-bold text-2xl mb-2">Hypercert claims</h1>
       <div className="bg-dark grid grid-cols-1 gap-4 sm:grid-cols-2">
         {data.map((claim: any) => (
           <div
             key={claim.id}
-            className="relative flex items-center space-x-3 rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 hover:border-gray-400"
+            className="flex flex-col items-start rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm focus-within:ring-2 focus-within:ring-indigo-500 focus-within:ring-offset-2 hover:border-gray-400"
           >
-            <div className="min-w-0 flex-1">
-              <div className="">
-                <span className="absolute inset-0" aria-hidden="true" />
-                <p className="text-sm font-medium text-gray-900">
-                  Minted on {new Date(claim.creation * 1000).toDateString()}
-                </p>
-                <Metadata uri={claim.uri} />
-              </div>
-            </div>
+            <p className="text-sm font-medium text-gray-900">
+              Minted on {new Date(claim.creation * 1000).toDateString()}
+            </p>
+            <Metadata uri={claim.uri} />
           </div>
         ))}
       </div>
-    </div>
+    </section>
   );
 }
