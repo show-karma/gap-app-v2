@@ -48,6 +48,7 @@ export const MarkdownEditor: FC<MarkdownEditorProps> = ({
           spellCheck: true,
           style: { height: "100%", minHeight: "100%" },
         }}
+        highlightEnable={false}
       />
     </div>
   );
