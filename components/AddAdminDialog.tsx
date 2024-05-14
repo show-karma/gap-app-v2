@@ -48,7 +48,7 @@ type AddAdminDialogProps = {
 
 export const AddAdmin: FC<AddAdminDialogProps> = ({
   buttonElement = {
-    icon: <PlusIcon className="h-4 w-4 text-white" />,
+    icon: <PlusIcon className="h-4 w-4 text-brand-blue" />,
     iconSide: "left",
     text: "Add Admin",
     styleClass: "",
@@ -57,7 +57,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
   chainid,
 }) => {
   const dataToUpdate = {
-    address: "0x000",
+    address: "",
   };
 
   const [isOpen, setIsOpen] = useState(false);
@@ -128,7 +128,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
       <button
         onClick={openModal}
         className={cn(
-          "flex justify-center min-w-max items-center gap-x-1 rounded-md bg-brand-blue border-2 border-brand-blue px-3 py-2 text-sm font-semibold text-white dark:text-zinc-100 hover:opacity-75 dark:hover:bg-primary-900",
+          "flex justify-center min-w-max items-center gap-x-1 rounded-md px-3 py-2 text-sm font-semibold text-brand-blue dark:text-zinc-100 hover:opacity-75 dark:hover:bg-primary-900",
           buttonElement.styleClass
         )}
       >
@@ -193,12 +193,9 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
                           id="address-input"
                           type="text"
                           className={inputStyle}
-                          placeholder='e.g. "0x0000000"'
+                          placeholder='e.g. "0x5cd3g343..."'
                           {...register("address")}
                         />
-                        <p className="text-red-500">
-                          {errors.address?.message}
-                        </p>
                       </div>
                     </div>
 
