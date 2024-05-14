@@ -10,6 +10,8 @@ export const chainNameDictionary = (chainId: number) => {
       return "Optimism Sepolia";
     case 11155111:
       return "Sepolia";
+    case 42220:
+      return "CELO";
     case 44787:
       return "CELO";
     case 84532:

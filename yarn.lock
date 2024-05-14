@@ -2318,11 +2318,10 @@
     "@sentry/cli" "^1.77.1"
     webpack-sources "^2.0.0 || ^3.0.0"
 
-
-"@show-karma/karma-gap-sdk@^0.3.26":
-  version "0.3.26"
-  resolved "https://registry.yarnpkg.com/@show-karma/karma-gap-sdk/-/karma-gap-sdk-0.3.26.tgz#8c8e16cdbfc7f8f283a2c792f5f0079b164000da"
-  integrity sha512-bgQ7iXvKE3oxueJe9qp/NBdNNGaG5GHefEmao2dRI7jLwb6363OaPhfkh9zmrbl4F+kQ9ZoUsV1xnF4LO6Hqvw==
+"@show-karma/karma-gap-sdk@^0.3.27":
+  version "0.3.27"
+  resolved "https://registry.yarnpkg.com/@show-karma/karma-gap-sdk/-/karma-gap-sdk-0.3.27.tgz#84e8f67663ee7619fff050941aeb97af1b99a665"
+  integrity sha512-YZJ0OiAN0Vw8nVyKFDzcHeeW7s/Iai/ymMmXxTu/87aB3JjIyeR2wB1Di5hJcPdd8unGkxbZ3dsR6vVAQU8KLQ==
   dependencies:
     "@allo-team/allo-v2-sdk" "^1.0.63"
     "@ethereum-attestation-service/eas-sdk" "1.4.2"
