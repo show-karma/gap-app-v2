@@ -10,18 +10,31 @@ import { MESSAGES } from "@/utilities/messages";
 import { Community } from "@show-karma/karma-gap-sdk";
 import { useGap } from "@/hooks";
 import { blo } from "blo";
-import { LinkIcon } from "@heroicons/react/24/solid";
+import { LinkIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { CommunityDialog } from "@/components/CommunityDialog";
 import { formatDate } from "@/utilities/formatDate";
 import { AddAdmin } from "@/components/AddAdminDialog";
+import { request, gql } from "graphql-request";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { RemoveAdmin } from "@/components/RemoveAdminDialog";
+
+interface CommunityAdmin {
+  id: string;
+  admins: { user: { id: string } }[];
+}
+
+interface Iadmin {
+  id: string[];
+}
 
 export default function Communities() {
   const [allCommunities, setAllCommunities] = useState<Community[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const { gap } = useGap();
+  const [copiedText, copy] = useCopyToClipboard();
   useEffect(() => {
     const fetchCommunities = async () => {
       try {
@@ -47,6 +60,41 @@ export default function Communities() {
 
   const { communities: communitiesToAdmin, isLoading: isLoadingCommunities } =
     useCommunitiesStore();
+
+  const [communityAdmins, setCommunityAdmins] = useState<any>([]);
+  useEffect(() => {
+    async function fetchCommunityAdmins() {
+      try {
+        const data: { communities?: CommunityAdmin[] } = await request(
+          "https://api.thegraph.com/subgraphs/name/arthh/playground",
+          gql`
+            {
+              communities {
+                id
+                admins {
+                  user {
+                    id
+                  }
+                }
+              }
+            }
+          `
+        );
+        // console.log(data?.communities);
+        setCommunityAdmins(data?.communities);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    fetchCommunityAdmins();
+  }, []);
+
+  function shortenHex(hexString: string) {
+    const firstPart = hexString.substring(0, 6);
+    const lastPart = hexString.substring(hexString.length - 6);
+
+    return `${firstPart}...${lastPart}`;
+  }
 
   return (
     <>
@@ -104,72 +152,101 @@ export default function Communities() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-x">
-                    {allCommunities.map((community) => (
-                      <tr className="divide-x" key={community.uid}>
-                        <td>
-                          <img
-                            src={
-                              community.details?.imageURL || blo(community.uid)
-                            }
-                            className="h-[64px] w-[100px] object-cover"
-                            alt={community.details?.name || community.uid}
-                          />
-                        </td>
-                        <td className="max-w-40 px-4">
-                          {community.details?.name}
-                        </td>
-                        <td className="max-w-60 px-4">
-                          {formatDate(
-                            Object(community?.createdAt)?.$timestamp?.t * 1000
-                          )}
-                        </td>
+                    {allCommunities.map((community) => {
+                      const matchingCommunityAdmin = communityAdmins.find(
+                        (admin: any) => admin.id === community.uid
+                      );
 
-                        <td className=" max-w-80 break-all px-4">
-                          {community.uid}
-                        </td>
-                        <td className="text-center px-4">
-                          <Link
-                            href={PAGES.COMMUNITY.ALL_GRANTS(
-                              community.details?.slug || community.uid
-                            )}
-                            className="flex flex-row items-center gap-1.5 text-blue-500"
-                          >
-                            Community
-                            <LinkIcon className="w-4 h-4" />
-                          </Link>
-                        </td>
-                        <td className="text-center  px-4">
-                          <Link
-                            href={PAGES.ADMIN.ROOT(
-                              community.details?.slug || community.uid
-                            )}
-                            className="flex flex-row items-center gap-1.5 text-blue-500"
-                          >
-                            Admin
-                            <LinkIcon className="w-4 h-4" />
-                          </Link>
-                        </td>
-                        <td className=" px-4">
-                          <div className="flex flex-row gap-2 items-center">
-                            <img
-                              src={chainImgDictionary(community.chainID)}
-                              alt={chainNameDictionary(community.chainID)}
-                              className="w-5 h-5"
-                            />
-                            <p>{chainNameDictionary(community.chainID)}</p>
-                          </div>
-                        </td>
-                        <td>
-                          <p>0x00000000000</p>
-                        </td>
-                        <td>
-                          <AddAdmin
-                            UUID={community.uid}
-                            chainid={community.chainID}
-                          />
-                        </td>
-                      </tr>
-                    ))}
+                      return (
+                        <React.Fragment key={community.uid}>
+                          <tr className="divide-x">
+                            <td>
+                              <img
+                                src={
+                                  community.details?.imageURL ||
+                                  blo(community.uid)
+                                }
+                                className="h-[64px] w-[100px] object-cover"
+                                alt={community.details?.name || community.uid}
+                              />
+                            </td>
+                            <td className="max-w-40 px-4">
+                              {community.details?.name}
+                            </td>
+                            <td className="max-w-60 px-4">
+                              {formatDate(
+                                Object(community?.createdAt)?.$timestamp?.t *
+                                  1000
+                              )}
+                            </td>
+                            <td className="max-w-80 break-all px-4">
+                              {community.uid}
+                            </td>
+                            <td className="text-center px-4">
+                              <Link
+                                href={PAGES.COMMUNITY.ALL_GRANTS(
+                                  community.details?.slug || community.uid
+                                )}
+                                className="flex flex-row items-center gap-1.5 text-blue-500"
+                              >
+                                Community
+                                <LinkIcon className="w-4 h-4" />
+                              </Link>
+                            </td>
+                            <td className="text-center px-4">
+                              <Link
+                                href={PAGES.ADMIN.ROOT(
+                                  community.details?.slug || community.uid
+                                )}
+                                className="flex flex-row items-center gap-1.5 text-blue-500"
+                              >
+                                Admin
+                                <LinkIcon className="w-4 h-4" />
+                              </Link>
+                            </td>
+                            <td className="px-4">
+                              <div className="flex flex-row gap-2 items-center">
+                                <img
+                                  src={chainImgDictionary(community.chainID)}
+                                  alt={chainNameDictionary(community.chainID)}
+                                  className="w-5 h-5"
+                                />
+                                <p>{chainNameDictionary(community.chainID)}</p>
+                              </div>
+                            </td>
+                            <td>
+                              {matchingCommunityAdmin &&
+                                matchingCommunityAdmin.admins.map(
+                                  (admin: any, index: any) => (
+                                    <div className="flex gap-2">
+                                      <div key={index}>
+                                        {shortenHex(admin.user.id)}
+                                      </div>
+                                      {/* <TrashIcon
+                                        width={20}
+                                        onClick={() => {
+                                          console.log(community.uid);
+                                        }}
+                                      /> */}
+                                      <RemoveAdmin
+                                        UUID={community.uid}
+                                        chainid={community.chainID}
+                                        Admin={admin.user.id}
+                                      />
+                                    </div>
+                                  )
+                                )}
+                            </td>
+                            <td>
+                              <AddAdmin
+                                UUID={community.uid}
+                                chainid={community.chainID}
+                              />
+                            </td>
+                          </tr>
+                        </React.Fragment>
+                      );
+                    })}
                   </tbody>
                 </table>
               ) : isLoading || isLoadingCommunities ? (
