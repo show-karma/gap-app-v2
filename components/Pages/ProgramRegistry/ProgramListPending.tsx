@@ -21,6 +21,8 @@ import {
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Spinner } from "@/components/Utilities/Spinner";
 import InfiniteScroll from "react-infinite-scroll-component";
+import { useAccount } from "wagmi";
+import { useAuthStore } from "@/store/auth";
 
 export type GrantProgram = {
   _id: {
@@ -95,13 +97,21 @@ interface ProgramListPendingProps {
   nextFunc: () => void;
 }
 
+const accountsAllowed = [
+  "0x23b7a53ecfd93803c63b97316d7362eae59c55b6",
+  "0x5a4830885f12438e00d8f4d98e9fe083e707698c",
+];
+
 export const ProgramListPending: FC<ProgramListPendingProps> = ({
   grantPrograms,
   approveOrReject,
   hasMore,
   nextFunc,
 }) => {
-  // const hasPermission =
+  const { address } = useAccount();
+  const { isAuth } = useAuthStore();
+  const isAllowed =
+    address && accountsAllowed.includes(address.toLowerCase()) && isAuth;
   const columns = useMemo<ColumnDef<GrantProgram>[]>(
     () => [
       {
@@ -110,7 +120,7 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
         cell: (info) => {
           const grant = info.row.original;
           return (
-            <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300 text-wrap max-w-[285px]">
+            <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300 text-wrap max-w-[285px] mr-4">
               <div className="flex flex-row gap-3">
                 <div className="flex flex-col gap-1">
                   {grant.metadata?.socialLinks?.website ? (
@@ -235,8 +245,15 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
         id: "Networks",
         cell: (info) => {
           const grant = info.row.original;
-          const firstNetworks = grant.metadata?.networks?.slice(0, 4);
-          const restNetworks = grant.metadata?.networks?.slice(4);
+          const networks = grant.metadata?.networks;
+          const firstNetworks = networks?.slice(0, 4);
+          const restNetworks = networks?.slice(4);
+          if (
+            !firstNetworks ||
+            typeof firstNetworks === "string" ||
+            typeof restNetworks === "string"
+          )
+            return null;
           return (
             <div className="w-full max-w-44 flex flex-row flex-wrap gap-1 my-2 items-center">
               {firstNetworks?.map((network, index) => (
@@ -469,33 +486,36 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
       {
         accessorFn: (row) => row,
         id: "Action",
+
         cell: (info) => {
           const grant = info.row.original;
 
           return (
             <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-              <div className="flex flex-row gap-3">
-                <Button
-                  className="text-sm"
-                  onClick={() => {
-                    if (grant.id) {
-                      approveOrReject(grant.id, true);
-                    }
-                  }}
-                >
-                  Approve
-                </Button>
-                <Button
-                  onClick={() => {
-                    if (grant.id) {
-                      approveOrReject(grant.id, false);
-                    }
-                  }}
-                  className="bg-red-600 hover:bg-red-600 text-sm"
-                >
-                  Reject
-                </Button>
-              </div>
+              {isAllowed ? (
+                <div className="flex flex-row gap-3">
+                  <Button
+                    className="text-sm"
+                    onClick={() => {
+                      if (grant.id) {
+                        approveOrReject(grant.id, true);
+                      }
+                    }}
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      if (grant.id) {
+                        approveOrReject(grant.id, false);
+                      }
+                    }}
+                    className="bg-red-600 hover:bg-red-600 text-sm"
+                  >
+                    Reject
+                  </Button>
+                </div>
+              ) : null}
             </div>
           );
         },
@@ -506,7 +526,7 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
         ),
       },
     ],
-    [grantPrograms]
+    [grantPrograms, isAllowed]
   );
 
   const table = useReactTable({
