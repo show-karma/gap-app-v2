@@ -172,28 +172,14 @@ const GrantProgramRegistry = () => {
               <div className="mt-8 flow-root">
                 <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                   <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                    <InfiniteScroll
-                      dataLength={grantPrograms.length}
-                      next={() => {
+                    <ProgramListPending
+                      approveOrReject={approveOrReject}
+                      grantPrograms={grantPrograms}
+                      hasMore={hasMore}
+                      nextFunc={() => {
                         fetchMoreData();
                       }}
-                      hasMore={hasMore}
-                      loader={
-                        <div className="flex flex-row justify-center items-center w-full">
-                          <Spinner />
-                        </div>
-                      }
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        overflow: "hidden",
-                      }}
-                    >
-                      <ProgramListPending
-                        approveOrReject={approveOrReject}
-                        grantPrograms={grantPrograms}
-                      />
-                    </InfiniteScroll>
+                    />
                   </div>
                 </div>
               </div>
