@@ -438,18 +438,18 @@ export const ProgramList: FC<ProgramListProps> = ({
       },
       {
         accessorFn: (row) => row,
-        id: "Categories",
+        id: "Types",
         cell: (info) => {
           const grant = info.row.original;
 
           return (
             <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-              {grant.metadata?.grantTypes?.map((category, index) => (
+              {grant.metadata?.grantTypes?.map((type, index) => (
                 <span
                   key={index}
                   className="mr-1 inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-600/20"
                 >
-                  {category}
+                  {type}
                 </span>
               ))}
             </div>
