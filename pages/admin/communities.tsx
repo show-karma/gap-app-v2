@@ -218,7 +218,7 @@ export default function Communities() {
                               {matchingCommunityAdmin &&
                                 matchingCommunityAdmin.admins.map(
                                   (admin: any, index: any) => (
-                                    <div className="flex gap-2">
+                                    <div className="flex gap-2" key={index}>
                                       <div key={index}>
                                         {shortenHex(admin.user.id)}
                                       </div>
