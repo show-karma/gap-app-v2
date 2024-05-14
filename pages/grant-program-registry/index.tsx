@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import React, { Dispatch, FC, useMemo } from "react";
+import React, { Dispatch, FC, useMemo, useRef } from "react";
 import { NextSeo } from "next-seo";
 import { defaultMetadata } from "@/utilities/meta";
 import { useState, useEffect } from "react";
@@ -22,6 +22,7 @@ import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 import { useQueryState } from "nuqs";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 const statuses = ["Active", "Inactive"];
 
@@ -73,6 +74,7 @@ const GrantProgramRegistry = ({
   defaultName,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const [grantPrograms, setGrantPrograms] = useState<GrantProgram[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
 
@@ -257,6 +259,7 @@ const GrantProgramRegistry = ({
             }`
         ).then(([res, error]) => {
           if (!error && res) {
+            console.log("res", res);
             setGrantPrograms(res);
             setHasMore(res.length === pageSize);
           }
@@ -280,6 +283,8 @@ const GrantProgramRegistry = ({
     selectedEcosystems,
     selectedGrantTypes,
   ]);
+
+  console.log(grantPrograms.length);
 
   return (
     <>
@@ -494,26 +499,17 @@ const GrantProgramRegistry = ({
             grantPrograms.length ? (
               <div className="mt-8 flow-root">
                 <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                  <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                    <InfiniteScroll
-                      dataLength={grantPrograms.length}
-                      next={() => {
+                  <div
+                    className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8"
+                    // {...virtualizer.containerProps}
+                  >
+                    <ProgramList
+                      grantPrograms={grantPrograms}
+                      hasMore={hasMore}
+                      nextFunc={() => {
                         fetchMoreData();
                       }}
-                      hasMore={hasMore}
-                      loader={
-                        <div className="flex flex-row justify-center items-center w-full">
-                          <Spinner />
-                        </div>
-                      }
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        overflow: "hidden",
-                      }}
-                    >
-                      <ProgramList grantPrograms={grantPrograms} />
-                    </InfiniteScroll>
+                    />
                   </div>
                 </div>
               </div>
