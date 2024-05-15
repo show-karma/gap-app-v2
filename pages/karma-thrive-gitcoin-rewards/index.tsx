@@ -28,11 +28,12 @@ const Index = () => {
           We are excited to announce our collaboration with Thrive to
           incentivize all GG20 grantees to update funders on their progress
           using the Karma GAP application. This strategy aids funders in making
-          informed decisions about the level of funding based on the grantees'
-          progress and forthcoming milestones. Furthermore, it will boost the
-          usage of the Arbitrum chain, given that all updates are posted
-          onchain.
+          informed decisions about the level of funding based on the
+          grantees&apos; progress and forthcoming milestones. Furthermore, it
+          will boost the usage of the Arbitrum chain, given that all updates are
+          posted onchain.
         </p>
+
         <h3 className="text-2xl font-semibold mb-3">How incentives work?</h3>
         <ul className=" list-disc list-inside space-y-2 text-lg">
           <li>
@@ -41,7 +42,8 @@ const Index = () => {
           </li>
           <li>
             They must post an update at the end of each month by completing that
-            month's milestone. They get 20 ARB for each milestone completed.
+            month&apos;s milestone. They get 20 ARB for each milestone
+            completed.
           </li>
           <li>
             Auditors will verify the milestones and issue the rewards at the end
