@@ -57,11 +57,18 @@ export default function AddProgram() {
   const [selectedNetworks, setSelectedNetworks] = useState<string[]>([]);
   const [selectedEcosystems, setSelectedEcosystems] = useState<string[]>([]);
   const [selectedGrantTypes, setSelectedGrantTypes] = useState<string[]>([]);
-  const supportedChains = appNetwork.map((chain) => ({
-    label: chain.name,
-    value: chain.id,
-    img: chainImgDictionary(chain.id),
-  }));
+  const supportedChains = appNetwork
+    .filter((chain) => {
+      const support = [10, 42161, 11155111];
+      return support.includes(chain.id);
+    })
+    .map((chain) => {
+      return {
+        label: chain.name,
+        value: chain.id,
+        img: chainImgDictionary(chain.id),
+      };
+    });
 
   const {
     register,
