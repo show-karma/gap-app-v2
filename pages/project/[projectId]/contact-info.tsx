@@ -6,7 +6,7 @@ import { Hex } from "viem";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import type { IProjectDetails } from "@show-karma/karma-gap-sdk";
 import { NextSeo } from "next-seo";
-import { ProjectSubscription } from "@/components/ProjectSubscription";
+import { ContactInfoSubscription } from "@/components/ContactInfoSubscription";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { getMetadata } from "@/utilities/sdk";
 import { zeroUID } from "@/utilities/commons";
@@ -89,7 +89,7 @@ const ContactInfoPage = ({
             <Spinner />
           </div>
         ) : (
-          <ProjectSubscription
+          <ContactInfoSubscription
             contactInfo={contactsInfo?.[contactsInfo.length - 1]}
             existingContacts={contactsInfo}
           />

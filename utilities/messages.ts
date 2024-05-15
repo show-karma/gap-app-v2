@@ -8,6 +8,7 @@ export const MESSAGES = {
     },
     MEMBERS: "Invalid address",
   },
+
   COMMUNITY_FORM: {
     TITLE: "Title must be at least 3 characters",
     IMAGE_URL: "ENTER a valid Image url",
@@ -150,6 +151,10 @@ export const MESSAGES = {
     NOT_CONNECTED: "Please login to view all your projects",
   },
   PROJECT: {
+    SUBSCRIPTION: {
+      NAME: "Name must be at least 3 characters",
+      EMAIL: "E-mail must be at least 3 characters",
+    },
     CREATE: {
       SUCCESS: "Project created successfully, please create grants now",
       ERROR: "There was an error creating project. Please try again",

@@ -1,5 +1,8 @@
+import { Hex } from "viem";
+
 export const INDEXER = {
   PROJECT: {
+    SUBSCRIBE: (projectId: Hex) => `/projects/${projectId}/subscribe`,
     GET: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}`,
     FEED: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/feed`,
   },
