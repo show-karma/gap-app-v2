@@ -12,7 +12,7 @@ import type { TNetwork } from "@show-karma/karma-gap-sdk";
 export const appNetwork: [Chain, ...Chain[]] =
   process.env.NEXT_PUBLIC_ENV === "production"
     ? [optimism, arbitrum, celo]
-    : [optimismSepolia, optimism, arbitrum, baseSepolia, sepolia];
+    : [optimismSepolia, baseSepolia, sepolia];
 
 export function getChainIdByName(name: string) {
   switch (name.toLowerCase()) {

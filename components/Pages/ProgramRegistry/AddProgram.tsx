@@ -23,6 +23,9 @@ import { useAuthStore } from "@/store/auth";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { registryHelper } from "./helper";
 import { SearchDropdown } from "./SearchDropdown";
+import { appNetwork } from "@/utilities/network";
+import { NetworkDropdown } from "./NetworkDropdown";
+import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -38,6 +41,7 @@ const createProgramSchema = z.object({
   forum: z.string().url().optional().or(z.literal("")),
   budget: z.coerce.number().min(1, { message: MESSAGES.REGISTRY.FORM.BUDGET }),
   amountDistributed: z.coerce.number().optional(),
+  network: z.coerce.number().int("Must select a network"),
   minGrantSize: z.coerce.number().int("Must be a integer"),
   maxGrantSize: z.coerce.number().int("Must be a integer"),
   grantsToDate: z.coerce.number().int("Must be a integer").optional(),
@@ -53,10 +57,17 @@ export default function AddProgram() {
   const [selectedNetworks, setSelectedNetworks] = useState<string[]>([]);
   const [selectedEcosystems, setSelectedEcosystems] = useState<string[]>([]);
   const [selectedGrantTypes, setSelectedGrantTypes] = useState<string[]>([]);
+  const supportedChains = appNetwork.map((chain) => ({
+    label: chain.name,
+    value: chain.id,
+    img: chainImgDictionary(chain.id),
+  }));
 
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors, isSubmitting, isValid },
   } = useForm<CreateProgramType>({
     resolver: zodResolver(createProgramSchema),
@@ -95,8 +106,9 @@ export default function AddProgram() {
         openConnectModal?.();
         return;
       }
-      if (chain && chain.id !== 11155111) {
-        await switchNetworkAsync?.(11155111);
+      const chainSelected = data.network;
+      if (chain && chain.id !== chainSelected) {
+        await switchNetworkAsync?.(chainSelected);
       }
 
       const ipfsStorage = new NFTStorage({
@@ -104,7 +116,7 @@ export default function AddProgram() {
       });
 
       const walletClient = await getWalletClient({
-        chainId: 11155111,
+        chainId: chainSelected,
       });
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
@@ -212,6 +224,23 @@ export default function AddProgram() {
                 {...register("name")}
               />
               <p className="text-base text-red-400">{errors.name?.message}</p>
+            </div>
+            <div className="flex w-full flex-col">
+              <label htmlFor="program-network" className={labelStyle}>
+                Network *
+              </label>
+              <NetworkDropdown
+                onSelectFunction={(value) => {
+                  setValue("network", value, {
+                    shouldValidate: true,
+                  });
+                }}
+                previousValue={watch("network")}
+                list={supportedChains}
+              />
+              <p className="text-base text-red-400">
+                {errors.network?.message}
+              </p>
             </div>
             <div className="flex w-full flex-col max-w-[480px] gap-1">
               <label htmlFor="program-description" className={labelStyle}>
