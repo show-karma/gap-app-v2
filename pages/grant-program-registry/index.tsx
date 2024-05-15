@@ -284,8 +284,6 @@ const GrantProgramRegistry = ({
     selectedGrantTypes,
   ]);
 
-  console.log(grantPrograms.length);
-
   return (
     <>
       <NextSeo
