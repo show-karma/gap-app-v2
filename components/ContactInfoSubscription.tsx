@@ -30,12 +30,12 @@ const subscriptionShema = z.object({
 
 type FormType = z.infer<typeof subscriptionShema>;
 
-interface ProjectSubscriptionProps {
+interface ContactInfoSubscriptionProps {
   existingContacts?: Contact[];
   contactInfo?: Contact;
 }
 
-export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({
+export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
   contactInfo,
   existingContacts,
 }) => {

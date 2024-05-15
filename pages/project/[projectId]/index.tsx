@@ -28,11 +28,11 @@ import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { cn } from "@/utilities/tailwind";
 import { defaultMetadata } from "@/utilities/meta";
 import { useAuthStore } from "@/store/auth";
-import { Feed } from "@/types";
 import { getWalletClient } from "@wagmi/core";
 import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
 import { Button } from "@/components/Utilities/Button";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { ProjectSubscriptionDialog } from "@/components/Pages/Project/ProjectSubscription";
 
 type ProjectDetailsWithUid = IProjectDetails & { uid: Hex };
 
@@ -378,7 +378,10 @@ export const NestedLayout = ({ children }: Props) => {
                 </div>
               </div>
             )}
-            {handleEndorse()}
+            <div className="flex flex-col gap-2 items-center">
+              {handleEndorse()}
+              {project ? <ProjectSubscriptionDialog project={project} /> : null}
+            </div>
           </div>
         </div>
         <div className="mt-4 max-sm:px-4">
