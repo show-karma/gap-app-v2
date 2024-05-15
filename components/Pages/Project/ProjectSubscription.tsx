@@ -45,6 +45,7 @@ export const ProjectSubscriptionDialog: FC<ProjectSubscriptionDialogProps> = ({
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<SchemaType>({
     resolver: zodResolver(schema),
@@ -76,11 +77,10 @@ export const ProjectSubscriptionDialog: FC<ProjectSubscriptionDialogProps> = ({
       console.log(error);
       const isAlreadySubscribed = error?.includes("422");
       if (isAlreadySubscribed) {
-        toast.error(
-          `You have already subscribed to ${
-            project?.details?.title || "this project"
-          }.`
-        );
+        setError("email", {
+          type: "manual",
+          message: `You have already subscribed to this project.`,
+        });
       } else {
         toast.error(
           `There was an error subscribing to ${
