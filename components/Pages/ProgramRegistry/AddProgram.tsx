@@ -227,7 +227,7 @@ export default function AddProgram() {
         >
           <div className="flex flex-col w-full gap-6">
             <div className="flex flex-col w-full gap-6 border-b border-b-[#98A2B3] pb-10">
-              <div className="flex flex-row gap-4">
+              <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-4">
                 <div className="flex w-full flex-col gap-1">
                   <label htmlFor="program-name" className={labelStyle}>
                     Program name *
@@ -273,7 +273,7 @@ export default function AddProgram() {
                   placeholderText="Please provide a description of this program"
                 />
               </div>
-              <div className="flex flex-row gap-4 justify-between">
+              <div className="grid grid-cols-4  max-sm:grid-cols-1 max-md:grid-cols-2 gap-4 justify-between">
                 <div className="flex w-full flex-col gap-1">
                   <label htmlFor="program-categories" className={labelStyle}>
                     Categories *
@@ -347,7 +347,7 @@ export default function AddProgram() {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 w-full gap-6 border-b border-b-[#98A2B3] pb-10">
+            <div className="grid grid-cols-3 max-sm:grid-cols-1 w-full gap-6 border-b border-b-[#98A2B3] pb-10">
               <div className="flex w-full flex-col justify-between gap-1">
                 <label htmlFor="program-network" className={labelStyle}>
                   Network *
@@ -444,7 +444,7 @@ export default function AddProgram() {
                 </p>
               </div>
             </div>
-            <div className="grid grid-cols-3 w-full gap-6  pb-10">
+            <div className="grid grid-cols-3 max-sm:grid-cols-1 w-full gap-6  pb-10">
               <div className="flex w-full flex-col gap-2 justify-between">
                 <label htmlFor="program-twitter" className={labelStyle}>
                   X/Twitter (optional)
