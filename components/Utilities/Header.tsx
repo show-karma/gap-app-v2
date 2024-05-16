@@ -55,7 +55,7 @@ export default function Header() {
     }
 
     setIsLoading(true);
-    const communitiesOf = await gapIndexerApi.communitiesOf(address, false);
+    const communitiesOf = await gapIndexerApi.adminOf(address);
 
     if (communitiesOf.data && communitiesOf.data.length !== 0) {
       setCommunities(communitiesOf.data);
