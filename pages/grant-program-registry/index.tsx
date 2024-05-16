@@ -259,7 +259,6 @@ const GrantProgramRegistry = ({
             }`
         ).then(([res, error]) => {
           if (!error && res) {
-            console.log("res", res);
             setGrantPrograms(res);
             setHasMore(res.length === pageSize);
           }

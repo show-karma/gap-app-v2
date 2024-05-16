@@ -170,7 +170,6 @@ export default function AddProgram() {
       const hasRegistry = await alloRegistry
         .createProgram(nonce + 1, name, metadata, owner, [owner])
         .then((res) => {
-          console.log("res", res);
           return res;
         })
         .catch((error) => {
