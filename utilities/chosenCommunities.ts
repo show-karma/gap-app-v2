@@ -142,8 +142,8 @@ export const chosenCommunities = () => {
       },
     },
     {
-      name: "Celo",
-      slug: "celo",
+      name: "Celo Public Goods",
+      slug: "celopg",
       uid: "0x68689eae8f1e08b7d30be8da301289f8ab8e058a6e472a8cf09efddc8165ccc1",
       imageURL: {
         light:
