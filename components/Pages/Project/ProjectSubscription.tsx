@@ -61,6 +61,7 @@ export const ProjectSubscriptionDialog: FC<ProjectSubscriptionDialogProps> = ({
 
   const onSubmit = async (data: SchemaType) => {
     try {
+      setIsLoading(true);
       const [res, error] = await fetchData(
         INDEXER.PROJECT.SUBSCRIBE(project?.uid as `0x${string}`),
         "POST",
@@ -208,6 +209,7 @@ export const ProjectSubscriptionDialog: FC<ProjectSubscriptionDialogProps> = ({
                         type={"submit"}
                         className="flex flex-row gap-2 items-center justify-center rounded-md border border-transparent bg-primary-500 px-6 py-2 text-md font-medium text-white hover:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                         isLoading={isLoading}
+                        disabled={isLoading}
                       >
                         Get Updates
                       </Button>
