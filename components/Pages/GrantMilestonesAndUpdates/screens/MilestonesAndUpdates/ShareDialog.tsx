@@ -35,13 +35,19 @@ export const ShareDialog: FC<ShareDialogProps> = ({
     (item) => item.uid.toLowerCase() === milestoneRefUID.toLowerCase()
   );
 
-  const shareURI =
-    encodeURI(`https://twitter.com/intent/post?text=🎉 We have just completed a milestone on ${
-      grant?.details?.title
-    } grant \n Excited to be making progress towards our goals.\nCheck out our achievement here -> https://gap.karmahq.xyz/project/${
-      (project?.details?.slug || project?.uid) as string
-    }/grants?grantId=${grant?.uid}&tab=milestones-and-updates
-                    `);
+  // 🚀 Just hit a major milestone of my grant from <Grant Name>!
+  // Check out my progress on @karmahq_ GAP and see how we’re advancing: [Link to Grant Milestone Page].
+  // Your thoughts and feedback are invaluable—let me know what you think!
+
+  const encoded = `🚀 Just hit a major milestone of my grant from ${
+    grant?.details?.title
+  }!\nCheck out my progress on @karmahq_ GAP and and see how we’re advancing: https://gap.karmahq.xyz/project/${
+    (project?.details?.slug || project?.uid) as string
+  }/grants?grantId=${
+    grant?.uid
+  }&tab=milestones-and-updates\nYour thoughts and feedback are invaluable—let me know what you think!`;
+  const twitterURL = `https://twitter.com/intent/post?text=`;
+  const shareURI = twitterURL + encodeURIComponent(encoded);
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
