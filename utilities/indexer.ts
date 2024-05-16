@@ -1,6 +1,12 @@
 import { Hex } from "viem";
 
 export const INDEXER = {
+  REGISTRY: {
+    GET_ALL: "/registry",
+    GET_ALL_PENDING: "/registry/pending",
+    APPROVE: "/registry/approve",
+    UPDATE: "/registry/updateMetadata",
+  },
   PROJECT: {
     SUBSCRIBE: (projectId: Hex) => `/projects/${projectId}/subscribe`,
     GET: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}`,

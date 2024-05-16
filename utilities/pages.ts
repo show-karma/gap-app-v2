@@ -41,4 +41,8 @@ export const PAGES = {
     },
     TEAM: (project: string) => `/project/${project}/team`,
   },
+  REGISTRY: {
+    ROOT: `/grant-program-registry`,
+    ADD_PROGRAM: `/grant-program-registry/add-program`,
+  },
 };

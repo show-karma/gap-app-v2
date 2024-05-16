@@ -122,7 +122,9 @@ export const useAuth = () => {
       if (router.asPath === "/") {
         router.push(PAGES.MY_PROJECTS);
       }
-      setIsOnboarding?.(true);
+      if (!router.asPath.includes("grant-program-registry")) {
+        setIsOnboarding?.(true);
+      }
       if (address) {
         mixpanel.reportEvent({
           event: "onboarding:popup",
