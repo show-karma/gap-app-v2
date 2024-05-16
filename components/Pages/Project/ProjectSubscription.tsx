@@ -119,7 +119,6 @@ export const ProjectSubscriptionDialog: FC<ProjectSubscriptionDialogProps> = ({
                       ? shortAddress(project?.uid as string)
                       : "this project")}
                 </b>{" "}
-                once a month
               </p>
               <Tooltip.Arrow className="TooltipArrow" />
             </Tooltip.Content>
@@ -163,7 +162,6 @@ export const ProjectSubscriptionDialog: FC<ProjectSubscriptionDialogProps> = ({
                           ? shortAddress(project?.uid as string)
                           : "this project")}
                     </b>{" "}
-                    once a month
                   </Dialog.Title>
                   <form onSubmit={handleSubmit(onSubmit)}>
                     <div className="flex flex-col w-full px-2 py-4 gap-1 sm:px-0 mt-4">
