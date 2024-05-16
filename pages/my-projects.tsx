@@ -144,10 +144,9 @@ export default function MyProjects() {
                   <div className="grid grid-cols-4 gap-7 pb-4 max-xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1">
                     {myProjects.map((card, index) => {
                       let active = 0;
-                      let total = 0;
+                      let total = card.grants?.length || 0;
                       card.grants?.forEach((grant) => {
                         if (grant.completed) return;
-                        total += 1;
                         const hasActive = grant.milestones.find(
                           (milestone: any) =>
                             (milestone.completed && !milestone.approved) ||
