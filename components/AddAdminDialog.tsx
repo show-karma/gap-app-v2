@@ -166,7 +166,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
                     as="h3"
                     className="text-xl font-bold leading-6 text-gray-900 dark:text-zinc-100"
                   >
-                    Add a new Community admin
+                    Add a new Community Admin
                   </Dialog.Title>
                   <button
                     type="button"
@@ -178,7 +178,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
                   {
                     <div className="mt-2">
                       <p className="text-sm text-gray-600 dark:text-zinc-300">
-                        Fill out these details to add a new Community admin
+                        Fill out these details to add a new Community Admin
                       </p>
                     </div>
                   }
