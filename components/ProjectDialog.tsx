@@ -443,15 +443,17 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       if (!address) return;
       if (!gap) return;
       let gapClient = gap;
-      if (!checkNetworkIsValid(chain?.id)) {
+
+      if (chain && !checkNetworkIsValid(chain?.id)) {
         await switchNetworkAsync?.(appNetwork[0].id);
         gapClient = getGapClient(appNetwork[0].id);
       }
+
       const project = new Project({
         data: {
           project: true,
         },
-        schema: gap.findSchema("Project"),
+        schema: gapClient.findSchema("Project"),
         recipient: (data.recipient || address) as Hex,
         uid: nullRef,
       });
@@ -562,7 +564,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   };
 
   const onSubmit = async (data: SchemaType) => {
-    if (!chain) return;
     if (projectToUpdate) {
       updateThisProject(data);
     } else {
@@ -578,13 +579,14 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           "flex justify-center min-w-max items-center gap-x-1 rounded-md bg-brand-blue border-2 border-brand-blue px-3 py-2 text-sm font-semibold text-white dark:text-zinc-100  hover:opacity-75 dark:hover:bg-primary-900",
           buttonElement.styleClass
         )}
+        id="new-project-button"
       >
         {buttonElement.iconSide === "left" && buttonElement.icon}
         {buttonElement.text}
         {buttonElement.iconSide === "right" && buttonElement.icon}
       </button>
       <Transition appear show={isOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={closeModal}>
+        <Dialog as="div" className="relative z-[10000]" onClose={closeModal}>
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"

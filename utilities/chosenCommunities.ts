@@ -121,5 +121,35 @@ export const chosenCommunities = () => {
         dark: "https://substackcdn.com/image/fetch/w_1456,c_limit,f_webp,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fca26ac94-67d3-4a26-82c1-54d5c606f7ce_1456x1048.png",
       },
     },
+    {
+      name: "Climate Co. Network",
+      slug: "climate-coordination-network",
+      uid: "0x5657dbe027418111401a194dab2226fa06a647f42f7da340b869c4906f556b09",
+      imageURL: {
+        light:
+          "https://pbs.twimg.com/profile_images/1778107539047030784/egzhv4lT_400x400.jpg",
+        dark: "https://pbs.twimg.com/profile_images/1778107539047030784/egzhv4lT_400x400.jpg",
+      },
+    },
+    {
+      name: "Refi DAO",
+      slug: "refidao",
+      uid: "0x8ec765bdf1c23d2b16288858b1928e08dff2e868fa1674ade3ecb6af2aaf95b6",
+      imageURL: {
+        light:
+          "https://s3.amazonaws.com/showkarma.xyz/assets/karma-refidao-logo.jpeg",
+        dark: "https://s3.amazonaws.com/showkarma.xyz/assets/karma-refidao-logo.jpeg",
+      },
+    },
+    {
+      name: "Celo",
+      slug: "celo",
+      uid: "0x68689eae8f1e08b7d30be8da301289f8ab8e058a6e472a8cf09efddc8165ccc1",
+      imageURL: {
+        light:
+          "https://s3.amazonaws.com/showkarma.xyz/assets/karma-celo-logo.jpeg",
+        dark: "https://s3.amazonaws.com/showkarma.xyz/assets/karma-celo-logo.jpeg",
+      },
+    },
   ];
 };

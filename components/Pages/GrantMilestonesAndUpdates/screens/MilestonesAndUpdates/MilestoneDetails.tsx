@@ -116,9 +116,9 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
           className="flex w-full flex-col py-4"
           style={{
             borderBottom:
-              isAuthorized ||
+              (isAuthorized && !milestone.completed) ||
               milestone?.completed?.reason ||
-              (isCommunityAdmin && milestone?.completed)
+              (isCommunityAdmin && !milestone?.completed)
                 ? "1px solid #CCCCCC"
                 : "none",
           }}
@@ -147,7 +147,8 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
             </ReadMore>
           </div>
         </div>
-        {(isAuthorized || milestone?.completed) && (
+        {((isAuthorized && !milestone?.completed) ||
+          milestone?.completed?.reason) && (
           <div className="mx-6 mt-4 rounded-lg bg-transparent pb-4">
             <Updates milestone={milestone} />
           </div>

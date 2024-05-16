@@ -72,7 +72,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
     setVerifiedMilestones(milestone?.verified || []);
   }, [milestone]);
 
-  if (!isEditing && milestone?.completed) {
+  if (!isEditing && milestone?.completed?.reason?.length) {
     return (
       <div className="flex flex-col gap-3 bg-[#F8F9FC] dark:bg-zinc-900 rounded-md px-4 py-2 max-lg:max-w-2xl max-sm:max-w-full">
         <div className="flex w-full flex-row flex-wrap items-center justify-between gap-2">
@@ -88,7 +88,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
             {verifiedMilestones.length ? (
               <VerifiedBadge
                 verifications={verifiedMilestones}
-                milestoneName={milestone.title}
+                title={`${milestone.title} - Reviews`}
               />
             ) : null}
             <VerifyMilestoneUpdateDialog
