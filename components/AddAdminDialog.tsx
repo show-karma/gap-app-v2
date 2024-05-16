@@ -187,7 +187,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
                     <div className="w-full px-2 py-4 sm:px-0">
                       <div className="flex w-full flex-col gap-2">
                         <label htmlFor="name-input" className={labelStyle}>
-                          address *
+                          Address *
                         </label>
                         <input
                           id="address-input"

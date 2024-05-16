@@ -105,7 +105,7 @@ export const RemoveAdmin: FC<AddAdminDialogProps> = ({
 
   return (
     <>
-      <TrashIcon onClick={openModal} width={20} />
+      <TrashIcon onClick={openModal} width={20} color="red" />
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeModal}>
           <Transition.Child
@@ -180,11 +180,11 @@ export const RemoveAdmin: FC<AddAdminDialogProps> = ({
 
                       <Button
                         type={"submit"}
-                        className="flex flex-row gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                        className="flex flex-row gap-2 items-center justify-center rounded-md border border-transparent bg-red-500 px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                         isLoading={isLoading}
                       >
                         Remove Admin
-                        <ChevronRightIcon className="w-4 h-4" />
+                        <TrashIcon width={20} height={20} color="white" />
                       </Button>
                     </div>
                   </form>

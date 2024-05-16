@@ -34,7 +34,7 @@ export default function Communities() {
   const [isLoading, setIsLoading] = useState(true);
 
   const { gap } = useGap();
-  const [copiedText, copy] = useCopyToClipboard();
+
   useEffect(() => {
     const fetchCommunities = async () => {
       try {
@@ -218,7 +218,7 @@ export default function Communities() {
                               {matchingCommunityAdmin &&
                                 matchingCommunityAdmin.admins.map(
                                   (admin: any, index: any) => (
-                                    <div className="flex gap-2" key={index}>
+                                    <div className="flex gap-2 p-5" key={index}>
                                       <div key={index}>
                                         {shortenHex(admin.user.id)}
                                       </div>
