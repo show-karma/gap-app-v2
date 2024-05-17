@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, useEffect, useMemo } from "react";
+import { FC, Fragment, useEffect, useMemo, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import {
@@ -12,11 +12,14 @@ import { useENSNames } from "@/store/ensNames";
 import { useProjectStore } from "@/store/project";
 import { formatDate } from "@/utilities/formatDate";
 import { ProjectImpactStatus } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
+import { ICommunityAdminsResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import {
   Tabs,
   TabContent,
   TabTrigger
 } from "@/components/Utilities/Tabs";
+import { useGrant } from "@/components/Pages/GrantMilestonesAndUpdates/GrantContext";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 
 interface VerificationsDialogProps {
   verifications: (
@@ -70,17 +73,30 @@ export const VerificationsDialog: FC<VerificationsDialogProps> = ({
   title,
 }) => {
   const project = useProjectStore((state) => state.project);
+  const grant = useGrant();
+
+  const communityUid = useMemo(() => grant?.communityUID, [grant]);
+  const [communityAdmins, setCommunityAdmins] = useState<string[]>([]);
+
   const { populateEnsNames } = useENSNames();
   useEffect(() => {
     populateEnsNames(verifications.map((v) => v.attester as string));
   }, [populateEnsNames, verifications]);
 
+  useEffect(() => {
+    gapIndexerApi.communityAdmins().then((data: ICommunityAdminsResponse) => {
+      setCommunityAdmins(
+        data.admins.map((admin) => admin.user.id.toLowerCase())
+      );
+    });
+  }, [communityUid]);
+
   const adminVerifications = useMemo(() => (
-    verifications.filter((item) => item.attester?.toUpperCase() === project?.attester?.toUpperCase())
-  ), [verifications, project]);
+    verifications.filter((item) => communityAdmins.includes(item.attester?.toLowerCase() as string))
+  ), [verifications, communityAdmins]);
   const memberVerifications = useMemo(() => (
-    verifications.filter((item) => item.attester?.toUpperCase() !== project?.attester?.toUpperCase())
-  ), [verifications, project]);
+    verifications.filter((item) => !communityAdmins.includes(item.attester?.toLowerCase() as string))
+  ), [verifications, communityAdmins]);
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
