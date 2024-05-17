@@ -76,7 +76,7 @@ export const VerificationsDialog: FC<VerificationsDialogProps> = ({
   const grant = useGrant();
 
   const communityUid = useMemo(() => grant?.communityUID, [grant]);
-  const [communityAdmins, setCommunityAdmins] = useState<string[]>([]);
+  const [communityAdmins, setCommunityAdmins] = useState<string[]>();
 
   const { populateEnsNames } = useENSNames();
   useEffect(() => {
@@ -97,6 +97,10 @@ export const VerificationsDialog: FC<VerificationsDialogProps> = ({
   const memberVerifications = useMemo(() => (
     verifications.filter((item) => !communityAdmins.includes(item.attester?.toLowerCase() as string))
   ), [verifications, communityAdmins]);
+
+  const defaultTab = useMemo(() => (
+    adminVerifications.length === 0 && memberVerifications.length > 0 ? "members" : "admins"
+  ), [adminVerifications, memberVerifications]);
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -134,12 +138,20 @@ export const VerificationsDialog: FC<VerificationsDialogProps> = ({
                 <div className="flex flex-col gap-6">
                   <div className="flex flex-col gap-3">
                     <h1 className="text-xl font-bold font-body">{title}</h1>
-                    <Tabs defaultTab="admins">
+                    <Tabs defaultTab={defaultTab}>
                       <div className="flex flex-wrap w-max gap-2 rounded bg-[#F2F4F7] dark:bg-zinc-800 px-2 py-1">
-                        <TabTrigger value="admins" icon={adminVerifications.length}>
+                        <TabTrigger
+                          value="admins"
+                          icon={adminVerifications.length}
+                          disabled={adminVerifications.length === 0}
+                        >
                           Community Admins
                         </TabTrigger>
-                        <TabTrigger value="members" icon={memberVerifications.length}>
+                        <TabTrigger
+                          value="members"
+                          icon={memberVerifications.length}
+                          disabled={memberVerifications.length === 0}
+                        >
                           Community Members
                         </TabTrigger>
                       </div>
