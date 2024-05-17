@@ -348,9 +348,9 @@ export default function AddProgram() {
             </div>
 
             <div className="grid grid-cols-3 max-sm:grid-cols-1 w-full gap-6 border-b border-b-[#98A2B3] pb-10">
-              <div className="flex w-full flex-col justify-between gap-1">
+              <div className="flex w-full flex-col justify-between gap-2">
                 <label htmlFor="program-network" className={labelStyle}>
-                  Network *
+                  Network to create program *
                 </label>
                 <NetworkDropdown
                   onSelectFunction={(value) => {
