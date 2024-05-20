@@ -10,6 +10,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { defaultMetadata } from "@/utilities/meta";
 import { type SortByOptions, type StatusOptions } from "@/types";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { pagesOnRoot } from "@/utilities/pagesOnRoot";
 
 type Props = {
   params: {
@@ -17,59 +18,25 @@ type Props = {
   };
 };
 
-// export async function generateMetadata({ params }: Props): Promise<Metadata> {
-//   const { communityId } = params;
-//   let name: string | undefined;
-//   try {
-//     const communityInfo = await getMetadata<ICommunityDetails>(
-//       "communities",
-//       communityId as Hex
-//     );
-//     name = communityInfo?.name;
-//     // const imageURL = communityInfo?.details?.imageURL;
-//     if (communityInfo?.uid === zeroUID || !communityInfo) {
-//       notFound();
-//     }
-//   } catch (e) {
-//     console.log(e);
-//   }
-
-//   return {
-//     ...defaultMetadata,
-//     title: `Karma GAP - ${name || communityId} community grants`,
-//     description: `View the list of grants issued by ${
-//       name || communityId
-//     } and the grantee updates.`,
-//     openGraph: {
-//       ...ogMeta,
-//       title: `Karma GAP - ${name || communityId} community grants`,
-//       description: `View the list of grants issued by ${
-//         name || communityId
-//       } and the grantee updates.`,
-//       // images: [imageURL || ''],
-//     },
-//     twitter: {
-//       ...twitterMeta,
-//       title: `Karma GAP - ${
-//         name || communityId || communityId
-//       } community grants`,
-//       description: `View the list of grants issued by ${
-//         name || communityId
-//       } and the grantee updates.`,
-//     },
-//   };
-// }
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { query, params } = context;
   const communityId = params?.communityId as string;
   let community: ICommunityResponse | null = null;
   let categoriesOptions: string[] = [];
 
+  if (pagesOnRoot.includes(communityId)) {
+    return undefined;
+  }
+
   await Promise.all(
     [
       async () => {
-        const { data } = await gapIndexerApi.communityBySlug(communityId);
-        community = data;
+        try {
+          const { data } = await gapIndexerApi.communityBySlug(communityId);
+          community = data;
+        } catch {
+          console.log("Not found community", communityId);
+        }
       },
       async () => {
         const [data] = await fetchData(
@@ -102,7 +69,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   return {
     props: {
       communityId,
-      communityName: (community as ICommunityResponse)?.details?.data?.name || "",
+      communityName:
+        (community as ICommunityResponse)?.details?.data?.name || "",
       community: community as ICommunityResponse,
       categoriesOptions,
       defaultSortBy,

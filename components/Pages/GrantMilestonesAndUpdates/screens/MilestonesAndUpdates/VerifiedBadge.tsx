@@ -5,13 +5,19 @@ import {
   MilestoneCompleted,
 } from "@show-karma/karma-gap-sdk";
 import { blo } from "blo";
-import { FC, useEffect } from "react";
+import { FC, useEffect, useState } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { useENSNames } from "@/store/ensNames";
 import { formatDate } from "@/utilities/formatDate";
+import { VerificationsDialog } from "./VerificationsDialog";
+import { ProjectImpactStatus } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
 
 interface VerifiedBadgeProps {
-  verifications: MilestoneCompleted[] | GrantUpdateStatus[];
+  verifications:
+    | MilestoneCompleted[]
+    | GrantUpdateStatus[]
+    | ProjectImpactStatus[];
+  title: string;
 }
 
 const BlockieTooltip = ({
@@ -64,14 +70,24 @@ const BlockieTooltip = ({
   );
 };
 
-export const VerifiedBadge: FC<VerifiedBadgeProps> = ({ verifications }) => {
+export const VerifiedBadge: FC<VerifiedBadgeProps> = ({
+  verifications,
+  title,
+}) => {
+  const [orderedSort, setOrderedSort] = useState<
+    (MilestoneCompleted | GrantUpdateStatus | ProjectImpactStatus)[]
+  >([]);
+
   const getUniqueVerifications = (
-    verifications: MilestoneCompleted[] | GrantUpdateStatus[]
+    verifications:
+      | MilestoneCompleted[]
+      | GrantUpdateStatus[]
+      | ProjectImpactStatus[]
   ) => {
     // get unique and by last date
     const uniqueVerifications: Record<
       Hex,
-      MilestoneCompleted | GrantUpdateStatus
+      MilestoneCompleted | GrantUpdateStatus | ProjectImpactStatus
     > = {};
     verifications.forEach((verification) => {
       if (!verification.attester) return;
@@ -86,14 +102,28 @@ export const VerifiedBadge: FC<VerifiedBadgeProps> = ({ verifications }) => {
     });
     return Object.values(uniqueVerifications);
   };
-  const uniques = getUniqueVerifications(verifications);
 
-  // order by date
-  const orderedSort = uniques.sort((a, b) => {
-    if (a.createdAt < b.createdAt) return -1;
-    if (a.createdAt > b.createdAt) return 1;
-    return 0;
-  });
+  const [isOpenDialog, setIsOpenDialog] = useState(false);
+
+  useEffect(() => {
+    const uniques = getUniqueVerifications(verifications);
+
+    // order by date
+    const sorted = uniques.sort((a, b) => {
+      if (new Date(a.createdAt).getTime() < new Date(b.createdAt).getTime())
+        return 1;
+      if (new Date(a.createdAt).getTime() > new Date(b.createdAt).getTime())
+        return -1;
+      return 0;
+    });
+    setOrderedSort(sorted);
+  }, [verifications]);
+
+  const openDialog = () => setIsOpenDialog(true);
+
+  const closeDialog = () => setIsOpenDialog(false);
+
+  const hasMore = orderedSort.length > 4;
 
   return (
     <div className="flex flex-row items-center gap-2 flex-1">
@@ -103,16 +133,30 @@ export const VerifiedBadge: FC<VerifiedBadgeProps> = ({ verifications }) => {
         className="w-6 h-6"
       />
       <span className="text-sm font-semibold text-[#0E9384]">Verified</span>
-      <div className="ml-2 flex flex-row -space-x-1 flex-wrap">
-        {orderedSort.map((verification) => (
-          <BlockieTooltip
-            key={verification.uid}
-            address={verification.attester as Hex}
-            date={verification.createdAt}
-            reason={verification.reason}
+      <VerificationsDialog
+        verifications={orderedSort}
+        isOpen={isOpenDialog}
+        closeDialog={closeDialog}
+        title={title}
+      />
+      <button
+        className="ml-2 flex flex-row -space-x-1 flex-wrap"
+        onClick={openDialog}
+      >
+        {orderedSort.slice(0, 4).map((verification) => (
+          <img
+            key={verification.attester}
+            src={blo(verification.attester as Hex, 8)}
+            alt={verification.attester}
+            className="h-8 w-8 min-h-8 min-w-8 rounded-full ring-2 ring-white dark:ring-gray-800"
           />
         ))}
-      </div>
+        {hasMore ? (
+          <div className="text-xs text-zinc-900 dark:text-white flex h-8 w-8 min-h-8 min-w-8 rounded-full ring-2 ring-zinc-200 dark:ring-gray-700 bg-white dark:bg-gray-800 justify-center items-center">
+            + {orderedSort.length - 4}
+          </div>
+        ) : null}
+      </button>
     </div>
   );
 };

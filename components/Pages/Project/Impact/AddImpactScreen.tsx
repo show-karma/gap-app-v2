@@ -9,7 +9,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { Popover } from "@headlessui/react";
 import { CalendarIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ProjectImpact, type Grant } from "@show-karma/karma-gap-sdk";
+import { ProjectImpact } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
 import { getWalletClient } from "@wagmi/core";
 import { useRouter } from "next/router";
 import { useQueryState } from "nuqs";

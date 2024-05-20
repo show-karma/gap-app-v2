@@ -30,11 +30,14 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(previousValue || "");
 
-  const communitiesArray = communities.map((community) => ({
-    value: community.uid,
-    label: community.details?.name || shortAddress(community.uid),
-    networkId: community.chainID,
-  }));
+  const communitiesArray = communities
+    .filter((community) => community.details?.name) // Filter out communities without a name
+    .map((community) => ({
+      value: community.uid,
+      label: community.details?.name || shortAddress(community.uid),
+      networkId: community.chainID,
+      logo: community.details?.imageURL,
+    }));
 
   // sort communities by name alphabetically
   const sortedCommunities = communitiesArray.sort((a, b) => {
@@ -49,36 +52,53 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
-      <Popover.Trigger className="min-w-[240px] max-w-[320px] w-max  justify-between text-black dark:text-white dark:bg-zinc-800 flex flex-row gap-2 px-4 py-2 items-center bg-gray-100 rounded-md">
+      <Popover.Trigger className="min-w-[240px] max-w-full w-max  justify-between text-black dark:text-white dark:bg-zinc-800 flex flex-row gap-2 px-4 py-2 items-center bg-gray-100 rounded-md">
         {value ? (
           <div className="flex flex-row gap-2 items-center">
             <img
-              src={chainImgDictionary(
+              src={
                 communitiesArray.find((community) => community.value === value)
-                  ?.networkId || 10
-              )}
-              alt={chainNameDictionary(
-                communitiesArray.find((community) => community.value === value)
-                  ?.networkId || 10
-              )}
+                  ?.logo
+              }
+              alt={""}
               className="w-5 h-5"
             />
-            <p>
-              {
-                communitiesArray.find((community) => community.value === value)
-                  ?.label
-              }
-            </p>
+            <div className="flex flex-row gap-1  items-center justify-start  flex-1">
+              <p>
+                {
+                  communitiesArray.find(
+                    (community) => community.value === value
+                  )?.label
+                }{" "}
+              </p>
+              <div className="flex flex-row gap-1 items-center">
+                <p className="w-max text-[7px]">on</p>
+                <img
+                  src={chainImgDictionary(
+                    communitiesArray.find(
+                      (community) => community.value === value
+                    )?.networkId as number
+                  )}
+                  alt={chainNameDictionary(
+                    communitiesArray.find(
+                      (community) => community.value === value
+                    )?.networkId as number
+                  )}
+                  className="min-w-2.5 min-h-2.5 w-2.5 h-2.5 m-0 rounded-full"
+                />
+                <p className="w-max text-[7px]">Network</p>
+              </div>
+            </div>
           </div>
         ) : (
           "Select community"
         )}
         <ChevronUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
       </Popover.Trigger>
-      <Popover.Content className="mt-4 w-[280px] z-10 bg-white border border-zinc-200 dark:border-zinc-700 rounded-md dark:text-white dark:bg-zinc-800  max-h-60 overflow-y-auto overflow-x-hidden py-2">
+      <Popover.Content className="mt-4 w-[360px] z-10 bg-white border border-zinc-200 dark:border-zinc-700 rounded-md dark:text-white dark:bg-zinc-800  max-h-60 overflow-y-auto overflow-x-hidden py-2">
         <Command>
           <CommandInput
-            className="rounded-md ml-2 mr-4 w-[240px] dark:text-white dark:bg-zinc-800"
+            className="rounded-md ml-2 mr-4 w-[320px] dark:text-white dark:bg-zinc-800"
             placeholder="Search community..."
           />
           <CommandEmpty className="px-4 py-2">No community found.</CommandEmpty>
@@ -99,29 +119,28 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
                     value === community.value ? "opacity-100" : "opacity-0"
                   )}
                 />
-                <div className="flex flex-row gap-2 items-center justify-start">
-                  <Tooltip.Provider>
-                    <Tooltip.Root delayDuration={0}>
-                      <Tooltip.Trigger>
-                        <div className="min-w-5 min-h-5 w-5 h-5 m-0">
-                          <img
-                            src={chainImgDictionary(community.networkId)}
-                            alt={chainNameDictionary(community.networkId)}
-                            className="min-w-5 min-h-5 w-5 h-5 m-0"
-                          />
-                        </div>
-                      </Tooltip.Trigger>
-                      <Tooltip.Portal>
-                        <Tooltip.Content className="z-20 bg-white text-black dark:bg-zinc-900 dark:text-white px-2 py-2 rounded-md">
-                          {chainNameDictionary(community.networkId)}
-                          <Tooltip.Arrow />
-                        </Tooltip.Content>
-                      </Tooltip.Portal>
-                    </Tooltip.Root>
-                  </Tooltip.Provider>
-                  <p className="line-clamp-2 w-full break-normal">
-                    {community.label}
-                  </p>
+                <div className="flex flex-row gap-2 items-center justify-start w-full">
+                  <div className="min-w-5 min-h-5 w-5 h-5 m-0">
+                    <img
+                      src={community.logo}
+                      alt={""}
+                      className="min-w-5 min-h-5 w-5 h-5 m-0 rounded-full"
+                    />
+                  </div>
+                  <div className="flex flex-row gap-1  items-center justify-start  flex-1">
+                    <p className="line-clamp-2 text-sm max-w-full break-normal">
+                      {community.label}
+                    </p>
+                    <div className="flex flex-row gap-1 items-center">
+                      <p className="w-max text-[7px]">on</p>
+                      <img
+                        src={chainImgDictionary(community.networkId)}
+                        alt={chainNameDictionary(community.networkId)}
+                        className="min-w-2.5 min-h-2.5 w-2.5 h-2.5 m-0 rounded-full"
+                      />
+                      <p className="w-max text-[7px]">Network</p>
+                    </div>
+                  </div>
                 </div>
               </CommandItem>
             ))}
