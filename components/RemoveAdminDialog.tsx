@@ -73,7 +73,7 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
     chainId: appNetwork[0].id,
   });
 
-  const removeAdmin = async (data: SchemaType) => {
+  const removeAdmin = async () => {
     if (chain?.id != chainid) {
       await switchNetworkAsync?.(chainid);
     }
@@ -93,11 +93,13 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
     }
   };
 
-  const onSubmit = async (data: SchemaType) => {
+  const onSubmit = async () => {
     try {
+      console.log("first");
       setIsLoading(true); // Set loading state to true
-      await removeAdmin(data); // Call the addAdmin function
+      await removeAdmin(); // Call the addAdmin function
       // Fetch the updated list of admins
+      if (fetchAdmins) await fetchAdmins();
       setIsLoading(false); // Reset loading state
       closeModal(); // Close the dialog upon successful submission
     } catch (error) {
@@ -184,9 +186,10 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
                       </button>
 
                       <Button
-                        type={"submit"}
+                        // type={"submit"}
                         className="flex flex-row gap-2 items-center justify-center rounded-md border border-transparent bg-red-500 px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                         isLoading={isLoading}
+                        onClick={onSubmit}
                       >
                         Remove Admin
                         <TrashIcon width={20} height={20} color="white" />
