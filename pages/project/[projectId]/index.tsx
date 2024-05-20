@@ -28,11 +28,11 @@ import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { cn } from "@/utilities/tailwind";
 import { defaultMetadata } from "@/utilities/meta";
 import { useAuthStore } from "@/store/auth";
-import { Feed } from "@/types";
 import { getWalletClient } from "@wagmi/core";
 import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
 import { Button } from "@/components/Utilities/Button";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { ProjectSubscriptionDialog } from "@/components/Pages/Project/ProjectSubscription";
 
 type ProjectDetailsWithUid = IProjectDetails & { uid: Hex };
 
@@ -125,7 +125,13 @@ export const NestedLayout = ({ children }: Props) => {
           }
           setProject(fetchedProject);
         } catch (error: any) {
-          console.log(error);
+          if (
+            error.message.includes("422") ||
+            error?.response?.statusCode === 422 ||
+            error?.response?.message.toLowerCase().includes("not found")
+          ) {
+            router.push(PAGES.NOT_FOUND);
+          }
           setProject(undefined);
         } finally {
           setLoading(false);
@@ -372,12 +378,15 @@ export const NestedLayout = ({ children }: Props) => {
                 </div>
               </div>
             )}
-            {handleEndorse()}
+            <div className="flex flex-col gap-2 items-center">
+              {handleEndorse()}
+              {project ? <ProjectSubscriptionDialog project={project} /> : null}
+            </div>
           </div>
         </div>
         <div className="mt-4 max-sm:px-4">
           <div className="sm:px-6 lg:px-12  sm:block">
-            <nav className="gap-10 flex flex-row w-full items-center max-lg:gap-8 overflow-scroll">
+            <nav className="gap-10 flex flex-row w-full items-center max-lg:gap-8 overflow-x-auto">
               {tabs.map((tab) => (
                 <Link
                   key={tab.name}
@@ -453,6 +462,15 @@ const ProjectPageIndex = ({
     title: `Karma GAP - ${projectTitle}`,
     description: projectDesc,
   };
+  // if (!projectTitle) {
+  //   // Project is undefined, return null or any other fallback component
+  //   return (
+  //     <div className="col-span-12 min-h-screen px-4 py-4">
+  //       <h1 className="text-3xl mb-5">404 - Project Not Found</h1>
+  //       <Link href="/">Go Home</Link>
+  //     </div>
+  //   );
+  // }
   return (
     <>
       <NextSeo
@@ -481,7 +499,8 @@ const ProjectPageIndex = ({
           },
         ]}
       />
-      <ProjectPage />
+
+      {<ProjectPage />}
     </>
   );
 };

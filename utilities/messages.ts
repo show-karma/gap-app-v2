@@ -8,6 +8,7 @@ export const MESSAGES = {
     },
     MEMBERS: "Invalid address",
   },
+
   COMMUNITY_FORM: {
     TITLE: "Title must be at least 3 characters",
     IMAGE_URL: "ENTER a valid Image url",
@@ -150,6 +151,10 @@ export const MESSAGES = {
     NOT_CONNECTED: "Please login to view all your projects",
   },
   PROJECT: {
+    SUBSCRIPTION: {
+      NAME: "Name must be at least 3 characters",
+      EMAIL: "E-mail must be at least 3 characters",
+    },
     CREATE: {
       SUCCESS: "Project created successfully, please create grants now",
       ERROR: "There was an error creating project. Please try again",
@@ -207,5 +212,23 @@ export const MESSAGES = {
   },
   REVIEWS: {
     NOT_ADMIN: "You need to be an admin to see this page",
+  },
+  REGISTRY: {
+    FORM: {
+      NAME: "Name must be at least 3 characters",
+      DESCRIPTION: "Description must be at least 3 characters",
+      BUDGET: "You need to specify a budget",
+      AMOUNT_DISTRIBUTED: "You need to specify an amount distributed to date",
+      GRANT_SIZE: "You need to specify a grant size",
+      CATEGORIES: "You need to specify at least one category",
+      ECOSYSTEMS: "You need to specify at least one ecosystem",
+      BOUNTIES: "You need to specify at least one bounty",
+      HOW_MANY_APPLICANTS:
+        "You need to specify how many applicants through the site",
+      HOW_MANY_GRANTS_ISSUE: "You need to specify how many grants issued",
+      LINKS_TO_DETAILS: "You need to specify links to details",
+      START_DATE: "You need to specify a start date",
+      END_DATE: "You need to specify an end date",
+    },
   },
 };

@@ -14,6 +14,7 @@ import { getWalletClient } from "@wagmi/core";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";
 import { useNetwork, useSwitchNetwork } from "wagmi";
+import { ShareDialog } from "./ShareDialog";
 
 interface NotUpdatingCaseProps {
   milestone: Milestone;
@@ -70,6 +71,18 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
   );
   const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
   const refreshProject = useProjectStore((state) => state.refreshProject);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  const openDialog = () => {
+    setIsDialogOpen(true);
+  };
+
+  const closeDialog = async () => {
+    setIsDialogOpen(false);
+    await refreshProject();
+    cancelEditing(false);
+    setIsUpdating(false);
+  };
 
   const completeMilestone = async (milestone: Milestone, text?: string) => {
     try {
@@ -83,7 +96,7 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
       const walletSigner = await walletClientToSigner(walletClient);
       await milestone.complete(walletSigner, text).then(async () => {
         toast.success(MESSAGES.MILESTONES.COMPLETE.SUCCESS);
-        await refreshProject();
+        openDialog();
       });
     } catch (error) {
       console.log(error);
@@ -126,19 +139,22 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
           setIsSubmitLoading(false);
         });
     } else {
-      await completeMilestone(milestone, description)
-        .then(() => {
-          cancelEditing(false);
-          setIsUpdating(false);
-        })
-        .finally(() => {
-          setIsSubmitLoading(false);
-        });
+      await completeMilestone(milestone, description).finally(() => {
+        setIsSubmitLoading(false);
+      });
     }
   };
 
   return isUpdating || isEditing ? (
     <div className="flex w-full flex-col">
+      {milestone.refUID && isDialogOpen ? (
+        <ShareDialog
+          milestoneName={milestone.title}
+          closeDialog={closeDialog}
+          isOpen={isDialogOpen}
+          milestoneRefUID={milestone.refUID as string}
+        />
+      ) : null}
       <div className="flex w-full flex-col items-start" data-color-mode="light">
         <div className="w-full max-w-3xl">
           <MarkdownEditor
