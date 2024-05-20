@@ -15,10 +15,10 @@ import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { CommunityDialog } from "@/components/CommunityDialog";
 import { formatDate } from "@/utilities/formatDate";
-import { AddAdmin } from "@/components/AddAdminDialog";
+import { AddAdmin } from "@/components/Pages/Admin/AddAdminDialog";
 import { request, gql } from "graphql-request";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { RemoveAdmin } from "@/components/RemoveAdminDialog";
+import { RemoveAdmin } from "@/components/Pages/Admin/RemoveAdminDialog";
 
 interface CommunityAdmin {
   id: string;

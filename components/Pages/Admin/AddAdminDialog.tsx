@@ -9,11 +9,11 @@ import {
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MarkdownEditor } from "./Utilities/MarkdownEditor";
+import { MarkdownEditor } from "../../Utilities/MarkdownEditor";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Community, GAP, nullRef } from "@show-karma/karma-gap-sdk";
-import { Button } from "./Utilities/Button";
+import { Button } from "../../Utilities/Button";
 import { useProjectStore } from "@/store";
 import { MESSAGES } from "@/utilities/messages";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -44,7 +44,7 @@ type AddAdminDialogProps = {
   };
   UUID: `0x${string}`;
   chainid: number;
-  fetchAdmins?: () => void;
+  fetchAdmins?: () => Promise<void>;
 };
 
 export const AddAdmin: FC<AddAdminDialogProps> = ({
@@ -100,16 +100,16 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
     try {
       console.log(data.address);
 
-      const communityResolver = (await GAP.getCommunityResolver(
-        walletSigner
-      )) as any;
-      const communityResponse = await communityResolver
-        .enlist(UUID, data.address)
-        .then(async () => {
-          if (fetchAdmins) await fetchAdmins(); // Fetch the updated list of admins
-          setIsLoading(false); // Reset loading state
-          closeModal();
-        });
+      const communityResolver = await GAP.getCommunityResolver(walletSigner);
+      const communityResponse = await communityResolver.enlist(
+        UUID,
+        data.address
+      );
+      await communityResponse.wait().then(async () => {
+        if (fetchAdmins) await fetchAdmins();
+        setIsLoading(false);
+        closeModal();
+      });
       console.log(communityResponse);
     } catch (error) {
       console.log(error);
@@ -120,9 +120,9 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
     try {
       setIsLoading(true); // Set loading state to true
       await addAdmin(data); // Call the addAdmin function
-      // Close the dialog upon successful submission
     } catch (error) {
       console.error("Error Adding Community Admin:", error);
+    } finally {
       setIsLoading(false); // Reset loading state
     }
   };
