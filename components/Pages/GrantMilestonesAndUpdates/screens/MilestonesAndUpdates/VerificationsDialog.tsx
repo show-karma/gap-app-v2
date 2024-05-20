@@ -13,11 +13,7 @@ import { useProjectStore } from "@/store/project";
 import { formatDate } from "@/utilities/formatDate";
 import { ProjectImpactStatus } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
 import { ICommunityAdminsResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import {
-  Tabs,
-  TabContent,
-  TabTrigger
-} from "@/components/Utilities/Tabs";
+import { Tabs, TabContent, TabTrigger } from "@/components/Utilities/Tabs";
 import { useGrant } from "@/components/Pages/GrantMilestonesAndUpdates/GrantContext";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 
@@ -33,11 +29,7 @@ interface VerificationsDialogProps {
 }
 
 interface VerificationsItemProps {
-  verification: (
-    | MilestoneCompleted
-    | GrantUpdateStatus
-    | ProjectImpactStatus
-  );
+  verification: MilestoneCompleted | GrantUpdateStatus | ProjectImpactStatus;
 }
 
 const VerificationItem = ({ verification }: VerificationsItemProps) => {
@@ -64,7 +56,7 @@ const VerificationItem = ({ verification }: VerificationsItemProps) => {
       </p>
     </div>
   );
-}
+};
 
 export const VerificationsDialog: FC<VerificationsDialogProps> = ({
   verifications,
@@ -84,23 +76,24 @@ export const VerificationsDialog: FC<VerificationsDialogProps> = ({
   }, [populateEnsNames, verifications]);
 
   useEffect(() => {
-    gapIndexerApi.communityAdmins().then((data: ICommunityAdminsResponse) => {
+    gapIndexerApi.communityAdmins(communityUid).then((data) => {
       setCommunityAdmins(
-        data.admins.map((admin) => admin.user.id.toLowerCase())
+        data.data.admins.map((admin) => admin.user.id.toLowerCase())
       );
     });
   }, [communityUid]);
 
-  const adminVerifications = useMemo(() => (
-    verifications.filter((item) => communityAdmins.includes(item.attester?.toLowerCase() as string))
-  ), [verifications, communityAdmins]);
-  const memberVerifications = useMemo(() => (
-    verifications.filter((item) => !communityAdmins.includes(item.attester?.toLowerCase() as string))
-  ), [verifications, communityAdmins]);
+  const adminVerifications = verifications.filter((item) =>
+    communityAdmins?.includes(item.attester?.toLowerCase() as string)
+  );
+  const memberVerifications = verifications.filter(
+    (item) => !communityAdmins?.includes(item.attester?.toLowerCase() as string)
+  );
 
-  const defaultTab = useMemo(() => (
-    adminVerifications.length === 0 && memberVerifications.length > 0 ? "members" : "admins"
-  ), [adminVerifications, memberVerifications]);
+  const defaultTab =
+    adminVerifications.length === 0 && memberVerifications.length > 0
+      ? "members"
+      : "admins";
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
