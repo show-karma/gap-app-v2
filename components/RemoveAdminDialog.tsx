@@ -36,16 +36,18 @@ const schema = z.object({
 
 type SchemaType = z.infer<typeof schema>;
 
-type AddAdminDialogProps = {
+type RemoveAdminDialogProps = {
   UUID: `0x${string}`;
   chainid: number;
   Admin: `0x${string}`;
+  fetchAdmins?: () => void;
 };
 
-export const RemoveAdmin: FC<AddAdminDialogProps> = ({
+export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
   UUID,
   chainid,
   Admin,
+  fetchAdmins,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -95,6 +97,7 @@ export const RemoveAdmin: FC<AddAdminDialogProps> = ({
     try {
       setIsLoading(true); // Set loading state to true
       await removeAdmin(data); // Call the addAdmin function
+      // Fetch the updated list of admins
       setIsLoading(false); // Reset loading state
       closeModal(); // Close the dialog upon successful submission
     } catch (error) {

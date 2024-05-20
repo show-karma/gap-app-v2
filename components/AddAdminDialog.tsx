@@ -44,6 +44,7 @@ type AddAdminDialogProps = {
   };
   UUID: `0x${string}`;
   chainid: number;
+  fetchAdmins?: () => void;
 };
 
 export const AddAdmin: FC<AddAdminDialogProps> = ({
@@ -55,6 +56,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
   },
   UUID,
   chainid,
+  fetchAdmins,
 }) => {
   const dataToUpdate = {
     address: "",
@@ -115,6 +117,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
     try {
       setIsLoading(true); // Set loading state to true
       await addAdmin(data); // Call the addAdmin function
+      if (fetchAdmins) await fetchAdmins(); // Fetch the updated list of admins
       setIsLoading(false); // Reset loading state
       closeModal(); // Close the dialog upon successful submission
     } catch (error) {

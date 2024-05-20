@@ -53,7 +53,7 @@ export default function Communities() {
       setIsLoading(false);
     }
   };
-  
+
   useEffect(() => {
     fetchCommunities();
   }, []);
@@ -62,30 +62,30 @@ export default function Communities() {
     useCommunitiesStore();
 
   const [communityAdmins, setCommunityAdmins] = useState<any>([]);
-  useEffect(() => {
-    async function fetchCommunityAdmins() {
-      try {
-        const data: { communities?: CommunityAdmin[] } = await request(
-          "https://api.thegraph.com/subgraphs/name/arthh/playground",
-          gql`
-            {
-              communities {
-                id
-                admins {
-                  user {
-                    id
-                  }
+  async function fetchCommunityAdmins() {
+    try {
+      const data: { communities?: CommunityAdmin[] } = await request(
+        "https://api.thegraph.com/subgraphs/name/arthh/playground",
+        gql`
+          {
+            communities {
+              id
+              admins {
+                user {
+                  id
                 }
               }
             }
-          `
-        );
-        // console.log(data?.communities);
-        setCommunityAdmins(data?.communities);
-      } catch (error) {
-        console.log(error);
-      }
+          }
+        `
+      );
+      // console.log(data?.communities);
+      setCommunityAdmins(data?.communities);
+    } catch (error) {
+      console.log(error);
     }
+  }
+  useEffect(() => {
     fetchCommunityAdmins();
   }, []);
 
@@ -232,6 +232,7 @@ export default function Communities() {
                                         UUID={community.uid}
                                         chainid={community.chainID}
                                         Admin={admin.user.id}
+                                        fetchAdmins={fetchCommunityAdmins}
                                       />
                                     </div>
                                   )
@@ -241,6 +242,7 @@ export default function Communities() {
                               <AddAdmin
                                 UUID={community.uid}
                                 chainid={community.chainID}
+                                fetchAdmins={fetchCommunityAdmins}
                               />
                             </td>
                           </tr>
