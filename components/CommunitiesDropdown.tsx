@@ -30,12 +30,14 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(previousValue || "");
 
-  const communitiesArray = communities.map((community) => ({
-    value: community.uid,
-    label: community.details?.name || shortAddress(community.uid),
-    networkId: community.chainID,
-    logo: community.details?.imageURL,
-  }));
+  const communitiesArray = communities
+    .filter((community) => community.details?.name) // Filter out communities without a name
+    .map((community) => ({
+      value: community.uid,
+      label: community.details?.name || shortAddress(community.uid),
+      networkId: community.chainID,
+      logo: community.details?.imageURL,
+    }));
 
   // sort communities by name alphabetically
   const sortedCommunities = communitiesArray.sort((a, b) => {

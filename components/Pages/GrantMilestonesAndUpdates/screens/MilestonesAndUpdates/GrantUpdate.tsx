@@ -128,7 +128,6 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
           ) : null}
           <VerifyGrantUpdateDialog
             grantUpdate={update}
-            isCommunityAdmin={isCommunityAdmin}
             addVerifiedUpdate={addVerifiedUpdate}
           />
         </div>
