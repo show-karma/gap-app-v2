@@ -97,8 +97,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
 
   return (
     <>
-      <HypercertsDisplay />
-      <div className="flex-row gap-4 flex">
+      <div className="flex-row gap-4 flex mb-10">
         {orderedImpacts.length ? (
           <div className="flex w-full flex-col overflow-x-auto">
             {isAuthorized ? (
@@ -246,6 +245,8 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
           <EmptyImpactScreen />
         )}
       </div>
+
+      <HypercertsDisplay walletAddress={project?.recipient || ""} />
     </>
   );
 };
