@@ -17,7 +17,6 @@ import { getGapClient, useGap } from "@/hooks";
 
 type VerifyMilestoneUpdateDialogProps = {
   milestone: Milestone;
-  isCommunityAdmin: boolean;
   addVerifiedMilestone: (newVerified: MilestoneCompleted) => void;
 };
 
@@ -29,7 +28,7 @@ type SchemaType = z.infer<typeof schema>;
 
 export const VerifyMilestoneUpdateDialog: FC<
   VerifyMilestoneUpdateDialogProps
-> = ({ milestone, isCommunityAdmin, addVerifiedMilestone }) => {
+> = ({ milestone, addVerifiedMilestone }) => {
   let [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -97,7 +96,7 @@ export const VerifyMilestoneUpdateDialog: FC<
   };
   const isAuthorized = useAuthStore((state) => state.isAuth);
   const ableToVerify = isAuthorized && isConnected;
-  if (!isCommunityAdmin || hasVerifiedThis || !ableToVerify) return null;
+  if (hasVerifiedThis || !ableToVerify) return null;
 
   return (
     <>

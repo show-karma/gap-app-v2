@@ -94,7 +94,6 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
             <VerifyMilestoneUpdateDialog
               milestone={milestone}
               addVerifiedMilestone={addVerifiedMilestone}
-              isCommunityAdmin={isCommunityAdmin}
             />
           </div>
           <p className="text-sm font-semibold text-gray-500 dark:text-zinc-100">

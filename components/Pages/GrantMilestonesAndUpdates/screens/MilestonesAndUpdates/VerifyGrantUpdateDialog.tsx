@@ -23,7 +23,6 @@ import { getGapClient, useGap } from "@/hooks";
 
 type VerifyGrantUpdateDialogProps = {
   grantUpdate: GrantUpdate;
-  isCommunityAdmin: boolean;
   addVerifiedUpdate: (newVerified: GrantUpdateStatus) => void;
 };
 
@@ -35,7 +34,6 @@ type SchemaType = z.infer<typeof schema>;
 
 export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
   grantUpdate,
-  isCommunityAdmin,
   addVerifiedUpdate,
 }) => {
   let [isOpen, setIsOpen] = useState(false);
@@ -108,7 +106,7 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
   };
   const isAuthorized = useAuthStore((state) => state.isAuth);
   const ableToVerify = isAuthorized && isConnected;
-  if (!isCommunityAdmin || hasVerifiedThis || !ableToVerify) return null;
+  if (hasVerifiedThis || !ableToVerify) return null;
 
   return (
     <>

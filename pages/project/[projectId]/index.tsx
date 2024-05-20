@@ -386,7 +386,7 @@ export const NestedLayout = ({ children }: Props) => {
         </div>
         <div className="mt-4 max-sm:px-4">
           <div className="sm:px-6 lg:px-12  sm:block">
-            <nav className="gap-10 flex flex-row w-full items-center max-lg:gap-8 overflow-scroll">
+            <nav className="gap-10 flex flex-row w-full items-center max-lg:gap-8 overflow-x-auto">
               {tabs.map((tab) => (
                 <Link
                   key={tab.name}

@@ -20,7 +20,6 @@ import { Button } from "@/components/Utilities/Button";
 import { useQueryState } from "nuqs";
 import { ReadMore } from "@/utilities/ReadMore";
 import { VerifyImpactDialog } from "./VerifyImpactDialog";
-import { VerifiedBadge } from "../../GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifiedBadge";
 import { ImpactVerifications } from "./ImpactVerifications";
 
 const headClasses =
@@ -141,7 +140,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
                       >
                         <div data-color-mode="light">
                           {/* <MarkdownPreview
-                    
+
                           source={item.work}
                         /> */}
                           <ReadMore

@@ -77,10 +77,6 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
     Tab | undefined
   >(undefined);
 
-  const isCommunityAdmin = useCommunityAdminStore(
-    (state) => state.isCommunityAdmin
-  );
-
   const getOrderedMerge = () => {
     const merged: any[] = [];
 

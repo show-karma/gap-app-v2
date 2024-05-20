@@ -35,6 +35,7 @@ import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { NextSeo } from "next-seo";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { GrantMilestonesAndUpdates } from "@/components/Pages/GrantMilestonesAndUpdates";
+import { GrantContext } from "@/components/Pages/GrantMilestonesAndUpdates/GrantContext";
 import { GrantAllReviews } from "@/components/Pages/AllReviews";
 import { ReviewGrant } from "@/components/Pages/ReviewGrant";
 
@@ -578,37 +579,39 @@ const GrantsPage = ({
           {/* Grants tabs end */}
           {project?.grants.length || currentTab === "create-grant" ? (
             <div className="flex flex-col py-5">
-              {currentTab === "milestones-and-updates" && (
-                <GrantMilestonesAndUpdates grant={grant} />
-              )}
-              {currentTab === "impact-criteria" && (
-                <GrantImpactCriteria grant={grant} />
-              )}
-              {currentTab === "reviews" && <GrantAllReviews grant={grant} />}
-              {currentTab === "review-this-grant" && (
-                <Suspense>
-                  <ReviewGrant grant={grant} />
-                </Suspense>
-              )}
-              {/*  */}
-              {currentTab === "create-grant" && project?.uid && (
-                <NewGrant grantToEdit={grant} />
-              )}
-              {currentTab === "edit-grant" && project?.uid && grant && (
-                <NewGrant grantToEdit={grant} />
-              )}
-              {(currentTab === "create-milestone" ||
-                currentTab === "edit-milestone") &&
-                grant && <NewMilestone grant={grant} />}
-              {currentTab === "grant-update" && grant && (
-                <NewGrantUpdate grant={grant} />
-              )}
-              {currentTab === "complete-grant" && grant && project && (
-                <GrantCompletion project={project} grant={grant} />
-              )}
-              {(currentTab === "overview" || !currentTab) && (
-                <GrantOverview grant={grant} />
-              )}
+              <GrantContext.Provider value={grant}>
+                {currentTab === "milestones-and-updates" && (
+                  <GrantMilestonesAndUpdates grant={grant} />
+                )}
+                {currentTab === "impact-criteria" && (
+                  <GrantImpactCriteria grant={grant} />
+                )}
+                {currentTab === "reviews" && <GrantAllReviews grant={grant} />}
+                {currentTab === "review-this-grant" && (
+                  <Suspense>
+                    <ReviewGrant grant={grant} />
+                  </Suspense>
+                )}
+                {/*  */}
+                {currentTab === "create-grant" && project?.uid && (
+                  <NewGrant grantToEdit={grant} />
+                )}
+                {currentTab === "edit-grant" && project?.uid && grant && (
+                  <NewGrant grantToEdit={grant} />
+                )}
+                {(currentTab === "create-milestone" ||
+                  currentTab === "edit-milestone") &&
+                  grant && <NewMilestone grant={grant} />}
+                {currentTab === "grant-update" && grant && (
+                  <NewGrantUpdate grant={grant} />
+                )}
+                {currentTab === "complete-grant" && grant && project && (
+                  <GrantCompletion project={project} grant={grant} />
+                )}
+                {(currentTab === "overview" || !currentTab) && (
+                  <GrantOverview grant={grant} />
+                )}
+              </GrantContext.Provider>
             </div>
           ) : (
             <div className="w-full py-5">
