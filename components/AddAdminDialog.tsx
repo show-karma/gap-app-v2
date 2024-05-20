@@ -103,10 +103,13 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
       const communityResolver = (await GAP.getCommunityResolver(
         walletSigner
       )) as any;
-      const communityResponse = await communityResolver.enlist(
-        UUID,
-        data.address
-      );
+      const communityResponse = await communityResolver
+        .enlist(UUID, data.address)
+        .then(async () => {
+          if (fetchAdmins) await fetchAdmins(); // Fetch the updated list of admins
+          setIsLoading(false); // Reset loading state
+          closeModal();
+        });
       console.log(communityResponse);
     } catch (error) {
       console.log(error);
@@ -117,9 +120,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
     try {
       setIsLoading(true); // Set loading state to true
       await addAdmin(data); // Call the addAdmin function
-      if (fetchAdmins) await fetchAdmins(); // Fetch the updated list of admins
-      setIsLoading(false); // Reset loading state
-      closeModal(); // Close the dialog upon successful submission
+      // Close the dialog upon successful submission
     } catch (error) {
       console.error("Error Adding Community Admin:", error);
       setIsLoading(false); // Reset loading state
