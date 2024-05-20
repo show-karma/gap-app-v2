@@ -105,7 +105,9 @@ export const RemoveAdmin: FC<AddAdminDialogProps> = ({
 
   return (
     <>
-      <TrashIcon onClick={openModal} width={20} color="red" />
+      <button className="bg-transparent" onClick={openModal}>
+        <TrashIcon width={20} color="red" />
+      </button>
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeModal}>
           <Transition.Child
