@@ -3,11 +3,11 @@ import type { Feed } from "@/types";
 import { PAGES } from "./pages";
 
 const feedIcons = {
-  project: "/icons/project-added.svg",
-  milestone: "/icons/milestone-added.svg",
-  grant: "/icons/grant-added.svg",
-  member: "/icons/member-added.svg",
-  community: "/icons/member-added.svg",
+  project: "/icons/newIcons/icon_folder.svg",
+  milestone: "/icons/newIcons/icon_flag.svg",
+  grant: "/icons/newIcons/icon_money.svg",
+  member: "/icons/newIcons/icon_added.svg",
+  community: "/icons/newIcons/icon_added.svg",
 };
 
 export const feedIconDictionary = (
@@ -24,20 +24,20 @@ export const feedIconDictionary = (
     return "/icons/deleted.svg";
   }
   if (event === "updated") {
-    return "/icons/updated.svg";
+    return "/icons/newIcons/icon_edit.svg";
   }
 
   if (event === "milestone-completed") {
     return "/icons/milestone-completed.svg";
   }
   if (event === "milestone-rejected") {
-    return "/icons/rejected.svg";
+    return "/icons/newIcons/icon_thumbs-down.svg";
   }
   if (event === "milestone-approved") {
-    return "/icons/approved.svg";
+    return "/icons/newIcons/icon_thumbs-up.svg";
   }
   if (event === "grant-completed") {
-    return "/icons/approved.svg";
+    return "/icons/newIcons/icon_thumbs-up.svg";
   }
   return "/icons/review.svg";
 };
