@@ -23,6 +23,9 @@ import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 import { z } from "zod";
 
 const updateSchema = z.object({
+  startedAt: z.date({
+    required_error: MESSAGES.PROJECT.IMPACT.FORM.DATE,
+  }),
   completedAt: z.date({
     required_error: MESSAGES.PROJECT.IMPACT.FORM.DATE,
   }),
@@ -58,6 +61,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
     reValidateMode: "onChange",
     mode: "onChange",
     defaultValues: {
+      startedAt: new Date(),
       completedAt: new Date(),
     },
   });
@@ -67,7 +71,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
   const onSubmit: SubmitHandler<UpdateType> = async (data, event) => {
     event?.preventDefault();
     event?.stopPropagation();
-    const { completedAt } = data;
+    const { completedAt, startedAt } = data;
     if (!address || !project) return;
     setIsLoading(true);
     let gapClient = gap;
@@ -85,6 +89,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
         work,
         impact,
         proof,
+        startedAt: startedAt.getTime() / 1000,
         completedAt: completedAt.getTime() / 1000,
       };
       const newImpact = new ProjectImpact({
@@ -147,7 +152,49 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
               />
             </div>
           </div>
-          <div className="flex w-full flex-col">
+          <div className="flex w-full flex-row">
+            <Controller
+              name="startedAt"
+              control={control}
+              render={({ field, formState, fieldState }) => (
+                <div className="flex w-full flex-col gap-2 mr-2">
+                  <label className={labelStyle}>Started at *</label>
+                  <div>
+                    <Popover className="relative">
+                      <Popover.Button className="max-lg:w-full w-max text-sm flex-row flex gap-2 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
+                        {field.value ? (
+                          formatDate(field.value)
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                      </Popover.Button>
+                      <Popover.Panel className="absolute z-10 bg-white dark:bg-zinc-800 mt-4 rounded-md">
+                        <DayPicker
+                          mode="single"
+                          selected={field.value}
+                          onDayClick={(e) => {
+                            setValue("startedAt", e, {
+                              shouldValidate: true,
+                            });
+                            field.onChange(e);
+                          }}
+                          disabled={(date) => {
+                            if (date < new Date("2000-01-01")) return true;
+                            return false;
+                          }}
+                          initialFocus
+                        />
+                      </Popover.Panel>
+                    </Popover>
+                  </div>
+                  <p className="text-base text-red-400">
+                    {formState.errors.startedAt?.message}
+                  </p>
+                </div>
+              )}
+            />
+
             <Controller
               name="completedAt"
               control={control}

@@ -224,8 +224,6 @@ export const MESSAGES = {
       BUDGET: "You need to specify a budget",
       AMOUNT_DISTRIBUTED: "You need to specify an amount distributed to date",
       GRANT_SIZE: "You need to specify a grant size",
-      CATEGORIES: "You need to specify at least one category",
-      ECOSYSTEMS: "You need to specify at least one ecosystem",
       BOUNTIES: "You need to specify at least one bounty",
       HOW_MANY_APPLICANTS:
         "You need to specify how many applicants through the site",
@@ -233,6 +231,14 @@ export const MESSAGES = {
       LINKS_TO_DETAILS: "You need to specify links to details",
       START_DATE: "You need to specify a start date",
       END_DATE: "You need to specify an end date",
+      MIN_GRANT_SIZE: "You need to specify a minimum grant size",
+      MAX_GRANT_SIZE: "You need to specify a maximum grant size",
+      GRANTS_TO_DATE: "You need to specify grants issued to date",
+      NETWORKTOCREATE: "You need to select a network",
+      CATEGORIES: "You need to specify at least one category",
+      ECOSYSTEMS: "You need to specify at least one ecosystem",
+      GRANT_TYPES: "You need to specify at least one grant type",
+      NETWORKS: "You need to specify at least one network",
     },
   },
 };

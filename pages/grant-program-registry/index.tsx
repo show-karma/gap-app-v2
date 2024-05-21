@@ -334,8 +334,8 @@ const GrantProgramRegistry = ({
               </button>
             </Link>
           </div>
-          <div className="h-44 w-[1px] bg-[#98A2B3] max-md:w-full max-md:h-[1px]" />
-          <div className="flex flex-1 flex-col gap-2 items-center max-sm:items-start">
+          {/* <div className="h-44 w-[1px] bg-[#98A2B3] max-md:w-full max-md:h-[1px]" /> */}
+          {/* <div className="flex flex-1 flex-col gap-2 items-center max-sm:items-start">
             <div className="flex flex-1 flex-col gap-2 items-start">
               <p className="text-[#101828] dark:text-white font-body font-semibold text-xl">
                 Be the first to know a new program launches
@@ -350,7 +350,7 @@ const GrantProgramRegistry = ({
                 </button>
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
 
         <div className="flex flex-row items-center justify-end max-sm:justify-start gap-10  flex-wrap w-full">

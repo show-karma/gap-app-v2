@@ -1,9 +1,6 @@
 import { cn } from "@/utilities/tailwind";
 import { FC, useEffect, useState } from "react";
-import {
-  ProjectImpact,
-  ProjectImpactStatus,
-} from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
+import { ProjectImpact } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
 import { formatDate } from "@/utilities/formatDate";
 import { useSearchParams } from "next/navigation";
 import { AddImpactScreen } from "./AddImpactScreen";
@@ -20,7 +17,6 @@ import { Button } from "@/components/Utilities/Button";
 import { useQueryState } from "nuqs";
 import { ReadMore } from "@/utilities/ReadMore";
 import { VerifyImpactDialog } from "./VerifyImpactDialog";
-import { VerifiedBadge } from "../../GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifiedBadge";
 import { ImpactVerifications } from "./ImpactVerifications";
 import HypercertsDisplay from "./Hypercerts/HypercertsDisplay";
 const headClasses =
@@ -130,7 +126,11 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
                       <tr className="" key={item.uid}>
                         <td className="pr-2">
                           <p className="w-36 max-w-max text-gray-500 text-sm font-medium ">
-                            {formatDate(item.data.completedAt * 1000)}
+                            {item.data?.startedAt
+                              ? formatDate(item.data?.startedAt * 1000)
+                              : "N/A"}
+                            {" → "}
+                            {formatDate(item.data?.completedAt * 1000)}
                           </p>
                         </td>
                         <td className="pr-2 max-sm:pr-2 border-l border-l-zinc-400" />
@@ -142,7 +142,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
                         >
                           <div data-color-mode="light">
                             {/* <MarkdownPreview
-                    
+
                           source={item.work}
                         /> */}
                             <ReadMore
