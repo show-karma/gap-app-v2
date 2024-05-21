@@ -1,9 +1,6 @@
 import { cn } from "@/utilities/tailwind";
 import { FC, useEffect, useState } from "react";
-import {
-  ProjectImpact,
-  ProjectImpactStatus,
-} from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
+import { ProjectImpact } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
 import { formatDate } from "@/utilities/formatDate";
 import { useSearchParams } from "next/navigation";
 import { AddImpactScreen } from "./AddImpactScreen";
@@ -128,7 +125,9 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
                     <tr className="" key={item.uid}>
                       <td className="pr-2">
                         <p className="w-36 max-w-max text-gray-500 text-sm font-medium ">
-                          {formatDate(item.data?.startedAt * 1000)}
+                          {item.data?.startedAt
+                            ? formatDate(item.data?.startedAt * 1000)
+                            : "N/A"}
                           {" → "}
                           {formatDate(item.data?.completedAt * 1000)}
                         </p>
