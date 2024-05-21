@@ -26,7 +26,7 @@ interface SearchDropdownProps {
     }
   >;
   type: string;
-  cleanFunction: () => void;
+  cleanFunction?: () => void;
   prefixUnselected?: string;
 }
 export const SearchDropdown: FC<SearchDropdownProps> = ({
