@@ -62,10 +62,7 @@ const createProgramSchema = z.object({
   maxGrantSize: z.coerce
     .number()
     .min(1, { message: MESSAGES.REGISTRY.FORM.MAX_GRANT_SIZE }),
-  grantsToDate: z.coerce
-    .number()
-    .min(1, { message: MESSAGES.REGISTRY.FORM.GRANTS_TO_DATE })
-    .optional(),
+  grantsToDate: z.coerce.number().optional(),
   linkToDetails: z.string().url(),
   categories: z
     .array(z.string())
