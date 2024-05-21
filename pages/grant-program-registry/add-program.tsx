@@ -4,11 +4,16 @@ import { defaultMetadata } from "@/utilities/meta";
 import AddProgram from "@/components/Pages/ProgramRegistry/AddProgram";
 
 export default function AddProgramPage() {
+  const metadata = {
+    title: "Karma GAP - Grant Program Registry",
+    description:
+      "Comprehensive list of all the grant programs in the web3 ecosystem.",
+  };
   return (
     <>
       <NextSeo
-        title={defaultMetadata.title}
-        description={defaultMetadata.description}
+        title={metadata.title}
+        description={metadata.description}
         twitter={{
           handle: defaultMetadata.twitter.creator,
           site: defaultMetadata.twitter.site,
@@ -16,11 +21,11 @@ export default function AddProgramPage() {
         }}
         openGraph={{
           url: defaultMetadata.openGraph.url,
-          title: defaultMetadata.title,
-          description: defaultMetadata.description,
+          title: metadata.title,
+          description: metadata.description,
           images: defaultMetadata.openGraph.images.map((image) => ({
             url: image,
-            alt: defaultMetadata.title,
+            alt: metadata.title,
           })),
           site_name: defaultMetadata.openGraph.siteName,
         }}

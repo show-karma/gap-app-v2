@@ -44,24 +44,51 @@ const createProgramSchema = z.object({
   orgWebsite: z.string().url().optional().or(z.literal("")),
   blog: z.string().url().optional().or(z.literal("")),
   forum: z.string().url().optional().or(z.literal("")),
-  budget: z.coerce.number().min(1, { message: MESSAGES.REGISTRY.FORM.BUDGET }),
   amountDistributed: z.coerce.number().optional(),
-  network: z.coerce.number().int("Must select a network"),
-  minGrantSize: z.coerce.number().int("Must be a integer"),
-  maxGrantSize: z.coerce.number().int("Must be a integer"),
-  grantsToDate: z.coerce.number().int("Must be a integer").optional(),
+  description: z
+    .string({
+      required_error: MESSAGES.REGISTRY.FORM.DESCRIPTION,
+    })
+    .min(3, {
+      message: MESSAGES.REGISTRY.FORM.DESCRIPTION,
+    }),
+  networkToCreate: z.coerce.number().gt(0, {
+    message: MESSAGES.REGISTRY.FORM.NETWORKTOCREATE,
+  }),
+  budget: z.coerce.number().min(1, { message: MESSAGES.REGISTRY.FORM.BUDGET }),
+  minGrantSize: z.coerce
+    .number()
+    .min(1, { message: MESSAGES.REGISTRY.FORM.MIN_GRANT_SIZE }),
+  maxGrantSize: z.coerce
+    .number()
+    .min(1, { message: MESSAGES.REGISTRY.FORM.MAX_GRANT_SIZE }),
+  grantsToDate: z.coerce
+    .number()
+    .min(1, { message: MESSAGES.REGISTRY.FORM.GRANTS_TO_DATE })
+    .optional(),
   linkToDetails: z.string().url(),
+  categories: z
+    .array(z.string())
+    .min(1, { message: MESSAGES.REGISTRY.FORM.CATEGORIES }),
+  ecosystems: z
+    .array(z.string())
+    .min(1, { message: MESSAGES.REGISTRY.FORM.ECOSYSTEMS }),
+  networks: z
+    .array(z.string())
+    .min(1, { message: MESSAGES.REGISTRY.FORM.NETWORKS }),
+  grantTypes: z
+    .array(z.string())
+    .min(1, { message: MESSAGES.REGISTRY.FORM.GRANT_TYPES }),
 });
 
 type CreateProgramType = z.infer<typeof createProgramSchema>;
 
 export default function AddProgram() {
-  const [description, setDescription] = useState("");
   const router = useRouter();
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [selectedNetworks, setSelectedNetworks] = useState<string[]>([]);
-  const [selectedEcosystems, setSelectedEcosystems] = useState<string[]>([]);
-  const [selectedGrantTypes, setSelectedGrantTypes] = useState<string[]>([]);
+  // const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  // const [selectedNetworks, setSelectedNetworks] = useState<string[]>([]);
+  // const [selectedEcosystems, setSelectedEcosystems] = useState<string[]>([]);
+  // const [selectedGrantTypes, setSelectedGrantTypes] = useState<string[]>([]);
   const supportedChains = appNetwork
     .filter((chain) => {
       const support = [10, 42161, 11155111];
@@ -85,21 +112,32 @@ export default function AddProgram() {
     resolver: zodResolver(createProgramSchema),
     reValidateMode: "onChange",
     mode: "onChange",
+    defaultValues: {
+      networkToCreate: 0,
+      categories: [],
+      ecosystems: [],
+      networks: [],
+      grantTypes: [],
+    },
   });
 
   const onChangeGeneric = (
     value: string,
-    setToChange: Dispatch<React.SetStateAction<string[]>>
+    fieldName: "categories" | "ecosystems" | "networks" | "grantTypes"
   ) => {
-    setToChange((oldArray) => {
-      const newArray = [...oldArray];
-      if (newArray.includes(value)) {
-        const filteredArray = newArray.filter((item) => item !== value);
-        return filteredArray;
-      } else {
-        newArray.push(value);
-      }
-      return newArray;
+    const oldArray = watch(fieldName);
+    let newArray = [...oldArray];
+    if (newArray.includes(value)) {
+      const filtered = newArray.filter((item) => item !== value);
+      setValue(fieldName, filtered, {
+        shouldValidate: true,
+      });
+      return;
+    } else {
+      newArray.push(value);
+    }
+    setValue(fieldName, newArray, {
+      shouldValidate: true,
     });
   };
 
@@ -118,7 +156,7 @@ export default function AddProgram() {
         openConnectModal?.();
         return;
       }
-      const chainSelected = data.network;
+      const chainSelected = data.networkToCreate;
       if (chain && chain.id !== chainSelected) {
         await switchNetworkAsync?.(chainSelected);
       }
@@ -136,10 +174,9 @@ export default function AddProgram() {
       const alloRegistry = new AlloRegistry(walletSigner as any, ipfsStorage);
 
       const nonce = Math.floor(Math.random() * 1000000 + 1);
-      const name = data.name;
       const metadata = {
-        title: name,
-        description: description,
+        title: data.name,
+        description: data.description,
         programBudget: data.budget,
         amountDistributedToDate: data.amountDistributed,
         minGrantSize: data.minGrantSize,
@@ -156,10 +193,10 @@ export default function AddProgram() {
           blog: data.blog || "",
           forum: data.forum || "",
         },
-        categories: selectedCategories,
-        ecosystems: selectedEcosystems,
-        networks: selectedNetworks,
-        grantTypes: selectedGrantTypes,
+        categories: data.categories,
+        ecosystems: data.ecosystems,
+        networks: data.networks,
+        grantTypes: data.grantTypes,
         logoImg: "",
         bannerImg: "",
         logoImgData: {},
@@ -170,10 +207,11 @@ export default function AddProgram() {
         // TODO: Additional metadata
         tags: ["grant-program-registry"],
       };
+      console.log("metadata", metadata);
       const owner = address as string;
 
       const hasRegistry = await alloRegistry
-        .createProgram(nonce + 1, name, metadata, owner, [owner])
+        .createProgram(nonce + 1, data.name, metadata, owner, [owner])
         .then((res) => {
           return res;
         })
@@ -213,11 +251,11 @@ export default function AddProgram() {
           </div>
           <div className="flex flex-col gap-1">
             <h1 className="text-2xl font-semibold text-black dark:text-white font-body">
-              Add your program registry
+              Add your program to onchain registry
             </h1>
             <p className="text-base text-black dark:text-white">
-              Add your program registry to the list of programs that are
-              available to the community.
+              Add your program to the registry and attract high quality
+              builders.
             </p>
           </div>
         </div>
@@ -262,16 +300,21 @@ export default function AddProgram() {
               </div>
               <div className="flex w-full flex-col max-w-full gap-1">
                 <label htmlFor="program-description" className={labelStyle}>
-                  Description (optional)
+                  Description *
                 </label>
                 <MarkdownEditor
                   className="bg-transparent"
-                  value={description}
+                  value={watch("description")}
                   onChange={(newValue: string) =>
-                    setDescription(newValue || "")
+                    setValue("description", newValue || "", {
+                      shouldValidate: true,
+                    })
                   }
                   placeholderText="Please provide a description of this program"
                 />
+                <p className="text-base text-red-400">
+                  {errors.description?.message}
+                </p>
               </div>
               <div className="grid grid-cols-4  max-sm:grid-cols-1 max-md:grid-cols-2 gap-4 justify-between">
                 <div className="flex w-full flex-col gap-1">
@@ -281,15 +324,15 @@ export default function AddProgram() {
                   <SearchDropdown
                     list={registryHelper.categories}
                     onSelectFunction={(value: string) =>
-                      onChangeGeneric(value, setSelectedCategories)
+                      onChangeGeneric(value, "categories")
                     }
-                    cleanFunction={() => {
-                      setSelectedCategories([]);
-                    }}
                     type={"Categories"}
-                    selected={selectedCategories}
+                    selected={watch("categories")}
                     prefixUnselected="Select"
                   />
+                  <p className="text-base text-red-400">
+                    {errors.categories?.message}
+                  </p>
                 </div>
                 <div className="flex w-full flex-col  gap-1">
                   <label htmlFor="program-ecosystems" className={labelStyle}>
@@ -298,15 +341,15 @@ export default function AddProgram() {
                   <SearchDropdown
                     list={registryHelper.ecosystems}
                     onSelectFunction={(value: string) =>
-                      onChangeGeneric(value, setSelectedEcosystems)
+                      onChangeGeneric(value, "ecosystems")
                     }
-                    cleanFunction={() => {
-                      setSelectedEcosystems([]);
-                    }}
                     type={"Ecosystems"}
-                    selected={selectedEcosystems}
+                    selected={watch("ecosystems")}
                     prefixUnselected="Select"
                   />
+                  <p className="text-base text-red-400">
+                    {errors.ecosystems?.message}
+                  </p>
                 </div>
                 <div className="flex w-full flex-col  gap-1">
                   <label htmlFor="program-networks" className={labelStyle}>
@@ -317,15 +360,15 @@ export default function AddProgram() {
                     list={registryHelper.networks}
                     imageDictionary={registryHelper.networkImages}
                     onSelectFunction={(value: string) =>
-                      onChangeGeneric(value, setSelectedNetworks)
+                      onChangeGeneric(value, "networks")
                     }
-                    cleanFunction={() => {
-                      setSelectedNetworks([]);
-                    }}
                     type={"Networks"}
-                    selected={selectedNetworks}
+                    selected={watch("networks")}
                     prefixUnselected="Select"
                   />
+                  <p className="text-base text-red-400">
+                    {errors.networks?.message}
+                  </p>
                 </div>
                 <div className="flex w-full flex-col  gap-1">
                   <label htmlFor="program-types" className={labelStyle}>
@@ -334,15 +377,15 @@ export default function AddProgram() {
                   <SearchDropdown
                     list={registryHelper.grantTypes}
                     onSelectFunction={(value: string) =>
-                      onChangeGeneric(value, setSelectedGrantTypes)
+                      onChangeGeneric(value, "grantTypes")
                     }
-                    cleanFunction={() => {
-                      setSelectedGrantTypes([]);
-                    }}
                     type={"Grant Types"}
-                    selected={selectedGrantTypes}
+                    selected={watch("grantTypes")}
                     prefixUnselected="Select"
                   />
+                  <p className="text-base text-red-400">
+                    {errors.grantTypes?.message}
+                  </p>
                 </div>
               </div>
             </div>
@@ -354,15 +397,15 @@ export default function AddProgram() {
                 </label>
                 <NetworkDropdown
                   onSelectFunction={(value) => {
-                    setValue("network", value, {
+                    setValue("networkToCreate", value, {
                       shouldValidate: true,
                     });
                   }}
-                  previousValue={watch("network")}
+                  previousValue={watch("networkToCreate")}
                   list={supportedChains}
                 />
                 <p className="text-base text-red-400">
-                  {errors.network?.message}
+                  {errors.networkToCreate?.message}
                 </p>
               </div>
               <div className="flex w-full flex-col  gap-1">
@@ -565,12 +608,13 @@ export default function AddProgram() {
               type="submit"
               className="px-3 py-3 text-base"
               disabled={
-                !isValid ||
-                isSubmitting ||
-                selectedCategories.length === 0 ||
-                selectedEcosystems.length === 0 ||
-                selectedNetworks.length === 0 ||
-                selectedGrantTypes.length === 0
+                isSubmitting
+                // ||
+                // !isValid ||
+                // selectedCategories.length === 0 ||
+                // selectedEcosystems.length === 0 ||
+                // selectedNetworks.length === 0 ||
+                // selectedGrantTypes.length === 0
               }
             >
               Create program
