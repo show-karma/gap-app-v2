@@ -128,7 +128,9 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
                     <tr className="" key={item.uid}>
                       <td className="pr-2">
                         <p className="w-36 max-w-max text-gray-500 text-sm font-medium ">
-                          {formatDate(item.data.completedAt * 1000)}
+                          {formatDate(item.data?.startedAt * 1000)}
+                          {" → "}
+                          {formatDate(item.data?.completedAt * 1000)}
                         </p>
                       </td>
                       <td className="pr-2 max-sm:pr-2 border-l border-l-zinc-400" />
