@@ -152,12 +152,12 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
               />
             </div>
           </div>
-          <div className="flex w-full flex-col">
+          <div className="flex w-full flex-row">
             <Controller
               name="startedAt"
               control={control}
               render={({ field, formState, fieldState }) => (
-                <div className="flex w-full flex-col gap-2">
+                <div className="flex w-full flex-col gap-2 mr-2">
                   <label className={labelStyle}>Started at *</label>
                   <div>
                     <Popover className="relative">
@@ -194,8 +194,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
                 </div>
               )}
             />
-          </div>
-          <div className="flex w-full flex-col">
+
             <Controller
               name="completedAt"
               control={control}
