@@ -37,7 +37,7 @@ export const feedIconDictionary = (
     return "/icons/newIcons/icon_thumbs-up.svg";
   }
   if (event === "grant-completed") {
-    return "/icons/newIcons/icon_thumbs-up.svg";
+    return "/icons/milestone-completed.svg";
   }
   return "/icons/review.svg";
 };
