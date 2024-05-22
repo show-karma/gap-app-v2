@@ -19,14 +19,11 @@ import { AddAdmin } from "@/components/Pages/Admin/AddAdminDialog";
 import { request, gql } from "graphql-request";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { RemoveAdmin } from "@/components/Pages/Admin/RemoveAdminDialog";
+import { useOwnerStore } from "@/store";
 
 interface CommunityAdmin {
   id: string;
   admins: { user: { id: string } }[];
-}
-
-interface Iadmin {
-  id: string[];
 }
 
 export default function Communities() {
@@ -58,8 +55,7 @@ export default function Communities() {
     fetchCommunities();
   }, []);
 
-  const { communities: communitiesToAdmin, isLoading: isLoadingCommunities } =
-    useCommunitiesStore();
+  const isOwner = useOwnerStore((state) => state.isOwner);
 
   const [communityAdmins, setCommunityAdmins] = useState<any>([]);
   async function fetchCommunityAdmins() {
@@ -125,7 +121,7 @@ export default function Communities() {
       />
 
       <div className="px-4 sm:px-6 lg:px-12 py-5">
-        {communitiesToAdmin.length ? (
+        {isOwner ? (
           <div className="flex flex-col gap-2">
             <div className="flex justify-between">
               <div className="text-2xl font-bold">
@@ -251,7 +247,7 @@ export default function Communities() {
                     })}
                   </tbody>
                 </table>
-              ) : isLoading || isLoadingCommunities ? (
+              ) : isLoading ? (
                 <Spinner />
               ) : null}
             </div>
