@@ -200,11 +200,10 @@ export default function AddProgram() {
         bannerImgData: {},
         credentials: {},
         createdAt: new Date().getTime(),
-
-        // TODO: Additional metadata
-        tags: ["grant-program-registry"],
+        type: "program",
+        tags: ["karma-gap", "grant-program-registry"],
       };
-      console.log("metadata", metadata);
+
       const owner = address as string;
 
       const hasRegistry = await alloRegistry
