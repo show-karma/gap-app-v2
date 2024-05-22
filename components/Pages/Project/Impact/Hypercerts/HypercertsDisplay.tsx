@@ -160,14 +160,22 @@ export default function HypertCerts({ walletAddress }: Props) {
     <section className="flex flex-col justify-center items-start mt-15 pt-3 border-zinc-300 border-t-[1px]">
       <h1 className="font-bold text-2xl mb-2">Impact Certificates</h1>
       <div className="bg-dark grid grid-cols-1 gap-3 sm:grid-cols-4 mt-4">
-        {data.map((claim: any) => (
-          <div key={claim.id} className="flex flex-col items-start shadow-sm">
-            <p className="text-sm font-medium text-gray-900">
-              Minted on {new Date(claim.creation * 1000).toDateString()}
+        {data.length === 0 ? (
+          <div className="flex flex-col items-center justify-center">
+            <p className="text-lg font-medium text-gray-900">
+              No Impact Certificates found
             </p>
-            <Metadata uri={claim.uri} />
           </div>
-        ))}
+        ) : (
+          data.map((claim: any) => (
+            <div key={claim.id} className="flex flex-col items-start shadow-sm">
+              <p className="text-sm font-medium text-gray-900">
+                Minted on {new Date(claim.creation * 1000).toDateString()}
+              </p>
+              <Metadata uri={claim.uri} />
+            </div>
+          ))
+        )}
       </div>
     </section>
   );
