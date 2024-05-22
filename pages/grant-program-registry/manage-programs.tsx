@@ -1,28 +1,40 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import React, { Dispatch, FC, useMemo } from "react";
+import React from "react";
 import { NextSeo } from "next-seo";
 import { defaultMetadata } from "@/utilities/meta";
 import { useState, useEffect } from "react";
 import { Spinner } from "@/components/Utilities/Spinner";
-import Link from "next/link";
-import { PAGES } from "@/utilities/pages";
-import debounce from "lodash.debounce";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import InfiniteScroll from "react-infinite-scroll-component";
-import {
-  GrantProgram,
-  ProgramList,
-} from "@/components/Pages/ProgramRegistry/ProgramList";
-import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
+import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { ProgramListPending } from "@/components/Pages/ProgramRegistry/ProgramListPending";
 import toast from "react-hot-toast";
+import { Button } from "@/components/Utilities/Button";
+import { useQueryState } from "nuqs";
+import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 
-const GrantProgramRegistry = () => {
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const { query } = context;
+  const defaultTab = (query.tab as string) || "";
+
+  return {
+    props: {
+      defaultTab,
+    },
+  };
+}
+
+const GrantProgramRegistry = ({
+  defaultTab,
+}: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const [grantPrograms, setGrantPrograms] = useState<GrantProgram[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
+
+  const [tab, setTab] = useQueryState("tab", {
+    defaultValue: defaultTab || "pending",
+  });
 
   const dynamicMetadata = {
     title: `Karma GAP - Grant Program Aggregator`,
@@ -37,8 +49,8 @@ const GrantProgramRegistry = () => {
       const newOffset = offset + pageSize;
       setOffset(newOffset);
       await fetchData(
-        INDEXER.REGISTRY.GET_ALL_PENDING +
-          `?limit=${pageSize}&offset=${newOffset}`
+        INDEXER.REGISTRY.GET_ALL +
+          `?limit=${pageSize}&offset=${newOffset}&isValid=${tab}`
       ).then(([res, error]) => {
         if (!error && res) {
           setGrantPrograms((oldArray) => [...oldArray, ...res]);
@@ -56,12 +68,14 @@ const GrantProgramRegistry = () => {
     setLoading(true);
     setOffset(0);
     try {
-      await fetchData(INDEXER.REGISTRY.GET_ALL_PENDING).then(([res, error]) => {
-        if (!error && res) {
-          setGrantPrograms(res);
-          setHasMore(res.length === pageSize);
+      await fetchData(INDEXER.REGISTRY.GET_ALL + `?isValid=${tab}`).then(
+        ([res, error]) => {
+          if (!error && res) {
+            setGrantPrograms(res);
+            setHasMore(res.length === pageSize);
+          }
         }
-      });
+      );
     } catch (error: any) {
       console.log(error);
     } finally {
@@ -72,9 +86,12 @@ const GrantProgramRegistry = () => {
   useEffect(() => {
     getGrantPrograms();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [tab]);
 
-  const approveOrReject = async (id: string, value: boolean) => {
+  const approveOrReject = async (
+    id: string,
+    value: "accepted" | "rejected" | "pending"
+  ) => {
     try {
       const [request, error] = await fetchData(
         INDEXER.REGISTRY.APPROVE,
@@ -88,11 +105,16 @@ const GrantProgramRegistry = () => {
         true
       );
       if (error) throw new Error("Error approving program");
-      toast.success(`Program ${value ? "approved" : "rejected"} successfully`);
+      toast.success(`Program ${value} successfully`);
       await getGrantPrograms();
     } catch {
-      console.log(`Error ${value ? "approving" : "rejecting"}  program ${id}`);
-      toast.error(`Error ${value ? "approving" : "rejecting"}  program ${id}`);
+      const messageDict = {
+        accepted: "approving",
+        rejected: "rejecting",
+        pending: "pending",
+      };
+      console.log(`Error ${messageDict[value]} program ${id}`);
+      toast.error(`Error ${messageDict[value]} program ${id}`);
     }
   };
 
@@ -127,25 +149,9 @@ const GrantProgramRegistry = () => {
       <section className="my-10 flex w-full max-w-full flex-col justify-between items-center gap-6 px-12 pb-7 pt-5 max-2xl:px-8 max-md:px-4">
         <div className="flex flex-row max-lg:gap-10  max-md:flex-col gap-32 justify-between w-full">
           <div className="flex flex-1 flex-col gap-3 items-start justify-start text-left">
-            <h1 className="text-2xl tracking-[-0.72px] 2xl:text-4xl font-bold text-start text-black dark:text-white">
-              {`The best grant program directory you’ll find`}
+            <h1 className="text-2xl tracking-[-0.72px] 2xl:text-3xl font-bold text-start text-black dark:text-white">
+              Manage Grant Programs
             </h1>
-            <p className="text-start text-lg max-w-5xl text-black dark:text-white">
-              Explore our handpicked grants for innovators and creators: from
-              tech pioneers to community leaders, we have a grant to elevate
-              your project. Did we miss your program/bounty? Add it{" "}
-              <Link
-                href={PAGES.REGISTRY.ADD_PROGRAM}
-                className="text-blue-700 dark:text-blue-400 underline"
-              >
-                here.
-              </Link>
-            </p>
-            <Link href={PAGES.REGISTRY.ADD_PROGRAM}>
-              <button className="mt-3 bg-[#0E101B] dark:bg-slate-800 text-white px-10 py-2.5 rounded-lg">
-                Add your program
-              </button>
-            </Link>
           </div>
           {/* <div className="h-44 w-[1px] bg-[#98A2B3] max-md:w-full max-md:h-[1px]" />
           <div className="flex flex-1 flex-col gap-2 items-center max-sm:items-start">
@@ -167,6 +173,44 @@ const GrantProgramRegistry = () => {
         </div>
 
         <div className="w-full">
+          <div className="flex flex-wrap w-max gap-2 rounded bg-[#F2F4F7] dark:bg-zinc-800 px-2 py-1">
+            <Button
+              className="bg-transparent text-black"
+              onClick={() => {
+                setTab("pending");
+              }}
+              style={{
+                backgroundColor: tab === "pending" ? "white" : "transparent",
+                color: tab === "pending" ? "black" : "gray",
+              }}
+            >
+              Pending
+            </Button>
+            <Button
+              className="bg-transparent text-black"
+              onClick={() => {
+                setTab("accepted");
+              }}
+              style={{
+                backgroundColor: tab === "accepted" ? "white" : "transparent",
+                color: tab === "accepted" ? "black" : "gray",
+              }}
+            >
+              Approved
+            </Button>
+            <Button
+              className="bg-transparent text-black"
+              onClick={() => {
+                setTab("rejected");
+              }}
+              style={{
+                backgroundColor: tab === "rejected" ? "white" : "transparent",
+                color: tab === "rejected" ? "black" : "gray",
+              }}
+            >
+              Rejected
+            </Button>
+          </div>
           {!loading ? (
             grantPrograms.length ? (
               <div className="mt-8 flow-root">
@@ -179,6 +223,7 @@ const GrantProgramRegistry = () => {
                       nextFunc={() => {
                         fetchMoreData();
                       }}
+                      tab={tab as "pending" | "accepted" | "rejected"}
                     />
                   </div>
                 </div>
