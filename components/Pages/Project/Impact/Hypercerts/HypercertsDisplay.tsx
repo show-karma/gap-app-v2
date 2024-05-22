@@ -1,9 +1,6 @@
 import tokensUnderOwnerQuery from "../../../../../utilities/hypercerts/tokensUnderOwner";
 import axios from "axios";
 import { useEffect, useState } from "react";
-import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
-import { shortAddress } from "@/utilities/shortAddress";
-import hypercertsClient from "@/utilities/hypercerts/hypercerts";
 import { Hex } from "viem";
 
 interface Props {
@@ -48,7 +45,6 @@ export default function HypertCerts({ walletAddress }: Props) {
       }
     );
     useEffect(() => {
-      console.log("ProjectRecord: ", walletAddress);
       axios.get(`https://${props.uri}.ipfs.nftstorage.link/`).then((res) => {
         setMetadata(res.data);
       });
@@ -131,17 +127,6 @@ export default function HypertCerts({ walletAddress }: Props) {
   };
 
   useEffect(() => {
-    // hypercertsClient.indexer
-    //   .fractionsByOwner("0x5a4830885f12438e00d8f4d98e9fe083e707698c")
-    //   .then((fractions) => {
-    //     console.log("Fractions: ", fractions);
-    //   })
-    //   .catch((error) => {
-    //     console.error("Error: ", error);
-    //   });
-  }, []);
-
-  useEffect(() => {
     console.log(data);
 
     (async () => {
@@ -163,7 +148,8 @@ export default function HypertCerts({ walletAddress }: Props) {
         {data.length === 0 ? (
           <div className="flex flex-col items-center justify-center">
             <p className="text-lg font-medium text-gray-900">
-              No Impact Certificates found
+              No Impact Certificates found for this project. Please ask the
+              owner/maintainer to mint one.
             </p>
           </div>
         ) : (
