@@ -92,9 +92,13 @@ export type GrantProgram = {
 
 interface ProgramListPendingProps {
   grantPrograms: GrantProgram[];
-  approveOrReject: (id: string, value: boolean) => void;
+  approveOrReject: (
+    id: string,
+    value: "accepted" | "rejected" | "pending"
+  ) => void;
   hasMore: boolean;
   nextFunc: () => void;
+  tab: "accepted" | "rejected" | "pending";
 }
 
 const accountsAllowed = [
@@ -107,6 +111,7 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
   approveOrReject,
   hasMore,
   nextFunc,
+  tab,
 }) => {
   const { address } = useAccount();
   const { isAuth } = useAuthStore();
@@ -490,31 +495,107 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
         cell: (info) => {
           const grant = info.row.original;
 
-          return (
-            <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-              {isAllowed ? (
-                <div className="flex flex-row gap-3">
+          const statusCases = () => {
+            if (tab === "accepted") {
+              return (
+                <>
                   <Button
-                    className="text-sm"
+                    className="text-sm bg-zinc-700 dark:bg-zinc-700 hover:bg-zinc-700 text-white"
                     onClick={() => {
-                      if (grant.id) {
-                        approveOrReject(grant.id, true);
+                      if (grant.id || grant.programId) {
+                        approveOrReject(
+                          grant.id || (grant.programId as string),
+                          "pending"
+                        );
                       }
                     }}
                   >
-                    Approve
+                    Pending
                   </Button>
                   <Button
                     onClick={() => {
-                      if (grant.id) {
-                        approveOrReject(grant.id, false);
+                      if (grant.id || grant.programId) {
+                        approveOrReject(
+                          grant.id || (grant.programId as string),
+                          "rejected"
+                        );
                       }
                     }}
                     className="bg-red-600 hover:bg-red-600 text-sm"
                   >
                     Reject
                   </Button>
-                </div>
+                </>
+              );
+            }
+            if (tab === "rejected") {
+              return (
+                <>
+                  <Button
+                    className="text-sm bg-zinc-700 dark:bg-zinc-700 hover:bg-zinc-700 text-white"
+                    onClick={() => {
+                      if (grant.id || grant.programId) {
+                        approveOrReject(
+                          grant.id || (grant.programId as string),
+                          "pending"
+                        );
+                      }
+                    }}
+                  >
+                    Pending
+                  </Button>
+                  <Button
+                    className="text-sm"
+                    onClick={() => {
+                      if (grant.id || grant.programId) {
+                        approveOrReject(
+                          grant.id || (grant.programId as string),
+                          "accepted"
+                        );
+                      }
+                    }}
+                  >
+                    Approve
+                  </Button>
+                </>
+              );
+            }
+            return (
+              <>
+                <Button
+                  className="text-sm"
+                  onClick={() => {
+                    if (grant.id || grant.programId) {
+                      approveOrReject(
+                        grant.id || (grant.programId as string),
+                        "accepted"
+                      );
+                    }
+                  }}
+                >
+                  Approve
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (grant.id || grant.programId) {
+                      approveOrReject(
+                        grant.id || (grant.programId as string),
+                        "rejected"
+                      );
+                    }
+                  }}
+                  className="bg-red-600 hover:bg-red-600 text-sm"
+                >
+                  Reject
+                </Button>
+              </>
+            );
+          };
+
+          return (
+            <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
+              {isAllowed ? (
+                <div className="flex flex-row gap-3">{statusCases()}</div>
               ) : null}
             </div>
           );
