@@ -38,6 +38,7 @@ export type GrantProgram = {
     title?: string;
     endDate?: string;
     logoImg?: string;
+    website?: string;
     socialLinks?: {
       blog?: string;
       forum?: string;
@@ -59,7 +60,7 @@ export type GrantProgram = {
     credentials?: {};
     description?: string;
     logoImgData?: string;
-    grantsIssued?: number;
+    grantsToDate?: number;
     bannerImgData?: string;
     linkToDetails?: string;
     programBudget?: string;
@@ -99,13 +100,14 @@ interface ProgramListPendingProps {
   hasMore: boolean;
   nextFunc: () => void;
   tab: "accepted" | "rejected" | "pending";
+  editFn: (program: GrantProgram) => any;
 }
 
-const accountsAllowed = [
+export const accountsAllowedManagePrograms = [
   "0x23b7a53ecfd93803c63b97316d7362eae59c55b6",
   "0x5a4830885f12438e00d8f4d98e9fe083e707698c",
   "0x99Cc6001079f320930bbED831bF08A9A01a70c77",
-];
+].map((item) => item.toLowerCase());
 
 export const ProgramListPending: FC<ProgramListPendingProps> = ({
   grantPrograms,
@@ -113,11 +115,15 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
   hasMore,
   nextFunc,
   tab,
+  editFn,
 }) => {
   const { address } = useAccount();
   const { isAuth } = useAuthStore();
   const isAllowed =
-    address && accountsAllowed.includes(address.toLowerCase()) && isAuth;
+    address &&
+    accountsAllowedManagePrograms.includes(address.toLowerCase()) &&
+    isAuth;
+
   const columns = useMemo<ColumnDef<GrantProgram>[]>(
     () => [
       {
@@ -223,9 +229,9 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
         cell: (info) => {
           const grant = info.row.original;
           return (
-            <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-400 max-w-[285px]">
+            <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-400 max-w-[240px]">
               <div
-                className="w-[420px] max-w-[420px] text-wrap pr-8"
+                className="w-[360px] max-w-[360px] text-wrap pr-8"
                 data-color-mode="light"
               >
                 <ReadMore
@@ -471,7 +477,7 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
           const grant = info.row.original;
 
           return (
-            <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
+            <div className="whitespace-nowrap max-w-[220px] flex flex-row flex-wrap gap-1 px-3 py-5 text-sm text-black dark:text-zinc-300">
               {grant.metadata?.grantTypes?.map((type, index) => (
                 <span
                   key={index}
@@ -496,107 +502,99 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
         cell: (info) => {
           const grant = info.row.original;
 
+          const EditButton = () => {
+            return (
+              <Button
+                className="text-sm bg-black dark:bg-black hover:bg-black text-white"
+                onClick={() => {
+                  editFn(grant);
+                }}
+              >
+                Update
+              </Button>
+            );
+          };
+
+          const PendingButton = () => (
+            <Button
+              className="text-sm bg-zinc-700 dark:bg-zinc-700 hover:bg-zinc-700 text-white"
+              onClick={() => {
+                if (grant.id || grant.programId) {
+                  approveOrReject(
+                    grant.id || (grant.programId as string),
+                    "pending"
+                  );
+                }
+              }}
+            >
+              Pending
+            </Button>
+          );
+          const RejectButton = () => (
+            <Button
+              onClick={() => {
+                if (grant.id || grant.programId) {
+                  approveOrReject(
+                    grant.id || (grant.programId as string),
+                    "rejected"
+                  );
+                }
+              }}
+              className="bg-red-600 hover:bg-red-600 text-sm"
+            >
+              Reject
+            </Button>
+          );
+          const ApproveButton = () => (
+            <Button
+              className="text-sm bg-blue-700 dark:bg-blue-700 hover:bg-blue-700 text-white"
+              onClick={() => {
+                if (grant.id || grant.programId) {
+                  approveOrReject(
+                    grant.id || (grant.programId as string),
+                    "accepted"
+                  );
+                }
+              }}
+            >
+              Approve
+            </Button>
+          );
+
           const statusCases = () => {
             if (tab === "accepted") {
               return (
                 <>
-                  <Button
-                    className="text-sm bg-zinc-700 dark:bg-zinc-700 hover:bg-zinc-700 text-white"
-                    onClick={() => {
-                      if (grant.id || grant.programId) {
-                        approveOrReject(
-                          grant.id || (grant.programId as string),
-                          "pending"
-                        );
-                      }
-                    }}
-                  >
-                    Pending
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      if (grant.id || grant.programId) {
-                        approveOrReject(
-                          grant.id || (grant.programId as string),
-                          "rejected"
-                        );
-                      }
-                    }}
-                    className="bg-red-600 hover:bg-red-600 text-sm"
-                  >
-                    Reject
-                  </Button>
+                  <EditButton />
+                  <PendingButton />
+                  <RejectButton />
                 </>
               );
             }
             if (tab === "rejected") {
               return (
                 <>
-                  <Button
-                    className="text-sm bg-zinc-700 dark:bg-zinc-700 hover:bg-zinc-700 text-white"
-                    onClick={() => {
-                      if (grant.id || grant.programId) {
-                        approveOrReject(
-                          grant.id || (grant.programId as string),
-                          "pending"
-                        );
-                      }
-                    }}
-                  >
-                    Pending
-                  </Button>
-                  <Button
-                    className="text-sm"
-                    onClick={() => {
-                      if (grant.id || grant.programId) {
-                        approveOrReject(
-                          grant.id || (grant.programId as string),
-                          "accepted"
-                        );
-                      }
-                    }}
-                  >
-                    Approve
-                  </Button>
+                  <EditButton />
+                  <PendingButton />
+                  <ApproveButton />
                 </>
               );
             }
             return (
               <>
-                <Button
-                  className="text-sm"
-                  onClick={() => {
-                    if (grant.id || grant.programId) {
-                      approveOrReject(
-                        grant.id || (grant.programId as string),
-                        "accepted"
-                      );
-                    }
-                  }}
-                >
-                  Approve
-                </Button>
-                <Button
-                  onClick={() => {
-                    if (grant.id || grant.programId) {
-                      approveOrReject(
-                        grant.id || (grant.programId as string),
-                        "rejected"
-                      );
-                    }
-                  }}
-                  className="bg-red-600 hover:bg-red-600 text-sm"
-                >
-                  Reject
-                </Button>
+                <EditButton />
+                <ApproveButton />
+                <RejectButton />
               </>
             );
           };
 
           return (
-            <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
+            <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300 w-48">
               {isAllowed ? (
-                <div className="flex flex-row gap-3">{statusCases()}</div>
+                <div className="flex flex-row flex-wrap gap-3">
+                  {statusCases()}
+                </div>
               ) : null}
             </div>
           );
