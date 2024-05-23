@@ -13,6 +13,7 @@ import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
 import { useQueryState } from "nuqs";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
+import AddProgram from "@/components/Pages/ProgramRegistry/AddProgram";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { query } = context;
@@ -31,6 +32,8 @@ const GrantProgramRegistry = ({
   const [grantPrograms, setGrantPrograms] = useState<GrantProgram[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasMore, setHasMore] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [programToEdit, setProgramToEdit] = useState<GrantProgram | null>(null);
 
   const [tab, setTab] = useQueryState("tab", {
     defaultValue: defaultTab || "pending",
@@ -147,13 +150,26 @@ const GrantProgramRegistry = ({
         ]}
       />
       <section className="my-10 flex w-full max-w-full flex-col justify-between items-center gap-6 px-12 pb-7 pt-5 max-2xl:px-8 max-md:px-4">
-        <div className="flex flex-row max-lg:gap-10  max-md:flex-col gap-32 justify-between w-full">
-          <div className="flex flex-1 flex-col gap-3 items-start justify-start text-left">
-            <h1 className="text-2xl tracking-[-0.72px] 2xl:text-3xl font-bold text-start text-black dark:text-white">
-              Manage Grant Programs
-            </h1>
+        {isEditing ? (
+          <div className="w-full">
+            <AddProgram
+              programToEdit={programToEdit}
+              backTo={() => {
+                setIsEditing(false);
+                setProgramToEdit(null);
+              }}
+              refreshPrograms={getGrantPrograms}
+            />
           </div>
-          {/* <div className="h-44 w-[1px] bg-[#98A2B3] max-md:w-full max-md:h-[1px]" />
+        ) : (
+          <>
+            <div className="flex flex-row max-lg:gap-10  max-md:flex-col gap-32 justify-between w-full">
+              <div className="flex flex-1 flex-col gap-3 items-start justify-start text-left">
+                <h1 className="text-2xl tracking-[-0.72px] 2xl:text-3xl font-bold text-start text-black dark:text-white">
+                  Manage Grant Programs
+                </h1>
+              </div>
+              {/* <div className="h-44 w-[1px] bg-[#98A2B3] max-md:w-full max-md:h-[1px]" />
           <div className="flex flex-1 flex-col gap-2 items-center max-sm:items-start">
             <div className="flex flex-1 flex-col gap-2 items-start">
               <p className="text-[#101828] dark:text-white font-body font-semibold text-xl">
@@ -170,77 +186,85 @@ const GrantProgramRegistry = ({
               </div>
             </div>
           </div> */}
-        </div>
-
-        <div className="w-full">
-          <div className="flex flex-wrap w-max gap-2 rounded bg-[#F2F4F7] dark:bg-zinc-800 px-2 py-1">
-            <Button
-              className="bg-transparent text-black"
-              onClick={() => {
-                setTab("pending");
-              }}
-              style={{
-                backgroundColor: tab === "pending" ? "white" : "transparent",
-                color: tab === "pending" ? "black" : "gray",
-              }}
-            >
-              Pending
-            </Button>
-            <Button
-              className="bg-transparent text-black"
-              onClick={() => {
-                setTab("accepted");
-              }}
-              style={{
-                backgroundColor: tab === "accepted" ? "white" : "transparent",
-                color: tab === "accepted" ? "black" : "gray",
-              }}
-            >
-              Approved
-            </Button>
-            <Button
-              className="bg-transparent text-black"
-              onClick={() => {
-                setTab("rejected");
-              }}
-              style={{
-                backgroundColor: tab === "rejected" ? "white" : "transparent",
-                color: tab === "rejected" ? "black" : "gray",
-              }}
-            >
-              Rejected
-            </Button>
-          </div>
-          {!loading ? (
-            grantPrograms.length ? (
-              <div className="mt-8 flow-root">
-                <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                  <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                    <ProgramListPending
-                      approveOrReject={approveOrReject}
-                      grantPrograms={grantPrograms}
-                      hasMore={hasMore}
-                      nextFunc={() => {
-                        fetchMoreData();
-                      }}
-                      tab={tab as "pending" | "accepted" | "rejected"}
-                    />
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="py-10 px-4 justify-center flex items-center">
-                <p className="text-lg font-normal text-black dark:text-zinc-100">
-                  No grant program found
-                </p>
-              </div>
-            )
-          ) : (
-            <div className="py-10 px-4 justify-center flex items-center">
-              <Spinner />
             </div>
-          )}
-        </div>
+            <div className="w-full">
+              <div className="flex flex-wrap w-max gap-2 rounded bg-[#F2F4F7] dark:bg-zinc-800 px-2 py-1">
+                <Button
+                  className="bg-transparent text-black"
+                  onClick={() => {
+                    setTab("pending");
+                  }}
+                  style={{
+                    backgroundColor:
+                      tab === "pending" ? "white" : "transparent",
+                    color: tab === "pending" ? "black" : "gray",
+                  }}
+                >
+                  Pending
+                </Button>
+                <Button
+                  className="bg-transparent text-black"
+                  onClick={() => {
+                    setTab("accepted");
+                  }}
+                  style={{
+                    backgroundColor:
+                      tab === "accepted" ? "white" : "transparent",
+                    color: tab === "accepted" ? "black" : "gray",
+                  }}
+                >
+                  Approved
+                </Button>
+                <Button
+                  className="bg-transparent text-black"
+                  onClick={() => {
+                    setTab("rejected");
+                  }}
+                  style={{
+                    backgroundColor:
+                      tab === "rejected" ? "white" : "transparent",
+                    color: tab === "rejected" ? "black" : "gray",
+                  }}
+                >
+                  Rejected
+                </Button>
+              </div>
+              {!loading ? (
+                grantPrograms.length ? (
+                  <div className="mt-8 flow-root">
+                    <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                      <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                        <ProgramListPending
+                          approveOrReject={approveOrReject}
+                          grantPrograms={grantPrograms}
+                          hasMore={hasMore}
+                          nextFunc={() => {
+                            fetchMoreData();
+                          }}
+                          tab={tab as "pending" | "accepted" | "rejected"}
+                          editFn={(program: GrantProgram) => {
+                            setIsEditing(true);
+                            setProgramToEdit(program);
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="py-10 px-4 justify-center flex items-center">
+                    <p className="text-lg font-normal text-black dark:text-zinc-100">
+                      No grant program found
+                    </p>
+                  </div>
+                )
+              ) : (
+                <div className="py-10 px-4 justify-center flex items-center">
+                  <Spinner />
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </section>
     </>
   );

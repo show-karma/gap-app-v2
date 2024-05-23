@@ -17,7 +17,6 @@ import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 import { envVars } from "@/utilities/enviromentVars";
 import { useRouter } from "next/router";
-import { Dropdown } from "@/components/Utilities/Dropdown";
 
 import { useAuthStore } from "@/store/auth";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
@@ -31,6 +30,9 @@ import { DiscordIcon, TwitterIcon, WebsiteIcon } from "@/components/Icons";
 import { BlogIcon } from "@/components/Icons/Blog";
 import { DiscussionIcon } from "@/components/Icons/Discussion";
 import { OrganizationIcon } from "@/components/Icons/Organization";
+import { GrantProgram } from "./ProgramListPending";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 const labelStyle = "text-sm font-bold text-[#344054] dark:text-zinc-100";
 const inputStyle =
@@ -80,12 +82,16 @@ const createProgramSchema = z.object({
 
 type CreateProgramType = z.infer<typeof createProgramSchema>;
 
-export default function AddProgram() {
+export default function AddProgram({
+  programToEdit,
+  backTo,
+  refreshPrograms,
+}: {
+  programToEdit: GrantProgram | null;
+  backTo?: () => void;
+  refreshPrograms?: () => Promise<void>;
+}) {
   const router = useRouter();
-  // const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  // const [selectedNetworks, setSelectedNetworks] = useState<string[]>([]);
-  // const [selectedEcosystems, setSelectedEcosystems] = useState<string[]>([]);
-  // const [selectedGrantTypes, setSelectedGrantTypes] = useState<string[]>([]);
   const supportedChains = appNetwork
     .filter((chain) => {
       const support = [10, 42161, 11155111];
@@ -110,11 +116,27 @@ export default function AddProgram() {
     reValidateMode: "onChange",
     mode: "onChange",
     defaultValues: {
-      networkToCreate: 0,
-      categories: [],
-      ecosystems: [],
-      networks: [],
-      grantTypes: [],
+      name: programToEdit?.metadata?.title,
+      description: programToEdit?.metadata?.description,
+      amountDistributed: programToEdit?.metadata?.amountDistributedToDate as
+        | number
+        | undefined,
+      budget: programToEdit?.metadata?.programBudget as number | undefined,
+      minGrantSize: programToEdit?.metadata?.minGrantSize as number | undefined,
+      maxGrantSize: programToEdit?.metadata?.maxGrantSize as number | undefined,
+      grantsToDate: programToEdit?.metadata?.grantsToDate as number | undefined,
+      linkToDetails: programToEdit?.metadata?.linkToDetails,
+      website: programToEdit?.metadata?.website,
+      twitter: programToEdit?.metadata?.projectTwitter,
+      discord: programToEdit?.metadata?.socialLinks?.discord,
+      orgWebsite: programToEdit?.metadata?.socialLinks?.orgWebsite,
+      blog: programToEdit?.metadata?.socialLinks?.blog,
+      forum: programToEdit?.metadata?.socialLinks?.forum,
+      categories: programToEdit?.metadata?.categories || [],
+      ecosystems: programToEdit?.metadata?.ecosystems || [],
+      networks: programToEdit?.metadata?.networks || [],
+      grantTypes: programToEdit?.metadata?.grantTypes || [],
+      networkToCreate: programToEdit?.chainID || 0,
     },
   });
 
@@ -227,10 +249,114 @@ export default function AddProgram() {
     }
   };
 
+  const editProgram = async (data: CreateProgramType) => {
+    setIsLoading(true);
+    try {
+      if (!isConnected || !isAuth || !address) {
+        openConnectModal?.();
+        return;
+      }
+      const chainSelected = data.networkToCreate;
+      if (chain && chain.id !== chainSelected) {
+        await switchNetworkAsync?.(chainSelected);
+      }
+
+      const ipfsStorage = new NFTStorage({
+        token: envVars.IPFS_TOKEN,
+      });
+
+      const walletClient = await getWalletClient({
+        chainId: chainSelected,
+      });
+      if (!walletClient) return;
+      const walletSigner = await walletClientToSigner(walletClient);
+
+      const alloRegistry = new AlloRegistry(walletSigner as any, ipfsStorage);
+
+      const metadata = {
+        title: data.name,
+        description: data.description,
+        programBudget: data.budget,
+        amountDistributedToDate: data.amountDistributed,
+        minGrantSize: data.minGrantSize,
+        maxGrantSize: data.maxGrantSize,
+        grantsToDate: data.grantsToDate,
+        linkToDetails: data.linkToDetails,
+        website: data.website || "",
+        projectTwitter: data.twitter || "",
+        socialLinks: {
+          twitter: data.twitter || "",
+          website: data.website || "",
+          discord: data.discord || "",
+          orgWebsite: data.orgWebsite || "",
+          blog: data.blog || "",
+          forum: data.forum || "",
+        },
+        categories: data.categories,
+        ecosystems: data.ecosystems,
+        networks: data.networks,
+        grantTypes: data.grantTypes,
+        logoImg: "",
+        bannerImg: "",
+        logoImgData: {},
+        bannerImgData: {},
+        credentials: {},
+        createdAt: new Date().getTime(),
+        type: "program",
+        tags: ["karma-gap", "grant-program-registry"],
+      };
+
+      const permissionToEditOnChain =
+        programToEdit?.createdByAddress?.toLowerCase() ===
+        address?.toLowerCase();
+      if (permissionToEditOnChain) {
+        const hasRegistry = await alloRegistry
+          .updateProgramMetadata(programToEdit?.programId as string, metadata)
+          .then((res) => {
+            return res;
+          })
+          .catch((error) => {
+            throw new Error(error);
+          });
+        if (!hasRegistry) {
+          throw new Error("Error editing program");
+        }
+      } else {
+        const [request, error] = await fetchData(
+          INDEXER.REGISTRY.UPDATE,
+          "PUT",
+          {
+            programId: programToEdit?.programId,
+            chainId: chainSelected,
+            metadata,
+          },
+          {},
+          {},
+          true
+        );
+        if (error)
+          throw new Error("An error occurred while editing the program");
+      }
+      toast.success("Program edited successfully");
+      await refreshPrograms?.().then(() => {
+        backTo?.();
+      });
+    } catch (error) {
+      console.log(error);
+      toast.error("An error occurred while editing the program");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const onSubmit: SubmitHandler<CreateProgramType> = async (data, event) => {
     event?.preventDefault();
     event?.stopPropagation();
-    await createProgram(data);
+    if (programToEdit) {
+      await editProgram(data);
+    } else {
+      await createProgram(data);
+    }
   };
 
   return (
@@ -238,20 +364,37 @@ export default function AddProgram() {
       <div className="flex flex-col justify-start items-center max-w-[900px] w-full gap-6">
         <div className="flex flex-col justify-start items-start gap-3 p-0 w-full">
           <div className="flex flex-col gap-2 p-0">
-            <Link href={PAGES.REGISTRY.ROOT}>
-              <Button className="flex flex-row gap-2 bg-transparent hover:bg-transparent text-[#004EEB] text-sm p-0">
+            {programToEdit ? (
+              <Button
+                onClick={backTo}
+                className="flex flex-row gap-2 bg-transparent hover:bg-transparent text-[#004EEB] text-sm p-0"
+              >
                 <ChevronLeftIcon className="w-4 h-4" />
-                <p className="border-b border-b-[#004EEB]">Back to programs</p>
+                <p className="border-b border-b-[#004EEB]">
+                  Back to Manage Programs
+                </p>
               </Button>
-            </Link>
+            ) : (
+              <Link href={PAGES.REGISTRY.ROOT}>
+                <Button className="flex flex-row gap-2 bg-transparent hover:bg-transparent text-[#004EEB] text-sm p-0">
+                  <ChevronLeftIcon className="w-4 h-4" />
+                  <p className="border-b border-b-[#004EEB]">
+                    Back to programs
+                  </p>
+                </Button>
+              </Link>
+            )}
           </div>
           <div className="flex flex-col gap-1">
             <h1 className="text-2xl font-semibold text-black dark:text-white font-body">
-              Add your program to onchain registry
+              {programToEdit
+                ? `Edit ${programToEdit.name} program`
+                : "Add your program to onchain registry"}
             </h1>
             <p className="text-base text-black dark:text-white">
-              Add your program to the registry and attract high quality
-              builders.
+              {programToEdit
+                ? ""
+                : "Add your program to the registry and attract high quality builders."}
             </p>
           </div>
         </div>
@@ -613,7 +756,7 @@ export default function AddProgram() {
                 // selectedGrantTypes.length === 0
               }
             >
-              Create program
+              {programToEdit ? "Edit program" : "Create program"}
             </Button>
           </div>
         </form>
