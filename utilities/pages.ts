@@ -44,5 +44,6 @@ export const PAGES = {
   REGISTRY: {
     ROOT: `/grant-program-registry`,
     ADD_PROGRAM: `/grant-program-registry/add-program`,
+    MANAGE_PROGRAMS: `/grant-program-registry/manage-programs`,
   },
 };

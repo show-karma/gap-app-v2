@@ -103,7 +103,7 @@ interface ProgramListPendingProps {
   editFn: (program: GrantProgram) => any;
 }
 
-const accountsAllowed = [
+export const accountsAllowedManagePrograms = [
   "0x23b7a53ecfd93803c63b97316d7362eae59c55b6",
   "0x5a4830885f12438e00d8f4d98e9fe083e707698c",
   "0x99Cc6001079f320930bbED831bF08A9A01a70c77",
@@ -120,7 +120,9 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
   const { address } = useAccount();
   const { isAuth } = useAuthStore();
   const isAllowed =
-    address && accountsAllowed.includes(address.toLowerCase()) && isAuth;
+    address &&
+    accountsAllowedManagePrograms.includes(address.toLowerCase()) &&
+    isAuth;
 
   const columns = useMemo<ColumnDef<GrantProgram>[]>(
     () => [
@@ -508,7 +510,7 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
                   editFn(grant);
                 }}
               >
-                Edit
+                Update
               </Button>
             );
           };
@@ -588,9 +590,11 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
           };
 
           return (
-            <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
+            <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300 w-48">
               {isAllowed ? (
-                <div className="flex flex-row gap-3">{statusCases()}</div>
+                <div className="flex flex-row flex-wrap gap-3">
+                  {statusCases()}
+                </div>
               ) : null}
             </div>
           );

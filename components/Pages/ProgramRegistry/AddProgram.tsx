@@ -388,7 +388,7 @@ export default function AddProgram({
           <div className="flex flex-col gap-1">
             <h1 className="text-2xl font-semibold text-black dark:text-white font-body">
               {programToEdit
-                ? `Edit ${programToEdit.name} program`
+                ? `Update ${programToEdit.metadata?.title} program`
                 : "Add your program to onchain registry"}
             </h1>
             <p className="text-base text-black dark:text-white">
@@ -756,7 +756,7 @@ export default function AddProgram({
                 // selectedGrantTypes.length === 0
               }
             >
-              {programToEdit ? "Edit program" : "Create program"}
+              {programToEdit ? "Update program" : "Create program"}
             </Button>
           </div>
         </form>
