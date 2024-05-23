@@ -107,7 +107,7 @@ const accountsAllowed = [
   "0x23b7a53ecfd93803c63b97316d7362eae59c55b6",
   "0x5a4830885f12438e00d8f4d98e9fe083e707698c",
   "0x99Cc6001079f320930bbED831bF08A9A01a70c77",
-];
+].map((item) => item.toLowerCase());
 
 export const ProgramListPending: FC<ProgramListPendingProps> = ({
   grantPrograms,
@@ -121,6 +121,7 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
   const { isAuth } = useAuthStore();
   const isAllowed =
     address && accountsAllowed.includes(address.toLowerCase()) && isAuth;
+
   const columns = useMemo<ColumnDef<GrantProgram>[]>(
     () => [
       {
