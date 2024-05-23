@@ -114,19 +114,33 @@ export const CreateImpactCertDialog: FC<CreateImpactCertDialogProps> = ({
             },
             impact_timeframe: {
               name: "Impact Timeframe",
-              value: [impact.data.startedAt, impact.data.completedAt],
-              display_value: `${new Date(
-                impact.data.startedAt * 1000
-              ).toLocaleDateString()}  ↔ ${new Date(
+              value: [
+                impact.data?.startedAt || impact.data.completedAt,
+                impact.data.completedAt,
+              ],
+              display_value: `${
+                impact.data?.startedAt
+                  ? new Date(impact.data.startedAt * 1000).toLocaleDateString()
+                  : new Date(
+                      impact.data.completedAt * 1000
+                    ).toLocaleDateString()
+              }  ↔ ${new Date(
                 impact.data.completedAt * 1000
               ).toLocaleDateString()}`,
             },
             work_timeframe: {
               name: "Work Timeframe",
-              value: [impact.data.startedAt, impact.data.completedAt],
-              display_value: `${new Date(
-                impact.data.startedAt * 1000
-              ).toLocaleDateString()}  ↔ ${new Date(
+              value: [
+                impact.data?.startedAt || impact.data.completedAt,
+                impact.data.completedAt,
+              ],
+              display_value: `${
+                impact.data?.startedAt
+                  ? new Date(impact.data.startedAt * 1000).toLocaleDateString()
+                  : new Date(
+                      impact.data.completedAt * 1000
+                    ).toLocaleDateString()
+              }  ↔ ${new Date(
                 impact.data.completedAt * 1000
               ).toLocaleDateString()}`,
             },
