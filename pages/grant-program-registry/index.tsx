@@ -23,6 +23,10 @@ import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdow
 import { useQueryState } from "nuqs";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { Button } from "@/components/Utilities/Button";
+import { accountsAllowedManagePrograms } from "@/components/Pages/ProgramRegistry/ProgramListPending";
+import { useAuthStore } from "@/store/auth";
+import { useAccount } from "wagmi";
 
 const statuses = ["Active", "Inactive"];
 
@@ -283,6 +287,14 @@ const GrantProgramRegistry = ({
     selectedGrantTypes,
   ]);
 
+  const { address } = useAccount();
+  const { isAuth } = useAuthStore();
+
+  const isAllowed =
+    address &&
+    accountsAllowedManagePrograms.includes(address.toLowerCase()) &&
+    isAuth;
+
   return (
     <>
       <NextSeo
@@ -334,7 +346,19 @@ const GrantProgramRegistry = ({
               </button>
             </Link>
           </div>
-          {/* <div className="h-44 w-[1px] bg-[#98A2B3] max-md:w-full max-md:h-[1px]" /> */}
+          {isAllowed ? (
+            <>
+              <div className="h-44 w-[1px] bg-[#98A2B3] max-md:w-full max-md:h-[1px]" />
+              <div className="flex flex-1 flex-col gap-2 items-center max-sm:items-start">
+                <Link href={PAGES.REGISTRY.MANAGE_PROGRAMS}>
+                  <button className="mt-3 bg-[#0E101B] dark:bg-slate-800 text-white px-10 py-2.5 rounded-lg">
+                    Manage programs
+                  </button>
+                </Link>
+              </div>
+            </>
+          ) : null}
+
           {/* <div className="flex flex-1 flex-col gap-2 items-center max-sm:items-start">
             <div className="flex flex-1 flex-col gap-2 items-start">
               <p className="text-[#101828] dark:text-white font-body font-semibold text-xl">
