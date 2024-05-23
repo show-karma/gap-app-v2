@@ -87,7 +87,7 @@ export default function AddProgram({
   backTo,
   refreshPrograms,
 }: {
-  programToEdit?: GrantProgram;
+  programToEdit?: GrantProgram | null;
   backTo?: () => void;
   refreshPrograms?: () => Promise<void>;
 }) {
