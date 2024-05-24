@@ -29,7 +29,7 @@ const handleRequest = frames(async (ctx) => {
           style={{
             display: "flex",
             flexDirection: "row",
-            gap: 100,
+            gap: 140,
           }}
         >
           <div
@@ -42,13 +42,14 @@ const handleRequest = frames(async (ctx) => {
             <img
               src="http://localhost:3000/logo/karma-gap-logo2.png"
               alt="logo"
-              width={264}
+              width={320}
             />
             <div
               style={{
                 fontSize: 64,
                 fontWeight: "bolder",
                 paddingTop: 80,
+                fontFamily: "sans-serif",
               }}
             >
               {data?.details?.title}
@@ -58,148 +59,117 @@ const handleRequest = frames(async (ctx) => {
           <div
             style={{
               display: "flex",
-              flexDirection: "column",
+              flexDirection: "row",
               padding: 60,
-              gap: 20,
+              gap: 30,
             }}
           >
             <div
               style={{
                 display: "flex",
-                justifyContent: "space-between",
-                gap: 50,
+                flexDirection: "column",
               }}
             >
               <div
                 style={{
-                  display: "flex",
-                  flexDirection: "column",
+                  fontSize: 30,
+                  fontWeight: "bolder",
                 }}
               >
-                <div
-                  style={{
-                    fontSize: 30,
-                    fontWeight: "bolder",
-                  }}
-                >
-                  No of Grants
-                </div>
-                <div
-                  style={{
-                    fontSize: 42,
-                    display: "flex",
-                    gap: 2,
-
-                    fontWeight: "bolder",
-                    alignItems: "center",
-                  }}
-                >
-                  {data?.grants.length.toString()}{" "}
-                </div>
+                Grants
               </div>
               <div
                 style={{
+                  fontSize: 42,
                   display: "flex",
-                  flexDirection: "column",
+                  gap: 2,
+
+                  fontWeight: "bolder",
+                  alignItems: "center",
                 }}
               >
-                <div
-                  style={{
-                    fontSize: 30,
-                    fontWeight: "bolder",
-                  }}
-                >
-                  No of Impacts
-                </div>
-                <div
-                  style={{
-                    fontSize: 42,
-                    display: "flex",
-                    gap: 2,
-
-                    fontWeight: "bolder",
-                    alignItems: "center",
-                  }}
-                >
-                  {data?.impacts.length.toString()}{" "}
-                </div>
-              </div>{" "}
+                {data?.grants.length.toString()}{" "}
+              </div>
             </div>
             <div
               style={{
                 display: "flex",
-                justifyContent: "space-between",
-                gap: 50,
+                flexDirection: "column",
               }}
             >
               <div
                 style={{
-                  display: "flex",
-                  flexDirection: "column",
+                  fontSize: 30,
+                  fontWeight: "bolder",
                 }}
               >
-                <div
-                  style={{
-                    fontSize: 30,
-                    fontWeight: "bolder",
-                  }}
-                >
-                  Chain
-                </div>
-                <div
-                  style={{
-                    fontSize: 42,
-                    display: "flex",
-                    gap: 2,
-
-                    fontWeight: "bolder",
-                    alignItems: "center",
-                  }}
-                >
-                  {data?.details?.chainID.toString()}{" "}
-                </div>
-              </div>{" "}
+                Impacts
+              </div>
               <div
                 style={{
+                  fontSize: 42,
                   display: "flex",
-                  flexDirection: "column",
+                  gap: 2,
+
+                  fontWeight: "bolder",
+                  alignItems: "center",
                 }}
               >
-                <div
-                  style={{
-                    fontSize: 30,
-                    fontWeight: "bolder",
-                  }}
-                >
-                  No of Endorsement
-                </div>
-                <div
-                  style={{
-                    fontSize: 42,
-                    display: "flex",
-                    gap: 2,
+                {data?.impacts.length.toString()}{" "}
+              </div>
+            </div>
 
-                    fontWeight: "bolder",
-                    alignItems: "center",
-                  }}
-                >
-                  {data?.endorsements.length.toString()}{" "}
-                </div>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+              }}
+            >
+              <div
+                style={{
+                  fontSize: 30,
+                  fontWeight: "bolder",
+                }}
+              >
+                Endorsement
+              </div>
+              <div
+                style={{
+                  fontSize: 42,
+                  display: "flex",
+                  gap: 2,
+
+                  fontWeight: "bolder",
+                  alignItems: "center",
+                }}
+              >
+                {data?.endorsements.length.toString()}{" "}
               </div>
             </div>
           </div>
         </div>
         <div
           style={{
-            fontSize: 26,
-            padding: 60,
+            fontSize: 32,
+            paddingLeft: 50,
+            paddingRight: 50,
           }}
         >
-          {data?.details?.description.slice(0, 400)}
+          {data?.details?.description.slice(0, 280) + "... view more on GAP"}
         </div>
       </div>
     ),
-    buttons: [<Button action="post">Click me</Button>],
+    buttons: [
+      <Button action="tx" target="/txdata" post_url="/frames">
+        Donate
+      </Button>,
+      <Button
+        action="link"
+        target={`https://gap.karmahq.xyz/project/${projectId}`}
+      >
+        View on GAP
+      </Button>,
+    ],
   };
 });
 
