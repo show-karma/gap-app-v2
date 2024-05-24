@@ -7,6 +7,10 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useAccount } from "wagmi";
 import { IProjectDetails, Project } from "@show-karma/karma-gap-sdk";
 import { NextSeo } from "next-seo";
+import {
+  fetchMetadata,
+  metadataToMetaTags,
+} from "frames.js/next/pages-router/client";
 
 import { Hex } from "viem";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
@@ -33,6 +37,7 @@ import { EndorsementDialog } from "@/components/Pages/Project/Impact/Endorsement
 import { Button } from "@/components/Utilities/Button";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { ProjectSubscriptionDialog } from "@/components/Pages/Project/ProjectSubscription";
+import Head from "next/head";
 
 type ProjectDetailsWithUid = IProjectDetails & { uid: Hex };
 
@@ -451,12 +456,22 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       projectDesc:
         (projectInfo as ProjectDetailsWithUid)?.description?.substring(0, 80) ||
         "",
+      metadata: await fetchMetadata(
+        new URL(
+          `/api/frames/${projectId}`,
+          process.env.VERCEL_URL
+            ? `https://${process.env.VERCEL_URL}`
+            : "http://localhost:3000"
+        )
+      ),
     },
   };
 }
+
 const ProjectPageIndex = ({
   projectTitle,
   projectDesc,
+  metadata,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const dynamicMetadata = {
     title: `Karma GAP - ${projectTitle}`,
@@ -471,8 +486,10 @@ const ProjectPageIndex = ({
   //     </div>
   //   );
   // }
+
   return (
     <>
+      {metadataToMetaTags(metadata)}
       <NextSeo
         title={dynamicMetadata.title || defaultMetadata.title}
         description={dynamicMetadata.description || defaultMetadata.description}
