@@ -12,32 +12,34 @@ import { z } from "zod";
 import { Hex, isAddress } from "viem";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MarkdownEditor } from "./Utilities/MarkdownEditor";
+import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Project, nullRef } from "@show-karma/karma-gap-sdk";
 import toast from "react-hot-toast";
 import { useRouter } from "next/router";
 import { getGapClient, useGap } from "@/hooks";
-import { Button } from "./Utilities/Button";
+import { Button } from "../Utilities/Button";
 import {
   GithubIcon,
   LinkedInIcon,
   TwitterIcon,
   DiscordIcon,
   WebsiteIcon,
-} from "./Icons";
+} from "../Icons";
 import { useProjectStore } from "@/store";
 import { useOwnerStore } from "@/store/owner";
 import { MESSAGES } from "@/utilities/messages";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { createNewProject, updateProject } from "@/utilities/sdk";
 import { appNetwork } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { useAuthStore } from "@/store/auth";
 import { getWalletClient } from "@wagmi/core";
+import { useStepper } from "@/store/txStepper";
+import { createNewProject } from "@/utilities/sdk/projects/createNewProject";
+import { updateProject } from "@/utilities/sdk/projects/editProject";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -433,6 +435,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const router = useRouter();
   const { gap } = useGap();
 
+  const { changeStepperStep, setIsStepper } = useStepper();
+
   const createProject = async (data: SchemaType) => {
     try {
       setIsLoading(true);
@@ -490,7 +494,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         },
         project,
         router,
-        gapClient
+        gapClient,
+        changeStepperStep,
+        closeModal
       );
 
       reset();
@@ -498,11 +504,12 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       setTeam([]);
       setTeamInput("");
       setStep(0);
-
-      closeModal();
+      setIsStepper(false);
     } catch (error) {
       console.log({ error });
       toast.error(MESSAGES.PROJECT.CREATE.ERROR);
+      setIsStepper(false);
+      openModal();
     } finally {
       setIsLoading(false);
     }
@@ -543,10 +550,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           website: data.website,
         },
         walletSigner,
-        gapClient
+        gapClient,
+        changeStepperStep,
+        closeModal
       ).then(async (res) => {
         toast.success(MESSAGES.PROJECT.UPDATE.SUCCESS);
-        closeModal();
         setStep(0);
         if (shouldRefresh) {
           refreshProject();
@@ -558,6 +566,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     } catch (error) {
       console.log(error);
       toast.error(MESSAGES.PROJECT.UPDATE.ERROR);
+      setIsStepper(false);
+      openModal();
     } finally {
       setIsLoading(false);
     }

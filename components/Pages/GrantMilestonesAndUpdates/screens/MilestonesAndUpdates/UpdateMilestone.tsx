@@ -15,6 +15,7 @@ import { type FC, useState } from "react";
 import toast from "react-hot-toast";
 import { useNetwork, useSwitchNetwork } from "wagmi";
 import { ShareDialog } from "./ShareDialog";
+import { useStepper } from "@/store/txStepper";
 
 interface NotUpdatingCaseProps {
   milestone: Milestone;
@@ -84,6 +85,8 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
     setIsUpdating(false);
   };
 
+  const { changeStepperStep, setIsStepper } = useStepper();
+
   const completeMilestone = async (milestone: Milestone, text?: string) => {
     try {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
@@ -94,13 +97,46 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
       });
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      await milestone.complete(walletSigner, text).then(async () => {
-        toast.success(MESSAGES.MILESTONES.COMPLETE.SUCCESS);
-        openDialog();
-      });
+      await milestone
+        .complete(walletSigner, text, changeStepperStep)
+        .then(async () => {
+          let retries = 1000;
+          changeStepperStep("indexing");
+          while (retries > 0) {
+            await refreshProject()
+              .then(async (fetchedProject) => {
+                const foundGrant = fetchedProject?.grants.find(
+                  (g) => g.uid === milestone.refUID
+                );
+
+                const fetchedMilestone = foundGrant?.milestones.find(
+                  (u) => u.uid === milestone.uid
+                );
+
+                const isCompleted = fetchedMilestone?.completed;
+
+                if (isCompleted) {
+                  retries = 0;
+                  changeStepperStep("indexed");
+                  toast.success(MESSAGES.MILESTONES.COMPLETE.SUCCESS);
+                  closeDialog();
+                }
+                retries -= 1;
+                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+              })
+              .catch(async () => {
+                retries -= 1;
+                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+              });
+          }
+        });
     } catch (error) {
       console.log(error);
       toast.error(MESSAGES.MILESTONES.COMPLETE.ERROR);
+    } finally {
+      setIsStepper(false);
     }
   };
 
@@ -117,13 +153,48 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
       });
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      await milestone.complete(walletSigner, text).then(async () => {
-        toast.success(MESSAGES.MILESTONES.UPDATE_COMPLETION.SUCCESS);
-        await refreshProject();
-      });
+      await milestone
+        .complete(walletSigner, text, changeStepperStep)
+        .then(async () => {
+          let retries = 1000;
+          changeStepperStep("indexing");
+          while (retries > 0) {
+            await refreshProject()
+              .then(async (fetchedProject) => {
+                const foundGrant = fetchedProject?.grants.find(
+                  (g) => g.uid === milestone.refUID
+                );
+
+                const fetchedMilestone = foundGrant?.milestones.find(
+                  (u) => u.uid === milestone.uid
+                );
+
+                const isSame =
+                  JSON.stringify(milestone.completed) ===
+                  JSON.stringify(fetchedMilestone?.completed);
+
+                if (isSame) {
+                  retries = 0;
+                  changeStepperStep("indexed");
+                  toast.success(MESSAGES.MILESTONES.UPDATE_COMPLETION.SUCCESS);
+                  closeDialog();
+                }
+                retries -= 1;
+                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+              })
+              .catch(async () => {
+                retries -= 1;
+                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+              });
+          }
+        });
     } catch (error) {
       console.log(error);
       toast.error(MESSAGES.MILESTONES.UPDATE_COMPLETION.ERROR);
+    } finally {
+      setIsStepper(false);
     }
   };
 

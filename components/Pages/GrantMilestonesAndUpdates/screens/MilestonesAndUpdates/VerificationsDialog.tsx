@@ -16,6 +16,7 @@ import { ICommunityAdminsResponse } from "@show-karma/karma-gap-sdk/core/class/k
 import { Tabs, TabContent, TabTrigger } from "@/components/Utilities/Tabs";
 import { useGrant } from "@/components/Pages/GrantMilestonesAndUpdates/GrantContext";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { useAccount } from "wagmi";
 
 interface VerificationsDialogProps {
   verifications: (
@@ -76,11 +77,13 @@ export const VerificationsDialog: FC<VerificationsDialogProps> = ({
   }, [populateEnsNames, verifications]);
 
   useEffect(() => {
-    gapIndexerApi.communityAdmins(communityUid).then((data) => {
-      setCommunityAdmins(
-        data.data.admins.map((admin) => admin.user.id.toLowerCase())
-      );
-    });
+    if (communityUid) {
+      gapIndexerApi.communityAdmins(communityUid).then((data) => {
+        setCommunityAdmins(
+          data.data.admins.map((admin) => admin.user.id.toLowerCase())
+        );
+      });
+    }
   }, [communityUid]);
 
   const adminVerifications = verifications.filter((item) =>

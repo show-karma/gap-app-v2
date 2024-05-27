@@ -10,7 +10,7 @@ import { ProjectFeed } from "@/components/ProjectFeed";
 import dynamic from "next/dynamic";
 import { useGap } from "@/hooks";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { deleteProject } from "@/utilities/sdk";
+import { deleteProject } from "@/utilities/sdk/projects/deleteProject";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { Feed } from "@/types";
@@ -18,9 +18,13 @@ import { getWalletClient } from "@wagmi/core";
 import { Button } from "@/components/Utilities/Button";
 import Link from "next/link";
 import { EndorsementList } from "@/components/Pages/Project/Impact/EndorsementList";
+import { useStepper } from "@/store/txStepper";
 
 const ProjectDialog = dynamic(
-  () => import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog),
+  () =>
+    import("@/components/Dialogs/ProjectDialog").then(
+      (mod) => mod.ProjectDialog
+    ),
   { ssr: false }
 );
 
@@ -29,7 +33,7 @@ const DeleteDialog = dynamic(() =>
 );
 
 const TransferOwnershipDialog = dynamic(() =>
-  import("@/components/TransferOwnershipDialog").then(
+  import("@/components/Dialogs/TransferOwnershipDialog").then(
     (mod) => mod.TransferOwnershipDialog
   )
 );
@@ -46,6 +50,7 @@ function ProjectPage() {
   const signer = useSigner();
   const { gap } = useGap();
   const projectId = router.query.projectId as string;
+  const { changeStepperStep, setIsStepper } = useStepper();
 
   const deleteFn = async () => {
     if (!address || !project) return;
@@ -59,15 +64,19 @@ function ProjectPage() {
       });
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      await deleteProject(project, walletSigner, gap)
-        .then(async () => {
-          toast.success(MESSAGES.PROJECT.DELETE.SUCCESS);
-          router.push(PAGES.MY_PROJECTS);
-        })
-        .catch((error) => console.log(error));
+      await deleteProject(
+        project,
+        walletSigner,
+        gap,
+        router,
+        changeStepperStep
+      ).then(async () => {
+        toast.success(MESSAGES.PROJECT.DELETE.SUCCESS);
+      });
     } catch (error) {
       console.log(error);
       toast.error(MESSAGES.PROJECT.DELETE.ERROR);
+      setIsStepper(false);
     } finally {
       setIsDeleting(false);
     }

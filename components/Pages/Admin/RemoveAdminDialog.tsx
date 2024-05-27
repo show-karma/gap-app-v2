@@ -24,6 +24,8 @@ import { useAuthStore } from "@/store/auth";
 import { getGapClient, useGap } from "@/hooks";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { getWalletClient } from "@wagmi/core";
+import { useStepper } from "@/store/txStepper";
+import toast from "react-hot-toast";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -35,12 +37,16 @@ const schema = z.object({
 });
 
 type SchemaType = z.infer<typeof schema>;
+interface CommunityAdmin {
+  id: string;
+  admins: { user: { id: string } }[];
+}
 
 type RemoveAdminDialogProps = {
   UUID: `0x${string}`;
   chainid: number;
   Admin: `0x${string}`;
-  fetchAdmins?: () => void;
+  fetchAdmins: () => Promise<CommunityAdmin[] | undefined>;
 };
 
 export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
@@ -73,6 +79,8 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
     chainId: appNetwork[0].id,
   });
 
+  const { changeStepperStep, setIsStepper } = useStepper();
+
   const removeAdmin = async () => {
     if (chain?.id != chainid) {
       await switchNetworkAsync?.(chainid);
@@ -86,15 +94,45 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
       const communityResolver = (await GAP.getCommunityResolver(
         walletSigner
       )) as any;
-      const communityResponse = await communityResolver.delist(UUID, Admin);
-      communityResponse.wait().then(async () => {
-        if (fetchAdmins) await fetchAdmins();
-        setIsLoading(false); // Reset loading state
-        closeModal(); // Close the dialog upon successful submission
+      changeStepperStep("preparing");
+      const communityResponse = await communityResolver
+        .delist(UUID, Admin)
+        .then(() => {
+          changeStepperStep("pending");
+        });
+      await communityResponse.wait().then(async () => {
+        changeStepperStep("indexing");
+        let retries = 1000;
+        while (retries > 0) {
+          await fetchAdmins()
+            .then(async (response) => {
+              const addressAdded = response?.find((community) =>
+                community.admins.find(
+                  (admin) => admin.user.id.toLowerCase() === Admin.toLowerCase()
+                )
+              );
+              if (addressAdded) {
+                retries = 0;
+                changeStepperStep("indexed");
+                toast.success("Admin removed successfully!");
+                closeModal(); // Close the dialog upon successful submission
+              }
+              retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            })
+            .catch(async () => {
+              retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            });
+        }
       });
-      console.log(communityResponse);
     } catch (error) {
       console.log(error);
+    } finally {
+      setIsStepper(false);
+      setIsLoading(false);
     }
   };
 

@@ -1,5 +1,7 @@
 import { DeleteDialog } from "@/components/DeleteDialog";
+import { getGapClient, useGap } from "@/hooks";
 import { useProjectStore } from "@/store";
+import { useStepper } from "@/store/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
@@ -8,6 +10,7 @@ import type { Milestone } from "@show-karma/karma-gap-sdk";
 import { getWalletClient } from "@wagmi/core";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";
+import { Hex } from "viem";
 import { useNetwork, useSwitchNetwork } from "wagmi";
 
 interface MilestoneDeleteProps {
@@ -21,12 +24,17 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
   const { chain } = useNetwork();
   const signer = useSigner();
   const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { gap } = useGap();
+  const { changeStepperStep, setIsStepper } = useStepper();
+  const selectedProject = useProjectStore((state) => state.project);
 
   const deleteFn = async () => {
     setIsDeletingMilestone(true);
+    let gapClient = gap;
     try {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
         await switchNetworkAsync?.(milestone.chainID);
+        gapClient = getGapClient(milestone.chainID);
       }
       const milestoneUID = milestone.uid;
       const walletClient = await getWalletClient({
@@ -34,27 +42,39 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
       });
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      await milestone.revoke(walletSigner).then(async () => {
-        toast.success(MESSAGES.MILESTONES.DELETE.SUCCESS);
-        await refreshProject().then((res) => {
-          const grantUID = milestone.refUID;
-          const grant = res?.grants.find((g) => g.uid === grantUID);
+      await milestone.revoke(walletSigner, changeStepperStep).then(async () => {
+        let retries = 1000;
+        changeStepperStep("indexing");
+        let fetchedProject = null;
+        while (retries > 0) {
+          if (selectedProject) {
+            fetchedProject = await gapClient!.fetch
+              .projectById(selectedProject.uid as Hex)
+              .catch(() => null);
+          }
+          const grant = fetchedProject?.grants.find(
+            (g) => g.uid === milestone.refUID
+          );
           const stillExist = grant?.milestones.find(
             (m) => m.uid === milestoneUID
           );
-          if (stillExist && grant?.milestones) {
-            const removedMilestone = grant?.milestones.filter(
-              (m) => m.uid !== milestoneUID
-            );
-            grant.milestones = removedMilestone;
+          if (!stillExist && grant?.milestones) {
+            retries = 0;
+            changeStepperStep("indexed");
+            toast.success(MESSAGES.MILESTONES.DELETE.SUCCESS);
+            await refreshProject();
           }
-        });
+        }
+        retries -= 1;
+        // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+        await new Promise((resolve) => setTimeout(resolve, 1500));
       });
     } catch (error) {
       toast.error(MESSAGES.MILESTONES.DELETE.ERROR(milestone.title));
       throw error;
     } finally {
       setIsDeletingMilestone(false);
+      setIsStepper(false);
     }
   };
 

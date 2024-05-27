@@ -14,6 +14,8 @@ import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { MESSAGES } from "@/utilities/messages";
 import { getGapClient, useGap } from "@/hooks";
+import { useProjectStore } from "@/store";
+import { useStepper } from "@/store/txStepper";
 
 type VerifyMilestoneUpdateDialogProps = {
   milestone: Milestone;
@@ -56,6 +58,8 @@ export const VerifyMilestoneUpdateDialog: FC<
   const { chain } = useNetwork();
   const { switchNetworkAsync } = useSwitchNetwork();
   const { gap } = useGap();
+  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { changeStepperStep, setIsStepper } = useStepper();
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
     let gapClient = gap;
@@ -71,27 +75,49 @@ export const VerifyMilestoneUpdateDialog: FC<
       });
       if (!walletClient || !address || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      await milestone.verify(walletSigner, data.comment).then(async () => {
-        toast.success(MESSAGES.MILESTONES.VERIFY.SUCCESS);
-        const newVerified = new MilestoneCompleted({
-          data: {
-            type: "verified",
-            reason: data.comment,
-          },
-          schema: gapClient!.findSchema("MilestoneCompleted"),
-          recipient: address,
-          refUID: milestone.uid,
-          attester: address,
+      await milestone
+        .verify(walletSigner, data.comment, changeStepperStep)
+        .then(async () => {
+          let retries = 1000;
+          changeStepperStep("indexing");
+          while (retries > 0) {
+            await refreshProject()
+              .then(async (fetchedProject) => {
+                const foundGrant = fetchedProject?.grants.find(
+                  (g) => g.uid === milestone.refUID
+                );
+
+                const fetchedMilestone = foundGrant?.milestones.find(
+                  (u) => u.uid === milestone.uid
+                );
+
+                const alreadyExists = fetchedMilestone?.verified?.find(
+                  (v) => v.attester?.toLowerCase() === address?.toLowerCase()
+                );
+
+                if (alreadyExists) {
+                  retries = 0;
+                  changeStepperStep("indexed");
+                  toast.success(MESSAGES.MILESTONES.VERIFY.SUCCESS);
+                }
+                retries -= 1;
+                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+              })
+              .catch(async () => {
+                retries -= 1;
+                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+              });
+          }
         });
-        milestone.verified = [...milestone.verified, newVerified];
-        addVerifiedMilestone(newVerified);
-      });
       closeModal();
     } catch (error) {
       console.log(error);
       toast.error(MESSAGES.MILESTONES.VERIFY.ERROR);
     } finally {
       setIsLoading(false);
+      setIsStepper(false);
     }
   };
   const isAuthorized = useAuthStore((state) => state.isAuth);

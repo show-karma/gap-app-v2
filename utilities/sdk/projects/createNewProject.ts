@@ -1,4 +1,5 @@
 import { getGapClient } from "@/hooks";
+import { TxStepperSteps } from "@/store/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { appNetwork } from "@/utilities/network";
@@ -26,7 +27,9 @@ export const createNewProject = async (
   newProjectInfo: NewProjectData,
   project: Project,
   router: any,
-  gap: any
+  gap: any,
+  changeStepperStep: (step: TxStepperSteps) => void,
+  closeModal: () => void
 ) => {
   try {
     if (!gap) return;
@@ -78,28 +81,31 @@ export const createNewProject = async (
     });
     if (!walletClient) return;
     const walletSigner = await walletClientToSigner(walletClient);
-    return await project.attest(walletSigner).then(async () => {
-      let retries = 10;
-      let fetchedProject: Project | null = null;
-      while (retries > 0) {
-        // eslint-disable-next-line no-await-in-loop
-        fetchedProject = await (slug
-          ? gap.fetch.projectBySlug(slug)
-          : gap.fetch.projectById(project.uid as Hex)
-        ).catch(() => null);
-        if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
-          retries = 0;
-          toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
-          router.push(PAGES.PROJECT.GRANTS(slug || project.uid));
-          return;
+    closeModal();
+    return await project
+      .attest(walletSigner, changeStepperStep)
+      .then(async () => {
+        let retries = 1000;
+        let fetchedProject: Project | null = null;
+        changeStepperStep("indexing");
+        while (retries > 0) {
+          // eslint-disable-next-line no-await-in-loop
+          fetchedProject = await (slug
+            ? gap.fetch.projectBySlug(slug)
+            : gap.fetch.projectById(project.uid as Hex)
+          ).catch(() => null);
+          if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
+            retries = 0;
+            toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
+            router.push(PAGES.PROJECT.GRANTS(slug || project.uid));
+            changeStepperStep("indexed");
+            return;
+          }
+          retries -= 1;
+          // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+          await new Promise((resolve) => setTimeout(resolve, 1500));
         }
-        retries -= 1;
-        // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-        await new Promise((resolve) => setTimeout(resolve, 1500));
-      }
-      toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
-      router.push(PAGES.MY_PROJECTS);
-    });
+      });
   } catch (error: any) {
     throw new Error(error);
   }

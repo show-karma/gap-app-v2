@@ -9,11 +9,11 @@ import {
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MarkdownEditor } from "./Utilities/MarkdownEditor";
+import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Community, nullRef } from "@show-karma/karma-gap-sdk";
-import { Button } from "./Utilities/Button";
+import { Button } from "../Utilities/Button";
 import { useProjectStore } from "@/store";
 import { MESSAGES } from "@/utilities/messages";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -27,6 +27,7 @@ import toast from "react-hot-toast";
 import { useCommunitiesStore } from "@/store/communities";
 import { envVars } from "@/utilities/enviromentVars";
 import { title } from "process";
+import { useStepper } from "@/store/txStepper";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -49,7 +50,7 @@ type ProjectDialogProps = {
     styleClass: string;
   };
   createCommuninity?: Community;
-  refreshCommunities: () => void;
+  refreshCommunities: () => Promise<Community[] | undefined>;
 };
 
 export const CommunityDialog: FC<ProjectDialogProps> = ({
@@ -96,11 +97,9 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
     chainId: appNetwork[0].id,
   });
   const [isLoading, setIsLoading] = useState(false);
-  const { openConnectModal } = useConnectModal();
-  const signer = useSigner();
-  const { setCommunities } = useCommunitiesStore();
 
   const { gap } = useGap();
+  const { changeStepperStep, setIsStepper } = useStepper();
 
   const createCommunity = async (data: SchemaType) => {
     if (!gap) return;
@@ -132,22 +131,48 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
       const walletSigner = await walletClientToSigner(walletClient);
 
       await newCommunity
-        .attest(walletSigner as any, {
-          name: data.name,
-          description: description as string,
-          imageURL: data.imageURL as string,
-          slug: data.slug as string,
-        })
-        .then(() => {
-          toast.success("Community created successfully!");
-          refreshCommunities();
-          closeModal(); // Close the dialog upon successful submission
+        .attest(
+          walletSigner as any,
+          {
+            name: data.name,
+            description: description as string,
+            imageURL: data.imageURL as string,
+            slug: data.slug as string,
+          },
+          changeStepperStep
+        )
+        .then(async () => {
+          let retries = 1000;
+          changeStepperStep("indexing");
+          while (retries > 0) {
+            await refreshCommunities()
+              .then(async (fetchedCommunities) => {
+                const createdCommunityExists = fetchedCommunities?.find(
+                  (g) => g.uid === newCommunity.uid
+                );
+                if (createdCommunityExists) {
+                  retries = 0;
+                  changeStepperStep("indexed");
+                  toast.success("Community created successfully!");
+                  closeModal(); // Close the dialog upon successful submission
+                }
+                retries -= 1;
+                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+              })
+              .catch(async () => {
+                retries -= 1;
+                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+              });
+          }
         });
     } catch (error) {
       console.error("Error creating community:", error);
       toast.error("Error creating community");
     } finally {
       setIsLoading(false); // Reset loading state
+      setIsStepper(false);
     }
   };
 

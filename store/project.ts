@@ -26,6 +26,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     const { project } = get();
     if (!project) return;
     const refreshedProject = await getProjectById(project.uid);
+
     set({ project: refreshedProject });
     return refreshedProject;
   },

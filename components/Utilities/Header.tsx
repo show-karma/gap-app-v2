@@ -24,11 +24,14 @@ import { PAGES } from "@/utilities/pages";
 import { useAuthStore } from "@/store/auth";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { getContractOwner } from "@/utilities/sdk/getContractOwner";
-import { OnboardingDialog } from "../OnboardingDialog";
+import { OnboardingDialog } from "../Dialogs/OnboardingDialog";
 import { useMobileStore } from "@/store/mobile";
 
 const ProjectDialog = dynamic(
-  () => import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog),
+  () =>
+    import("@/components/Dialogs/ProjectDialog").then(
+      (mod) => mod.ProjectDialog
+    ),
   { ssr: false }
 );
 

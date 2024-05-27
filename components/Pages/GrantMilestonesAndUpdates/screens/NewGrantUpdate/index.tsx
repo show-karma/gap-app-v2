@@ -2,10 +2,11 @@
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useProjectStore } from "@/store";
+import { useStepper } from "@/store/txStepper";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { Grant } from "@show-karma/karma-gap-sdk";
+import { GrantUpdate, type Grant } from "@show-karma/karma-gap-sdk";
 import { getWalletClient } from "@wagmi/core";
 import { useRouter } from "next/router";
 import { useQueryState } from "nuqs";
@@ -66,6 +67,8 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
 
   const isDescriptionValid = !!description.length;
 
+  const { changeStepperStep, setIsStepper } = useStepper();
+
   const createGrantUpdate = async (
     grantToUpdate: Grant,
     { title, text }: { title: string; text: string }
@@ -80,20 +83,56 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
       });
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      await grantToUpdate
-        .attestUpdate(walletSigner as any, {
+
+      const grantUpdate = new GrantUpdate({
+        data: {
           text,
           title,
-        })
+          type: "grant-update",
+        },
+        recipient: grantToUpdate.recipient,
+        refUID: grantToUpdate.uid,
+        schema: grantToUpdate.schema.gap.findSchema("GrantDetails"),
+      });
+
+      await grantUpdate
+        .attest(walletSigner as any, changeStepperStep)
         .then(async () => {
-          toast.success(MESSAGES.GRANT.GRANT_UPDATE.SUCCESS);
-          await refreshProject().then(() => {
-            changeTab("milestones-and-updates");
-          });
+          let retries = 1000;
+          changeStepperStep("indexing");
+          while (retries > 0) {
+            await refreshProject()
+              .then(async (fetchedProject) => {
+                const attestUID = grantUpdate.uid;
+                const updatedGrant = fetchedProject?.grants.find(
+                  (g) => g.uid === grantToUpdate.uid
+                );
+
+                const alreadyExists = updatedGrant?.updates.find(
+                  (u) => u.uid === attestUID
+                );
+                if (alreadyExists) {
+                  retries = 0;
+                  changeStepperStep("indexed");
+                  toast.success(MESSAGES.GRANT.GRANT_UPDATE.SUCCESS);
+                  changeTab("milestones-and-updates");
+                }
+                retries -= 1;
+                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+              })
+              .catch(async () => {
+                retries -= 1;
+                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+              });
+          }
         });
     } catch (error) {
       console.log(error);
       toast.error(MESSAGES.GRANT.GRANT_UPDATE.ERROR);
+    } finally {
+      setIsStepper(false);
     }
   };
 

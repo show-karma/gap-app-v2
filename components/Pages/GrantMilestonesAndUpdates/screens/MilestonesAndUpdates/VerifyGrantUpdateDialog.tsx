@@ -7,19 +7,15 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/auth";
-import {
-  Grant,
-  GrantUpdate,
-  GrantUpdateStatus,
-  Milestone,
-  MilestoneCompleted,
-} from "@show-karma/karma-gap-sdk";
+import { GrantUpdate, GrantUpdateStatus } from "@show-karma/karma-gap-sdk";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 import { getWalletClient } from "@wagmi/core";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { MESSAGES } from "@/utilities/messages";
 import { getGapClient, useGap } from "@/hooks";
+import { useStepper } from "@/store/txStepper";
+import { useProjectStore } from "@/store";
 
 type VerifyGrantUpdateDialogProps = {
   grantUpdate: GrantUpdate;
@@ -63,6 +59,8 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
   const { chain } = useNetwork();
   const { switchNetworkAsync } = useSwitchNetwork();
   const { gap } = useGap();
+  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { changeStepperStep, setIsStepper } = useStepper();
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
     let gapClient = gap;
@@ -81,27 +79,49 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
       });
       if (!walletClient || !address || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      await grantUpdate.verify(walletSigner, data.comment).then(async () => {
-        toast.success(MESSAGES.GRANT.GRANT_UPDATE.VERIFY.SUCCESS);
-        const newVerified = new GrantUpdateStatus({
-          data: {
-            type: "grant-update-verified",
-            reason: data.comment,
-          },
-          schema: gapClient!.findSchema("GrantUpdateStatus"),
-          recipient: address,
-          refUID: grantUpdate.uid,
-          attester: address,
+      await grantUpdate
+        .verify(walletSigner, data.comment, changeStepperStep)
+        .then(async () => {
+          let retries = 1000;
+          changeStepperStep("indexing");
+          while (retries > 0) {
+            await refreshProject()
+              .then(async (fetchedProject) => {
+                const foundGrant = fetchedProject?.grants.find(
+                  (g) => g.uid === grantUpdate.refUID
+                );
+
+                const fetchedGrantUpdate = foundGrant?.updates.find(
+                  (u) => u.uid === grantUpdate.uid
+                );
+
+                const alreadyExists = fetchedGrantUpdate?.verified?.find(
+                  (v) => v.attester?.toLowerCase() === address?.toLowerCase()
+                );
+
+                if (alreadyExists) {
+                  retries = 0;
+                  changeStepperStep("indexed");
+                  toast.success(MESSAGES.GRANT.GRANT_UPDATE.VERIFY.SUCCESS);
+                }
+                retries -= 1;
+                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+              })
+              .catch(async () => {
+                retries -= 1;
+                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+              });
+          }
         });
-        grantUpdate.verified = [...grantUpdate.verified, newVerified];
-        addVerifiedUpdate(newVerified);
-      });
       closeModal();
     } catch (error) {
       console.log(error);
       toast.error(MESSAGES.GRANT.GRANT_UPDATE.VERIFY.ERROR);
     } finally {
       setIsLoading(false);
+      setIsStepper(false);
     }
   };
   const isAuthorized = useAuthStore((state) => state.isAuth);
