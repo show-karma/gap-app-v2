@@ -33,6 +33,8 @@ import { OrganizationIcon } from "@/components/Icons/Organization";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { GrantProgram } from "./ProgramList";
+import { Twitter2Icon } from "@/components/Icons/Twitter2";
+import { Discord2Icon } from "@/components/Icons/Discord2";
 
 const labelStyle = "text-sm font-bold text-[#344054] dark:text-zinc-100";
 const inputStyle =
@@ -640,7 +642,7 @@ export default function AddProgram({
                 </label>
                 <div className="w-full relative">
                   <div className="h-full w-max absolute flex justify-center items-center mx-3">
-                    <TwitterIcon className="text-[#47ACDF] w-4 h-4" />
+                    <Twitter2Icon className="text-zinc-500 w-4 h-4" />
                   </div>
                   <input
                     id="program-twitter"
@@ -659,7 +661,7 @@ export default function AddProgram({
                 </label>
                 <div className="w-full relative">
                   <div className="h-full w-max absolute flex justify-center items-center mx-3">
-                    <DiscordIcon className="text-[#5865F2] w-4 h-4" />
+                    <Discord2Icon className="text-zinc-500 w-4 h-4" />
                   </div>
                   <input
                     id="program-discord"
@@ -678,7 +680,7 @@ export default function AddProgram({
                 </label>
                 <div className="w-full relative">
                   <div className="h-full w-max absolute flex justify-center items-center mx-3">
-                    <BlogIcon className="text-orange-500 w-4 h-4" />
+                    <BlogIcon className="text-zinc-500 w-4 h-4" />
                   </div>
                   <input
                     id="program-blog"
