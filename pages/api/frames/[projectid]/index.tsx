@@ -1,10 +1,8 @@
 import { getProjectById } from "@/utilities/sdk";
 import { da } from "date-fns/locale";
 import { createFrames, Button } from "frames.js/next/pages-router/server";
-
-const frames = createFrames({
-  basePath: "/api/frames",
-});
+import { frames } from "./frame";
+import { getGapClient } from "@/hooks";
 
 const handleRequest = frames(async (ctx) => {
   const projectId = ctx.request.url.split("/").pop();
@@ -14,6 +12,30 @@ const handleRequest = frames(async (ctx) => {
   const gl = data?.grants?.length.toString();
   console.log(data?.impacts?.length);
   console.log(data?.endorsements?.length);
+  const gap = getGapClient(11155420);
+  console.log(gap.findSchema("ProjectEndorsement").uid);
+
+  if (ctx.message?.transactionId) {
+    return {
+      image: (
+        <div tw="bg-purple-800 text-white w-full h-full justify-center items-center flex">
+          Transaction submitted! {ctx.message.transactionId}
+        </div>
+      ),
+      imageOptions: {
+        aspectRatio: "1:1",
+      },
+      buttons: [
+        <Button
+          action="link"
+          target={`https://www.onceupon.gg/tx/${ctx.message.transactionId}`}
+        >
+          View on block explorer
+        </Button>,
+      ],
+    };
+  }
+
   return {
     image: (
       <div
@@ -159,8 +181,9 @@ const handleRequest = frames(async (ctx) => {
         </div>
       </div>
     ),
+    textInput: "Enter the donate value in wei",
     buttons: [
-      <Button action="tx" target="/txdata" post_url="/frames">
+      <Button action="tx" target="/txdata" post_url="/">
         Donate
       </Button>,
       <Button
