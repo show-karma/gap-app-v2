@@ -30,9 +30,9 @@ import { DiscordIcon, TwitterIcon, WebsiteIcon } from "@/components/Icons";
 import { BlogIcon } from "@/components/Icons/Blog";
 import { DiscussionIcon } from "@/components/Icons/Discussion";
 import { OrganizationIcon } from "@/components/Icons/Organization";
-import { GrantProgram } from "./ProgramListPending";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { GrantProgram } from "./ProgramList";
 
 const labelStyle = "text-sm font-bold text-[#344054] dark:text-zinc-100";
 const inputStyle =
@@ -46,6 +46,8 @@ const createProgramSchema = z.object({
   orgWebsite: z.string().url().optional().or(z.literal("")),
   blog: z.string().url().optional().or(z.literal("")),
   forum: z.string().url().optional().or(z.literal("")),
+  grantsSite: z.string().url().optional().or(z.literal("")),
+  bugBounty: z.string().url().optional().or(z.literal("")),
   amountDistributed: z.coerce.number().optional(),
   description: z
     .string({
@@ -125,6 +127,7 @@ export default function AddProgram({
       minGrantSize: programToEdit?.metadata?.minGrantSize as number | undefined,
       maxGrantSize: programToEdit?.metadata?.maxGrantSize as number | undefined,
       grantsToDate: programToEdit?.metadata?.grantsToDate as number | undefined,
+      bugBounty: programToEdit?.metadata?.bugBounty,
       linkToDetails: programToEdit?.metadata?.linkToDetails,
       website: programToEdit?.metadata?.website,
       twitter: programToEdit?.metadata?.projectTwitter,
@@ -137,6 +140,7 @@ export default function AddProgram({
       networks: programToEdit?.metadata?.networks || [],
       grantTypes: programToEdit?.metadata?.grantTypes || [],
       networkToCreate: programToEdit?.chainID || 0,
+      grantsSite: programToEdit?.metadata?.socialLinks?.grantsSite,
     },
   });
 
@@ -211,7 +215,9 @@ export default function AddProgram({
           orgWebsite: data.orgWebsite || "",
           blog: data.blog || "",
           forum: data.forum || "",
+          grantsSite: data.grantsSite || "",
         },
+        bugBounty: data.bugBounty,
         categories: data.categories,
         ecosystems: data.ecosystems,
         networks: data.networks,
@@ -225,7 +231,7 @@ export default function AddProgram({
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
       };
-
+      console.log(metadata);
       const owner = address as string;
 
       const hasRegistry = await alloRegistry
@@ -292,6 +298,7 @@ export default function AddProgram({
           blog: data.blog || "",
           forum: data.forum || "",
         },
+        bugBounty: data.bugBounty,
         categories: data.categories,
         ecosystems: data.ecosystems,
         networks: data.networks,
@@ -737,6 +744,44 @@ export default function AddProgram({
                 </div>
                 <p className="text-base text-red-400">
                   {errors.website?.message}
+                </p>
+              </div>
+              <div className="flex w-full flex-col gap-2 justify-between">
+                <label htmlFor="program-grants-site" className={labelStyle}>
+                  Grants Website (optional)
+                </label>
+                <div className="w-full relative">
+                  <div className="h-full w-max absolute flex justify-center items-center mx-3">
+                    <WebsiteIcon className="text-zinc-500 w-4 h-4" />
+                  </div>
+                  <input
+                    className={cn(inputStyle, "pl-10 mt-0")}
+                    placeholder="Ex: https://program.xyz"
+                    id="program-grants-site"
+                    {...register("grantsSite")}
+                  />
+                </div>
+                <p className="text-base text-red-400">
+                  {errors.grantsSite?.message}
+                </p>
+              </div>
+              <div className="flex w-full flex-col gap-2 justify-between">
+                <label htmlFor="program-bug-bounty" className={labelStyle}>
+                  Link to Bug bounty (optional)
+                </label>
+                <div className="w-full relative">
+                  <div className="h-full w-max absolute flex justify-center items-center mx-3">
+                    <WebsiteIcon className="text-zinc-500 w-4 h-4" />
+                  </div>
+                  <input
+                    className={cn(inputStyle, "pl-10 mt-0")}
+                    placeholder="Ex: https://program.xyz"
+                    id="program-bug-bounty"
+                    {...register("bugBounty")}
+                  />
+                </div>
+                <p className="text-base text-red-400">
+                  {errors.bugBounty?.message}
                 </p>
               </div>
             </div>
