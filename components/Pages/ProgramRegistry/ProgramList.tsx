@@ -50,6 +50,7 @@ export type GrantProgram = {
     startDate?: string;
     categories?: string[];
     ecosystems?: string[];
+    organizations?: string[];
     networks?: string[];
     grantTypes?: string[];
     credentials?: {};
