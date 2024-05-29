@@ -183,7 +183,7 @@ const handleRequest = frames(async (ctx) => {
     ),
     textInput: "Enter the donate value in wei",
     buttons: [
-      <Button action="tx" target="/txdata" post_url="/">
+      <Button action="tx" target={`/${projectId}/txdata`} post_url="/">
         Donate
       </Button>,
       <Button
