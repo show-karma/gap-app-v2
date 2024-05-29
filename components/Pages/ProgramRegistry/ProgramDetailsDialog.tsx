@@ -73,48 +73,22 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                         </div>
                       </div>
                     ) : null}
-                    {program.metadata?.networks?.length ? (
+                    {program.metadata?.organizations?.length ? (
                       <div className="flex flex-col gap-1">
                         <label className="text-base text-gray-900 dark:text-zinc-100">
-                          Networks
+                          Organizations
                         </label>
                         <div className="flex flex-row gap-2 flex-wrap">
-                          {program.metadata?.networks?.map((network) => (
-                            <div
-                              key={network}
-                              className="rounded-full bg-zinc-100 px-2 py-1 text-sm text-zinc-800 flex flex-row gap-1 items-center"
-                            >
-                              {registryHelper.networkImages[
-                                network.toLowerCase()
-                              ] ? (
-                                <div className="min-w-4 min-h-4 w-4 h-4 m-0">
-                                  <Image
-                                    width={16}
-                                    height={16}
-                                    src={
-                                      registryHelper.networkImages[
-                                        network.toLowerCase()
-                                      ].light
-                                    }
-                                    alt={""}
-                                    className="min-w-4 min-h-4 w-4 h-4 m-0 rounded-full block dark:hidden"
-                                  />
-                                  <Image
-                                    width={16}
-                                    height={16}
-                                    src={
-                                      registryHelper.networkImages[
-                                        network.toLowerCase()
-                                      ].dark
-                                    }
-                                    alt={""}
-                                    className="min-w-4 min-h-4 w-4 h-4 m-0 rounded-full hidden dark:block"
-                                  />
-                                </div>
-                              ) : null}
-                              {network}
-                            </div>
-                          ))}
+                          {program.metadata?.organizations?.map(
+                            (organization) => (
+                              <div
+                                key={organization}
+                                className="rounded-full bg-zinc-100 px-2 py-1 text-sm text-zinc-800"
+                              >
+                                {organization}
+                              </div>
+                            )
+                          )}
                         </div>
                       </div>
                     ) : null}
