@@ -56,103 +56,114 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                     {program.metadata?.title || program.name}
                   </Dialog.Title>
                   <div className="flex flex-col gap-8 mt-8">
-                    <div className="flex flex-col gap-1">
-                      <label className="text-base text-gray-900 dark:text-zinc-100">
-                        Ecosystems
-                      </label>
-                      <div className="flex flex-row gap-2 flex-wrap">
-                        {program.metadata?.ecosystems?.map((ecosystem) => (
-                          <div
-                            key={ecosystem}
-                            className="rounded-full bg-zinc-100 px-2 py-1 text-sm text-zinc-800"
-                          >
-                            {ecosystem}
-                          </div>
-                        ))}
+                    {program.metadata?.ecosystems?.length ? (
+                      <div className="flex flex-col gap-1">
+                        <label className="text-base text-gray-900 dark:text-zinc-100">
+                          Ecosystems
+                        </label>
+                        <div className="flex flex-row gap-2 flex-wrap">
+                          {program.metadata?.ecosystems?.map((ecosystem) => (
+                            <div
+                              key={ecosystem}
+                              className="rounded-full bg-zinc-100 px-2 py-1 text-sm text-zinc-800"
+                            >
+                              {ecosystem}
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-base text-gray-900 dark:text-zinc-100">
-                        Networks
-                      </label>
-                      <div className="flex flex-row gap-2 flex-wrap">
-                        {program.metadata?.networks?.map((network) => (
-                          <div
-                            key={network}
-                            className="rounded-full bg-zinc-100 px-2 py-1 text-sm text-zinc-800 flex flex-row gap-1 items-center"
-                          >
-                            {registryHelper.networkImages[
-                              network.toLowerCase()
-                            ] ? (
-                              <div className="min-w-4 min-h-4 w-4 h-4 m-0">
-                                <Image
-                                  width={16}
-                                  height={16}
-                                  src={
-                                    registryHelper.networkImages[
-                                      network.toLowerCase()
-                                    ].light
-                                  }
-                                  alt={""}
-                                  className="min-w-4 min-h-4 w-4 h-4 m-0 rounded-full block dark:hidden"
-                                />
-                                <Image
-                                  width={16}
-                                  height={16}
-                                  src={
-                                    registryHelper.networkImages[
-                                      network.toLowerCase()
-                                    ].dark
-                                  }
-                                  alt={""}
-                                  className="min-w-4 min-h-4 w-4 h-4 m-0 rounded-full hidden dark:block"
-                                />
-                              </div>
-                            ) : null}
-                            {network}
-                          </div>
-                        ))}
+                    ) : null}
+                    {program.metadata?.networks?.length ? (
+                      <div className="flex flex-col gap-1">
+                        <label className="text-base text-gray-900 dark:text-zinc-100">
+                          Networks
+                        </label>
+                        <div className="flex flex-row gap-2 flex-wrap">
+                          {program.metadata?.networks?.map((network) => (
+                            <div
+                              key={network}
+                              className="rounded-full bg-zinc-100 px-2 py-1 text-sm text-zinc-800 flex flex-row gap-1 items-center"
+                            >
+                              {registryHelper.networkImages[
+                                network.toLowerCase()
+                              ] ? (
+                                <div className="min-w-4 min-h-4 w-4 h-4 m-0">
+                                  <Image
+                                    width={16}
+                                    height={16}
+                                    src={
+                                      registryHelper.networkImages[
+                                        network.toLowerCase()
+                                      ].light
+                                    }
+                                    alt={""}
+                                    className="min-w-4 min-h-4 w-4 h-4 m-0 rounded-full block dark:hidden"
+                                  />
+                                  <Image
+                                    width={16}
+                                    height={16}
+                                    src={
+                                      registryHelper.networkImages[
+                                        network.toLowerCase()
+                                      ].dark
+                                    }
+                                    alt={""}
+                                    className="min-w-4 min-h-4 w-4 h-4 m-0 rounded-full hidden dark:block"
+                                  />
+                                </div>
+                              ) : null}
+                              {network}
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-base text-gray-900 dark:text-zinc-100">
-                        Budget
-                      </label>
-                      <p className="text-base text-zinc-600 dark:text-zinc-300">
-                        {program?.metadata?.programBudget
-                          ? formatCurrency(
-                              +program?.metadata?.programBudget
-                            ) === "NaN"
-                            ? program?.metadata?.programBudget
-                            : `$${formatCurrency(
+                    ) : null}
+                    {program?.metadata?.programBudget ? (
+                      <div className="flex flex-col gap-1">
+                        <label className="text-base text-gray-900 dark:text-zinc-100">
+                          Budget
+                        </label>
+                        <p className="text-base text-zinc-600 dark:text-zinc-300">
+                          {program?.metadata?.programBudget
+                            ? formatCurrency(
                                 +program?.metadata?.programBudget
-                              )}`
-                          : ""}
-                      </p>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <label className="text-base text-gray-900 dark:text-zinc-100">
-                        Grant Size
-                      </label>
-                      <div className="text-base text-zinc-600 dark:text-zinc-300">
-                        {program?.metadata?.minGrantSize &&
-                        program?.metadata?.maxGrantSize
-                          ? `$${formatCurrency(
-                              +program?.metadata?.minGrantSize
-                            )} - $${formatCurrency(
-                              +program?.metadata?.maxGrantSize
-                            )}`
-                          : ""}
+                              ) === "NaN"
+                              ? program?.metadata?.programBudget
+                              : `$${formatCurrency(
+                                  +program?.metadata?.programBudget
+                                )}`
+                            : ""}
+                        </p>
                       </div>
-                    </div>
-                    <div className="flex flex-col gap-1">
-                      <ExternalLink
-                        href={program?.metadata?.bugBounty}
-                        className="text-base text-blue-400 underline cursor-pointer"
-                      >
-                        Bug bounty
-                      </ExternalLink>
-                    </div>
+                    ) : null}
+                    {program?.metadata?.minGrantSize &&
+                    program?.metadata?.maxGrantSize ? (
+                      <div className="flex flex-col gap-1">
+                        <label className="text-base text-gray-900 dark:text-zinc-100">
+                          Grant Size
+                        </label>
+                        <div className="text-base text-zinc-600 dark:text-zinc-300">
+                          {program?.metadata?.minGrantSize &&
+                          program?.metadata?.maxGrantSize
+                            ? `$${formatCurrency(
+                                +program?.metadata?.minGrantSize
+                              )} - $${formatCurrency(
+                                +program?.metadata?.maxGrantSize
+                              )}`
+                            : ""}
+                        </div>
+                      </div>
+                    ) : null}
+                    {program?.metadata?.bugBounty ? (
+                      <div className="flex flex-col gap-1">
+                        <ExternalLink
+                          href={program?.metadata?.bugBounty}
+                          className="text-base text-blue-400 underline cursor-pointer"
+                        >
+                          Bug bounty
+                        </ExternalLink>
+                      </div>
+                    ) : null}
                   </div>
                 </Dialog.Panel>
               </Transition.Child>
