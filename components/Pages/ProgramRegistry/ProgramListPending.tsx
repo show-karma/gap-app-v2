@@ -2,7 +2,7 @@ import { ReadMore } from "@/utilities/ReadMore";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import Image from "next/image";
-import { FC, useMemo, useRef } from "react";
+import { FC, useMemo, useRef, useState } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { registryHelper } from "./helper";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -23,73 +23,8 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useAccount } from "wagmi";
 import { useAuthStore } from "@/store/auth";
-
-export type GrantProgram = {
-  _id: {
-    $oid: string;
-  };
-  id?: string;
-  name?: string;
-  createdAtBlock?: string;
-  createdByAddress?: string;
-  metadata?: {
-    tags?: string[];
-    type?: string;
-    title?: string;
-    endDate?: string;
-    logoImg?: string;
-    website?: string;
-    socialLinks?: {
-      blog?: string;
-      forum?: string;
-      twitter?: string;
-      discord?: string;
-      website?: string;
-      orgWebsite?: string;
-    };
-    bounties?: string[];
-    bannerImg?: string;
-    createdAt?: number;
-    minGrantSize?: string;
-    maxGrantSize?: string;
-    startDate?: string;
-    categories?: string[];
-    ecosystems?: string[];
-    networks?: string[];
-    grantTypes?: string[];
-    credentials?: {};
-    description?: string;
-    logoImgData?: string;
-    grantsToDate?: number;
-    bannerImgData?: string;
-    linkToDetails?: string;
-    programBudget?: string;
-    projectTwitter?: string;
-    applicantsNumber?: number;
-    amountDistributedToDate?: string;
-  };
-  tags?: string[];
-  updatedAtBlock?: string;
-  projectNumber?: null;
-  projectType?: string;
-  registryAddress?: string;
-  anchorAddress?: string;
-  programId?: string;
-  chainID?: number;
-  isValid?: boolean;
-  createdAt: {
-    $timestamp: {
-      t: number;
-      i: number;
-    };
-  };
-  updatedAt: {
-    $timestamp: {
-      t: number;
-      i: number;
-    };
-  };
-};
+import { GrantProgram } from "./ProgramList";
+import { ProgramDetailsDialog } from "./ProgramDetailsDialog";
 
 interface ProgramListPendingProps {
   grantPrograms: GrantProgram[];
@@ -125,6 +60,10 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
     accountsAllowedManagePrograms.includes(address.toLowerCase()) &&
     isAuth;
 
+  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(
+    null
+  );
+
   const columns = useMemo<ColumnDef<GrantProgram>[]>(
     () => [
       {
@@ -133,86 +72,77 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
         cell: (info) => {
           const grant = info.row.original;
           return (
-            <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300 text-wrap max-w-[285px] mr-4">
-              <div className="flex flex-row gap-3">
-                <div className="flex flex-col gap-1">
+            <div className="flex flex-1 w-full whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300 text-wrap max-w-[285px] mr-4">
+              <div className="flex flex-col gap-1 w-max max-w-full">
+                <button
+                  type="button"
+                  onClick={() => setSelectedProgram(grant)}
+                  className="text-left font-semibold text-base text-gray-900 underline dark:text-zinc-100 w-full"
+                >
+                  {grant?.metadata?.title}
+                </button>
+                <div className="flex flex-row gap-1 w-full">
                   {grant.metadata?.socialLinks?.website ? (
                     <ExternalLink
                       href={grant.metadata?.socialLinks?.website}
                       className="w-max"
                     >
-                      <div className="font-semibold text-base text-gray-900 underline dark:text-zinc-100">
-                        {grant?.metadata?.title}
-                      </div>
+                      <Image
+                        className="w-5 h-5 text-black dark:text-white dark:hidden"
+                        width={20}
+                        height={20}
+                        src="/icons/globe.svg"
+                        alt={grant.metadata?.socialLinks?.website}
+                      />
+                      <Image
+                        width={20}
+                        height={20}
+                        className="w-5 h-5 text-black dark:text-white hidden dark:block"
+                        src="/icons/globe-white.svg"
+                        alt={grant.metadata?.socialLinks?.website}
+                      />
                     </ExternalLink>
-                  ) : (
-                    <div className="font-semibold text-base text-gray-900 dark:text-zinc-100">
-                      {grant?.metadata?.title}
-                    </div>
-                  )}
-                  <div className="flex flex-row gap-1 w-full">
-                    {grant.metadata?.socialLinks?.website ? (
-                      <ExternalLink
-                        href={grant.metadata?.socialLinks?.website}
-                        className="w-max"
-                      >
-                        <Image
-                          className="w-5 h-5 text-black dark:text-white dark:hidden"
-                          width={20}
-                          height={20}
-                          src="/icons/globe.svg"
-                          alt={grant.metadata?.socialLinks?.website}
-                        />
-                        <Image
-                          width={20}
-                          height={20}
-                          className="w-5 h-5 text-black dark:text-white hidden dark:block"
-                          src="/icons/globe-white.svg"
-                          alt={grant.metadata?.socialLinks?.website}
-                        />
-                      </ExternalLink>
-                    ) : null}
-                    {grant.metadata?.socialLinks?.twitter ? (
-                      <ExternalLink
-                        href={grant.metadata?.socialLinks?.twitter}
-                        className="w-max"
-                      >
-                        <TwitterIcon className="w-5 h-5 text-black dark:text-white" />
-                      </ExternalLink>
-                    ) : null}
-                    {grant.metadata?.socialLinks?.discord ? (
-                      <ExternalLink
-                        href={grant.metadata?.socialLinks?.discord}
-                        className="w-max"
-                      >
-                        <DiscordIcon className="w-5 h-5 text-black dark:text-white" />
-                      </ExternalLink>
-                    ) : null}
-                    {grant.metadata?.socialLinks?.forum ? (
-                      <ExternalLink
-                        href={grant.metadata?.socialLinks?.forum}
-                        className="w-max"
-                      >
-                        <DiscussionIcon className="w-5 h-5 text-black dark:text-white" />
-                      </ExternalLink>
-                    ) : null}
-                    {grant.metadata?.socialLinks?.blog ? (
-                      <ExternalLink
-                        href={grant.metadata?.socialLinks?.blog}
-                        className="w-max"
-                      >
-                        <BlogIcon className="w-5 h-5 text-black dark:text-white" />
-                      </ExternalLink>
-                    ) : null}
-                    {grant.metadata?.socialLinks?.orgWebsite ? (
-                      <ExternalLink
-                        href={grant.metadata?.socialLinks?.orgWebsite}
-                        className="w-max"
-                      >
-                        <OrganizationIcon className="w-5 h-5 text-black dark:text-white" />
-                      </ExternalLink>
-                    ) : null}
-                  </div>
+                  ) : null}
+                  {grant.metadata?.socialLinks?.twitter ? (
+                    <ExternalLink
+                      href={grant.metadata?.socialLinks?.twitter}
+                      className="w-max"
+                    >
+                      <TwitterIcon className="w-5 h-5 text-black dark:text-white" />
+                    </ExternalLink>
+                  ) : null}
+                  {grant.metadata?.socialLinks?.discord ? (
+                    <ExternalLink
+                      href={grant.metadata?.socialLinks?.discord}
+                      className="w-max"
+                    >
+                      <DiscordIcon className="w-5 h-5 text-black dark:text-white" />
+                    </ExternalLink>
+                  ) : null}
+                  {grant.metadata?.socialLinks?.forum ? (
+                    <ExternalLink
+                      href={grant.metadata?.socialLinks?.forum}
+                      className="w-max"
+                    >
+                      <DiscussionIcon className="w-5 h-5 text-black dark:text-white" />
+                    </ExternalLink>
+                  ) : null}
+                  {grant.metadata?.socialLinks?.blog ? (
+                    <ExternalLink
+                      href={grant.metadata?.socialLinks?.blog}
+                      className="w-max"
+                    >
+                      <BlogIcon className="w-5 h-5 text-black dark:text-white" />
+                    </ExternalLink>
+                  ) : null}
+                  {grant.metadata?.socialLinks?.orgWebsite ? (
+                    <ExternalLink
+                      href={grant.metadata?.socialLinks?.orgWebsite}
+                      className="w-max"
+                    >
+                      <OrganizationIcon className="w-5 h-5 text-black dark:text-white" />
+                    </ExternalLink>
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -628,6 +558,13 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
 
   return (
     <div ref={parentRef} className="w-full">
+      {selectedProgram ? (
+        <ProgramDetailsDialog
+          program={selectedProgram}
+          isOpen={selectedProgram !== null}
+          closeModal={() => setSelectedProgram(null)}
+        />
+      ) : null}
       <InfiniteScroll
         dataLength={rows.length}
         next={nextFunc}
