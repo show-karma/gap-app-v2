@@ -11,9 +11,10 @@ import { Dontaion_ABI } from "./contracts/Donation";
 import { transaction } from "frames.js/core";
 import { getGapClient } from "@/hooks";
 
-const handleRequest = frames(async (ctx) => {
-  const projectId = ctx.request.url.split("/").pop();
-  console.log(projectId);
+export const POST = frames(async (ctx) => {
+  // const projectId = ctx.request.url.split("/").pop();
+  // console.log(projectId);
+  console.log("first");
   // const gap = getGapClient(11155420);
   // console.log(gap.findSchema("ProjectEndorsement").uid);
   // const schema = gap.findSchema("ProjectEndorsement").uid;
@@ -73,5 +74,5 @@ const handleRequest = frames(async (ctx) => {
   });
 });
 
-export const GET = handleRequest;
-export const POST = handleRequest;
+// export const GET = handleRequest;
+// export const POST = handleRequest;
