@@ -16,6 +16,7 @@ import { ReadMore } from "@/utilities/ReadMore";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { registryHelper } from "./helper";
 import { Button } from "@/components/Utilities/Button";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 
 type ProgramDetailsDialogProps = {
   program: GrantProgram;
@@ -150,14 +151,9 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                         className="w-full max-w-full text-wrap"
                         data-color-mode="light"
                       >
-                        <ReadMore
-                          readLessText="Show less description"
-                          readMoreText="Show full description"
-                          side="left"
-                          words={50}
-                        >
-                          {program.metadata?.description!}
-                        </ReadMore>
+                        <MarkdownPreview
+                          source={program.metadata?.description!}
+                        />
                       </div>
                     </div>
                     <div className="grid grid-cols-3 max-sm:grid-cols-1 gap-4">
@@ -363,7 +359,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                         <ExternalLink
                           href={program.metadata?.socialLinks?.grantsSite}
                         >
-                          <Button className="text-base">Apply</Button>
+                          <Button className="text-base px-6">Apply</Button>
                         </ExternalLink>
                       ) : null}
                     </div>
