@@ -70,18 +70,11 @@ const createProgramSchema = z.object({
     .min(1, { message: MESSAGES.REGISTRY.FORM.MAX_GRANT_SIZE }),
   grantsToDate: z.coerce.number().optional(),
   linkToDetails: z.string().url(),
-  categories: z
-    .array(z.string())
-    .min(1, { message: MESSAGES.REGISTRY.FORM.CATEGORIES }),
-  ecosystems: z
-    .array(z.string())
-    .min(1, { message: MESSAGES.REGISTRY.FORM.ECOSYSTEMS }),
-  networks: z
-    .array(z.string())
-    .min(1, { message: MESSAGES.REGISTRY.FORM.NETWORKS }),
-  grantTypes: z
-    .array(z.string())
-    .min(1, { message: MESSAGES.REGISTRY.FORM.GRANT_TYPES }),
+  categories: z.array(z.string()),
+  organizations: z.array(z.string()),
+  ecosystems: z.array(z.string()),
+  networks: z.array(z.string()),
+  grantTypes: z.array(z.string()),
 });
 
 type CreateProgramType = z.infer<typeof createProgramSchema>;
@@ -139,6 +132,7 @@ export default function AddProgram({
       forum: programToEdit?.metadata?.socialLinks?.forum,
       categories: programToEdit?.metadata?.categories || [],
       ecosystems: programToEdit?.metadata?.ecosystems || [],
+      organizations: programToEdit?.metadata?.organizations || [],
       networks: programToEdit?.metadata?.networks || [],
       grantTypes: programToEdit?.metadata?.grantTypes || [],
       networkToCreate: programToEdit?.chainID || 0,
@@ -148,7 +142,12 @@ export default function AddProgram({
 
   const onChangeGeneric = (
     value: string,
-    fieldName: "categories" | "ecosystems" | "networks" | "grantTypes"
+    fieldName:
+      | "categories"
+      | "ecosystems"
+      | "networks"
+      | "grantTypes"
+      | "organizations"
   ) => {
     const oldArray = watch(fieldName);
     let newArray = [...oldArray];
@@ -222,6 +221,7 @@ export default function AddProgram({
         bugBounty: data.bugBounty,
         categories: data.categories,
         ecosystems: data.ecosystems,
+        organizations: data.organizations,
         networks: data.networks,
         grantTypes: data.grantTypes,
         logoImg: "",
@@ -233,7 +233,7 @@ export default function AddProgram({
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
       };
-      console.log(metadata);
+
       const owner = address as string;
 
       const hasRegistry = await alloRegistry
@@ -303,6 +303,7 @@ export default function AddProgram({
         bugBounty: data.bugBounty,
         categories: data.categories,
         ecosystems: data.ecosystems,
+        organizations: data.organizations,
         networks: data.networks,
         grantTypes: data.grantTypes,
         logoImg: "",
@@ -467,7 +468,7 @@ export default function AddProgram({
               <div className="grid grid-cols-4  max-sm:grid-cols-1 max-md:grid-cols-2 gap-4 justify-between">
                 <div className="flex w-full flex-col gap-1">
                   <label htmlFor="program-categories" className={labelStyle}>
-                    Categories *
+                    Categories (optional)
                   </label>
                   <SearchDropdown
                     list={registryHelper.categories}
@@ -477,14 +478,33 @@ export default function AddProgram({
                     type={"Categories"}
                     selected={watch("categories")}
                     prefixUnselected="Select"
+                    buttonClassname="w-full max-w-full"
                   />
                   <p className="text-base text-red-400">
                     {errors.categories?.message}
                   </p>
                 </div>
                 <div className="flex w-full flex-col  gap-1">
+                  <label htmlFor="program-organizations" className={labelStyle}>
+                    Organizations (optional)
+                  </label>
+                  <SearchDropdown
+                    list={registryHelper.organizations}
+                    onSelectFunction={(value: string) =>
+                      onChangeGeneric(value, "organizations")
+                    }
+                    type={"Organizations"}
+                    selected={watch("organizations")}
+                    prefixUnselected="Select"
+                    buttonClassname="w-full max-w-full"
+                  />
+                  <p className="text-base text-red-400">
+                    {errors.organizations?.message}
+                  </p>
+                </div>
+                <div className="flex w-full flex-col  gap-1">
                   <label htmlFor="program-ecosystems" className={labelStyle}>
-                    Ecosystems *
+                    Ecosystems (optional)
                   </label>
                   <SearchDropdown
                     list={registryHelper.ecosystems}
@@ -494,6 +514,7 @@ export default function AddProgram({
                     type={"Ecosystems"}
                     selected={watch("ecosystems")}
                     prefixUnselected="Select"
+                    buttonClassname="w-full max-w-full"
                   />
                   <p className="text-base text-red-400">
                     {errors.ecosystems?.message}
@@ -501,7 +522,7 @@ export default function AddProgram({
                 </div>
                 <div className="flex w-full flex-col  gap-1">
                   <label htmlFor="program-networks" className={labelStyle}>
-                    Networks *
+                    Networks (optional)
                   </label>
 
                   <SearchDropdown
@@ -513,6 +534,7 @@ export default function AddProgram({
                     type={"Networks"}
                     selected={watch("networks")}
                     prefixUnselected="Select"
+                    buttonClassname="w-full max-w-full"
                   />
                   <p className="text-base text-red-400">
                     {errors.networks?.message}
@@ -520,7 +542,7 @@ export default function AddProgram({
                 </div>
                 <div className="flex w-full flex-col  gap-1">
                   <label htmlFor="program-types" className={labelStyle}>
-                    Types *
+                    Types (optional)
                   </label>
                   <SearchDropdown
                     list={registryHelper.grantTypes}
@@ -530,6 +552,7 @@ export default function AddProgram({
                     type={"Grant Types"}
                     selected={watch("grantTypes")}
                     prefixUnselected="Select"
+                    buttonClassname="w-full max-w-full"
                   />
                   <p className="text-base text-red-400">
                     {errors.grantTypes?.message}
