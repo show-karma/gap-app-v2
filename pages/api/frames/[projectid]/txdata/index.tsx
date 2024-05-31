@@ -63,7 +63,7 @@ export const handleRequest = frames(async (ctx) => {
   });
 
   return transaction({
-    chainId: "eip155:10", // OP Mainnet 10
+    chainId: "eip155:11155420",
     method: "eth_sendTransaction",
     params: {
       abi: Dontaion_ABI as Abi,
