@@ -28,6 +28,7 @@ interface SearchDropdownProps {
   type: string;
   cleanFunction?: () => void;
   prefixUnselected?: string;
+  buttonClassname?: string;
 }
 export const SearchDropdown: FC<SearchDropdownProps> = ({
   onSelectFunction,
@@ -36,7 +37,8 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
   imageDictionary,
   type,
   cleanFunction,
-  prefixUnselected = "All",
+  prefixUnselected = "Any",
+  buttonClassname,
 }) => {
   const [open, setOpen] = useState(false);
 
@@ -57,7 +59,12 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
-      <Popover.Trigger className="min-w-40 w-full max-w-max max-md:max-w-full justify-between flex flex-row cursor-default rounded-md bg-white dark:bg-zinc-800 dark:text-zinc-100 py-3 px-4 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
+      <Popover.Trigger
+        className={cn(
+          "min-w-40 w-full max-w-max max-md:max-w-full justify-between flex flex-row cursor-default rounded-md bg-white dark:bg-zinc-800 dark:text-zinc-100 py-3 px-4 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6",
+          buttonClassname
+        )}
+      >
         <div className="flex flex-row gap-4 w-full justify-between">
           <p className="block w-max">
             {selected.length
@@ -92,7 +99,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
                 <div className="flex flex-row gap-2 items-center justify-start w-full">
                   <div className="flex flex-row gap-1  items-center justify-start  flex-1">
                     <p className="line-clamp-2 font-semibold text-sm max-w-full break-normal">
-                      All
+                      Any
                     </p>
                   </div>
                   <CheckIcon
