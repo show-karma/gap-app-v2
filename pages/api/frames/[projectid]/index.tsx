@@ -27,6 +27,7 @@ const handleRequest = frames(async (ctx) => {
       },
       buttons: [
         <Button
+          key={1}
           action="link"
           target={`https://www.onceupon.gg/tx/${ctx.message.transactionId}`}
         >
@@ -184,6 +185,7 @@ const handleRequest = frames(async (ctx) => {
     textInput: "Enter the donate value in wei",
     buttons: [
       <Button
+        key={1}
         action="tx"
         target={`http://localhost:3000/api/frames/${projectId}/txdata`}
         post_url={`/frames/${projectId}`}
@@ -191,6 +193,7 @@ const handleRequest = frames(async (ctx) => {
         Donate
       </Button>,
       <Button
+        key={2}
         action="link"
         target={`https://gap.karmahq.xyz/project/${projectId}`}
       >
