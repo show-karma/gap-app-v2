@@ -188,6 +188,10 @@ export const MESSAGES = {
         SUCCESS: "You have successfully verified the milestone.",
         ERROR: "There was an error verifying the milestone. Please try again.",
       },
+      CERTIFICATE: {
+        SUCCESS: "Hypercert minted successfully",
+        ERROR: "There was an error minting hypercert. Please try again",
+      },
     },
     TRANSFER_OWNERSHIP: {
       SUCCESS: (newOwner: string) =>
