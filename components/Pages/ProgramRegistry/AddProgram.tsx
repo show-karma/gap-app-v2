@@ -40,16 +40,63 @@ const labelStyle = "text-sm font-bold text-[#344054] dark:text-zinc-100";
 const inputStyle =
   "mt-1 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100";
 
+const urlRegex =
+  /^((https?):\/\/)?([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}(\/.*)?$/;
+
 const createProgramSchema = z.object({
   name: z.string().min(3, { message: MESSAGES.REGISTRY.FORM.NAME }),
-  website: z.string().url().optional().or(z.literal("")),
-  twitter: z.string().url().optional().or(z.literal("")),
-  discord: z.string().url().optional().or(z.literal("")),
-  orgWebsite: z.string().url().optional().or(z.literal("")),
-  blog: z.string().url().optional().or(z.literal("")),
-  forum: z.string().url().optional().or(z.literal("")),
-  grantsSite: z.string().url().optional().or(z.literal("")),
-  bugBounty: z.string().url().optional().or(z.literal("")),
+  website: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: "Please enter a valid URL",
+    })
+    .optional()
+    .or(z.literal("")),
+  twitter: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: "Please enter a valid URL",
+    })
+    .optional()
+    .or(z.literal("")),
+  discord: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: "Please enter a valid URL",
+    })
+    .optional()
+    .or(z.literal("")),
+  orgWebsite: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: "Please enter a valid URL",
+    })
+    .optional()
+    .or(z.literal("")),
+  blog: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: "Please enter a valid URL",
+    })
+    .optional()
+    .or(z.literal("")),
+  forum: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: "Please enter a valid URL",
+    })
+    .optional()
+    .or(z.literal("")),
+  grantsSite: z.string().refine((value) => urlRegex.test(value), {
+    message: "Please enter a valid URL",
+  }),
+  bugBounty: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: "Please enter a valid URL",
+    })
+    .optional()
+    .or(z.literal("")),
   amountDistributed: z.coerce.number().optional(),
   description: z
     .string({
@@ -61,15 +108,10 @@ const createProgramSchema = z.object({
   networkToCreate: z.coerce.number().gt(0, {
     message: MESSAGES.REGISTRY.FORM.NETWORKTOCREATE,
   }),
-  budget: z.coerce.number().min(1, { message: MESSAGES.REGISTRY.FORM.BUDGET }),
-  minGrantSize: z.coerce
-    .number()
-    .min(1, { message: MESSAGES.REGISTRY.FORM.MIN_GRANT_SIZE }),
-  maxGrantSize: z.coerce
-    .number()
-    .min(1, { message: MESSAGES.REGISTRY.FORM.MAX_GRANT_SIZE }),
+  budget: z.coerce.number().optional(),
+  minGrantSize: z.coerce.number().optional(),
+  maxGrantSize: z.coerce.number().optional(),
   grantsToDate: z.coerce.number().optional(),
-  linkToDetails: z.string().url(),
   categories: z.array(z.string()),
   organizations: z.array(z.string()),
   ecosystems: z.array(z.string()),
@@ -123,7 +165,6 @@ export default function AddProgram({
       maxGrantSize: programToEdit?.metadata?.maxGrantSize as number | undefined,
       grantsToDate: programToEdit?.metadata?.grantsToDate as number | undefined,
       bugBounty: programToEdit?.metadata?.bugBounty,
-      linkToDetails: programToEdit?.metadata?.linkToDetails,
       website: programToEdit?.metadata?.website,
       twitter: programToEdit?.metadata?.projectTwitter,
       discord: programToEdit?.metadata?.socialLinks?.discord,
@@ -206,7 +247,6 @@ export default function AddProgram({
         minGrantSize: data.minGrantSize,
         maxGrantSize: data.maxGrantSize,
         grantsToDate: data.grantsToDate,
-        linkToDetails: data.linkToDetails,
         website: data.website || "",
         projectTwitter: data.twitter || "",
         socialLinks: {
@@ -289,7 +329,6 @@ export default function AddProgram({
         minGrantSize: data.minGrantSize,
         maxGrantSize: data.maxGrantSize,
         grantsToDate: data.grantsToDate,
-        linkToDetails: data.linkToDetails,
         website: data.website || "",
         projectTwitter: data.twitter || "",
         socialLinks: {
@@ -299,6 +338,7 @@ export default function AddProgram({
           orgWebsite: data.orgWebsite || "",
           blog: data.blog || "",
           forum: data.forum || "",
+          grantsSite: data.grantsSite || "",
         },
         bugBounty: data.bugBounty,
         categories: data.categories,
@@ -430,20 +470,17 @@ export default function AddProgram({
                   </p>
                 </div>
                 <div className="flex w-full flex-col  gap-1">
-                  <label
-                    htmlFor="program-links-to-details"
-                    className={labelStyle}
-                  >
-                    Link to program details *
+                  <label htmlFor="program-grants-site" className={labelStyle}>
+                    Grants Site *
                   </label>
                   <input
-                    id="program-links-to-details"
+                    id="program-grants-site"
                     className={inputStyle}
-                    placeholder="Ex: https://program.xyz/details"
-                    {...register("linkToDetails")}
+                    placeholder="Ex: https://program.xyz/"
+                    {...register("grantsSite")}
                   />
                   <p className="text-base text-red-400">
-                    {errors.linkToDetails?.message}
+                    {errors.grantsSite?.message}
                   </p>
                 </div>
               </div>
@@ -468,7 +505,7 @@ export default function AddProgram({
               <div className="grid grid-cols-4  max-sm:grid-cols-1 max-md:grid-cols-2 gap-4 justify-between">
                 <div className="flex w-full flex-col gap-1">
                   <label htmlFor="program-categories" className={labelStyle}>
-                    Categories (optional)
+                    Categories
                   </label>
                   <SearchDropdown
                     list={registryHelper.categories}
@@ -486,7 +523,7 @@ export default function AddProgram({
                 </div>
                 <div className="flex w-full flex-col  gap-1">
                   <label htmlFor="program-organizations" className={labelStyle}>
-                    Organizations (optional)
+                    Organizations
                   </label>
                   <SearchDropdown
                     list={registryHelper.organizations}
@@ -504,7 +541,7 @@ export default function AddProgram({
                 </div>
                 <div className="flex w-full flex-col  gap-1">
                   <label htmlFor="program-ecosystems" className={labelStyle}>
-                    Ecosystems (optional)
+                    Ecosystems
                   </label>
                   <SearchDropdown
                     list={registryHelper.ecosystems}
@@ -522,7 +559,7 @@ export default function AddProgram({
                 </div>
                 <div className="flex w-full flex-col  gap-1">
                   <label htmlFor="program-networks" className={labelStyle}>
-                    Networks (optional)
+                    Networks
                   </label>
 
                   <SearchDropdown
@@ -535,6 +572,7 @@ export default function AddProgram({
                     selected={watch("networks")}
                     prefixUnselected="Select"
                     buttonClassname="w-full max-w-full"
+                    canAdd
                   />
                   <p className="text-base text-red-400">
                     {errors.networks?.message}
@@ -542,14 +580,14 @@ export default function AddProgram({
                 </div>
                 <div className="flex w-full flex-col  gap-1">
                   <label htmlFor="program-types" className={labelStyle}>
-                    Types (optional)
+                    Funding Mechanisms
                   </label>
                   <SearchDropdown
                     list={registryHelper.grantTypes}
                     onSelectFunction={(value: string) =>
                       onChangeGeneric(value, "grantTypes")
                     }
-                    type={"Grant Types"}
+                    type={"Mechanisms"}
                     selected={watch("grantTypes")}
                     prefixUnselected="Select"
                     buttonClassname="w-full max-w-full"
@@ -581,7 +619,7 @@ export default function AddProgram({
               </div>
               <div className="flex w-full flex-col  gap-1">
                 <label htmlFor="program-budget" className={labelStyle}>
-                  Program budget *
+                  Program budget
                 </label>
                 <input
                   id="program-budget"
@@ -599,7 +637,7 @@ export default function AddProgram({
                   htmlFor="program-amount-distributed"
                   className={labelStyle}
                 >
-                  Amount distributed to date (optional)
+                  Amount distributed to date
                 </label>
                 <input
                   id="program-amount-distributed"
@@ -614,7 +652,7 @@ export default function AddProgram({
               </div>
               <div className="flex w-full flex-col  gap-1">
                 <label htmlFor="program-grants-issued" className={labelStyle}>
-                  Grants issued to date (optional)
+                  Grants issued to date
                 </label>
                 <input
                   id="program-grants-issued"
@@ -629,7 +667,7 @@ export default function AddProgram({
               </div>
               <div className="flex w-full flex-col  gap-1">
                 <label htmlFor="program-min-grant-size" className={labelStyle}>
-                  Min Grant size *
+                  Min Grant size
                 </label>
                 <input
                   type="number"
@@ -644,7 +682,7 @@ export default function AddProgram({
               </div>
               <div className="flex w-full flex-col  gap-1">
                 <label htmlFor="program-max-grant-size" className={labelStyle}>
-                  Max Grant size *
+                  Max Grant size
                 </label>
                 <input
                   type="number"
@@ -661,7 +699,7 @@ export default function AddProgram({
             <div className="grid grid-cols-3 max-sm:grid-cols-1 w-full gap-6  pb-10">
               <div className="flex w-full flex-col gap-2 justify-between">
                 <label htmlFor="program-twitter" className={labelStyle}>
-                  X/Twitter (optional)
+                  X/Twitter
                 </label>
                 <div className="w-full relative">
                   <div className="h-full w-max absolute flex justify-center items-center mx-3">
@@ -680,7 +718,7 @@ export default function AddProgram({
               </div>
               <div className="flex w-full flex-col gap-2 justify-between">
                 <label htmlFor="program-discord" className={labelStyle}>
-                  Discord (optional)
+                  Discord
                 </label>
                 <div className="w-full relative">
                   <div className="h-full w-max absolute flex justify-center items-center mx-3">
@@ -699,7 +737,7 @@ export default function AddProgram({
               </div>
               <div className="flex w-full flex-col gap-2 justify-between">
                 <label htmlFor="program-blog" className={labelStyle}>
-                  Blog (optional)
+                  Blog
                 </label>
                 <div className="w-full relative">
                   <div className="h-full w-max absolute flex justify-center items-center mx-3">
@@ -716,7 +754,7 @@ export default function AddProgram({
               </div>
               <div className="flex w-full flex-col gap-2 justify-between">
                 <label htmlFor="program-forum" className={labelStyle}>
-                  Forum (optional)
+                  Forum
                 </label>
                 <div className="w-full relative">
                   <div className="h-full w-max absolute flex justify-center items-center mx-3">
@@ -735,7 +773,7 @@ export default function AddProgram({
               </div>
               <div className="flex w-full flex-col gap-2 justify-between">
                 <label htmlFor="program-org" className={labelStyle}>
-                  Organization website (optional)
+                  Organization website
                 </label>
                 <div className="w-full relative">
                   <div className="h-full w-max absolute flex justify-center items-center mx-3">
@@ -752,47 +790,10 @@ export default function AddProgram({
                   {errors.orgWebsite?.message}
                 </p>
               </div>
-              <div className="flex w-full flex-col gap-2 justify-between">
-                <label htmlFor="program-website" className={labelStyle}>
-                  Program Website (optional)
-                </label>
-                <div className="w-full relative">
-                  <div className="h-full w-max absolute flex justify-center items-center mx-3">
-                    <WebsiteIcon className="text-zinc-500 w-4 h-4" />
-                  </div>
-                  <input
-                    className={cn(inputStyle, "pl-10 mt-0")}
-                    placeholder="Ex: https://program.xyz"
-                    id="program-website"
-                    {...register("website")}
-                  />
-                </div>
-                <p className="text-base text-red-400">
-                  {errors.website?.message}
-                </p>
-              </div>
-              <div className="flex w-full flex-col gap-2 justify-between">
-                <label htmlFor="program-grants-site" className={labelStyle}>
-                  Grants Website (optional)
-                </label>
-                <div className="w-full relative">
-                  <div className="h-full w-max absolute flex justify-center items-center mx-3">
-                    <WebsiteIcon className="text-zinc-500 w-4 h-4" />
-                  </div>
-                  <input
-                    className={cn(inputStyle, "pl-10 mt-0")}
-                    placeholder="Ex: https://program.xyz"
-                    id="program-grants-site"
-                    {...register("grantsSite")}
-                  />
-                </div>
-                <p className="text-base text-red-400">
-                  {errors.grantsSite?.message}
-                </p>
-              </div>
+
               <div className="flex w-full flex-col gap-2 justify-between">
                 <label htmlFor="program-bug-bounty" className={labelStyle}>
-                  Link to Bug bounty (optional)
+                  Link to Bug bounty
                 </label>
                 <div className="w-full relative">
                   <div className="h-full w-max absolute flex justify-center items-center mx-3">

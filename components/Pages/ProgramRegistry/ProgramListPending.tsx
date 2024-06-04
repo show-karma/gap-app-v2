@@ -354,28 +354,28 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
           </div>
         ),
       },
-      {
-        accessorFn: (row) => row,
-        id: "Grant Size",
-        cell: (info) => {
-          const grant = info.row.original;
+      // {
+      //   accessorFn: (row) => row,
+      //   id: "Grant Size",
+      //   cell: (info) => {
+      //     const grant = info.row.original;
 
-          return (
-            <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-              {grant?.metadata?.minGrantSize && grant?.metadata?.maxGrantSize
-                ? `$${formatCurrency(
-                    +grant?.metadata?.minGrantSize
-                  )} - $${formatCurrency(+grant?.metadata?.maxGrantSize)}`
-                : ""}
-            </div>
-          );
-        },
-        header: () => (
-          <div className="px-3 py-3.5 text-left text-sm w-[120px] font-bold text-gray-900 dark:text-zinc-100 font-body">
-            Grant Size
-          </div>
-        ),
-      },
+      //     return (
+      //       <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
+      //         {grant?.metadata?.minGrantSize && grant?.metadata?.maxGrantSize
+      //           ? `$${formatCurrency(
+      //               +grant?.metadata?.minGrantSize
+      //             )} - $${formatCurrency(+grant?.metadata?.maxGrantSize)}`
+      //           : ""}
+      //       </div>
+      //     );
+      //   },
+      //   header: () => (
+      //     <div className="px-3 py-3.5 text-left text-sm w-[120px] font-bold text-gray-900 dark:text-zinc-100 font-body">
+      //       Grant Size
+      //     </div>
+      //   ),
+      // },
       {
         accessorFn: (row) => row,
         id: "Categories",

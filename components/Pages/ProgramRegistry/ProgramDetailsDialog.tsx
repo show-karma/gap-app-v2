@@ -145,8 +145,8 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                       <XMarkIcon className="w-5 h-5" />
                     </button>
                   </Dialog.Title>
-                  <div className="flex flex-col gap-4 mt-2">
-                    <div className="whitespace-nowrap py-4 text-sm text-black dark:text-zinc-400">
+                  <div className="flex flex-col gap-4 mt-2  divide-y divide-zinc-200">
+                    <div className="whitespace-nowrap py-4 text-sm text-black dark:text-zinc-400 ">
                       <div
                         className="w-full max-w-full text-wrap"
                         data-color-mode="light"
@@ -156,7 +156,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                         />
                       </div>
                     </div>
-                    <div className="grid grid-cols-3 max-sm:grid-cols-1 gap-4">
+                    <div className="grid grid-cols-3 max-sm:grid-cols-1 gap-4 py-3">
                       {program.metadata?.categories?.length ? (
                         <div className="flex flex-col gap-1">
                           <label className="text-base text-gray-900 dark:text-zinc-100">
@@ -277,7 +277,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                         </div>
                       ) : null}
                     </div>
-                    <div className="grid grid-cols-3 max-sm:grid-cols-2 gap-2 border-y border-zinc-200 py-6 my-6">
+                    <div className="grid grid-cols-3 max-sm:grid-cols-2 gap-2 py-6 my-6">
                       {program?.metadata?.programBudget ? (
                         <div className="flex flex-col gap-1">
                           <label className="text-base text-gray-900 dark:text-zinc-100">
@@ -344,7 +344,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                       ) : null}
                     </div>
 
-                    <div className="flex flex-row gap-10 justify-end items-center">
+                    <div className="flex flex-row gap-10 justify-end items-center border-none">
                       {program?.metadata?.bugBounty ? (
                         <div className="flex flex-col gap-1">
                           <ExternalLink

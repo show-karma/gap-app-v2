@@ -62,7 +62,6 @@ export type GrantProgram = {
     logoImgData?: string;
     grantsToDate?: number;
     bannerImgData?: string;
-    linkToDetails?: string;
     programBudget?: string;
     projectTwitter?: string;
     applicantsNumber?: number;
