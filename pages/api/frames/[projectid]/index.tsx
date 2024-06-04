@@ -8,7 +8,7 @@ const handleRequest = frames(async (ctx) => {
   const projectId = ctx.request.url.split("/").pop();
   const data = await getProjectById(projectId as string);
   console.log(data);
-  console.log(data?.details?.description);
+  console.log(data?.refUID);
   const gl = data?.grants?.length.toString();
   console.log(data?.impacts?.length);
   console.log(data?.endorsements?.length);
@@ -187,8 +187,8 @@ const handleRequest = frames(async (ctx) => {
       <Button
         key={1}
         action="tx"
-        target={`http://localhost:3000/api/frames/${projectId}/txdata`}
-        post_url={`/frames/${projectId}`}
+        target={`http://localhost:3000/api/frames/${projectId}/txdata?projectId=${projectId}&recipient=${data?.recipient}&refuid=${data?.refUID}`}
+        post_url={`/${projectId}`}
       >
         Donate
       </Button>,

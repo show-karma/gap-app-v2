@@ -1,31 +1,28 @@
-import {
-  Abi,
-  createPublicClient,
-  encodeFunctionData,
-  getContract,
-  http,
-} from "viem";
+import { Abi, encodeFunctionData } from "viem";
 
 import { frames } from "../frame";
 import { Dontaion_ABI } from "./contracts/Donation";
 import { transaction } from "frames.js/core";
-import { getGapClient } from "@/hooks";
+
+import { Networks } from "@show-karma/karma-gap-sdk";
+
+import { ethers } from "ethers";
 
 export const handleRequest = frames(async (ctx) => {
-  // const projectId = ctx.request.url.split("/").pop();
-  // console.log(projectId);
-  console.log("first");
-  // const gap = getGapClient(11155420);
-  // console.log(gap.findSchema("ProjectEndorsement").uid);
-  // const schema = gap.findSchema("ProjectEndorsement").uid;
-  const schema =
-    "0xd193e75f420a69910f98fa79cacdfd9d0dcbf5933edce8f8bde9a10bd204d996";
+  console.log(ctx.message?.inputText);
+  const EtherToWei = ethers.parseUnits(
+    ctx.message?.inputText as string,
+    "ether"
+  );
+  console.log(EtherToWei.toString());
+  const schema = Networks["optimism-sepolia"].schemas.Details || "0x00000000";
+  const recipient = ctx.searchParams["recipient"] || "0x00000000";
+  const refuid = ctx.searchParams["refuid"] || "0x00000000";
 
   if (!ctx?.message) {
     throw new Error("Invalid frame message");
   }
 
-  // Get current storage price
   const args: readonly [
     {
       schema: `0x${string}`;
@@ -43,17 +40,16 @@ export const handleRequest = frames(async (ctx) => {
     {
       schema: schema as `0x${string}`,
       data: {
-        recipient:
-          "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" as `0x${string}`,
+        recipient: recipient as `0x${string}`,
         expirationTime: BigInt(0),
         revocable: true,
-        refUID:
-          "0x0000000000000000000000000000000000000000000000000000000000000000" as `0x${string}`,
-        data: "0x21342" as `0x${string}`,
+        refUID: refuid as `0x${string}`,
+        data: "0x2125125" as `0x${string}`,
         value: BigInt(0),
       },
     },
-    BigInt(1000000),
+    BigInt(EtherToWei),
+    // BigInt(100000000),
   ];
 
   const calldata = encodeFunctionData({
@@ -63,13 +59,13 @@ export const handleRequest = frames(async (ctx) => {
   });
 
   return transaction({
-    chainId: "eip155:11155420",
+    chainId: "eip155:10",
     method: "eth_sendTransaction",
     params: {
       abi: Dontaion_ABI as Abi,
-      to: "0xf2a0e36141965dbfb7e5e66dfe1a880cc35db12c",
+      to: "0x8E232482417FfE40b5E68Bd9e436C2F2c3A97670",
       data: calldata,
-      value: BigInt(1000000).toString(),
+      value: BigInt(100000000).toString(),
     },
   });
 });
