@@ -70,7 +70,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                   >
                     <div className="flex flex-col gap-2 w-max max-w-full">
                       <h2 className="text-2xl font-medium leading-6 text-gray-900 dark:text-zinc-100">
-                        {program.metadata?.title || program.name}
+                        {program.metadata?.title}
                       </h2>
 
                       <div className="flex flex-row gap-1 w-full">
