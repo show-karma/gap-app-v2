@@ -222,23 +222,7 @@ export default function AddProgram({
         return;
       }
       const chainSelected = data.networkToCreate;
-      if (chain && chain.id !== chainSelected) {
-        await switchNetworkAsync?.(chainSelected);
-      }
 
-      const ipfsStorage = new NFTStorage({
-        token: envVars.IPFS_TOKEN,
-      });
-
-      const walletClient = await getWalletClient({
-        chainId: chainSelected,
-      });
-      if (!walletClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
-
-      const alloRegistry = new AlloRegistry(walletSigner as any, ipfsStorage);
-
-      const nonce = Math.floor(Math.random() * 1000000 + 1);
       const metadata = {
         title: data.name,
         description: data.description,
@@ -274,17 +258,19 @@ export default function AddProgram({
         tags: ["karma-gap", "grant-program-registry"],
       };
 
-      const owner = address as string;
-
-      const hasRegistry = await alloRegistry
-        .createProgram(nonce + 1, data.name, metadata, owner, [owner])
-        .then((res) => {
-          return res;
-        })
-        .catch((error) => {
-          throw new Error(error);
-        });
-      if (!hasRegistry) {
+      const [request, error] = await fetchData(
+        INDEXER.REGISTRY.CREATE,
+        "POST",
+        {
+          owner: address,
+          chainId: chainSelected,
+          metadata,
+        },
+        {},
+        {},
+        true
+      );
+      if (error) {
         throw new Error("Error creating program");
       }
       toast.success("Program created successfully");

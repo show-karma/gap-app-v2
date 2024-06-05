@@ -17,12 +17,28 @@ import { Button } from "@/components/Utilities/Button";
 import { useQueryState } from "nuqs";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import AddProgram from "@/components/Pages/ProgramRegistry/AddProgram";
-import { useAccount } from "wagmi";
+import {
+  useAccount,
+  useBlockNumber,
+  useNetwork,
+  useSwitchNetwork,
+} from "wagmi";
 import { useAuthStore } from "@/store/auth";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { ChevronLeftIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
+import { envVars } from "@/utilities/enviromentVars";
+import { NFTStorage } from "nft.storage";
+import { getWalletClient } from "@wagmi/core";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { AlloBase } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/Allo";
+import {
+  Address,
+  ApplicationMetadata,
+  GrantArgs,
+} from "@show-karma/karma-gap-sdk/core/class/types/allo";
+import { AlloContracts } from "@show-karma/karma-gap-sdk";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { query } = context;
@@ -107,33 +123,141 @@ const GrantProgramRegistry = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab]);
 
+  const { chain } = useNetwork();
+  const { switchNetworkAsync } = useSwitchNetwork();
+
   const approveOrReject = async (
-    id: string,
+    program: GrantProgram,
     value: "accepted" | "rejected" | "pending"
   ) => {
+    const messageDict = {
+      accepted: "approving",
+      rejected: "rejecting",
+      pending: "pending",
+    };
     try {
-      const [request, error] = await fetchData(
-        INDEXER.REGISTRY.APPROVE,
-        "POST",
-        {
-          programId: id,
-          isValid: value,
-        },
-        {},
-        {},
-        true
-      );
-      if (error) throw new Error("Error approving program");
+      const id = program._id.$oid;
+      const { programId, createdAtBlock, chainID, metadata, createdByAddress } =
+        program;
+      if (value === "accepted" && !programId && !createdAtBlock) {
+        if (!isConnected || !isAuth) {
+          openConnectModal?.();
+          return;
+        }
+        if (chain && chain.id !== chainID) {
+          await switchNetworkAsync?.(chainID);
+        }
+
+        const ipfsStorage = new NFTStorage({
+          token: envVars.IPFS_TOKEN,
+        });
+
+        const walletClient = await getWalletClient({
+          chainId: chainID,
+        });
+        if (!walletClient) return;
+        const walletSigner = await walletClientToSigner(walletClient);
+        const _currentTimestamp = Math.floor(new Date().getTime() / 1000);
+        const matchinFundAmount = 0;
+        const nonce = Math.floor(Math.random() * 1000000 + 1);
+
+        const allo = new AlloBase(
+          walletSigner as any,
+          ipfsStorage,
+          chainID as number
+        );
+
+        const profileId =
+          "0x812f0ae5dc7dd0a3a66e52f71f2da56c61a23bb06f1a149975424d6f73519ed1"; // Karma Test Program 3
+
+        const applicationMetadata: ApplicationMetadata = {
+          version: "1.0.0",
+          lastUpdatedOn: new Date().getTime(),
+          applicationSchema: {
+            questions: [
+              {
+                id: 0,
+                info: "Email Address",
+                type: "email",
+                title: "Email Address",
+                hidden: false,
+                required: false,
+                encrypted: false,
+              },
+            ],
+            requirements: {
+              github: {
+                required: false,
+                verification: false,
+              },
+              twitter: {
+                required: false,
+                verification: false,
+              },
+            },
+          },
+        };
+
+        const args: any = {
+          profileId,
+          roundMetadata: metadata,
+          applicationStart: _currentTimestamp + 3600, // 1 hour later   registrationStartTime
+          applicationEnd: _currentTimestamp + 432000, // 5 days later   registrationEndTime
+          roundStart: _currentTimestamp + 7200, // 2 hours later  allocationStartTime
+          roundEnd: _currentTimestamp + 864000, // 10 days later  allocaitonEndTime
+          matchingFundAmt: matchinFundAmount,
+          applicationMetadata,
+          managers: [program.createdByAddress as Address], // managers
+          strategy: AlloContracts.strategy
+            .DonationVotingMerkleDistributionDirectTransferStrategy as Address, // strategy
+          payoutToken: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE", // Eg. ETH
+        };
+
+        const hasRegistry = await allo
+          .createGrant(args)
+          .then((res) => {
+            return res;
+          })
+          .catch((error) => {
+            throw new Error(error);
+          });
+        console.log(hasRegistry);
+        if (!hasRegistry) {
+          throw new Error("No registry found");
+        }
+        const { txHash } = hasRegistry;
+        const [request, error] = await fetchData(
+          INDEXER.REGISTRY.APPROVE,
+          "POST",
+          {
+            txHash,
+            id,
+            isValid: value,
+          },
+          {},
+          {},
+          true
+        );
+        if (error) throw new Error("Error approving program");
+      } else {
+        const [request, error] = await fetchData(
+          INDEXER.REGISTRY.APPROVE,
+          "POST",
+          {
+            id,
+            isValid: value,
+          },
+          {},
+          {},
+          true
+        );
+        if (error) throw new Error(`Program failed when updating to ${value}`);
+      }
       toast.success(`Program ${value} successfully`);
       await getGrantPrograms();
     } catch {
-      const messageDict = {
-        accepted: "approving",
-        rejected: "rejecting",
-        pending: "pending",
-      };
-      console.log(`Error ${messageDict[value]} program ${id}`);
-      toast.error(`Error ${messageDict[value]} program ${id}`);
+      console.log(`Error ${messageDict[value]} program ${program._id.$oid}`);
+      toast.error(`Error ${messageDict[value]} program ${program._id.$oid}`);
     }
   };
 
