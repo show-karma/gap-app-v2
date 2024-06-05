@@ -159,7 +159,6 @@ const GrantProgramRegistry = ({
         const walletSigner = await walletClientToSigner(walletClient);
         const _currentTimestamp = Math.floor(new Date().getTime() / 1000);
         const matchinFundAmount = 0;
-        const nonce = Math.floor(Math.random() * 1000000 + 1);
 
         const allo = new AlloBase(
           walletSigner as any,
@@ -168,7 +167,7 @@ const GrantProgramRegistry = ({
         );
 
         const profileId =
-          "0x812f0ae5dc7dd0a3a66e52f71f2da56c61a23bb06f1a149975424d6f73519ed1"; // Karma Test Program 3
+          "0x418102f570483423fc7d431e0efd1cc5d49f2b3fe4c85cb7d837bcfa83e7db03"; // Karma Test Program 3
 
         const applicationMetadata: ApplicationMetadata = {
           version: "1.0.0",
