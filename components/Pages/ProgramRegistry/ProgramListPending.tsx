@@ -29,9 +29,9 @@ import { ProgramDetailsDialog } from "./ProgramDetailsDialog";
 interface ProgramListPendingProps {
   grantPrograms: GrantProgram[];
   approveOrReject: (
-    id: string,
+    program: GrantProgram,
     value: "accepted" | "rejected" | "pending"
-  ) => void;
+  ) => Promise<void>;
   hasMore: boolean;
   nextFunc: () => void;
   tab: "accepted" | "rejected" | "pending";
@@ -451,11 +451,8 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
             <Button
               className="text-sm bg-zinc-700 dark:bg-zinc-700 hover:bg-zinc-700 text-white"
               onClick={() => {
-                if (grant.id || grant.programId) {
-                  approveOrReject(
-                    grant.id || (grant.programId as string),
-                    "pending"
-                  );
+                if (grant) {
+                  approveOrReject(grant, "pending");
                 }
               }}
             >
@@ -465,11 +462,8 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
           const RejectButton = () => (
             <Button
               onClick={() => {
-                if (grant.id || grant.programId) {
-                  approveOrReject(
-                    grant.id || (grant.programId as string),
-                    "rejected"
-                  );
+                if (grant) {
+                  approveOrReject(grant, "rejected");
                 }
               }}
               className="bg-red-600 hover:bg-red-600 text-sm"
@@ -481,11 +475,8 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
             <Button
               className="text-sm bg-blue-700 dark:bg-blue-700 hover:bg-blue-700 text-white"
               onClick={() => {
-                if (grant.id || grant.programId) {
-                  approveOrReject(
-                    grant.id || (grant.programId as string),
-                    "accepted"
-                  );
+                if (grant) {
+                  approveOrReject(grant, "accepted");
                 }
               }}
             >

@@ -26,7 +26,6 @@ export type GrantProgram = {
     $oid: string;
   };
   id?: string;
-  name?: string;
   createdAtBlock?: string;
   createdByAddress?: string;
   metadata?: {

@@ -35,6 +35,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { GrantProgram } from "./ProgramList";
 import { Twitter2Icon } from "@/components/Icons/Twitter2";
 import { Discord2Icon } from "@/components/Icons/Discord2";
+import { AlloBase } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/Allo";
 
 const labelStyle = "text-sm font-bold text-[#344054] dark:text-zinc-100";
 const inputStyle =
@@ -225,23 +226,7 @@ export default function AddProgram({
         return;
       }
       const chainSelected = data.networkToCreate;
-      if (chain && chain.id !== chainSelected) {
-        await switchNetworkAsync?.(chainSelected);
-      }
 
-      const ipfsStorage = new NFTStorage({
-        token: envVars.IPFS_TOKEN,
-      });
-
-      const walletClient = await getWalletClient({
-        chainId: chainSelected,
-      });
-      if (!walletClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
-
-      const alloRegistry = new AlloRegistry(walletSigner as any, ipfsStorage);
-
-      const nonce = Math.floor(Math.random() * 1000000 + 1);
       const metadata = {
         title: data.name,
         description: data.description,
@@ -278,17 +263,19 @@ export default function AddProgram({
         tags: ["karma-gap", "grant-program-registry"],
       };
 
-      const owner = address as string;
-
-      const hasRegistry = await alloRegistry
-        .createProgram(nonce + 1, data.name, metadata, owner, [owner])
-        .then((res) => {
-          return res;
-        })
-        .catch((error) => {
-          throw new Error(error);
-        });
-      if (!hasRegistry) {
+      const [request, error] = await fetchData(
+        INDEXER.REGISTRY.CREATE,
+        "POST",
+        {
+          owner: address,
+          chainId: chainSelected,
+          metadata,
+        },
+        {},
+        {},
+        true
+      );
+      if (error) {
         throw new Error("Error creating program");
       }
       toast.success("Program created successfully");
@@ -322,8 +309,6 @@ export default function AddProgram({
       });
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-
-      const alloRegistry = new AlloRegistry(walletSigner as any, ipfsStorage);
 
       const metadata = {
         title: data.name,
@@ -364,34 +349,37 @@ export default function AddProgram({
       const permissionToEditOnChain =
         programToEdit?.createdByAddress?.toLowerCase() ===
         address?.toLowerCase();
-      if (permissionToEditOnChain) {
-        const hasRegistry = await alloRegistry
-          .updateProgramMetadata(programToEdit?.programId as string, metadata)
-          .then((res) => {
-            return res;
-          })
-          .catch((error) => {
-            throw new Error(error);
-          });
-        if (!hasRegistry) {
-          throw new Error("Error editing program");
-        }
-      } else {
-        const [request, error] = await fetchData(
-          INDEXER.REGISTRY.UPDATE,
-          "PUT",
-          {
-            programId: programToEdit?.programId,
-            chainId: chainSelected,
-            metadata,
-          },
-          {},
-          {},
-          true
-        );
-        if (error)
-          throw new Error("An error occurred while editing the program");
-      }
+      // if (permissionToEditOnChain) {
+      // const allo = new AlloBase(
+      //   walletSigner as any,
+      //   ipfsStorage,
+      //   chainSelected as number
+      // );
+      //   const hasRegistry = await allo.updatePoolMetadata(programToEdit?.programId as string, metadata)
+      //     .then((res) => {
+      //       return res;
+      //     })
+      //     .catch((error) => {
+      //       throw new Error(error);
+      //     });
+      //   if (!hasRegistry) {
+      //     throw new Error("Error editing program");
+      //   }
+      // } else {
+      const [request, error] = await fetchData(
+        INDEXER.REGISTRY.UPDATE,
+        "PUT",
+        {
+          id: programToEdit?._id.$oid,
+          chainId: chainSelected,
+          metadata,
+        },
+        {},
+        {},
+        true
+      );
+      if (error) throw new Error("An error occurred while editing the program");
+      // }
       toast.success("Program edited successfully");
       await refreshPrograms?.().then(() => {
         backTo?.();
