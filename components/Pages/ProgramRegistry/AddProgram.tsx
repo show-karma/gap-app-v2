@@ -117,6 +117,7 @@ const createProgramSchema = z.object({
   ecosystems: z.array(z.string()),
   networks: z.array(z.string()),
   grantTypes: z.array(z.string()),
+  platformsUsed: z.array(z.string()),
 });
 
 type CreateProgramType = z.infer<typeof createProgramSchema>;
@@ -178,6 +179,7 @@ export default function AddProgram({
       grantTypes: programToEdit?.metadata?.grantTypes || [],
       networkToCreate: programToEdit?.chainID || 0,
       grantsSite: programToEdit?.metadata?.socialLinks?.grantsSite,
+      platformsUsed: programToEdit?.metadata?.platformsUsed || [],
     },
   });
 
@@ -189,6 +191,7 @@ export default function AddProgram({
       | "networks"
       | "grantTypes"
       | "organizations"
+      | "platformsUsed"
   ) => {
     const oldArray = watch(fieldName);
     let newArray = [...oldArray];
@@ -264,6 +267,7 @@ export default function AddProgram({
         organizations: data.organizations,
         networks: data.networks,
         grantTypes: data.grantTypes,
+        platformsUsed: data.platformsUsed,
         logoImg: "",
         bannerImg: "",
         logoImgData: {},
@@ -346,6 +350,7 @@ export default function AddProgram({
         organizations: data.organizations,
         networks: data.networks,
         grantTypes: data.grantTypes,
+        platformsUsed: data.platformsUsed,
         logoImg: "",
         bannerImg: "",
         logoImgData: {},
@@ -488,15 +493,18 @@ export default function AddProgram({
                 <label htmlFor="program-description" className={labelStyle}>
                   Description *
                 </label>
-                <MarkdownEditor
-                  className="bg-transparent"
+                <textarea
+                  className={cn(
+                    inputStyle,
+                    "bg-transparent min-h-[120px] max-h-[360px]"
+                  )}
                   value={watch("description")}
-                  onChange={(newValue: string) =>
-                    setValue("description", newValue || "", {
+                  onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
+                    setValue("description", event.target.value || "", {
                       shouldValidate: true,
                     })
                   }
-                  placeholderText="Please provide a description of this program"
+                  placeholder="Please provide a description of this program"
                 />
                 <p className="text-base text-red-400">
                   {errors.description?.message}
@@ -534,6 +542,7 @@ export default function AddProgram({
                     selected={watch("organizations")}
                     prefixUnselected="Select"
                     buttonClassname="w-full max-w-full"
+                    canAdd
                   />
                   <p className="text-base text-red-400">
                     {errors.organizations?.message}
@@ -552,6 +561,7 @@ export default function AddProgram({
                     selected={watch("ecosystems")}
                     prefixUnselected="Select"
                     buttonClassname="w-full max-w-full"
+                    canAdd
                   />
                   <p className="text-base text-red-400">
                     {errors.ecosystems?.message}
@@ -594,6 +604,26 @@ export default function AddProgram({
                   />
                   <p className="text-base text-red-400">
                     {errors.grantTypes?.message}
+                  </p>
+                </div>
+                <div className="flex w-full flex-col  gap-1">
+                  <label htmlFor="program-types" className={labelStyle}>
+                    Platforms Used
+                  </label>
+                  <SearchDropdown
+                    list={registryHelper.platformsUsed}
+                    onSelectFunction={(value: string) =>
+                      onChangeGeneric(value, "platformsUsed")
+                    }
+                    type={"Platforms"}
+                    selected={watch("platformsUsed")}
+                    prefixUnselected="Select"
+                    buttonClassname="w-full max-w-full"
+                    shouldSort={false}
+                    canAdd
+                  />
+                  <p className="text-base text-red-400">
+                    {errors.platformsUsed?.message}
                   </p>
                 </div>
               </div>

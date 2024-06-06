@@ -66,6 +66,7 @@ export type GrantProgram = {
     projectTwitter?: string;
     applicantsNumber?: number;
     amountDistributedToDate?: string;
+    platformsUsed?: string[];
   };
   tags?: string[];
   updatedAtBlock?: string;

@@ -561,7 +561,20 @@ const categories = [
   "Yield Farming",
   "Infrastructure",
 ];
-const grantTypes = ["Retroactive", "Proactive", "Bounty"];
+const grantTypes = [
+  "Direct Grants",
+  "Bounties",
+  "Retro Funding",
+  "Quadratic Funding",
+];
+const platformsUsed = [
+  "Gitcoin",
+  "Questbook",
+  "Charmverse",
+  "GitHub",
+  "Notion",
+  "Custom",
+];
 
 const grantSizes = [0, 250000];
 
@@ -573,4 +586,5 @@ export const registryHelper = {
   grantTypes,
   grantSizes,
   networkImages,
+  platformsUsed,
 };
