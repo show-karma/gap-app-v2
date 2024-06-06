@@ -177,7 +177,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                       {program.metadata?.grantTypes?.length ? (
                         <div className="flex flex-col gap-1">
                           <label className="text-base text-gray-900 dark:text-zinc-100">
-                            Types
+                            Funding Mechanisms
                           </label>
                           <div className="flex flex-row gap-2 flex-wrap">
                             {program.metadata?.grantTypes?.map((grantType) => (
@@ -270,6 +270,25 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                                   className="rounded-full bg-zinc-100 px-2 py-1 text-sm text-zinc-800 dark:bg-zinc-700 dark:text-zinc-100"
                                 >
                                   {organization}
+                                </div>
+                              )
+                            )}
+                          </div>
+                        </div>
+                      ) : null}
+                      {program.metadata?.platformsUsed?.length ? (
+                        <div className="flex flex-col gap-1">
+                          <label className="text-base text-gray-900 dark:text-zinc-100">
+                            Platforms Used
+                          </label>
+                          <div className="flex flex-row gap-2 flex-wrap">
+                            {program.metadata?.platformsUsed?.map(
+                              (platform) => (
+                                <div
+                                  key={platform}
+                                  className="rounded-full bg-zinc-100 px-2 py-1 text-sm text-zinc-800 dark:bg-zinc-700 dark:text-zinc-100"
+                                >
+                                  {platform}
                                 </div>
                               )
                             )}

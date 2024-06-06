@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import {
   Command,
   CommandEmpty,
@@ -30,6 +30,7 @@ interface SearchDropdownProps {
   prefixUnselected?: string;
   buttonClassname?: string;
   canAdd?: boolean;
+  shouldSort?: boolean;
 }
 export const SearchDropdown: FC<SearchDropdownProps> = ({
   onSelectFunction,
@@ -41,24 +42,42 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
   prefixUnselected = "Any",
   buttonClassname,
   canAdd = false,
+  shouldSort = true,
 }) => {
   const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);
 
-  const parsedArray = list.map((item) => ({
-    value: item,
-    image: imageDictionary?.[item.toLowerCase()],
-  }));
+  const [orderedList, setOrderedList] = useState<
+    {
+      value: string;
+      image:
+        | {
+            light: string;
+            dark: string;
+          }
+        | undefined;
+    }[]
+  >([]);
 
-  const sortedList = parsedArray.sort((a, b) => {
-    if (a.value < b.value) {
-      return -1;
-    }
-    if (a.value > b.value) {
-      return 1;
-    }
-    return 0;
-  });
+  useEffect(() => {
+    const parsedArray = list.map((item) => ({
+      value: item,
+      image: imageDictionary?.[item.toLowerCase()],
+    }));
+
+    const sortedList = shouldSort
+      ? parsedArray.sort((a, b) => {
+          if (a.value < b.value) {
+            return -1;
+          }
+          if (a.value > b.value) {
+            return 1;
+          }
+          return 0;
+        })
+      : parsedArray;
+    setOrderedList(sortedList);
+  }, []);
 
   const addCustomNetwork = (customNetwork: string) => {
     setAdding(false);
@@ -69,6 +88,10 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
     if (!lowercasedList.includes(customNetwork.toLowerCase())) {
       onSelectFunction(customNetwork);
       list.push(customNetwork);
+      orderedList.push({
+        value: customNetwork,
+        image: imageDictionary?.[customNetwork.toLowerCase()],
+      });
     } else {
       if (!selected.includes(customNetwork)) {
         onSelectFunction(customNetwork);
@@ -135,7 +158,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
                 </div>
               </CommandItem>
             ) : null}
-            {sortedList.map((item) => (
+            {orderedList.map((item) => (
               <CommandItem key={item.value}>
                 <div
                   onClick={() => {
@@ -185,7 +208,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
               <div className="my-2 px-2">
                 <input
                   className="rounded-md py-1 px-2 w-full dark:text-white dark:bg-zinc-800 border-zinc-200"
-                  placeholder={`Add a ${pluralize(type, 1).toLowerCase()}...`}
+                  placeholder={`${pluralize(type, 1)} name...`}
                   // on enter key press, add the network
                   onKeyDown={(e: any) => {
                     if (e.key === "Enter") {
@@ -197,10 +220,10 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
             ) : (
               <div className="my-2 px-2">
                 <button
-                  className="px-3 py-2 rounded-md bg-zinc-600 dark:bg-zinc-900 text-white dark:text-white w-full"
+                  className="px-3 py-2 text-sm rounded-md bg-zinc-600 dark:bg-zinc-900 text-white dark:text-white w-full"
                   onClick={() => setAdding(true)}
                 >
-                  Add a network
+                  {`Add a ${pluralize(type, 1).toLowerCase()}`}
                 </button>
               </div>
             )

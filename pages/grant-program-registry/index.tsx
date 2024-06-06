@@ -88,7 +88,7 @@ const GrantProgramRegistry = ({
     parse: (value) => (value.length > 0 ? value.split(",") : []),
   });
   const [status, setStatus] = useQueryState("status", {
-    defaultValue: defaultStatuses,
+    defaultValue: defaultStatuses || "Active",
   });
 
   const [searchInput, setSearchInput] = useQueryState("name", {
