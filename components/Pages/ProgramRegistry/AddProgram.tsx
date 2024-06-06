@@ -349,37 +349,39 @@ export default function AddProgram({
       const permissionToEditOnChain =
         programToEdit?.createdByAddress?.toLowerCase() ===
         address?.toLowerCase();
-      // if (permissionToEditOnChain) {
-      // const allo = new AlloBase(
-      //   walletSigner as any,
-      //   ipfsStorage,
-      //   chainSelected as number
-      // );
-      //   const hasRegistry = await allo.updatePoolMetadata(programToEdit?.programId as string, metadata)
-      //     .then((res) => {
-      //       return res;
-      //     })
-      //     .catch((error) => {
-      //       throw new Error(error);
-      //     });
-      //   if (!hasRegistry) {
-      //     throw new Error("Error editing program");
-      //   }
-      // } else {
-      const [request, error] = await fetchData(
-        INDEXER.REGISTRY.UPDATE,
-        "PUT",
-        {
-          id: programToEdit?._id.$oid,
-          chainId: chainSelected,
-          metadata,
-        },
-        {},
-        {},
-        true
-      );
-      if (error) throw new Error("An error occurred while editing the program");
-      // }
+      if (permissionToEditOnChain) {
+        const allo = new AlloBase(
+          walletSigner as any,
+          ipfsStorage,
+          chainSelected as number
+        );
+        const hasRegistry = await allo
+          .updatePoolMetadata(programToEdit?.programId as string, metadata)
+          .then((res) => {
+            return res;
+          })
+          .catch((error) => {
+            throw new Error(error);
+          });
+        if (!hasRegistry) {
+          throw new Error("Error editing program");
+        }
+      } else {
+        const [request, error] = await fetchData(
+          INDEXER.REGISTRY.UPDATE,
+          "PUT",
+          {
+            id: programToEdit?._id.$oid,
+            chainId: chainSelected,
+            metadata,
+          },
+          {},
+          {},
+          true
+        );
+        if (error)
+          throw new Error("An error occurred while editing the program");
+      }
       toast.success("Program edited successfully");
       await refreshPrograms?.().then(() => {
         backTo?.();

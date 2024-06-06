@@ -166,8 +166,7 @@ const GrantProgramRegistry = ({
           chainID as number
         );
 
-        const profileId =
-          "0x418102f570483423fc7d431e0efd1cc5d49f2b3fe4c85cb7d837bcfa83e7db03"; // Karma Test Program 3
+        const profileId = envVars.PROFILE_ID;
 
         const applicationMetadata: ApplicationMetadata = {
           version: "1.0.0",

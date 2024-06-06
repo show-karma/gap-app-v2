@@ -27,4 +27,7 @@ export const envVars = {
   PROJECT_ID: process.env.NEXT_PUBLIC_PROJECT_ID || "",
   IPFS_TOKEN: process.env.NEXT_PUBLIC_IPFS_TOKEN || "",
   ANON_KARMA_URL: "https://anon.karmahq.xyz",
+  PROFILE_ID: isDev
+    ? "0x418102f570483423fc7d431e0efd1cc5d49f2b3fe4c85cb7d837bcfa83e7db03"
+    : "0x418102f570483423fc7d431e0efd1cc5d49f2b3fe4c85cb7d837bcfa83e7db03",
 };
