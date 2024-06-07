@@ -66,6 +66,7 @@ export type GrantProgram = {
     applicantsNumber?: number;
     amountDistributedToDate?: string;
     platformsUsed?: string[];
+    status: string;
   };
   tags?: string[];
   updatedAtBlock?: string;
