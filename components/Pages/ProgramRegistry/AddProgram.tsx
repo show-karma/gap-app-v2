@@ -36,6 +36,7 @@ import { GrantProgram } from "./ProgramList";
 import { Twitter2Icon } from "@/components/Icons/Twitter2";
 import { Discord2Icon } from "@/components/Icons/Discord2";
 import { AlloBase } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/Allo";
+import { StatusDropdown } from "./StatusDropdown";
 
 const labelStyle = "text-sm font-bold text-[#344054] dark:text-zinc-100";
 const inputStyle =
@@ -119,6 +120,11 @@ const createProgramSchema = z.object({
   networks: z.array(z.string()),
   grantTypes: z.array(z.string()),
   platformsUsed: z.array(z.string()),
+  status: z
+  .string()
+  .optional()
+  .or(z.literal("Active")),
+  
 });
 
 type CreateProgramType = z.infer<typeof createProgramSchema>;
@@ -181,6 +187,7 @@ export default function AddProgram({
       networkToCreate: programToEdit?.chainID || 0,
       grantsSite: programToEdit?.metadata?.socialLinks?.grantsSite,
       platformsUsed: programToEdit?.metadata?.platformsUsed || [],
+      status: programToEdit?.metadata?.status || "Active",
     },
   });
 
@@ -259,6 +266,7 @@ export default function AddProgram({
         bannerImgData: {},
         credentials: {},
         createdAt: new Date().getTime(),
+        status: "Active",
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
       };
@@ -344,6 +352,7 @@ export default function AddProgram({
         createdAt: new Date().getTime(),
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
+        
       };
 
       const permissionToEditOnChain =
@@ -397,6 +406,11 @@ export default function AddProgram({
   const onSubmit: SubmitHandler<CreateProgramType> = async (data, event) => {
     event?.preventDefault();
     event?.stopPropagation();
+    
+    data.networkToCreate =  process.env.NEXT_PUBLIC_ENV === "production"
+    ?  42161
+    : 11155111;
+
     if (programToEdit) {
       await editProgram(data);
     } else {
@@ -616,11 +630,26 @@ export default function AddProgram({
                     {errors.platformsUsed?.message}
                   </p>
                 </div>
+                <div className="flex w-full flex-col justify-between gap-2">
+                  <label htmlFor="program-status" className={labelStyle}>
+                    Status
+                  </label>
+                  <StatusDropdown
+                    onSelectFunction={(value: string) => {
+                      setValue("status", value);
+                    }}
+                    list={registryHelper.status}
+                    previousValue={watch("status")}
+                  />
+                  <p className="text-base text-red-400">
+                    {errors.networkToCreate?.message}
+                  </p>
+              </div>
               </div>
             </div>
 
             <div className="grid grid-cols-3 max-sm:grid-cols-1 w-full gap-6 border-b border-b-[#98A2B3] pb-10">
-              <div className="flex w-full flex-col justify-between gap-2">
+              {/* <div className="flex w-full flex-col justify-between gap-2">
                 <label htmlFor="program-network" className={labelStyle}>
                   Network to create program *
                 </label>
@@ -636,7 +665,7 @@ export default function AddProgram({
                 <p className="text-base text-red-400">
                   {errors.networkToCreate?.message}
                 </p>
-              </div>
+              </div> */}
               <div className="flex w-full flex-col  gap-1">
                 <label htmlFor="program-budget" className={labelStyle}>
                   Program budget
