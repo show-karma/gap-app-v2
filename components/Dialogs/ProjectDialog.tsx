@@ -558,6 +558,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         setStep(0);
         if (shouldRefresh) {
           refreshProject();
+          setIsStepper(false);
         } else {
           const project = res.details?.slug || res.uid;
           router.push(PAGES.PROJECT.OVERVIEW(project));
