@@ -575,10 +575,12 @@ const platformsUsed = [
   "Notion",
   "Custom",
 ];
+
 const status = [
   "Active",
   "Inactive",
 ];
+
 
 const grantSizes = [0, 250000];
 

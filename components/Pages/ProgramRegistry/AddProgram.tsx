@@ -182,6 +182,7 @@ export default function AddProgram({
       grantsSite: programToEdit?.metadata?.socialLinks?.grantsSite,
       platformsUsed: programToEdit?.metadata?.platformsUsed || [],
       status: programToEdit?.metadata?.status || 'Active',
+
     },
   });
 
@@ -622,7 +623,6 @@ export default function AddProgram({
                     {errors.platformsUsed?.message}
                   </p>
                 </div>
-
                 {programToEdit && (
                   <div className="flex w-full flex-col justify-between gap-2">
                     <label htmlFor="program-status" className={labelStyle}>
