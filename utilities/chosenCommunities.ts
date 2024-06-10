@@ -117,8 +117,8 @@ export const chosenCommunities = () => {
       uid: "0x22dd5bed20dc47c3608d3b872351a672fe1b5cfd8f2a4d7854fd81e88bd821c9",
       imageURL: {
         light:
-          "https://substackcdn.com/image/fetch/w_1456,c_limit,f_webp,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fca26ac94-67d3-4a26-82c1-54d5c606f7ce_1456x1048.png",
-        dark: "https://substackcdn.com/image/fetch/w_1456,c_limit,f_webp,q_auto:good,fl_progressive:steep/https%3A%2F%2Fsubstack-post-media.s3.amazonaws.com%2Fpublic%2Fimages%2Fca26ac94-67d3-4a26-82c1-54d5c606f7ce_1456x1048.png",
+          "https://s3.amazonaws.com/showkarma.xyz/assets/karma-opencivics.png",
+        dark: "https://s3.amazonaws.com/showkarma.xyz/assets/karma-opencivics.png",
       },
     },
     {

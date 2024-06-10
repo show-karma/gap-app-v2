@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, useState } from "react";
+import { FC, useEffect, useState } from "react";
 import {
   Command,
   CommandEmpty,
@@ -28,6 +28,9 @@ interface SearchDropdownProps {
   type: string;
   cleanFunction?: () => void;
   prefixUnselected?: string;
+  buttonClassname?: string;
+  canAdd?: boolean;
+  shouldSort?: boolean;
 }
 export const SearchDropdown: FC<SearchDropdownProps> = ({
   onSelectFunction,
@@ -36,28 +39,74 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
   imageDictionary,
   type,
   cleanFunction,
-  prefixUnselected = "All",
+  prefixUnselected = "Any",
+  buttonClassname,
+  canAdd = false,
+  shouldSort = true,
 }) => {
   const [open, setOpen] = useState(false);
+  const [adding, setAdding] = useState(false);
 
-  const parsedArray = list.map((item) => ({
-    value: item,
-    image: imageDictionary?.[item.toLowerCase()],
-  }));
+  const [orderedList, setOrderedList] = useState<
+    {
+      value: string;
+      image:
+        | {
+            light: string;
+            dark: string;
+          }
+        | undefined;
+    }[]
+  >([]);
 
-  const sortedList = parsedArray.sort((a, b) => {
-    if (a.value < b.value) {
-      return -1;
+  useEffect(() => {
+    const parsedArray = list.map((item) => ({
+      value: item,
+      image: imageDictionary?.[item.toLowerCase()],
+    }));
+
+    const sortedList = shouldSort
+      ? parsedArray.sort((a, b) => {
+          if (a.value < b.value) {
+            return -1;
+          }
+          if (a.value > b.value) {
+            return 1;
+          }
+          return 0;
+        })
+      : parsedArray;
+    setOrderedList(sortedList);
+  }, []);
+
+  const addCustomNetwork = (customNetwork: string) => {
+    setAdding(false);
+    if (!customNetwork) {
+      return;
     }
-    if (a.value > b.value) {
-      return 1;
+    const lowercasedList = list.map((item) => item.toLowerCase());
+    if (!lowercasedList.includes(customNetwork.toLowerCase())) {
+      onSelectFunction(customNetwork);
+      list.push(customNetwork);
+      orderedList.push({
+        value: customNetwork,
+        image: imageDictionary?.[customNetwork.toLowerCase()],
+      });
+    } else {
+      if (!selected.includes(customNetwork)) {
+        onSelectFunction(customNetwork);
+      }
     }
-    return 0;
-  });
+  };
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
-      <Popover.Trigger className="min-w-40 w-full max-w-max max-md:max-w-full justify-between flex flex-row cursor-default rounded-md bg-white dark:bg-zinc-800 dark:text-zinc-100 py-3 px-4 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
+      <Popover.Trigger
+        className={cn(
+          "min-w-40 w-full max-w-max max-md:max-w-full justify-between flex flex-row cursor-default rounded-md bg-white dark:bg-zinc-800 dark:text-zinc-100 py-3 px-4 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6",
+          buttonClassname
+        )}
+      >
         <div className="flex flex-row gap-4 w-full justify-between">
           <p className="block w-max">
             {selected.length
@@ -81,76 +130,104 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
             />
           </div>
           <CommandEmpty className="px-4 py-2">No {type} found.</CommandEmpty>
+
           <CommandGroup>
             {cleanFunction ? (
-              <CommandItem
-                onSelect={() => {
-                  cleanFunction();
-                }}
-                className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
-              >
-                <div className="flex flex-row gap-2 items-center justify-start w-full">
-                  <div className="flex flex-row gap-1  items-center justify-start  flex-1">
-                    <p className="line-clamp-2 font-semibold text-sm max-w-full break-normal">
-                      All
-                    </p>
+              <CommandItem>
+                <div
+                  onClick={() => {
+                    cleanFunction();
+                  }}
+                  className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
+                >
+                  <div className="flex flex-row gap-2 items-center justify-start w-full">
+                    <div className="flex flex-row gap-1  items-center justify-start  flex-1">
+                      <p className="line-clamp-2 font-semibold text-sm max-w-full break-normal">
+                        Any
+                      </p>
+                    </div>
+                    <CheckIcon
+                      className={cn(
+                        "mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white"
+                      )}
+                      style={{
+                        display: selected.length ? "none" : "block",
+                      }}
+                    />
+                  </div>
+                </div>
+              </CommandItem>
+            ) : null}
+            {orderedList.map((item) => (
+              <CommandItem key={item.value}>
+                <div
+                  onClick={() => {
+                    onSelectFunction(item.value);
+                  }}
+                  className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
+                >
+                  <div className="flex flex-row gap-2 items-center justify-start w-full">
+                    {item.image ? (
+                      <div className="min-w-5 min-h-5 w-5 h-5 m-0">
+                        <Image
+                          width={20}
+                          height={20}
+                          src={item.image.light}
+                          alt={""}
+                          className="min-w-5 min-h-5 w-5 h-5 m-0 rounded-full block dark:hidden"
+                        />
+                        <Image
+                          width={20}
+                          height={20}
+                          src={item.image.dark}
+                          alt={""}
+                          className="min-w-5 min-h-5 w-5 h-5 m-0 rounded-full hidden dark:block"
+                        />
+                      </div>
+                    ) : null}
+                    <div className="flex flex-row gap-1  items-center justify-start  flex-1">
+                      <p className="line-clamp-2 text-sm max-w-full break-normal">
+                        {item.value}
+                      </p>
+                    </div>
                   </div>
                   <CheckIcon
                     className={cn(
                       "mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white"
                     )}
                     style={{
-                      display: selected.length ? "none" : "block",
+                      display: selected.includes(item.value) ? "block" : "none",
                     }}
                   />
                 </div>
               </CommandItem>
-            ) : null}
-            {sortedList.map((item) => (
-              <CommandItem
-                key={item.value}
-                onSelect={() => {
-                  //   setOpen(false);
-                  onSelectFunction(item.value);
-                }}
-                className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
-              >
-                <div className="flex flex-row gap-2 items-center justify-start w-full">
-                  {item.image ? (
-                    <div className="min-w-5 min-h-5 w-5 h-5 m-0">
-                      <Image
-                        width={20}
-                        height={20}
-                        src={item.image.light}
-                        alt={""}
-                        className="min-w-5 min-h-5 w-5 h-5 m-0 rounded-full block dark:hidden"
-                      />
-                      <Image
-                        width={20}
-                        height={20}
-                        src={item.image.dark}
-                        alt={""}
-                        className="min-w-5 min-h-5 w-5 h-5 m-0 rounded-full hidden dark:block"
-                      />
-                    </div>
-                  ) : null}
-                  <div className="flex flex-row gap-1  items-center justify-start  flex-1">
-                    <p className="line-clamp-2 text-sm max-w-full break-normal">
-                      {item.value}
-                    </p>
-                  </div>
-                </div>
-                <CheckIcon
-                  className={cn(
-                    "mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white"
-                  )}
-                  style={{
-                    display: selected.includes(item.value) ? "block" : "none",
-                  }}
-                />
-              </CommandItem>
             ))}
           </CommandGroup>
+          {canAdd ? (
+            adding ? (
+              <div className="my-2 px-2">
+                <input
+                  className="rounded-md py-1 px-2 w-full dark:text-white dark:bg-zinc-800 border-zinc-200"
+                  placeholder={`${pluralize(type, 1)} name...`}
+                  // on enter key press, add the network
+                  onKeyDown={(e: any) => {
+                    if (e.key === "Enter") {
+                      addCustomNetwork(e.target?.value);
+                    }
+                  }}
+                />
+              </div>
+            ) : (
+              <div className="my-2 px-2">
+                <button
+                  className="px-3 py-2 text-sm rounded-md bg-zinc-600 dark:bg-zinc-900 text-white dark:text-white w-full"
+                  onClick={() => setAdding(true)}
+                >
+                  {`Add a ${pluralize(type, 1).toLowerCase()}`}
+                </button>
+              </div>
+            )
+          ) : null}
         </Command>
       </Popover.Content>
     </Popover.Root>

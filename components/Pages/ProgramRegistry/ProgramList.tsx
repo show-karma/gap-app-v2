@@ -1,12 +1,10 @@
 import { ReadMore } from "@/utilities/ReadMore";
-import formatCurrency from "@/utilities/formatCurrency";
-import { formatDate } from "@/utilities/formatDate";
 import Image from "next/image";
-import { FC, useMemo, useRef } from "react";
+import { FC, useMemo, useRef, useState } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { registryHelper } from "./helper";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { DiscordIcon, TwitterIcon } from "@/components/Icons";
+import { Discord2Icon, Twitter2Icon } from "@/components/Icons";
 import { DiscussionIcon } from "@/components/Icons/Discussion";
 import { BlogIcon } from "@/components/Icons/Blog";
 import { OrganizationIcon } from "@/components/Icons/Organization";
@@ -20,12 +18,14 @@ import {
 } from "@tanstack/react-table";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { Button } from "@/components/Utilities/Button";
+import { ProgramDetailsDialog } from "./ProgramDetailsDialog";
 
 export type GrantProgram = {
   _id: {
     $oid: string;
   };
-  name?: string;
+  id?: string;
   createdAtBlock?: string;
   createdByAddress?: string;
   metadata?: {
@@ -34,6 +34,7 @@ export type GrantProgram = {
     title?: string;
     endDate?: string;
     logoImg?: string;
+    website?: string;
     socialLinks?: {
       blog?: string;
       forum?: string;
@@ -41,7 +42,9 @@ export type GrantProgram = {
       discord?: string;
       website?: string;
       orgWebsite?: string;
+      grantsSite?: string;
     };
+    bugBounty?: string;
     bounties?: string[];
     bannerImg?: string;
     createdAt?: number;
@@ -50,18 +53,20 @@ export type GrantProgram = {
     startDate?: string;
     categories?: string[];
     ecosystems?: string[];
+    organizations?: string[];
     networks?: string[];
     grantTypes?: string[];
     credentials?: {};
     description?: string;
     logoImgData?: string;
-    grantsIssued?: number;
+    grantsToDate?: number;
     bannerImgData?: string;
-    linkToDetails?: string;
     programBudget?: string;
     projectTwitter?: string;
     applicantsNumber?: number;
     amountDistributedToDate?: string;
+    platformsUsed?: string[];
+    status: string;
   };
   tags?: string[];
   updatedAtBlock?: string;
@@ -97,6 +102,10 @@ export const ProgramList: FC<ProgramListProps> = ({
   hasMore,
   nextFunc,
 }) => {
+  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(
+    null
+  );
+
   const columns = useMemo<ColumnDef<GrantProgram>[]>(
     () => [
       {
@@ -105,86 +114,78 @@ export const ProgramList: FC<ProgramListProps> = ({
         cell: (info) => {
           const grant = info.row.original;
           return (
-            <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300 text-wrap max-w-[285px]">
-              <div className="flex flex-row gap-3">
-                <div className="flex flex-col gap-1">
+            <div className="flex flex-1 w-full whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300 text-wrap max-w-[285px]">
+              <div className="flex flex-col gap-1 w-max max-w-full">
+                <button
+                  type="button"
+                  onClick={() => setSelectedProgram(grant)}
+                  className="text-left font-semibold text-base text-gray-900 underline dark:text-zinc-100 w-full"
+                >
+                  {grant?.metadata?.title}
+                </button>
+
+                <div className="flex flex-row gap-1 w-full">
                   {grant.metadata?.socialLinks?.website ? (
                     <ExternalLink
                       href={grant.metadata?.socialLinks?.website}
                       className="w-max"
                     >
-                      <div className="font-semibold text-base text-gray-900 underline dark:text-zinc-100">
-                        {grant?.metadata?.title}
-                      </div>
+                      <Image
+                        className="w-5 h-5 text-black dark:text-white dark:hidden"
+                        width={20}
+                        height={20}
+                        src="/icons/globe.svg"
+                        alt={grant.metadata?.socialLinks?.website}
+                      />
+                      <Image
+                        width={20}
+                        height={20}
+                        className="w-5 h-5 text-black dark:text-white hidden dark:block"
+                        src="/icons/globe-white.svg"
+                        alt={grant.metadata?.socialLinks?.website}
+                      />
                     </ExternalLink>
-                  ) : (
-                    <div className="font-semibold text-base text-gray-900 dark:text-zinc-100">
-                      {grant?.metadata?.title}
-                    </div>
-                  )}
-                  <div className="flex flex-row gap-1 w-full">
-                    {grant.metadata?.socialLinks?.website ? (
-                      <ExternalLink
-                        href={grant.metadata?.socialLinks?.website}
-                        className="w-max"
-                      >
-                        <Image
-                          className="w-5 h-5 text-black dark:text-white dark:hidden"
-                          width={20}
-                          height={20}
-                          src="/icons/globe.svg"
-                          alt={grant.metadata?.socialLinks?.website}
-                        />
-                        <Image
-                          width={20}
-                          height={20}
-                          className="w-5 h-5 text-black dark:text-white hidden dark:block"
-                          src="/icons/globe-white.svg"
-                          alt={grant.metadata?.socialLinks?.website}
-                        />
-                      </ExternalLink>
-                    ) : null}
-                    {grant.metadata?.socialLinks?.twitter ? (
-                      <ExternalLink
-                        href={grant.metadata?.socialLinks?.twitter}
-                        className="w-max"
-                      >
-                        <TwitterIcon className="w-5 h-5 text-black dark:text-white" />
-                      </ExternalLink>
-                    ) : null}
-                    {grant.metadata?.socialLinks?.discord ? (
-                      <ExternalLink
-                        href={grant.metadata?.socialLinks?.discord}
-                        className="w-max"
-                      >
-                        <DiscordIcon className="w-5 h-5 text-black dark:text-white" />
-                      </ExternalLink>
-                    ) : null}
-                    {grant.metadata?.socialLinks?.forum ? (
-                      <ExternalLink
-                        href={grant.metadata?.socialLinks?.forum}
-                        className="w-max"
-                      >
-                        <DiscussionIcon className="w-5 h-5 text-black dark:text-white" />
-                      </ExternalLink>
-                    ) : null}
-                    {grant.metadata?.socialLinks?.blog ? (
-                      <ExternalLink
-                        href={grant.metadata?.socialLinks?.blog}
-                        className="w-max"
-                      >
-                        <BlogIcon className="w-5 h-5 text-black dark:text-white" />
-                      </ExternalLink>
-                    ) : null}
-                    {grant.metadata?.socialLinks?.orgWebsite ? (
-                      <ExternalLink
-                        href={grant.metadata?.socialLinks?.orgWebsite}
-                        className="w-max"
-                      >
-                        <OrganizationIcon className="w-5 h-5 text-black dark:text-white" />
-                      </ExternalLink>
-                    ) : null}
-                  </div>
+                  ) : null}
+                  {grant.metadata?.socialLinks?.twitter ? (
+                    <ExternalLink
+                      href={grant.metadata?.socialLinks?.twitter}
+                      className="w-max"
+                    >
+                      <Twitter2Icon className="w-5 h-5 text-black dark:text-white" />
+                    </ExternalLink>
+                  ) : null}
+                  {grant.metadata?.socialLinks?.discord ? (
+                    <ExternalLink
+                      href={grant.metadata?.socialLinks?.discord}
+                      className="w-max"
+                    >
+                      <Discord2Icon className="w-5 h-5 text-black dark:text-white" />
+                    </ExternalLink>
+                  ) : null}
+                  {grant.metadata?.socialLinks?.forum ? (
+                    <ExternalLink
+                      href={grant.metadata?.socialLinks?.forum}
+                      className="w-max"
+                    >
+                      <DiscussionIcon className="w-5 h-5 text-black dark:text-white" />
+                    </ExternalLink>
+                  ) : null}
+                  {grant.metadata?.socialLinks?.blog ? (
+                    <ExternalLink
+                      href={grant.metadata?.socialLinks?.blog}
+                      className="w-max"
+                    >
+                      <BlogIcon className="w-5 h-5 text-black dark:text-white" />
+                    </ExternalLink>
+                  ) : null}
+                  {grant.metadata?.socialLinks?.orgWebsite ? (
+                    <ExternalLink
+                      href={grant.metadata?.socialLinks?.orgWebsite}
+                      className="w-max"
+                    >
+                      <OrganizationIcon className="w-5 h-5 text-black dark:text-white" />
+                    </ExternalLink>
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -368,50 +369,6 @@ export const ProgramList: FC<ProgramListProps> = ({
       },
       {
         accessorFn: (row) => row,
-        id: "Budget",
-        cell: (info) => {
-          const grant = info.row.original;
-
-          return (
-            <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-              {grant?.metadata?.programBudget
-                ? formatCurrency(+grant?.metadata?.programBudget) === "NaN"
-                  ? grant?.metadata?.programBudget
-                  : `$${formatCurrency(+grant?.metadata?.programBudget)}`
-                : ""}
-            </div>
-          );
-        },
-        header: () => (
-          <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
-            Budget
-          </div>
-        ),
-      },
-      {
-        accessorFn: (row) => row,
-        id: "Grant Size",
-        cell: (info) => {
-          const grant = info.row.original;
-
-          return (
-            <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-              {grant?.metadata?.minGrantSize && grant?.metadata?.maxGrantSize
-                ? `$${formatCurrency(
-                    +grant?.metadata?.minGrantSize
-                  )} - $${formatCurrency(+grant?.metadata?.maxGrantSize)}`
-                : ""}
-            </div>
-          );
-        },
-        header: () => (
-          <div className="px-3 py-3.5 text-left text-sm w-[120px] font-bold text-gray-900 dark:text-zinc-100 font-body">
-            Grant Size
-          </div>
-        ),
-      },
-      {
-        accessorFn: (row) => row,
         id: "Categories",
         accessorKey: "metadata.categories",
         cell: (info) => {
@@ -461,6 +418,24 @@ export const ProgramList: FC<ProgramListProps> = ({
           </div>
         ),
       },
+      {
+        accessorFn: (row) => row,
+        id: "Apply",
+        cell: (info) => {
+          const grant = info.row.original;
+
+          return (
+            <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
+              {grant.metadata?.socialLinks?.grantsSite ? (
+                <ExternalLink href={grant.metadata?.socialLinks?.grantsSite}>
+                  <Button>Apply</Button>
+                </ExternalLink>
+              ) : null}
+            </div>
+          );
+        },
+        header: () => <div />,
+      },
     ],
     []
   );
@@ -483,6 +458,13 @@ export const ProgramList: FC<ProgramListProps> = ({
 
   return (
     <div ref={parentRef} className="w-full">
+      {selectedProgram ? (
+        <ProgramDetailsDialog
+          program={selectedProgram}
+          isOpen={selectedProgram !== null}
+          closeModal={() => setSelectedProgram(null)}
+        />
+      ) : null}
       <InfiniteScroll
         dataLength={rows.length}
         next={nextFunc}
