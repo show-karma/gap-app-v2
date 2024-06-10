@@ -11,11 +11,11 @@ const StepNumberDictionary: Record<TxStepperSteps, number> = {
   indexed: 5,
 };
 const StepTextDictionary: Record<TxStepperSteps, string> = {
-  preparing: "Preparing transaction to attest",
-  pending: "Attesting the transaction",
-  confirmed: "Waiting the confirmation from blockchain",
-  indexing: "We are indexing the attestation",
-  indexed: "Attestation indexed",
+  preparing: "Preparing to write to blockchain",
+  pending: "Executing the onchain transaction",
+  confirmed: "Waiting for confirmation",
+  indexing: "Indexing the blockchain data",
+  indexed: "Indexing complete",
 };
 const Step = ({
   step,
