@@ -26,7 +26,6 @@ export type GrantProgram = {
     $oid: string;
   };
   id?: string;
-  name?: string;
   createdAtBlock?: string;
   createdByAddress?: string;
   metadata?: {
@@ -67,6 +66,7 @@ export type GrantProgram = {
     applicantsNumber?: number;
     amountDistributedToDate?: string;
     platformsUsed?: string[];
+    status: string;
   };
   tags?: string[];
   updatedAtBlock?: string;

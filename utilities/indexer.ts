@@ -6,6 +6,7 @@ export const INDEXER = {
     GET_ALL_PENDING: "/registry/pending",
     APPROVE: "/registry/approve",
     UPDATE: "/registry/updateMetadata",
+    CREATE: "/registry/offchain/create",
   },
   PROJECT: {
     SUBSCRIBE: (projectId: Hex) => `/projects/${projectId}/subscribe`,

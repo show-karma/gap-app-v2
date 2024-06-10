@@ -576,6 +576,12 @@ const platformsUsed = [
   "Custom",
 ];
 
+const status = [
+  "Active",
+  "Inactive",
+];
+
+
 const grantSizes = [0, 250000];
 
 export const registryHelper = {
@@ -587,4 +593,5 @@ export const registryHelper = {
   grantSizes,
   networkImages,
   platformsUsed,
+  status
 };
