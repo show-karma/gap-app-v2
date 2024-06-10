@@ -30,6 +30,7 @@ import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { formatDate } from "@/utilities/formatDate";
 import { getWalletClient } from "@wagmi/core";
 import { useCommunityAdminStore } from "@/store/community";
+import { useStepper } from "@/store/txStepper";
 
 const milestoneSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.MILESTONES.FORM.TITLE }),
@@ -102,6 +103,8 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
     (state) => state.isCommunityAdmin
   );
 
+  const { changeStepperStep, setIsStepper } = useStepper();
+
   const onSubmit: SubmitHandler<MilestoneType> = async (data, event) => {
     event?.preventDefault();
     event?.stopPropagation();
@@ -151,20 +154,41 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
       });
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      await milestoneToAttest.attest(walletSigner as any).then(async () => {
-        toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS);
-        changeTab("milestones-and-updates");
-        const currentGrant = selectedProject?.grants.find(
-          (grant) => grant.uid === uid
-        );
-
-        currentGrant?.milestones?.push(milestoneToAttest);
-      });
+      await milestoneToAttest
+        .attest(walletSigner as any, changeStepperStep)
+        .then(async () => {
+          let retries = 1000;
+          changeStepperStep("indexing");
+          while (retries > 0) {
+            await refreshProject()
+              .then(async (fetchedProject) => {
+                const grant = fetchedProject?.grants.find((g) => g.uid === uid);
+                const milestoneExists = grant?.milestones.find(
+                  (g) => g.uid === milestoneToAttest.uid
+                );
+                if (milestoneExists) {
+                  retries = 0;
+                  changeStepperStep("indexed");
+                  toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS);
+                  changeTab("milestones-and-updates");
+                }
+                retries -= 1;
+                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+              })
+              .catch(async () => {
+                retries -= 1;
+                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+              });
+          }
+        });
     } catch (error) {
       console.error(error);
       toast.error(MESSAGES.MILESTONES.CREATE.ERROR);
     } finally {
       setIsLoading(false);
+      setIsStepper(false);
     }
   };
 

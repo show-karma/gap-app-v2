@@ -13,7 +13,7 @@ import { blo } from "blo";
 import { LinkIcon, TrashIcon } from "@heroicons/react/24/solid";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
-import { CommunityDialog } from "@/components/CommunityDialog";
+import { CommunityDialog } from "@/components/Dialogs/CommunityDialog";
 import { formatDate } from "@/utilities/formatDate";
 import { AddAdmin } from "@/components/Pages/Admin/AddAdminDialog";
 import { request, gql } from "graphql-request";
@@ -77,6 +77,8 @@ export default function Communities() {
       );
       // console.log(data?.communities);
       setCommunityAdmins(data?.communities);
+      console.log(data?.communities);
+      return data.communities;
     } catch (error) {
       console.log(error);
     }

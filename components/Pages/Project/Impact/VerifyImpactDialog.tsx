@@ -25,6 +25,9 @@ import {
   ProjectImpactStatus,
 } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useStepper } from "@/store/txStepper";
+import { useProjectStore } from "@/store";
+import { Hex } from "viem";
 
 type VerifyImpactDialogProps = {
   impact: ProjectImpact;
@@ -70,6 +73,10 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
   const { chain } = useNetwork();
   const { switchNetworkAsync } = useSwitchNetwork();
   const { gap } = useGap();
+  const project = useProjectStore((state) => state.project);
+  const refreshProject = useProjectStore((state) => state.refreshProject);
+
+  const { changeStepperStep, setIsStepper } = useStepper();
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
     let gapClient = gap;
@@ -85,27 +92,53 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
       });
       if (!walletClient || !address || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      await impact.verify(walletSigner, data.comment).then(async () => {
-        toast.success(MESSAGES.PROJECT.IMPACT.VERIFY.SUCCESS);
-        const newVerified = new ProjectImpactStatus({
-          data: {
-            type: "project-impact-verified",
-            reason: data.comment,
-          },
-          schema: gapClient!.findSchema("GrantUpdateStatus"),
-          recipient: address,
-          refUID: impact.uid,
-          attester: address,
+      await impact
+        .verify(walletSigner, data.comment, changeStepperStep)
+        .then(async () => {
+          if (!project) return;
+          let retries = 1000;
+          changeStepperStep("indexing");
+          let fetchedProject = null;
+          while (retries > 0) {
+            fetchedProject = await gapClient!.fetch
+              .projectById(project.uid as Hex)
+              .catch(() => null);
+            if (
+              fetchedProject?.impacts?.find((impact) =>
+                impact.verified?.find(
+                  (v) => v.attester?.toLowerCase() === address?.toLowerCase()
+                )
+              )
+            ) {
+              retries = 0;
+              changeStepperStep("indexed");
+              await refreshProject();
+            }
+            retries -= 1;
+            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+          }
+          // const newVerified = new ProjectImpactStatus({
+          //   data: {
+          //     type: "project-impact-verified",
+          //     reason: data.comment,
+          //   },
+          //   schema: gapClient!.findSchema("GrantUpdateStatus"),
+          //   recipient: address,
+          //   refUID: impact.uid,
+          //   attester: address,
+          // });
+          // impact.verified = [...impact.verified, newVerified];
+          // toast.success(MESSAGES.PROJECT.IMPACT.VERIFY.SUCCESS);
+          // addVerification(newVerified);
         });
-        impact.verified = [...impact.verified, newVerified];
-        addVerification(newVerified);
-      });
       closeModal();
     } catch (error) {
       console.log(error);
       toast.error(MESSAGES.PROJECT.IMPACT.VERIFY.ERROR);
     } finally {
       setIsLoading(false);
+      setIsStepper(false);
     }
   };
   const isAuthorized = useAuthStore((state) => state.isAuth);

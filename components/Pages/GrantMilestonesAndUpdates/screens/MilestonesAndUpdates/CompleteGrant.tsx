@@ -1,6 +1,8 @@
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { getGapClient, useGap } from "@/hooks";
 import { useProjectStore } from "@/store";
+import { useStepper } from "@/store/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
@@ -12,6 +14,7 @@ import { useQueryState } from "nuqs";
 import type { FC } from "react";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { Hex } from "viem";
 import { useNetwork, useSwitchNetwork } from "wagmi";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
@@ -35,6 +38,9 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [, changeTab] = useQueryState("tab");
 
+  const { changeStepperStep, setIsStepper } = useStepper();
+  const { gap } = useGap();
+
   const markGrantAsComplete = async (
     grantToComplete: Grant,
     data: {
@@ -42,12 +48,14 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
       title?: string;
     }
   ) => {
+    let gapClient = gap;
     try {
       if (
         !checkNetworkIsValid(chain?.id) ||
         chain?.id !== grantToComplete.chainID
       ) {
         await switchNetworkAsync?.(grantToComplete.chainID);
+        gapClient = getGapClient(grantToComplete.chainID);
       }
       const walletClient = await getWalletClient({
         chainId: grantToComplete.chainID,
@@ -55,19 +63,43 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
       await grantToComplete
-        .complete(walletSigner, {
-          title: data.title || "",
-          text: data.text || "",
-        })
+        .complete(
+          walletSigner,
+          {
+            title: data.title || "",
+            text: data.text || "",
+          },
+          changeStepperStep
+        )
         .then(async () => {
-          toast.success(MESSAGES.GRANT.MARK_AS_COMPLETE.SUCCESS);
-          await refreshProject().then(() => {
-            changeTab("milestones-and-updates");
-          });
+          let retries = 1000;
+          changeStepperStep("indexing");
+          let fetchedProject = null;
+          while (retries > 0) {
+            fetchedProject = await gapClient!.fetch
+              .projectById(project.uid as Hex)
+              .catch(() => null);
+            const grant = fetchedProject?.grants?.find(
+              (g) => g.uid === grantToComplete.uid
+            );
+            if (grant && grant.completed) {
+              retries = 0;
+              changeStepperStep("indexed");
+              toast.success(MESSAGES.GRANT.MARK_AS_COMPLETE.SUCCESS);
+              await refreshProject().then(() => {
+                changeTab("milestones-and-updates");
+              });
+            }
+          }
+          retries -= 1;
+          // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+          await new Promise((resolve) => setTimeout(resolve, 1500));
         });
     } catch (error) {
       console.log(error);
       toast.error(MESSAGES.GRANT.MARK_AS_COMPLETE.ERROR);
+    } finally {
+      setIsStepper(false);
     }
   };
 

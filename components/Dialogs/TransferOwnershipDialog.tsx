@@ -2,7 +2,7 @@
 import { FC, Fragment, ReactNode, useEffect, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { PlusIcon } from "@heroicons/react/24/solid";
-import { Button } from "./Utilities/Button";
+import { Button } from "../Utilities/Button";
 import toast from "react-hot-toast";
 import { isAddress } from "viem";
 import { useProjectStore } from "@/store";
@@ -10,8 +10,9 @@ import { useNetwork, useSwitchNetwork } from "wagmi";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { appNetwork } from "@/utilities/network";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { transferOwnership } from "@/utilities/sdk";
 import { getWalletClient } from "@wagmi/core";
+import { useStepper } from "@/store/txStepper";
+import { getProjectOwner } from "@/utilities/sdk";
 
 type TransferOwnershipProps = {
   buttonElement?: {
@@ -44,9 +45,11 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const setIsProjectOwner = useProjectStore((state) => state.setIsProjectOwner);
   const { switchNetworkAsync } = useSwitchNetwork({
     chainId: project?.chainID || appNetwork[0].id,
   });
+  const { changeStepperStep, setIsStepper } = useStepper();
   const transfer = async () => {
     if (!project) return;
     if (!newOwner || !isAddress(newOwner)) {
@@ -64,18 +67,36 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
       });
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      await transferOwnership(project, newOwner, walletSigner).then(
-        async () => {
-          await refreshProject();
+      await project
+        .transferOwnership(walletSigner, newOwner, changeStepperStep)
+        .then(async () => {
+          let retries = 1000;
+          changeStepperStep("indexing");
+          while (retries > 0) {
+            const stillProjectOwner = await getProjectOwner(
+              walletSigner || signer,
+              project
+            );
+
+            if (!stillProjectOwner) {
+              setIsProjectOwner(false);
+              retries = 0;
+              await refreshProject();
+              changeStepperStep("indexed");
+            }
+            retries -= 1;
+            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+          }
           toast.success("Ownership transferred successfully");
-        }
-      );
+        });
       closeModal();
     } catch (error) {
       toast.error("Something went wrong. Please try again later.");
       console.error(error);
     } finally {
       setIsLoading(false);
+      setIsStepper(false);
     }
   };
 
