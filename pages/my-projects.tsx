@@ -23,7 +23,10 @@ import { useOnboarding } from "@/store/onboarding";
 import { useMixpanel } from "@/hooks/useMixpanel";
 
 const ProjectDialog = dynamic(
-  () => import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog),
+  () =>
+    import("@/components/Dialogs/ProjectDialog").then(
+      (mod) => mod.ProjectDialog
+    ),
   { ssr: false }
 );
 

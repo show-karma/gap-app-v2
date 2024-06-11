@@ -17,6 +17,7 @@ import { getWalletClient } from "@wagmi/core";
 import { VerifyMilestoneUpdateDialog } from "./VerifyMilestoneUpdateDialog";
 import { VerifiedBadge } from "./VerifiedBadge";
 import { useCommunityAdminStore } from "@/store/community";
+import { useStepper } from "@/store/txStepper";
 
 interface UpdatesProps {
   milestone: Milestone;
@@ -33,6 +34,8 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const signer = useSigner();
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
+  const { changeStepperStep, setIsStepper } = useStepper();
+
   const undoMilestoneCompletion = async (milestone: Milestone) => {
     try {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
@@ -43,13 +46,42 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
       });
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      await milestone.revokeCompletion(walletSigner as any).then(async () => {
-        toast.success(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS);
-        await refreshProject();
-      });
+      await milestone
+        .revokeCompletion(walletSigner as any, changeStepperStep)
+        .then(async () => {
+          let retries = 1000;
+          changeStepperStep("indexing");
+          while (retries > 0) {
+            await refreshProject()
+              .then(async (fetchedProject) => {
+                const foundGrant = fetchedProject?.grants.find(
+                  (g) => g.uid === milestone.refUID
+                );
+                const fetchedMilestone = foundGrant?.milestones.find(
+                  (u) => u.uid === milestone.uid
+                );
+                const isCompleted = fetchedMilestone?.completed;
+                if (!isCompleted) {
+                  retries = 0;
+                  changeStepperStep("indexed");
+                  toast.success(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS);
+                }
+                retries -= 1;
+                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+              })
+              .catch(async () => {
+                retries -= 1;
+                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+                await new Promise((resolve) => setTimeout(resolve, 1500));
+              });
+          }
+        });
     } catch (error) {
       console.log(error);
       toast.error(MESSAGES.MILESTONES.COMPLETE.UNDO.ERROR);
+    } finally {
+      setIsStepper(false);
     }
   };
 

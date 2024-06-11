@@ -1,10 +1,12 @@
 import { getGapClient } from "@/hooks";
+import { TxStepperSteps } from "@/store/txStepper";
 import { appNetwork } from "@/utilities/network";
 import {
   ExternalLink,
   Project,
   TExternalLink,
 } from "@show-karma/karma-gap-sdk";
+import { Hex, zeroHash } from "viem";
 
 export const updateProject = async (
   project: Project,
@@ -21,7 +23,9 @@ export const updateProject = async (
     linkedin?: string;
   },
   signer: any,
-  gap: any
+  gap: any,
+  changeStepperStep: (step: TxStepperSteps) => void,
+  closeModal: () => void
 ) => {
   const oldProjectData = JSON.parse(JSON.stringify(project.details?.data));
   try {
@@ -49,7 +53,59 @@ export const updateProject = async (
         name: tag.name,
       })),
     });
-    await project.details?.attest(signer as any);
+
+    closeModal();
+
+    await project.details
+      ?.attest(signer as any, changeStepperStep)
+      .then(async () => {
+        let retries = 1000;
+        let fetchedProject: Project | null = null;
+        changeStepperStep("indexing");
+        while (retries > 0) {
+          // eslint-disable-next-line no-await-in-loop
+          fetchedProject = await (slug
+            ? gap.fetch.projectBySlug(slug)
+            : gap.fetch.projectById(project.uid as Hex)
+          ).catch(() => null);
+          const compareAll = (a: any, b: any) => {
+            return JSON.stringify(a) === JSON.stringify(b);
+          };
+          const newDetailsData = {
+            title: newProjectInfo.title,
+            description: newProjectInfo.description,
+            links: linksArray,
+            slug,
+            tags: newProjectInfo.tags?.map((tag) => ({
+              name: tag.name,
+            })),
+          };
+          const fetchedDetailsData = {
+            title: fetchedProject?.details?.title,
+            description: fetchedProject?.details?.description,
+            links: fetchedProject?.details?.links,
+            slug: fetchedProject?.details?.slug,
+            tags: fetchedProject?.details?.tags?.map((tag) => ({
+              name: tag.name,
+            })),
+          };
+          if (
+            fetchedProject?.uid &&
+            fetchedProject.uid !== zeroHash &&
+            compareAll(newDetailsData, fetchedDetailsData)
+          ) {
+            retries = 0;
+            changeStepperStep("indexed");
+            setTimeout(() => {
+              closeModal();
+            }, 500);
+            return;
+          }
+          retries -= 1;
+          // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+        }
+      });
     return project;
   } catch (error) {
     project.details?.setValues(oldProjectData);

@@ -18,6 +18,9 @@ import toast from "react-hot-toast";
 import { useNetwork, useSwitchNetwork } from "wagmi";
 import { VerifyGrantUpdateDialog } from "./VerifyGrantUpdateDialog";
 import { VerifiedBadge } from "./VerifiedBadge";
+import { getGapClient, useGap } from "@/hooks";
+import { useStepper } from "@/store/txStepper";
+import { Hex } from "viem";
 
 interface UpdateTagProps {
   index: number;
@@ -72,26 +75,53 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [isDeletingGrantUpdate, setIsDeletingGrantUpdate] = useState(false);
 
+  const selectedProject = useProjectStore((state) => state.project);
+  const { gap } = useGap();
+  const { changeStepperStep, setIsStepper } = useStepper();
+
   const undoGrantUpdate = async () => {
+    let gapClient = gap;
     try {
       setIsDeletingGrantUpdate(true);
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== update.chainID) {
         await switchNetworkAsync?.(update.chainID);
+        gapClient = getGapClient(update.chainID);
       }
       const walletClient = await getWalletClient({
         chainId: update.chainID,
       });
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      await update.revoke(walletSigner as any).then(async () => {
-        toast.success(MESSAGES.GRANT.GRANT_UPDATE.UNDO.SUCCESS);
-        await refreshProject();
-      });
+      await update
+        .revoke(walletSigner as any, changeStepperStep)
+        .then(async () => {
+          let retries = 1000;
+          changeStepperStep("indexing");
+          let fetchedProject = null;
+          while (retries > 0) {
+            fetchedProject = await gapClient!.fetch
+              .projectById(selectedProject?.uid as Hex)
+              .catch(() => null);
+            const stillExists = fetchedProject?.grants?.find(
+              (grantUpdate) => grantUpdate.uid === update.uid
+            );
+            if (!stillExists) {
+              retries = 0;
+              changeStepperStep("indexed");
+              toast.success(MESSAGES.GRANT.GRANT_UPDATE.UNDO.SUCCESS);
+              await refreshProject();
+            }
+            retries -= 1;
+            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+          }
+        });
     } catch (error) {
       console.log(error);
       toast.error(MESSAGES.GRANT.GRANT_UPDATE.UNDO.ERROR);
     } finally {
       setIsDeletingGrantUpdate(false);
+      setIsStepper(false);
     }
   };
 

@@ -16,6 +16,7 @@ import NextThemeProvider from "@/components/Utilities/NextThemeProvider";
 import NextNProgress from "nextjs-progressbar";
 import { WagmiConfig } from "wagmi";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { StepperDialog } from "@/components/Dialogs/StepperDialog";
 
 export default function App({ Component, pageProps }: AppProps) {
   return (
@@ -24,6 +25,7 @@ export default function App({ Component, pageProps }: AppProps) {
       <WagmiConfig config={wagmiConfig}>
         <WagmiProvider>
           <Toaster />
+          <StepperDialog />
           <NextNProgress options={{ showSpinner: false }} />
           <NextThemeProvider>
             <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">
