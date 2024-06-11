@@ -18,6 +18,9 @@ import { useQueryState } from "nuqs";
 import { ReadMore } from "@/utilities/ReadMore";
 import { VerifyImpactDialog } from "./VerifyImpactDialog";
 import { ImpactVerifications } from "./ImpactVerifications";
+import { useStepper } from "@/store/txStepper";
+import { getGapClient, useGap } from "@/hooks";
+import { Hex } from "viem";
 
 const headClasses =
   "text-black dark:text-white text-xs font-medium uppercase text-left px-6 py-3 font-body";
@@ -56,13 +59,18 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
   const { switchNetworkAsync } = useSwitchNetwork();
 
   const [loading, setLoading] = useState<Record<string, boolean>>({});
+  const { changeStepperStep, setIsStepper } = useStepper();
+  const { gap } = useGap();
+  const refreshProject = useProjectStore((state) => state.refreshProject);
 
   const revokeImpact = async (impact: ProjectImpact) => {
     if (!address || !project || !impact) return;
+    let gapClient = gap;
     try {
       setLoading({ ...loading, [impact.uid.toLowerCase()]: true });
       if (chain && chain.id !== project.chainID) {
         await switchNetworkAsync?.(project.chainID);
+        gapClient = getGapClient(project.chainID);
       }
       const walletClient = await getWalletClient({
         chainId: project.chainID,
@@ -70,19 +78,40 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
 
-      await impact.revoke(walletSigner as any).then(async () => {
-        toast.success(MESSAGES.PROJECT.IMPACT.REMOVE.SUCCESS);
-        const filtered = project.impacts.filter(
-          (item) => item.uid !== impact.uid
-        );
-        project.impacts = filtered;
-      });
+      await impact
+        .revoke(walletSigner as any, changeStepperStep)
+        .then(async () => {
+          // const filtered = project.impacts.filter(
+          //   (item) => item.uid !== impact.uid
+          // );
+          // project.impacts = filtered;
+          let retries = 1000;
+          changeStepperStep("indexing");
+          let fetchedProject = null;
+          while (retries > 0) {
+            fetchedProject = await gapClient!.fetch
+              .projectById(project.uid as Hex)
+              .catch(() => null);
+            if (
+              fetchedProject?.impacts?.find((imp) => imp.uid === impact.uid)
+            ) {
+              retries = 0;
+              changeStepperStep("indexed");
+              await refreshProject();
+            }
+            retries -= 1;
+            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+          }
+        });
+      toast.success(MESSAGES.PROJECT.IMPACT.REMOVE.SUCCESS);
     } catch (error) {
       console.log(error);
       setLoading({ ...loading, [impact.uid.toLowerCase()]: false });
       toast.error(MESSAGES.PROJECT.IMPACT.REMOVE.ERROR);
     } finally {
       setLoading({ ...loading, [impact.uid.toLowerCase()]: false });
+      setIsStepper(false);
     }
   };
   const [, changeTab] = useQueryState("tab");

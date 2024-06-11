@@ -14,7 +14,10 @@ import { defaultMetadata } from "@/utilities/meta";
 import { ImageTheme } from "@/components/Utilities/ImageTheme";
 
 const ProjectDialog = dynamic(
-  () => import("@/components/ProjectDialog").then((mod) => mod.ProjectDialog),
+  () =>
+    import("@/components/Dialogs/ProjectDialog").then(
+      (mod) => mod.ProjectDialog
+    ),
   { ssr: false }
 );
 

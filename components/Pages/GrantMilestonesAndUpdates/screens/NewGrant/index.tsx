@@ -45,6 +45,7 @@ import { useCommunityAdminStore } from "@/store/community";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { useCommunitiesStore } from "@/store/communities";
 import { cn } from "@/utilities/tailwind";
+import { useStepper } from "@/store/txStepper";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -303,7 +304,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const router = useRouter();
 
   const { connector } = useAccount();
-
+  const { changeStepperStep, setIsStepper } = useStepper();
   const createNewGrant = async (
     data: NewGrantData,
     communityNetworkId: number
@@ -394,36 +395,55 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
       await grant
-        .attest(walletSigner as any, selectedProject.chainID)
+        .attest(walletSigner as any, selectedProject.chainID, changeStepperStep)
         .then(async () => {
-          // eslint-disable-next-line no-param-reassign
-          clearMilestonesForms();
-          grant.community = await gap.fetch.communityById(grant.communityUID);
-          toast.success(MESSAGES.GRANT.CREATE.SUCCESS);
-          changeTab("overview");
-          changeGrant(grant.uid);
-          selectedProject?.grants.unshift(grant);
+          let retries = 1000;
+          changeStepperStep("indexing");
+          let fetchedProject = null;
+          while (retries > 0) {
+            fetchedProject = await gapClient!.fetch
+              .projectById(selectedProject.uid as Hex)
+              .catch(() => null);
+            if (
+              fetchedProject?.grants?.find(
+                (oldGrant) => oldGrant.uid === grant.uid
+              )
+            ) {
+              clearMilestonesForms();
+              retries = 0;
+              toast.success(MESSAGES.GRANT.CREATE.SUCCESS);
+              changeStepperStep("indexed");
+              changeTab("overview");
+              changeGrant(grant.uid);
+              await refreshProject();
+            }
+            retries -= 1;
+            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+          }
         });
     } catch (error) {
       toast.error(MESSAGES.GRANT.CREATE.ERROR);
       console.log(error);
     } finally {
       setIsLoading(false);
+      setIsStepper(false);
     }
   };
 
   const updateGrant = async (oldGrant: Grant, data: NewGrantData) => {
     if (!address || !selectedProject) return;
+    let gapClient = gap;
     try {
       setIsLoading(true);
       if (chain && chain.id !== oldGrant.chainID) {
         await switchNetworkAsync?.(oldGrant.chainID);
+        gapClient = getGapClient(communityNetworkId);
       }
       oldGrant.setValues({
         communityUID: data.community,
       });
-
-      oldGrant.details?.setValues({
+      const grantData = {
         amount: data.amount || "",
         description: data.description,
         proposalURL: data.linkToProposal,
@@ -433,29 +453,71 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         // season: data.season,
         questions: data.questions,
         startDate: data.startDate,
-      });
+      };
+      oldGrant.details?.setValues(grantData);
       const walletClient = await getWalletClient({
         chainId: oldGrant.chainID,
       });
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      await oldGrant.details?.attest(walletSigner as any).then(async () => {
-        // eslint-disable-next-line no-param-reassign
-        toast.success(MESSAGES.GRANT.UPDATE.SUCCESS);
-        await refreshProject().then(() => {
-          router.push(
-            PAGES.PROJECT.GRANT(
-              selectedProject.details?.slug || selectedProject.uid,
-              oldGrant.uid
-            )
-          );
+      const oldGrantData = JSON.parse(JSON.stringify(oldGrant.details?.data));
+      await oldGrant.details
+        ?.attest(walletSigner as any, changeStepperStep)
+        .then(async () => {
+          // eslint-disable-next-line no-param-reassign
+
+          const compareAll = (a: any, b: any) => {
+            return JSON.stringify(a) === JSON.stringify(b);
+          };
+
+          let retries = 1000;
+          changeStepperStep("indexing");
+          let fetchedProject = null;
+          while (retries > 0) {
+            fetchedProject = await gapClient!.fetch
+              .projectById(selectedProject.uid as Hex)
+              .catch(() => null);
+            const fetchedGrant = fetchedProject?.grants.find(
+              (item) => item.uid.toLowerCase() === oldGrant.uid.toLowerCase()
+            );
+            const grantData = {
+              amount: fetchedGrant?.details?.data.amount || "",
+              description: fetchedGrant?.details?.data?.description,
+              proposalURL: fetchedGrant?.details?.data?.proposalURL,
+              title: fetchedGrant?.details?.data?.title,
+              payoutAddress: fetchedGrant?.details?.data?.payoutAddress,
+              // cycle: data.cycle,
+              // season: data.season,
+              questions: fetchedGrant?.details?.data?.questions,
+              startDate: fetchedGrant?.details?.data?.startDate,
+            };
+            if (compareAll(grantData, oldGrantData)) {
+              clearMilestonesForms();
+              retries = 0;
+              toast.success(MESSAGES.GRANT.UPDATE.SUCCESS);
+              changeStepperStep("indexed");
+              changeTab("overview");
+              changeGrant(oldGrant.uid);
+              await refreshProject().then(() => {
+                router.push(
+                  PAGES.PROJECT.GRANT(
+                    selectedProject.details?.slug || selectedProject.uid,
+                    oldGrant.uid
+                  )
+                );
+              });
+            }
+            retries -= 1;
+            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+          }
         });
-      });
     } catch (error) {
       toast.error(MESSAGES.GRANT.UPDATE.ERROR);
       console.log(error);
     } finally {
       setIsLoading(false);
+      setIsStepper(false);
     }
   };
 

@@ -7,11 +7,13 @@ import { useProjectStore } from "@/store";
 import { shortAddress } from "@/utilities/shortAddress";
 import { getWalletClient } from "@wagmi/core";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { ProjectEndorsement } from "@show-karma/karma-gap-sdk";
+import { Project, ProjectEndorsement } from "@show-karma/karma-gap-sdk";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 import { getGapClient, useGap } from "@/hooks";
 import { useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
+import { useStepper } from "@/store/txStepper";
+import { Hex } from "viem";
 
 type EndorsementDialogProps = {
   buttonElement?: {
@@ -46,6 +48,8 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = ({
     setIsOpen(true);
   }
 
+  const { changeStepperStep, setIsStepper } = useStepper();
+
   const handleFunction = async () => {
     let gapClient = gap;
     setIsLoading(true);
@@ -68,19 +72,42 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = ({
         refUID: project?.uid,
         recipient: address,
       });
-      await endorsement.attest(walletSigner).then(() => {
-        refreshProject();
-        router.push(
-          PAGES.PROJECT.OVERVIEW(
-            (project.details?.slug || project?.uid) as string
-          )
-        );
-      });
+      await endorsement
+        // .attest(walletSigner, changeStepperStep)
+        .attest(walletSigner, changeStepperStep)
+        .then(async () => {
+          let retries = 1000;
+          refreshProject();
+          let fetchedProject: Project | null = null;
+          changeStepperStep("indexing");
+          while (retries > 0) {
+            fetchedProject = await gapClient!.fetch
+              .projectById(project.uid as Hex)
+              .catch(() => null);
+            if (
+              fetchedProject?.endorsements?.find(
+                (end) => end.uid === endorsement.uid
+              )
+            ) {
+              retries = 0;
+              changeStepperStep("indexed");
+              router.push(
+                PAGES.PROJECT.OVERVIEW(
+                  (project.details?.slug || project?.uid) as string
+                )
+              );
+            }
+            retries -= 1;
+            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+          }
+        });
       closeModal();
     } catch (error) {
       console.log(error);
     } finally {
       setIsLoading(false);
+      setIsStepper(false);
     }
   };
 

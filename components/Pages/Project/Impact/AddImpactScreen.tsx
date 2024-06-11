@@ -3,6 +3,7 @@ import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks";
 import { useProjectStore } from "@/store";
+import { useStepper } from "@/store/txStepper";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
@@ -19,6 +20,7 @@ import { DayPicker } from "react-day-picker";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { Hex } from "viem";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 import { z } from "zod";
 
@@ -67,6 +69,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const { gap } = useGap();
+  const { changeStepperStep, setIsStepper } = useStepper();
 
   const onSubmit: SubmitHandler<UpdateType> = async (data, event) => {
     event?.preventDefault();
@@ -100,20 +103,37 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
         refUID: project.uid,
         createdAt: new Date(),
       });
-      await newImpact.attest(walletSigner as any).then(async () => {
-        toast.success(MESSAGES.PROJECT.IMPACT.SUCCESS);
-        const newImpacts = [...project.impacts, newImpact];
-        const ordered = newImpacts.sort((a, b) => {
-          return b.data.completedAt - a.data.completedAt;
+      await newImpact
+        .attest(walletSigner as any, changeStepperStep)
+        .then(async () => {
+          let retries = 1000;
+          changeStepperStep("indexing");
+          let fetchedProject = null;
+          while (retries > 0) {
+            fetchedProject = await gapClient!.fetch
+              .projectById(project.uid as Hex)
+              .catch(() => null);
+            if (
+              fetchedProject?.impacts?.find(
+                (impact) => impact.uid === newImpact.uid
+              )
+            ) {
+              retries = 0;
+              changeStepperStep("indexed");
+              changeTab(null);
+              await refreshProject();
+            }
+            retries -= 1;
+            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+          }
         });
-        project.impacts = ordered;
-        changeTab(null);
-      });
     } catch (error) {
       console.log(error);
       toast.error(MESSAGES.PROJECT.IMPACT.ERROR);
     } finally {
       setIsLoading(false);
+      setIsStepper(false);
     }
   };
 

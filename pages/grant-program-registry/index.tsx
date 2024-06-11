@@ -23,6 +23,10 @@ import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdow
 import { useQueryState } from "nuqs";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { Button } from "@/components/Utilities/Button";
+import { accountsAllowedManagePrograms } from "@/components/Pages/ProgramRegistry/ProgramListPending";
+import { useAuthStore } from "@/store/auth";
+import { useAccount } from "wagmi";
 
 const statuses = ["Active", "Inactive"];
 
@@ -84,45 +88,45 @@ const GrantProgramRegistry = ({
     parse: (value) => (value.length > 0 ? value.split(",") : []),
   });
   const [status, setStatus] = useQueryState("status", {
-    defaultValue: defaultStatuses,
+    defaultValue: defaultStatuses || "Active",
   });
 
   const [searchInput, setSearchInput] = useQueryState("name", {
     defaultValue: defaultName,
     throttleMs: 500,
   });
-  const [minGrantSize, setMinGrantSize] = useQueryState("minGrantSize", {
-    throttleMs: 500,
-    defaultValue: defaultGrantSize[0].toString() as any,
-    parse: (value) => {
-      if (value === defaultGrantSize[0].toString()) {
-        return null;
-      }
-      return value;
-    },
-    serialize: (value) => {
-      if (value === defaultGrantSize[0].toString()) {
-        return null;
-      }
-      return value;
-    },
-  });
-  const [maxGrantSize, setMaxGrantSize] = useQueryState("maxGrantSize", {
-    throttleMs: 500,
-    defaultValue: defaultGrantSize[1].toString() as any,
-    parse: (value) => {
-      if (value === defaultGrantSize[1].toString()) {
-        return null;
-      }
-      return value;
-    },
-    serialize: (value) => {
-      if (value === defaultGrantSize[1].toString()) {
-        return null;
-      }
-      return value;
-    },
-  });
+  // const [minGrantSize, setMinGrantSize] = useQueryState("minGrantSize", {
+  //   throttleMs: 500,
+  //   defaultValue: defaultGrantSize[0].toString() as any,
+  //   parse: (value) => {
+  //     if (value === defaultGrantSize[0].toString()) {
+  //       return null;
+  //     }
+  //     return value;
+  //   },
+  //   serialize: (value) => {
+  //     if (value === defaultGrantSize[0].toString()) {
+  //       return null;
+  //     }
+  //     return value;
+  //   },
+  // });
+  // const [maxGrantSize, setMaxGrantSize] = useQueryState("maxGrantSize", {
+  //   throttleMs: 500,
+  //   defaultValue: defaultGrantSize[1].toString() as any,
+  //   parse: (value) => {
+  //     if (value === defaultGrantSize[1].toString()) {
+  //       return null;
+  //     }
+  //     return value;
+  //   },
+  //   serialize: (value) => {
+  //     if (value === defaultGrantSize[1].toString()) {
+  //       return null;
+  //     }
+  //     return value;
+  //   },
+  // });
 
   const [selectedNetworks, setSelectedNetworks] = useQueryState("networks", {
     defaultValue: defaultNetworks,
@@ -150,10 +154,10 @@ const GrantProgramRegistry = ({
     setSearchInput(value);
   }, 500);
 
-  const changeGrantSize = (value: number[]) => {
-    setMinGrantSize(value[0].toString());
-    setMaxGrantSize(value[1].toString());
-  };
+  // const changeGrantSize = (value: number[]) => {
+  //   setMinGrantSize(value[0].toString());
+  //   setMaxGrantSize(value[1].toString());
+  // };
 
   const onChangeGeneric = (
     value: string,
@@ -198,14 +202,6 @@ const GrantProgramRegistry = ({
               ? `&ecosystems=${selectedEcosystems.join(",")}`
               : ""
           }${
-            minGrantSize !== registryHelper.grantSizes[0].toString()
-              ? `&minGrantSize=${minGrantSize}`
-              : ""
-          }${
-            maxGrantSize !== registryHelper.grantSizes[1].toString()
-              ? `&maxGrantSize=${maxGrantSize}`
-              : ""
-          }${
             selectedCategory.length
               ? `&categories=${selectedCategory.join(",")}`
               : ""
@@ -244,15 +240,8 @@ const GrantProgramRegistry = ({
               selectedEcosystems.length
                 ? `&ecosystems=${selectedEcosystems.join(",")}`
                 : ""
-            }${
-              minGrantSize !== registryHelper.grantSizes[0].toString()
-                ? `&minGrantSize=${minGrantSize}`
-                : ""
-            }${
-              maxGrantSize !== registryHelper.grantSizes[1].toString()
-                ? `&maxGrantSize=${maxGrantSize}`
-                : ""
-            }${
+            }
+            ${
               selectedCategory.length
                 ? `&categories=${selectedCategory.join(",")}`
                 : ""
@@ -276,12 +265,20 @@ const GrantProgramRegistry = ({
     searchInput,
     selectedCategory,
     status,
-    minGrantSize,
-    maxGrantSize,
+    // minGrantSize,
+    // maxGrantSize,
     selectedNetworks,
     selectedEcosystems,
     selectedGrantTypes,
   ]);
+
+  const { address } = useAccount();
+  const { isAuth } = useAuthStore();
+
+  const isAllowed =
+    address &&
+    accountsAllowedManagePrograms.includes(address.toLowerCase()) &&
+    isAuth;
 
   return (
     <>
@@ -320,13 +317,7 @@ const GrantProgramRegistry = ({
             <p className="text-start text-lg max-w-5xl text-black dark:text-white">
               Explore our handpicked grants for innovators and creators: from
               tech pioneers to community leaders, we have a grant to elevate
-              your project. Did we miss your program/bounty? Add it{" "}
-              <Link
-                href={PAGES.REGISTRY.ADD_PROGRAM}
-                className="text-blue-700 dark:text-blue-400 underline"
-              >
-                here.
-              </Link>
+              your project. Did we miss your program/bounty?
             </p>
             <Link href={PAGES.REGISTRY.ADD_PROGRAM}>
               <button className="mt-3 bg-[#0E101B] dark:bg-slate-800 text-white px-10 py-2.5 rounded-lg">
@@ -334,7 +325,19 @@ const GrantProgramRegistry = ({
               </button>
             </Link>
           </div>
-          {/* <div className="h-44 w-[1px] bg-[#98A2B3] max-md:w-full max-md:h-[1px]" /> */}
+          {isAllowed ? (
+            <>
+              <div className="h-44 w-[1px] bg-[#98A2B3] max-md:w-full max-md:h-[1px]" />
+              <div className="flex flex-1 flex-col gap-2 items-center max-sm:items-start">
+                <Link href={PAGES.REGISTRY.MANAGE_PROGRAMS}>
+                  <button className="mt-3 bg-[#0E101B] dark:bg-slate-800 text-white px-10 py-2.5 rounded-lg">
+                    Manage programs
+                  </button>
+                </Link>
+              </div>
+            </>
+          ) : null}
+
           {/* <div className="flex flex-1 flex-col gap-2 items-center max-sm:items-start">
             <div className="flex flex-1 flex-col gap-2 items-start">
               <p className="text-[#101828] dark:text-white font-body font-semibold text-xl">
@@ -445,13 +448,13 @@ const GrantProgramRegistry = ({
               </div>
             </div>
             <div className="flex flex-row gap-2 w-max flex-1 max-md:flex-wrap max-md:flex-col justify-end">
-              <GrantSizeSlider
+              {/* <GrantSizeSlider
                 value={[
                   +minGrantSize,
                   maxGrantSize ? +maxGrantSize : registryHelper.grantSizes[1],
                 ]}
                 onChangeListener={changeGrantSize}
-              />
+              /> */}
 
               <SearchDropdown
                 list={registryHelper.networks}
@@ -485,7 +488,7 @@ const GrantProgramRegistry = ({
                 cleanFunction={() => {
                   setSelectedGrantTypes([]);
                 }}
-                type={"Grant Types"}
+                type={"Funding Mechanisms"}
                 selected={selectedGrantTypes}
                 // imageDictionary={}
               />

@@ -1,49 +1,104 @@
-import { z } from "zod";
-import type { SubmitHandler } from "react-hook-form";
-import { Controller, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Dispatch, useState } from "react";
-import { MESSAGES } from "@/utilities/messages";
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { ChevronLeftIcon } from "@heroicons/react/24/solid";
-import { Button } from "@/components/Utilities/Button";
-import Link from "next/link";
-import { PAGES } from "@/utilities/pages";
-import { NFTStorage } from "nft.storage";
-import { AlloRegistry } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/AlloRegistry";
-import { getWalletClient } from "@wagmi/core";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
-import { envVars } from "@/utilities/enviromentVars";
-import { useRouter } from "next/router";
-import { Dropdown } from "@/components/Utilities/Dropdown";
+import { z } from 'zod';
+import type { SubmitHandler } from 'react-hook-form';
+import { Controller, useForm } from 'react-hook-form';
+import toast from 'react-hot-toast';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Dispatch, useState } from 'react';
+import { MESSAGES } from '@/utilities/messages';
+import { MarkdownEditor } from '@/components/Utilities/MarkdownEditor';
+import { ChevronLeftIcon } from '@heroicons/react/24/solid';
+import { Button } from '@/components/Utilities/Button';
+import Link from 'next/link';
+import { PAGES } from '@/utilities/pages';
+import { NFTStorage } from 'nft.storage';
+import { AlloRegistry } from '@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/AlloRegistry';
+import { getWalletClient } from '@wagmi/core';
+import { walletClientToSigner } from '@/utilities/eas-wagmi-utils';
+import { useAccount, useNetwork, useSwitchNetwork } from 'wagmi';
+import { envVars } from '@/utilities/enviromentVars';
+import { useRouter } from 'next/router';
 
-import { useAuthStore } from "@/store/auth";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { registryHelper } from "./helper";
-import { SearchDropdown } from "./SearchDropdown";
-import { appNetwork } from "@/utilities/network";
-import { NetworkDropdown } from "./NetworkDropdown";
-import { chainImgDictionary } from "@/utilities/chainImgDictionary";
-import { cn } from "@/utilities/tailwind";
-import { DiscordIcon, TwitterIcon, WebsiteIcon } from "@/components/Icons";
-import { BlogIcon } from "@/components/Icons/Blog";
-import { DiscussionIcon } from "@/components/Icons/Discussion";
-import { OrganizationIcon } from "@/components/Icons/Organization";
+import { useAuthStore } from '@/store/auth';
+import { useConnectModal } from '@rainbow-me/rainbowkit';
+import { registryHelper } from './helper';
+import { SearchDropdown } from './SearchDropdown';
+import { appNetwork } from '@/utilities/network';
+import { NetworkDropdown } from './NetworkDropdown';
+import { chainImgDictionary } from '@/utilities/chainImgDictionary';
+import { cn } from '@/utilities/tailwind';
+import { DiscordIcon, TwitterIcon, WebsiteIcon } from '@/components/Icons';
+import { BlogIcon } from '@/components/Icons/Blog';
+import { DiscussionIcon } from '@/components/Icons/Discussion';
+import { OrganizationIcon } from '@/components/Icons/Organization';
+import fetchData from '@/utilities/fetchData';
+import { INDEXER } from '@/utilities/indexer';
+import { GrantProgram } from './ProgramList';
+import { Twitter2Icon } from '@/components/Icons/Twitter2';
+import { Discord2Icon } from '@/components/Icons/Discord2';
+import { AlloBase } from '@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/Allo';
+import { StatusDropdown } from './StatusDropdown';
 
-const labelStyle = "text-sm font-bold text-[#344054] dark:text-zinc-100";
+const labelStyle = 'text-sm font-bold text-[#344054] dark:text-zinc-100';
 const inputStyle =
-  "mt-1 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100";
+  'mt-1 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100';
+
+const urlRegex =
+  /^((https?):\/\/)?([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}(\/.*)?$/;
 
 const createProgramSchema = z.object({
   name: z.string().min(3, { message: MESSAGES.REGISTRY.FORM.NAME }),
-  website: z.string().url().optional().or(z.literal("")),
-  twitter: z.string().url().optional().or(z.literal("")),
-  discord: z.string().url().optional().or(z.literal("")),
-  orgWebsite: z.string().url().optional().or(z.literal("")),
-  blog: z.string().url().optional().or(z.literal("")),
-  forum: z.string().url().optional().or(z.literal("")),
+  website: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: 'Please enter a valid URL',
+    })
+    .optional()
+    .or(z.literal('')),
+  twitter: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: 'Please enter a valid URL',
+    })
+    .optional()
+    .or(z.literal('')),
+  discord: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: 'Please enter a valid URL',
+    })
+    .optional()
+    .or(z.literal('')),
+  orgWebsite: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: 'Please enter a valid URL',
+    })
+    .optional()
+    .or(z.literal('')),
+  blog: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: 'Please enter a valid URL',
+    })
+    .optional()
+    .or(z.literal('')),
+  forum: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: 'Please enter a valid URL',
+    })
+    .optional()
+    .or(z.literal('')),
+  grantsSite: z.string().refine((value) => urlRegex.test(value), {
+    message: 'Please enter a valid URL',
+  }),
+  bugBounty: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: 'Please enter a valid URL',
+    })
+    .optional()
+    .or(z.literal('')),
   amountDistributed: z.coerce.number().optional(),
   description: z
     .string({
@@ -52,40 +107,32 @@ const createProgramSchema = z.object({
     .min(3, {
       message: MESSAGES.REGISTRY.FORM.DESCRIPTION,
     }),
-  networkToCreate: z.coerce.number().gt(0, {
-    message: MESSAGES.REGISTRY.FORM.NETWORKTOCREATE,
-  }),
-  budget: z.coerce.number().min(1, { message: MESSAGES.REGISTRY.FORM.BUDGET }),
-  minGrantSize: z.coerce
-    .number()
-    .min(1, { message: MESSAGES.REGISTRY.FORM.MIN_GRANT_SIZE }),
-  maxGrantSize: z.coerce
-    .number()
-    .min(1, { message: MESSAGES.REGISTRY.FORM.MAX_GRANT_SIZE }),
+  networkToCreate: z.coerce.number().optional(),
+  budget: z.coerce.number().optional(),
+  minGrantSize: z.coerce.number().optional(),
+  maxGrantSize: z.coerce.number().optional(),
   grantsToDate: z.coerce.number().optional(),
-  linkToDetails: z.string().url(),
-  categories: z
-    .array(z.string())
-    .min(1, { message: MESSAGES.REGISTRY.FORM.CATEGORIES }),
-  ecosystems: z
-    .array(z.string())
-    .min(1, { message: MESSAGES.REGISTRY.FORM.ECOSYSTEMS }),
-  networks: z
-    .array(z.string())
-    .min(1, { message: MESSAGES.REGISTRY.FORM.NETWORKS }),
-  grantTypes: z
-    .array(z.string())
-    .min(1, { message: MESSAGES.REGISTRY.FORM.GRANT_TYPES }),
+  categories: z.array(z.string()),
+  organizations: z.array(z.string()),
+  ecosystems: z.array(z.string()),
+  networks: z.array(z.string()),
+  grantTypes: z.array(z.string()),
+  platformsUsed: z.array(z.string()),
+  status: z.string().optional().or(z.literal('Active')),
 });
 
 type CreateProgramType = z.infer<typeof createProgramSchema>;
 
-export default function AddProgram() {
+export default function AddProgram({
+  programToEdit,
+  backTo,
+  refreshPrograms,
+}: {
+  programToEdit?: GrantProgram | null;
+  backTo?: () => void;
+  refreshPrograms?: () => Promise<void>;
+}) {
   const router = useRouter();
-  // const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  // const [selectedNetworks, setSelectedNetworks] = useState<string[]>([]);
-  // const [selectedEcosystems, setSelectedEcosystems] = useState<string[]>([]);
-  // const [selectedGrantTypes, setSelectedGrantTypes] = useState<string[]>([]);
   const supportedChains = appNetwork
     .filter((chain) => {
       const support = [10, 42161, 11155111];
@@ -107,20 +154,47 @@ export default function AddProgram() {
     formState: { errors, isSubmitting, isValid },
   } = useForm<CreateProgramType>({
     resolver: zodResolver(createProgramSchema),
-    reValidateMode: "onChange",
-    mode: "onChange",
+    reValidateMode: 'onChange',
+    mode: 'onChange',
     defaultValues: {
-      networkToCreate: 0,
-      categories: [],
-      ecosystems: [],
-      networks: [],
-      grantTypes: [],
+      name: programToEdit?.metadata?.title,
+      description: programToEdit?.metadata?.description,
+      amountDistributed: programToEdit?.metadata?.amountDistributedToDate as
+        | number
+        | undefined,
+      budget: programToEdit?.metadata?.programBudget as number | undefined,
+      minGrantSize: programToEdit?.metadata?.minGrantSize as number | undefined,
+      maxGrantSize: programToEdit?.metadata?.maxGrantSize as number | undefined,
+      grantsToDate: programToEdit?.metadata?.grantsToDate as number | undefined,
+      bugBounty: programToEdit?.metadata?.bugBounty,
+      website: programToEdit?.metadata?.website,
+      twitter: programToEdit?.metadata?.projectTwitter,
+      discord: programToEdit?.metadata?.socialLinks?.discord,
+      orgWebsite: programToEdit?.metadata?.socialLinks?.orgWebsite,
+      blog: programToEdit?.metadata?.socialLinks?.blog,
+      forum: programToEdit?.metadata?.socialLinks?.forum,
+      categories: programToEdit?.metadata?.categories || [],
+      ecosystems: programToEdit?.metadata?.ecosystems || [],
+      organizations: programToEdit?.metadata?.organizations || [],
+      networks: programToEdit?.metadata?.networks || [],
+      grantTypes: programToEdit?.metadata?.grantTypes || [],
+      networkToCreate: programToEdit?.chainID || 0,
+      grantsSite: programToEdit?.metadata?.socialLinks?.grantsSite,
+      platformsUsed: programToEdit?.metadata?.platformsUsed || [],
+      status: programToEdit?.metadata?.status || 'Active',
+
     },
   });
 
   const onChangeGeneric = (
     value: string,
-    fieldName: "categories" | "ecosystems" | "networks" | "grantTypes"
+    fieldName:
+      | 'categories'
+      | 'ecosystems'
+      | 'networks'
+      | 'grantTypes'
+      | 'organizations'
+      | 'platformsUsed'
   ) => {
     const oldArray = watch(fieldName);
     let newArray = [...oldArray];
@@ -154,6 +228,77 @@ export default function AddProgram() {
         return;
       }
       const chainSelected = data.networkToCreate;
+
+      const metadata = {
+        title: data.name,
+        description: data.description,
+        programBudget: data.budget,
+        amountDistributedToDate: data.amountDistributed,
+        minGrantSize: data.minGrantSize,
+        maxGrantSize: data.maxGrantSize,
+        grantsToDate: data.grantsToDate,
+        website: data.website || '',
+        projectTwitter: data.twitter || '',
+        socialLinks: {
+          twitter: data.twitter || '',
+          website: data.website || '',
+          discord: data.discord || '',
+          orgWebsite: data.orgWebsite || '',
+          blog: data.blog || '',
+          forum: data.forum || '',
+          grantsSite: data.grantsSite || '',
+        },
+        bugBounty: data.bugBounty,
+        categories: data.categories,
+        ecosystems: data.ecosystems,
+        organizations: data.organizations,
+        networks: data.networks,
+        grantTypes: data.grantTypes,
+        platformsUsed: data.platformsUsed,
+        logoImg: '',
+        bannerImg: '',
+        logoImgData: {},
+        bannerImgData: {},
+        credentials: {},
+        createdAt: new Date().getTime(),
+        status: 'Active',
+        type: 'program',
+        tags: ['karma-gap', 'grant-program-registry'],
+      };
+
+      const [request, error] = await fetchData(
+        INDEXER.REGISTRY.CREATE,
+        'POST',
+        {
+          owner: address,
+          chainId: chainSelected,
+          metadata,
+        },
+        {},
+        {},
+        true
+      );
+      if (error) {
+        throw new Error('Error creating program');
+      }
+      toast.success('Program created successfully');
+      router.push(PAGES.REGISTRY.ROOT);
+    } catch (error) {
+      console.log(error);
+      toast.error('An error occurred while creating the program');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const editProgram = async (data: CreateProgramType) => {
+    setIsLoading(true);
+    try {
+      if (!isConnected || !isAuth || !address) {
+        openConnectModal?.();
+        return;
+      }
+      const chainSelected = data.networkToCreate;
       if (chain && chain.id !== chainSelected) {
         await switchNetworkAsync?.(chainSelected);
       }
@@ -168,9 +313,6 @@ export default function AddProgram() {
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
 
-      const alloRegistry = new AlloRegistry(walletSigner as any, ipfsStorage);
-
-      const nonce = Math.floor(Math.random() * 1000000 + 1);
       const metadata = {
         title: data.name,
         description: data.description,
@@ -179,49 +321,77 @@ export default function AddProgram() {
         minGrantSize: data.minGrantSize,
         maxGrantSize: data.maxGrantSize,
         grantsToDate: data.grantsToDate,
-        linkToDetails: data.linkToDetails,
-        website: data.website || "",
-        projectTwitter: data.twitter || "",
+        website: data.website || '',
+        projectTwitter: data.twitter || '',
         socialLinks: {
-          twitter: data.twitter || "",
-          website: data.website || "",
-          discord: data.discord || "",
-          orgWebsite: data.orgWebsite || "",
-          blog: data.blog || "",
-          forum: data.forum || "",
+          twitter: data.twitter || '',
+          website: data.website || '',
+          discord: data.discord || '',
+          orgWebsite: data.orgWebsite || '',
+          blog: data.blog || '',
+          forum: data.forum || '',
+          grantsSite: data.grantsSite || '',
         },
+        bugBounty: data.bugBounty,
         categories: data.categories,
         ecosystems: data.ecosystems,
+        organizations: data.organizations,
         networks: data.networks,
         grantTypes: data.grantTypes,
-        logoImg: "",
-        bannerImg: "",
+        platformsUsed: data.platformsUsed,
+        logoImg: '',
+        bannerImg: '',
         logoImgData: {},
         bannerImgData: {},
         credentials: {},
         createdAt: new Date().getTime(),
-        type: "program",
-        tags: ["karma-gap", "grant-program-registry"],
+        type: 'program',
+        tags: ['karma-gap', 'grant-program-registry'],
       };
 
-      const owner = address as string;
-
-      const hasRegistry = await alloRegistry
-        .createProgram(nonce + 1, data.name, metadata, owner, [owner])
-        .then((res) => {
-          return res;
-        })
-        .catch((error) => {
-          throw new Error(error);
-        });
-      if (!hasRegistry) {
-        throw new Error("Error creating program");
+      const permissionToEditOnChain =
+        programToEdit?.createdByAddress?.toLowerCase() ===
+        address?.toLowerCase();
+      if (permissionToEditOnChain) {
+        const allo = new AlloBase(
+          walletSigner as any,
+          ipfsStorage,
+          chainSelected as number
+        );
+        const hasRegistry = await allo
+          .updatePoolMetadata(programToEdit?.programId as string, metadata)
+          .then((res) => {
+            return res;
+          })
+          .catch((error) => {
+            throw new Error(error);
+          });
+        if (!hasRegistry) {
+          throw new Error('Error editing program');
+        }
+      } else {
+        const [request, error] = await fetchData(
+          INDEXER.REGISTRY.UPDATE,
+          'PUT',
+          {
+            id: programToEdit?._id.$oid,
+            chainId: chainSelected,
+            metadata,
+          },
+          {},
+          {},
+          true
+        );
+        if (error)
+          throw new Error('An error occurred while editing the program');
       }
-      toast.success("Program created successfully");
-      router.push(PAGES.REGISTRY.ROOT);
+      toast.success('Program edited successfully');
+      await refreshPrograms?.().then(() => {
+        backTo?.();
+      });
     } catch (error) {
       console.log(error);
-      toast.error("An error occurred while creating the program");
+      toast.error('An error occurred while editing the program');
     } finally {
       setIsLoading(false);
     }
@@ -230,7 +400,15 @@ export default function AddProgram() {
   const onSubmit: SubmitHandler<CreateProgramType> = async (data, event) => {
     event?.preventDefault();
     event?.stopPropagation();
-    await createProgram(data);
+
+    data.networkToCreate =
+      process.env.NEXT_PUBLIC_ENV === 'production' ? 42161 : 11155111;
+
+    if (programToEdit) {
+      await editProgram(data);
+    } else {
+      await createProgram(data);
+    }
   };
 
   return (
@@ -238,20 +416,37 @@ export default function AddProgram() {
       <div className="flex flex-col justify-start items-center max-w-[900px] w-full gap-6">
         <div className="flex flex-col justify-start items-start gap-3 p-0 w-full">
           <div className="flex flex-col gap-2 p-0">
-            <Link href={PAGES.REGISTRY.ROOT}>
-              <Button className="flex flex-row gap-2 bg-transparent hover:bg-transparent text-[#004EEB] text-sm p-0">
+            {programToEdit ? (
+              <Button
+                onClick={backTo}
+                className="flex flex-row gap-2 bg-transparent hover:bg-transparent text-[#004EEB] text-sm p-0"
+              >
                 <ChevronLeftIcon className="w-4 h-4" />
-                <p className="border-b border-b-[#004EEB]">Back to programs</p>
+                <p className="border-b border-b-[#004EEB]">
+                  Back to Manage Programs
+                </p>
               </Button>
-            </Link>
+            ) : (
+              <Link href={PAGES.REGISTRY.ROOT}>
+                <Button className="flex flex-row gap-2 bg-transparent hover:bg-transparent text-[#004EEB] text-sm p-0">
+                  <ChevronLeftIcon className="w-4 h-4" />
+                  <p className="border-b border-b-[#004EEB]">
+                    Back to programs
+                  </p>
+                </Button>
+              </Link>
+            )}
           </div>
           <div className="flex flex-col gap-1">
             <h1 className="text-2xl font-semibold text-black dark:text-white font-body">
-              Add your program to onchain registry
+              {programToEdit
+                ? `Update ${programToEdit.metadata?.title} program`
+                : 'Add your program to onchain registry'}
             </h1>
             <p className="text-base text-black dark:text-white">
-              Add your program to the registry and attract high quality
-              builders.
+              {programToEdit
+                ? ''
+                : 'Add your program to the registry and attract high quality builders.'}
             </p>
           </div>
         </div>
@@ -270,27 +465,24 @@ export default function AddProgram() {
                     id="program-name"
                     className={inputStyle}
                     placeholder="Ex: Super cool Program"
-                    {...register("name")}
+                    {...register('name')}
                   />
                   <p className="text-base text-red-400">
                     {errors.name?.message}
                   </p>
                 </div>
                 <div className="flex w-full flex-col  gap-1">
-                  <label
-                    htmlFor="program-links-to-details"
-                    className={labelStyle}
-                  >
-                    Link to program details *
+                  <label htmlFor="program-grants-site" className={labelStyle}>
+                    Grants Site *
                   </label>
                   <input
-                    id="program-links-to-details"
+                    id="program-grants-site"
                     className={inputStyle}
-                    placeholder="Ex: https://program.xyz/details"
-                    {...register("linkToDetails")}
+                    placeholder="Ex: https://program.xyz/"
+                    {...register('grantsSite')}
                   />
                   <p className="text-base text-red-400">
-                    {errors.linkToDetails?.message}
+                    {errors.grantsSite?.message}
                   </p>
                 </div>
               </div>
@@ -298,15 +490,18 @@ export default function AddProgram() {
                 <label htmlFor="program-description" className={labelStyle}>
                   Description *
                 </label>
-                <MarkdownEditor
-                  className="bg-transparent"
-                  value={watch("description")}
-                  onChange={(newValue: string) =>
-                    setValue("description", newValue || "", {
+                <textarea
+                  className={cn(
+                    inputStyle,
+                    'bg-transparent min-h-[120px] max-h-[360px]'
+                  )}
+                  value={watch('description')}
+                  onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
+                    setValue('description', event.target.value || '', {
                       shouldValidate: true,
                     })
                   }
-                  placeholderText="Please provide a description of this program"
+                  placeholder="Please provide a description of this program"
                 />
                 <p className="text-base text-red-400">
                   {errors.description?.message}
@@ -315,33 +510,55 @@ export default function AddProgram() {
               <div className="grid grid-cols-4  max-sm:grid-cols-1 max-md:grid-cols-2 gap-4 justify-between">
                 <div className="flex w-full flex-col gap-1">
                   <label htmlFor="program-categories" className={labelStyle}>
-                    Categories *
+                    Categories
                   </label>
                   <SearchDropdown
                     list={registryHelper.categories}
                     onSelectFunction={(value: string) =>
-                      onChangeGeneric(value, "categories")
+                      onChangeGeneric(value, 'categories')
                     }
-                    type={"Categories"}
-                    selected={watch("categories")}
+                    type={'Categories'}
+                    selected={watch('categories')}
                     prefixUnselected="Select"
+                    buttonClassname="w-full max-w-full"
                   />
                   <p className="text-base text-red-400">
                     {errors.categories?.message}
                   </p>
                 </div>
                 <div className="flex w-full flex-col  gap-1">
+                  <label htmlFor="program-organizations" className={labelStyle}>
+                    Organizations
+                  </label>
+                  <SearchDropdown
+                    list={registryHelper.organizations}
+                    onSelectFunction={(value: string) =>
+                      onChangeGeneric(value, 'organizations')
+                    }
+                    type={'Organizations'}
+                    selected={watch('organizations')}
+                    prefixUnselected="Select"
+                    buttonClassname="w-full max-w-full"
+                    canAdd
+                  />
+                  <p className="text-base text-red-400">
+                    {errors.organizations?.message}
+                  </p>
+                </div>
+                <div className="flex w-full flex-col  gap-1">
                   <label htmlFor="program-ecosystems" className={labelStyle}>
-                    Ecosystems *
+                    Ecosystems
                   </label>
                   <SearchDropdown
                     list={registryHelper.ecosystems}
                     onSelectFunction={(value: string) =>
-                      onChangeGeneric(value, "ecosystems")
+                      onChangeGeneric(value, 'ecosystems')
                     }
-                    type={"Ecosystems"}
-                    selected={watch("ecosystems")}
+                    type={'Ecosystems'}
+                    selected={watch('ecosystems')}
                     prefixUnselected="Select"
+                    buttonClassname="w-full max-w-full"
+                    canAdd
                   />
                   <p className="text-base text-red-400">
                     {errors.ecosystems?.message}
@@ -349,18 +566,20 @@ export default function AddProgram() {
                 </div>
                 <div className="flex w-full flex-col  gap-1">
                   <label htmlFor="program-networks" className={labelStyle}>
-                    Networks *
+                    Networks
                   </label>
 
                   <SearchDropdown
                     list={registryHelper.networks}
                     imageDictionary={registryHelper.networkImages}
                     onSelectFunction={(value: string) =>
-                      onChangeGeneric(value, "networks")
+                      onChangeGeneric(value, 'networks')
                     }
-                    type={"Networks"}
-                    selected={watch("networks")}
+                    type={'Networks'}
+                    selected={watch('networks')}
                     prefixUnselected="Select"
+                    buttonClassname="w-full max-w-full"
+                    canAdd
                   />
                   <p className="text-base text-red-400">
                     {errors.networks?.message}
@@ -368,26 +587,61 @@ export default function AddProgram() {
                 </div>
                 <div className="flex w-full flex-col  gap-1">
                   <label htmlFor="program-types" className={labelStyle}>
-                    Types *
+                    Funding Mechanisms
                   </label>
                   <SearchDropdown
                     list={registryHelper.grantTypes}
                     onSelectFunction={(value: string) =>
-                      onChangeGeneric(value, "grantTypes")
+                      onChangeGeneric(value, 'grantTypes')
                     }
-                    type={"Grant Types"}
-                    selected={watch("grantTypes")}
+                    type={'Mechanisms'}
+                    selected={watch('grantTypes')}
                     prefixUnselected="Select"
+                    buttonClassname="w-full max-w-full"
                   />
                   <p className="text-base text-red-400">
                     {errors.grantTypes?.message}
                   </p>
                 </div>
+                <div className="flex w-full flex-col  gap-1">
+                  <label htmlFor="program-types" className={labelStyle}>
+                    Platforms Used
+                  </label>
+                  <SearchDropdown
+                    list={registryHelper.platformsUsed}
+                    onSelectFunction={(value: string) =>
+                      onChangeGeneric(value, 'platformsUsed')
+                    }
+                    type={'Platforms'}
+                    selected={watch('platformsUsed')}
+                    prefixUnselected="Select"
+                    buttonClassname="w-full max-w-full"
+                    shouldSort={false}
+                    canAdd
+                  />
+                  <p className="text-base text-red-400">
+                    {errors.platformsUsed?.message}
+                  </p>
+                </div>
+                {programToEdit && (
+                  <div className="flex w-full flex-col justify-between gap-2">
+                    <label htmlFor="program-status" className={labelStyle}>
+                      Status
+                    </label>
+                    <StatusDropdown
+                      onSelectFunction={(value: string) => {
+                        setValue('status', value);
+                      }}
+                      list={registryHelper.status}
+                      previousValue={watch('status')}
+                    />
+                  </div>
+                )}
               </div>
             </div>
 
             <div className="grid grid-cols-3 max-sm:grid-cols-1 w-full gap-6 border-b border-b-[#98A2B3] pb-10">
-              <div className="flex w-full flex-col justify-between gap-2">
+              {/* <div className="flex w-full flex-col justify-between gap-2">
                 <label htmlFor="program-network" className={labelStyle}>
                   Network to create program *
                 </label>
@@ -403,17 +657,17 @@ export default function AddProgram() {
                 <p className="text-base text-red-400">
                   {errors.networkToCreate?.message}
                 </p>
-              </div>
+              </div> */}
               <div className="flex w-full flex-col  gap-1">
                 <label htmlFor="program-budget" className={labelStyle}>
-                  Program budget *
+                  Program budget
                 </label>
                 <input
                   id="program-budget"
                   className={inputStyle}
                   placeholder="Ex: 100500"
                   type="number"
-                  {...register("budget")}
+                  {...register('budget')}
                 />
                 <p className="text-base text-red-400">
                   {errors.budget?.message}
@@ -424,14 +678,14 @@ export default function AddProgram() {
                   htmlFor="program-amount-distributed"
                   className={labelStyle}
                 >
-                  Amount distributed to date (optional)
+                  Amount distributed to date
                 </label>
                 <input
                   id="program-amount-distributed"
                   className={inputStyle}
                   placeholder="Ex: 804150"
                   type="number"
-                  {...register("amountDistributed")}
+                  {...register('amountDistributed')}
                 />
                 <p className="text-base text-red-400">
                   {errors.amountDistributed?.message}
@@ -439,14 +693,14 @@ export default function AddProgram() {
               </div>
               <div className="flex w-full flex-col  gap-1">
                 <label htmlFor="program-grants-issued" className={labelStyle}>
-                  Grants issued to date (optional)
+                  Grants issued to date
                 </label>
                 <input
                   id="program-grants-issued"
                   type="number"
                   className={inputStyle}
                   placeholder="Ex: 60"
-                  {...register("grantsToDate")}
+                  {...register('grantsToDate')}
                 />
                 <p className="text-base text-red-400">
                   {errors.grantsToDate?.message}
@@ -454,14 +708,14 @@ export default function AddProgram() {
               </div>
               <div className="flex w-full flex-col  gap-1">
                 <label htmlFor="program-min-grant-size" className={labelStyle}>
-                  Min Grant size *
+                  Min Grant size
                 </label>
                 <input
                   type="number"
                   id="program-min-grant-size"
                   className={inputStyle}
                   placeholder="Ex: 80000"
-                  {...register("minGrantSize")}
+                  {...register('minGrantSize')}
                 />
                 <p className="text-base text-red-400">
                   {errors.minGrantSize?.message}
@@ -469,14 +723,14 @@ export default function AddProgram() {
               </div>
               <div className="flex w-full flex-col  gap-1">
                 <label htmlFor="program-max-grant-size" className={labelStyle}>
-                  Max Grant size *
+                  Max Grant size
                 </label>
                 <input
                   type="number"
                   id="program-max-grant-size"
                   className={inputStyle}
                   placeholder="Ex: 80000"
-                  {...register("maxGrantSize")}
+                  {...register('maxGrantSize')}
                 />
                 <p className="text-base text-red-400">
                   {errors.maxGrantSize?.message}
@@ -486,17 +740,17 @@ export default function AddProgram() {
             <div className="grid grid-cols-3 max-sm:grid-cols-1 w-full gap-6  pb-10">
               <div className="flex w-full flex-col gap-2 justify-between">
                 <label htmlFor="program-twitter" className={labelStyle}>
-                  X/Twitter (optional)
+                  X/Twitter
                 </label>
                 <div className="w-full relative">
                   <div className="h-full w-max absolute flex justify-center items-center mx-3">
-                    <TwitterIcon className="text-[#47ACDF] w-4 h-4" />
+                    <Twitter2Icon className="text-zinc-500 w-4 h-4" />
                   </div>
                   <input
                     id="program-twitter"
-                    className={cn(inputStyle, "pl-10 mt-0")}
+                    className={cn(inputStyle, 'pl-10 mt-0')}
                     placeholder="Ex: https://twitter.com/program"
-                    {...register("twitter")}
+                    {...register('twitter')}
                   />
                 </div>
                 <p className="text-base text-red-400">
@@ -505,17 +759,17 @@ export default function AddProgram() {
               </div>
               <div className="flex w-full flex-col gap-2 justify-between">
                 <label htmlFor="program-discord" className={labelStyle}>
-                  Discord (optional)
+                  Discord
                 </label>
                 <div className="w-full relative">
                   <div className="h-full w-max absolute flex justify-center items-center mx-3">
-                    <DiscordIcon className="text-[#5865F2] w-4 h-4" />
+                    <Discord2Icon className="text-zinc-500 w-4 h-4" />
                   </div>
                   <input
                     id="program-discord"
-                    className={cn(inputStyle, "pl-10 mt-0")}
+                    className={cn(inputStyle, 'pl-10 mt-0')}
                     placeholder="Ex: https://discord.gg/program"
-                    {...register("discord")}
+                    {...register('discord')}
                   />
                 </div>
                 <p className="text-base text-red-400">
@@ -524,34 +778,34 @@ export default function AddProgram() {
               </div>
               <div className="flex w-full flex-col gap-2 justify-between">
                 <label htmlFor="program-blog" className={labelStyle}>
-                  Blog (optional)
+                  Blog
                 </label>
                 <div className="w-full relative">
                   <div className="h-full w-max absolute flex justify-center items-center mx-3">
-                    <BlogIcon className="text-orange-500 w-4 h-4" />
+                    <BlogIcon className="text-zinc-500 w-4 h-4" />
                   </div>
                   <input
                     id="program-blog"
-                    className={cn(inputStyle, "pl-10 mt-0")}
+                    className={cn(inputStyle, 'pl-10 mt-0')}
                     placeholder="Ex: https://blog.program.co/program"
-                    {...register("blog")}
+                    {...register('blog')}
                   />
                 </div>
                 <p className="text-base text-red-400">{errors.blog?.message}</p>
               </div>
               <div className="flex w-full flex-col gap-2 justify-between">
                 <label htmlFor="program-forum" className={labelStyle}>
-                  Forum (optional)
+                  Forum
                 </label>
                 <div className="w-full relative">
                   <div className="h-full w-max absolute flex justify-center items-center mx-3">
                     <DiscussionIcon className="text-zinc-500 w-4 h-4" />
                   </div>
                   <input
-                    className={cn(inputStyle, "pl-10 mt-0")}
+                    className={cn(inputStyle, 'pl-10 mt-0')}
                     id="program-forum"
                     placeholder="Ex: https://forum.program.co/program"
-                    {...register("forum")}
+                    {...register('forum')}
                   />
                 </div>
                 <p className="text-base text-red-400">
@@ -560,40 +814,41 @@ export default function AddProgram() {
               </div>
               <div className="flex w-full flex-col gap-2 justify-between">
                 <label htmlFor="program-org" className={labelStyle}>
-                  Organization website (optional)
+                  Organization website
                 </label>
                 <div className="w-full relative">
                   <div className="h-full w-max absolute flex justify-center items-center mx-3">
                     <OrganizationIcon className="text-zinc-500 w-4 h-4" />
                   </div>
                   <input
-                    className={cn(inputStyle, "pl-10 mt-0")}
+                    className={cn(inputStyle, 'pl-10 mt-0')}
                     placeholder="Ex: https://org.program.co/program"
                     id="program-org"
-                    {...register("orgWebsite")}
+                    {...register('orgWebsite')}
                   />
                 </div>
                 <p className="text-base text-red-400">
                   {errors.orgWebsite?.message}
                 </p>
               </div>
+
               <div className="flex w-full flex-col gap-2 justify-between">
-                <label htmlFor="program-website" className={labelStyle}>
-                  Program Website (optional)
+                <label htmlFor="program-bug-bounty" className={labelStyle}>
+                  Link to Bug bounty
                 </label>
                 <div className="w-full relative">
                   <div className="h-full w-max absolute flex justify-center items-center mx-3">
                     <WebsiteIcon className="text-zinc-500 w-4 h-4" />
                   </div>
                   <input
-                    className={cn(inputStyle, "pl-10 mt-0")}
+                    className={cn(inputStyle, 'pl-10 mt-0')}
                     placeholder="Ex: https://program.xyz"
-                    id="program-website"
-                    {...register("website")}
+                    id="program-bug-bounty"
+                    {...register('bugBounty')}
                   />
                 </div>
                 <p className="text-base text-red-400">
-                  {errors.website?.message}
+                  {errors.bugBounty?.message}
                 </p>
               </div>
             </div>
@@ -613,7 +868,7 @@ export default function AddProgram() {
                 // selectedGrantTypes.length === 0
               }
             >
-              Create program
+              {programToEdit ? 'Update program' : 'Create program'}
             </Button>
           </div>
         </form>

@@ -23,6 +23,8 @@ import { useAuthStore } from "@/store/auth";
 import { getGapClient, useGap } from "@/hooks";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { getWalletClient } from "@wagmi/core";
+import { useStepper } from "@/store/txStepper";
+import toast from "react-hot-toast";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -35,6 +37,11 @@ const schema = z.object({
 
 type SchemaType = z.infer<typeof schema>;
 
+interface CommunityAdmin {
+  id: string;
+  admins: { user: { id: string } }[];
+}
+
 type AddAdminDialogProps = {
   buttonElement?: {
     text?: string;
@@ -44,7 +51,7 @@ type AddAdminDialogProps = {
   };
   UUID: `0x${string}`;
   chainid: number;
-  fetchAdmins?: () => Promise<void>;
+  fetchAdmins: () => Promise<CommunityAdmin[] | undefined>;
 };
 
 export const AddAdmin: FC<AddAdminDialogProps> = ({
@@ -87,6 +94,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
   const { switchNetworkAsync } = useSwitchNetwork({
     chainId: appNetwork[0].id,
   });
+  const { changeStepperStep, setIsStepper } = useStepper();
 
   const addAdmin = async (data: SchemaType) => {
     if (chain?.id != chainid) {
@@ -98,21 +106,47 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
     if (!walletClient) return;
     const walletSigner = await walletClientToSigner(walletClient);
     try {
-      console.log(data.address);
-
       const communityResolver = await GAP.getCommunityResolver(walletSigner);
+      changeStepperStep("preparing");
       const communityResponse = await communityResolver.enlist(
         UUID,
         data.address
       );
+      changeStepperStep("pending");
       await communityResponse.wait().then(async () => {
-        if (fetchAdmins) await fetchAdmins();
-        setIsLoading(false);
-        closeModal();
+        changeStepperStep("indexing");
+        let retries = 1000;
+        while (retries > 0) {
+          await fetchAdmins()
+            .then(async (response) => {
+              const addressAdded = response?.find((community) =>
+                community.admins.find(
+                  (admin) =>
+                    admin.user.id.toLowerCase() === data.address.toLowerCase()
+                )
+              );
+              if (addressAdded) {
+                retries = 0;
+                changeStepperStep("indexed");
+                toast.success("Admin added successfully!");
+                closeModal(); // Close the dialog upon successful submission
+              }
+              retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            })
+            .catch(async () => {
+              retries -= 1;
+              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            });
+        }
       });
-      console.log(communityResponse);
     } catch (error) {
       console.log(error);
+    } finally {
+      setIsStepper(false);
+      setIsLoading(false);
     }
   };
 

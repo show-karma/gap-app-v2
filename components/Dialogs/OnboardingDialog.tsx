@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { FC, Fragment, useEffect, useMemo } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import { Button } from "./Utilities/Button";
+import { Button } from "../Utilities/Button";
 import { useOnboarding } from "@/store/onboarding";
 import {
   ChevronLeftIcon,
@@ -276,7 +276,7 @@ export const OnboardingDialog: FC = () => {
             >
               <Dialog.Panel className="w-full max-w-4xl h-max transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
                 <button
-                  className="p-2 text-black absolute top-4 right-4"
+                  className="p-2 text-black dark:text-white absolute top-4 right-4"
                   onClick={() => closeModal()}
                 >
                   <XMarkIcon className="w-6 h-6" />
