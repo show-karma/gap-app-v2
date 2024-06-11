@@ -1,12 +1,10 @@
 import { Abi, encodeFunctionData } from "viem";
-
 import { frames } from "../frame";
-import { Dontaion_ABI } from "./contracts/Donation";
 import { transaction } from "frames.js/core";
-
 import { Networks } from "@show-karma/karma-gap-sdk";
-
 import { ethers } from "ethers";
+import { DonationsABI } from "../../../../../utilities/donations/abi";
+import { getChainNameById } from "@/utilities/network";
 
 export const handleRequest = frames(async (ctx) => {
   console.log(ctx.message?.inputText);
@@ -15,7 +13,10 @@ export const handleRequest = frames(async (ctx) => {
     "ether"
   );
   console.log(EtherToWei.toString());
-  const schema = Networks["optimism-sepolia"].schemas.Details || "0x00000000";
+  const chainId = ctx.searchParams["chainId"] || "0x00000000";
+  const schema =
+    Networks[getChainNameById(parseInt(chainId))].schemas.Details ||
+    "0x00000000";
   const recipient = ctx.searchParams["recipient"] || "0x00000000";
   const refuid = ctx.searchParams["refuid"] || "0x00000000";
 
@@ -53,17 +54,17 @@ export const handleRequest = frames(async (ctx) => {
   ];
 
   const calldata = encodeFunctionData({
-    abi: Dontaion_ABI,
+    abi: DonationsABI,
     functionName: "donate",
     args: args,
   });
 
   return transaction({
-    chainId: "eip155:10",
+    chainId: `eip155:${chainId}`,
     method: "eth_sendTransaction",
     params: {
-      abi: Dontaion_ABI as Abi,
-      to: "0x8E232482417FfE40b5E68Bd9e436C2F2c3A97670",
+      abi: DonationsABI as Abi,
+      to: Networks[getChainNameById(parseInt(chainId))].contracts.donations,
       data: calldata,
       value: BigInt(100000000).toString(),
     },

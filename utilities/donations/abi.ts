@@ -1,8 +1,38 @@
-export const Dontaion_ABI = [
+export const DonationsABI = [
   {
-    inputs: [],
+    inputs: [
+      {
+        internalType: "address",
+        name: "_gap_contract_address",
+        type: "address",
+      },
+      {
+        internalType: "uint256",
+        name: "_platformFeeInBasis",
+        type: "uint256",
+      },
+    ],
     stateMutability: "nonpayable",
     type: "constructor",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "owner",
+        type: "address",
+      },
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "amount",
+        type: "uint256",
+      },
+    ],
+    name: "CommissionEarned",
+    type: "event",
   },
   {
     anonymous: false,
@@ -33,19 +63,6 @@ export const Dontaion_ABI = [
     anonymous: false,
     inputs: [
       {
-        indexed: false,
-        internalType: "uint8",
-        name: "version",
-        type: "uint8",
-      },
-    ],
-    name: "Initialized",
-    type: "event",
-  },
-  {
-    anonymous: false,
-    inputs: [
-      {
         indexed: true,
         internalType: "address",
         name: "previousOwner",
@@ -60,6 +77,32 @@ export const Dontaion_ABI = [
     ],
     name: "OwnershipTransferred",
     type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: false,
+        internalType: "uint256",
+        name: "platformFeeInBasis",
+        type: "uint256",
+      },
+    ],
+    name: "PlatformFeeSet",
+    type: "event",
+  },
+  {
+    inputs: [],
+    name: "_owner",
+    outputs: [
+      {
+        internalType: "address",
+        name: "",
+        type: "address",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
   },
   {
     inputs: [
@@ -114,7 +157,7 @@ export const Dontaion_ABI = [
       },
       {
         internalType: "uint256",
-        name: "amountInWei",
+        name: "amount",
         type: "uint256",
       },
     ],
@@ -143,24 +186,6 @@ export const Dontaion_ABI = [
     type: "function",
   },
   {
-    inputs: [
-      {
-        internalType: "address",
-        name: "_gap_contract_address",
-        type: "address",
-      },
-      {
-        internalType: "uint256",
-        name: "_platformFeeDividend",
-        type: "uint256",
-      },
-    ],
-    name: "initialize",
-    outputs: [],
-    stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
     inputs: [],
     name: "owner",
     outputs: [
@@ -175,7 +200,7 @@ export const Dontaion_ABI = [
   },
   {
     inputs: [],
-    name: "platformFeeDividend",
+    name: "platformFeeInBasis",
     outputs: [
       {
         internalType: "uint256",
@@ -210,11 +235,11 @@ export const Dontaion_ABI = [
     inputs: [
       {
         internalType: "uint256",
-        name: "_platformFeeDividend",
+        name: "_platformFeeInBasis",
         type: "uint256",
       },
     ],
-    name: "setPlatformFeeDividend",
+    name: "setPlatformFeeInBasis",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -232,4 +257,4 @@ export const Dontaion_ABI = [
     stateMutability: "nonpayable",
     type: "function",
   },
-] as const;
+];
