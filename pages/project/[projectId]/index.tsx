@@ -11,6 +11,7 @@ import {
   fetchMetadata,
   metadataToMetaTags,
 } from "frames.js/next/pages-router/client";
+import { envVars } from "@/utilities/enviromentVars";
 
 import { Hex } from "viem";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
@@ -457,12 +458,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         (projectInfo as ProjectDetailsWithUid)?.description?.substring(0, 80) ||
         "",
       metadata: await fetchMetadata(
-        new URL(
-          `/api/frames/${projectId}`,
-          process.env.VERCEL_URL
-            ? `https://${process.env.VERCEL_URL}`
-            : "http://localhost:3000"
-        )
+        new URL(`/api/frames/${projectId}`, envVars.APP_URL)
       ),
     },
   };
