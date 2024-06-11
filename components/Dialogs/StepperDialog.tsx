@@ -111,11 +111,8 @@ export const StepperDialog = () => {
                 <div className="flex flex-col gap-2">
                   <div className="flex flex-col gap-1">
                     <h2 className="text-2xl font-bold dark:text-zinc-200 text-black">
-                      Attestation interaction
+                      Saving your information
                     </h2>
-                    <p className="text-lg font-normal dark:text-zinc-400 text-black">
-                      Check the current step of your attestation
-                    </p>
                   </div>
                   <div className="flex flex-col gap-3 mt-4 mb-4">
                     {stepCounter.map((item) => (
