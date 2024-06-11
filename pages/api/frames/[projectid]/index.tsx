@@ -182,12 +182,12 @@ const handleRequest = frames(async (ctx) => {
         </div>
       </div>
     ),
-    textInput: "Enter the donate value in wei",
+    textInput: "Enter the amount",
     buttons: [
       <Button
         key={1}
         action="tx"
-        target={`http://localhost:3000/api/frames/${projectId}/txdata?projectId=${projectId}&recipient=${data?.recipient}&refuid=${data?.refUID}`}
+        target={`http://localhost:3000/api/frames/${projectId}/txdata?projectId=${projectId}&recipient=${data?.recipient}&refuid=${data?.refUID}&chainID=${data?.chainID}`}
         post_url={`/${projectId}`}
       >
         Donate
