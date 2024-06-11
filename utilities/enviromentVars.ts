@@ -30,5 +30,8 @@ export const envVars = {
   PROFILE_ID: isDev
     ? "0x418102f570483423fc7d431e0efd1cc5d49f2b3fe4c85cb7d837bcfa83e7db03"
     : "0xf123b01fbc8e244131dd1078c8c6778a7037855139f01e65e0e424e06584edd2",
-  APP_URL: isDev ? "https://gapstag.karmahq.xyz" : "https://gap.karmahq.xyz",
+  APP_URL:
+    process.env.NEXT_PUBLIC_ENV === "production"
+      ? "https://gap.karmahq.xyz"
+      : "https://gap-app-v2-git-feat-frames-karma-devs.vercel.app",
 };
