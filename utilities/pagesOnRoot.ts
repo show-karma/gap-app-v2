@@ -5,5 +5,5 @@ export const pagesOnRoot = [
   "stats",
   "404",
   "admin",
-  "grant-program-registry",
+  "funding-map",
 ];
