@@ -5,6 +5,7 @@ import { Networks } from "@show-karma/karma-gap-sdk";
 import { ethers } from "ethers";
 import { getChainNameById } from "@/utilities/network";
 import { DonationsABI } from "../../../../../utilities/donations/abi";
+import { SchemaEncoder } from "@ethereum-attestation-service/eas-sdk";
 
 export const handleRequest = frames(async (ctx) => {
   console.log(ctx.message?.inputText);
@@ -20,6 +21,18 @@ export const handleRequest = frames(async (ctx) => {
   const recipient = ctx.searchParams["recipient"] || "0x00000000";
   const refuid = ctx.searchParams["refuid"] || "0x00000000";
 
+  const schemaEncoder = new SchemaEncoder("string json");
+  const encodedData = schemaEncoder.encodeData([
+    {
+      name: "json",
+      value: JSON.stringify({
+        comment: `Donation to project ${ctx.message?.inputText}`,
+        type: "project-endorsement",
+      }),
+      type: "string",
+    },
+  ]);
+
   if (!ctx?.message) {
     throw new Error("Invalid frame message");
   }
@@ -32,7 +45,7 @@ export const handleRequest = frames(async (ctx) => {
         expirationTime: bigint;
         revocable: boolean;
         refUID: `0x${string}`;
-        data: any;
+        data: string;
         value: bigint;
       };
     },
@@ -45,10 +58,7 @@ export const handleRequest = frames(async (ctx) => {
         expirationTime: BigInt(0),
         revocable: true,
         refUID: refuid as `0x${string}`,
-        data: JSON.stringify({
-          comment: `Donation to project ${ctx.message?.inputText}`,
-          type: "project-endorsement",
-        }),
+        data: encodedData,
         value: BigInt(0),
       },
     },
