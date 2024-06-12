@@ -7,12 +7,8 @@ import { getGapClient } from "@/hooks";
 const handleRequest = frames(async (ctx) => {
   const projectId = ctx.request.url.split("/").pop();
   const data = await getProjectById(projectId as string);
-  console.log(data);
-  console.log(data?.refUID);
   const gl = data?.grants?.length.toString();
-  console.log(data?.impacts?.length);
-  console.log(data?.endorsements?.length);
-  const gap = getGapClient(11155420);
+  const gap = getGapClient(data?.chainID as number);
   console.log(gap.findSchema("ProjectEndorsement").uid);
 
   if (ctx.message?.transactionId) {

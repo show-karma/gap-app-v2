@@ -33,5 +33,5 @@ export const envVars = {
   APP_URL:
     process.env.NEXT_PUBLIC_ENV === "production"
       ? "https://gap.karmahq.xyz"
-      : "https://gap-app-v2-git-feat-frames-karma-devs.vercel.app",
+      : "https://03d6-49-207-213-73.ngrok-free.app/",
 };
