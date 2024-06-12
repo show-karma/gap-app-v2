@@ -38,7 +38,6 @@ import { EndorsementDialog } from "@/components/Pages/Project/Impact/Endorsement
 import { Button } from "@/components/Utilities/Button";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { ProjectSubscriptionDialog } from "@/components/Pages/Project/ProjectSubscription";
-import Head from "next/head";
 
 type ProjectDetailsWithUid = IProjectDetails & { uid: Hex };
 
