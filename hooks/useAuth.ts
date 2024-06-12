@@ -122,7 +122,7 @@ export const useAuth = () => {
       if (router.asPath === "/") {
         router.push(PAGES.MY_PROJECTS);
       }
-      if (!router.asPath.includes("grant-program-registry")) {
+      if (!router.asPath.includes("funding-map")) {
         setIsOnboarding?.(true);
       }
       if (address) {
