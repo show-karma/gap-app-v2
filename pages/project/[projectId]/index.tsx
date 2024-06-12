@@ -7,6 +7,11 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useAccount } from "wagmi";
 import { IProjectDetails, Project } from "@show-karma/karma-gap-sdk";
 import { NextSeo } from "next-seo";
+import {
+  fetchMetadata,
+  metadataToMetaTags,
+} from "frames.js/next/pages-router/client";
+import { envVars } from "@/utilities/enviromentVars";
 
 import { Hex } from "viem";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
@@ -451,12 +456,17 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       projectDesc:
         (projectInfo as ProjectDetailsWithUid)?.description?.substring(0, 80) ||
         "",
+      metadata: await fetchMetadata(
+        new URL(`/api/frames/${projectId}`, envVars.APP_URL)
+      ),
     },
   };
 }
+
 const ProjectPageIndex = ({
   projectTitle,
   projectDesc,
+  metadata,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const dynamicMetadata = {
     title: `Karma GAP - ${projectTitle}`,
@@ -471,8 +481,10 @@ const ProjectPageIndex = ({
   //     </div>
   //   );
   // }
+
   return (
     <>
+      {metadataToMetaTags(metadata)}
       <NextSeo
         title={dynamicMetadata.title || defaultMetadata.title}
         description={dynamicMetadata.description || defaultMetadata.description}
