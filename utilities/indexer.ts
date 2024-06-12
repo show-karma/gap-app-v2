@@ -11,6 +11,8 @@ export const INDEXER = {
   PROJECT: {
     SUBSCRIBE: (projectId: Hex) => `/projects/${projectId}/subscribe`,
     GET: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}`,
+    GET_INFO_FOR_FRAMES: (projectIdOrSlug: string) =>
+      `/projects/${projectIdOrSlug}/info-for-frame`,
     FEED: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/feed`,
   },
   QUESTIONS: {
