@@ -33,9 +33,10 @@ const handleRequest = frames(async (ctx) => {
         <div tw="bg-zinc-100 text-zinc-900 w-full h-full text-center justify-center items-center flex flex-col">
           <div tw="flex mb-2">
             <img
-              tw="h-32"
               src="https://gap.karmahq.xyz/logo/karma-gap-logo.svg"
               alt=""
+              width={550}
+              height={135}
             />
           </div>
           <div tw="flex font-bold">
@@ -75,10 +76,11 @@ const handleRequest = frames(async (ctx) => {
         <div tw="flex flex-row justify-between items-start pb-5">
           <div tw="flex flex-col">
             <img
-              src="http://localhost:3000/logo/karma-gap-logo2.png"
+              src="https://gap.karmahq.xyz/logo/karma-gap-logo.svg"
               alt="logo"
               tw="mt-2"
               width={400}
+              height={100}
             />
           </div>
           <div tw="flex flex-row items-start justify-between p-2 ">
@@ -118,6 +120,9 @@ const handleRequest = frames(async (ctx) => {
         </div>
       </div>
     ),
+    imageOptions: {
+      aspectRatio: "1.91:1",
+    },
     textInput: "Enter the amount",
     buttons: [
       <Button
