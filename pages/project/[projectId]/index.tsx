@@ -7,7 +7,7 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useAccount } from "wagmi";
 import { IProjectDetails, Project } from "@show-karma/karma-gap-sdk";
 import { NextSeo } from "next-seo";
-import Head from "next/head";
+import { MetaTag } from "next-seo/lib/types";
 import {
   fetchMetadata,
   metadataToMetaTags,
@@ -457,10 +457,15 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       projectDesc:
         (projectInfo as ProjectDetailsWithUid)?.description?.substring(0, 80) ||
         "",
-      metadata: await fetchMetadata(
-        new URL(`/api/frames/${projectId}`, envVars.APP_URL)
+      frameMetadata: await fetchMetadata(
+        new URL(
+          `/api/frames/${projectId}?projectInfo=${
+            // Base64 encoded projectInfo
+            Buffer.from(JSON.stringify(projectInfo)).toString("base64")
+          }`,
+          envVars.VERCEL_URL
+        )
       ),
-      projectInfo,
     },
   };
 }
@@ -468,9 +473,9 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const ProjectPageIndex = ({
   projectTitle,
   projectDesc,
-  metadata,
+  frameMetadata,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
-  console.log("metadata: ", metadata["fc:frame"]);
+  console.log("frameMetadata: ", frameMetadata["fc:frame"]);
   const dynamicMetadata = {
     title: `Karma GAP - ${projectTitle}`,
     description: projectDesc,
@@ -485,9 +490,15 @@ const ProjectPageIndex = ({
   //   );
   // }
 
+  const framesAdditonalMetatags: MetaTag[] = Object.entries(frameMetadata).map(
+    ([key, value]) => ({
+      name: key,
+      content: String(value),
+    })
+  );
+
   return (
     <>
-      <Head>{metadataToMetaTags(metadata)}</Head>
       <NextSeo
         title={dynamicMetadata.title || defaultMetadata.title}
         description={dynamicMetadata.description || defaultMetadata.description}
@@ -513,6 +524,7 @@ const ProjectPageIndex = ({
             href: "/images/favicon.png",
           },
         ]}
+        additionalMetaTags={framesAdditonalMetatags}
       />
 
       {<ProjectPage />}

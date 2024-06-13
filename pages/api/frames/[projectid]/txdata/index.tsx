@@ -13,7 +13,6 @@ export const handleRequest = frames(async (ctx) => {
     ctx.message?.inputText as string,
     "ether"
   );
-  console.log(EtherToWei.toString());
   const chainId = ctx.searchParams["chainID"] || "0x00000000";
   const schema =
     Networks[getChainNameById(parseInt(chainId))].schemas.Details ||

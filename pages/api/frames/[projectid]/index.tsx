@@ -7,10 +7,14 @@ import { getGapClient } from "@/hooks";
 import { envVars } from "@/utilities/enviromentVars";
 
 const handleRequest = frames(async (ctx) => {
-  const projectId = ctx.request.url.split("/").pop();
+  const projectId = ctx.request.url.split("?projectInfo=")[0].split("/").pop();
 
-  const [data, error, pageInfo]: any = await fetchData(
-    `${INDEXER.PROJECT.GET_INFO_FOR_FRAMES(projectId as string)}`
+  // Get project info from URL query params - base64 decode
+  const projectInfo = JSON.parse(
+    Buffer.from(
+      ctx.request.url?.split("?projectInfo=")?.pop() as string,
+      "base64"
+    ).toString()
   );
 
   if (ctx.message?.transactionId) {
@@ -27,7 +31,7 @@ const handleRequest = frames(async (ctx) => {
             />
           </div>
           <div tw="flex font-bold">
-            Donation to {data?.details?.title} has been successful.
+            Donation to {projectInfo?.details?.title} has been successful.
           </div>
           <div tw="flex">An endorsement attestation has been issued.</div>
           <div tw="mt-2 text-3xl flex">
@@ -49,7 +53,7 @@ const handleRequest = frames(async (ctx) => {
         <Button
           key={2}
           action="link"
-          target={`${envVars.APP_URL}/project/${projectId}`}
+          target={`${envVars.VERCEL_URL}/project/${projectId}`}
         >
           View on GAP
         </Button>,
@@ -73,19 +77,19 @@ const handleRequest = frames(async (ctx) => {
             <div tw="flex flex-col items-end border-r-2 border-zinc-400 pr-2 rounded-xl">
               <div tw="font-bold text-3xl">Endorsements</div>
               <div tw="flex font-black text-6xl gap-2 items-center">
-                {data?.endorsements}
+                {projectInfo?.endorsements}
               </div>
             </div>
             <div tw="flex flex-col items-end ml-4 border-r-2 border-zinc-400 pr-2 rounded-xl">
               <div tw="font-bold text-3xl">Impacts</div>
               <div tw="flex font-black text-6xl gap-2 items-center">
-                {data?.impacts}
+                {projectInfo?.impacts}
               </div>
             </div>
             <div tw="flex flex-col items-end ml-4 border-r-2 border-zinc-400 pr-2 rounded-xl">
               <div tw="font-bold text-3xl">Grants</div>
               <div tw="flex font-black text-6xl gap-2 items-center">
-                {data?.grants}
+                {projectInfo?.grants}
               </div>
             </div>
           </div>
@@ -98,10 +102,10 @@ const handleRequest = frames(async (ctx) => {
             }}
             tw="text-7xl font-black font-serif"
           >
-            {data?.name}
+            {projectInfo?.title}
           </div>
           <div tw="flex text-4xl mt-5 text-justify">
-            {data?.description.slice(0, 270) + "  -- Read more on GAP"}
+            {projectInfo?.description.slice(0, 270) + "  -- Read more on GAP"}
           </div>
         </div>
       </div>
@@ -111,7 +115,7 @@ const handleRequest = frames(async (ctx) => {
       <Button
         key={1}
         action="tx"
-        target={`${envVars.APP_URL}/api/frames/${projectId}/txdata?projectId=${projectId}&recipient=${data?.recipient}&refuid=${data?.refUID}&chainID=${data?.chainID}`}
+        target={`${envVars.VERCEL_URL}/api/frames/${projectId}/txdata?projectId=${projectId}&recipient=${projectInfo?.recipient}&refuid=${projectInfo?.uid}&chainID=${projectInfo?.chainID}`}
         post_url={`/${projectId}`}
       >
         Donate
@@ -119,7 +123,7 @@ const handleRequest = frames(async (ctx) => {
       <Button
         key={2}
         action="link"
-        target={`${envVars.APP_URL}/project/${projectId}`}
+        target={`${envVars.VERCEL_URL}/project/${projectId}`}
       >
         View on GAP
       </Button>,
