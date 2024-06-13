@@ -7,15 +7,23 @@ import { getGapClient } from "@/hooks";
 import { envVars } from "@/utilities/enviromentVars";
 
 const handleRequest = frames(async (ctx) => {
-  const projectId = ctx.request.url.split("?projectInfo=")[0].split("/").pop();
+  const url = new URL(ctx.request.url);
+  const urlSafeBase64ProjectInfo = url.searchParams.get(
+    "projectInfo"
+  ) as string;
+  const projectId = url.pathname.split("/").pop();
+
+  // console.log("\n\nprojectId", projectId);
 
   // Get project info from URL query params - base64 decode
   const projectInfo = JSON.parse(
     Buffer.from(
-      ctx.request.url?.split("?projectInfo=")?.pop() as string,
+      decodeURIComponent(urlSafeBase64ProjectInfo) as string,
       "base64"
     ).toString()
   );
+
+  // console.log("\n\nprojectInfo", projectInfo);
 
   if (ctx.message?.transactionId) {
     let txHash = ctx.message?.transactionId;

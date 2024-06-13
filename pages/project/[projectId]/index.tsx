@@ -461,7 +461,9 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         new URL(
           `/api/frames/${projectId}?projectInfo=${
             // Base64 encoded projectInfo
-            Buffer.from(JSON.stringify(projectInfo)).toString("base64")
+            encodeURIComponent(
+              Buffer.from(JSON.stringify(projectInfo)).toString("base64")
+            )
           }`,
           envVars.VERCEL_URL
         )
