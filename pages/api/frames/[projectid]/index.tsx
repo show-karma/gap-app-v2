@@ -13,18 +13,6 @@ const handleRequest = frames(async (ctx) => {
   ) as string;
   const projectId = url.pathname.split("/").pop();
 
-  // console.log("\n\nprojectId", projectId);
-
-  // Get project info from URL query params - base64 decode
-  const projectInfo = JSON.parse(
-    Buffer.from(
-      decodeURIComponent(urlSafeBase64ProjectInfo) as string,
-      "base64"
-    ).toString()
-  );
-
-  // console.log("\n\nprojectInfo", projectInfo);
-
   if (ctx.message?.transactionId) {
     let txHash = ctx.message?.transactionId;
 
@@ -40,7 +28,7 @@ const handleRequest = frames(async (ctx) => {
             />
           </div>
           <div tw="flex font-bold">
-            Donation to {projectInfo?.details?.title} has been successful.
+            Donation to {projectId} has been successful.
           </div>
           <div tw="flex">An endorsement attestation has been issued.</div>
           <div tw="mt-2 text-3xl flex">
@@ -68,80 +56,92 @@ const handleRequest = frames(async (ctx) => {
         </Button>,
       ],
     };
+  } else {
+    // console.log("\n\nprojectId", projectId);
+
+    // Get project info from URL query params - base64 decode
+    const projectInfo = JSON.parse(
+      Buffer.from(
+        decodeURIComponent(urlSafeBase64ProjectInfo) as string,
+        "base64"
+      ).toString()
+    );
+
+    // console.log("\n\nprojectInfo", projectInfo);
+
+    return {
+      image: (
+        <div tw="flex flex-col justify-between items-between px-15">
+          <div tw="flex flex-row justify-between items-start pb-5">
+            <div tw="flex flex-col">
+              <img
+                src="https://gap.karmahq.xyz/logo/karma-gap-logo.svg"
+                alt="logo"
+                tw="mt-2"
+                width={400}
+                height={100}
+              />
+            </div>
+            <div tw="flex flex-row items-start justify-between p-2 ">
+              <div tw="flex flex-col items-end border-r-2 border-zinc-400 pr-2 rounded-xl">
+                <div tw="font-bold text-3xl">Endorsements</div>
+                <div tw="flex font-black text-6xl gap-2 items-center">
+                  {projectInfo?.endorsements}
+                </div>
+              </div>
+              <div tw="flex flex-col items-end ml-4 border-r-2 border-zinc-400 pr-2 rounded-xl">
+                <div tw="font-bold text-3xl">Impacts</div>
+                <div tw="flex font-black text-6xl gap-2 items-center">
+                  {projectInfo?.impacts}
+                </div>
+              </div>
+              <div tw="flex flex-col items-end ml-4 border-r-2 border-zinc-400 pr-2 rounded-xl">
+                <div tw="font-bold text-3xl">Grants</div>
+                <div tw="flex font-black text-6xl gap-2 items-center">
+                  {projectInfo?.grants}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div tw="flex flex-col items-start justify-center mt-10">
+            <div
+              style={{
+                fontWeight: "black",
+              }}
+              tw="text-7xl font-black font-serif"
+            >
+              {projectInfo?.title}
+            </div>
+            <div tw="flex text-4xl mt-5 text-justify">
+              {projectInfo?.description.slice(0, 270) + "  -- Read more on GAP"}
+            </div>
+          </div>
+        </div>
+      ),
+      imageOptions: {
+        aspectRatio: "1.91:1",
+      },
+      textInput: "Enter the amount",
+      buttons: [
+        <Button
+          key={1}
+          action="tx"
+          target={`${envVars.VERCEL_URL}/api/frames/${projectId}/txdata?projectId=${projectId}&recipient=${projectInfo?.recipient}&refuid=${projectInfo?.uid}&chainID=${projectInfo?.chainID}`}
+          post_url={`/${projectId}`}
+        >
+          Donate
+        </Button>,
+        <Button
+          key={2}
+          action="link"
+          target={`${envVars.VERCEL_URL}/project/${projectId}`}
+        >
+          View on GAP
+        </Button>,
+      ],
+    };
   }
-
-  return {
-    image: (
-      <div tw="flex flex-col justify-between items-between px-15">
-        <div tw="flex flex-row justify-between items-start pb-5">
-          <div tw="flex flex-col">
-            <img
-              src="https://gap.karmahq.xyz/logo/karma-gap-logo.svg"
-              alt="logo"
-              tw="mt-2"
-              width={400}
-              height={100}
-            />
-          </div>
-          <div tw="flex flex-row items-start justify-between p-2 ">
-            <div tw="flex flex-col items-end border-r-2 border-zinc-400 pr-2 rounded-xl">
-              <div tw="font-bold text-3xl">Endorsements</div>
-              <div tw="flex font-black text-6xl gap-2 items-center">
-                {projectInfo?.endorsements}
-              </div>
-            </div>
-            <div tw="flex flex-col items-end ml-4 border-r-2 border-zinc-400 pr-2 rounded-xl">
-              <div tw="font-bold text-3xl">Impacts</div>
-              <div tw="flex font-black text-6xl gap-2 items-center">
-                {projectInfo?.impacts}
-              </div>
-            </div>
-            <div tw="flex flex-col items-end ml-4 border-r-2 border-zinc-400 pr-2 rounded-xl">
-              <div tw="font-bold text-3xl">Grants</div>
-              <div tw="flex font-black text-6xl gap-2 items-center">
-                {projectInfo?.grants}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div tw="flex flex-col items-start justify-center mt-10">
-          <div
-            style={{
-              fontWeight: "black",
-            }}
-            tw="text-7xl font-black font-serif"
-          >
-            {projectInfo?.title}
-          </div>
-          <div tw="flex text-4xl mt-5 text-justify">
-            {projectInfo?.description.slice(0, 270) + "  -- Read more on GAP"}
-          </div>
-        </div>
-      </div>
-    ),
-    imageOptions: {
-      aspectRatio: "1.91:1",
-    },
-    textInput: "Enter the amount",
-    buttons: [
-      <Button
-        key={1}
-        action="tx"
-        target={`${envVars.VERCEL_URL}/api/frames/${projectId}/txdata?projectId=${projectId}&recipient=${projectInfo?.recipient}&refuid=${projectInfo?.uid}&chainID=${projectInfo?.chainID}`}
-        post_url={`/${projectId}`}
-      >
-        Donate
-      </Button>,
-      <Button
-        key={2}
-        action="link"
-        target={`${envVars.VERCEL_URL}/project/${projectId}`}
-      >
-        View on GAP
-      </Button>,
-    ],
-  };
 });
 
 export default handleRequest;
