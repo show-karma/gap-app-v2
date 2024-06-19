@@ -11,8 +11,6 @@ export const INDEXER = {
   PROJECT: {
     SUBSCRIBE: (projectId: Hex) => `/projects/${projectId}/subscribe`,
     GET: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}`,
-    GET_INFO_FOR_FRAMES: (projectIdOrSlug: string) =>
-      `/projects/${projectIdOrSlug}/info-for-frame`,
     FEED: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/feed`,
   },
   QUESTIONS: {
@@ -55,6 +53,8 @@ export const INDEXER = {
       `/communities/${communityIdOrSlug}/categories`,
     QUESTIONS: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/questions`,
+    STATS: (communityIdOrSlug: string) =>
+      `/communities/${communityIdOrSlug}/stats`,
   },
   GRANTS: {
     GET_ZK_GROUP: (
