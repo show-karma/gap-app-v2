@@ -27,10 +27,23 @@ export const ReadMore = ({
   };
 
   const text = children ? children : "";
-  const minimumText = words ? words : 400;
+
+  const getMinimumText = () => {
+    let wordsCounter = 400;
+    for (let i = words || 400; i < text.length; i++) {
+      const regex = /\s/;
+      if (!regex.test(text[i])) {
+        wordsCounter++;
+      } else {
+        wordsCounter++;
+        break;
+      }
+    }
+    return wordsCounter;
+  };
 
   useEffect(() => {
-    if (text.length - 1 < minimumText) {
+    if (text.length - 1 < getMinimumText()) {
       setIsReadMore(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -44,8 +57,8 @@ export const ReadMore = ({
             className={markdownClass}
             components={markdownComponents}
             source={
-              text.slice(0, minimumText) +
-              (text.length >= minimumText ? "..." : "")
+              text.slice(0, getMinimumText()) +
+              (text.length >= getMinimumText() ? "..." : "")
             }
           />
         ) : (
@@ -56,7 +69,7 @@ export const ReadMore = ({
           />
         )}
       </div>
-      {text.length - 1 > minimumText && (
+      {text.length - 1 > getMinimumText() && (
         <div onClick={toggleReadMore} className="read-or-hide mt-2">
           {isReadMore ? (
             <>
