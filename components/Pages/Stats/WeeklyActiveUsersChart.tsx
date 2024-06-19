@@ -28,7 +28,7 @@ export const WeeklyActiveUsersChart = () => {
   }, [setData, setIsLoading]);
 
   return (
-    <div className="container  mx-auto sm:px-0 lg:px-20 w-full flex-col items-center justify-center">
+    <div className="container mx-auto sm:px-0 lg:px-20 w-full flex-col items-center justify-center">
       {isLoading ? (
         <p>Loading...</p>
       ) : (

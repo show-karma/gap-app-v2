@@ -20,6 +20,7 @@ import { request, gql } from "graphql-request";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { RemoveAdmin } from "@/components/Pages/Admin/RemoveAdminDialog";
 import { useOwnerStore } from "@/store";
+import CommunityStats from "@/components/CommunityStats";
 
 interface CommunityAdmin {
   id: string;
@@ -144,6 +145,7 @@ export default function Communities() {
                       <th>UUID</th>
                       <th className="px-4 text-center">Community page</th>
                       <th className="px-4 text-center">Admin page</th>
+                      <th className="px-4 text-center">View stats</th>
                       <th>Network</th>
                       <th>Admins</th>
                       <th>Action</th>
@@ -201,6 +203,9 @@ export default function Communities() {
                                 Admin
                                 <LinkIcon className="w-4 h-4" />
                               </Link>
+                            </td>
+                            <td className="text-center px-4">
+                              <CommunityStats communityId={community.uid} />
                             </td>
                             <td className="px-4">
                               <div className="flex flex-row gap-2 items-center">
