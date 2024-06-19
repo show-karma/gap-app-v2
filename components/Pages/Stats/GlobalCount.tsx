@@ -48,7 +48,7 @@ export function GlobalCount() {
       <Card className="min-w-[400px]">
         <div className="flex justify-between items-center mb-2 pb-2 border-b-2 border-zinc-300">
           <Title className="flex flex-row flex-wrap items-center gap-2">
-            Community Stats
+            Global Attestations Stats
           </Title>
           <Button onClick={fetchStats} className="bg-zinc-400">
             <ArrowPathIcon className="h-5 w-5" />
