@@ -17,11 +17,31 @@ import { XMarkIcon } from "@heroicons/react/24/solid";
 import { registryHelper } from "./helper";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { cn } from "@/utilities/tailwind";
 
 type ProgramDetailsDialogProps = {
   program: GrantProgram;
   isOpen: boolean;
   closeModal: () => void;
+};
+
+const cardClassnames = {
+  div: "flex flex-col gap-2 bg-[#F4F8FF] rounded-xl py-3 px-4",
+  label: "text-base text-gray-900 font-body dark:text-zinc-1000 font-semibold",
+  list: "flex flex-row gap-2 flex-wrap",
+  pill: "rounded-full font-body flex flex-row gap-2 bg-white px-2 py-1 text-sm text-[#155EEF] font-medium dark:bg-zinc-700 dark:text-zinc-100",
+};
+
+const statsClassnames = {
+  div: "flex flex-row justify-between gap-2 items-center px-4 py-0.5",
+  label: "text-base font-body font-normal text-gray-900 dark:text-zinc-100",
+  pill: "text-base font-body text-zinc-600 font-semibold dark:text-zinc-300",
+};
+
+const iconsClassnames = {
+  light: "text-black dark:text-white dark:hidden",
+  dark: "text-black dark:text-white hidden dark:block",
+  general: "w-6 h-6 text-black dark:text-white",
 };
 
 export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
@@ -63,35 +83,67 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
+                <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded dark:bg-zinc-800 bg-white px-6 text-left align-middle  transition-all">
                   <Dialog.Title
                     as="h3"
                     className="text-xl font-medium leading-6 text-gray-900 dark:text-zinc-100"
                   >
-                    <div className="flex flex-col gap-2 w-max max-w-full">
-                      <h2 className="text-2xl font-medium leading-6 text-gray-900 dark:text-zinc-100">
-                        {program.metadata?.title}
-                      </h2>
-
-                      <div className="flex flex-row gap-1 w-full">
-                        {program.metadata?.socialLinks?.website ? (
+                    <div className="flex flex-row-reverse w-full pt-5 pb-5">
+                      <button
+                        type="button"
+                        className=" hover:opacity-75 transition-all ease-in-out duration-200 dark:text-zinc-100"
+                        onClick={closeModal}
+                      >
+                        <XMarkIcon className="w-6 h-6" />
+                      </button>
+                    </div>
+                    <div
+                      className={
+                        "flex flex-row max-sm:flex-col gap-2 justify-between pb-3"
+                      }
+                    >
+                      <div className="flex flex-1">
+                        {program.metadata?.grantTypes?.length ? (
+                          <div className={cardClassnames.list}>
+                            {program.metadata?.grantTypes?.map((grantType) => (
+                              <div
+                                key={grantType}
+                                className={cn(
+                                  cardClassnames.pill,
+                                  "bg-[#F2F4F7] py-1 px-3 rounded-full text-[#1D2939]"
+                                )}
+                              >
+                                {grantType}
+                              </div>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                      <div className="flex flex-row gap-1">
+                        {program.metadata?.socialLinks?.grantsSite ? (
                           <ExternalLink
-                            href={program.metadata?.socialLinks?.website}
+                            href={program.metadata?.socialLinks?.grantsSite}
                             className="w-max"
                           >
                             <Image
-                              className="w-5 h-5 text-black dark:text-white dark:hidden"
+                              className={cn(
+                                iconsClassnames.general,
+                                iconsClassnames.light
+                              )}
                               width={20}
                               height={20}
                               src="/icons/globe.svg"
-                              alt={program.metadata?.socialLinks?.website}
+                              alt={program.metadata?.socialLinks?.grantsSite}
                             />
                             <Image
                               width={20}
                               height={20}
-                              className="w-5 h-5 text-black dark:text-white hidden dark:block"
+                              className={cn(
+                                iconsClassnames.general,
+                                iconsClassnames.dark
+                              )}
                               src="/icons/globe-white.svg"
-                              alt={program.metadata?.socialLinks?.website}
+                              alt={program.metadata?.socialLinks?.grantsSite}
                             />
                           </ExternalLink>
                         ) : null}
@@ -100,7 +152,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                             href={program.metadata?.socialLinks?.twitter}
                             className="w-max"
                           >
-                            <Twitter2Icon className="w-5 h-5 text-black dark:text-white" />
+                            <Twitter2Icon className={iconsClassnames.general} />
                           </ExternalLink>
                         ) : null}
                         {program.metadata?.socialLinks?.discord ? (
@@ -108,7 +160,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                             href={program.metadata?.socialLinks?.discord}
                             className="w-max"
                           >
-                            <Discord2Icon className="w-5 h-5 text-black dark:text-white" />
+                            <Discord2Icon className={iconsClassnames.general} />
                           </ExternalLink>
                         ) : null}
                         {program.metadata?.socialLinks?.forum ? (
@@ -116,7 +168,9 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                             href={program.metadata?.socialLinks?.forum}
                             className="w-max"
                           >
-                            <DiscussionIcon className="w-5 h-5 text-black dark:text-white" />
+                            <DiscussionIcon
+                              className={iconsClassnames.general}
+                            />
                           </ExternalLink>
                         ) : null}
                         {program.metadata?.socialLinks?.blog ? (
@@ -124,7 +178,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                             href={program.metadata?.socialLinks?.blog}
                             className="w-max"
                           >
-                            <BlogIcon className="w-5 h-5 text-black dark:text-white" />
+                            <BlogIcon className={iconsClassnames.general} />
                           </ExternalLink>
                         ) : null}
                         {program.metadata?.socialLinks?.orgWebsite ? (
@@ -132,41 +186,36 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                             href={program.metadata?.socialLinks?.orgWebsite}
                             className="w-max"
                           >
-                            <OrganizationIcon className="w-5 h-5 text-black dark:text-white" />
+                            <OrganizationIcon
+                              className={iconsClassnames.general}
+                            />
                           </ExternalLink>
                         ) : null}
                       </div>
                     </div>
-                    <button
-                      type="button"
-                      className="top-6 absolute right-6 hover:opacity-75 transition-all ease-in-out duration-200 dark:text-zinc-100"
-                      onClick={closeModal}
-                    >
-                      <XMarkIcon className="w-5 h-5" />
-                    </button>
-                  </Dialog.Title>
-                  <div className="flex flex-col gap-4 mt-2  divide-y divide-zinc-200">
-                    <div className="whitespace-nowrap py-4 text-sm text-black dark:text-zinc-400 ">
-                      <div
-                        className="w-full max-w-full text-wrap"
-                        data-color-mode="light"
-                      >
-                        <MarkdownPreview
-                          source={program.metadata?.description!}
-                        />
-                      </div>
+                    <div className="flex flex-col gap-2 w-max max-w-full font-body mt-2">
+                      <h2 className="text-xl  font-body font-bold leading-6 text-gray-900 dark:text-zinc-100">
+                        {program.metadata?.title}
+                      </h2>
                     </div>
-                    <div className="grid grid-cols-3 max-sm:grid-cols-1 gap-4 py-3">
+                  </Dialog.Title>
+                  <div className="flex flex-col gap-4 mb-6">
+                    <div className="whitespace-nowrap pt-2 pb-4 text-sm text-black dark:text-zinc-400 ">
+                      <p className="w-full max-w-full text-wrap font-body">
+                        {program.metadata?.description!}
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 max-sm:grid-cols-1 gap-4 py-3">
                       {program.metadata?.categories?.length ? (
-                        <div className="flex flex-col gap-1">
-                          <label className="text-base text-gray-900 dark:text-zinc-100">
+                        <div className={cardClassnames.div}>
+                          <label className={cardClassnames.label}>
                             Categories
                           </label>
-                          <div className="flex flex-row gap-2 flex-wrap">
+                          <div className={cardClassnames.list}>
                             {program.metadata?.categories?.map((category) => (
                               <div
                                 key={category}
-                                className="rounded-full bg-zinc-100 px-2 py-1 text-sm text-zinc-800 dark:bg-zinc-700 dark:text-zinc-100"
+                                className={cardClassnames.pill}
                               >
                                 {category}
                               </div>
@@ -174,33 +223,17 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                           </div>
                         </div>
                       ) : null}
-                      {program.metadata?.grantTypes?.length ? (
-                        <div className="flex flex-col gap-1">
-                          <label className="text-base text-gray-900 dark:text-zinc-100">
-                            Funding Mechanisms
-                          </label>
-                          <div className="flex flex-row gap-2 flex-wrap">
-                            {program.metadata?.grantTypes?.map((grantType) => (
-                              <div
-                                key={grantType}
-                                className="rounded-full bg-zinc-100 px-2 py-1 text-sm text-zinc-800 dark:bg-zinc-700 dark:text-zinc-100"
-                              >
-                                {grantType}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      ) : null}
+
                       {program.metadata?.networks?.length ? (
-                        <div className="flex flex-col gap-1">
-                          <label className="text-base text-gray-900 dark:text-zinc-100">
+                        <div className={cardClassnames.div}>
+                          <label className={cardClassnames.label}>
                             Networks
                           </label>
-                          <div className="flex flex-row gap-2 flex-wrap">
+                          <div className={cardClassnames.list}>
                             {program.metadata?.networks?.map((network) => (
                               <div
                                 key={network}
-                                className="rounded-full bg-zinc-100 px-2 py-1 text-sm text-zinc-800 flex flex-row gap-2 items-center dark:bg-zinc-700 dark:text-zinc-100"
+                                className={cardClassnames.pill}
                               >
                                 <div className="w-5 h-5 rounded-full flex justify-center items-center">
                                   {registryHelper.networkImages[
@@ -241,15 +274,15 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                         </div>
                       ) : null}
                       {program.metadata?.ecosystems?.length ? (
-                        <div className="flex flex-col gap-1">
-                          <label className="text-base text-gray-900 dark:text-zinc-100">
+                        <div className={cardClassnames.div}>
+                          <label className={cardClassnames.label}>
                             Ecosystems
                           </label>
-                          <div className="flex flex-row gap-2 flex-wrap">
+                          <div className={cardClassnames.list}>
                             {program.metadata?.ecosystems?.map((ecosystem) => (
                               <div
                                 key={ecosystem}
-                                className="rounded-full bg-zinc-100 px-2 py-1 text-sm text-zinc-800 dark:bg-zinc-700 dark:text-zinc-100"
+                                className={cardClassnames.pill}
                               >
                                 {ecosystem}
                               </div>
@@ -257,36 +290,18 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                           </div>
                         </div>
                       ) : null}
-                      {program.metadata?.organizations?.length ? (
-                        <div className="flex flex-col gap-1">
-                          <label className="text-base text-gray-900 dark:text-zinc-100">
-                            Organizations
-                          </label>
-                          <div className="flex flex-row gap-2 flex-wrap">
-                            {program.metadata?.organizations?.map(
-                              (organization) => (
-                                <div
-                                  key={organization}
-                                  className="rounded-full bg-zinc-100 px-2 py-1 text-sm text-zinc-800 dark:bg-zinc-700 dark:text-zinc-100"
-                                >
-                                  {organization}
-                                </div>
-                              )
-                            )}
-                          </div>
-                        </div>
-                      ) : null}
+
                       {program.metadata?.platformsUsed?.length ? (
-                        <div className="flex flex-col gap-1">
-                          <label className="text-base text-gray-900 dark:text-zinc-100">
+                        <div className={cardClassnames.div}>
+                          <label className={cardClassnames.label}>
                             Platforms Used
                           </label>
-                          <div className="flex flex-row gap-2 flex-wrap">
+                          <div className={cardClassnames.list}>
                             {program.metadata?.platformsUsed?.map(
                               (platform) => (
                                 <div
                                   key={platform}
-                                  className="rounded-full bg-zinc-100 px-2 py-1 text-sm text-zinc-800 dark:bg-zinc-700 dark:text-zinc-100"
+                                  className={cardClassnames.pill}
                                 >
                                   {platform}
                                 </div>
@@ -296,81 +311,114 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                         </div>
                       ) : null}
                     </div>
-                    <div className="grid grid-cols-3 max-sm:grid-cols-2 gap-2 py-6 my-6">
-                      {program?.metadata?.programBudget ? (
-                        <div className="flex flex-col gap-1">
-                          <label className="text-base text-gray-900 dark:text-zinc-100">
-                            Budget
+                    <div className="grid grid-cols-2 gap-4">
+                      {program.metadata?.organizations?.length ? (
+                        <div className={cardClassnames.div}>
+                          <label className={cardClassnames.label}>
+                            Organizations
                           </label>
-                          <p className="text-base text-zinc-600 dark:text-zinc-300">
-                            {program?.metadata?.programBudget
-                              ? formatCurrency(
-                                  +program?.metadata?.programBudget
-                                ) === "NaN"
-                                ? program?.metadata?.programBudget
-                                : `$${formatCurrency(
-                                    +program?.metadata?.programBudget
-                                  )}`
-                              : ""}
-                          </p>
-                        </div>
-                      ) : null}
-                      {program?.metadata?.amountDistributedToDate ? (
-                        <div className="flex flex-col gap-1">
-                          <label className="text-base text-gray-900 dark:text-zinc-100">
-                            Amount distributed to date
-                          </label>
-                          <p className="text-base text-zinc-600 dark:text-zinc-300">
-                            {program?.metadata?.amountDistributedToDate
-                              ? formatCurrency(
-                                  +program?.metadata?.amountDistributedToDate
-                                ) === "NaN"
-                                ? program?.metadata?.amountDistributedToDate
-                                : `$${formatCurrency(
-                                    +program?.metadata?.amountDistributedToDate
-                                  )}`
-                              : ""}
-                          </p>
-                        </div>
-                      ) : null}
-                      {program?.metadata?.grantsToDate ? (
-                        <div className="flex flex-col gap-1">
-                          <label className="text-base text-gray-900 dark:text-zinc-100">
-                            Grants issued to date
-                          </label>
-                          <p className="text-base text-zinc-600 dark:text-zinc-300">
-                            {program?.metadata?.amountDistributedToDate}
-                          </p>
-                        </div>
-                      ) : null}
-                      {program?.metadata?.minGrantSize &&
-                      program?.metadata?.maxGrantSize ? (
-                        <div className="flex flex-col gap-1">
-                          <label className="text-base text-gray-900 dark:text-zinc-100">
-                            Grant Size
-                          </label>
-                          <div className="text-base text-zinc-600 dark:text-zinc-300">
-                            {program?.metadata?.minGrantSize &&
-                            program?.metadata?.maxGrantSize
-                              ? `$${formatCurrency(
-                                  +program?.metadata?.minGrantSize
-                                )} - $${formatCurrency(
-                                  +program?.metadata?.maxGrantSize
-                                )}`
-                              : ""}
+                          <div className={cardClassnames.list}>
+                            {program.metadata?.organizations?.map(
+                              (organization) => (
+                                <div
+                                  key={organization}
+                                  className={cardClassnames.pill}
+                                >
+                                  {organization}
+                                </div>
+                              )
+                            )}
                           </div>
+                        </div>
+                      ) : null}
+                      {program.metadata?.programBudget ||
+                      program.metadata?.minGrantSize ||
+                      program.metadata?.maxGrantSize ||
+                      program.metadata?.amountDistributedToDate ||
+                      program.metadata?.grantsToDate ? (
+                        <div className="flex flex-col gap-1 divide-y divide-y-zinc-200  bg-[#F4F8FF] rounded-xl py-3">
+                          {program?.metadata?.programBudget ? (
+                            <div className={statsClassnames.div}>
+                              <label className={statsClassnames.label}>
+                                Budget
+                              </label>
+                              <p className={statsClassnames.pill}>
+                                {program?.metadata?.programBudget
+                                  ? formatCurrency(
+                                      +program?.metadata?.programBudget
+                                    ) === "NaN"
+                                    ? program?.metadata?.programBudget
+                                    : `$${formatCurrency(
+                                        +program?.metadata?.programBudget
+                                      )}`
+                                  : ""}
+                              </p>
+                            </div>
+                          ) : null}
+                          {program?.metadata?.minGrantSize &&
+                          program?.metadata?.maxGrantSize ? (
+                            <div className={statsClassnames.div}>
+                              <label className={statsClassnames.label}>
+                                Grant Size
+                              </label>
+                              <div className={statsClassnames.pill}>
+                                {program?.metadata?.minGrantSize &&
+                                program?.metadata?.maxGrantSize
+                                  ? `$${formatCurrency(
+                                      +program?.metadata?.minGrantSize
+                                    )} - $${formatCurrency(
+                                      +program?.metadata?.maxGrantSize
+                                    )}`
+                                  : ""}
+                              </div>
+                            </div>
+                          ) : null}
+                          {program?.metadata?.amountDistributedToDate ? (
+                            <div className={statsClassnames.div}>
+                              <label className={statsClassnames.label}>
+                                Amount Distributed to Date
+                              </label>
+                              <p className={statsClassnames.pill}>
+                                {program?.metadata?.amountDistributedToDate
+                                  ? formatCurrency(
+                                      +program?.metadata
+                                        ?.amountDistributedToDate
+                                    ) === "NaN"
+                                    ? program?.metadata?.amountDistributedToDate
+                                    : `$${formatCurrency(
+                                        +program?.metadata
+                                          ?.amountDistributedToDate
+                                      )}`
+                                  : ""}
+                              </p>
+                            </div>
+                          ) : null}
+                          {program?.metadata?.grantsToDate ? (
+                            <div className={statsClassnames.div}>
+                              <label className={statsClassnames.label}>
+                                Grants Issued to Date
+                              </label>
+                              <p className={statsClassnames.pill}>
+                                {program?.metadata?.amountDistributedToDate
+                                  ? formatCurrency(
+                                      +program.metadata.amountDistributedToDate
+                                    )
+                                  : null}
+                              </p>
+                            </div>
+                          ) : null}
                         </div>
                       ) : null}
                     </div>
 
-                    <div className="flex flex-row gap-10 justify-end items-center border-none">
+                    <div className="flex flex-row mt-2 gap-10 justify-end items-center border-none">
                       {program?.metadata?.bugBounty ? (
                         <div className="flex flex-col gap-1">
                           <ExternalLink
                             href={program?.metadata?.bugBounty}
-                            className="text-base text-blue-500 underline cursor-pointer"
+                            className="text-base font-bold font-body text-[#155EEF] cursor-pointer"
                           >
-                            Bug bounty
+                            Bug Bounty
                           </ExternalLink>
                         </div>
                       ) : null}
@@ -378,7 +426,9 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                         <ExternalLink
                           href={program.metadata?.socialLinks?.grantsSite}
                         >
-                          <Button className="text-base px-6">Apply</Button>
+                          <Button className="text-base font-body px-6 py-3 bg-brand-blue hover:bg-brand-blue rounded">
+                            Apply
+                          </Button>
                         </ExternalLink>
                       ) : null}
                     </div>

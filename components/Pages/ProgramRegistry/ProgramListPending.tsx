@@ -83,9 +83,9 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
                   {grant?.metadata?.title}
                 </button>
                 <div className="flex flex-row gap-1 w-full">
-                  {grant.metadata?.socialLinks?.website ? (
+                  {grant.metadata?.socialLinks?.grantsSite ? (
                     <ExternalLink
-                      href={grant.metadata?.socialLinks?.website}
+                      href={grant.metadata?.socialLinks?.grantsSite}
                       className="w-max"
                     >
                       <Image
@@ -93,14 +93,14 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
                         width={20}
                         height={20}
                         src="/icons/globe.svg"
-                        alt={grant.metadata?.socialLinks?.website}
+                        alt={grant.metadata?.socialLinks?.grantsSite}
                       />
                       <Image
                         width={20}
                         height={20}
                         className="w-5 h-5 text-black dark:text-white hidden dark:block"
                         src="/icons/globe-white.svg"
-                        alt={grant.metadata?.socialLinks?.website}
+                        alt={grant.metadata?.socialLinks?.grantsSite}
                       />
                     </ExternalLink>
                   ) : null}
