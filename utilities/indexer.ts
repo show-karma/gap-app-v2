@@ -88,6 +88,7 @@ export const INDEXER = {
   GAP: {
     STATS: `/attestations/stats`,
     WEEKLY_ACTIVE_USERS: `/attestations/wau`,
+    GLOBAL_COUNT: `/attestations/global-count`,
   },
   SUBSCRIPTION: {
     GET: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/contacts`,

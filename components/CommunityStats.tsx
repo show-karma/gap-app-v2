@@ -4,7 +4,6 @@ import { useState, Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { Button } from "@/components/Utilities/Button";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
-import { set } from "date-fns";
 
 interface CommunityStatsProps {
   communityId: string;
@@ -17,12 +16,14 @@ export default function CommunityStats({ communityId }: CommunityStatsProps) {
   const [loading, setLoading] = useState<boolean>(true);
 
   async function fetchStats() {
+    setLoading(true);
     try {
       const [data, error]: any = await fetchData(
         INDEXER.COMMUNITY.STATS(communityId as string)
       );
       if (error) {
         console.error("Error fetching data:", error);
+        setError(error);
       } else {
         if (data && data?.projects) {
           console.log("Stats fetched:", data);
@@ -55,6 +56,8 @@ export default function CommunityStats({ communityId }: CommunityStatsProps) {
               data?.GrantEdits +
               data?.ProjectEdits,
           });
+
+          setError("");
         } else {
           console.error("No stats found for community:", communityId);
           setError("No stats found for community");
@@ -74,7 +77,6 @@ export default function CommunityStats({ communityId }: CommunityStatsProps) {
 
   async function openModal() {
     setIsOpen(true);
-    setLoading(true);
     await fetchStats();
   }
 
@@ -121,10 +123,12 @@ export default function CommunityStats({ communityId }: CommunityStatsProps) {
                       <ArrowPathIcon className="h-5 w-5" />
                     </Button>
                   </div>
-                  {loading && !stats ? (
+                  {loading ? (
                     <div>Loading stats...</div>
-                  ) : error && !stats ? (
-                    <div className="font-bold">Error fetching stats</div>
+                  ) : error ? (
+                    <div className="font-bold">
+                      Error fetching stats: {JSON.stringify(error)}
+                    </div>
                   ) : (
                     <>
                       {Object.entries(stats).map(([key, value]) => (
