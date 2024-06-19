@@ -10,6 +10,7 @@ import type {
 
 import { LineChart } from "./LineChart";
 import { WeeklyActiveUsersChart } from "./WeeklyActiveUsersChart";
+import { GlobalCount } from "./GlobalCount";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { getGAPStats } from "@/utilities/indexer/stats";
 import { fillDateRangeWithValues } from "@/utilities/fillDateRangeWithValues";
@@ -127,6 +128,7 @@ export const Stats = () => {
       ) : (
         <div className="flex w-full flex-col items-center justify-center gap-8">
           <WeeklyActiveUsersChart />
+          <GlobalCount />
           <div className="flex flex-row items-center gap-4">
             <h3 className="text-xl text-black">Select a period</h3>
             {/* <Select

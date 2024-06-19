@@ -53,6 +53,8 @@ export const INDEXER = {
       `/communities/${communityIdOrSlug}/categories`,
     QUESTIONS: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/questions`,
+    STATS: (communityIdOrSlug: string) =>
+      `/communities/${communityIdOrSlug}/stats`,
   },
   GRANTS: {
     GET_ZK_GROUP: (
@@ -86,6 +88,7 @@ export const INDEXER = {
   GAP: {
     STATS: `/attestations/stats`,
     WEEKLY_ACTIVE_USERS: `/attestations/wau`,
+    GLOBAL_COUNT: `/attestations/global-count`,
   },
   SUBSCRIPTION: {
     GET: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/contacts`,

@@ -7,6 +7,12 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useAccount } from "wagmi";
 import { IProjectDetails, Project } from "@show-karma/karma-gap-sdk";
 import { NextSeo } from "next-seo";
+import { MetaTag } from "next-seo/lib/types";
+import {
+  fetchMetadata,
+  metadataToMetaTags,
+} from "frames.js/next/pages-router/client";
+import { envVars } from "@/utilities/enviromentVars";
 
 import { Hex } from "viem";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
@@ -451,13 +457,27 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       projectDesc:
         (projectInfo as ProjectDetailsWithUid)?.description?.substring(0, 80) ||
         "",
+      frameMetadata: await fetchMetadata(
+        new URL(
+          `/api/frames/${projectId}?projectInfo=${
+            // Base64 encoded projectInfo
+            encodeURIComponent(
+              Buffer.from(JSON.stringify(projectInfo)).toString("base64")
+            )
+          }`,
+          envVars.VERCEL_URL
+        )
+      ),
     },
   };
 }
+
 const ProjectPageIndex = ({
   projectTitle,
   projectDesc,
+  frameMetadata,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
+  console.log("frameMetadata: ", frameMetadata["fc:frame"]);
   const dynamicMetadata = {
     title: `Karma GAP - ${projectTitle}`,
     description: projectDesc,
@@ -471,6 +491,14 @@ const ProjectPageIndex = ({
   //     </div>
   //   );
   // }
+
+  const framesAdditonalMetatags: MetaTag[] = Object.entries(frameMetadata).map(
+    ([key, value]) => ({
+      name: key,
+      content: String(value),
+    })
+  );
+
   return (
     <>
       <NextSeo
@@ -498,6 +526,7 @@ const ProjectPageIndex = ({
             href: "/images/favicon.png",
           },
         ]}
+        additionalMetaTags={framesAdditonalMetatags}
       />
 
       {<ProjectPage />}
