@@ -177,7 +177,7 @@ const GrantProgramRegistry = ({
 
   const dynamicMetadata = {
     title: `Karma GAP - Grant Program Aggregator`,
-    description: `View the list of grant programs issued by various ecosystems.`,
+    description: `Find all the funding opportunities across web3 ecosystem.`,
   };
 
   const pageSize = 10;
