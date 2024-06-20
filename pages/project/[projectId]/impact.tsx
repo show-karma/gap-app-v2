@@ -66,7 +66,7 @@ const ImpactPage = ({
             url: image,
             alt: dynamicMetadata.title || defaultMetadata.title,
           })),
-          site_name: defaultMetadata.openGraph.siteName,
+          // // site_name: defaultMetadata.openGraph.siteName,
         }}
         additionalLinkTags={[
           {
