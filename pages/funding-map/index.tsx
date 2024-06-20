@@ -299,7 +299,7 @@ const GrantProgramRegistry = ({
             url: image,
             alt: dynamicMetadata.title || defaultMetadata.title,
           })),
-          // site_name:
+          // // site_name:
           //   dynamicMetadata.title || defaultMetadata.openGraph.siteName,
         }}
         additionalLinkTags={[

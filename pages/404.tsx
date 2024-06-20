@@ -22,7 +22,7 @@ const NotFoundPage: React.FC = () => {
             url: image,
             alt: defaultMetadata.title,
           })),
-          site_name: defaultMetadata.openGraph.siteName,
+          // site_name: defaultMetadata.openGraph.siteName,
         }}
         additionalLinkTags={[
           {

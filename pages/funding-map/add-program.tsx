@@ -27,7 +27,7 @@ export default function AddProgramPage() {
             url: image,
             alt: metadata.title,
           })),
-          site_name: defaultMetadata.openGraph.siteName,
+          // site_name: defaultMetadata.openGraph.siteName,
         }}
         additionalLinkTags={[
           {
