@@ -1,6 +1,6 @@
 import { ReadMore } from "@/utilities/ReadMore";
 import Image from "next/image";
-import { FC, useMemo, useRef, useState } from "react";
+import { Dispatch, FC, SetStateAction, useMemo, useRef, useState } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { registryHelper } from "./helper";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -8,7 +8,7 @@ import { Discord2Icon, Twitter2Icon } from "@/components/Icons";
 import { DiscussionIcon } from "@/components/Icons/Discussion";
 import { BlogIcon } from "@/components/Icons/Blog";
 import { OrganizationIcon } from "@/components/Icons/Organization";
-import { VirtualItem, useVirtualizer } from "@tanstack/react-virtual";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import {
   ColumnDef,
   Row,
@@ -16,8 +16,6 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import InfiniteScroll from "react-infinite-scroll-component";
-import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/Utilities/Button";
 import { ProgramDetailsDialog } from "./ProgramDetailsDialog";
 
@@ -93,15 +91,9 @@ export type GrantProgram = {
 
 interface ProgramListProps {
   grantPrograms: GrantProgram[];
-  hasMore: boolean;
-  nextFunc: () => void;
 }
 
-export const ProgramList: FC<ProgramListProps> = ({
-  grantPrograms,
-  hasMore,
-  nextFunc,
-}) => {
+export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
   const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(
     null
   );
@@ -465,15 +457,8 @@ export const ProgramList: FC<ProgramListProps> = ({
           closeModal={() => setSelectedProgram(null)}
         />
       ) : null}
-      <InfiniteScroll
-        dataLength={rows.length}
-        next={nextFunc}
-        hasMore={hasMore}
-        loader={
-          <div className="flex flex-row justify-center items-center w-full">
-            <Spinner />
-          </div>
-        }
+
+      <div
         style={{
           width: "100%",
           minHeight: "100%",
@@ -533,7 +518,7 @@ export const ProgramList: FC<ProgramListProps> = ({
             })}
           </tbody>
         </table>
-      </InfiniteScroll>
+      </div>
     </div>
   );
 };
