@@ -59,7 +59,7 @@ export function GlobalCount() {
         ) : error && !stats ? (
           <div className="font-bold">Error fetching stats</div>
         ) : (
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-6 gap-4">
             {stats.map((item: any) => (
               <div className="mx-1" key={item._id as any}>
                 <p>{item._id}</p>

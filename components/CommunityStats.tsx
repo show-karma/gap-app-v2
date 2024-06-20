@@ -3,7 +3,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { useState, Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { Button } from "@/components/Utilities/Button";
-import { ArrowPathIcon } from "@heroicons/react/24/solid";
+import { ArrowPathIcon, ChartBarSquareIcon } from "@heroicons/react/24/solid";
 
 interface CommunityStatsProps {
   communityId: string;
@@ -39,7 +39,8 @@ export default function CommunityStats({ communityId }: CommunityStatsProps) {
             "No. of Grant Update Status Posts": data?.GrantUpdateStatuses,
             "No. of Grants Completed": data?.GrantCompleted,
             "No. of Milestones": data?.Milestones,
-            "No. of Milestone Updates": data?.MilestoneUpdates,
+            "No. of Milestones Completed": data?.MilestoneCompleted,
+            "No. of Milestones Verifications": data?.MilestoneVerified,
             "No. of Members Added": data?.MemberOf,
             "Total Attestations":
               data?.projects +
@@ -50,7 +51,8 @@ export default function CommunityStats({ communityId }: CommunityStatsProps) {
               data?.MemberOf +
               data?.ProjectEndorsements +
               data?.Milestones +
-              data?.MilestoneUpdates +
+              data?.MilestoneCompleted +
+              data?.MilestoneVerified +
               data?.ProjectImpactVerifieds +
               data?.GrantUpdateStatuses +
               data?.GrantEdits +
@@ -85,10 +87,10 @@ export default function CommunityStats({ communityId }: CommunityStatsProps) {
       <Button
         onClick={openModal}
         className={
-          "flex justify-center items-center gap-x-2 rounded-md bg-transparent dark:bg-transparent px-3 py-2 text-sm font-semibold text-red-600 dark:text-red-300 hover:opacity-75 dark:hover:opacity-75 border border-red-200 dark:border-red-900 hover:bg-transparent"
+          "flex justify-center items-center gap-x-2 rounded-md bg-transparent dark:bg-transparent px-3 py-2 text-sm font-semibold text-fuchsia-600 dark:text-fuchsia-300 hover:opacity-75 dark:hover:opacity-75 border border-fuchsia-200 dark:border-fuchsia-900 hover:bg-transparent"
         }
       >
-        View Stats
+        Stats <ChartBarSquareIcon className="h-5 w-5" />
       </Button>
 
       <Transition appear show={isOpen} as={Fragment}>
