@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import React, { Dispatch } from "react";
+import React, { Dispatch, useMemo } from "react";
 import { NextSeo } from "next-seo";
 import { defaultMetadata } from "@/utilities/meta";
 import { useState, useEffect } from "react";
@@ -76,7 +76,6 @@ const GrantProgramRegistry = ({
 }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const [grantPrograms, setGrantPrograms] = useState<GrantProgram[]>([]);
 
-  const [hasInitialized, setInitialized] = useState(false);
   const [loading, setLoading] = useState(true);
   const [totalPrograms, setTotalPrograms] = useState(0);
   const pageLimit = 10;
@@ -159,11 +158,6 @@ const GrantProgramRegistry = ({
     setSearchInput(value);
   }, 500);
 
-  // const changeGrantSize = (value: number[]) => {
-  //   setMinGrantSize(value[0].toString());
-  //   setMaxGrantSize(value[1].toString());
-  // };
-
   const onChangeGeneric = (
     value: string,
     setToChange: Dispatch<React.SetStateAction<string[]>>
@@ -188,7 +182,7 @@ const GrantProgramRegistry = ({
 
   const pageSize = 10;
 
-  useEffect(() => {
+  useMemo(() => {
     const getGrantPrograms = async () => {
       setLoading(true);
       try {
