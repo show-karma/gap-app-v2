@@ -32,8 +32,6 @@ interface ProgramListPendingProps {
     program: GrantProgram,
     value: "accepted" | "rejected" | "pending"
   ) => Promise<void>;
-  hasMore: boolean;
-  nextFunc: () => void;
   tab: "accepted" | "rejected" | "pending";
   editFn: (program: GrantProgram) => any;
 }
@@ -53,8 +51,6 @@ export const accountsAllowedManagePrograms = [
 export const ProgramListPending: FC<ProgramListPendingProps> = ({
   grantPrograms,
   approveOrReject,
-  hasMore,
-  nextFunc,
   tab,
   editFn,
 }) => {
@@ -561,15 +557,7 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
           closeModal={() => setSelectedProgram(null)}
         />
       ) : null}
-      <InfiniteScroll
-        dataLength={rows.length}
-        next={nextFunc}
-        hasMore={hasMore}
-        loader={
-          <div className="flex flex-row justify-center items-center w-full">
-            <Spinner />
-          </div>
-        }
+      <div
         style={{
           width: "100%",
           minHeight: "100%",
@@ -629,7 +617,7 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
             })}
           </tbody>
         </table>
-      </InfiniteScroll>
+      </div>
     </div>
   );
 };
