@@ -39,6 +39,7 @@ interface ProgramListPendingProps {
   ) => Promise<void>;
   tab: "accepted" | "rejected" | "pending";
   editFn: (program: GrantProgram) => any;
+  selectProgram: (program: GrantProgram) => void;
 }
 
 export const accountsAllowedManagePrograms = [
@@ -58,6 +59,7 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
   approveOrReject,
   tab,
   editFn,
+  selectProgram,
 }) => {
   const { address } = useAccount();
   const { isAuth } = useAuthStore();
@@ -67,10 +69,6 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
     accountsAllowedManagePrograms.includes(address.toLowerCase()) &&
     // isMember &&
     isAuth;
-
-  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(
-    null
-  );
 
   // useEffect(() => {
   //   if (!address) return;
@@ -118,7 +116,7 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
               <div className="flex flex-col gap-1 w-max max-w-full">
                 <button
                   type="button"
-                  onClick={() => setSelectedProgram(grant)}
+                  onClick={() => selectProgram(grant)}
                   className="text-left font-semibold text-base text-gray-900 underline dark:text-zinc-100 w-full"
                 >
                   {grant?.metadata?.title}
@@ -591,13 +589,6 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
 
   return (
     <div ref={parentRef} className="w-full">
-      {selectedProgram ? (
-        <ProgramDetailsDialog
-          program={selectedProgram}
-          isOpen={selectedProgram !== null}
-          closeModal={() => setSelectedProgram(null)}
-        />
-      ) : null}
       <div
         style={{
           width: "100%",
