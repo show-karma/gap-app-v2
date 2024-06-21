@@ -2,7 +2,7 @@ import { ReadMore } from "@/utilities/ReadMore";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import Image from "next/image";
-import { FC, useMemo, useRef, useState } from "react";
+import { FC, useEffect, useMemo, useRef, useState } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { registryHelper } from "./helper";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -25,6 +25,11 @@ import { useAccount } from "wagmi";
 import { useAuthStore } from "@/store/auth";
 import { GrantProgram } from "./ProgramList";
 import { ProgramDetailsDialog } from "./ProgramDetailsDialog";
+import { AlloRegistry } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/AlloRegistry";
+import { getWalletClient } from "@wagmi/core";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { envVars } from "@/utilities/enviromentVars";
+import { NFTStorage } from "nft.storage";
 
 interface ProgramListPendingProps {
   grantPrograms: GrantProgram[];
@@ -56,14 +61,50 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
 }) => {
   const { address } = useAccount();
   const { isAuth } = useAuthStore();
+  const [isMember, setIsMember] = useState(false);
   const isAllowed =
     address &&
     accountsAllowedManagePrograms.includes(address.toLowerCase()) &&
+    // isMember &&
     isAuth;
 
   const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(
     null
   );
+
+  // useEffect(() => {
+  //   if (!address) return;
+  //   const getMemberOf = async () => {
+  //     try {
+  //       const walletClient = await getWalletClient({
+  //         chainId: 42161,
+  //         // registryHelper.supportedNetworks,
+  //       });
+
+  //       if (!walletClient) return;
+
+  //       const walletSigner = await walletClientToSigner(walletClient);
+
+  //       const ipfsStorage = new NFTStorage({
+  //         token: envVars.IPFS_TOKEN,
+  //       });
+
+  //       const allo = new AlloRegistry(walletSigner as any, ipfsStorage);
+
+  //       const member = await allo.isMemberOf(
+  //         // envVars.PROFILE_ID,
+  //         // address
+  //         "0xf123b01fbc8e244131dd1078c8c6778a7037855139f01e65e0e424e06584edd2",
+  //         "0x23b7a53ecfd93803c63b97316d7362eae59c55b6"
+  //       );
+  //       console.log("member", member);
+  //       setIsMember(member);
+  //     } catch (error) {
+  //       console.log(error);
+  //     }
+  //   };
+  //   getMemberOf();
+  // }, [address]);
 
   const columns = useMemo<ColumnDef<GrantProgram>[]>(
     () => [
