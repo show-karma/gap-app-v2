@@ -8,10 +8,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import {
-  ProgramListPending,
-  accountsAllowedManagePrograms,
-} from "@/components/Pages/ProgramRegistry/ProgramListPending";
+import { ProgramListPending } from "@/components/Pages/ProgramRegistry/ProgramListPending";
 import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
 import { useQueryState } from "nuqs";
@@ -34,7 +31,7 @@ import { PAGES } from "@/utilities/pages";
 import { envVars } from "@/utilities/enviromentVars";
 import { NFTStorage } from "nft.storage";
 import { getWalletClient } from "@wagmi/core";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { AlloBase } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/Allo";
 import {
   Address,
@@ -46,6 +43,7 @@ import Pagination from "@/components/Utilities/Pagination";
 import debounce from "lodash.debounce";
 import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
 import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
+import { AlloRegistry } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/AlloRegistry";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { query } = context;
@@ -55,7 +53,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   return {
     props: {
       defaultTab,
-      defaultName,defaultProgramId
+      defaultName,
+      defaultProgramId,
     },
   };
 }
@@ -63,7 +62,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const GrantProgramRegistry = ({
   defaultTab,
   defaultName,
-  defaultProgramId
+  defaultProgramId,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const [grantPrograms, setGrantPrograms] = useState<GrantProgram[]>([]);
   const [loading, setLoading] = useState(true);
@@ -72,10 +71,41 @@ const GrantProgramRegistry = ({
 
   const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore();
-  const isAllowed =
-    address &&
-    accountsAllowedManagePrograms.includes(address.toLowerCase()) &&
-    isAuth;
+
+  const [isMember, setIsMember] = useState(false);
+
+  const isAllowed = address && isMember && isAuth;
+
+  const signer = useSigner();
+  useEffect(() => {
+    if (!address || !isConnected) {
+      setIsMember(false);
+      return;
+    }
+    const getMemberOf = async () => {
+      try {
+        const walletClient = await getWalletClient({
+          chainId: registryHelper.supportedNetworks,
+        });
+
+        if (!walletClient) return;
+
+        const walletSigner = await walletClientToSigner(walletClient);
+
+        const ipfsStorage = new NFTStorage({
+          token: envVars.IPFS_TOKEN,
+        });
+
+        const allo = new AlloRegistry(walletSigner as any, ipfsStorage);
+
+        const member = await allo.isMemberOf(envVars.PROFILE_ID, address);
+        setIsMember(member);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    getMemberOf();
+  }, [address, signer, isConnected]);
 
   const [tab, setTab] = useQueryState("tab", {
     defaultValue: defaultTab || "pending",
@@ -486,6 +516,7 @@ const GrantProgramRegistry = ({
                               setProgramId(program.programId || "");
                               setSelectedProgram(program);
                             }}
+                            isAllowed={isAllowed}
                           />
                           <Pagination
                             currentPage={page}
