@@ -25,7 +25,10 @@ import {
 } from "wagmi";
 import { useAuthStore } from "@/store/auth";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { ChevronLeftIcon } from "@heroicons/react/24/solid";
+import {
+  ChevronLeftIcon,
+  MagnifyingGlassIcon,
+} from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
 import { envVars } from "@/utilities/enviromentVars";
@@ -40,20 +43,23 @@ import {
 } from "@show-karma/karma-gap-sdk/core/class/types/allo";
 import { AlloContracts } from "@show-karma/karma-gap-sdk";
 import Pagination from "@/components/Utilities/Pagination";
+import debounce from "lodash.debounce";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { query } = context;
   const defaultTab = (query.tab as string) || "";
-
+  const defaultName = (query.name as string) || "";
   return {
     props: {
       defaultTab,
+      defaultName,
     },
   };
 }
 
 const GrantProgramRegistry = ({
   defaultTab,
+  defaultName,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const [grantPrograms, setGrantPrograms] = useState<GrantProgram[]>([]);
   const [loading, setLoading] = useState(true);
@@ -84,12 +90,24 @@ const GrantProgramRegistry = ({
   const pageSize = 10;
   const [totalPrograms, setTotalPrograms] = useState(0);
 
+  const [searchInput, setSearchInput] = useQueryState("name", {
+    defaultValue: defaultName,
+    throttleMs: 500,
+  });
+
+  const debouncedSearch = debounce((value: string) => {
+    setPage(1);
+    setSearchInput(value);
+  }, 500);
+
   const getGrantPrograms = async () => {
     setLoading(true);
     try {
       await fetchData(
         INDEXER.REGISTRY.GET_ALL +
-          `?isValid=${tab}&limit=${pageSize}&offset=${(page - 1) * pageSize}`
+          `?isValid=${tab}&limit=${pageSize}&offset=${(page - 1) * pageSize}${
+            searchInput ? `&name=${searchInput}` : ""
+          }`
       ).then(([res, error]) => {
         if (!error && res) {
           setGrantPrograms(res.programs);
@@ -106,7 +124,7 @@ const GrantProgramRegistry = ({
   useMemo(() => {
     getGrantPrograms();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, page]);
+  }, [tab, page, searchInput]);
 
   const { chain } = useNetwork();
   const { switchNetworkAsync } = useSwitchNetwork();
@@ -342,7 +360,7 @@ const GrantProgramRegistry = ({
           </div> */}
               </div>
               <div className="w-full">
-                <div className="flex flex-wrap w-max gap-2 rounded bg-[#F2F4F7] dark:bg-zinc-800 px-2 py-1">
+                <div className="flex flex-wrap w-max gap-2 rounded-t bg-[#F2F4F7] dark:bg-zinc-800 px-2 py-1">
                   <Button
                     className="bg-transparent text-black"
                     onClick={() => {
@@ -385,6 +403,30 @@ const GrantProgramRegistry = ({
                   >
                     Rejected
                   </Button>
+                </div>
+                <div className="sm:items-center p-3 flex max-sm:flex-col flex-row gap-3 flex-wrap justify-between rounded-b-[4px] bg-[#F2F4F7] dark:bg-zinc-900">
+                  <div className="w-full max-w-[450px] max-lg:max-w-xs">
+                    <label htmlFor="search" className="sr-only">
+                      Search
+                    </label>
+                    <div className="relative">
+                      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
+                        <MagnifyingGlassIcon
+                          className="h-5 w-5 text-black dark:text-white"
+                          aria-hidden="true"
+                        />
+                      </div>
+                      <input
+                        id="search"
+                        name="search"
+                        className="block w-full rounded-full border-0 bg-white dark:bg-zinc-600 py-1.5 pr-10 pl-3 text-black dark:text-white dark:placeholder:text-zinc-100  placeholder:text-zinc-900  sm:text-sm sm:leading-6"
+                        placeholder="Search"
+                        type="search"
+                        defaultValue={searchInput}
+                        onChange={(e) => debouncedSearch(e.target.value)}
+                      />
+                    </div>
+                  </div>
                 </div>
                 {!loading ? (
                   grantPrograms.length ? (
