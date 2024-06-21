@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import React, { Dispatch, FC, useMemo, useRef } from "react";
+import React, { Dispatch, useMemo } from "react";
 import { NextSeo } from "next-seo";
 import { defaultMetadata } from "@/utilities/meta";
 import { useState, useEffect } from "react";
@@ -10,10 +10,8 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
 import debounce from "lodash.debounce";
-import { GrantSizeSlider } from "@/components/GrantSizeSlider";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import InfiniteScroll from "react-infinite-scroll-component";
 import {
   GrantProgram,
   ProgramList,
@@ -22,11 +20,10 @@ import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 import { useQueryState } from "nuqs";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
-import { useVirtualizer } from "@tanstack/react-virtual";
-import { Button } from "@/components/Utilities/Button";
 import { accountsAllowedManagePrograms } from "@/components/Pages/ProgramRegistry/ProgramListPending";
 import { useAuthStore } from "@/store/auth";
 import { useAccount } from "wagmi";
+import Pagination from "@/components/Utilities/Pagination";
 
 const statuses = ["Active", "Inactive"];
 
@@ -80,7 +77,8 @@ const GrantProgramRegistry = ({
   const [grantPrograms, setGrantPrograms] = useState<GrantProgram[]>([]);
 
   const [loading, setLoading] = useState(true);
-  const [hasMore, setHasMore] = useState(true);
+  const [totalPrograms, setTotalPrograms] = useState(0);
+  const pageLimit = 10;
 
   const [selectedCategory, setSelectedCategory] = useQueryState("categories", {
     defaultValue: defaultCategories,
@@ -89,6 +87,11 @@ const GrantProgramRegistry = ({
   });
   const [status, setStatus] = useQueryState("status", {
     defaultValue: defaultStatuses || "Active",
+  });
+  const [page, setPage] = useQueryState("page", {
+    defaultValue: 1,
+    serialize: (value) => value.toString(),
+    parse: (value) => parseInt(value),
   });
 
   const [searchInput, setSearchInput] = useQueryState("name", {
@@ -151,19 +154,16 @@ const GrantProgramRegistry = ({
   );
 
   const debouncedSearch = debounce((value: string) => {
+    setPage(1);
     setSearchInput(value);
   }, 500);
-
-  // const changeGrantSize = (value: number[]) => {
-  //   setMinGrantSize(value[0].toString());
-  //   setMaxGrantSize(value[1].toString());
-  // };
 
   const onChangeGeneric = (
     value: string,
     setToChange: Dispatch<React.SetStateAction<string[]>>
   ) => {
     setToChange((oldArray) => {
+      setPage(1);
       const newArray = [...oldArray];
       if (newArray.includes(value)) {
         const filteredArray = newArray.filter((item) => item !== value);
@@ -177,56 +177,18 @@ const GrantProgramRegistry = ({
 
   const dynamicMetadata = {
     title: `Karma GAP - Grant Program Aggregator`,
-    description: `View the list of grant programs issued by various ecosystems.`,
+    description: `Find all the funding opportunities across web3 ecosystem.`,
   };
 
   const pageSize = 10;
-  const [offset, setOffset] = useState(0);
 
-  const fetchMoreData = async () => {
-    try {
-      const newOffset = offset + pageSize;
-      setOffset(newOffset);
-      await fetchData(
-        INDEXER.REGISTRY.GET_ALL +
-          `?limit=${pageSize}&offset=${newOffset}${
-            searchInput ? `&name=${searchInput}` : ""
-          }${
-            selectedGrantTypes.length ? `&grantTypes=${selectedGrantTypes}` : ""
-          }${status ? `&status=${status}` : ""}${
-            selectedNetworks.length
-              ? `&networks=${selectedNetworks.join(",")}`
-              : ""
-          }${
-            selectedEcosystems.length
-              ? `&ecosystems=${selectedEcosystems.join(",")}`
-              : ""
-          }${
-            selectedCategory.length
-              ? `&categories=${selectedCategory.join(",")}`
-              : ""
-          }`
-      ).then(([res, error]) => {
-        if (!error && res) {
-          setGrantPrograms((oldArray) => [...oldArray, ...res]);
-          setHasMore(res.length === pageSize);
-        }
-      });
-    } catch (error: any) {
-      console.log(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
+  useMemo(() => {
     const getGrantPrograms = async () => {
       setLoading(true);
-      setOffset(0);
       try {
         await fetchData(
           INDEXER.REGISTRY.GET_ALL +
-            `?limit=${pageSize}&offset=0${
+            `?limit=${pageSize}&offset=${(page - 1) * pageSize}${
               searchInput ? `&name=${searchInput}` : ""
             }${
               selectedGrantTypes.length
@@ -240,16 +202,15 @@ const GrantProgramRegistry = ({
               selectedEcosystems.length
                 ? `&ecosystems=${selectedEcosystems.join(",")}`
                 : ""
-            }
-            ${
+            }${
               selectedCategory.length
                 ? `&categories=${selectedCategory.join(",")}`
                 : ""
             }`
         ).then(([res, error]) => {
           if (!error && res) {
-            setGrantPrograms(res);
-            setHasMore(res.length === pageSize);
+            setGrantPrograms(res.programs);
+            setTotalPrograms(res.count);
           }
         });
       } catch (error: any) {
@@ -262,11 +223,10 @@ const GrantProgramRegistry = ({
     getGrantPrograms();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    page,
+    status,
     searchInput,
     selectedCategory,
-    status,
-    // minGrantSize,
-    // maxGrantSize,
     selectedNetworks,
     selectedEcosystems,
     selectedGrantTypes,
@@ -299,7 +259,8 @@ const GrantProgramRegistry = ({
             url: image,
             alt: dynamicMetadata.title || defaultMetadata.title,
           })),
-          site_name: defaultMetadata.openGraph.siteName,
+          // // site_name:
+          //   dynamicMetadata.title || defaultMetadata.openGraph.siteName,
         }}
         additionalLinkTags={[
           {
@@ -496,30 +457,32 @@ const GrantProgramRegistry = ({
           </div>
 
           {!loading ? (
-            grantPrograms.length ? (
-              <div className="mt-8 flow-root">
-                <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                  <div
-                    className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8"
-                    // {...virtualizer.containerProps}
-                  >
-                    <ProgramList
-                      grantPrograms={grantPrograms}
-                      hasMore={hasMore}
-                      nextFunc={() => {
-                        fetchMoreData();
-                      }}
-                    />
+            <div className="w-full flex flex-col">
+              {grantPrograms.length ? (
+                <div className="mt-8 flow-root">
+                  <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                    <div
+                      className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8"
+                      // {...virtualizer.containerProps}
+                    >
+                      <ProgramList grantPrograms={grantPrograms} />
+                    </div>
                   </div>
                 </div>
-              </div>
-            ) : (
-              <div className="py-10 px-4 justify-center flex items-center">
-                <p className="text-lg font-normal text-black dark:text-zinc-100">
-                  No grant program found
-                </p>
-              </div>
-            )
+              ) : (
+                <div className="py-10 px-4 justify-center flex items-center">
+                  <p className="text-lg font-normal text-black dark:text-zinc-100">
+                    No grant program found
+                  </p>
+                </div>
+              )}
+              <Pagination
+                currentPage={page}
+                setCurrentPage={setPage}
+                postsPerPage={pageLimit}
+                totalPosts={totalPrograms}
+              />
+            </div>
           ) : (
             <div className="py-10 px-4 justify-center flex items-center">
               <Spinner />
