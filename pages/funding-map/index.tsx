@@ -24,6 +24,7 @@ import { accountsAllowedManagePrograms } from "@/components/Pages/ProgramRegistr
 import { useAuthStore } from "@/store/auth";
 import { useAccount } from "wagmi";
 import Pagination from "@/components/Utilities/Pagination";
+import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
 
 const statuses = ["Active", "Inactive"];
 
@@ -51,6 +52,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     .filter((category) => category.trim());
   const defaultStatuses = (query.status as string) || "";
   const defaultName = (query.name as string) || "";
+  const defaultProgramId = (query.programId as string) || "";
 
   return {
     props: {
@@ -61,6 +63,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       defaultCategories,
       defaultStatuses,
       defaultName,
+      defaultProgramId,
     },
   };
 }
@@ -73,6 +76,7 @@ const GrantProgramRegistry = ({
   defaultCategories,
   defaultStatuses,
   defaultName,
+  defaultProgramId,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const [grantPrograms, setGrantPrograms] = useState<GrantProgram[]>([]);
 
@@ -98,38 +102,11 @@ const GrantProgramRegistry = ({
     defaultValue: defaultName,
     throttleMs: 500,
   });
-  // const [minGrantSize, setMinGrantSize] = useQueryState("minGrantSize", {
-  //   throttleMs: 500,
-  //   defaultValue: defaultGrantSize[0].toString() as any,
-  //   parse: (value) => {
-  //     if (value === defaultGrantSize[0].toString()) {
-  //       return null;
-  //     }
-  //     return value;
-  //   },
-  //   serialize: (value) => {
-  //     if (value === defaultGrantSize[0].toString()) {
-  //       return null;
-  //     }
-  //     return value;
-  //   },
-  // });
-  // const [maxGrantSize, setMaxGrantSize] = useQueryState("maxGrantSize", {
-  //   throttleMs: 500,
-  //   defaultValue: defaultGrantSize[1].toString() as any,
-  //   parse: (value) => {
-  //     if (value === defaultGrantSize[1].toString()) {
-  //       return null;
-  //     }
-  //     return value;
-  //   },
-  //   serialize: (value) => {
-  //     if (value === defaultGrantSize[1].toString()) {
-  //       return null;
-  //     }
-  //     return value;
-  //   },
-  // });
+
+  const [programId, setProgramId] = useQueryState("programId", {
+    defaultValue: defaultProgramId,
+    throttleMs: 500,
+  });
 
   const [selectedNetworks, setSelectedNetworks] = useQueryState("networks", {
     defaultValue: defaultNetworks,
@@ -152,6 +129,28 @@ const GrantProgramRegistry = ({
       parse: (value) => (value.length > 0 ? value.split(",") : []),
     }
   );
+
+  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(
+    null
+  );
+
+  useEffect(() => {
+    const searchProgramById = async (id: string) => {
+      try {
+        const [data, error] = await fetchData(
+          INDEXER.REGISTRY.FIND_BY_ID(id, registryHelper.supportedNetworks)
+        );
+        if (data) {
+          setSelectedProgram(data);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    if (programId) {
+      searchProgramById(programId);
+    }
+  }, [programId]);
 
   const debouncedSearch = debounce((value: string) => {
     setPage(1);
@@ -269,6 +268,16 @@ const GrantProgramRegistry = ({
           },
         ]}
       />
+      {selectedProgram ? (
+        <ProgramDetailsDialog
+          program={selectedProgram}
+          isOpen={selectedProgram !== null}
+          closeModal={() => {
+            setProgramId(null);
+            setSelectedProgram(null);
+          }}
+        />
+      ) : null}
       <section className="my-10 flex w-full max-w-full flex-col justify-between items-center gap-6 px-12 pb-7 pt-5 max-2xl:px-8 max-md:px-4">
         <div className="flex flex-row max-lg:gap-10  max-md:flex-col gap-32 justify-between w-full">
           <div className="flex flex-1 flex-col gap-3 items-start justify-start text-left">
@@ -465,7 +474,13 @@ const GrantProgramRegistry = ({
                       className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8"
                       // {...virtualizer.containerProps}
                     >
-                      <ProgramList grantPrograms={grantPrograms} />
+                      <ProgramList
+                        grantPrograms={grantPrograms}
+                        selectProgram={(program) => {
+                          setSelectedProgram(program);
+                          setProgramId(program.programId || "");
+                        }}
+                      />
                     </div>
                   </div>
                 </div>

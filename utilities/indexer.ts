@@ -3,6 +3,8 @@ import { Hex } from "viem";
 export const INDEXER = {
   REGISTRY: {
     GET_ALL: "/registry",
+    FIND_BY_ID: (id: string, chainId: number) =>
+      `/registry/find/${id}/${chainId}`,
     GET_ALL_PENDING: "/registry/pending",
     APPROVE: "/registry/approve",
     UPDATE: "/registry/updateMetadata",

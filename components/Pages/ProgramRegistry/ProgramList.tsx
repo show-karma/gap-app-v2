@@ -1,6 +1,14 @@
 import { ReadMore } from "@/utilities/ReadMore";
 import Image from "next/image";
-import { Dispatch, FC, SetStateAction, useMemo, useRef, useState } from "react";
+import {
+  Dispatch,
+  FC,
+  SetStateAction,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { registryHelper } from "./helper";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -91,13 +99,13 @@ export type GrantProgram = {
 
 interface ProgramListProps {
   grantPrograms: GrantProgram[];
+  selectProgram: (program: GrantProgram) => void;
 }
 
-export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
-  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(
-    null
-  );
-
+export const ProgramList: FC<ProgramListProps> = ({
+  grantPrograms,
+  selectProgram,
+}) => {
   const columns = useMemo<ColumnDef<GrantProgram>[]>(
     () => [
       {
@@ -110,7 +118,7 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
               <div className="flex flex-col gap-1 w-max max-w-full">
                 <button
                   type="button"
-                  onClick={() => setSelectedProgram(grant)}
+                  onClick={() => selectProgram(grant)}
                   className="text-left font-semibold text-base text-gray-900 underline dark:text-zinc-100 w-full"
                 >
                   {grant?.metadata?.title}
@@ -450,14 +458,6 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms }) => {
 
   return (
     <div ref={parentRef} className="w-full">
-      {selectedProgram ? (
-        <ProgramDetailsDialog
-          program={selectedProgram}
-          isOpen={selectedProgram !== null}
-          closeModal={() => setSelectedProgram(null)}
-        />
-      ) : null}
-
       <div
         style={{
           width: "100%",
