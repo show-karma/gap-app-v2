@@ -103,11 +103,6 @@ const GrantProgramRegistry = ({
     throttleMs: 500,
   });
 
-  const [programId, setProgramId] = useQueryState("programId", {
-    defaultValue: defaultProgramId,
-    throttleMs: 500,
-  });
-
   const [selectedNetworks, setSelectedNetworks] = useQueryState("networks", {
     defaultValue: defaultNetworks,
     serialize: (value) => (value.length ? value?.join(",") : ""),
@@ -129,6 +124,11 @@ const GrantProgramRegistry = ({
       parse: (value) => (value.length > 0 ? value.split(",") : []),
     }
   );
+
+  const [programId, setProgramId] = useQueryState("programId", {
+    defaultValue: defaultProgramId,
+    throttleMs: 500,
+  });
 
   const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(
     null
