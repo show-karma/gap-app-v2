@@ -44,15 +44,18 @@ import {
 import { AlloContracts } from "@show-karma/karma-gap-sdk";
 import Pagination from "@/components/Utilities/Pagination";
 import debounce from "lodash.debounce";
+import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
+import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { query } = context;
   const defaultTab = (query.tab as string) || "";
   const defaultName = (query.name as string) || "";
+  const defaultProgramId = (query.programId as string) || "";
   return {
     props: {
       defaultTab,
-      defaultName,
+      defaultName,defaultProgramId
     },
   };
 }
@@ -60,6 +63,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const GrantProgramRegistry = ({
   defaultTab,
   defaultName,
+  defaultProgramId
 }: InferGetServerSidePropsType<typeof getServerSideProps>) => {
   const [grantPrograms, setGrantPrograms] = useState<GrantProgram[]>([]);
   const [loading, setLoading] = useState(true);
@@ -94,6 +98,33 @@ const GrantProgramRegistry = ({
     defaultValue: defaultName,
     throttleMs: 500,
   });
+
+  const [programId, setProgramId] = useQueryState("programId", {
+    defaultValue: defaultProgramId,
+    throttleMs: 500,
+  });
+
+  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(
+    null
+  );
+
+  useEffect(() => {
+    const searchProgramById = async (id: string) => {
+      try {
+        const [data, error] = await fetchData(
+          INDEXER.REGISTRY.FIND_BY_ID(id, registryHelper.supportedNetworks)
+        );
+        if (data) {
+          setSelectedProgram(data);
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    if (programId) {
+      searchProgramById(programId);
+    }
+  }, [programId]);
 
   const debouncedSearch = debounce((value: string) => {
     setPage(1);
@@ -308,6 +339,16 @@ const GrantProgramRegistry = ({
           },
         ]}
       />
+      {selectedProgram ? (
+        <ProgramDetailsDialog
+          program={selectedProgram}
+          isOpen={selectedProgram !== null}
+          closeModal={() => {
+            setProgramId(null);
+            setSelectedProgram(null);
+          }}
+        />
+      ) : null}
       <section className="my-10 flex w-full max-w-full flex-col justify-between items-center gap-6 px-12 pb-7 pt-5 max-2xl:px-8 max-md:px-4">
         {isEditing ? null : (
           <div className="flex flex-row gap-2 justify-start w-full">
@@ -440,6 +481,10 @@ const GrantProgramRegistry = ({
                             editFn={(program: GrantProgram) => {
                               setIsEditing(true);
                               setProgramToEdit(program);
+                            }}
+                            selectProgram={(program: GrantProgram) => {
+                              setProgramId(program.programId || "");
+                              setSelectedProgram(program);
                             }}
                           />
                           <Pagination
