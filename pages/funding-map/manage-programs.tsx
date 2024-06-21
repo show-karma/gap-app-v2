@@ -75,6 +75,7 @@ const GrantProgramRegistry = ({
   const [isMember, setIsMember] = useState(false);
 
   const isAllowed = address && isMember && isAuth;
+  const { chain } = useNetwork();
 
   const signer = useSigner();
   useEffect(() => {
@@ -105,7 +106,7 @@ const GrantProgramRegistry = ({
       }
     };
     getMemberOf();
-  }, [address, signer, isConnected]);
+  }, [address, signer, isConnected, chain]);
 
   const [tab, setTab] = useQueryState("tab", {
     defaultValue: defaultTab || "pending",
@@ -187,7 +188,6 @@ const GrantProgramRegistry = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, page, searchInput]);
 
-  const { chain } = useNetwork();
   const { switchNetworkAsync } = useSwitchNetwork();
 
   const approveOrReject = async (

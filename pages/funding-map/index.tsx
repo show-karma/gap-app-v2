@@ -21,7 +21,7 @@ import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdow
 import { useQueryState } from "nuqs";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { useAuthStore } from "@/store/auth";
-import { useAccount } from "wagmi";
+import { useAccount, useNetwork } from "wagmi";
 import Pagination from "@/components/Utilities/Pagination";
 import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
 import { getWalletClient } from "@wagmi/core";
@@ -241,7 +241,7 @@ const GrantProgramRegistry = ({
   const [isMember, setIsMember] = useState(false);
 
   const isAllowed = address && isMember && isAuth;
-
+  const { chain } = useNetwork();
   const signer = useSigner();
   useEffect(() => {
     if (!address || !isConnected) {
@@ -271,7 +271,7 @@ const GrantProgramRegistry = ({
       }
     };
     getMemberOf();
-  }, [address, signer, isConnected]);
+  }, [address, signer, isConnected, chain]);
 
   return (
     <>
