@@ -24,11 +24,12 @@ import { useAuthStore } from "@/store/auth";
 import { useAccount, useNetwork } from "wagmi";
 import Pagination from "@/components/Utilities/Pagination";
 import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
-import { getWalletClient } from "@wagmi/core";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { NFTStorage } from "nft.storage";
 import { envVars } from "@/utilities/enviromentVars";
-import { AlloRegistry } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/AlloRegistry";
+import { useGap } from "@/hooks";
+import { Hex, createPublicClient, createWalletClient, http } from "viem";
+import { arbitrum, optimismSepolia } from "viem/chains";
+import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
 
 const statuses = ["Active", "Inactive"];
 
@@ -250,22 +251,9 @@ const GrantProgramRegistry = ({
     }
     const getMemberOf = async () => {
       try {
-        const walletClient = await getWalletClient({
-          chainId: registryHelper.supportedNetworks,
-        });
+        const call = await isMemberOfProfile(address);
 
-        if (!walletClient) return;
-
-        const walletSigner = await walletClientToSigner(walletClient);
-
-        const ipfsStorage = new NFTStorage({
-          token: envVars.IPFS_TOKEN,
-        });
-
-        const allo = new AlloRegistry(walletSigner as any, ipfsStorage);
-
-        const member = await allo.isMemberOf(envVars.PROFILE_ID, address);
-        setIsMember(member);
+        setIsMember(call as boolean);
       } catch (error) {
         console.log(error);
       }

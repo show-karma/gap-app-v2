@@ -44,6 +44,7 @@ import debounce from "lodash.debounce";
 import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
 import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
 import { AlloRegistry } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/AlloRegistry";
+import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { query } = context;
@@ -85,22 +86,8 @@ const GrantProgramRegistry = ({
     }
     const getMemberOf = async () => {
       try {
-        const walletClient = await getWalletClient({
-          chainId: registryHelper.supportedNetworks,
-        });
-
-        if (!walletClient) return;
-
-        const walletSigner = await walletClientToSigner(walletClient);
-
-        const ipfsStorage = new NFTStorage({
-          token: envVars.IPFS_TOKEN,
-        });
-
-        const allo = new AlloRegistry(walletSigner as any, ipfsStorage);
-
-        const member = await allo.isMemberOf(envVars.PROFILE_ID, address);
-        setIsMember(member);
+        const call = await isMemberOfProfile(address);
+        setIsMember(call);
       } catch (error) {
         console.log(error);
       }
