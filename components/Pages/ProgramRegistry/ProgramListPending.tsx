@@ -19,17 +19,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { Spinner } from "@/components/Utilities/Spinner";
-import InfiniteScroll from "react-infinite-scroll-component";
-import { useAccount } from "wagmi";
-import { useAuthStore } from "@/store/auth";
 import { GrantProgram } from "./ProgramList";
-import { ProgramDetailsDialog } from "./ProgramDetailsDialog";
-import { AlloRegistry } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/AlloRegistry";
-import { getWalletClient } from "@wagmi/core";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { envVars } from "@/utilities/enviromentVars";
-import { NFTStorage } from "nft.storage";
 
 interface ProgramListPendingProps {
   grantPrograms: GrantProgram[];
@@ -40,20 +30,8 @@ interface ProgramListPendingProps {
   tab: "accepted" | "rejected" | "pending";
   editFn: (program: GrantProgram) => any;
   selectProgram: (program: GrantProgram) => void;
+  isAllowed: boolean;
 }
-
-export const accountsAllowedManagePrograms = [
-  "0x23b7a53ecfd93803c63b97316d7362eae59c55b6",
-  "0x5a4830885f12438e00d8f4d98e9fe083e707698c",
-  "0xc5b24B213783477F811523649f4dd31dd43F7790",
-  "0x636DA9bF416B662B5Fedaf67d5937d07A34c6a2D",
-  "0x7926dad04fE7c482425D784985B5E24aea03C9fF",
-  "0x636DA9bF416B662B5Fedaf67d5937d07A34c6a2D",
-  "0xc5b24B213783477F811523649f4dd31dd43F7790",
-  "0xDA97C8739DE1e4b6Bc2560B6795Ac7a1a080C32a",
-  "0x5a5D9aB7b1bD978F80909503EBb828879daCa9C3",
-  "0x2dd2036C9Db2ADA2739509AF0047c00C8b9291EF",
-].map((item) => item.toLowerCase());
 
 export const ProgramListPending: FC<ProgramListPendingProps> = ({
   grantPrograms,
@@ -61,50 +39,8 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
   tab,
   editFn,
   selectProgram,
+  isAllowed,
 }) => {
-  const { address } = useAccount();
-  const { isAuth } = useAuthStore();
-  const [isMember, setIsMember] = useState(false);
-  const isAllowed =
-    address &&
-    accountsAllowedManagePrograms.includes(address.toLowerCase()) &&
-    // isMember &&
-    isAuth;
-
-  // useEffect(() => {
-  //   if (!address) return;
-  //   const getMemberOf = async () => {
-  //     try {
-  //       const walletClient = await getWalletClient({
-  //         chainId: 42161,
-  //         // registryHelper.supportedNetworks,
-  //       });
-
-  //       if (!walletClient) return;
-
-  //       const walletSigner = await walletClientToSigner(walletClient);
-
-  //       const ipfsStorage = new NFTStorage({
-  //         token: envVars.IPFS_TOKEN,
-  //       });
-
-  //       const allo = new AlloRegistry(walletSigner as any, ipfsStorage);
-
-  //       const member = await allo.isMemberOf(
-  //         // envVars.PROFILE_ID,
-  //         // address
-  //         "0xf123b01fbc8e244131dd1078c8c6778a7037855139f01e65e0e424e06584edd2",
-  //         "0x23b7a53ecfd93803c63b97316d7362eae59c55b6"
-  //       );
-  //       console.log("member", member);
-  //       setIsMember(member);
-  //     } catch (error) {
-  //       console.log(error);
-  //     }
-  //   };
-  //   getMemberOf();
-  // }, [address]);
-
   const columns = useMemo<ColumnDef<GrantProgram>[]>(
     () => [
       {

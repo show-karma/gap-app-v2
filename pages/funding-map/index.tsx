@@ -20,11 +20,9 @@ import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 import { useQueryState } from "nuqs";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
-import { accountsAllowedManagePrograms } from "@/components/Pages/ProgramRegistry/ProgramListPending";
 import { useAuthStore } from "@/store/auth";
-import { useAccount } from "wagmi";
+import { useAccount, useNetwork } from "wagmi";
 import Pagination from "@/components/Utilities/Pagination";
-import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
 
 const statuses = ["Active", "Inactive"];
 
@@ -231,13 +229,30 @@ const GrantProgramRegistry = ({
     selectedGrantTypes,
   ]);
 
-  const { address } = useAccount();
+  const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore();
 
-  const isAllowed =
-    address &&
-    accountsAllowedManagePrograms.includes(address.toLowerCase()) &&
-    isAuth;
+  const [isMember, setIsMember] = useState(false);
+
+  const isAllowed = address && isMember && isAuth;
+  const { chain } = useNetwork();
+  const signer = useSigner();
+  useEffect(() => {
+    if (!address || !isConnected) {
+      setIsMember(false);
+      return;
+    }
+    const getMemberOf = async () => {
+      try {
+        const call = await isMemberOfProfile(address);
+
+        setIsMember(call as boolean);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+    getMemberOf();
+  }, [address, signer, isConnected, chain]);
 
   return (
     <>
