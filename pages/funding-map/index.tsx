@@ -23,6 +23,8 @@ import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { useAuthStore } from "@/store/auth";
 import { useAccount, useNetwork } from "wagmi";
 import Pagination from "@/components/Utilities/Pagination";
+import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
+import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
 
 const statuses = ["Active", "Inactive"];
 
@@ -236,7 +238,6 @@ const GrantProgramRegistry = ({
 
   const isAllowed = address && isMember && isAuth;
   const { chain } = useNetwork();
-  const signer = useSigner();
   useEffect(() => {
     if (!address || !isConnected) {
       setIsMember(false);
@@ -252,7 +253,7 @@ const GrantProgramRegistry = ({
       }
     };
     getMemberOf();
-  }, [address, signer, isConnected, chain]);
+  }, [address, isConnected, chain]);
 
   return (
     <>
