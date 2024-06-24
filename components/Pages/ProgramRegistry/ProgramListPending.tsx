@@ -52,6 +52,7 @@ export const accountsAllowedManagePrograms = [
   "0xc5b24B213783477F811523649f4dd31dd43F7790",
   "0xDA97C8739DE1e4b6Bc2560B6795Ac7a1a080C32a",
   "0x5a5D9aB7b1bD978F80909503EBb828879daCa9C3",
+  "0x2dd2036C9Db2ADA2739509AF0047c00C8b9291EF",
 ].map((item) => item.toLowerCase());
 
 export const ProgramListPending: FC<ProgramListPendingProps> = ({
