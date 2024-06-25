@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, ReactNode, useEffect, useState } from "react";
+import { FC, Fragment, ReactNode, useEffect, useMemo, useState } from "react";
 import { Dialog, Tab, Transition } from "@headlessui/react";
 import {
   ChevronRightIcon,
@@ -9,28 +9,35 @@ import {
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
 import { z } from "zod";
-import { Hex, isAddress } from "viem";
+import { Hex, isAddress, zeroHash } from "viem";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MarkdownEditor } from "../Utilities/MarkdownEditor";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { Project, nullRef } from "@show-karma/karma-gap-sdk";
+import {
+  ExternalLink,
+  IProjectDetails,
+  MemberOf,
+  Project,
+  ProjectDetails,
+  nullRef,
+} from "@show-karma/karma-gap-sdk";
 import toast from "react-hot-toast";
 import { useRouter } from "next/router";
 import { getGapClient, useGap } from "@/hooks";
-import { Button } from "../Utilities/Button";
+import { Button } from "@/components/Utilities/Button";
 import {
   GithubIcon,
   LinkedInIcon,
   TwitterIcon,
   DiscordIcon,
   WebsiteIcon,
-} from "../Icons";
+} from "@/components/Icons";
 import { useProjectStore } from "@/store";
 import { useOwnerStore } from "@/store/owner";
 import { MESSAGES } from "@/utilities/messages";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { appNetwork } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
@@ -38,8 +45,11 @@ import { cn } from "@/utilities/tailwind";
 import { useAuthStore } from "@/store/auth";
 import { getWalletClient } from "@wagmi/core";
 import { useStepper } from "@/store/txStepper";
-import { createNewProject } from "@/utilities/sdk/projects/createNewProject";
 import { updateProject } from "@/utilities/sdk/projects/editProject";
+import { ContactInfoSection } from "./ContactInfoSection";
+import { Contact } from "@/types/project";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -72,6 +82,10 @@ const schema = z.object({
   discord: z.string().optional(),
   website: z.string().optional(),
   linkedin: z.string().optional(),
+  businessModel: z.string().optional(),
+  stageIn: z.string().optional(),
+  raisedMoney: z.string().optional(),
+  pathToTake: z.string().optional(),
 });
 
 type SchemaType = z.infer<typeof schema>;
@@ -84,6 +98,7 @@ type ProjectDialogProps = {
     styleClass: string;
   };
   projectToUpdate?: Project;
+  previousContacts?: Contact[];
 };
 
 export const ProjectDialog: FC<ProjectDialogProps> = ({
@@ -94,6 +109,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     styleClass: "",
   },
   projectToUpdate,
+  previousContacts,
 }) => {
   const dataToUpdate = {
     description: projectToUpdate?.details?.description || "",
@@ -117,27 +133,38 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     tags: projectToUpdate?.details?.tags.map((item) => item.name),
     members: projectToUpdate?.members.map((item) => item.recipient),
     recipient: projectToUpdate?.recipient,
+    businessModel: projectToUpdate?.details?.businessModel,
+    stageIn: projectToUpdate?.details?.stageIn,
+    raisedMoney: projectToUpdate?.details?.raisedMoney,
+    pathToTake: projectToUpdate?.details?.pathToTake,
   };
 
+  const [contacts, setContacts] = useState<Contact[]>(previousContacts || []);
   let [isOpen, setIsOpen] = useState(false);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [step, setStep] = useState(0);
 
-  const signer = useSigner();
-
   const isOwner = useOwnerStore((state) => state.isOwner);
 
-  function closeModal() {
-    setIsOpen(false);
-  }
-  function openModal() {
-    setIsOpen(true);
-  }
+  const { isConnected, address } = useAccount();
+  const { isAuth } = useAuthStore();
+  const { chain } = useNetwork();
+  const { switchNetworkAsync } = useSwitchNetwork({
+    chainId: appNetwork[0].id,
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const { openConnectModal } = useConnectModal();
+  const router = useRouter();
+  const { gap } = useGap();
+
+  const { changeStepperStep, setIsStepper } = useStepper();
 
   const {
     register,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors, isValid },
   } = useForm<SchemaType>({
     resolver: zodResolver(schema),
@@ -154,40 +181,334 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const [teamInput, setTeamInput] = useState("");
   const [teamInputError, setTeamInputError] = useState<string | undefined>("");
 
-  const addMemberToArray = () => {
-    event?.preventDefault();
-    event?.stopPropagation();
-    const splittedMembers = new Set(
-      teamInput.split(",").map((m) => m.trim().toLowerCase())
-    );
-    const uniqueMembers = Array.from(splittedMembers).filter(
-      (m) => !team.includes(m)
-    );
-    setTeamInput("");
-    setTeam((prev) => [...prev, ...uniqueMembers]);
-  };
+  function closeModal() {
+    setIsOpen(false);
+  }
+  function openModal() {
+    setIsOpen(true);
+    if (!projectToUpdate) {
+      setContacts([]);
+    }
+  }
 
-  const checkTeamError = () => {
-    if (isAddress(teamInput) || teamInput.length === 0) {
-      setTeamInputError(undefined);
-      return;
-    }
-    const splittedMembers = teamInput
-      .split(",")
-      .map((m) => m.trim().toLowerCase());
-    const checkArray = splittedMembers.every((address) => {
-      return isAddress(address);
-    });
-    if (checkArray) {
-      setTeamInputError(undefined);
-      return;
-    }
-    setTeamInputError(MESSAGES.PROJECT_FORM.MEMBERS);
-  };
+  // const addMemberToArray = () => {
+  //   event?.preventDefault();
+  //   event?.stopPropagation();
+  //   const splittedMembers = new Set(
+  //     teamInput.split(",").map((m) => m.trim().toLowerCase())
+  //   );
+  //   const uniqueMembers = Array.from(splittedMembers).filter(
+  //     (m) => !team.includes(m)
+  //   );
+  //   setTeamInput("");
+  //   setTeam((prev) => [...prev, ...uniqueMembers]);
+  // };
+
+  // const checkTeamError = () => {
+  //   if (isAddress(teamInput) || teamInput.length === 0) {
+  //     setTeamInputError(undefined);
+  //     return;
+  //   }
+  //   const splittedMembers = teamInput
+  //     .split(",")
+  //     .map((m) => m.trim().toLowerCase());
+  //   const checkArray = splittedMembers.every((address) => {
+  //     return isAddress(address);
+  //   });
+  //   if (checkArray) {
+  //     setTeamInputError(undefined);
+  //     return;
+  //   }
+  //   setTeamInputError(MESSAGES.PROJECT_FORM.MEMBERS);
+  // };
 
   // useEffect(() => {
   //   checkTeamError();
   // }, [teamInput]);
+
+  const handleErrors = () => {
+    const isDescriptionValid = !!description.length;
+    if (step === 0) {
+      return (
+        !!errors?.title ||
+        !!errors?.recipient ||
+        !isDescriptionValid ||
+        !watch("title")
+      );
+    }
+    if (step === 1) {
+      return (
+        !!errors?.twitter ||
+        !!errors?.github ||
+        !!errors?.discord ||
+        !!errors?.website ||
+        !!errors?.linkedin
+      );
+    }
+    if (step === 3) {
+      return !contacts.length;
+    }
+    // if (step === 2) {
+    //   return (
+    //     !!teamInputError || !team.length || !isValid || !isDescriptionValid
+    //   );
+    // }
+
+    return false;
+  };
+
+  const createProject = async (data: SchemaType) => {
+    try {
+      setIsLoading(true);
+      if (!isConnected || !isAuth) {
+        openConnectModal?.();
+        return;
+      }
+      if (!address) return;
+      if (!gap) return;
+      let gapClient = gap;
+
+      if (chain && !checkNetworkIsValid(chain?.id)) {
+        await switchNetworkAsync?.(appNetwork[0].id);
+        gapClient = getGapClient(appNetwork[0].id);
+      }
+
+      const project = new Project({
+        data: {
+          project: true,
+        },
+        schema: gapClient.findSchema("Project"),
+        recipient: (data.recipient || address) as Hex,
+        uid: nullRef,
+      });
+
+      interface NewProjectData extends IProjectDetails {
+        // tags?: Tag[];
+        members?: Hex[];
+        links: ExternalLink;
+        recipient?: string;
+      }
+
+      const newProjectInfo: NewProjectData = {
+        ...data,
+        description,
+        // members: team.map((item) => item as Hex),
+        members: [(data.recipient || address) as Hex],
+        links: [
+          {
+            type: "twitter",
+            url: data.twitter || "",
+          },
+          {
+            type: "github",
+            url: data.github || "",
+          },
+          {
+            type: "discord",
+            url: data.discord || "",
+          },
+          {
+            type: "website",
+            url: data.website || "",
+          },
+          {
+            type: "linkedin",
+            url: data.linkedin || "",
+          },
+        ],
+        imageURL: "",
+      };
+
+      if (!gap) return;
+
+      const slug = await gap.generateSlug(newProjectInfo.title);
+      // eslint-disable-next-line no-param-reassign
+      project.details = new ProjectDetails({
+        data: {
+          title: newProjectInfo.title,
+          description: newProjectInfo.description,
+          imageURL: "",
+          links: newProjectInfo.links,
+          slug,
+          tags: newProjectInfo.tags?.map((tag) => ({
+            name: tag.name,
+          })),
+          businessModel: newProjectInfo.businessModel,
+          stageIn: newProjectInfo.stageIn,
+          raisedMoney: newProjectInfo.raisedMoney,
+          pathToTake: newProjectInfo.pathToTake,
+        },
+        refUID: project.uid,
+        schema: gap.findSchema("ProjectDetails"),
+        recipient: project.recipient,
+        uid: nullRef,
+      });
+
+      if (newProjectInfo.tags) {
+        // eslint-disable-next-line no-param-reassign
+        project.details.tags = newProjectInfo.tags?.map((t) => ({
+          name: t.name,
+        }));
+      }
+
+      if (newProjectInfo.members) {
+        // eslint-disable-next-line no-param-reassign
+        project.members = newProjectInfo.members?.map(
+          (member) =>
+            new MemberOf({
+              recipient: member,
+              refUID: project.uid,
+              schema: gap.findSchema("MemberOf"),
+              uid: nullRef,
+              data: {
+                memberOf: true,
+              },
+            })
+        );
+      }
+
+      const walletClient = await getWalletClient({
+        chainId: project.chainID,
+      });
+      if (!walletClient) return;
+      const walletSigner = await walletClientToSigner(walletClient);
+      closeModal();
+
+      await project.attest(walletSigner, changeStepperStep).then(async () => {
+        let retries = 1000;
+        let fetchedProject: Project | null = null;
+        changeStepperStep("indexing");
+        while (retries > 0) {
+          // eslint-disable-next-line no-await-in-loop
+          fetchedProject = await (slug
+            ? gap.fetch.projectBySlug(slug)
+            : gap.fetch.projectById(project.uid as Hex)
+          ).catch(() => null);
+          if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
+            await fetchData(
+              INDEXER.SUBSCRIPTION.CREATE(fetchedProject.uid),
+              "POST",
+              { contacts },
+              {},
+              {},
+              true
+            ).then(([res, error]) => {
+              if (error) {
+                toast.error(
+                  "Something went wrong with contact info save. Please try again later.",
+                  {
+                    className: "z-[9999]",
+                  }
+                );
+              }
+              retries = 0;
+              toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
+              router.push(PAGES.PROJECT.GRANTS(slug || project.uid));
+              changeStepperStep("indexed");
+              return;
+            });
+          }
+          retries -= 1;
+          // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+        }
+      });
+
+      reset();
+      setDescription("");
+      setTeam([]);
+      setTeamInput("");
+      setStep(0);
+      setIsStepper(false);
+      setContacts([]);
+    } catch (error) {
+      console.log({ error });
+      toast.error(MESSAGES.PROJECT.CREATE.ERROR);
+      setIsStepper(false);
+      openModal();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const updateThisProject = async (data: SchemaType) => {
+    let gapClient = gap;
+    try {
+      setIsLoading(true);
+      if (!isConnected || !isAuth) {
+        openConnectModal?.();
+        return;
+      }
+      if (!address || !projectToUpdate) return;
+      if (!gap) return;
+      if (chain && chain.id !== projectToUpdate.chainID) {
+        await switchNetworkAsync?.(projectToUpdate.chainID);
+        gapClient = getGapClient(projectToUpdate.chainID);
+      }
+      const shouldRefresh = dataToUpdate.title === data.title;
+      const walletClient = await getWalletClient({
+        chainId: projectToUpdate.chainID,
+      });
+      if (!walletClient) return;
+      const walletSigner = await walletClientToSigner(walletClient);
+      await updateProject(
+        projectToUpdate,
+        {
+          title: data.title,
+          description: description,
+          tags: dataToUpdate?.tags?.map((item) => ({ name: item })) || [],
+          businessModel: data.businessModel,
+          stageIn: data.stageIn,
+          raisedMoney: data.raisedMoney,
+          pathToTake: data.pathToTake,
+        },
+        {
+          discord: data.discord,
+          github: data.github,
+          linkedin: data.linkedin,
+          twitter: data.twitter,
+          website: data.website,
+        },
+        walletSigner,
+        gapClient,
+        changeStepperStep,
+        closeModal
+      ).then(async (res) => {
+        toast.success(MESSAGES.PROJECT.UPDATE.SUCCESS);
+        setStep(0);
+        if (shouldRefresh) {
+          refreshProject();
+          setIsStepper(false);
+        } else {
+          const project = res.details?.slug || res.uid;
+          router.push(PAGES.PROJECT.OVERVIEW(project));
+        }
+      });
+    } catch (error) {
+      console.log(error);
+      toast.error(MESSAGES.PROJECT.UPDATE.ERROR);
+      setIsStepper(false);
+      openModal();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const onSubmit = async (data: SchemaType) => {
+    if (projectToUpdate) {
+      updateThisProject(data);
+    } else {
+      createProject(data);
+    }
+  };
+
+  const contactsInfo = useProjectStore((state) => state.projectContactsInfo);
+
+  useMemo(() => {
+    if (projectToUpdate) {
+      setContacts(contactsInfo || []);
+    }
+  }, [contactsInfo]);
 
   const categories = [
     {
@@ -223,7 +544,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
           {/* <div className="flex w-full flex-col gap-2">
         <label htmlFor="tags-input" className={labelStyle}>
-          Tags (Helps users discover your project)
+        Tags (Helps users discover your project)
         </label>
         <input
           id="tags-input"
@@ -340,6 +661,101 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         </div>
       ),
     },
+    {
+      title: "Project stage",
+      desc: "Tell us how is your project",
+      fields: (
+        <div className="flex w-full flex-col gap-8">
+          <div className="flex w-full flex-col gap-2">
+            <label htmlFor="business-modal-input" className={labelStyle}>
+              What is your business model? (optional)
+            </label>
+            <input
+              id="business-modal-input"
+              type="text"
+              className={inputStyle}
+              placeholder="Describe your business model"
+              {...register("businessModel")}
+            />
+            <p className="text-red-500">{errors.businessModel?.message}</p>
+          </div>
+          <div className="flex w-full flex-col gap-2">
+            <label htmlFor="stage-input" className={labelStyle}>
+              What stage are you in? (optional)
+            </label>
+            <input
+              id="stage-input"
+              type="text"
+              className={inputStyle}
+              placeholder="e.g. MVP, Seed, Series A, Series B, Series C"
+              {...register("stageIn")}
+            />
+            <p className="text-red-500">{errors.stageIn?.message}</p>
+          </div>
+          <div className="flex w-full flex-col gap-2">
+            <label htmlFor="raised-money-input" className={labelStyle}>
+              How much money did you raise from investors? (optional)
+            </label>
+            <input
+              id="raised-money-input"
+              type="text"
+              className={inputStyle}
+              placeholder="120k USD"
+              {...register("raisedMoney")}
+            />
+            <p className="text-red-500">{errors.raisedMoney?.message}</p>
+          </div>
+
+          <div className="flex w-full flex-col gap-2">
+            <label htmlFor="raised-money-input" className={labelStyle}>
+              What path do you want to take? (optional)
+            </label>
+            <select
+              className={inputStyle}
+              value={watch("pathToTake") || "none"}
+              onChange={(e) => {
+                setValue("pathToTake", e.target.value);
+              }}
+            >
+              <option className="font-body" disabled key="None" value="none">
+                Select
+              </option>
+              {[
+                "No VC",
+                "Only grants",
+                "Public good sidegig always",
+                "Want to raise",
+              ].map((item) => (
+                <option className="font-body" key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: "Contact info",
+      desc: "How can we contact you?",
+      fields: (
+        <div className="flex w-full min-w-[320px] flex-col gap-2">
+          <ContactInfoSection
+            existingContacts={contacts}
+            isEditing={!!projectToUpdate}
+            addContact={(contact) => {
+              const withoutContact = contacts.filter(
+                (c) => c.id !== contact.id
+              );
+              setContacts([...withoutContact, contact]);
+            }}
+            removeContact={(contact) =>
+              setContacts(contacts.filter((c) => c.id !== contact.id))
+            }
+          />
+        </div>
+      ),
+    },
     // {
     //   id: "teamMembers",
     //   title: "Team members",
@@ -401,187 +817,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     // },
   ];
 
-  const handleErrors = () => {
-    const isDescriptionValid = !!description.length;
-    if (step === 0) {
-      return !!errors?.title || !!errors?.recipient || !isDescriptionValid;
-    }
-    if (step === 1) {
-      return (
-        !!errors?.twitter ||
-        !!errors?.github ||
-        !!errors?.discord ||
-        !!errors?.website ||
-        !!errors?.linkedin
-      );
-    }
-    // if (step === 2) {
-    //   return (
-    //     !!teamInputError || !team.length || !isValid || !isDescriptionValid
-    //   );
-    // }
-
-    return false;
-  };
-
-  const { isConnected, address } = useAccount();
-  const { isAuth } = useAuthStore();
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork({
-    chainId: appNetwork[0].id,
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const { openConnectModal } = useConnectModal();
-  const router = useRouter();
-  const { gap } = useGap();
-
-  const { changeStepperStep, setIsStepper } = useStepper();
-
-  const createProject = async (data: SchemaType) => {
-    try {
-      setIsLoading(true);
-      if (!isConnected || !isAuth) {
-        openConnectModal?.();
-        return;
-      }
-      if (!address) return;
-      if (!gap) return;
-      let gapClient = gap;
-
-      if (chain && !checkNetworkIsValid(chain?.id)) {
-        await switchNetworkAsync?.(appNetwork[0].id);
-        gapClient = getGapClient(appNetwork[0].id);
-      }
-
-      const project = new Project({
-        data: {
-          project: true,
-        },
-        schema: gapClient.findSchema("Project"),
-        recipient: (data.recipient || address) as Hex,
-        uid: nullRef,
-      });
-
-      await createNewProject(
-        {
-          ...data,
-          description,
-          // members: team.map((item) => item as Hex),
-          members: [(data.recipient || address) as Hex],
-          links: [
-            {
-              type: "twitter",
-              url: data.twitter || "",
-            },
-            {
-              type: "github",
-              url: data.github || "",
-            },
-            {
-              type: "discord",
-              url: data.discord || "",
-            },
-            {
-              type: "website",
-              url: data.website || "",
-            },
-            {
-              type: "linkedin",
-              url: data.linkedin || "",
-            },
-          ],
-          imageURL: "",
-        },
-        project,
-        router,
-        gapClient,
-        changeStepperStep,
-        closeModal
-      );
-
-      reset();
-      setDescription("");
-      setTeam([]);
-      setTeamInput("");
-      setStep(0);
-      setIsStepper(false);
-    } catch (error) {
-      console.log({ error });
-      toast.error(MESSAGES.PROJECT.CREATE.ERROR);
-      setIsStepper(false);
-      openModal();
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const updateThisProject = async (data: SchemaType) => {
-    let gapClient = gap;
-    try {
-      setIsLoading(true);
-      if (!isConnected || !isAuth) {
-        openConnectModal?.();
-        return;
-      }
-      if (!address || !projectToUpdate) return;
-      if (!gap) return;
-      if (chain && chain.id !== projectToUpdate.chainID) {
-        await switchNetworkAsync?.(projectToUpdate.chainID);
-        gapClient = getGapClient(projectToUpdate.chainID);
-      }
-      const shouldRefresh = dataToUpdate.title === data.title;
-      const walletClient = await getWalletClient({
-        chainId: projectToUpdate.chainID,
-      });
-      if (!walletClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
-      await updateProject(
-        projectToUpdate,
-        {
-          title: data.title,
-          description: description,
-          tags: dataToUpdate?.tags?.map((item) => ({ name: item })) || [],
-        },
-        {
-          discord: data.discord,
-          github: data.github,
-          linkedin: data.linkedin,
-          twitter: data.twitter,
-          website: data.website,
-        },
-        walletSigner,
-        gapClient,
-        changeStepperStep,
-        closeModal
-      ).then(async (res) => {
-        toast.success(MESSAGES.PROJECT.UPDATE.SUCCESS);
-        setStep(0);
-        if (shouldRefresh) {
-          refreshProject();
-          setIsStepper(false);
-        } else {
-          const project = res.details?.slug || res.uid;
-          router.push(PAGES.PROJECT.OVERVIEW(project));
-        }
-      });
-    } catch (error) {
-      console.log(error);
-      toast.error(MESSAGES.PROJECT.UPDATE.ERROR);
-      setIsStepper(false);
-      openModal();
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const onSubmit = async (data: SchemaType) => {
-    if (projectToUpdate) {
-      updateThisProject(data);
-    } else {
-      createProject(data);
-    }
-  };
-
   return (
     <>
       <button
@@ -597,7 +832,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         {buttonElement.iconSide === "right" && buttonElement.icon}
       </button>
       <Transition appear show={isOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-[10000]" onClose={closeModal}>
+        <Dialog as="div" className="relative z-[100]" onClose={closeModal}>
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -621,7 +856,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-2xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
+                <Dialog.Panel className="w-full max-w-3xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
                   <Dialog.Title
                     as="h3"
                     className="text-xl font-bold leading-6 text-gray-900 dark:text-zinc-100"
@@ -668,7 +903,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                                   ? "text-blue-700 dark:text-blue-400 border-t-4 border-t-brand-blue"
                                   : "text-zinc-600 dark:text-blue-100 border-t-4 border-t-zinc-400 hover:opacity-70"
                               )}
-                              onClick={() => setStep(index)}
+                              // onClick={() => setStep(index)}
                               disabled={
                                 projectToUpdate &&
                                 index === categories.length - 1
@@ -716,13 +951,15 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                           </>
                         )}
                       </button>
-                      {step < 1 && (
+                      {step < categories.length - 1 && (
                         <Button
                           type="button"
                           className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                           onClick={() => {
                             setStep((oldStep) =>
-                              oldStep >= 2 ? oldStep : oldStep + 1
+                              oldStep >= categories.length - 1
+                                ? oldStep
+                                : oldStep + 1
                             );
                           }}
                           disabled={handleErrors() || isLoading}
@@ -732,7 +969,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                           <ChevronRightIcon className="w-4 h-4" />
                         </Button>
                       )}
-                      {step === 1 && (
+                      {step === categories.length - 1 && (
                         <Button
                           type={"submit"}
                           className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"

@@ -24,7 +24,7 @@ import { useMixpanel } from "@/hooks/useMixpanel";
 
 const ProjectDialog = dynamic(
   () =>
-    import("@/components/Dialogs/ProjectDialog").then(
+    import("@/components/Dialogs/ProjectDialog/index").then(
       (mod) => mod.ProjectDialog
     ),
   { ssr: false }
