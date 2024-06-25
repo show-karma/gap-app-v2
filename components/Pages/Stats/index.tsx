@@ -164,7 +164,7 @@ export const Stats = () => {
                       <Listbox.Button className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left  dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 text-gray-900  ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
                         <span className="block truncate">
                           {/* {sortOptions[selectedSort]} */}
-                          {periodParam}
+                          {period}
                         </span>
                         <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                           <ChevronUpDownIcon
@@ -240,7 +240,7 @@ export const Stats = () => {
                   key={item.name}
                   title={`${
                     dataNameDictionary[item.name].title
-                  } ${periodParam.toLowerCase()}`}
+                  } ${period.toLowerCase()}`}
                   titleProps={{
                     className: "flex flex-row gap-2 flex-wrap items-center",
                   }}
@@ -252,7 +252,7 @@ export const Stats = () => {
                     className: "mt-6 h-[240px] max-xl:h-[200px]",
                     yAxisWidth: 48,
                   }}
-                  period={periodParam}
+                  period={period}
                 />
               ))}
             </div>
