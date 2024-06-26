@@ -165,8 +165,16 @@ export default function Header() {
                   href="/"
                 >
                   <Image
-                    className="block w-full h-auto"
+                    className="block w-full h-auto dark:hidden"
                     src="/logo/karma-gap-logo.svg"
+                    alt="Gap"
+                    width={180}
+                    height={40}
+                    priority={true}
+                  />
+                  <Image
+                    className="hidden w-full h-auto dark:block"
+                    src="/logo/karma-gap-logo-white.svg"
                     alt="Gap"
                     width={180}
                     height={40}
