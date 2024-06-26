@@ -60,6 +60,9 @@ const dataNameDictionary: Record<IAttestationStatsNames, DictionaryValue> = {
 const allPeriods: StatPeriod[] = ["Days", "Weeks", "Months", "Years"];
 
 export const Stats = () => {
+  const router = useRouter();
+  const periodParam = router.query.period as StatPeriod;
+
   const [data, setData] = useState<StatChartData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [period, setPeriod] = useState<StatPeriod>("Days");
@@ -106,16 +109,17 @@ export const Stats = () => {
     getData();
   }, []);
 
-  const router = useRouter();
-
-  const periodParam = router.query.period as StatPeriod;
+  useEffect(() => {
+    if (periodParam) {
+      setPeriod(periodParam);
+    }
+  }, [periodParam]);
 
   //   const [periodParam, setPeriodParam] = useQueryState("period", {
   //     shallow: false,
   //   });
 
   const setPeriodParam = (value: StatPeriod) => {
-    setPeriod(value);
     router.push({
       pathname: router.pathname,
       query: { period: value },
