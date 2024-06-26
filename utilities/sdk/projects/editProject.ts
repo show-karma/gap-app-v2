@@ -56,6 +56,10 @@ export const updateProject = async (
       tags: newProjectInfo.tags?.map((tag) => ({
         name: tag.name,
       })),
+      businessModel: newProjectInfo.businessModel,
+      stageIn: newProjectInfo.stageIn,
+      raisedMoney: newProjectInfo.raisedMoney,
+      pathToTake: newProjectInfo.pathToTake,
     });
 
     closeModal();
