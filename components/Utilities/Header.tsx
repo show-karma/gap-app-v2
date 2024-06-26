@@ -29,7 +29,7 @@ import { useMobileStore } from "@/store/mobile";
 
 const ProjectDialog = dynamic(
   () =>
-    import("@/components/Dialogs/ProjectDialog").then(
+    import("@/components/Dialogs/ProjectDialog/index").then(
       (mod) => mod.ProjectDialog
     ),
   { ssr: false }
