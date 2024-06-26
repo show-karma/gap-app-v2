@@ -158,7 +158,7 @@ export default function Header() {
       <>
         <div className="px-4 sm:px-6 lg:px-12  border-b border-b-[#DFE1E6]">
           <div className="relative flex lg:gap-8 justify-between items-center flex-row">
-            <div className="flex flex-row gap-52 items-center">
+            <div className="flex flex-row gap-16 items-center justify-between">
               <div className="flex py-4 lg:inset-y-0 lg:left-0 lg:static">
                 <Link
                   className="flex-shrink-0 max-w-[180px] max-h-[40px]"
@@ -174,7 +174,7 @@ export default function Header() {
                   />
                 </Link>
               </div>
-              <div className="hidden lg:flex min-w-max w-[400px] max-xl:w-[180px]">
+              <div className="hidden min-w-min lg:flex w-[400px] max-xl:w-[180px]">
                 <Searchbar />
               </div>
             </div>
@@ -327,7 +327,7 @@ export default function Header() {
               </Popover.Root>
             </div>
 
-            <div className="hidden lg:flex lg:items-center lg:justify-end lg:gap-x-3 py-3">
+            <div className="hidden lg:flex lg:items-center lg:justify-end lg:gap-x-3 py-3 max-xl:gap-x-1">
               {/* <div className="rounded-none h-10 w-[1px] bg-zinc-300 mx-2" /> */}
               {isReady ? (
                 <>
@@ -439,6 +439,9 @@ export default function Header() {
               </button>
               {/* Color mode toggle end */}
               <div className="flex h-[40px] flex-row items-center gap-2 border-l border-l-[#dcdfea] pl-4">
+                <ExternalLink href={"https://docs.gap.karmahq.xyz/"}>
+                  <button className={buttonStyle}>Docs</button>
+                </ExternalLink>
                 {socials.map((social) => {
                   return (
                     <ExternalLink
