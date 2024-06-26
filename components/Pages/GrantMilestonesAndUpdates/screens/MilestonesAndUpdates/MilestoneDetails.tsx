@@ -8,6 +8,7 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { formatDate } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
 import { useCommunityAdminStore } from "@/store/community";
+import { MilestoneNFT } from "./MilestoneNFT";
 
 interface MilestoneDateStatusProps {
   milestone: Milestone;
@@ -131,6 +132,7 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
               </h4>
             </div>
             <div className="flex flex-row items-center justify-start gap-2">
+              {isAuthorized ? <MilestoneNFT milestone={milestone} /> : null} |
               <MilestoneDateStatus milestone={milestone} />
               {isAuthorized ? <MilestoneDelete milestone={milestone} /> : null}
             </div>
@@ -146,7 +148,7 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
               {milestone.description}
             </ReadMore>
           </div>
-        </div>
+        </div>{" "}
         {((isAuthorized && !milestone?.completed) ||
           milestone?.completed?.reason) && (
           <div className="mx-6 mt-4 rounded-lg bg-transparent pb-4">

@@ -32,6 +32,7 @@
     "@vercel/speed-insights": "^1.0.10",
     "@wagmi/core": "1.4.13",
     "@walletconnect/ethereum-provider": "^2.10.5",
+    "@zoralabs/protocol-deployments": "^0.1.13",
     "@zoralabs/protocol-sdk": "^0.6.0",
     "axios": "^1.4.0",
     "blo": "^1.1.1",

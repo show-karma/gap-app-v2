@@ -101,6 +101,11 @@ export const MESSAGES = {
       ERROR: (title: string) =>
         `There was an error deleting ${title}. Please try again.`,
     },
+    MINT: {
+      SUCCESS: "Milestone minted successfully",
+      ERROR: (title: string) =>
+        `There was an error minting ${title}. Please try again.`,
+    },
     REJECT: {
       SUCCESS: "Milestone has been rejected.",
       ERROR: "There was an error rejecting the milestone. Please try again.",

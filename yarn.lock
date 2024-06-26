@@ -3725,7 +3725,7 @@
   dependencies:
     buffer "^6.0.3"
 
-"@zoralabs/protocol-deployments@*":
+"@zoralabs/protocol-deployments@*", "@zoralabs/protocol-deployments@^0.1.13":
   version "0.1.13"
   resolved "https://registry.npmjs.org/@zoralabs/protocol-deployments/-/protocol-deployments-0.1.13.tgz#e64e46a4b339b43de4f413ae7b5244cc0c3d3caa"
   integrity sha512-pAJ+rr7Q6RsulTl2EB+osUJMldGx+Sj/XfrkfOQsScL/RQlu+H6sL0sRVdaG3VLWVd9ua8szIRSeJ+RqwEZNyg==
