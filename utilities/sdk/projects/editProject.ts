@@ -14,6 +14,10 @@ export const updateProject = async (
     title: string;
     description: string;
     tags: { name: string }[];
+    businessModel?: string;
+    stageIn?: string;
+    raisedMoney?: string;
+    pathToTake?: string;
   },
   data: {
     twitter?: string;
@@ -52,6 +56,10 @@ export const updateProject = async (
       tags: newProjectInfo.tags?.map((tag) => ({
         name: tag.name,
       })),
+      businessModel: newProjectInfo.businessModel,
+      stageIn: newProjectInfo.stageIn,
+      raisedMoney: newProjectInfo.raisedMoney,
+      pathToTake: newProjectInfo.pathToTake,
     });
 
     closeModal();
@@ -79,6 +87,10 @@ export const updateProject = async (
             tags: newProjectInfo.tags?.map((tag) => ({
               name: tag.name,
             })),
+            businessModel: newProjectInfo.businessModel,
+            stageIn: newProjectInfo.stageIn,
+            raisedMoney: newProjectInfo.raisedMoney,
+            pathToTake: newProjectInfo.pathToTake,
           };
           const fetchedDetailsData = {
             title: fetchedProject?.details?.title,
@@ -88,6 +100,10 @@ export const updateProject = async (
             tags: fetchedProject?.details?.tags?.map((tag) => ({
               name: tag.name,
             })),
+            businessModel: fetchedProject?.details?.businessModel,
+            stageIn: fetchedProject?.details?.stageIn,
+            raisedMoney: fetchedProject?.details?.raisedMoney,
+            pathToTake: fetchedProject?.details?.pathToTake,
           };
           if (
             fetchedProject?.uid &&

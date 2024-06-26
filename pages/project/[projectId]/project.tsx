@@ -22,7 +22,7 @@ import { useStepper } from "@/store/txStepper";
 
 const ProjectDialog = dynamic(
   () =>
-    import("@/components/Dialogs/ProjectDialog").then(
+    import("@/components/Dialogs/ProjectDialog/index").then(
       (mod) => mod.ProjectDialog
     ),
   { ssr: false }
@@ -51,6 +51,8 @@ function ProjectPage() {
   const { gap } = useGap();
   const projectId = router.query.projectId as string;
   const { changeStepperStep, setIsStepper } = useStepper();
+  const contactsInfo = useProjectStore((state) => state.projectContactsInfo);
+
 
   const deleteFn = async () => {
     if (!address || !project) return;
@@ -147,6 +149,7 @@ function ProjectPage() {
                     "rounded-md bg-black px-3 py-2 text-sm font-semibold text-white border-none  disabled:opacity-75 transition-all ease-in-out duration-300",
                 }}
                 projectToUpdate={project}
+                previousContacts={contactsInfo}
               />
               <TransferOwnershipDialog
                 buttonElement={{
