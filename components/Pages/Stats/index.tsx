@@ -60,6 +60,9 @@ const dataNameDictionary: Record<IAttestationStatsNames, DictionaryValue> = {
 const allPeriods: StatPeriod[] = ["Days", "Weeks", "Months", "Years"];
 
 export const Stats = () => {
+  const router = useRouter();
+  const periodParam = router.query.period as StatPeriod;
+
   const [data, setData] = useState<StatChartData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [period, setPeriod] = useState<StatPeriod>("Days");
@@ -106,9 +109,11 @@ export const Stats = () => {
     getData();
   }, []);
 
-  const router = useRouter();
-
-  const periodParam = router.query.period as StatPeriod;
+  useEffect(() => {
+    if (periodParam) {
+      setPeriod(periodParam);
+    }
+  }, [periodParam]);
 
   //   const [periodParam, setPeriodParam] = useQueryState("period", {
   //     shallow: false,
@@ -181,7 +186,7 @@ export const Stats = () => {
                         leaveTo="opacity-0"
                       >
                         <Listbox.Options className="absolute  z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base  dark:bg-zinc-800 dark:text-zinc-200 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                          {Object.keys(allPeriods).map((item) => (
+                          {allPeriods.map((item) => (
                             <Listbox.Option
                               key={item}
                               className={({ active }) =>
