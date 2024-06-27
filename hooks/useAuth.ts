@@ -5,7 +5,6 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import Cookies from "universal-cookie";
 import { useAccount, useDisconnect, useSignMessage } from "wagmi";
 import toast from "react-hot-toast";
-import { signMessage as sign } from "wagmi/actions";
 import { IExpirationStatus, ISession } from "@/types/auth";
 import { checkExpirationStatus } from "@/utilities/checkExpirationStatus";
 import { Hex } from "viem";
@@ -50,10 +49,11 @@ export const useAuth = () => {
   const router = useRouter();
   const cookies = new Cookies();
   const { mixpanel } = useMixpanel();
+  const { signMessageAsync } = useSignMessage();
 
   const signMessage = async (messageToSign: string) => {
     try {
-      const signedMessage = await sign({ message: messageToSign });
+      const signedMessage = await signMessageAsync({ message: messageToSign });
       return signedMessage;
     } catch (err) {
       // eslint-disable-next-line no-console

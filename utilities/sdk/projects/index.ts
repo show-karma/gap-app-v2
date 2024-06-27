@@ -1,4 +1,3 @@
-export * from "./createNewProject";
 export * from "./deleteProject";
 export * from "./editProject";
 export * from "./getProjectById";

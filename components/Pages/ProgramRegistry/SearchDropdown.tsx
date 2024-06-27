@@ -31,6 +31,7 @@ interface SearchDropdownProps {
   buttonClassname?: string;
   canAdd?: boolean;
   shouldSort?: boolean;
+  canSearch?: boolean;
 }
 export const SearchDropdown: FC<SearchDropdownProps> = ({
   onSelectFunction,
@@ -43,6 +44,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
   buttonClassname,
   canAdd = false,
   shouldSort = true,
+  canSearch = true,
 }) => {
   const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -123,12 +125,14 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
       </Popover.Trigger>
       <Popover.Content className="mt-4 w-max max-w-[320px] z-10 bg-white border border-zinc-200 dark:border-zinc-700 rounded-md dark:text-white dark:bg-zinc-800  max-h-60 overflow-y-auto overflow-x-hidden py-2">
         <Command>
-          <div className="w-full px-2">
-            <CommandInput
-              className="rounded-md px-2 w-full dark:text-white dark:bg-zinc-800"
-              placeholder={`Search ${type}...`}
-            />
-          </div>
+          {canSearch ? (
+            <div className="w-full px-2">
+              <CommandInput
+                className="rounded-md px-2 w-full dark:text-white dark:bg-zinc-800"
+                placeholder={`Search ${type}...`}
+              />
+            </div>
+          ) : null}
           <CommandEmpty className="px-4 py-2">No {type} found.</CommandEmpty>
 
           <CommandGroup>

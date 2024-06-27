@@ -6,7 +6,7 @@ import {
   IpfsStorage,
 } from "@show-karma/karma-gap-sdk/core/class";
 import { useEffect, useMemo, useState } from "react";
-import { useNetwork } from "wagmi";
+import { useAccount } from "wagmi";
 
 import {
   appNetwork,
@@ -57,7 +57,7 @@ export const getGapClient = (chainID: number): GAP => {
 
 export const useGap = () => {
   const [gap, setGapClient] = useState<GAP>();
-  const { chain } = useNetwork();
+  const { chain } = useAccount();
 
   if (!gap) {
     const chainID =

@@ -19,7 +19,7 @@ import type { FC } from "react";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Hex, isAddress } from "viem";
-import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
 import { Milestone as MilestoneComponent } from "./Milestone";
 import { useRouter } from "next/router";
@@ -46,6 +46,7 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 import { useCommunitiesStore } from "@/store/communities";
 import { cn } from "@/utilities/tailwind";
 import { useStepper } from "@/store/txStepper";
+import { config } from "@/utilities/wagmi/config";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -210,8 +211,8 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const [isCommunityAllowed, setIsCommunityAllowed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const selectedProject = useProjectStore((state) => state.project);
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const { gap } = useGap();
   const { isConnected } = useAccount();
 
@@ -317,7 +318,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       if (!isConnected || !isAuth) return;
       const chainId = await connector?.getChainId();
       if (!checkNetworkIsValid(chainId) || chainId !== communityNetworkId) {
-        await switchNetworkAsync?.(communityNetworkId);
+        await switchChainAsync?.({ chainId: communityNetworkId });
         gapClient = getGapClient(communityNetworkId);
       }
       const grant = new Grant({
@@ -389,7 +390,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         return created;
       });
 
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: communityNetworkId,
       });
       if (!walletClient) return;
@@ -437,7 +438,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     try {
       setIsLoading(true);
       if (chain && chain.id !== oldGrant.chainID) {
-        await switchNetworkAsync?.(oldGrant.chainID);
+        await switchChainAsync?.({ chainId: oldGrant.chainID });
         gapClient = getGapClient(communityNetworkId);
       }
       oldGrant.setValues({
@@ -455,7 +456,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         startDate: data.startDate,
       };
       oldGrant.details?.setValues(grantData);
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: oldGrant.chainID,
       });
       if (!walletClient) return;

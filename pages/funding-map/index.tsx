@@ -21,7 +21,7 @@ import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdow
 import { useQueryState } from "nuqs";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { useAuthStore } from "@/store/auth";
-import { useAccount, useNetwork } from "wagmi";
+import { useAccount } from "wagmi";
 import Pagination from "@/components/Utilities/Pagination";
 import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
 import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
@@ -237,7 +237,7 @@ const GrantProgramRegistry = ({
   const [isMember, setIsMember] = useState(false);
 
   const isAllowed = address && isMember && isAuth;
-  const { chain } = useNetwork();
+  const { chain } = useAccount();
   useEffect(() => {
     if (!address || !isConnected) {
       setIsMember(false);

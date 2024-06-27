@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/auth";
 import { Milestone, MilestoneCompleted } from "@show-karma/karma-gap-sdk";
-import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import { getWalletClient } from "@wagmi/core";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
@@ -16,6 +16,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { getGapClient, useGap } from "@/hooks";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/txStepper";
+import { config } from "@/utilities/wagmi/config";
 
 type VerifyMilestoneUpdateDialogProps = {
   milestone: Milestone;
@@ -55,8 +56,8 @@ export const VerifyMilestoneUpdateDialog: FC<
   const hasVerifiedThis = milestone?.verified?.find(
     (v) => v.attester?.toLowerCase() === address?.toLowerCase()
   );
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const { gap } = useGap();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const { changeStepperStep, setIsStepper } = useStepper();
@@ -67,10 +68,10 @@ export const VerifyMilestoneUpdateDialog: FC<
     try {
       setIsLoading(true);
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
-        await switchNetworkAsync?.(milestone.chainID);
+        await switchChainAsync?.({ chainId: milestone.chainID });
         gapClient = getGapClient(milestone.chainID);
       }
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: milestone.chainID,
       });
       if (!walletClient || !address || !gapClient) return;

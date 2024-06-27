@@ -15,7 +15,7 @@ import { ImageTheme } from "@/components/Utilities/ImageTheme";
 
 const ProjectDialog = dynamic(
   () =>
-    import("@/components/Dialogs/ProjectDialog").then(
+    import("@/components/Dialogs/ProjectDialog/index").then(
       (mod) => mod.ProjectDialog
     ),
   { ssr: false }

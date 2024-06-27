@@ -6,13 +6,14 @@ import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { shortAddress } from "@/utilities/shortAddress";
+import { config } from "@/utilities/wagmi/config";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import type { Grant } from "@show-karma/karma-gap-sdk";
 import { getWalletClient } from "@wagmi/core";
 import { useQueryState } from "nuqs";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 
 interface GrantDeleteProps {
   grant: Grant;
@@ -20,10 +21,10 @@ interface GrantDeleteProps {
 
 export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
   const [isDeletingGrant, setIsDeletingGrant] = useState(false);
-  const signer = useSigner();
   const { address } = useAccount();
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
+
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [, setGrantTab] = useQueryState("grantId");
 
@@ -34,9 +35,9 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
     setIsDeletingGrant(true);
     try {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== grant.chainID) {
-        await switchNetworkAsync?.(grant.chainID);
+        await switchChainAsync?.({ chainId: grant.chainID });
       }
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: grant.chainID,
       });
       if (!walletClient) return;
