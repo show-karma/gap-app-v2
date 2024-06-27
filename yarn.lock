@@ -3791,10 +3791,10 @@
   resolved "https://registry.npmjs.org/@zoralabs/protocol-deployments/-/protocol-deployments-0.1.13.tgz#e64e46a4b339b43de4f413ae7b5244cc0c3d3caa"
   integrity sha512-pAJ+rr7Q6RsulTl2EB+osUJMldGx+Sj/XfrkfOQsScL/RQlu+H6sL0sRVdaG3VLWVd9ua8szIRSeJ+RqwEZNyg==
 
-"@zoralabs/protocol-sdk@^0.6.0":
-  version "0.6.0"
-  resolved "https://registry.npmjs.org/@zoralabs/protocol-sdk/-/protocol-sdk-0.6.0.tgz#8d38a3790eb4796e9edf483e75ec9ea54d7e2d16"
-  integrity sha512-/GOElPEwHOiEDLNwwUhVMpFWGZphGZe6PN0SlpHtjL+UUzX4VzZwk2JyqxabYhxT1wy9450kgRwvTLzaKqSEXw==
+"@zoralabs/protocol-sdk@^0.7.0":
+  version "0.7.0"
+  resolved "https://registry.npmjs.org/@zoralabs/protocol-sdk/-/protocol-sdk-0.7.0.tgz#e950a0f4a2fef29e93cd8bfbdcf8e62dcf280323"
+  integrity sha512-XS1rJinLzqczh5OgNKfsLelaWXAZigYsDJtuon+KR+qU98zbpCBurSZNZdDJ5rnO1P6Ep/rxQMsTC/xVsjjGYw==
   dependencies:
     "@zoralabs/protocol-deployments" "*"
     semver "^7.6.2"

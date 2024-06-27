@@ -33,7 +33,7 @@
     "@wagmi/core": "^2.11.5",
     "@walletconnect/ethereum-provider": "^2.10.5",
     "@zoralabs/protocol-deployments": "^0.1.13",
-    "@zoralabs/protocol-sdk": "^0.6.0",
+    "@zoralabs/protocol-sdk": "^0.7.0",
     "axios": "^1.4.0",
     "blo": "^1.1.1",
     "clsx": "^2.1.0",
