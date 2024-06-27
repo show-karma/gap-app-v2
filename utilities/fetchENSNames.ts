@@ -1,5 +1,5 @@
 import { createPublicClient, type Hex, http } from "viem";
-import { mainnet } from "wagmi";
+import { mainnet } from "viem/chains";
 
 export const fetchENSNames = async (addresses: (Hex | string)[]) => {
   const alchemyTransport = http(

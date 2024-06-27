@@ -3,15 +3,16 @@ import { getGapClient, useGap } from "@/hooks";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
+import { config } from "@/utilities/wagmi/config";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import type { Milestone } from "@show-karma/karma-gap-sdk";
 import { getWalletClient } from "@wagmi/core";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";
 import { Hex } from "viem";
-import { useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 
 interface MilestoneDeleteProps {
   milestone: Milestone;
@@ -20,9 +21,8 @@ interface MilestoneDeleteProps {
 export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
   const [isDeletingMilestone, setIsDeletingMilestone] = useState(false);
 
-  const { switchNetworkAsync } = useSwitchNetwork();
-  const { chain } = useNetwork();
-  const signer = useSigner();
+  const { switchChainAsync } = useSwitchChain();
+  const { chain } = useAccount();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
@@ -33,11 +33,11 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
     let gapClient = gap;
     try {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
-        await switchNetworkAsync?.(milestone.chainID);
+        await switchChainAsync?.({ chainId: milestone.chainID });
         gapClient = getGapClient(milestone.chainID);
       }
       const milestoneUID = milestone.uid;
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: milestone.chainID,
       });
       if (!walletClient) return;

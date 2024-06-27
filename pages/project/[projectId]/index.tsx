@@ -39,6 +39,7 @@ import { EndorsementDialog } from "@/components/Pages/Project/Impact/Endorsement
 import { Button } from "@/components/Utilities/Button";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { ProjectSubscriptionDialog } from "@/components/Pages/Project/ProjectSubscription";
+import { config } from "@/utilities/wagmi/config";
 
 type ProjectDetailsWithUid = IProjectDetails & { uid: Hex };
 
@@ -191,7 +192,7 @@ export const NestedLayout = ({ children }: Props) => {
     const setupOwner = async () => {
       try {
         setIsProjectOwnerLoading(true);
-        const walletClient = await getWalletClient({
+        const walletClient = await getWalletClient(config, {
           chainId: project.chainID,
         });
         if (!walletClient) return;

@@ -8,12 +8,13 @@ import { shortAddress } from "@/utilities/shortAddress";
 import { getWalletClient } from "@wagmi/core";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { Project, ProjectEndorsement } from "@show-karma/karma-gap-sdk";
-import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import { getGapClient, useGap } from "@/hooks";
 import { useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
 import { useStepper } from "@/store/txStepper";
 import { Hex } from "viem";
+import { config } from "@/utilities/wagmi/config";
 
 type EndorsementDialogProps = {
   buttonElement?: {
@@ -34,9 +35,9 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = ({
   let [isOpen, setIsOpen] = useState(false);
   const [comment, setComment] = useState<string>("");
   const project = useProjectStore((state) => state.project);
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { switchChainAsync } = useSwitchChain();
   const { gap } = useGap();
-  const { chain } = useNetwork();
+  const { chain } = useAccount();
   const { address } = useAccount();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();
@@ -56,10 +57,10 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = ({
     try {
       if (!project) return;
       if (chain && chain.id !== project.chainID) {
-        await switchNetworkAsync?.(project.chainID);
+        await switchChainAsync?.({ chainId: project.chainID });
         gapClient = getGapClient(project.chainID);
       }
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: project?.chainID,
       });
       if (!walletClient || !address || !gapClient) return;

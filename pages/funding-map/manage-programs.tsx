@@ -14,12 +14,7 @@ import { Button } from "@/components/Utilities/Button";
 import { useQueryState } from "nuqs";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import AddProgram from "@/components/Pages/ProgramRegistry/AddProgram";
-import {
-  useAccount,
-  useBlockNumber,
-  useNetwork,
-  useSwitchNetwork,
-} from "wagmi";
+import { useAccount, useBlockNumber, useSwitchChain } from "wagmi";
 import { useAuthStore } from "@/store/auth";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import {
@@ -45,6 +40,7 @@ import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/Program
 import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
 import { AlloRegistry } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/AlloRegistry";
 import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
+import { config } from "@/utilities/wagmi/config";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { query } = context;
@@ -76,7 +72,7 @@ const GrantProgramRegistry = ({
   const [isMember, setIsMember] = useState(false);
 
   const isAllowed = address && isMember && isAuth;
-  const { chain } = useNetwork();
+  const { chain } = useAccount();
 
   const signer = useSigner();
   useEffect(() => {
@@ -175,7 +171,7 @@ const GrantProgramRegistry = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, page, searchInput]);
 
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { switchChainAsync } = useSwitchChain();
 
   const approveOrReject = async (
     program: GrantProgram,
@@ -196,14 +192,14 @@ const GrantProgramRegistry = ({
           return;
         }
         if (chain && chain.id !== chainID) {
-          await switchNetworkAsync?.(chainID);
+          await switchChainAsync?.({ chainId: chainID as number });
         }
 
         const ipfsStorage = new NFTStorage({
           token: envVars.IPFS_TOKEN,
         });
 
-        const walletClient = await getWalletClient({
+        const walletClient = await getWalletClient(config, {
           chainId: chainID,
         });
         if (!walletClient) return;

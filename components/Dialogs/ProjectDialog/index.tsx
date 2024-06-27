@@ -13,7 +13,7 @@ import { Hex, isAddress, zeroHash } from "viem";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import {
   ExternalLink,
@@ -50,6 +50,7 @@ import { ContactInfoSection } from "./ContactInfoSection";
 import { Contact } from "@/types/project";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { config } from "@/utilities/wagmi/config";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -148,10 +149,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
   const { isConnected, address } = useAccount();
   const { isAuth } = useAuthStore();
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork({
-    chainId: appNetwork[0].id,
-  });
+  const { chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const [isLoading, setIsLoading] = useState(false);
   const { openConnectModal } = useConnectModal();
   const router = useRouter();
@@ -269,7 +268,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       let gapClient = gap;
 
       if (chain && !checkNetworkIsValid(chain?.id)) {
-        await switchNetworkAsync?.(appNetwork[0].id);
+        await switchChainAsync?.({ chainId: appNetwork[0].id });
         gapClient = getGapClient(appNetwork[0].id);
       }
 
@@ -367,7 +366,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         );
       }
 
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: project.chainID,
       });
       if (!walletClient) return;
@@ -442,11 +441,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       if (!address || !projectToUpdate) return;
       if (!gap) return;
       if (chain && chain.id !== projectToUpdate.chainID) {
-        await switchNetworkAsync?.(projectToUpdate.chainID);
+        await switchChainAsync?.({ chainId: projectToUpdate.chainID });
         gapClient = getGapClient(projectToUpdate.chainID);
       }
       const shouldRefresh = dataToUpdate.title === data.title;
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: projectToUpdate.chainID,
       });
       if (!walletClient) return;

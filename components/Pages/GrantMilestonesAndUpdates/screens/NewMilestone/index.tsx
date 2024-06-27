@@ -12,7 +12,7 @@ import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import { getGapClient, useGap } from "@/hooks";
 import { Hex } from "viem";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
@@ -31,6 +31,7 @@ import { formatDate } from "@/utilities/formatDate";
 import { getWalletClient } from "@wagmi/core";
 import { useCommunityAdminStore } from "@/store/community";
 import { useStepper } from "@/store/txStepper";
+import { config } from "@/utilities/wagmi/config";
 
 const milestoneSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.MILESTONES.FORM.TITLE }),
@@ -94,9 +95,8 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
   });
   const [isLoading, setIsLoading] = useState(false);
   const { gap } = useGap();
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork();
-  const selectedProject = useProjectStore((state) => state.project);
+  const { chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [, changeTab] = useQueryState("tab");
   const isCommunityAdmin = useCommunityAdminStore(
@@ -124,7 +124,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
 
     try {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== chainID) {
-        await switchNetworkAsync?.(chainID);
+        await switchChainAsync?.({ chainId: chainID });
         gapClient = getGapClient(chainID);
       }
       const milestoneToAttest = new Milestone({
@@ -149,7 +149,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
           },
         });
       }
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: chainID,
       });
       if (!walletClient) return;

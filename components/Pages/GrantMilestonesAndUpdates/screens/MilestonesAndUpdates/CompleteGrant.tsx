@@ -7,6 +7,7 @@ import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { shortAddress } from "@/utilities/shortAddress";
+import { config } from "@/utilities/wagmi/config";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import type { Grant, Project } from "@show-karma/karma-gap-sdk";
 import { getWalletClient } from "@wagmi/core";
@@ -15,7 +16,7 @@ import type { FC } from "react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { Hex } from "viem";
-import { useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 
@@ -32,8 +33,8 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const signer = useSigner();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [, changeTab] = useQueryState("tab");
@@ -54,10 +55,10 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
         !checkNetworkIsValid(chain?.id) ||
         chain?.id !== grantToComplete.chainID
       ) {
-        await switchNetworkAsync?.(grantToComplete.chainID);
+        await switchChainAsync?.({ chainId: grantToComplete.chainID });
         gapClient = getGapClient(grantToComplete.chainID);
       }
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: grantToComplete.chainID,
       });
       if (!walletClient) return;
