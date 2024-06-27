@@ -315,20 +315,26 @@ export default function Header() {
                         </>
                       ) : null}
                     </div>
-                    <div className="flex h-[40px] flex-row items-center justify-center gap-2 border-t border-t-[#dcdfea] mt-4 pt-4">
-                      {socials.map((social) => {
-                        return (
-                          <ExternalLink
-                            key={social.name}
-                            href={social.href}
-                            className="text-black dark:text-white transition-all duration-500 ease-in-out"
-                          >
-                            <div className="flex h-6 w-6 items-center justify-center ">
-                              {social.icon}
-                            </div>
-                          </ExternalLink>
-                        );
-                      })}
+                    <div className="w-full flex flex-col  border-t border-t-[#dcdfea] mt-4 pt-4  items-center justify-center">
+                      <ExternalLink href={"https://docs.gap.karmahq.xyz/"}>
+                        <button className={buttonStyle}>Docs</button>
+                      </ExternalLink>
+
+                      <div className="flex h-[40px] flex-row items-center justify-center gap-2">
+                        {socials.map((social) => {
+                          return (
+                            <ExternalLink
+                              key={social.name}
+                              href={social.href}
+                              className="text-black dark:text-white transition-all duration-500 ease-in-out"
+                            >
+                              <div className="flex h-6 w-6 items-center justify-center ">
+                                {social.icon}
+                              </div>
+                            </ExternalLink>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
                 </Popover.Content>
