@@ -2,23 +2,22 @@ import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 import { useProjectStore } from "@/store";
 import { useOwnerStore } from "@/store/owner";
 import { useState } from "react";
-import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import toast from "react-hot-toast";
 import { useRouter } from "next/router";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import { ProjectFeed } from "@/components/ProjectFeed";
 import dynamic from "next/dynamic";
 import { useGap } from "@/hooks";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { deleteProject } from "@/utilities/sdk/projects/deleteProject";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
-import { Feed } from "@/types";
 import { getWalletClient } from "@wagmi/core";
 import { Button } from "@/components/Utilities/Button";
 import Link from "next/link";
 import { EndorsementList } from "@/components/Pages/Project/Impact/EndorsementList";
 import { useStepper } from "@/store/txStepper";
+import { config } from "@/utilities/wagmi/config";
 
 const ProjectDialog = dynamic(
   () =>
@@ -44,24 +43,22 @@ function ProjectPage() {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const [isDeleting, setIsDeleting] = useState(false);
   const { address } = useAccount();
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const router = useRouter();
-  const signer = useSigner();
   const { gap } = useGap();
   const projectId = router.query.projectId as string;
   const { changeStepperStep, setIsStepper } = useStepper();
   const contactsInfo = useProjectStore((state) => state.projectContactsInfo);
-
 
   const deleteFn = async () => {
     if (!address || !project) return;
     setIsDeleting(true);
     try {
       if (chain && chain.id !== project.chainID) {
-        await switchNetworkAsync?.(project.chainID);
+        await switchChainAsync?.({ chainId: project.chainID });
       }
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: project.chainID,
       });
       if (!walletClient) return;

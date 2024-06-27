@@ -15,12 +15,13 @@ import {
 import { getWalletClient } from "@wagmi/core";
 import { useEffect, useState, type FC } from "react";
 import toast from "react-hot-toast";
-import { useNetwork, useSwitchNetwork } from "wagmi";
 import { VerifyGrantUpdateDialog } from "./VerifyGrantUpdateDialog";
 import { VerifiedBadge } from "./VerifiedBadge";
 import { getGapClient, useGap } from "@/hooks";
 import { useStepper } from "@/store/txStepper";
 import { Hex } from "viem";
+import { config } from "@/utilities/wagmi/config";
+import { useAccount, useSwitchChain } from "wagmi";
 
 interface UpdateTagProps {
   index: number;
@@ -70,8 +71,8 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
   date,
   update,
 }) => {
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [isDeletingGrantUpdate, setIsDeletingGrantUpdate] = useState(false);
 
@@ -84,10 +85,10 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
     try {
       setIsDeletingGrantUpdate(true);
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== update.chainID) {
-        await switchNetworkAsync?.(update.chainID);
+        await switchChainAsync?.({ chainId: update.chainID });
         gapClient = getGapClient(update.chainID);
       }
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: update.chainID,
       });
       if (!walletClient) return;

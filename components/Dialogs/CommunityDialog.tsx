@@ -10,7 +10,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
-import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Community, nullRef } from "@show-karma/karma-gap-sdk";
 import { Button } from "../Utilities/Button";
@@ -28,6 +28,7 @@ import { useCommunitiesStore } from "@/store/communities";
 import { envVars } from "@/utilities/enviromentVars";
 import { title } from "process";
 import { useStepper } from "@/store/txStepper";
+import { config } from "@/utilities/wagmi/config";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -90,12 +91,8 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
     defaultValues: dataToUpdate,
   });
 
-  const { isConnected, address } = useAccount();
-  const { isAuth } = useAuthStore();
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork({
-    chainId: appNetwork[0].id,
-  });
+  const { address, chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const [isLoading, setIsLoading] = useState(false);
 
   const { gap } = useGap();
@@ -108,7 +105,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
 
     try {
       if (chain?.id != selectedChain) {
-        await switchNetworkAsync?.(selectedChain);
+        await switchChainAsync?.({ chainId: selectedChain });
         gapClient = getGapClient(selectedChain);
       }
       const newCommunity = new Community({
@@ -124,7 +121,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
         data.slug = await gapClient.generateSlug(data.slug as string);
       }
 
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: selectedChain,
       });
       if (!walletClient) return;

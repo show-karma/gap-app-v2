@@ -14,7 +14,7 @@ import {
   Milestone,
   MilestoneCompleted,
 } from "@show-karma/karma-gap-sdk";
-import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import { getWalletClient } from "@wagmi/core";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
@@ -28,6 +28,7 @@ import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useStepper } from "@/store/txStepper";
 import { useProjectStore } from "@/store";
 import { Hex } from "viem";
+import { config } from "@/utilities/wagmi/config";
 
 type VerifyImpactDialogProps = {
   impact: ProjectImpact;
@@ -70,8 +71,8 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
         (v) => v.attester?.toLowerCase() === address?.toLowerCase()
       )
     : null;
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const { gap } = useGap();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
@@ -84,10 +85,10 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
     try {
       setIsLoading(true);
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== impact.chainID) {
-        await switchNetworkAsync?.(impact.chainID);
+        await switchChainAsync?.({ chainId: impact.chainID });
         gapClient = getGapClient(impact.chainID);
       }
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: impact.chainID,
       });
       if (!walletClient || !address || !gapClient) return;
