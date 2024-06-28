@@ -16,6 +16,10 @@ import toast from "react-hot-toast";
 import { useProjectStore } from "@/store";
 import { MESSAGES } from "@/utilities/messages";
 import { Address } from "viem";
+import ZoraCollectPremint from "../Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/CollectPremint";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import Image from "next/image";
 
 type MilestoneNFTDialogProps = {
   title?: ReactNode;
@@ -74,6 +78,21 @@ export const MilestoneNFTDialog: FC<MilestoneNFTDialogProps> = ({
   }
 
   useEffect(() => {
+    (async () => {
+      const [data, error] = await fetchData(
+        INDEXER.GRANTS.MILESTONES.GET(String(milestone.uid))
+      );
+
+      console.log("MilestoneNFT Already Exists", data, error, milestone.uid);
+
+      if (data) {
+        setDebugGlobalAddress(data.contractAddress);
+        setDebugGlobalUid(data.zoraPremintUID);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
     async function createPremint() {
       const {
         premintConfig: pC,
@@ -119,9 +138,23 @@ export const MilestoneNFTDialog: FC<MilestoneNFTDialogProps> = ({
         submit({
           signature,
         });
-        // Debug to store collection info
-        setDebugGlobalAddress(collectionAddress);
-        setDebugGlobalUid(premintConfig.uid);
+
+        // Set the contractAddress and zoraPremintUID to DB
+        fetchData(
+          INDEXER.GRANTS.MILESTONES.CREATE(String(milestone.uid)),
+          "POST",
+          {
+            contractAddress: collectionAddress,
+            zoraPremintUID: premintConfig.uid,
+            chainID: milestone.chainID,
+          }
+        ).then(([data, error]) => {
+          console.log("MilestoneNFT Saved!", data, error);
+
+          // Debug to store collection info
+          setDebugGlobalAddress(collectionAddress);
+          setDebugGlobalUid(premintConfig.uid);
+        });
       } else {
         console.error("Submit function is not set.");
       }
@@ -166,6 +199,16 @@ export const MilestoneNFTDialog: FC<MilestoneNFTDialogProps> = ({
                   >
                     {title}
                   </Dialog.Title>
+                  <section>
+                    <img
+                      className="rounded-lg shadow-lg m-2"
+                      src={"https://i.ibb.co/QvgDTCL/image.png"}
+                      alt={milestone.uid.toString()}
+                      width={200}
+                      height={200}
+                    />
+                  </section>
+
                   <div className="flex flex-row gap-4 mt-10 justify-end">
                     <Button
                       className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-transparent dark:hover:bg-zinc-900 dark:hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
@@ -182,12 +225,20 @@ export const MilestoneNFTDialog: FC<MilestoneNFTDialogProps> = ({
                         disabled={isMintingMilestone}
                         isLoading={isMintingMilestone}
                       >
-                        Continue
+                        Premint
                       </Button>
                     ) : (
                       <div className="flex h-10 items-center space-x-4">
-                        <p>Collection Address: {debugGlobalAddress}</p>
-                        <p>UID: {debugGlobalUid}</p>
+                        <div className="flex flex-col ">
+                          <p>Collection Address: {debugGlobalAddress}</p>
+                          <p>UID: {debugGlobalUid}</p>
+                        </div>
+
+                        <br />
+                        <ZoraCollectPremint
+                          contractAddress={debugGlobalAddress}
+                          uid={debugGlobalUid}
+                        />
                       </div>
                     )}
                   </div>

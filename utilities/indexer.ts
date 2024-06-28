@@ -86,6 +86,14 @@ export const INDEXER = {
       ALL: (idOrSlug: string) => `/communities/${idOrSlug}/categories`,
       UPDATE: (grantUID: string) => `/grants/${grantUID}/update/categories`,
     },
+    MILESTONES: {
+      ALL: (grantUID: string) => `/grants/${grantUID}/milestone-nfts`,
+      CREATE: (milestoneUID: string) =>
+        `/grants/milestone-nfts/${milestoneUID}`,
+      DELETE: (milestoneUID: string) =>
+        `/grants/milestone-nfts/${milestoneUID}`,
+      GET: (milestoneUID: string) => `/grants/milestone-nfts/${milestoneUID}`,
+    },
   },
   GAP: {
     STATS: `/attestations/stats`,

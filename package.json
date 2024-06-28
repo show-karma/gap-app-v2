@@ -72,6 +72,7 @@
     "react-virtualized": "^9.22.5",
     "rehype-sanitize": "^6.0.0",
     "sass": "^1.71.0",
+    "satori": "^0.10.13",
     "tailwind-merge": "^2.2.1",
     "typescript": "5.1.3",
     "universal-cookie": "^7.1.0",

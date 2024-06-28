@@ -138,8 +138,8 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
                   milestone={milestone}
                   title={
                     <p className="font-normal">
-                      Are you sure you want to mint <b>{milestone.title}</b>{" "}
-                      milestone?
+                      Are you sure you want to mint{" "}
+                      <b className="">{milestone.title}</b> milestone update?
                     </p>
                   }
                   buttonElement={{
