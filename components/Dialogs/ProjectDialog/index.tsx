@@ -662,9 +662,14 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     },
     {
       title: "Project stage",
-      desc: "Tell us how is your project",
+      desc: "What stage is your project at?",
       fields: (
         <div className="flex w-full flex-col gap-8">
+          <p className="text-black dark:text-white">
+            Answer few more questions below and we can help you take your
+            project to next level by either recommending grants or introduce to
+            funders/investors.
+          </p>
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="business-modal-input" className={labelStyle}>
               What is your business model? (optional)
@@ -693,7 +698,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           </div>
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="raised-money-input" className={labelStyle}>
-              How much money did you raise from investors? (optional)
+              How much money have you raised from grants or investors?
+              (optional)
             </label>
             <input
               id="raised-money-input"
@@ -720,10 +726,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                 Select
               </option>
               {[
-                "No VC",
-                "Only grants",
-                "Public good sidegig always",
-                "Want to raise",
+                "Have raised VC round",
+                "Want to raise from VCs",
+                "Want to grow through just grant funding",
+                "Just want it to build it as side gig",
               ].map((item) => (
                 <option className="font-body" key={item} value={item}>
                   {item}
