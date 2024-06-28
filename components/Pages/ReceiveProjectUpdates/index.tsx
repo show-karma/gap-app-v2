@@ -173,26 +173,32 @@ export const ReceiveProjectUpdates = ({
           ) : (
             <div className="flex flex-col gap-4 border-t border-t-zinc-300 pt-4">
               <p className="text-black dark:text-white">
-                You have funded {projectsFunded} projects. You can find all the
-                projects you have funded{" "}
-                <ExternalLink
-                  className="underline text-blue-600 dark:text-blue-400"
-                  href={`https://explorer.gitcoin.co/#/contributors/${addressSearched}`}
-                >
-                  here.
-                </ExternalLink>
+                You have funded {projectsFunded} projects.{" "}
+                {projectsFunded ? (
+                  <>
+                    You can find all the projects you have funded{" "}
+                    <ExternalLink
+                      className="underline text-blue-600 dark:text-blue-400"
+                      href={`https://explorer.gitcoin.co/#/contributors/${addressSearched}`}
+                    >
+                      here.
+                    </ExternalLink>
+                  </>
+                ) : null}
               </p>
-              {subscribed ? (
-                <p className="text-green-600 dark:text-green-500">
-                  Successfully subscribed to all the projects funded by your
-                  wallet.
-                </p>
-              ) : (
-                <SubscribeForm
-                  address={addressSearched}
-                  changeIsSubscribed={changeIsSubscribed}
-                />
-              )}
+              {projectsFunded > 0 ? (
+                subscribed ? (
+                  <p className="text-green-600 dark:text-green-500">
+                    Successfully subscribed to all the projects funded by your
+                    wallet.
+                  </p>
+                ) : (
+                  <SubscribeForm
+                    address={addressSearched}
+                    changeIsSubscribed={changeIsSubscribed}
+                  />
+                )
+              ) : null}
             </div>
           )
         ) : null}
