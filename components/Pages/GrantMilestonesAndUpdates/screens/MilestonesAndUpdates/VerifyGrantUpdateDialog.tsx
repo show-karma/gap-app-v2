@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/auth";
 import { GrantUpdate, GrantUpdateStatus } from "@show-karma/karma-gap-sdk";
-import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import { getWalletClient } from "@wagmi/core";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
@@ -16,6 +16,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { getGapClient, useGap } from "@/hooks";
 import { useStepper } from "@/store/txStepper";
 import { useProjectStore } from "@/store";
+import { config } from "@/utilities/wagmi/config";
 
 type VerifyGrantUpdateDialogProps = {
   grantUpdate: GrantUpdate;
@@ -56,8 +57,8 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
   const hasVerifiedThis = grantUpdate?.verified?.find(
     (v) => v.attester?.toLowerCase() === address?.toLowerCase()
   );
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const { gap } = useGap();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const { changeStepperStep, setIsStepper } = useStepper();
@@ -71,10 +72,10 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
         !checkNetworkIsValid(chain?.id) ||
         chain?.id !== grantUpdate.chainID
       ) {
-        await switchNetworkAsync?.(grantUpdate.chainID);
+        await switchChainAsync?.({ chainId: grantUpdate.chainID });
         gapClient = getGapClient(grantUpdate.chainID);
       }
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: grantUpdate.chainID,
       });
       if (!walletClient || !address || !gapClient) return;

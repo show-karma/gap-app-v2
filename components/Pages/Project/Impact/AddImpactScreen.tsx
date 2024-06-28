@@ -7,6 +7,7 @@ import { useStepper } from "@/store/txStepper";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
+import { config } from "@/utilities/wagmi/config";
 import { Popover } from "@headlessui/react";
 import { CalendarIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,7 +22,7 @@ import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { Hex } from "viem";
-import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
 
 const updateSchema = z.object({
@@ -47,8 +48,8 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
   const [work, setWork] = useState("");
 
   const { address } = useAccount();
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [, changeTab] = useQueryState("tab");
@@ -80,10 +81,10 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
     let gapClient = gap;
     try {
       if (chain && chain.id !== project.chainID) {
-        await switchNetworkAsync?.(project.chainID);
+        await switchChainAsync?.({ chainId: project.chainID });
         gapClient = getGapClient(project.chainID);
       }
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: project.chainID,
       });
       if (!walletClient || !address || !gapClient) return;

@@ -1,40 +1,42 @@
 "use client";
-
-import type { JsonRpcProvider, JsonRpcSigner } from "@ethersproject/providers";
-import type { PublicClient, WalletClient } from "@wagmi/core";
-import { ethers } from "ethers";
+import {
+  BrowserProvider,
+  FallbackProvider,
+  JsonRpcProvider,
+  JsonRpcSigner,
+} from "ethers";
 import { useEffect, useState } from "react";
-import { type HttpTransport } from "viem";
+import type { Account, Chain, Client, Transport } from "viem";
 import { usePublicClient, useWalletClient } from "wagmi";
 
-export function publicClientToProvider(publicClient: PublicClient) {
-  const { chain, transport } = publicClient;
+export function publicClientToProvider(client: Client<Transport, Chain>) {
+  const { chain, transport } = client;
   const network = {
     chainId: chain.id,
     name: chain.name,
     ensAddress: chain.contracts?.ensRegistry?.address,
   };
-  if (transport.type === "fallback")
-    return new ethers.FallbackProvider(
-      (transport.transports as ReturnType<HttpTransport>[]).map(
-        ({ value }) => new ethers.JsonRpcProvider(value?.url, network)
-      )
+  if (transport.type === "fallback") {
+    const providers = (transport.transports as ReturnType<Transport>[]).map(
+      ({ value }) => new JsonRpcProvider(value?.url, network)
     );
-  return new ethers.JsonRpcProvider(transport.url, network);
+    if (providers.length === 1) return providers[0];
+    return new FallbackProvider(providers);
+  }
+  return new JsonRpcProvider(transport.url, network);
 }
 
-export async function walletClientToSigner(walletClient: WalletClient) {
-  const { account, chain, transport } = walletClient;
+export async function walletClientToSigner(
+  client: Client<Transport, Chain, Account>
+) {
+  const { account, chain, transport } = client;
   const network = {
     chainId: chain.id,
     name: chain.name,
     ensAddress: chain.contracts?.ensRegistry?.address,
   };
-  const provider = new ethers.BrowserProvider(transport, network);
-  const signer = await provider
-    .getSigner(account.address)
-    .catch(() => undefined);
-
+  const provider = new BrowserProvider(transport, network);
+  const signer = new JsonRpcSigner(provider, account.address);
   return signer;
 }
 

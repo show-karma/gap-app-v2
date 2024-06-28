@@ -8,8 +8,8 @@ import { UpdateMilestone } from "./UpdateMilestone";
 import { useOwnerStore, useProjectStore } from "@/store";
 import toast from "react-hot-toast";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { useNetwork, useSwitchNetwork } from "wagmi";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { useSwitchChain, useAccount } from "wagmi";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { formatDate } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
@@ -18,6 +18,7 @@ import { VerifyMilestoneUpdateDialog } from "./VerifyMilestoneUpdateDialog";
 import { VerifiedBadge } from "./VerifiedBadge";
 import { useCommunityAdminStore } from "@/store/community";
 import { useStepper } from "@/store/txStepper";
+import { config } from "@/utilities/wagmi/config";
 
 interface UpdatesProps {
   milestone: Milestone;
@@ -29,9 +30,8 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const handleEditing = (value: boolean) => {
     setIsEditing(value);
   };
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork();
-  const signer = useSigner();
+  const { chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
   const { changeStepperStep, setIsStepper } = useStepper();
@@ -39,9 +39,9 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const undoMilestoneCompletion = async (milestone: Milestone) => {
     try {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
-        await switchNetworkAsync?.(milestone.chainID);
+        await switchChainAsync?.({ chainId: milestone.chainID });
       }
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: milestone.chainID,
       });
       if (!walletClient) return;

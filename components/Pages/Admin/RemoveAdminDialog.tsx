@@ -11,7 +11,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MarkdownEditor } from "../../Utilities/MarkdownEditor";
-import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Community, GAP, nullRef } from "@show-karma/karma-gap-sdk";
 import { Button } from "../../Utilities/Button";
@@ -26,6 +26,7 @@ import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { getWalletClient } from "@wagmi/core";
 import { useStepper } from "@/store/txStepper";
 import toast from "react-hot-toast";
+import { config } from "@/utilities/wagmi/config";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -74,18 +75,16 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
   });
 
   const [isLoading, setIsLoading] = useState(false);
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork({
-    chainId: appNetwork[0].id,
-  });
+  const { chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
 
   const { changeStepperStep, setIsStepper } = useStepper();
 
   const removeAdmin = async () => {
     if (chain?.id != chainid) {
-      await switchNetworkAsync?.(chainid);
+      await switchChainAsync?.({ chainId: chainid });
     }
-    const walletClient = await getWalletClient({
+    const walletClient = await getWalletClient(config, {
       chainId: chainid,
     });
     if (!walletClient) return;

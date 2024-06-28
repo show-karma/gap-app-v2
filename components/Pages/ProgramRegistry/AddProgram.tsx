@@ -14,7 +14,7 @@ import { NFTStorage } from "nft.storage";
 import { AlloRegistry } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/AlloRegistry";
 import { getWalletClient } from "@wagmi/core";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { useAccount, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import { envVars } from "@/utilities/enviromentVars";
 import { useRouter } from "next/router";
 
@@ -37,6 +37,7 @@ import { Twitter2Icon } from "@/components/Icons/Twitter2";
 import { Discord2Icon } from "@/components/Icons/Discord2";
 import { AlloBase } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/Allo";
 import { StatusDropdown } from "./StatusDropdown";
+import { config } from "@/utilities/wagmi/config";
 
 const labelStyle = "text-sm font-bold text-[#344054] dark:text-zinc-100";
 const inputStyle =
@@ -215,8 +216,8 @@ export default function AddProgram({
 
   const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore();
-  const { chain } = useNetwork();
-  const { switchNetworkAsync } = useSwitchNetwork();
+  const { chain } = useAccount();
+  const { switchChainAsync } = useSwitchChain();
   const { openConnectModal } = useConnectModal();
 
   const createProgram = async (data: CreateProgramType) => {
@@ -299,14 +300,14 @@ export default function AddProgram({
       }
       const chainSelected = data.networkToCreate;
       if (chain && chain.id !== chainSelected) {
-        await switchNetworkAsync?.(chainSelected);
+        await switchChainAsync?.({ chainId: chainSelected as number });
       }
 
       const ipfsStorage = new NFTStorage({
         token: envVars.IPFS_TOKEN,
       });
 
-      const walletClient = await getWalletClient({
+      const walletClient = await getWalletClient(config, {
         chainId: chainSelected,
       });
       if (!walletClient) return;

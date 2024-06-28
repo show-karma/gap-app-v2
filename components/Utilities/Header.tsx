@@ -6,7 +6,7 @@ import * as Popover from "@radix-ui/react-popover";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { MoonIcon, SunIcon } from "@heroicons/react/24/solid";
-import { ConnectorData, useAccount, useConnect, useDisconnect } from "wagmi";
+import { useAccount, useConfig, useConnect, useDisconnect } from "wagmi";
 import { useOwnerStore } from "@/store/owner";
 import { useCommunitiesStore } from "@/store/communities";
 import { ExternalLink } from "./ExternalLink";
@@ -26,6 +26,8 @@ import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { getContractOwner } from "@/utilities/sdk/getContractOwner";
 import { OnboardingDialog } from "../Dialogs/OnboardingDialog";
 import { useMobileStore } from "@/store/mobile";
+import { config } from "@/utilities/wagmi/config";
+import { watchAccount } from "@wagmi/core";
 
 const ProjectDialog = dynamic(
   () =>
@@ -34,10 +36,6 @@ const ProjectDialog = dynamic(
     ),
   { ssr: false }
 );
-
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(" ");
-}
 
 const buttonStyle: HTMLButtonElement["className"] =
   " rounded-md bg-white w-max dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 hover:bg-transparent dark:hover:bg-opacity-75 dark:border-zinc-900";
@@ -126,24 +124,17 @@ export default function Header() {
   }, []);
 
   const { authenticate, disconnect, softDisconnect } = useAuth();
-  const { connector: activeConnector } = useAccount();
 
   useEffect(() => {
-    const handleConnectorUpdate = ({ account, chain }: ConnectorData) => {
-      if (account) {
-        console.log("account", account);
-        softDisconnect(account);
-      } else if (chain) {
-        console.log("new chain", chain);
-      }
-    };
-
-    if (activeConnector) {
-      activeConnector.on("change", handleConnectorUpdate);
-    }
-
-    return () => activeConnector?.off("change", handleConnectorUpdate) as any;
-  }, [activeConnector]);
+    const unwatch = watchAccount?.(config, {
+      onChange: (account, prevAccount) => {
+        if (account.address && account.address !== prevAccount.address) {
+          softDisconnect(account.address);
+        }
+      },
+    });
+    return () => unwatch();
+  }, []);
 
   useEffect(() => {
     if (isConnected && isReady && !isAuth) {
