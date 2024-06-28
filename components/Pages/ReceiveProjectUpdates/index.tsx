@@ -94,7 +94,12 @@ const SubscribeForm = ({ address, changeIsSubscribed }: SubscribeFormProps) => {
     </div>
   );
 };
-const LookupForm = () => {
+
+export const ReceiveProjectUpdates = ({
+  communityName,
+}: {
+  communityName: string;
+}) => {
   const {
     register,
     handleSubmit,
@@ -132,73 +137,66 @@ const LookupForm = () => {
       setIsLoading(false);
     }
   };
-
-  return (
-    <div className="flex flex-col gap-8">
-      <h1 className="text-xl font-semibold">
-        Receive updates from projects you have funded
-      </h1>
-      <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
-        <div className="flex flex-col gap-2">
-          <label>Your wallet address</label>
-          <input
-            className="rounded text-black dark:text-white dark:bg-zinc-700 placeholder:text-zinc-500 dark:placeholder:text-zinc-100"
-            placeholder="Enter your wallet address"
-            {...register("address")}
-          />
-          <p className="text-red-400">{errors.address?.message}</p>
-          <p className="text-zinc-600 dark:text-zinc-400 text-sm">
-            This is the wallet you used to fund projects on Gitcoin
-          </p>
-        </div>
-        <Button
-          disabled={isLoading || !isValid}
-          type="submit"
-          className="w-full flex flex-row justify-center text-base items-center bg-brand-blue text-white px-4 py-2 rounded"
-          isLoading={isLoading}
-        >
-          Lookup
-        </Button>
-      </form>
-      {addressSearched ? (
-        isLoading ? (
-          <div className="flex flex-col justify-center items-center">
-            <Spinner />
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4 border-t border-t-zinc-300 pt-4">
-            <p className="text-black dark:text-white">
-              You have funded {projectsFunded} projects. You can find all the
-              projects you have funded{" "}
-              <ExternalLink
-                className="underline text-blue-600 dark:text-blue-400"
-                href={`https://explorer.gitcoin.co/#/contributors/${addressSearched}`}
-              >
-                here.
-              </ExternalLink>
-            </p>
-            {subscribed ? (
-              <p className="text-green-600 dark:text-green-500">
-                Successfully subscribed to all the projects funded by your
-                wallet.
-              </p>
-            ) : (
-              <SubscribeForm
-                address={addressSearched}
-                changeIsSubscribed={changeIsSubscribed}
-              />
-            )}
-          </div>
-        )
-      ) : null}
-    </div>
-  );
-};
-
-export const ReceiveProjectUpdates = () => {
   return (
     <div className="flex flex-col gap-8  max-w-xl w-full">
-      <LookupForm />
+      <div className="flex flex-col gap-8">
+        <h1 className="text-xl font-semibold">
+          Receive updates from projects you have funded
+        </h1>
+        <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
+          <div className="flex flex-col gap-2">
+            <label>Your wallet address</label>
+            <input
+              className="rounded text-black dark:text-white dark:bg-zinc-700 placeholder:text-zinc-500 dark:placeholder:text-zinc-100"
+              placeholder="Enter your wallet address"
+              {...register("address")}
+            />
+            <p className="text-red-400">{errors.address?.message}</p>
+            <p className="text-zinc-600 dark:text-zinc-400 text-sm">
+              This is the wallet you used to fund projects on {communityName}
+            </p>
+          </div>
+          <Button
+            disabled={isLoading || !isValid}
+            type="submit"
+            className="w-full flex flex-row justify-center text-base items-center bg-brand-blue text-white px-4 py-2 rounded"
+            isLoading={isLoading}
+          >
+            Lookup
+          </Button>
+        </form>
+        {addressSearched ? (
+          isLoading ? (
+            <div className="flex flex-col justify-center items-center">
+              <Spinner />
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4 border-t border-t-zinc-300 pt-4">
+              <p className="text-black dark:text-white">
+                You have funded {projectsFunded} projects. You can find all the
+                projects you have funded{" "}
+                <ExternalLink
+                  className="underline text-blue-600 dark:text-blue-400"
+                  href={`https://explorer.gitcoin.co/#/contributors/${addressSearched}`}
+                >
+                  here.
+                </ExternalLink>
+              </p>
+              {subscribed ? (
+                <p className="text-green-600 dark:text-green-500">
+                  Successfully subscribed to all the projects funded by your
+                  wallet.
+                </p>
+              ) : (
+                <SubscribeForm
+                  address={addressSearched}
+                  changeIsSubscribed={changeIsSubscribed}
+                />
+              )}
+            </div>
+          )
+        ) : null}
+      </div>
     </div>
   );
 };

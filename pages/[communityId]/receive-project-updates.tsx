@@ -1,16 +1,13 @@
-import { grantReviewDictionary } from "@/components/Pages/GrantReviews/util";
 import { ReceiveProjectUpdates } from "@/components/Pages/ReceiveProjectUpdates";
-import { Spinner } from "@/components/Utilities/Spinner";
 import { zeroUID } from "@/utilities/commons";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { PAGES } from "@/utilities/pages";
+import { defaultMetadata } from "@/utilities/meta";
 import { getMetadata } from "@/utilities/sdk";
 import type { ICommunityDetails } from "@show-karma/karma-gap-sdk";
-import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
-import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { NextSeo } from "next-seo";
 import { Hex } from "viem";
+
+const supportedCommunities = ["gitcoin"];
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { params } = context;
@@ -19,7 +16,11 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     "communities",
     communityId as Hex
   );
-  if (communityInfo?.uid === zeroUID || !communityInfo) {
+  if (
+    communityInfo?.uid === zeroUID ||
+    !communityInfo ||
+    !supportedCommunities.includes(communityInfo.slug as string)
+  ) {
     return {
       notFound: true,
     };
@@ -27,55 +28,50 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   return {
     props: {
       communityId,
+      communityName: communityInfo.name || "",
     },
   };
 }
 function BulkProjectsPage({
-  communityId,
+  communityName,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
-  const [community, setCommunity] = useState<ICommunityResponse | undefined>(
-    undefined
-  ); // Data returned from the API
-  const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
-  const router = useRouter();
-
-  if (communityId && !grantReviewDictionary[communityId]) {
-    const slug = community?.details?.data?.slug;
-    if (!slug || (slug && !grantReviewDictionary[slug])) {
-    }
-  }
-
-  useEffect(() => {
-    const fetchDetails = async () => {
-      if (!communityId) return;
-      setLoading(true);
-      try {
-        const { data: result } = await gapIndexerApi.communityBySlug(
-          communityId
-        );
-        if (!result || result.uid === zeroUID)
-          throw new Error("Community not found");
-        setCommunity(result);
-      } catch (error: any) {
-        console.error("Error fetching data:", error);
-        if (
-          error.message === "Community not found" ||
-          error.message.includes("422")
-        ) {
-          router.push(PAGES.NOT_FOUND);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDetails();
-  }, [communityId]);
+  const dynamicMetadata = {
+    title: `Karma GAP - Receive project updates for ${communityName}`,
+    description: `Receive all the updates for the projects funded by your wallet.`,
+  };
 
   return (
-    <div className="mb-8 flex flex-col items-center px-12 py-8  max-xl:px-12 max-md:px-4">
-      <ReceiveProjectUpdates />
-    </div>
+    <>
+      <NextSeo
+        title={dynamicMetadata.title || defaultMetadata.title}
+        description={dynamicMetadata.description || defaultMetadata.description}
+        twitter={{
+          handle: defaultMetadata.twitter.creator,
+          site: defaultMetadata.twitter.site,
+          cardType: "summary_large_image",
+        }}
+        openGraph={{
+          url: defaultMetadata.openGraph.url,
+          title: dynamicMetadata.title || defaultMetadata.title,
+          description:
+            dynamicMetadata.description || defaultMetadata.description,
+          images: defaultMetadata.openGraph.images.map((image) => ({
+            url: image,
+            alt: dynamicMetadata.title || defaultMetadata.title,
+          })),
+          // site_name: defaultMetadata.openGraph.siteName,
+        }}
+        additionalLinkTags={[
+          {
+            rel: "icon",
+            href: "/images/favicon.png",
+          },
+        ]}
+      />
+      <div className="mb-8 flex flex-col items-center px-12 py-8  max-xl:px-12 max-md:px-4">
+        <ReceiveProjectUpdates communityName={communityName} />
+      </div>
+    </>
   );
 }
 
