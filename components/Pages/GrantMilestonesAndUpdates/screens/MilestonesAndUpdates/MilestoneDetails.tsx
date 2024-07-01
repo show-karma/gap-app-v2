@@ -8,8 +8,6 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { formatDate } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
 import { useCommunityAdminStore } from "@/store/community";
-import { MilestoneNFTDialog } from "@/components/Dialogs/MilestoneNFTDialog";
-import { TicketIcon } from "@heroicons/react/24/outline";
 
 interface MilestoneDateStatusProps {
   milestone: Milestone;
@@ -106,6 +104,8 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
   index,
 }) => {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const selectedProject = useProjectStore((state) => state.project);
+
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
@@ -133,24 +133,6 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
               </h4>
             </div>
             <div className="flex flex-row items-center justify-start gap-2">
-              {isAuthorized ? (
-                <MilestoneNFTDialog
-                  milestone={milestone}
-                  title={
-                    <p className="font-normal">
-                      Are you sure you want to mint{" "}
-                      <b className="">{milestone.title}</b> milestone update?
-                    </p>
-                  }
-                  buttonElement={{
-                    text: "Create Milestone NFT",
-                    icon: <TicketIcon className="text-white w-5 h-5 mr-1" />,
-                    styleClass:
-                      "px-2 py-1 w-max h-max text-white transition-all duration-500 bg-gradient-to-tr to-red-400 via-violet-600 from-blue-500 bg-size-200 bg-pos-0 hover:bg-pos-100  shadow",
-                  }}
-                />
-              ) : null}{" "}
-              |
               <MilestoneDateStatus milestone={milestone} />
               {isAuthorized ? <MilestoneDelete milestone={milestone} /> : null}
             </div>

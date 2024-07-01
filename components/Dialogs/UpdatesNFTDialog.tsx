@@ -20,35 +20,39 @@ import ZoraCollectPremint from "../Pages/GrantMilestonesAndUpdates/screens/Miles
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import Image from "next/image";
+import satori from "satori";
+import { storeFile, storeJSON, storeMetadata } from "@/utilities/storeOnIPFS";
+import { TicketIcon } from "@heroicons/react/24/outline";
 
-type MilestoneNFTDialogProps = {
-  title?: ReactNode;
-  milestone: Milestone;
-  buttonElement?: {
-    text: string;
-    icon: ReactNode;
-    styleClass: string;
-  };
-  afterFunction?: () => void;
+type UpdatesNFTDialogProps = {
+  nftContractName: string;
+  entityTitle: string;
+  entityDescription: string;
+  projectName: string;
+  updateTitle: string;
+  updateDescription: string;
+  platformAddress: Address;
+  mintChainID: number;
+  entityUID: `0x${string}`;
 };
 
-export const MilestoneNFTDialog: FC<MilestoneNFTDialogProps> = ({
-  title = "Are you sure you want to delete?",
-  milestone,
-  buttonElement = {
-    icon: <PlusIcon className="h-4 w-4 text-primary-600" />,
-    text: "New Project",
-    styleClass:
-      "flex justify-center items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100  hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900",
-  },
-  afterFunction,
+export const UpdatesNFTDialog: FC<UpdatesNFTDialogProps> = ({
+  entityTitle,
+  entityDescription,
+  projectName,
+  updateTitle,
+  updateDescription,
+  nftContractName,
+  entityUID,
+  mintChainID,
+  platformAddress,
 }) => {
-  const walletClient = useWalletClient();
   const publicClient = usePublicClient();
   const { address: creatorAddress } = useAccount();
   const { signTypedData, data: signature } = useSignTypedData();
+  const [svg, setSvg] = useState<string | null>("");
 
-  // Debug to store collection info, stand-in for database, etc.
+  const [pricePerToken, setPricePerToken] = useState<number>(0);
   const [debugGlobalAddress, setDebugGlobalAddress] = useState<string | null>(
     null
   );
@@ -59,16 +63,16 @@ export const MilestoneNFTDialog: FC<MilestoneNFTDialogProps> = ({
   );
   const [typedDataDefinition, setTypedDataDefinition] = useState<any>(null);
   const [submit, setSubmit] = useState<Function | null>(null);
+  const [contractURI, setContractURI] = useState<string>("");
+  const [tokenURI, setTokenURI] = useState<string>("");
 
   const creatorClient = createCreatorClient({
-    chainId: milestone.chainID,
+    chainId: mintChainID,
     publicClient: publicClient as any,
   });
 
   let [isOpen, setIsOpen] = useState(false);
   const [isMintingMilestone, setIsMintingMilestone] = useState(false);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
-  const selectedProject = useProjectStore((state) => state.project);
 
   function closeModal() {
     setIsOpen(false);
@@ -77,13 +81,135 @@ export const MilestoneNFTDialog: FC<MilestoneNFTDialogProps> = ({
     setIsOpen(true);
   }
 
+  // Store metadata
+  async function storeMetadataToIPFS(svg: string) {
+    storeFile(new File([svg], "image.svg", { type: "image/svg+xml" })).then(
+      (imageCID) => {
+        console.log("Image CID ", `ipfs://${imageCID}`);
+        storeMetadata({
+          name: entityTitle,
+          description: entityDescription,
+          image: `ipfs://${imageCID}`,
+          external_url: "",
+          attributes: [
+            {
+              trait_type: "Project",
+              value: projectName,
+            },
+            {
+              trait_type: "Update",
+              value: updateTitle,
+            },
+          ],
+        })
+          .then((cid) => {
+            console.log("Token Metadata CID ", `ipfs://${cid}`);
+            setTokenURI(`ipfs://${cid}`);
+          })
+          .catch((error) => {
+            console.error("Error storing metadata", error);
+          });
+      }
+    );
+  }
+
+  // Render image using milestone data
+  useEffect(() => {
+    (async () => {
+      const normalFont = await fetch("/fonts/Poppins/poppins_regular.ttf");
+      const normalFontBuffer = await normalFont.arrayBuffer();
+
+      const boldFont = await fetch("/fonts/Poppins/poppins_bold.ttf");
+      const boldFontBuffer = await boldFont.arrayBuffer();
+
+      const svgString = await satori(
+        <section
+          tw="bg-white flex flex-col w-full h-full items-start justify-between p-4"
+          style={{ color: "black" }}
+        >
+          <div tw="flex justify-between items-center w-full">
+            <div
+              style={{ fontFamily: "Poppins Bold" }}
+              tw="w-[50%] text-2xl bg-teal-400 h-full flex justify-start px-2 pt-2 rounded-md items-center text-white"
+            >
+              {nftContractName}
+            </div>
+            <img src="/logo/karma-gap-logo-white.svg" height={45} alt="" />
+          </div>
+          <div tw="flex flex-col justify-start items-between">
+            <section tw="flex flex-col bg-zinc-200 p-2 rounded-xl justify-start items-start">
+              <div tw="flex flex-col">
+                <div
+                  tw="flex mb-1"
+                  style={{
+                    fontFamily: "Poppins Bold",
+                  }}
+                >
+                  {entityTitle}
+                </div>
+                <div tw="flex text-sm leading-1">{entityDescription}</div>
+              </div>
+              <div tw="flex flex-col mt-4">
+                <div
+                  tw="flex mb-1"
+                  style={{
+                    fontFamily: "Poppins Bold",
+                  }}
+                >
+                  {updateTitle}
+                </div>
+                <div tw="flex text-sm leading-1">{updateDescription}</div>
+              </div>
+            </section>
+          </div>
+          <section tw="flex justify-between items-end w-full">
+            <div
+              tw="flex text-2xl mb-1 w-[60%] leading-[1.1]"
+              style={{
+                fontFamily: "Poppins Bold",
+              }}
+            >
+              {projectName}
+            </div>
+            <img
+              src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${window.location.href}`}
+              height={150}
+              alt=""
+            />
+          </section>
+        </section>,
+        {
+          width: 500,
+          height: 500,
+          fonts: [
+            {
+              name: "Poppins Normal",
+              // Use `fs` (Node.js only) or `fetch` to read the font as Buffer/ArrayBuffer and provide `data` here.
+              data: normalFontBuffer,
+              weight: 400,
+              style: "normal",
+            },
+            {
+              name: "Poppins Bold",
+              // Use `fs` (Node.js only) or `fetch` to read the font as Buffer/ArrayBuffer and provide `data` here.
+              data: boldFontBuffer,
+              weight: 700,
+              style: "normal",
+            },
+          ],
+        }
+      );
+      setSvg(svgString);
+    })();
+  }, []);
+
   useEffect(() => {
     (async () => {
       const [data, error] = await fetchData(
-        INDEXER.GRANTS.MILESTONES.GET(String(milestone.uid))
+        INDEXER.GRANTS.MILESTONES.GET(String(entityUID))
       );
 
-      console.log("MilestoneNFT Already Exists", data, error, milestone.uid);
+      console.log("MilestoneNFT Already Exists", data, error, entityUID);
 
       if (data) {
         setDebugGlobalAddress(data.contractAddress);
@@ -94,6 +220,7 @@ export const MilestoneNFTDialog: FC<MilestoneNFTDialogProps> = ({
 
   useEffect(() => {
     async function createPremint() {
+      await storeMetadataToIPFS(svg as string);
       const {
         premintConfig: pC,
         collectionAddress: cA,
@@ -105,18 +232,18 @@ export const MilestoneNFTDialog: FC<MilestoneNFTDialogProps> = ({
         contract: {
           // the account that will be the admin of the collection.  Must match the signer of the premint.
           contractAdmin: creatorAddress as Address,
-          contractName: "GAP Milestone NFT",
-          contractURI: "ipfs://QmYjwarNweXhQAfu3phirz8vwnwFEqo5t8m3xt3HWpFd8N",
+          contractName: nftContractName,
+          contractURI: contractURI, // "ipfs://QmYjwarNweXhQAfu3phirz8vwnwFEqo5t8m3xt3HWpFd8N",
         },
         // token info of token to create
         token: {
-          tokenURI: "ipfs://QmXr9NuvX9afZhHTpd2jRgFHbVnaWPKD315AtnTT6H67hz",
-          createReferral: "0x5A4830885f12438E00D8f4d98e9Fe083e707698C",
+          tokenURI: tokenURI, // "ipfs://QmXr9NuvX9afZhHTpd2jRgFHbVnaWPKD315AtnTT6H67hz",
+          createReferral: platformAddress,
           maxSupply: BigInt(50000),
           maxTokensPerAddress: BigInt(1),
           mintStart: BigInt(0),
           mintDuration: BigInt(0), // 0 for infinite.
-          pricePerToken: BigInt(0), // 0 for it to be a free mint.
+          pricePerToken: BigInt(pricePerToken), // 0 for it to be a free mint.
           payoutRecipient: creatorAddress as Address, // address to receive creator rewards for free mints, or if its a paid mint, the paid mint sale proceeds.
         },
       });
@@ -127,7 +254,7 @@ export const MilestoneNFTDialog: FC<MilestoneNFTDialogProps> = ({
       setSubmit(() => sub); // Ensure submit is set as a function
     }
 
-    if (creatorAddress) {
+    if (creatorAddress && svg) {
       createPremint();
     }
   }, [creatorAddress]);
@@ -140,15 +267,11 @@ export const MilestoneNFTDialog: FC<MilestoneNFTDialogProps> = ({
         });
 
         // Set the contractAddress and zoraPremintUID to DB
-        fetchData(
-          INDEXER.GRANTS.MILESTONES.CREATE(String(milestone.uid)),
-          "POST",
-          {
-            contractAddress: collectionAddress,
-            zoraPremintUID: premintConfig.uid,
-            chainID: milestone.chainID,
-          }
-        ).then(([data, error]) => {
+        fetchData(INDEXER.GRANTS.MILESTONES.CREATE(String(entityUID)), "POST", {
+          contractAddress: collectionAddress,
+          zoraPremintUID: premintConfig.uid,
+          chainID: mintChainID,
+        }).then(([data, error]) => {
           console.log("MilestoneNFT Saved!", data, error);
 
           // Debug to store collection info
@@ -162,10 +285,13 @@ export const MilestoneNFTDialog: FC<MilestoneNFTDialogProps> = ({
   }, [signature]);
 
   return (
-    <>
-      <Button onClick={openModal} className={buttonElement.styleClass}>
-        {buttonElement.icon}
-        {buttonElement.text}
+    <div className="mx-2">
+      <Button
+        onClick={openModal}
+        className="px-2 py-1 w-max h-max text-white transition-all duration-500 bg-gradient-to-tr to-red-400 via-violet-600 from-blue-500 bg-size-200 bg-pos-0 hover:bg-pos-100  shadow"
+      >
+        <TicketIcon className="text-white w-5 h-5 mr-1" />
+        Mint as NFT
       </Button>
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeModal}>
@@ -197,16 +323,17 @@ export const MilestoneNFTDialog: FC<MilestoneNFTDialogProps> = ({
                     as="h3"
                     className="text-xl font-medium leading-6 text-gray-900 dark:text-zinc-100"
                   >
-                    {title}
+                    <p className="font-normal">
+                      Are you sure you want to mint this update as an NFT?
+                    </p>
                   </Dialog.Title>
                   <section>
-                    <img
-                      className="rounded-lg shadow-lg m-2"
-                      src={"https://i.ibb.co/QvgDTCL/image.png"}
-                      alt={milestone.uid.toString()}
-                      width={200}
-                      height={200}
-                    />
+                    {svg && (
+                      <div
+                        dangerouslySetInnerHTML={{ __html: svg }}
+                        className="bg-zinc-200 rounded-lg shadow-lg mt-3 flex justify-center py-3"
+                      />
+                    )}
                   </section>
 
                   <div className="flex flex-row gap-4 mt-10 justify-end">
@@ -248,6 +375,6 @@ export const MilestoneNFTDialog: FC<MilestoneNFTDialogProps> = ({
           </div>
         </Dialog>
       </Transition>
-    </>
+    </div>
   );
 };

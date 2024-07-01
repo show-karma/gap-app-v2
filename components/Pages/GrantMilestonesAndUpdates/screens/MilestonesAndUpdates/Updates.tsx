@@ -19,6 +19,7 @@ import { VerifiedBadge } from "./VerifiedBadge";
 import { useCommunityAdminStore } from "@/store/community";
 import { useStepper } from "@/store/txStepper";
 import { config } from "@/utilities/wagmi/config";
+import { UpdatesNFTDialog } from "@/components/Dialogs/UpdatesNFTDialog";
 
 interface UpdatesProps {
   milestone: Milestone;
@@ -33,6 +34,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const { chain } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const refreshProject = useProjectStore((state) => state.refreshProject);
+  const selectedProject = useProjectStore((state) => state.project);
 
   const { changeStepperStep, setIsStepper } = useStepper();
 
@@ -144,6 +146,22 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
             </ReadMore>
 
             <div className="flex w-full flex-row items-center justify-end">
+              {isAuthorized ? (
+                <UpdatesNFTDialog
+                  entityTitle={milestone.title}
+                  entityDescription={milestone.description}
+                  updateTitle="Update #1"
+                  updateDescription={milestone.completed.reason}
+                  projectName={
+                    selectedProject?.details?.data?.title || "No Title Found"
+                  }
+                  nftContractName="Milestone NFT"
+                  entityUID={milestone.uid}
+                  mintChainID={milestone.chainID}
+                  platformAddress="0x5A4830885f12438E00D8f4d98e9Fe083e707698C"
+                />
+              ) : null}{" "}
+              |
               {isAuthorized ? (
                 <div className="flex w-max flex-row items-center gap-2">
                   <Button

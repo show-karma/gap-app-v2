@@ -22,6 +22,7 @@ import { useStepper } from "@/store/txStepper";
 import { Hex } from "viem";
 import { config } from "@/utilities/wagmi/config";
 import { useAccount, useSwitchChain } from "wagmi";
+import { UpdatesNFTDialog } from "@/components/Dialogs/UpdatesNFTDialog";
 
 interface UpdateTagProps {
   index: number;
@@ -197,6 +198,23 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
         >
           {description}
         </ReadMore>
+      </div>
+      <div className="flex justify-end">
+        {isAuthorized ? (
+          <UpdatesNFTDialog
+            entityTitle={title}
+            entityDescription={description}
+            updateTitle="Update #1"
+            updateDescription={`Made on ${formatDate(date)}`}
+            projectName={
+              selectedProject?.details?.data?.title || "No Title Found"
+            }
+            nftContractName="Grant Update NFT"
+            entityUID={update.uid}
+            mintChainID={update.chainID}
+            platformAddress="0x5A4830885f12438E00D8f4d98e9Fe083e707698C"
+          />
+        ) : null}
       </div>
     </div>
   );
