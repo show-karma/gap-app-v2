@@ -14,6 +14,7 @@ export const INDEXER = {
     SUBSCRIBE: (projectId: Hex) => `/projects/${projectId}/subscribe`,
     GET: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}`,
     FEED: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/feed`,
+    FUNDEDBY: (address: string) => `/projects/fundedby/${address}`,
   },
   QUESTIONS: {
     CREATE: (idOrSlug: string) => `/questions/create/${idOrSlug}`,
@@ -26,6 +27,9 @@ export const INDEXER = {
   },
   COMMUNITY: {
     GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}`,
+    SUBSCRIBE: {
+      BULK: `/bulk-subscription/subscribe`,
+    },
     GRANTS: (
       communityIdOrSlug: string,
       {

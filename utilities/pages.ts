@@ -3,6 +3,8 @@ export const PAGES = {
   NOT_FOUND: `/404`,
   COMMUNITY: {
     ALL_GRANTS: (community: string) => `/${community}`,
+    RECEIVEPROJECTUPDATES: (community: string) =>
+      `/${community}/receive-project-updates`,
   },
   MY_PROJECTS: `/my-projects`,
   ADMIN: {
