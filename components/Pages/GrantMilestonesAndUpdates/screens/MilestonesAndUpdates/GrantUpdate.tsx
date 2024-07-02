@@ -200,22 +200,21 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
         </ReadMore>
       </div>
       <div className="flex justify-end">
-        {isAuthorized ? (
-          <UpdatesNFTDialog
-            entityTitle={title}
-            entityDescription={description}
-            updateTitle="Update #1"
-            updateDescription={`Made on ${formatDate(date)}`}
-            projectName={
-              selectedProject?.details?.data?.title || "No Title Found"
-            }
-            projectSlug={selectedProject?.details?.data?.slug || ""}
-            nftContractName="Grant Update NFT"
-            entityUID={update.uid}
-            mintChainID={update.chainID}
-            platformAddress="0x5A4830885f12438E00D8f4d98e9Fe083e707698C"
-          />
-        ) : null}
+        <UpdatesNFTDialog
+          entityTitle={title}
+          entityDescription={description}
+          updateTitle="Update #1"
+          updateDescription={`Made on ${formatDate(date)}`}
+          projectName={
+            selectedProject?.details?.data?.title || "No Title Found"
+          }
+          projectSlug={selectedProject?.details?.data?.slug || ""}
+          nftContractName="Grant Update NFT"
+          entityUID={update.uid}
+          mintChainID={update.chainID}
+          platformAddress="0x5A4830885f12438E00D8f4d98e9Fe083e707698C"
+          isAuthorized={isAuthorized}
+        />
       </div>
     </div>
   );

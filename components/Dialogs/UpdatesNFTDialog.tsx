@@ -37,6 +37,7 @@ type UpdatesNFTDialogProps = {
   platformAddress: Address;
   mintChainID: number;
   entityUID: `0x${string}`;
+  isAuthorized: boolean;
 };
 
 export const UpdatesNFTDialog: FC<UpdatesNFTDialogProps> = ({
@@ -50,6 +51,7 @@ export const UpdatesNFTDialog: FC<UpdatesNFTDialogProps> = ({
   entityUID,
   mintChainID,
   platformAddress,
+  isAuthorized,
 }) => {
   const publicClient = usePublicClient();
   const { address: creatorAddress } = useAccount();
@@ -301,7 +303,8 @@ export const UpdatesNFTDialog: FC<UpdatesNFTDialogProps> = ({
       !tokenURI &&
       !contractURI &&
       !debugGlobalAddress &&
-      !debugGlobalUid
+      !debugGlobalUid &&
+      isAuthorized
     ) {
       console.log("Storing metadata on IPFS");
       storeMetadataToIPFS(svg as string).then(() => {
@@ -314,7 +317,8 @@ export const UpdatesNFTDialog: FC<UpdatesNFTDialogProps> = ({
       tokenURI &&
       contractURI &&
       !debugGlobalAddress &&
-      !debugGlobalUid
+      !debugGlobalUid &&
+      isAuthorized
     ) {
       createPremint();
     }
@@ -322,7 +326,7 @@ export const UpdatesNFTDialog: FC<UpdatesNFTDialogProps> = ({
 
   useEffect(() => {
     if (signature) {
-      if (submit && !debugGlobalAddress && !debugGlobalUid) {
+      if (submit && !debugGlobalAddress && !debugGlobalUid && isAuthorized) {
         // Submit the premint
         submit({
           signature,
@@ -345,136 +349,146 @@ export const UpdatesNFTDialog: FC<UpdatesNFTDialogProps> = ({
     }
   }, [signature]);
 
-  return (
-    <div className="mx-2">
-      <Button
-        onClick={openModal}
-        className="px-2 py-1 w-max h-max text-white transition-all duration-500 bg-gradient-to-tr to-red-400 via-violet-600 from-blue-500 bg-size-200 bg-pos-0 hover:bg-pos-100  shadow"
-      >
-        <TicketIcon className="text-white w-5 h-5 mr-1" />
-        Mint as NFT
-      </Button>
-      <Transition appear show={isOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={closeModal}>
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
-            <div className="fixed inset-0 bg-black/25" />
-          </Transition.Child>
+  if (!creatorAddress) {
+    return <></>;
+  } else {
+    return (
+      <div className="mx-2">
+        <Button
+          onClick={openModal}
+          className="px-2 py-1 w-max h-max text-white transition-all duration-500 bg-gradient-to-tr to-red-400 via-violet-600 from-blue-500 bg-size-200 bg-pos-0 hover:bg-pos-100  shadow"
+        >
+          <TicketIcon className="text-white w-5 h-5 mr-1" />
+          Mint as NFT
+        </Button>
+        <Transition appear show={isOpen} as={Fragment}>
+          <Dialog as="div" className="relative z-10" onClose={closeModal}>
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0"
+              enterTo="opacity-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100"
+              leaveTo="opacity-0"
+            >
+              <div className="fixed inset-0 bg-black/25" />
+            </Transition.Child>
 
-          <div className="fixed inset-0 overflow-y-auto">
-            <div className="flex min-h-full items-center justify-center p-4 text-center">
-              <Transition.Child
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
-              >
-                <Dialog.Panel className="w-full max-w-xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
-                  <Dialog.Title
-                    as="h3"
-                    className="text-xl font-medium leading-6 text-gray-900 dark:text-zinc-100"
-                  >
-                    <p className="font-normal">
-                      Are you sure you want to mint this update as an NFT?
-                    </p>
-                  </Dialog.Title>
-                  <section>
-                    {svg ? (
-                      <div>
-                        {!debugGlobalAddress && !debugGlobalUid && (
-                          <div className="flex rounded-lg border-2 border-zinc-200 p-2 items-center justify-between w-full mt-3">
-                            <label
-                              htmlFor="name-input"
-                              className="font-bold mr-3"
-                            >
-                              Price Per Token <br /> (in ETH):
-                            </label>
-                            <input
-                              id="price-per-token-input"
-                              type="number"
-                              className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
-                              placeholder="0.001"
-                              value={pricePerToken}
-                              onChange={(e) => {
-                                setPricePerToken(e.target.value);
-                              }}
-                            />
-                          </div>
-                        )}
-                        <div
-                          dangerouslySetInnerHTML={{ __html: svg }}
-                          className="bg-zinc-200 rounded-lg shadow-lg mt-3 flex justify-center py-3"
-                        />
-                      </div>
-                    ) : (
-                      <div className="bg-zinc-100 shadow-xl mt-4 flex flex-col-reverse justify-center items-center py-10 w-full h-full">
-                        Generating NFT Preview... <Spinner className="mb-3" />
-                      </div>
-                    )}
-                  </section>
-
-                  <section>
-                    {debugGlobalAddress && debugGlobalUid && (
-                      <div className="flex flex-col mt-5">
-                        <div>
-                          Premint Collection Address: {debugGlobalAddress}
-                        </div>
-                        <div>Zora Premint UID: {debugGlobalUid}</div>
-                      </div>
-                    )}
-                  </section>
-
-                  <div className="flex flex-row gap-4 mt-10 justify-end">
-                    <Button
-                      className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-transparent dark:hover:bg-zinc-900 dark:hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
-                      onClick={closeModal}
-                      disabled={isMinting}
+            <div className="fixed inset-0 overflow-y-auto">
+              <div className="flex min-h-full items-center justify-center p-4 text-center">
+                <Transition.Child
+                  as={Fragment}
+                  enter="ease-out duration-300"
+                  enterFrom="opacity-0 scale-95"
+                  enterTo="opacity-100 scale-100"
+                  leave="ease-in duration-200"
+                  leaveFrom="opacity-100 scale-100"
+                  leaveTo="opacity-0 scale-95"
+                >
+                  <Dialog.Panel className="w-full max-w-xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
+                    <Dialog.Title
+                      as="h3"
+                      className="text-xl font-medium leading-6 text-gray-900 dark:text-zinc-100"
                     >
-                      Close
-                    </Button>
+                      <p className="font-normal">
+                        Are you sure you want to mint this update as an NFT?
+                      </p>
+                    </Dialog.Title>
+                    <section>
+                      {svg ? (
+                        <div>
+                          {!debugGlobalAddress &&
+                            !debugGlobalUid &&
+                            isAuthorized && (
+                              <div className="flex rounded-lg border-2 border-zinc-200 p-2 items-center justify-between w-full mt-3">
+                                <label
+                                  htmlFor="name-input"
+                                  className="font-bold mr-3"
+                                >
+                                  Price Per Token <br /> (in ETH):
+                                </label>
+                                <input
+                                  id="price-per-token-input"
+                                  type="number"
+                                  className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
+                                  placeholder="0.001"
+                                  value={pricePerToken}
+                                  onChange={(e) => {
+                                    setPricePerToken(e.target.value);
+                                  }}
+                                />
+                              </div>
+                            )}
+                          <div
+                            dangerouslySetInnerHTML={{ __html: svg }}
+                            className="bg-zinc-200 rounded-lg shadow-lg mt-3 flex justify-center py-3"
+                          />
+                        </div>
+                      ) : (
+                        <div className="bg-zinc-100 shadow-xl mt-4 flex flex-col-reverse justify-center items-center py-10 w-full h-full">
+                          Generating NFT Preview... <Spinner className="mb-3" />
+                        </div>
+                      )}
+                    </section>
 
-                    {!debugGlobalAddress || !debugGlobalUid ? (
+                    <section>
+                      {debugGlobalAddress && debugGlobalUid && (
+                        <div className="flex flex-col mt-5">
+                          <div>
+                            Premint Collection Address: {debugGlobalAddress}
+                          </div>
+                          <div>Zora Premint UID: {debugGlobalUid}</div>
+                        </div>
+                      )}
+                    </section>
+
+                    <div className="flex flex-row gap-4 mt-10 justify-end">
                       <Button
-                        className="text-white text-lg bg-blue-600 border-black  hover:bg-blue-500 hover:text-white disabled:opacity-50 disabled:bg-blue-600 disabled:text-white"
-                        onClick={() => {
-                          console.log(
-                            "Signing Typed Data",
-                            typedDataDefinition
-                          );
-                          signTypedData(typedDataDefinition);
-                        }}
-                        disabled={!contractURI || !tokenURI}
-                        isLoading={isMinting}
+                        className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-transparent dark:hover:bg-zinc-900 dark:hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
+                        onClick={closeModal}
+                        disabled={isMinting}
                       >
-                        {isMinting
-                          ? "Minting..."
-                          : "Premint (Gasless via Zora)"}
+                        Close
                       </Button>
-                    ) : (
-                      <div className="flex h-10 items-center space-x-4">
-                        <ZoraCollectPremint
-                          contractAddress={debugGlobalAddress}
-                          uid={debugGlobalUid}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </Dialog.Panel>
-              </Transition.Child>
+
+                      {!debugGlobalAddress &&
+                        !debugGlobalUid &&
+                        isAuthorized && (
+                          <Button
+                            className="text-white text-lg bg-blue-600 border-black  hover:bg-blue-500 hover:text-white disabled:opacity-50 disabled:bg-blue-600 disabled:text-white"
+                            onClick={() => {
+                              console.log(
+                                "Signing Typed Data",
+                                typedDataDefinition
+                              );
+                              signTypedData(typedDataDefinition);
+                            }}
+                            disabled={!contractURI || !tokenURI}
+                            isLoading={isMinting}
+                          >
+                            {isMinting
+                              ? "Minting..."
+                              : "Premint (Gasless via Zora)"}
+                          </Button>
+                        )}
+
+                      {debugGlobalAddress && debugGlobalUid && (
+                        <div className="flex h-10 items-center space-x-4">
+                          <ZoraCollectPremint
+                            contractAddress={debugGlobalAddress}
+                            uid={debugGlobalUid}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </Dialog.Panel>
+                </Transition.Child>
+              </div>
             </div>
-          </div>
-        </Dialog>
-      </Transition>
-    </div>
-  );
+          </Dialog>
+        </Transition>
+      </div>
+    );
+  }
 };

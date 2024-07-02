@@ -146,44 +146,44 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
             </ReadMore>
 
             <div className="flex w-full flex-row items-center justify-end mt-4">
+              <UpdatesNFTDialog
+                entityTitle={milestone.title}
+                entityDescription={milestone.description}
+                updateTitle="Update #1"
+                updateDescription={milestone.completed.reason}
+                projectName={
+                  selectedProject?.details?.data?.title || "No Title Found"
+                }
+                projectSlug={selectedProject?.details?.data?.slug || ""}
+                nftContractName="Milestone NFT"
+                entityUID={milestone.uid}
+                mintChainID={milestone.chainID}
+                platformAddress="0x5A4830885f12438E00D8f4d98e9Fe083e707698C"
+                isAuthorized={isAuthorized}
+              />
               {isAuthorized ? (
                 <>
-                  <UpdatesNFTDialog
-                    entityTitle={milestone.title}
-                    entityDescription={milestone.description}
-                    updateTitle="Update #1"
-                    updateDescription={milestone.completed.reason}
-                    projectName={
-                      selectedProject?.details?.data?.title || "No Title Found"
-                    }
-                    projectSlug={selectedProject?.details?.data?.slug || ""}
-                    nftContractName="Milestone NFT"
-                    entityUID={milestone.uid}
-                    mintChainID={milestone.chainID}
-                    platformAddress="0x5A4830885f12438E00D8f4d98e9Fe083e707698C"
-                  />{" "}
+                  {" "}
                   |
+                  <div className="flex w-max flex-row items-center gap-2">
+                    <Button
+                      type="button"
+                      className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
+                      onClick={() => handleEditing(true)}
+                    >
+                      <PencilSquareIcon className="h-5 w-5" />
+                      Edit
+                    </Button>
+                    <Button
+                      type="button"
+                      className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
+                      onClick={() => undoMilestoneCompletion(milestone)}
+                    >
+                      <TrashIcon className="h-5 w-5" />
+                      Remove
+                    </Button>
+                  </div>
                 </>
-              ) : null}
-              {isAuthorized ? (
-                <div className="flex w-max flex-row items-center gap-2">
-                  <Button
-                    type="button"
-                    className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
-                    onClick={() => handleEditing(true)}
-                  >
-                    <PencilSquareIcon className="h-5 w-5" />
-                    Edit
-                  </Button>
-                  <Button
-                    type="button"
-                    className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
-                    onClick={() => undoMilestoneCompletion(milestone)}
-                  >
-                    <TrashIcon className="h-5 w-5" />
-                    Remove
-                  </Button>
-                </div>
               ) : null}
             </div>
           </div>
