@@ -154,7 +154,7 @@ export default function Index({
               Community Grants
             </p>
           </div>
-          {communitiesToBulkSubscribe.includes(
+          {/* {communitiesToBulkSubscribe.includes(
             community.details?.data.slug as string
           ) ? (
             <div className="flex flex-col gap-3 px-4 border-l border-l-zinc-300 h-full w-max  max-lg:border-t  max-lg:border-x-0  max-lg:border-t-zinc-300  max-lg:py-4">
@@ -167,7 +167,7 @@ export default function Index({
                 Receive Project Updates
               </Link>
             </div>
-          ) : null}
+          ) : null} */}
         </div>
 
         <div className="flex gap-8 flex-row max-lg:flex-col-reverse w-full">
