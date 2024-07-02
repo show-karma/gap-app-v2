@@ -24,7 +24,7 @@ import {
 import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
 import { envVars } from "@/utilities/enviromentVars";
-import { NFTStorage } from "nft.storage";
+import pinataSDK from "@pinata/sdk";
 import { getWalletClient } from "@wagmi/core";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { AlloBase } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/Allo";
@@ -195,8 +195,8 @@ const GrantProgramRegistry = ({
           await switchChainAsync?.({ chainId: chainID as number });
         }
 
-        const ipfsStorage = new NFTStorage({
-          token: envVars.IPFS_TOKEN,
+        const ipfsStorage = new pinataSDK({
+          pinataJWTKey: envVars.IPFS_TOKEN,
         });
 
         const walletClient = await getWalletClient(config, {
