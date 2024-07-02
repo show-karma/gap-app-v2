@@ -26,8 +26,8 @@ type ProgramDetailsDialogProps = {
 };
 
 const cardClassnames = {
-  div: "flex flex-col gap-2 bg-[#F4F8FF] rounded-xl py-3 px-4",
-  label: "text-base text-gray-900 font-body dark:text-zinc-1000 font-semibold",
+  div: "flex flex-col gap-2 bg-[#F4F8FF] dark:bg-zinc-600 rounded-xl py-3 px-4",
+  label: "text-base text-gray-900 font-body dark:text-zinc-100 font-semibold",
   list: "flex flex-row gap-2 flex-wrap",
   pill: "rounded-full font-body flex flex-row gap-2 bg-white px-2 py-1 text-sm text-[#155EEF] font-medium dark:bg-zinc-700 dark:text-zinc-100",
 };
@@ -83,123 +83,131 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded dark:bg-zinc-800 bg-white px-6 text-left align-middle  transition-all">
-                  <Dialog.Title
-                    as="h3"
-                    className="text-xl font-medium leading-6 text-gray-900 dark:text-zinc-100"
-                  >
-                    <div className="flex flex-row-reverse w-full pt-5 pb-5">
-                      <button
-                        type="button"
-                        className=" hover:opacity-75 transition-all ease-in-out duration-200 dark:text-zinc-100"
-                        onClick={closeModal}
-                      >
-                        <XMarkIcon className="w-6 h-6" />
-                      </button>
-                    </div>
-                    <div
-                      className={
-                        "flex flex-row max-sm:flex-col gap-2 justify-between pb-3"
-                      }
+                <Dialog.Panel className="w-full max-w-4xl transform overflow-hidden rounded dark:bg-zinc-800 bg-white text-left align-middle  transition-all">
+                  <div className="px-6">
+                    <Dialog.Title
+                      as="h3"
+                      className="text-xl font-medium leading-6 text-gray-900 dark:text-zinc-100"
                     >
-                      <div className="flex flex-1">
-                        {program.metadata?.grantTypes?.length ? (
-                          <div className={cardClassnames.list}>
-                            {program.metadata?.grantTypes?.map((grantType) => (
-                              <div
-                                key={grantType}
+                      <div className="flex flex-row-reverse w-full pt-5 pb-5">
+                        <button
+                          type="button"
+                          className=" hover:opacity-75 transition-all ease-in-out duration-200 dark:text-zinc-100"
+                          onClick={closeModal}
+                        >
+                          <XMarkIcon className="w-6 h-6" />
+                        </button>
+                      </div>
+                      <div
+                        className={
+                          "flex flex-row max-sm:flex-col gap-2 justify-between pb-3"
+                        }
+                      >
+                        <div className="flex flex-1">
+                          {program.metadata?.grantTypes?.length ? (
+                            <div className={cardClassnames.list}>
+                              {program.metadata?.grantTypes?.map(
+                                (grantType) => (
+                                  <div
+                                    key={grantType}
+                                    className={cn(
+                                      cardClassnames.pill,
+                                      "bg-[#F2F4F7] py-1 px-3 rounded-full text-[#1D2939]"
+                                    )}
+                                  >
+                                    {grantType}
+                                  </div>
+                                )
+                              )}
+                            </div>
+                          ) : null}
+                        </div>
+                        <div className="flex flex-row gap-1">
+                          {program.metadata?.socialLinks?.grantsSite ? (
+                            <ExternalLink
+                              href={program.metadata?.socialLinks?.grantsSite}
+                              className="w-max"
+                            >
+                              <Image
                                 className={cn(
-                                  cardClassnames.pill,
-                                  "bg-[#F2F4F7] py-1 px-3 rounded-full text-[#1D2939]"
+                                  iconsClassnames.general,
+                                  iconsClassnames.light
                                 )}
-                              >
-                                {grantType}
-                              </div>
-                            ))}
-                          </div>
-                        ) : null}
+                                width={20}
+                                height={20}
+                                src="/icons/globe.svg"
+                                alt={program.metadata?.socialLinks?.grantsSite}
+                              />
+                              <Image
+                                width={20}
+                                height={20}
+                                className={cn(
+                                  iconsClassnames.general,
+                                  iconsClassnames.dark
+                                )}
+                                src="/icons/globe-white.svg"
+                                alt={program.metadata?.socialLinks?.grantsSite}
+                              />
+                            </ExternalLink>
+                          ) : null}
+                          {program.metadata?.socialLinks?.twitter ? (
+                            <ExternalLink
+                              href={program.metadata?.socialLinks?.twitter}
+                              className="w-max"
+                            >
+                              <Twitter2Icon
+                                className={iconsClassnames.general}
+                              />
+                            </ExternalLink>
+                          ) : null}
+                          {program.metadata?.socialLinks?.discord ? (
+                            <ExternalLink
+                              href={program.metadata?.socialLinks?.discord}
+                              className="w-max"
+                            >
+                              <Discord2Icon
+                                className={iconsClassnames.general}
+                              />
+                            </ExternalLink>
+                          ) : null}
+                          {program.metadata?.socialLinks?.forum ? (
+                            <ExternalLink
+                              href={program.metadata?.socialLinks?.forum}
+                              className="w-max"
+                            >
+                              <DiscussionIcon
+                                className={iconsClassnames.general}
+                              />
+                            </ExternalLink>
+                          ) : null}
+                          {program.metadata?.socialLinks?.blog ? (
+                            <ExternalLink
+                              href={program.metadata?.socialLinks?.blog}
+                              className="w-max"
+                            >
+                              <BlogIcon className={iconsClassnames.general} />
+                            </ExternalLink>
+                          ) : null}
+                          {program.metadata?.socialLinks?.orgWebsite ? (
+                            <ExternalLink
+                              href={program.metadata?.socialLinks?.orgWebsite}
+                              className="w-max"
+                            >
+                              <OrganizationIcon
+                                className={iconsClassnames.general}
+                              />
+                            </ExternalLink>
+                          ) : null}
+                        </div>
                       </div>
-                      <div className="flex flex-row gap-1">
-                        {program.metadata?.socialLinks?.grantsSite ? (
-                          <ExternalLink
-                            href={program.metadata?.socialLinks?.grantsSite}
-                            className="w-max"
-                          >
-                            <Image
-                              className={cn(
-                                iconsClassnames.general,
-                                iconsClassnames.light
-                              )}
-                              width={20}
-                              height={20}
-                              src="/icons/globe.svg"
-                              alt={program.metadata?.socialLinks?.grantsSite}
-                            />
-                            <Image
-                              width={20}
-                              height={20}
-                              className={cn(
-                                iconsClassnames.general,
-                                iconsClassnames.dark
-                              )}
-                              src="/icons/globe-white.svg"
-                              alt={program.metadata?.socialLinks?.grantsSite}
-                            />
-                          </ExternalLink>
-                        ) : null}
-                        {program.metadata?.socialLinks?.twitter ? (
-                          <ExternalLink
-                            href={program.metadata?.socialLinks?.twitter}
-                            className="w-max"
-                          >
-                            <Twitter2Icon className={iconsClassnames.general} />
-                          </ExternalLink>
-                        ) : null}
-                        {program.metadata?.socialLinks?.discord ? (
-                          <ExternalLink
-                            href={program.metadata?.socialLinks?.discord}
-                            className="w-max"
-                          >
-                            <Discord2Icon className={iconsClassnames.general} />
-                          </ExternalLink>
-                        ) : null}
-                        {program.metadata?.socialLinks?.forum ? (
-                          <ExternalLink
-                            href={program.metadata?.socialLinks?.forum}
-                            className="w-max"
-                          >
-                            <DiscussionIcon
-                              className={iconsClassnames.general}
-                            />
-                          </ExternalLink>
-                        ) : null}
-                        {program.metadata?.socialLinks?.blog ? (
-                          <ExternalLink
-                            href={program.metadata?.socialLinks?.blog}
-                            className="w-max"
-                          >
-                            <BlogIcon className={iconsClassnames.general} />
-                          </ExternalLink>
-                        ) : null}
-                        {program.metadata?.socialLinks?.orgWebsite ? (
-                          <ExternalLink
-                            href={program.metadata?.socialLinks?.orgWebsite}
-                            className="w-max"
-                          >
-                            <OrganizationIcon
-                              className={iconsClassnames.general}
-                            />
-                          </ExternalLink>
-                        ) : null}
+                      <div className="flex flex-col gap-2 w-max max-w-full font-body mt-2">
+                        <h2 className="text-xl  font-body font-bold leading-6 text-gray-900 dark:text-zinc-100">
+                          {program.metadata?.title}
+                        </h2>
                       </div>
-                    </div>
-                    <div className="flex flex-col gap-2 w-max max-w-full font-body mt-2">
-                      <h2 className="text-xl  font-body font-bold leading-6 text-gray-900 dark:text-zinc-100">
-                        {program.metadata?.title}
-                      </h2>
-                    </div>
-                  </Dialog.Title>
-                  <div className="flex flex-col gap-4 mb-6">
+                    </Dialog.Title>
+                  </div>
+                  <div className="flex flex-col gap-4 mb-6 px-6">
                     <div className="whitespace-nowrap pt-2 pb-4 text-sm text-black dark:text-zinc-400 ">
                       <p className="w-full max-w-full text-wrap font-body">
                         {program.metadata?.description!}
@@ -432,6 +440,18 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                         </ExternalLink>
                       ) : null}
                     </div>
+                  </div>
+                  <div className="border-t border-t-zinc-200 px-6 py-3">
+                    <p className="text-black dark:text-white">
+                      Are you the manager of this grant program?{" "}
+                      <ExternalLink
+                        className="text-blue-600 underline"
+                        href={`https://tally.so/r/3qB1PY?program_id=${program.programId}&program_name=karma`}
+                      >
+                        Claim
+                      </ExternalLink>{" "}
+                      this program to update it.
+                    </p>
                   </div>
                 </Dialog.Panel>
               </Transition.Child>
