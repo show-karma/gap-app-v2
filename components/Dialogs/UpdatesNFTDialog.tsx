@@ -242,22 +242,31 @@ export const UpdatesNFTDialog: FC<UpdatesNFTDialogProps> = ({
 
   useEffect(() => {
     (async () => {
-      const [data, error] = await fetchData(
-        INDEXER.GRANTS.MILESTONES.GET(String(entityUID))
-      );
+      try {
+        const [data, error] = await fetchData(
+          INDEXER.GRANTS.MILESTONES.GET(String(entityUID))
+        );
 
-      console.log("MilestoneNFT Already Exists", data, error, entityUID);
-
-      if (data) {
-        setDebugGlobalAddress(data.contractAddress);
-        setDebugGlobalUid(data.zoraPremintUID);
+        if (data) {
+          setDebugGlobalAddress(data.contractAddress);
+          setDebugGlobalUid(data.zoraPremintUID);
+        }
+      } catch (error) {
+        console.log("MilestoneNFT Already Exists", error, entityUID);
       }
     })();
   }, []);
 
   useEffect(() => {
+    if (svg) {
+      storeMetadataToIPFS(svg as string).then(() => {
+        console.log("Metadata stored on IPFS");
+      });
+    }
+  }, []);
+
+  useEffect(() => {
     async function createPremint() {
-      await storeMetadataToIPFS(svg as string);
       console.log("Metadata stored on IPFS");
       const {
         premintConfig: pC,
@@ -292,10 +301,10 @@ export const UpdatesNFTDialog: FC<UpdatesNFTDialogProps> = ({
       setSubmit(() => sub); // Ensure submit is set as a function
     }
 
-    if (creatorAddress && svg) {
+    if (creatorAddress && tokenURI && contractURI) {
       createPremint();
     }
-  }, [creatorAddress]);
+  }, [creatorAddress, tokenURI, contractURI, pricePerToken, svg]);
 
   useEffect(() => {
     if (signature) {
@@ -410,7 +419,13 @@ export const UpdatesNFTDialog: FC<UpdatesNFTDialogProps> = ({
                     {!debugGlobalAddress || !debugGlobalUid ? (
                       <Button
                         className="text-white text-lg bg-blue-600 border-black  hover:bg-blue-500 hover:text-white"
-                        onClick={() => signTypedData(typedDataDefinition)}
+                        onClick={() => {
+                          console.log(
+                            "Signing Typed Data",
+                            typedDataDefinition
+                          );
+                          signTypedData(typedDataDefinition);
+                        }}
                         disabled={isMinting}
                         isLoading={isMinting}
                       >
