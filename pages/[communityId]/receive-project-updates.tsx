@@ -36,8 +36,8 @@ function BulkProjectsPage({
   communityName,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const dynamicMetadata = {
-    title: `Karma GAP - Receive project updates for ${communityName}`,
-    description: `Receive all the updates for the projects funded by your wallet.`,
+    title: `Karma GAP - Receive email updates from your funded projects.`,
+    description: `Receive monthly updates from projects you've funded on ${communityName}.`,
   };
 
   return (
