@@ -209,6 +209,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
             projectName={
               selectedProject?.details?.data?.title || "No Title Found"
             }
+            projectSlug={selectedProject?.details?.data?.slug || ""}
             nftContractName="Grant Update NFT"
             entityUID={update.uid}
             mintChainID={update.chainID}

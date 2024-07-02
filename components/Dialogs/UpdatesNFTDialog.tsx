@@ -15,7 +15,7 @@ import {
 import toast from "react-hot-toast";
 import { useProjectStore } from "@/store";
 import { MESSAGES } from "@/utilities/messages";
-import { Address } from "viem";
+import { Address, parseEther } from "viem";
 import ZoraCollectPremint from "../Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/CollectPremint";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -23,12 +23,15 @@ import Image from "next/image";
 import satori from "satori";
 import { storeFile, storeJSON, storeMetadata } from "@/utilities/storeOnIPFS";
 import { TicketIcon } from "@heroicons/react/24/outline";
+import { Spinner } from "../Utilities/Spinner";
+import { envVars } from "@/utilities/enviromentVars";
 
 type UpdatesNFTDialogProps = {
   nftContractName: string;
   entityTitle: string;
   entityDescription: string;
   projectName: string;
+  projectSlug: string;
   updateTitle: string;
   updateDescription: string;
   platformAddress: Address;
@@ -40,6 +43,7 @@ export const UpdatesNFTDialog: FC<UpdatesNFTDialogProps> = ({
   entityTitle,
   entityDescription,
   projectName,
+  projectSlug,
   updateTitle,
   updateDescription,
   nftContractName,
@@ -52,7 +56,7 @@ export const UpdatesNFTDialog: FC<UpdatesNFTDialogProps> = ({
   const { signTypedData, data: signature } = useSignTypedData();
   const [svg, setSvg] = useState<string | null>("");
 
-  const [pricePerToken, setPricePerToken] = useState<number>(0);
+  const [pricePerToken, setPricePerToken] = useState<string>("0");
   const [debugGlobalAddress, setDebugGlobalAddress] = useState<string | null>(
     null
   );
@@ -72,7 +76,7 @@ export const UpdatesNFTDialog: FC<UpdatesNFTDialogProps> = ({
   });
 
   let [isOpen, setIsOpen] = useState(false);
-  const [isMintingMilestone, setIsMintingMilestone] = useState(false);
+  const [isMinting, setIsMinting] = useState(false);
 
   function closeModal() {
     setIsOpen(false);
@@ -90,21 +94,54 @@ export const UpdatesNFTDialog: FC<UpdatesNFTDialogProps> = ({
           name: entityTitle,
           description: entityDescription,
           image: `ipfs://${imageCID}`,
-          external_url: "",
+          external_url: `${envVars.VERCEL_URL}/project/${projectSlug}`,
           attributes: [
             {
               trait_type: "Project",
               value: projectName,
             },
             {
-              trait_type: "Update",
+              trait_type: "Entity Title",
+              value: entityTitle,
+            },
+            {
+              trait_type: "Entity Description",
+              value: entityDescription,
+            },
+            {
+              trait_type: "Update Title",
               value: updateTitle,
+            },
+            {
+              trait_type: "Update Description",
+              value: updateDescription,
+            },
+            {
+              trait_type: "Mint Chain ID",
+              value: mintChainID,
+            },
+            {
+              trait_type: "Platform Address",
+              value: platformAddress,
             },
           ],
         })
           .then((cid) => {
             console.log("Token Metadata CID ", `ipfs://${cid}`);
             setTokenURI(`ipfs://${cid}`);
+          })
+          .catch((error) => {
+            console.error("Error storing metadata", error);
+          });
+        storeMetadata({
+          name: nftContractName,
+          description:
+            "This is an NFT contract for a milestone update on Karma GAP.",
+          image: `ipfs://${imageCID}`,
+        })
+          .then((cid) => {
+            console.log("Contract Metadata CID ", `ipfs://${cid}`);
+            setContractURI(`ipfs://${cid}`);
           })
           .catch((error) => {
             console.error("Error storing metadata", error);
@@ -221,6 +258,7 @@ export const UpdatesNFTDialog: FC<UpdatesNFTDialogProps> = ({
   useEffect(() => {
     async function createPremint() {
       await storeMetadataToIPFS(svg as string);
+      console.log("Metadata stored on IPFS");
       const {
         premintConfig: pC,
         collectionAddress: cA,
@@ -243,7 +281,7 @@ export const UpdatesNFTDialog: FC<UpdatesNFTDialogProps> = ({
           maxTokensPerAddress: BigInt(1),
           mintStart: BigInt(0),
           mintDuration: BigInt(0), // 0 for infinite.
-          pricePerToken: BigInt(pricePerToken), // 0 for it to be a free mint.
+          pricePerToken: BigInt(parseEther(pricePerToken, "wei")), // 0 for it to be a free mint.
           payoutRecipient: creatorAddress as Address, // address to receive creator rewards for free mints, or if its a paid mint, the paid mint sale proceeds.
         },
       });
@@ -262,10 +300,10 @@ export const UpdatesNFTDialog: FC<UpdatesNFTDialogProps> = ({
   useEffect(() => {
     if (signature) {
       if (submit) {
+        // Submit the premint
         submit({
           signature,
         });
-
         // Set the contractAddress and zoraPremintUID to DB
         fetchData(INDEXER.GRANTS.MILESTONES.CREATE(String(entityUID)), "POST", {
           contractAddress: collectionAddress,
@@ -328,11 +366,35 @@ export const UpdatesNFTDialog: FC<UpdatesNFTDialogProps> = ({
                     </p>
                   </Dialog.Title>
                   <section>
-                    {svg && (
-                      <div
-                        dangerouslySetInnerHTML={{ __html: svg }}
-                        className="bg-zinc-200 rounded-lg shadow-lg mt-3 flex justify-center py-3"
-                      />
+                    {svg ? (
+                      <div>
+                        <div className="flex rounded-lg border-2 border-zinc-200 p-2 items-center justify-between w-full mt-3">
+                          <label
+                            htmlFor="name-input"
+                            className="font-bold mr-3"
+                          >
+                            Price Per Token <br /> (in ETH):
+                          </label>
+                          <input
+                            id="price-per-token-input"
+                            type="number"
+                            className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
+                            placeholder="0.001"
+                            value={pricePerToken}
+                            onChange={(e) => {
+                              setPricePerToken(e.target.value);
+                            }}
+                          />
+                        </div>
+                        <div
+                          dangerouslySetInnerHTML={{ __html: svg }}
+                          className="bg-zinc-200 rounded-lg shadow-lg mt-3 flex justify-center py-3"
+                        />
+                      </div>
+                    ) : (
+                      <div className="bg-zinc-100 shadow-xl mt-4 flex flex-col-reverse justify-center items-center py-10 w-full h-full">
+                        Generating NFT Preview... <Spinner className="mb-3" />
+                      </div>
                     )}
                   </section>
 
@@ -340,19 +402,21 @@ export const UpdatesNFTDialog: FC<UpdatesNFTDialogProps> = ({
                     <Button
                       className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-transparent dark:hover:bg-zinc-900 dark:hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
                       onClick={closeModal}
-                      disabled={isMintingMilestone}
+                      disabled={isMinting}
                     >
                       Cancel
                     </Button>
 
                     {!debugGlobalAddress || !debugGlobalUid ? (
                       <Button
-                        className="text-white text-lg bg-red-600 border-black  hover:bg-red-600 hover:text-white"
+                        className="text-white text-lg bg-blue-600 border-black  hover:bg-blue-500 hover:text-white"
                         onClick={() => signTypedData(typedDataDefinition)}
-                        disabled={isMintingMilestone}
-                        isLoading={isMintingMilestone}
+                        disabled={isMinting}
+                        isLoading={isMinting}
                       >
-                        Premint
+                        {isMinting
+                          ? "Minting..."
+                          : "Premint (Gasless via Zora)"}
                       </Button>
                     ) : (
                       <div className="flex h-10 items-center space-x-4">

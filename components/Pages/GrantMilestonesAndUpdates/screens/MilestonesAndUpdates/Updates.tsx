@@ -145,23 +145,26 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
               {milestone.completed.reason}
             </ReadMore>
 
-            <div className="flex w-full flex-row items-center justify-end">
+            <div className="flex w-full flex-row items-center justify-end mt-4">
               {isAuthorized ? (
-                <UpdatesNFTDialog
-                  entityTitle={milestone.title}
-                  entityDescription={milestone.description}
-                  updateTitle="Update #1"
-                  updateDescription={milestone.completed.reason}
-                  projectName={
-                    selectedProject?.details?.data?.title || "No Title Found"
-                  }
-                  nftContractName="Milestone NFT"
-                  entityUID={milestone.uid}
-                  mintChainID={milestone.chainID}
-                  platformAddress="0x5A4830885f12438E00D8f4d98e9Fe083e707698C"
-                />
-              ) : null}{" "}
-              |
+                <>
+                  <UpdatesNFTDialog
+                    entityTitle={milestone.title}
+                    entityDescription={milestone.description}
+                    updateTitle="Update #1"
+                    updateDescription={milestone.completed.reason}
+                    projectName={
+                      selectedProject?.details?.data?.title || "No Title Found"
+                    }
+                    projectSlug={selectedProject?.details?.data?.slug || ""}
+                    nftContractName="Milestone NFT"
+                    entityUID={milestone.uid}
+                    mintChainID={milestone.chainID}
+                    platformAddress="0x5A4830885f12438E00D8f4d98e9Fe083e707698C"
+                  />{" "}
+                  |
+                </>
+              ) : null}
               {isAuthorized ? (
                 <div className="flex w-max flex-row items-center gap-2">
                   <Button
