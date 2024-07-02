@@ -11,6 +11,9 @@ import { defaultMetadata } from "@/utilities/meta";
 import { type SortByOptions, type StatusOptions } from "@/types";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
+import Link from "next/link";
+import { PAGES } from "@/utilities/pages";
+import { communitiesToBulkSubscribe } from "./receive-project-updates";
 
 type Props = {
   params: {
@@ -126,29 +129,45 @@ export default function Index({
       />
       <div className="flex w-full max-w-full flex-col justify-between gap-6 px-12 pb-7 pt-5 max-2xl:px-8 max-md:px-4">
         <div
-          className="flex h-max w-full flex-col items-center justify-center gap-3 rounded-2xl p-6 max-lg:py-4"
+          className="flex h-max w-full flex-row items-center justify-between gap-3 rounded-2xl p-6 max-lg:py-4  max-lg:flex-col"
           style={{
             backgroundColor:
               communityColors[community?.uid.toLowerCase() || "black"] ||
               "#000000",
           }}
         >
-          <div className="flex justify-center">
-            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-            <img
-              src={community?.details?.data?.imageURL}
-              className={
-                "h-14 w-14 rounded-full border border-white p-1 max-lg:h-8 max-lg:w-8"
-              }
-            />
-          </div>
+          <div className="flex flex-col gap-3 flex-1 items-center justify-center h-full">
+            <div className="flex justify-center">
+              {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+              <img
+                src={community?.details?.data?.imageURL}
+                className={
+                  "h-14 w-14 rounded-full border border-white p-1 max-lg:h-8 max-lg:w-8"
+                }
+              />
+            </div>
 
-          <p className="text-3xl font-semibold text-white max-2xl:text-2xl max-lg:text-xl">
-            <span className={"font-body"}>
-              {community ? community.details?.data?.name : ""}
-            </span>{" "}
-            Community Grants
-          </p>
+            <p className="text-3xl font-semibold text-white max-2xl:text-2xl max-lg:text-xl">
+              <span className={"font-body"}>
+                {community ? community.details?.data?.name : ""}
+              </span>{" "}
+              Community Grants
+            </p>
+          </div>
+          {communitiesToBulkSubscribe.includes(
+            community.details?.data.slug as string
+          ) ? (
+            <div className="flex flex-col gap-3 px-4 border-l border-l-zinc-300 h-full w-max  max-lg:border-t  max-lg:border-x-0  max-lg:border-t-zinc-300  max-lg:py-4">
+              <Link
+                href={PAGES.COMMUNITY.RECEIVEPROJECTUPDATES(
+                  community.details?.data.slug as string
+                )}
+                className="text-white underline"
+              >
+                Receive Project Updates
+              </Link>
+            </div>
+          ) : null}
         </div>
 
         <div className="flex gap-8 flex-row max-lg:flex-col-reverse w-full">

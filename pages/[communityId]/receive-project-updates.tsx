@@ -7,7 +7,7 @@ import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import { NextSeo } from "next-seo";
 import { Hex } from "viem";
 
-const supportedCommunities = ["gitcoin"];
+export const communitiesToBulkSubscribe = ["gitcoin"];
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { params } = context;
@@ -19,7 +19,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   if (
     communityInfo?.uid === zeroUID ||
     !communityInfo ||
-    !supportedCommunities.includes(communityInfo.slug as string)
+    !communitiesToBulkSubscribe.includes(communityInfo.slug as string)
   ) {
     return {
       notFound: true,
@@ -36,8 +36,8 @@ function BulkProjectsPage({
   communityName,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const dynamicMetadata = {
-    title: `Karma GAP - Receive project updates for ${communityName}`,
-    description: `Receive all the updates for the projects funded by your wallet.`,
+    title: `Karma GAP - Receive email updates from your funded projects.`,
+    description: `Receive monthly updates from projects you've funded on ${communityName}.`,
   };
 
   return (
