@@ -21,7 +21,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import Image from "next/image";
 import satori from "satori";
-import { storeFile, storeJSON, storeMetadata } from "@/utilities/storeOnIPFS";
+import { storeFile, storeMetadata } from "@/utilities/storeOnIPFS";
 import { TicketIcon } from "@heroicons/react/24/outline";
 import { Spinner } from "../Utilities/Spinner";
 import { envVars } from "@/utilities/enviromentVars";
@@ -240,10 +240,11 @@ export const UpdatesNFTDialog: FC<UpdatesNFTDialogProps> = ({
     })();
   }, []);
 
+  // Check if Milestone NFT contract already exists
   useEffect(() => {
     (async () => {
       try {
-        const [data, error] = await fetchData(
+        const [data] = await fetchData(
           INDEXER.GRANTS.MILESTONES.GET(String(entityUID))
         );
 
@@ -257,13 +258,7 @@ export const UpdatesNFTDialog: FC<UpdatesNFTDialogProps> = ({
     })();
   }, []);
 
-  useEffect(() => {
-    if (svg) {
-      storeMetadataToIPFS(svg as string).then(() => {
-        console.log("Metadata stored on IPFS");
-      });
-    }
-  }, []);
+  useEffect(() => {}, []);
 
   useEffect(() => {
     async function createPremint() {
@@ -301,14 +296,33 @@ export const UpdatesNFTDialog: FC<UpdatesNFTDialogProps> = ({
       setSubmit(() => sub); // Ensure submit is set as a function
     }
 
-    if (creatorAddress && tokenURI && contractURI) {
+    if (
+      svg &&
+      !tokenURI &&
+      !contractURI &&
+      !debugGlobalAddress &&
+      !debugGlobalUid
+    ) {
+      console.log("Storing metadata on IPFS");
+      storeMetadataToIPFS(svg as string).then(() => {
+        console.log("Metadata stored on IPFS");
+      });
+    }
+
+    if (
+      creatorAddress &&
+      tokenURI &&
+      contractURI &&
+      !debugGlobalAddress &&
+      !debugGlobalUid
+    ) {
       createPremint();
     }
   }, [creatorAddress, tokenURI, contractURI, pricePerToken, svg]);
 
   useEffect(() => {
     if (signature) {
-      if (submit) {
+      if (submit && !debugGlobalAddress && !debugGlobalUid) {
         // Submit the premint
         submit({
           signature,
@@ -316,7 +330,7 @@ export const UpdatesNFTDialog: FC<UpdatesNFTDialogProps> = ({
         // Set the contractAddress and zoraPremintUID to DB
         fetchData(INDEXER.GRANTS.MILESTONES.CREATE(String(entityUID)), "POST", {
           contractAddress: collectionAddress,
-          zoraPremintUID: premintConfig.uid,
+          zoraPremintUID: String(premintConfig.uid),
           chainID: mintChainID,
         }).then(([data, error]) => {
           console.log("MilestoneNFT Saved!", data, error);
@@ -377,24 +391,26 @@ export const UpdatesNFTDialog: FC<UpdatesNFTDialogProps> = ({
                   <section>
                     {svg ? (
                       <div>
-                        <div className="flex rounded-lg border-2 border-zinc-200 p-2 items-center justify-between w-full mt-3">
-                          <label
-                            htmlFor="name-input"
-                            className="font-bold mr-3"
-                          >
-                            Price Per Token <br /> (in ETH):
-                          </label>
-                          <input
-                            id="price-per-token-input"
-                            type="number"
-                            className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
-                            placeholder="0.001"
-                            value={pricePerToken}
-                            onChange={(e) => {
-                              setPricePerToken(e.target.value);
-                            }}
-                          />
-                        </div>
+                        {!debugGlobalAddress && !debugGlobalUid && (
+                          <div className="flex rounded-lg border-2 border-zinc-200 p-2 items-center justify-between w-full mt-3">
+                            <label
+                              htmlFor="name-input"
+                              className="font-bold mr-3"
+                            >
+                              Price Per Token <br /> (in ETH):
+                            </label>
+                            <input
+                              id="price-per-token-input"
+                              type="number"
+                              className="rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white"
+                              placeholder="0.001"
+                              value={pricePerToken}
+                              onChange={(e) => {
+                                setPricePerToken(e.target.value);
+                              }}
+                            />
+                          </div>
+                        )}
                         <div
                           dangerouslySetInnerHTML={{ __html: svg }}
                           className="bg-zinc-200 rounded-lg shadow-lg mt-3 flex justify-center py-3"
@@ -407,18 +423,29 @@ export const UpdatesNFTDialog: FC<UpdatesNFTDialogProps> = ({
                     )}
                   </section>
 
+                  <section>
+                    {debugGlobalAddress && debugGlobalUid && (
+                      <div className="flex flex-col mt-5">
+                        <div>
+                          Premint Collection Address: {debugGlobalAddress}
+                        </div>
+                        <div>Zora Premint UID: {debugGlobalUid}</div>
+                      </div>
+                    )}
+                  </section>
+
                   <div className="flex flex-row gap-4 mt-10 justify-end">
                     <Button
                       className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-transparent dark:hover:bg-zinc-900 dark:hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
                       onClick={closeModal}
                       disabled={isMinting}
                     >
-                      Cancel
+                      Close
                     </Button>
 
                     {!debugGlobalAddress || !debugGlobalUid ? (
                       <Button
-                        className="text-white text-lg bg-blue-600 border-black  hover:bg-blue-500 hover:text-white"
+                        className="text-white text-lg bg-blue-600 border-black  hover:bg-blue-500 hover:text-white disabled:opacity-50 disabled:bg-blue-600 disabled:text-white"
                         onClick={() => {
                           console.log(
                             "Signing Typed Data",
@@ -426,7 +453,7 @@ export const UpdatesNFTDialog: FC<UpdatesNFTDialogProps> = ({
                           );
                           signTypedData(typedDataDefinition);
                         }}
-                        disabled={isMinting}
+                        disabled={!contractURI || !tokenURI}
                         isLoading={isMinting}
                       >
                         {isMinting
@@ -435,12 +462,6 @@ export const UpdatesNFTDialog: FC<UpdatesNFTDialogProps> = ({
                       </Button>
                     ) : (
                       <div className="flex h-10 items-center space-x-4">
-                        <div className="flex flex-col ">
-                          <p>Collection Address: {debugGlobalAddress}</p>
-                          <p>UID: {debugGlobalUid}</p>
-                        </div>
-
-                        <br />
                         <ZoraCollectPremint
                           contractAddress={debugGlobalAddress}
                           uid={debugGlobalUid}

@@ -1,5 +1,4 @@
 import { envVars } from "./enviromentVars";
-import { NFTStorage } from "nft.storage";
 
 export type TokenMetadata = {
   name: string;
@@ -15,28 +14,57 @@ export type ContractMetadata = {
 };
 
 export async function storeMetadata(data: TokenMetadata | ContractMetadata) {
-  const ipfsStorage = new NFTStorage({
-    token: envVars.IPFS_TOKEN,
-  });
-
-  const cid = await ipfsStorage.storeBlob(new Blob([JSON.stringify(data)]));
-  return cid;
+  const IpfsHash = await storeJSON(data);
+  return IpfsHash;
 }
 
-export async function storeJSON(data: any) {
-  const ipfsStorage = new NFTStorage({
-    token: envVars.IPFS_TOKEN,
-  });
-
-  const cid = await ipfsStorage.storeBlob(new Blob([JSON.stringify(data)]));
-  return cid;
+export async function storeJSON(
+  data: any,
+  pinataMetadata = { name: "Karma GAP" }
+) {
+  try {
+    const res = await fetch("https://api.pinata.cloud/pinning/pinJSONToIPFS", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${envVars.IPFS_TOKEN}`,
+      },
+      body: JSON.stringify({
+        pinataContent: data,
+        pinataMetadata: pinataMetadata,
+      }),
+    });
+    const resData = await res.json();
+    console.log(resData);
+    return resData.IpfsHash;
+  } catch (error) {
+    console.log(error);
+  }
 }
 
-export async function storeFile(file: File) {
-  const ipfsStorage = new NFTStorage({
-    token: envVars.IPFS_TOKEN,
-  });
+export async function storeFile(file: File, pinataMetadata = { name: "File" }) {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("pinataMetadata", JSON.stringify(pinataMetadata));
+    formData.append(
+      "pinataOptions",
+      JSON.stringify({
+        cidVersion: 0,
+      })
+    );
 
-  const cid = await ipfsStorage.storeBlob(file);
-  return cid;
+    const res = await fetch("https://api.pinata.cloud/pinning/pinFileToIPFS", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${envVars.IPFS_TOKEN}`,
+      },
+      body: formData,
+    });
+    const resData = await res.json();
+    console.log(resData);
+    return resData.IpfsHash;
+  } catch (error) {
+    console.log(error);
+  }
 }
