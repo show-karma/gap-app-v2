@@ -441,7 +441,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                       ) : null}
                     </div>
                   </div>
-                  <div className="border-t border-t-zinc-200 px-6 py-3">
+                  <div className="border-t border-t-zinc-200 dark:border-t-zinc-600 px-6 py-3">
                     <p className="text-black dark:text-white">
                       Are you the manager of this grant program?{" "}
                       <ExternalLink
