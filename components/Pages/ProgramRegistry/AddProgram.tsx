@@ -10,7 +10,6 @@ import { ChevronLeftIcon } from "@heroicons/react/24/solid";
 import { Button } from "@/components/Utilities/Button";
 import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
-import { NFTStorage } from "nft.storage";
 import { AlloRegistry } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/AlloRegistry";
 import { getWalletClient } from "@wagmi/core";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -303,10 +302,6 @@ export default function AddProgram({
         await switchChainAsync?.({ chainId: chainSelected as number });
       }
 
-      const ipfsStorage = new NFTStorage({
-        token: envVars.IPFS_TOKEN,
-      });
-
       const walletClient = await getWalletClient(config, {
         chainId: chainSelected,
       });
@@ -355,7 +350,7 @@ export default function AddProgram({
       if (permissionToEditOnChain) {
         const allo = new AlloBase(
           walletSigner as any,
-          ipfsStorage,
+          envVars.IPFS_TOKEN,
           chainSelected as number
         );
         const hasRegistry = await allo
