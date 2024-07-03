@@ -298,16 +298,16 @@ const GrantProgramRegistry = ({
         <div className="flex flex-row max-lg:gap-10  max-md:flex-col gap-32 justify-between w-full">
           <div className="flex flex-1 flex-col gap-3 items-start justify-start text-left">
             <h1 className="text-2xl tracking-[-0.72px] 2xl:text-4xl font-bold text-start text-black dark:text-white">
-              {`The best grant program directory you’ll find`}
+              {`The most comprehensive onchain grant program directory you’ll find`}
             </h1>
             <p className="text-start text-lg max-w-5xl text-black dark:text-white">
-              Explore our handpicked grants for innovators and creators: from
-              tech pioneers to community leaders, we have a grant to elevate
-              your project. Did we miss your program/bounty?
+              Explore our curated list of grant programs for innovators and creators: from
+              tech pioneers to community leaders, there is a grant program to elevate
+              your project. Did we miss a program/bounty?
             </p>
             <Link href={PAGES.REGISTRY.ADD_PROGRAM}>
               <button className="mt-3 bg-[#0E101B] dark:bg-slate-800 text-white px-10 py-2.5 rounded-lg">
-                Add your program
+                Add a grant program
               </button>
             </Link>
           </div>
