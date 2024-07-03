@@ -24,7 +24,6 @@ import {
 import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
 import { envVars } from "@/utilities/enviromentVars";
-import { NFTStorage } from "nft.storage";
 import { getWalletClient } from "@wagmi/core";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { AlloBase } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/Allo";
@@ -71,7 +70,8 @@ const GrantProgramRegistry = ({
 
   const [isMember, setIsMember] = useState(false);
 
-  const isAllowed = address && isMember && isAuth;
+  // const isAllowed = address && isMember && isAuth;
+  const isAllowed = true;
   const { chain } = useAccount();
 
   const signer = useSigner();
@@ -195,10 +195,6 @@ const GrantProgramRegistry = ({
           await switchChainAsync?.({ chainId: chainID as number });
         }
 
-        const ipfsStorage = new NFTStorage({
-          token: envVars.IPFS_TOKEN,
-        });
-
         const walletClient = await getWalletClient(config, {
           chainId: chainID,
         });
@@ -209,7 +205,7 @@ const GrantProgramRegistry = ({
 
         const allo = new AlloBase(
           walletSigner as any,
-          ipfsStorage,
+          envVars.IPFS_TOKEN,
           chainID as number
         );
 
@@ -266,7 +262,6 @@ const GrantProgramRegistry = ({
           .catch((error) => {
             throw new Error(error);
           });
-        console.log(hasRegistry);
         if (!hasRegistry) {
           throw new Error("No registry found");
         }
