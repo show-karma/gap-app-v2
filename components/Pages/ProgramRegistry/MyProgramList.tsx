@@ -1,14 +1,8 @@
 import { ReadMore } from "@/utilities/ReadMore";
+import formatCurrency from "@/utilities/formatCurrency";
+import { formatDate } from "@/utilities/formatDate";
 import Image from "next/image";
-import {
-  Dispatch,
-  FC,
-  SetStateAction,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { FC, useEffect, useMemo, useRef, useState } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { registryHelper } from "./helper";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -16,7 +10,7 @@ import { Discord2Icon, Twitter2Icon } from "@/components/Icons";
 import { DiscussionIcon } from "@/components/Icons/Discussion";
 import { BlogIcon } from "@/components/Icons/Blog";
 import { OrganizationIcon } from "@/components/Icons/Organization";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import { Button } from "@/components/Utilities/Button";
 import {
   ColumnDef,
   Row,
@@ -24,88 +18,23 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import { Button } from "@/components/Utilities/Button";
-import { ProgramDetailsDialog } from "./ProgramDetailsDialog";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { GrantProgram } from "./ProgramList";
 
-export type GrantProgram = {
-  _id: {
-    $oid: string;
-  };
-  id?: string;
-  createdAtBlock?: string;
-  createdByAddress?: string;
-  metadata?: {
-    tags?: string[];
-    type?: string;
-    title?: string;
-    endDate?: string;
-    logoImg?: string;
-    website?: string;
-    socialLinks?: {
-      blog?: string;
-      forum?: string;
-      twitter?: string;
-      discord?: string;
-      website?: string;
-      orgWebsite?: string;
-      grantsSite?: string;
-    };
-    bugBounty?: string;
-    bounties?: string[];
-    bannerImg?: string;
-    createdAt?: number;
-    minGrantSize?: string;
-    maxGrantSize?: string;
-    startDate?: string;
-    categories?: string[];
-    ecosystems?: string[];
-    organizations?: string[];
-    networks?: string[];
-    grantTypes?: string[];
-    credentials?: {};
-    description?: string;
-    logoImgData?: string;
-    grantsToDate?: number;
-    bannerImgData?: string;
-    programBudget?: string;
-    projectTwitter?: string;
-    applicantsNumber?: number;
-    amountDistributedToDate?: string;
-    platformsUsed?: string[];
-    status: string;
-  };
-  tags?: string[];
-  updatedAtBlock?: string;
-  projectNumber?: null;
-  projectType?: string;
-  registryAddress?: string;
-  anchorAddress?: string;
-  programId?: string;
-  chainID?: number;
-  isValid?: boolean;
-  txHash?: string;
-  createdAt: {
-    $timestamp: {
-      t: number;
-      i: number;
-    };
-  };
-  updatedAt: {
-    $timestamp: {
-      t: number;
-      i: number;
-    };
-  };
-};
-
-interface ProgramListProps {
+interface MyProgramListProps {
   grantPrograms: GrantProgram[];
+  tab: "accepted" | "rejected" | "pending";
+  editFn: (program: GrantProgram) => any;
   selectProgram: (program: GrantProgram) => void;
+  isAllowed: boolean;
 }
 
-export const ProgramList: FC<ProgramListProps> = ({
+export const MyProgramList: FC<MyProgramListProps> = ({
   grantPrograms,
+  tab,
+  editFn,
   selectProgram,
+  isAllowed,
 }) => {
   const columns = useMemo<ColumnDef<GrantProgram>[]>(
     () => [
@@ -115,7 +44,7 @@ export const ProgramList: FC<ProgramListProps> = ({
         cell: (info) => {
           const grant = info.row.original;
           return (
-            <div className="flex flex-1 w-full whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300 text-wrap max-w-[285px]">
+            <div className="flex flex-1 w-full whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300 text-wrap max-w-[285px] mr-4">
               <div className="flex flex-col gap-1 w-max max-w-full">
                 <button
                   type="button"
@@ -124,11 +53,10 @@ export const ProgramList: FC<ProgramListProps> = ({
                 >
                   {grant?.metadata?.title}
                 </button>
-
                 <div className="flex flex-row gap-1 w-full">
-                  {grant.metadata?.socialLinks?.website ? (
+                  {grant.metadata?.socialLinks?.grantsSite ? (
                     <ExternalLink
-                      href={grant.metadata?.socialLinks?.website}
+                      href={grant.metadata?.socialLinks?.grantsSite}
                       className="w-max"
                     >
                       <Image
@@ -136,14 +64,14 @@ export const ProgramList: FC<ProgramListProps> = ({
                         width={20}
                         height={20}
                         src="/icons/globe.svg"
-                        alt={grant.metadata?.socialLinks?.website}
+                        alt={grant.metadata?.socialLinks?.grantsSite}
                       />
                       <Image
                         width={20}
                         height={20}
                         className="w-5 h-5 text-black dark:text-white hidden dark:block"
                         src="/icons/globe-white.svg"
-                        alt={grant.metadata?.socialLinks?.website}
+                        alt={grant.metadata?.socialLinks?.grantsSite}
                       />
                     </ExternalLink>
                   ) : null}
@@ -204,9 +132,9 @@ export const ProgramList: FC<ProgramListProps> = ({
         cell: (info) => {
           const grant = info.row.original;
           return (
-            <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-400 max-w-[285px]">
+            <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-400 max-w-[240px]">
               <div
-                className="w-[420px] max-w-[420px] text-wrap pr-8"
+                className="w-[360px] max-w-[360px] text-wrap pr-8"
                 data-color-mode="light"
               >
                 <ReadMore
@@ -232,8 +160,15 @@ export const ProgramList: FC<ProgramListProps> = ({
         id: "Networks",
         cell: (info) => {
           const grant = info.row.original;
-          const firstNetworks = grant.metadata?.networks?.slice(0, 4);
-          const restNetworks = grant.metadata?.networks?.slice(4);
+          const networks = grant.metadata?.networks;
+          const firstNetworks = networks?.slice(0, 4);
+          const restNetworks = networks?.slice(4);
+          if (
+            !firstNetworks ||
+            typeof firstNetworks === "string" ||
+            typeof restNetworks === "string"
+          )
+            return null;
           return (
             <div className="w-full max-w-44 flex flex-row flex-wrap gap-1 my-2 items-center">
               {firstNetworks?.map((network, index) => (
@@ -370,6 +305,50 @@ export const ProgramList: FC<ProgramListProps> = ({
       },
       {
         accessorFn: (row) => row,
+        id: "Budget",
+        cell: (info) => {
+          const grant = info.row.original;
+
+          return (
+            <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
+              {grant?.metadata?.programBudget
+                ? formatCurrency(+grant?.metadata?.programBudget) === "NaN"
+                  ? grant?.metadata?.programBudget
+                  : `$${formatCurrency(+grant?.metadata?.programBudget)}`
+                : ""}
+            </div>
+          );
+        },
+        header: () => (
+          <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
+            Budget
+          </div>
+        ),
+      },
+      // {
+      //   accessorFn: (row) => row,
+      //   id: "Grant Size",
+      //   cell: (info) => {
+      //     const grant = info.row.original;
+
+      //     return (
+      //       <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
+      //         {grant?.metadata?.minGrantSize && grant?.metadata?.maxGrantSize
+      //           ? `$${formatCurrency(
+      //               +grant?.metadata?.minGrantSize
+      //             )} - $${formatCurrency(+grant?.metadata?.maxGrantSize)}`
+      //           : ""}
+      //       </div>
+      //     );
+      //   },
+      //   header: () => (
+      //     <div className="px-3 py-3.5 text-left text-sm w-[120px] font-bold text-gray-900 dark:text-zinc-100 font-body">
+      //       Grant Size
+      //     </div>
+      //   ),
+      // },
+      {
+        accessorFn: (row) => row,
         id: "Categories",
         accessorKey: "metadata.categories",
         cell: (info) => {
@@ -401,7 +380,7 @@ export const ProgramList: FC<ProgramListProps> = ({
           const grant = info.row.original;
 
           return (
-            <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
+            <div className="whitespace-nowrap max-w-[220px] flex flex-row flex-wrap gap-1 px-3 py-5 text-sm text-black dark:text-zinc-300">
               {grant.metadata?.grantTypes?.map((type, index) => (
                 <span
                   key={index}
@@ -421,24 +400,36 @@ export const ProgramList: FC<ProgramListProps> = ({
       },
       {
         accessorFn: (row) => row,
-        id: "Apply",
+        id: "Action",
+
         cell: (info) => {
           const grant = info.row.original;
 
           return (
-            <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-              {grant.metadata?.socialLinks?.grantsSite ? (
-                <ExternalLink href={grant.metadata?.socialLinks?.grantsSite}>
-                  <Button>Apply</Button>
-                </ExternalLink>
+            <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300 w-48">
+              {isAllowed ? (
+                <div className="flex flex-row flex-wrap gap-3">
+                  <Button
+                    className="text-sm bg-black dark:bg-black hover:bg-black text-white"
+                    onClick={() => {
+                      editFn(grant);
+                    }}
+                  >
+                    Update
+                  </Button>
+                </div>
               ) : null}
             </div>
           );
         },
-        header: () => <div />,
+        header: () => (
+          <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body">
+            Action
+          </div>
+        ),
       },
     ],
-    []
+    [grantPrograms, isAllowed]
   );
 
   const table = useReactTable({
