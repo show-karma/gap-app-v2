@@ -346,7 +346,7 @@ export default function AddProgram({
 
       const permissionToEditOnChain =
         programToEdit?.createdByAddress?.toLowerCase() ===
-        address?.toLowerCase();
+          address?.toLowerCase() && programToEdit?.txHash;
       if (permissionToEditOnChain) {
         const allo = new AlloBase(
           walletSigner as any,

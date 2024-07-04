@@ -25,6 +25,7 @@ import { useAccount } from "wagmi";
 import Pagination from "@/components/Utilities/Pagination";
 import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
 import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
+import { checkIsPoolManager } from "@/utilities/registry/checkIsPoolManager";
 
 const statuses = ["Active", "Inactive"];
 
@@ -234,20 +235,24 @@ const GrantProgramRegistry = ({
   const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore();
 
-  const [isMember, setIsMember] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isPoolManager, setIsPoolManager] = useState(false);
 
-  const isAllowed = address && isMember && isAuth;
+  const isAllowed = address && (isAdmin || isPoolManager) && isAuth;
   const { chain } = useAccount();
   useEffect(() => {
     if (!address || !isConnected) {
-      setIsMember(false);
+      setIsAdmin(false);
       return;
     }
     const getMemberOf = async () => {
       try {
         const call = await isMemberOfProfile(address);
-
-        setIsMember(call as boolean);
+        setIsAdmin(call);
+        if (!call) {
+          const isManager = await checkIsPoolManager(address);
+          setIsPoolManager(isManager);
+        }
       } catch (error) {
         console.log(error);
       }
@@ -296,14 +301,15 @@ const GrantProgramRegistry = ({
       ) : null}
       <section className="my-10 flex w-full max-w-full flex-col justify-between items-center gap-6 px-12 pb-7 pt-5 max-2xl:px-8 max-md:px-4">
         <div className="flex flex-row max-lg:gap-10  max-md:flex-col gap-32 justify-between w-full">
-          <div className="flex flex-1 flex-col gap-3 items-start justify-start text-left">
+          <div className="flex flex-[3] flex-col gap-3 items-start justify-start text-left">
             <h1 className="text-2xl tracking-[-0.72px] 2xl:text-4xl font-bold text-start text-black dark:text-white">
               {`The most comprehensive onchain grant program directory you’ll find`}
             </h1>
             <p className="text-start text-lg max-w-5xl text-black dark:text-white">
-              Explore our curated list of grant programs for innovators and creators: from
-              tech pioneers to community leaders, there is a grant program to elevate
-              your project. Did we miss a program/bounty?
+              Explore our curated list of grant programs for innovators and
+              creators: from tech pioneers to community leaders, there is a
+              grant program to elevate your project. Did we miss a
+              program/bounty?
             </p>
             <Link href={PAGES.REGISTRY.ADD_PROGRAM}>
               <button className="mt-3 bg-[#0E101B] dark:bg-slate-800 text-white px-10 py-2.5 rounded-lg">

@@ -14,7 +14,7 @@ import { Button } from "@/components/Utilities/Button";
 import { useQueryState } from "nuqs";
 import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
 import AddProgram from "@/components/Pages/ProgramRegistry/AddProgram";
-import { useAccount, useBlockNumber, useSwitchChain } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import { useAuthStore } from "@/store/auth";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import {
@@ -30,16 +30,16 @@ import { AlloBase } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegis
 import {
   Address,
   ApplicationMetadata,
-  GrantArgs,
 } from "@show-karma/karma-gap-sdk/core/class/types/allo";
 import { AlloContracts } from "@show-karma/karma-gap-sdk";
 import Pagination from "@/components/Utilities/Pagination";
 import debounce from "lodash.debounce";
 import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
 import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
-import { AlloRegistry } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/AlloRegistry";
-import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
 import { config } from "@/utilities/wagmi/config";
+import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
+import { checkIsPoolManager } from "@/utilities/registry/checkIsPoolManager";
+import { MyProgramList } from "@/components/Pages/ProgramRegistry/MyProgramList";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { query } = context;
@@ -68,21 +68,27 @@ const GrantProgramRegistry = ({
   const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore();
 
-  const [isMember, setIsMember] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isPoolManager, setIsPoolManager] = useState(false);
 
-  const isAllowed = address && isMember && isAuth;
+  const isAllowed = address && (isAdmin || isPoolManager) && isAuth;
   const { chain } = useAccount();
 
   const signer = useSigner();
   useEffect(() => {
     if (!address || !isConnected) {
-      setIsMember(false);
+      setIsAdmin(false);
       return;
     }
+
     const getMemberOf = async () => {
       try {
         const call = await isMemberOfProfile(address);
-        setIsMember(call);
+        setIsAdmin(call);
+        if (!call) {
+          const isManager = await checkIsPoolManager(address);
+          setIsPoolManager(isManager);
+        }
       } catch (error) {
         console.log(error);
       }
@@ -147,17 +153,26 @@ const GrantProgramRegistry = ({
   const getGrantPrograms = async () => {
     setLoading(true);
     try {
-      await fetchData(
-        INDEXER.REGISTRY.GET_ALL +
-          `?isValid=${tab}&limit=${pageSize}&offset=${(page - 1) * pageSize}${
-            searchInput ? `&name=${searchInput}` : ""
-          }`
-      ).then(([res, error]) => {
+      const fetchPrograms = async (url: string) => {
+        const [res, error] = await fetchData(url);
         if (!error && res) {
           setGrantPrograms(res.programs);
           setTotalPrograms(res.count);
         }
-      });
+      };
+
+      const baseUrl = INDEXER.REGISTRY.GET_ALL;
+      const queryParams = `?isValid=${tab}&limit=${pageSize}&offset=${
+        (page - 1) * pageSize
+      }`;
+      const searchParam = searchInput ? `&name=${searchInput}` : "";
+      const ownerParam = address ? `&owner=${address}` : "";
+
+      const url = isAdmin
+        ? `${baseUrl}${queryParams}${searchParam}`
+        : `${baseUrl}${queryParams}${ownerParam}${searchParam}`;
+
+      await fetchPrograms(url);
     } catch (error: any) {
       console.log(error);
     } finally {
@@ -304,18 +319,21 @@ const GrantProgramRegistry = ({
 
   const NotAllowedCases = () => {
     if (!address || !isAuth || !isConnected) {
-      <div>
-        <p>You need to login to access this page</p>
-        <Button
-          onClick={() => {
-            openConnectModal?.();
-          }}
-        >
-          Login
-        </Button>
-      </div>;
+      return (
+        <div className="flex flex-col gap-2 justify-center items-center">
+          <p>You need to login to access this page</p>
+          <Button
+            className="w-max"
+            onClick={() => {
+              openConnectModal?.();
+            }}
+          >
+            Login
+          </Button>
+        </div>
+      );
     }
-    return <p>Only admins are allowed to use this page</p>;
+    return <p>Seems like you do not have programs to manage.</p>;
   };
 
   return (
@@ -421,7 +439,7 @@ const GrantProgramRegistry = ({
                       color: tab === "pending" ? "black" : "gray",
                     }}
                   >
-                    Pending
+                    {isAdmin ? "Pending" : "Waiting for approval"}
                   </Button>
                   <Button
                     className="bg-transparent text-black"
@@ -481,20 +499,36 @@ const GrantProgramRegistry = ({
                     <div className="mt-8 flow-root">
                       <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                         <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                          <ProgramListPending
-                            approveOrReject={approveOrReject}
-                            grantPrograms={grantPrograms}
-                            tab={tab as "pending" | "accepted" | "rejected"}
-                            editFn={(program: GrantProgram) => {
-                              setIsEditing(true);
-                              setProgramToEdit(program);
-                            }}
-                            selectProgram={(program: GrantProgram) => {
-                              setProgramId(program.programId || "");
-                              setSelectedProgram(program);
-                            }}
-                            isAllowed={isAllowed}
-                          />
+                          {isAdmin ? (
+                            <ProgramListPending
+                              approveOrReject={approveOrReject}
+                              grantPrograms={grantPrograms}
+                              tab={tab as "pending" | "accepted" | "rejected"}
+                              editFn={(program: GrantProgram) => {
+                                setIsEditing(true);
+                                setProgramToEdit(program);
+                              }}
+                              selectProgram={(program: GrantProgram) => {
+                                setProgramId(program.programId || "");
+                                setSelectedProgram(program);
+                              }}
+                              isAllowed={isAllowed}
+                            />
+                          ) : (
+                            <MyProgramList
+                              grantPrograms={grantPrograms}
+                              tab={tab as "pending" | "accepted" | "rejected"}
+                              editFn={(program: GrantProgram) => {
+                                setIsEditing(true);
+                                setProgramToEdit(program);
+                              }}
+                              selectProgram={(program: GrantProgram) => {
+                                setProgramId(program.programId || "");
+                                setSelectedProgram(program);
+                              }}
+                              isAllowed={isAllowed}
+                            />
+                          )}
                           <Pagination
                             currentPage={page}
                             setCurrentPage={setPage}
