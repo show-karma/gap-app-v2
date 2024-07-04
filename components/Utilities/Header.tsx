@@ -13,7 +13,7 @@ import { ExternalLink } from "./ExternalLink";
 import { SOCIALS } from "@/utilities/socials";
 import { DiscordIcon, MirrorIcon, TelegramIcon, TwitterIcon } from "../Icons";
 import { blo } from "blo";
-import { Hex } from "viem";
+import { Chain, Hex } from "viem";
 import { Button } from "./Button";
 import { useTheme } from "next-themes";
 import { Searchbar } from "../Searchbar";
@@ -70,6 +70,8 @@ export default function Header() {
   const setIsOwner = useOwnerStore((state) => state.setIsOwner);
   const setIsOwnerLoading = useOwnerStore((state) => state.setIsOwnerLoading);
 
+  const { chain } = useAccount();
+
   useEffect(() => {
     if (!signer || !address || !isAuth) {
       setIsOwnerLoading(false);
@@ -78,7 +80,11 @@ export default function Header() {
     }
     const setupOwner = async () => {
       setIsOwnerLoading(true);
-      await getContractOwner(signer as any)
+      if (!chain) {
+        setIsOwner(false);
+        return;
+      }
+      await getContractOwner(signer as any, chain as Chain)
         .then((owner) => {
           setIsOwner(owner.toLowerCase() === address?.toLowerCase());
         })
