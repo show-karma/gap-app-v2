@@ -298,7 +298,7 @@ export default function AddProgram({
         return;
       }
       const chainSelected = data.networkToCreate;
-      if (chain && chain.id !== chainSelected) {
+      if (chain?.id !== chainSelected) {
         await switchChainAsync?.({ chainId: chainSelected as number });
       }
 

@@ -146,7 +146,7 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
     text?: string
   ) => {
     try {
-      if (chain && chain.id !== milestone.chainID) {
+      if (chain?.id !== milestone.chainID) {
         await switchChainAsync?.({ chainId: milestone.chainID });
       }
       const walletClient = await getWalletClient(config, {

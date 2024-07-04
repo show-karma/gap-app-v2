@@ -75,7 +75,7 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
   ) => {
     if (!address || !project) return;
     try {
-      if (chain && chain.id !== grantToUpdate.chainID) {
+      if (chain?.id !== grantToUpdate.chainID) {
         await switchChainAsync?.({ chainId: grantToUpdate.chainID });
       }
       const walletClient = await getWalletClient(config, {

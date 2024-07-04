@@ -437,7 +437,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     let gapClient = gap;
     try {
       setIsLoading(true);
-      if (chain && chain.id !== oldGrant.chainID) {
+      if (chain?.id !== oldGrant.chainID) {
         await switchChainAsync?.({ chainId: oldGrant.chainID });
         gapClient = getGapClient(communityNetworkId);
       }

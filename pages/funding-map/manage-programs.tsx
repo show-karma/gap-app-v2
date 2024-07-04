@@ -191,7 +191,7 @@ const GrantProgramRegistry = ({
           openConnectModal?.();
           return;
         }
-        if (chain && chain.id !== chainID) {
+        if (chain?.id !== chainID) {
           await switchChainAsync?.({ chainId: chainID as number });
         }
 

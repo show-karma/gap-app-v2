@@ -80,7 +80,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
     setIsLoading(true);
     let gapClient = gap;
     try {
-      if (chain && chain.id !== project.chainID) {
+      if (chain?.id !== project.chainID) {
         await switchChainAsync?.({ chainId: project.chainID });
         gapClient = getGapClient(project.chainID);
       }

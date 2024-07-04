@@ -267,7 +267,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       if (!gap) return;
       let gapClient = gap;
 
-      if (chain && !checkNetworkIsValid(chain?.id)) {
+      if (!checkNetworkIsValid(chain?.id)) {
         await switchChainAsync?.({ chainId: appNetwork[0].id });
         gapClient = getGapClient(appNetwork[0].id);
       }
@@ -440,7 +440,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       }
       if (!address || !projectToUpdate) return;
       if (!gap) return;
-      if (chain && chain.id !== projectToUpdate.chainID) {
+      if (chain?.id !== projectToUpdate.chainID) {
         await switchChainAsync?.({ chainId: projectToUpdate.chainID });
         gapClient = getGapClient(projectToUpdate.chainID);
       }
