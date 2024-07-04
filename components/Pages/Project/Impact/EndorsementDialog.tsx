@@ -56,7 +56,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = ({
     setIsLoading(true);
     try {
       if (!project) return;
-      if (chain && chain.id !== project.chainID) {
+      if (chain?.id !== project.chainID) {
         await switchChainAsync?.({ chainId: project.chainID });
         gapClient = getGapClient(project.chainID);
       }

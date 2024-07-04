@@ -55,7 +55,7 @@ function ProjectPage() {
     if (!address || !project) return;
     setIsDeleting(true);
     try {
-      if (chain && chain.id !== project.chainID) {
+      if (chain?.id !== project.chainID) {
         await switchChainAsync?.({ chainId: project.chainID });
       }
       const walletClient = await getWalletClient(config, {
