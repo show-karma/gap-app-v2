@@ -70,8 +70,7 @@ const GrantProgramRegistry = ({
 
   const [isMember, setIsMember] = useState(false);
 
-  // const isAllowed = address && isMember && isAuth;
-  const isAllowed = true;
+  const isAllowed = address && isMember && isAuth;
   const { chain } = useAccount();
 
   const signer = useSigner();
