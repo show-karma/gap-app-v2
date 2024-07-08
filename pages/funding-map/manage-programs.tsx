@@ -40,6 +40,7 @@ import { config } from "@/utilities/wagmi/config";
 import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
 import { checkIsPoolManager } from "@/utilities/registry/checkIsPoolManager";
 import { MyProgramList } from "@/components/Pages/ProgramRegistry/MyProgramList";
+import { useStepper } from "@/store/txStepper";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { query } = context;
@@ -69,6 +70,7 @@ const GrantProgramRegistry = ({
   const { isAuth } = useAuthStore();
 
   const [isAdmin, setIsAdmin] = useState(false);
+
   const [isPoolManager, setIsPoolManager] = useState(false);
 
   const isAllowed = address && (isAdmin || isPoolManager) && isAuth;
@@ -186,6 +188,7 @@ const GrantProgramRegistry = ({
   }, [tab, page, searchInput]);
 
   const { switchChainAsync } = useSwitchChain();
+  const { changeStepperStep, setIsStepper } = useStepper();
 
   const approveOrReject = async (
     program: GrantProgram,
@@ -269,13 +272,14 @@ const GrantProgramRegistry = ({
         };
 
         const hasRegistry = await allo
-          .createGrant(args)
+          .createGrant(args, changeStepperStep)
           .then((res) => {
             return res;
           })
           .catch((error) => {
             throw new Error(error);
           });
+        changeStepperStep("indexing");
         if (!hasRegistry) {
           throw new Error("No registry found");
         }
@@ -293,6 +297,7 @@ const GrantProgramRegistry = ({
           true
         );
         if (error) throw new Error("Error approving program");
+        changeStepperStep("indexed");
       } else {
         const [request, error] = await fetchData(
           INDEXER.REGISTRY.APPROVE,
@@ -312,6 +317,8 @@ const GrantProgramRegistry = ({
     } catch {
       console.log(`Error ${messageDict[value]} program ${program._id.$oid}`);
       toast.error(`Error ${messageDict[value]} program ${program._id.$oid}`);
+    } finally {
+      setIsStepper(false);
     }
   };
 

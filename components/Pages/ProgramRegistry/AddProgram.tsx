@@ -37,6 +37,7 @@ import { Discord2Icon } from "@/components/Icons/Discord2";
 import { AlloBase } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/Allo";
 import { StatusDropdown } from "./StatusDropdown";
 import { config } from "@/utilities/wagmi/config";
+import { useStepper } from "@/store/txStepper";
 
 const labelStyle = "text-sm font-bold text-[#344054] dark:text-zinc-100";
 const inputStyle =
@@ -218,6 +219,7 @@ export default function AddProgram({
   const { chain } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const { openConnectModal } = useConnectModal();
+  const { changeStepperStep, setIsStepper } = useStepper();
 
   const createProgram = async (data: CreateProgramType) => {
     setIsLoading(true);
@@ -354,12 +356,46 @@ export default function AddProgram({
           chainSelected as number
         );
         const hasRegistry = await allo
-          .updatePoolMetadata(programToEdit?.programId as string, metadata)
-          .then((res) => {
-            return res;
-          })
+          .updatePoolMetadata(
+            programToEdit?.programId as string,
+            metadata,
+            changeStepperStep
+          )
           .catch((error) => {
             throw new Error(error);
+          })
+          .then(async (res) => {
+            let retries = 1000;
+            changeStepperStep("indexing");
+            while (retries > 0) {
+              await fetchData(
+                INDEXER.REGISTRY.GET_ALL +
+                  `?programId=${programToEdit?.programId}`
+              )
+                .then(async ([res]) => {
+                  const compareAll = (a: any, b: any) => {
+                    return JSON.stringify(a) === JSON.stringify(b);
+                  };
+                  const sameData = compareAll(
+                    res?.programs?.[0]?.metadata,
+                    metadata
+                  );
+                  if (sameData) {
+                    retries = 0;
+                    changeStepperStep("indexed");
+                    toast.success("Program updated successfully!");
+                  }
+                  retries -= 1;
+                  // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+                  await new Promise((resolve) => setTimeout(resolve, 1500));
+                })
+                .catch(async () => {
+                  retries -= 1;
+                  // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+                  await new Promise((resolve) => setTimeout(resolve, 1500));
+                });
+            }
+            return res;
           });
         if (!hasRegistry) {
           throw new Error("Error editing program");
@@ -389,6 +425,7 @@ export default function AddProgram({
       toast.error("An error occurred while editing the program");
     } finally {
       setIsLoading(false);
+      setIsStepper(false);
     }
   };
 
