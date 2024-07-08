@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { ReactNode, useEffect, useMemo, useState } from "react";
-import ProjectPage from "./project";
+import ProjectPage from "./project/page";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useAccount } from "wagmi";
 import { IProjectDetails, Project } from "@show-karma/karma-gap-sdk";

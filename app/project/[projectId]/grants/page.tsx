@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { ProjectPageLayout } from ".";
+import { ProjectPageLayout } from "../page";
 import { useOwnerStore, useProjectStore } from "@/store";
 import {
   Grant,

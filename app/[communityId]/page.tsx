@@ -13,7 +13,7 @@ import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
 import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
-import { communitiesToBulkSubscribe } from "./receive-project-updates";
+import { communitiesToBulkSubscribe } from "./receive-project-updates/page";
 
 type Props = {
   params: {
