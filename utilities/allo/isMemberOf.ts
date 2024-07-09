@@ -9,7 +9,7 @@ export const isMemberOfProfile = async (address: string): Promise<boolean> => {
     const wallet = createPublicClient({
       chain: envVars.isDev ? sepolia : arbitrum,
       transport: http(
-        envVars.isDev ? envVars.RPC.OPT_SEPOLIA : envVars.RPC.ARBITRUM
+        envVars.isDev ? envVars.RPC.SEPOLIA : envVars.RPC.ARBITRUM
       ),
     });
 
