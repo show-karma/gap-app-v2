@@ -1,9 +1,12 @@
-import { ISitemapField, getServerSideSitemapLegacy } from "next-sitemap";
-import { GetServerSideProps } from "next";
+import {
+  ISitemapField,
+  getServerSideSitemap,
+  getServerSideSitemapLegacy,
+} from "next-sitemap";
 import { chosenCommunities } from "@/utilities/chosenCommunities";
 import { envVars } from "@/utilities/enviromentVars";
 
-export const getServerSideProps: GetServerSideProps = async (ctx) => {
+export async function GET(request: Request) {
   const communities = chosenCommunities().map((community) => community.uid);
   const fetchCommunities = await Promise.all(
     communities.map((communityID) => {
@@ -29,8 +32,5 @@ export const getServerSideProps: GetServerSideProps = async (ctx) => {
     priority: 0.7,
   }));
 
-  return getServerSideSitemapLegacy(ctx, paths);
-};
-
-// Default export to prevent next.js errors
-export default function Sitemap() {}
+  return getServerSideSitemap(paths);
+}

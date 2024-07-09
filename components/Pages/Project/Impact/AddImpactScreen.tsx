@@ -13,7 +13,6 @@ import { CalendarIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProjectImpact } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
 import { getWalletClient } from "@wagmi/core";
-import { useRouter } from "next/router";
 import { useQueryState } from "nuqs";
 import type { FC } from "react";
 import { useState } from "react";

@@ -1,3 +1,4 @@
+"use client";
 /* eslint-disable @next/next/no-img-element */
 import { Grant } from "@show-karma/karma-gap-sdk";
 import { Button } from "../Utilities/Button";

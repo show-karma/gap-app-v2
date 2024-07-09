@@ -1,3 +1,4 @@
+"use client";
 /* eslint-disable no-nested-ternary */
 
 import { useConnectModal } from "@rainbow-me/rainbowkit";

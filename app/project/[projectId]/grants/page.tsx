@@ -1,7 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { ProjectPageLayout } from "../page";
+import { notFound, useSearchParams } from "next/navigation";
 import { useOwnerStore, useProjectStore } from "@/store";
 import {
   Grant,
@@ -31,8 +30,7 @@ import { useAccount } from "wagmi";
 import { GrantDelete } from "@/components/Pages/GrantMilestonesAndUpdates/GrantDelete";
 import { GrantCompleteButton } from "@/components/Pages/GrantMilestonesAndUpdates/GrantCompleteButton";
 import { GrantCompletion } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/CompleteGrant";
-import { GetServerSidePropsContext, InferGetServerSidePropsType } from "next";
-import { NextSeo } from "next-seo";
+import { Metadata } from "next";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { GrantMilestonesAndUpdates } from "@/components/Pages/GrantMilestonesAndUpdates";
 import { GrantContext } from "@/components/Pages/GrantMilestonesAndUpdates/GrantContext";
@@ -75,11 +73,21 @@ const authorizedViews: GrantScreen[] = [
   "complete-grant",
 ];
 
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { params } = context;
+export async function generateMetadata({
+  params,
+  searchParams,
+}: {
+  params: {
+    projectId: string;
+  };
+  searchParams: {
+    grantId: string;
+    tab: string;
+  };
+}): Promise<Metadata> {
   const projectId = params?.projectId as string;
-  const grant = context.query?.grantId as string | undefined;
-  const tab = context.query?.tab as string | undefined;
+  const grant = searchParams?.grantId as string | undefined;
+  const tab = searchParams?.tab as string | undefined;
 
   const projectInfo = await getMetadata<IProjectDetails>(
     "projects",
@@ -87,10 +95,15 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   );
 
   if (projectInfo?.uid === zeroUID || !projectInfo) {
-    return {
-      notFound: true,
-    };
+    notFound();
   }
+  let metadata = {
+    title: defaultMetadata.title,
+    description: defaultMetadata.description,
+    twitter: defaultMetadata.twitter,
+    openGraph: defaultMetadata.openGraph,
+    icons: defaultMetadata.icons,
+  };
   if (grant && tab) {
     const grantInfo = await getMetadata<IGrantDetails>("grants", grant as Hex);
     if (grantInfo) {
@@ -150,32 +163,49 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         },
       };
 
-      return {
-        props: {
-          metadataTitle:
-            tabMetadata[tab || "overview"]?.title ||
-            tabMetadata["overview"]?.title ||
-            "",
-          metadataDesc:
-            tabMetadata[tab || "overview"]?.description ||
-            tabMetadata["overview"]?.description ||
-            "",
-        },
+      metadata = {
+        ...metadata,
+        title:
+          tabMetadata[tab || "overview"]?.title ||
+          tabMetadata["overview"]?.title ||
+          "",
+        description:
+          tabMetadata[tab || "overview"]?.description ||
+          tabMetadata["overview"]?.description ||
+          "",
       };
     }
+  } else {
+    metadata = {
+      ...metadata,
+      title: `Karma GAP - ${projectInfo?.title}`,
+      description: projectInfo?.description?.substring(0, 80) || "",
+    };
   }
+
   return {
-    props: {
-      metadataTitle: `Karma GAP - ${projectInfo?.title}`,
-      metadataDesc: projectInfo?.description?.substring(0, 80) || "",
+    title: metadata.title,
+    description: metadata.description,
+    twitter: {
+      creator: defaultMetadata.twitter.creator,
+      site: defaultMetadata.twitter.site,
+      card: "summary_large_image",
     },
+    openGraph: {
+      url: defaultMetadata.openGraph.url,
+      title: metadata.title,
+      description: metadata.description,
+      images: defaultMetadata.openGraph.images.map((image) => ({
+        url: image,
+        alt: metadata.title,
+      })),
+      // site_name: defaultMetadata.openGraph.siteName,
+    },
+    icons: metadata.icons,
   };
 }
 
-const GrantsPage = ({
-  metadataTitle,
-  metadataDesc,
-}: InferGetServerSidePropsType<typeof getServerSideProps>) => {
+const GrantsPage = () => {
   const searchParams = useSearchParams();
   const tabFromQueryParam = searchParams?.get("tab");
   const grantIdFromQueryParam = searchParams?.get("grantId");
@@ -357,31 +387,6 @@ const GrantsPage = ({
 
   return (
     <>
-      <NextSeo
-        title={metadataTitle || defaultMetadata.title}
-        description={metadataDesc || defaultMetadata.description}
-        twitter={{
-          handle: defaultMetadata.twitter.creator,
-          site: defaultMetadata.twitter.site,
-          cardType: "summary_large_image",
-        }}
-        openGraph={{
-          url: defaultMetadata.openGraph.url,
-          title: metadataTitle || defaultMetadata.title,
-          description: metadataDesc || defaultMetadata.description,
-          images: defaultMetadata.openGraph.images.map((image) => ({
-            url: image,
-            alt: metadataTitle || defaultMetadata.title,
-          })),
-          // site_name: defaultMetadata.openGraph.siteName,
-        }}
-        additionalLinkTags={[
-          {
-            rel: "icon",
-            href: "/images/favicon.png",
-          },
-        ]}
-      />
       <div className="flex max-lg:flex-col">
         {project?.grants.length ? (
           <div className="w-full max-w-[320px] max-lg:max-w-full py-5 border-none max-lg:w-full max-lg:px-0">
@@ -623,8 +628,6 @@ const GrantsPage = ({
     </>
   );
 };
-
-GrantsPage.getLayout = ProjectPageLayout;
 
 export default GrantsPage;
 

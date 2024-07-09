@@ -1,10 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 import React, { useState } from "react";
 import Link from "next/link";
-import Typed from "react-typed";
 import { PlusIcon } from "@heroicons/react/24/solid";
 import { CloudArrowUpIcon, LockClosedIcon } from "@heroicons/react/20/solid";
-import { NextSeo } from "next-seo";
 import { CheckIcon } from "@heroicons/react/24/outline";
 import { Button } from "@/components/Utilities/Button";
 import dynamic from "next/dynamic";
@@ -12,6 +10,7 @@ import { chosenCommunities } from "@/utilities/chosenCommunities";
 import { PAGES } from "@/utilities/pages";
 import { defaultMetadata } from "@/utilities/meta";
 import { ImageTheme } from "@/components/Utilities/ImageTheme";
+import { ReactTypedWrapper } from "@/components/Pages/Home/ReactTypedWrapp";
 
 const ProjectDialog = dynamic(
   () =>
@@ -22,12 +21,6 @@ const ProjectDialog = dynamic(
 );
 
 const Presentation = () => {
-  const phrases = [
-    "Open Source",
-    "Public Goods",
-    "Community Funded",
-    "Crypto protocol",
-  ];
   return (
     <div className="flex flex-1 items-end gap-8 max-2xl:gap-4">
       <div className="mt-12 flex w-full flex-row items-end justify-center gap-1 max-lg:mt-4">
@@ -41,13 +34,7 @@ const Presentation = () => {
               <h1 className="text-6xl font-bold leading-[64px] text-gray-900 dark:text-gray-100 max-2xl:text-4xl max-2xl:leading-[36px] max-lg:text-3xl max-lg:leading-normal">
                 Visibility and <br />
                 accountability for <br className="mb-3" />
-                <Typed
-                  strings={phrases}
-                  typeSpeed={100}
-                  className="w-max bg-[#EAECF5] p-4 text-center text-6xl font-normal leading-[120px] dark:text-gray-100 dark:bg-gray-800 text-gray-900 max-2xl:text-4xl max-2xl:leading-[80px] max-lg:text-3xl max-lg:leading-[80px]"
-                  loop
-                  backSpeed={50}
-                />
+                <ReactTypedWrapper />
                 <span className="text-6xl font-bold leading-[64px] text-gray-900 dark:text-gray-100 max-2xl:text-4xl max-2xl:leading-[36px] max-lg:text-3xl max-lg:leading-normal">
                   <br /> projects
                 </span>
@@ -299,6 +286,8 @@ const WhatIsSolving = () => {
   );
 };
 
+export const metadata = defaultMetadata;
+
 export default function Index() {
   const projectTypes = [
     "Open Source",
@@ -324,83 +313,6 @@ export default function Index() {
 
   return (
     <>
-      {/* <Head>
-        <title>{defaultMetadata.title}</title>
-        <meta name="description" content={defaultMetadata.description} />
-
-        <meta property="og:type" content="website" />
-        <meta
-          property="og:url"
-          content={defaultMetadata.openGraph.url}
-          key="ogurl"
-        />
-        <meta
-          property="og:image"
-          content={defaultMetadata.openGraph.images[0]}
-          key="ogimage"
-        />
-        <meta
-          property="og:site_name"
-          content={defaultMetadata.openGraph.siteName}
-          key="ogsitename"
-        />
-        <meta
-          property="og:title"
-          content={defaultMetadata.title}
-          key="ogtitle"
-        />
-        <meta
-          property="og:description"
-          content={defaultMetadata.description}
-          key="ogdesc"
-        />
-        <link rel="icon" href={"/images/favicon.png"} />
-
-        <meta property="twitter:card" content="summary_large_image" />
-        <meta property="twitter:url" content={defaultMetadata.twitter.site} />
-        <meta
-          property="twitter:title"
-          content={defaultMetadata.twitter.title}
-        />
-        <meta
-          property="twitter:description"
-          content={defaultMetadata.twitter.description}
-        />
-        <meta
-          property="twitter:image"
-          content={defaultMetadata.twitter.images[0]}
-        />
-        <meta
-          property="twitter:image"
-          content={defaultMetadata.twitter.images[0]}
-        />
-      </Head> */}
-      <NextSeo
-        title={defaultMetadata.title}
-        description={defaultMetadata.description}
-        twitter={{
-          handle: defaultMetadata.twitter.creator,
-          site: defaultMetadata.twitter.site,
-          cardType: "summary_large_image",
-        }}
-        openGraph={{
-          url: defaultMetadata.openGraph.url,
-          title: defaultMetadata.title,
-          description: defaultMetadata.description,
-          images: defaultMetadata.openGraph.images.map((image) => ({
-            url: image,
-            alt: defaultMetadata.title,
-          })),
-          // site_name: defaultMetadata.openGraph.siteName,
-        }}
-        additionalLinkTags={[
-          {
-            rel: "icon",
-            href: "/images/favicon.png",
-          },
-        ]}
-      />
-
       {/* <div className="relative isolate overflow-hidden bg-white">
         <svg
           className="absolute inset-0 -z-10 h-full w-full stroke-gray-200 [mask-image:radial-gradient(100%_100%_at_top_right,white,transparent)]"

@@ -1,3 +1,4 @@
+"use client";
 /* eslint-disable @next/next/no-img-element */
 import { FC, Fragment, ReactNode, useEffect, useMemo, useState } from "react";
 import { Dialog, Tab, Transition } from "@headlessui/react";
@@ -24,7 +25,7 @@ import {
   nullRef,
 } from "@show-karma/karma-gap-sdk";
 import toast from "react-hot-toast";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { getGapClient, useGap } from "@/hooks";
 import { Button } from "@/components/Utilities/Button";
 import {

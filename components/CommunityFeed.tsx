@@ -1,8 +1,8 @@
+"use client";
 /* eslint-disable @next/next/no-img-element */
 import { Feed } from "@/types";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import { Spinner } from "./Utilities/Spinner";
 import { ExternalLink } from "./Utilities/ExternalLink";
@@ -14,10 +14,11 @@ import { Hex } from "viem";
 import { MarkdownPreview } from "./Utilities/MarkdownPreview";
 import { useTheme } from "next-themes";
 import { cn } from "@/utilities/tailwind";
+import { useSearchParams } from "next/navigation";
 
 export const CommunityFeed = () => {
-  const router = useRouter();
-  const communityId = router.query.communityId; // Get the communityId from the URL
+  const searchParams = useSearchParams();
+  const communityId = searchParams.get("communityId"); // Get the communityId from the URL
   const { theme } = useTheme();
 
   const [feed, setFeed] = useState<Feed[]>([]); // Set the initial feed state to an empty array

@@ -22,7 +22,7 @@ import { Hex, isAddress } from "viem";
 import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
 import { Milestone as MilestoneComponent } from "./Milestone";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { CommunitiesDropdown } from "@/components/CommunitiesDropdown";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { getGapClient, useGap } from "@/hooks";

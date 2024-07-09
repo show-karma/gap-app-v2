@@ -1,3 +1,4 @@
+"use client";
 /* eslint-disable @next/next/no-img-element */
 import { Feed } from "@/types";
 import fetchData from "@/utilities/fetchData";
@@ -16,10 +17,10 @@ import { useTheme } from "next-themes";
 import { cn } from "@/utilities/tailwind";
 
 interface ProjectFeedProps {
-  initialFeed: Feed[]
+  initialFeed: Feed[];
 }
 
-export const ProjectFeed = ({initialFeed = []}: ProjectFeedProps) => {
+export const ProjectFeed = ({ initialFeed = [] }: ProjectFeedProps) => {
   const router = useRouter();
   const projectId = router.query.projectId; // Get the projectId from the URL
 
