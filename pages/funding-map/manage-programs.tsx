@@ -69,7 +69,9 @@ const GrantProgramRegistry = ({
   const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore();
 
-  const [isAdmin, setIsAdmin] = useState(false);
+  // const [isAdmin, setIsAdmin] = useState(false);
+  const [, setIsAdmin] = useState(false);
+  const isAdmin = true;
 
   const [isPoolManager, setIsPoolManager] = useState(false);
 
