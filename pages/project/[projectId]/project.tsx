@@ -40,7 +40,8 @@ const TransferOwnershipDialog = dynamic(() =>
 function ProjectPage() {
   const project = useProjectStore((state) => state.project);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isOwner = useOwnerStore((state) => state.isOwner);
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
+  const isAuthorized = isContractOwner || isProjectOwner;
   const [isDeleting, setIsDeleting] = useState(false);
   const { address } = useAccount();
   const { chain } = useAccount();
@@ -80,6 +81,11 @@ function ProjectPage() {
       setIsDeleting(false);
     }
   };
+
+  const permissionToRevoke =
+    isContractOwner ||
+    project?.attester?.toLowerCase() === address?.toLowerCase() ||
+    project?.recipient?.toLowerCase() === address?.toLowerCase();
 
   return (
     <div className="flex flex-row max-lg:flex-col gap-4 py-5 mb-20">
@@ -125,7 +131,7 @@ function ProjectPage() {
         </div>
       </div>
       <div className="flex flex-col w-4/12 gap-8 max-lg:w-full">
-        {isProjectOwner || isOwner ? (
+        {isAuthorized ? (
           <div className="flex flex-col gap-2 max-w-full w-full max-lg:max-w-80 2xl:max-w-max">
             <Link
               href={PAGES.PROJECT.IMPACT.ADD_IMPACT(
@@ -156,17 +162,19 @@ function ProjectPage() {
                     "bg-red-600 items-center justify-center hover:bg-red-500",
                 }}
               />
-              <DeleteDialog
-                title="Are you sure you want to delete this project?"
-                deleteFunction={deleteFn}
-                isLoading={isDeleting}
-                buttonElement={{
-                  icon: null,
-                  text: "Delete project",
-                  styleClass:
-                    "bg-red-600 items-center justify-center hover:bg-red-500",
-                }}
-              />
+              {permissionToRevoke ? (
+                <DeleteDialog
+                  title="Are you sure you want to delete this project?"
+                  deleteFunction={deleteFn}
+                  isLoading={isDeleting}
+                  buttonElement={{
+                    icon: null,
+                    text: "Delete project",
+                    styleClass:
+                      "bg-red-600 items-center justify-center hover:bg-red-500",
+                  }}
+                />
+              ) : null}
             </div>
           </div>
         ) : null}

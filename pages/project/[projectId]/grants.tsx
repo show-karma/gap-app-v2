@@ -355,6 +355,11 @@ const GrantsPage = ({
     checkIfAdmin();
   }, [address, grant?.uid, signer, isAuth]);
 
+  const permissionToRevoke =
+    isContractOwner ||
+    grant?.attester?.toLowerCase() === address?.toLowerCase() ||
+    grant?.recipient?.toLowerCase() === address?.toLowerCase();
+
   return (
     <>
       <NextSeo
@@ -540,12 +545,12 @@ const GrantsPage = ({
                   </button>
                 )}
               </div>
-              {isAuthorized && grant ? (
+              {grant ? (
                 <div className="flex flex-row gap-2">
-                  {project ? (
+                  {isAuthorized && project ? (
                     <GrantCompleteButton project={project} grant={grant} />
                   ) : null}
-                  <GrantDelete grant={grant} />
+                  {permissionToRevoke ? <GrantDelete grant={grant} /> : null}
                 </div>
               ) : null}
             </div>

@@ -8,6 +8,7 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { formatDate } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
 import { useCommunityAdminStore } from "@/store/community";
+import { useAccount } from "wagmi";
 
 interface MilestoneDateStatusProps {
   milestone: Milestone;
@@ -109,6 +110,14 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
     (state) => state.isCommunityAdmin
   );
   const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
+
+  const { address } = useAccount();
+
+  const permissionToRevoke =
+    isContractOwner ||
+    milestone?.attester?.toLowerCase() === address?.toLowerCase() ||
+    milestone?.recipient?.toLowerCase() === address?.toLowerCase();
+
   return (
     <div className="flex flex-col gap-2">
       <div className="flex w-full flex-1 flex-col rounded-lg border border-zinc-200 bg-white dark:bg-zinc-800 transition-all duration-200 ease-in-out">
@@ -132,7 +141,9 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
             </div>
             <div className="flex flex-row items-center justify-start gap-2">
               <MilestoneDateStatus milestone={milestone} />
-              {isAuthorized ? <MilestoneDelete milestone={milestone} /> : null}
+              {permissionToRevoke ? (
+                <MilestoneDelete milestone={milestone} />
+              ) : null}
             </div>
           </div>
           <div

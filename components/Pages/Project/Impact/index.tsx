@@ -36,9 +36,9 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
     project?.impacts || []
   );
 
-  const isOwner = useOwnerStore((state) => state.isOwner);
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isAuthorized = isOwner || isProjectOwner;
+  const isAuthorized = isContractOwner || isProjectOwner;
 
   useEffect(() => {
     if (!project || !project.impacts || !project.impacts.length) {
@@ -119,6 +119,11 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
   if (grantScreen === "add-impact" && isAuthorized) {
     return <AddImpactScreen />;
   }
+
+  const permissionToRevoke = (impact: ProjectImpact) =>
+    isContractOwner ||
+    impact?.attester?.toLowerCase() === address?.toLowerCase() ||
+    impact?.recipient?.toLowerCase() === address?.toLowerCase();
 
   return (
     <div className="flex-row gap-4 flex">
@@ -249,13 +254,14 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
                       <td className={cn(cellClasses, "px-3 align-top")}>
                         <ImpactVerifications impact={item} />
                       </td>
-                      {isAuthorized ? (
+                      {permissionToRevoke(item) ? (
                         <td className={cn(cellClasses, "px-3 align-top")}>
                           <Button
                             type="button"
                             className="bg-transparent hover:bg-transparent hover:opacity-75"
                             disabled={
-                              loading[item.uid.toLowerCase()] || !isAuthorized
+                              loading[item.uid.toLowerCase()] ||
+                              !permissionToRevoke(item)
                             }
                             onClick={() => revokeImpact(item)}
                           >
