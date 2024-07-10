@@ -91,11 +91,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   );
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
-  const { address } = useAccount();
-  const permissionToRevoke =
-    isContractOwner ||
-    milestone?.attester?.toLowerCase() === address?.toLowerCase() ||
-    milestone?.recipient?.toLowerCase() === address?.toLowerCase();
+
   const [verifiedMilestones, setVerifiedMilestones] = useState<
     MilestoneCompleted[]
   >(milestone?.verified || []);
@@ -148,28 +144,24 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
             </ReadMore>
 
             <div className="flex w-full flex-row items-center justify-end">
-              {isAuthorized || permissionToRevoke ? (
+              {isAuthorized ? (
                 <div className="flex w-max flex-row items-center gap-2">
-                  {isAuthorized ? (
-                    <Button
-                      type="button"
-                      className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
-                      onClick={() => handleEditing(true)}
-                    >
-                      <PencilSquareIcon className="h-5 w-5" />
-                      Edit
-                    </Button>
-                  ) : null}
-                  {permissionToRevoke ? (
-                    <Button
-                      type="button"
-                      className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
-                      onClick={() => undoMilestoneCompletion(milestone)}
-                    >
-                      <TrashIcon className="h-5 w-5" />
-                      Remove
-                    </Button>
-                  ) : null}
+                  <Button
+                    type="button"
+                    className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
+                    onClick={() => handleEditing(true)}
+                  >
+                    <PencilSquareIcon className="h-5 w-5" />
+                    Edit
+                  </Button>
+                  <Button
+                    type="button"
+                    className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
+                    onClick={() => undoMilestoneCompletion(milestone)}
+                  >
+                    <TrashIcon className="h-5 w-5" />
+                    Remove
+                  </Button>
                 </div>
               ) : null}
             </div>

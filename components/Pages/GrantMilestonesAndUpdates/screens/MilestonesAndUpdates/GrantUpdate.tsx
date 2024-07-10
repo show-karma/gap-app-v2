@@ -146,13 +146,6 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
     setVerifiedUpdate(update?.verified || []);
   }, [update]);
 
-  const { address } = useAccount();
-
-  const permissionToRevoke =
-    isContractOwner ||
-    update?.attester?.toLowerCase() === address?.toLowerCase() ||
-    update?.recipient?.toLowerCase() === address?.toLowerCase();
-
   return (
     <div className="flex w-full flex-1 flex-col gap-4 rounded-lg border border-zinc-200 dark:bg-zinc-800 dark:border-zinc-700 bg-white p-4 transition-all duration-200 ease-in-out  max-sm:px-2">
       <div className="flex flex-row items-center justify-between">
@@ -173,7 +166,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
           <p className="text-sm font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
             Posted on {formatDate(date)}
           </p>
-          {permissionToRevoke ? (
+          {isAuthorized ? (
             <DeleteDialog
               deleteFunction={undoGrantUpdate}
               isLoading={isDeletingGrantUpdate}
