@@ -6,13 +6,14 @@ import formatCurrency from "@/utilities/formatCurrency";
 import { formatNumberPercentage } from "@/utilities/formatNumber";
 import { isDelegateOf } from "@/utilities/karma";
 import { Popover, Transition } from "@headlessui/react";
-import type { Community, Hex } from "@show-karma/karma-gap-sdk";
+import type { Hex } from "@show-karma/karma-gap-sdk";
+import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { type FC, type ReactNode, useEffect, useState, Fragment } from "react";
 
 interface VotingPowerPopoverProps {
   reviewer: string | Hex;
   children: ReactNode;
-  community: Community;
+  community: ICommunityResponse;
 }
 
 export const VotingPowerPopover: FC<VotingPowerPopoverProps> = ({
@@ -28,14 +29,15 @@ export const VotingPowerPopover: FC<VotingPowerPopoverProps> = ({
 
   useEffect(() => {
     const getVotingPower = async () => {
-      if (!community.details?.slug) return;
+      if (!community.details?.data?.slug) return;
       setIsFetching(true);
       try {
         const daoDictionary: Record<string, string> = {
           arb: "arbitrum",
         };
         const data = await isDelegateOf(
-          daoDictionary[community.details?.slug] || community.details?.slug,
+          daoDictionary[community.details?.data?.slug] ||
+            community.details?.data?.slug,
           reviewer
         );
 
@@ -90,7 +92,7 @@ export const VotingPowerPopover: FC<VotingPowerPopoverProps> = ({
                       </p>
                       <div className="px-4 flex flex-col gap-2 items-center rounded-lg transition duration-150 ease-in-out hover:bg-gray-50 focus:outline-none focus-visible:ring focus-visible:ring-orange-500/50">
                         <p className="text-base font-medium text-gray-900 w-full">
-                          Delegate of {community.details?.name}:{" "}
+                          Delegate of {community.details?.data?.name}:{" "}
                           <span>{isDelegate ? "Yes" : "No"}</span>
                         </p>
                         <div className="flex flex-row gap-3 text-base font-medium  text-gray-900">

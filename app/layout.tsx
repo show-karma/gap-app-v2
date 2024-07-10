@@ -23,7 +23,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className="h-full" style={{ scrollBehavior: "smooth" }}>
       <body>
         <ThemeProvider defaultTheme="light" attribute="class">
           <WagmiProvider>

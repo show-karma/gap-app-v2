@@ -17,7 +17,6 @@ import { getGapClient, useGap } from "@/hooks";
 import { Hex } from "viem";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import toast from "react-hot-toast";
-import { useRouter } from "next/router";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { Popover } from "@headlessui/react";
@@ -32,6 +31,7 @@ import { getWalletClient } from "@wagmi/core";
 import { useCommunityAdminStore } from "@/store/community";
 import { useStepper } from "@/store/txStepper";
 import { config } from "@/utilities/wagmi/config";
+import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 const milestoneSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.MILESTONES.FORM.TITLE }),
@@ -65,7 +65,7 @@ const inputStyle =
 type MilestoneType = z.infer<typeof milestoneSchema>;
 
 interface NewMilestoneProps {
-  grant: Grant;
+  grant: IGrantResponse;
 }
 
 export const NewMilestone: FC<NewMilestoneProps> = ({
@@ -164,7 +164,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
               .then(async (fetchedProject) => {
                 const grant = fetchedProject?.grants.find((g) => g.uid === uid);
                 const milestoneExists = grant?.milestones.find(
-                  (g) => g.uid === milestoneToAttest.uid
+                  (g: any) => g.uid === milestoneToAttest.uid
                 );
                 if (milestoneExists) {
                   retries = 0;

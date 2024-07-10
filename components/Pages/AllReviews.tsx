@@ -1,6 +1,5 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { Grant } from "@show-karma/karma-gap-sdk";
 import { Button } from "../Utilities/Button";
 import Pagination from "../Utilities/Pagination";
 import { Spinner } from "../Utilities/Spinner";
@@ -18,9 +17,10 @@ import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { getReviewsOf, getAnonReviewsOf } from "@/utilities/sdk";
+import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 interface GrantAllReviewsProps {
-  grant: Grant | undefined;
+  grant: IGrantResponse | undefined;
 }
 
 type Review = {
@@ -156,7 +156,7 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
       <div className="flex w-full max-w-5xl flex-col gap-8">
         <div className="flex w-full flex-col items-start justify-between gap-6  border-b border-b-zinc-300 pb-8">
           <h2 className="text-2xl font-normal">
-            All reviews of <b>{grant?.details?.title}</b>
+            All reviews of <b>{grant?.details?.data?.title}</b>
           </h2>
           <div className="flex flex-col gap-2">
             <h3 className="text-lg font-bold">Goal of review</h3>
@@ -203,9 +203,9 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
                           {votingPowerCommunities.find(
                             (item) =>
                               item.toLowerCase() ===
-                                grant?.community?.details?.name?.toLowerCase() ||
+                                grant?.community?.details?.data?.name?.toLowerCase() ||
                               item.toLowerCase() ===
-                                grant?.community?.details?.slug?.toLowerCase()
+                                grant?.community?.details?.data?.slug?.toLowerCase()
                           ) ? (
                             grant?.community ? (
                               <VotingPowerPopover
@@ -314,9 +314,9 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
                           {votingPowerCommunities.find(
                             (item) =>
                               item.toLowerCase() ===
-                                grant?.community?.details?.name?.toLowerCase() ||
+                                grant?.community?.details?.data?.name?.toLowerCase() ||
                               item.toLowerCase() ===
-                                grant?.community?.details?.slug?.toLowerCase()
+                                grant?.community?.details?.data?.slug?.toLowerCase()
                           ) ? (
                             grant?.community ? (
                               <VotingPowerPopover
@@ -426,7 +426,7 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
                   {grant && (
                     <Link
                       href={PAGES.PROJECT.TABS.REVIEW_THIS_GRANT(
-                        project?.details?.slug || project?.uid || "",
+                        project?.details?.data?.slug || project?.uid || "",
                         grant?.uid || ""
                       )}
                     >

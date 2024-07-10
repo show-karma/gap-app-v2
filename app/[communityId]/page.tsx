@@ -1,18 +1,15 @@
 import React from "react";
-import { Metadata } from "next";
-import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { Metadata } from "next";
+import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { CommunityGrants } from "@/components/CommunityGrants";
 import { CommunityFeed } from "@/components/CommunityFeed";
 import { communityColors } from "@/utilities/communityColors";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { defaultMetadata } from "@/utilities/meta";
-import { type SortByOptions, type StatusOptions } from "@/types";
+import type { SortByOptions, StatusOptions } from "@/types";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
-import Link from "next/link";
-import { PAGES } from "@/utilities/pages";
-import { communitiesToBulkSubscribe } from "./receive-project-updates/page";
 import { notFound } from "next/navigation";
 
 type Props = {
@@ -86,7 +83,7 @@ export default async function Page({ params }: Props) {
         const [data] = await fetchData(
           INDEXER.COMMUNITY.CATEGORIES(communityId as string)
         );
-        if (data && data.length) {
+        if (data?.length) {
           const categoriesToOrder = data.map(
             (category: { name: string }) => category.name
           );
@@ -121,6 +118,7 @@ export default async function Page({ params }: Props) {
           <div className="flex justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
             <img
+              alt={(community as ICommunityResponse).details?.data.name}
               src={(community as ICommunityResponse)?.details?.data?.imageURL}
               className={
                 "h-14 w-14 rounded-full border border-white p-1 max-lg:h-8 max-lg:w-8"

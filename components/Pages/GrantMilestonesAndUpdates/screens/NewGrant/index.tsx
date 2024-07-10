@@ -47,6 +47,7 @@ import { useCommunitiesStore } from "@/store/communities";
 import { cn } from "@/utilities/tailwind";
 import { useStepper } from "@/store/txStepper";
 import { config } from "@/utilities/wagmi/config";
+import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -130,7 +131,7 @@ const grantSchema = z.object({
 type GrantType = z.infer<typeof grantSchema>;
 
 interface NewGrantProps {
-  grantToEdit?: Grant;
+  grantToEdit?: IGrantResponse;
 }
 
 interface SuccessQuestion {
@@ -202,7 +203,9 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
 
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [description, setDescription] = useState(
-    grantScreen === "edit-grant" ? grantToEdit?.details?.description || "" : ""
+    grantScreen === "edit-grant"
+      ? grantToEdit?.details?.data?.description || ""
+      : ""
   );
   const [grantUpdate, setGrantUpdate] = useState("");
   const [communityNetworkId, setCommunityNetworkId] = useState<number>(
@@ -223,7 +226,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     type: QuestionType,
     questions: string[]
   ): T[] {
-    const hasQuestions = grantToEdit?.details?.questions?.filter(
+    const hasQuestions = grantToEdit?.details?.data?.questions?.filter(
       (item) => item.type === type
     );
     if (grantScreen === "edit-grant" && hasQuestions?.length) {
@@ -257,9 +260,12 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     reValidateMode: "onChange",
     mode: "onChange",
     defaultValues: {
-      title: grantScreen === "edit-grant" ? grantToEdit?.details?.title : "",
-      amount: grantScreen === "edit-grant" ? grantToEdit?.details?.amount : "",
-      community: grantScreen === "edit-grant" ? grantToEdit?.communityUID : "",
+      title:
+        grantScreen === "edit-grant" ? grantToEdit?.details?.data?.title : "",
+      amount:
+        grantScreen === "edit-grant" ? grantToEdit?.details?.data?.amount : "",
+      community:
+        grantScreen === "edit-grant" ? grantToEdit?.data?.communityUID : "",
       // season: grantScreen === "edit-grant" ? grantToEdit?.details?.season : "",
       // cycle: grantScreen === "edit-grant" ? grantToEdit?.details?.cycle : "",
       recipient:
@@ -267,10 +273,12 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           ? grantToEdit?.recipient
           : selectedProject?.recipient,
       linkToProposal:
-        grantScreen === "edit-grant" ? grantToEdit?.details?.proposalURL : "",
+        grantScreen === "edit-grant"
+          ? grantToEdit?.details?.data?.proposalURL
+          : "",
       startDate:
-        grantScreen === "edit-grant" && grantToEdit?.details?.startDate
-          ? new Date(grantToEdit?.details?.startDate * 1000)
+        grantScreen === "edit-grant" && grantToEdit?.details?.data?.startDate
+          ? new Date(grantToEdit?.details?.data?.startDate * 1000)
           : undefined,
       successQuestions: premade<SuccessQuestion>(
         "SUCCESS_MEASURE",
@@ -432,7 +440,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     }
   };
 
-  const updateGrant = async (oldGrant: Grant, data: NewGrantData) => {
+  const updateGrant = async (oldGrant: IGrantResponse, data: NewGrantData) => {
     if (!address || !selectedProject) return;
     let gapClient = gap;
     try {
@@ -441,7 +449,12 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         await switchChainAsync?.({ chainId: oldGrant.chainID });
         gapClient = getGapClient(communityNetworkId);
       }
-      oldGrant.setValues({
+      if (!gapClient) return;
+      const oldGrantInstance = new Grant({
+        ...oldGrant,
+        schema: gapClient.findSchema("Grant"),
+      });
+      oldGrantInstance.setValues({
         communityUID: data.community,
       });
       const grantData = {
@@ -455,14 +468,14 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         questions: data.questions,
         startDate: data.startDate,
       };
-      oldGrant.details?.setValues(grantData);
+      oldGrantInstance.details?.setValues(grantData);
       const walletClient = await getWalletClient(config, {
         chainId: oldGrant.chainID,
       });
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
       const oldGrantData = JSON.parse(JSON.stringify(oldGrant.details?.data));
-      await oldGrant.details
+      await oldGrantInstance.details
         ?.attest(walletSigner as any, changeStepperStep)
         .then(async () => {
           // eslint-disable-next-line no-param-reassign
@@ -502,7 +515,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
               await refreshProject().then(() => {
                 router.push(
                   PAGES.PROJECT.GRANT(
-                    selectedProject.details?.slug || selectedProject.uid,
+                    selectedProject.details?.data?.slug || selectedProject.uid,
                     oldGrant.uid
                   )
                 );
@@ -667,19 +680,19 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       }
     }
     const communityIdEdit =
-      grantScreen === "edit-grant" ? grantToEdit?.communityUID : null;
+      grantScreen === "edit-grant" ? grantToEdit?.data?.communityUID : null;
     if (
       isCommunityAdminOfSome &&
       allCommunities.length &&
       (community || communityIdEdit)
     ) {
-      checkCommunityAdmin(community || communityIdEdit);
+      checkCommunityAdmin(community || communityIdEdit || "");
     }
   }, [
     isCommunityAdminOfSome,
     community,
     grantScreen,
-    grantToEdit?.communityUID,
+    grantToEdit?.data?.communityUID,
     allCommunities,
     address,
   ]);
@@ -724,7 +737,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
               if (!grantToEdit) {
                 router.push(
                   PAGES.PROJECT.GRANTS(
-                    selectedProject.details?.slug || selectedProject?.uid
+                    selectedProject.details?.data?.slug || selectedProject?.uid
                   )
                 );
                 return;
@@ -756,7 +769,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
               onSelectFunction={setCommunityValue}
               previousValue={
                 grantScreen === "edit-grant"
-                  ? grantToEdit?.communityUID
+                  ? grantToEdit?.data?.communityUID
                   : undefined
               }
               communities={allCommunities}
@@ -1063,7 +1076,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
               if (!grantToEdit) {
                 router.push(
                   PAGES.PROJECT.GRANTS(
-                    selectedProject.details?.slug || selectedProject?.uid
+                    selectedProject.details?.data?.slug || selectedProject?.uid
                   )
                 );
                 return;

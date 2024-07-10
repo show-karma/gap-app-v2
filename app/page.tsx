@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import React, { useState } from "react";
+import React, { Suspense, useState } from "react";
 import Link from "next/link";
 import { PlusIcon } from "@heroicons/react/24/solid";
 import { CloudArrowUpIcon, LockClosedIcon } from "@heroicons/react/20/solid";
@@ -10,7 +10,8 @@ import { chosenCommunities } from "@/utilities/chosenCommunities";
 import { PAGES } from "@/utilities/pages";
 import { defaultMetadata } from "@/utilities/meta";
 import { ImageTheme } from "@/components/Utilities/ImageTheme";
-import { ReactTypedWrapper } from "@/components/Pages/Home/ReactTypedWrapp";
+import { TypedLoading } from "@/components/Pages/Home/ReactTypedWrapp";
+// import { ReactTypedWrapper } from "@/components/Pages/Home/ReactTypedWrapp";
 
 const ProjectDialog = dynamic(
   () =>
@@ -18,6 +19,13 @@ const ProjectDialog = dynamic(
       (mod) => mod.ProjectDialog
     ),
   { ssr: false }
+);
+const ReactTypedWrapper = dynamic(
+  () =>
+    import("@/components/Pages/Home/ReactTypedWrapp").then(
+      (mod) => mod.ReactTypedWrapper
+    ),
+  { ssr: false, loading: () => <TypedLoading /> }
 );
 
 const Presentation = () => {

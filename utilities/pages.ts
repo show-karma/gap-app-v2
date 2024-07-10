@@ -1,6 +1,6 @@
 export const PAGES = {
   HOME: `/`,
-  NOT_FOUND: `/404`,
+  NOT_FOUND: `/not-found`,
   COMMUNITY: {
     ALL_GRANTS: (community: string) => `/${community}`,
     RECEIVEPROJECTUPDATES: (community: string) =>

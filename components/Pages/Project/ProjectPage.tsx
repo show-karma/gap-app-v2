@@ -1,10 +1,11 @@
+"use client";
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 import { useProjectStore } from "@/store";
 import { useOwnerStore } from "@/store/owner";
 import { useState } from "react";
 import { useAccount, useSwitchChain } from "wagmi";
 import toast from "react-hot-toast";
-import { useRouter } from "next/router";
+import { useParams, useRouter } from "next/navigation";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import dynamic from "next/dynamic";
 import { useGap } from "@/hooks";
@@ -18,6 +19,7 @@ import Link from "next/link";
 import { EndorsementList } from "@/components/Pages/Project/Impact/EndorsementList";
 import { useStepper } from "@/store/txStepper";
 import { config } from "@/utilities/wagmi/config";
+import { getProjectById } from "@/utilities/sdk";
 
 const ProjectDialog = dynamic(
   () =>
@@ -47,7 +49,8 @@ function ProjectPage() {
   const { switchChainAsync } = useSwitchChain();
   const router = useRouter();
   const { gap } = useGap();
-  const projectId = router.query.projectId as string;
+  const params = useParams();
+  const projectId = params.projectId as string;
   const { changeStepperStep, setIsStepper } = useStepper();
   const contactsInfo = useProjectStore((state) => state.projectContactsInfo);
 
@@ -63,8 +66,10 @@ function ProjectPage() {
       });
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
+      const fetchedProject = await getProjectById(projectId);
+      if (!fetchedProject) return;
       await deleteProject(
-        project,
+        fetchedProject,
         walletSigner,
         gap,
         router,
@@ -98,13 +103,13 @@ function ProjectPage() {
           </p>
         </div>
 
-        {project?.details?.tags.length ? (
+        {project?.details?.data?.tags?.length ? (
           <div className="flex flex-col gap-2">
             <div className="mt-8 text-base font-bold leading-normal text-gray-900 dark:text-zinc-100">
               Categories
             </div>
             <div className="flex items-center gap-x-1">
-              {project?.details?.tags?.map((tag) => (
+              {project?.details?.data?.tags?.map((tag) => (
                 <span
                   key={tag.name}
                   className="rounded bg-gray-100 px-2 py-1 text-sm  font-normal text-slate-700"
@@ -121,7 +126,7 @@ function ProjectPage() {
         </div>
 
         <div className="mt-2 space-y-5 ">
-          <MarkdownPreview source={project?.details?.description} />
+          <MarkdownPreview source={project?.details?.data?.description} />
         </div>
       </div>
       <div className="flex flex-col w-4/12 gap-8 max-lg:w-full">
@@ -129,7 +134,7 @@ function ProjectPage() {
           <div className="flex flex-col gap-2 max-w-full w-full max-lg:max-w-80 2xl:max-w-max">
             <Link
               href={PAGES.PROJECT.IMPACT.ADD_IMPACT(
-                project?.details?.slug || projectId
+                project?.details?.data?.slug || projectId
               )}
             >
               <Button className="bg-brand-blue text-white hover:bg-black dark:bg-zinc-800 w-full items-center flex flex-row justify-center max-w-full">

@@ -8,10 +8,6 @@ import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
 import { TrashIcon } from "@heroicons/react/24/outline";
-import {
-  GrantUpdateStatus,
-  GrantUpdate as Update,
-} from "@show-karma/karma-gap-sdk";
 import { getWalletClient } from "@wagmi/core";
 import { useEffect, useState, type FC } from "react";
 import toast from "react-hot-toast";
@@ -22,6 +18,12 @@ import { useStepper } from "@/store/txStepper";
 import { Hex } from "viem";
 import { config } from "@/utilities/wagmi/config";
 import { useAccount, useSwitchChain } from "wagmi";
+import {
+  IGrantUpdate,
+  IGrantUpdateStatus,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { GrantUpdate as GrantUpdateClass } from "@show-karma/karma-gap-sdk";
 
 interface UpdateTagProps {
   index: number;
@@ -61,7 +63,7 @@ interface GrantUpdateProps {
   description: string;
   index: number;
   date: Date | number;
-  update: Update;
+  update: IGrantUpdate;
 }
 
 export const GrantUpdate: FC<GrantUpdateProps> = ({
@@ -91,9 +93,13 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
       const walletClient = await getWalletClient(config, {
         chainId: update.chainID,
       });
-      if (!walletClient) return;
+      if (!walletClient || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      await update
+      const grantUpdateInstance = new GrantUpdateClass({
+        ...update,
+        schema: gapClient.findSchema("GrantUpdate"),
+      });
+      await grantUpdateInstance
         .revoke(walletSigner as any, changeStepperStep)
         .then(async () => {
           let retries = 1000;
@@ -134,11 +140,11 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
 
   const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
 
-  const [verifiedUpdate, setVerifiedUpdate] = useState<GrantUpdateStatus[]>(
+  const [verifiedUpdate, setVerifiedUpdate] = useState<IGrantUpdateStatus[]>(
     update?.verified || []
   );
 
-  const addVerifiedUpdate = (newVerified: GrantUpdateStatus) => {
+  const addVerifiedUpdate = (newVerified: IGrantUpdateStatus) => {
     setVerifiedUpdate([...verifiedUpdate, newVerified]);
   };
 
@@ -172,7 +178,8 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
               isLoading={isDeletingGrantUpdate}
               title={
                 <p className="font-normal">
-                  Are you sure you want to delete <b>{update.title}</b> update?
+                  Are you sure you want to delete <b>{update.data.title}</b>{" "}
+                  update?
                 </p>
               }
               buttonElement={{

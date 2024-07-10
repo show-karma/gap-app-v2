@@ -8,7 +8,7 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 import fetchData from "@/utilities/fetchData";
-import { useRouter } from "next/router";
+import { useParams } from "next/navigation";
 import { useAuthStore } from "@/store/auth";
 import { useAuth } from "@/hooks/useAuth";
 import { INDEXER } from "@/utilities/indexer";
@@ -30,8 +30,8 @@ export const CategoryCreationDialog: FC<CategoryCreationDialogProps> = ({
 }) => {
   let [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
-  const communityId = router.query.communityId as string;
+  const params = useParams();
+  const communityId = params.communityId as string;
 
   const {
     register,

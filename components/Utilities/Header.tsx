@@ -39,13 +39,14 @@ const ProjectDialog = dynamic(
 );
 
 const buttonStyle: HTMLButtonElement["className"] =
-  " rounded-md bg-white w-max dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 hover:bg-transparent dark:hover:bg-opacity-75 dark:border-zinc-900";
+  "rounded-md bg-white w-max dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 hover:bg-transparent dark:hover:bg-opacity-75 dark:border-zinc-900";
 
 export default function Header() {
   const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
   const { isConnected, address } = useAccount();
   const { isAuth, isAuthenticating } = useAuthStore();
   const { communities, setCommunities, setIsLoading } = useCommunitiesStore();
+
   const signer = useSigner();
 
   const isCommunityAdmin = communities.length !== 0;
@@ -67,7 +68,6 @@ export default function Header() {
     setIsLoading(false);
   };
 
-  const isOwner = useOwnerStore((state) => state.isOwner);
   const setIsOwner = useOwnerStore((state) => state.setIsOwner);
   const setIsOwnerLoading = useOwnerStore((state) => state.setIsOwnerLoading);
 
@@ -235,9 +235,7 @@ export default function Header() {
                               </button>
                             </Link>
                           )}
-                          {(isCommunityAdmin || isOwner) &&
-                          isConnected &&
-                          isAuth ? (
+                          {isCommunityAdmin && isConnected && isAuth ? (
                             <Link href={PAGES.ADMIN.LIST}>
                               <button className="rounded-md w-full bg-white dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
                                 Admin
@@ -343,7 +341,7 @@ export default function Header() {
               {/* <div className="rounded-none h-10 w-[1px] bg-zinc-300 mx-2" /> */}
               {isReady ? (
                 <>
-                  {(isCommunityAdmin || isOwner) && isConnected && isAuth ? (
+                  {isCommunityAdmin && isConnected && isAuth ? (
                     <Link href={PAGES.ADMIN.LIST}>
                       <button className={buttonStyle}>Admin</button>
                     </Link>

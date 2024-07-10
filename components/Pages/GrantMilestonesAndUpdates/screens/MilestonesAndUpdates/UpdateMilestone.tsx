@@ -9,7 +9,7 @@ import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
-import type { Milestone } from "@show-karma/karma-gap-sdk";
+import { Milestone } from "@show-karma/karma-gap-sdk";
 import { getWalletClient } from "@wagmi/core";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";
@@ -17,9 +17,11 @@ import { useAccount, useSwitchChain } from "wagmi";
 import { ShareDialog } from "./ShareDialog";
 import { useStepper } from "@/store/txStepper";
 import { config } from "@/utilities/wagmi/config";
+import { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { getGapClient, useGap } from "@/hooks";
 
 interface NotUpdatingCaseProps {
-  milestone: Milestone;
+  milestone: IMilestoneResponse;
   isAuthorized: boolean;
   setIsUpdating: (value: boolean) => void;
 }
@@ -48,7 +50,7 @@ const NotUpdatingCase: FC<NotUpdatingCaseProps> = ({
 };
 
 interface UpdateMilestoneProps {
-  milestone: Milestone;
+  milestone: IMilestoneResponse;
   isEditing: boolean;
   previousDescription?: string;
   cancelEditing: (value: boolean) => void;
@@ -85,10 +87,14 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
     cancelEditing(false);
     setIsUpdating(false);
   };
-
+  const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
 
-  const completeMilestone = async (milestone: Milestone, text?: string) => {
+  const completeMilestone = async (
+    milestone: IMilestoneResponse,
+    text?: string
+  ) => {
+    let gapClient = gap;
     try {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
         await switchChainAsync?.({ chainId: milestone.chainID });
@@ -98,7 +104,11 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
       });
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      await milestone
+      const milestoneInstance = new Milestone({
+        ...milestone,
+        schema: gapClient!.findSchema("Milestone"),
+      });
+      await milestoneInstance
         .complete(walletSigner, text, changeStepperStep)
         .then(async () => {
           let retries = 1000;
@@ -111,7 +121,7 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
                 );
 
                 const fetchedMilestone = foundGrant?.milestones.find(
-                  (u) => u.uid === milestone.uid
+                  (u: any) => u.uid === milestone.uid
                 );
 
                 const isCompleted = fetchedMilestone?.completed;
@@ -142,19 +152,25 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
   };
 
   const updateMilestoneCompletion = async (
-    milestone: Milestone,
+    milestone: IMilestoneResponse,
     text?: string
   ) => {
+    let gapClient = gap;
     try {
       if (chain?.id !== milestone.chainID) {
         await switchChainAsync?.({ chainId: milestone.chainID });
+        gapClient = getGapClient(milestone.chainID);
       }
       const walletClient = await getWalletClient(config, {
         chainId: milestone.chainID,
       });
-      if (!walletClient) return;
+      if (!walletClient || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      await milestone
+      const milestoneInstance = new Milestone({
+        ...milestone,
+        schema: gapClient.findSchema("Milestone"),
+      });
+      await milestoneInstance
         .complete(walletSigner, text, changeStepperStep)
         .then(async () => {
           let retries = 1000;
@@ -167,7 +183,7 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
                 );
 
                 const fetchedMilestone = foundGrant?.milestones.find(
-                  (u) => u.uid === milestone.uid
+                  (u: any) => u.uid === milestone.uid
                 );
 
                 const isSame =
@@ -221,7 +237,7 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
     <div className="flex w-full flex-col">
       {milestone.refUID && isDialogOpen ? (
         <ShareDialog
-          milestoneName={milestone.title}
+          milestoneName={milestone.data.title}
           closeDialog={closeDialog}
           isOpen={isDialogOpen}
           milestoneRefUID={milestone.refUID as string}

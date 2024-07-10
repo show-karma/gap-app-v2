@@ -1,21 +1,67 @@
 "use client";
-
+import { useOwnerStore, useProjectStore } from "@/store";
 import formatCurrency from "@/utilities/formatCurrency";
+import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useParams, usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export const ProjectNavigator = ({
-  tabs,
   hasContactInfo,
   grantsLength,
 }: {
-  tabs: { name: string; href: string }[];
   hasContactInfo: boolean;
   grantsLength: number;
 }) => {
   const pathname = usePathname();
+  const projectId = useParams().projectId as string;
+  const project = useProjectStore((state) => state.project);
+  const publicTabs = [
+    {
+      name: "Project",
+      href: PAGES.PROJECT.OVERVIEW(project?.details?.data?.slug || projectId),
+    },
+    {
+      name: "Grants",
+      href: PAGES.PROJECT.GRANTS(project?.details?.data?.slug || projectId),
+    },
+    // {
+    //   name: "Team",
+    //   href: PAGES.PROJECT.TEAM(project?.details?.data?.slug || projectId),
+    // },
+    {
+      name: "Impact",
+      href: PAGES.PROJECT.IMPACT.ROOT(
+        project?.details?.data?.slug || projectId
+      ),
+    },
+  ];
+  const [tabs, setTabs] = useState<typeof publicTabs>(publicTabs);
+
+  const isOwner = useOwnerStore((state) => state.isOwner);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+
+  const isAuthorized = isOwner || isProjectOwner;
+  useEffect(() => {
+    const mountTabs = () => {
+      if (isAuthorized) {
+        setTabs([
+          ...publicTabs,
+          {
+            name: "Contact Info",
+            href: PAGES.PROJECT.CONTACT_INFO(
+              project?.details?.data.slug || projectId
+            ),
+          },
+        ]);
+      } else {
+        setTabs(publicTabs);
+      }
+    };
+    mountTabs();
+  }, [isAuthorized, project]);
   return (
     <nav className="gap-10 flex flex-row w-full items-center max-lg:gap-8 overflow-x-auto">
       {tabs.map((tab) => (

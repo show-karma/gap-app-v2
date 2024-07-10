@@ -2,8 +2,6 @@
 /* eslint-disable no-nested-ternary */
 
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import type { Grant } from "@show-karma/karma-gap-sdk";
-import { Switch } from "@headlessui/react";
 import { type FC, useEffect, useState, Suspense } from "react";
 import { useAccount } from "wagmi";
 
@@ -22,9 +20,10 @@ import { additionalQuestion } from "@/utilities/tabs";
 import { MESSAGES } from "@/utilities/messages";
 import { useAuthStore } from "@/store/auth";
 import { useSearchParams } from "next/navigation";
+import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 interface ReviewGrantProps {
-  grant: Grant | undefined;
+  grant: IGrantResponse | undefined;
 }
 
 function classNames(...classes: any) {

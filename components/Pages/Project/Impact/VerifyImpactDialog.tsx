@@ -20,19 +20,21 @@ import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { MESSAGES } from "@/utilities/messages";
 import { getGapClient, useGap } from "@/hooks";
-import {
-  ProjectImpact,
-  ProjectImpactStatus,
-} from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
+
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useStepper } from "@/store/txStepper";
 import { useProjectStore } from "@/store";
 import { Hex } from "viem";
 import { config } from "@/utilities/wagmi/config";
+import { getProjectById } from "@/utilities/sdk";
+import {
+  IProjectImpact,
+  IProjectImpactStatus,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 type VerifyImpactDialogProps = {
-  impact: ProjectImpact;
-  addVerification: (newVerified: ProjectImpactStatus) => void;
+  impact: IProjectImpact;
+  addVerification: (newVerified: IProjectImpactStatus) => void;
 };
 
 const schema = z.object({
@@ -84,16 +86,24 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
     if (!gap) throw new Error("Please, connect a wallet");
     try {
       setIsLoading(true);
-      if (!checkNetworkIsValid(chain?.id) || chain?.id !== impact.chainID) {
-        await switchChainAsync?.({ chainId: impact.chainID });
-        gapClient = getGapClient(impact.chainID);
+      const fetchedProject = await getProjectById(project!.uid);
+      const findImpact = fetchedProject?.impacts?.find(
+        (imp) => imp.uid === (impact.uid as string)
+      );
+      if (!findImpact) return;
+      if (
+        !checkNetworkIsValid(chain?.id) ||
+        chain?.id !== findImpact!.chainID
+      ) {
+        await switchChainAsync?.({ chainId: findImpact!.chainID });
+        gapClient = getGapClient(findImpact!.chainID);
       }
       const walletClient = await getWalletClient(config, {
-        chainId: impact.chainID,
+        chainId: findImpact!.chainID,
       });
       if (!walletClient || !address || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      await impact
+      await findImpact
         .verify(walletSigner, data.comment, changeStepperStep)
         .then(async () => {
           if (!project) return;

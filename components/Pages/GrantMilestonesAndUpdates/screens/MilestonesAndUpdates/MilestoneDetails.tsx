@@ -1,6 +1,5 @@
 "use client";
 
-import type { Milestone } from "@show-karma/karma-gap-sdk";
 import { type FC } from "react";
 import { Updates } from "./Updates";
 import { MilestoneDelete } from "./MilestoneDelete";
@@ -8,9 +7,10 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { formatDate } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
 import { useCommunityAdminStore } from "@/store/community";
+import { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 interface MilestoneDateStatusProps {
-  milestone: Milestone;
+  milestone: IMilestoneResponse;
 }
 
 const statusDictionary = {
@@ -56,7 +56,7 @@ export const MilestoneDateStatus: FC<MilestoneDateStatusProps> = ({
     if (milestone.approved) return "approved";
     if (milestone.rejected) return "rejected";
     if (milestone.completed) return "completed";
-    if (milestone.endsAt < Date.now() / 1000) return "past due";
+    if (milestone.data.endsAt < Date.now() / 1000) return "past due";
     return "pending";
   };
 
@@ -64,12 +64,12 @@ export const MilestoneDateStatus: FC<MilestoneDateStatusProps> = ({
 
   return (
     <div className="flex w-max flex-row items-center justify-center gap-4 max-lg:justify-start">
-      <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">
-        {milestone.startsAt
-          ? `${formatDate(milestone.startsAt * 1000)} - ${formatDate(
-              milestone.endsAt * 1000
+      <p className="text-sm font-semibold text-gray-500 dark:text-gray-4000">
+        {milestone.data.startsAt
+          ? `${formatDate(milestone.data.startsAt * 1000)} - ${formatDate(
+              milestone.data.endsAt * 1000
             )}`
-          : `Due on ${formatDate(milestone.endsAt * 1000)}`}
+          : `Due on ${formatDate(milestone.data.endsAt * 1000)}`}
       </p>
       <div
         className={`flex items-center justify-start rounded-2xl px-2 py-1 ${statusBg[status]}`}
@@ -95,7 +95,7 @@ export const MilestoneTag: FC<MilestoneTagProps> = ({ index }) => {
 };
 
 interface MilestoneDetailsProps {
-  milestone: Milestone;
+  milestone: IMilestoneResponse;
   index: number;
 }
 
@@ -109,6 +109,7 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
     (state) => state.isCommunityAdmin
   );
   const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
+  console.log(milestone);
   return (
     <div className="flex flex-col gap-2">
       <div className="flex w-full flex-1 flex-col rounded-lg border border-zinc-200 bg-white dark:bg-zinc-800 transition-all duration-200 ease-in-out">
@@ -117,7 +118,7 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
           style={{
             borderBottom:
               (isAuthorized && !milestone.completed) ||
-              milestone?.completed?.reason ||
+              milestone?.completed?.data?.reason ||
               (isCommunityAdmin && !milestone?.completed)
                 ? "1px solid #CCCCCC"
                 : "none",
@@ -127,7 +128,7 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
             <div className="flex flex-col gap-3">
               <MilestoneTag index={index} />
               <h4 className="text-base font-bold leading-normal text-black dark:text-zinc-100">
-                {milestone.title}
+                {milestone.data.title}
               </h4>
             </div>
             <div className="flex flex-row items-center justify-start gap-2">
@@ -143,12 +144,12 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
               readLessText="Read less milestone description"
               readMoreText="Read full milestone description"
             >
-              {milestone.description}
+              {milestone.data.description}
             </ReadMore>
           </div>
         </div>
         {((isAuthorized && !milestone?.completed) ||
-          milestone?.completed?.reason) && (
+          milestone?.completed?.data?.reason) && (
           <div className="mx-6 mt-4 rounded-lg bg-transparent pb-4">
             <Updates milestone={milestone} />
           </div>

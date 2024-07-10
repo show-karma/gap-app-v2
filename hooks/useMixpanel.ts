@@ -1,3 +1,4 @@
+"use client";
 import mp, { Mixpanel } from "mixpanel-browser";
 import { useEffect, useState } from "react";
 

@@ -7,7 +7,6 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/auth";
-import { GrantUpdate, GrantUpdateStatus } from "@show-karma/karma-gap-sdk";
 import { useAccount, useSwitchChain } from "wagmi";
 import { getWalletClient } from "@wagmi/core";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -17,10 +16,15 @@ import { getGapClient, useGap } from "@/hooks";
 import { useStepper } from "@/store/txStepper";
 import { useProjectStore } from "@/store";
 import { config } from "@/utilities/wagmi/config";
+import {
+  IGrantUpdate,
+  IGrantUpdateStatus,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { GrantUpdate } from "@show-karma/karma-gap-sdk";
 
 type VerifyGrantUpdateDialogProps = {
-  grantUpdate: GrantUpdate;
-  addVerifiedUpdate: (newVerified: GrantUpdateStatus) => void;
+  grantUpdate: IGrantUpdate;
+  addVerifiedUpdate: (newVerified: IGrantUpdateStatus) => void;
 };
 
 const schema = z.object({
@@ -60,6 +64,7 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
   const { chain } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const { gap } = useGap();
+  const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const { changeStepperStep, setIsStepper } = useStepper();
 
@@ -80,7 +85,13 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
       });
       if (!walletClient || !address || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      await grantUpdate
+
+      const instanceGrantUpdate = new GrantUpdate({
+        ...grantUpdate,
+        chainID: grantUpdate.chainID,
+        schema: gapClient.findSchema("GrantUpdate"),
+      });
+      await instanceGrantUpdate
         .verify(walletSigner, data.comment, changeStepperStep)
         .then(async () => {
           let retries = 1000;
@@ -93,11 +104,12 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
                 );
 
                 const fetchedGrantUpdate = foundGrant?.updates.find(
-                  (u) => u.uid === grantUpdate.uid
+                  (u: any) => u.uid === grantUpdate.uid
                 );
 
                 const alreadyExists = fetchedGrantUpdate?.verified?.find(
-                  (v) => v.attester?.toLowerCase() === address?.toLowerCase()
+                  (v: any) =>
+                    v.attester?.toLowerCase() === address?.toLowerCase()
                 );
 
                 if (alreadyExists) {

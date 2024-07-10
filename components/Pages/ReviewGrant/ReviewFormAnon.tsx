@@ -280,7 +280,7 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
       console.log(error);
       toast.error(
         MESSAGES.GRANT.REVIEW.ERROR(
-          project?.details?.title as string,
+          project?.details?.data?.title as string,
           grant.details?.title as string
         )
       );
@@ -301,7 +301,7 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
         if (data?.success == true) {
           toast.success(
             MESSAGES.GRANT.REVIEW.SUCCESS(
-              project?.details?.title as string,
+              project?.details?.data?.title as string,
               grant.details?.title as string
             )
           );
@@ -309,7 +309,7 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
         } else {
           toast.error(
             MESSAGES.GRANT.REVIEW.ANON_REVIEW_ALREADY_EXISTS(
-              project?.details?.title as string,
+              project?.details?.data?.title as string,
               grant.details?.title as string
             )
           );
@@ -319,7 +319,7 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
         console.log("Error in storing anon reviews: ", error);
         toast.error(
           MESSAGES.GRANT.REVIEW.ERROR(
-            project?.details?.title as string,
+            project?.details?.data?.title as string,
             grant.details?.title as string
           )
         );

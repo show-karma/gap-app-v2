@@ -1,4 +1,3 @@
-import type { Grant } from "@show-karma/karma-gap-sdk/core/class/entities/Grant";
 import pluralize from "pluralize";
 import { type FC, useEffect, useMemo, useState, use } from "react";
 
@@ -7,13 +6,11 @@ import { Button } from "@/components/Utilities/Button";
 import { useAccount } from "wagmi";
 import { GrantUpdate } from "./GrantUpdate";
 import { MilestoneDetails } from "./MilestoneDetails";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
-import { isCommunityAdminOf } from "@/utilities/sdk";
 import { cn } from "@/utilities/tailwind";
-import { useCommunityAdminStore } from "@/store/community";
+import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 interface MilestonesListProps {
-  grant: Grant;
+  grant: IGrantResponse;
 }
 
 type Tab = "completed" | "pending" | "all";
@@ -93,7 +90,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
       grant.milestones?.forEach((milestone) => {
         merged.push({
           object: milestone,
-          date: milestone.endsAt || milestone.createdAt,
+          date: milestone.data.endsAt || milestone.createdAt,
           type: "milestone",
         });
       });

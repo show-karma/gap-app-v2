@@ -1,4 +1,7 @@
-import { ReceiveProjectUpdates } from "@/components/Pages/ReceiveProjectUpdates";
+import {
+  ReceiveProjectUpdates,
+  communitiesToBulkSubscribe,
+} from "@/components/Pages/ReceiveProjectUpdates";
 import { zeroUID } from "@/utilities/commons";
 import { defaultMetadata } from "@/utilities/meta";
 import { getMetadata } from "@/utilities/sdk";
@@ -6,8 +9,6 @@ import type { ICommunityDetails } from "@show-karma/karma-gap-sdk";
 import { Hex } from "viem";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-
-export const communitiesToBulkSubscribe = ["gitcoin"];
 
 type Props = {
   params: {

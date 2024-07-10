@@ -1,8 +1,8 @@
-import { Grant } from "@show-karma/karma-gap-sdk";
 import { MilestonesAndUpdates } from "./screens/MilestonesAndUpdates";
+import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 interface GrantMilestonesAndUpdatesProps {
-  grant: Grant | undefined;
+  grant: IGrantResponse | undefined;
 }
 
 export const GrantMilestonesAndUpdates = ({

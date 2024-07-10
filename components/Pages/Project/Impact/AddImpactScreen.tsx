@@ -94,6 +94,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
         proof,
         startedAt: startedAt.getTime() / 1000,
         completedAt: completedAt.getTime() / 1000,
+        verified: [],
       };
       const newImpact = new ProjectImpact({
         data: dataToAttest,

@@ -4,7 +4,7 @@ import React, { useEffect, useMemo } from "react";
 import { Fragment, useState } from "react";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
 import { Listbox, Transition } from "@headlessui/react";
-import { useSearchParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { Hex } from "viem";
 import { getGrants } from "@/utilities/sdk/communities/getGrants";
 import type { Grant } from "@show-karma/karma-gap-sdk";
@@ -44,8 +44,8 @@ export const CommunityGrants = ({
   defaultSortBy,
   defaultSelectedStatus,
 }: CommunityGrantsProps) => {
-  const searchParams = useSearchParams();
-  const communityId = searchParams.get("communityId") as string;
+  const params = useParams();
+  const communityId = params.communityId as string;
 
   const [currentPage, setCurrentPage] = useState(0);
 

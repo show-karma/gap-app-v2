@@ -1,13 +1,13 @@
 import { Abi, encodeFunctionData } from "viem";
-import { frames } from "../frame";
 import { transaction } from "frames.js/core";
 import { Networks } from "@show-karma/karma-gap-sdk";
 import { ethers } from "ethers";
 import { getChainNameById } from "@/utilities/network";
 import { DonationsABI } from "../../../../../utilities/donations/abi";
 import { SchemaEncoder } from "@ethereum-attestation-service/eas-sdk";
+import { frames } from "@/utilities/frames";
 
-export const handleRequest = frames(async (ctx) => {
+const handleRequest = frames(async (ctx) => {
   console.log(ctx.message?.inputText);
   const EtherToWei = ethers.parseUnits(
     ctx.message?.inputText as string,
@@ -83,4 +83,5 @@ export const handleRequest = frames(async (ctx) => {
   });
 });
 
-export default handleRequest;
+export const GET = handleRequest;
+export const POST = handleRequest;

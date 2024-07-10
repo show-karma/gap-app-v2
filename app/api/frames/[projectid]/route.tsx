@@ -1,10 +1,6 @@
-import { getProjectById } from "@/utilities/sdk";
-import { INDEXER } from "@/utilities/indexer";
-import fetchData from "@/utilities/fetchData";
 import { Button } from "frames.js/next/pages-router/server";
-import { frames } from "./frame";
-import { getGapClient } from "@/hooks";
 import { envVars } from "@/utilities/enviromentVars";
+import { frames } from "@/utilities/frames";
 
 const handleRequest = frames(async (ctx) => {
   const url = new URL(ctx.request.url);
@@ -144,4 +140,5 @@ const handleRequest = frames(async (ctx) => {
   }
 });
 
-export default handleRequest;
+export const GET = handleRequest;
+export const POST = handleRequest;

@@ -3,7 +3,7 @@
 import { Feed } from "@/types";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { useRouter } from "next/router";
+import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Spinner } from "./Utilities/Spinner";
 import { ExternalLink } from "./Utilities/ExternalLink";
@@ -21,8 +21,8 @@ interface ProjectFeedProps {
 }
 
 export const ProjectFeed = ({ initialFeed = [] }: ProjectFeedProps) => {
-  const router = useRouter();
-  const projectId = router.query.projectId; // Get the projectId from the URL
+  const params = useParams();
+  const projectId = params.projectId; // Get the projectId from the URL
 
   const [feed, setFeed] = useState<Feed[]>(initialFeed); // Set the initial feed state to an empty array
   const [feedLoading, setFeedLoading] = useState<boolean>(false); // Set the initial loading state to true

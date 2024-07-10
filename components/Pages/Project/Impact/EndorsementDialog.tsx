@@ -94,7 +94,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = ({
               changeStepperStep("indexed");
               router.push(
                 PAGES.PROJECT.OVERVIEW(
-                  (project.details?.slug || project?.uid) as string
+                  (project.details?.data?.slug || project?.uid) as string
                 )
               );
             }
@@ -149,7 +149,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = ({
                   >
                     You are endorsing{" "}
                     <b>
-                      {project?.details?.title ||
+                      {project?.details?.data?.title ||
                         (project?.uid
                           ? shortAddress(project?.uid as string)
                           : "this project")}
