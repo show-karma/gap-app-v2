@@ -35,9 +35,9 @@ const links = {
   funding_block: "https://tally.so/r/w2rJ8M",
   add_program: "https://gap.karmahq.xyz/funding-map/add-program",
   cryptographer:
-    "https://www.notion.so/sovs/Onchain-Grant-Registry-8fde2610cf6c4422a07216d4b2506c73",
-  notion:
     "https://sovs.notion.site/Cartographer-Syndicate-a574b48ae162451cb73c17326f471b6a",
+  notion:
+    "https://www.notion.so/sovs/Onchain-Grant-Registry-8fde2610cf6c4422a07216d4b2506c73",
 };
 
 export const ProgramsExplorer = () => {
