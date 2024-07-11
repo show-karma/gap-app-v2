@@ -86,12 +86,17 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
       if (!walletClient || !address || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
 
-      const instanceGrantUpdate = new GrantUpdate({
-        ...grantUpdate,
-        chainID: grantUpdate.chainID,
-        schema: gapClient.findSchema("GrantUpdate"),
-      });
-      await instanceGrantUpdate
+      const fetchedProject = await gapClient.fetch.projectById(project?.uid);
+      if (!fetchedProject) return;
+      const grantInstance = fetchedProject.grants.find(
+        (g) => g.uid.toLowerCase() === grantUpdate.refUID.toLowerCase()
+      );
+      if (!grantInstance) return;
+      const grantUpdateInstance = grantInstance.updates.find(
+        (u) => u.uid.toLowerCase() === grantUpdate.uid.toLowerCase()
+      );
+      if (!grantUpdateInstance) return;
+      await grantUpdateInstance
         .verify(walletSigner, data.comment, changeStepperStep)
         .then(async () => {
           let retries = 1000;

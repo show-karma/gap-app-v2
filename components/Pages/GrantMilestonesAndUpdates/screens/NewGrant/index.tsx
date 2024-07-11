@@ -40,14 +40,18 @@ import { Popover } from "@headlessui/react";
 import { DayPicker } from "react-day-picker";
 import { useAuthStore } from "@/store/auth";
 import { formatDate } from "@/utilities/formatDate";
-import { isCommunityAdminOf } from "@/utilities/sdk";
+import { getProjectById, isCommunityAdminOf } from "@/utilities/sdk";
 import { useCommunityAdminStore } from "@/store/community";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { useCommunitiesStore } from "@/store/communities";
 import { cn } from "@/utilities/tailwind";
 import { useStepper } from "@/store/txStepper";
 import { config } from "@/utilities/wagmi/config";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import {
+  ICommunityResponse,
+  IGrantResponse,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -450,10 +454,11 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         gapClient = getGapClient(communityNetworkId);
       }
       if (!gapClient) return;
-      const oldGrantInstance = new Grant({
-        ...oldGrant,
-        schema: gapClient.findSchema("Grant"),
-      });
+      const projectInstance = await getProjectById(selectedProject.uid);
+      const oldGrantInstance = projectInstance?.grants?.find(
+        (item) => item?.uid?.toLowerCase() === oldGrant?.uid?.toLowerCase()
+      );
+      if (!oldGrantInstance) return;
       oldGrantInstance.setValues({
         communityUID: data.community,
       });
@@ -638,7 +643,9 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const isDescriptionValid = !!description.length;
   const signer = useSigner();
 
-  const [allCommunities, setAllCommunities] = useState<Community[]>([]);
+  const [allCommunities, setAllCommunities] = useState<ICommunityResponse[]>(
+    []
+  );
 
   const community = form.getValues("community");
 
@@ -646,8 +653,8 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     const fetchCommunities = async () => {
       try {
         if (!gap) throw new Error("Gap not initialized");
-        const result = await gap.fetch.communities();
-        setAllCommunities(result);
+        const result = await gapIndexerApi.communities();
+        setAllCommunities(result.data);
         return result;
       } catch (error) {
         console.log(error);
@@ -670,7 +677,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         );
         if (!findCommunity) return setIsCommunityAllowed(false);
         const result = await isCommunityAdminOf(
-          findCommunity as Community,
+          findCommunity,
           address as string,
           signer
         );

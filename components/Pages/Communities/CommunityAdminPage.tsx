@@ -32,7 +32,7 @@ export const CommunityAdminPage = ({
       if (!community?.uid || !isAuth) return;
       try {
         const checkAdmin = await isCommunityAdminOf(
-          { uid: community.uid, chainID: community.chainID },
+          community,
           address as string,
           signer
         );

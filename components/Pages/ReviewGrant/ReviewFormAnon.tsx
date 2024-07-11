@@ -1,7 +1,6 @@
 "use client";
 /* eslint-disable react/no-unstable-nested-components */
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { Grant } from "@show-karma/karma-gap-sdk";
 import { type FC, useState, Fragment, useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -27,9 +26,10 @@ import { useSearchParams } from "next/navigation";
 import { ExclamationTriangleIcon } from "@heroicons/react/20/solid";
 import { createHash } from "crypto";
 import { envVars } from "@/utilities/enviromentVars";
+import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 interface ReviewFormAnonProps {
-  grant: Grant;
+  grant: IGrantResponse;
   allQuestions: Question[];
   alreadyReviewed: boolean;
   reviewerInfo: ReviewerInfo;
@@ -281,7 +281,7 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
       toast.error(
         MESSAGES.GRANT.REVIEW.ERROR(
           project?.details?.data?.title as string,
-          grant.details?.title as string
+          grant.details?.data?.title as string
         )
       );
     } finally {
@@ -302,7 +302,7 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
           toast.success(
             MESSAGES.GRANT.REVIEW.SUCCESS(
               project?.details?.data?.title as string,
-              grant.details?.title as string
+              grant.details?.data?.title as string
             )
           );
           setHasSubmitted(true);
@@ -310,7 +310,7 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
           toast.error(
             MESSAGES.GRANT.REVIEW.ANON_REVIEW_ALREADY_EXISTS(
               project?.details?.data?.title as string,
-              grant.details?.title as string
+              grant.details?.data?.title as string
             )
           );
         }
@@ -320,7 +320,7 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
         toast.error(
           MESSAGES.GRANT.REVIEW.ERROR(
             project?.details?.data?.title as string,
-            grant.details?.title as string
+            grant.details?.data?.title as string
           )
         );
       });

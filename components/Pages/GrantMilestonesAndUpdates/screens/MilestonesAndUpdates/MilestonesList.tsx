@@ -282,8 +282,8 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
                   <GrantUpdate
                     key={item.object.uid}
                     index={updatesArray.length - updatesIndex}
-                    title={item.object.title}
-                    description={item.object.text}
+                    title={item.object?.data?.title}
+                    description={item.object?.data?.text}
                     date={item.object.createdAt}
                     update={item.object}
                   />

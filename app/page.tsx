@@ -315,7 +315,7 @@ function NewFeatureBanner() {
 						</p> */}
           </div>
         </div>
-        <ExternalLink href="https://gap.karmahq.xyz/funding-map">
+        <ExternalLink href="/funding-map">
           <button
             type="button"
             className="max-md:text-xs max-md:p-[8px_12px] bg-[#080a0e] rounded-[4px] text-[#1de9b6] flex items-center justify-center gap-[8px] p-[16px_24px] outline-none border-none font-semibold text-[14px] leading-[16px]"

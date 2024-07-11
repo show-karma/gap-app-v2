@@ -1,5 +1,4 @@
 import { DeleteDialog } from "@/components/DeleteDialog";
-import { Button } from "@/components/Utilities/Button";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/community";
 import { ReadMore } from "@/utilities/ReadMore";
@@ -22,8 +21,6 @@ import {
   IGrantUpdate,
   IGrantUpdateStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { GrantUpdate as GrantUpdateClass } from "@show-karma/karma-gap-sdk";
 
 interface UpdateTagProps {
   index: number;
@@ -82,6 +79,8 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
 
+  const project = useProjectStore((state) => state.project);
+
   const undoGrantUpdate = async () => {
     let gapClient = gap;
     try {
@@ -95,10 +94,16 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
       });
       if (!walletClient || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      const grantUpdateInstance = new GrantUpdateClass({
-        ...update,
-        schema: gapClient.findSchema("GrantUpdate"),
-      });
+
+      const instanceProject = await gapClient.fetch.projectById(project?.uid);
+      const grantInstance = instanceProject?.grants.find(
+        (item) => item.uid.toLowerCase() === update.refUID.toLowerCase()
+      );
+      if (!grantInstance) return;
+      const grantUpdateInstance = grantInstance.updates.find(
+        (item) => item.uid.toLowerCase() === update.uid.toLowerCase()
+      );
+      if (!grantUpdateInstance) return;
       await grantUpdateInstance
         .revoke(walletSigner as any, changeStepperStep)
         .then(async () => {

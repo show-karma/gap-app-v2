@@ -22,7 +22,6 @@ import {
   IMilestoneCompleted,
   IMilestoneResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { Milestone } from "@show-karma/karma-gap-sdk";
 import { getGapClient, useGap } from "@/hooks";
 
 interface UpdatesProps {
@@ -41,6 +40,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
 
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
+  const project = useProjectStore((state) => state.project);
 
   const undoMilestoneCompletion = async (milestone: IMilestoneResponse) => {
     let gapClient = gap;
@@ -54,10 +54,18 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
       });
       if (!walletClient || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      const instanceMilestone = new Milestone({
-        ...milestone,
-        schema: gapClient.findSchema("Milestone"),
-      });
+      // const instanceMilestone = new Milestone({
+      //   ...milestone,
+      //   schema: gapClient.findSchema("Milestone"),
+      // });
+      const instanceProject = await gapClient.fetch.projectById(project?.uid);
+      const findGrant = instanceProject?.grants.find(
+        (item) => item.uid.toLowerCase() === milestone.refUID.toLowerCase()
+      );
+      const instanceMilestone = findGrant?.milestones.find(
+        (item) => item.uid.toLowerCase() === milestone.uid.toLowerCase()
+      );
+      if (!instanceMilestone) return;
       await instanceMilestone
         .revokeCompletion(walletSigner as any, changeStepperStep)
         .then(async () => {

@@ -67,11 +67,13 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
       });
       if (!walletClient || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      const instancedGrantToComplete = new Grant({
-        ...grantToComplete,
-        schema: gapClient.findSchema("Grant"),
-      });
-      await instancedGrantToComplete
+      const fetchedProject = await gapClient.fetch.projectById(project?.uid);
+      if (!fetchedProject) return;
+      const grantInstance = fetchedProject.grants.find(
+        (g) => g.uid.toLowerCase() === grantToComplete.uid.toLowerCase()
+      );
+      if (!grantInstance) return;
+      await grantInstance
         .complete(
           walletSigner,
           {

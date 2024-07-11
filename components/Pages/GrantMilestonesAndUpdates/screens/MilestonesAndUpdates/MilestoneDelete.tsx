@@ -29,6 +29,8 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
   const { changeStepperStep, setIsStepper } = useStepper();
   const selectedProject = useProjectStore((state) => state.project);
 
+  const project = useProjectStore((state) => state.project);
+
   const deleteFn = async () => {
     setIsDeletingMilestone(true);
     let gapClient = gap;
@@ -41,12 +43,17 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
       const walletClient = await getWalletClient(config, {
         chainId: milestone.chainID,
       });
-      if (!walletClient) return;
+      if (!walletClient || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      const milestoneInstance = new Milestone({
-        ...milestone,
-        schema: gapClient!.findSchema("Milestone"),
-      });
+      const instanceProject = await gapClient.fetch.projectById(project?.uid);
+      const grantInstance = instanceProject?.grants.find(
+        (item) => item.uid.toLowerCase() === milestone.refUID.toLowerCase()
+      );
+      if (!grantInstance) return;
+      const milestoneInstance = grantInstance.milestones.find(
+        (item) => item.uid.toLowerCase() === milestone.uid.toLowerCase()
+      );
+      if (!milestoneInstance) return;
       await milestoneInstance
         .revoke(walletSigner, changeStepperStep)
         .then(async () => {

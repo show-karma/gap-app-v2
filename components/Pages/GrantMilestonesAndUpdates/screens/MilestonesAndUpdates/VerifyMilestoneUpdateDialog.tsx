@@ -65,6 +65,7 @@ export const VerifyMilestoneUpdateDialog: FC<
   const { gap } = useGap();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const { changeStepperStep, setIsStepper } = useStepper();
+  const project = useProjectStore((state) => state.project);
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
     let gapClient = gap;
@@ -80,10 +81,16 @@ export const VerifyMilestoneUpdateDialog: FC<
       });
       if (!walletClient || !address || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      const milestoneInstance = new Milestone({
-        ...milestone,
-        schema: gapClient.findSchema("Milestone"),
-      });
+      const fetchedProject = await gapClient.fetch.projectById(project?.uid);
+      if (!fetchedProject) return;
+      const grantInstance = fetchedProject.grants.find(
+        (g) => g.uid.toLowerCase() === milestone.refUID.toLowerCase()
+      );
+      if (!grantInstance) return;
+      const milestoneInstance = grantInstance.milestones?.find(
+        (u) => u.uid.toLowerCase() === milestone.uid.toLowerCase()
+      );
+      if (!milestoneInstance) return;
       await milestoneInstance
         .verify(walletSigner, data.comment, changeStepperStep)
         .then(async () => {

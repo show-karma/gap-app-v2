@@ -3,7 +3,6 @@
 import React, { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { Grant } from "@show-karma/karma-gap-sdk";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import {
   ArrowTopRightOnSquareIcon,
@@ -54,6 +53,7 @@ import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { GrantsAccordion } from "@/components/GrantsAccordion";
 import { PAGES } from "@/utilities/pages";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 
 interface Tab {
   name: string;
@@ -233,7 +233,9 @@ export const ProjectGrantsPage = () => {
     }
     setIsCommunityAdminLoading(true);
     try {
-      const community = await gap.fetch.communityById(grant.data.communityUID);
+      const community = await gapIndexerApi
+        .communityBySlug(grant.data.communityUID)
+        .then((res) => res.data);
       const result = await isCommunityAdminOf(
         community,
         address as string,

@@ -74,7 +74,6 @@ export default function CommunitiesToAdminPage() {
       );
       // console.log(data?.communities);
       setCommunityAdmins(data?.communities);
-      console.log(data?.communities);
       return data.communities;
     } catch (error) {
       console.log(error);

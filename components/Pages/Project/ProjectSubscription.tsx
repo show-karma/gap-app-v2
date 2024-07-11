@@ -7,12 +7,10 @@ import { z } from "zod";
 import { MESSAGES } from "@/utilities/messages";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronRightIcon } from "@heroicons/react/24/solid";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import toast from "react-hot-toast";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { Project } from "@show-karma/karma-gap-sdk";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 const inputStyle =

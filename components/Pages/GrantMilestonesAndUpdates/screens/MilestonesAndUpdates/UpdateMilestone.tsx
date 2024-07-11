@@ -89,6 +89,7 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
   };
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
+  const project = useProjectStore((state) => state.project);
 
   const completeMilestone = async (
     milestone: IMilestoneResponse,
@@ -102,14 +103,20 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
       const walletClient = await getWalletClient(config, {
         chainId: milestone.chainID,
       });
-      if (!walletClient) return;
+      if (!walletClient || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      const milestoneInstance = new Milestone({
-        ...milestone,
-        schema: gapClient!.findSchema("Milestone"),
-      });
+
+      const fetchedProject = await gapClient.fetch.projectById(project?.uid);
+      if (!fetchedProject) return;
+      const grantInstance = fetchedProject.grants.find(
+        (g) => g.uid.toLowerCase() === milestone.refUID.toLowerCase()
+      );
+      if (!grantInstance) return;
+      const milestoneInstance = grantInstance.milestones.find(
+        (u) => u.uid.toLowerCase() === milestone.uid.toLowerCase()
+      );
       await milestoneInstance
-        .complete(walletSigner, text, changeStepperStep)
+        ?.complete(walletSigner, text, changeStepperStep)
         .then(async () => {
           let retries = 1000;
           changeStepperStep("indexing");
@@ -166,12 +173,17 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
       });
       if (!walletClient || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      const milestoneInstance = new Milestone({
-        ...milestone,
-        schema: gapClient.findSchema("Milestone"),
-      });
+      const fetchedProject = await gapClient.fetch.projectById(project?.uid);
+      if (!fetchedProject) return;
+      const grantInstance = fetchedProject.grants.find(
+        (g) => g.uid.toLowerCase() === milestone.refUID.toLowerCase()
+      );
+      if (!grantInstance) return;
+      const milestoneInstance = grantInstance.milestones.find(
+        (u) => u.uid.toLowerCase() === milestone.uid.toLowerCase()
+      );
       await milestoneInstance
-        .complete(walletSigner, text, changeStepperStep)
+        ?.complete(walletSigner, text, changeStepperStep)
         .then(async () => {
           let retries = 1000;
           changeStepperStep("indexing");

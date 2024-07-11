@@ -109,7 +109,6 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
     (state) => state.isCommunityAdmin
   );
   const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
-  console.log(milestone);
   return (
     <div className="flex flex-col gap-2">
       <div className="flex w-full flex-1 flex-col rounded-lg border border-zinc-200 bg-white dark:bg-zinc-800 transition-all duration-200 ease-in-out">

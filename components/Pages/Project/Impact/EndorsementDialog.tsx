@@ -74,7 +74,6 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = ({
         recipient: address,
       });
       await endorsement
-        // .attest(walletSigner, changeStepperStep)
         .attest(walletSigner, changeStepperStep)
         .then(async () => {
           let retries = 1000;

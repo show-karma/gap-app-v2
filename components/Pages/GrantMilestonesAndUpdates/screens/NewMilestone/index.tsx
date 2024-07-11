@@ -1,10 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  Milestone,
-  type Grant,
-  MilestoneCompleted,
-} from "@show-karma/karma-gap-sdk";
+import { Milestone, MilestoneCompleted } from "@show-karma/karma-gap-sdk";
 import type { FC } from "react";
 import { useEffect, useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
