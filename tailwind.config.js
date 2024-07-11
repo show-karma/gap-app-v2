@@ -27,10 +27,15 @@ module.exports = {
     center: true,
     padding: "2rem",
     screens: {
+      xs: "425px",
       "2xl": "1400px",
     },
   },
   theme: {
+    screens: {
+      ...defaultTheme.screens,
+      xs: "425px",
+    },
     fontFamily: {
       sans: ["Open Sans"],
       body: ["Inter"],

@@ -25,6 +25,9 @@ import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
 import { checkIsPoolManager } from "@/utilities/registry/checkIsPoolManager";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { KarmaLogo } from "@/components/Icons/Karma";
+import { useRegistryStore } from "@/store/registry";
 
 const statuses = ["Active", "Inactive"];
 
@@ -132,23 +135,19 @@ export const ProgramsExplorer = () => {
   const pageSize = 10;
 
   const { address, isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
 
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [isPoolManager, setIsPoolManager] = useState(false);
-
-  const isAllowed = address && (isAdmin || isPoolManager) && isAuth;
   const { chain } = useAccount();
 
+  const { setIsRegistryAdmin, setIsPoolManager } = useRegistryStore();
   useEffect(() => {
     if (!address || !isConnected) {
-      setIsAdmin(false);
+      setIsRegistryAdmin(false);
       return;
     }
     const getMemberOf = async () => {
       try {
         const call = await isMemberOfProfile(address);
-        setIsAdmin(call);
+        setIsRegistryAdmin(call);
         if (!call) {
           const isManager = await checkIsPoolManager(address);
           setIsPoolManager(isManager);
@@ -235,37 +234,105 @@ export const ProgramsExplorer = () => {
           }}
         />
       ) : null}
-      <section className="my-10 flex w-full max-w-full flex-col justify-between items-center gap-6 px-12 pb-7 pt-5 max-2xl:px-8 max-md:px-4">
-        <div className="flex flex-row max-lg:gap-10  max-md:flex-col gap-32 justify-between w-full">
-          <div className="flex flex-[3] flex-col gap-3 items-start justify-start text-left">
-            <h1 className="text-2xl tracking-[-0.72px] 2xl:text-4xl font-bold text-start text-black dark:text-white">
-              {`The most comprehensive onchain grant program directory you’ll find`}
+      <section className="my-8 flex w-full max-w-full flex-col justify-between items-center gap-6 px-6 pb-7 max-2xl:px-4 max-md:px-4 max-md:pt-0 max-md:my-4">
+        <div className="flex flex-col w-full gap-3">
+          <div className="flex flex-[3] flex-col gap-3 items-start justify-start text-left max-lg:gap-1">
+            <h1 className="text-2xl tracking-[-0.72px] 2xl:text-4xl font-bold text-start text-black dark:text-white max-lg:tracking-normal">
+              {`The best grant program directory you’ll find`}
             </h1>
-            <p className="text-start text-lg max-w-5xl text-black dark:text-white">
+            <p className="text-start text-lg max-lg:text-base max-w-5xl text-black dark:text-white">
               Explore our curated list of grant programs for innovators and
               creators: from tech pioneers to community leaders, there is a
               grant program to elevate your project. Did we miss a
               program/bounty?
             </p>
-            <Link href={PAGES.REGISTRY.ADD_PROGRAM}>
-              <button className="mt-3 bg-[#0E101B] dark:bg-slate-800 text-white px-10 py-2.5 rounded-lg">
-                Add a grant program
-              </button>
-            </Link>
           </div>
-          {isAllowed ? (
-            <>
-              <div className="h-44 w-[1px] bg-[#98A2B3] max-md:w-full max-md:h-[1px]" />
-              <div className="flex flex-1 flex-col gap-2 items-center max-sm:items-start">
-                <Link href={PAGES.REGISTRY.MANAGE_PROGRAMS}>
-                  <button className="mt-3 bg-[#0E101B] dark:bg-slate-800 text-white px-10 py-2.5 rounded-lg">
-                    Manage programs
-                  </button>
-                </Link>
+          <div className="flex flex-row gap-4 flex-wrap max-md:grid  max-md:grid-cols-2 max-xs:grid-cols-1">
+            <div className="bg-[#DBFFC5] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full max-sm:max-w-full">
+              <img
+                src="/icons/funding.png"
+                alt="Funding"
+                className="w-6 h-6 mt-1"
+              />
+              <div className="flex flex-col gap-1">
+                <p className="text-black text-sm font-semibold">
+                  Looking for funding?
+                </p>
+                <p className="text-[#344054] text-sm font-normal">
+                  <ExternalLink
+                    href={links.funding_block}
+                    className="text-[#155EEF] underline font-semibold"
+                  >
+                    Get notified
+                  </ExternalLink>{" "}
+                  when we add a new grant or bounty
+                </p>
               </div>
-            </>
-          ) : null}
-
+            </div>
+            <div className="bg-[#DDF9F2] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full max-sm:max-w-full">
+              <img
+                src="/icons/reward.png"
+                alt="Reward"
+                className="w-6 h-6 mt-1"
+              />
+              <div className="flex flex-col gap-1">
+                <p className="text-black text-sm font-semibold">
+                  Are we missing a grant program?
+                </p>
+                <p className="text-[#344054] text-sm font-normal">
+                  <ExternalLink
+                    href={links.add_program}
+                    className="text-[#155EEF] underline font-semibold"
+                  >
+                    Submit a program
+                  </ExternalLink>{" "}
+                  and get rewarded
+                </p>
+              </div>
+            </div>
+            <div className="bg-[#E0EAFF] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full max-sm:max-w-full">
+              <img
+                src="/icons/karma-program-registry-syndicate.png"
+                alt="Cartographer Syndicate"
+                className="w-6 h-6 mt-1"
+              />
+              <div className="flex flex-col gap-1">
+                <p className="text-black text-sm font-semibold">
+                  This registry is maintained by the Cartographer Syndicate.
+                </p>
+                <p className="text-[#344054] text-sm font-normal">
+                  <ExternalLink
+                    href={links.cryptographer}
+                    className="text-[#155EEF] underline font-semibold"
+                  >
+                    Learn more
+                  </ExternalLink>{" "}
+                  about it
+                </p>
+              </div>
+            </div>
+            <div className="bg-[#ECE9FE] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full max-sm:max-w-full">
+              <img
+                src="/icons/karma-logo-rounded.png"
+                alt="Karma Logo"
+                className="w-6 h-6 mt-1"
+              />
+              <div className="flex flex-col gap-1">
+                <p className="text-black text-sm font-semibold">
+                  Our vision and roadmap for the funding map.
+                </p>
+                <p className="text-[#344054] text-sm font-normal">
+                  <ExternalLink
+                    href={links.notion}
+                    className="text-[#155EEF] underline font-semibold"
+                  >
+                    Learn more
+                  </ExternalLink>{" "}
+                  about it.
+                </p>
+              </div>
+            </div>
+          </div>
           {/* <div className="flex flex-1 flex-col gap-2 items-center max-sm:items-start">
             <div className="flex flex-1 flex-col gap-2 items-start">
               <p className="text-[#101828] dark:text-white font-body font-semibold text-xl">
@@ -284,14 +351,14 @@ export const ProgramsExplorer = () => {
           </div> */}
         </div>
 
-        <div className="flex flex-row items-center justify-end max-sm:justify-start gap-10  flex-wrap w-full">
+        <div className="flex flex-row items-center justify-end max-sm:justify-start gap-2.5  flex-wrap w-full">
           <div className="flex flex-row items-center gap-2 flex-wrap">
             <button
               onClick={() => {
                 setSelectedCategory([]);
               }}
               key={"All"}
-              className={`px-3 py-1 mx-1 my-2 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${
+              className={`px-3 py-1 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${
                 !selectedCategory.length
                   ? "bg-black text-white dark:bg-white dark:text-black"
                   : "border border-black text-black dark:border-white dark:text-white"
@@ -308,7 +375,7 @@ export const ProgramsExplorer = () => {
                   onChangeGeneric(type, setSelectedCategory);
                 }}
                 key={type}
-                className={`px-3 py-1 mx-1 my-2 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${
+                className={`px-3 py-1 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${
                   selectedCategory.includes(type)
                     ? "bg-black text-white dark:bg-white dark:text-black"
                     : "border border-black text-black dark:border-white dark:text-white"
@@ -326,7 +393,7 @@ export const ProgramsExplorer = () => {
             <button
               onClick={() => setStatus("")}
               key={"All"}
-              className={`px-3 py-1 mx-1 my-2 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${
+              className={`px-3 py-1 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${
                 status === ""
                   ? "bg-black text-white dark:bg-white dark:text-black"
                   : "border border-black text-black dark:border-white dark:text-white"
@@ -338,7 +405,7 @@ export const ProgramsExplorer = () => {
               <button
                 onClick={() => setStatus(type)}
                 key={type}
-                className={`px-3 py-1 mx-1 my-2 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${
+                className={`px-3 py-1 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${
                   status === type
                     ? "bg-black text-white dark:bg-white dark:text-black"
                     : "border border-black text-black dark:border-white dark:text-white"

@@ -29,6 +29,8 @@ import { OnboardingDialog } from "../Dialogs/OnboardingDialog";
 import { useMobileStore } from "@/store/mobile";
 import { config } from "@/utilities/wagmi/config";
 import { watchAccount } from "@wagmi/core";
+import { useRouter } from "next/router";
+import { useRegistryStore } from "@/store/registry";
 
 const ProjectDialog = dynamic(
   () =>
@@ -151,6 +153,12 @@ export default function Header() {
 
   const { isMobileMenuOpen, setIsMobileMenuOpen } = useMobileStore();
 
+  const router = useRouter();
+  const isFundingMap = router.pathname.includes("funding-map");
+  const { isPoolManager, isRegistryAdmin } = useRegistryStore();
+  const isRegistryAllowed =
+    address && (isRegistryAdmin || isPoolManager) && isAuth;
+
   return (
     <>
       <>
@@ -228,22 +236,35 @@ export default function Header() {
                     <div className="mt-8 px-3 flex flex-col gap-4">
                       {isReady ? (
                         <>
-                          {isConnected && isAuth && (
-                            <Link href={PAGES.MY_PROJECTS}>
-                              <button className="rounded-md bg-white w-full dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
-                                My Projects
-                              </button>
-                            </Link>
-                          )}
-                          {isCommunityAdmin && isConnected && isAuth ? (
-                            <Link href={PAGES.ADMIN.LIST}>
-                              <button className="rounded-md w-full bg-white dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
-                                Admin
-                              </button>
-                            </Link>
-                          ) : null}
+                          {isFundingMap ? (
+                            isRegistryAllowed ? (
+                              <Link href={PAGES.REGISTRY.MANAGE_PROGRAMS}>
+                                <button className="rounded-md bg-white w-full dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
+                                  Manage Programs
+                                </button>
+                              </Link>
+                            ) : null
+                          ) : (
+                            <>
+                              {isConnected && isAuth && (
+                                <Link href={PAGES.MY_PROJECTS}>
+                                  <button className="rounded-md bg-white w-full dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
+                                    My Projects
+                                  </button>
+                                </Link>
+                              )}
+                              {isCommunityAdmin && isConnected && isAuth ? (
+                                <Link href={PAGES.ADMIN.LIST}>
+                                  <button className="rounded-md w-full bg-white dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
+                                    Admin
+                                  </button>
+                                </Link>
+                              ) : null}
 
-                          {isConnected && isAuth && <ProjectDialog />}
+                              {isConnected && isAuth && <ProjectDialog />}
+                            </>
+                          )}
+
                           <ConnectButton.Custom>
                             {({
                               account,
@@ -341,19 +362,30 @@ export default function Header() {
               {/* <div className="rounded-none h-10 w-[1px] bg-zinc-300 mx-2" /> */}
               {isReady ? (
                 <>
-                  {isCommunityAdmin && isConnected && isAuth ? (
-                    <Link href={PAGES.ADMIN.LIST}>
-                      <button className={buttonStyle}>Admin</button>
-                    </Link>
-                  ) : null}
-                  {isConnected && isAuth && (
-                    <Link href={PAGES.MY_PROJECTS}>
-                      <button className={buttonStyle}>My Projects</button>
-                    </Link>
+                  {isFundingMap ? (
+                    isRegistryAllowed ? (
+                      <Link href={PAGES.REGISTRY.MANAGE_PROGRAMS}>
+                        <button className={buttonStyle}>Manage Programs</button>
+                      </Link>
+                    ) : null
+                  ) : (
+                    <>
+                      {isCommunityAdmin && isConnected && isAuth ? (
+                        <Link href={PAGES.ADMIN.LIST}>
+                          <button className={buttonStyle}>Admin</button>
+                        </Link>
+                      ) : null}
+                      {isConnected && isAuth && (
+                        <Link href={PAGES.MY_PROJECTS}>
+                          <button className={buttonStyle}>My Projects</button>
+                        </Link>
+                      )}
+
+                      {/* Rainbowkit custom connect button start */}
+                      {isConnected && isAuth && <ProjectDialog />}
+                    </>
                   )}
 
-                  {/* Rainbowkit custom connect button start */}
-                  {isConnected && isAuth && <ProjectDialog />}
                   <ConnectButton.Custom>
                     {({
                       account,
