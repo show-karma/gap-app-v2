@@ -1,3 +1,4 @@
+"use client";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { useState, Fragment } from "react";

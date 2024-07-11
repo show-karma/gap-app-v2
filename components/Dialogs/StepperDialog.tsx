@@ -1,3 +1,4 @@
+"use client";
 import { TxStepperSteps, useStepper } from "@/store/txStepper";
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/solid";

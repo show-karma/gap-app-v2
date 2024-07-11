@@ -1,16 +1,16 @@
 /* eslint-disable @next/next/no-img-element */
 import { Button } from "@/components/Utilities/Button";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { Grant } from "@show-karma/karma-gap-sdk";
 import { MilestonesList } from "./MilestonesList";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { MESSAGES } from "@/utilities/messages";
 import { ReadMore } from "@/utilities/ReadMore";
 import { formatDate } from "@/utilities/formatDate";
 import { useCommunityAdminStore } from "@/store/community";
+import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
-export const EmptyMilestone = ({ grant }: { grant?: Grant }) => {
+export const EmptyMilestone = ({ grant }: { grant?: IGrantResponse }) => {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
@@ -88,7 +88,7 @@ export const EmptyMilestone = ({ grant }: { grant?: Grant }) => {
 };
 
 interface GrantCompletionCardProps {
-  completion: Grant["completed"] | undefined;
+  completion: IGrantResponse["completed"] | undefined;
 }
 const GrantCompletionCard = ({ completion }: GrantCompletionCardProps) => {
   if (!completion) return null;
@@ -99,7 +99,7 @@ const GrantCompletionCard = ({ completion }: GrantCompletionCardProps) => {
           <div className="flex w-full flex-row justify-between  px-4 max-lg:mb-4 max-lg:flex-col">
             <div className="flex flex-col gap-3">
               <h4 className="text-base font-bold leading-normal text-gray-700">
-                {completion.title}
+                {completion.data.title}
               </h4>
             </div>
             <div className="flex flex-row items-center justify-center gap-4 max-lg:justify-start">
@@ -111,7 +111,7 @@ const GrantCompletionCard = ({ completion }: GrantCompletionCardProps) => {
 
           <div className="flex flex-col gap-2 px-4  pb-3 max-lg:max-w-xl max-sm:max-w-[300px]">
             <ReadMore readLessText="Read less" readMoreText="Read full">
-              {completion.text}
+              {completion.data.text}
             </ReadMore>
           </div>
         </div>
@@ -121,7 +121,7 @@ const GrantCompletionCard = ({ completion }: GrantCompletionCardProps) => {
 };
 
 interface MilestonesAndUpdatesProps {
-  grant: Grant | undefined;
+  grant: IGrantResponse | undefined;
 }
 export const MilestonesAndUpdates = ({ grant }: MilestonesAndUpdatesProps) => {
   const hasMilestonesOrUpdates =
@@ -137,7 +137,8 @@ export const MilestonesAndUpdates = ({ grant }: MilestonesAndUpdatesProps) => {
 
   return (
     <div className="space-y-5">
-      {grant?.completed && (grant?.completed.title || grant?.completed.text) ? (
+      {grant?.completed &&
+      (grant?.completed.data.title || grant?.completed.data.text) ? (
         <GrantCompletionCard completion={grant?.completed} />
       ) : null}
       {hasMilestonesOrUpdates ? (

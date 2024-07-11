@@ -1,6 +1,6 @@
+"use client";
 /* eslint-disable react/no-unstable-nested-components */
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { Grant } from "@show-karma/karma-gap-sdk";
 import { type FC, useState, Fragment } from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -22,9 +22,10 @@ import { MESSAGES } from "@/utilities/messages";
 import { additionalQuestion } from "@/utilities/tabs";
 import { INDEXER } from "@/utilities/indexer";
 import { cn } from "@/utilities/tailwind";
+import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 interface ReviewFormProps {
-  grant: Grant;
+  grant: IGrantResponse;
   allQuestions: Question[];
   alreadyReviewed: boolean;
   reviewerInfo: ReviewerInfo;
@@ -206,8 +207,8 @@ export const ReviewForm: FC<ReviewFormProps> = ({
       }).then(() => {
         toast.success(
           MESSAGES.GRANT.REVIEW.SUCCESS(
-            project?.details?.title as string,
-            grant.details?.title as string
+            project?.details?.data?.title as string,
+            grant.details?.data?.title as string
           )
         );
         setHasSubmitted(true);
@@ -215,8 +216,8 @@ export const ReviewForm: FC<ReviewFormProps> = ({
     } catch (error) {
       toast.error(
         MESSAGES.GRANT.REVIEW.ERROR(
-          project?.details?.title as string,
-          grant.details?.title as string
+          project?.details?.data?.title as string,
+          grant.details?.data?.title as string
         )
       );
     } finally {

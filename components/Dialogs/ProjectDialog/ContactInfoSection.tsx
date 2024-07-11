@@ -114,7 +114,7 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
       if (data.id === "0") {
         await fetchData(
           INDEXER.SUBSCRIPTION.CREATE(
-            project?.details?.slug || (project?.uid as string)
+            project?.details?.data?.slug || (project?.uid as string)
           ),
           "POST",
           { contacts: [data] },
@@ -137,7 +137,7 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
       } else {
         await fetchData(
           INDEXER.SUBSCRIPTION.UPDATE(
-            project?.details?.slug || (project?.uid as string),
+            project?.details?.data?.slug || (project?.uid as string),
             data.id
           ),
           "PUT",
@@ -181,7 +181,7 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
       }
       await fetchData(
         INDEXER.SUBSCRIPTION.DELETE(
-          project?.details?.slug || (project?.uid as string)
+          project?.details?.data?.slug || (project?.uid as string)
         ),
         "DELETE",
         { contacts: [watch("id")] },

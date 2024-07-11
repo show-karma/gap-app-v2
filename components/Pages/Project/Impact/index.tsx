@@ -1,6 +1,6 @@
+'use client';
 import { cn } from "@/utilities/tailwind";
 import { FC, useEffect, useState } from "react";
-import { ProjectImpact } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
 import { formatDate } from "@/utilities/formatDate";
 import { useSearchParams } from "next/navigation";
 import { AddImpactScreen } from "./AddImpactScreen";
@@ -16,12 +16,13 @@ import { useAccount, useSwitchChain } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
 import { useQueryState } from "nuqs";
 import { ReadMore } from "@/utilities/ReadMore";
-import { VerifyImpactDialog } from "./VerifyImpactDialog";
 import { ImpactVerifications } from "./ImpactVerifications";
 import { useStepper } from "@/store/txStepper";
 import { getGapClient, useGap } from "@/hooks";
 import { Hex } from "viem";
 import { config } from "@/utilities/wagmi/config";
+import { IProjectImpact } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { getProjectById } from "@/utilities/sdk";
 
 const headClasses =
   "text-black dark:text-white text-xs font-medium uppercase text-left px-6 py-3 font-body";
@@ -32,7 +33,7 @@ interface ImpactComponentProps {}
 
 export const ImpactComponent: FC<ImpactComponentProps> = () => {
   const project = useProjectStore((state) => state.project);
-  const [orderedImpacts, setOrderedImpacts] = useState<ProjectImpact[]>(
+  const [orderedImpacts, setOrderedImpacts] = useState<IProjectImpact[]>(
     project?.impacts || []
   );
 
@@ -63,7 +64,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
   const { gap } = useGap();
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
-  const revokeImpact = async (impact: ProjectImpact) => {
+  const revokeImpact = async (impact: IProjectImpact) => {
     if (!address || !project || !impact) return;
     let gapClient = gap;
     try {
@@ -78,7 +79,12 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
 
-      await impact
+      const fetchedProject = await getProjectById(project.uid);
+      const instanceImpact = fetchedProject?.impacts?.find(
+        (imp) => imp.uid === impact.uid
+      );
+      if (!instanceImpact) return;
+      await instanceImpact
         .revoke(walletSigner as any, changeStepperStep)
         .then(async () => {
           // const filtered = project.impacts.filter(
@@ -192,7 +198,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
                             }}
                             markdownClass="text-black dark:text-white text-lg font-semibold "
                           >
-                            {item.work}
+                            {item.data?.work}
                           </ReadMore>
                         </div>
                       </td>
@@ -217,7 +223,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
                               },
                             }}
                           >
-                            {item.impact}
+                            {item.data?.impact}
                           </ReadMore>
                         </div>
                       </td>
@@ -242,7 +248,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
                               },
                             }}
                           >
-                            {item.proof}
+                            {item.data?.proof}
                           </ReadMore>
                         </div>
                       </td>

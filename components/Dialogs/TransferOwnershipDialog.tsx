@@ -12,7 +12,7 @@ import { appNetwork } from "@/utilities/network";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { getWalletClient } from "@wagmi/core";
 import { useStepper } from "@/store/txStepper";
-import { getProjectOwner } from "@/utilities/sdk";
+import { getProjectById, getProjectOwner } from "@/utilities/sdk";
 import { config } from "@/utilities/wagmi/config";
 
 type TransferOwnershipProps = {
@@ -66,7 +66,9 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
       });
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      await project
+      const fetchedProject = await getProjectById(project.uid);
+      if (!fetchedProject) return;
+      await fetchedProject
         .transferOwnership(walletSigner, newOwner, changeStepperStep)
         .then(async () => {
           let retries = 1000;
@@ -74,7 +76,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
           while (retries > 0) {
             const stillProjectOwner = await getProjectOwner(
               walletSigner || signer,
-              project
+              fetchedProject
             );
 
             if (!stillProjectOwner) {

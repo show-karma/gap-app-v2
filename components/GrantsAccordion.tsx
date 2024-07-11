@@ -1,3 +1,4 @@
+"use client";
 import { ChevronDownIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import { FC, ReactNode, useState } from "react";
 

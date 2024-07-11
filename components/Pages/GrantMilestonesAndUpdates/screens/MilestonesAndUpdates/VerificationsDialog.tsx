@@ -2,17 +2,18 @@
 import { FC, Fragment, useEffect, useMemo, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
-import {
-  GrantUpdateStatus,
-  MilestoneCompleted,
-} from "@show-karma/karma-gap-sdk";
+
 import { blo } from "blo";
 import { Hex } from "viem";
 import { useENSNames } from "@/store/ensNames";
 import { useProjectStore } from "@/store/project";
 import { formatDate } from "@/utilities/formatDate";
-import { ProjectImpactStatus } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
-import { ICommunityAdminsResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import {
+  ICommunityAdminsResponse,
+  IGrantUpdateStatus,
+  IMilestoneCompleted,
+  IProjectImpactStatus,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { Tabs, TabContent, TabTrigger } from "@/components/Utilities/Tabs";
 import { useGrant } from "@/components/Pages/GrantMilestonesAndUpdates/GrantContext";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
@@ -20,9 +21,9 @@ import { useAccount } from "wagmi";
 
 interface VerificationsDialogProps {
   verifications: (
-    | MilestoneCompleted
-    | GrantUpdateStatus
-    | ProjectImpactStatus
+    | IMilestoneCompleted
+    | IGrantUpdateStatus
+    | IProjectImpactStatus
   )[];
   isOpen: boolean;
   closeDialog: () => void;
@@ -30,7 +31,7 @@ interface VerificationsDialogProps {
 }
 
 interface VerificationsItemProps {
-  verification: MilestoneCompleted | GrantUpdateStatus | ProjectImpactStatus;
+  verification: IMilestoneCompleted | IGrantUpdateStatus | IProjectImpactStatus;
 }
 
 const VerificationItem = ({ verification }: VerificationsItemProps) => {
@@ -53,7 +54,7 @@ const VerificationItem = ({ verification }: VerificationsItemProps) => {
         </p>
       </div>
       <p className="pl-11 text-base font-normal text-[#344054] dark:text-zinc-300">
-        {verification.reason}
+        {verification.data?.reason}
       </p>
     </div>
   );
@@ -68,7 +69,7 @@ export const VerificationsDialog: FC<VerificationsDialogProps> = ({
   const project = useProjectStore((state) => state.project);
   const grant = useGrant();
 
-  const communityUid = useMemo(() => grant?.communityUID, [grant]);
+  const communityUid = useMemo(() => grant?.data.communityUID, [grant]);
   const [communityAdmins, setCommunityAdmins] = useState<string[]>();
 
   const { populateEnsNames } = useENSNames();

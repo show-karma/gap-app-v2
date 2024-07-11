@@ -1,6 +1,8 @@
+import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { createContext, useContext } from "react";
-import type { Grant } from "@show-karma/karma-gap-sdk/core/class/entities/Grant";
 
-export const GrantContext = createContext<Grant | undefined>(undefined);
+export const GrantContext = createContext<IGrantResponse | undefined>(
+  undefined
+);
 
 export const useGrant = () => useContext(GrantContext);

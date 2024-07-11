@@ -1,6 +1,7 @@
+"use client";
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, ReactNode, useEffect, useMemo, useState } from "react";
-import { Dialog, Tab, Transition } from "@headlessui/react";
+import { type FC, Fragment, type ReactNode, useMemo, useState } from "react";
+import { Dialog, Transition } from "@headlessui/react";
 import {
   ChevronRightIcon,
   PlusIcon,
@@ -9,22 +10,22 @@ import {
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
 import { z } from "zod";
-import { Hex, isAddress, zeroHash } from "viem";
+import { type Hex, isAddress, zeroHash } from "viem";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useAccount, useSwitchChain } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import {
-  ExternalLink,
-  IProjectDetails,
+  type ExternalLink,
+  type IProjectDetails,
   MemberOf,
   Project,
   ProjectDetails,
   nullRef,
 } from "@show-karma/karma-gap-sdk";
 import toast from "react-hot-toast";
-import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { getGapClient, useGap } from "@/hooks";
 import { Button } from "@/components/Utilities/Button";
 import {
@@ -47,10 +48,12 @@ import { getWalletClient } from "@wagmi/core";
 import { useStepper } from "@/store/txStepper";
 import { updateProject } from "@/utilities/sdk/projects/editProject";
 import { ContactInfoSection } from "./ContactInfoSection";
-import { Contact } from "@/types/project";
+import type { Contact } from "@/types/project";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { config } from "@/utilities/wagmi/config";
+import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { getProjectById } from "@/utilities/sdk";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -98,7 +101,7 @@ type ProjectDialogProps = {
     iconSide?: "left" | "right";
     styleClass: string;
   };
-  projectToUpdate?: Project;
+  projectToUpdate?: IProjectResponse;
   previousContacts?: Contact[];
 };
 
@@ -113,35 +116,35 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   previousContacts,
 }) => {
   const dataToUpdate = {
-    description: projectToUpdate?.details?.description || "",
-    title: projectToUpdate?.details?.title || "",
-    imageURL: projectToUpdate?.details?.imageURL,
-    twitter: projectToUpdate?.details?.links?.find(
+    description: projectToUpdate?.details?.data?.description || "",
+    title: projectToUpdate?.details?.data?.title || "",
+    imageURL: projectToUpdate?.details?.data?.imageURL,
+    twitter: projectToUpdate?.details?.data?.links?.find(
       (link) => link.type === "twitter"
     )?.url,
-    github: projectToUpdate?.details?.links?.find(
+    github: projectToUpdate?.details?.data?.links?.find(
       (link) => link.type === "github"
     )?.url,
-    discord: projectToUpdate?.details?.links?.find(
+    discord: projectToUpdate?.details?.data?.links?.find(
       (link) => link.type === "discord"
     )?.url,
-    website: projectToUpdate?.details?.links?.find(
+    website: projectToUpdate?.details?.data?.links?.find(
       (link) => link.type === "website"
     )?.url,
-    linkedin: projectToUpdate?.details?.links?.find(
+    linkedin: projectToUpdate?.details?.data?.links?.find(
       (link) => link.type === "linkedin"
     )?.url,
-    tags: projectToUpdate?.details?.tags.map((item) => item.name),
+    tags: projectToUpdate?.details?.data?.tags?.map((item) => item.name),
     members: projectToUpdate?.members.map((item) => item.recipient),
     recipient: projectToUpdate?.recipient,
-    businessModel: projectToUpdate?.details?.businessModel,
-    stageIn: projectToUpdate?.details?.stageIn,
-    raisedMoney: projectToUpdate?.details?.raisedMoney,
-    pathToTake: projectToUpdate?.details?.pathToTake,
+    businessModel: projectToUpdate?.details?.data?.businessModel,
+    stageIn: projectToUpdate?.details?.data?.stageIn,
+    raisedMoney: projectToUpdate?.details?.data?.raisedMoney,
+    pathToTake: projectToUpdate?.details?.data?.pathToTake,
   };
 
   const [contacts, setContacts] = useState<Contact[]>(previousContacts || []);
-  let [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [step, setStep] = useState(0);
 
@@ -450,8 +453,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       });
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
+      const fetchedProject = await getProjectById(projectToUpdate.uid);
+      if (!fetchedProject) return;
       await updateProject(
-        projectToUpdate,
+        fetchedProject,
         {
           title: data.title,
           description: description,
@@ -825,6 +830,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   return (
     <>
       <button
+        type="button"
         onClick={openModal}
         className={cn(
           "flex justify-center min-w-max items-center gap-x-1 rounded-md bg-brand-blue border-2 border-brand-blue px-3 py-2 text-sm font-semibold text-white dark:text-zinc-100  hover:opacity-75 dark:hover:bg-primary-900",

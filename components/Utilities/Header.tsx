@@ -1,3 +1,4 @@
+"use client";
 /* eslint-disable @next/next/no-img-element */
 import { useEffect, useState } from "react";
 import Image from "next/image";
@@ -6,7 +7,7 @@ import * as Popover from "@radix-ui/react-popover";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { MoonIcon, SunIcon } from "@heroicons/react/24/solid";
-import { useAccount, useConfig, useConnect, useDisconnect } from "wagmi";
+import { useAccount } from "wagmi";
 import { useOwnerStore } from "@/store/owner";
 import { useCommunitiesStore } from "@/store/communities";
 import { ExternalLink } from "./ExternalLink";
@@ -28,7 +29,7 @@ import { OnboardingDialog } from "../Dialogs/OnboardingDialog";
 import { useMobileStore } from "@/store/mobile";
 import { config } from "@/utilities/wagmi/config";
 import { watchAccount } from "@wagmi/core";
-import { useRouter } from "next/router";
+import { usePathname } from "next/navigation";
 import { useRegistryStore } from "@/store/registry";
 
 const ProjectDialog = dynamic(
@@ -40,13 +41,14 @@ const ProjectDialog = dynamic(
 );
 
 const buttonStyle: HTMLButtonElement["className"] =
-  " rounded-md bg-white w-max dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 hover:bg-transparent dark:hover:bg-opacity-75 dark:border-zinc-900";
+  "rounded-md bg-white w-max dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 hover:bg-transparent dark:hover:bg-opacity-75 dark:border-zinc-900";
 
 export default function Header() {
   const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
   const { isConnected, address } = useAccount();
   const { isAuth, isAuthenticating } = useAuthStore();
   const { communities, setCommunities, setIsLoading } = useCommunitiesStore();
+
   const signer = useSigner();
 
   const isCommunityAdmin = communities.length !== 0;
@@ -68,7 +70,6 @@ export default function Header() {
     setIsLoading(false);
   };
 
-  const isOwner = useOwnerStore((state) => state.isOwner);
   const setIsOwner = useOwnerStore((state) => state.setIsOwner);
   const setIsOwnerLoading = useOwnerStore((state) => state.setIsOwnerLoading);
 
@@ -152,8 +153,8 @@ export default function Header() {
 
   const { isMobileMenuOpen, setIsMobileMenuOpen } = useMobileStore();
 
-  const router = useRouter();
-  const isFundingMap = router.pathname.includes("funding-map");
+  const pathname = usePathname();
+  const isFundingMap = pathname.includes("funding-map");
   const { isPoolManager, isRegistryAdmin } = useRegistryStore();
   const isRegistryAllowed =
     address && (isRegistryAdmin || isPoolManager) && isAuth;
@@ -252,9 +253,7 @@ export default function Header() {
                                   </button>
                                 </Link>
                               )}
-                              {(isCommunityAdmin || isOwner) &&
-                              isConnected &&
-                              isAuth ? (
+                              {isCommunityAdmin && isConnected && isAuth ? (
                                 <Link href={PAGES.ADMIN.LIST}>
                                   <button className="rounded-md w-full bg-white dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
                                     Admin
@@ -371,9 +370,7 @@ export default function Header() {
                     ) : null
                   ) : (
                     <>
-                      {(isCommunityAdmin || isOwner) &&
-                      isConnected &&
-                      isAuth ? (
+                      {isCommunityAdmin && isConnected && isAuth ? (
                         <Link href={PAGES.ADMIN.LIST}>
                           <button className={buttonStyle}>Admin</button>
                         </Link>

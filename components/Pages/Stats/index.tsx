@@ -14,11 +14,11 @@ import { GlobalCount } from "./GlobalCount";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { getGAPStats } from "@/utilities/indexer/stats";
 import { fillDateRangeWithValues } from "@/utilities/fillDateRangeWithValues";
-import { useRouter } from "next/router";
 import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
+import { useQueryState } from "nuqs";
 
 // const valueFormatter = (number) =>
 //   `$ ${new Intl.NumberFormat('us').format(number).toString()}`;
@@ -60,12 +60,14 @@ const dataNameDictionary: Record<IAttestationStatsNames, DictionaryValue> = {
 const allPeriods: StatPeriod[] = ["Days", "Weeks", "Months", "Years"];
 
 export const Stats = () => {
-  const router = useRouter();
-  const periodParam = router.query.period as StatPeriod;
-
   const [data, setData] = useState<StatChartData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [period, setPeriod] = useState<StatPeriod>("Days");
+  // const [period, setPeriod] = useState<StatPeriod>("Days");
+
+  const [period, setPeriod] = useQueryState("period", {
+    shallow: false,
+    defaultValue: "Days",
+  });
 
   const getData = async () => {
     setIsLoading(true);
@@ -109,23 +111,6 @@ export const Stats = () => {
     getData();
   }, []);
 
-  useEffect(() => {
-    if (periodParam) {
-      setPeriod(periodParam);
-    }
-  }, [periodParam]);
-
-  //   const [periodParam, setPeriodParam] = useQueryState("period", {
-  //     shallow: false,
-  //   });
-
-  const setPeriodParam = (value: StatPeriod) => {
-    router.push({
-      pathname: router.pathname,
-      query: { period: value },
-    });
-  };
-
   return (
     <div className="mb-10 mt-4  flex w-full flex-col items-center justify-center px-12 max-xl:px-12 max-md:px-4">
       <div className="flex w-full flex-col items-center justify-center gap-8">
@@ -138,28 +123,10 @@ export const Stats = () => {
           <>
             <div className="flex flex-row items-center gap-4">
               <h3 className="text-xl text-black">Select a period</h3>
-              {/* <Select
-                onValueChange={(value: StatPeriod) => {
-                  setPeriodParam(value);
-                }}
-              >
-                <SelectTrigger className="flex w-max flex-row gap-2">
-                  <SelectValue defaultValue="days">{period}</SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectGroup>
-                    {allPeriods.map((item) => (
-                      <SelectItem key={item} value={item}>
-                        {item}
-                      </SelectItem>
-                    ))}
-                  </SelectGroup>
-                </SelectContent>
-              </Select> */}
               <Listbox
-                value={periodParam}
+                value={period}
                 onChange={(value) => {
-                  setPeriodParam(value);
+                  setPeriod(value);
                 }}
               >
                 {({ open }) => (
@@ -256,7 +223,7 @@ export const Stats = () => {
                     className: "mt-6 h-[240px] max-xl:h-[200px]",
                     yAxisWidth: 48,
                   }}
-                  period={period}
+                  period={period as StatPeriod}
                 />
               ))}
             </div>

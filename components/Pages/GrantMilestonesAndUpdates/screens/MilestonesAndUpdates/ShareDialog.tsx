@@ -5,7 +5,6 @@ import JSConfetti from "js-confetti";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useProjectStore } from "@/store";
-import { PAGES } from "@/utilities/pages";
 
 interface ShareDialogProps {
   isOpen: boolean;
@@ -40,9 +39,9 @@ export const ShareDialog: FC<ShareDialogProps> = ({
   // Your thoughts and feedback are invaluable—let me know what you think!
 
   const encoded = `🚀 Just hit a major milestone of my grant from ${
-    grant?.details?.title
+    grant?.details?.data?.title
   }!\nCheck out my progress on @karmahq_ GAP and and see how we’re advancing: https://gap.karmahq.xyz/project/${
-    (project?.details?.slug || project?.uid) as string
+    (project?.details?.data?.slug || project?.uid) as string
   }/grants?grantId=${
     grant?.uid
   }&tab=milestones-and-updates\nYour thoughts and feedback are invaluable—let me know what you think!`;

@@ -1,7 +1,6 @@
+"use client";
 /* eslint-disable @next/next/no-img-element */
-import { FC, useEffect, useState } from "react";
-import { Community } from "@show-karma/karma-gap-sdk";
-import { useGap } from "@/hooks";
+import { FC, useState } from "react";
 import {
   Command,
   CommandEmpty,
@@ -14,13 +13,13 @@ import * as Popover from "@radix-ui/react-popover";
 import { shortAddress } from "@/utilities/shortAddress";
 import { cn } from "@/utilities/tailwind";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
-import * as Tooltip from "@radix-ui/react-tooltip";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
+import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 interface CommunitiesDropdownProps {
   onSelectFunction: (value: string, networkId: number) => void;
   previousValue?: string;
-  communities: Community[];
+  communities: ICommunityResponse[];
 }
 export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
   onSelectFunction,
@@ -31,12 +30,12 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
   const [value, setValue] = useState(previousValue || "");
 
   const communitiesArray = communities
-    .filter((community) => community.details?.name) // Filter out communities without a name
+    .filter((community) => community.details?.data?.name) // Filter out communities without a name
     .map((community) => ({
       value: community.uid,
-      label: community.details?.name || shortAddress(community.uid),
+      label: community.details?.data?.name || shortAddress(community.uid),
       networkId: community.chainID,
-      logo: community.details?.imageURL,
+      logo: community.details?.data?.imageURL,
     }));
 
   // sort communities by name alphabetically

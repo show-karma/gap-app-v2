@@ -7,12 +7,11 @@ import { z } from "zod";
 import { MESSAGES } from "@/utilities/messages";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ChevronRightIcon } from "@heroicons/react/24/solid";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import toast from "react-hot-toast";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { Project } from "@show-karma/karma-gap-sdk";
+import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -32,7 +31,7 @@ const schema = z.object({
 type SchemaType = z.infer<typeof schema>;
 
 interface ProjectSubscriptionDialogProps {
-  project: Project;
+  project: IProjectResponse;
 }
 
 export const ProjectSubscriptionDialog: FC<ProjectSubscriptionDialogProps> = ({
@@ -70,7 +69,7 @@ export const ProjectSubscriptionDialog: FC<ProjectSubscriptionDialogProps> = ({
       if (error) throw error;
       toast.success(
         `You have successfully subscribed to ${
-          project?.details?.title || "this project"
+          project?.details?.data?.title || "this project"
         }.`
       );
       closeModal();
@@ -85,7 +84,7 @@ export const ProjectSubscriptionDialog: FC<ProjectSubscriptionDialogProps> = ({
       } else {
         toast.error(
           `There was an error subscribing to ${
-            project?.details?.title || "this project"
+            project?.details?.data?.title || "this project"
           }.`
         );
       }
@@ -115,7 +114,7 @@ export const ProjectSubscriptionDialog: FC<ProjectSubscriptionDialogProps> = ({
               <p className="text-xs font-normal mt-1">
                 Receive monthly updates from{" "}
                 <b>
-                  {project?.details?.title ||
+                  {project?.details?.data?.title ||
                     (project?.uid
                       ? shortAddress(project?.uid as string)
                       : "this project")}
@@ -158,7 +157,7 @@ export const ProjectSubscriptionDialog: FC<ProjectSubscriptionDialogProps> = ({
                   >
                     Receive monthly updates from{" "}
                     <b>
-                      {project?.details?.title ||
+                      {project?.details?.data?.title ||
                         (project?.uid
                           ? shortAddress(project?.uid as string)
                           : "this project")}

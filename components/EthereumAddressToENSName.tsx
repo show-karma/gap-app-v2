@@ -1,6 +1,6 @@
+"use client";
 import { useENSNames } from "@/store/ensNames";
 import React, { useEffect } from "react";
-import { useEnsName } from "wagmi";
 
 interface Props {
   address: any;
