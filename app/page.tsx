@@ -12,6 +12,9 @@ import { defaultMetadata } from "@/utilities/meta";
 import { ImageTheme } from "@/components/Utilities/ImageTheme";
 import { TypedLoading } from "@/components/Pages/Home/ReactTypedWrapp";
 // import { ReactTypedWrapper } from "@/components/Pages/Home/ReactTypedWrapp";
+import { MegaphoneIcon } from "@/components/Icons/Megaphone";
+import { RightArrowIcon } from "@/components/Icons/RightArrow";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
 
 const ProjectDialog = dynamic(
   () =>
@@ -31,7 +34,7 @@ const ReactTypedWrapper = dynamic(
 const Presentation = () => {
   return (
     <div className="flex flex-1 items-end gap-8 max-2xl:gap-4">
-      <div className="mt-12 flex w-full flex-row items-end justify-center gap-1 max-lg:mt-4">
+      <div className=" flex w-full flex-row items-end justify-center gap-1 max-lg:mt-4">
         <div className="flex w-full flex-[4]  flex-col  items-start">
           <div className="flex flex-1 flex-col gap-8 pb-8 max-2xl:gap-6">
             <h4 className="w-max rounded-3xl bg-[#EAECF5] dark:bg-slate-800 dark:text-blue-400 px-3 py-1 text-center text-base font-semibold text-indigo-900  max-2xl:text-sm">
@@ -295,6 +298,36 @@ const WhatIsSolving = () => {
 };
 
 export const metadata = defaultMetadata;
+function NewFeatureBanner() {
+  return (
+    <div className="flex w-full">
+      <div className="flex w-full justify-between bg-[#bee1d8] border-l-[5px] border-[#1de9b6] rounded-l-lg p-4 gap-4 max-md:p-2 max-md:flex-col">
+        <div className="flex flex-row gap-4 items-center max-md:gap-2.5">
+          <MegaphoneIcon />
+          <div className="flex flex-col">
+            <p className="text-sm font-semibold text-[#080a0e] max-md:text-xs">
+              We just launched onchain grant program registry - find funding for
+              your project.
+            </p>
+            {/* <p>
+							Visibility and accountability for community funded and public
+							goods projects.
+						</p> */}
+          </div>
+        </div>
+        <ExternalLink href="https://gap.karmahq.xyz/funding-map">
+          <button
+            type="button"
+            className="max-md:text-xs max-md:p-[8px_12px] bg-[#080a0e] rounded-[4px] text-[#1de9b6] flex items-center justify-center gap-[8px] p-[16px_24px] outline-none border-none font-semibold text-[14px] leading-[16px]"
+          >
+            View details
+            <RightArrowIcon />
+          </button>
+        </ExternalLink>
+      </div>
+    </div>
+  );
+}
 
 export default function Index() {
   const projectTypes = [
@@ -414,10 +447,13 @@ export default function Index() {
         </div>
       </div> */}
       <div className="flex w-full flex-col items-center bg-white dark:bg-black">
-        <div className="flex w-full max-w-[1920px] flex-col gap-16 px-16 py-1 max-lg:px-8 max-md:px-4">
-          <Presentation />
-          <Communities />
-          <WhatIsSolving />
+        <div className="flex w-full max-w-[1920px] flex-col gap-2 px-16 py-1 pt-4 max-lg:px-8 max-md:px-4">
+          <NewFeatureBanner />
+          <div className="flex flex-col gap-16 py-4">
+            <Presentation />
+            <Communities />
+            <WhatIsSolving />
+          </div>
         </div>
       </div>
     </>
