@@ -1,6 +1,6 @@
 "use client";
 import React, { Fragment, useEffect, useState } from "react";
-import { useRouter } from "next/router";
+import { useRouter, useParams } from "next/navigation";
 import type { Grant } from "@show-karma/karma-gap-sdk";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
 import { useAccount } from "wagmi";
@@ -66,7 +66,8 @@ export default function EditCategoriesPage() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore();
-  const communityId = router.query.communityId as string;
+  const params = useParams();
+  const communityId = params.communityId as string;
   const [grants, setGrants] = useState<SimplifiedGrants[]>([]);
   const [categoriesOptions, setCategoriesOptions] = useState<
     CategoriesOptions[]

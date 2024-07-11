@@ -1,6 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/router";
+import { useParams, useRouter } from "next/navigation";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
 import { useAccount } from "wagmi";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -44,7 +44,8 @@ export default function AssignQuestionsPage() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore();
-  const communityId = router.query.communityId as string;
+  const params = useParams();
+  const communityId = params.communityId as string;
   // const { gap } = useGap();
 
   // Call API

@@ -95,7 +95,6 @@ const SubscribeForm = ({ address, changeIsSubscribed }: SubscribeFormProps) => {
     </div>
   );
 };
-export const communitiesToBulkSubscribe: string[] = ["gitcoin"];
 
 export const ReceiveProjectUpdates = ({
   communityName,
