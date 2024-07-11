@@ -309,13 +309,19 @@ const GrantProgramRegistry = ({
       ) : null}
       <section className="my-8 flex w-full max-w-full flex-col justify-between items-center gap-6 px-6 pb-7 max-2xl:px-4 max-md:px-4 max-md:pt-0 max-md:my-4">
         <div className="flex flex-col w-full gap-3">
-          <div className="flex flex-[3] flex-col gap-3 items-start justify-start text-left">
-            <h1 className="text-2xl tracking-[-0.72px] 2xl:text-4xl font-bold text-start text-black dark:text-white">
+          <div className="flex flex-[3] flex-col gap-3 items-start justify-start text-left max-lg:gap-1">
+            <h1 className="text-2xl tracking-[-0.72px] 2xl:text-4xl font-bold text-start text-black dark:text-white max-lg:tracking-normal">
               {`The best grant program directory you’ll find`}
             </h1>
+            <p className="text-start text-lg max-lg:text-base max-w-5xl text-black dark:text-white">
+              Explore our curated list of grant programs for innovators and
+              creators: from tech pioneers to community leaders, there is a
+              grant program to elevate your project. Did we miss a
+              program/bounty?
+            </p>
           </div>
           <div className="flex flex-row gap-4 flex-wrap max-md:grid  max-md:grid-cols-2 max-xs:grid-cols-1">
-            <div className="bg-[#DBFFC5] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full">
+            <div className="bg-[#DBFFC5] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full max-sm:max-w-full">
               <img
                 src="/icons/funding.png"
                 alt="Funding"
@@ -336,7 +342,7 @@ const GrantProgramRegistry = ({
                 </p>
               </div>
             </div>
-            <div className="bg-[#DDF9F2] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full">
+            <div className="bg-[#DDF9F2] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full max-sm:max-w-full">
               <img
                 src="/icons/reward.png"
                 alt="Reward"
@@ -357,7 +363,7 @@ const GrantProgramRegistry = ({
                 </p>
               </div>
             </div>
-            <div className="bg-[#E0EAFF] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full">
+            <div className="bg-[#E0EAFF] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full max-sm:max-w-full">
               <img
                 src="/icons/karma-program-registry-syndicate.png"
                 alt="Cartographer Syndicate"
@@ -378,7 +384,7 @@ const GrantProgramRegistry = ({
                 </p>
               </div>
             </div>
-            <div className="bg-[#ECE9FE] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full">
+            <div className="bg-[#ECE9FE] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full max-sm:max-w-full">
               <img
                 src="/icons/karma-logo-rounded.png"
                 alt="Karma Logo"
@@ -425,7 +431,7 @@ const GrantProgramRegistry = ({
                 setSelectedCategory([]);
               }}
               key={"All"}
-              className={`px-3 py-1 mx-1 my-2 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${
+              className={`px-3 py-1 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${
                 !selectedCategory.length
                   ? "bg-black text-white dark:bg-white dark:text-black"
                   : "border border-black text-black dark:border-white dark:text-white"
@@ -442,7 +448,7 @@ const GrantProgramRegistry = ({
                   onChangeGeneric(type, setSelectedCategory);
                 }}
                 key={type}
-                className={`px-3 py-1 mx-1 my-2 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${
+                className={`px-3 py-1 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${
                   selectedCategory.includes(type)
                     ? "bg-black text-white dark:bg-white dark:text-black"
                     : "border border-black text-black dark:border-white dark:text-white"
@@ -460,7 +466,7 @@ const GrantProgramRegistry = ({
             <button
               onClick={() => setStatus("")}
               key={"All"}
-              className={`px-3 py-1 mx-1 my-2 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${
+              className={`px-3 py-1 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${
                 status === ""
                   ? "bg-black text-white dark:bg-white dark:text-black"
                   : "border border-black text-black dark:border-white dark:text-white"
@@ -472,7 +478,7 @@ const GrantProgramRegistry = ({
               <button
                 onClick={() => setStatus(type)}
                 key={type}
-                className={`px-3 py-1 mx-1 my-2 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${
+                className={`px-3 py-1 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${
                   status === type
                     ? "bg-black text-white dark:bg-white dark:text-black"
                     : "border border-black text-black dark:border-white dark:text-white"
