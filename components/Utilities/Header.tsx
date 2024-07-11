@@ -7,7 +7,7 @@ import * as Popover from "@radix-ui/react-popover";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { MoonIcon, SunIcon } from "@heroicons/react/24/solid";
-import { useAccount, useConfig, useConnect, useDisconnect } from "wagmi";
+import { useAccount } from "wagmi";
 import { useOwnerStore } from "@/store/owner";
 import { useCommunitiesStore } from "@/store/communities";
 import { ExternalLink } from "./ExternalLink";
@@ -29,7 +29,7 @@ import { OnboardingDialog } from "../Dialogs/OnboardingDialog";
 import { useMobileStore } from "@/store/mobile";
 import { config } from "@/utilities/wagmi/config";
 import { watchAccount } from "@wagmi/core";
-import { useRouter } from "next/router";
+import { usePathname } from "next/navigation";
 import { useRegistryStore } from "@/store/registry";
 
 const ProjectDialog = dynamic(
@@ -153,8 +153,8 @@ export default function Header() {
 
   const { isMobileMenuOpen, setIsMobileMenuOpen } = useMobileStore();
 
-  const router = useRouter();
-  const isFundingMap = router.pathname.includes("funding-map");
+  const pathname = usePathname();
+  const isFundingMap = pathname.includes("funding-map");
   const { isPoolManager, isRegistryAdmin } = useRegistryStore();
   const isRegistryAllowed =
     address && (isRegistryAdmin || isPoolManager) && isAuth;
