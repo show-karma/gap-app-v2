@@ -41,6 +41,7 @@ import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
 import { checkIsPoolManager } from "@/utilities/registry/checkIsPoolManager";
 import { MyProgramList } from "@/components/Pages/ProgramRegistry/MyProgramList";
 import { useStepper } from "@/store/txStepper";
+import { useRegistryStore } from "@/store/registry";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { query } = context;
@@ -69,24 +70,28 @@ const GrantProgramRegistry = ({
   const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore();
 
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  const [isPoolManager, setIsPoolManager] = useState(false);
-
-  const isAllowed = address && (isAdmin || isPoolManager) && isAuth;
   const { chain } = useAccount();
 
   const signer = useSigner();
+
+  const {
+    setIsRegistryAdmin,
+    setIsPoolManager,
+    isPoolManager,
+    isRegistryAdmin,
+  } = useRegistryStore();
+  const isAllowed = address && (isRegistryAdmin || isPoolManager) && isAuth;
+
   useEffect(() => {
     if (!address || !isConnected) {
-      setIsAdmin(false);
+      setIsRegistryAdmin(false);
       return;
     }
 
     const getMemberOf = async () => {
       try {
         const call = await isMemberOfProfile(address);
-        setIsAdmin(call);
+        setIsRegistryAdmin(call);
         if (!call) {
           const isManager = await checkIsPoolManager(address);
           setIsPoolManager(isManager);
@@ -170,7 +175,7 @@ const GrantProgramRegistry = ({
       const searchParam = searchInput ? `&name=${searchInput}` : "";
       const ownerParam = address ? `&owner=${address}` : "";
 
-      const url = isAdmin
+      const url = isRegistryAdmin
         ? `${baseUrl}${queryParams}${searchParam}`
         : `${baseUrl}${queryParams}${ownerParam}${searchParam}`;
 
@@ -446,7 +451,7 @@ const GrantProgramRegistry = ({
                       color: tab === "pending" ? "black" : "gray",
                     }}
                   >
-                    {isAdmin ? "Pending" : "Waiting for approval"}
+                    {isRegistryAdmin ? "Pending" : "Waiting for approval"}
                   </Button>
                   <Button
                     className="bg-transparent text-black"
@@ -506,7 +511,7 @@ const GrantProgramRegistry = ({
                     <div className="mt-8 flow-root">
                       <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                         <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                          {isAdmin ? (
+                          {isRegistryAdmin ? (
                             <ProgramListPending
                               approveOrReject={approveOrReject}
                               grantPrograms={grantPrograms}
