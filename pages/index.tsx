@@ -14,6 +14,7 @@ import { defaultMetadata } from "@/utilities/meta";
 import { ImageTheme } from "@/components/Utilities/ImageTheme";
 import { MegaphoneIcon } from "@/components/Icons/Megaphone";
 import { RightArrowIcon } from "@/components/Icons/RightArrow";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
 
 const ProjectDialog = dynamic(
   () =>
@@ -304,7 +305,7 @@ const WhatIsSolving = () => {
 function NewFeatureBanner() {
   return (
     <div className="flex w-full">
-      <div className="flex w-full justify-between bg-[#bee1d8] border-l-[5px] border-[#1de9b6] rounded-l-lg p-4 gap-4 max-md:p-2 max-md:mx-2 max-md:flex-col">
+      <div className="flex w-full justify-between bg-[#bee1d8] border-l-[5px] border-[#1de9b6] rounded-l-lg p-4 gap-4 max-md:p-2 max-md:flex-col">
         <div className="flex flex-row gap-4 items-center max-md:gap-2.5">
           <MegaphoneIcon />
           <div className="flex flex-col">
@@ -318,11 +319,7 @@ function NewFeatureBanner() {
 						</p> */}
           </div>
         </div>
-        <a
-          target="_blank"
-          rel="noreferrer"
-          href="https://gap.karmahq.xyz/funding-map"
-        >
+        <ExternalLink href="https://gap.karmahq.xyz/funding-map">
           <button
             type="button"
             className="max-md:text-xs max-md:p-[8px_12px] bg-[#080a0e] rounded-[4px] text-[#1de9b6] flex items-center justify-center gap-[8px] p-[16px_24px] outline-none border-none font-semibold text-[14px] leading-[16px]"
@@ -330,7 +327,7 @@ function NewFeatureBanner() {
             View details
             <RightArrowIcon />
           </button>
-        </a>
+        </ExternalLink>
       </div>
     </div>
   );
