@@ -1,8 +1,9 @@
 import type { Hex } from "viem";
 import { GAP } from "@show-karma/karma-gap-sdk";
+import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 export const isCommunityAdminOf = async (
-  community: { uid: Hex; chainID: number },
+  community: ICommunityResponse,
   address: string | Hex,
   signer?: any
 ) => {

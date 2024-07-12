@@ -1,3 +1,4 @@
+"use client";
 /* eslint-disable @next/next/no-img-element */
 import { FC, Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";

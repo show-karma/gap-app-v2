@@ -1,5 +1,4 @@
 /* eslint-disable @next/next/no-img-element */
-import type { Milestone, MilestoneCompleted } from "@show-karma/karma-gap-sdk";
 import { type FC, useState, useEffect } from "react";
 
 import { Button } from "@/components/Utilities/Button";
@@ -19,9 +18,14 @@ import { VerifiedBadge } from "./VerifiedBadge";
 import { useCommunityAdminStore } from "@/store/community";
 import { useStepper } from "@/store/txStepper";
 import { config } from "@/utilities/wagmi/config";
+import {
+  IMilestoneCompleted,
+  IMilestoneResponse,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { getGapClient, useGap } from "@/hooks";
 
 interface UpdatesProps {
-  milestone: Milestone;
+  milestone: IMilestoneResponse;
 }
 
 export const Updates: FC<UpdatesProps> = ({ milestone }) => {
@@ -35,18 +39,34 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
   const { changeStepperStep, setIsStepper } = useStepper();
+  const { gap } = useGap();
+  const project = useProjectStore((state) => state.project);
 
-  const undoMilestoneCompletion = async (milestone: Milestone) => {
+  const undoMilestoneCompletion = async (milestone: IMilestoneResponse) => {
+    let gapClient = gap;
     try {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
         await switchChainAsync?.({ chainId: milestone.chainID });
+        gapClient = getGapClient(milestone.chainID);
       }
       const walletClient = await getWalletClient(config, {
         chainId: milestone.chainID,
       });
-      if (!walletClient) return;
+      if (!walletClient || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      await milestone
+      // const instanceMilestone = new Milestone({
+      //   ...milestone,
+      //   schema: gapClient.findSchema("Milestone"),
+      // });
+      const instanceProject = await gapClient.fetch.projectById(project?.uid);
+      const findGrant = instanceProject?.grants.find(
+        (item) => item.uid.toLowerCase() === milestone.refUID.toLowerCase()
+      );
+      const instanceMilestone = findGrant?.milestones.find(
+        (item) => item.uid.toLowerCase() === milestone.uid.toLowerCase()
+      );
+      if (!instanceMilestone) return;
+      await instanceMilestone
         .revokeCompletion(walletSigner as any, changeStepperStep)
         .then(async () => {
           let retries = 1000;
@@ -58,7 +78,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
                   (g) => g.uid === milestone.refUID
                 );
                 const fetchedMilestone = foundGrant?.milestones.find(
-                  (u) => u.uid === milestone.uid
+                  (u: any) => u.uid === milestone.uid
                 );
                 const isCompleted = fetchedMilestone?.completed;
                 if (!isCompleted) {
@@ -93,10 +113,10 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
 
   const [verifiedMilestones, setVerifiedMilestones] = useState<
-    MilestoneCompleted[]
+    IMilestoneCompleted[]
   >(milestone?.verified || []);
 
-  const addVerifiedMilestone = (newVerified: MilestoneCompleted) => {
+  const addVerifiedMilestone = (newVerified: IMilestoneCompleted) => {
     setVerifiedMilestones([...verifiedMilestones, newVerified]);
   };
 
@@ -104,7 +124,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
     setVerifiedMilestones(milestone?.verified || []);
   }, [milestone]);
 
-  if (!isEditing && milestone?.completed?.reason?.length) {
+  if (!isEditing && milestone?.completed?.data?.reason?.length) {
     return (
       <div className="flex flex-col gap-3 bg-[#F8F9FC] dark:bg-zinc-900 rounded-md px-4 py-2 max-lg:max-w-2xl max-sm:max-w-full">
         <div className="flex w-full flex-row flex-wrap items-center justify-between gap-2">
@@ -120,7 +140,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
             {verifiedMilestones.length ? (
               <VerifiedBadge
                 verifications={verifiedMilestones}
-                title={`${milestone.title} - Reviews`}
+                title={`${milestone.data.title} - Reviews`}
               />
             ) : null}
             <VerifyMilestoneUpdateDialog
@@ -133,14 +153,14 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
           </p>
         </div>
 
-        {milestone.completed?.reason ? (
+        {milestone.completed?.data?.reason ? (
           <div className="flex flex-col items-start " data-color-mode="light">
             <ReadMore
               readLessText="Read less"
               readMoreText="Read more"
               side="left"
             >
-              {milestone.completed.reason}
+              {milestone.completed.data?.reason}
             </ReadMore>
 
             <div className="flex w-full flex-row items-center justify-end">
@@ -175,7 +195,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
     <UpdateMilestone
       milestone={milestone}
       isEditing={isEditing}
-      previousDescription={milestone.completed?.reason || ""}
+      previousDescription={milestone.completed?.data?.reason || ""}
       cancelEditing={handleEditing}
     />
   );

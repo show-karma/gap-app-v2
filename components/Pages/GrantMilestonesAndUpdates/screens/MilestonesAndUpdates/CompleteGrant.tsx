@@ -9,7 +9,11 @@ import { MESSAGES } from "@/utilities/messages";
 import { shortAddress } from "@/utilities/shortAddress";
 import { config } from "@/utilities/wagmi/config";
 import { XMarkIcon } from "@heroicons/react/24/solid";
-import type { Grant, Project } from "@show-karma/karma-gap-sdk";
+import { Grant } from "@show-karma/karma-gap-sdk";
+import {
+  IGrantResponse,
+  IProjectResponse,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getWalletClient } from "@wagmi/core";
 import { useQueryState } from "nuqs";
 import type { FC } from "react";
@@ -21,8 +25,8 @@ import { useAccount, useSwitchChain } from "wagmi";
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 
 interface GrantCompletionProps {
-  grant: Grant;
-  project: Project;
+  grant: IGrantResponse;
+  project: IProjectResponse;
 }
 
 export const GrantCompletion: FC<GrantCompletionProps> = ({
@@ -43,7 +47,7 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
   const { gap } = useGap();
 
   const markGrantAsComplete = async (
-    grantToComplete: Grant,
+    grantToComplete: IGrantResponse,
     data: {
       text?: string;
       title?: string;
@@ -61,9 +65,15 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
       const walletClient = await getWalletClient(config, {
         chainId: grantToComplete.chainID,
       });
-      if (!walletClient) return;
+      if (!walletClient || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      await grantToComplete
+      const fetchedProject = await gapClient.fetch.projectById(project?.uid);
+      if (!fetchedProject) return;
+      const grantInstance = fetchedProject.grants.find(
+        (g) => g.uid.toLowerCase() === grantToComplete.uid.toLowerCase()
+      );
+      if (!grantInstance) return;
+      await grantInstance
         .complete(
           walletSigner,
           {
@@ -118,7 +128,8 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
       <div className="flex w-full max-w-3xl flex-col gap-6 rounded-md bg-gray-200 dark:bg-zinc-800 px-4 py-6 max-lg:max-w-full">
         <div className="flex w-full flex-row justify-between">
           <h4 className="text-2xl font-bold text-black dark:text-zinc-100">
-            Complete {grant.details?.title || shortAddress(grant.uid)} Grant
+            Complete {grant.details?.data?.title || shortAddress(grant.uid)}{" "}
+            Grant
           </h4>
           <button
             onClick={() => {

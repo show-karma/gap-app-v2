@@ -1,13 +1,13 @@
 import { Contact } from "@/types/project";
-import { getProjectById } from "@/utilities/sdk";
-import type { Project } from "@show-karma/karma-gap-sdk";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { create } from "zustand";
 
 interface ProjectStore {
-  project: Project | undefined;
-  setProject: (project: Project | undefined) => void;
+  project: IProjectResponse | undefined;
+  setProject: (project: IProjectResponse | undefined) => void;
   loading: boolean;
-  refreshProject: () => Promise<Project | undefined>;
+  refreshProject: () => Promise<IProjectResponse | undefined>;
   setLoading: (loading: boolean) => void;
   isProjectOwner: boolean;
   setIsProjectOwner: (isProjectOwner: boolean) => void;
@@ -21,11 +21,13 @@ interface ProjectStore {
 
 export const useProjectStore = create<ProjectStore>((set, get) => ({
   project: undefined,
-  setProject: (project: Project | undefined) => set({ project }),
+  setProject: (project: IProjectResponse | undefined) => set({ project }),
   refreshProject: async () => {
     const { project } = get();
     if (!project) return;
-    const refreshedProject = await getProjectById(project.uid);
+    const refreshedProject = await gapIndexerApi
+      .projectBySlug(project.uid)
+      .then((res) => res.data);
 
     set({ project: refreshedProject });
     return refreshedProject;

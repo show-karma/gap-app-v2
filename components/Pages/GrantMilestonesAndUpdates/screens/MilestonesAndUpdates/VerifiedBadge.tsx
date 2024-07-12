@@ -1,22 +1,23 @@
 /* eslint-disable @next/next/no-img-element */
-import {
-  GrantUpdateStatus,
-  Hex,
-  MilestoneCompleted,
-} from "@show-karma/karma-gap-sdk";
+
 import { blo } from "blo";
 import { FC, useEffect, useState } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { useENSNames } from "@/store/ensNames";
 import { formatDate } from "@/utilities/formatDate";
 import { VerificationsDialog } from "./VerificationsDialog";
-import { ProjectImpactStatus } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
+import {
+  IMilestoneCompleted,
+  IProjectImpactStatus,
+  IGrantUpdateStatus,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { Hex } from "viem";
 
 interface VerifiedBadgeProps {
   verifications:
-    | MilestoneCompleted[]
-    | GrantUpdateStatus[]
-    | ProjectImpactStatus[];
+    | IMilestoneCompleted[]
+    | IGrantUpdateStatus[]
+    | IProjectImpactStatus[];
   title: string;
 }
 
@@ -75,19 +76,19 @@ export const VerifiedBadge: FC<VerifiedBadgeProps> = ({
   title,
 }) => {
   const [orderedSort, setOrderedSort] = useState<
-    (MilestoneCompleted | GrantUpdateStatus | ProjectImpactStatus)[]
+    (IMilestoneCompleted | IGrantUpdateStatus | IProjectImpactStatus)[]
   >([]);
 
   const getUniqueVerifications = (
     verifications:
-      | MilestoneCompleted[]
-      | GrantUpdateStatus[]
-      | ProjectImpactStatus[]
+      | IMilestoneCompleted[]
+      | IGrantUpdateStatus[]
+      | IProjectImpactStatus[]
   ) => {
     // get unique and by last date
     const uniqueVerifications: Record<
       Hex,
-      MilestoneCompleted | GrantUpdateStatus | ProjectImpactStatus
+      IMilestoneCompleted | IGrantUpdateStatus | IProjectImpactStatus
     > = {};
     verifications.forEach((verification) => {
       if (!verification.attester) return;

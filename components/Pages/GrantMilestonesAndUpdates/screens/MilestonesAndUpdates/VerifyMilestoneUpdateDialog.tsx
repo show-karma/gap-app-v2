@@ -17,10 +17,14 @@ import { getGapClient, useGap } from "@/hooks";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/txStepper";
 import { config } from "@/utilities/wagmi/config";
+import {
+  IMilestoneCompleted,
+  IMilestoneResponse,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 type VerifyMilestoneUpdateDialogProps = {
-  milestone: Milestone;
-  addVerifiedMilestone: (newVerified: MilestoneCompleted) => void;
+  milestone: IMilestoneResponse;
+  addVerifiedMilestone: (newVerified: IMilestoneCompleted) => void;
 };
 
 const schema = z.object({
@@ -61,6 +65,7 @@ export const VerifyMilestoneUpdateDialog: FC<
   const { gap } = useGap();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const { changeStepperStep, setIsStepper } = useStepper();
+  const project = useProjectStore((state) => state.project);
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
     let gapClient = gap;
@@ -76,7 +81,17 @@ export const VerifyMilestoneUpdateDialog: FC<
       });
       if (!walletClient || !address || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      await milestone
+      const fetchedProject = await gapClient.fetch.projectById(project?.uid);
+      if (!fetchedProject) return;
+      const grantInstance = fetchedProject.grants.find(
+        (g) => g.uid.toLowerCase() === milestone.refUID.toLowerCase()
+      );
+      if (!grantInstance) return;
+      const milestoneInstance = grantInstance.milestones?.find(
+        (u) => u.uid.toLowerCase() === milestone.uid.toLowerCase()
+      );
+      if (!milestoneInstance) return;
+      await milestoneInstance
         .verify(walletSigner, data.comment, changeStepperStep)
         .then(async () => {
           let retries = 1000;
@@ -89,11 +104,12 @@ export const VerifyMilestoneUpdateDialog: FC<
                 );
 
                 const fetchedMilestone = foundGrant?.milestones.find(
-                  (u) => u.uid === milestone.uid
+                  (u: any) => u.uid === milestone.uid
                 );
 
                 const alreadyExists = fetchedMilestone?.verified?.find(
-                  (v) => v.attester?.toLowerCase() === address?.toLowerCase()
+                  (v: any) =>
+                    v.attester?.toLowerCase() === address?.toLowerCase()
                 );
 
                 if (alreadyExists) {

@@ -1,61 +1,44 @@
+"use client";
 /* eslint-disable @next/next/no-img-element */
-import { Feed } from "@/types";
+import type { Feed } from "@/types";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { useRouter } from "next/router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Spinner } from "./Utilities/Spinner";
 import { ExternalLink } from "./Utilities/ExternalLink";
 import { feedIconDictionary, getFeedHref } from "@/utilities/feed";
 import { formatDate } from "@/utilities/formatDate";
 import EthereumAddressToENSName from "./EthereumAddressToENSName";
 import { blo } from "blo";
-import { Hex } from "viem";
+import type { Hex } from "viem";
 import { MarkdownPreview } from "./Utilities/MarkdownPreview";
 import { useTheme } from "next-themes";
 import { cn } from "@/utilities/tailwind";
+import { useParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 
 export const CommunityFeed = () => {
-  const router = useRouter();
-  const communityId = router.query.communityId; // Get the communityId from the URL
+  const params = useParams<{ communityId: string }>();
+  const communityId = params.communityId;
   const { theme } = useTheme();
 
-  const [feed, setFeed] = useState<Feed[]>([]); // Set the initial feed state to an empty array
-  const [feedLoading, setFeedLoading] = useState<boolean>(true); // Set the initial loading state to true
   const itemsPerPage = 12; // Set the total number of items you want returned from the API
   const [page, setPage] = useState<number>(1);
-  const [hasMore, setHasMore] = useState<boolean>(true);
 
-  // Fetch the feed data from the API
+  const { data, isLoading: feedLoading } = useQuery<Feed[]>({
+    queryKey: ["communityFeed", communityId],
+    queryFn: async () => {
+      const [data]: any = await fetchData(
+        `${INDEXER.COMMUNITY.FEED(communityId as string)}?limit=${itemsPerPage}`
+      );
+      return data || [];
+    },
+    enabled: Boolean(communityId),
+  });
 
-  // Call the feed API when the component loads
-  useEffect(() => {
-    const callFeedAPI = async () => {
-      setFeedLoading(true);
-      try {
-        const [data, error, pageInfo]: any = await fetchData(
-          `${INDEXER.COMMUNITY.FEED(
-            communityId as string
-          )}?limit=${itemsPerPage}`
-        );
-        if (!data) return;
-        const oldFeed = feed;
-        const newFeed = data.slice(0, itemsPerPage * page);
-        setFeed(newFeed);
-        const canLoadMore = oldFeed.length !== newFeed.length;
-        setHasMore(canLoadMore);
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setFeedLoading(false);
-      }
-    };
-
-    if (communityId) {
-      callFeedAPI();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }
-  }, [communityId, page]);
+  const feed = data?.slice(0, itemsPerPage * page) || [];
+  const hasMore = feed?.length !== data?.length;
+  const feedCounter = feed?.length;
 
   return (
     <div className="max-lg:hidden w-4/12 max-lg:w-full  2xl:w-3/12">
@@ -65,7 +48,7 @@ export const CommunityFeed = () => {
       {/* Feed start */}
       <div className="flow-root mt-10 bg-white dark:bg-zinc-900 dark:border-gray-700 border border-gray-200 py-2 rounded-xl  max-h-96 max-lg:max-h-64 max-lg:mt-4 overflow-y-auto">
         <ul>
-          {feed.length ? (
+          {feedCounter ? (
             feed.map((item, index) => {
               return (
                 <div
@@ -133,13 +116,14 @@ export const CommunityFeed = () => {
           ) : feedLoading ? null : (
             <p className="px-6 py-2 text-base font-normal text-black dark:text-zinc-100">{`This community doesn't have any activity yet`}</p>
           )}
-          {feed.length && hasMore ? (
+          {feedCounter && hasMore ? (
             <li className="mx-5 flex items-center justify-center">
               <button
                 onClick={() => {
                   setPage((oldValue) => oldValue + 1);
                 }}
                 className="h-max w-max my-4 py-2 px-6 bg-black dark:bg-slate-800 text-white rounded-md hover:opacity-75 transition-all ease-in-out duration-200"
+                disabled={feedLoading}
               >
                 {feedLoading ? (
                   <div className="w-full justify-center flex py-2">
@@ -151,7 +135,7 @@ export const CommunityFeed = () => {
               </button>
             </li>
           ) : null}
-          {feedLoading && !feed.length ? (
+          {feedLoading && !feedCounter ? (
             <div className="w-full justify-center flex py-2">
               <Spinner />
             </div>

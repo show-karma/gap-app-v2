@@ -138,7 +138,6 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
   const onSubmit = async () => {
     setIsLoading(true); // Set loading state to true
     try {
-      console.log("first");
       await removeAdmin(); // Call the addAdmin function
     } catch (error) {
       console.error("Error removing Community Admin:", error);

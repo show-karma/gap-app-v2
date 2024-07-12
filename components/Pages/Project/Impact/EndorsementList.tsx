@@ -8,13 +8,13 @@ import { shortAddress } from "@/utilities/shortAddress";
 import { formatDate } from "@/utilities/formatDate";
 import { EmptyEndorsmentList } from "./EmptyEndorsmentList";
 import { useProjectStore } from "@/store";
-import { ProjectEndorsement } from "@show-karma/karma-gap-sdk";
 import pluralize from "pluralize";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { IProjectEndorsement } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 interface EndorsementRowProps {
-  endorsement: ProjectEndorsement;
+  endorsement: IProjectEndorsement;
 }
 
 const EndorsementRow: FC<EndorsementRowProps> = ({ endorsement }) => {
@@ -41,14 +41,14 @@ const EndorsementRow: FC<EndorsementRowProps> = ({ endorsement }) => {
           </div>
         </div>
       </div>
-      {endorsement.comment ? (
+      {endorsement.data.comment ? (
         <div className="text-left px-0 flex flex-row items-start">
           <p className="text-sm text-[#344054] dark:text-zinc-100  font-normal">
             <div
               className="w-full break-normal text-base font-normal text-black dark:text-zinc-100 max-2xl:text-sm"
               data-color-mode="light"
             >
-              <MarkdownPreview source={endorsement.comment} />
+              <MarkdownPreview source={endorsement.data.comment} />
             </div>
           </p>
         </div>
@@ -60,7 +60,7 @@ const EndorsementRow: FC<EndorsementRowProps> = ({ endorsement }) => {
 export const EndorsementList: FC = () => {
   const project = useProjectStore((state) => state.project);
   const [handledEndorsements, setHandledEndorsements] = useState<
-    ProjectEndorsement[]
+    IProjectEndorsement[]
   >([]);
   const itemsPerPage = 12; // Set the total number of items you want returned from the API
   const [page, setPage] = useState<number>(1);
@@ -77,7 +77,7 @@ export const EndorsementList: FC = () => {
     populateEnsNames(allAddresses);
 
     const checkUniqueEndorsements = () => {
-      const addresses: Record<Hex, ProjectEndorsement> = {};
+      const addresses: Record<Hex, IProjectEndorsement> = {};
       endorsements.forEach((endorsement) => {
         if (addresses[endorsement.recipient]) {
           if (

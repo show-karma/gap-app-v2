@@ -3,13 +3,16 @@
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/community";
 import { CheckCircleIcon } from "@heroicons/react/24/outline";
-import type { Grant, Project } from "@show-karma/karma-gap-sdk";
+import {
+  IGrantResponse,
+  IProjectResponse,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useQueryState } from "nuqs";
 import type { FC } from "react";
 
 interface GrantCompleteProps {
-  project: Project;
-  grant: Grant;
+  project: IProjectResponse;
+  grant: IGrantResponse;
   text?: string;
 }
 

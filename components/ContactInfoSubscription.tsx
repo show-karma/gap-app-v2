@@ -1,14 +1,13 @@
+"use client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { FC, useEffect, useState } from "react";
+import { FC, useState } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { z } from "zod";
 import { Button } from "./Utilities/Button";
 import toast from "react-hot-toast";
 import { useOwnerStore, useProjectStore } from "@/store";
-import axios from "axios";
 import { Contact } from "@/types/project";
 import { ContactsDropdown } from "./Pages/Project/ContactsDropdown";
-import { envVars } from "@/utilities/enviromentVars";
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
 
@@ -78,7 +77,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
       if (data.id === "0") {
         await fetchData(
           INDEXER.SUBSCRIPTION.CREATE(
-            project?.details?.slug || (project?.uid as string)
+            project?.details?.data?.slug || (project?.uid as string)
           ),
           "POST",
           { contacts: [data] },
@@ -96,7 +95,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
       } else {
         await fetchData(
           INDEXER.SUBSCRIPTION.UPDATE(
-            project?.details?.slug || (project?.uid as string),
+            project?.details?.data?.slug || (project?.uid as string),
             data.id
           ),
           "PUT",
@@ -129,7 +128,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
     try {
       await fetchData(
         INDEXER.SUBSCRIPTION.DELETE(
-          project?.details?.slug || (project?.uid as string)
+          project?.details?.data?.slug || (project?.uid as string)
         ),
         "DELETE",
         { contacts: [watch("id")] },

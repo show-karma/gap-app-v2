@@ -1,3 +1,4 @@
+"use client";
 /* eslint-disable @next/next/no-img-element */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable jsx-a11y/no-static-element-interactions */
@@ -55,7 +56,11 @@ export const SearchList: React.FC<Props> = ({
   }, [isAuth, isConnected, shouldOpen]);
   const { isMobileMenuOpen, setIsMobileMenuOpen } = useMobileStore();
 
-  const renderItem = (item: IProjectResponse | ICommunityResponse, title: string, href: string) => {
+  const renderItem = (
+    item: IProjectResponse | ICommunityResponse,
+    title: string,
+    href: string
+  ) => {
     return (
       <Link
         key={item.uid}
@@ -92,41 +97,43 @@ export const SearchList: React.FC<Props> = ({
     isOpen && (
       <div className="absolute left-0 top-10 mt-3 max-h-64 min-w-full overflow-y-auto rounded-md bg-white dark:bg-zinc-800 py-4 border border-zinc-200">
         {data.projects.length > 0 &&
-          data.projects.map((project) => (
+          data.projects.map((project) =>
             renderItem(
               project,
               project.details?.data.title || "Untitled Project",
               PAGES.PROJECT.GRANTS(project.details?.data.slug || project.uid)
             )
-          ))
-        }
+          )}
 
         {data.communities.length > 0 &&
-          data.communities.map((community) => (
+          data.communities.map((community) =>
             renderItem(
               community,
               community.details?.data.name || "Untitled Community",
-              PAGES.COMMUNITY.ALL_GRANTS(community.details?.data.slug || community.uid)
+              PAGES.COMMUNITY.ALL_GRANTS(
+                community.details?.data.slug || community.uid
+              )
             )
-          ))
-        }
+          )}
 
         {isLoading && (
           <div className="flex justify-center ">
             <Spinner />
           </div>
         )}
-        {!isLoading && data.projects.length === 0 && data.communities.length === 0 && (
-          <div className="flex flex-col items-center text-center">
-            <div className="w-full text-center">No results found.</div>
-            <div
-              onClick={() => triggerCreateProjectModal()}
-              className="mt-2 cursor-pointer rounded-sm bg-brand-blue px-3 py-2 text-white font-bold"
-            >
-              Create a project
+        {!isLoading &&
+          data.projects.length === 0 &&
+          data.communities.length === 0 && (
+            <div className="flex flex-col items-center text-center">
+              <div className="w-full text-center">No results found.</div>
+              <div
+                onClick={() => triggerCreateProjectModal()}
+                className="mt-2 cursor-pointer rounded-sm bg-brand-blue px-3 py-2 text-white font-bold"
+              >
+                Create a project
+              </div>
             </div>
-          </div>
-        )}
+          )}
       </div>
     )
   );

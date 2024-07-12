@@ -1,6 +1,6 @@
+"use client";
 /* eslint-disable react/no-unstable-nested-components */
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { Grant } from "@show-karma/karma-gap-sdk";
 import { type FC, useState, Fragment, useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -26,9 +26,10 @@ import { useSearchParams } from "next/navigation";
 import { ExclamationTriangleIcon } from "@heroicons/react/20/solid";
 import { createHash } from "crypto";
 import { envVars } from "@/utilities/enviromentVars";
+import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 interface ReviewFormAnonProps {
-  grant: Grant;
+  grant: IGrantResponse;
   allQuestions: Question[];
   alreadyReviewed: boolean;
   reviewerInfo: ReviewerInfo;
@@ -279,8 +280,8 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
       console.log(error);
       toast.error(
         MESSAGES.GRANT.REVIEW.ERROR(
-          project?.details?.title as string,
-          grant.details?.title as string
+          project?.details?.data?.title as string,
+          grant.details?.data?.title as string
         )
       );
     } finally {
@@ -300,16 +301,16 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
         if (data?.success == true) {
           toast.success(
             MESSAGES.GRANT.REVIEW.SUCCESS(
-              project?.details?.title as string,
-              grant.details?.title as string
+              project?.details?.data?.title as string,
+              grant.details?.data?.title as string
             )
           );
           setHasSubmitted(true);
         } else {
           toast.error(
             MESSAGES.GRANT.REVIEW.ANON_REVIEW_ALREADY_EXISTS(
-              project?.details?.title as string,
-              grant.details?.title as string
+              project?.details?.data?.title as string,
+              grant.details?.data?.title as string
             )
           );
         }
@@ -318,8 +319,8 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
         console.log("Error in storing anon reviews: ", error);
         toast.error(
           MESSAGES.GRANT.REVIEW.ERROR(
-            project?.details?.title as string,
-            grant.details?.title as string
+            project?.details?.data?.title as string,
+            grant.details?.data?.title as string
           )
         );
       });

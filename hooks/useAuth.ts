@@ -1,3 +1,4 @@
+"use client";
 import { useAuthStore } from "@/store/auth";
 import { jwtDecode } from "jwt-decode";
 import fetchData from "@/utilities/fetchData";
@@ -10,7 +11,7 @@ import { checkExpirationStatus } from "@/utilities/checkExpirationStatus";
 import { Hex } from "viem";
 import { useOnboarding } from "@/store/onboarding";
 import { PAGES } from "@/utilities/pages";
-import { useRouter } from "next/router";
+import { usePathname, useRouter } from "next/navigation";
 import { useMixpanel } from "./useMixpanel";
 
 export const authCookiePath = "gap_auth";
@@ -50,6 +51,8 @@ export const useAuth = () => {
   const cookies = new Cookies();
   const { mixpanel } = useMixpanel();
   const { signMessageAsync } = useSignMessage();
+
+  const pathname = usePathname();
 
   const signMessage = async (messageToSign: string) => {
     try {
@@ -119,10 +122,10 @@ export const useAuth = () => {
         toast.error("Login failed");
         return;
       }
-      if (router.asPath === "/") {
+      if (pathname === "/") {
         router.push(PAGES.MY_PROJECTS);
       }
-      if (!router.asPath.includes("funding-map")) {
+      if (!pathname.includes("funding-map")) {
         setIsOnboarding?.(true);
       }
       if (address) {

@@ -1,15 +1,16 @@
 /* eslint-disable @next/next/no-img-element */
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { getGapClient, useGap } from "@/hooks";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/txStepper";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { config } from "@/utilities/wagmi/config";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { GrantUpdate, type Grant } from "@show-karma/karma-gap-sdk";
+import { GrantUpdate } from "@show-karma/karma-gap-sdk";
+import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getWalletClient } from "@wagmi/core";
-import { useRouter } from "next/router";
 import { useQueryState } from "nuqs";
 import type { FC } from "react";
 import { useState } from "react";
@@ -30,7 +31,7 @@ const inputStyle =
 type UpdateType = z.infer<typeof updateSchema>;
 
 interface NewGrantUpdateProps {
-  grant: Grant;
+  grant: IGrantResponse;
 }
 
 export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
@@ -69,19 +70,23 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
 
   const { changeStepperStep, setIsStepper } = useStepper();
 
+  const { gap } = useGap();
+
   const createGrantUpdate = async (
-    grantToUpdate: Grant,
+    grantToUpdate: IGrantResponse,
     { title, text }: { title: string; text: string }
   ) => {
+    let gapClient = gap;
     if (!address || !project) return;
     try {
       if (chain?.id !== grantToUpdate.chainID) {
         await switchChainAsync?.({ chainId: grantToUpdate.chainID });
+        gapClient = getGapClient(grantToUpdate.chainID);
       }
       const walletClient = await getWalletClient(config, {
         chainId: grantToUpdate.chainID,
       });
-      if (!walletClient) return;
+      if (!walletClient || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
 
       const grantUpdate = new GrantUpdate({
@@ -92,7 +97,7 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
         },
         recipient: grantToUpdate.recipient,
         refUID: grantToUpdate.uid,
-        schema: grantToUpdate.schema.gap.findSchema("GrantDetails"),
+        schema: gapClient.findSchema("GrantDetails"),
       });
 
       await grantUpdate
@@ -109,7 +114,7 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
                 );
 
                 const alreadyExists = updatedGrant?.updates.find(
-                  (u) => u.uid === attestUID
+                  (u: any) => u.uid === attestUID
                 );
                 if (alreadyExists) {
                   retries = 0;

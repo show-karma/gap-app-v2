@@ -2,12 +2,12 @@ import { FC, useEffect, useState } from "react";
 import { VerifiedBadge } from "../../GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/VerifiedBadge";
 import { VerifyImpactDialog } from "./VerifyImpactDialog";
 import {
-  ProjectImpact,
-  ProjectImpactStatus,
-} from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
+  IProjectImpact,
+  IProjectImpactStatus,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 interface ImpactVerificationsProps {
-  impact: ProjectImpact;
+  impact: IProjectImpact;
 }
 
 export const ImpactVerifications: FC<ImpactVerificationsProps> = ({
@@ -19,7 +19,7 @@ export const ImpactVerifications: FC<ImpactVerificationsProps> = ({
     setVerifieds(impact.verified);
   }, [impact.verified]);
 
-  const addVerification = (newVerified: ProjectImpactStatus) => {
+  const addVerification = (newVerified: IProjectImpactStatus) => {
     setVerifieds([...verifieds, newVerified]);
   };
 

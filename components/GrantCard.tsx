@@ -1,6 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
 import { Grant, GrantDetails, ProjectDetails } from "@show-karma/karma-gap-sdk";
-import { blo } from "blo";
 import { Hex } from "viem";
 import pluralize from "pluralize";
 import formatCurrency from "@/utilities/formatCurrency";
@@ -8,9 +7,6 @@ import { MarkdownPreview } from "./Utilities/MarkdownPreview";
 import { formatPercentage } from "@/utilities/formatNumber";
 import { PAGES } from "@/utilities/pages";
 import { formatDate } from "@/utilities/formatDate";
-import { chainImgDictionary } from "@/utilities/chainImgDictionary";
-import { chainNameDictionary } from "@/utilities/chainNameDictionary";
-import * as Tooltip from "@radix-ui/react-tooltip";
 
 interface GrantMongo extends Omit<Grant, "details" | "project"> {
   details: GrantDetails;
