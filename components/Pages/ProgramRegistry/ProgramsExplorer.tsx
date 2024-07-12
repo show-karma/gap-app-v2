@@ -33,7 +33,7 @@ const statuses = ["Active", "Inactive"];
 
 const links = {
   funding_block: "https://tally.so/r/w2rJ8M",
-  add_program: "https://gap.karmahq.xyz/funding-map/add-program",
+  add_program: "/funding-map/add-program",
   cryptographer:
     "https://sovs.notion.site/Cartographer-Syndicate-a574b48ae162451cb73c17326f471b6a",
   notion:
