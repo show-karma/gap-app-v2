@@ -4,6 +4,7 @@ const networks = [
   "Bitcoin",
   "Cardano",
   "Cosmos/IBC",
+  "Degen",
   "EVM",
   "Farcaster",
   "NEAR",
@@ -406,6 +407,10 @@ const networkImages: Record<
   "cosmos/ibc": {
     light: "/images/networks/cosmos.svg",
     dark: "/images/networks/cosmos.svg",
+  },
+  degen: {
+    light: "/images/networks/degen.svg",
+    dark: "/images/networks/degen.svg",
   },
   evm: {
     light: "/images/networks/ethereum.svg",
