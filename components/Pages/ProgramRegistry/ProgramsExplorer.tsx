@@ -255,8 +255,8 @@ export const ProgramsExplorer = () => {
               program/bounty?
             </p>
           </div>
-          <div className="flex flex-row gap-4 flex-wrap max-md:grid  max-md:grid-cols-2 max-xs:grid-cols-1">
-            <div className="bg-[#DBFFC5] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full max-sm:max-w-full">
+          <div className="grid grid-cols-4 gap-4  max-md:grid max-xl:grid-cols-3 max-lg:grid-cols-2 max-xs:grid-cols-1 w-max max-xl:w-full">
+            <div className="bg-[#DBFFC5] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full max-lg:max-w-full">
               <img
                 src="/icons/funding.png"
                 alt="Funding"
@@ -277,7 +277,7 @@ export const ProgramsExplorer = () => {
                 </p>
               </div>
             </div>
-            <div className="bg-[#DDF9F2] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full max-sm:max-w-full">
+            <div className="bg-[#DDF9F2] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full max-lg:max-w-full">
               <img
                 src="/icons/reward.png"
                 alt="Reward"
@@ -298,7 +298,7 @@ export const ProgramsExplorer = () => {
                 </p>
               </div>
             </div>
-            <div className="bg-[#E0EAFF] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full max-sm:max-w-full">
+            <div className="bg-[#E0EAFF] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full max-lg:max-w-full">
               <img
                 src="/icons/karma-program-registry-syndicate.png"
                 alt="Cartographer Syndicate"
@@ -319,7 +319,7 @@ export const ProgramsExplorer = () => {
                 </p>
               </div>
             </div>
-            <div className="bg-[#ECE9FE] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full max-sm:max-w-full">
+            <div className="bg-[#ECE9FE] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full max-lg:max-w-full">
               <img
                 src="/icons/karma-logo-rounded.png"
                 alt="Karma Logo"
