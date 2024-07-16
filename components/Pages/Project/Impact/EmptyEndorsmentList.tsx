@@ -15,7 +15,7 @@ export const EmptyEndorsmentList: FC = () => {
   const { setIsEndorsementOpen: setIsOpen } = useEndorsementStore();
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3 px-3 py-3">
       <p>Be the first to endorse this project!</p>
       {!isConnected || !isAuth ? (
         <button
