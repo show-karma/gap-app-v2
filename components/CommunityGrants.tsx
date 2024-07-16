@@ -17,6 +17,9 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import { AutoSizer, Grid } from "react-virtualized";
 import { cn } from "@/utilities/tailwind";
 import { zeroUID } from "@/utilities/commons";
+import { useQuery } from "@tanstack/react-query";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 const sortOptions: Record<SortByOptions, string> = {
   recent: "Recent",
@@ -37,6 +40,24 @@ interface CommunityGrantsProps {
   defaultSortBy: SortByOptions;
   defaultSelectedStatus: StatusOptions;
 }
+
+const getTotalProjects = async (communityId: string) => {
+  try {
+    const [data, error] = await fetchData(
+      INDEXER.COMMUNITY.STATS(communityId),
+      "GET",
+      {},
+      {},
+      {},
+      false,
+      true
+    );
+    if (error || !data.projects) return 0;
+    return data.projects;
+  } catch {
+    return 0;
+  }
+};
 
 export const CommunityGrants = ({
   categoriesOptions,
@@ -151,11 +172,17 @@ export const CommunityGrants = ({
     }
   };
 
+  const { data: totalProjects, isLoading } = useQuery({
+    queryKey: ["totalProjects", communityId],
+    queryFn: () => getTotalProjects(communityId),
+  });
+
   return (
     <div className="w-8/12 max-lg:w-full 2xl:w-9/12">
       <div className="flex items-center justify-between flex-row flex-wrap-reverse max-lg:flex-wrap max-lg:flex-col-reverse max-lg:justify-start max-lg:items-start gap-3 max-lg:gap-4">
         <div className="text-2xl font-semibold text-gray-900 dark:text-zinc-100 max-2xl:text-xl">
-          Total Grants {totalGrants ? `(${totalGrants})` : null}
+          Total Grants {totalGrants ? `(${totalGrants})` : null}{" "}
+          {!isLoading ? `on ${totalProjects || 0} projects` : null}
         </div>
         <div className="flex items-center gap-x-3 flex-wrap gap-y-2">
           {/* Filter by category start */}
