@@ -173,9 +173,7 @@ export const ManagePrograms = () => {
   };
 
   useMemo(() => {
-    if (!isRegistryAdminLoading) {
-      getGrantPrograms();
-    }
+    getGrantPrograms();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tab, page, searchInput, address, isRegistryAdmin]);
 
