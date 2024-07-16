@@ -3,7 +3,7 @@ import { FC, useState } from "react";
 import { useAccount } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { EndorsementDialog } from "./EndorsementDialog";
-import { useEndorsementStore } from "@/store/endorsement";
+import { useEndorsementStore } from "@/store/modals/endorsement";
 import { Button } from "@/components/Utilities/Button";
 import { cn } from "@/utilities/tailwind";
 

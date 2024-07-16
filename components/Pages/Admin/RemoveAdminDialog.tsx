@@ -24,7 +24,7 @@ import { useAuthStore } from "@/store/auth";
 import { getGapClient, useGap } from "@/hooks";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { getWalletClient } from "@wagmi/core";
-import { useStepper } from "@/store/txStepper";
+import { useStepper } from "@/store/modals/txStepper";
 import toast from "react-hot-toast";
 import { config } from "@/utilities/wagmi/config";
 

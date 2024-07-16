@@ -9,7 +9,7 @@ import toast from "react-hot-toast";
 import { IExpirationStatus, ISession } from "@/types/auth";
 import { checkExpirationStatus } from "@/utilities/checkExpirationStatus";
 import { Hex } from "viem";
-import { useOnboarding } from "@/store/onboarding";
+import { useOnboarding } from "@/store/modals/onboarding";
 import { PAGES } from "@/utilities/pages";
 import { usePathname, useRouter } from "next/navigation";
 import { useMixpanel } from "./useMixpanel";

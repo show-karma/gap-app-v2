@@ -13,10 +13,10 @@ import { useAccount, useSwitchChain } from "wagmi";
 import { getGapClient, useGap } from "@/hooks";
 import { useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
-import { useStepper } from "@/store/txStepper";
+import { useStepper } from "@/store/modals/txStepper";
 import { Hex } from "viem";
 import { config } from "@/utilities/wagmi/config";
-import { useEndorsementStore } from "@/store/endorsement";
+import { useEndorsementStore } from "@/store/modals/endorsement";
 
 type EndorsementDialogProps = {};
 

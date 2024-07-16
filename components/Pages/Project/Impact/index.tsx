@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import { cn } from "@/utilities/tailwind";
 import { FC, useEffect, useState } from "react";
 import { formatDate } from "@/utilities/formatDate";
@@ -17,7 +17,7 @@ import { Button } from "@/components/Utilities/Button";
 import { useQueryState } from "nuqs";
 import { ReadMore } from "@/utilities/ReadMore";
 import { ImpactVerifications } from "./ImpactVerifications";
-import { useStepper } from "@/store/txStepper";
+import { useStepper } from "@/store/modals/txStepper";
 import { getGapClient, useGap } from "@/hooks";
 import { Hex } from "viem";
 import { config } from "@/utilities/wagmi/config";

@@ -16,7 +16,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { getGapClient, useGap } from "@/hooks";
 
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { useStepper } from "@/store/txStepper";
+import { useStepper } from "@/store/modals/txStepper";
 import { useProjectStore } from "@/store";
 import { Hex } from "viem";
 import { config } from "@/utilities/wagmi/config";

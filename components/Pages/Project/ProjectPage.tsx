@@ -18,7 +18,7 @@ import { getWalletClient } from "@wagmi/core";
 import { Button } from "@/components/Utilities/Button";
 import Link from "next/link";
 import { EndorsementList } from "@/components/Pages/ProgramRegistry/EndorsementList";
-import { useStepper } from "@/store/txStepper";
+import { useStepper } from "@/store/modals/txStepper";
 import { config } from "@/utilities/wagmi/config";
 import { getProjectById } from "@/utilities/sdk";
 import { shortAddress } from "@/utilities/shortAddress";
@@ -28,13 +28,14 @@ import { Hex } from "viem";
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
 import { cn } from "@/utilities/tailwind";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { useEndorsementStore } from "@/store/endorsement";
+import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { ProjectSubTabs } from "./ProjectSubTabs";
 import { useActivityTabStore } from "@/store/activityTab";
 import { envVars } from "@/utilities/enviromentVars";
 import { ProjectSubscription } from "./ProjectSubscription";
 import formatCurrency from "@/utilities/formatCurrency";
+import { useIntroModalStore } from "@/store/modals/intro";
 
 const ProjectDialog = dynamic(
   () =>
@@ -56,9 +57,10 @@ const TransferOwnershipDialog = dynamic(() =>
 
 function ProjectBlocks() {
   const project = useProjectStore((state) => state.project);
-  const { setIsEndorsementOpen: setIsOpen } = useEndorsementStore();
+  const { setIsEndorsementOpen } = useEndorsementStore();
   const [, copy] = useCopyToClipboard();
   const params = useParams();
+  const { setIsIntroModalOpen } = useIntroModalStore();
 
   const blocks: {
     iconSrc: string;
@@ -86,14 +88,14 @@ function ProjectBlocks() {
       iconSrc: "/icons/intro.png",
       title: "Request intro",
       description: "Get an introduction to connect",
-      link: "/",
+      action: () => setIsIntroModalOpen(true),
       bg: "bg-[#DBFFC5]",
     },
     {
       iconSrc: "/icons/endorsements.png",
       title: "Endorse the Project",
       description: "Publicly endorse our project",
-      action: () => setIsOpen(true),
+      action: () => setIsEndorsementOpen(true),
       bg: "bg-[#FFF3D4]",
     },
     {

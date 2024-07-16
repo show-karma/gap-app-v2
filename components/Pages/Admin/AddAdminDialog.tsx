@@ -9,21 +9,14 @@ import {
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MarkdownEditor } from "../../Utilities/MarkdownEditor";
 import { useAccount, useSwitchChain } from "wagmi";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { Community, GAP, nullRef } from "@show-karma/karma-gap-sdk";
+import { GAP } from "@show-karma/karma-gap-sdk";
 import { Button } from "../../Utilities/Button";
-import { useProjectStore } from "@/store";
 import { MESSAGES } from "@/utilities/messages";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { appNetwork, getChainIdByName } from "@/utilities/network";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { cn } from "@/utilities/tailwind";
-import { useAuthStore } from "@/store/auth";
-import { getGapClient, useGap } from "@/hooks";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { getWalletClient } from "@wagmi/core";
-import { useStepper } from "@/store/txStepper";
+import { useStepper } from "@/store/modals/txStepper";
 import toast from "react-hot-toast";
 import { config } from "@/utilities/wagmi/config";
 

@@ -45,7 +45,7 @@ import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { useAuthStore } from "@/store/auth";
 import { getWalletClient } from "@wagmi/core";
-import { useStepper } from "@/store/txStepper";
+import { useStepper } from "@/store/modals/txStepper";
 import { updateProject } from "@/utilities/sdk/projects/editProject";
 import { ContactInfoSection } from "./ContactInfoSection";
 import type { Contact } from "@/types/project";

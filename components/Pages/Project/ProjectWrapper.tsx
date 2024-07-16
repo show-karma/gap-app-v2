@@ -22,7 +22,12 @@ import fetchData from "@/utilities/fetchData";
 import { getProjectById, getProjectOwner } from "@/utilities/sdk";
 import { ProjectNavigator } from "@/components/Pages/Project/ProjectNavigator";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useEndorsementStore } from "@/store/endorsement";
+import { useEndorsementStore } from "@/store/modals/endorsement";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import Image from "next/image";
+import { blo } from "blo";
+import { IntroDialog } from "./IntroDialog";
+import { useIntroModalStore } from "@/store/modals/intro";
 
 interface ProjectWrapperProps {
   project: IProjectResponse;
@@ -30,6 +35,7 @@ interface ProjectWrapperProps {
 }
 export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   const setProject = useProjectStore((state) => state.setProject);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const setIsProjectOwner = useProjectStore((state) => state.setIsProjectOwner);
   const setIsProjectOwnerLoading = useProjectStore(
     (state) => state.setIsProjectOwnerLoading
@@ -221,12 +227,51 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
     }
     return null;
   };
+
+  interface Member {
+    uid: string;
+    recipient: string;
+    details?: {
+      name?: string;
+    };
+  }
+
+  const mountMembers = () => {
+    const members: Member[] = [];
+    if (project?.members) {
+      project.members.forEach((member) => {
+        members.push({
+          uid: member.uid,
+          recipient: member.recipient,
+          details: {
+            name: member?.details?.name,
+          },
+        });
+      });
+    }
+    const alreadyHasOwner = project?.members.find(
+      (member) => member.recipient === project.recipient
+    );
+    if (!alreadyHasOwner) {
+      members.push({
+        uid: project?.recipient || "",
+        recipient: project?.recipient || "",
+      });
+    }
+
+    return members;
+  };
+
+  const members = mountMembers();
+  const { isIntroModalOpen } = useIntroModalStore();
+  const { isEndorsementOpen } = useEndorsementStore();
   return (
     <>
-      <EndorsementDialog />
+      {isIntroModalOpen ? <IntroDialog /> : null}
+      {isEndorsementOpen ? <EndorsementDialog /> : null}
 
       <div className="relative border-b border-gray-200 ">
-        <div className="px-4 sm:px-6 lg:px-12 md:flex py-5 md:items-start md:justify-between flex flex-row max-lg:flex-col gap-4">
+        <div className="px-4 sm:px-6 lg:px-12 lg:flex py-5 lg:items-start lg:justify-between flex flex-row max-lg:flex-col max-lg:justify-center max-lg:items-center gap-4">
           <div className="flex flex-col gap-4">
             <h1
               className={
@@ -250,29 +295,74 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
               </div>
             ) : null}
           </div>
-          <div className="flex flex-row gap-10 max-lg:gap-4 flex-wrap max-lg:flex-col items-center max-lg:items-start">
-            {socials.length > 0 && (
-              <div className="flex flex-row gap-4 items-center">
-                {socials
-                  .filter((social) => social?.url)
-                  .map((social, index) => (
-                    <a
-                      key={social?.url || index}
-                      href={social?.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {social?.icon && (
-                        <social.icon className="h-5 w-5 fill-black text-black dark:text-white dark:fill-zinc-200" />
-                      )}
-                    </a>
-                  ))}
-              </div>
-            )}
-            {/* <div className="flex flex-col gap-2 items-center">
+          <div className="flex flex-col gap-3 items-end justify-end">
+            <div className="flex flex-row gap-6 max-lg:flex-col  max-lg:gap-3">
+              <div className="flex flex-row gap-10 max-lg:gap-4 flex-wrap max-lg:flex-col items-center max-lg:justify-center">
+                {socials.length > 0 && (
+                  <div className="flex flex-row gap-4 items-center">
+                    {socials
+                      .filter((social) => social?.url)
+                      .map((social, index) => (
+                        <a
+                          key={social?.url || index}
+                          href={social?.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {social?.icon && (
+                            <social.icon className="h-5 w-5 fill-black text-black dark:text-white dark:fill-zinc-200" />
+                          )}
+                        </a>
+                      ))}
+                  </div>
+                )}
+                {/* <div className="flex flex-col gap-2 items-center">
               {handleEndorse()}
               {project ? <ProjectSubscriptionDialog project={project} /> : null}
             </div> */}
+              </div>
+              {isProjectOwner ? (
+                <ExternalLink
+                  href={"https://tally.so/r/w8e6GP"}
+                  className="bg-black dark:bg-zinc-800 text-white justify-center items-center dark:text-zinc-400 flex flex-row gap-2.5 py-2 px-5 rounded-full"
+                >
+                  <Image
+                    src="/icons/alert.png"
+                    alt="Looking for help"
+                    className="w-5 h-5"
+                    width={20}
+                    height={20}
+                  />
+                  <p>
+                    Are you <b>looking for help?</b>
+                  </p>
+                </ExternalLink>
+              ) : null}
+            </div>
+            {members.length ? (
+              <div className="flex items-center justify-end w-full flex-wrap gap-4 max-lg:hidden">
+                <p className="text-base font-normal text-black dark:text-slate-200">
+                  Built by
+                </p>
+                <div className="flex flex-row gap-0 w-max">
+                  {members.map((member, index) => (
+                    <span
+                      key={index}
+                      className="-ml-1.5"
+                      style={{ zIndex: 1 + index }}
+                    >
+                      <Image
+                        width={20}
+                        height={20}
+                        src={blo(member.recipient as `0x${string}`, 8)}
+                        alt={member.recipient}
+                        className="h-5 w-5 rounded-full border border-gray-100 dark:border-zinc-9000 sm:h-5 sm:w-5"
+                      />
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
         <div className="mt-4 max-sm:px-4">
