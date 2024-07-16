@@ -175,7 +175,7 @@ export const ManagePrograms = () => {
   useMemo(() => {
     getGrantPrograms();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, page, searchInput, address, isRegistryAdmin]);
+  }, [tab, page, searchInput, isRegistryAdmin]);
 
   const { switchChainAsync } = useSwitchChain();
   const { changeStepperStep, setIsStepper } = useStepper();
