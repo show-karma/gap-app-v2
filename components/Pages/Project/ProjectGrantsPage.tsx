@@ -31,6 +31,7 @@ import { GrantMilestonesAndUpdates } from "@/components/Pages/GrantMilestonesAnd
 import { GrantContext } from "@/components/Pages/GrantMilestonesAndUpdates/GrantContext";
 import { GrantAllReviews } from "@/components/Pages/AllReviews";
 import { ReviewGrant } from "@/components/Pages/ReviewGrant";
+import { GenerateImpactReportDialog } from "@/components/Dialogs/GenerateImpactReportDialog";
 
 import { useQueryState } from "nuqs";
 import {
@@ -414,12 +415,14 @@ export const ProjectGrantsPage = () => {
                   </button>
                 )}
               </div>
-              {isAuthorized && grant ? (
+              {/* // TODO: Revert isAuthorized to !isAuthorized */}
+              {!isAuthorized && grant ? (
                 <div className="flex flex-row gap-2">
                   {project ? (
                     <GrantCompleteButton project={project} grant={grant} />
                   ) : null}
                   <GrantDelete grant={grant} />
+                  <GenerateImpactReportDialog grant={grant} />
                 </div>
               ) : null}
             </div>
