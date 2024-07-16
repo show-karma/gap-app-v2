@@ -14,7 +14,7 @@ import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-ind
 import { cn } from "@/utilities/tailwind";
 
 const inputStyle =
-  "bg-transparent  w-full text-black dark:text-zinc-200 placeholder:text-zinc-600  dark:placeholder:text-zinc-200";
+  "bg-transparent bg-white dark:bg-zinc-900  w-full text-black dark:text-zinc-200 placeholder:text-zinc-600  dark:placeholder:text-zinc-200";
 
 const labelStyle =
   "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
