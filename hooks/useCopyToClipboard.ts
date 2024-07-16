@@ -1,5 +1,6 @@
 "use client";
 import { useCallback, useState } from "react";
+import toast from "react-hot-toast";
 
 type CopiedValue = string | null;
 
@@ -18,6 +19,7 @@ export function useCopyToClipboard(): [CopiedValue, CopyFn] {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedText(text);
+      toast.success("Copied to clipboard");
       return true;
     } catch (error) {
       console.warn("Copy failed", error);

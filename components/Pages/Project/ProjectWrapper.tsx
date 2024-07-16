@@ -23,6 +23,7 @@ import fetchData from "@/utilities/fetchData";
 import { getProjectById, getProjectOwner } from "@/utilities/sdk";
 import { ProjectNavigator } from "@/components/Pages/Project/ProjectNavigator";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useEndorsementStore } from "@/store/endorsement";
 
 interface ProjectWrapperProps {
   project: IProjectResponse;
@@ -189,6 +190,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
     (item) => item.recipient?.toLowerCase() === address?.toLowerCase()
   );
   const { openConnectModal } = useConnectModal();
+  const { setIsEndorsementOpen: setIsOpen } = useEndorsementStore();
 
   const handleEndorse = () => {
     if (!isConnected || !isAuth) {
@@ -207,33 +209,50 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
     }
     if (!hasAlreadyEndorsed) {
       return (
-        <EndorsementDialog
-          buttonElement={{
-            text: "Endorse this project",
-            styleClass:
-              "hover:bg-white dark:hover:bg-black border border-black bg-white text-black dark:bg-black dark:text-white px-4 rounded-md py-2 w-max",
-          }}
-        />
+        <Button
+          onClick={() => setIsOpen(true)}
+          className={cn(
+            "flex justify-center items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100  hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900",
+            "hover:bg-white dark:hover:bg-black border border-black bg-white text-black dark:bg-black dark:text-white px-4 rounded-md py-2 w-max"
+          )}
+        >
+          Endorse this project
+        </Button>
       );
     }
     return null;
   };
   return (
-    <div className="relative border-b border-gray-200 ">
-      <div className="px-4 sm:px-6 lg:px-12 md:flex py-5 md:items-start md:justify-between flex flex-row max-lg:flex-col gap-4">
-        <h1
-          className={
-            "text-[32px] font-bold leading-tight text-black dark:text-zinc-100"
-          }
-        >
-          {project?.details?.data?.title}
-        </h1>
-        <div className="flex flex-row gap-10 max-lg:gap-4 flex-wrap max-lg:flex-col items-center max-lg:items-start">
-          {socials.length > 0 && (
-            <div className="flex flex-row gap-3 items-center">
-              <p className="text-base font-normal leading-tight text-black dark:text-zinc-200 max-lg:hidden">
-                Socials
-              </p>
+    <>
+      <EndorsementDialog />
+
+      <div className="relative border-b border-gray-200 ">
+        <div className="px-4 sm:px-6 lg:px-12 md:flex py-5 md:items-start md:justify-between flex flex-row max-lg:flex-col gap-4">
+          <div className="flex flex-col gap-4">
+            <h1
+              className={
+                "text-[32px] font-bold leading-tight text-black dark:text-zinc-100"
+              }
+            >
+              {project?.details?.data?.title}
+            </h1>
+            {project?.details?.data?.tags?.length ? (
+              <div className="flex flex-col gap-2 max-md:hidden">
+                <div className="flex items-center gap-x-1">
+                  {project?.details?.data?.tags?.map((tag) => (
+                    <span
+                      key={tag.name}
+                      className="rounded bg-gray-100 px-2 py-1 text-sm  font-normal text-slate-700"
+                    >
+                      {tag.name}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
+          <div className="flex flex-row gap-10 max-lg:gap-4 flex-wrap max-lg:flex-col items-center max-lg:items-start">
+            {socials.length > 0 && (
               <div className="flex flex-row gap-4 items-center">
                 {socials
                   .filter((social) => social?.url)
@@ -250,22 +269,22 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
                     </a>
                   ))}
               </div>
-            </div>
-          )}
-          <div className="flex flex-col gap-2 items-center">
-            {handleEndorse()}
-            {project ? <ProjectSubscriptionDialog project={project} /> : null}
+            )}
+            {/* <div className="flex flex-col gap-2 items-center">
+              {handleEndorse()}
+              {project ? <ProjectSubscriptionDialog project={project} /> : null}
+            </div> */}
+          </div>
+        </div>
+        <div className="mt-4 max-sm:px-4">
+          <div className="sm:px-6 lg:px-12  sm:block">
+            <ProjectNavigator
+              hasContactInfo={hasContactInfo}
+              grantsLength={project?.grants?.length || 0}
+            />
           </div>
         </div>
       </div>
-      <div className="mt-4 max-sm:px-4">
-        <div className="sm:px-6 lg:px-12  sm:block">
-          <ProjectNavigator
-            hasContactInfo={hasContactInfo}
-            grantsLength={project?.grants?.length || 0}
-          />
-        </div>
-      </div>
-    </div>
+    </>
   );
 };
