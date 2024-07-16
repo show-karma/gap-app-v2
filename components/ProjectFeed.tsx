@@ -17,7 +17,7 @@ import { useTheme } from "next-themes";
 import { cn } from "@/utilities/tailwind";
 
 interface ProjectFeedProps {
-  initialFeed: Feed[];
+  initialFeed?: Feed[];
 }
 
 export const ProjectFeed = ({ initialFeed = [] }: ProjectFeedProps) => {
@@ -54,7 +54,7 @@ export const ProjectFeed = ({ initialFeed = [] }: ProjectFeedProps) => {
       }
     };
 
-    if (projectId && page > 1) {
+    if (projectId) {
       callFeedAPI();
       // eslint-disable-next-line react-hooks/exhaustive-deps
     }
@@ -62,11 +62,8 @@ export const ProjectFeed = ({ initialFeed = [] }: ProjectFeedProps) => {
 
   return (
     <div className="w-full flex flex-col gap-2">
-      <div className="text-lg font-bold text-zinc-700 max-2xl:text-base">
-        Project Feed
-      </div>
       {/* Feed start */}
-      <div className="flow-root  bg-white dark:bg-zinc-900 dark:border-gray-700 border border-gray-200 py-2 rounded-xl  max-h-96 max-lg:max-h-64 max-lg:mt-4 overflow-y-auto">
+      <div className="flow-root  rounded-xl  max-h-96 max-lg:max-h-64 max-lg:mt-4 overflow-y-auto">
         <ul>
           {feed.length ? (
             feed.map((item, index) => {
@@ -142,14 +139,14 @@ export const ProjectFeed = ({ initialFeed = [] }: ProjectFeedProps) => {
                 onClick={() => {
                   setPage((oldValue) => oldValue + 1);
                 }}
-                className="h-max w-max my-4 py-2 px-6 bg-black dark:bg-slate-800 text-white rounded-md hover:opacity-75 transition-all ease-in-out duration-200"
+                className="rounded-sm mb-2 w-max px-9 py-2 font-semibold text-base bg-white border text-black dark:bg-zinc-800 border-black dark:text-zinc-200 dark:border-white hover:opacity-75 dark:hover:opacity-75"
               >
                 {feedLoading ? (
                   <div className="w-full justify-center flex py-2">
-                    <Spinner className="w-4 h-4" />
+                    <Spinner className="w-4 h-4 text-black" />
                   </div>
                 ) : (
-                  "See more"
+                  "Load more"
                 )}
               </button>
             </li>

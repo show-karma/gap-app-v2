@@ -1,12 +1,13 @@
+"use client";
 /* eslint-disable @next/next/no-img-element */
 import Image from "next/image";
-import { FC, useEffect, useMemo, useState } from "react";
+import { FC, useMemo, useState } from "react";
 import { blo } from "blo";
 import { Hex } from "viem";
 import { useENSNames } from "@/store/ensNames";
 import { shortAddress } from "@/utilities/shortAddress";
 import { formatDate } from "@/utilities/formatDate";
-import { EmptyEndorsmentList } from "./EmptyEndorsmentList";
+import { EmptyEndorsmentList } from "../Project/Impact/EmptyEndorsmentList";
 import { useProjectStore } from "@/store";
 import pluralize from "pluralize";
 import { Button } from "@/components/Utilities/Button";
@@ -65,7 +66,6 @@ export const EndorsementList: FC = () => {
   const itemsPerPage = 12; // Set the total number of items you want returned from the API
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const [totalEndorsements, setTotalEndorsements] = useState<number>(0);
 
   const { populateEnsNames } = useENSNames();
 
@@ -97,7 +97,6 @@ export const EndorsementList: FC = () => {
       );
       const sliced = ordered.slice(0, itemsPerPage * page);
       const canLoadMore = uniqueEndorsements.length !== sliced.length;
-      setTotalEndorsements(uniqueEndorsements.length);
       setHasMore(canLoadMore);
       setHandledEndorsements(sliced);
     };
@@ -106,27 +105,8 @@ export const EndorsementList: FC = () => {
 
   return (
     <div className="w-full flex flex-col gap-3">
-      <div className="flex flex-row gap-2 justify-between items-center">
-        <h3 className="font-bold text-[#101828] dark:text-zinc-100 text-lg">
-          Endorsements
-        </h3>
-        {totalEndorsements ? (
-          <div className="flex flex-row gap-2 items-center">
-            <Image
-              width={12}
-              height={12}
-              src="/icons/trending.svg"
-              alt="Trending"
-            />
-            <p className="text-[#F79009] text-xs font-bold">
-              This project has been endorsed {totalEndorsements}{" "}
-              {pluralize("time", totalEndorsements)}
-            </p>
-          </div>
-        ) : null}
-      </div>
       {handledEndorsements.length ? (
-        <div className="flex flex-col gap-0 divide-y divide-y-gray-200  rounded-xl border border-gray-200">
+        <div className="flex flex-col gap-0 divide-y divide-y-gray-200  rounded-xl">
           {handledEndorsements.map((endorsement, index) => (
             <EndorsementRow key={index} endorsement={endorsement} />
           ))}
@@ -136,9 +116,9 @@ export const EndorsementList: FC = () => {
                 onClick={() => {
                   setPage((old) => old + 1);
                 }}
-                className="w-max text-base bg-black dark:text-black dark:bg-white hover:bg-black dark:hover:bg-white"
+                className="w-max text-base bg-white border border-black dark:text-black dark:bg-black dark:border-white hover:bg-black dark:hover:bg-white"
               >
-                See more
+                Load more
               </Button>
             </div>
           ) : null}

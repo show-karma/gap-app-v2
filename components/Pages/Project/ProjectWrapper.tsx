@@ -5,7 +5,6 @@ import { getWalletClient } from "@wagmi/core";
 import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
 import { Button } from "@/components/Utilities/Button";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { ProjectSubscriptionDialog } from "@/components/Pages/Project/ProjectSubscription";
 import { config } from "@/utilities/wagmi/config";
 import { INDEXER } from "@/utilities/indexer";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
