@@ -375,7 +375,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
       closeModal();
-
+      changeStepperStep("preparing");
       await project.attest(walletSigner, changeStepperStep).then(async () => {
         let retries = 1000;
         let fetchedProject: Project | null = null;
@@ -455,6 +455,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       const walletSigner = await walletClientToSigner(walletClient);
       const fetchedProject = await getProjectById(projectToUpdate.uid);
       if (!fetchedProject) return;
+      changeStepperStep("preparing");
       await updateProject(
         fetchedProject,
         {
