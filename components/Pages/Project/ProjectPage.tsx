@@ -342,34 +342,37 @@ function ProjectPage() {
           <Team />
         </div>
         {isProjectOwner || isOwner ? (
-          <div className="flex flex-col gap-2 max-w-full w-full max-lg:max-w-80 2xl:max-w-max">
-            <Link
-              href={PAGES.PROJECT.IMPACT.ADD_IMPACT(
-                project?.details?.data?.slug || projectId
-              )}
-            >
-              <Button className="bg-brand-blue text-white hover:bg-black dark:bg-zinc-800 w-full items-center flex flex-row justify-center max-w-full">
-                Add impact
-              </Button>
-            </Link>
-            <div className="flex flex-row justify-between gap-2 flex-wrap max-lg:flex-col w-full max-lg:max-w-80">
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-row flex-wrap justify-between gap-2 max-lg:flex-col w-full max-lg:max-w-80">
+              <Link
+                href={PAGES.PROJECT.IMPACT.ADD_IMPACT(
+                  project?.details?.data?.slug || projectId
+                )}
+                className="flex flex-1 min-w-[49%] max-lg:w-full"
+              >
+                <Button className="bg-brand-blue text-white hover:bg-black dark:bg-zinc-800 items-center flex flex-row justify-center w-full">
+                  Add impact
+                </Button>
+              </Link>
               <ProjectDialog
                 key={project?.uid}
                 buttonElement={{
                   icon: null,
                   text: "Edit project",
                   styleClass:
-                    "rounded-md bg-black px-3 py-2 text-sm font-semibold text-white border-none  disabled:opacity-75 transition-all ease-in-out duration-300",
+                    "rounded-md bg-black px-3 py-2 text-sm font-semibold text-white border-none  disabled:opacity-75 transition-all ease-in-out duration-300  flex-1 max-lg:w-full",
                 }}
                 projectToUpdate={project}
                 previousContacts={contactsInfo}
               />
+            </div>
+            <div className="flex flex-row flex-wrap justify-between gap-2 max-lg:flex-col w-full max-lg:max-w-80">
               <TransferOwnershipDialog
                 buttonElement={{
                   icon: null,
                   text: "Transfer Ownership",
                   styleClass:
-                    "bg-red-600 items-center justify-center hover:bg-red-500",
+                    "bg-red-600 items-center justify-center hover:bg-red-500 flex-1 max-lg:w-full",
                 }}
               />
               <DeleteDialog
@@ -380,7 +383,7 @@ function ProjectPage() {
                   icon: null,
                   text: "Delete project",
                   styleClass:
-                    "bg-red-600 items-center justify-center hover:bg-red-500",
+                    "bg-red-600 items-center justify-center hover:bg-red-500 flex-1 max-lg:w-full",
                 }}
               />
             </div>
