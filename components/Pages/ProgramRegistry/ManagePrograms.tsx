@@ -27,7 +27,7 @@ import {
   Address,
   ApplicationMetadata,
 } from "@show-karma/karma-gap-sdk/core/class/types/allo";
-import { AlloContracts } from "@show-karma/karma-gap-sdk";
+import { AlloContracts } from "@show-karma/karma-gap-sdk/core/consts";
 import Pagination from "@/components/Utilities/Pagination";
 import debounce from "lodash.debounce";
 import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
@@ -39,7 +39,7 @@ import { MyProgramList } from "@/components/Pages/ProgramRegistry/MyProgramList"
 import { useStepper } from "@/store/txStepper";
 import { useSearchParams } from "next/navigation";
 import { useRegistryStore } from "@/store/registry";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 export const ManagePrograms = () => {
   const searchParams = useSearchParams();
@@ -175,7 +175,7 @@ export const ManagePrograms = () => {
     }
   };
 
-  const { data, isLoading } = useQuery<{
+  const { data, isLoading, refetch } = useQuery<{
     programs: GrantProgram[];
     count: number;
   }>({
@@ -186,10 +186,12 @@ export const ManagePrograms = () => {
   const grantPrograms = data?.programs || [];
   const totalPrograms = data?.count || 0;
 
-  const queryClient = useQueryClient();
-
   const { switchChainAsync } = useSwitchChain();
   const { changeStepperStep, setIsStepper } = useStepper();
+
+  const refreshPrograms = async () => {
+    await refetch();
+  };
 
   const approveOrReject = async (
     program: GrantProgram,
@@ -314,15 +316,7 @@ export const ManagePrograms = () => {
         if (error) throw new Error(`Program failed when updating to ${value}`);
       }
       toast.success(`Program ${value} successfully`);
-      queryClient.invalidateQueries({
-        queryKey: [
-          "grantPrograms",
-          tab,
-          page,
-          searchInput,
-          isRegistryAdminLoading,
-        ],
-      });
+      await refreshPrograms();
     } catch {
       console.log(`Error ${messageDict[value]} program ${program._id.$oid}`);
       toast.error(`Error ${messageDict[value]} program ${program._id.$oid}`);
@@ -386,7 +380,7 @@ export const ManagePrograms = () => {
                   setIsEditing(false);
                   setProgramToEdit(null);
                 }}
-                refreshPrograms={getGrantPrograms}
+                refreshPrograms={refreshPrograms}
               />
             </div>
           ) : (
