@@ -63,16 +63,21 @@ export const ManagePrograms = () => {
     setIsPoolManager,
     isPoolManager,
     isRegistryAdmin,
+    setIsRegistryAdminLoading,
+    isRegistryAdminLoading,
   } = useRegistryStore();
+
   const isAllowed = address && (isRegistryAdmin || isPoolManager) && isAuth;
 
   useEffect(() => {
     if (!address || !isConnected) {
       setIsRegistryAdmin(false);
+      setIsRegistryAdminLoading(false);
       return;
     }
 
     const getMemberOf = async () => {
+      setIsRegistryAdminLoading(true);
       try {
         const call = await isMemberOfProfile(address);
         setIsRegistryAdmin(call);
@@ -82,6 +87,8 @@ export const ManagePrograms = () => {
         }
       } catch (error) {
         console.log(error);
+      } finally {
+        setIsRegistryAdminLoading(false);
       }
     };
     getMemberOf();
@@ -152,8 +159,7 @@ export const ManagePrograms = () => {
         (page - 1) * pageSize
       }`;
       const searchParam = searchInput ? `&name=${searchInput}` : "";
-      const ownerParam = address ? `&owner=${address}` : "";
-
+      const ownerParam = address && !isRegistryAdmin ? `&owner=${address}` : "";
       const url = isRegistryAdmin
         ? `${baseUrl}${queryParams}${searchParam}`
         : `${baseUrl}${queryParams}${ownerParam}${searchParam}`;
@@ -169,7 +175,7 @@ export const ManagePrograms = () => {
   useMemo(() => {
     getGrantPrograms();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, page, searchInput]);
+  }, [tab, page, searchInput, isRegistryAdmin]);
 
   const { switchChainAsync } = useSwitchChain();
   const { changeStepperStep, setIsStepper } = useStepper();
