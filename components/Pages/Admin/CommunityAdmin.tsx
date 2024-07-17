@@ -13,12 +13,11 @@ import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { CommunityDialog } from "@/components/Dialogs/CommunityDialog";
 import { formatDate } from "@/utilities/formatDate";
 import { AddAdmin } from "@/components/Pages/Admin/AddAdminDialog";
-import { request, gql } from "graphql-request";
 import { RemoveAdmin } from "@/components/Pages/Admin/RemoveAdminDialog";
 import { useOwnerStore } from "@/store";
 import CommunityStats from "@/components/CommunityStats";
-import { set } from "date-fns";
 import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 interface CommunityAdmin {
   id: string;
@@ -43,7 +42,7 @@ export default function CommunitiesToAdminPage() {
       const fetchPromises = result.map(async (community) => {
         try {
           const [data, error] = await fetchData(
-            `/communities/${community.uid}/admins`,
+            INDEXER.COMMUNITY.ADMINS(community.uid),
             "GET",
             {},
             {},

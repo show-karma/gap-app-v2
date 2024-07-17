@@ -27,6 +27,8 @@ import { getWalletClient } from "@wagmi/core";
 import { useStepper } from "@/store/txStepper";
 import toast from "react-hot-toast";
 import { config } from "@/utilities/wagmi/config";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -104,15 +106,20 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
         let addressRemoved = false;
         while (retries > 0) {
           try {
-            const response = await fetch(
-              `https://gapstagapi.karmahq.xyz/communities/${UUID}/admins`
+            const [response, error] = await fetchData(
+              INDEXER.COMMUNITY.ADMINS(UUID),
+              "GET",
+              {},
+              {},
+              {},
+              false,
+              true
             );
-            if (!response.ok) {
+            if (!response || error) {
               throw new Error(`Error fetching admins for community ${UUID}`);
             }
-            const result = await response.json();
 
-            addressRemoved = !result.admins.some(
+            addressRemoved = !response.some(
               (admin: any) =>
                 admin.user.id.toLowerCase() === Admin.toLowerCase()
             );
