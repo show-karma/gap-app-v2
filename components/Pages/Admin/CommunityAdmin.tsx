@@ -44,9 +44,6 @@ export default function CommunitiesToAdminPage() {
           `https://gapstagapi.karmahq.xyz/communities/${community.uid}/admins`
         );
         if (!response.ok) {
-          // throw new Error(
-          //   `Error fetching admins for community ${community.uid}`
-          // );
           return { id: community.uid, admins: [] };
         }
         const communityAdmin = await response.json();
@@ -117,8 +114,6 @@ export default function CommunitiesToAdminPage() {
                     const matchingCommunityAdmin = communityAdmins.find(
                       (admin: any) => admin.id === community.uid
                     );
-                    console.log(matchingCommunityAdmin);
-
                     return (
                       <React.Fragment key={community.uid}>
                         <tr className="divide-x">
