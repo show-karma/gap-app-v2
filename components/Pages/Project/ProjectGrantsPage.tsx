@@ -415,14 +415,13 @@ export const ProjectGrantsPage = () => {
                   </button>
                 )}
               </div>
-              {/* // TODO: Revert isAuthorized to !isAuthorized */}
-              {!isAuthorized && grant ? (
+              {isAuthorized && grant ? (
                 <div className="flex flex-row gap-2">
                   {project ? (
                     <GrantCompleteButton project={project} grant={grant} />
                   ) : null}
-                  <GrantDelete grant={grant} />
                   <GenerateImpactReportDialog grant={grant} />
+                  <GrantDelete grant={grant} />
                 </div>
               ) : null}
             </div>
