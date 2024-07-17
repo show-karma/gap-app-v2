@@ -13,11 +13,11 @@ import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { CommunityDialog } from "@/components/Dialogs/CommunityDialog";
 import { formatDate } from "@/utilities/formatDate";
 import { AddAdmin } from "@/components/Pages/Admin/AddAdminDialog";
-import { request, gql } from "graphql-request";
 import { RemoveAdmin } from "@/components/Pages/Admin/RemoveAdminDialog";
 import { useOwnerStore } from "@/store";
 import CommunityStats from "@/components/CommunityStats";
-import { set } from "date-fns";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 interface CommunityAdmin {
   id: string;
@@ -40,21 +40,28 @@ export default function CommunitiesToAdminPage() {
       );
       setAllCommunities(result);
       const fetchPromises = result.map(async (community) => {
-        const response = await fetch(
-          `https://gapstagapi.karmahq.xyz/communities/${community.uid}/admins`
-        );
-        if (!response.ok) {
+        try {
+          const [data, error] = await fetchData(
+            INDEXER.COMMUNITY.ADMINS(community.uid),
+            "GET",
+            {},
+            {},
+            {},
+            false,
+            true
+          );
+
+          if (error || !data) return { id: community.uid, admins: [] };
+          return data;
+        } catch {
           return { id: community.uid, admins: [] };
         }
-        const communityAdmin = await response.json();
-        return communityAdmin;
       });
       const communityAdmins = await Promise.all(fetchPromises);
 
       // Update the state with the fetched data
       setCommunityAdmins(communityAdmins);
 
-      console.log("Fetched admins successfully:", communityAdmins);
       return result;
     } catch (error) {
       console.log(error);
