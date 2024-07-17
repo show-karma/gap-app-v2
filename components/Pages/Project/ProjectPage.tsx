@@ -20,6 +20,7 @@ import { EndorsementList } from "@/components/Pages/Project/Impact/EndorsementLi
 import { useStepper } from "@/store/txStepper";
 import { config } from "@/utilities/wagmi/config";
 import { getProjectById } from "@/utilities/sdk";
+import { RequestIntro } from "./RequestIntroDialog";
 
 const ProjectDialog = dynamic(
   () =>
@@ -141,6 +142,7 @@ function ProjectPage() {
                 Add impact
               </Button>
             </Link>
+            <RequestIntro UUID="0x0000000" chainid={10001} />
             <div className="flex flex-row justify-between gap-2 flex-wrap max-lg:flex-col w-full max-lg:max-w-80">
               <ProjectDialog
                 key={project?.uid}
