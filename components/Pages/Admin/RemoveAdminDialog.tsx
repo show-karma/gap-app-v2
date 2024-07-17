@@ -1,28 +1,15 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, ReactNode, useState } from "react";
+import { FC, Fragment, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import {
-  ChevronRightIcon,
-  PlusIcon,
-  TrashIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/solid";
+import { TrashIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MarkdownEditor } from "../../Utilities/MarkdownEditor";
 import { useAccount, useSwitchChain } from "wagmi";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { Community, GAP, nullRef } from "@show-karma/karma-gap-sdk";
+import { GAP } from "@show-karma/karma-gap-sdk/core/class/GAP";
 import { Button } from "../../Utilities/Button";
-import { useProjectStore } from "@/store";
 import { MESSAGES } from "@/utilities/messages";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { appNetwork, getChainIdByName } from "@/utilities/network";
-import { cn } from "@/utilities/tailwind";
-import { useAuthStore } from "@/store/auth";
-import { getGapClient, useGap } from "@/hooks";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { getWalletClient } from "@wagmi/core";
 import { useStepper } from "@/store/txStepper";
 import toast from "react-hot-toast";

@@ -3,7 +3,7 @@ import React from "react";
 
 import { Hex } from "viem";
 import { Metadata } from "next";
-import type { IProjectDetails } from "@show-karma/karma-gap-sdk";
+import type { IProjectDetails } from "@show-karma/karma-gap-sdk/core/class/types/attestations";
 import { getMetadata } from "@/utilities/sdk";
 import { zeroUID } from "@/utilities/commons";
 import { defaultMetadata } from "@/utilities/meta";

@@ -7,7 +7,7 @@ import {
   baseSepolia,
   sepolia,
 } from "viem/chains";
-import type { TNetwork } from "@show-karma/karma-gap-sdk";
+import { TNetwork } from "@show-karma/karma-gap-sdk/core/types";
 
 export const appNetwork: [Chain, ...Chain[]] =
   process.env.NEXT_PUBLIC_ENV === "production"

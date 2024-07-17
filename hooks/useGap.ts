@@ -1,6 +1,6 @@
 "use client";
 
-import { GAP } from "@show-karma/karma-gap-sdk";
+import { GAP } from "@show-karma/karma-gap-sdk/core/class/GAP";
 import {
   GapIndexerClient,
   IpfsStorage,

@@ -1,7 +1,8 @@
-import type { Grant, Hex } from "@show-karma/karma-gap-sdk";
 import type { SortByOptions, StatusOptions } from "@/types/filters";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { Grant } from "@show-karma/karma-gap-sdk/core/class/entities/Grant";
+import { Hex } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 export interface GrantsResponse {
   grants: Grant[];

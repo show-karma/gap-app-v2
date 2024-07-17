@@ -1,4 +1,4 @@
-import type { Hex } from "@show-karma/karma-gap-sdk";
+import { Hex } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 export interface Feed {
   attester: Hex | string;

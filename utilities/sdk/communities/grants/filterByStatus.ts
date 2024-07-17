@@ -1,4 +1,4 @@
-import type { Grant } from "@show-karma/karma-gap-sdk";
+import { Grant } from "@show-karma/karma-gap-sdk/core/class/entities/Grant";
 
 import { filterGrantsByCompleted } from "./filter/filterGrantsByCompleted";
 import { filterGrantsByStarting } from "./filter/filterGrantsByStarting";

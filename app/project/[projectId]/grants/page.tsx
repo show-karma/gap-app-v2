@@ -2,7 +2,10 @@ import { ProjectGrantsPage } from "@/components/Pages/Project/ProjectGrantsPage"
 /* eslint-disable @next/next/no-img-element */
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
-import { IGrantDetails, IProjectDetails } from "@show-karma/karma-gap-sdk";
+import {
+  IGrantDetails,
+  IProjectDetails,
+} from "@show-karma/karma-gap-sdk/core/class/types/attestations";
 
 import { Hex } from "viem";
 import { Metadata } from "next";

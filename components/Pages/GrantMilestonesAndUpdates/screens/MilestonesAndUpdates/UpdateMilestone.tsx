@@ -9,7 +9,6 @@ import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
-import { Milestone } from "@show-karma/karma-gap-sdk";
 import { getWalletClient } from "@wagmi/core";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";

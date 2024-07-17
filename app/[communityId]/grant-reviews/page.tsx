@@ -4,7 +4,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { zeroUID } from "@/utilities/commons";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { getMetadata } from "@/utilities/sdk";
-import type { ICommunityDetails } from "@show-karma/karma-gap-sdk";
+import type { ICommunityDetails } from "@show-karma/karma-gap-sdk/core/class/types/attestations";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Hex } from "viem";

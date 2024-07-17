@@ -1,4 +1,5 @@
-import type { Hex, SignerOrProvider } from "@show-karma/karma-gap-sdk";
+import { SignerOrProvider } from "@show-karma/karma-gap-sdk/core/types";
+import { Hex } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { Networks } from "@show-karma/karma-gap-sdk/core/consts";
 import { Contract } from "ethers";
 import MulticallABI from "@show-karma/karma-gap-sdk/core/abi/MultiAttester.json";

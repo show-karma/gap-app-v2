@@ -1,4 +1,4 @@
-import type { Hex } from "@show-karma/karma-gap-sdk";
+import { Hex } from "@show-karma/karma-gap-sdk/core/types";
 
 import { getGapClient } from "@/hooks/useGap";
 import { appNetwork } from "@/utilities/network";

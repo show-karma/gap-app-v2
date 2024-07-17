@@ -1,5 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
-import { Grant, GrantDetails, ProjectDetails } from "@show-karma/karma-gap-sdk";
+import {
+  GrantDetails,
+  ProjectDetails,
+} from "@show-karma/karma-gap-sdk/core/class/types/attestations";
+import { Grant } from "@show-karma/karma-gap-sdk/core/class/entities/Grant";
 import { Hex } from "viem";
 import pluralize from "pluralize";
 import formatCurrency from "@/utilities/formatCurrency";

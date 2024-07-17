@@ -7,7 +7,7 @@ import { Listbox, Transition } from "@headlessui/react";
 import { useParams, useSearchParams } from "next/navigation";
 import { Hex } from "viem";
 import { getGrants } from "@/utilities/sdk/communities/getGrants";
-import type { Grant } from "@show-karma/karma-gap-sdk";
+import { Grant } from "@show-karma/karma-gap-sdk/core/class/entities/Grant";
 import { Spinner } from "./Utilities/Spinner";
 import { GrantCard } from "./GrantCard";
 import { useQueryState } from "nuqs";

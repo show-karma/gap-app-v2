@@ -1,5 +1,4 @@
-import type { Hex } from "@show-karma/karma-gap-sdk";
-import axios from "axios";
+import { Hex } from "@show-karma/karma-gap-sdk/core/types";
 
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";

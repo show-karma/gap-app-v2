@@ -7,7 +7,6 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/auth";
-import { Milestone, MilestoneCompleted } from "@show-karma/karma-gap-sdk";
 import { useAccount, useSwitchChain } from "wagmi";
 import { getWalletClient } from "@wagmi/core";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";

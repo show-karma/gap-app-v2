@@ -1,7 +1,6 @@
 "use client";
 import React, { Fragment, useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import type { Grant } from "@show-karma/karma-gap-sdk";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
 import { useAccount } from "wagmi";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -49,15 +48,6 @@ type SimplifiedGrants = {
   uid: string;
   projectUid: string;
   projectSlug: string;
-};
-
-const milestonesPercentage = (grantToCalculate: Grant) => {
-  const total = grantToCalculate.milestones?.length;
-  const completed = grantToCalculate.milestones?.filter(
-    (milestone) => milestone.completed
-  ).length;
-  if (!total) return 0;
-  return Math.round((completed / total) * 100) || 0;
 };
 
 export const metadata = defaultMetadata;

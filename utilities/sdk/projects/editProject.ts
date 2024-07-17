@@ -1,11 +1,7 @@
-import { getGapClient } from "@/hooks";
 import { TxStepperSteps } from "@/store/txStepper";
-import { appNetwork } from "@/utilities/network";
-import {
-  ExternalLink,
-  Project,
-  TExternalLink,
-} from "@show-karma/karma-gap-sdk";
+import { TExternalLink } from "@show-karma/karma-gap-sdk/core/types";
+import { ExternalLink } from "@show-karma/karma-gap-sdk/core/class/types/attestations";
+import { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
 import { Hex, zeroHash } from "viem";
 
 export const updateProject = async (

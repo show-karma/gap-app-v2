@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { PAGES } from "@/utilities/pages";
 import { MESSAGES } from "@/utilities/messages";
-import { Community } from "@show-karma/karma-gap-sdk";
+import { Community } from "@show-karma/karma-gap-sdk/core/class/entities/Community";
 import { useGap } from "@/hooks";
 import { blo } from "blo";
 import { LinkIcon } from "@heroicons/react/24/solid";

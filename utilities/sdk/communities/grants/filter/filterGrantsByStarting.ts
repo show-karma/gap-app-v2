@@ -1,4 +1,4 @@
-import type { Grant } from "@show-karma/karma-gap-sdk";
+import { Grant } from "@show-karma/karma-gap-sdk/core/class/entities/Grant";
 
 export const filterGrantsByStarting = (grants: Grant[]) => {
   const newGrants = [...grants];

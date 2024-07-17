@@ -7,14 +7,14 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { MilestoneWithCompleted } from "@/types/milestones";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  GrantDetails,
-  nullRef,
-  GrantUpdate,
-  Grant,
-  Milestone,
   MilestoneCompleted,
-  Community,
-} from "@show-karma/karma-gap-sdk";
+  GrantDetails,
+} from "@show-karma/karma-gap-sdk/core/class/types/attestations";
+import { nullRef } from "@show-karma/karma-gap-sdk/core/consts";
+import { GrantUpdate } from "@show-karma/karma-gap-sdk/core/class/entities/GrantUpdate";
+import { Grant } from "@show-karma/karma-gap-sdk/core/class/entities/Grant";
+import { Milestone } from "@show-karma/karma-gap-sdk/core/class/entities/Milestone";
+
 import type { FC } from "react";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";

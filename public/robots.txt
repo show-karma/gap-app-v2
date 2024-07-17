@@ -7,4 +7,4 @@ Host: https://gap.karmahq.xyz
 
 # Sitemaps
 Sitemap: https://gap.karmahq.xyz/sitemap.xml
-Sitemap: https://gap.karmahq.xyz/server-sitemap-index.xml
+Sitemap: https://gap.karmahq.xyz/server-sitemap.xml

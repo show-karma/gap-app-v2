@@ -1,6 +1,6 @@
 import { Abi, encodeFunctionData } from "viem";
 import { transaction } from "frames.js/core";
-import { Networks } from "@show-karma/karma-gap-sdk";
+import { Networks } from "@show-karma/karma-gap-sdk/core/consts";
 import { ethers } from "ethers";
 import { getChainNameById } from "@/utilities/network";
 import { DonationsABI } from "../../../../../utilities/donations/abi";

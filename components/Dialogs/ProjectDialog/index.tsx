@@ -16,14 +16,15 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useAccount, useSwitchChain } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { nullRef } from "@show-karma/karma-gap-sdk/core/consts";
 import {
   type ExternalLink,
   type IProjectDetails,
   MemberOf,
   Project,
   ProjectDetails,
-  nullRef,
 } from "@show-karma/karma-gap-sdk";
+
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { getGapClient, useGap } from "@/hooks";

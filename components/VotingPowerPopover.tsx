@@ -6,7 +6,7 @@ import formatCurrency from "@/utilities/formatCurrency";
 import { formatNumberPercentage } from "@/utilities/formatNumber";
 import { isDelegateOf } from "@/utilities/karma";
 import { Popover, Transition } from "@headlessui/react";
-import type { Hex } from "@show-karma/karma-gap-sdk";
+import { Hex } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { type FC, type ReactNode, useEffect, useState, Fragment } from "react";
 

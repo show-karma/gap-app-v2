@@ -1,5 +1,5 @@
 import type { Hex } from "viem";
-import { GAP } from "@show-karma/karma-gap-sdk";
+import { GAP } from "@show-karma/karma-gap-sdk/core/class/GAP";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 export const isCommunityAdminOf = async (

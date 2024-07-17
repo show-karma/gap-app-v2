@@ -8,7 +8,7 @@ import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { config } from "@/utilities/wagmi/config";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { GrantUpdate } from "@show-karma/karma-gap-sdk";
+import { GrantUpdate } from "@show-karma/karma-gap-sdk/core/class/entities/GrantUpdate";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getWalletClient } from "@wagmi/core";
 import { useQueryState } from "nuqs";

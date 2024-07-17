@@ -9,7 +9,6 @@ import { MESSAGES } from "@/utilities/messages";
 import { shortAddress } from "@/utilities/shortAddress";
 import { config } from "@/utilities/wagmi/config";
 import { XMarkIcon } from "@heroicons/react/24/solid";
-import { Grant } from "@show-karma/karma-gap-sdk";
 import {
   IGrantResponse,
   IProjectResponse,

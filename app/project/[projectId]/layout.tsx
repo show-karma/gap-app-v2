@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import type { IProjectDetails } from "@show-karma/karma-gap-sdk";
+import type { IProjectDetails } from "@show-karma/karma-gap-sdk/core/class/types/attestations";
 import { fetchMetadata } from "frames.js/next/pages-router/client";
 import { envVars } from "@/utilities/enviromentVars";
 import { Hex } from "viem";

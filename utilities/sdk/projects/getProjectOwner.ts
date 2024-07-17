@@ -1,8 +1,6 @@
-import {
-  GAP,
-  type Project,
-  type SignerOrProvider,
-} from "@show-karma/karma-gap-sdk";
+import { SignerOrProvider } from "@show-karma/karma-gap-sdk/core/types";
+import { GAP } from "@show-karma/karma-gap-sdk/core/class/GAP";
+import { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
 
 export async function getProjectOwner(
   signer: SignerOrProvider,

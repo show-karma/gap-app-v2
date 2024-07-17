@@ -1,6 +1,6 @@
 import { TxStepperSteps } from "@/store/txStepper";
 import { PAGES } from "@/utilities/pages";
-import { Project } from "@show-karma/karma-gap-sdk";
+import { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
 import { Hex } from "viem";
 
 export const deleteProject = async (
