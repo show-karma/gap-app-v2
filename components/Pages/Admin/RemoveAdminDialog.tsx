@@ -119,7 +119,7 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
               throw new Error(`Error fetching admins for community ${UUID}`);
             }
 
-            addressRemoved = !response.some(
+            addressRemoved = !response.admins.some(
               (admin: any) =>
                 admin.user.id.toLowerCase() === Admin.toLowerCase()
             );
