@@ -83,6 +83,7 @@ function ProjectPage() {
       setIsStepper(false);
     } finally {
       setIsDeleting(false);
+      setIsStepper(false);
     }
   };
 
