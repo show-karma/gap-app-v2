@@ -51,7 +51,6 @@ export default function CommunitiesToAdminPage() {
             false,
             true
           );
-          console.log(data);
 
           if (error || !data) return { id: community.uid, admins: [] };
           return data;
@@ -64,7 +63,6 @@ export default function CommunitiesToAdminPage() {
       // Update the state with the fetched data
       setCommunityAdmins(communityAdmins);
 
-      console.log("Fetched admins successfully:", communityAdmins);
       return result;
     } catch (error) {
       console.log(error);
