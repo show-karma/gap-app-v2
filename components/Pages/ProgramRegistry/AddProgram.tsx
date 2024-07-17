@@ -130,7 +130,10 @@ export default function AddProgram({
 }: {
   programToEdit?: GrantProgram | null;
   backTo?: () => void;
-  refreshPrograms?: () => Promise<void>;
+  refreshPrograms?: () => Promise<{
+    programs: GrantProgram[];
+    count: number;
+  }>;
 }) {
   const router = useRouter();
   const supportedChains = appNetwork

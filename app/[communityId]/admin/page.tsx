@@ -14,7 +14,11 @@ interface Props {
 
 export default async function Page({ params }: Props) {
   const communityId = params.communityId;
-  const { data: community } = await gapIndexerApi.communityBySlug(communityId);
+  const { data: community } = await gapIndexerApi
+    .communityBySlug(communityId)
+    .catch(() => {
+      notFound();
+    });
   if (!community || community?.uid === zeroUID) {
     notFound();
   }
