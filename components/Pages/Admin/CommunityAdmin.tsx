@@ -17,6 +17,7 @@ import { request, gql } from "graphql-request";
 import { RemoveAdmin } from "@/components/Pages/Admin/RemoveAdminDialog";
 import { useOwnerStore } from "@/store";
 import CommunityStats from "@/components/CommunityStats";
+import { set } from "date-fns";
 
 interface CommunityAdmin {
   id: string;
@@ -38,6 +39,25 @@ export default function CommunitiesToAdminPage() {
         (a.details?.name || a.uid).localeCompare(b.details?.name || b.uid)
       );
       setAllCommunities(result);
+      const fetchPromises = result.map(async (community) => {
+        const response = await fetch(
+          `https://gapstagapi.karmahq.xyz/communities/${community.uid}/admins`
+        );
+        if (!response.ok) {
+          // throw new Error(
+          //   `Error fetching admins for community ${community.uid}`
+          // );
+          return { id: community.uid, admins: [] };
+        }
+        const communityAdmin = await response.json();
+        return communityAdmin;
+      });
+      const communityAdmins = await Promise.all(fetchPromises);
+
+      // Update the state with the fetched data
+      setCommunityAdmins(communityAdmins);
+
+      console.log("Fetched admins successfully:", communityAdmins);
       return result;
     } catch (error) {
       console.log(error);
@@ -55,33 +75,6 @@ export default function CommunitiesToAdminPage() {
   const isOwner = useOwnerStore((state) => state.isOwner);
 
   const [communityAdmins, setCommunityAdmins] = useState<any>([]);
-  async function fetchCommunityAdmins() {
-    try {
-      const data: { communities?: CommunityAdmin[] } = await request(
-        "https://api.thegraph.com/subgraphs/name/arthh/playground",
-        gql`
-          {
-            communities {
-              id
-              admins {
-                user {
-                  id
-                }
-              }
-            }
-          }
-        `
-      );
-      // console.log(data?.communities);
-      setCommunityAdmins(data?.communities);
-      return data.communities;
-    } catch (error) {
-      console.log(error);
-    }
-  }
-  useEffect(() => {
-    fetchCommunityAdmins();
-  }, []);
 
   function shortenHex(hexString: string) {
     const firstPart = hexString.substring(0, 6);
@@ -124,6 +117,7 @@ export default function CommunitiesToAdminPage() {
                     const matchingCommunityAdmin = communityAdmins.find(
                       (admin: any) => admin.id === community.uid
                     );
+                    console.log(matchingCommunityAdmin);
 
                     return (
                       <React.Fragment key={community.uid}>
@@ -202,7 +196,7 @@ export default function CommunitiesToAdminPage() {
                                       UUID={community.uid}
                                       chainid={community.chainID}
                                       Admin={admin.user.id}
-                                      fetchAdmins={fetchCommunityAdmins}
+                                      fetchAdmins={fetchCommunities}
                                     />
                                   </div>
                                 )
@@ -212,7 +206,7 @@ export default function CommunitiesToAdminPage() {
                             <AddAdmin
                               UUID={community.uid}
                               chainid={community.chainID}
-                              fetchAdmins={fetchCommunityAdmins}
+                              fetchAdmins={fetchCommunities}
                             />
                           </td>
                         </tr>
