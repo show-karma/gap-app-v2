@@ -52,7 +52,7 @@ type AddAdminDialogProps = {
   };
   UUID: `0x${string}`;
   chainid: number;
-  fetchAdmins: () => Promise<CommunityAdmin[] | undefined>;
+  fetchAdmins: () => Promise<any[] | undefined>;
 };
 
 export const AddAdmin: FC<AddAdminDialogProps> = ({
@@ -116,30 +116,36 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
       await communityResponse.wait().then(async () => {
         changeStepperStep("indexing");
         let retries = 1000;
+        let addressAdded = false;
         while (retries > 0) {
-          await fetchAdmins()
-            .then(async (response) => {
-              const addressAdded = response?.find((community) =>
-                community.admins.find(
-                  (admin) =>
-                    admin.user.id.toLowerCase() === data.address.toLowerCase()
-                )
-              );
-              if (addressAdded) {
-                retries = 0;
-                changeStepperStep("indexed");
-                toast.success("Admin added successfully!");
-                closeModal(); // Close the dialog upon successful submission
-              }
-              retries -= 1;
-              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-              await new Promise((resolve) => setTimeout(resolve, 1500));
-            })
-            .catch(async () => {
-              retries -= 1;
-              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-              await new Promise((resolve) => setTimeout(resolve, 1500));
-            });
+          try {
+            const response = await fetch(
+              `https://gapstagapi.karmahq.xyz/communities/${UUID}/admins`
+            );
+            if (!response.ok) {
+              throw new Error(`Error fetching admins for community ${UUID}`);
+            }
+            const result = await response.json();
+
+            addressAdded = result.admins.some(
+              (admin: any) =>
+                admin.user.id.toLowerCase() === data.address.toLowerCase()
+            );
+
+            if (addressAdded) {
+              await fetchAdmins();
+              changeStepperStep("indexed");
+              toast.success("Admin added successfully!");
+              closeModal(); // Close the dialog upon successful submission
+              break;
+            }
+          } catch (error) {
+            console.log("Retrying...");
+          }
+
+          retries -= 1;
+          // eslint-disable-next-line no-await-in-loop
+          await new Promise((resolve) => setTimeout(resolve, 1500));
         }
       });
     } catch (error) {
