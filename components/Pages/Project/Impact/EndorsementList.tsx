@@ -30,7 +30,7 @@ const EndorsementRow: FC<EndorsementRowProps> = ({ endorsement }) => {
             className="h-6 w-6 rounded-full"
           />
           <div className="flex flex-row gap-3 w-full items-start justify-between">
-            <p className="text-sm font-bold text-[#101828] dark:text-zinc-100">
+            <p className="text-sm font-bold text-brand-darkblue dark:text-zinc-100">
               {ensNames[endorsement?.recipient]?.name ||
                 shortAddress(endorsement.recipient)}
               {` `}
@@ -107,7 +107,7 @@ export const EndorsementList: FC = () => {
   return (
     <div className="w-full flex flex-col gap-3">
       <div className="flex flex-row gap-2 justify-between items-center">
-        <h3 className="font-bold text-[#101828] dark:text-zinc-100 text-lg">
+        <h3 className="font-bold text-brand-darkblue dark:text-zinc-100 text-lg">
           Endorsements
         </h3>
         {totalEndorsements ? (

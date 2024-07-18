@@ -41,12 +41,12 @@ export const CommunityFeed = () => {
   const feedCounter = feed?.length;
 
   return (
-    <div className="max-lg:hidden w-4/12 max-lg:w-full  2xl:w-3/12">
-      <div className="text-lg font-bold text-zinc-700 dark:text-gray-200 max-2xl:text-base">
+    <div className="max-lg:hidden w-full flex flex-col gap-3">
+      <div className="w-full text-lg font-bold text-brand-darkblue dark:text-gray-200 max-2xl:text-base">
         Community Feed
       </div>
       {/* Feed start */}
-      <div className="flow-root mt-10 bg-white dark:bg-zinc-900 dark:border-gray-700 border border-gray-200 py-2 rounded-xl  max-h-96 max-lg:max-h-64 max-lg:mt-4 overflow-y-auto">
+      <div className="w-full  flow-root bg-white dark:bg-zinc-900 dark:border-gray-700 border border-gray-200 py-2 rounded-xl  max-h-96 max-lg:max-h-64 max-lg:mt-4 overflow-y-auto">
         <ul>
           {feedCounter ? (
             feed.map((item, index) => {

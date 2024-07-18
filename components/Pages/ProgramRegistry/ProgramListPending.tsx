@@ -213,7 +213,7 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
                     </Tooltip.Trigger>
                     <Tooltip.Portal>
                       <Tooltip.Content
-                        className="TooltipContent bg-[#101828] rounded-lg text-white p-3 max-w-[360px]"
+                        className="TooltipContent bg-brand-darkblue rounded-lg text-white p-3 max-w-[360px]"
                         sideOffset={5}
                         side="bottom"
                       >
@@ -260,7 +260,7 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
                     </Tooltip.Trigger>
                     <Tooltip.Portal>
                       <Tooltip.Content
-                        className="TooltipContent bg-[#101828] rounded-lg text-white p-3 max-w-[360px]"
+                        className="TooltipContent bg-brand-darkblue rounded-lg text-white p-3 max-w-[360px]"
                         sideOffset={5}
                         side="bottom"
                       >
