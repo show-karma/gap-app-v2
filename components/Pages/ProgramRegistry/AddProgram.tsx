@@ -345,6 +345,7 @@ export default function AddProgram({
         createdAt: new Date().getTime(),
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
+        status: data.status,
       };
 
       const isSameAddress =
@@ -376,20 +377,14 @@ export default function AddProgram({
                   `?programId=${programToEdit?.programId}`
               )
                 .then(async ([res]) => {
-                  const compareAll = (a: any, b: any) => {
-                    return JSON.stringify(a) === JSON.stringify(b);
-                  };
-                  if (res?.programs?.[0]?.metadata?.amount) {
-                    delete res?.programs?.[0]?.metadata?.amount;
-                  }
-                  const sameData = compareAll(
-                    res?.programs?.[0]?.metadata,
-                    metadata
-                  );
-                  if (sameData) {
+                  const hasUpdated =
+                    programToEdit?.updatedAt?.$timestamp?.t <
+                    (res?.programs?.[0] as GrantProgram)?.updatedAt?.$timestamp
+                      ?.t;
+
+                  if (hasUpdated) {
                     retries = 0;
                     changeStepperStep("indexed");
-                    toast.success("Program updated successfully!");
                   }
                   retries -= 1;
                   // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
@@ -426,7 +421,7 @@ export default function AddProgram({
         if (error)
           throw new Error("An error occurred while editing the program");
       }
-      toast.success("Program edited successfully");
+      toast.success("Program updated successfully!");
       await refreshPrograms?.().then(() => {
         backTo?.();
       });
