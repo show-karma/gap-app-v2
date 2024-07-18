@@ -566,15 +566,6 @@ export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
                     >
                       Cancel
                     </Button>
-                    <Button
-                      className="text-white text-lg bg-red-600 border-black  hover:bg-red-600 hover:text-white"
-                      onClick={generate}
-                      disabled={isLoading || !impactSummary}
-                      isLoading={isLoading}
-                      type="button"
-                    >
-                      Continue
-                    </Button>
                   </div>
                 </Dialog.Panel>
               </Transition.Child>
