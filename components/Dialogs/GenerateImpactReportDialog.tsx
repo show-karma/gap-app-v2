@@ -1,7 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
 import { FC, Fragment, ReactNode, useEffect, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
+import Html from "react-pdf-html";
+
 import { DocumentCheckIcon, PlusIcon } from "@heroicons/react/24/solid";
+import { renderToHTML } from "@/utilities/markdown";
 import { Button } from "../Utilities/Button";
 import toast from "react-hot-toast";
 import { isAddress } from "viem";
@@ -35,11 +38,12 @@ import { envVars } from "@/utilities/enviromentVars";
 
 // Create styles
 const styles = StyleSheet.create({});
-Font.register({ family: "Roboto", src: "/fonts/Inter/Inter.ttf" });
 Font.registerEmojiSource({
   format: "png",
   url: "https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/",
 });
+
+const defaultBannerImageURL = "http://localhost:3000/assets/impact-banner.jpg";
 
 function GenerateDocument({
   grant,
@@ -59,15 +63,16 @@ function GenerateDocument({
       <Page
         size="A4"
         style={{
+          lineHeight: 1.3,
           flexDirection: "column",
-          paddingVertical: 20,
+          paddingBottom: 20,
+          paddingTop: 20,
+          paddingHorizontal: 30,
         }}
       >
         <View
           style={{
-            margin: 10,
             padding: 10,
-            flexGrow: 1,
             flexDirection: "column",
           }}
         >
@@ -82,17 +87,14 @@ function GenerateDocument({
             <View
               style={{
                 flexDirection: "row",
-                width: "30%",
+                width: "20%",
               }}
             >
               <Image
-                src={
-                  project?.details?.data?.imageURL ||
-                  "https://gap.karmahq.xyz/logo/logo-dark.png"
-                }
+                src={"https://gap.karmahq.xyz/logo/logo-dark.png"}
                 style={{
                   backgroundColor: "black",
-                  padding: 10,
+                  padding: 5,
                   marginRight: 5,
                   width: 30,
                   height: 30,
@@ -118,12 +120,24 @@ function GenerateDocument({
                 fontSize: 10,
                 flexDirection: "row",
                 justifyContent: "flex-end",
-                width: "70%",
+                width: "80%",
+                alignItems: "center",
               }}
             >
+              <Image
+                src={
+                  "https://assets-global.website-files.com/5d66bdc65e51a0d114d15891/64cebe06bc8437de66e41758_X-EverythingApp-Logo-Black-Twitter.jpg"
+                }
+                style={{
+                  borderRadius: 50,
+                  marginRight: 2,
+                  width: 15,
+                  height: 15,
+                }}
+              />
               <Text
                 style={{
-                  marginRight: 5,
+                  marginRight: 10,
                 }}
               >
                 @
@@ -134,9 +148,21 @@ function GenerateDocument({
                 }
               </Text>
 
+              <Image
+                src={
+                  "https://static.vecteezy.com/system/resources/thumbnails/003/731/316/small_2x/web-icon-line-on-white-background-image-for-web-presentation-logo-icon-symbol-free-vector.jpg"
+                }
+                style={{
+                  borderRadius: 50,
+                  marginRight: 5,
+                  padding: -3,
+                  width: 10,
+                  height: 10,
+                }}
+              />
               <Text
                 style={{
-                  marginRight: 5,
+                  marginRight: 10,
                 }}
               >
                 {
@@ -145,9 +171,23 @@ function GenerateDocument({
                   )?.url
                 }
               </Text>
+
+              <Image
+                src={
+                  "https://static-00.iconduck.com/assets.00/github-icon-2048x2048-qlv5m092.png"
+                }
+                style={{
+                  backgroundColor: "black",
+                  borderRadius: 50,
+                  marginRight: 5,
+                  padding: -5,
+                  width: 10,
+                  height: 10,
+                }}
+              />
               <Text
                 style={{
-                  marginRight: 5,
+                  marginRight: 10,
                 }}
               >
                 github.com/
@@ -160,31 +200,35 @@ function GenerateDocument({
             </View>
           </View>
 
-          <View
-            style={{
-              flexGrow: 1,
-            }}
-          >
+          <View style={{}}>
             <Text
               style={{
                 color: "#2563eb",
-                fontSize: 18,
+                fontSize: 16,
+                marginBottom: 5,
               }}
             >
-              {grant.details?.data.title}
+              {grant.details?.data.title} - Impact Report
             </Text>
-            <Text>{project?.details?.data?.title}</Text>
+            <Text
+              style={{
+                fontFamily: "Helvetica",
+                fontWeight: "heavy",
+              }}
+            >
+              {project?.details?.data?.title}
+            </Text>
             <View
               style={{
                 backgroundColor: "#eef1f4",
-                padding: 10,
+                padding: 5,
                 marginTop: 5,
                 borderRadius: 5,
               }}
             >
               <Text
                 style={{
-                  fontSize: 15,
+                  fontSize: 12,
                 }}
               >
                 📍 Location of Impact:{" "}
@@ -195,14 +239,15 @@ function GenerateDocument({
         </View>
         <View
           style={{
-            flexGrow: 1,
             height: "180px", // Set your desired fixed height here
-            width: "100vw",
+            width: "auto",
+            borderRadius: 10,
+            marginHorizontal: 10,
             overflow: "hidden", // Ensures the image does not overflow the container size
           }}
         >
           <Image
-            src={impactBannerImageURL}
+            src={impactBannerImageURL || defaultBannerImageURL}
             style={{
               width: "100%",
               height: "100%",
@@ -221,7 +266,16 @@ function GenerateDocument({
             backgroundColor: "#e2e8fb",
           }}
         >
-          <Text>🖊️ Mission Summary</Text>
+          <Text
+            style={{
+              fontWeight: 600,
+              fontSize: 15,
+              marginBottom: 8,
+              fontFamily: "Helvetica-Bold",
+            }}
+          >
+            🖊️ Mission Summary
+          </Text>
           <Text
             style={{
               fontSize: 12,
@@ -250,13 +304,14 @@ function GenerateDocument({
             <Text
               style={{
                 fontSize: 15,
+                marginBottom: 8,
               }}
             >
               ⚠️ Problem
             </Text>
             <Text
               style={{
-                fontSize: 13,
+                fontSize: 12,
                 marginTop: 5,
               }}
             >
@@ -276,13 +331,14 @@ function GenerateDocument({
             <Text
               style={{
                 fontSize: 15,
+                marginBottom: 8,
               }}
             >
               ✅ Solution
             </Text>
             <Text
               style={{
-                fontSize: 13,
+                fontSize: 12,
                 marginTop: 5,
               }}
             >
@@ -294,53 +350,75 @@ function GenerateDocument({
           style={{
             margin: 10,
             padding: 10,
-            flexGrow: 1,
           }}
         >
-          <Text style={{}}>Milestone Progress</Text>
           <View>
+            <Text style={{}}>Milestone Progress</Text>
             {grant.milestones.map((milestone, index) => (
               <View
                 style={{
                   flexGrow: 1,
-                  marginTop: 10,
+                  marginBottom: 10,
                 }}
                 key={index}
               >
                 <Text
                   style={{
                     fontSize: 14,
-                    marginTop: 5,
+                    marginVertical: 10,
+                    fontWeight: "bold",
                   }}
                 >
                   🚩 #{index + 1} {JSON.stringify(milestone.data.title)}
                 </Text>
-                <Text
+                <View
                   style={{
                     fontSize: 12,
                     marginTop: 5,
                   }}
                 >
-                  {JSON.stringify(milestone.data.description)}
-                </Text>
+                  <Html
+                    stylesheet={{
+                      img: {
+                        width: "100%",
+                      },
+                    }}
+                    style={{
+                      fontSize: 11,
+                    }}
+                  >
+                    {renderToHTML(milestone.data.description)}
+                  </Html>
+                </View>
                 {milestone?.completed?.data?.reason && (
                   <View
                     style={{
-                      marginTop: 5,
-                      padding: 20,
+                      marginTop: 10,
+                      padding: 12,
                       flexGrow: 1,
                       borderRadius: 10,
                       backgroundColor: "#f0f0f0",
                     }}
                   >
-                    <Text
+                    <View
                       style={{
-                        fontSize: 12,
-                        marginTop: 5,
+                        fontSize: 11,
                       }}
                     >
-                      Updates: {milestone?.completed?.data?.reason}
-                    </Text>
+                      <Text>Updates: </Text>
+                      <Html
+                        stylesheet={{
+                          img: {
+                            width: "100%",
+                          },
+                        }}
+                        style={{
+                          fontSize: 11,
+                        }}
+                      >
+                        {renderToHTML(milestone?.completed?.data?.reason)}
+                      </Html>
+                    </View>
                   </View>
                 )}
               </View>
@@ -348,11 +426,11 @@ function GenerateDocument({
           </View>
         </View>
         <View
+          wrap={false}
           style={{
             margin: 10,
             padding: 20,
             borderRadius: 10,
-            flexGrow: 1,
             backgroundColor: "#faf5ee",
           }}
         >
@@ -366,25 +444,27 @@ function GenerateDocument({
             {impactSummary}
           </Text>
         </View>
-        <View
-          style={{
-            margin: 10,
-            padding: 20,
-            borderRadius: 10,
-            flexGrow: 1,
-            backgroundColor: "#f5f9f4",
-          }}
-        >
-          <Text>💬 Impact Testimonial</Text>
-          <Text
+        {impactRecipientTestimonial && (
+          <View
+            wrap={false}
             style={{
-              fontSize: 12,
-              marginTop: 5,
+              margin: 10,
+              padding: 20,
+              borderRadius: 10,
+              backgroundColor: "#f5f9f4",
             }}
           >
-            {impactSummary}
-          </Text>
-        </View>
+            <Text>💬 Impact Testimonial</Text>
+            <Text
+              style={{
+                fontSize: 12,
+                marginTop: 5,
+              }}
+            >
+              {impactRecipientTestimonial}
+            </Text>
+          </View>
+        )}
       </Page>
     </Document>
   );
@@ -409,9 +489,7 @@ export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
   const [impactSummary, setImpactSummary] = useState<string>("");
   const [impactRecipientTestimonial, setImpactRecipientTestimonial] =
     useState<string>("");
-  const [impactBannerImageURL, setImpactBannerImageURL] = useState<string>(
-    `${envVars.VERCEL_URL}/images/karma-grant-reviews.png`
-  );
+  const [impactBannerImageURL, setImpactBannerImageURL] = useState<string>(``);
 
   function closeModal() {
     setIsOpen(false);
@@ -528,11 +606,7 @@ export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
                         />
                       </div>
                     </div>
-                    {project &&
-                    grant &&
-                    impactSummary &&
-                    impactRecipientTestimonial &&
-                    impactBannerImageURL ? (
+                    {project && grant && impactSummary ? (
                       <div className="flex flex-col">
                         <h4 className="">Preview</h4>
                         <PDFViewer className="w-full h-full rounded-xl">
