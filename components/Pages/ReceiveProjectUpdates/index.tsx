@@ -5,6 +5,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Image from "next/image";
 import { useState, useTransition } from "react";
 import { SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -13,7 +14,7 @@ import { z } from "zod";
 
 const lookupSchema = z.object({
   address: z.string().refine((str) => isAddress(str), {
-    message: "Invalid address",
+    message: "This address is not valid",
   }),
 });
 const subscribeSchema = z.object({
@@ -79,22 +80,24 @@ const SubscribeForm = ({ address, changeIsSubscribed }: SubscribeFormProps) => {
             {...register("email")}
           />
           <p className="text-red-400">{errors.email?.message}</p>
-          <p className="text-zinc-600 dark:text-zinc-400 text-sm">
-            You will receive updates from all the projects funded by your wallet
-          </p>
         </div>
         <Button
           type="submit"
-          className="w-full flex flex-row text-base justify-center items-center bg-zinc-700 hover:bg-zinc-700 text-white px-4 py-2 rounded"
+          className="w-full flex flex-row text-base justify-center items-center bg-[#0E101B] hover:bg-[#0E101B]/80 text-white px-4 py-2 rounded"
           isLoading={isLoading}
           disabled={isLoading || !isValid}
         >
-          Subscribe
+          Subscribe to get updates
         </Button>
       </form>
     </div>
   );
 };
+
+interface StepNavigatorProps {
+  step: "lookup" | "subscribe";
+  setStep: (step: "lookup" | "subscribe") => void;
+}
 
 export const ReceiveProjectUpdates = ({
   communityName,
@@ -105,6 +108,7 @@ export const ReceiveProjectUpdates = ({
     register,
     handleSubmit,
     formState: { errors, isValid },
+    setError,
   } = useForm<LookupFormType>({
     resolver: zodResolver(lookupSchema),
     reValidateMode: "onChange",
@@ -114,6 +118,7 @@ export const ReceiveProjectUpdates = ({
   const [projectsFunded, setProjectsFunded] = useState(0);
   const [addressSearched, setAddressSearched] = useState<string | null>(null);
   const [subscribed, setSubscribed] = useState(false);
+  const [step, setStep] = useState<"lookup" | "subscribe">("lookup");
 
   const changeIsSubscribed = (value: boolean) => {
     setSubscribed(value);
@@ -130,79 +135,111 @@ export const ReceiveProjectUpdates = ({
       if (error) {
         throw error;
       }
-      setProjectsFunded(res.length);
+      if (res.length > 0) {
+        setProjectsFunded(res.length);
+        setStep("subscribe");
+      } else {
+        setError("address", {
+          message: "No projects funded by this wallet",
+        });
+        setStep("lookup");
+      }
     } catch (error) {
       console.error(error);
       setProjectsFunded(0);
+      setStep("lookup");
     } finally {
       setIsLoading(false);
     }
   };
   return (
-    <div className="flex flex-col gap-8  max-w-xl w-full">
-      <div className="flex flex-col gap-8">
-        <h1 className="text-xl font-semibold">
-          Receive updates from projects you have funded
-        </h1>
-        <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
-          <div className="flex flex-col gap-2">
-            <label>Your wallet address</label>
-            <input
-              className="rounded text-black dark:text-white dark:bg-zinc-700 placeholder:text-zinc-500 dark:placeholder:text-zinc-100"
-              placeholder="Enter your wallet address"
-              {...register("address")}
-            />
-            <p className="text-red-400">{errors.address?.message}</p>
-            <p className="text-zinc-600 dark:text-zinc-400 text-sm">
-              This is the wallet you used to fund projects on {communityName}
+    <div className="flex flex-col gap-4  max-w-xl w-full bg-[#EEF4FF] dark:bg-zinc-800 p-5 rounded-lg">
+      {step === "lookup" ? (
+        <div className="flex flex-col gap-4">
+          <Image src="/icons/mail.png" width={24} height={24} alt="Mail" />
+
+          <div className="flex flex-col gap-3">
+            <p className="text-brand-darkblue text-base font-semibold dark:text-zinc-300">
+              Enter the wallet you’ve used to fund projects on {communityName}{" "}
+              to track them.
             </p>
+            <form
+              className="flex flex-col gap-4"
+              onSubmit={handleSubmit(onSubmit)}
+            >
+              <div className="flex flex-col gap-2">
+                <input
+                  className="rounded text-black dark:text-white dark:bg-zinc-700 placeholder:text-zinc-500 dark:placeholder:text-zinc-100 border-black border"
+                  placeholder="Enter your wallet address"
+                  {...register("address")}
+                />
+                <p className="text-red-400">{errors.address?.message}</p>
+              </div>
+              <Button
+                disabled={isLoading || !isValid}
+                type="submit"
+                className="w-full flex flex-row text-base justify-center items-center bg-[#0E101B] hover:bg-[#0E101B]/80 text-white px-4 py-2 rounded"
+                isLoading={isLoading}
+              >
+                Lookup Projects
+              </Button>
+            </form>
           </div>
-          <Button
-            disabled={isLoading || !isValid}
-            type="submit"
-            className="w-full flex flex-row justify-center text-base items-center bg-brand-blue text-white px-4 py-2 rounded"
-            isLoading={isLoading}
-          >
-            Lookup
-          </Button>
-        </form>
-        {addressSearched ? (
-          isLoading ? (
-            <div className="flex flex-col justify-center items-center">
-              <Spinner />
-            </div>
-          ) : (
-            <div className="flex flex-col gap-4 border-t border-t-zinc-300 pt-4">
-              <p className="text-black dark:text-white">
-                You have funded {projectsFunded} projects.{" "}
-                {projectsFunded ? (
-                  <>
-                    You can find all the projects you have funded{" "}
-                    <ExternalLink
-                      className="underline text-blue-600 dark:text-blue-400"
-                      href={`https://explorer.gitcoin.co/#/contributors/${addressSearched}`}
-                    >
-                      here.
-                    </ExternalLink>
-                  </>
-                ) : null}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          <Image
+            src="/icons/congratulations.png"
+            width={24}
+            height={24}
+            alt="Congratulations"
+          />
+          <p className="text-brand-darkblue dark:text-white font-semibold text-base">
+            You’ve funded {projectsFunded} projects. You can see the full list{" "}
+            <ExternalLink
+              className="underline text-blue-600 dark:text-blue-400"
+              href={`https://explorer.gitcoin.co/#/contributors/${addressSearched}`}
+            >
+              here.
+            </ExternalLink>
+          </p>
+          {projectsFunded > 0 ? (
+            subscribed ? (
+              <p className="text-green-600 dark:text-green-500">
+                Successfully subscribed to all the projects funded by your
+                wallet.
               </p>
-              {projectsFunded > 0 ? (
-                subscribed ? (
-                  <p className="text-green-600 dark:text-green-500">
-                    Successfully subscribed to all the projects funded by your
-                    wallet.
-                  </p>
-                ) : (
-                  <SubscribeForm
-                    address={addressSearched}
-                    changeIsSubscribed={changeIsSubscribed}
-                  />
-                )
-              ) : null}
-            </div>
-          )
-        ) : null}
+            ) : (
+              <SubscribeForm
+                address={addressSearched as string}
+                changeIsSubscribed={changeIsSubscribed}
+              />
+            )
+          ) : null}
+        </div>
+      )}
+      <div className="flex flex-row gap-2 w-full justify-center items-center">
+        <Button
+          className="w-3 h-3 rounded-full p-0"
+          onClick={() => setStep("lookup")}
+          style={{
+            backgroundColor: step === "lookup" ? "#155EEF" : "transparent",
+            border:
+              step === "lookup" ? "2px solid transparent" : "2px solid #155EEF",
+          }}
+        />
+        <Button
+          className="w-3 h-3 rounded-full p-0"
+          onClick={() => setStep("subscribe")}
+          disabled={!(projectsFunded > 0)}
+          style={{
+            backgroundColor: step === "subscribe" ? "#155EEF" : "transparent",
+            border:
+              step === "subscribe"
+                ? "2px solid transparent"
+                : "2px solid #155EEF",
+          }}
+        />
       </div>
     </div>
   );
