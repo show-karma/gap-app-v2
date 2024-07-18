@@ -65,7 +65,7 @@ const Presentation = () => {
                   iconSide: "right",
                   text: "Add your project",
                   styleClass:
-                    "flex rounded-md hover:opacity-75 border-none transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-3 bg-[#101828] dark:bg-gray-700 px-7 py-4 text-lg font-semibold leading-7 text-white hover:bg-[#101828] max-2xl:px-5 max-2xl:text-base max-lg:text-sm",
+                    "flex rounded-md hover:opacity-75 border-none transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-3 bg-brand-darkblue dark:bg-gray-700 px-7 py-4 text-lg font-semibold leading-7 text-white hover:bg-brand-darkblue max-2xl:px-5 max-2xl:text-base max-lg:text-sm",
                 }}
               />
             </div>

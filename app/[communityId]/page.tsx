@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import React from "react";
 import type { Metadata } from "next";
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
@@ -11,6 +12,9 @@ import type { SortByOptions, StatusOptions } from "@/types";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
 import { notFound } from "next/navigation";
+import Image from "next/image";
+import { ReceiveProjectUpdates } from "@/components/Pages/ReceiveProjectUpdates";
+import { communitiesToBulkSubscribe } from "@/utilities/subscribe";
 
 type Props = {
   params: {
@@ -104,25 +108,27 @@ export default async function Page({ params }: Props) {
   const defaultSelectedStatus = "all" as StatusOptions;
 
   return (
-    <div className="flex w-full max-w-full flex-col justify-between gap-6 px-12 pb-7 pt-5 max-2xl:px-8 max-md:px-4">
-      <div
-        className="flex h-max w-full flex-row items-center justify-between gap-3 rounded-2xl p-6 max-lg:py-4  max-lg:flex-col"
-        style={{
-          backgroundColor:
-            communityColors[
-              (community as ICommunityResponse).uid.toLowerCase() || "black"
-            ] || "#000000",
-        }}
-      >
-        <div className="flex flex-col gap-3 flex-1 items-center justify-center h-full">
-          <div className="flex justify-center">
-            {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
+    <div className="flex w-full max-w-full flex-row justify-start gap-6 px-12 pb-7 pt-5 max-2xl:px-8 max-md:px-4  max-lg:flex-col">
+      <div className="flex w-full max-w-full flex-col justify-start items-center gap-6">
+        <div
+          className="flex h-max w-full flex-row items-center justify-start gap-3 rounded-2xl p-6 max-lg:py-4"
+          style={{
+            backgroundColor:
+              communityColors[
+                (community as ICommunityResponse).uid.toLowerCase() || "black"
+              ] || "#000000",
+          }}
+        >
+          <div className="flex justify-center border border-white rounded-full p-2">
             <img
-              alt={(community as ICommunityResponse).details?.data.name}
-              src={(community as ICommunityResponse)?.details?.data?.imageURL}
-              className={
-                "h-14 w-14 rounded-full border border-white p-1 max-lg:h-8 max-lg:w-8"
+              alt={
+                (community as ICommunityResponse).details?.data.name ||
+                "Community name"
               }
+              src={
+                (community as ICommunityResponse)?.details?.data?.imageURL || ""
+              }
+              className={"h-14 w-14 rounded-full max-lg:h-8 max-lg:w-8"}
             />
           </div>
 
@@ -135,29 +141,27 @@ export default async function Page({ params }: Props) {
             Community Grants
           </p>
         </div>
-        {/* {communitiesToBulkSubscribe.includes(
-          community.details?.data.slug as string
-        ) ? (
-          <div className="flex flex-col gap-3 px-4 border-l border-l-zinc-300 h-full w-max  max-lg:border-t  max-lg:border-x-0  max-lg:border-t-zinc-300  max-lg:py-4">
-            <Link
-              href={PAGES.COMMUNITY.RECEIVEPROJECTUPDATES(
-                community.details?.data.slug as string
-              )}
-              className="text-white underline"
-            >
-              Receive Project Updates
-            </Link>
-          </div>
-        ) : null} */}
-      </div>
 
-      <div className="flex gap-8 flex-row max-lg:flex-col-reverse w-full">
-        <CommunityGrants
-          categoriesOptions={categoriesOptions}
-          defaultSelectedCategories={defaultSelectedCategories}
-          defaultSortBy={defaultSortBy}
-          defaultSelectedStatus={defaultSelectedStatus}
-        />
+        <div className="flex gap-8 flex-row max-lg:flex-col-reverse w-full">
+          <CommunityGrants
+            categoriesOptions={categoriesOptions}
+            defaultSelectedCategories={defaultSelectedCategories}
+            defaultSortBy={defaultSortBy}
+            defaultSelectedStatus={defaultSelectedStatus}
+          />
+        </div>
+      </div>
+      <div className="flex flex-col gap-2 w-4/12 max-lg:w-full max-lg:hidden">
+        {communitiesToBulkSubscribe.includes(
+          (community as ICommunityResponse).details?.data?.slug as string
+        ) ? (
+          <ReceiveProjectUpdates
+            communityName={
+              (community as ICommunityResponse).details?.data?.name || ""
+            }
+          />
+        ) : null}
+
         <CommunityFeed />
       </div>
     </div>
