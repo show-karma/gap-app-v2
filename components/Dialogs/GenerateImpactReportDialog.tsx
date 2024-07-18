@@ -24,6 +24,7 @@ import {
   Document,
   StyleSheet,
   Image,
+  Font,
 } from "@react-pdf/renderer";
 import { PDFViewer } from "@react-pdf/renderer";
 import {
@@ -34,6 +35,11 @@ import { envVars } from "@/utilities/enviromentVars";
 
 // Create styles
 const styles = StyleSheet.create({});
+Font.register({ family: "Roboto", src: "/fonts/Inter/Inter.ttf" });
+Font.registerEmojiSource({
+  format: "png",
+  url: "https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/",
+});
 
 function GenerateDocument({
   grant,
@@ -54,7 +60,7 @@ function GenerateDocument({
         size="A4"
         style={{
           flexDirection: "column",
-          backgroundColor: "#E4E4E4",
+          paddingVertical: 20,
         }}
       >
         <View
@@ -62,82 +68,129 @@ function GenerateDocument({
             margin: 10,
             padding: 10,
             flexGrow: 1,
-            flexDirection: "row",
+            flexDirection: "column",
           }}
         >
           <View
             style={{
-              marginRight: 10,
               flexDirection: "row",
+              marginBottom: 10,
+              alignItems: "center",
+              justifyContent: "space-between",
             }}
           >
-            <Image
-              src={
-                project?.details?.data?.imageURL ||
-                "https://gap.karmahq.xyz/logo/logo-dark.png"
-              }
+            <View
               style={{
-                backgroundColor: "black",
-                padding: 10,
-                marginRight: 5,
-                width: 50,
-                height: 50,
-                borderRadius: 50,
+                flexDirection: "row",
+                width: "30%",
               }}
-            />
-            <Image
-              src={
-                grant?.community?.details?.data?.imageURL ||
-                "https://gap.karmahq.xyz/logo/logo-dark.png"
-              }
+            >
+              <Image
+                src={
+                  project?.details?.data?.imageURL ||
+                  "https://gap.karmahq.xyz/logo/logo-dark.png"
+                }
+                style={{
+                  backgroundColor: "black",
+                  padding: 10,
+                  marginRight: 5,
+                  width: 30,
+                  height: 30,
+                  borderRadius: 50,
+                }}
+              />
+              <Image
+                src={
+                  grant?.community?.details?.data?.imageURL ||
+                  "https://gap.karmahq.xyz/logo/logo-dark.png"
+                }
+                style={{
+                  backgroundColor: "black",
+                  width: 30,
+                  height: 30,
+                  borderRadius: 50,
+                }}
+              />
+            </View>
+            <View
               style={{
-                backgroundColor: "black",
-                width: 50,
-                height: 50,
-                borderRadius: 50,
+                color: "#52525b",
+                fontSize: 10,
+                flexDirection: "row",
+                justifyContent: "flex-end",
+                width: "70%",
               }}
-            />
+            >
+              <Text
+                style={{
+                  marginRight: 5,
+                }}
+              >
+                @
+                {
+                  project?.details?.data?.links?.find(
+                    (social) => social?.type === "twitter"
+                  )?.url
+                }
+              </Text>
+
+              <Text
+                style={{
+                  marginRight: 5,
+                }}
+              >
+                {
+                  project?.details?.data?.links?.find(
+                    (social) => social?.type === "website"
+                  )?.url
+                }
+              </Text>
+              <Text
+                style={{
+                  marginRight: 5,
+                }}
+              >
+                github.com/
+                {
+                  project?.details?.data?.links?.find(
+                    (social) => social?.type === "github"
+                  )?.url
+                }
+              </Text>
+            </View>
           </View>
+
           <View
             style={{
               flexGrow: 1,
-              width: "62",
             }}
           >
             <Text
               style={{
                 color: "#2563eb",
-                fontSize: 20,
+                fontSize: 18,
               }}
             >
               {grant.details?.data.title}
             </Text>
             <Text>{project?.details?.data?.title}</Text>
-            <Text
+            <View
               style={{
-                color: "#52525b",
-                fontSize: 15,
+                backgroundColor: "#eef1f4",
+                padding: 10,
                 marginTop: 5,
+                borderRadius: 5,
               }}
             >
-              Location of Impact: {"Sub-Saharan Africa"}
-            </Text>
-            <Text
-              style={{
-                color: "#52525b",
-                fontSize: 11,
-              }}
-            >
-              {project?.details?.data?.links &&
-                project?.details?.data?.links
-                  .filter((social) => social?.url)
-                  .map((social, index) => (
-                    <Text key={index}>
-                      {index != 0 && " | "}
-                      {social?.url}
-                    </Text>
-                  ))}
-            </Text>
+              <Text
+                style={{
+                  fontSize: 15,
+                }}
+              >
+                📍 Location of Impact:{" "}
+                {project?.details?.data?.locationOfImpact}
+              </Text>
+            </View>
           </View>
         </View>
         <View
@@ -160,68 +213,80 @@ function GenerateDocument({
 
         <View
           style={{
-            margin: 10,
-            padding: 10,
+            marginTop: 10,
+            marginHorizontal: 10,
+            padding: 20,
+            borderRadius: 10,
             flexGrow: 1,
+            backgroundColor: "#e2e8fb",
           }}
         >
-          <Text>Mission Summary</Text>
+          <Text>🖊️ Mission Summary</Text>
           <Text
             style={{
               fontSize: 12,
               marginTop: 5,
             }}
           >
-            {
-              "We work with local NGOs tocreate innovative ways toaccelerate off-grid solar inunderserved communities. Weenvision emergent pilotprojects & sustainable fundingmodels to empower ourpartner communities to accessclean energy & have anownership stake in the solardeployed."
-            }
+            {project?.details?.data?.missionSummary}
           </Text>
         </View>
 
         <View
           style={{
-            backgroundColor: "gray",
             flexDirection: "row",
           }}
         >
           <View
             style={{
               margin: 10,
-              padding: 10,
+              padding: 20,
               flexGrow: 1,
-              width: "30%",
+              width: "50%",
+              borderRadius: 10,
+              backgroundColor: "#faf2d9",
             }}
           >
-            <Text>Problem</Text>
             <Text
               style={{
-                fontSize: 12,
+                fontSize: 15,
+              }}
+            >
+              ⚠️ Problem
+            </Text>
+            <Text
+              style={{
+                fontSize: 13,
                 marginTop: 5,
               }}
             >
-              {
-                "We believe that new technologies such as Web3 & blockchain have the potential to accelerate progress address climate change especially for reducing GHG emissions deforestation through solar power and clean cooking. "
-              }
+              {project?.details?.data?.problem}
             </Text>
           </View>
           <View
             style={{
               margin: 10,
-              padding: 10,
+              padding: 20,
+              borderRadius: 10,
               flexGrow: 1,
-              width: "30%",
+              width: "50%",
+              backgroundColor: "#e4f6f2",
             }}
           >
-            <Text>Solution</Text>
             <Text
               style={{
-                fontSize: 12,
+                fontSize: 15,
+              }}
+            >
+              ✅ Solution
+            </Text>
+            <Text
+              style={{
+                fontSize: 13,
                 marginTop: 5,
               }}
             >
-              {
-                "We believe that new technologies such as Web3 & blockchain have the potential to accelerate progress address climate change especially for reducing GHG emissions deforestation through solar power and clean cooking. "
-              }
+              {project?.details?.data?.solution}
             </Text>
           </View>
         </View>
@@ -248,7 +313,7 @@ function GenerateDocument({
                     marginTop: 5,
                   }}
                 >
-                  #{index + 1} {JSON.stringify(milestone.data.title)}
+                  🚩 #{index + 1} {JSON.stringify(milestone.data.title)}
                 </Text>
                 <Text
                   style={{
@@ -256,19 +321,28 @@ function GenerateDocument({
                     marginTop: 5,
                   }}
                 >
-                  {/* <MarkdownPreview
-                source={grant?.details?.data?.description}
-              /> */}
                   {JSON.stringify(milestone.data.description)}
                 </Text>
-                <Text
-                  style={{
-                    fontSize: 12,
-                    marginTop: 5,
-                  }}
-                >
-                  Updates: {milestone?.completed?.data?.reason}
-                </Text>
+                {milestone?.completed?.data?.reason && (
+                  <View
+                    style={{
+                      marginTop: 5,
+                      padding: 20,
+                      flexGrow: 1,
+                      borderRadius: 10,
+                      backgroundColor: "#f0f0f0",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 12,
+                        marginTop: 5,
+                      }}
+                    >
+                      Updates: {milestone?.completed?.data?.reason}
+                    </Text>
+                  </View>
+                )}
               </View>
             ))}
           </View>
@@ -276,31 +350,39 @@ function GenerateDocument({
         <View
           style={{
             margin: 10,
-            padding: 10,
+            padding: 20,
+            borderRadius: 10,
             flexGrow: 1,
+            backgroundColor: "#faf5ee",
           }}
         >
-          <Text>Impact Summary</Text>
+          <Text>🌟 Impact Summary</Text>
           <Text
             style={{
               fontSize: 12,
               marginTop: 5,
             }}
           >
-            {impactSummary ||
-              `Solar for Education
-·Rooftop solar for 2 rural schools in Nigeria including a computer lab that serves the entire community
-Microgrid for a school in Tanzania, including teacher housing and offices
-
-Solar for Community & Health Centers
-·Rooftop solar for a Community Center in Nigeria
-·Solar water pump & 2 water tanks; solar lights for security to provide water to local community members
-· Rooftop solar for a health center in Kenya that includes a maternity ward and refrigeration for vaccines
-
-Solar for Agroforestry
-·Mobile solar for office; solar lights & fencing for nursery; solar home systems for volunteers and mobile phones to help showcase impact
-Solar for Women
-• Over 175 portable solar lanterns replaced unhealthy, polluting kerosene lamps in Uganda as a gateway to learning more about how solar works & how it can benefit the health, safety and economic development of off-grid families and communities`}
+            {impactSummary}
+          </Text>
+        </View>
+        <View
+          style={{
+            margin: 10,
+            padding: 20,
+            borderRadius: 10,
+            flexGrow: 1,
+            backgroundColor: "#f5f9f4",
+          }}
+        >
+          <Text>💬 Impact Testimonial</Text>
+          <Text
+            style={{
+              fontSize: 12,
+              marginTop: 5,
+            }}
+          >
+            {impactSummary}
           </Text>
         </View>
       </Page>
@@ -400,76 +482,82 @@ export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
+                <Dialog.Panel className="w-full max-w-5xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
                   <Dialog.Title
                     as="h3"
                     className="text-xl font-medium leading-6 text-gray-900 dark:text-zinc-100"
                   >
                     Generate Impact Report PDF
                   </Dialog.Title>
-                  <div className="flex flex-col gap-2 mt-4 mb-3">
-                    <label htmlFor="newOwner">
-                      Add a summary of the impact
-                    </label>
-                    <textarea
-                      className="rounded border border-zinc-300  dark:bg-zinc-800 px-2 py-1 text-black dark:text-white"
-                      id="impactSummary"
-                      onChange={(e) => setImpactSummary(e.target.value)}
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2 mt-2 mb-3">
-                    <label htmlFor="newOwner">
-                      Add a testimonial from the impact recipient (optional)
-                    </label>
-                    <textarea
-                      className="rounded border border-zinc-300  dark:bg-zinc-800 px-2 py-1 text-black dark:text-white"
-                      id="impactRecipientTestimonial"
-                      value={impactRecipientTestimonial}
-                      onChange={(e) =>
-                        setImpactRecipientTestimonial(e.target.value)
-                      }
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2 mt-2 mb-5">
-                    <label htmlFor="newOwner">
-                      Add a banner image URL (optional)
-                    </label>
-                    <input
-                      className="rounded border border-zinc-300  dark:bg-zinc-800 px-2 py-1 text-black dark:text-white"
-                      id="impactBannerImageURL"
-                      value={impactBannerImageURL}
-                      onChange={(e) => setImpactBannerImageURL(e.target.value)}
-                    />
-                  </div>
-                  {project &&
-                  grant &&
-                  impactSummary &&
-                  impactRecipientTestimonial &&
-                  impactBannerImageURL ? (
-                    <>
-                      <h4 className="mb-3">Preview</h4>
-                      <PDFViewer className="w-full h-60">
-                        <GenerateDocument
-                          grant={grant}
-                          project={project}
-                          impactSummary={impactSummary}
-                          impactRecipientTestimonial={
-                            impactRecipientTestimonial
-                          }
-                          impactBannerImageURL={impactBannerImageURL}
+                  <section className="grid grid-cols-2 gap-5 mt-3">
+                    <div>
+                      <div className="flex flex-col gap-2 mb-10">
+                        <label htmlFor="newOwner">Summary of the impact</label>
+                        <textarea
+                          className="rounded border border-zinc-300  dark:bg-zinc-800 px-2 py-1 text-black dark:text-white"
+                          id="impactSummary"
+                          rows={5}
+                          onChange={(e) => setImpactSummary(e.target.value)}
                         />
-                      </PDFViewer>
-                    </>
-                  ) : (
-                    <div className="flex flex-col gap-2 mt-2 mb-5">
-                      <label htmlFor="newOwner">Preview</label>
-                      <div className="bg-zinc-100 flex flex-col justify-center items-center gap-2 p-4 border border-zinc-300 dark:border-zinc-800 rounded dark:bg-zinc-800">
-                        <p className="text-zinc-600 dark:text-zinc-100">
-                          Please fill in all fields
-                        </p>
+                      </div>
+                      <div className="flex flex-col gap-2 mb-10">
+                        <label htmlFor="newOwner">
+                          Testimonial from impact recipient (optional)
+                        </label>
+                        <textarea
+                          rows={5}
+                          className="rounded border border-zinc-300  dark:bg-zinc-800 px-2 py-1 text-black dark:text-white"
+                          id="impactRecipientTestimonial"
+                          value={impactRecipientTestimonial}
+                          onChange={(e) =>
+                            setImpactRecipientTestimonial(e.target.value)
+                          }
+                        />
+                      </div>
+                      <div className="flex flex-col gap-2 ">
+                        <label htmlFor="newOwner">
+                          Banner image URL (optional)
+                        </label>
+                        <input
+                          className="rounded border border-zinc-300  dark:bg-zinc-800 px-2 py-1 text-black dark:text-white"
+                          id="impactBannerImageURL"
+                          value={impactBannerImageURL}
+                          onChange={(e) =>
+                            setImpactBannerImageURL(e.target.value)
+                          }
+                        />
                       </div>
                     </div>
-                  )}
+                    {project &&
+                    grant &&
+                    impactSummary &&
+                    impactRecipientTestimonial &&
+                    impactBannerImageURL ? (
+                      <div className="flex flex-col">
+                        <h4 className="">Preview</h4>
+                        <PDFViewer className="w-full h-full rounded-xl">
+                          <GenerateDocument
+                            grant={grant}
+                            project={project}
+                            impactSummary={impactSummary}
+                            impactRecipientTestimonial={
+                              impactRecipientTestimonial
+                            }
+                            impactBannerImageURL={impactBannerImageURL}
+                          />
+                        </PDFViewer>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col gap-2 mt-2">
+                        <label htmlFor="newOwner">Preview</label>
+                        <div className="bg-zinc-100 flex flex-col justify-center items-center gap-2 p-4  border border-zinc-300 dark:border-zinc-800 rounded dark:bg-zinc-800 h-full">
+                          <p className="text-zinc-600 dark:text-zinc-100">
+                            Please fill in all fields
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </section>
                   <div className="flex flex-row gap-4 mt-10 justify-end">
                     <Button
                       className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
