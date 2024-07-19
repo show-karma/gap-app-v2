@@ -45,7 +45,7 @@ import { useCommunityAdminStore } from "@/store/community";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { useCommunitiesStore } from "@/store/communities";
 import { cn } from "@/utilities/tailwind";
-import { useStepper } from "@/store/txStepper";
+import { useStepper } from "@/store/modals/txStepper";
 import { config } from "@/utilities/wagmi/config";
 import {
   ICommunityResponse,

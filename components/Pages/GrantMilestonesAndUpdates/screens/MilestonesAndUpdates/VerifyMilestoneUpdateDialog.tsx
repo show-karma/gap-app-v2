@@ -15,7 +15,7 @@ import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { MESSAGES } from "@/utilities/messages";
 import { getGapClient, useGap } from "@/hooks";
 import { useProjectStore } from "@/store";
-import { useStepper } from "@/store/txStepper";
+import { useStepper } from "@/store/modals/txStepper";
 import { config } from "@/utilities/wagmi/config";
 import {
   IMilestoneCompleted,

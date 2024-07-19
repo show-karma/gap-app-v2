@@ -36,7 +36,7 @@ import { config } from "@/utilities/wagmi/config";
 import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
 import { checkIsPoolManager } from "@/utilities/registry/checkIsPoolManager";
 import { MyProgramList } from "@/components/Pages/ProgramRegistry/MyProgramList";
-import { useStepper } from "@/store/txStepper";
+import { useStepper } from "@/store/modals/txStepper";
 import { useSearchParams } from "next/navigation";
 import { useRegistryStore } from "@/store/registry";
 import { useQuery } from "@tanstack/react-query";
@@ -394,7 +394,7 @@ export const ManagePrograms = () => {
                 {/* <div className="h-44 w-[1px] bg-[#98A2B3] max-md:w-full max-md:h-[1px]" />
             <div className="flex flex-1 flex-col gap-2 items-center max-sm:items-start">
               <div className="flex flex-1 flex-col gap-2 items-start">
-                <p className="text-[#101828] dark:text-white font-body font-semibold text-xl">
+                <p className="text-brand-darkblue dark:text-white font-body font-semibold text-xl">
                   Be the first to know a new program launches
                 </p>
                 <div className="flex flex-row gap-4 max-sm:flex-col max-sm:w-full">

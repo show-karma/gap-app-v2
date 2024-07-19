@@ -45,7 +45,7 @@ import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { useAuthStore } from "@/store/auth";
 import { getWalletClient } from "@wagmi/core";
-import { useStepper } from "@/store/txStepper";
+import { useStepper } from "@/store/modals/txStepper";
 import { updateProject } from "@/utilities/sdk/projects/editProject";
 import { ContactInfoSection } from "./ContactInfoSection";
 import type { Contact } from "@/types/project";
@@ -401,7 +401,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
       closeModal();
-
+      changeStepperStep("preparing");
       await project.attest(walletSigner, changeStepperStep).then(async () => {
         let retries = 1000;
         let fetchedProject: Project | null = null;
@@ -481,6 +481,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       const walletSigner = await walletClientToSigner(walletClient);
       const fetchedProject = await getProjectById(projectToUpdate.uid);
       if (!fetchedProject) return;
+      changeStepperStep("preparing");
       await updateProject(
         fetchedProject,
         {

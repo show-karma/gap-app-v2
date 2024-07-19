@@ -17,7 +17,7 @@ import { useAuthStore } from "@/store/auth";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { Button } from "@/components/Utilities/Button";
-import { useOnboarding } from "@/store/onboarding";
+import { useOnboarding } from "@/store/modals/onboarding";
 import { useMixpanel } from "@/hooks/useMixpanel";
 
 const ProjectDialog = dynamic(

@@ -41,7 +41,7 @@ export async function generateMetadata({
   const dynamicMetadata = {
     title: `Karma GAP - ${(projectInfo as ProjectDetailsWithUid).title}`,
     description:
-      (projectInfo as ProjectDetailsWithUid).description?.substring(0, 80) ||
+      (projectInfo as ProjectDetailsWithUid).description?.substring(0, 160) ||
       "",
   };
 
