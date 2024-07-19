@@ -685,7 +685,7 @@ export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
                         </div>
                       </div>
                     )}
-                  <section className="grid grid-cols-2 gap-5 mt-3">
+                  <section className="grid grid-cols-1 md:grid-cols-2  gap-5 mt-5">
                     <div>
                       <div className="flex flex-col gap-2 mb-10">
                         <label htmlFor="newOwner">Summary of the impact</label>
@@ -726,7 +726,7 @@ export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
                     </div>
                     {project && grant && impactSummary ? (
                       <div className="flex flex-col">
-                        <h4 className="">Preview</h4>
+                        <h4 className="mt-5 mb-3 md:mt-0 md:mb-0">Preview</h4>
                         <PDFViewer className="w-full h-full rounded-xl">
                           <GenerateDocument
                             grant={grant}
