@@ -2,19 +2,13 @@
 import { FC, Fragment, ReactNode, useEffect, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 
-import { DocumentCheckIcon } from "@heroicons/react/24/solid";
+import { DocumentCheckIcon, LightBulbIcon } from "@heroicons/react/24/solid";
 import { Button } from "../Utilities/Button";
 import toast from "react-hot-toast";
 import { useProjectStore } from "@/store";
 import { useAccount, useSwitchChain } from "wagmi";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { getWalletClient } from "@wagmi/core";
-import { useStepper } from "@/store/txStepper";
-import { getProjectById } from "@/utilities/sdk";
-import { config } from "@/utilities/wagmi/config";
 
 import React from "react";
 import {
@@ -22,6 +16,7 @@ import {
   IProjectResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { envVars } from "@/utilities/enviromentVars";
+import { Spinner } from "../Utilities/Spinner";
 
 type Props = {};
 
@@ -40,30 +35,41 @@ function GrantGenieRecommendations({ projectId }: { projectId: string }) {
 
   useEffect(() => {
     setIsLoading(true);
-    fetchData(INDEXER.PROJECT.GRANTS_GENIE(projectId), "GET").then(
-      ([res, error]) => {
-        setIsLoading(false);
-        setError(error);
-        if (error) {
-          toast.error("Failed to fetch recommendations");
-          return;
-        }
-        setRecommendations(res?.grants);
+    fetchData(
+      INDEXER.PROJECT.GRANTS_GENIE(projectId),
+      "GET",
+      {},
+      {},
+      {},
+      undefined,
+      true
+    ).then(([res, error]) => {
+      setIsLoading(false);
+      setError(error);
+      if (error) {
+        toast.error("Failed to fetch recommendations");
+        return;
       }
-    );
+      setRecommendations(res?.grants);
+    });
   }, [projectId]);
 
   return (
     <section className="grid grid-cols-1 gap-4 mt-3 h-[60vh] overflow-y-scroll">
       {isLoading ? (
-        <div>Loading...</div>
+        <div className="flex flex-col  gap-5 justify-center items-center h-full">
+          <Spinner />
+          <div>
+            Hold on, Grants Genie is working on finding you the best programs...
+          </div>
+        </div>
       ) : recommendations?.length === 0 || error ? (
         <div>No recommendations available at the moment.</div>
       ) : (
         recommendations.map((recommendation, index) => (
           <div
             key={index}
-            className="rounded-xl bg-teal-100 p-5 gap-5 grid grid-cols-2"
+            className="rounded-xl bg-teal-50 shadow p-8 gap-5 grid grid-cols-2"
           >
             <div className="">
               <h3 className="font-semibold">{recommendation.title}</h3>
@@ -84,7 +90,6 @@ function GrantGenieRecommendations({ projectId }: { projectId: string }) {
 }
 
 export const GrantsGenieDialog: FC<Props> = ({}) => {
-  const { chain } = useAccount();
   const project = useProjectStore((state) => state.project);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const setIsProjectOwner = useProjectStore((state) => state.setIsProjectOwner);
@@ -103,9 +108,9 @@ export const GrantsGenieDialog: FC<Props> = ({}) => {
     <>
       <Button
         onClick={openModal}
-        className="flex items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100  hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900"
+        className="flex items-center gap-x-1 rounded-md bg-teal-50 dark:bg-teal-900/50 px-3 py-2 text-sm font-semibold text-teal-600 dark:text-zinc-100  hover:bg-teal-100 dark:hover:bg-teal-900 border border-teal-200 dark:border-teal-900"
       >
-        <DocumentCheckIcon className="h-4 w-4 text-primary-800" />
+        <LightBulbIcon className="h-4 w-4 text-teal-800" />
         Call Grants Genie
       </Button>
       <Transition appear show={isOpen} as={Fragment}>
