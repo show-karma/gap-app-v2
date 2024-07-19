@@ -1,8 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, ReactNode, useEffect, useState } from "react";
+import React, { FC, Fragment, ReactNode, useEffect, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import Html from "react-pdf-html";
-
 import {
   DocumentCheckIcon,
   ExclamationCircleIcon,
@@ -17,12 +16,8 @@ import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { appNetwork } from "@/utilities/network";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { getWalletClient } from "@wagmi/core";
-import { useStepper } from "@/store/txStepper";
 import { getProjectById, getProjectOwner } from "@/utilities/sdk";
 import { config } from "@/utilities/wagmi/config";
-import { MarkdownPreview } from "../Utilities/MarkdownPreview";
-
-import React from "react";
 import {
   Page,
   Text,
@@ -31,8 +26,9 @@ import {
   StyleSheet,
   Image,
   Font,
+  PDFViewer,
+  PDFDownloadLink,
 } from "@react-pdf/renderer";
-import { PDFViewer } from "@react-pdf/renderer";
 import {
   IGrantResponse,
   IProjectResponse,
@@ -58,7 +54,7 @@ Font.register({
   ],
 });
 
-const defaultBannerImageURL = "http://localhost:3000/assets/impact-banner.jpg";
+const defaultBannerImageURL = `${envVars.VERCEL_URL}/assets/impact-banner.jpg`;
 
 function GenerateDocument({
   grant,
@@ -583,14 +579,9 @@ type Props = {
 };
 
 export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
-  const signer = useSigner();
   const { chain } = useAccount();
   const project = useProjectStore((state) => state.project);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const setIsProjectOwner = useProjectStore((state) => state.setIsProjectOwner);
   const { switchChainAsync } = useSwitchChain();
-  const { changeStepperStep, setIsStepper } = useStepper();
   let [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -629,14 +620,12 @@ export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
       console.error(error);
     } finally {
       setIsLoading(false);
-      setIsStepper(false);
     }
   };
 
   return (
     <>
       <Button
-        disabled={!isProjectOwner}
         onClick={openModal}
         className="flex items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100  hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900"
       >
@@ -769,6 +758,30 @@ export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
                     >
                       Cancel
                     </Button>
+                    <PDFDownloadLink
+                      className="text-primary-600 text-lg bg-primary-100 border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900 p-3 rounded-md"
+                      document={
+                        <GenerateDocument
+                          grant={grant}
+                          project={project as IProjectResponse}
+                          impactSummary={impactSummary}
+                          impactRecipientTestimonial={
+                            impactRecipientTestimonial
+                          }
+                          impactBannerImageURL={impactBannerImageURL}
+                        />
+                      }
+                      fileName={`${
+                        project?.details?.data?.slug || "project"
+                      }-impact-report-${grant?.details?.data?.title.replaceAll(
+                        " ",
+                        "-"
+                      )}.pdf`}
+                    >
+                      {({ blob, url, loading, error }) =>
+                        loading ? "Loading document..." : "💾 Download"
+                      }
+                    </PDFDownloadLink>
                   </div>
                 </Dialog.Panel>
               </Transition.Child>
