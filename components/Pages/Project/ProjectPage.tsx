@@ -255,6 +255,12 @@ function ProjectPage() {
         recipient: project?.recipient || "",
       });
     }
+    // sort by owner
+    members.sort((a, b) => {
+      return a.recipient.toLowerCase() === project?.recipient?.toLowerCase()
+        ? -1
+        : 1;
+    });
     return members;
   };
 
@@ -268,7 +274,7 @@ function ProjectPage() {
         <div className="font-semibold text-black dark:text-white leading-none">
           Team
         </div>
-        <div className=" flex flex-col divide-y divide-y-zinc-200 border border-zinc-200 rounded-xl">
+        <div className="flex flex-col divide-y divide-y-zinc-200 border border-zinc-200 rounded-xl">
           {members?.map((member) => (
             <div
               key={member.uid}
@@ -285,6 +291,12 @@ function ProjectPage() {
                     ensNames[member.recipient as Hex]?.name ||
                     shortAddress(member.recipient)}
                 </p>
+                {member.recipient?.toLowerCase() ===
+                project?.recipient?.toLowerCase() ? (
+                  <p className="text-sm text-brand-blue font-medium leading-none">
+                    Owner
+                  </p>
+                ) : null}
                 <div className="flex flex-row gap-2 justify-between items-center w-full max-w-max">
                   <p className="text-sm font-medium text-[#475467] dark:text-gray-300 line-clamp-1 text-wrap whitespace-nowrap">
                     {ensNames[member.recipient as Hex]?.name ||
@@ -313,20 +325,6 @@ function ProjectPage() {
       </div>
       <div className="flex flex-col flex-[8] max-lg:w-full gap-4">
         <ProjectBlocks />
-
-        <div className="text-base flex flex-row gap-1 text-gray-900 dark:text-zinc-100 break-all">
-          <p className="text-base font-bold leading-normal text-gray-900 dark:text-zinc-100">
-            Owner:
-            <span className="font-normal ml-1">
-              {project && (
-                <EthereumAddressToENSName
-                  shouldTruncate={false}
-                  address={project.recipient}
-                />
-              )}
-            </span>
-          </p>
-        </div>
 
         <div className="flex flex-col gap-1">
           <div className="text-base font-bold leading-normal text-black dark:text-zinc-100">

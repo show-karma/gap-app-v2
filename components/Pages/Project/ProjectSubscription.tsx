@@ -90,7 +90,7 @@ export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({
       className="p-5 flex flex-col gap-1 rounded-lg w-full h-max items-center justify-center text-left bg-[#EFF1F5] dark:bg-zinc-700"
     >
       <p className="mb-1 font-semibold text-[#101828] text-sm dark:text-zinc-300 text-left w-full">
-        Be the first to learn of any updates
+        Get updates on this project
       </p>
       <div className="flex w-full flex-col gap-1">
         <input
