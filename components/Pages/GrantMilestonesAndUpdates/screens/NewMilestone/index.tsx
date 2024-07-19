@@ -25,7 +25,7 @@ import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { formatDate } from "@/utilities/formatDate";
 import { getWalletClient } from "@wagmi/core";
 import { useCommunityAdminStore } from "@/store/community";
-import { useStepper } from "@/store/txStepper";
+import { useStepper } from "@/store/modals/txStepper";
 import { config } from "@/utilities/wagmi/config";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 

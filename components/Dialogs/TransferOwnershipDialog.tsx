@@ -11,7 +11,7 @@ import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { appNetwork } from "@/utilities/network";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { getWalletClient } from "@wagmi/core";
-import { useStepper } from "@/store/txStepper";
+import { useStepper } from "@/store/modals/txStepper";
 import { getProjectById, getProjectOwner } from "@/utilities/sdk";
 import { config } from "@/utilities/wagmi/config";
 

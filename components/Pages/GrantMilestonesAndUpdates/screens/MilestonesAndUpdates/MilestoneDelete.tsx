@@ -1,7 +1,7 @@
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { getGapClient, useGap } from "@/hooks";
 import { useProjectStore } from "@/store";
-import { useStepper } from "@/store/txStepper";
+import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";

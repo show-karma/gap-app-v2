@@ -27,7 +27,7 @@ import toast from "react-hot-toast";
 import { useCommunitiesStore } from "@/store/communities";
 import { envVars } from "@/utilities/enviromentVars";
 import { title } from "process";
-import { useStepper } from "@/store/txStepper";
+import { useStepper } from "@/store/modals/txStepper";
 import { config } from "@/utilities/wagmi/config";
 
 const inputStyle =

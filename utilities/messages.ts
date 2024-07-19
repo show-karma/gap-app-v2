@@ -151,6 +151,10 @@ export const MESSAGES = {
     NOT_CONNECTED: "Please login to view all your projects",
   },
   PROJECT: {
+    INTRO: {
+      EMAIL: "E-mail must be a valid email address",
+      TELEGRAM: "Telegram handle must be at least 3 characters",
+    },
     SUBSCRIPTION: {
       NAME: "Name must be at least 3 characters",
       EMAIL: "E-mail must be at least 3 characters",
