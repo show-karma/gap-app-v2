@@ -18,6 +18,10 @@ export const updateProject = async (
     stageIn?: string;
     raisedMoney?: string;
     pathToTake?: string;
+    problem?: string;
+    solution?: string;
+    missionSummary?: string;
+    locationOfImpact?: string;
   },
   data: {
     twitter?: string;
@@ -50,6 +54,10 @@ export const updateProject = async (
     project.details?.setValues({
       title: newProjectInfo.title,
       description: newProjectInfo.description,
+      problem: newProjectInfo.problem,
+      solution: newProjectInfo.solution,
+      missionSummary: newProjectInfo.missionSummary,
+      locationOfImpact: newProjectInfo.locationOfImpact,
       imageURL: "",
       links: linksArray,
       slug,
@@ -91,6 +99,10 @@ export const updateProject = async (
             stageIn: newProjectInfo.stageIn,
             raisedMoney: newProjectInfo.raisedMoney,
             pathToTake: newProjectInfo.pathToTake,
+            problem: newProjectInfo.problem,
+            solution: newProjectInfo.solution,
+            missionSummary: newProjectInfo.missionSummary,
+            locationOfImpact: newProjectInfo.locationOfImpact,
           };
           const fetchedDetailsData = {
             title: fetchedProject?.details?.title,
