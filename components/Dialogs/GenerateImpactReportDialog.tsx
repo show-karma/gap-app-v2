@@ -3,7 +3,10 @@ import { FC, Fragment, ReactNode, useEffect, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import Html from "react-pdf-html";
 
-import { DocumentCheckIcon, PlusIcon } from "@heroicons/react/24/solid";
+import {
+  DocumentCheckIcon,
+  ExclamationCircleIcon,
+} from "@heroicons/react/24/solid";
 import { renderToHTML } from "@/utilities/markdown";
 import { Button } from "../Utilities/Button";
 import toast from "react-hot-toast";
@@ -42,6 +45,18 @@ Font.registerEmojiSource({
   format: "png",
   url: "https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/",
 });
+Font.register({
+  family: "Open Sans",
+  fonts: [
+    {
+      src: "https://cdn.jsdelivr.net/npm/open-sans-all@0.1.3/fonts/open-sans-regular.ttf",
+    },
+    {
+      src: "https://cdn.jsdelivr.net/npm/open-sans-all@0.1.3/fonts/open-sans-600.ttf",
+      fontWeight: 600,
+    },
+  ],
+});
 
 const defaultBannerImageURL = "http://localhost:3000/assets/impact-banner.jpg";
 
@@ -63,6 +78,7 @@ function GenerateDocument({
       <Page
         size="A4"
         style={{
+          fontFamily: "Open Sans",
           lineHeight: 1.3,
           flexDirection: "column",
           paddingBottom: 20,
@@ -205,6 +221,7 @@ function GenerateDocument({
               style={{
                 color: "#2563eb",
                 fontSize: 16,
+                fontWeight: 600,
                 marginBottom: 5,
               }}
             >
@@ -212,29 +229,47 @@ function GenerateDocument({
             </Text>
             <Text
               style={{
-                fontFamily: "Helvetica",
-                fontWeight: "heavy",
+                fontFamily: "Open Sans",
+                fontWeight: 600,
               }}
             >
               {project?.details?.data?.title}
             </Text>
-            <View
-              style={{
-                backgroundColor: "#eef1f4",
-                padding: 5,
-                marginTop: 5,
-                borderRadius: 5,
-              }}
-            >
-              <Text
+            {project?.details?.data?.locationOfImpact && (
+              <View
                 style={{
-                  fontSize: 12,
+                  backgroundColor: "#eef1f4",
+                  padding: 5,
+                  marginTop: 8,
+                  borderRadius: 5,
                 }}
               >
-                📍 Location of Impact:{" "}
-                {project?.details?.data?.locationOfImpact}
-              </Text>
-            </View>
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "flex-start",
+                    gap: 5,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontWeight: 600,
+                      fontSize: 12,
+                    }}
+                  >
+                    📍 Location of Impact:{" "}
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                    }}
+                  >
+                    {project?.details?.data?.locationOfImpact}
+                  </Text>
+                </View>
+              </View>
+            )}
           </View>
         </View>
         <View
@@ -256,189 +291,255 @@ function GenerateDocument({
           />
         </View>
 
-        <View
-          style={{
-            marginTop: 10,
-            marginHorizontal: 10,
-            padding: 20,
-            borderRadius: 10,
-            flexGrow: 1,
-            backgroundColor: "#e2e8fb",
-          }}
-        >
-          <Text
-            style={{
-              fontWeight: 600,
-              fontSize: 15,
-              marginBottom: 8,
-              fontFamily: "Helvetica-Bold",
-            }}
-          >
-            🖊️ Mission Summary
-          </Text>
-          <Text
-            style={{
-              fontSize: 12,
-              marginTop: 5,
-            }}
-          >
-            {project?.details?.data?.missionSummary}
-          </Text>
-        </View>
-
-        <View
-          style={{
-            flexDirection: "row",
-          }}
-        >
-          <View
-            style={{
-              margin: 10,
-              padding: 20,
-              flexGrow: 1,
-              width: "50%",
-              borderRadius: 10,
-              backgroundColor: "#faf2d9",
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 15,
-                marginBottom: 8,
-              }}
-            >
-              ⚠️ Problem
-            </Text>
-            <Text
-              style={{
-                fontSize: 12,
-                marginTop: 5,
-              }}
-            >
-              {project?.details?.data?.problem}
-            </Text>
-          </View>
-          <View
-            style={{
-              margin: 10,
-              padding: 20,
-              borderRadius: 10,
-              flexGrow: 1,
-              width: "50%",
-              backgroundColor: "#e4f6f2",
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 15,
-                marginBottom: 8,
-              }}
-            >
-              ✅ Solution
-            </Text>
-            <Text
-              style={{
-                fontSize: 12,
-                marginTop: 5,
-              }}
-            >
-              {project?.details?.data?.solution}
-            </Text>
-          </View>
-        </View>
-        <View
-          style={{
-            margin: 10,
-            padding: 10,
-          }}
-        >
-          <View>
-            <Text style={{}}>Milestone Progress</Text>
-            {grant.milestones.map((milestone, index) => (
+        {project?.details?.data?.missionSummary &&
+          project?.details?.data?.problem &&
+          project?.details?.data?.solution && (
+            <>
               <View
                 style={{
+                  marginTop: 10,
+                  marginHorizontal: 10,
+                  padding: 20,
+                  borderRadius: 10,
                   flexGrow: 1,
-                  marginBottom: 10,
+                  backgroundColor: "#e2e8fb",
                 }}
-                key={index}
               >
                 <Text
                   style={{
-                    fontSize: 14,
-                    marginVertical: 10,
-                    fontWeight: "bold",
+                    fontSize: 15,
+                    marginBottom: 8,
+                    fontWeight: 600,
                   }}
                 >
-                  🚩 #{index + 1} {JSON.stringify(milestone.data.title)}
+                  🖊️ Mission Summary
                 </Text>
-                <View
+                <Text
                   style={{
                     fontSize: 12,
                     marginTop: 5,
                   }}
                 >
-                  <Html
-                    stylesheet={{
-                      img: {
-                        width: "100%",
-                      },
-                    }}
+                  {project?.details?.data?.missionSummary}
+                </Text>
+              </View>
+
+              <View
+                style={{
+                  flexDirection: "row",
+                  gap: 10,
+                  marginTop: 10,
+                  marginHorizontal: 10,
+                }}
+              >
+                <View
+                  style={{
+                    // margin: 10,
+                    padding: 20,
+                    flexGrow: 1,
+                    width: "50%",
+                    borderRadius: 10,
+                    backgroundColor: "#faf2d9",
+                  }}
+                >
+                  <Text
                     style={{
-                      fontSize: 11,
+                      fontSize: 15,
+                      marginBottom: 8,
+                      fontWeight: 600,
                     }}
                   >
-                    {renderToHTML(milestone.data.description)}
-                  </Html>
+                    ⚠️ Problem
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      marginTop: 5,
+                    }}
+                  >
+                    {project?.details?.data?.problem}
+                  </Text>
                 </View>
-                {milestone?.completed?.data?.reason && (
+                <View
+                  style={{
+                    // margin: 10,
+                    padding: 20,
+                    borderRadius: 10,
+                    flexGrow: 1,
+                    width: "50%",
+                    backgroundColor: "#e4f6f2",
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontSize: 15,
+                      marginBottom: 8,
+                      fontWeight: 600,
+                    }}
+                  >
+                    ✅ Solution
+                  </Text>
+                  <Text
+                    style={{
+                      fontSize: 12,
+                      marginTop: 5,
+                    }}
+                  >
+                    {project?.details?.data?.solution}
+                  </Text>
+                </View>
+              </View>
+            </>
+          )}
+        {grant.milestones.length > 0 ? (
+          <View
+            style={{
+              margin: 10,
+              padding: 10,
+            }}
+          >
+            <View>
+              <Text
+                style={{
+                  fontWeight: 600,
+                }}
+              >
+                Milestone Progress
+              </Text>
+              {grant.milestones.map((milestone, index) => (
+                <View
+                  style={{
+                    flexGrow: 1,
+                    marginBottom: 10,
+                  }}
+                  key={index}
+                >
+                  <Text
+                    style={{
+                      fontSize: 14,
+                      marginVertical: 10,
+                      fontWeight: 600,
+                    }}
+                  >
+                    🚩 #{index + 1} {JSON.stringify(milestone.data.title)}
+                  </Text>
                   <View
                     style={{
-                      marginTop: 10,
-                      padding: 12,
-                      flexGrow: 1,
-                      borderRadius: 10,
-                      backgroundColor: "#f0f0f0",
+                      fontSize: 12,
+                      marginTop: 5,
                     }}
                   >
-                    <View
+                    <Html
+                      stylesheet={{
+                        img: {
+                          width: "100%",
+                        },
+                      }}
                       style={{
                         fontSize: 11,
                       }}
                     >
-                      <Text>Updates: </Text>
-                      <Html
-                        stylesheet={{
-                          img: {
-                            width: "100%",
-                          },
-                        }}
+                      {renderToHTML(milestone.data.description)}
+                    </Html>
+                  </View>
+                  {milestone?.completed?.data?.reason && (
+                    <View
+                      style={{
+                        marginTop: 10,
+                        padding: 12,
+                        flexGrow: 1,
+                        borderRadius: 10,
+                        backgroundColor: "#f0f0f0",
+                      }}
+                    >
+                      <View
                         style={{
                           fontSize: 11,
                         }}
                       >
-                        {renderToHTML(milestone?.completed?.data?.reason)}
-                      </Html>
+                        <Text
+                          style={{
+                            fontWeight: 600,
+                          }}
+                        >
+                          Updates:{" "}
+                        </Text>
+                        <Html
+                          stylesheet={{
+                            img: {
+                              width: "100%",
+                            },
+                          }}
+                          style={{
+                            fontSize: 11,
+                            marginTop: -6,
+                          }}
+                        >
+                          {renderToHTML(milestone?.completed?.data?.reason)}
+                        </Html>
+                      </View>
                     </View>
-                  </View>
-                )}
-              </View>
-            ))}
+                  )}
+                </View>
+              ))}
+            </View>
           </View>
-        </View>
+        ) : (
+          <View
+            style={{
+              margin: 10,
+              padding: 10,
+            }}
+          >
+            <View>
+              <Text
+                style={{
+                  fontWeight: 600,
+                }}
+              >
+                Milestone Progress
+              </Text>
+              <View
+                style={{
+                  flexGrow: 1,
+                  marginBottom: 10,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 14,
+                    marginVertical: 10,
+                    fontWeight: 600,
+                  }}
+                >
+                  🚩 No Milestones
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
+
         <View
           wrap={false}
           style={{
-            margin: 10,
+            marginHorizontal: 15,
             padding: 20,
             borderRadius: 10,
             backgroundColor: "#faf5ee",
           }}
         >
-          <Text>🌟 Impact Summary</Text>
+          <Text
+            style={{
+              fontSize: 15,
+              fontWeight: 600,
+            }}
+          >
+            🌟 Impact Summary
+          </Text>
           <Text
             style={{
               fontSize: 12,
-              marginTop: 5,
+              marginTop: 10,
             }}
           >
             {impactSummary}
@@ -454,11 +555,18 @@ function GenerateDocument({
               backgroundColor: "#f5f9f4",
             }}
           >
-            <Text>💬 Impact Testimonial</Text>
+            <Text
+              style={{
+                fontSize: 15,
+                fontWeight: 600,
+              }}
+            >
+              💬 Impact Testimonial
+            </Text>
             <Text
               style={{
                 fontSize: 12,
-                marginTop: 5,
+                marginTop: 10,
               }}
             >
               {impactRecipientTestimonial}
@@ -567,6 +675,27 @@ export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
                   >
                     Generate Impact Report PDF
                   </Dialog.Title>
+
+                  {!project?.details?.data?.missionSummary &&
+                    !project?.details?.data?.problem &&
+                    !project?.details?.data?.solution &&
+                    !project?.details?.data?.locationOfImpact && (
+                      <div className="flex w-full">
+                        <div className="mt-5 flex w-full justify-between rounded-xl bg-[#bee1d8] border-l-[5px] border-[#1de9b6] rounded-l-lg p-4 gap-4 max-md:p-2 max-md:flex-col">
+                          <div className="flex flex-row gap-4 items-center max-md:gap-2.5">
+                            <ExclamationCircleIcon className="h-10 w-10" />
+                            <div className="flex flex-col">
+                              <p className="text-sm font-semibold text-[#080a0e] max-md:text-xs">
+                                Your project is missing some key information to
+                                generate a complete impact report. Please edit
+                                your project to include the following: Mission
+                                Summary, Problem, Solution, Location of Impact.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   <section className="grid grid-cols-2 gap-5 mt-3">
                     <div>
                       <div className="flex flex-col gap-2 mb-10">
