@@ -27,6 +27,8 @@ import { getWalletClient } from "@wagmi/core";
 import { useStepper } from "@/store/modals/txStepper";
 import toast from "react-hot-toast";
 import { config } from "@/utilities/wagmi/config";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -47,7 +49,7 @@ type RemoveAdminDialogProps = {
   UUID: `0x${string}`;
   chainid: number;
   Admin: `0x${string}`;
-  fetchAdmins: () => Promise<CommunityAdmin[] | undefined>;
+  fetchAdmins: () => Promise<any[] | undefined>;
 };
 
 export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
@@ -94,37 +96,48 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
         walletSigner
       )) as any;
       changeStepperStep("preparing");
-      const communityResponse = await communityResolver
-        .delist(UUID, Admin)
-        .then(() => {
-          changeStepperStep("pending");
-        });
+      const communityResponse = await communityResolver.delist(UUID, Admin);
+
+      changeStepperStep("pending");
+
       await communityResponse.wait().then(async () => {
         changeStepperStep("indexing");
         let retries = 1000;
+        let addressRemoved = false;
         while (retries > 0) {
-          await fetchAdmins()
-            .then(async (response) => {
-              const addressAdded = response?.find((community) =>
-                community.admins.find(
-                  (admin) => admin.user.id.toLowerCase() === Admin.toLowerCase()
-                )
-              );
-              if (addressAdded) {
-                retries = 0;
-                changeStepperStep("indexed");
-                toast.success("Admin removed successfully!");
-                closeModal(); // Close the dialog upon successful submission
-              }
-              retries -= 1;
-              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-              await new Promise((resolve) => setTimeout(resolve, 1500));
-            })
-            .catch(async () => {
-              retries -= 1;
-              // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-              await new Promise((resolve) => setTimeout(resolve, 1500));
-            });
+          try {
+            const [response, error] = await fetchData(
+              INDEXER.COMMUNITY.ADMINS(UUID),
+              "GET",
+              {},
+              {},
+              {},
+              false,
+              true
+            );
+            if (!response || error) {
+              throw new Error(`Error fetching admins for community ${UUID}`);
+            }
+
+            addressRemoved = !response.admins.some(
+              (admin: any) =>
+                admin.user.id.toLowerCase() === Admin.toLowerCase()
+            );
+
+            if (addressRemoved) {
+              await fetchAdmins();
+              changeStepperStep("indexed");
+              toast.success("Admin removed successfully!");
+              closeModal(); // Close the dialog upon successful submission
+              break;
+            }
+          } catch (error) {
+            console.log("Retrying...");
+          }
+
+          retries -= 1;
+          // eslint-disable-next-line no-await-in-loop
+          await new Promise((resolve) => setTimeout(resolve, 1500));
         }
       });
     } catch (error) {

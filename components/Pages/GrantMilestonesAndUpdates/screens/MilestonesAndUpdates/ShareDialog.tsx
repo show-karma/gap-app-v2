@@ -84,10 +84,10 @@ export const ShareDialog: FC<ShareDialogProps> = ({
                 <div className="flex flex-col gap-3 justify-center items-center pt-6 pb-12 px-[80px] bg-[#F5F8FF] rounded dark:bg-zinc-700 mt-8">
                   <h2 className="text-[40px] font-bold font-body">🎉</h2>
                   <div className="flex flex-col gap-0 justify-center items-center">
-                    <h1 className="text-[#101828] dark:text-zinc-100 font-bold text-xl">
+                    <h1 className="text-brand-darkblue dark:text-zinc-100 font-bold text-xl">
                       Congratulations on completing {milestoneName}!
                     </h1>
-                    <p className="text-[#101828] dark:text-zinc-100 font-normal text-base">
+                    <p className="text-brand-darkblue dark:text-zinc-100 font-normal text-base">
                       {`We're thrilled to celebrate this achievement with you.
                       Your dedication and hard work have paid off, and we
                       couldn't be prouder of your progress. Keep up the

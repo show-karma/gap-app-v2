@@ -98,7 +98,8 @@ export default async function RootLayout({
 }) {
   const project = await gapIndexerApi
     .projectBySlug(projectId)
-    .then((res) => res.data);
+    .then((res) => res.data)
+    .catch(() => notFound());
 
   if (!project || project.uid === zeroUID) {
     notFound();

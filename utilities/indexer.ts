@@ -61,6 +61,8 @@ export const INDEXER = {
       `/communities/${communityIdOrSlug}/questions`,
     STATS: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/stats`,
+    ADMINS: (communityIdOrSlug: string) =>
+      `/communities/${communityIdOrSlug}/admins`,
   },
   GRANTS: {
     GET_ZK_GROUP: (

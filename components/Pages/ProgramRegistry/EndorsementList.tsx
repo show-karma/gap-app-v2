@@ -1,6 +1,5 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import Image from "next/image";
 import { FC, useMemo, useState } from "react";
 import { blo } from "blo";
 import { Hex } from "viem";
@@ -31,7 +30,7 @@ const EndorsementRow: FC<EndorsementRowProps> = ({ endorsement }) => {
             className="h-6 w-6 rounded-full"
           />
           <div className="flex flex-row gap-3 w-full items-start justify-between">
-            <p className="text-sm font-bold text-[#101828] dark:text-zinc-100">
+            <p className="text-sm font-bold text-brand-darkblue dark:text-zinc-100">
               {ensNames[endorsement?.recipient]?.name ||
                 shortAddress(endorsement.recipient)}
               {` `}
