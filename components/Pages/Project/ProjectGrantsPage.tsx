@@ -420,7 +420,7 @@ export const ProjectGrantsPage = () => {
                   {project ? (
                     <GrantCompleteButton project={project} grant={grant} />
                   ) : null}
-                  <GrantsGenieDialog />
+
                   <GrantDelete grant={grant} />
                 </div>
               ) : null}

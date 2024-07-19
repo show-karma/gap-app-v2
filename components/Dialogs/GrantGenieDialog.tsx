@@ -111,7 +111,6 @@ export const GrantsGenieDialog: FC<Props> = ({}) => {
         className="flex items-center gap-x-1 rounded-md bg-teal-50 dark:bg-teal-900/50 px-3 py-2 text-sm font-semibold text-teal-600 dark:text-zinc-100  hover:bg-teal-100 dark:hover:bg-teal-900 border border-teal-200 dark:border-teal-900"
       >
         <LightBulbIcon className="h-4 w-4 text-teal-800" />
-        Call Grants Genie
       </Button>
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeModal}>
