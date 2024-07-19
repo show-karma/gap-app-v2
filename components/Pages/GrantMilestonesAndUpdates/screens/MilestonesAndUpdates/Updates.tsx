@@ -16,7 +16,7 @@ import { getWalletClient } from "@wagmi/core";
 import { VerifyMilestoneUpdateDialog } from "./VerifyMilestoneUpdateDialog";
 import { VerifiedBadge } from "./VerifiedBadge";
 import { useCommunityAdminStore } from "@/store/community";
-import { useStepper } from "@/store/txStepper";
+import { useStepper } from "@/store/modals/txStepper";
 import { config } from "@/utilities/wagmi/config";
 import {
   IMilestoneCompleted,

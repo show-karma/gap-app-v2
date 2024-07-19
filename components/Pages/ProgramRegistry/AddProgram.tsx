@@ -35,7 +35,7 @@ import { Discord2Icon } from "@/components/Icons/Discord2";
 import { AlloBase } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/Allo";
 import { StatusDropdown } from "./StatusDropdown";
 import { config } from "@/utilities/wagmi/config";
-import { useStepper } from "@/store/txStepper";
+import { useStepper } from "@/store/modals/txStepper";
 import { useRegistryStore } from "@/store/registry";
 
 const labelStyle = "text-sm font-bold text-[#344054] dark:text-zinc-100";

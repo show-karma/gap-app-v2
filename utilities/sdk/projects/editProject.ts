@@ -1,5 +1,5 @@
 import { getGapClient } from "@/hooks";
-import { TxStepperSteps } from "@/store/txStepper";
+import { TxStepperSteps } from "@/store/modals/txStepper";
 import { appNetwork } from "@/utilities/network";
 import {
   ExternalLink,

@@ -13,7 +13,7 @@ import toast from "react-hot-toast";
 import { VerifyGrantUpdateDialog } from "./VerifyGrantUpdateDialog";
 import { VerifiedBadge } from "./VerifiedBadge";
 import { getGapClient, useGap } from "@/hooks";
-import { useStepper } from "@/store/txStepper";
+import { useStepper } from "@/store/modals/txStepper";
 import { Hex } from "viem";
 import { config } from "@/utilities/wagmi/config";
 import { useAccount, useSwitchChain } from "wagmi";

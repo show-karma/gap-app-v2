@@ -2,7 +2,7 @@
 import { FC, Fragment, useEffect, useMemo } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { Button } from "../Utilities/Button";
-import { useOnboarding } from "@/store/onboarding";
+import { useOnboarding } from "@/store/modals/onboarding";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
