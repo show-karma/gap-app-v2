@@ -15,6 +15,7 @@ export const INDEXER = {
     GET: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}`,
     FEED: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/feed`,
     FUNDEDBY: (address: string) => `/projects/fundedby/${address}`,
+    GRANTS_GENIE: (projectId: string) => `/projects/${projectId}/grants-genie`,
   },
   QUESTIONS: {
     CREATE: (idOrSlug: string) => `/questions/create/${idOrSlug}`,
