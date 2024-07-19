@@ -36,6 +36,7 @@ import { envVars } from "@/utilities/enviromentVars";
 import { ProjectSubscription } from "./ProjectSubscription";
 import formatCurrency from "@/utilities/formatCurrency";
 import { useIntroModalStore } from "@/store/modals/intro";
+import { GrantsGenieDialog } from "@/components/Dialogs/GrantGenieDialog";
 
 const ProjectDialog = dynamic(
   () =>
@@ -342,9 +343,9 @@ function ProjectPage() {
         <div className="flex w-full lg:hidden">
           <Team />
         </div>
-        {isProjectOwner || isOwner ? (
+        {!isProjectOwner || isOwner ? (
           <div className="flex flex-col gap-2">
-            <div className="flex flex-row flex-wrap justify-between gap-2 max-lg:flex-col w-full max-lg:max-w-80">
+            <div className="grid grid-cols-3 flex-row flex-wrap justify-between gap-2 max-lg:flex-col w-full max-lg:max-w-80">
               <Link
                 href={PAGES.PROJECT.IMPACT.ADD_IMPACT(
                   project?.details?.data?.slug || projectId
@@ -366,6 +367,7 @@ function ProjectPage() {
                 projectToUpdate={project}
                 previousContacts={contactsInfo}
               />
+              <GrantsGenieDialog />
             </div>
             <div className="flex flex-row flex-wrap justify-between gap-2 max-lg:flex-col w-full max-lg:max-w-80">
               <TransferOwnershipDialog
