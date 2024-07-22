@@ -1,12 +1,10 @@
-import { getGapClient } from "@/hooks";
 import { TxStepperSteps } from "@/store/modals/txStepper";
-import { appNetwork } from "@/utilities/network";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import {
   ExternalLink,
   Project,
   TExternalLink,
 } from "@show-karma/karma-gap-sdk";
-import { Hex, zeroHash } from "viem";
 
 export const updateProject = async (
   project: Project,
@@ -72,61 +70,27 @@ export const updateProject = async (
 
     closeModal();
 
+    const projectBefore = await gapIndexerApi
+      .projectBySlug(project.uid)
+      .then((res) => res.data);
+
     await project.details
       ?.attest(signer as any, changeStepperStep)
       .then(async () => {
         let retries = 1000;
-        let fetchedProject: Project | null = null;
         changeStepperStep("indexing");
         while (retries > 0) {
           // eslint-disable-next-line no-await-in-loop
-          fetchedProject = await (slug
-            ? gap.fetch.projectBySlug(slug)
-            : gap.fetch.projectById(project.uid as Hex)
-          ).catch(() => null);
-          const compareAll = (a: any, b: any) => {
-            return JSON.stringify(a) === JSON.stringify(b);
-          };
-          const newDetailsData = {
-            title: newProjectInfo.title,
-            description: newProjectInfo.description,
-            links: linksArray,
-            slug,
-            tags: newProjectInfo.tags?.map((tag) => ({
-              name: tag.name,
-            })),
-            businessModel: newProjectInfo.businessModel,
-            stageIn: newProjectInfo.stageIn,
-            raisedMoney: newProjectInfo.raisedMoney,
-            pathToTake: newProjectInfo.pathToTake,
-            problem: newProjectInfo.problem,
-            solution: newProjectInfo.solution,
-            missionSummary: newProjectInfo.missionSummary,
-            locationOfImpact: newProjectInfo.locationOfImpact,
-          };
-          const fetchedDetailsData = {
-            title: fetchedProject?.details?.title,
-            description: fetchedProject?.details?.description,
-            links: fetchedProject?.details?.links,
-            slug: fetchedProject?.details?.slug,
-            tags: fetchedProject?.details?.tags?.map((tag) => ({
-              name: tag.name,
-            })),
-            businessModel: fetchedProject?.details?.businessModel,
-            stageIn: fetchedProject?.details?.stageIn,
-            raisedMoney: fetchedProject?.details?.raisedMoney,
-            pathToTake: fetchedProject?.details?.pathToTake,
-          };
+          const fetchedProject = await gapIndexerApi
+            .projectBySlug(project.uid)
+            .then((res) => res.data);
+
           if (
-            fetchedProject?.uid &&
-            fetchedProject.uid !== zeroHash &&
-            compareAll(newDetailsData, fetchedDetailsData)
+            fetchedProject.details?.updatedAt > projectBefore.details?.updatedAt
           ) {
             retries = 0;
             changeStepperStep("indexed");
-            setTimeout(() => {
-              closeModal();
-            }, 500);
+            closeModal();
             return;
           }
           retries -= 1;

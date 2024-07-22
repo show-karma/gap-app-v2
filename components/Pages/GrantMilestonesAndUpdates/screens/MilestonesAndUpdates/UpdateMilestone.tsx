@@ -198,11 +198,10 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
                   (u: any) => u.uid === milestone.uid
                 );
 
-                const isSame =
-                  JSON.stringify(milestone.completed) ===
-                  JSON.stringify(fetchedMilestone?.completed);
-
-                if (isSame) {
+                if (
+                  milestone?.completed?.updatedAt <
+                  fetchedMilestone?.completed?.updatedAt
+                ) {
                   retries = 0;
                   changeStepperStep("indexed");
                   toast.success(MESSAGES.MILESTONES.UPDATE_COMPLETION.SUCCESS);
