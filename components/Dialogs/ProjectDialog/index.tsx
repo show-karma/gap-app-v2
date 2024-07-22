@@ -64,10 +64,10 @@ const labelStyle =
 
 const schema = z.object({
   title: z.string().min(3, { message: MESSAGES.PROJECT_FORM.TITLE }),
-  problem: z.string().optional(),
-  solution: z.string().optional(),
-  missionSummary: z.string().optional(),
-  locationOfImpact: z.string().optional(),
+  problem: z.string(),
+  solution: z.string(),
+  missionSummary: z.string(),
+  locationOfImpact: z.string(),
   recipient: z
     .string()
     .optional()
@@ -247,11 +247,20 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
   const handleErrors = () => {
     const isDescriptionValid = !!description.length;
+    const isMissionSummaryValid = !!missionSummary.length;
+    const isLocationOfImpactValid = !!locationOfImpact.length;
+    const isProblemValid = !!problem.length;
+    const isSolutionValid = !!solution.length;
+
     if (step === 0) {
       return (
         !!errors?.title ||
         !!errors?.recipient ||
         !isDescriptionValid ||
+        !isMissionSummaryValid ||
+        !isLocationOfImpactValid ||
+        !isProblemValid ||
+        !isSolutionValid ||
         !watch("title")
       );
     }
