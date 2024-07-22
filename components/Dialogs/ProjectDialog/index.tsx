@@ -493,28 +493,30 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       const fetchedProject = await getProjectById(projectToUpdate.uid);
       if (!fetchedProject) return;
       changeStepperStep("preparing");
+      const newProjectInfo = {
+        title: data.title,
+        description: description,
+        problem,
+        solution,
+        missionSummary,
+        locationOfImpact,
+        tags: dataToUpdate?.tags?.map((item) => ({ name: item })) || [],
+        businessModel: data.businessModel,
+        stageIn: data.stageIn,
+        raisedMoney: data.raisedMoney,
+        pathToTake: data.pathToTake,
+      };
+      const socialData = {
+        discord: data.discord,
+        github: data.github,
+        linkedin: data.linkedin,
+        twitter: data.twitter,
+        website: data.website,
+      };
       await updateProject(
         fetchedProject,
-        {
-          title: data.title,
-          description: description,
-          problem,
-          solution,
-          missionSummary,
-          locationOfImpact,
-          tags: dataToUpdate?.tags?.map((item) => ({ name: item })) || [],
-          businessModel: data.businessModel,
-          stageIn: data.stageIn,
-          raisedMoney: data.raisedMoney,
-          pathToTake: data.pathToTake,
-        },
-        {
-          discord: data.discord,
-          github: data.github,
-          linkedin: data.linkedin,
-          twitter: data.twitter,
-          website: data.website,
-        },
+        newProjectInfo,
+        socialData,
         walletSigner,
         gapClient,
         changeStepperStep,
@@ -524,7 +526,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         setStep(0);
         if (shouldRefresh) {
           refreshProject();
-          setIsStepper(false);
         } else {
           const project = res.details?.slug || res.uid;
           router.push(PAGES.PROJECT.OVERVIEW(project));
@@ -533,10 +534,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     } catch (error) {
       console.log(error);
       toast.error(MESSAGES.PROJECT.UPDATE.ERROR);
-      setIsStepper(false);
       openModal();
     } finally {
       setIsLoading(false);
+      setIsStepper(false);
     }
   };
 

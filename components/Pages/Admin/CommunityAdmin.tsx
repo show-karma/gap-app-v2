@@ -138,9 +138,7 @@ export default function CommunitiesToAdminPage() {
                             {community.details?.name}
                           </td>
                           <td className="max-w-60 px-4">
-                            {formatDate(
-                              Object(community?.createdAt)?.$timestamp?.t * 1000
-                            )}
+                            {formatDate(community?.createdAt)}
                           </td>
                           <td className="max-w-80 break-all px-4">
                             {community.uid}

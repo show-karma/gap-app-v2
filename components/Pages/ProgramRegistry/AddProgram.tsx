@@ -378,9 +378,8 @@ export default function AddProgram({
               )
                 .then(async ([res]) => {
                   const hasUpdated =
-                    programToEdit?.updatedAt?.$timestamp?.t <
-                    (res?.programs?.[0] as GrantProgram)?.updatedAt?.$timestamp
-                      ?.t;
+                    new Date(programToEdit?.updatedAt) <
+                    new Date((res?.programs?.[0] as GrantProgram)?.updatedAt);
 
                   if (hasUpdated) {
                     retries = 0;
