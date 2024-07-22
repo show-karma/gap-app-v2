@@ -199,8 +199,8 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
                 );
 
                 if (
-                  milestone?.completed?.updatedAt <
-                  fetchedMilestone?.completed?.updatedAt
+                  new Date(milestone?.completed?.updatedAt) <
+                  new Date(fetchedMilestone?.completed?.updatedAt)
                 ) {
                   retries = 0;
                   changeStepperStep("indexed");

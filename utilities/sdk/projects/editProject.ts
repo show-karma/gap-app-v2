@@ -86,7 +86,8 @@ export const updateProject = async (
             .then((res) => res.data);
 
           if (
-            fetchedProject.details?.updatedAt > projectBefore.details?.updatedAt
+            new Date(fetchedProject.details?.updatedAt) >
+            new Date(projectBefore.details?.updatedAt)
           ) {
             retries = 0;
             changeStepperStep("indexed");
