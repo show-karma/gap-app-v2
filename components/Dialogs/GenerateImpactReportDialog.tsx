@@ -56,6 +56,18 @@ Font.register({
 
 const defaultBannerImageURL = `${envVars.VERCEL_URL}/assets/impact-banner.jpg`;
 
+// Replace image URLs with a proxy URL to avoid CORS issues
+export function replaceImageUrls(htmlString: string) {
+  const proxyUrl = "/api/img-proxy?url=";
+  return htmlString.replace(
+    /<img\s+([^>]*?)src="([^"]+)"([^>]*?)>/g,
+    (match: any, p1: any, p2: any, p3: any) => {
+      const proxiedSrc = `${proxyUrl}${encodeURIComponent(p2)}`;
+      return `<img ${p1}src="${proxiedSrc}"${p3}>`;
+    }
+  );
+}
+
 function GenerateDocument({
   grant,
   project,
@@ -435,7 +447,9 @@ function GenerateDocument({
                         fontSize: 11,
                       }}
                     >
-                      {renderToHTML(milestone.data.description)}
+                      {replaceImageUrls(
+                        renderToHTML(milestone.data.description)
+                      )}
                     </Html>
                   </View>
                   {milestone?.completed?.data?.reason && (
@@ -471,7 +485,9 @@ function GenerateDocument({
                             marginTop: -6,
                           }}
                         >
-                          {renderToHTML(milestone?.completed?.data?.reason)}
+                          {replaceImageUrls(
+                            renderToHTML(milestone?.completed?.data?.reason)
+                          )}
                         </Html>
                       </View>
                     </View>
