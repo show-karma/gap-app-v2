@@ -372,6 +372,19 @@ function ProjectPage() {
             </div>
           </div>
         )}
+        {project?.details?.data?.locationOfImpact && (
+          <div className="flex flex-col gap-1">
+            <div className="text-base font-bold leading-normal text-black dark:text-zinc-100">
+              Location of Impact
+            </div>
+
+            <div className="mt-2 space-y-5 ">
+              <MarkdownPreview
+                source={project?.details?.data?.locationOfImpact}
+              />
+            </div>
+          </div>
+        )}
       </div>
       <div className="flex flex-col flex-[4] gap-8 max-lg:w-full">
         <div className="flex w-full lg:hidden">

@@ -251,6 +251,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     const isLocationOfImpactValid = !!locationOfImpact.length;
     const isProblemValid = !!problem.length;
     const isSolutionValid = !!solution.length;
+    const locationOfImpactValid = !!locationOfImpact.length;
 
     if (step === 0) {
       return (
@@ -261,6 +262,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         !isLocationOfImpactValid ||
         !isProblemValid ||
         !isSolutionValid ||
+        !locationOfImpactValid ||
         !watch("title")
       );
     }
