@@ -34,6 +34,8 @@ export type GrantProgram = {
     endDate?: string;
     logoImg?: string;
     website?: string;
+    startsAt?: string;
+    endsAt?: string;
     socialLinks?: {
       blog?: string;
       forum?: string;
