@@ -110,7 +110,7 @@ function ProjectBlocks() {
             PAGES.PROJECT.OVERVIEW(
               project?.details?.data.slug || (params.projectId as string)
             ),
-          "Link copied. Post to Farcaster as Frame."
+          "Just post the link to Farcaster and it will be displayed as a frame!"
         );
       },
     },
@@ -248,7 +248,8 @@ function ProjectPage() {
       });
     }
     const alreadyHasOwner = project?.members.find(
-      (member) => member.recipient === project.recipient
+      (member) =>
+        member.recipient.toLowerCase() === project.recipient.toLowerCase()
     );
     if (!alreadyHasOwner) {
       members.push({

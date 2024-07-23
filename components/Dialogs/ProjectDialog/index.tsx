@@ -64,10 +64,19 @@ const labelStyle =
 
 const schema = z.object({
   title: z.string().min(3, { message: MESSAGES.PROJECT_FORM.TITLE }),
-  problem: z.string(),
-  solution: z.string(),
-  missionSummary: z.string(),
-  locationOfImpact: z.string(),
+  locationOfImpact: z.string().optional(),
+  description: z.string().min(1, {
+    message: "Description is required",
+  }),
+  problem: z.string().min(1, {
+    message: "Problem is required",
+  }),
+  solution: z.string().min(1, {
+    message: "Solution is required",
+  }),
+  missionSummary: z.string().min(1, {
+    message: "Mission Summary is required",
+  }),
   recipient: z
     .string()
     .optional()
@@ -155,9 +164,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [step, setStep] = useState(0);
-
   const isOwner = useOwnerStore((state) => state.isOwner);
-
   const { isConnected, address } = useAccount();
   const { isAuth } = useAuthStore();
   const { chain } = useAccount();
@@ -166,35 +173,16 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const { openConnectModal } = useConnectModal();
   const router = useRouter();
   const { gap } = useGap();
-
   const { changeStepperStep, setIsStepper } = useStepper();
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    watch,
-    setValue,
-    formState: { errors, isValid },
-  } = useForm<SchemaType>({
-    resolver: zodResolver(schema),
-    reValidateMode: "onChange",
-    mode: "onChange",
-    defaultValues: dataToUpdate,
-  });
-
-  const [description, setDescription] = useState(
-    dataToUpdate?.description || ""
-  );
-
-  const [problem, setProblem] = useState(dataToUpdate?.problem || "");
-  const [solution, setSolution] = useState(dataToUpdate?.solution || "");
-  const [missionSummary, setMissionSummary] = useState(
-    dataToUpdate?.missionSummary || ""
-  );
-  const [locationOfImpact, setLocationOfImpact] = useState(
-    dataToUpdate?.locationOfImpact || ""
-  );
+  const { register, handleSubmit, reset, watch, setValue, trigger, formState } =
+    useForm<SchemaType>({
+      resolver: zodResolver(schema),
+      reValidateMode: "onChange",
+      mode: "onChange",
+      defaultValues: dataToUpdate,
+    });
+  const { errors, isValid } = formState;
 
   const [team, setTeam] = useState<string[]>(dataToUpdate?.members || []);
   const [teamInput, setTeamInput] = useState("");
@@ -246,23 +234,15 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   // }, [teamInput]);
 
   const handleErrors = () => {
-    const isDescriptionValid = !!description.length;
-    const isMissionSummaryValid = !!missionSummary.length;
-    const isLocationOfImpactValid = !!locationOfImpact.length;
-    const isProblemValid = !!problem.length;
-    const isSolutionValid = !!solution.length;
-    const locationOfImpactValid = !!locationOfImpact.length;
-
     if (step === 0) {
       return (
         !!errors?.title ||
         !!errors?.recipient ||
-        !isDescriptionValid ||
-        !isMissionSummaryValid ||
-        !isLocationOfImpactValid ||
-        !isProblemValid ||
-        !isSolutionValid ||
-        !locationOfImpactValid ||
+        !!errors?.locationOfImpact ||
+        !!errors?.description ||
+        !!errors?.problem ||
+        !!errors?.solution ||
+        !!errors?.missionSummary ||
         !watch("title")
       );
     }
@@ -285,6 +265,32 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     // }
 
     return false;
+  };
+
+  const checkForm = async (callback?: () => void) => {
+    const stepsToValidate: Record<number, (keyof SchemaType)[]> = {
+      0: [
+        "title",
+        "recipient",
+        "locationOfImpact",
+        "description",
+        "problem",
+        "solution",
+        "missionSummary",
+      ],
+      1: ["twitter", "github", "discord", "website", "linkedin"],
+    };
+
+    if (stepsToValidate[step]) {
+      const triggerResult = await trigger(stepsToValidate[step], {
+        shouldFocus: true,
+      });
+      if (!triggerResult) return;
+    }
+    if (step === 3) {
+      if (!contacts.length) return;
+    }
+    callback?.();
   };
 
   const createProject = async (data: SchemaType) => {
@@ -321,11 +327,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
       const newProjectInfo: NewProjectData = {
         ...data,
-        description,
-        problem,
-        solution,
-        missionSummary,
-        locationOfImpact,
         // members: team.map((item) => item as Hex),
         members: [(data.recipient || address) as Hex],
         links: [
@@ -454,7 +455,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       });
 
       reset();
-      setDescription("");
       setTeam([]);
       setTeamInput("");
       setStep(0);
@@ -495,11 +495,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       changeStepperStep("preparing");
       const newProjectInfo = {
         title: data.title,
-        description: description,
-        problem,
-        solution,
-        missionSummary,
-        locationOfImpact,
+        description: data.description,
+        problem: data.problem,
+        solution: data.solution,
+        missionSummary: data.missionSummary,
+        locationOfImpact: data.locationOfImpact,
         tags: dataToUpdate?.tags?.map((item) => ({ name: item })) || [],
         businessModel: data.businessModel,
         stageIn: data.stageIn,
@@ -582,11 +582,14 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               Description *
             </label>
             <MarkdownEditor
-              value={description}
+              value={watch("description")}
               onChange={(newValue: string) => {
-                setDescription(newValue || "");
+                setValue("description", newValue || "", {
+                  shouldValidate: true,
+                });
               }}
             />
+            <p className="text-red-500">{errors.description?.message}</p>
           </div>
           <div className="flex w-full flex-col gap-2" data-color-mode="light">
             <label htmlFor="desc-input" className={labelStyle}>
@@ -595,11 +598,14 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             <MarkdownEditor
               placeholderText="e.g. Climate change is a serious problem that is affecting our planet
               and we are building a platform that connects people with similar interests."
-              value={problem}
+              value={watch("problem")}
               onChange={(newValue: string) => {
-                setProblem(newValue || "");
+                setValue("problem", newValue || "", {
+                  shouldValidate: true,
+                });
               }}
             />
+            <p className="text-red-500">{errors.problem?.message}</p>
           </div>
           <div className="flex w-full flex-col gap-2" data-color-mode="light">
             <label htmlFor="desc-input" className={labelStyle}>
@@ -607,11 +613,14 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             </label>
             <MarkdownEditor
               placeholderText="We are solving this problem by building a platform that connects people with similar interests."
-              value={solution}
+              value={watch("solution")}
               onChange={(newValue: string) => {
-                setSolution(newValue || "");
+                setValue("solution", newValue || "", {
+                  shouldValidate: true,
+                });
               }}
             />
+            <p className="text-red-500">{errors.solution?.message}</p>
           </div>
           <div className="flex w-full flex-col gap-2" data-color-mode="light">
             <label htmlFor="desc-input" className={labelStyle}>
@@ -619,23 +628,27 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             </label>
             <MarkdownEditor
               placeholderText="e.g. We are on a mission to build a better world by solving the problem of climate change."
-              value={missionSummary}
+              value={watch("missionSummary")}
               onChange={(newValue: string) => {
-                setMissionSummary(newValue || "");
+                setValue("missionSummary", newValue || "", {
+                  shouldValidate: true,
+                });
               }}
             />
+            <p className="text-red-500">{errors.missionSummary?.message}</p>
           </div>
-          <div className="flex w-full flex-col gap-2" data-color-mode="light">
-            <label htmlFor="desc-input" className={labelStyle}>
-              Location of Impact *
+          <div className="flex w-full flex-col gap-2">
+            <label htmlFor="location-impact-input" className={labelStyle}>
+              Location of Impact (optional)
             </label>
             <input
+              id="location-impact-input"
               placeholder="e.g. Global, India, Africa, etc."
               type="text"
               className={inputStyle}
-              value={locationOfImpact}
-              onChange={(e) => setLocationOfImpact(e.target.value)}
+              {...register("locationOfImpact")}
             />
+            <p className="text-red-500">{errors.locationOfImpact?.message}</p>
           </div>
 
           {/* <div className="flex w-full flex-col gap-2">
@@ -1059,11 +1072,13 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                           type="button"
                           className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                           onClick={() => {
-                            setStep((oldStep) =>
-                              oldStep >= categories.length - 1
-                                ? oldStep
-                                : oldStep + 1
-                            );
+                            const nextStep = () =>
+                              setStep((oldStep) =>
+                                oldStep >= categories.length - 1
+                                  ? oldStep
+                                  : oldStep + 1
+                              );
+                            checkForm(nextStep);
                           }}
                           disabled={handleErrors() || isLoading}
                           isLoading={isLoading}

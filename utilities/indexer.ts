@@ -9,6 +9,8 @@ export const INDEXER = {
     APPROVE: "/registry/approve",
     UPDATE: "/registry/updateMetadata",
     CREATE: "/registry/offchain/create",
+    MANAGERS: (profileId: string, chainId: number) =>
+      `/registry/profile/${profileId}/${chainId}/members`,
   },
   PROJECT: {
     SUBSCRIBE: (projectId: Hex) => `/projects/${projectId}/subscribe`,
