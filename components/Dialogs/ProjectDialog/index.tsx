@@ -268,43 +268,27 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   };
 
   const checkForm = async (callback?: () => void) => {
-    if (step === 0) {
-      const triggerResult = await trigger(
-        [
-          "title",
-          "recipient",
-          "locationOfImpact",
-          "description",
-          "problem",
-          "solution",
-          "missionSummary",
-        ],
-        {
-          shouldFocus: true,
-        }
-      );
-      if (triggerResult) {
-        callback?.();
-      }
-      return;
-    }
-    if (step === 1) {
-      const triggerResult = await trigger(
-        ["twitter", "github", "discord", "website", "linkedin"],
-        {
-          shouldFocus: true,
-        }
-      );
-      if (triggerResult) {
-        callback?.();
-      }
-      return;
+    const stepsToValidate: Record<number, (keyof SchemaType)[]> = {
+      0: [
+        "title",
+        "recipient",
+        "locationOfImpact",
+        "description",
+        "problem",
+        "solution",
+        "missionSummary",
+      ],
+      1: ["twitter", "github", "discord", "website", "linkedin"],
+    };
+
+    if (stepsToValidate[step]) {
+      const triggerResult = await trigger(stepsToValidate[step], {
+        shouldFocus: true,
+      });
+      if (!triggerResult) return;
     }
     if (step === 3) {
-      if (contacts.length) {
-        callback?.();
-      }
-      return;
+      if (!contacts.length) return;
     }
     callback?.();
   };
@@ -600,7 +584,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             <MarkdownEditor
               value={watch("description")}
               onChange={(newValue: string) => {
-                setValue("description", newValue || "");
+                setValue("description", newValue || "", {
+                  shouldValidate: true,
+                });
               }}
             />
             <p className="text-red-500">{errors.description?.message}</p>
@@ -614,7 +600,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               and we are building a platform that connects people with similar interests."
               value={watch("problem")}
               onChange={(newValue: string) => {
-                setValue("problem", newValue || "");
+                setValue("problem", newValue || "", {
+                  shouldValidate: true,
+                });
               }}
             />
             <p className="text-red-500">{errors.problem?.message}</p>
@@ -627,7 +615,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               placeholderText="We are solving this problem by building a platform that connects people with similar interests."
               value={watch("solution")}
               onChange={(newValue: string) => {
-                setValue("solution", newValue || "");
+                setValue("solution", newValue || "", {
+                  shouldValidate: true,
+                });
               }}
             />
             <p className="text-red-500">{errors.solution?.message}</p>
@@ -640,7 +630,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               placeholderText="e.g. We are on a mission to build a better world by solving the problem of climate change."
               value={watch("missionSummary")}
               onChange={(newValue: string) => {
-                setValue("missionSummary", newValue || "");
+                setValue("missionSummary", newValue || "", {
+                  shouldValidate: true,
+                });
               }}
             />
             <p className="text-red-500">{errors.missionSummary?.message}</p>
