@@ -10,11 +10,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import toast from "react-hot-toast";
-import * as Tooltip from "@radix-ui/react-tooltip";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { cn } from "@/utilities/tailwind";
 
 const inputStyle =
-  "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
+  "bg-transparent bg-white dark:bg-zinc-900  w-full text-black dark:text-zinc-200 placeholder:text-zinc-600  dark:placeholder:text-zinc-200";
+
 const labelStyle =
   "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
@@ -30,16 +31,14 @@ const schema = z.object({
 
 type SchemaType = z.infer<typeof schema>;
 
-interface ProjectSubscriptionDialogProps {
+interface ProjectSubscriptionProps {
   project: IProjectResponse;
 }
 
-export const ProjectSubscriptionDialog: FC<ProjectSubscriptionDialogProps> = ({
+export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({
   project,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
-
-  let [isOpen, setIsOpen] = useState(false);
 
   const {
     register,
@@ -50,13 +49,6 @@ export const ProjectSubscriptionDialog: FC<ProjectSubscriptionDialogProps> = ({
     resolver: zodResolver(schema),
     mode: "onChange",
   });
-
-  function closeModal() {
-    setIsOpen(false);
-  }
-  function openModal() {
-    setIsOpen(true);
-  }
 
   const onSubmit = async (data: SchemaType) => {
     try {
@@ -72,7 +64,6 @@ export const ProjectSubscriptionDialog: FC<ProjectSubscriptionDialogProps> = ({
           project?.details?.data?.title || "this project"
         }.`
       );
-      closeModal();
     } catch (error: any) {
       console.log(error);
       const isAlreadySubscribed = error?.includes("422");
@@ -94,132 +85,49 @@ export const ProjectSubscriptionDialog: FC<ProjectSubscriptionDialogProps> = ({
   };
 
   return (
-    <>
-      <Tooltip.Provider>
-        <Tooltip.Root delayDuration={0.5}>
-          <Tooltip.Trigger
-            onClick={openModal}
-            className={
-              "flex justify-center items-center w-full gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100  hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900"
-            }
+    <form
+      onSubmit={handleSubmit(onSubmit)}
+      className="p-5 flex flex-col gap-1 rounded-lg w-full h-max items-center justify-center text-left bg-[#EFF1F5] dark:bg-zinc-700"
+    >
+      <p className="mb-1 font-semibold text-[#101828] text-sm dark:text-zinc-300 text-left w-full">
+        Get updates on this project
+      </p>
+      <div className="flex w-full flex-col gap-1">
+        <input
+          id="name-input"
+          type="text"
+          className={cn(
+            inputStyle,
+            "border border-black dark:border-zinc-300 rounded-lg"
+          )}
+          placeholder="Enter your name (optional)"
+          {...register("name")}
+        />
+        <p className="text-red-500">{errors.name?.message}</p>
+      </div>
+      <div className="flex flex-col justify-end gap-0 h-max w-full">
+        <div className="flex w-full justify-between flex-row gap-0 border rounded-lg border-black dark:border-zinc-300">
+          <input
+            id="email-input"
+            type="text"
+            className={cn(
+              inputStyle,
+              "border-none rounded-l-lg rounded-r-none"
+            )}
+            placeholder="Enter your email"
+            {...register("email")}
+          />
+          <Button
+            type={"submit"}
+            className="flex flex-row gap-2 items-center justify-center rounded-l-none rounded-r-md border border-transparent bg-black hover:bg-black/75 px-6 py-2 text-md font-medium text-white hover:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:bg-zinc-800 dark:hover:bg-zinc-800/75"
+            isLoading={isLoading}
+            disabled={isLoading}
           >
-            Get Updates
-          </Tooltip.Trigger>
-          <Tooltip.Portal>
-            <Tooltip.Content
-              className="TooltipContent bg-[#101828] rounded-lg text-white p-3 max-w-[360px]"
-              sideOffset={5}
-              side="bottom"
-            >
-              <p className="text-xs font-normal mt-1">
-                Receive monthly updates from{" "}
-                <b>
-                  {project?.details?.data?.title ||
-                    (project?.uid
-                      ? shortAddress(project?.uid as string)
-                      : "this project")}
-                </b>{" "}
-              </p>
-              <Tooltip.Arrow className="TooltipArrow" />
-            </Tooltip.Content>
-          </Tooltip.Portal>
-        </Tooltip.Root>
-      </Tooltip.Provider>
-      <Transition appear show={isOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-10" onClose={closeModal}>
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
-            <div className="fixed inset-0 bg-black/25" />
-          </Transition.Child>
-
-          <div className="fixed inset-0 overflow-y-auto">
-            <div className="flex min-h-full items-center justify-center p-4 text-center">
-              <Transition.Child
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
-              >
-                <Dialog.Panel className="w-full max-w-xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
-                  <Dialog.Title
-                    as="h3"
-                    className="text-xl font-normal leading-6 text-gray-900 dark:text-zinc-100"
-                  >
-                    Receive monthly updates from{" "}
-                    <b>
-                      {project?.details?.data?.title ||
-                        (project?.uid
-                          ? shortAddress(project?.uid as string)
-                          : "this project")}
-                    </b>{" "}
-                  </Dialog.Title>
-                  <form onSubmit={handleSubmit(onSubmit)}>
-                    <div className="flex flex-col w-full px-2 py-4 gap-1 sm:px-0 mt-4">
-                      <div className="flex w-full flex-col gap-2">
-                        <label htmlFor="name-input" className={labelStyle}>
-                          Name (Optional)
-                        </label>
-                        <input
-                          id="name-input"
-                          type="text"
-                          className={inputStyle}
-                          placeholder='e.g. "Jonny Craig"'
-                          {...register("name")}
-                        />
-                        <p className="text-red-500">{errors.name?.message}</p>
-                      </div>
-
-                      <div className="flex w-full flex-col gap-2">
-                        <label htmlFor="email-input" className={labelStyle}>
-                          E-mail *
-                        </label>
-                        <input
-                          id="email-input"
-                          type="text"
-                          className={inputStyle}
-                          placeholder='e.g. "my.email@gmail.com"'
-                          {...register("email")}
-                        />
-                        <p className="text-red-500">{errors.email?.message}</p>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 flex flex-row justify-end gap-4">
-                      <button
-                        type="button"
-                        className="flex items-center flex-row gap-2 dark:border-white dark:text-zinc-100 justify-center rounded-md border bg-transparent border-gray-200 px-4 py-2 text-md font-medium text-black hover:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                        onClick={closeModal}
-                        disabled={isLoading}
-                      >
-                        Cancel
-                      </button>
-
-                      <Button
-                        type={"submit"}
-                        className="flex flex-row gap-2 items-center justify-center rounded-md border border-transparent bg-primary-500 px-6 py-2 text-md font-medium text-white hover:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                        isLoading={isLoading}
-                        disabled={isLoading}
-                      >
-                        Get Updates
-                      </Button>
-                    </div>
-                  </form>
-                </Dialog.Panel>
-              </Transition.Child>
-            </div>
-          </div>
-        </Dialog>
-      </Transition>
-    </>
+            Subscribe
+          </Button>
+        </div>
+        <p className="text-red-500">{errors.email?.message}</p>
+      </div>
+    </form>
   );
 };

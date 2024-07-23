@@ -41,7 +41,7 @@ export async function generateMetadata({
   const dynamicMetadata = {
     title: `Karma GAP - ${(projectInfo as ProjectDetailsWithUid).title}`,
     description:
-      (projectInfo as ProjectDetailsWithUid).description?.substring(0, 80) ||
+      (projectInfo as ProjectDetailsWithUid).description?.substring(0, 160) ||
       "",
   };
 
@@ -98,7 +98,8 @@ export default async function RootLayout({
 }) {
   const project = await gapIndexerApi
     .projectBySlug(projectId)
-    .then((res) => res.data);
+    .then((res) => res.data)
+    .catch(() => notFound());
 
   if (!project || project.uid === zeroUID) {
     notFound();

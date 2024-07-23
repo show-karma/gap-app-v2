@@ -15,7 +15,7 @@ import { type FC, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
 import { ShareDialog } from "./ShareDialog";
-import { useStepper } from "@/store/txStepper";
+import { useStepper } from "@/store/modals/txStepper";
 import { config } from "@/utilities/wagmi/config";
 import { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getGapClient, useGap } from "@/hooks";
@@ -198,11 +198,10 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
                   (u: any) => u.uid === milestone.uid
                 );
 
-                const isSame =
-                  JSON.stringify(milestone.completed) ===
-                  JSON.stringify(fetchedMilestone?.completed);
-
-                if (isSame) {
+                if (
+                  new Date(milestone?.completed?.updatedAt) <
+                  new Date(fetchedMilestone?.completed?.updatedAt)
+                ) {
                   retries = 0;
                   changeStepperStep("indexed");
                   toast.success(MESSAGES.MILESTONES.UPDATE_COMPLETION.SUCCESS);

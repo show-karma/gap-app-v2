@@ -45,7 +45,7 @@ import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { useAuthStore } from "@/store/auth";
 import { getWalletClient } from "@wagmi/core";
-import { useStepper } from "@/store/txStepper";
+import { useStepper } from "@/store/modals/txStepper";
 import { updateProject } from "@/utilities/sdk/projects/editProject";
 import { ContactInfoSection } from "./ContactInfoSection";
 import type { Contact } from "@/types/project";
@@ -64,6 +64,10 @@ const labelStyle =
 
 const schema = z.object({
   title: z.string().min(3, { message: MESSAGES.PROJECT_FORM.TITLE }),
+  problem: z.string(),
+  solution: z.string(),
+  missionSummary: z.string(),
+  locationOfImpact: z.string(),
   recipient: z
     .string()
     .optional()
@@ -118,6 +122,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const dataToUpdate = {
     description: projectToUpdate?.details?.data?.description || "",
     title: projectToUpdate?.details?.data?.title || "",
+    problem: projectToUpdate?.details?.data?.problem,
+    solution: projectToUpdate?.details?.data?.solution,
+    missionSummary: projectToUpdate?.details?.data?.missionSummary,
+    locationOfImpact: projectToUpdate?.details?.data?.locationOfImpact,
     imageURL: projectToUpdate?.details?.data?.imageURL,
     twitter: projectToUpdate?.details?.data?.links?.find(
       (link) => link.type === "twitter"
@@ -179,6 +187,15 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     dataToUpdate?.description || ""
   );
 
+  const [problem, setProblem] = useState(dataToUpdate?.problem || "");
+  const [solution, setSolution] = useState(dataToUpdate?.solution || "");
+  const [missionSummary, setMissionSummary] = useState(
+    dataToUpdate?.missionSummary || ""
+  );
+  const [locationOfImpact, setLocationOfImpact] = useState(
+    dataToUpdate?.locationOfImpact || ""
+  );
+
   const [team, setTeam] = useState<string[]>(dataToUpdate?.members || []);
   const [teamInput, setTeamInput] = useState("");
   const [teamInputError, setTeamInputError] = useState<string | undefined>("");
@@ -230,11 +247,22 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
   const handleErrors = () => {
     const isDescriptionValid = !!description.length;
+    const isMissionSummaryValid = !!missionSummary.length;
+    const isLocationOfImpactValid = !!locationOfImpact.length;
+    const isProblemValid = !!problem.length;
+    const isSolutionValid = !!solution.length;
+    const locationOfImpactValid = !!locationOfImpact.length;
+
     if (step === 0) {
       return (
         !!errors?.title ||
         !!errors?.recipient ||
         !isDescriptionValid ||
+        !isMissionSummaryValid ||
+        !isLocationOfImpactValid ||
+        !isProblemValid ||
+        !isSolutionValid ||
+        !locationOfImpactValid ||
         !watch("title")
       );
     }
@@ -294,6 +322,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       const newProjectInfo: NewProjectData = {
         ...data,
         description,
+        problem,
+        solution,
+        missionSummary,
+        locationOfImpact,
         // members: team.map((item) => item as Hex),
         members: [(data.recipient || address) as Hex],
         links: [
@@ -329,6 +361,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         data: {
           title: newProjectInfo.title,
           description: newProjectInfo.description,
+          problem: newProjectInfo.problem,
+          solution: newProjectInfo.solution,
+          missionSummary: newProjectInfo.missionSummary,
+          locationOfImpact: newProjectInfo.locationOfImpact,
+
           imageURL: "",
           links: newProjectInfo.links,
           slug,
@@ -375,7 +412,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
       closeModal();
-
+      changeStepperStep("preparing");
       await project.attest(walletSigner, changeStepperStep).then(async () => {
         let retries = 1000;
         let fetchedProject: Project | null = null;
@@ -455,24 +492,31 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       const walletSigner = await walletClientToSigner(walletClient);
       const fetchedProject = await getProjectById(projectToUpdate.uid);
       if (!fetchedProject) return;
+      changeStepperStep("preparing");
+      const newProjectInfo = {
+        title: data.title,
+        description: description,
+        problem,
+        solution,
+        missionSummary,
+        locationOfImpact,
+        tags: dataToUpdate?.tags?.map((item) => ({ name: item })) || [],
+        businessModel: data.businessModel,
+        stageIn: data.stageIn,
+        raisedMoney: data.raisedMoney,
+        pathToTake: data.pathToTake,
+      };
+      const socialData = {
+        discord: data.discord,
+        github: data.github,
+        linkedin: data.linkedin,
+        twitter: data.twitter,
+        website: data.website,
+      };
       await updateProject(
         fetchedProject,
-        {
-          title: data.title,
-          description: description,
-          tags: dataToUpdate?.tags?.map((item) => ({ name: item })) || [],
-          businessModel: data.businessModel,
-          stageIn: data.stageIn,
-          raisedMoney: data.raisedMoney,
-          pathToTake: data.pathToTake,
-        },
-        {
-          discord: data.discord,
-          github: data.github,
-          linkedin: data.linkedin,
-          twitter: data.twitter,
-          website: data.website,
-        },
+        newProjectInfo,
+        socialData,
         walletSigner,
         gapClient,
         changeStepperStep,
@@ -482,7 +526,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         setStep(0);
         if (shouldRefresh) {
           refreshProject();
-          setIsStepper(false);
         } else {
           const project = res.details?.slug || res.uid;
           router.push(PAGES.PROJECT.OVERVIEW(project));
@@ -491,10 +534,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     } catch (error) {
       console.log(error);
       toast.error(MESSAGES.PROJECT.UPDATE.ERROR);
-      setIsStepper(false);
       openModal();
     } finally {
       setIsLoading(false);
+      setIsStepper(false);
     }
   };
 
@@ -543,6 +586,55 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               onChange={(newValue: string) => {
                 setDescription(newValue || "");
               }}
+            />
+          </div>
+          <div className="flex w-full flex-col gap-2" data-color-mode="light">
+            <label htmlFor="desc-input" className={labelStyle}>
+              Problem *
+            </label>
+            <MarkdownEditor
+              placeholderText="e.g. Climate change is a serious problem that is affecting our planet
+              and we are building a platform that connects people with similar interests."
+              value={problem}
+              onChange={(newValue: string) => {
+                setProblem(newValue || "");
+              }}
+            />
+          </div>
+          <div className="flex w-full flex-col gap-2" data-color-mode="light">
+            <label htmlFor="desc-input" className={labelStyle}>
+              Solution *
+            </label>
+            <MarkdownEditor
+              placeholderText="We are solving this problem by building a platform that connects people with similar interests."
+              value={solution}
+              onChange={(newValue: string) => {
+                setSolution(newValue || "");
+              }}
+            />
+          </div>
+          <div className="flex w-full flex-col gap-2" data-color-mode="light">
+            <label htmlFor="desc-input" className={labelStyle}>
+              Mission Summary *
+            </label>
+            <MarkdownEditor
+              placeholderText="e.g. We are on a mission to build a better world by solving the problem of climate change."
+              value={missionSummary}
+              onChange={(newValue: string) => {
+                setMissionSummary(newValue || "");
+              }}
+            />
+          </div>
+          <div className="flex w-full flex-col gap-2" data-color-mode="light">
+            <label htmlFor="desc-input" className={labelStyle}>
+              Location of Impact *
+            </label>
+            <input
+              placeholder="e.g. Global, India, Africa, etc."
+              type="text"
+              className={inputStyle}
+              value={locationOfImpact}
+              onChange={(e) => setLocationOfImpact(e.target.value)}
             />
           </div>
 

@@ -15,6 +15,7 @@ export const INDEXER = {
     GET: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}`,
     FEED: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/feed`,
     FUNDEDBY: (address: string) => `/projects/fundedby/${address}`,
+    GRANTS_GENIE: (projectId: string) => `/projects/${projectId}/grants-genie`,
   },
   QUESTIONS: {
     CREATE: (idOrSlug: string) => `/questions/create/${idOrSlug}`,
@@ -61,6 +62,8 @@ export const INDEXER = {
       `/communities/${communityIdOrSlug}/questions`,
     STATS: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/stats`,
+    ADMINS: (communityIdOrSlug: string) =>
+      `/communities/${communityIdOrSlug}/admins`,
   },
   GRANTS: {
     GET_ZK_GROUP: (

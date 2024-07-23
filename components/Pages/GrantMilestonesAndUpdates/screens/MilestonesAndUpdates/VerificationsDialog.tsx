@@ -45,7 +45,7 @@ const VerificationItem = ({ verification }: VerificationsItemProps) => {
           alt={verification.attester}
           className="h-8 w-8 min-h-8 min-w-8 rounded-full"
         />
-        <p className="text-sm font-bold text-[#101828] font-body dark:text-zinc-200">
+        <p className="text-sm font-bold text-brand-darkblue font-body dark:text-zinc-200">
           {ensNames[verification.attester as Hex]?.name ||
             verification.attester}
           <span className="ml-1 font-normal font-body text-[#344054] dark:text-zinc-300">

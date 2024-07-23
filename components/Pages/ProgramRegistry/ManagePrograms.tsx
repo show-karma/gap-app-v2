@@ -27,7 +27,7 @@ import {
   Address,
   ApplicationMetadata,
 } from "@show-karma/karma-gap-sdk/core/class/types/allo";
-import { AlloContracts } from "@show-karma/karma-gap-sdk";
+import { AlloContracts } from "@show-karma/karma-gap-sdk/core/consts";
 import Pagination from "@/components/Utilities/Pagination";
 import debounce from "lodash.debounce";
 import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
@@ -36,9 +36,10 @@ import { config } from "@/utilities/wagmi/config";
 import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
 import { checkIsPoolManager } from "@/utilities/registry/checkIsPoolManager";
 import { MyProgramList } from "@/components/Pages/ProgramRegistry/MyProgramList";
-import { useStepper } from "@/store/txStepper";
+import { useStepper } from "@/store/modals/txStepper";
 import { useSearchParams } from "next/navigation";
 import { useRegistryStore } from "@/store/registry";
+import { useQuery } from "@tanstack/react-query";
 
 export const ManagePrograms = () => {
   const searchParams = useSearchParams();
@@ -46,8 +47,7 @@ export const ManagePrograms = () => {
   const defaultName = searchParams.get("name") || "";
   const defaultProgramId = searchParams.get("programId") || "";
 
-  const [grantPrograms, setGrantPrograms] = useState<GrantProgram[]>([]);
-  const [loading, setLoading] = useState(true);
+  // const [grantPrograms, setGrantPrograms] = useState<GrantProgram[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [programToEdit, setProgramToEdit] = useState<GrantProgram | null>(null);
 
@@ -63,16 +63,21 @@ export const ManagePrograms = () => {
     setIsPoolManager,
     isPoolManager,
     isRegistryAdmin,
+    setIsRegistryAdminLoading,
+    isRegistryAdminLoading,
   } = useRegistryStore();
+
   const isAllowed = address && (isRegistryAdmin || isPoolManager) && isAuth;
 
   useEffect(() => {
     if (!address || !isConnected) {
       setIsRegistryAdmin(false);
+      setIsRegistryAdminLoading(false);
       return;
     }
 
     const getMemberOf = async () => {
+      setIsRegistryAdminLoading(true);
       try {
         const call = await isMemberOfProfile(address);
         setIsRegistryAdmin(call);
@@ -82,10 +87,12 @@ export const ManagePrograms = () => {
         }
       } catch (error) {
         console.log(error);
+      } finally {
+        setIsRegistryAdminLoading(false);
       }
     };
     getMemberOf();
-  }, [address, signer, isConnected, chain]);
+  }, [address]);
 
   const [tab, setTab] = useQueryState("tab", {
     defaultValue: defaultTab || "pending",
@@ -97,7 +104,6 @@ export const ManagePrograms = () => {
     parse: (value) => parseInt(value),
   });
   const pageSize = 10;
-  const [totalPrograms, setTotalPrograms] = useState(0);
 
   const [searchInput, setSearchInput] = useQueryState("name", {
     defaultValue: defaultName,
@@ -137,42 +143,55 @@ export const ManagePrograms = () => {
   }, 500);
 
   const getGrantPrograms = async () => {
-    setLoading(true);
     try {
-      const fetchPrograms = async (url: string) => {
-        const [res, error] = await fetchData(url);
-        if (!error && res) {
-          setGrantPrograms(res.programs);
-          setTotalPrograms(res.count);
-        }
-      };
-
       const baseUrl = INDEXER.REGISTRY.GET_ALL;
       const queryParams = `?isValid=${tab}&limit=${pageSize}&offset=${
         (page - 1) * pageSize
       }`;
       const searchParam = searchInput ? `&name=${searchInput}` : "";
-      const ownerParam = address ? `&owner=${address}` : "";
-
+      const ownerParam = address && !isRegistryAdmin ? `&owner=${address}` : "";
       const url = isRegistryAdmin
         ? `${baseUrl}${queryParams}${searchParam}`
         : `${baseUrl}${queryParams}${ownerParam}${searchParam}`;
 
-      await fetchPrograms(url);
+      const [res, error] = await fetchData(url);
+      if (!error && res) {
+        return {
+          programs: res.programs as GrantProgram[],
+          count: res.count as number,
+        };
+      } else {
+        return {
+          programs: [] as GrantProgram[],
+          count: 0,
+        };
+      }
     } catch (error: any) {
       console.log(error);
-    } finally {
-      setLoading(false);
+      return {
+        programs: [] as GrantProgram[],
+        count: 0,
+      };
     }
   };
 
-  useMemo(() => {
-    getGrantPrograms();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tab, page, searchInput]);
+  const { data, isLoading, refetch } = useQuery<{
+    programs: GrantProgram[];
+    count: number;
+  }>({
+    queryKey: ["grantPrograms", tab, page, searchInput, isRegistryAdminLoading],
+    queryFn: () => getGrantPrograms(),
+    enabled: !isRegistryAdminLoading,
+  });
+  const grantPrograms = data?.programs || [];
+  const totalPrograms = data?.count || 0;
 
   const { switchChainAsync } = useSwitchChain();
   const { changeStepperStep, setIsStepper } = useStepper();
+
+  const refreshPrograms = async () => {
+    await refetch();
+  };
 
   const approveOrReject = async (
     program: GrantProgram,
@@ -297,7 +316,7 @@ export const ManagePrograms = () => {
         if (error) throw new Error(`Program failed when updating to ${value}`);
       }
       toast.success(`Program ${value} successfully`);
-      await getGrantPrograms();
+      await refreshPrograms();
     } catch {
       console.log(`Error ${messageDict[value]} program ${program._id.$oid}`);
       toast.error(`Error ${messageDict[value]} program ${program._id.$oid}`);
@@ -361,7 +380,7 @@ export const ManagePrograms = () => {
                   setIsEditing(false);
                   setProgramToEdit(null);
                 }}
-                refreshPrograms={getGrantPrograms}
+                refreshPrograms={refreshPrograms}
               />
             </div>
           ) : (
@@ -375,7 +394,7 @@ export const ManagePrograms = () => {
                 {/* <div className="h-44 w-[1px] bg-[#98A2B3] max-md:w-full max-md:h-[1px]" />
             <div className="flex flex-1 flex-col gap-2 items-center max-sm:items-start">
               <div className="flex flex-1 flex-col gap-2 items-start">
-                <p className="text-[#101828] dark:text-white font-body font-semibold text-xl">
+                <p className="text-brand-darkblue dark:text-white font-body font-semibold text-xl">
                   Be the first to know a new program launches
                 </p>
                 <div className="flex flex-row gap-4 max-sm:flex-col max-sm:w-full">
@@ -459,8 +478,8 @@ export const ManagePrograms = () => {
                     </div>
                   </div>
                 </div>
-                {!loading ? (
-                  grantPrograms.length ? (
+                {!isLoading ? (
+                  grantPrograms?.length ? (
                     <div className="mt-8 flow-root">
                       <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                         <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">

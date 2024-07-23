@@ -13,10 +13,11 @@ import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { CommunityDialog } from "@/components/Dialogs/CommunityDialog";
 import { formatDate } from "@/utilities/formatDate";
 import { AddAdmin } from "@/components/Pages/Admin/AddAdminDialog";
-import { request, gql } from "graphql-request";
 import { RemoveAdmin } from "@/components/Pages/Admin/RemoveAdminDialog";
 import { useOwnerStore } from "@/store";
 import CommunityStats from "@/components/CommunityStats";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 interface CommunityAdmin {
   id: string;
@@ -38,6 +39,29 @@ export default function CommunitiesToAdminPage() {
         (a.details?.name || a.uid).localeCompare(b.details?.name || b.uid)
       );
       setAllCommunities(result);
+      const fetchPromises = result.map(async (community) => {
+        try {
+          const [data, error] = await fetchData(
+            INDEXER.COMMUNITY.ADMINS(community.uid),
+            "GET",
+            {},
+            {},
+            {},
+            false,
+            true
+          );
+
+          if (error || !data) return { id: community.uid, admins: [] };
+          return data;
+        } catch {
+          return { id: community.uid, admins: [] };
+        }
+      });
+      const communityAdmins = await Promise.all(fetchPromises);
+
+      // Update the state with the fetched data
+      setCommunityAdmins(communityAdmins);
+
       return result;
     } catch (error) {
       console.log(error);
@@ -55,33 +79,6 @@ export default function CommunitiesToAdminPage() {
   const isOwner = useOwnerStore((state) => state.isOwner);
 
   const [communityAdmins, setCommunityAdmins] = useState<any>([]);
-  async function fetchCommunityAdmins() {
-    try {
-      const data: { communities?: CommunityAdmin[] } = await request(
-        "https://api.thegraph.com/subgraphs/name/arthh/playground",
-        gql`
-          {
-            communities {
-              id
-              admins {
-                user {
-                  id
-                }
-              }
-            }
-          }
-        `
-      );
-      // console.log(data?.communities);
-      setCommunityAdmins(data?.communities);
-      return data.communities;
-    } catch (error) {
-      console.log(error);
-    }
-  }
-  useEffect(() => {
-    fetchCommunityAdmins();
-  }, []);
 
   function shortenHex(hexString: string) {
     const firstPart = hexString.substring(0, 6);
@@ -124,7 +121,6 @@ export default function CommunitiesToAdminPage() {
                     const matchingCommunityAdmin = communityAdmins.find(
                       (admin: any) => admin.id === community.uid
                     );
-
                     return (
                       <React.Fragment key={community.uid}>
                         <tr className="divide-x">
@@ -142,9 +138,7 @@ export default function CommunitiesToAdminPage() {
                             {community.details?.name}
                           </td>
                           <td className="max-w-60 px-4">
-                            {formatDate(
-                              Object(community?.createdAt)?.$timestamp?.t * 1000
-                            )}
+                            {formatDate(community?.createdAt)}
                           </td>
                           <td className="max-w-80 break-all px-4">
                             {community.uid}
@@ -202,7 +196,7 @@ export default function CommunitiesToAdminPage() {
                                       UUID={community.uid}
                                       chainid={community.chainID}
                                       Admin={admin.user.id}
-                                      fetchAdmins={fetchCommunityAdmins}
+                                      fetchAdmins={fetchCommunities}
                                     />
                                   </div>
                                 )
@@ -212,7 +206,7 @@ export default function CommunitiesToAdminPage() {
                             <AddAdmin
                               UUID={community.uid}
                               chainid={community.chainID}
-                              fetchAdmins={fetchCommunityAdmins}
+                              fetchAdmins={fetchCommunities}
                             />
                           </td>
                         </tr>

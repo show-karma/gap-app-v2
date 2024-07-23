@@ -1,4 +1,4 @@
-import { TxStepperSteps } from "@/store/txStepper";
+import { TxStepperSteps } from "@/store/modals/txStepper";
 import { PAGES } from "@/utilities/pages";
 import { Project } from "@show-karma/karma-gap-sdk";
 import { Hex } from "viem";

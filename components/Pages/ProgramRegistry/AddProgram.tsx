@@ -35,7 +35,8 @@ import { Discord2Icon } from "@/components/Icons/Discord2";
 import { AlloBase } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/Allo";
 import { StatusDropdown } from "./StatusDropdown";
 import { config } from "@/utilities/wagmi/config";
-import { useStepper } from "@/store/txStepper";
+import { useStepper } from "@/store/modals/txStepper";
+import { useRegistryStore } from "@/store/registry";
 
 const labelStyle = "text-sm font-bold text-[#344054] dark:text-zinc-100";
 const inputStyle =
@@ -219,6 +220,8 @@ export default function AddProgram({
   const { openConnectModal } = useConnectModal();
   const { changeStepperStep, setIsStepper } = useStepper();
 
+  const { isRegistryAdmin } = useRegistryStore();
+
   const createProgram = async (data: CreateProgramType) => {
     setIsLoading(true);
     try {
@@ -342,11 +345,17 @@ export default function AddProgram({
         createdAt: new Date().getTime(),
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
+        status: data.status,
       };
 
-      const permissionToEditOnChain =
+      const isSameAddress =
         programToEdit?.createdByAddress?.toLowerCase() ===
-          address?.toLowerCase() && programToEdit?.txHash;
+        address?.toLowerCase();
+
+      const permissionToEditOnChain = !!(
+        programToEdit?.txHash &&
+        (isSameAddress || isRegistryAdmin)
+      );
       if (permissionToEditOnChain) {
         const allo = new AlloBase(
           walletSigner as any,
@@ -359,9 +368,6 @@ export default function AddProgram({
             metadata,
             changeStepperStep
           )
-          .catch((error) => {
-            throw new Error(error);
-          })
           .then(async (res) => {
             let retries = 1000;
             changeStepperStep("indexing");
@@ -371,17 +377,13 @@ export default function AddProgram({
                   `?programId=${programToEdit?.programId}`
               )
                 .then(async ([res]) => {
-                  const compareAll = (a: any, b: any) => {
-                    return JSON.stringify(a) === JSON.stringify(b);
-                  };
-                  const sameData = compareAll(
-                    res?.programs?.[0]?.metadata,
-                    metadata
-                  );
-                  if (sameData) {
+                  const hasUpdated =
+                    new Date(programToEdit?.updatedAt) <
+                    new Date((res?.programs?.[0] as GrantProgram)?.updatedAt);
+
+                  if (hasUpdated) {
                     retries = 0;
                     changeStepperStep("indexed");
-                    toast.success("Program updated successfully!");
                   }
                   retries -= 1;
                   // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
@@ -394,7 +396,11 @@ export default function AddProgram({
                 });
             }
             return res;
+          })
+          .catch((error) => {
+            throw new Error(error);
           });
+
         if (!hasRegistry) {
           throw new Error("Error editing program");
         }
@@ -414,7 +420,7 @@ export default function AddProgram({
         if (error)
           throw new Error("An error occurred while editing the program");
       }
-      toast.success("Program edited successfully");
+      toast.success("Program updated successfully!");
       await refreshPrograms?.().then(() => {
         backTo?.();
       });

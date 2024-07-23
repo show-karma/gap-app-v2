@@ -31,6 +31,7 @@ import { GrantMilestonesAndUpdates } from "@/components/Pages/GrantMilestonesAnd
 import { GrantContext } from "@/components/Pages/GrantMilestonesAndUpdates/GrantContext";
 import { GrantAllReviews } from "@/components/Pages/AllReviews";
 import { ReviewGrant } from "@/components/Pages/ReviewGrant";
+import { GenerateImpactReportDialog } from "@/components/Dialogs/GenerateImpactReportDialog";
 
 import { useQueryState } from "nuqs";
 import {
@@ -54,6 +55,7 @@ import { GrantsAccordion } from "@/components/GrantsAccordion";
 import { PAGES } from "@/utilities/pages";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { GrantsGenieDialog } from "@/components/Dialogs/GrantGenieDialog";
 
 interface Tab {
   name: string;
@@ -419,6 +421,7 @@ export const ProjectGrantsPage = () => {
                   {project ? (
                     <GrantCompleteButton project={project} grant={grant} />
                   ) : null}
+                  <GenerateImpactReportDialog grant={grant} />
                   <GrantDelete grant={grant} />
                 </div>
               ) : null}
