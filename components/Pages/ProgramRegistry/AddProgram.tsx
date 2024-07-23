@@ -181,8 +181,12 @@ export default function AddProgram({
       name: programToEdit?.metadata?.title,
       description: programToEdit?.metadata?.description,
       dates: {
-        startsAt: programToEdit?.metadata?.startsAt,
-        endsAt: programToEdit?.metadata?.endsAt,
+        startsAt: programToEdit?.metadata?.startsAt
+          ? new Date(programToEdit?.metadata?.startsAt)
+          : undefined,
+        endsAt: programToEdit?.metadata?.endsAt
+          ? new Date(programToEdit?.metadata?.endsAt)
+          : undefined,
       },
       amountDistributed: programToEdit?.metadata?.amountDistributedToDate as
         | number
