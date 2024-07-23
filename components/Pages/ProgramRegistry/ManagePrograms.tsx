@@ -259,6 +259,16 @@ export const ManagePrograms = () => {
           },
         };
 
+        const [currentManagers, fetchError] = await fetchData(
+          INDEXER.REGISTRY.MANAGERS(profileId, chainID as number),
+          "GET"
+        );
+        if (fetchError) throw new Error("Error fetching current managers");
+
+        const managers = currentManagers.concat([
+          program.createdByAddress as Address,
+        ]);
+
         const args: any = {
           profileId,
           roundMetadata: metadata,
@@ -268,7 +278,7 @@ export const ManagePrograms = () => {
           roundEnd: _currentTimestamp + 864000, // 10 days later  allocaitonEndTime
           matchingFundAmt: matchinFundAmount,
           applicationMetadata,
-          managers: [program.createdByAddress as Address], // managers
+          managers, // managers
           strategy: AlloContracts.strategy
             .DonationVotingMerkleDistributionDirectTransferStrategy as Address, // strategy
           payoutToken: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE", // Eg. ETH
