@@ -77,18 +77,8 @@ export type GrantProgram = {
   chainID?: number;
   isValid?: boolean;
   txHash?: string;
-  createdAt: {
-    $timestamp: {
-      t: number;
-      i: number;
-    };
-  };
-  updatedAt: {
-    $timestamp: {
-      t: number;
-      i: number;
-    };
-  };
+  createdAt: string;
+  updatedAt: string;
 };
 
 interface ProgramListProps {

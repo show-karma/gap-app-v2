@@ -479,38 +479,30 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       });
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      const oldGrantData = JSON.parse(JSON.stringify(oldGrant.details?.data));
+      const oldProjectData = await gapIndexerApi
+        .projectBySlug(selectedProject.uid)
+        .then((res) => res.data);
+      const oldGrantData = oldProjectData?.grants?.find(
+        (item) => item.uid.toLowerCase() === oldGrant.uid.toLowerCase()
+      );
       await oldGrantInstance.details
         ?.attest(walletSigner as any, changeStepperStep)
         .then(async () => {
-          // eslint-disable-next-line no-param-reassign
-
-          const compareAll = (a: any, b: any) => {
-            return JSON.stringify(a) === JSON.stringify(b);
-          };
-
           let retries = 1000;
           changeStepperStep("indexing");
-          let fetchedProject = null;
           while (retries > 0) {
-            fetchedProject = await gapClient!.fetch
-              .projectById(selectedProject.uid as Hex)
+            const fetchedProject = await gapIndexerApi
+              .projectBySlug(selectedProject.uid)
+              .then((res) => res.data)
               .catch(() => null);
             const fetchedGrant = fetchedProject?.grants.find(
               (item) => item.uid.toLowerCase() === oldGrant.uid.toLowerCase()
             );
-            const grantData = {
-              amount: fetchedGrant?.details?.data.amount || "",
-              description: fetchedGrant?.details?.data?.description,
-              proposalURL: fetchedGrant?.details?.data?.proposalURL,
-              title: fetchedGrant?.details?.data?.title,
-              payoutAddress: fetchedGrant?.details?.data?.payoutAddress,
-              // cycle: data.cycle,
-              // season: data.season,
-              questions: fetchedGrant?.details?.data?.questions,
-              startDate: fetchedGrant?.details?.data?.startDate,
-            };
-            if (compareAll(grantData, oldGrantData)) {
+
+            if (
+              new Date(fetchedGrant?.details?.updatedAt) >
+              new Date(oldGrantData?.updatedAt)
+            ) {
               clearMilestonesForms();
               retries = 0;
               toast.success(MESSAGES.GRANT.UPDATE.SUCCESS);
