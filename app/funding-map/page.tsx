@@ -10,7 +10,13 @@ export const metadata: Metadata = {
 
 const GrantProgramRegistry = () => {
   return (
-    <Suspense fallback={<Spinner />}>
+    <Suspense
+      fallback={
+        <div className="flex h-screen w-full items-center justify-center">
+          <Spinner />
+        </div>
+      }
+    >
       <ProgramsExplorer />
     </Suspense>
   );
