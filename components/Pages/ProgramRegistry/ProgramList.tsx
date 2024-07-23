@@ -18,7 +18,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { Button } from "@/components/Utilities/Button";
-import { ProgramDetailsDialog } from "./ProgramDetailsDialog";
+import { formatDate } from "@/utilities/formatDate";
 
 export type GrantProgram = {
   _id: {
@@ -31,7 +31,6 @@ export type GrantProgram = {
     tags?: string[];
     type?: string;
     title?: string;
-    endDate?: string;
     logoImg?: string;
     website?: string;
     startsAt?: string;
@@ -51,7 +50,6 @@ export type GrantProgram = {
     createdAt?: number;
     minGrantSize?: string;
     maxGrantSize?: string;
-    startDate?: string;
     categories?: string[];
     ecosystems?: string[];
     organizations?: string[];
@@ -209,6 +207,24 @@ export const ProgramList: FC<ProgramListProps> = ({
         header: () => (
           <div className="px-3 py-3.5 text-left w-[420px] text-sm font-bold text-gray-900 dark:text-zinc-100 font-body">
             Description
+          </div>
+        ),
+      },
+      {
+        accessorFn: (row) => row,
+        id: "End date",
+        cell: (info) => {
+          const program = info.row.original;
+          const endsAt = program.metadata?.endsAt;
+          return (
+            <div className="w-full flex flex-row flex-wrap gap-1 my-2 items-center">
+              {endsAt ? formatDate(endsAt) : null}
+            </div>
+          );
+        },
+        header: () => (
+          <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
+            End date
           </div>
         ),
       },
