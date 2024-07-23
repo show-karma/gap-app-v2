@@ -248,7 +248,8 @@ function ProjectPage() {
       });
     }
     const alreadyHasOwner = project?.members.find(
-      (member) => member.recipient === project.recipient
+      (member) =>
+        member.recipient.toLowerCase() === project.recipient.toLowerCase()
     );
     if (!alreadyHasOwner) {
       members.push({
