@@ -162,6 +162,42 @@ export const ProgramListPending: FC<ProgramListPendingProps> = ({
       },
       {
         accessorFn: (row) => row,
+        id: "Start date",
+        cell: (info) => {
+          const program = info.row.original;
+          const startsAt = program.metadata?.startsAt;
+          return (
+            <div className="w-full flex flex-row flex-wrap gap-1 my-2 items-center">
+              {startsAt ? formatDate(startsAt) : null}
+            </div>
+          );
+        },
+        header: () => (
+          <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
+            Start date
+          </div>
+        ),
+      },
+      {
+        accessorFn: (row) => row,
+        id: "End date",
+        cell: (info) => {
+          const program = info.row.original;
+          const endsAt = program.metadata?.endsAt;
+          return (
+            <div className="w-full flex flex-row flex-wrap gap-1 my-2 items-center">
+              {endsAt ? formatDate(endsAt) : null}
+            </div>
+          );
+        },
+        header: () => (
+          <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
+            End date
+          </div>
+        ),
+      },
+      {
+        accessorFn: (row) => row,
         id: "Networks",
         cell: (info) => {
           const grant = info.row.original;
