@@ -2,6 +2,12 @@ export const chainNameDictionary = (chainId: number) => {
   switch (chainId) {
     case 10:
       return "Optimism";
+    case 1329:
+      return "Sei";
+    case 1328:
+      return "Sei Testnet";
+    case 713715:
+      return "Sei Devnet";
     case 42161:
       return "Arbitrum One";
     case 420:
