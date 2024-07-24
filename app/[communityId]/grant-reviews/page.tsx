@@ -48,7 +48,13 @@ export default async function Page({ params }: Props) {
   }
 
   return (
-    <Suspense fallback={<Spinner />}>
+    <Suspense
+      fallback={
+        <div className="flex h-screen w-full items-center justify-center">
+          <Spinner />
+        </div>
+      }
+    >
       <CommunityLanding community={community} />
     </Suspense>
   );
