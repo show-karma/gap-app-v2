@@ -56,6 +56,7 @@ import { PAGES } from "@/utilities/pages";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { GrantsGenieDialog } from "@/components/Dialogs/GrantGenieDialog";
+import { ReviewSection } from "@/components/Pages/Project/Review/";
 
 interface Tab {
   name: string;
@@ -185,6 +186,11 @@ export const ProjectGrantsPage = () => {
         {
           name: "Review this grant",
           tabName: "review-this-grant",
+          current: false,
+        },
+        {
+          name: "Review",
+          tabName: "review",
           current: false,
         },
       ];
@@ -469,6 +475,7 @@ export const ProjectGrantsPage = () => {
                     <ReviewGrant grant={grant} />
                   </Suspense>
                 )}
+                {currentTab === "review" && <ReviewSection grant={grant} />}
                 {/*  */}
                 {currentTab === "create-grant" && project?.uid && <NewGrant />}
                 {currentTab === "edit-grant" && project?.uid && grant && (
