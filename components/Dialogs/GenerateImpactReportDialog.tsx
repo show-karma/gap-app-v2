@@ -2,6 +2,7 @@
 import React, { FC, Fragment, ReactNode, useEffect, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import Html from "react-pdf-html";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import {
   DocumentCheckIcon,
   ExclamationCircleIcon,
@@ -548,14 +549,19 @@ function GenerateDocument({
           >
             🌟 Impact Summary
           </Text>
-          <Text
+          <Html
+            stylesheet={{
+              img: {
+                width: "100%",
+              },
+            }}
             style={{
               fontSize: 12,
-              marginTop: 10,
+              marginTop: 5,
             }}
           >
-            {impactSummary}
-          </Text>
+            {replaceImageUrls(renderToHTML(impactSummary))}
+          </Html>
         </View>
         {impactRecipientTestimonial && (
           <View
@@ -705,11 +711,11 @@ export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
                     <div>
                       <div className="flex flex-col gap-2 mb-10">
                         <label htmlFor="newOwner">Summary of the impact</label>
-                        <textarea
-                          className="rounded border border-zinc-300  dark:bg-zinc-800 px-2 py-1 text-black dark:text-white"
-                          id="impactSummary"
-                          rows={5}
-                          onChange={(e) => setImpactSummary(e.target.value)}
+                        <MarkdownEditor
+                          value={impactSummary}
+                          onChange={(newValue: string) =>
+                            setImpactSummary(newValue)
+                          }
                         />
                       </div>
                       <div className="flex flex-col gap-2 mb-10">
