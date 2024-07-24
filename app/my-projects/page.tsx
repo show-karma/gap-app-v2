@@ -7,7 +7,13 @@ export const metadata = defaultMetadata;
 
 export default function Page() {
   return (
-    <Suspense fallback={<Spinner />}>
+    <Suspense
+      fallback={
+        <div className="flex h-screen w-full items-center justify-center">
+          <Spinner />
+        </div>
+      }
+    >
       <MyProjects />
     </Suspense>
   );

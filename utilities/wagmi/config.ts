@@ -5,6 +5,7 @@ import {
   optimism,
   optimismSepolia,
   celo,
+  sei,
 } from "@wagmi/core/chains";
 import {
   coinbaseWallet,
@@ -48,5 +49,6 @@ export const config = createConfig({
     [baseSepolia.id]: http(envVars.RPC.BASE_SEPOLIA),
     [optimismSepolia.id]: http(envVars.RPC.OPT_SEPOLIA),
     [celo.id]: http(envVars.RPC.CELO),
+    [sei.id]: http(envVars.RPC.SEI),
   },
 });

@@ -1,12 +1,12 @@
 "use client";
 import { z } from "zod";
 import type { SubmitHandler } from "react-hook-form";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { MESSAGES } from "@/utilities/messages";
-import { ChevronLeftIcon } from "@heroicons/react/24/solid";
+import { CalendarIcon, ChevronLeftIcon } from "@heroicons/react/24/solid";
 import { Button } from "@/components/Utilities/Button";
 import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
@@ -37,6 +37,9 @@ import { StatusDropdown } from "./StatusDropdown";
 import { config } from "@/utilities/wagmi/config";
 import { useStepper } from "@/store/modals/txStepper";
 import { useRegistryStore } from "@/store/registry";
+import { Popover } from "@headlessui/react";
+import { formatDate } from "@/utilities/formatDate";
+import { DayPicker } from "react-day-picker";
 
 const labelStyle = "text-sm font-bold text-[#344054] dark:text-zinc-100";
 const inputStyle =
@@ -47,6 +50,23 @@ const urlRegex =
 
 const createProgramSchema = z.object({
   name: z.string().min(3, { message: MESSAGES.REGISTRY.FORM.NAME }),
+  dates: z
+    .object({
+      endsAt: z.date().optional(),
+      startsAt: z.date().optional(),
+    })
+    .refine(
+      (data) => {
+        if (!data.endsAt || !data.startsAt) return true;
+        const endsAt = data.endsAt.getTime() / 1000;
+        const startsAt = data.startsAt.getTime() / 1000;
+        return startsAt ? startsAt <= endsAt : true;
+      },
+      {
+        message: "Start date must be before the end date",
+        path: ["startsAt"],
+      }
+    ),
   website: z
     .string()
     .refine((value) => urlRegex.test(value), {
@@ -151,6 +171,7 @@ export default function AddProgram({
     handleSubmit,
     watch,
     setValue,
+    control,
     formState: { errors, isSubmitting, isValid },
   } = useForm<CreateProgramType>({
     resolver: zodResolver(createProgramSchema),
@@ -159,6 +180,14 @@ export default function AddProgram({
     defaultValues: {
       name: programToEdit?.metadata?.title,
       description: programToEdit?.metadata?.description,
+      dates: {
+        startsAt: programToEdit?.metadata?.startsAt
+          ? new Date(programToEdit?.metadata?.startsAt)
+          : undefined,
+        endsAt: programToEdit?.metadata?.endsAt
+          ? new Date(programToEdit?.metadata?.endsAt)
+          : undefined,
+      },
       amountDistributed: programToEdit?.metadata?.amountDistributedToDate as
         | number
         | undefined,
@@ -239,6 +268,8 @@ export default function AddProgram({
         minGrantSize: data.minGrantSize,
         maxGrantSize: data.maxGrantSize,
         grantsToDate: data.grantsToDate,
+        startsAt: data.dates.startsAt,
+        endsAt: data.dates.endsAt,
         website: data.website || "",
         projectTwitter: data.twitter || "",
         socialLinks: {
@@ -319,6 +350,8 @@ export default function AddProgram({
         minGrantSize: data.minGrantSize,
         maxGrantSize: data.maxGrantSize,
         grantsToDate: data.grantsToDate,
+        startsAt: data.dates.startsAt,
+        endsAt: data.dates.endsAt,
         website: data.website || "",
         projectTwitter: data.twitter || "",
         socialLinks: {
@@ -519,6 +552,112 @@ export default function AddProgram({
                   <p className="text-base text-red-400">
                     {errors.grantsSite?.message}
                   </p>
+                </div>
+              </div>
+              <div className="flex w-full flex-row items-center justify-between gap-4">
+                <div className="flex w-full flex-row justify-between gap-4">
+                  <Controller
+                    name="dates.startsAt"
+                    control={control}
+                    render={({ field, formState, fieldState }) => (
+                      <div className="flex w-full flex-col gap-2">
+                        <label className={labelStyle}>
+                          Start date (optional)
+                        </label>
+                        <div>
+                          <Popover className="relative">
+                            <Popover.Button
+                              className={cn(
+                                inputStyle,
+                                "w-max text-sm flex-row flex gap-2 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md"
+                              )}
+                            >
+                              {field.value ? (
+                                formatDate(field.value)
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Popover.Button>
+                            <Popover.Panel className="absolute z-10 border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 mt-4 rounded-md">
+                              <DayPicker
+                                mode="single"
+                                selected={field.value}
+                                onDayClick={(e) => {
+                                  setValue("dates.startsAt", e, {
+                                    shouldValidate: true,
+                                  });
+                                  field.onChange(e);
+                                }}
+                                disabled={(date) => {
+                                  if (date < new Date("2000-01-01"))
+                                    return true;
+                                  return false;
+                                }}
+                                initialFocus
+                              />
+                            </Popover.Panel>
+                          </Popover>
+                        </div>
+                        <p className="text-base text-red-400">
+                          {errors.dates?.startsAt?.message}
+                        </p>
+                      </div>
+                    )}
+                  />
+                </div>
+                <div className="flex w-full flex-row justify-between gap-4">
+                  <Controller
+                    name="dates.endsAt"
+                    control={control}
+                    render={({ field, formState, fieldState }) => (
+                      <div className="flex w-full flex-col gap-2">
+                        <label className={labelStyle}>
+                          End date (optional)
+                        </label>
+                        <div>
+                          <Popover className="relative">
+                            <Popover.Button
+                              className={cn(
+                                inputStyle,
+                                "w-max text-sm flex-row flex gap-2 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md"
+                              )}
+                            >
+                              {field.value ? (
+                                formatDate(field.value)
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Popover.Button>
+                            <Popover.Panel className="absolute z-10 border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 mt-4 rounded-md">
+                              <DayPicker
+                                mode="single"
+                                selected={field.value}
+                                onDayClick={(e) => {
+                                  setValue("dates.endsAt", e, {
+                                    shouldValidate: true,
+                                  });
+                                  field.onChange(e);
+                                }}
+                                disabled={(date) => {
+                                  if (date < new Date("2000-01-01"))
+                                    return true;
+                                  const startsAt = watch("dates.startsAt");
+                                  if (startsAt && date < startsAt) return true;
+                                  return false;
+                                }}
+                                initialFocus
+                              />
+                            </Popover.Panel>
+                          </Popover>
+                        </div>
+                        <p className="text-base text-red-400">
+                          {errors.dates?.endsAt?.message}
+                        </p>
+                      </div>
+                    )}
+                  />
                 </div>
               </div>
               <div className="flex w-full flex-col max-w-full gap-1">
