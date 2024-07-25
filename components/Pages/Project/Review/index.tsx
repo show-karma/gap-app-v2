@@ -9,6 +9,7 @@ import { StarIcon } from "@/components/Icons";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/Utilities/Button";
 import { CardReview } from "./CardReview";
+import { NavbarReview } from "./NavbarReview";
 
 interface GrantAllReviewsProps {
   grant: IGrantResponse | undefined;
@@ -156,7 +157,9 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
             </Button>
           </div>
 
-          <CardReview />
+          <NavbarReview />
+
+          {/* <CardReview /> */}
         </div>
       </div>
     </div>
