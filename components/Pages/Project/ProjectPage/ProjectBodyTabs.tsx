@@ -237,14 +237,14 @@ const UpdatesTab = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-row gap-2 justify-between">
+      <div className="flex flex-row gap-4 justify-between">
         <p className="font-bold text-black dark:text-zinc-200 text-base">
           Updates {updates.length ? `(${updates.length})` : ""}
         </p>
         {isAuthorized ? (
           <Button
             onClick={() => setActiveTab("post-update")}
-            className="flex h-max w-max dark:bg-zinc-9000 dark:text-white text-zinc-900 flex-row items-center justify-center gap-3 rounded border border-black bg-transparent px-3 py-1 text-sm font-semibold hover:bg-transparent hover:opacity-75 max-sm:w-full"
+            className="flex h-max w-max dark:bg-zinc-9000 dark:text-white text-zinc-900 flex-row items-center justify-center gap-3 rounded border border-black bg-transparent px-3 py-1 text-sm font-semibold hover:bg-transparent hover:opacity-75"
           >
             Post a Project Update
           </Button>
