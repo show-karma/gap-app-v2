@@ -214,6 +214,7 @@ const UpdateBlock = ({
           readLessText="Read less update"
           readMoreText="Read full update"
           markdownClass="text-black font-normal text-base"
+          side="left"
         >
           {update.data.text}
         </ReadMore>
@@ -232,52 +233,7 @@ const UpdatesTab = () => {
     defaultValue: "info",
   });
 
-  const updates: IProjectUpdate[] = [
-    {
-      id: "1",
-      data: {
-        title: "Project Update 1",
-        text: "Project Update 1 Description",
-        type: "project-update",
-      },
-      uid: "0x1",
-      schemaUID: "0x1",
-      refUID: "0x1",
-      attester: "0x123",
-      recipient: "0x123",
-      revoked: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      chainID: 1,
-      type: "project-update",
-      decodedDataJson: "{}",
-      revocable: false,
-      schemaId: "0x1",
-      isOffchain: false,
-    },
-    {
-      id: "2",
-      data: {
-        title: "Project Update 2",
-        text: "Project Update 2 Description",
-        type: "project-update",
-      },
-      uid: "0x2",
-      schemaUID: "0x1",
-      refUID: "0x1",
-      attester: "0x123",
-      recipient: "0x123",
-      revoked: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      chainID: 1,
-      type: "project-update",
-      decodedDataJson: "{}",
-      revocable: false,
-      schemaId: "0x1",
-      isOffchain: false,
-    },
-  ];
+  const updates: IProjectUpdate[] = project?.updates || [];
 
   return (
     <div className="flex flex-col gap-6">
@@ -300,7 +256,15 @@ const UpdatesTab = () => {
             <UpdateBlock key={update.id} update={update} index={index} />
           ))}
         </div>
-      ) : null}
+      ) : (
+        <div className="flex flex-col gap-6">
+          {isAuthorized ? (
+            <p>Go ahead and create your first update.</p>
+          ) : (
+            <p>No updates yet.</p>
+          )}
+        </div>
+      )}
     </div>
   );
 };
