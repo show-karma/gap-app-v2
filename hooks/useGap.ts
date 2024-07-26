@@ -15,15 +15,9 @@ import {
 } from "@/utilities/network";
 import { envVars } from "@/utilities/enviromentVars";
 
-const ipfsClient = new IpfsStorage(
-  {
-    token: envVars.IPFS_TOKEN,
-  },
-  {
-    url: envVars.NEXT_PUBLIC_IPFS_SPONSOR_URL || "",
-    responseParser: (res) => res.cid,
-  }
-);
+const ipfsClient = new IpfsStorage({
+  token: envVars.IPFS_TOKEN,
+});
 
 const gelatoOpts = {
   sponsorUrl: envVars.NEXT_PUBLIC_SPONSOR_URL || "/api/sponsored-txn",
@@ -46,7 +40,6 @@ export const getGapClient = (chainID: number): GAP => {
             apiClient: new GapIndexerClient(apiUrl),
           }
         : {}),
-      // gelatoOpts,
       remoteStorage: ipfsClient,
     });
     gapClients[chainID] = client;

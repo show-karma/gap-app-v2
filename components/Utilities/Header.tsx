@@ -41,7 +41,7 @@ const ProjectDialog = dynamic(
 );
 
 const buttonStyle: HTMLButtonElement["className"] =
-  "rounded-md bg-white w-max dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 hover:bg-transparent dark:hover:bg-opacity-75 dark:border-zinc-900";
+  "rounded-md bg-white w-max dark:bg-black px-0 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 hover:bg-transparent dark:hover:bg-opacity-75 dark:border-zinc-900";
 
 export default function Header() {
   const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
@@ -234,6 +234,11 @@ export default function Header() {
                       <Searchbar />
                     </div>
                     <div className="mt-8 px-3 flex flex-col gap-4">
+                      <Link href={PAGES.REGISTRY.ROOT}>
+                        <button className="rounded-md bg-white w-full dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
+                          Get Funding
+                        </button>
+                      </Link>
                       {isReady ? (
                         <>
                           {isFundingMap ? (
@@ -358,10 +363,13 @@ export default function Header() {
               </Popover.Root>
             </div>
 
-            <div className="hidden lg:flex lg:items-center lg:justify-end lg:gap-x-3 py-3 max-xl:gap-x-1">
+            <div className="hidden lg:flex lg:items-center lg:justify-end lg:gap-3 xl:gap-5 2xl:gap-6 py-3">
               {/* <div className="rounded-none h-10 w-[1px] bg-zinc-300 mx-2" /> */}
               {isReady ? (
                 <>
+                  <Link href={PAGES.REGISTRY.ROOT}>
+                    <button className={buttonStyle}>Get Funding</button>
+                  </Link>
                   {isFundingMap ? (
                     isRegistryAllowed ? (
                       <Link href={PAGES.REGISTRY.MANAGE_PROGRAMS}>
