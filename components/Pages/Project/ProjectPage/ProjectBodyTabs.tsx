@@ -118,15 +118,12 @@ const UpdateBlock = ({
       const walletSigner = await walletClientToSigner(walletClient);
 
       const instanceProject = await gapClient.fetch.projectById(project?.uid);
-      const grantInstance = instanceProject?.grants.find(
-        (item) => item.uid.toLowerCase() === update.refUID.toLowerCase()
+      if (!instanceProject) return;
+      const findUpdate = instanceProject.updates.find(
+        (update) => update.uid === update.refUID
       );
-      if (!grantInstance) return;
-      const grantUpdateInstance = grantInstance.updates.find(
-        (item) => item.uid.toLowerCase() === update.uid.toLowerCase()
-      );
-      if (!grantUpdateInstance) return;
-      await grantUpdateInstance
+      if (!findUpdate) return;
+      await findUpdate
         .revoke(walletSigner as any, changeStepperStep)
         .then(async () => {
           let retries = 1000;
@@ -136,8 +133,8 @@ const UpdateBlock = ({
             fetchedProject = await gapClient!.fetch
               .projectById(project?.uid as Hex)
               .catch(() => null);
-            const stillExists = fetchedProject?.grants?.find(
-              (grantUpdate) => grantUpdate.uid === update.uid
+            const stillExists = fetchedProject?.updates?.find(
+              (update) => update.uid === update.uid
             );
             if (!stillExists) {
               retries = 0;
@@ -160,7 +157,7 @@ const UpdateBlock = ({
   };
 
   return (
-    <div className="flex w-full flex-1 flex-col gap-4 rounded-lg border border-zinc-2000 dark:bg-zinc-800 dark:border-zinc-700 bg-white p-4 transition-all duration-200 ease-in-out  max-sm:px-2">
+    <div className="flex w-full flex-1 flex-col gap-4 rounded-lg  dark:bg-zinc-800 bg-[#F8F9FC] p-4 transition-all duration-200 ease-in-out  max-sm:px-2">
       <div className="flex flex-row items-center justify-between">
         <div className="flex flex-row gap-3 items-center">
           <div className="flex items-center h-max w-max flex-row gap-2 rounded-full bg-[#5720B7] dark:bg-purple-900 px-3 py-1">
@@ -216,6 +213,7 @@ const UpdateBlock = ({
         <ReadMore
           readLessText="Read less update"
           readMoreText="Read full update"
+          markdownClass="text-black font-normal text-base"
         >
           {update.data.text}
         </ReadMore>
