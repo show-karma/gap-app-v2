@@ -14,22 +14,22 @@ export const CardReviewSummary = () => {
 
   const MiniReviewSummary: MiniReviewSummaryProps[] = [
     {
-      date: "18/07/2024",
+      date: "24 July, 2024",
       icon: <StarReviewIcon className="w-20 h-20" />,
       score: 4.6,
     },
     {
-      date: "18/07/2024",
+      date: "24 July, 2024",
       icon: <StarReviewIcon className="w-20 h-20" />,
       score: 4.6,
     },
     {
-      date: "18/07/2024",
+      date: "24 July, 2024",
       icon: <StarReviewIcon className="w-20 h-20" />,
       score: 4.6,
     },
     {
-      date: "18/07/2024",
+      date: "24 July, 2024",
       icon: <StarReviewIcon className="w-20 h-20" />,
       score: 4.6,
     },
@@ -38,13 +38,17 @@ export const CardReviewSummary = () => {
   return (
     <>
       <div className="w-full flex flex-col">
-        <div className="w-full flex px-2 gap-2">
+        <div className="w-full flex px-2 gap-2 ">
           {MiniReviewSummary.map(
             (miniReview: MiniReviewSummaryProps, index: number) => (
               <>
                 <div
                   key={index}
-                  className="w-fit flex flex-col justify-center items-center"
+                  className={`w-fit flex flex-col justify-center items-center px-10 ${
+                    MiniReviewSummary.length - 1 == index
+                      ? ""
+                      : "border-r border-b-zinc-300"
+                  }`}
                   onClick={() => {
                     setIsStarSelected(!isStarSelected);
                   }}
