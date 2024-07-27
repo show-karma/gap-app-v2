@@ -49,7 +49,7 @@ export const CardReviewSummary = () => {
                     : "border-r border-b-zinc-300"
                 }`}
                 onClick={() => {
-                  setIsStarSelected(miniReview.id);
+                  setIsStarSelected(index);
                 }}
               >
                 <p>{miniReview.date}</p>
@@ -60,7 +60,7 @@ export const CardReviewSummary = () => {
           )}
         </div>
         <div className="w-full flex">
-          {isStarSelected !== null && <CardReview id={isStarSelected - 1} />}
+          {isStarSelected !== null && <CardReview id={isStarSelected} />}
         </div>
       </div>
     </>
