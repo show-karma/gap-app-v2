@@ -1,6 +1,6 @@
 import { Hex, createPublicClient, http } from "viem";
 import { envVars } from "../enviromentVars";
-import { arbitrum, optimismSepolia, sepolia } from "viem/chains";
+import { arbitrum, sepolia } from "viem/chains";
 import AlloRegistryABI from "@show-karma/karma-gap-sdk/core/abi/AlloRegistry.json";
 import { AlloContracts } from "@show-karma/karma-gap-sdk";
 

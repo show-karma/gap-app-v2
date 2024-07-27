@@ -30,6 +30,7 @@ export async function walletClientToSigner(
   client: Client<Transport, Chain, Account>
 ) {
   const { account, chain, transport } = client;
+  if (!chain) return;
   const network = {
     chainId: chain.id,
     name: chain.name,
