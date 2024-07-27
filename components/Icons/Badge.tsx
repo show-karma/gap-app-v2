@@ -42,9 +42,9 @@ export const BadgeIcon = ({
           fill="#EFF6FF"
           stroke="#C7D9FB"
         />
-        <circle cx="36" cy="38" r="18" fill="#1D58CD" fill-opacity="0.05" />
-        <circle cx="36" cy="38" r="22" fill="#1D58CD" fill-opacity="0.05" />
-        <g clip-path="url(#clip0_380_868)">
+        <circle cx="36" cy="38" r="18" fill="#1D58CD" fillOpacity="0.05" />
+        <circle cx="36" cy="38" r="22" fill="#1D58CD" fillOpacity="0.05" />
+        <g clipPath="url(#clip0_380_868)">
           <path
             d="M25.912 38.9458H23.2983C23.7573 45.2141 28.7775 50.2287 35.0458 50.6933V48.0853C30.216 47.6319 26.3654 43.7813 25.912 38.9458Z"
             fill="white"
@@ -86,9 +86,9 @@ export const BadgeIcon = ({
             width="70.3535"
             height="77.5244"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               type="matrix"
@@ -147,9 +147,9 @@ export const BadgeIcon = ({
           fill="#EFF6FF"
           stroke="#C7D9FB"
         />
-        <circle cx="36" cy="38" r="18" fill="#1D58CD" fill-opacity=".05" />
-        <circle cx="36" cy="38" r="22" fill="#1D58CD" fill-opacity=".05" />
-        <g clip-path="url(#b)">
+        <circle cx="36" cy="38" r="18" fill="#1D58CD" fillOpacity=".05" />
+        <circle cx="36" cy="38" r="22" fill="#1D58CD" fillOpacity=".05" />
+        <g clipPath="url(#b)">
           <path
             d="M49.227 27.666a.89.89 0 0 0-.89-.89H21.674a.89.89 0 0 0-.89.89v4.516h28.438v-4.516h.005Z"
             fill="#1D58CD"
@@ -190,9 +190,9 @@ export const BadgeIcon = ({
             width="70.353"
             height="77.524"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
@@ -237,9 +237,9 @@ export const BadgeIcon = ({
           fill="#EFF6FF"
           stroke="#C7D9FB"
         />
-        <circle cx="36.5" cy="38" r="18" fill="#1D58CD" fill-opacity=".05" />
-        <circle cx="36.5" cy="38" r="22" fill="#1D58CD" fill-opacity=".05" />
-        <g clip-path="url(#b)">
+        <circle cx="36.5" cy="38" r="18" fill="#1D58CD" fillOpacity=".05" />
+        <circle cx="36.5" cy="38" r="22" fill="#1D58CD" fillOpacity=".05" />
+        <g clipPath="url(#b)">
           <path
             d="M30.835 48.534h-8.901a4.554 4.554 0 0 0 4.448 3.628 4.555 4.555 0 0 0 4.453-3.628ZM51.056 48.534h-8.891a4.554 4.554 0 0 0 4.448 3.628 4.543 4.543 0 0 0 4.443-3.628Z"
             fill="#1D58CD"
@@ -268,9 +268,9 @@ export const BadgeIcon = ({
             width="70.353"
             height="77.524"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
@@ -315,7 +315,7 @@ export const BadgeIcon = ({
           fill="#EFF6FF"
           stroke="#C7D9FB"
         />
-        <g fill="#1D58CD" fill-opacity=".05">
+        <g fill="#1D58CD" fillOpacity=".05">
           <circle cx="36" cy="38" r="19" />
           <circle cx="36" cy="38" r="22" />
         </g>
@@ -382,9 +382,9 @@ export const BadgeIcon = ({
             width="70.353"
             height="77.524"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
@@ -429,8 +429,8 @@ export const BadgeIcon = ({
           fill="#EFF6FF"
           stroke="#C7D9FB"
         />
-        <circle cx="36" cy="38" r="18" fill="#1D58CD" fill-opacity=".05" />
-        <circle cx="36" cy="38" r="22" fill="#1D58CD" fill-opacity=".05" />
+        <circle cx="36" cy="38" r="18" fill="#1D58CD" fillOpacity=".05" />
+        <circle cx="36" cy="38" r="22" fill="#1D58CD" fillOpacity=".05" />
         <path
           d="M24.715 52.472a3.582 3.582 0 1 0 0-7.164 3.582 3.582 0 0 0 0 7.164Z"
           fill="#1EE9B6"
@@ -551,9 +551,9 @@ export const BadgeIcon = ({
             width="70.353"
             height="77.524"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
@@ -598,8 +598,8 @@ export const BadgeIcon = ({
           fill="#EFF6FF"
           stroke="#C7D9FB"
         />
-        <circle cx="35.5" cy="38" r="19" fill="#1D58CD" fill-opacity=".05" />
-        <circle cx="35.5" cy="38" r="22" fill="#1D58CD" fill-opacity=".05" />
+        <circle cx="35.5" cy="38" r="19" fill="#1D58CD" fillOpacity=".05" />
+        <circle cx="35.5" cy="38" r="22" fill="#1D58CD" fillOpacity=".05" />
         <mask
           id="b"
           maskUnits="userSpaceOnUse"
@@ -655,7 +655,7 @@ export const BadgeIcon = ({
             d="M19.557 36.015a.663.663 0 0 0-.635-.465H16.63l-.702-2.097a.667.667 0 0 0-.63-.453.67.67 0 0 0-.631.453l-.706 2.097h-2.293a.665.665 0 0 0-.635.465c-.09.28.016.58.248.745l1.837 1.293-.702 2.073a.668.668 0 0 0 .233.744c.233.17.548.174.78.008l1.86-1.308 1.86 1.308a.669.669 0 0 0 .781-.008c.233-.17.323-.473.233-.744l-.694-2.078 1.837-1.292a.66.66 0 0 0 .252-.741Zm-3.26 1.23a.662.662 0 0 0-.248.752l.213.63-.587-.409a.664.664 0 0 0-.765 0l-.583.41.213-.63a.66.66 0 0 0-.249-.753l-.524-.367h.67a.67.67 0 0 0 .63-.453l.226-.674.224.674c.09.268.343.453.63.453h.67l-.52.367Z"
             fill="#191B2A"
           />
-          <g clip-path="url(#c)">
+          <g clipPath="url(#c)">
             <path
               d="M34.569 29.251h-6.945a.89.89 0 1 1 0-1.78h6.94c.49 0 .89.394.89.89 0 .495-.395.89-.885.89ZM41.614 34.21h-13.99a.89.89 0 1 1 0-1.781h13.99a.89.89 0 1 1 0 1.78ZM41.614 39.168h-13.99a.89.89 0 1 1 0-1.781h13.99a.89.89 0 1 1 0 1.78ZM34.337 44.116h-6.713a.89.89 0 1 1 0-1.781h6.713c.49 0 .89.395.89.89 0 .496-.395.89-.89.89ZM32.23 49.074h-4.606a.89.89 0 0 1-.89-.89c0-.496.395-.891.89-.891h4.605a.89.89 0 1 1 0 1.78Z"
               fill="#191B2A"
@@ -694,9 +694,9 @@ export const BadgeIcon = ({
             width="70.353"
             height="77.524"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
@@ -741,9 +741,9 @@ export const BadgeIcon = ({
           fill="#EFF6FF"
           stroke="#C7D9FB"
         />
-        <circle cx="36" cy="38" r="18" fill="#1D58CD" fill-opacity=".05" />
-        <circle cx="36" cy="38" r="22" fill="#1D58CD" fill-opacity=".05" />
-        <g clip-path="url(#b)">
+        <circle cx="36" cy="38" r="18" fill="#1D58CD" fillOpacity=".05" />
+        <circle cx="36" cy="38" r="22" fill="#1D58CD" fillOpacity=".05" />
+        <g clipPath="url(#b)">
           <path
             d="M28.374 46.949c1.217 0 2.555-2.129 2.555-4.068 0-1.928-1.391-2.334-2.555-2.334-1.165 0-2.556.4-2.556 2.334 0 1.94 1.344 4.068 2.556 4.068Z"
             fill="#fff"
@@ -776,9 +776,9 @@ export const BadgeIcon = ({
             width="70.353"
             height="77.524"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0"
