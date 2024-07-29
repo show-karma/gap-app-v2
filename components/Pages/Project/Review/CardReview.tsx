@@ -107,9 +107,9 @@ export const CardReview = (data: CardReviewDataProps) => {
         {selectedBadgeList.map((badge: BadgeListProps, index: number) => (
           <div key={index} className="flex flex-col w-full">
             <div className="flex flex-row w-full items-center gap-2">
-              <div className="flex">{badge.icon}</div>
-              <div className="flex">{badge.description}</div>
-              <div className="flex">{badge.score}</div>
+              <div>{badge.icon}</div>
+              <div>{badge.description}</div>
+              <div>{badge.score}</div>
             </div>
           </div>
         ))}
