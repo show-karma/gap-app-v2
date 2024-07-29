@@ -24,6 +24,7 @@ export const envVars = {
     BASE_SEPOLIA: process.env.NEXT_PUBLIC_RPC_BASE_SEPOLIA as string,
     CELO: process.env.NEXT_PUBLIC_RPC_OPTIMISM_SEPOLIA as string,
     SEPOLIA: process.env.NEXT_PUBLIC_RPC_SEPOLIA as string,
+    SEI: process.env.NEXT_PUBLIC_RPC_SEI as string,
   },
   PROJECT_ID: process.env.NEXT_PUBLIC_PROJECT_ID || "",
   IPFS_TOKEN: process.env.NEXT_PUBLIC_IPFS_TOKEN || "",
