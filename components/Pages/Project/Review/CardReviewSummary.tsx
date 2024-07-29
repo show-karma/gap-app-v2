@@ -48,12 +48,21 @@ export const CardReviewSummary = () => {
                     ? ""
                     : "border-r border-b-zinc-300"
                 }`}
-                onClick={() => {
-                  setIsStarSelected(index);
-                }}
               >
                 <p>{miniReview.date}</p>
-                <StarReviewIcon className="w-20 h-20" />
+                <StarReviewIcon
+                  props={{
+                    className: `w-20 h-20 ${
+                      index === isStarSelected ? "text-[#004EEB]" : ""
+                    }`,
+                  }}
+                  pathProps={{
+                    className: "cursor-pointer",
+                    onClick: () => {
+                      setIsStarSelected(index);
+                    },
+                  }}
+                />
                 <p>{miniReview.score}</p>
               </div>
             )
