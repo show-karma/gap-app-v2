@@ -2,6 +2,7 @@
 import { StarReviewIcon } from "@/components/Icons/StarReview";
 import { useState } from "react";
 import { CardReview } from "./CardReview";
+import { ChevronDown } from "@/components/Icons";
 
 export const CardReviewSummary = () => {
   const [isStarSelected, setIsStarSelected] = useState<number | null>(null); // ID
@@ -64,11 +65,16 @@ export const CardReviewSummary = () => {
                   }}
                 />
                 <p>{miniReview.score}</p>
+                {isStarSelected === index && (
+                  <div>
+                    <ChevronDown />
+                  </div>
+                )}
               </div>
             )
           )}
         </div>
-        <div className="w-full flex">
+        <div className="w-full flex flex-col">
           {isStarSelected !== null && <CardReview id={isStarSelected} />}
         </div>
       </div>
