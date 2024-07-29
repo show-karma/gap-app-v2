@@ -8,8 +8,9 @@ import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-index
 import { StarIcon } from "@/components/Icons";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/Utilities/Button";
-import { CardReview } from "./CardReview";
-import { NavbarReview } from "./NavbarReview";
+import { NavbarReview } from "@/components/Pages/Project/Review/NavbarReview";
+// import { useConnectModal } from "@rainbow-me/rainbowkit";
+// import { useAccount } from "wagmi";
 
 interface GrantAllReviewsProps {
   grant: IGrantResponse | undefined;
@@ -54,6 +55,8 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
   const [page, setPage] = useState(1);
   const [pageAnon, setPageAnon] = useState(1);
   const pageLimit = 10;
+  // const { openConnectModal } = useConnectModal();
+  // const { isConnected, address } = useAccount();
 
   useEffect(() => {
     if (!grant) return;
@@ -149,7 +152,9 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
             </h2>
             <Button
               disabled={false}
-              onClick={() => {}}
+              // onClick={() => {
+              //   isConnected ?? openConnectModal;
+              // }} // To DO: Check if the user is connected and create a new Review.
               className="flex justify-center items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100  hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900"
             >
               <StarIcon />
@@ -158,8 +163,6 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
           </div>
 
           <NavbarReview />
-
-          {/* <CardReview /> */}
         </div>
       </div>
     </div>
