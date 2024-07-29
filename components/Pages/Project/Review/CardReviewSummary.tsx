@@ -37,47 +37,44 @@ export const CardReviewSummary = () => {
   ];
 
   return (
-    <>
-      <div className="w-full flex flex-col">
-        <div className="w-full flex px-2 gap-2 ">
-          {MiniReviewSummary.map(
-            (miniReview: MiniReviewSummaryProps, index: number) => (
-              <div
-                key={miniReview.id}
-                className={`w-fit flex flex-col justify-center items-center px-10 ${
-                  MiniReviewSummary.length - 1 === index
-                    ? ""
-                    : "border-r border-b-zinc-300"
-                }`}
-              >
-                <p>{miniReview.date}</p>
-                <StarReviewIcon
-                  props={{
-                    className: `w-20 h-20 ${
-                      index === isStarSelected ? "text-[#004EEB]" : ""
-                    }`,
-                  }}
-                  pathProps={{
-                    className: "cursor-pointer",
-                    onClick: () => {
-                      setIsStarSelected(index);
-                    },
-                  }}
-                />
-                <p>{miniReview.score}</p>
-                {isStarSelected === index && (
-                  <div>
-                    <ChevronDown />
-                  </div>
-                )}
-              </div>
-            )
-          )}
-        </div>
-        <div className="w-full flex flex-col">
-          {isStarSelected !== null && <CardReview id={isStarSelected} />}
-        </div>
+    <div className="w-full flex flex-col">
+      <div className="w-full flex px-2 gap-2 ">
+        {MiniReviewSummary.map(
+          (miniReview: MiniReviewSummaryProps, index: number) => (
+            <div
+              key={miniReview.id}
+              className={`w-fit flex flex-col justify-center items-center px-10 ${
+                MiniReviewSummary.length - 1 !== index &&
+                "border-r border-b-zinc-300"
+              }`}
+            >
+              <p>{miniReview.date}</p>
+              <StarReviewIcon
+                props={{
+                  className: `w-20 h-20 ${
+                    isStarSelected === index && "text-[#004EEB]"
+                  }`,
+                }}
+                pathProps={{
+                  className: "cursor-pointer",
+                  onClick: () => {
+                    setIsStarSelected(index);
+                  },
+                }}
+              />
+              <p>{miniReview.score}</p>
+              {isStarSelected === index && (
+                <div>
+                  <ChevronDown />
+                </div>
+              )}
+            </div>
+          )
+        )}
       </div>
-    </>
+      <div className="w-full flex flex-col">
+        {isStarSelected !== null && <CardReview id={isStarSelected} />}
+      </div>
+    </div>
   );
 };
