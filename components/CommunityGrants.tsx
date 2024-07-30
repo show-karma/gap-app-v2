@@ -182,7 +182,7 @@ export const CommunityGrants = ({
       <div className="flex items-center justify-between flex-row flex-wrap-reverse max-lg:flex-wrap max-lg:flex-col-reverse max-lg:justify-start max-lg:items-start gap-3 max-lg:gap-4">
         <div className="text-2xl font-semibold text-gray-900 dark:text-zinc-100 max-2xl:text-xl">
           Total Grants {totalGrants ? `(${totalGrants})` : null}{" "}
-          {!isLoading ? `on ${totalProjects || 0} projects` : null}
+          {!isLoading ? `across ${totalProjects || 0} projects` : null}
         </div>
         <div className="flex items-center gap-x-3 flex-wrap gap-y-2">
           {/* Filter by category start */}
