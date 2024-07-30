@@ -120,7 +120,7 @@ const UpdateBlock = ({
       const instanceProject = await gapClient.fetch.projectById(project?.uid);
       if (!instanceProject) return;
       const findUpdate = instanceProject.updates.find(
-        (update) => update.uid === update.refUID
+        (update) => update.uid === update.uid
       );
       if (!findUpdate) return;
       await findUpdate
@@ -131,10 +131,10 @@ const UpdateBlock = ({
           let fetchedProject = null;
           while (retries > 0) {
             fetchedProject = await gapClient!.fetch
-              .projectById(project?.uid as Hex)
-              .catch(() => null);
+            .projectById(project?.uid as Hex)
+            .catch(() => null);
             const stillExists = fetchedProject?.updates?.find(
-              (update) => update.uid === update.uid
+              (upd) => ( (upd as any)?._uid || upd.uid  ) === update.uid
             );
             if (!stillExists) {
               retries = 0;
