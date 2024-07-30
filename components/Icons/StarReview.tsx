@@ -5,7 +5,7 @@ export const StarReviewIcon = ({
   props,
   pathProps,
 }: {
-  props: SVGProps<SVGSVGElement>;
+  props?: SVGProps<SVGSVGElement>;
   pathProps?: React.SVGProps<SVGPathElement>;
 }) => {
   return (
