@@ -11,49 +11,29 @@ export const CardReviewSummary = () => {
   interface MiniReviewSummaryProps {
     id: number;
     date: number; // UNIX Timestamp
-    score: number;
+    scoreMedia: number;
   }
 
   const MiniReviewSummary: MiniReviewSummaryProps[] = [
     {
       id: 1,
       date: 1727136000, // 24 July, 2024 in Unix timestamp
-      score: 4.6,
+      scoreMedia: 4.6,
     },
     {
       id: 2,
       date: 1727222400, // 25 July, 2024 in Unix timestamp
-      score: 4.4,
+      scoreMedia: 4.4,
     },
     {
       id: 3,
       date: 1727308800, // 26 July, 2024 in Unix timestamp
-      score: 4.1,
+      scoreMedia: 4.1,
     },
     {
       id: 4,
       date: 1727395200, // 27 July, 2024 in Unix timestamp
-      score: 4.9,
-    },
-    {
-      id: 5,
-      date: 1727395200, // 27 July, 2024 in Unix timestamp
-      score: 4.9,
-    },
-    {
-      id: 6,
-      date: 1727395200, // 27 July, 2024 in Unix timestamp
-      score: 4.9,
-    },
-    {
-      id: 7,
-      date: 1727395200, // 27 July, 2024 in Unix timestamp
-      score: 4.9,
-    },
-    {
-      id: 8,
-      date: 1727395200, // 27 July, 2024 in Unix timestamp
-      score: 4.9,
+      scoreMedia: 4.9,
     },
   ];
 
@@ -87,7 +67,7 @@ export const CardReviewSummary = () => {
                   },
                 }}
               />
-              <p>{miniReview.score}</p>
+              <p>{miniReview.scoreMedia}</p>
               {isStarSelected === index && (
                 <div>
                   <ChevronDown />
@@ -98,7 +78,21 @@ export const CardReviewSummary = () => {
         )}
       </div>
       <div className="w-full flex flex-col">
-        {isStarSelected !== null && <CardReview id={isStarSelected} />}
+        {isStarSelected !== null && (
+          <CardReview
+            id={isStarSelected}
+            editableReview={true}
+            // newReview={false}
+          />
+        )}
+        {/*         
+        // : (
+        //   <CardReview
+        //     id={99999999999} // get the last index from data and add + 1 to be the last one created.
+        //     editableReview={true}
+        //     newReview={true}
+        //   />
+        // ) */}
       </div>
     </div>
   );
