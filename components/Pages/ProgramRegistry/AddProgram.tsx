@@ -314,7 +314,16 @@ export default function AddProgram({
       if (error) {
         throw new Error("Error creating program");
       }
-      toast.success("Program created successfully");
+      toast.success(
+        <p className="text-left">
+          You have successfully created the grant program.
+          <br />
+          We will review and approve the program shortly.
+        </p>,
+        {
+          duration: 20000,
+        }
+      );
       router.push(PAGES.REGISTRY.ROOT);
     } catch (error) {
       console.log(error);
