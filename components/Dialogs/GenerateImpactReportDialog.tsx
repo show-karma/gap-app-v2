@@ -234,7 +234,7 @@ function GenerateDocument({
                 marginBottom: 5,
               }}
             >
-              {grant.details?.data.title} - Impact Report
+              {grant.details?.data?.title} - Impact Report
             </Text>
             <Text
               style={{
@@ -430,7 +430,7 @@ function GenerateDocument({
                       fontWeight: 600,
                     }}
                   >
-                    🚩 #{index + 1} {JSON.stringify(milestone.data.title)}
+                    🚩 #{index + 1} {JSON.stringify(milestone?.data?.title)}
                   </Text>
                   <View
                     style={{
@@ -449,7 +449,7 @@ function GenerateDocument({
                       }}
                     >
                       {replaceImageUrls(
-                        renderToHTML(milestone.data.description)
+                        renderToHTML(milestone?.data?.description)
                       )}
                     </Html>
                   </View>
@@ -795,7 +795,7 @@ export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
                       }
                       fileName={`${
                         project?.details?.data?.slug || "project"
-                      }-impact-report-${grant?.details?.data?.title.replaceAll(
+                      }-impact-report-${grant?.details?.data?.title?.replaceAll(
                         " ",
                         "-"
                       )}.pdf`}
