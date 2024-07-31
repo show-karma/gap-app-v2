@@ -8,7 +8,16 @@ export const MESSAGES = {
     },
     MEMBERS: "Invalid address",
   },
-
+  PROJECT_UPDATE_FORM: {
+    TITLE: "Title must be at least 3 characters",
+    TEXT: "Text must be at least 3 characters",
+    SUCCESS: "Update was successfully added to the project.",
+    ERROR: "There was an error creating the update. Please try again.",
+    DELETE: {
+      SUCCESS: "Update deleted successfully",
+      ERROR: "There was an error deleting the update. Please try again",
+    },
+  },
   COMMUNITY_FORM: {
     TITLE: "Title must be at least 3 characters",
     IMAGE_URL: "ENTER a valid Image url",
@@ -199,6 +208,9 @@ export const MESSAGES = {
       ERROR: "There was an error transferring ownership. Please try again",
     },
     EMPTY: {
+      UPDATES: {
+        NOT_CREATED: `Project owner is working on adding project updates. Check back in a few days :)`,
+      },
       IMPACTS: {
         NOT_CREATED: `Project owner is working on adding impact attestations. Check back in a few days :)`,
         NOT_CREATED_USER: `Create a new impact attestation to show the world the impact of your work!`,
