@@ -162,7 +162,7 @@ function ProjectPage() {
 
   const Team = () => {
     return members.length ? (
-      <div className="flex flex-col gap-2 w-full">
+      <div className="flex flex-col gap-2 w-full min-w-48">
         <div className="font-semibold text-black dark:text-white leading-none">
           Team
         </div>
@@ -178,7 +178,7 @@ function ProjectPage() {
                 className="h-8 w-8 rounded-full"
               />
               <div className="flex flex-col gap-1">
-                <p className="text-sm font-bold text-[#101828] dark:text-gray-400 line-clamp-1 text-wrap whitespace-nowrap">
+                <p className="text-sm font-bold text-[#101828] dark:text-gray-400 line-clamp-1 text-wrap whitespace-nowrap w-full">
                   {member.details?.name ||
                     ensNames[member.recipient as Hex]?.name ||
                     shortAddress(member.recipient)}
@@ -212,11 +212,11 @@ function ProjectPage() {
 
   return (
     <div className="flex flex-row max-lg:flex-col gap-6 max-md:gap-4 py-5 mb-20">
-      <div className="flex flex-[2] gap-6 flex-col w-full max-lg:hidden">
+      <div className="flex flex-[2.5] gap-6 flex-col w-full max-lg:hidden">
         <ProjectBlocks />
         <Team />
       </div>
-      <div className="flex flex-col flex-[8] max-lg:w-full gap-4">
+      <div className="flex flex-col flex-[7.5] max-lg:w-full gap-4">
         <ProjectBodyTabs />
       </div>
       <div className="flex flex-col flex-[4] gap-8 max-lg:w-full">

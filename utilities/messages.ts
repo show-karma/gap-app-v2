@@ -208,6 +208,9 @@ export const MESSAGES = {
       ERROR: "There was an error transferring ownership. Please try again",
     },
     EMPTY: {
+      UPDATES: {
+        NOT_CREATED: `Project owner is working on adding project updates. Check back in a few days :)`,
+      },
       IMPACTS: {
         NOT_CREATED: `Project owner is working on adding impact attestations. Check back in a few days :)`,
         NOT_CREATED_USER: `Create a new impact attestation to show the world the impact of your work!`,
