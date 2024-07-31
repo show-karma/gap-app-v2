@@ -4,12 +4,12 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { cn } from "@/utilities/tailwind";
 import { useQueryState } from "nuqs";
-import { ButtonHTMLAttributes, FC, ReactNode, useState } from "react";
+import { ButtonHTMLAttributes, FC, useState } from "react";
 import { ProjectUpdateForm } from "./ProjectUpdateForm";
 import { IProjectUpdate } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { formatDate } from "@/utilities/formatDate";
 import { DeleteDialog } from "@/components/DeleteDialog";
-import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/solid";
+import { TrashIcon } from "@heroicons/react/24/outline";
 import { ReadMore } from "@/utilities/ReadMore";
 import { getGapClient, useGap } from "@/hooks";
 import { useStepper } from "@/store/modals/txStepper";
@@ -22,7 +22,7 @@ import { useAccount, useSwitchChain } from "wagmi";
 import { config } from "@/utilities/wagmi/config";
 import { Hex } from "viem";
 
-const InformationTab = () => {
+const InformationTab: FC = () => {
   const { project } = useProjectStore();
   return (
     <>
@@ -228,7 +228,7 @@ const UpdateBlock = ({
   );
 };
 
-const UpdatesTab = () => {
+const UpdatesTab: FC = () => {
   const { project } = useProjectStore();
 
   const isOwner = useOwnerStore((state) => state.isOwner);
@@ -358,11 +358,14 @@ export function ProjectBodyTabs() {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isAuthorized = isOwner || isProjectOwner;
 
-  const Tab = tabs[activeTab as keyof typeof tabs] || tabs.info;
-
-  if (protectedTabs.includes(activeTab) && !isAuthorized) {
-    setActiveTab("info");
-  }
+  const getActiveTab = () => {
+    if (protectedTabs.includes(activeTab) && !isAuthorized) {
+      const InfoTab = tabs.info;
+      return <InfoTab />;
+    }
+    const Tab = tabs[activeTab as keyof typeof tabs] || tabs.info;
+    return <Tab />;
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -384,7 +387,7 @@ export function ProjectBodyTabs() {
           Updates
         </TabButton>
       </div>
-      <Tab />
+      {getActiveTab()}
     </div>
   );
 }
