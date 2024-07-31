@@ -251,8 +251,8 @@ export const ProgramsExplorer = () => {
             <p className="text-start text-lg max-lg:text-base max-w-5xl text-black dark:text-white">
               Explore our curated list of grant programs for innovators and
               creators: from tech pioneers to community leaders, there is a
-              grant program to elevate your project. Did we miss a
-              program/bounty?
+              grant program to elevate your project. Find and apply for a grant
+              now!
             </p>
           </div>
           <div className="flex flex-row gap-4 flex-wrap">
