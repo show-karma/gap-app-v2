@@ -118,11 +118,15 @@ const UpdateBlock = ({
       const walletSigner = await walletClientToSigner(walletClient);
 
       const instanceProject = await gapClient.fetch.projectById(project?.uid);
-      if (!instanceProject) return;
+      if (!instanceProject) {
+        throw new Error("Project not found");
+      }
       const findUpdate = instanceProject.updates.find(
-        (update) => update.uid === update.uid
+        (upd) => upd.uid === update.uid
       );
-      if (!findUpdate) return;
+      if (!findUpdate) {
+        throw new Error("Update not found");
+      }
       await findUpdate
         .revoke(walletSigner as any, changeStepperStep)
         .then(async () => {
@@ -131,10 +135,10 @@ const UpdateBlock = ({
           let fetchedProject = null;
           while (retries > 0) {
             fetchedProject = await gapClient!.fetch
-            .projectById(project?.uid as Hex)
-            .catch(() => null);
+              .projectById(project?.uid as Hex)
+              .catch(() => null);
             const stillExists = fetchedProject?.updates?.find(
-              (upd) => ( (upd as any)?._uid || upd.uid  ) === update.uid
+              (upd) => ((upd as any)?._uid || upd.uid) === update.uid
             );
             if (!stillExists) {
               retries = 0;
