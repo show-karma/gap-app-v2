@@ -35,11 +35,26 @@ export const NavbarReview = () => {
       date: 1727395200, // 27 July, 2024 in Unix timestamp
       scoreMedia: 4.9,
     },
+    {
+      id: 5,
+      date: 1719792000, // 1 July, 2024 in Unix timestamp
+      scoreMedia: 4.9,
+    },
+    {
+      id: 6,
+      date: 1672531200, // 1 January, 2023 in Unix timestamp
+      scoreMedia: 4.9,
+    },
+    {
+      id: 7,
+      date: 1356998400, // 1 January, 2013 in Unix timestamp
+      scoreMedia: 4.9,
+    },
   ];
 
   return (
     <div className="w-full flex flex-col">
-      <div className="w-full flex px-2 gap-2 overflow-x-auto">
+      <div className="w-full flex px-2 gap-2 overflow-x-auto pb-4">
         {MiniReviewSummary.sort((a, b) => b.date - a.date).map(
           (miniReview: MiniReviewSummaryProps, index: number) => (
             <div
