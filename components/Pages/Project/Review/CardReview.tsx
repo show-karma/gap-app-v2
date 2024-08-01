@@ -266,10 +266,10 @@ export const CardReview = (data: CardReviewDataProps) => {
     <div className="flex w-full flex-col justify-center gap-4">
       <div className="w-full flex flex-col px-2 gap-2">
         {selectedBadgeList.map((badge: BadgeListProps, index: number) => (
-          <div key={index} className="flex flex-col w-full">
-            <div className="flex flex-row w-full items-center gap-2">
+          <div key={index} className="flex flex-col w-full pl-14">
+            <div className="flex flex-row w-full items-center gap-3">
               <div>{badge.icon}</div>
-              <div>{badge.description}</div>
+              <div className="text-sm">{badge.description}</div>
               <div>
                 {data.editableReview ? (
                   <DynamicStarsReview
