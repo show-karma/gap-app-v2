@@ -57,6 +57,11 @@ const TransferOwnershipDialog = dynamic(() =>
     (mod) => mod.TransferOwnershipDialog
   )
 );
+const MergeProjectDialog = dynamic(() =>
+  import("@/components/Dialogs/MergeProjectDialog").then(
+    (mod) => mod.MergeProjectDialog
+  )
+);
 
 function ProjectPage() {
   const project = useProjectStore((state) => state.project);
@@ -128,13 +133,16 @@ function ProjectPage() {
     const members: Member[] = [];
     if (project?.members) {
       project.members.forEach((member) => {
-        members.push({
-          uid: member.uid,
-          recipient: member.recipient,
-          details: {
-            name: member?.details?.name,
-          },
-        });
+        if (!members.find((m) => m.recipient === member.recipient)) {
+          members.push({
+            uid: member.uid,
+            recipient: member.recipient,
+            details: {
+              name: member?.details?.name,
+            },
+          });
+        }
+
       });
     }
     const alreadyHasOwner = project?.members.find(
@@ -184,7 +192,7 @@ function ProjectPage() {
                     shortAddress(member.recipient)}
                 </p>
                 {member.recipient?.toLowerCase() ===
-                project?.recipient?.toLowerCase() ? (
+                  project?.recipient?.toLowerCase() ? (
                   <p className="text-sm text-brand-blue font-medium leading-none">
                     Owner
                   </p>
@@ -250,6 +258,14 @@ function ProjectPage() {
               <GrantsGenieDialog />
             </div>
             <div className="flex flex-row flex-wrap justify-between gap-2 max-lg:flex-col w-full max-lg:max-w-80">
+              <MergeProjectDialog
+                buttonElement={{
+                  icon: null,
+                  text: "Merge",
+                  styleClass:
+                    "bg-red-600 items-center justify-center hover:bg-red-500 flex-1 max-lg:w-full",
+                }}
+              />
               <TransferOwnershipDialog
                 buttonElement={{
                   icon: null,
