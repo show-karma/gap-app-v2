@@ -6,7 +6,9 @@ import { ArrowLeftIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
 interface Props {
   currentPage: number;
   totalPosts: number;
-  setCurrentPage: React.Dispatch<React.SetStateAction<number>>;
+  setCurrentPage:
+    | React.Dispatch<React.SetStateAction<number>>
+    | ((page: number) => void);
   postsPerPage: number;
 }
 
