@@ -143,7 +143,8 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
     }
   };
   const isAuthorized = useAuthStore((state) => state.isAuth);
-  const ableToVerify = isAuthorized && isConnected;
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const ableToVerify = isAuthorized && isConnected && !isProjectOwner;
   if (hasVerifiedThis || !ableToVerify) return null;
 
   return (
