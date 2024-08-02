@@ -1,7 +1,6 @@
 "use client";
 import React, { Fragment, useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import type { Grant } from "@show-karma/karma-gap-sdk";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
 import { useAccount } from "wagmi";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -29,6 +28,7 @@ import { useAuthStore } from "@/store/auth";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { useQuery } from "@tanstack/react-query";
 
 interface GrantEdited {
   uid: string;
@@ -51,23 +51,26 @@ type SimplifiedGrants = {
   projectSlug: string;
 };
 
-const milestonesPercentage = (grantToCalculate: Grant) => {
-  const total = grantToCalculate.milestones?.length;
-  const completed = grantToCalculate.milestones?.filter(
-    (milestone) => milestone.completed
-  ).length;
-  if (!total) return 0;
-  return Math.round((completed / total) * 100) || 0;
-};
+interface Report {}
 
 export const metadata = defaultMetadata;
 
-export default function EditCategoriesPage() {
+export const MilestoneReportPage = () => {
+  const params = useParams();
+  const communityId = params.communityId as string;
+  const { data, isLoading: feedLoading } = useQuery<Report[]>({
+    queryKey: ["communityFeed", communityId],
+    queryFn: async () => {
+      const [data]: any = await fetchData(
+        `${INDEXER.COMMUNITY.FEED(communityId as string)}?limit=${itemsPerPage}`
+      );
+      return data || [];
+    },
+    enabled: Boolean(communityId),
+  });
   const router = useRouter();
   const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore();
-  const params = useParams();
-  const communityId = params.communityId as string;
   const [grants, setGrants] = useState<SimplifiedGrants[]>([]);
   const [categoriesOptions, setCategoriesOptions] = useState<
     CategoriesOptions[]
@@ -268,9 +271,6 @@ export default function EditCategoriesPage() {
                 Return to admin page
               </Button>
             </Link>
-            <div className="flex">
-              <CategoryCreationDialog refreshCategories={getCategories} />
-            </div>
           </div>
           <div className="flex flex-col justify-center w-full max-w-full overflow-x-auto rounded-md border">
             <table className="pt-3 min-w-full divide-y dark:bg-zinc-900 divide-gray-300 dark:divide-zinc-800 dark:text-white">
@@ -462,4 +462,4 @@ export default function EditCategoriesPage() {
       )}
     </div>
   );
-}
+};
