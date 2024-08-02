@@ -249,7 +249,7 @@ const UpdatesTab: FC = () => {
         {isAuthorized ? (
           <Button
             onClick={() => setActiveTab("post-update")}
-            className="flex h-max w-max dark:bg-zinc-9000 dark:text-white text-zinc-900 flex-row items-center justify-center gap-3 rounded border border-black bg-transparent px-3 py-1 text-sm font-semibold hover:bg-transparent hover:opacity-75"
+            className="flex h-max w-max dark:bg-zinc-900 dark:text-white text-zinc-900 flex-row items-center justify-center gap-3 rounded border border-black bg-transparent px-3 py-1 text-sm font-semibold hover:bg-transparent hover:opacity-75"
           >
             Post a Project Update
           </Button>

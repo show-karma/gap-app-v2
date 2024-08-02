@@ -250,244 +250,216 @@ export default function EditCategoriesPage() {
   };
 
   return (
-    <div className="px-4 sm:px-6 lg:px-12 py-5">
-      <div className="py-8 rounded-xl bg-black border border-primary-800 text-center flex flex-col gap-2 justify-center w-full items-center">
-        <div className="flex justify-center">
-          {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
-          <img
-            src={community?.details?.data?.imageURL}
-            className={cn(
-              "h-14 w-14 rounded-full",
-              loading ? "animate-pulse bg-gray-600" : ""
-            )}
-          />
+    <div className="mt-12 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
+      {loading ? (
+        <div className="flex w-full items-center justify-center">
+          <Spinner />
         </div>
-
-        <div className="mt-3 text-3xl font-black text-white w-max flex flex-row gap-2">
-          <span
-            className={cn(
-              loading
-                ? "animate-pulse min-w-32 bg-gray-600 rounded-lg px-4 py-0"
-                : ""
-            )}
-          >
-            {community && !loading ? community.details?.data?.name : ""}
-          </span>{" "}
-          Admin
-        </div>
-      </div>
-
-      <div className="mt-12 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
-        {loading ? (
-          <div className="flex w-full items-center justify-center">
-            <Spinner />
-          </div>
-        ) : isAdmin ? (
-          <div className="w-full flex flex-col gap-8">
-            <div className="w-full flex flex-row items-center justify-between">
-              <Link
-                href={PAGES.ADMIN.ROOT(
-                  community?.details?.data?.slug || (community?.uid as string)
-                )}
-              >
-                <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
-                  <ChevronLeftIcon className="h-5 w-5" />
-                  Return to admin page
-                </Button>
-              </Link>
-              <div className="flex">
-                <CategoryCreationDialog refreshCategories={getCategories} />
-              </div>
+      ) : isAdmin ? (
+        <div className="w-full flex flex-col gap-8">
+          <div className="w-full flex flex-row items-center justify-between">
+            <Link
+              href={PAGES.ADMIN.ROOT(
+                community?.details?.data?.slug || (community?.uid as string)
+              )}
+            >
+              <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
+                <ChevronLeftIcon className="h-5 w-5" />
+                Return to admin page
+              </Button>
+            </Link>
+            <div className="flex">
+              <CategoryCreationDialog refreshCategories={getCategories} />
             </div>
-            <div className="flex flex-col justify-center w-full max-w-full overflow-x-auto rounded-md border">
-              <table className="pt-3 min-w-full divide-y dark:bg-zinc-900 divide-gray-300 dark:divide-zinc-800 dark:text-white">
-                <thead>
-                  <tr className="border-b transition-colors text-gray-500 dark:text-gray-200 hover:bg-muted/50 data-[state=selected]:bg-muted">
-                    <th
-                      scope="col"
-                      className="h-12 px-4 text-left align-middle font-medium"
+          </div>
+          <div className="flex flex-col justify-center w-full max-w-full overflow-x-auto rounded-md border">
+            <table className="pt-3 min-w-full divide-y dark:bg-zinc-900 divide-gray-300 dark:divide-zinc-800 dark:text-white">
+              <thead>
+                <tr className="border-b transition-colors text-gray-500 dark:text-gray-200 hover:bg-muted/50 data-[state=selected]:bg-muted">
+                  <th
+                    scope="col"
+                    className="h-12 px-4 text-left align-middle font-medium"
+                  >
+                    Project
+                  </th>
+                  <th
+                    scope="col"
+                    className="h-12 px-4 text-left align-middle font-medium"
+                  >
+                    Grant Title
+                  </th>
+                  <th
+                    scope="col"
+                    className="h-12 px-4 text-left align-middle font-medium"
+                  >
+                    Description
+                  </th>
+                  <th
+                    scope="col"
+                    className="h-12 px-4 text-left align-middle font-medium"
+                  >
+                    Categories
+                  </th>
+                  <th
+                    scope="col"
+                    className="h-12 px-4 text-left align-middle font-medium"
+                  >
+                    Edit categories
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="px-4 divide-y divide-gray-200 dark:divide-zinc-800">
+                {grants.map((grant) => {
+                  const categories =
+                    grantsEdited.find((item) => item.uid === grant.uid)
+                      ?.categories || grant.categories;
+                  return (
+                    <tr
+                      key={grant.uid}
+                      className="dark:text-zinc-300 text-gray-900 px-4 py-4"
                     >
-                      Project
-                    </th>
-                    <th
-                      scope="col"
-                      className="h-12 px-4 text-left align-middle font-medium"
-                    >
-                      Grant Title
-                    </th>
-                    <th
-                      scope="col"
-                      className="h-12 px-4 text-left align-middle font-medium"
-                    >
-                      Description
-                    </th>
-                    <th
-                      scope="col"
-                      className="h-12 px-4 text-left align-middle font-medium"
-                    >
-                      Categories
-                    </th>
-                    <th
-                      scope="col"
-                      className="h-12 px-4 text-left align-middle font-medium"
-                    >
-                      Edit categories
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="px-4 divide-y divide-gray-200 dark:divide-zinc-800">
-                  {grants.map((grant) => {
-                    const categories =
-                      grantsEdited.find((item) => item.uid === grant.uid)
-                        ?.categories || grant.categories;
-                    return (
-                      <tr
-                        key={grant.uid}
-                        className="dark:text-zinc-300 text-gray-900 px-4 py-4"
-                      >
-                        <td className="px-4 py-2 font-medium h-16">
-                          <ExternalLink
-                            href={PAGES.PROJECT.OVERVIEW(
-                              grant.projectSlug || grant.projectUid
-                            )}
-                            className="max-w-full line-clamp-2 underline"
-                          >
-                            {grant.project}
-                          </ExternalLink>
-                        </td>
-                        <td className="px-4 py-2">
-                          <ExternalLink
-                            href={PAGES.PROJECT.GRANT(
-                              grant.projectSlug || grant.projectUid,
-                              grant.uid
-                            )}
-                            className="max-w-full line-clamp-2 underline w-max"
-                          >
-                            {grant.grant}
-                          </ExternalLink>
-                        </td>
-                        <td className="px-4 py-2">
-                          <div className=" max-w-[200px] line-clamp-2">
-                            {grant.description}
-                          </div>
-                        </td>
-                        <td className="px-4 py-2 max-w-[200px]">
-                          {grant.categories.join(", ")}
-                        </td>
-                        <td className="w-max">
-                          <Listbox
-                            value={categories}
-                            onChange={(value) => editGrant(grant.uid, value)}
-                            multiple
-                          >
-                            {({ open }) => (
-                              <div className="flex items-center gap-x-2">
-                                <div className="relative flex-1 w-56">
-                                  <Listbox.Button className=" dark:bg-zinc-800 dark:text-white relative w-full max-w-[200px] cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900  ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
-                                    <p className="block truncate">
-                                      {categories.length > 0
-                                        ? `${categories.length} 
+                      <td className="px-4 py-2 font-medium h-16">
+                        <ExternalLink
+                          href={PAGES.PROJECT.OVERVIEW(
+                            grant.projectSlug || grant.projectUid
+                          )}
+                          className="max-w-full line-clamp-2 underline"
+                        >
+                          {grant.project}
+                        </ExternalLink>
+                      </td>
+                      <td className="px-4 py-2">
+                        <ExternalLink
+                          href={PAGES.PROJECT.GRANT(
+                            grant.projectSlug || grant.projectUid,
+                            grant.uid
+                          )}
+                          className="max-w-full line-clamp-2 underline w-max"
+                        >
+                          {grant.grant}
+                        </ExternalLink>
+                      </td>
+                      <td className="px-4 py-2">
+                        <div className=" max-w-[200px] line-clamp-2">
+                          {grant.description}
+                        </div>
+                      </td>
+                      <td className="px-4 py-2 max-w-[200px]">
+                        {grant.categories.join(", ")}
+                      </td>
+                      <td className="w-max">
+                        <Listbox
+                          value={categories}
+                          onChange={(value) => editGrant(grant.uid, value)}
+                          multiple
+                        >
+                          {({ open }) => (
+                            <div className="flex items-center gap-x-2">
+                              <div className="relative flex-1 w-56">
+                                <Listbox.Button className=" dark:bg-zinc-800 dark:text-white relative w-full max-w-[200px] cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900  ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
+                                  <p className="block truncate">
+                                    {categories.length > 0
+                                      ? `${categories.length} 
                         ${pluralize("category", categories.length)} selected`
-                                        : "Categories"}
-                                    </p>
-                                    <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                                      <ChevronUpDownIcon
-                                        className="h-5 w-5 text-gray-400"
-                                        aria-hidden="true"
-                                      />
-                                    </span>
-                                  </Listbox.Button>
+                                      : "Categories"}
+                                  </p>
+                                  <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                                    <ChevronUpDownIcon
+                                      className="h-5 w-5 text-gray-400"
+                                      aria-hidden="true"
+                                    />
+                                  </span>
+                                </Listbox.Button>
 
-                                  <Transition
-                                    show={open}
-                                    as={Fragment}
-                                    leave="transition ease-in duration-100"
-                                    leaveFrom="opacity-100"
-                                    leaveTo="opacity-0"
-                                  >
-                                    <Listbox.Options className="dark:bg-zinc-800 dark:text-white absolute z-10 mt-1 max-h-60 w-full max-w-max min-w-[200px] overflow-auto rounded-md bg-white py-1 text-base  ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                                      {categoriesOptions.map((category) => (
-                                        <Listbox.Option
-                                          key={category.id}
-                                          className={({ active }) =>
-                                            cn(
-                                              active
-                                                ? "bg-gray-100 text-black dark:text-gray-300 dark:bg-zinc-900"
-                                                : "text-gray-900 dark:text-gray-200 ",
-                                              "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
-                                            )
-                                          }
-                                          value={category.name}
-                                        >
-                                          {({ selected, active }) => {
-                                            return (
-                                              <>
+                                <Transition
+                                  show={open}
+                                  as={Fragment}
+                                  leave="transition ease-in duration-100"
+                                  leaveFrom="opacity-100"
+                                  leaveTo="opacity-0"
+                                >
+                                  <Listbox.Options className="dark:bg-zinc-800 dark:text-white absolute z-10 mt-1 max-h-60 w-full max-w-max min-w-[200px] overflow-auto rounded-md bg-white py-1 text-base  ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                                    {categoriesOptions.map((category) => (
+                                      <Listbox.Option
+                                        key={category.id}
+                                        className={({ active }) =>
+                                          cn(
+                                            active
+                                              ? "bg-gray-100 text-black dark:text-gray-300 dark:bg-zinc-900"
+                                              : "text-gray-900 dark:text-gray-200 ",
+                                            "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
+                                          )
+                                        }
+                                        value={category.name}
+                                      >
+                                        {({ selected, active }) => {
+                                          return (
+                                            <>
+                                              <span
+                                                className={cn(
+                                                  selected
+                                                    ? "font-semibold"
+                                                    : "font-normal",
+                                                  "block truncate"
+                                                )}
+                                              >
+                                                {category.name}
+                                              </span>
+
+                                              {selected ? (
                                                 <span
                                                   className={cn(
-                                                    selected
-                                                      ? "font-semibold"
-                                                      : "font-normal",
-                                                    "block truncate"
+                                                    "text-primary-600 dark:text-primary-400",
+                                                    "absolute inset-y-0 right-0 flex items-center pr-4"
                                                   )}
                                                 >
-                                                  {category.name}
+                                                  <CheckIcon
+                                                    className="h-5 w-5"
+                                                    aria-hidden="true"
+                                                  />
                                                 </span>
-
-                                                {selected ? (
-                                                  <span
-                                                    className={cn(
-                                                      "text-primary-600 dark:text-primary-400",
-                                                      "absolute inset-y-0 right-0 flex items-center pr-4"
-                                                    )}
-                                                  >
-                                                    <CheckIcon
-                                                      className="h-5 w-5"
-                                                      aria-hidden="true"
-                                                    />
-                                                  </span>
-                                                ) : null}
-                                              </>
-                                            );
-                                          }}
-                                        </Listbox.Option>
-                                      ))}
-                                    </Listbox.Options>
-                                  </Transition>
-                                </div>
+                                              ) : null}
+                                            </>
+                                          );
+                                        }}
+                                      </Listbox.Option>
+                                    ))}
+                                  </Listbox.Options>
+                                </Transition>
                               </div>
-                            )}
-                          </Listbox>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-              <div className="dark:bg-zinc-900 flex flex-col pb-4 items-end">
-                <div className="w-full">
-                  <TablePagination
-                    currentPage={currentPage}
-                    setCurrentPage={setCurrentPage}
-                    postsPerPage={itemsPerPage}
-                    totalPosts={totalGrants}
-                  />
-                </div>
-                <Button
-                  disabled={isSaving || grantsEdited.length === 0}
-                  onClick={saveEdits}
-                  className="w-max  mx-4 px-8 py-2 bg-blue-400 text-white rounded-md disabled:opacity-25 dark:bg-blue-900"
-                >
-                  Save
-                </Button>
+                            </div>
+                          )}
+                        </Listbox>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+            <div className="dark:bg-zinc-900 flex flex-col pb-4 items-end">
+              <div className="w-full">
+                <TablePagination
+                  currentPage={currentPage}
+                  setCurrentPage={setCurrentPage}
+                  postsPerPage={itemsPerPage}
+                  totalPosts={totalGrants}
+                />
               </div>
+              <Button
+                disabled={isSaving || grantsEdited.length === 0}
+                onClick={saveEdits}
+                className="w-max  mx-4 px-8 py-2 bg-blue-400 text-white rounded-md disabled:opacity-25 dark:bg-blue-900"
+              >
+                Save
+              </Button>
             </div>
           </div>
-        ) : (
-          <div className="flex w-full items-center justify-center">
-            <p>{MESSAGES.ADMIN.NOT_AUTHORIZED(community?.uid || "")}</p>
-          </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className="flex w-full items-center justify-center">
+          <p>{MESSAGES.ADMIN.NOT_AUTHORIZED(community?.uid || "")}</p>
+        </div>
+      )}
     </div>
   );
 }
