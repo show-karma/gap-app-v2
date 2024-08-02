@@ -356,7 +356,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
                         height={20}
                         src={blo(member.recipient as `0x${string}`, 8)}
                         alt={member.recipient}
-                        className="h-5 w-5 rounded-full border border-gray-100 dark:border-zinc-9000 sm:h-5 sm:w-5"
+                        className="h-5 w-5 rounded-full border border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5"
                       />
                     </span>
                   ))}

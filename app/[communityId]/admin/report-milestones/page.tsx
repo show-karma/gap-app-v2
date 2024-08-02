@@ -2,7 +2,7 @@ import { defaultMetadata } from "@/utilities/meta";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { notFound } from "next/navigation";
 import { zeroUID } from "@/utilities/commons";
-import { MilestoneReportPage } from "@/components/Pages/Admin/MilestoneReportPage";
+import { ReportMilestonePage } from "@/components/Pages/Admin/ReportMilestonePage";
 
 export const metadata = defaultMetadata;
 
@@ -21,5 +21,5 @@ export default async function Page({ params }: Props) {
     notFound();
   }
 
-  return <MilestoneReportPage />;
+  return <ReportMilestonePage community={community} />;
 }
