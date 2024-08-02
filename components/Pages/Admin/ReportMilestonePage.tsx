@@ -203,7 +203,7 @@ export const ReportMilestonePage = ({
                   </th>
                   <th
                     scope="col"
-                    className="h-12 px-4 text-left align-middle font-medium max-w-max"
+                    className="h-12 px-4 text-left align-middle font-medium"
                   >
                     <button
                       className="flex flex-row gap-2 items-center p-0 bg-transparent text-zinc-700 dark:text-zinc-200"
@@ -223,7 +223,7 @@ export const ReportMilestonePage = ({
                   </th>
                   <th
                     scope="col"
-                    className="h-12 px-4 text-left align-middle font-medium max-w-max"
+                    className="h-12 px-4 text-left align-middle font-medium"
                   >
                     <button
                       className="flex flex-row gap-2 items-center p-0 bg-transparent text-zinc-700 dark:text-zinc-200"
@@ -243,7 +243,7 @@ export const ReportMilestonePage = ({
                   </th>
                   <th
                     scope="col"
-                    className="h-12 px-4 text-left align-middle font-medium max-w-max"
+                    className="h-12 px-4 text-left align-middle font-medium"
                   >
                     <button
                       className="flex flex-row gap-2 items-center p-0 bg-transparent text-zinc-700 dark:text-zinc-200"
