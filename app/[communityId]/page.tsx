@@ -56,7 +56,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     // link: [
     //   {
     //     rel: "icon",
-    //     href: "/images/favicon.png",
+    //     href: "/favicon.ico",
     //   },
     // ],
   };
