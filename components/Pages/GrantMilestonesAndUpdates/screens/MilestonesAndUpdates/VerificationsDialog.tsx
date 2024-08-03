@@ -79,11 +79,14 @@ export const VerificationsDialog: FC<VerificationsDialogProps> = ({
 
   useEffect(() => {
     if (communityUid) {
-      gapIndexerApi.communityAdmins(communityUid).then((data) => {
-        setCommunityAdmins(
-          data.data.admins.map((admin) => admin.user.id.toLowerCase())
-        );
-      });
+      gapIndexerApi
+        .communityAdmins(communityUid)
+        .then((data) => {
+          setCommunityAdmins(
+            data.data.admins.map((admin) => admin.user.id.toLowerCase())
+          );
+        })
+        .catch(() => null);
     }
   }, [communityUid]);
 
