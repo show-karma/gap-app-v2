@@ -43,7 +43,7 @@ export async function generateMetadata({
       })),
     },
     icons: {
-      icon: "/images/favicon.png",
+      icon: "/favicon.ico",
     },
   };
 }
