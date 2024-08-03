@@ -328,14 +328,21 @@ interface TabButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const TabButton: FC<TabButtonProps> = ({ isActive, children, ...props }) => {
+  if (isActive) {
+    return (
+      <button
+        type="button"
+        className={cn(tabClasses, "bg-white dark:bg-zinc-700 text-zinc-700")}
+        {...props}
+      >
+        {children}
+      </button>
+    );
+  }
   return (
     <button
       type="button"
-      className={
-        isActive
-          ? cn(tabClasses, "bg-white dark:bg-zinc-700 text-zinc-700")
-          : cn(tabClasses, "text-zinc-500")
-      }
+      className={cn(tabClasses, "text-zinc-500")}
       {...props}
     >
       {children}
