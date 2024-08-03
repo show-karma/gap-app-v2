@@ -6,6 +6,9 @@ module.exports = {
   exclude: ["/stats"],
   sitemapSize: 30000,
   robotsTxtOptions: {
-    additionalSitemaps: ["https://gap.karmahq.xyz/server-sitemap.xml"],
+    additionalSitemaps: [
+      "https://gap.karmahq.xyz/sitemaps/projects/sitemap.xml",
+      "https://gap.karmahq.xyz/sitemaps/communities/sitemap.xml",
+    ],
   },
 };
