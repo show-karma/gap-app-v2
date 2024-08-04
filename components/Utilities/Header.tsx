@@ -95,7 +95,7 @@ export default function Header() {
       }
       await getContractOwner(signer as any, chain as Chain)
         .then((owner) => {
-          setIsOwner(owner.toLowerCase() === address?.toLowerCase());
+          setIsOwner(owner?.toLowerCase() === address?.toLowerCase());
         })
         .finally(() => {
           setIsOwnerLoading(false);
