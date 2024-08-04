@@ -7,7 +7,7 @@ import { Chain } from "viem";
 export async function getContractOwner(
   signer: SignerOrProvider,
   chain: Chain
-): Promise<Hex> {
+): Promise<Hex | undefined> {
   const network = Object.values(Networks).find(
     (n) => +n.chainId === Number(chain.id)
   );
@@ -16,6 +16,6 @@ export async function getContractOwner(
 
   const address = network.contracts.multicall;
   const contract = new Contract(address, MulticallABI, signer as any);
-  const owner = await contract.owner?.();
+  const owner = await contract.owner?.().catch(() => undefined);
   return owner;
 }
