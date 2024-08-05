@@ -14,7 +14,7 @@ import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { MESSAGES } from "@/utilities/messages";
 import { getGapClient, useGap } from "@/hooks";
-import { useProjectStore } from "@/store";
+import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { config } from "@/utilities/wagmi/config";
 import {
@@ -139,7 +139,12 @@ export const VerifyMilestoneUpdateDialog: FC<
   };
   const isAuthorized = useAuthStore((state) => state.isAuth);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const ableToVerify = isAuthorized && isConnected && !isProjectOwner;
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
+  const verifyPermission = () => {
+    if (!isAuthorized || !isConnected) return false;
+    return isContractOwner || !isProjectOwner;
+  };
+  const ableToVerify = verifyPermission();
   if (hasVerifiedThis || !ableToVerify) return null;
 
   return (

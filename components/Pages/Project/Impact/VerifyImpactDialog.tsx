@@ -17,7 +17,7 @@ import { getGapClient, useGap } from "@/hooks";
 
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useStepper } from "@/store/modals/txStepper";
-import { useProjectStore } from "@/store";
+import { useOwnerStore, useProjectStore } from "@/store";
 import { Hex } from "viem";
 import { config } from "@/utilities/wagmi/config";
 import { getProjectById } from "@/utilities/sdk";
@@ -148,7 +148,12 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
   };
   const isAuthorized = useAuthStore((state) => state.isAuth);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const ableToVerify = isAuthorized && isConnected && !isProjectOwner;
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
+  const verifyPermission = () => {
+    if (!isAuthorized || !isConnected) return false;
+    return isContractOwner || !isProjectOwner;
+  };
+  const ableToVerify = verifyPermission();
   const { openConnectModal } = useConnectModal();
 
   if (hasVerifiedThis || !ableToVerify) return null;
