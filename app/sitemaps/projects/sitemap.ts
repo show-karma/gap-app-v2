@@ -23,7 +23,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         );
         const community = await fetch(
           `https://gapapi.karmahq.xyz/communities/${communityID}/grants?pageLimit=${itemsPerPage}&page=${page}`
-        ).then((res) => res.json());
+        )
+          .then((res) => res.json())
+          .catch(() => {
+            console.log("Error fetching projects for community", communityID);
+            return undefined;
+          });
         if (!community) return;
         totalPages = Math.ceil(community?.pageInfo?.totalItems / itemsPerPage);
         raw = raw.concat(community?.data);
