@@ -19,7 +19,6 @@ export const WeeklyActiveUsersChart = () => {
     const fetchData = async () => {
       setIsLoading(true);
       const response: any = await getGAPWeeklyActiveUsers();
-      console.log(response);
       const formattedData = response.map((item: any) => ({
         // eslint-disable-next-line no-underscore-dangle
 
