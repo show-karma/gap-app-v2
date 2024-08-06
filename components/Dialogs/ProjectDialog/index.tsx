@@ -8,7 +8,7 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/solid";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-
+import * as Tooltip from "@radix-ui/react-tooltip";
 import { z } from "zod";
 import { type Hex, isAddress, zeroHash } from "viem";
 import { useForm } from "react-hook-form";
@@ -65,18 +65,34 @@ const labelStyle =
 const schema = z.object({
   title: z.string().min(3, { message: MESSAGES.PROJECT_FORM.TITLE }),
   locationOfImpact: z.string().optional(),
-  description: z.string().min(1, {
-    message: "Description is required",
-  }),
-  problem: z.string().min(1, {
-    message: "Problem is required",
-  }),
-  solution: z.string().min(1, {
-    message: "Solution is required",
-  }),
-  missionSummary: z.string().min(1, {
-    message: "Mission Summary is required",
-  }),
+  description: z
+    .string({
+      required_error: "Description is required",
+    })
+    .min(1, {
+      message: "Description is required",
+    }),
+  problem: z
+    .string({
+      required_error: "Problem is required",
+    })
+    .min(1, {
+      message: "Problem is required",
+    }),
+  solution: z
+    .string({
+      required_error: "Solution is required",
+    })
+    .min(1, {
+      message: "Solution is required",
+    }),
+  missionSummary: z
+    .string({
+      required_error: "Mission Summary is required",
+    })
+    .min(1, {
+      message: "Mission Summary is required",
+    }),
   recipient: z
     .string()
     .optional()
@@ -233,7 +249,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   //   checkTeamError();
   // }, [teamInput]);
 
-  const handleErrors = () => {
+  const hasErrors = () => {
     if (step === 0) {
       return (
         !!errors?.title ||
@@ -933,6 +949,18 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     // },
   ];
 
+  const tooltipText = () => {
+    const errors = hasErrors();
+    if (isLoading) {
+      return <p>Loading...</p>;
+    }
+    if (!errors) {
+      return;
+    }
+
+    return <p>Please fill all the required fields</p>;
+  };
+
   return (
     <>
       <button
@@ -1069,39 +1097,80 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                         )}
                       </button>
                       {step < categories.length - 1 && (
-                        <Button
-                          type="button"
-                          className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                          onClick={() => {
-                            const nextStep = () =>
-                              setStep((oldStep) =>
-                                oldStep >= categories.length - 1
-                                  ? oldStep
-                                  : oldStep + 1
-                              );
-                            checkForm(nextStep);
-                          }}
-                          disabled={handleErrors() || isLoading}
-                          isLoading={isLoading}
-                        >
-                          Next
-                          <ChevronRightIcon className="w-4 h-4" />
-                        </Button>
+                        <Tooltip.Provider>
+                          <Tooltip.Root delayDuration={0}>
+                            <Tooltip.Trigger asChild>
+                              <div className="flex w-max h-max">
+                                <Button
+                                  type="button"
+                                  className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                                  onClick={() => {
+                                    const nextStep = () =>
+                                      setStep((oldStep) =>
+                                        oldStep >= categories.length - 1
+                                          ? oldStep
+                                          : oldStep + 1
+                                      );
+                                    checkForm(nextStep);
+                                  }}
+                                  disabled={hasErrors() || isLoading}
+                                  isLoading={isLoading}
+                                >
+                                  Next
+                                  <ChevronRightIcon className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            </Tooltip.Trigger>
+                            <Tooltip.Portal>
+                              {hasErrors() || isLoading ? (
+                                <Tooltip.Content
+                                  className="TooltipContent bg-brand-darkblue rounded-lg text-white p-3 z-[1000]"
+                                  sideOffset={5}
+                                  side="bottom"
+                                >
+                                  {tooltipText()}
+                                  <Tooltip.Arrow className="TooltipArrow" />
+                                </Tooltip.Content>
+                              ) : null}
+                            </Tooltip.Portal>
+                          </Tooltip.Root>
+                        </Tooltip.Provider>
                       )}
+
                       {step === categories.length - 1 && (
-                        <Button
-                          type={"submit"}
-                          className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-                          disabled={handleErrors() || isLoading}
-                          isLoading={isLoading}
-                        >
-                          {projectToUpdate
-                            ? "Update project"
-                            : "Create project"}
-                          {!projectToUpdate ? (
-                            <ChevronRightIcon className="w-4 h-4" />
-                          ) : null}
-                        </Button>
+                        <Tooltip.Provider>
+                          <Tooltip.Root delayDuration={0}>
+                            <Tooltip.Trigger asChild>
+                              <div className="flex w-max h-max">
+                                <Button
+                                  type={"submit"}
+                                  className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                                  disabled={hasErrors() || isLoading}
+                                  isLoading={isLoading}
+                                >
+                                  {projectToUpdate
+                                    ? "Update project"
+                                    : "Create project"}
+                                  {!projectToUpdate ? (
+                                    <ChevronRightIcon className="w-4 h-4" />
+                                  ) : null}
+                                </Button>
+                              </div>
+                            </Tooltip.Trigger>
+                            <Tooltip.Portal>
+                              {hasErrors() || isLoading ? (
+                                <Tooltip.Content
+                                  className="TooltipContent bg-brand-darkblue rounded-lg text-white p-3 z-[1000]"
+                                  sideOffset={5}
+                                  side="bottom"
+                                >
+                                  {tooltipText()}
+                                  <Tooltip.Arrow className="TooltipArrow" />
+                                </Tooltip.Content>
+                              ) : null}
+                            </Tooltip.Portal>
+                          </Tooltip.Root>
+                        </Tooltip.Provider>
                       )}
                     </div>
                   </form>
