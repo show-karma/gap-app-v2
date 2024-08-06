@@ -4,14 +4,11 @@ import { Dialog, Transition } from "@headlessui/react";
 import { PlusIcon } from "@heroicons/react/24/solid";
 import { Button } from "../Utilities/Button";
 import toast from "react-hot-toast";
-import { isHexString } from "ethers";
 import { useProjectStore } from "@/store";
 import { useSwitchChain } from "wagmi";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { getWalletClient } from "@wagmi/core";
 import { useStepper } from "@/store/modals/txStepper";
-import { getProjectById, getProjectOwner } from "@/utilities/sdk";
 import { config } from "@/utilities/wagmi/config";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import debounce from "lodash.debounce";
@@ -26,10 +23,10 @@ import {
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useAccount } from "wagmi";
 import { MESSAGES } from "@/utilities/messages";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { getGapClient, useGap } from "@/hooks";
 import { ProjectPointer } from "@show-karma/karma-gap-sdk";
+import { useRouter } from 'next/navigation';
 
 type MergeProjectProps = {
     buttonElement?: {
@@ -167,7 +164,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
 
     const { gap } = useGap();
     const { address } = useAccount();
-
+    const router = useRouter();
     function closeModal() {
         setIsOpen(false);
     }
@@ -224,6 +221,14 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
                                     retries = 0;
                                     changeStepperStep("indexed");
                                     toast.success(MESSAGES.PROJECT_POINTER_FORM.SUCCESS);
+
+                                    if (project && project?.pointers?.length > 0) {
+                                        gap?.fetch?.projectById(project.pointers[0].data?.ogProjectUID).then((_project) => {
+                                            if (_project) {
+                                                router.push(`/project/${_project?.details?.data?.slug}`);
+                                            }
+                                        });
+                                    }
                                 }
                                 retries -= 1;
                                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
@@ -294,11 +299,12 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
                                     <div className="flex flex-col gap-2 mt-2">
                                         <p className="text-red-500 mb-2">
                                             {project?.symlinks?.length
-                                                ? `The current project is already primary project. Cannot be merged with another project. Please delete any existing pointers to enable merging.`
+                                                ? `The current project is already primary project. Cannot be merged with another project. Please delete existing pointers to enable merging.`
                                                 : null}
                                         </p>
                                         {
-                                            project && project.symlinks.length == 0 ? <>
+                                            project && project.symlinks.length == 0 &&
+                                            <>
                                                 {primaryProject ? (
                                                     <div>
                                                         <p className="mb-2">Selected Primary Project:</p>
@@ -307,10 +313,8 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
                                                     </div>
                                                 ) : (
                                                     <div>Select a primary project to merge with.</div>
-                                                )}</> :
-                                                <div>
-                                                    {JSON.stringify(project?.uid)}
-                                                </div>
+                                                )}
+                                            </>
                                         }
 
                                         <p className="text-red-500 mb-2">
