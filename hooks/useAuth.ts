@@ -4,7 +4,7 @@ import { jwtDecode } from "jwt-decode";
 import fetchData from "@/utilities/fetchData";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import Cookies from "universal-cookie";
-import { useAccount, useDisconnect, useSignMessage } from "wagmi";
+import { useAccount, useDisconnect, useSignMessage, useChainId } from "wagmi";
 import toast from "react-hot-toast";
 import { IExpirationStatus, ISession } from "@/types/auth";
 import { checkExpirationStatus } from "@/utilities/checkExpirationStatus";
@@ -15,6 +15,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useMixpanel } from "./useMixpanel";
 
 export const authCookiePath = "gap_auth";
+export const authWalletTypeCookiePath = "gap_auth_wallet_type";
 
 const getNonce = async (publicAddress: string) => {
   try {
@@ -43,7 +44,9 @@ const isTokenValid = (tokenValue: string | null) => {
 export const useAuth = () => {
   const { isConnected, address } = useAccount();
   const { openConnectModal } = useConnectModal();
-  const { setIsAuthenticating, setIsAuth, isAuthenticating } = useAuthStore();
+  const chainId = useChainId();
+  const { setIsAuthenticating, setIsAuth, isAuthenticating, setWalletType } =
+    useAuthStore();
   // const { signMessageAsync } = useSignMessage();
   const { disconnectAsync } = useDisconnect();
   const { setIsOnboarding } = useOnboarding?.();
@@ -74,25 +77,35 @@ export const useAuth = () => {
       const [response] = await fetchData("/auth/authentication", "POST", {
         publicAddress,
         signedMessage,
+        chainId,
       });
-      const { token } = response;
-      return token;
+      const { token, walletType } = response;
+      return { token, walletType };
     } catch (error) {
       // eslint-disable-next-line no-console
       console.log("Error in getAccountAssets", error);
-      return undefined;
+      return { token: undefined, walletType: undefined };
     }
   };
 
-  const saveToken = (token: string | undefined) => {
-    if (token)
+  const saveToken = (
+    token: string | undefined,
+    walletType: "eoa" | "safe" = "eoa"
+  ) => {
+    if (token) {
       cookies.set(authCookiePath, token, {
         path: "/",
       });
+      cookies.set(authWalletTypeCookiePath, walletType, {
+        path: "/",
+      });
+    }
+
+    setWalletType(walletType);
     setIsAuth(true);
   };
 
-  const authenticate = async (newAddress = address) => {
+  const authenticate = async (newAddress = address, shouldToast = true) => {
     try {
       if (isAuthenticating) return;
       setIsAuthenticating(true);
@@ -102,22 +115,34 @@ export const useAuth = () => {
       }
       if (typeof window !== "undefined") {
         const savedToken = cookies.get(authCookiePath);
-        if (savedToken) {
+        const savedWalletType = cookies.get(authWalletTypeCookiePath);
+        if (savedToken && savedWalletType) {
           const isValid = isTokenValid(savedToken);
           if (isValid) {
-            saveToken(savedToken);
+            saveToken(savedToken, savedWalletType);
             return;
           }
         }
+      }
+      if (!shouldToast) {
+        toast.success("Wallet connected");
+        toast.loading("Authenticating...");
       }
       const nonceMessage = await getNonce(newAddress);
 
       const signedMessage = await signMessage(nonceMessage);
       if (!signedMessage) return;
-      const token = await getAccountToken(newAddress, signedMessage);
+      const { token, walletType } = await getAccountToken(
+        newAddress,
+        signedMessage
+      );
 
       if (token) {
-        saveToken(token);
+        saveToken(token, walletType);
+        if (walletType === "safe") {
+          toast.success("Logged in with safe wallet");
+        }
+        // toast.dismiss();
       } else {
         toast.error("Login failed");
         return;
@@ -155,6 +180,7 @@ export const useAuth = () => {
     localStorage?.clear();
 
     setIsAuth(false);
+    setWalletType(undefined);
     disconnectAsync();
   };
 
@@ -163,6 +189,7 @@ export const useAuth = () => {
       path: "/",
     });
     setIsAuth(false);
+    setWalletType(undefined);
     authenticate(newAddress);
   };
 

@@ -7,6 +7,9 @@ interface AuthStore {
   setIsAuth: (isAuth: boolean) => void;
   isAuthenticating: boolean;
   setIsAuthenticating: (loading: boolean) => void;
+  walletType: "eoa" | "safe" | undefined;
+  setWalletType: (walletType: "eoa" | "safe" | undefined) => void;
+  getToken: () => string | undefined;
 }
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
@@ -18,4 +21,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   },
   isAuthenticating: false,
   setIsAuthenticating: (isAuthenticating: boolean) => set({ isAuthenticating }),
+  walletType: "eoa",
+  setWalletType: (walletType: "eoa" | "safe" | undefined) =>
+    set({ walletType }),
 }));
