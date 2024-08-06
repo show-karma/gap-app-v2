@@ -252,7 +252,10 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
         });
         return;
       }
-      if (data.id === "0") {
+      const idAlreadyExists = existingContacts?.find(
+        (contact) => contact.id === data.id
+      );
+      if (!idAlreadyExists) {
         await fetchData(
           INDEXER.SUBSCRIPTION.CREATE(
             project?.details?.data?.slug || (project?.uid as string)
