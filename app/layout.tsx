@@ -15,7 +15,7 @@ import { StepperDialog } from "@/components/Dialogs/StepperDialog";
 import { ProgressBarWrapper } from "@/components/ProgressBarWrapper";
 import { ThemeProvider } from "next-themes";
 import { Analytics } from "@vercel/analytics/react";
-import GoogleAnalytics from "@/components/Utilities/GoogleAnalytics";
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 export const metadata = defaultMetadata;
 
@@ -26,11 +26,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="h-full" style={{ scrollBehavior: "smooth" }}>
-      {process.env.GA_TRACKING_ID && process.env.NEXT_PUBLIC_ENV === "prod" && (
-        <GoogleAnalytics
-          GA_TRACKING_ID={process.env.GA_TRACKING_ID as string}
-        />
-      )}
+      {process.env.NEXT_PUBLIC_GA_TRACKING_ID &&
+        process.env.NEXT_PUBLIC_ENV === "prod" && (
+          <GoogleAnalytics
+            gaId={process.env.NEXT_PUBLIC_GA_TRACKING_ID as string}
+          />
+        )}
       <body>
         <ThemeProvider defaultTheme="light" attribute="class">
           <WagmiProvider>
