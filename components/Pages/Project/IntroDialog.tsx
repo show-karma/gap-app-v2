@@ -164,10 +164,9 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
                       <label htmlFor="message-input" className={labelStyle}>
                         Message
                       </label>
-                      <input
+                      <textarea
                         id="message-input"
-                        type="text"
-                        className={`${inputStyle} h-20`}
+                        className={inputStyle}
                         placeholder="Enter your request message"
                         {...register("message")}
                       />
