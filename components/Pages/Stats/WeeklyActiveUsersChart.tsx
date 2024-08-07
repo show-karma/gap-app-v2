@@ -9,15 +9,24 @@ export const WeeklyActiveUsersChart = () => {
   const [data, setData] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
 
+  function reduceDays(dateString: string, days: number) {
+    const date = new Date(dateString);
+    date.setDate(date.getDate() - days);
+    return date.toISOString();
+  }
+
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       const response: any = await getGAPWeeklyActiveUsers();
       const formattedData = response.map((item: any) => ({
         // eslint-disable-next-line no-underscore-dangle
-        Date: `${formatDate(item.date.$date)} ${
-          item["percentileChange"] > 0 ? "🟢" : "🔴"
-        } ${parseInt(item["percentileChange"])}%`,
+
+        Date: `${formatDate(reduceDays(item.date.$date, 7))} - ${formatDate(
+          item.date.$date
+        )} ${item["percentileChange"] > 0 ? "🟢" : "🔴"} ${parseInt(
+          item["percentileChange"]
+        )}%`,
         "Weekly Active Users": item["wau"],
         "Percent Change": item["percentileChange"],
       }));

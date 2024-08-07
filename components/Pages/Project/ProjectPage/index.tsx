@@ -30,13 +30,15 @@ import { cn } from "@/utilities/tailwind";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { ProjectSubTabs } from "./ProjectSubTabs";
+import { ProjectSubTabs } from "../ProjectSubTabs";
 import { useActivityTabStore } from "@/store/activityTab";
 import { envVars } from "@/utilities/enviromentVars";
-import { ProjectSubscription } from "./ProjectSubscription";
+import { ProjectSubscription } from "../ProjectSubscription";
 import formatCurrency from "@/utilities/formatCurrency";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { GrantsGenieDialog } from "@/components/Dialogs/GrantGenieDialog";
+import { ProjectBlocks } from "./ProjectBlocks";
+import { ProjectBodyTabs } from "./ProjectBodyTabs";
 
 const ProjectDialog = dynamic(
   () =>
@@ -55,118 +57,6 @@ const TransferOwnershipDialog = dynamic(() =>
     (mod) => mod.TransferOwnershipDialog
   )
 );
-
-function ProjectBlocks() {
-  const project = useProjectStore((state) => state.project);
-  const { setIsEndorsementOpen } = useEndorsementStore();
-  const [, copy] = useCopyToClipboard();
-  const params = useParams();
-  const { setIsIntroModalOpen } = useIntroModalStore();
-
-  const blocks: {
-    iconSrc: string;
-    title: string;
-    description: string;
-    link?: string;
-    action?: () => void;
-    bg: string;
-  }[] = [
-    // {
-    //   iconSrc: "/icons/donate-once.png",
-    //   title: "Donate once",
-    //   description: "Make a one-time contribution",
-    //   link: "/",
-    //   bg: "bg-[#DDF9F2]",
-    // },
-    // {
-    //   iconSrc: "/icons/recurring-donate.png",
-    //   title: "Recurring Donation",
-    //   description: "Setup a monthly donation",
-    //   link: "/",
-    //   bg: "bg-[#ECE9FE]",
-    // },
-    // {
-    //   iconSrc: "/icons/intro.png",
-    //   title: "Request intro",
-    //   description: "Get an introduction to connect",
-    //   action: () => setIsIntroModalOpen(true),
-    //   bg: "bg-[#DBFFC5]",
-    // },
-    {
-      iconSrc: "/icons/endorsements.png",
-      title: "Endorse the Project",
-      description: "Publicly endorse our project",
-      action: () => setIsEndorsementOpen(true),
-      bg: "bg-[#FFF3D4]",
-    },
-    {
-      iconSrc: "/icons/link.png",
-      title: "Farcaster Link",
-      description: "Share your project on Farcaster as a frame",
-      bg: "bg-[#FFE6D5]",
-      action: () => {
-        copy(
-          envVars.VERCEL_URL +
-            PAGES.PROJECT.OVERVIEW(
-              project?.details?.data.slug || (params.projectId as string)
-            ),
-          "Just post the link to Farcaster and it will be displayed as a frame!"
-        );
-      },
-    },
-    // {
-    //   iconSrc: "/icons/support.png",
-    //   title: "Support the Project",
-    //   description: "Help us continue our work",
-    //   link: "/",
-    //   bg: "bg-[#FDE3FF]",
-    // },
-  ];
-
-  function Block({ item }: { item: (typeof blocks)[number] }) {
-    return (
-      <div
-        className={cn(
-          `flex flex-row items-center gap-2 p-4 rounded-xl max-w-[220px] w-full justify-start max-lg:max-w-full`,
-          item.bg
-        )}
-      >
-        <div className="flex flex-col gap-2 justify-start items-start">
-          <img src={item.iconSrc} alt={item.title} className="w-6 h-6" />
-          <p className="text-sm font-bold text-black text-left">{item.title}</p>
-          <p className="text-sm text-[#344054] text-left max-lg:hidden">
-            {item.description}
-          </p>
-        </div>
-        <ChevronRightIcon className="text-[#1D2939] w-5 h-5 min-w-5 min-h-5 max-lg:hidden" />
-      </div>
-    );
-  }
-  return (
-    <div className="flex flex-row gap-4 flex-wrap max-lg:gap-1">
-      {blocks.map((item) =>
-        item.action ? (
-          <button
-            type="button"
-            key={item.title}
-            onClick={() => item?.action?.()}
-            className="max-w-[220px] w-full max-lg:max-w-[170px]"
-          >
-            <Block key={item.title} item={item} />
-          </button>
-        ) : (
-          <ExternalLink
-            href={item.link}
-            key={item.title}
-            className="max-w-[220px] w-full max-lg:max-w-[170px]"
-          >
-            <Block key={item.title} item={item} />
-          </ExternalLink>
-        )
-      )}
-    </div>
-  );
-}
 
 function ProjectPage() {
   const project = useProjectStore((state) => state.project);
@@ -272,7 +162,7 @@ function ProjectPage() {
 
   const Team = () => {
     return members.length ? (
-      <div className="flex flex-col gap-2 w-full">
+      <div className="flex flex-col gap-2 w-full min-w-48">
         <div className="font-semibold text-black dark:text-white leading-none">
           Team
         </div>
@@ -288,7 +178,7 @@ function ProjectPage() {
                 className="h-8 w-8 rounded-full"
               />
               <div className="flex flex-col gap-1">
-                <p className="text-sm font-bold text-[#101828] dark:text-gray-400 line-clamp-1 text-wrap whitespace-nowrap">
+                <p className="text-sm font-bold text-[#101828] dark:text-gray-400 line-clamp-1 text-wrap whitespace-nowrap w-full">
                   {member.details?.name ||
                     ensNames[member.recipient as Hex]?.name ||
                     shortAddress(member.recipient)}
@@ -321,71 +211,13 @@ function ProjectPage() {
   };
 
   return (
-    <div className="flex flex-row max-lg:flex-col gap-4 py-5 mb-20">
-      <div className="flex flex-[2.5] w-full max-lg:hidden">
+    <div className="flex flex-row max-lg:flex-col gap-6 max-md:gap-4 py-5 mb-20">
+      <div className="flex flex-[2.5] gap-6 flex-col w-full max-lg:hidden">
+        <ProjectBlocks />
         <Team />
       </div>
-      <div className="flex flex-col flex-[8] max-lg:w-full gap-4">
-        <ProjectBlocks />
-
-        <div className="flex flex-col gap-1">
-          <div className="text-base font-bold leading-normal text-black dark:text-zinc-100">
-            Description
-          </div>
-
-          <div className="mt-2 space-y-5 ">
-            <MarkdownPreview source={project?.details?.data?.description} />
-          </div>
-        </div>
-        {project?.details?.data?.missionSummary && (
-          <div className="flex flex-col gap-1">
-            <div className="text-base font-bold leading-normal text-black dark:text-zinc-100">
-              Mission
-            </div>
-
-            <div className="mt-2 space-y-5 ">
-              <MarkdownPreview
-                source={project?.details?.data?.missionSummary}
-              />
-            </div>
-          </div>
-        )}
-
-        {project?.details?.data?.problem && (
-          <div className="flex flex-col gap-1">
-            <div className="text-base font-bold leading-normal text-black dark:text-zinc-100">
-              Problem
-            </div>
-
-            <div className="mt-2 space-y-5 ">
-              <MarkdownPreview source={project?.details?.data?.problem} />
-            </div>
-          </div>
-        )}
-        {project?.details?.data?.solution && (
-          <div className="flex flex-col gap-1">
-            <div className="text-base font-bold leading-normal text-black dark:text-zinc-100">
-              Solution
-            </div>
-
-            <div className="mt-2 space-y-5 ">
-              <MarkdownPreview source={project?.details?.data?.solution} />
-            </div>
-          </div>
-        )}
-        {project?.details?.data?.locationOfImpact && (
-          <div className="flex flex-col gap-1">
-            <div className="text-base font-bold leading-normal text-black dark:text-zinc-100">
-              Location of Impact
-            </div>
-
-            <div className="mt-2 space-y-5 ">
-              <MarkdownPreview
-                source={project?.details?.data?.locationOfImpact}
-              />
-            </div>
-          </div>
-        )}
+      <div className="flex flex-col flex-[7.5] max-lg:w-full gap-4">
+        <ProjectBodyTabs />
       </div>
       <div className="flex flex-col flex-[4] gap-8 max-lg:w-full">
         <div className="flex w-full lg:hidden">

@@ -12,7 +12,6 @@ import type { SortByOptions, StatusOptions } from "@/types";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import { ReceiveProjectUpdates } from "@/components/Pages/ReceiveProjectUpdates";
 import { communitiesToBulkSubscribe } from "@/utilities/subscribe";
 
@@ -57,7 +56,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     // link: [
     //   {
     //     rel: "icon",
-    //     href: "/images/favicon.png",
+    //     href: "/favicon.ico",
     //   },
     // ],
   };
