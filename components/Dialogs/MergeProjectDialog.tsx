@@ -219,16 +219,10 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
 
                                 if (alreadyExists) {
                                     retries = 0;
+                                    console.log("Redirecting to the primary project");
+                                    router.push(`/project/${primaryProject?.details?.data?.slug}`);
                                     changeStepperStep("indexed");
                                     toast.success(MESSAGES.PROJECT_POINTER_FORM.SUCCESS);
-
-                                    if (project && project?.pointers?.length > 0) {
-                                        gap?.fetch?.projectById(project.pointers[0].data?.ogProjectUID).then((_project) => {
-                                            if (_project) {
-                                                router.push(`/project/${_project?.details?.data?.slug}`);
-                                            }
-                                        });
-                                    }
                                 }
                                 retries -= 1;
                                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return

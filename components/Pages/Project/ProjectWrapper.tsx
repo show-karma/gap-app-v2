@@ -267,13 +267,17 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
     return members;
   };
 
-  if (project && project?.pointers?.length > 0) {
-    gap?.fetch?.projectById(project.pointers[0].data?.ogProjectUID).then((_project) => {
-      if (_project) {
-        router.push(`/project/${_project?.details?.data?.slug}`);
-      }
-    });
-  }
+
+  useEffect(() => {
+    if (project && project?.pointers?.length > 0) {
+      gap?.fetch?.projectById(project.pointers[0].data?.ogProjectUID).then((_project) => {
+        if (_project) {
+          router.push(`/project/${_project?.details?.data?.slug}`);
+        }
+      });
+    }
+  }, [project]);
+
 
   const members = mountMembers();
   const { isIntroModalOpen } = useIntroModalStore();
