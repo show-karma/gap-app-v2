@@ -72,6 +72,7 @@ export const NavbarReview = () => {
                 }}
                 pathProps={{
                   className: "cursor-pointer",
+                  fill: `${isStarSelected === index && "#004EEB"} `,
                   onClick: () => {
                     setIsStarSelected((prev) =>
                       prev === index ? null : index
