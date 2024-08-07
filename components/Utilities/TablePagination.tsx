@@ -66,22 +66,28 @@ export default function TablePagination({
           </button>
         </div>
         <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-          <div>
+          {totalPosts > 0 ? (
+            <div>
+              <p className="text-sm text-gray-700 dark:text-zinc-200">
+                Showing &nbsp;
+                <span className="font-medium">
+                  {currentPage * postsPerPage - postsPerPage + 1}
+                </span>
+                &nbsp;-&nbsp;
+                <span className="font-medium">
+                  {currentPage * postsPerPage > totalPosts
+                    ? totalPosts
+                    : currentPage * postsPerPage}
+                </span>
+                &nbsp;of&nbsp;
+                <span className="font-medium">{totalPosts}</span> results
+              </p>
+            </div>
+          ) : (
             <p className="text-sm text-gray-700 dark:text-zinc-200">
-              Showing &nbsp;
-              <span className="font-medium">
-                {currentPage * postsPerPage - postsPerPage + 1}
-              </span>
-              &nbsp;-&nbsp;
-              <span className="font-medium">
-                {currentPage * postsPerPage > totalPosts
-                  ? totalPosts
-                  : currentPage * postsPerPage}
-              </span>
-              &nbsp;of&nbsp;
-              <span className="font-medium">{totalPosts}</span> results
+              No results found
             </p>
-          </div>
+          )}
           <div>
             <nav
               className="relative z-0 inline-flex rounded-md  -space-x-px"
