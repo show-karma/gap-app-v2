@@ -363,15 +363,15 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       // eslint-disable-next-line no-param-reassign
       grant.updates = data.grantUpdate
         ? [
-            new GrantUpdate({
-              data: {
-                text: data.grantUpdate || "",
-                title: "",
-              },
-              schema: gapClient.findSchema("Milestone"),
-              recipient: grant.recipient,
-            }),
-          ]
+          new GrantUpdate({
+            data: {
+              text: data.grantUpdate || "",
+              title: "",
+            },
+            schema: gapClient.findSchema("Milestone"),
+            recipient: grant.recipient,
+          }),
+        ]
         : [];
 
       // eslint-disable-next-line no-param-reassign
@@ -445,7 +445,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   };
 
   const updateGrant = async (oldGrant: IGrantResponse, data: NewGrantData) => {
-    if (!address || !selectedProject) return;
+    if (!address || !oldGrant.refUID || !selectedProject) return;
     let gapClient = gap;
     try {
       setIsLoading(true);
@@ -454,7 +454,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         gapClient = getGapClient(communityNetworkId);
       }
       if (!gapClient) return;
-      const projectInstance = await getProjectById(selectedProject.uid);
+      const projectInstance = await getProjectById(oldGrant.refUID);
       const oldGrantInstance = projectInstance?.grants?.find(
         (item) => item?.uid?.toLowerCase() === oldGrant?.uid?.toLowerCase()
       );
@@ -480,7 +480,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
       const oldProjectData = await gapIndexerApi
-        .projectBySlug(selectedProject.uid)
+        .projectBySlug(oldGrant.refUID)
         .then((res) => res.data);
       const oldGrantData = oldProjectData?.grants?.find(
         (item) => item.uid.toLowerCase() === oldGrant.uid.toLowerCase()
@@ -492,7 +492,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           changeStepperStep("indexing");
           while (retries > 0) {
             const fetchedProject = await gapIndexerApi
-              .projectBySlug(selectedProject.uid)
+              .projectBySlug(oldGrant.refUID)
               .then((res) => res.data)
               .catch(() => null);
             const fetchedGrant = fetchedProject?.grants.find(

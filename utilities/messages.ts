@@ -8,6 +8,14 @@ export const MESSAGES = {
     },
     MEMBERS: "Invalid address",
   },
+  PROJECT_POINTER_FORM: {
+    SUCCESS: "Project was successfully merged.",
+    ERROR: "There was an error merging the project. Please try again.",
+    DELETE: {
+      SUCCESS: "Pointer deleted successfully",
+      ERROR: "There was an error deleting the pointer. Please try again",
+    },
+  },
   PROJECT_UPDATE_FORM: {
     TITLE: "Title must be at least 3 characters",
     TEXT: "Text must be at least 3 characters",

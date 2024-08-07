@@ -12,6 +12,7 @@ import { defaultMetadata } from "@/utilities/meta";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
+
 type ProjectDetailsWithUid = IProjectDetails & { uid: Hex };
 
 export async function generateMetadata({
@@ -49,10 +50,10 @@ export async function generateMetadata({
     await fetchMetadata(
       new URL(
         `/api/frames/${projectId}?projectInfo=${
-          // Base64 encoded projectInfo
-          encodeURIComponent(
-            Buffer.from(JSON.stringify(projectInfo)).toString("base64")
-          )
+        // Base64 encoded projectInfo
+        encodeURIComponent(
+          Buffer.from(JSON.stringify(projectInfo)).toString("base64")
+        )
         }`,
         envVars.VERCEL_URL
       )
@@ -96,6 +97,8 @@ export default async function RootLayout({
   children: React.ReactNode;
   params: { projectId: string };
 }) {
+
+
   const project = await gapIndexerApi
     .projectBySlug(projectId)
     .then((res) => res.data)
@@ -104,6 +107,8 @@ export default async function RootLayout({
   if (!project || project.uid === zeroUID) {
     notFound();
   }
+
+
 
   return (
     <Suspense
