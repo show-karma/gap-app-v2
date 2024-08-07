@@ -1,9 +1,9 @@
 "use client";
-import { StarReviewIcon } from "@/components/Icons/StarReview";
 import { useState } from "react";
-import { CardReview } from "./CardReview";
-import { ChevronDown } from "@/components/Icons";
 import { formatDate } from "@/utilities/formatDate";
+import { StarReviewIcon } from "@/components/Icons/StarReview";
+import { CardReview } from "@/components/Pages/Project/Review/CardReview";
+import { ChevronDown } from "@/components/Icons";
 
 export const NavbarReview = () => {
   const [isStarSelected, setIsStarSelected] = useState<number | null>(null); // ID
@@ -17,22 +17,22 @@ export const NavbarReview = () => {
   const MiniReviewSummary: MiniReviewSummaryProps[] = [
     {
       id: 1,
-      date: 1727136000, // 24 July, 2024 in Unix timestamp
+      date: 1620414884, // 07 May, 2021 in Unix timestamp
       scoreMedia: 4.6,
     },
     {
       id: 2,
-      date: 1727222400, // 25 July, 2024 in Unix timestamp
+      date: 1673723684, // 14 January, 2023 in Unix timestamp
       scoreMedia: 4.4,
     },
     {
       id: 3,
-      date: 1727308800, // 26 July, 2024 in Unix timestamp
+      date: 1498072484, // 21 Jun 2017 in Unix timestamp
       scoreMedia: 4.1,
     },
     {
       id: 4,
-      date: 1727395200, // 27 July, 2024 in Unix timestamp
+      date: 1351188884, // 25 Oct 2012 in Unix timestamp
       scoreMedia: 4.9,
     },
     {
@@ -54,36 +54,43 @@ export const NavbarReview = () => {
 
   return (
     <div className="w-full flex flex-col">
-      <div className="w-full flex px-2 gap-2 overflow-x-auto pb-4 divide-x-[2px] divide-[zinc-300]">
+      <div className="w-full flex px-2 gap-2 overflow-x-auto pb-4 relative">
         {MiniReviewSummary.sort((a, b) => b.date - a.date).map(
           (miniReview: MiniReviewSummaryProps, index: number) => (
             <div
               key={miniReview.id}
-              className="w-full flex flex-col justify-center sm:px-14 px-4 items-center text-center">
+              className="flex flex-col justify-center items-center text-center relative"
+            >
               <p className="w-full">
                 {formatDate(new Date(miniReview.date * 1000))}
               </p>
-              <StarReviewIcon
-                props={{
-                  className: `w-20 h-20 ${
-                    isStarSelected === index && "text-[#004EEB]"
-                  }`,
-                }}
-                pathProps={{
-                  className: "cursor-pointer",
-                  onClick: () => {
-                    setIsStarSelected((prev) =>
-                      prev === index ? null : index
-                    );
-                  },
-                }}
-              />
-              <p>{miniReview.scoreMedia}</p>
-              {isStarSelected === index && (
-                <div>
-                  <ChevronDown />
-                </div>
-              )}
+              <div className="w-full flex flex-col items-center sm:px-14 px-4">
+                <StarReviewIcon
+                  props={{
+                    className: `w-20 h-20 ${
+                      isStarSelected === index && "text-[#004EEB]"
+                    }`,
+                  }}
+                  pathProps={{
+                    className: "cursor-pointer",
+                    fill: `${isStarSelected === index && "#004EEB"} `,
+                    onClick: () => {
+                      setIsStarSelected((prev) =>
+                        prev === index ? null : index
+                      );
+                    },
+                  }}
+                />
+                <p>{miniReview.scoreMedia}</p>
+                {isStarSelected === index && (
+                  <div>
+                    <ChevronDown />
+                  </div>
+                )}
+                {index < MiniReviewSummary.length - 1 && (
+                  <div className="absolute right-0 top-1/2 h-3/4 w-[2px] bg-zinc-300 transform -translate-y-1/2"></div>
+                )}
+              </div>
             </div>
           )
         )}
