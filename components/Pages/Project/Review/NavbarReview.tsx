@@ -17,22 +17,22 @@ export const NavbarReview = () => {
   const MiniReviewSummary: MiniReviewSummaryProps[] = [
     {
       id: 1,
-      date: 1727136000, // 24 July, 2024 in Unix timestamp
+      date: 1620414884, // 07 May, 2021 in Unix timestamp
       scoreMedia: 4.6,
     },
     {
       id: 2,
-      date: 1727222400, // 25 July, 2024 in Unix timestamp
+      date: 1673723684, // 14 January, 2023 in Unix timestamp
       scoreMedia: 4.4,
     },
     {
       id: 3,
-      date: 1727308800, // 26 July, 2024 in Unix timestamp
+      date: 1498072484, // 21 Jun 2017 in Unix timestamp
       scoreMedia: 4.1,
     },
     {
       id: 4,
-      date: 1727395200, // 27 July, 2024 in Unix timestamp
+      date: 1351188884, // 25 Oct 2012 in Unix timestamp
       scoreMedia: 4.9,
     },
     {
@@ -59,7 +59,8 @@ export const NavbarReview = () => {
           (miniReview: MiniReviewSummaryProps, index: number) => (
             <div
               key={miniReview.id}
-              className="w-full flex flex-col justify-center sm:px-14 px-4 items-center text-center">
+              className="w-full flex flex-col justify-center sm:px-14 px-4 items-center text-center"
+            >
               <p className="w-full">
                 {formatDate(new Date(miniReview.date * 1000))}
               </p>
