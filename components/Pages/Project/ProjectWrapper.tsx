@@ -28,6 +28,8 @@ import Image from "next/image";
 import { blo } from "blo";
 import { IntroDialog } from "./IntroDialog";
 import { useIntroModalStore } from "@/store/modals/intro";
+import { useRouter } from 'next/navigation';
+import { useGap } from "@/hooks";
 
 interface ProjectWrapperProps {
   project: IProjectResponse;
@@ -50,6 +52,8 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   const setContactInfoLoading = useProjectStore(
     (state) => state.setContactInfoLoading
   );
+
+  const router = useRouter();
 
   useEffect(() => {
     setProject(project);
@@ -85,6 +89,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   const signer = useSigner();
   const { address, isConnected, isConnecting } = useAccount();
   const { isAuth } = useAuthStore();
+  const { gap } = useGap();
 
   useEffect(() => {
     if (!project || !project?.chainID || !isAuth || !isConnected) {
@@ -173,8 +178,8 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
               url: isLink(hasUrl)
                 ? hasUrl
                 : hasUrl.includes(prefix)
-                ? addPrefix(url)
-                : prefix + url,
+                  ? addPrefix(url)
+                  : prefix + url,
               icon,
             };
           }
@@ -261,6 +266,18 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
 
     return members;
   };
+
+
+  useEffect(() => {
+    if (project && project?.pointers?.length > 0) {
+      gap?.fetch?.projectById(project.pointers[0].data?.ogProjectUID).then((_project) => {
+        if (_project) {
+          router.push(`/project/${_project?.details?.data?.slug}`);
+        }
+      });
+    }
+  }, [project]);
+
 
   const members = mountMembers();
   const { isIntroModalOpen } = useIntroModalStore();
