@@ -64,22 +64,28 @@ export default function Pagination({
           </button>
         </div> */}
         <div className="flex-1 flex flex-row items-center justify-between max-sm:flex-col gap-4">
-          <div>
-            <p className="text-sm text-gray-700 dark:text-zinc-400">
-              Showing &nbsp;
-              <span className="font-medium">
-                {currentPage * postsPerPage - postsPerPage + 1}
-              </span>
-              &nbsp;-&nbsp;
-              <span className="font-medium">
-                {currentPage * postsPerPage > totalPosts
-                  ? totalPosts
-                  : currentPage * postsPerPage}
-              </span>
-              &nbsp;of&nbsp;
-              <span className="font-medium">{totalPosts}</span> results
+          {totalPosts > 0 ? (
+            <div>
+              <p className="text-sm text-gray-700 dark:text-zinc-400">
+                Showing &nbsp;
+                <span className="font-medium">
+                  {currentPage * postsPerPage - postsPerPage + 1}
+                </span>
+                &nbsp;-&nbsp;
+                <span className="font-medium">
+                  {currentPage * postsPerPage > totalPosts
+                    ? totalPosts
+                    : currentPage * postsPerPage}
+                </span>
+                &nbsp;of&nbsp;
+                <span className="font-medium">{totalPosts}</span> results
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-gray-700 dark:text-zinc-200">
+              No results found
             </p>
-          </div>
+          )}
           <div>
             <nav
               className="relative z-0 inline-flex rounded-md  -space-x-px"

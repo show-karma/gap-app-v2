@@ -3,6 +3,7 @@ const networks = [
   "Aleph Zero",
   "Bitcoin",
   "Cardano",
+  "Celo",
   "Cosmos/IBC",
   "Degen",
   "EVM",
@@ -403,6 +404,10 @@ const networkImages: Record<
   cardano: {
     light: "/images/networks/cardano.svg",
     dark: "/images/networks/cardano.svg",
+  },
+  celo: {
+    light: "/images/networks/celo.svg",
+    dark: "/images/networks/celo.svg",
   },
   "cosmos/ibc": {
     light: "/images/networks/cosmos.svg",
