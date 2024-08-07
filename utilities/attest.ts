@@ -12,8 +12,6 @@ import {
   waitForTransactionReceipt,
 } from "viem/actions";
 
-import { EAS_CONTRACT_OP } from "../client/constants"; //Create the constant file? where to createit?
-
 import { config } from "@/utilities/wagmi/config";
 import { mainnet } from "viem/chains";
 
@@ -37,6 +35,7 @@ const publicClient = createPublicClient({
 });
 
 export async function submitAttest(
+  EAS_CONTRACT: Hex,
   from: Hex,
   schemaUID: Hex,
   attestationRequestData: AttestationRequestData
@@ -96,7 +95,7 @@ export async function submitAttest(
   try {
     gasLimit = await estimateGas(publicClient, {
       account: from as Hex,
-      to: EAS_CONTRACT_OP as Hex,
+      to: EAS_CONTRACT as Hex,
       data: data,
       value: attestationRequestData.value,
     });
@@ -107,7 +106,7 @@ export async function submitAttest(
   try {
     const transactionHash = await sendTransaction(walletClient, {
       account: from as Hex,
-      to: EAS_CONTRACT_OP as Hex,
+      to: EAS_CONTRACT as Hex,
       gasLimit: gasLimit,
       data: data,
       value: attestationRequestData.value,

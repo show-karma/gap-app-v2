@@ -1,6 +1,6 @@
 import axios, { Method } from "axios";
 
-export async function fetchEASData(
+export async function fetchSubgraph(
   query: string,
   variables: any,
   networkSubgraphURL: string
