@@ -14,7 +14,7 @@ import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { MESSAGES } from "@/utilities/messages";
 import { getGapClient, useGap } from "@/hooks";
 import { useStepper } from "@/store/modals/txStepper";
-import { useProjectStore } from "@/store";
+import { useOwnerStore, useProjectStore } from "@/store";
 import { config } from "@/utilities/wagmi/config";
 import {
   IGrantUpdate,
@@ -143,7 +143,13 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
     }
   };
   const isAuthorized = useAuthStore((state) => state.isAuth);
-  const ableToVerify = isAuthorized && isConnected;
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
+  const verifyPermission = () => {
+    if (!isAuthorized || !isConnected) return false;
+    return isContractOwner || !isProjectOwner;
+  };
+  const ableToVerify = verifyPermission();
   if (hasVerifiedThis || !ableToVerify) return null;
 
   return (
