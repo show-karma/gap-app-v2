@@ -10,12 +10,16 @@ export enum BadgeName {
   FAST_DISBURSEMENT = "Fast Disbursement",
 }
 
-export const BadgeIcon = ({
-  badgeName,
-  props,
-}: {
+interface BadgeIconProps {
   badgeName: BadgeName;
   props?: SVGProps<SVGSVGElement>;
+  className?: SVGProps<SVGSVGElement>["className"];
+}
+
+export const BadgeIcon: React.FC<BadgeIconProps> = ({
+  badgeName,
+  className,
+  props,
 }) => {
   const BadeIconName: Record<BadgeName, React.ReactNode> = {
     [BadgeName.CLEAR_GOALS]: (
@@ -26,6 +30,7 @@ export const BadgeIcon = ({
         viewBox="0 0 72 78"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
+        className={className}
       >
         <g filter="url(#filter0_d_380_868)">
           <path
