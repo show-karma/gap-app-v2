@@ -18,7 +18,7 @@ export const twitterMeta = {
 
 export const defaultMetadata = {
   title: "Karma GAP - Grantee Accountability Protocol",
-  icons: ["/images/favicon.png"],
+  icons: ["/favicon.ico"],
   description:
     "GAP is a protocol to help community get visibility into grantee progress and grantees to build reputation.",
   openGraph: {

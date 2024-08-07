@@ -82,7 +82,7 @@ export async function generateMetadata({
     additionalLinkTags: [
       {
         rel: "icon",
-        href: "/images/favicon.png",
+        href: "/favicon.ico",
       },
     ],
     additionalMetaTags: framesAdditionalMetatags,

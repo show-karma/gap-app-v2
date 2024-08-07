@@ -36,7 +36,7 @@ const connectors = connectorsForWallets(
     projectId: process.env.NEXT_PUBLIC_PROJECT_ID || "",
     appDescription: "Karma GAP",
     appUrl: "https://gap.karmahq.xyz",
-    appIcon: "https://gap.karmahq.xyz/images/favicon.png",
+    appIcon: "https://gap.karmahq.xyz/favicon.ico",
   }
 );
 

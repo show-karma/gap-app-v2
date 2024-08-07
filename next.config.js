@@ -7,6 +7,7 @@ const removeImports = require("next-remove-imports")();
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  staticPageGenerationTimeout: 1000,
   webpack: (config) => {
     config.externals.push("pino-pretty", "lokijs", "encoding");
     return config;

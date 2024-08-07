@@ -33,6 +33,10 @@ export const INDEXER = {
     SUBSCRIBE: {
       BULK: `/bulk-subscription/subscribe`,
     },
+    REPORT: {
+      GET: (communityIdOrSlug: string) =>
+        `/communities/${communityIdOrSlug}/report`,
+    },
     GRANTS: (
       communityIdOrSlug: string,
       {

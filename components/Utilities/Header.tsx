@@ -58,16 +58,22 @@ export default function Header() {
       setCommunities([]);
       return;
     }
-
     setIsLoading(true);
-    const communitiesOf = await gapIndexerApi.adminOf(address);
+    try {
+      const communitiesOf = await gapIndexerApi
+        .adminOf(address)
+        .catch(() => undefined);
 
-    if (communitiesOf.data && communitiesOf.data.length !== 0) {
-      setCommunities(communitiesOf.data);
-    } else {
+      if (communitiesOf?.data && communitiesOf?.data.length !== 0) {
+        setCommunities(communitiesOf.data);
+      } else {
+        setCommunities([]);
+      }
+    } catch {
       setCommunities([]);
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
   };
 
   const setIsOwner = useOwnerStore((state) => state.setIsOwner);
@@ -89,7 +95,7 @@ export default function Header() {
       }
       await getContractOwner(signer as any, chain as Chain)
         .then((owner) => {
-          setIsOwner(owner.toLowerCase() === address?.toLowerCase());
+          setIsOwner(owner?.toLowerCase() === address?.toLowerCase());
         })
         .finally(() => {
           setIsOwnerLoading(false);

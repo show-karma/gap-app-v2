@@ -19,7 +19,8 @@ body * {
 * {
   @apply font-sans;
 }
-p {
+p,
+label {
   @apply font-body;
 }
 
