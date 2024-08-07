@@ -37,6 +37,8 @@ export const INDEXER = {
       GET: (communityIdOrSlug: string) =>
         `/communities/${communityIdOrSlug}/report`,
     },
+    GRANT_TITLES: (communityIdOrSlug: string) =>
+      `/communities/${communityIdOrSlug}/grant-titles`,
     GRANTS: (
       communityIdOrSlug: string,
       {
