@@ -54,12 +54,12 @@ export const NavbarReview = () => {
 
   return (
     <div className="w-full flex flex-col">
-      <div className="w-full flex px-2 gap-2 overflow-x-auto pb-4 divide-x-[2px] divide-[zinc-300]">
+      <div className="w-full flex px-2 gap-2 overflow-x-auto pb-4 relative">
         {MiniReviewSummary.sort((a, b) => b.date - a.date).map(
           (miniReview: MiniReviewSummaryProps, index: number) => (
             <div
               key={miniReview.id}
-              className="w-full flex flex-col justify-center sm:px-14 px-4 items-center text-center"
+              className="flex flex-col justify-center sm:px-14 px-4 items-center text-center relative"
             >
               <p className="w-full">
                 {formatDate(new Date(miniReview.date * 1000))}
@@ -85,6 +85,9 @@ export const NavbarReview = () => {
                 <div>
                   <ChevronDown />
                 </div>
+              )}
+              {index < MiniReviewSummary.length - 1 && (
+                <div className="absolute right-0 top-1/2 h-3/4 w-[2px] bg-zinc-300 transform -translate-y-1/2"></div>
               )}
             </div>
           )
