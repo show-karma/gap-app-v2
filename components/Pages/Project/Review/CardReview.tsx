@@ -5,9 +5,13 @@ import { Button } from "@/components/Utilities/Button";
 import React, { useState } from "react";
 import { DynamicStarsReview } from "./DynamicStarsReview";
 
+export enum CardReviewMode {
+  READ = "READ",
+  WRITE = "WRITE",
+}
 interface CardReviewDataProps {
   id: number;
-  editableReview: boolean;
+  mode: CardReviewMode;
   // newReview?: boolean;
 }
 
@@ -222,14 +226,14 @@ export const CardReview = (data: CardReviewDataProps) => {
     <div className="flex w-full flex-col justify-center gap-4">
       <div className="w-full flex flex-col px-2 gap-2">
         {selectedBadgeList.map((badge: BadgeListProps, index: number) => (
-          <div key={index} className="flex flex-col w-full pl-14">
+          <div key={index} className="flex flex-col w-full px-14 mt-4">
             <div className="flex flex-row w-full items-center gap-3">
               <div>
-                <BadgeIcon badgeName={badge.name} className="w-28 h-28" />
+                <BadgeIcon badgeName={badge.name} className="w-20 h-20" />
               </div>
               <div className="text-sm">{badge.description}</div>
               <div>
-                {data.editableReview ? (
+                {data.mode === CardReviewMode.WRITE ? (
                   <DynamicStarsReview
                     totalStars={5}
                     rating={badge.score}

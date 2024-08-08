@@ -2,7 +2,10 @@
 import { useState } from "react";
 import { formatDate } from "@/utilities/formatDate";
 import { StarReviewIcon } from "@/components/Icons/StarReview";
-import { CardReview } from "@/components/Pages/Project/Review/CardReview";
+import {
+  CardReview,
+  CardReviewMode,
+} from "@/components/Pages/Project/Review/CardReview";
 import { ChevronDown } from "@/components/Icons";
 
 export const NavbarReview = () => {
@@ -99,7 +102,7 @@ export const NavbarReview = () => {
         {isStarSelected !== null && (
           <CardReview
             id={isStarSelected}
-            editableReview={true}
+            mode={CardReviewMode.READ}
             // newReview={false}
           />
         )}
