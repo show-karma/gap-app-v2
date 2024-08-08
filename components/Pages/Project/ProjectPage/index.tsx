@@ -39,6 +39,7 @@ import { useIntroModalStore } from "@/store/modals/intro";
 import { GrantsGenieDialog } from "@/components/Dialogs/GrantGenieDialog";
 import { ProjectBlocks } from "./ProjectBlocks";
 import { ProjectBodyTabs } from "./ProjectBodyTabs";
+import { useENSAvatar } from "@/store/ensAvatars";
 
 const ProjectDialog = dynamic(
   () =>
@@ -142,7 +143,6 @@ function ProjectPage() {
             },
           });
         }
-
       });
     }
     const alreadyHasOwner = project?.members.find(
@@ -169,6 +169,7 @@ function ProjectPage() {
   const { setActivityTab } = useActivityTabStore();
 
   const Team = () => {
+    const { ensAvatars } = useENSAvatar();
     return members.length ? (
       <div className="flex flex-col gap-2 w-full min-w-48">
         <div className="font-semibold text-black dark:text-white leading-none">
@@ -181,7 +182,10 @@ function ProjectPage() {
               className="flex items-center flex-row gap-3 p-3"
             >
               <img
-                src={blo(member.recipient as `0x${string}`, 8)}
+                src={
+                  ensAvatars[member.recipient as `0x${string}`]?.avatar ||
+                  blo(member.recipient as `0x${string}`, 8)
+                }
                 alt={member.details?.name || member.recipient}
                 className="h-8 w-8 rounded-full"
               />
@@ -192,7 +196,7 @@ function ProjectPage() {
                     shortAddress(member.recipient)}
                 </p>
                 {member.recipient?.toLowerCase() ===
-                  project?.recipient?.toLowerCase() ? (
+                project?.recipient?.toLowerCase() ? (
                   <p className="text-sm text-brand-blue font-medium leading-none">
                     Owner
                   </p>

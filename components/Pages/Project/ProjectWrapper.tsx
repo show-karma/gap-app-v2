@@ -28,8 +28,9 @@ import Image from "next/image";
 import { blo } from "blo";
 import { IntroDialog } from "./IntroDialog";
 import { useIntroModalStore } from "@/store/modals/intro";
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 import { useGap } from "@/hooks";
+import { useENSAvatar } from "@/store/ensAvatars";
 
 interface ProjectWrapperProps {
   project: IProjectResponse;
@@ -178,8 +179,8 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
               url: isLink(hasUrl)
                 ? hasUrl
                 : hasUrl.includes(prefix)
-                  ? addPrefix(url)
-                  : prefix + url,
+                ? addPrefix(url)
+                : prefix + url,
               icon,
             };
           }
@@ -267,21 +268,22 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
     return members;
   };
 
-
   useEffect(() => {
     if (project && project?.pointers?.length > 0) {
-      gap?.fetch?.projectById(project.pointers[0].data?.ogProjectUID).then((_project) => {
-        if (_project) {
-          router.push(`/project/${_project?.details?.data?.slug}`);
-        }
-      });
+      gap?.fetch
+        ?.projectById(project.pointers[0].data?.ogProjectUID)
+        .then((_project) => {
+          if (_project) {
+            router.push(`/project/${_project?.details?.data?.slug}`);
+          }
+        });
     }
   }, [project]);
-
 
   const members = mountMembers();
   const { isIntroModalOpen } = useIntroModalStore();
   const { isEndorsementOpen } = useEndorsementStore();
+  const { ensAvatars } = useENSAvatar();
   return (
     <>
       {isIntroModalOpen ? <IntroDialog /> : null}
@@ -371,7 +373,11 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
                       <Image
                         width={20}
                         height={20}
-                        src={blo(member.recipient as `0x${string}`, 8)}
+                        src={
+                          ensAvatars[member.recipient as `0x${string}`]
+                            ?.avatar ||
+                          blo(member.recipient as `0x${string}`, 8)
+                        }
                         alt={member.recipient}
                         className="h-5 w-5 rounded-full border border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5"
                       />

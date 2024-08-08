@@ -12,6 +12,7 @@ import pluralize from "pluralize";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { IProjectEndorsement } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useENSAvatar } from "@/store/ensAvatars";
 
 interface EndorsementRowProps {
   endorsement: IProjectEndorsement;
@@ -19,13 +20,17 @@ interface EndorsementRowProps {
 
 const EndorsementRow: FC<EndorsementRowProps> = ({ endorsement }) => {
   const { ensNames } = useENSNames();
+  const { ensAvatars } = useENSAvatar();
 
   return (
     <div className="flex flex-col w-full p-4 gap-3">
       <div className="flex flex-row gap-2 w-full items-start">
         <div className="flex flex-row gap-2 w-full items-center">
           <img
-            src={blo(endorsement.recipient, 6)}
+            src={
+              ensAvatars[endorsement.recipient]?.avatar ||
+              blo(endorsement.recipient, 6)
+            }
             alt={endorsement.recipient}
             className="h-6 w-6 rounded-full"
           />

@@ -12,6 +12,7 @@ import {
   IGrantUpdateStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { Hex } from "viem";
+import { useENSAvatar } from "@/store/ensAvatars";
 
 interface VerifiedBadgeProps {
   verifications:
@@ -31,6 +32,7 @@ const BlockieTooltip = ({
   reason?: string;
 }) => {
   const { ensNames, populateEnsNames } = useENSNames();
+  const { ensAvatars } = useENSAvatar();
 
   useEffect(() => {
     populateEnsNames([address]);
@@ -42,7 +44,7 @@ const BlockieTooltip = ({
         <Tooltip.Trigger asChild>
           <div>
             <img
-              src={blo(address, 8)}
+              src={ensAvatars[address]?.avatar || blo(address, 8)}
               alt={address}
               className="h-8 w-8 min-h-8 min-w-8 rounded-full ring-2 ring-white dark:ring-gray-800"
             />
