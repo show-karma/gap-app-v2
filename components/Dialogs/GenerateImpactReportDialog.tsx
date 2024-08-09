@@ -130,7 +130,7 @@ function GenerateDocument({
   return (
     <Document>
       <Page
-        size="A4"
+        size={{ width: 595.28 }}
         style={{
           fontFamily: "Open Sans",
           lineHeight: 1.3,
