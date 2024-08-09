@@ -82,10 +82,55 @@ function GenerateDocument({
   impactRecipientTestimonial: string;
   impactBannerImageURL: string;
 }): ReactNode {
+  const isLink = (link?: string) => {
+    if (!link) return false;
+    if (
+      link.includes("http://") ||
+      link.includes("https://") ||
+      link.includes("www.")
+    ) {
+      return true;
+    }
+    return false;
+  };
+
+  const addPrefix = (link: string) => `https://${link}`;
+
+
+  const removeHTTP = (link: string) => {
+    if (link.includes("https://")) {
+      return link.split("https://")[1];
+    }
+    if (link.includes("http://")) {
+      return link.split("http://")[1];
+    }
+    return link;
+  }
+
+  const getTwitterUserNameOnly = (text: string) => {
+    console.log("getTwitterUserNameOnly -> text", text);
+    if (text.includes("twitter.com/")) {
+      const twitterUsername = text.split("twitter.com/")[1];
+      return twitterUsername;
+    }
+
+    if (text.includes("@")) {
+      const twitterUsername = text.split("@")[1];
+      return twitterUsername;
+    }
+
+    if (text.includes("x.com/")) {
+      const twitterUsername = text.split("x.com/")[1];
+      return twitterUsername;
+    }
+
+    return text;
+  }
+
   return (
     <Document>
       <Page
-        size="A4"
+        size={{ width: 595.28 }}
         style={{
           fontFamily: "Open Sans",
           lineHeight: 1.3,
@@ -112,7 +157,7 @@ function GenerateDocument({
             <View
               style={{
                 flexDirection: "row",
-                width: "20%",
+                width: "17%",
               }}
             >
               <Image
@@ -145,7 +190,7 @@ function GenerateDocument({
                 fontSize: 10,
                 flexDirection: "row",
                 justifyContent: "flex-end",
-                width: "80%",
+                width: "auto",
                 alignItems: "center",
               }}
             >
@@ -155,7 +200,7 @@ function GenerateDocument({
                 }
                 style={{
                   borderRadius: 50,
-                  marginRight: 2,
+                  marginRight: 1,
                   width: 15,
                   height: 15,
                 }}
@@ -165,11 +210,12 @@ function GenerateDocument({
                   marginRight: 10,
                 }}
               >
-                @
                 {
-                  project?.details?.data?.links?.find(
-                    (social) => social?.type === "twitter"
-                  )?.url
+                  `${getTwitterUserNameOnly(
+                    project?.details?.data?.links?.find(
+                      (social) => social?.type === "twitter"
+                    )?.url as string
+                  )}`
                 }
               </Text>
 
@@ -179,7 +225,7 @@ function GenerateDocument({
                 }
                 style={{
                   borderRadius: 50,
-                  marginRight: 5,
+                  marginRight: 4,
                   padding: -3,
                   width: 10,
                   height: 10,
@@ -189,11 +235,11 @@ function GenerateDocument({
                 style={{
                   marginRight: 10,
                 }}
-              >
-                {
-                  project?.details?.data?.links?.find(
+              >{
+                  `${removeHTTP(project?.details?.data?.links?.find(
                     (social) => social?.type === "website"
-                  )?.url
+                  )?.url as string)
+                  }`
                 }
               </Text>
 
@@ -204,7 +250,7 @@ function GenerateDocument({
                 style={{
                   backgroundColor: "black",
                   borderRadius: 50,
-                  marginRight: 5,
+                  marginRight: 4,
                   padding: -5,
                   width: 10,
                   height: 10,
@@ -215,11 +261,10 @@ function GenerateDocument({
                   marginRight: 10,
                 }}
               >
-                github.com/
                 {
                   project?.details?.data?.links?.find(
                     (social) => social?.type === "github"
-                  )?.url
+                  )?.url as string
                 }
               </Text>
             </View>
@@ -793,12 +838,11 @@ export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
                           impactBannerImageURL={impactBannerImageURL}
                         />
                       }
-                      fileName={`${
-                        project?.details?.data?.slug || "project"
-                      }-impact-report-${grant?.details?.data?.title?.replaceAll(
-                        " ",
-                        "-"
-                      )}.pdf`}
+                      fileName={`${project?.details?.data?.slug || "project"
+                        }-impact-report-${grant?.details?.data?.title?.replaceAll(
+                          " ",
+                          "-"
+                        )}.pdf`}
                     >
                       {({ blob, url, loading, error }) =>
                         loading ? "Loading document..." : "💾 Download"

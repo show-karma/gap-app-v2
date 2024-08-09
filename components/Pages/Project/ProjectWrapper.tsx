@@ -362,7 +362,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
                   Built by
                 </p>
                 <div className="flex flex-row gap-0 w-max">
-                  {members.map((member, index) => (
+                  {Array.from(new Set(members.map(member => member.recipient))).map((member, index) => (
                     <span
                       key={index}
                       className="-ml-1.5"
@@ -371,8 +371,8 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
                       <Image
                         width={20}
                         height={20}
-                        src={blo(member.recipient as `0x${string}`, 8)}
-                        alt={member.recipient}
+                        src={blo(member as `0x${string}`, 8)}
+                        alt={member}
                         className="h-5 w-5 rounded-full border border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5"
                       />
                     </span>
