@@ -37,13 +37,13 @@ export function ProjectBlocks() {
     //   link: "/",
     //   bg: "bg-[#ECE9FE]",
     // },
-    {
-      iconSrc: "/icons/intro.png",
-      title: "Request intro",
-      description: "Get an introduction to connect",
-      action: () => setIsIntroModalOpen(true),
-      bg: "bg-[#DBFFC5]",
-    },
+    // {
+    //   iconSrc: "/icons/intro.png",
+    //   title: "Request intro",
+    //   description: "Get an introduction to connect",
+    //   action: () => setIsIntroModalOpen(true),
+    //   bg: "bg-[#DBFFC5]",
+    // },
     {
       iconSrc: "/icons/endorsements.png",
       title: "Endorse the Project",
