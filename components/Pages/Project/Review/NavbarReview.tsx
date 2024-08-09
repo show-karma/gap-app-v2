@@ -100,20 +100,8 @@ export const NavbarReview = () => {
       </div>
       <div className="w-full flex flex-col">
         {isStarSelected !== null && (
-          <CardReview
-            id={isStarSelected}
-            mode={CardReviewMode.READ}
-            // newReview={false}
-          />
+          <CardReview id={isStarSelected} mode={CardReviewMode.READ} />
         )}
-        {/*         
-        // : (
-        //   <CardReview
-        //     id={99999999999} // get the last index from data and add + 1 to be the last one created.
-        //     editableReview={true}
-        //     newReview={true}
-        //   />
-        // ) */}
       </div>
     </div>
   );
