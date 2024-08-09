@@ -1,24 +1,25 @@
 "use client";
 import React, { useState } from "react";
 import { StarReviewIcon } from "@/components/Icons/StarReview";
+import { CardReviewMode } from "./CardReview";
 
 interface DynamicStarsReviewProps {
   totalStars: number;
   rating: number;
   setRating: (rating: number) => void;
-  editableReview: boolean;
+  mode: CardReviewMode;
 }
 
 export const DynamicStarsReview = ({
   totalStars,
   rating,
   setRating,
-  editableReview,
+  mode,
 }: DynamicStarsReviewProps) => {
   const [hover, setHover] = useState<number | null>(null);
 
   const handleStarClick = (index: number) => {
-    if (editableReview) {
+    if (mode == CardReviewMode.WRITE) {
       setRating(index);
     }
   };
@@ -33,20 +34,26 @@ export const DynamicStarsReview = ({
           <StarReviewIcon
             key={index}
             pathProps={{
-              className: editableReview
-                ? "transition-all ease-in-out duration-300 cursor-pointer"
-                : "transition-all ease-in-out duration-300",
-              onClick: editableReview
-                ? () => handleStarClick(currentRating)
-                : undefined,
+              className:
+                mode === CardReviewMode.WRITE
+                  ? "transition-all ease-in-out duration-300 cursor-pointer"
+                  : "transition-all ease-in-out duration-300",
+              onClick:
+                mode === CardReviewMode.WRITE
+                  ? () => handleStarClick(currentRating)
+                  : undefined,
               style: {
                 fill: isHoveredOrRated ? "#004EEB" : "none",
                 stroke: isHoveredOrRated ? "#004EEB" : "#98A2B3",
               },
-              onMouseEnter: editableReview
-                ? () => setHover(currentRating)
-                : undefined,
-              onMouseLeave: editableReview ? () => setHover(null) : undefined,
+              onMouseEnter:
+                mode === CardReviewMode.WRITE
+                  ? () => setHover(currentRating)
+                  : undefined,
+              onMouseLeave:
+                mode === CardReviewMode.WRITE
+                  ? () => setHover(null)
+                  : undefined,
             }}
           />
         );

@@ -12,10 +12,9 @@ export enum CardReviewMode {
 interface CardReviewDataProps {
   id: number;
   mode: CardReviewMode;
-  // newReview?: boolean;
 }
 
-interface BadgeListProps {
+export interface BadgeListProps {
   name: BadgeName;
   description: string;
   score: number;
@@ -204,10 +203,6 @@ export const CardReview = (data: CardReviewDataProps) => {
   const [badgeList, setBadgeList] =
     useState<BadgeListProps[][]>(initialBadgeList);
 
-  // const [newReview, setNewReview] = useState<BadgeListProps[]>(
-  //   defaultInitialBadgeList
-  // );
-
   const selectedBadgeList = badgeList[data.id] || [];
 
   const handleSetRating = (index: number, rating: number) => {
@@ -238,14 +233,14 @@ export const CardReview = (data: CardReviewDataProps) => {
                     totalStars={5}
                     rating={badge.score}
                     setRating={(rating) => handleSetRating(index, rating)}
-                    editableReview={true}
+                    mode={CardReviewMode.WRITE}
                   />
                 ) : (
                   <DynamicStarsReview
                     totalStars={5}
                     rating={badge.score}
                     setRating={() => {}}
-                    editableReview={false}
+                    mode={CardReviewMode.READ}
                   />
                 )}
               </div>
