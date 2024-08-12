@@ -65,7 +65,10 @@ const labelStyle =
 
 const schema = z.object({
   title: z.string().min(3, { message: MESSAGES.PROJECT_FORM.TITLE }),
-  chainID: z.number(),
+  chainID: z.number({
+    required_error: "Network is required",
+    message: "Network is required",
+  }),
   locationOfImpact: z.string().optional(),
   description: z
     .string({
@@ -147,7 +150,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   previousContacts,
 }) => {
   const dataToUpdate = {
-    chainID: projectToUpdate?.chainID || appNetwork[0].id,
+    chainID: projectToUpdate?.chainID,
     description: projectToUpdate?.details?.data?.description || "",
     title: projectToUpdate?.details?.data?.title || "",
     problem: projectToUpdate?.details?.data?.problem,
@@ -212,9 +215,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   }
   function openModal() {
     setIsOpen(true);
-    if (!projectToUpdate) {
-      setContacts([]);
-    }
   }
 
   // const addMemberToArray = () => {
@@ -298,6 +298,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         "missionSummary",
       ],
       1: ["twitter", "github", "discord", "website", "linkedin"],
+      3: ["chainID"],
     };
 
     if (stepsToValidate[step]) {
@@ -899,7 +900,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                   setValue("chainID", networkId);
                 }}
                 networks={appNetwork}
-                defaultValue={appNetwork[0].id}
                 previousValue={watch("chainID")}
               />
               <p className="text-red-500">{errors.chainID?.message}</p>

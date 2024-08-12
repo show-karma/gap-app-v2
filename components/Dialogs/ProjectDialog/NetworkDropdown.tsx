@@ -12,28 +12,15 @@ interface NetworkDropdownProps {
   onSelectFunction: (value: number) => void;
   previousValue?: number;
   networks: Chain[];
-  defaultValue: number;
 }
 
 export const NetworkDropdown: FC<NetworkDropdownProps> = ({
   onSelectFunction,
   previousValue,
   networks,
-  defaultValue,
 }) => {
   const [open, setOpen] = useState(false);
-  const [value, setValue] = useState<number>(previousValue || defaultValue);
-
-  // sort networks by name alphabetically
-  const sortedNetworks = networks.sort((a, b) => {
-    if (a.name < b.name) {
-      return -1;
-    }
-    if (a.name > b.name) {
-      return 1;
-    }
-    return 0;
-  });
+  const [value, setValue] = useState<number | undefined>(previousValue);
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
@@ -41,10 +28,10 @@ export const NetworkDropdown: FC<NetworkDropdownProps> = ({
         {value ? (
           <div className="flex flex-row gap-2 items-center">
             <img src={chainImgDictionary(value)} alt={""} className="w-5 h-5" />
-            <p>{networks.find((community) => community.id === value)?.name} </p>
+            <p>{networks.find((network) => network.id === value)?.name} </p>
           </div>
         ) : (
-          "Select community"
+          "Select network"
         )}
         <ChevronUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
       </Popover.Trigger>
@@ -54,7 +41,7 @@ export const NetworkDropdown: FC<NetworkDropdownProps> = ({
       >
         <Command>
           <CommandGroup>
-            {sortedNetworks.map((network) => (
+            {networks.map((network) => (
               <CommandItem
                 key={network.id}
                 onSelect={() => {
