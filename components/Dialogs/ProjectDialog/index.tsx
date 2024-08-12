@@ -262,7 +262,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         !!errors?.problem ||
         !!errors?.solution ||
         !!errors?.missionSummary ||
-        !watch("title")
+        !watch("title") ||
+        !watch("description") ||
+        !watch("problem") ||
+        !watch("solution") ||
+        !watch("missionSummary")
       );
     }
     if (step === 1) {
@@ -275,7 +279,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       );
     }
     if (step === 3) {
-      return !contacts.length || !!errors?.chainID;
+      return !contacts.length || !!errors?.chainID || !watch("chainID");
     }
     // if (step === 2) {
     //   return (
@@ -897,7 +901,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               </label>
               <NetworkDropdown
                 onSelectFunction={(networkId) => {
-                  setValue("chainID", networkId);
+                  setValue("chainID", networkId, {
+                    shouldValidate: true,
+                  });
                 }}
                 networks={appNetwork}
                 previousValue={watch("chainID")}
