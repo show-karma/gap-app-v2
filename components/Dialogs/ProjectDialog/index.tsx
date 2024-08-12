@@ -54,6 +54,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { config } from "@/utilities/wagmi/config";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getProjectById } from "@/utilities/sdk";
+import { NetworkDropdown } from "./NetworkDropdown";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -64,6 +65,7 @@ const labelStyle =
 
 const schema = z.object({
   title: z.string().min(3, { message: MESSAGES.PROJECT_FORM.TITLE }),
+  chainID: z.number(),
   locationOfImpact: z.string().optional(),
   description: z
     .string({
@@ -145,6 +147,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   previousContacts,
 }) => {
   const dataToUpdate = {
+    chainID: projectToUpdate?.chainID || appNetwork[0].id,
     description: projectToUpdate?.details?.data?.description || "",
     title: projectToUpdate?.details?.data?.title || "",
     problem: projectToUpdate?.details?.data?.problem,
@@ -272,7 +275,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       );
     }
     if (step === 3) {
-      return !contacts.length;
+      return !contacts.length || !!errors?.chainID;
     }
     // if (step === 2) {
     //   return (
@@ -318,11 +321,13 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       }
       if (!address) return;
       if (!gap) return;
-      let gapClient = gap;
 
-      if (!checkNetworkIsValid(chain?.id)) {
-        await switchChainAsync?.({ chainId: appNetwork[0].id });
-        gapClient = getGapClient(appNetwork[0].id);
+      const chainSelected = data.chainID;
+      let gapClient = getGapClient(chainSelected);
+
+      if (chain?.id !== chainSelected) {
+        await switchChainAsync?.({ chainId: chainSelected });
+        gapClient = getGapClient(chainSelected);
       }
 
       const project = new Project({
@@ -340,9 +345,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         links: ExternalLink;
         recipient?: string;
       }
-
+      const { chainID, ...rest } = data;
       const newProjectInfo: NewProjectData = {
-        ...data,
+        ...rest,
         // members: team.map((item) => item as Hex),
         members: [(data.recipient || address) as Hex],
         links: [
@@ -370,9 +375,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         imageURL: "",
       };
 
-      if (!gap) return;
+      if (!gapClient) return;
 
-      const slug = await gap.generateSlug(newProjectInfo.title);
+      const slug = await gapClient.generateSlug(newProjectInfo.title);
       // eslint-disable-next-line no-param-reassign
       project.details = new ProjectDetails({
         data: {
@@ -382,7 +387,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           solution: newProjectInfo.solution,
           missionSummary: newProjectInfo.missionSummary,
           locationOfImpact: newProjectInfo.locationOfImpact,
-
           imageURL: "",
           links: newProjectInfo.links,
           slug,
@@ -395,7 +399,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           pathToTake: newProjectInfo.pathToTake,
         },
         refUID: project.uid,
-        schema: gap.findSchema("ProjectDetails"),
+        schema: gapClient.findSchema("ProjectDetails"),
         recipient: project.recipient,
         uid: nullRef,
       });
@@ -414,7 +418,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             new MemberOf({
               recipient: member,
               refUID: project.uid,
-              schema: gap.findSchema("MemberOf"),
+              schema: gapClient.findSchema("MemberOf"),
               uid: nullRef,
               data: {
                 memberOf: true,
@@ -437,8 +441,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         while (retries > 0) {
           // eslint-disable-next-line no-await-in-loop
           fetchedProject = await (slug
-            ? gap.fetch.projectBySlug(slug)
-            : gap.fetch.projectById(project.uid as Hex)
+            ? gapClient.fetch.projectBySlug(slug)
+            : gapClient.fetch.projectById(project.uid as Hex)
           ).catch(() => null);
           if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
             await fetchData(
@@ -468,7 +472,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
           await new Promise((resolve) => setTimeout(resolve, 1500));
         }
-      })
+      });
 
       reset();
       setTeam([]);
@@ -870,7 +874,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       title: "Contact info",
       desc: "How can we contact you?",
       fields: (
-        <div className="flex w-full min-w-[320px] flex-col gap-2">
+        <div className="flex w-full min-w-[320px] flex-col gap-8">
           <ContactInfoSection
             existingContacts={contacts}
             isEditing={!!projectToUpdate}
@@ -885,6 +889,22 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               setContacts(contacts.filter((c) => c.id !== contact.id))
             }
           />
+          {!projectToUpdate ? (
+            <div className="flex w-full flex-col gap-2 border-t border-zinc-200 dark:border-zinc-700 pt-8">
+              <label htmlFor="chain-id-input" className={labelStyle}>
+                Choose a network to create your project
+              </label>
+              <NetworkDropdown
+                onSelectFunction={(networkId) => {
+                  setValue("chainID", networkId);
+                }}
+                networks={appNetwork}
+                defaultValue={appNetwork[0].id}
+                previousValue={watch("chainID")}
+              />
+              <p className="text-red-500">{errors.chainID?.message}</p>
+            </div>
+          ) : null}
         </div>
       ),
     },
