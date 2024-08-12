@@ -70,9 +70,6 @@ export const CardReview = (data: CardReviewDataProps) => {
           </div>
         ))}
       </div>
-      <div className="flex justify-end w-full">
-        <Button>Submit Review</Button>
-      </div>
     </div>
   );
 };
