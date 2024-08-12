@@ -1,13 +1,12 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FC, useState } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
 import toast from "react-hot-toast";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/store";
 import { Contact } from "@/types/project";
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
-import { ContactsDropdown } from "@/components/Pages/Project/ContactsDropdown";
 import { Button } from "@/components/Utilities/Button";
 import { Hex } from "viem";
 import Image from "next/image";
