@@ -1,18 +1,8 @@
 "use client";
 
 import { BadgeIcon, BadgeName } from "@/components/Icons/Badge";
-import React from "react";
-import { DynamicStarsReview } from "./DynamicStarsReview";
+import { DynamicStarsReview, ReviewMode } from "./DynamicStarsReview";
 import { useReviewStore } from "@/store/review";
-
-export enum CardReviewMode {
-  READ = "READ",
-  WRITE = "WRITE",
-}
-interface CardReviewDataProps {
-  id: number;
-  mode: CardReviewMode;
-}
 
 export interface BadgeListProps {
   name: BadgeName;
@@ -20,23 +10,9 @@ export interface BadgeListProps {
   score: number;
 }
 
-export const CardReview = (data: CardReviewDataProps) => {
-  const setBadgeList = useReviewStore((state) => state.setBadgeList);
-  const badgeList = useReviewStore((state) => state.badgeList);
-
-  const selectedBadgeList = badgeList[data.id] || [];
-
-  const handleSetRating = (index: number, rating: number) => {
-    const updatedBadgeList = [...badgeList];
-    const updatedBadges = [...updatedBadgeList[data.id]];
-
-    if (updatedBadges[index]) {
-      updatedBadges[index] = { ...updatedBadges[index], score: rating };
-    }
-
-    updatedBadgeList[data.id] = updatedBadges;
-    setBadgeList(updatedBadgeList);
-  };
+export const CardReview = ({ id }: { id: number }) => {
+  const review = useReviewStore((state) => state.review);
+  const selectedBadgeList = review[id].reviews || [];
 
   return (
     <div className="flex w-full flex-col justify-center gap-4">
@@ -49,21 +25,12 @@ export const CardReview = (data: CardReviewDataProps) => {
               </div>
               <div className="text-sm">{badge.description}</div>
               <div>
-                {data.mode === CardReviewMode.WRITE ? (
-                  <DynamicStarsReview
-                    totalStars={5}
-                    rating={badge.score}
-                    setRating={(rating) => handleSetRating(index, rating)}
-                    mode={CardReviewMode.WRITE}
-                  />
-                ) : (
-                  <DynamicStarsReview
-                    totalStars={5}
-                    rating={badge.score}
-                    setRating={() => {}}
-                    mode={CardReviewMode.READ}
-                  />
-                )}
+                <DynamicStarsReview
+                  totalStars={5}
+                  rating={badge.score}
+                  setRating={() => {}}
+                  mode={ReviewMode.READ}
+                />
               </div>
             </div>
           </div>

@@ -1,20 +1,88 @@
 "use client";
 
-import { BadgeIcon } from "@/components/Icons/Badge";
+import { useState } from "react";
+import { BadgeIcon, BadgeName } from "@/components/Icons/Badge";
 import { Button } from "@/components/Utilities/Button";
-import React from "react";
-import { DynamicStarsReview } from "./DynamicStarsReview";
-import { BadgeListProps, CardReviewMode } from "./CardReview";
-import { useReviewStore } from "@/store/review";
+import { DynamicStarsReview, ReviewMode } from "./DynamicStarsReview";
+import { BadgeListProps } from "./CardReview";
+import { Review, useReviewStore } from "@/store/review";
 
-export const CardNewReview = ({ id }: { id: number }) => {
-  const setNewReview = useReviewStore((state) => state.setNewReview);
-  const newReview = useReviewStore((state) => state.newReview);
+const defaultInitialNewReviewList: BadgeListProps[] = [
+  {
+    name: BadgeName.CLEAR_GOALS,
+    description:
+      "Clear Goals: Recognizes programs with well-defined goals. Every grant program has a goal, such as governance, impact, or education. Are these goals well explained so you can build a project aligned with them?",
+    score: 0,
+  },
+  {
+    name: BadgeName.SMOOTH_APPLICATION,
+    description:
+      "Smooth Application: Awards a seamless application process. Are they using a tech that facilitates the application process? Did they get back to you after the application, ou foi apenas um formulário genérico?",
+    score: 0,
+  },
+  {
+    name: BadgeName.FAIR_ROUNDS,
+    description:
+      "Fair rounds: Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla sem urna, sodales vel placerat sed, elementum a orci. Duis sit amet neque rutrum, suscipit enim tempus, dignissim erat. Etiam interdum dignissim pretium.",
+    score: 0,
+  },
+  {
+    name: BadgeName.EASY_TEACH,
+    description:
+      "Easy Tech: Awards programs with easily implementable technology. How hard is the tech? Are the docs easy to use or find?",
+    score: 0,
+  },
+  {
+    name: BadgeName.SUPPORTIVE_TEAM,
+    description:
+      "Supportive Team: Highlights programs with highly supportive teams. Whether technical or not, if you receive very helpful support after applying for a grant, issue this badge. – Post-Grant Support: Highlights strong post-grant support. How much do they help you after the application? Do they suggest related projects, possible connections, or interested people?",
+    score: 0,
+  },
+  {
+    name: BadgeName.GREAT_REVIEWERS,
+    description:
+      "Great Reviewers: Recognizes top-quality grant reviewers. They are impartial, select well-written projects, set clear goals, and explain the application process well.",
+    score: 0,
+  },
+  {
+    name: BadgeName.FAST_DISBURSEMENT,
+    description:
+      "Fast Disbursement: Commends quick fund disbursement processes. Did they complete the payment as soon as you completed the milestones? If yes, issue this badge.",
+    score: 0,
+  },
+];
+
+export const CardNewReview = () => {
+  const [newReview, setNewReview] = useState<BadgeListProps[]>(
+    defaultInitialNewReviewList
+  );
+  const setReview = useReviewStore((state) => state.setReview);
+  const review = useReviewStore((state) => state.review);
+  const _currentTimestamp = Math.floor(new Date().getTime() / 1000);
 
   const handleSetRating = (index: number, rating: number) => {
     const updatedBadges = [...newReview];
     updatedBadges[index] = { ...updatedBadges[index], score: rating };
     setNewReview(updatedBadges);
+  };
+
+  const handleSubmitReview = () => {
+    const totalScore = newReview.reduce(
+      (score, review) => score + review.score,
+      0
+    );
+    const averageScore = newReview.length
+      ? Number((totalScore / newReview.length).toFixed(1))
+      : 0;
+
+    const newReviewData: Review = {
+      id: review.length + 1,
+      date: _currentTimestamp,
+      averageScore: averageScore,
+      reviews: newReview,
+    };
+
+    setReview([...review, newReviewData]);
   };
 
   return (
@@ -32,7 +100,7 @@ export const CardNewReview = ({ id }: { id: number }) => {
                   totalStars={5}
                   rating={badge.score}
                   setRating={(rating) => handleSetRating(index, rating)}
-                  mode={CardReviewMode.WRITE}
+                  mode={ReviewMode.WRITE}
                 />
               </div>
             </div>
@@ -40,7 +108,7 @@ export const CardNewReview = ({ id }: { id: number }) => {
         ))}
       </div>
       <div className="flex justify-end w-full">
-        <Button>Submit Review</Button>
+        <Button onClick={handleSubmitReview}>Submit Review</Button>
       </div>
     </div>
   );

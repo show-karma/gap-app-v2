@@ -1,13 +1,16 @@
 "use client";
 import React, { useState } from "react";
 import { StarReviewIcon } from "@/components/Icons/StarReview";
-import { CardReviewMode } from "./CardReview";
 
+export enum ReviewMode {
+  READ = "READ",
+  WRITE = "WRITE",
+}
 interface DynamicStarsReviewProps {
   totalStars: number;
   rating: number;
   setRating: (rating: number) => void;
-  mode: CardReviewMode;
+  mode: ReviewMode;
 }
 
 export const DynamicStarsReview = ({
@@ -19,7 +22,7 @@ export const DynamicStarsReview = ({
   const [hover, setHover] = useState<number | null>(null);
 
   const handleStarClick = (index: number) => {
-    if (mode == CardReviewMode.WRITE) {
+    if (mode == ReviewMode.WRITE) {
       setRating(index);
     }
   };
@@ -35,11 +38,11 @@ export const DynamicStarsReview = ({
             key={index}
             pathProps={{
               className:
-                mode === CardReviewMode.WRITE
+                mode === ReviewMode.WRITE
                   ? "transition-all ease-in-out duration-300 cursor-pointer"
                   : "transition-all ease-in-out duration-300",
               onClick:
-                mode === CardReviewMode.WRITE
+                mode === ReviewMode.WRITE
                   ? () => handleStarClick(currentRating)
                   : undefined,
               style: {
@@ -47,13 +50,11 @@ export const DynamicStarsReview = ({
                 stroke: isHoveredOrRated ? "#004EEB" : "#98A2B3",
               },
               onMouseEnter:
-                mode === CardReviewMode.WRITE
+                mode === ReviewMode.WRITE
                   ? () => setHover(currentRating)
                   : undefined,
               onMouseLeave:
-                mode === CardReviewMode.WRITE
-                  ? () => setHover(null)
-                  : undefined,
+                mode === ReviewMode.WRITE ? () => setHover(null) : undefined,
             }}
           />
         );

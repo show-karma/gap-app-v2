@@ -1,9 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { useEffect, useState } from "react";
-import { additionalQuestion } from "@/utilities/tabs";
+import { useState } from "react";
 import { useProjectStore } from "@/store";
-import { getReviewsOf, getAnonReviewsOf } from "@/utilities/sdk";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { StarIcon } from "@/components/Icons";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -19,28 +17,6 @@ interface GrantAllReviewsProps {
   grant: IGrantResponse | undefined;
 }
 
-type Review = {
-  answers: {
-    query: string;
-    rating: number;
-    answer: string;
-    questionId: number;
-  }[];
-  publicAddress: string;
-  createdAt: string;
-};
-type AnonReview = {
-  answers: {
-    query: string;
-    rating: number;
-    answer: string;
-    questionId: number;
-    createdAt: string;
-  }[];
-  nullifier: string;
-  createdAt: string;
-};
-
 export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
   const isProjectLoading = useProjectStore((state) => state.loading);
   if (isProjectLoading || !grant) {
@@ -48,103 +24,10 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
       <Spinner />
     </div>;
   }
+  const [isOpenReview, setIsOpenReview] = useState<boolean>(false);
   const project = useProjectStore((state) => state.project);
-  const [isFetching, setIsFetching] = useState(false);
-  const [isFetchingAnon, setIsFetchingAnon] = useState(false);
-  const [allReviews, setAllReviews] = useState<Review[]>([]);
-  const [allAnonReviews, setAllAnonReviews] = useState<AnonReview[]>([]);
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [anonReviews, setAnonReviews] = useState<AnonReview[]>([]);
-  const [page, setPage] = useState(1);
-  const [pageAnon, setPageAnon] = useState(1);
-  const pageLimit = 10;
   const { openConnectModal } = useConnectModal();
   const { isConnected, address } = useAccount();
-  const [isOpenReview, setIsOpenReview] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (!grant) return;
-
-    const getReviews = async () => {
-      setIsFetching(true);
-      if (!grant) return;
-      try {
-        const data: Review[] = await getReviewsOf(grant.uid);
-        const orderedData = data.map((review) => ({
-          ...review,
-          answers: [
-            ...review.answers.filter(
-              (answer) => !additionalQuestion(answer.questionId, answer.query)
-            ),
-            ...review.answers.filter((answer) =>
-              additionalQuestion(answer.questionId, answer.query)
-            ),
-          ],
-        }));
-        const sortByDate = (a: Review, b: Review) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        const sortedData = orderedData.sort(sortByDate);
-        setAllReviews(sortedData);
-        const slicedData = sortedData.slice(0, pageLimit);
-
-        setReviews(slicedData);
-      } catch (error) {
-        console.log(error);
-        setReviews([]);
-      } finally {
-        setIsFetching(false);
-      }
-    };
-
-    const getReviewsAnon = async () => {
-      setIsFetchingAnon(true);
-      if (!grant) return;
-      try {
-        const data: AnonReview[] = await getAnonReviewsOf(grant.uid);
-        const orderedData = data.map((review) => ({
-          ...review,
-
-          answers: [
-            ...review.answers.filter(
-              (answer) => !additionalQuestion(answer.questionId, answer.query)
-            ),
-            ...review.answers.filter((answer) =>
-              additionalQuestion(answer.questionId, answer.query)
-            ),
-          ],
-        }));
-        const sortByDate = (a: AnonReview, b: AnonReview) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        const sortedData = orderedData.sort(sortByDate);
-        setAllAnonReviews(sortedData);
-        const slicedData = sortedData.slice(0, pageLimit);
-
-        setAnonReviews(slicedData);
-      } catch (error) {
-        console.log(error);
-        setAnonReviews([]);
-      } finally {
-        setIsFetchingAnon(false);
-      }
-    };
-
-    getReviews();
-    getReviewsAnon();
-  }, [grant]);
-
-  useEffect(() => {
-    const slicedData = allReviews.slice(
-      (page - 1) * pageLimit,
-      page * pageLimit
-    );
-    setReviews(slicedData);
-
-    const slicedAnonData = allAnonReviews.slice(
-      (pageAnon - 1) * pageLimit,
-      pageAnon * pageLimit
-    );
-    setAnonReviews(slicedAnonData);
-  }, [page]);
 
   const handleReviewButton = () => {
     if (!isConnected && openConnectModal) {
@@ -172,8 +55,7 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
                   <XMarkIcon className="w-6 h-6" />
                 </button>
               </div>
-              <CardNewReview id={10} />
-              {/*  id = data.lenght + 1 ( last one created)*/}
+              <CardNewReview />
             </>
           ) : (
             <>
@@ -184,7 +66,7 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
                 {isConnected &&
                 project?.recipient &&
                 address &&
-                isAddressEqual(project.recipient, address) ? (
+                !isAddressEqual(project.recipient, address) ? ( //TODO: Remove this (negation)!
                   <Button
                     disabled={false}
                     onClick={handleReviewButton}
