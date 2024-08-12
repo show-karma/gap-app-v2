@@ -74,11 +74,16 @@ export const useAuth = () => {
     signedMessage: string
   ) => {
     try {
-      const [response] = await fetchData("/auth/authentication", "POST", {
-        publicAddress,
-        signedMessage,
-        chainId,
-      });
+      const [response] = chainId
+        ? await fetchData("/auth/authentication", "POST", {
+            publicAddress,
+            signedMessage,
+            chainId,
+          })
+        : await fetchData("/auth/authentication", "POST", {
+            publicAddress,
+            signedMessage,
+          });
       const { token, walletType } = response;
       return { token, walletType };
     } catch (error) {
