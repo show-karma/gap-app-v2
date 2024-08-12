@@ -1,7 +1,6 @@
 "use client";
 
 import { BadgeIcon, BadgeName } from "@/components/Icons/Badge";
-import { Button } from "@/components/Utilities/Button";
 import React from "react";
 import { DynamicStarsReview } from "./DynamicStarsReview";
 import { useReviewStore } from "@/store/review";
