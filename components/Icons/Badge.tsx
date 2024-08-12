@@ -155,8 +155,8 @@ export const BadgeIcon: React.FC<BadgeIconProps> = ({
           fill="#EFF6FF"
           stroke="#C7D9FB"
         />
-        <circle cx="36" cy="38" r="18" fill="#1D58CD" fill-opacity="0.05" />
-        <circle cx="36" cy="38" r="22" fill="#1D58CD" fill-opacity="0.05" />
+        <circle cx="36" cy="38" r="18" fill="#1D58CD" fillOpacity="0.05" />
+        <circle cx="36" cy="38" r="22" fill="#1D58CD" fillOpacity="0.05" />
         <g clip-path="url(#clip0_380_946)">
           <path
             d="M49.2272 27.6664C49.2272 27.1763 48.8321 26.7759 48.3367 26.7759H21.6742C21.1841 26.7759 20.7837 27.171 20.7837 27.6664V32.1821H49.2219V27.6664H49.2272Z"
@@ -209,7 +209,7 @@ export const BadgeIcon: React.FC<BadgeIconProps> = ({
             filterUnits="userSpaceOnUse"
             color-interpolation-filters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               type="matrix"
@@ -271,8 +271,8 @@ export const BadgeIcon: React.FC<BadgeIconProps> = ({
           fill="#EFF6FF"
           stroke="#C7D9FB"
         />
-        <circle cx="36.5" cy="38" r="18" fill="#1D58CD" fill-opacity="0.05" />
-        <circle cx="36.5" cy="38" r="22" fill="#1D58CD" fill-opacity="0.05" />
+        <circle cx="36.5" cy="38" r="18" fill="#1D58CD" fillOpacity="0.05" />
+        <circle cx="36.5" cy="38" r="22" fill="#1D58CD" fillOpacity="0.05" />
         <g clip-path="url(#clip0_380_930)">
           <path
             d="M30.8354 48.5337H21.9336C22.3572 50.5976 24.193 52.1617 26.3817 52.1617C28.576 52.1617 30.4063 50.603 30.8354 48.5337Z"
@@ -309,7 +309,7 @@ export const BadgeIcon: React.FC<BadgeIconProps> = ({
             filterUnits="userSpaceOnUse"
             color-interpolation-filters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               type="matrix"
@@ -380,7 +380,7 @@ export const BadgeIcon: React.FC<BadgeIconProps> = ({
               cy="38"
               r="19"
               fill="#1D58CD"
-              fill-opacity="0.05"
+              fillOpacity="0.05"
             />
             <circle
               id="bg 1"
@@ -388,7 +388,7 @@ export const BadgeIcon: React.FC<BadgeIconProps> = ({
               cy="38"
               r="22"
               fill="#1D58CD"
-              fill-opacity="0.05"
+              fillOpacity="0.05"
             />
           </g>
           <mask
@@ -482,7 +482,7 @@ export const BadgeIcon: React.FC<BadgeIconProps> = ({
             filterUnits="userSpaceOnUse"
             color-interpolation-filters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               type="matrix"
@@ -536,8 +536,8 @@ export const BadgeIcon: React.FC<BadgeIconProps> = ({
           fill="#EFF6FF"
           stroke="#C7D9FB"
         />
-        <circle cx="36" cy="38" r="18" fill="#1D58CD" fill-opacity="0.05" />
-        <circle cx="36" cy="38" r="22" fill="#1D58CD" fill-opacity="0.05" />
+        <circle cx="36" cy="38" r="18" fill="#1D58CD" fillOpacity="0.05" />
+        <circle cx="36" cy="38" r="22" fill="#1D58CD" fillOpacity="0.05" />
         <path
           d="M24.7152 52.4725C26.6937 52.4725 28.2976 50.8685 28.2976 48.89C28.2976 46.9115 26.6937 45.3076 24.7152 45.3076C22.7367 45.3076 21.1328 46.9115 21.1328 48.89C21.1328 50.8685 22.7367 52.4725 24.7152 52.4725Z"
           fill="#1EE9B6"
@@ -764,7 +764,7 @@ export const BadgeIcon: React.FC<BadgeIconProps> = ({
             filterUnits="userSpaceOnUse"
             color-interpolation-filters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               type="matrix"
@@ -818,8 +818,8 @@ export const BadgeIcon: React.FC<BadgeIconProps> = ({
           fill="#EFF6FF"
           stroke="#C7D9FB"
         />
-        <circle cx="35.5" cy="38" r="19" fill="#1D58CD" fill-opacity="0.05" />
-        <circle cx="35.5" cy="38" r="22" fill="#1D58CD" fill-opacity="0.05" />
+        <circle cx="35.5" cy="38" r="19" fill="#1D58CD" fillOpacity="0.05" />
+        <circle cx="35.5" cy="38" r="22" fill="#1D58CD" fillOpacity="0.05" />
         <mask
           id="mask0_380_886"
           maskUnits="userSpaceOnUse"
@@ -944,7 +944,7 @@ export const BadgeIcon: React.FC<BadgeIconProps> = ({
             filterUnits="userSpaceOnUse"
             color-interpolation-filters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               type="matrix"
@@ -1006,8 +1006,8 @@ export const BadgeIcon: React.FC<BadgeIconProps> = ({
           fill="#EFF6FF"
           stroke="#C7D9FB"
         />
-        <circle cx="36" cy="38" r="18" fill="#1D58CD" fill-opacity="0.05" />
-        <circle cx="36" cy="38" r="22" fill="#1D58CD" fill-opacity="0.05" />
+        <circle cx="36" cy="38" r="18" fill="#1D58CD" fillOpacity="0.05" />
+        <circle cx="36" cy="38" r="22" fill="#1D58CD" fillOpacity="0.05" />
         <g clip-path="url(#clip0_380_966)">
           <path
             d="M28.3737 46.9486C29.5907 46.9486 30.9289 44.8201 30.9289 42.8813C30.9289 40.953 29.538 40.5474 28.3737 40.5474C27.2093 40.5474 25.8184 40.9478 25.8184 42.8813C25.8184 44.8201 27.1619 46.9486 28.3737 46.9486Z"
@@ -1060,7 +1060,7 @@ export const BadgeIcon: React.FC<BadgeIconProps> = ({
             filterUnits="userSpaceOnUse"
             color-interpolation-filters="sRGB"
           >
-            <feFlood flood-opacity="0" result="BackgroundImageFix" />
+            <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
               in="SourceAlpha"
               type="matrix"
