@@ -3,12 +3,12 @@ import {
   ProgressModalScreen,
   useProgressModalStore,
 } from "@/store/modals/progress";
-import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import { FC, Fragment, ReactNode, useState } from "react";
 import { Button } from "../../Utilities/Button";
 import { GrantUpdateScreen } from "./GrantUpdateScreen";
+import { Transition, Dialog } from "@headlessui/react";
 
 const Box = ({
   icon,
@@ -171,7 +171,7 @@ export const ProgressDialog = () => {
         </Transition.Child>
 
         <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4 text-center">
+          <div className="flex min-h-full h-max items-center justify-center p-4 text-center">
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"

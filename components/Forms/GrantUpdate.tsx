@@ -6,11 +6,14 @@ import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
+import { cn } from "@/utilities/tailwind";
 import { config } from "@/utilities/wagmi/config";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { GrantUpdate } from "@show-karma/karma-gap-sdk";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getWalletClient } from "@wagmi/core";
+import { useRouter } from "next/navigation";
 import { useQueryState } from "nuqs";
 import type { FC } from "react";
 import { useState } from "react";
@@ -24,17 +27,27 @@ const updateSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.GRANT.UPDATE.FORM.TITLE }),
 });
 
-const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
-const inputStyle =
+const labelStyleDefault = "text-sm font-bold text-black dark:text-zinc-100";
+const inputStyleDefault =
   "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300";
 
 type UpdateType = z.infer<typeof updateSchema>;
 
 interface GrantUpdateFormProps {
   grant: IGrantResponse;
+  labelStyleProps?: string;
+  inputStyleProps?: string;
+  afterSubmit?: () => void;
 }
 
-export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({ grant }) => {
+export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
+  grant,
+  labelStyleProps = labelStyleDefault,
+  inputStyleProps = inputStyleDefault,
+  afterSubmit,
+}) => {
+  const labelStyle = cn(labelStyleDefault, labelStyleProps);
+  const inputStyle = cn(inputStyleDefault, inputStyleProps);
   const [description, setDescription] = useState("");
 
   const { address } = useAccount();
@@ -42,7 +55,6 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({ grant }) => {
   const { switchChainAsync } = useSwitchChain();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const [, changeTab] = useQueryState("tab");
   const {
     register,
     handleSubmit,
@@ -71,6 +83,8 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({ grant }) => {
   const { changeStepperStep, setIsStepper } = useStepper();
 
   const { gap } = useGap();
+
+  const router = useRouter();
 
   const createGrantUpdate = async (
     grantToUpdate: IGrantResponse,
@@ -119,8 +133,15 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({ grant }) => {
                 if (alreadyExists) {
                   retries = 0;
                   changeStepperStep("indexed");
+                  afterSubmit?.();
                   toast.success(MESSAGES.GRANT.GRANT_UPDATE.SUCCESS);
-                  changeTab("milestones-and-updates");
+                  router.push(
+                    PAGES.PROJECT.TABS.SELECTED_TAB(
+                      project.uid,
+                      grantToUpdate.uid,
+                      "milestones-and-updates"
+                    )
+                  );
                 }
                 retries -= 1;
                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
