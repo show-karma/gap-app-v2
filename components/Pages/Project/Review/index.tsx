@@ -1,42 +1,23 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { useEffect, useState } from "react";
-import { additionalQuestion } from "@/utilities/tabs";
+import { useState } from "react";
 import { useProjectStore } from "@/store";
-import { getReviewsOf, getAnonReviewsOf } from "@/utilities/sdk";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { StarIcon } from "@/components/Icons";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/Utilities/Button";
 import { NavbarReview } from "@/components/Pages/Project/Review/NavbarReview";
-// import { useConnectModal } from "@rainbow-me/rainbowkit";
-// import { useAccount } from "wagmi";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useAccount } from "wagmi";
+import { CardNewReview } from "./CardNewReview";
+import { XMarkIcon } from "@heroicons/react/24/solid";
+import { isAddressEqual } from "viem";
+import { ReviewMode } from "@/types/review";
+import { useReviewStore } from "@/store/review";
 
 interface GrantAllReviewsProps {
   grant: IGrantResponse | undefined;
 }
-
-type Review = {
-  answers: {
-    query: string;
-    rating: number;
-    answer: string;
-    questionId: number;
-  }[];
-  publicAddress: string;
-  createdAt: string;
-};
-type AnonReview = {
-  answers: {
-    query: string;
-    rating: number;
-    answer: string;
-    questionId: number;
-    createdAt: string;
-  }[];
-  nullifier: string;
-  createdAt: string;
-};
 
 export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
   const isProjectLoading = useProjectStore((state) => state.loading);
@@ -45,124 +26,75 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
       <Spinner />
     </div>;
   }
+  const isOpenReview = useReviewStore((state) => state.isOpenReview);
+  const setIsOpenReview = useReviewStore((state) => state.setIsOpenReview);
   const project = useProjectStore((state) => state.project);
-  const [isFetching, setIsFetching] = useState(false);
-  const [isFetchingAnon, setIsFetchingAnon] = useState(false);
-  const [allReviews, setAllReviews] = useState<Review[]>([]);
-  const [allAnonReviews, setAllAnonReviews] = useState<AnonReview[]>([]);
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [anonReviews, setAnonReviews] = useState<AnonReview[]>([]);
-  const [page, setPage] = useState(1);
-  const [pageAnon, setPageAnon] = useState(1);
-  const pageLimit = 10;
-  // const { openConnectModal } = useConnectModal();
-  // const { isConnected, address } = useAccount();
+  const { openConnectModal } = useConnectModal();
+  const { isConnected, address } = useAccount();
 
-  useEffect(() => {
-    if (!grant) return;
-
-    const getReviews = async () => {
-      setIsFetching(true);
-      if (!grant) return;
-      try {
-        const data: Review[] = await getReviewsOf(grant.uid);
-        const orderedData = data.map((review) => ({
-          ...review,
-          answers: [
-            ...review.answers.filter(
-              (answer) => !additionalQuestion(answer.questionId, answer.query)
-            ),
-            ...review.answers.filter((answer) =>
-              additionalQuestion(answer.questionId, answer.query)
-            ),
-          ],
-        }));
-        const sortByDate = (a: Review, b: Review) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        const sortedData = orderedData.sort(sortByDate);
-        setAllReviews(sortedData);
-        const slicedData = sortedData.slice(0, pageLimit);
-
-        setReviews(slicedData);
-      } catch (error) {
-        console.log(error);
-        setReviews([]);
-      } finally {
-        setIsFetching(false);
-      }
-    };
-
-    const getReviewsAnon = async () => {
-      setIsFetchingAnon(true);
-      if (!grant) return;
-      try {
-        const data: AnonReview[] = await getAnonReviewsOf(grant.uid);
-        const orderedData = data.map((review) => ({
-          ...review,
-
-          answers: [
-            ...review.answers.filter(
-              (answer) => !additionalQuestion(answer.questionId, answer.query)
-            ),
-            ...review.answers.filter((answer) =>
-              additionalQuestion(answer.questionId, answer.query)
-            ),
-          ],
-        }));
-        const sortByDate = (a: AnonReview, b: AnonReview) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-        const sortedData = orderedData.sort(sortByDate);
-        setAllAnonReviews(sortedData);
-        const slicedData = sortedData.slice(0, pageLimit);
-
-        setAnonReviews(slicedData);
-      } catch (error) {
-        console.log(error);
-        setAnonReviews([]);
-      } finally {
-        setIsFetchingAnon(false);
-      }
-    };
-
-    getReviews();
-    getReviewsAnon();
-  }, [grant]);
-
-  useEffect(() => {
-    const slicedData = allReviews.slice(
-      (page - 1) * pageLimit,
-      page * pageLimit
-    );
-    setReviews(slicedData);
-
-    const slicedAnonData = allAnonReviews.slice(
-      (pageAnon - 1) * pageLimit,
-      pageAnon * pageLimit
-    );
-    setAnonReviews(slicedAnonData);
-  }, [page]);
+  const handleReviewButton = () => {
+    if (!isConnected && openConnectModal) {
+      openConnectModal();
+    } else {
+      setIsOpenReview(ReviewMode.WRITE);
+    }
+  };
 
   return (
     <div className="space-y-5 flex w-full flex-col items-start justify-start gap-8">
       <div className="flex w-full max-w-5xl flex-col gap-8">
         <div className="flex w-full flex-col items-start justify-between gap-6 border-b border-b-zinc-300 pb-8">
-          <div className="flex w-full justify-between">
-            <h2 className="text-2xl font-normal">
-              All reviews of <b>{grant?.details?.data?.title}</b>
-            </h2>
-            <Button
-              disabled={false}
-              // onClick={() => {
-              //   isConnected && <CardReview id={10} editableReview={true} />; // id = data.lenght + 1 ( last one created)
-              // }}
-              className="flex justify-center items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100  hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900"
-            >
-              <StarIcon />
-              Review
-            </Button>
-          </div>
-
-          <NavbarReview />
+          {isOpenReview === ReviewMode.WRITE ? (
+            <>
+              <div className="flex w-full justify-between">
+                <h2 className="text-2xl font-normal">Write a new review</h2>
+                <button
+                  type="button"
+                  className=" hover:opacity-75 transition-all ease-in-out duration-200 dark:text-zinc-100"
+                  onClick={() => {
+                    setIsOpenReview(ReviewMode.READ);
+                  }}
+                >
+                  <XMarkIcon className="w-6 h-6" />
+                </button>
+              </div>
+              <CardNewReview />
+            </>
+          ) : (
+            isOpenReview === ReviewMode.READ && (
+              <>
+                <div className="flex w-full justify-between">
+                  <h2 className="text-2xl font-normal">
+                    All reviews of <b>{grant?.details?.data?.title}</b>
+                  </h2>
+                  {isConnected &&
+                  project?.recipient &&
+                  address &&
+                  !isAddressEqual(project.recipient, address) ? ( //TODO: Remove this (negation)!
+                    <Button
+                      disabled={false}
+                      onClick={handleReviewButton}
+                      className="flex justify-center items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100  hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900"
+                    >
+                      <StarIcon />
+                      Review
+                    </Button>
+                  ) : (
+                    !isConnected && (
+                      <Button
+                        disabled={false}
+                        onClick={openConnectModal}
+                        className="flex justify-center items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100  hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900"
+                      >
+                        Connect Wallet
+                      </Button>
+                    )
+                  )}
+                </div>
+                <NavbarReview />
+              </>
+            )
+          )}
         </div>
       </div>
     </div>

@@ -1,24 +1,26 @@
 "use client";
-import React, { useState } from "react";
+
+import { useState } from "react";
 import { StarReviewIcon } from "@/components/Icons/StarReview";
+import { ReviewMode } from "@/types/review";
 
 interface DynamicStarsReviewProps {
   totalStars: number;
   rating: number;
   setRating: (rating: number) => void;
-  editableReview: boolean;
+  mode: ReviewMode;
 }
 
 export const DynamicStarsReview = ({
   totalStars,
   rating,
   setRating,
-  editableReview,
+  mode,
 }: DynamicStarsReviewProps) => {
   const [hover, setHover] = useState<number | null>(null);
 
   const handleStarClick = (index: number) => {
-    if (editableReview) {
+    if (mode == ReviewMode.WRITE) {
       setRating(index);
     }
   };
@@ -33,20 +35,24 @@ export const DynamicStarsReview = ({
           <StarReviewIcon
             key={index}
             pathProps={{
-              className: editableReview
-                ? "transition-all ease-in-out duration-300 cursor-pointer"
-                : "transition-all ease-in-out duration-300",
-              onClick: editableReview
-                ? () => handleStarClick(currentRating)
-                : undefined,
+              className:
+                mode === ReviewMode.WRITE
+                  ? "transition-all ease-in-out duration-300 cursor-pointer"
+                  : "transition-all ease-in-out duration-300",
+              onClick:
+                mode === ReviewMode.WRITE
+                  ? () => handleStarClick(currentRating)
+                  : undefined,
               style: {
                 fill: isHoveredOrRated ? "#004EEB" : "none",
                 stroke: isHoveredOrRated ? "#004EEB" : "#98A2B3",
               },
-              onMouseEnter: editableReview
-                ? () => setHover(currentRating)
-                : undefined,
-              onMouseLeave: editableReview ? () => setHover(null) : undefined,
+              onMouseEnter:
+                mode === ReviewMode.WRITE
+                  ? () => setHover(currentRating)
+                  : undefined,
+              onMouseLeave:
+                mode === ReviewMode.WRITE ? () => setHover(null) : undefined,
             }}
           />
         );

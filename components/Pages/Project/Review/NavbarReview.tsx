@@ -1,62 +1,23 @@
 "use client";
+
 import { useState } from "react";
 import { formatDate } from "@/utilities/formatDate";
 import { StarReviewIcon } from "@/components/Icons/StarReview";
 import { CardReview } from "@/components/Pages/Project/Review/CardReview";
 import { ChevronDown } from "@/components/Icons";
+import { useReviewStore } from "@/store/review";
+import { Review } from "@/types/review";
 
 export const NavbarReview = () => {
   const [isStarSelected, setIsStarSelected] = useState<number | null>(null); // ID
-
-  interface MiniReviewSummaryProps {
-    id: number;
-    date: number; // UNIX Timestamp
-    scoreMedia: number;
-  }
-
-  const MiniReviewSummary: MiniReviewSummaryProps[] = [
-    {
-      id: 1,
-      date: 1620414884, // 07 May, 2021 in Unix timestamp
-      scoreMedia: 4.6,
-    },
-    {
-      id: 2,
-      date: 1673723684, // 14 January, 2023 in Unix timestamp
-      scoreMedia: 4.4,
-    },
-    {
-      id: 3,
-      date: 1498072484, // 21 Jun 2017 in Unix timestamp
-      scoreMedia: 4.1,
-    },
-    {
-      id: 4,
-      date: 1351188884, // 25 Oct 2012 in Unix timestamp
-      scoreMedia: 4.9,
-    },
-    {
-      id: 5,
-      date: 1719792000, // 1 July, 2024 in Unix timestamp
-      scoreMedia: 4.9,
-    },
-    {
-      id: 6,
-      date: 1672531200, // 1 January, 2023 in Unix timestamp
-      scoreMedia: 4.9,
-    },
-    {
-      id: 7,
-      date: 1356998400, // 1 January, 2013 in Unix timestamp
-      scoreMedia: 4.9,
-    },
-  ];
+  const review = useReviewStore((state) => state.review);
 
   return (
     <div className="w-full flex flex-col">
       <div className="w-full flex px-2 gap-2 overflow-x-auto pb-4 relative">
-        {MiniReviewSummary.sort((a, b) => b.date - a.date).map(
-          (miniReview: MiniReviewSummaryProps, index: number) => (
+        {review
+          .sort((a, b) => b.date - a.date)
+          .map((miniReview: Review, index: number) => (
             <div
               key={miniReview.id}
               className="flex flex-col justify-center items-center text-center relative"
@@ -81,36 +42,21 @@ export const NavbarReview = () => {
                     },
                   }}
                 />
-                <p>{miniReview.scoreMedia}</p>
+                <p>{miniReview.averageScore}</p>
                 {isStarSelected === index && (
                   <div>
                     <ChevronDown />
                   </div>
                 )}
-                {index < MiniReviewSummary.length - 1 && (
+                {index < review.length - 1 && (
                   <div className="absolute right-0 top-1/2 h-3/4 w-[2px] bg-zinc-300 transform -translate-y-1/2"></div>
                 )}
               </div>
             </div>
-          )
-        )}
+          ))}
       </div>
       <div className="w-full flex flex-col">
-        {isStarSelected !== null && (
-          <CardReview
-            id={isStarSelected}
-            editableReview={true}
-            // newReview={false}
-          />
-        )}
-        {/*         
-        // : (
-        //   <CardReview
-        //     id={99999999999} // get the last index from data and add + 1 to be the last one created.
-        //     editableReview={true}
-        //     newReview={true}
-        //   />
-        // ) */}
+        {isStarSelected !== null && <CardReview id={isStarSelected} />}
       </div>
     </div>
   );
