@@ -4,7 +4,8 @@ import { formatDate } from "@/utilities/formatDate";
 import { StarReviewIcon } from "@/components/Icons/StarReview";
 import { CardReview } from "@/components/Pages/Project/Review/CardReview";
 import { ChevronDown } from "@/components/Icons";
-import { Review, useReviewStore } from "@/store/review";
+import { useReviewStore } from "@/store/review";
+import { Review } from "@/types/review";
 
 export const NavbarReview = () => {
   const [isStarSelected, setIsStarSelected] = useState<number | null>(null); // ID

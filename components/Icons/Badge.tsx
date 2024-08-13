@@ -1,14 +1,5 @@
+import { BadgeName } from "@/types/review";
 import type { SVGProps } from "react";
-
-export enum BadgeName {
-  CLEAR_GOALS = "Clear Goals",
-  SMOOTH_APPLICATION = "Smooth Application",
-  FAIR_ROUNDS = "Fair Rounds",
-  EASY_TEACH = "Easy Tech",
-  SUPPORTIVE_TEAM = "Supportive Team",
-  GREAT_REVIEWERS = "Great Reviewers",
-  FAST_DISBURSEMENT = "Fast Disbursement",
-}
 
 interface BadgeIconProps {
   badgeName: BadgeName;
