@@ -2,11 +2,8 @@
 
 import { useState } from "react";
 import { StarReviewIcon } from "@/components/Icons/StarReview";
+import { ReviewMode } from "@/types/review";
 
-export enum ReviewMode {
-  READ = "READ",
-  WRITE = "WRITE",
-}
 interface DynamicStarsReviewProps {
   totalStars: number;
   rating: number;

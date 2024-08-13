@@ -3,14 +3,16 @@
 import { useState } from "react";
 import { BadgeIcon } from "@/components/Icons/Badge";
 import { Button } from "@/components/Utilities/Button";
-import { DynamicStarsReview, ReviewMode } from "./DynamicStarsReview";
+import { DynamicStarsReview } from "./DynamicStarsReview";
 import { useReviewStore } from "@/store/review";
 import {
   BadgeDescription,
   BadgeListProps,
   BadgeName,
   Review,
+  ReviewMode,
 } from "@/types/review";
+import toast from "react-hot-toast";
 
 const defaultInitialNewReviewList: BadgeListProps[] = [
   {
@@ -54,6 +56,7 @@ export const CardNewReview = () => {
   const [newReview, setNewReview] = useState<BadgeListProps[]>(
     defaultInitialNewReviewList
   );
+  const setIsOpenReview = useReviewStore((state) => state.setIsOpenReview);
   const setReview = useReviewStore((state) => state.setReview);
   const review = useReviewStore((state) => state.review);
   const _currentTimestamp = Math.floor(new Date().getTime() / 1000);
@@ -81,6 +84,9 @@ export const CardNewReview = () => {
     };
 
     setReview([...review, newReviewData]);
+    toast.success("Review submitted successfully!");
+    setNewReview(defaultInitialNewReviewList);
+    setIsOpenReview(ReviewMode.READ);
   };
 
   return (

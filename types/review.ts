@@ -37,3 +37,8 @@ export const BadgeDescription: Record<BadgeName, string> = {
   [BadgeName.FAST_DISBURSEMENT]:
     "Commends quick fund disbursement processes. Did they complete the payment as soon as you completed the milestones? If yes, issue this badge.",
 };
+
+export enum ReviewMode {
+  READ = "READ",
+  WRITE = "WRITE",
+}

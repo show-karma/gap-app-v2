@@ -1,9 +1,9 @@
 "use client";
 
 import { BadgeIcon } from "@/components/Icons/Badge";
-import { DynamicStarsReview, ReviewMode } from "./DynamicStarsReview";
+import { DynamicStarsReview } from "./DynamicStarsReview";
 import { useReviewStore } from "@/store/review";
-import { BadgeListProps } from "@/types/review";
+import { BadgeListProps, ReviewMode } from "@/types/review";
 
 export const CardReview = ({ id }: { id: number }) => {
   const review = useReviewStore((state) => state.review);
