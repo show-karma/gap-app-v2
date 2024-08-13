@@ -23,7 +23,10 @@ export const CardReview = ({ id }: { id: number }) => {
               <div>
                 <BadgeIcon badgeName={badge.name} className="w-20 h-20" />
               </div>
-              <div className="text-sm">{badge.description}</div>
+              <div>
+                <div className="text-lg">{badge.name}</div>
+                <div className="text-sm">{badge.description}</div>
+              </div>
               <div>
                 <DynamicStarsReview
                   totalStars={5}
