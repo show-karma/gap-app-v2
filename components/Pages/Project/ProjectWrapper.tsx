@@ -28,8 +28,10 @@ import Image from "next/image";
 import { blo } from "blo";
 import { IntroDialog } from "./IntroDialog";
 import { useIntroModalStore } from "@/store/modals/intro";
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 import { useGap } from "@/hooks";
+import { useProgressModalStore } from "@/store/modals/progress";
+import { ProgressDialog } from "@/components/Dialogs/ProgressDialog";
 
 interface ProjectWrapperProps {
   project: IProjectResponse;
@@ -178,8 +180,8 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
               url: isLink(hasUrl)
                 ? hasUrl
                 : hasUrl.includes(prefix)
-                  ? addPrefix(url)
-                  : prefix + url,
+                ? addPrefix(url)
+                : prefix + url,
               icon,
             };
           }
@@ -267,25 +269,27 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
     return members;
   };
 
-
   useEffect(() => {
     if (project && project?.pointers?.length > 0) {
-      gap?.fetch?.projectById(project.pointers[0].data?.ogProjectUID).then((_project) => {
-        if (_project) {
-          router.push(`/project/${_project?.details?.data?.slug}`);
-        }
-      });
+      gap?.fetch
+        ?.projectById(project.pointers[0].data?.ogProjectUID)
+        .then((_project) => {
+          if (_project) {
+            router.push(`/project/${_project?.details?.data?.slug}`);
+          }
+        });
     }
   }, [project]);
-
 
   const members = mountMembers();
   const { isIntroModalOpen } = useIntroModalStore();
   const { isEndorsementOpen } = useEndorsementStore();
+  const { isProgressModalOpen } = useProgressModalStore();
   return (
     <>
       {isIntroModalOpen ? <IntroDialog /> : null}
       {isEndorsementOpen ? <EndorsementDialog /> : null}
+      {isProgressModalOpen ? <ProgressDialog /> : null}
 
       <div className="relative border-b border-gray-200 ">
         <div className="px-4 sm:px-6 lg:px-12 lg:flex py-5 lg:items-start lg:justify-between flex flex-row max-lg:flex-col max-lg:justify-center max-lg:items-center gap-4">
@@ -362,7 +366,9 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
                   Built by
                 </p>
                 <div className="flex flex-row gap-0 w-max">
-                  {Array.from(new Set(members.map(member => member.recipient))).map((member, index) => (
+                  {Array.from(
+                    new Set(members.map((member) => member.recipient))
+                  ).map((member, index) => (
                     <span
                       key={index}
                       className="-ml-1.5"
