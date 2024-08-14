@@ -7,9 +7,9 @@ import { Button } from "./Utilities/Button";
 import toast from "react-hot-toast";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { Contact } from "@/types/project";
-import { ContactsDropdown } from "./Pages/Project/ContactsDropdown";
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
+import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 
 const labelStyle = "text-sm font-bold";
 const inputStyle =
@@ -28,6 +28,80 @@ const subscriptionShema = z.object({
 });
 
 type FormType = z.infer<typeof subscriptionShema>;
+
+interface ContactBlockProps {
+  onSelectFunction: (value: string) => void;
+  contacts?: Contact[];
+  value: string;
+  deleteFunction: (value: string) => void;
+  newContact: () => void;
+}
+const ContactBlock: FC<ContactBlockProps> = ({
+  contacts,
+  value,
+  onSelectFunction,
+  deleteFunction,
+  newContact,
+}) => {
+  return (
+    <div className="h-full flex flex-col gap-3 justify-start items-start p-4 w-full bg-[#F5F8FF] dark:bg-zinc-700 rounded-xl max-h-[367px] min-w-[320px]">
+      <p className="text-gray-900 dark:text-zinc-100  text-base font-semibold leading-normal">
+        My Contacts
+      </p>
+      <div className="flex flex-col gap-2 w-full overflow-y-auto">
+        {contacts?.map((contact) => (
+          <div
+            key={contact.id}
+            className="h-20 p-4 bg-white dark:bg-zinc-600 rounded-xl justify-between items-end flex w-full flex-row gap-2"
+            style={{
+              border:
+                value === contact.id
+                  ? "2px solid #155EEF"
+                  : "2px solid transparent",
+            }}
+          >
+            <div className="flex-col justify-center items-start gap-1 flex">
+              <p className="text-slate-800 dark:text-white text-base font-bold font-['Inter'] leading-normal">
+                {contact.name}
+              </p>
+              <p className="text-slate-700 dark:text-slate-200 text-base font-normal font-['Inter'] leading-normal">
+                {contact.email}
+              </p>
+            </div>
+            <div className="rounded-3xl justify-center items-center gap-2.5 flex">
+              <button
+                type="button"
+                onClick={() => {
+                  onSelectFunction(contact.id);
+                }}
+              >
+                <PencilSquareIcon className="w-6 h-6 max-md:w-7 max-md:h-7 text-black dark:text-white" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  deleteFunction(contact.id);
+                }}
+              >
+                <TrashIcon className="w-6 h-6 max-md:w-7 max-md:h-7 text-red-500" />
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+      <button
+        type="button"
+        className="w-full bg-white dark:bg-zinc-600 rounded-xl justify-center items-center p-4 text-gray-900 dark:text-zinc-100 text-base font-semibold leading-normal"
+        style={{
+          border: "dashed 1px #155EEF",
+        }}
+        onClick={newContact}
+      >
+        Add Contact
+      </button>
+    </div>
+  );
+};
 
 interface ContactInfoSubscriptionProps {
   existingContacts?: Contact[];
@@ -59,6 +133,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: { errors, isValid },
   } = useForm<FormType>({
     resolver: zodResolver(subscriptionShema),
@@ -179,19 +254,8 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
         provide reminders about milestones and grant deadlines.
       </p>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-        <div className="flex w-full min-w-[320px] flex-col gap-2">
-          <div className="flex w-full flex-col gap-2">
-            <label htmlFor="id-input" className={labelStyle}>
-              Contact
-            </label>
-            <ContactsDropdown
-              contacts={existingContacts}
-              value={watch("id")}
-              onSelectFunction={changeId}
-            />
-            <p className="text-red-500">{errors.id?.message}</p>
-          </div>
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-row gap-8">
+        <div className="flex w-full min-w-[320px] flex-col gap-3">
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="name-input" className={labelStyle}>
               Name *
@@ -231,26 +295,25 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
             />
             <p className="text-red-500">{errors.telegram?.message}</p>
           </div>
-        </div>
-        <Button
-          isLoading={isLoading}
-          disabled={isLoading || !isValid || !isAuthorized || isDeleteLoading}
-          type="submit"
-          className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
-        >
-          Save
-        </Button>
-        {watch("id") === "0" ? null : (
           <Button
-            isLoading={isDeleteLoading}
+            isLoading={isLoading}
             disabled={isLoading || !isValid || !isAuthorized || isDeleteLoading}
-            type="button"
-            onClick={deleteContact}
-            className="flex disabled:opacity-50 flex-row dark:bg-red-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-red-500 px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-red-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            type="submit"
+            className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
           >
-            Delete this contact
+            Save
           </Button>
-        )}
+        </div>
+        <div className="flex w-full flex-col gap-2">
+          <ContactBlock
+            contacts={existingContacts}
+            value={watch("id")}
+            onSelectFunction={changeId}
+            deleteFunction={deleteContact}
+            newContact={() => changeId("0")}
+          />
+          <p className="text-red-500">{errors.id?.message}</p>
+        </div>
       </form>
     </div>
   ) : (
