@@ -5,6 +5,8 @@ import { getGapClient, useGap } from "@/hooks";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { config } from "@/utilities/wagmi/config";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -102,9 +104,17 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
 
       await grantUpdate
         .attest(walletSigner as any, changeStepperStep)
-        .then(async () => {
+        .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, grantUpdate.chainID),
+              "POST",
+              {}
+            );
+          }
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {

@@ -29,6 +29,8 @@ import { envVars } from "@/utilities/enviromentVars";
 import { title } from "process";
 import { useStepper } from "@/store/modals/txStepper";
 import { config } from "@/utilities/wagmi/config";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -138,7 +140,20 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
           },
           changeStepperStep
         )
-        .then(async () => {
+        .then(async (res) => {
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, newCommunity.chainID),
+              "POST",
+              {}
+            );
+          }
+          await fetchData(
+            INDEXER.ATTESTATION_LISTENER(newCommunity.uid, selectedChain),
+            "POST",
+            {}
+          );
           let retries = 1000;
           changeStepperStep("indexing");
           while (retries > 0) {
