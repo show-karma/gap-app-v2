@@ -1,5 +1,7 @@
 import { Contact } from "@/types/project";
+import fetchData from "@/utilities/fetchData";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { INDEXER } from "@/utilities/indexer";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { create } from "zustand";
 
@@ -8,6 +10,7 @@ interface ProjectStore {
   setProject: (project: IProjectResponse | undefined) => void;
   loading: boolean;
   refreshProject: () => Promise<IProjectResponse | undefined>;
+  refreshContactInfo: () => Promise<Contact[] | undefined>;
   setLoading: (loading: boolean) => void;
   isProjectOwner: boolean;
   setIsProjectOwner: (isProjectOwner: boolean) => void;
@@ -31,6 +34,24 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
     set({ project: refreshedProject });
     return refreshedProject;
+  },
+  refreshContactInfo: async () => {
+    const project = get();
+    if (!project.project?.id) return;
+
+    const [data] = await fetchData(
+      INDEXER.SUBSCRIPTION.GET(project.project.id),
+      "GET",
+      {},
+      {},
+      {},
+      true
+    ).catch(() => []);
+    if (data) {
+      set({ projectContactsInfo: data });
+      console.log(data);
+    }
+    return data;
   },
   loading: false,
   setLoading: (loading: boolean) => set({ loading }),

@@ -106,11 +106,13 @@ const ContactBlock: FC<ContactBlockProps> = ({
 interface ContactInfoSubscriptionProps {
   existingContacts?: Contact[];
   contactInfo?: Contact;
+  refreshContactInfo: () => void;
 }
 
 export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
   contactInfo,
   existingContacts,
+  refreshContactInfo,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const project = useProjectStore((state) => state.project);
@@ -133,7 +135,6 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
     handleSubmit,
     setValue,
     watch,
-    reset,
     formState: { errors, isValid },
   } = useForm<FormType>({
     resolver: zodResolver(subscriptionShema),
@@ -163,6 +164,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
           if (!error) {
             toast.success("Contact info created successfully");
             refreshProject();
+            refreshContactInfo();
           } else {
             toast.error("Something went wrong. Please try again later.");
           }
@@ -182,6 +184,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
           if (!error) {
             toast.success("Contact info updated successfully");
             refreshProject();
+            refreshContactInfo();
           } else {
             toast.error("Something went wrong. Please try again later.");
           }
@@ -214,6 +217,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
         if (!error) {
           toast.success("Contact info deleted successfully");
           refreshProject();
+          refreshContactInfo();
         } else {
           toast.error("Something went wrong. Please try again later.");
         }
