@@ -9,6 +9,9 @@ import { FC, Fragment, ReactNode, useState } from "react";
 import { Button } from "../../Utilities/Button";
 import { GrantUpdateScreen } from "./GrantUpdateScreen";
 import { Transition, Dialog } from "@headlessui/react";
+import { ProjectUpdateScreen } from "./ProjectUpdateScreen";
+import { MilestoneScreen } from "./MilestoneScreen";
+import { MilestoneUpdateScreen } from "./MilestoneUpdateScreen";
 
 const Box = ({
   icon,
@@ -150,9 +153,9 @@ export const ProgressDialog = () => {
   const screenToShow: Record<ProgressModalScreen, ReactNode> = {
     menu: <Menu />,
     grant_update: <GrantUpdateScreen />,
-    // "project_update": <ProjectUpdate/>,
-    // "milestone": <Milestone/>,
-    // "milestone_update": <MilestoneUpdate/>,
+    project_update: <ProjectUpdateScreen />,
+    milestone: <MilestoneScreen />,
+    milestone_update: <MilestoneUpdateScreen />,
   };
 
   return (

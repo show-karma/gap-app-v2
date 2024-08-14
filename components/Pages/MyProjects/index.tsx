@@ -208,13 +208,13 @@ export default function MyProjects() {
             ) : !isLoading ? (
               <div className="flex w-full flex-row items-center justify-center">
                 <div
-                  className="flex h-96 border-spacing-4 flex-col items-center justify-center gap-5 rounded border border-blue-600 bg-[#EEF4FF] px-8"
+                  className="flex h-96 border-spacing-4 flex-col items-center justify-center gap-5 rounded border border-blue-600 bg-[#EEF4FF] px-8 max-sm:px-1"
                   style={{
                     border: "dashed 2px #155EEF",
                   }}
                 >
                   <p className="text-lg font-bold text-black">Attention!</p>
-                  <p className="w-max max-w-md  break-normal text-left text-lg font-normal text-black">
+                  <p className="w-max max-w-md break-normal max-sm:break-keep max-sm:whitespace-break-spaces text-left text-lg max-sm:max-w-full max-sm:text-center max-sm:text-base max-sm:w-full font-normal text-black">
                     We were unable to locate any projects associated with your
                     wallet address: {address}. <br />
                     To find your project, please use the search function above.

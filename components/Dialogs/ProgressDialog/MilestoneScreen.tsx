@@ -1,5 +1,6 @@
 "use client";
 import { GrantUpdateForm } from "@/components/Forms/GrantUpdate";
+import { MilestoneForm } from "@/components/Forms/Milestone";
 import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
 import { PAGES } from "@/utilities/pages";
@@ -7,7 +8,7 @@ import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-index
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export const GrantUpdateScreen = () => {
+export const MilestoneScreen = () => {
   const { project } = useProjectStore();
   const router = useRouter();
   const { closeProgressModal } = useProgressModalStore();
@@ -59,9 +60,8 @@ export const GrantUpdateScreen = () => {
           className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300"
         >
           <option
-            value=""
+            value={undefined}
             onClick={() => setSelectedGrant(undefined)}
-            disabled
             className="text-gray-400"
           >
             Select Grant
@@ -79,7 +79,7 @@ export const GrantUpdateScreen = () => {
       </div>
       <div className="flex flex-col gap-2">
         {selectedGrant ? (
-          <GrantUpdateForm
+          <MilestoneForm
             grant={selectedGrant}
             afterSubmit={() => {
               closeProgressModal();
