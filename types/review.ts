@@ -27,7 +27,7 @@ export const BadgeDescription: Record<BadgeName, string> = {
   [BadgeName.SMOOTH_APPLICATION]:
     "Awards a seamless application process. Are they using a tech that facilitates the application process? Did they get back to you after the application, or was it just a poor form?",
   [BadgeName.FAIR_ROUNDS]:
-    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla sem urna, sodales vel placerat sed, elementum a orci. Duis sit amet neque rutrum, suscipit enim tempus, dignissim erat. Etiam interdum dignissim pretium.",
+    "Grant programs and funding rounds are conducted fairly, supporting a diverse range of projects, including new initiatives, while actively incorporating community feedback.",
   [BadgeName.EASY_TEACH]:
     "Awards programs with easily implementable technology. How hard is the tech? Are the docs easy to use or find?",
   [BadgeName.SUPPORTIVE_TEAM]:
