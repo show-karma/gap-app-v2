@@ -63,33 +63,38 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
           ) : (
             isOpenReview === ReviewMode.READ && (
               <>
-                <div className="flex w-full justify-between">
-                  <h2 className="text-2xl font-normal">
-                    All reviews of <b>{grant?.details?.data?.title}</b>
-                  </h2>
-                  {isConnected &&
-                  project?.recipient &&
-                  address &&
-                  !isAddressEqual(project.recipient, address) ? ( //TODO: Remove this (negation)!
-                    <Button
-                      disabled={false}
-                      onClick={handleReviewButton}
-                      className="flex justify-center items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100  hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900"
-                    >
-                      <StarIcon />
-                      Review
-                    </Button>
-                  ) : (
-                    !isConnected && (
+                <div className="flex flex-col w-full">
+                  <div className="flex w-full justify-between">
+                    <h2 className="text-2xl font-normal">
+                      All reviews of <b>{grant?.details?.data?.title}</b>
+                    </h2>
+                    {isConnected &&
+                    project?.recipient &&
+                    address &&
+                    !isAddressEqual(project.recipient, address) ? ( //TODO: Remove this (negation)!
                       <Button
                         disabled={false}
-                        onClick={openConnectModal}
+                        onClick={handleReviewButton}
                         className="flex justify-center items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100  hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900"
                       >
-                        Connect Wallet
+                        <StarIcon />
+                        Review
                       </Button>
-                    )
-                  )}
+                    ) : (
+                      !isConnected && (
+                        <Button
+                          disabled={false}
+                          onClick={openConnectModal}
+                          className="flex justify-center items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100  hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900"
+                        >
+                          Connect Wallet
+                        </Button>
+                      )
+                    )}
+                  </div>
+                  <div>
+                    <p>Aggregate a reputation to a grants program</p>
+                  </div>
                 </div>
                 <NavbarReview />
               </>
