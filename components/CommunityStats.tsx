@@ -5,6 +5,7 @@ import { useState, Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { Button } from "@/components/Utilities/Button";
 import { ArrowPathIcon, ChartBarSquareIcon } from "@heroicons/react/24/solid";
+import * as Sentry from "@sentry/nextjs";
 
 interface CommunityStatsProps {
   communityId: string;
@@ -68,6 +69,7 @@ export default function CommunityStats({ communityId }: CommunityStatsProps) {
       }
     } catch (error) {
       console.error("Error fetching stats:", error);
+      Sentry.captureException(`Error fetching stats: ${error}`);
       setError(error);
     } finally {
       setLoading(false);

@@ -39,7 +39,8 @@ import { useProjectStore } from "@/store";
 import { useOwnerStore } from "@/store/owner";
 import { MESSAGES } from "@/utilities/messages";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
+
+import * as Sentry from "@sentry/nextjs";
 import { appNetwork } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -487,6 +488,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       setContacts([]);
     } catch (error) {
       console.log({ error });
+      Sentry.captureException(`Error creating project: ${error}`);
       toast.error(MESSAGES.PROJECT.CREATE.ERROR);
       setIsStepper(false);
       openModal();
@@ -558,6 +560,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       });
     } catch (error) {
       console.log(error);
+      Sentry.captureException(
+        `Error updating project ${
+          projectToUpdate?.details?.data?.slug || projectToUpdate?.uid
+        }: ${error}`
+      );
       toast.error(MESSAGES.PROJECT.UPDATE.ERROR);
       openModal();
     } finally {

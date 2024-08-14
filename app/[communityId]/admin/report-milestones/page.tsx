@@ -5,6 +5,7 @@ import { zeroUID } from "@/utilities/commons";
 import { ReportMilestonePage } from "@/components/Pages/Admin/ReportMilestonePage";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import * as Sentry from "@sentry/nextjs";
 
 export const metadata = defaultMetadata;
 
@@ -16,10 +17,13 @@ const getGrantTitles = async (communityId: string): Promise<string[]> => {
   try {
     const [data] = await fetchData(INDEXER.COMMUNITY.GRANT_TITLES(communityId));
     if (!data) {
-      throw new Error("No data");
+      throw new Error(
+        `No data found on grant titles of community ${communityId}`
+      );
     }
     return data;
   } catch (error) {
+    Sentry.captureException(error);
     console.log(error);
     return [];
   }

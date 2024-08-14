@@ -8,12 +8,12 @@ import { isAddress } from "viem";
 import { useProjectStore } from "@/store";
 import { useAccount, useSwitchChain } from "wagmi";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { appNetwork } from "@/utilities/network";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { getWalletClient } from "@wagmi/core";
 import { useStepper } from "@/store/modals/txStepper";
 import { getProjectById, getProjectOwner } from "@/utilities/sdk";
 import { config } from "@/utilities/wagmi/config";
+import * as Sentry from "@sentry/nextjs";
 
 type TransferOwnershipProps = {
   buttonElement?: {
@@ -94,6 +94,9 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
       closeModal();
     } catch (error) {
       toast.error("Something went wrong. Please try again later.");
+      Sentry.captureException(
+        `Error transfering ownership from ${project.recipient} to ${newOwner}: ${error}`
+      );
       console.error(error);
     } finally {
       setIsLoading(false);

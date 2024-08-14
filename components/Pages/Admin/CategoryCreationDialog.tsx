@@ -12,6 +12,7 @@ import { useParams } from "next/navigation";
 import { useAuthStore } from "@/store/auth";
 import { useAuth } from "@/hooks/useAuth";
 import { INDEXER } from "@/utilities/indexer";
+import * as Sentry from "@sentry/nextjs";
 
 type CategoryCreationDialogProps = {
   refreshCategories: () => Promise<void>;
@@ -73,6 +74,9 @@ export const CategoryCreationDialog: FC<CategoryCreationDialogProps> = ({
       refreshCategories();
       closeModal();
     } catch (error) {
+      Sentry.captureException(
+        `Error creating category of community ${communityId}: ${error}`
+      );
       console.log(error);
       toast.error("An error occurred while creating the category");
     } finally {

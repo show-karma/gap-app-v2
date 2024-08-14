@@ -20,6 +20,7 @@ import { zeroUID } from "@/utilities/commons";
 import { useQuery } from "@tanstack/react-query";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import * as Sentry from "@sentry/nextjs";
 
 const sortOptions: Record<SortByOptions, string> = {
   recent: "Recent",
@@ -138,6 +139,7 @@ export const CommunityGrants = ({
         }
       } catch (error) {
         console.log("error", error);
+        Sentry.captureException(error);
         setGrants([]);
       } finally {
         setLoading(false);

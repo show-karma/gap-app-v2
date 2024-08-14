@@ -15,6 +15,7 @@ import { Hex } from "viem";
 import { MarkdownPreview } from "./Utilities/MarkdownPreview";
 import { useTheme } from "next-themes";
 import { cn } from "@/utilities/tailwind";
+import * as Sentry from "@sentry/nextjs";
 
 interface ProjectFeedProps {
   initialFeed?: Feed[];
@@ -49,6 +50,9 @@ export const ProjectFeed = ({ initialFeed = [] }: ProjectFeedProps) => {
         setHasMore(canLoadMore);
       } catch (error) {
         console.error("Error fetching data:", error);
+        Sentry.captureException(
+          `Error fetching data feed for project ${projectId}: ${error}`
+        );
       } finally {
         setFeedLoading(false);
       }

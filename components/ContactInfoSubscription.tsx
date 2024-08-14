@@ -10,6 +10,7 @@ import { Contact } from "@/types/project";
 import { ContactsDropdown } from "./Pages/Project/ContactsDropdown";
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
+import * as Sentry from "@sentry/nextjs";
 
 const labelStyle = "text-sm font-bold";
 const inputStyle =
@@ -90,6 +91,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
             refreshProject();
           } else {
             toast.error("Something went wrong. Please try again later.");
+            throw new Error("Something went wrong while creating contact info");
           }
         });
       } else {
@@ -109,11 +111,13 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
             refreshProject();
           } else {
             toast.error("Something went wrong. Please try again later.");
+            throw new Error("Something went wrong while updating contact info");
           }
         });
       }
       // const subscription = await fetchData(INDEXER.NOTIFICATIONS.UPDATE())
     } catch (error: any) {
+      Sentry.captureException(error);
       toast.error("Something went wrong. Please try again later.");
       console.log(error);
     } finally {
@@ -145,6 +149,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
       });
       // const subscription = await fetchData(INDEXER.NOTIFICATIONS.UPDATE())
     } catch (error: any) {
+      Sentry.captureException(`Error deleting contact info: ${error}`);
       toast.error("Something went wrong. Please try again later.");
       console.log(error);
     } finally {

@@ -14,6 +14,7 @@ import { useQueryState } from "nuqs";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
+import * as Sentry from "@sentry/nextjs";
 
 interface GrantDeleteProps {
   grant: IGrantResponse;
@@ -86,7 +87,7 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
           grant.details?.data?.title || shortAddress(grant.uid)
         )
       );
-      console.log(error);
+      Sentry.captureException(`Error deleting grant ${grant.uid}: ${error}`);
     } finally {
       setIsDeletingGrant(false);
       setIsStepper(false);

@@ -10,11 +10,10 @@ import {
 import { renderToHTML } from "@/utilities/markdown";
 import { Button } from "../Utilities/Button";
 import toast from "react-hot-toast";
-import { isAddress } from "viem";
+import * as Sentry from "@sentry/nextjs";
 import { useProjectStore } from "@/store";
 import { useAccount, useSwitchChain } from "wagmi";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { appNetwork } from "@/utilities/network";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { getWalletClient } from "@wagmi/core";
 import { getProjectById, getProjectOwner } from "@/utilities/sdk";
@@ -96,7 +95,6 @@ function GenerateDocument({
 
   const addPrefix = (link: string) => `https://${link}`;
 
-
   const removeHTTP = (link: string) => {
     if (link.includes("https://")) {
       return link.split("https://")[1];
@@ -105,7 +103,7 @@ function GenerateDocument({
       return link.split("http://")[1];
     }
     return link;
-  }
+  };
 
   const getTwitterUserNameOnly = (text: string) => {
     console.log("getTwitterUserNameOnly -> text", text);
@@ -125,7 +123,7 @@ function GenerateDocument({
     }
 
     return text;
-  }
+  };
 
   return (
     <Document>
@@ -210,13 +208,11 @@ function GenerateDocument({
                   marginRight: 10,
                 }}
               >
-                {
-                  `${getTwitterUserNameOnly(
-                    project?.details?.data?.links?.find(
-                      (social) => social?.type === "twitter"
-                    )?.url as string
-                  )}`
-                }
+                {`${getTwitterUserNameOnly(
+                  project?.details?.data?.links?.find(
+                    (social) => social?.type === "twitter"
+                  )?.url as string
+                )}`}
               </Text>
 
               <Image
@@ -235,12 +231,12 @@ function GenerateDocument({
                 style={{
                   marginRight: 10,
                 }}
-              >{
-                  `${removeHTTP(project?.details?.data?.links?.find(
+              >
+                {`${removeHTTP(
+                  project?.details?.data?.links?.find(
                     (social) => social?.type === "website"
-                  )?.url as string)
-                  }`
-                }
+                  )?.url as string
+                )}`}
               </Text>
 
               <Image
@@ -684,6 +680,7 @@ export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
       closeModal();
     } catch (error) {
       toast.error("Something went wrong. Please try again later.");
+      Sentry.captureException(`Error generating impact report: ${error}`);
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -838,11 +835,12 @@ export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
                           impactBannerImageURL={impactBannerImageURL}
                         />
                       }
-                      fileName={`${project?.details?.data?.slug || "project"
-                        }-impact-report-${grant?.details?.data?.title?.replaceAll(
-                          " ",
-                          "-"
-                        )}.pdf`}
+                      fileName={`${
+                        project?.details?.data?.slug || "project"
+                      }-impact-report-${grant?.details?.data?.title?.replaceAll(
+                        " ",
+                        "-"
+                      )}.pdf`}
                     >
                       {({ blob, url, loading, error }) =>
                         loading ? "Loading document..." : "💾 Download"

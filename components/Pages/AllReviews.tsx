@@ -18,7 +18,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { getReviewsOf, getAnonReviewsOf } from "@/utilities/sdk";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-
+import * as Sentry from "@sentry/nextjs";
 interface GrantAllReviewsProps {
   grant: IGrantResponse | undefined;
 }
@@ -91,6 +91,11 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
         setReviews(slicedData);
       } catch (error) {
         console.log(error);
+        Sentry.captureException(
+          `Error getting reviews of grant ${
+            grant?.details?.data?.title || grant?.uid
+          }: ${error}`
+        );
         setReviews([]);
       } finally {
         setIsFetching(false);
@@ -122,6 +127,11 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
 
         setAnonReviews(slicedData);
       } catch (error) {
+        Sentry.captureException(
+          `Error getting anon reviews of grant ${
+            grant?.details?.data?.title || grant?.uid
+          }: ${error}`
+        );
         console.log(error);
         setAnonReviews([]);
       } finally {

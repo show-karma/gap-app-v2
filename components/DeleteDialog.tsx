@@ -4,6 +4,7 @@ import { FC, Fragment, ReactNode, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { PlusIcon } from "@heroicons/react/24/solid";
 import { Button } from "./Utilities/Button";
+import * as Sentry from "@sentry/nextjs";
 
 type DeleteDialogProps = {
   title?: ReactNode;
@@ -46,6 +47,7 @@ export const DeleteDialog: FC<DeleteDialogProps> = ({
       closeModal();
     } catch (error) {
       console.log(error);
+      Sentry.captureException(`Error deleting: ${error}`);
     }
   };
 

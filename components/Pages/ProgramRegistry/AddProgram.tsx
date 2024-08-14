@@ -15,7 +15,7 @@ import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { useAccount, useSwitchChain } from "wagmi";
 import { envVars } from "@/utilities/enviromentVars";
 import { useRouter } from "next/navigation";
-
+import * as Sentry from "@sentry/nextjs";
 import { useAuthStore } from "@/store/auth";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { registryHelper } from "./helper";
@@ -327,6 +327,7 @@ export default function AddProgram({
       router.push(PAGES.REGISTRY.ROOT);
     } catch (error) {
       console.log(error);
+      Sentry.captureException(error);
       toast.error("An error occurred while creating the program");
     } finally {
       setIsLoading(false);
@@ -467,6 +468,7 @@ export default function AddProgram({
         backTo?.();
       });
     } catch (error) {
+      Sentry.captureException(error);
       console.log(error);
       toast.error("An error occurred while editing the program");
     } finally {

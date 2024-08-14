@@ -29,6 +29,7 @@ import { useAuthStore } from "@/store/auth";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import * as Sentry from "@sentry/nextjs";
 
 interface GrantEdited {
   uid: string;
@@ -102,6 +103,9 @@ export default function EditCategoriesPage() {
         setCommunity(result);
       } catch (error: any) {
         console.error("Error fetching data:", error);
+        Sentry.captureException(
+          `Error fetching community details of ${communityId}: ${error}`
+        );
         if (
           error.message === "Community not found" ||
           error.message.includes("422")
@@ -131,6 +135,9 @@ export default function EditCategoriesPage() {
         setIsAdmin(checkAdmin);
       } catch (error) {
         console.log(error);
+        Sentry.captureException(
+          `Error checking if ${address} is admin of ${communityId}: ${error}`
+        );
         setIsAdmin(false);
       } finally {
         setLoading(false);
@@ -152,6 +159,9 @@ export default function EditCategoriesPage() {
       );
       setCategoriesOptions(orderedCategories);
     } catch (error) {
+      Sentry.captureException(
+        `Error fetching categories of ${communityId}: ${error}`
+      );
       setCategoriesOptions([]);
       console.error(error);
     }
@@ -185,6 +195,9 @@ export default function EditCategoriesPage() {
           setGrants(mapSimplifiedGrants);
         }
       } catch (error) {
+        Sentry.captureException(
+          `Error fetching grants of ${communityId}: ${error}`
+        );
         console.log("error", error);
         setGrants([]);
       } finally {
@@ -243,6 +256,9 @@ export default function EditCategoriesPage() {
       toast.success("Categories updated successfully.");
     } catch (error) {
       toast.error("Something went wrong, please try again later.");
+      Sentry.captureException(
+        `Error updating categories of ${communityId}: ${error}`
+      );
       console.log(error);
     } finally {
       setIsSaving(false);

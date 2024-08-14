@@ -5,10 +5,10 @@ import { useAccount } from "wagmi";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { PAGES } from "@/utilities/pages";
-import { cn } from "@/utilities/tailwind";
 import { MESSAGES } from "@/utilities/messages";
 import { useAuthStore } from "@/store/auth";
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import * as Sentry from "@sentry/nextjs";
 
 export const CommunityAdminPage = ({
   communityId,
@@ -38,7 +38,9 @@ export const CommunityAdminPage = ({
         );
         setIsAdmin(checkAdmin);
       } catch (error) {
-        console.log(error);
+        Sentry.captureException(
+          `Error checking if ${address} is admin of ${communityId}: ${error}`
+        );
         setIsAdmin(false);
       } finally {
         setLoading(false);
