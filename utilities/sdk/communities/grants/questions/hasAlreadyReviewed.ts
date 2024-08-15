@@ -1,7 +1,7 @@
 import type { Hex } from "@show-karma/karma-gap-sdk";
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 export const hasAlreadyReviewed = async (
   grantUID: string | Hex,

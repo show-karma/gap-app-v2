@@ -21,8 +21,8 @@ import {
   IGrantUpdate,
   IGrantUpdateStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import * as Sentry from "@sentry/react";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+
+import { errorManager } from "@/components/Utilities/errorManager";
 
 interface UpdateTagProps {
   index: number;

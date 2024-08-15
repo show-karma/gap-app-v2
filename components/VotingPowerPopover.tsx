@@ -9,8 +9,8 @@ import { Popover, Transition } from "@headlessui/react";
 import type { Hex } from "@show-karma/karma-gap-sdk";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { type FC, type ReactNode, useEffect, useState, Fragment } from "react";
-import * as Sentry from "@sentry/nextjs";
-import { errorManager } from "./Utilities/ErrorManager";
+
+import { errorManager } from "./Utilities/errorManager";
 
 interface VotingPowerPopoverProps {
   reviewer: string | Hex;

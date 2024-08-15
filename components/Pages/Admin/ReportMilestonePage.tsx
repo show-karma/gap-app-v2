@@ -26,8 +26,8 @@ import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useOwnerStore } from "@/store";
 import { SearchDropdown } from "../ProgramRegistry/SearchDropdown";
 import { useQueryState } from "nuqs";
-import * as Sentry from "@sentry/nextjs";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+
+import { errorManager } from "@/components/Utilities/errorManager";
 
 interface Report {
   _id: {

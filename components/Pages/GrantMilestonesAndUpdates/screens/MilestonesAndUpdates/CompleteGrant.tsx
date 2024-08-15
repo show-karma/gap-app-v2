@@ -1,4 +1,5 @@
 import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks";
 import { useProjectStore } from "@/store";
@@ -21,8 +22,6 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { Hex } from "viem";
 import { useAccount, useSwitchChain } from "wagmi";
-import * as Sentry from "@sentry/nextjs";
-import { errorManager } from "@/components/Utilities/ErrorManager";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 

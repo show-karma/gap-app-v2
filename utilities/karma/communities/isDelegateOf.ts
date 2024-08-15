@@ -1,7 +1,7 @@
 import axios from "axios";
 
 import { karmaAPI } from "../karma";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 export const isDelegateOf = async (community: string, address: string) => {
   try {

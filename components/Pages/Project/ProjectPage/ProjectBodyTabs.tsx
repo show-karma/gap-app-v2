@@ -21,8 +21,8 @@ import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useAccount, useSwitchChain } from "wagmi";
 import { config } from "@/utilities/wagmi/config";
 import { Hex } from "viem";
-import * as Sentry from "@sentry/react";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+
+import { errorManager } from "@/components/Utilities/errorManager";
 
 const InformationTab: FC = () => {
   const { project } = useProjectStore();

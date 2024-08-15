@@ -51,8 +51,8 @@ import {
   IGrantResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import * as Sentry from "@sentry/react";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+
+import { errorManager } from "@/components/Utilities/errorManager";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =

@@ -1,7 +1,7 @@
 import type { StatsResponse } from "@/types";
 import { INDEXER } from "../indexer";
 import fetchData from "../fetchData";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 export const getGAPStats = async (): Promise<StatsResponse> => {
   try {

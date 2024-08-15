@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import { Card, LineChart, Title } from "@tremor/react";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 export function GlobalCount() {
   const [stats, setStats] = useState<any>([]);

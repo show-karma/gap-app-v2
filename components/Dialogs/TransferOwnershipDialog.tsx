@@ -13,8 +13,8 @@ import { getWalletClient } from "@wagmi/core";
 import { useStepper } from "@/store/modals/txStepper";
 import { getProjectById, getProjectOwner } from "@/utilities/sdk";
 import { config } from "@/utilities/wagmi/config";
-import * as Sentry from "@sentry/nextjs";
-import { errorManager } from "../Utilities/ErrorManager";
+
+import { errorManager } from "../Utilities/errorManager";
 
 type TransferOwnershipProps = {
   buttonElement?: {

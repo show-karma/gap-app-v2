@@ -3,7 +3,7 @@ import { envVars } from "../enviromentVars";
 import { arbitrum, sepolia } from "viem/chains";
 import AlloRegistryABI from "@show-karma/karma-gap-sdk/core/abi/AlloRegistry.json";
 import { AlloContracts } from "@show-karma/karma-gap-sdk";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 export const isMemberOfProfile = async (address: string): Promise<boolean> => {
   try {

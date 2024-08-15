@@ -3,7 +3,7 @@ import { Networks } from "@show-karma/karma-gap-sdk/core/consts";
 import { Contract } from "ethers";
 import MulticallABI from "@show-karma/karma-gap-sdk/core/abi/MultiAttester.json";
 import { Chain } from "viem";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 export async function getContractOwner(
   signer: SignerOrProvider,

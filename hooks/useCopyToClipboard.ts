@@ -1,5 +1,5 @@
 "use client";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
 

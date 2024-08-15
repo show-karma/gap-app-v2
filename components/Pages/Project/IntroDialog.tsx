@@ -15,8 +15,8 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { INDEXER } from "@/utilities/indexer";
-import * as Sentry from "@sentry/react";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+
+import { errorManager } from "@/components/Utilities/errorManager";
 
 type IntroDialogProps = {};
 

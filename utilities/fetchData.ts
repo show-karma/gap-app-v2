@@ -2,7 +2,7 @@ import axios, { Method } from "axios";
 import { envVars } from "./enviromentVars";
 import Cookies from "universal-cookie";
 import { authCookiePath } from "@/hooks/useAuth";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 export default async function fetchData(
   endpoint: string,

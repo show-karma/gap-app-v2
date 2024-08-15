@@ -22,8 +22,8 @@ import { getWalletClient } from "@wagmi/core";
 import toast from "react-hot-toast";
 import { useStepper } from "@/store/modals/txStepper";
 import { config } from "@/utilities/wagmi/config";
-import * as Sentry from "@sentry/nextjs";
-import { errorManager } from "../Utilities/ErrorManager";
+
+import { errorManager } from "../Utilities/errorManager";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";

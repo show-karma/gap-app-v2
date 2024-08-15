@@ -8,8 +8,8 @@ import { PAGES } from "@/utilities/pages";
 import { MESSAGES } from "@/utilities/messages";
 import { useAuthStore } from "@/store/auth";
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import * as Sentry from "@sentry/nextjs";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+
+import { errorManager } from "@/components/Utilities/errorManager";
 
 export const CommunityAdminPage = ({
   communityId,

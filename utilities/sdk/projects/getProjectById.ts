@@ -1,4 +1,4 @@
-import { errorManager } from "@/components/Utilities/ErrorManager";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient } from "@/hooks";
 import { zeroUID } from "@/utilities/commons";
 import { appNetwork } from "@/utilities/network";

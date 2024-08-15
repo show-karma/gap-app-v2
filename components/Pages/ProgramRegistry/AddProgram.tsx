@@ -15,7 +15,7 @@ import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { useAccount, useSwitchChain } from "wagmi";
 import { envVars } from "@/utilities/enviromentVars";
 import { useRouter } from "next/navigation";
-import * as Sentry from "@sentry/nextjs";
+
 import { useAuthStore } from "@/store/auth";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { registryHelper } from "./helper";
@@ -40,7 +40,7 @@ import { useRegistryStore } from "@/store/registry";
 import { Popover } from "@headlessui/react";
 import { formatDate } from "@/utilities/formatDate";
 import { DayPicker } from "react-day-picker";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 const labelStyle = "text-sm font-bold text-[#344054] dark:text-zinc-100";
 const inputStyle =

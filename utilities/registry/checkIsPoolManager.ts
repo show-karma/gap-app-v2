@@ -1,4 +1,4 @@
-import { errorManager } from "@/components/Utilities/ErrorManager";
+import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "../fetchData";
 import { INDEXER } from "../indexer";
 

@@ -1,4 +1,4 @@
-import { errorManager } from "@/components/Utilities/ErrorManager";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { createPublicClient, type Hex, http } from "viem";
 import { mainnet } from "viem/chains";
 

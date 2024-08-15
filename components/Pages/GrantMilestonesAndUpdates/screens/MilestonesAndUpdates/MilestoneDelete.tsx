@@ -14,8 +14,8 @@ import { type FC, useState } from "react";
 import toast from "react-hot-toast";
 import { Hex } from "viem";
 import { useAccount, useSwitchChain } from "wagmi";
-import * as Sentry from "@sentry/react";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+
+import { errorManager } from "@/components/Utilities/errorManager";
 interface MilestoneDeleteProps {
   milestone: IMilestoneResponse;
 }

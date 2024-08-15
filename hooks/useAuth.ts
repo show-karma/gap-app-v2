@@ -13,7 +13,7 @@ import { useOnboarding } from "@/store/modals/onboarding";
 import { PAGES } from "@/utilities/pages";
 import { usePathname, useRouter } from "next/navigation";
 import { useMixpanel } from "./useMixpanel";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 export const authCookiePath = "gap_auth";
 export const authWalletTypeCookiePath = "gap_auth_wallet_type";

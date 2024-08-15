@@ -1,4 +1,5 @@
 import { DeleteDialog } from "@/components/DeleteDialog";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
@@ -14,8 +15,6 @@ import { useQueryState } from "nuqs";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
-import * as Sentry from "@sentry/nextjs";
-import { errorManager } from "@/components/Utilities/ErrorManager";
 
 interface GrantDeleteProps {
   grant: IGrantResponse;

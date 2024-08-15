@@ -31,7 +31,7 @@ import { config } from "@/utilities/wagmi/config";
 import { watchAccount } from "@wagmi/core";
 import { usePathname } from "next/navigation";
 import { useRegistryStore } from "@/store/registry";
-import { errorManager } from "./ErrorManager";
+import { errorManager } from "./errorManager";
 
 const ProjectDialog = dynamic(
   () =>

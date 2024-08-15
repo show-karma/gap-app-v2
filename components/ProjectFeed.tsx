@@ -15,8 +15,8 @@ import { Hex } from "viem";
 import { MarkdownPreview } from "./Utilities/MarkdownPreview";
 import { useTheme } from "next-themes";
 import { cn } from "@/utilities/tailwind";
-import * as Sentry from "@sentry/nextjs";
-import { errorManager } from "./Utilities/ErrorManager";
+
+import { errorManager } from "./Utilities/errorManager";
 
 interface ProjectFeedProps {
   initialFeed?: Feed[];

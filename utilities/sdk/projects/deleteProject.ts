@@ -1,4 +1,4 @@
-import { errorManager } from "@/components/Utilities/ErrorManager";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { TxStepperSteps } from "@/store/modals/txStepper";
 import { PAGES } from "@/utilities/pages";
 import { Project } from "@show-karma/karma-gap-sdk";

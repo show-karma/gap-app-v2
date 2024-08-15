@@ -27,8 +27,8 @@ import { z } from "zod";
 import { getGapClient, useGap } from "@/hooks";
 import { ProjectPointer } from "@show-karma/karma-gap-sdk";
 import { useRouter } from "next/navigation";
-import * as Sentry from "@sentry/nextjs";
-import { errorManager } from "../Utilities/ErrorManager";
+
+import { errorManager } from "../Utilities/errorManager";
 
 type MergeProjectProps = {
   buttonElement?: {

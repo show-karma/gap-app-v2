@@ -40,8 +40,8 @@ import { useStepper } from "@/store/modals/txStepper";
 import { useSearchParams } from "next/navigation";
 import { useRegistryStore } from "@/store/registry";
 import { useQuery } from "@tanstack/react-query";
-import * as Sentry from "@sentry/react";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+
+import { errorManager } from "@/components/Utilities/errorManager";
 
 export const ManagePrograms = () => {
   const searchParams = useSearchParams();

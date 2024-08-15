@@ -12,8 +12,8 @@ import { Hex } from "viem";
 import Image from "next/image";
 import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import { generateRandomString } from "@/utilities/generateRandomString";
-import * as Sentry from "@sentry/nextjs";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+
+import { errorManager } from "@/components/Utilities/errorManager";
 
 const labelStyle = "text-sm font-bold";
 const inputStyle =

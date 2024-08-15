@@ -17,7 +17,7 @@ import { useStepper } from "@/store/modals/txStepper";
 import { Hex } from "viem";
 import { config } from "@/utilities/wagmi/config";
 import { useEndorsementStore } from "@/store/modals/endorsement";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 type EndorsementDialogProps = {};
 

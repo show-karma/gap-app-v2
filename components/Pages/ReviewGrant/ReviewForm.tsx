@@ -23,7 +23,7 @@ import { additionalQuestion } from "@/utilities/tabs";
 import { INDEXER } from "@/utilities/indexer";
 import { cn } from "@/utilities/tailwind";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 interface ReviewFormProps {
   grant: IGrantResponse;

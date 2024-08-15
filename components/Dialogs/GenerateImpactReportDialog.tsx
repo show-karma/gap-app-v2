@@ -10,7 +10,7 @@ import {
 import { renderToHTML } from "@/utilities/markdown";
 import { Button } from "../Utilities/Button";
 import toast from "react-hot-toast";
-import * as Sentry from "@sentry/nextjs";
+
 import { useProjectStore } from "@/store";
 import { useAccount, useSwitchChain } from "wagmi";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -34,7 +34,7 @@ import {
   IProjectResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { envVars } from "@/utilities/enviromentVars";
-import { errorManager } from "../Utilities/ErrorManager";
+import { errorManager } from "../Utilities/errorManager";
 
 // Create styles
 const styles = StyleSheet.create({});

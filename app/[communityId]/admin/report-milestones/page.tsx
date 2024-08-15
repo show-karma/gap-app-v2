@@ -5,8 +5,8 @@ import { zeroUID } from "@/utilities/commons";
 import { ReportMilestonePage } from "@/components/Pages/Admin/ReportMilestonePage";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import * as Sentry from "@sentry/nextjs";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+
+import { errorManager } from "@/components/Utilities/errorManager";
 
 export const metadata = defaultMetadata;
 

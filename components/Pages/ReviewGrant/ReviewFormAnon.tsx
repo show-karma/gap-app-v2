@@ -27,7 +27,7 @@ import { ExclamationTriangleIcon } from "@heroicons/react/20/solid";
 import { createHash } from "crypto";
 import { envVars } from "@/utilities/enviromentVars";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 interface ReviewFormAnonProps {
   grant: IGrantResponse;

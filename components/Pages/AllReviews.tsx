@@ -18,8 +18,8 @@ import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { getReviewsOf, getAnonReviewsOf } from "@/utilities/sdk";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import * as Sentry from "@sentry/nextjs";
-import { errorManager } from "../Utilities/ErrorManager";
+import { errorManager } from "../Utilities/errorManager";
+
 interface GrantAllReviewsProps {
   grant: IGrantResponse | undefined;
 }

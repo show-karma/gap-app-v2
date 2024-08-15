@@ -5,8 +5,8 @@ import { useState, Fragment } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { Button } from "@/components/Utilities/Button";
 import { ArrowPathIcon, ChartBarSquareIcon } from "@heroicons/react/24/solid";
-import * as Sentry from "@sentry/nextjs";
-import { errorManager } from "./Utilities/ErrorManager";
+
+import { errorManager } from "./Utilities/errorManager";
 
 interface CommunityStatsProps {
   communityId: string;

@@ -12,7 +12,7 @@ import { INDEXER } from "@/utilities/indexer";
 import toast from "react-hot-toast";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { cn } from "@/utilities/tailwind";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 const inputStyle =
   "bg-transparent bg-white dark:bg-zinc-900  w-full text-black dark:text-zinc-200 placeholder:text-zinc-600  dark:placeholder:text-zinc-200";

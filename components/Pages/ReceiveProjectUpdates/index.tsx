@@ -1,6 +1,6 @@
 "use client";
 import { Button } from "@/components/Utilities/Button";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Spinner } from "@/components/Utilities/Spinner";
 import fetchData from "@/utilities/fetchData";

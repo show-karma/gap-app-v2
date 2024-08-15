@@ -30,7 +30,7 @@ import { IntroDialog } from "./IntroDialog";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { useRouter } from "next/navigation";
 import { useGap } from "@/hooks";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 interface ProjectWrapperProps {
   project: IProjectResponse;

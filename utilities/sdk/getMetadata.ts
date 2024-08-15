@@ -1,6 +1,6 @@
 import type { Hex } from "@show-karma/karma-gap-sdk";
 import { envVars } from "../enviromentVars";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 export const getMetadata = async <T>(
   type: "projects" | "communities" | "grants",

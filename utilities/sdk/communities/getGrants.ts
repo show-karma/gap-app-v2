@@ -2,7 +2,7 @@ import type { Grant, Hex } from "@show-karma/karma-gap-sdk";
 import type { SortByOptions, StatusOptions } from "@/types/filters";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 export interface GrantsResponse {
   grants: Grant[];

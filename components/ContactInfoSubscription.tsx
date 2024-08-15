@@ -10,8 +10,8 @@ import { Contact } from "@/types/project";
 import { ContactsDropdown } from "./Pages/Project/ContactsDropdown";
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
-import * as Sentry from "@sentry/nextjs";
-import { errorManager } from "./Utilities/ErrorManager";
+
+import { errorManager } from "./Utilities/errorManager";
 
 const labelStyle = "text-sm font-bold";
 const inputStyle =

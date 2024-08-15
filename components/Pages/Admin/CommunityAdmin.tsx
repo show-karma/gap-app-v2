@@ -18,8 +18,8 @@ import { useOwnerStore } from "@/store";
 import CommunityStats from "@/components/CommunityStats";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import * as Sentry from "@sentry/nextjs";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+
+import { errorManager } from "@/components/Utilities/errorManager";
 
 interface CommunityAdmin {
   id: string;

@@ -21,7 +21,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { useAuthStore } from "@/store/auth";
 import { useSearchParams } from "next/navigation";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { errorManager } from "@/components/Utilities/ErrorManager";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 interface ReviewGrantProps {
   grant: IGrantResponse | undefined;
