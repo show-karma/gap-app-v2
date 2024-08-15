@@ -440,45 +440,55 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       const walletSigner = await walletClientToSigner(walletClient);
       closeModal();
       changeStepperStep("preparing");
-      await project.attest(walletSigner, changeStepperStep).then(async () => {
-        let retries = 1000;
-        let fetchedProject: Project | null = null;
-        changeStepperStep("indexing");
-        while (retries > 0) {
-          // eslint-disable-next-line no-await-in-loop
-          fetchedProject = await (slug
-            ? gapClient.fetch.projectBySlug(slug)
-            : gapClient.fetch.projectById(project.uid as Hex)
-          ).catch(() => null);
-          if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
+      await project
+        .attest(walletSigner, changeStepperStep)
+        .then(async (res) => {
+          let retries = 1000;
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
             await fetchData(
-              INDEXER.SUBSCRIPTION.CREATE(fetchedProject.uid),
+              INDEXER.ATTESTATION_LISTENER(txHash, project.chainID),
               "POST",
-              { contacts },
-              {},
-              {},
-              true
-            ).then(([res, error]) => {
-              if (error) {
-                toast.error(
-                  "Something went wrong with contact info save. Please try again later.",
-                  {
-                    className: "z-[9999]",
-                  }
-                );
-              }
-              retries = 0;
-              toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
-              router.push(PAGES.PROJECT.GRANTS(slug || project.uid));
-              changeStepperStep("indexed");
-              return;
-            });
+              {}
+            );
           }
-          retries -= 1;
-          // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-          await new Promise((resolve) => setTimeout(resolve, 1500));
-        }
-      });
+          let fetchedProject: Project | null = null;
+          changeStepperStep("indexing");
+          while (retries > 0) {
+            // eslint-disable-next-line no-await-in-loop
+            fetchedProject = await (slug
+              ? gapClient.fetch.projectBySlug(slug)
+              : gapClient.fetch.projectById(project.uid as Hex)
+            ).catch(() => null);
+            if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
+              await fetchData(
+                INDEXER.SUBSCRIPTION.CREATE(fetchedProject.uid),
+                "POST",
+                { contacts },
+                {},
+                {},
+                true
+              ).then(([res, error]) => {
+                if (error) {
+                  toast.error(
+                    "Something went wrong with contact info save. Please try again later.",
+                    {
+                      className: "z-[9999]",
+                    }
+                  );
+                }
+                retries = 0;
+                toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
+                router.push(PAGES.PROJECT.GRANTS(slug || project.uid));
+                changeStepperStep("indexed");
+                return;
+              });
+            }
+            retries -= 1;
+            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+          }
+        });
 
       reset();
       setTeam([]);

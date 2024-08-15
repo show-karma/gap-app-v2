@@ -26,6 +26,8 @@ import {
   IProjectImpactStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { errorManager } from "@/components/Utilities/errorManager";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 type VerifyImpactDialogProps = {
   impact: IProjectImpact;
@@ -100,8 +102,16 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
       const walletSigner = await walletClientToSigner(walletClient);
       await findImpact
         .verify(walletSigner, data.comment, changeStepperStep)
-        .then(async () => {
+        .then(async (res) => {
           if (!project) return;
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, findImpact.chainID),
+              "POST",
+              {}
+            );
+          }
           let retries = 1000;
           changeStepperStep("indexing");
           let fetchedProject = null;

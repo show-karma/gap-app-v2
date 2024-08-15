@@ -1,6 +1,8 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import { TxStepperSteps } from "@/store/modals/txStepper";
+import fetchData from "@/utilities/fetchData";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { INDEXER } from "@/utilities/indexer";
 import {
   ExternalLink,
   Project,
@@ -77,9 +79,17 @@ export const updateProject = async (
 
     await project.details
       ?.attest(signer as any, changeStepperStep)
-      .then(async () => {
+      .then(async (res) => {
         let retries = 1000;
         changeStepperStep("indexing");
+        const txHash = res?.tx[0]?.hash;
+        if (txHash) {
+          await fetchData(
+            INDEXER.ATTESTATION_LISTENER(txHash, project.chainID),
+            "POST",
+            {}
+          );
+        }
         while (retries > 0) {
           // eslint-disable-next-line no-await-in-loop
           const fetchedProject = await gapIndexerApi

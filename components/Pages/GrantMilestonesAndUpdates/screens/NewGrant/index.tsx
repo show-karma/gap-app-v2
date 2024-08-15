@@ -51,6 +51,8 @@ import {
   IGrantResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 
@@ -410,10 +412,18 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       const walletSigner = await walletClientToSigner(walletClient);
       await grant
         .attest(walletSigner as any, selectedProject.chainID, changeStepperStep)
-        .then(async () => {
+        .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
           let fetchedProject = null;
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, grant.chainID),
+              "POST",
+              {}
+            );
+          }
           while (retries > 0) {
             fetchedProject = await gapClient!.fetch
               .projectById(selectedProject.uid as Hex)
@@ -491,9 +501,17 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       );
       await oldGrantInstance.details
         ?.attest(walletSigner as any, changeStepperStep)
-        .then(async () => {
+        .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, oldGrant.chainID),
+              "POST",
+              {}
+            );
+          }
           while (retries > 0) {
             const fetchedProject = await gapIndexerApi
               .projectBySlug(oldGrant.refUID)

@@ -22,6 +22,8 @@ import { getWalletClient } from "@wagmi/core";
 import toast from "react-hot-toast";
 import { useStepper } from "@/store/modals/txStepper";
 import { config } from "@/utilities/wagmi/config";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "../Utilities/errorManager";
 
@@ -133,7 +135,20 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
           },
           changeStepperStep
         )
-        .then(async () => {
+        .then(async (res) => {
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, newCommunity.chainID),
+              "POST",
+              {}
+            );
+          }
+          await fetchData(
+            INDEXER.ATTESTATION_LISTENER(newCommunity.uid, selectedChain),
+            "POST",
+            {}
+          );
           let retries = 1000;
           changeStepperStep("indexing");
           while (retries > 0) {

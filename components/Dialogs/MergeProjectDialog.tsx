@@ -27,8 +27,9 @@ import { z } from "zod";
 import { getGapClient, useGap } from "@/hooks";
 import { ProjectPointer } from "@show-karma/karma-gap-sdk";
 import { useRouter } from "next/navigation";
-
 import { errorManager } from "../Utilities/errorManager";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 type MergeProjectProps = {
   buttonElement?: {
@@ -208,9 +209,17 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
 
       await projectPointer
         .attest(walletSigner as any, changeStepperStep)
-        .then(async () => {
+        .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, project.chainID),
+              "POST",
+              {}
+            );
+          }
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {

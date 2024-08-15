@@ -1,6 +1,8 @@
 import { Hex } from "viem";
 
 export const INDEXER = {
+  ATTESTATION_LISTENER: (hash: Hex | string, chainId: number) =>
+    `/attestations/index-by-transaction/${hash}/${chainId}`,
   REGISTRY: {
     GET_ALL: "/registry",
     FIND_BY_ID: (id: string, chainId: number) =>

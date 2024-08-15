@@ -21,6 +21,8 @@ import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useAccount, useSwitchChain } from "wagmi";
 import { config } from "@/utilities/wagmi/config";
 import { Hex } from "viem";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 
@@ -132,7 +134,15 @@ const UpdateBlock = ({
       }
       await findUpdate
         .revoke(walletSigner as any, changeStepperStep)
-        .then(async () => {
+        .then(async (res) => {
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, findUpdate.chainID),
+              "POST",
+              {}
+            );
+          }
           let retries = 1000;
           changeStepperStep("indexing");
           let fetchedProject = null;

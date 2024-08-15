@@ -13,6 +13,8 @@ import { getWalletClient } from "@wagmi/core";
 import { useStepper } from "@/store/modals/txStepper";
 import { getProjectById, getProjectOwner } from "@/utilities/sdk";
 import { config } from "@/utilities/wagmi/config";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "../Utilities/errorManager";
 
@@ -71,9 +73,17 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
       if (!fetchedProject) return;
       await fetchedProject
         .transferOwnership(walletSigner, newOwner, changeStepperStep)
-        .then(async () => {
+        .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, project.chainID),
+              "POST",
+              {}
+            );
+          }
           while (retries > 0) {
             const stillProjectOwner = await getProjectOwner(
               walletSigner || signer,
