@@ -23,6 +23,8 @@ import { Hex } from "viem";
 import { config } from "@/utilities/wagmi/config";
 import { IProjectImpact } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getProjectById } from "@/utilities/sdk";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 const headClasses =
   "text-black dark:text-white text-xs font-medium uppercase text-left px-6 py-3 font-body";
@@ -86,11 +88,15 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
       if (!instanceImpact) return;
       await instanceImpact
         .revoke(walletSigner as any, changeStepperStep)
-        .then(async () => {
-          // const filtered = project.impacts.filter(
-          //   (item) => item.uid !== impact.uid
-          // );
-          // project.impacts = filtered;
+        .then(async (res) => {
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, instanceImpact.chainID),
+              "POST",
+              {}
+            );
+          }
           let retries = 1000;
           changeStepperStep("indexing");
           let fetchedProject = null;

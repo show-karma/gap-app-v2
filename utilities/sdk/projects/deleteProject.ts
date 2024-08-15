@@ -1,4 +1,6 @@
 import { TxStepperSteps } from "@/store/modals/txStepper";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
 import { Project } from "@show-karma/karma-gap-sdk";
 import { Hex } from "viem";
@@ -12,10 +14,18 @@ export const deleteProject = async (
 ) => {
   try {
     if (!gap) return;
-    await project.revoke(signer as any, changeStepperStep).then(async () => {
+    await project.revoke(signer as any, changeStepperStep).then(async (res) => {
       let retries = 1000;
       let fetchedProject: Project | null = null;
       changeStepperStep("indexing");
+      const txHash = res?.tx[0]?.hash;
+      if (txHash) {
+        await fetchData(
+          INDEXER.ATTESTATION_LISTENER(txHash, project.chainID),
+          "POST",
+          {}
+        );
+      }
       while (retries > 0) {
         // eslint-disable-next-line no-await-in-loop
         fetchedProject = await (project.details?.slug

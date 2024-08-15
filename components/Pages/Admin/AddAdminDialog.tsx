@@ -108,7 +108,15 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
         data.address
       );
       changeStepperStep("pending");
+      const { hash } = communityResponse;
       await communityResponse.wait().then(async () => {
+        if (hash) {
+          await fetchData(
+            INDEXER.ATTESTATION_LISTENER(hash, chainid),
+            "POST",
+            {}
+          );
+        }
         changeStepperStep("indexing");
         let retries = 1000;
         let addressAdded = false;
