@@ -326,7 +326,7 @@ export default function AddProgram({
         }
       );
       router.push(PAGES.REGISTRY.ROOT);
-    } catch (error) {
+    } catch (error: any) {
       errorManager(`Error while creating a program`, error);
       toast.error("An error occurred while creating the program");
     } finally {
@@ -467,7 +467,7 @@ export default function AddProgram({
       await refreshPrograms?.().then(() => {
         backTo?.();
       });
-    } catch (error) {
+    } catch (error: any) {
       errorManager(`Error while editing a program`, error);
       console.log(error);
       toast.error("An error occurred while editing the program");

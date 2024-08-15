@@ -275,7 +275,7 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
       } else {
         console.log("User cancelled the proof generation");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       errorManager(
         `Error of user ${address} saving anon review for grant ${grant.uid}`,

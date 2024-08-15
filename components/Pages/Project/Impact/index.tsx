@@ -118,7 +118,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
           }
         });
       toast.success(MESSAGES.PROJECT.IMPACT.REMOVE.SUCCESS);
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       errorManager(
         `Error of user ${address} revoking impact from project ${project?.uid}`,

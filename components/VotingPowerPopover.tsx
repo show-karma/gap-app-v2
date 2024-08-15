@@ -48,7 +48,7 @@ export const VotingPowerPopover: FC<VotingPowerPopoverProps> = ({
           setDelegatedVotes(data.delegatedVotes);
         }
         setIsDelegate(!!data);
-      } catch (error) {
+      } catch (error: any) {
         errorManager(
           `Error fetching voting power for reviewer ${reviewer}`,
           error

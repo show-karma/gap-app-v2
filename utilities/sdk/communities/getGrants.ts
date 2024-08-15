@@ -39,7 +39,7 @@ export const getGrants = async (
     if (!grants || grants.length === 0) return { grants: [], pageInfo: {} };
 
     return { grants, pageInfo };
-  } catch (error) {
+  } catch (error: any) {
     errorManager(`Error getting grants of community: ${uid}`, error);
     console.log(error);
     return { grants: [], pageInfo: {} };

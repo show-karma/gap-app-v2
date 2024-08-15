@@ -141,7 +141,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
             await new Promise((resolve) => setTimeout(resolve, 1500));
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       toast.error(MESSAGES.GRANT.GRANT_UPDATE.UNDO.ERROR);
       errorManager(`Error deleting grant update ${update.uid}`, error);
     } finally {

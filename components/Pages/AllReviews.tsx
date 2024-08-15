@@ -90,7 +90,7 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
         const slicedData = sortedData.slice(0, pageLimit);
 
         setReviews(slicedData);
-      } catch (error) {
+      } catch (error: any) {
         console.log(error);
         errorManager(
           `Error getting reviews of grant ${
@@ -128,7 +128,7 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
         const slicedData = sortedData.slice(0, pageLimit);
 
         setAnonReviews(slicedData);
-      } catch (error) {
+      } catch (error: any) {
         errorManager(
           `Error getting anon reviews of grant ${
             grant?.details?.data?.title || grant?.uid

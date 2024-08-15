@@ -68,7 +68,7 @@ export default function CommunityStats({ communityId }: CommunityStatsProps) {
           setError("No stats found for community");
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching stats:", error);
       errorManager(`Error fetching stats: ${error}`, error);
       setError(error);

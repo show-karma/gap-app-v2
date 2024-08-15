@@ -162,7 +162,7 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
               });
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       toast.error(MESSAGES.MILESTONES.COMPLETE.ERROR);
       errorManager(
@@ -242,7 +242,7 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
               });
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       toast.error(MESSAGES.MILESTONES.UPDATE_COMPLETION.ERROR);
       errorManager(

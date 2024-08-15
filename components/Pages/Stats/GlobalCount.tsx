@@ -33,7 +33,7 @@ export function GlobalCount() {
           setError("No stats found");
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching stats:", error);
       errorManager("Error fetching stats", error);
       setError(error);

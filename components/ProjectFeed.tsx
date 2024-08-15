@@ -49,7 +49,7 @@ export const ProjectFeed = ({ initialFeed = [] }: ProjectFeedProps) => {
         setFeed(newFeed);
         const canLoadMore = oldFeed.length !== newFeed.length;
         setHasMore(canLoadMore);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching data:", error);
         errorManager(
           `Error fetching data feed for project ${projectId}`,

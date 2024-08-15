@@ -149,7 +149,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
               closeModal(); // Close the dialog upon successful submission
               break;
             }
-          } catch (error) {
+          } catch (error: any) {
             console.log("Retrying...");
           }
 
@@ -158,7 +158,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
           await new Promise((resolve) => setTimeout(resolve, 1500));
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       errorManager(
         `Error adding admin ${data.address} to community ${UUID}`,
         error

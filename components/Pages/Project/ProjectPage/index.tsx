@@ -103,7 +103,7 @@ function ProjectPage() {
       ).then(async () => {
         toast.success(MESSAGES.PROJECT.DELETE.SUCCESS);
       });
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       toast.error(MESSAGES.PROJECT.DELETE.ERROR);
       errorManager(`Error deleting project ${projectId}`, error);

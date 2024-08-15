@@ -135,7 +135,7 @@ export default function EditCategoriesPage() {
           signer
         );
         setIsAdmin(checkAdmin);
-      } catch (error) {
+      } catch (error: any) {
         console.log(error);
         errorManager(
           `Error checking if ${address} is admin of ${communityId}`,
@@ -161,7 +161,7 @@ export default function EditCategoriesPage() {
         }
       );
       setCategoriesOptions(orderedCategories);
-    } catch (error) {
+    } catch (error: any) {
       errorManager(`Error fetching categories of ${communityId}`, error);
       setCategoriesOptions([]);
       console.error(error);
@@ -195,7 +195,7 @@ export default function EditCategoriesPage() {
             );
           setGrants(mapSimplifiedGrants);
         }
-      } catch (error) {
+      } catch (error: any) {
         errorManager(`Error fetching grants of ${communityId}`, error);
         console.log("error", error);
         setGrants([]);
@@ -253,7 +253,7 @@ export default function EditCategoriesPage() {
       }
 
       toast.success("Categories updated successfully.");
-    } catch (error) {
+    } catch (error: any) {
       toast.error("Something went wrong, please try again later.");
       errorManager(`Error updating categories of ${communityId}`, error);
       console.log(error);

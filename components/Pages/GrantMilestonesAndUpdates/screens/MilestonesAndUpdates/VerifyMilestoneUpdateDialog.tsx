@@ -140,7 +140,7 @@ export const VerifyMilestoneUpdateDialog: FC<
           }
         });
       closeModal();
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       toast.error(MESSAGES.MILESTONES.VERIFY.ERROR);
       errorManager(

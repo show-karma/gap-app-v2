@@ -17,7 +17,7 @@ export async function getProjectOwner(
     const response = await resolver.isAdmin(uid, publicAddress);
     const isowner = response;
     return isowner;
-  } catch (error) {
+  } catch (error: any) {
     errorManager(`Error getting project owner: ${project.uid}`, error);
     return false;
   }

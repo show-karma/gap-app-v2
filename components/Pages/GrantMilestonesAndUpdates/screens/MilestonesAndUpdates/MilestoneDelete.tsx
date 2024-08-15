@@ -94,7 +94,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
           // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
           await new Promise((resolve) => setTimeout(resolve, 1500));
         });
-    } catch (error) {
+    } catch (error: any) {
       toast.error(MESSAGES.MILESTONES.DELETE.ERROR(milestone.data.title));
       errorManager(
         `Error deleting milestone ${milestone.uid} from grant ${milestone.refUID}`,

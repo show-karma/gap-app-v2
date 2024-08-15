@@ -158,7 +158,7 @@ export const ProgramsExplorer = () => {
           const isManager = await checkIsPoolManager(address);
           setIsPoolManager(isManager);
         }
-      } catch (error) {
+      } catch (error: any) {
         errorManager(
           `Error while checking if ${address} is a registry admin or pool manager`,
           error
@@ -223,7 +223,7 @@ export const ProgramsExplorer = () => {
         if (data) {
           setSelectedProgram(data);
         }
-      } catch (error) {
+      } catch (error: any) {
         errorManager(`Error while searching for program by id`, error);
         console.log(error);
       }

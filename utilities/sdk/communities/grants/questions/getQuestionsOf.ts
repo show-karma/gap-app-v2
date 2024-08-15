@@ -10,7 +10,7 @@ export const getQuestionsOf = async (grantUID: string | `0x${string}`) => {
     }
 
     return [];
-  } catch (error) {
+  } catch (error: any) {
     console.log(error);
     errorManager(`Error getting questions of grant: ${grantUID}`, error);
     return [];

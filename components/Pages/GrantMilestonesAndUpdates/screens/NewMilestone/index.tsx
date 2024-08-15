@@ -196,7 +196,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
               });
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       toast.error(MESSAGES.MILESTONES.CREATE.ERROR);
       errorManager(

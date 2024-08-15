@@ -20,7 +20,7 @@ export async function getContractOwner(
     const contract = new Contract(address, MulticallABI, signer as any);
     const owner = await contract.owner?.();
     return owner;
-  } catch (error) {
+  } catch (error: any) {
     errorManager(`Error getting contract owner`, error);
     return undefined;
   }

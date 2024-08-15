@@ -74,7 +74,7 @@ export const QuestionCreationDialog: FC<QuestionCreationDialogProps> = ({
       toast.success("Question created successfully");
       refreshQuestions();
       closeModal();
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       errorManager(`Error creating question of ${communityId}`, error);
       toast.error("An error occurred while creating the question");

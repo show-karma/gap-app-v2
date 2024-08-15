@@ -133,7 +133,7 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
               closeModal(); // Close the dialog upon successful submission
               break;
             }
-          } catch (error) {
+          } catch (error: any) {
             console.log("Retrying...");
           }
 
@@ -142,7 +142,7 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
           await new Promise((resolve) => setTimeout(resolve, 1500));
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       errorManager(`Error removing admin of ${UUID}`, error);
       console.log(error);
     } finally {

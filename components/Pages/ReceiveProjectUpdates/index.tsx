@@ -62,7 +62,7 @@ const SubscribeForm = ({ address, changeIsSubscribed }: SubscribeFormProps) => {
       toast.success(
         "You have subscribed to all the projects funded by your wallet"
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       errorManager(
         `Error of user ${address}/${data.email} subscribing to all projects funded by his wallet`,
@@ -149,7 +149,7 @@ export const ReceiveProjectUpdates = ({
         });
         setStep("lookup");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       setProjectsFunded(0);
       setStep("lookup");

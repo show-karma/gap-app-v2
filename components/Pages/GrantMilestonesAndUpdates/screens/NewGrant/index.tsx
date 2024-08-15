@@ -446,7 +446,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             await new Promise((resolve) => setTimeout(resolve, 1500));
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       toast.error(MESSAGES.GRANT.CREATE.ERROR);
       errorManager(
         `Error creating grant to project ${selectedProject.uid}`,
@@ -545,7 +545,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             await new Promise((resolve) => setTimeout(resolve, 1500));
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       toast.error(MESSAGES.GRANT.UPDATE.ERROR);
       errorManager(
         `Error updating grant ${oldGrant.uid} from project ${selectedProject.uid}`,
@@ -674,7 +674,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         const result = await gapIndexerApi.communities();
         setAllCommunities(result.data);
         return result;
-      } catch (error) {
+      } catch (error: any) {
         console.log(error);
         setAllCommunities([]);
         return undefined;
@@ -700,7 +700,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           signer
         );
         setIsCommunityAllowed(result);
-      } catch (error) {
+      } catch (error: any) {
         setIsCommunityAllowed(false);
         errorManager(
           `Error checking if ${address} is community admin for ${communityToSearch}`,

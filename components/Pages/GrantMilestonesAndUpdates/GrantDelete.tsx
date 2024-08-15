@@ -91,7 +91,7 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
               });
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       toast.error(
         MESSAGES.GRANT.DELETE.ERROR(
           grant.details?.data?.title || shortAddress(grant.uid)

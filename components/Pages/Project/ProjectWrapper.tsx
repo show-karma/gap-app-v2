@@ -75,7 +75,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
         );
 
         setProjectContactsInfo(data);
-      } catch (error) {
+      } catch (error: any) {
         console.error(error);
         setProjectContactsInfo(undefined);
         errorManager(
@@ -120,7 +120,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
             setIsProjectOwner(res);
           })
           .finally(() => setIsProjectOwnerLoading(false));
-      } catch (error) {
+      } catch (error: any) {
         setIsProjectOwner(false);
         errorManager(
           `Error checking if user ${address} is project owner from project ${projectId}`,

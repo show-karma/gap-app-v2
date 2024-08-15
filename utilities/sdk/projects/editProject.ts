@@ -111,7 +111,7 @@ export const updateProject = async (
         }
       });
     return project;
-  } catch (error) {
+  } catch (error: any) {
     project.details?.setValues(oldProjectData);
     errorManager(`Error editing project: ${project.uid}`, error);
     throw error;

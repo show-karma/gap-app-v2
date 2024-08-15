@@ -15,7 +15,7 @@ export const isCommunityAdminOf = async (
     );
     const response = await resolver?.isAdmin?.(uid as Hex, address);
     return response;
-  } catch (error) {
+  } catch (error: any) {
     errorManager(
       `Error checking if user ${address} is community(${uid}) admin`,
       error

@@ -496,7 +496,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       setStep(0);
       setIsStepper(false);
       setContacts([]);
-    } catch (error) {
+    } catch (error: any) {
       console.log({ error });
       errorManager(`Error creating project`, error);
       toast.error(MESSAGES.PROJECT.CREATE.ERROR);
@@ -568,7 +568,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           router.push(PAGES.PROJECT.OVERVIEW(project));
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       errorManager(
         `Error updating project ${

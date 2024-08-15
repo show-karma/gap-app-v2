@@ -149,7 +149,7 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
           // addVerification(newVerified);
         });
       closeModal();
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       errorManager(
         `Error of user ${address} verifying impact from project ${project?.uid}`,

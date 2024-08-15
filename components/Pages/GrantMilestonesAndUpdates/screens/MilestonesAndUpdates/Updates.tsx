@@ -109,7 +109,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
               });
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       toast.error(MESSAGES.MILESTONES.COMPLETE.UNDO.ERROR);
       errorManager(

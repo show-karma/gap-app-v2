@@ -87,7 +87,7 @@ export const ReviewGrant: FC<ReviewGrantProps> = ({ grant }) => {
   //         );
   //         setZkGroup(data);
   //       }
-  //     } catch (error) {
+  //     } catch (error: any) {
   //       console.error("Error in finding zkgroup for this grant", error);
   //     }
   //   })();
@@ -104,7 +104,7 @@ export const ReviewGrant: FC<ReviewGrantProps> = ({ grant }) => {
           data.choice = data.choice === true ? "yes" : "no";
         }
         setReviewerInfo(data);
-      } catch (error) {
+      } catch (error: any) {
         errorManager(`Error getting reviewer info of user ${address}`, error);
         setReviewerInfo({
           choice: undefined,
@@ -135,7 +135,7 @@ export const ReviewGrant: FC<ReviewGrantProps> = ({ grant }) => {
 
         const allQuestions = [...dataWithoutAdditional, ...additionals];
         setQuestions(allQuestions);
-      } catch (error) {
+      } catch (error: any) {
         errorManager(`Error getting questions of grant ${grant.uid}`, error);
         console.log(error);
         setQuestions([]);
@@ -155,7 +155,7 @@ export const ReviewGrant: FC<ReviewGrantProps> = ({ grant }) => {
         try {
           const data = await hasAlreadyReviewed(grant.uid, address);
           setAlreadyReviewed(data);
-        } catch (error) {
+        } catch (error: any) {
           errorManager(
             `Error getting already reviewed of user ${address} for grant ${grant.uid}`,
             error

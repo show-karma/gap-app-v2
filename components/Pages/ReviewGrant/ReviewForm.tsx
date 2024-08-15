@@ -212,7 +212,7 @@ export const ReviewForm: FC<ReviewFormProps> = ({
         );
         setHasSubmitted(true);
       });
-    } catch (error) {
+    } catch (error: any) {
       errorManager(
         `Error of user ${address} saving review for grant ${grant.uid}`,
         error

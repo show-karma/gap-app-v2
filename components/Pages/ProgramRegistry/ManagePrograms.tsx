@@ -87,7 +87,7 @@ export const ManagePrograms = () => {
           const isManager = await checkIsPoolManager(address);
           setIsPoolManager(isManager);
         }
-      } catch (error) {
+      } catch (error: any) {
         errorManager(
           `Error while checking if ${address} is a registry admin or pool manager`,
           error
@@ -134,7 +134,7 @@ export const ManagePrograms = () => {
         if (data) {
           setSelectedProgram(data);
         }
-      } catch (error) {
+      } catch (error: any) {
         errorManager(`Error while searching for program by id`, error);
       }
     };
@@ -334,7 +334,7 @@ export const ManagePrograms = () => {
       }
       toast.success(`Program ${value} successfully`);
       await refreshPrograms();
-    } catch (error) {
+    } catch (error: any) {
       errorManager(
         `Error ${messageDict[value]} program ${program._id.$oid}`,
         error

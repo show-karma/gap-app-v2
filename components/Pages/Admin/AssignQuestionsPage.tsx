@@ -103,7 +103,7 @@ export default function AssignQuestionsPage() {
           signer
         );
         setIsAdmin(checkAdmin);
-      } catch (error) {
+      } catch (error: any) {
         errorManager(
           `Error checking if ${address} is admin of community ${communityId}`,
           error
@@ -144,7 +144,7 @@ export default function AssignQuestionsPage() {
             );
             setQuestionsAssigned(previousQuestions);
           }
-        } catch (error) {
+        } catch (error: any) {
           errorManager(
             `Error fetching categories of community ${communityId}`,
             error
@@ -165,7 +165,7 @@ export default function AssignQuestionsPage() {
           if (data) {
             setQuestions(data);
           }
-        } catch (error) {
+        } catch (error: any) {
           errorManager(
             `Error fetching questions of community ${communityId}`,
             error
@@ -243,7 +243,7 @@ export default function AssignQuestionsPage() {
       if (data) {
         setQuestions(data);
       }
-    } catch (error) {
+    } catch (error: any) {
       errorManager(
         `Error refreshing questions of community ${communityId}`,
         error

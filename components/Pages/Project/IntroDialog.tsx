@@ -83,7 +83,7 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
       }
       closeModal();
       toast.success("Successfully requested intro!");
-    } catch (error) {
+    } catch (error: any) {
       errorManager(`Error while requesting intro`, error);
       console.log(error);
     } finally {

@@ -26,7 +26,7 @@ export const fetchENSNames = async (addresses: (Hex | string)[]) => {
     });
     const names = await Promise.all(calls);
     return names;
-  } catch (error) {
+  } catch (error: any) {
     errorManager(`Error in fetch ens names`, error);
     console.log(error);
     return addresses.map((address) => ({ name: undefined, address }));

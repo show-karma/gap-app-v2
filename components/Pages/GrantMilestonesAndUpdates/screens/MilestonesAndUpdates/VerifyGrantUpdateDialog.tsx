@@ -146,7 +146,7 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
           }
         });
       closeModal();
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       toast.error(MESSAGES.GRANT.GRANT_UPDATE.VERIFY.ERROR);
       errorManager(

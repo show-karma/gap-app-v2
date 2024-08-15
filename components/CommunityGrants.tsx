@@ -138,7 +138,7 @@ export const CommunityGrants = ({
             setTotalGrants(0);
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.log("error", error);
         errorManager("Error while fetching community grants", error);
         setGrants([]);

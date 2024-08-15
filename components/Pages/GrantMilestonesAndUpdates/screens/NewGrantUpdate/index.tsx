@@ -145,7 +145,7 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
               });
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       toast.error(MESSAGES.GRANT.GRANT_UPDATE.ERROR);
       errorManager(

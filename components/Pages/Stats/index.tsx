@@ -101,7 +101,7 @@ export const Stats = () => {
         };
       });
       setData(stats);
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       errorManager("Error fetching GAP stats", error);
     } finally {

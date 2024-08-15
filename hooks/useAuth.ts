@@ -25,7 +25,7 @@ const getNonce = async (publicAddress: string) => {
     });
     const { nonceMessage } = data;
     return nonceMessage;
-  } catch (error) {
+  } catch (error: any) {
     // eslint-disable-next-line no-console
     console.error("Error in login:", error);
     errorManager(`Error in login of user ${publicAddress}`, error);
@@ -89,7 +89,7 @@ export const useAuth = () => {
           });
       const { token, walletType } = response;
       return { token, walletType };
-    } catch (error) {
+    } catch (error: any) {
       // eslint-disable-next-line no-console
       errorManager(
         `Error in get account token of user ${publicAddress}`,

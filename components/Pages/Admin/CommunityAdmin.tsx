@@ -65,7 +65,7 @@ export default function CommunitiesToAdminPage() {
       setCommunityAdmins(communityAdmins);
 
       return result;
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       errorManager(`Error fetching all communities`, error);
       setAllCommunities([]);

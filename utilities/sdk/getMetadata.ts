@@ -13,7 +13,7 @@ export const getMetadata = async <T>(
     const response = await fetch(url).then((res) => res.json());
 
     return response as T & { uid: Hex };
-  } catch (error) {
+  } catch (error: any) {
     errorManager(`Error getting metadata of ${type}: ${uid}`, error);
     console.log(error);
     return undefined;

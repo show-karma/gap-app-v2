@@ -140,7 +140,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
             await new Promise((resolve) => setTimeout(resolve, 1500));
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       toast.error(MESSAGES.PROJECT.IMPACT.ERROR);
       errorManager(`Error adding impact to project ${project.uid}`, error);

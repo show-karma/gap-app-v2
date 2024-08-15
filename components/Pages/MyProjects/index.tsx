@@ -95,7 +95,7 @@ export default function MyProjects() {
           itemsPerPage * page
         );
         setMyProjects(projectsPiece || []);
-      } catch (error) {
+      } catch (error: any) {
         console.error(error);
         setMyProjects([]);
         errorManager(`Error fetching projects of ${address}`, error);

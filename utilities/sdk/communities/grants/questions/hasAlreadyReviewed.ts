@@ -12,7 +12,7 @@ export const hasAlreadyReviewed = async (
       INDEXER.GRANTS.REVIEWS.USER_ANSWERED(grantUID, address)
     );
     return data?.answers?.length > 0;
-  } catch (error) {
+  } catch (error: any) {
     errorManager(
       `Error checking if user ${address} has already reviewed grant: ${grantUID}`,
       error

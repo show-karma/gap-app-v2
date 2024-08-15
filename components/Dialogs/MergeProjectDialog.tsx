@@ -248,7 +248,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
               });
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       errorManager(`Error creating project pointer`, error);
       toast.error(MESSAGES.PROJECT_POINTER_FORM.ERROR);

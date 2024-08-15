@@ -120,7 +120,7 @@ export const ProjectUpdateForm: FC = () => {
               });
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       errorManager(
         `Error of user ${address} creating project update for project ${project?.uid}`,
         error

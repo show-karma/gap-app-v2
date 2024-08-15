@@ -23,7 +23,7 @@ const getGrantTitles = async (communityId: string): Promise<string[]> => {
       );
     }
     return data;
-  } catch (error) {
+  } catch (error: any) {
     errorManager(
       `Error while fetching grant titles of community ${communityId}`,
       error

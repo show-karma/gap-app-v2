@@ -103,7 +103,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
           }
         });
       closeModal();
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       errorManager(
         `Error of user ${address} endorsing project ${project?.uid}`,

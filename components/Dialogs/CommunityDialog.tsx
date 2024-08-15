@@ -174,7 +174,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
               });
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       errorManager(`Error creating community`, error);
       toast.error("Error creating community");
     } finally {

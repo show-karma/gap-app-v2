@@ -74,7 +74,7 @@ export const CategoryCreationDialog: FC<CategoryCreationDialogProps> = ({
       toast.success("Category created successfully");
       refreshCategories();
       closeModal();
-    } catch (error) {
+    } catch (error: any) {
       errorManager(
         `Error creating category of community ${communityId}`,
         error

@@ -38,7 +38,7 @@ export const CommunityAdminPage = ({
           signer
         );
         setIsAdmin(checkAdmin);
-      } catch (error) {
+      } catch (error: any) {
         errorManager(
           `Error checking if ${address} is admin of ${communityId}`,
           error

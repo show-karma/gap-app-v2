@@ -245,7 +245,7 @@ export const ProjectGrantsPage = () => {
         signer
       );
       setIsCommunityAdmin(result);
-    } catch (error) {
+    } catch (error: any) {
       errorManager(`Error checking if ${address} is a community admin`, error);
       console.log(error);
       setIsCommunityAdmin(false);

@@ -37,7 +37,7 @@ export const isMemberOfProfile = async (address: string): Promise<boolean> => {
     });
 
     return (checkBothCall || call) as boolean;
-  } catch (error) {
+  } catch (error: any) {
     errorManager(`Error checking if user is member of profile`, error);
     return false;
   }
