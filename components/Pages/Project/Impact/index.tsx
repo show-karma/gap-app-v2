@@ -23,6 +23,7 @@ import { Hex } from "viem";
 import { config } from "@/utilities/wagmi/config";
 import { IProjectImpact } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getProjectById } from "@/utilities/sdk";
+import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -117,8 +118,12 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
           }
         });
       toast.success(MESSAGES.PROJECT.IMPACT.REMOVE.SUCCESS);
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
+      errorManager(
+        `Error of user ${address} revoking impact from project ${project?.uid}`,
+        error
+      );
       setLoading({ ...loading, [impact.uid.toLowerCase()]: false });
       toast.error(MESSAGES.PROJECT.IMPACT.REMOVE.ERROR);
     } finally {

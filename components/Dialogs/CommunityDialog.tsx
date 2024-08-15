@@ -11,26 +11,21 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 import { useAccount, useSwitchChain } from "wagmi";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Community, nullRef } from "@show-karma/karma-gap-sdk";
 import { Button } from "../Utilities/Button";
-import { useProjectStore } from "@/store";
 import { MESSAGES } from "@/utilities/messages";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { appNetwork, getChainIdByName } from "@/utilities/network";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { appNetwork } from "@/utilities/network";
 import { cn } from "@/utilities/tailwind";
-import { useAuthStore } from "@/store/auth";
 import { getGapClient, useGap } from "@/hooks";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { getWalletClient } from "@wagmi/core";
 import toast from "react-hot-toast";
-import { useCommunitiesStore } from "@/store/communities";
-import { envVars } from "@/utilities/enviromentVars";
-import { title } from "process";
 import { useStepper } from "@/store/modals/txStepper";
 import { config } from "@/utilities/wagmi/config";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+
+import { errorManager } from "../Utilities/errorManager";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -179,8 +174,8 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
               });
           }
         });
-    } catch (error) {
-      console.error("Error creating community:", error);
+    } catch (error: any) {
+      errorManager(`Error creating community`, error);
       toast.error("Error creating community");
     } finally {
       setIsLoading(false); // Reset loading state

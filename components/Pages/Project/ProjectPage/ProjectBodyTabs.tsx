@@ -24,6 +24,8 @@ import { Hex } from "viem";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
+import { errorManager } from "@/components/Utilities/errorManager";
+
 const InformationTab: FC = () => {
   const { project } = useProjectStore();
   return (
@@ -162,9 +164,13 @@ const UpdateBlock = ({
             await new Promise((resolve) => setTimeout(resolve, 1500));
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       toast.error(MESSAGES.PROJECT_UPDATE_FORM.DELETE.ERROR);
+      errorManager(
+        `Error deleting project update ${update.uid} from project ${project?.uid}`,
+        error
+      );
     } finally {
       setIsDeletingUpdate(false);
       setIsStepper(false);

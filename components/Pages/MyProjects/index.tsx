@@ -20,6 +20,8 @@ import { Button } from "@/components/Utilities/Button";
 import { useOnboarding } from "@/store/modals/onboarding";
 import { useMixpanel } from "@/hooks/useMixpanel";
 
+import { errorManager } from "@/components/Utilities/errorManager";
+
 const ProjectDialog = dynamic(
   () =>
     import("@/components/Dialogs/ProjectDialog/index").then(
@@ -93,9 +95,10 @@ export default function MyProjects() {
           itemsPerPage * page
         );
         setMyProjects(projectsPiece || []);
-      } catch (error) {
+      } catch (error: any) {
         console.error(error);
         setMyProjects([]);
+        errorManager(`Error fetching projects of ${address}`, error);
       } finally {
         setIsLoading(false);
       }

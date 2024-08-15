@@ -31,6 +31,8 @@ import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-index
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
+import { errorManager } from "@/components/Utilities/errorManager";
+
 const milestoneSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.MILESTONES.FORM.TITLE }),
   dates: z
@@ -67,7 +69,12 @@ interface NewMilestoneProps {
 }
 
 export const NewMilestone: FC<NewMilestoneProps> = ({
-  grant: { uid, chainID, recipient: grantRecipient },
+  grant: {
+    uid,
+    chainID,
+    recipient: grantRecipient,
+    project: { uid: projectUID },
+  },
 }) => {
   const form = useForm<z.infer<typeof milestoneSchema>>({
     resolver: zodResolver(milestoneSchema),
@@ -189,9 +196,13 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
               });
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       toast.error(MESSAGES.MILESTONES.CREATE.ERROR);
+      errorManager(
+        `Error creating milestone for grant ${uid} from project ${projectUID}`,
+        error
+      );
     } finally {
       setIsLoading(false);
       setIsStepper(false);

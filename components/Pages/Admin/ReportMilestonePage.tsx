@@ -1,35 +1,24 @@
 "use client";
-import React, { Fragment, useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
 import { useAccount } from "wagmi";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { getGrants } from "@/utilities/sdk/communities/getGrants";
-import { Hex } from "viem";
 import fetchData from "@/utilities/fetchData";
 import TablePagination from "@/components/Utilities/TablePagination";
-import { CheckIcon, ChevronLeftIcon } from "@heroicons/react/20/solid";
-import { Listbox, Transition } from "@headlessui/react";
+import { ChevronLeftIcon } from "@heroicons/react/20/solid";
 import {
   ChevronDownIcon,
   ChevronUpDownIcon,
   ChevronUpIcon,
 } from "@heroicons/react/24/solid";
-import toast from "react-hot-toast";
-import pluralize from "pluralize";
 import { Button } from "@/components/Utilities/Button";
 import Link from "next/link";
-import { CategoryCreationDialog } from "@/components/Pages/Admin/CategoryCreationDialog";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
-import { zeroUID } from "@/utilities/commons";
 import { PAGES } from "@/utilities/pages";
 import { INDEXER } from "@/utilities/indexer";
-import { reduceText } from "@/utilities/reduceText";
 import { defaultMetadata } from "@/utilities/meta";
-import { cn } from "@/utilities/tailwind";
 import { MESSAGES } from "@/utilities/messages";
 import { useAuthStore } from "@/store/auth";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useQuery } from "@tanstack/react-query";
@@ -37,6 +26,8 @@ import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useOwnerStore } from "@/store";
 import { SearchDropdown } from "../ProgramRegistry/SearchDropdown";
 import { useQueryState } from "nuqs";
+
+import { errorManager } from "@/components/Utilities/errorManager";
 
 interface Report {
   _id: {
@@ -155,7 +146,11 @@ export const ReportMilestonePage = ({
           signer
         );
         setIsAdmin(checkAdmin);
-      } catch (error) {
+      } catch (error: any) {
+        errorManager(
+          `Error checking if ${address} is admin of ${communityId}`,
+          error
+        );
         console.log(error);
         setIsAdmin(false);
       }

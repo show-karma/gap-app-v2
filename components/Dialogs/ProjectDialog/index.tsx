@@ -39,7 +39,7 @@ import { useProjectStore } from "@/store";
 import { useOwnerStore } from "@/store/owner";
 import { MESSAGES } from "@/utilities/messages";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
+
 import { appNetwork } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -55,6 +55,7 @@ import { config } from "@/utilities/wagmi/config";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getProjectById } from "@/utilities/sdk";
 import { NetworkDropdown } from "./NetworkDropdown";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -495,8 +496,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       setStep(0);
       setIsStepper(false);
       setContacts([]);
-    } catch (error) {
+    } catch (error: any) {
       console.log({ error });
+      errorManager(`Error creating project`, error);
       toast.error(MESSAGES.PROJECT.CREATE.ERROR);
       setIsStepper(false);
       openModal();
@@ -566,8 +568,14 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           router.push(PAGES.PROJECT.OVERVIEW(project));
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
+      errorManager(
+        `Error updating project ${
+          projectToUpdate?.details?.data?.slug || projectToUpdate?.uid
+        }`,
+        error
+      );
       toast.error(MESSAGES.PROJECT.UPDATE.ERROR);
       openModal();
     } finally {

@@ -40,6 +40,8 @@ import { GrantsGenieDialog } from "@/components/Dialogs/GrantGenieDialog";
 import { ProjectBlocks } from "./ProjectBlocks";
 import { ProjectBodyTabs } from "./ProjectBodyTabs";
 
+import { errorManager } from "@/components/Utilities/errorManager";
+
 const ProjectDialog = dynamic(
   () =>
     import("@/components/Dialogs/ProjectDialog/index").then(
@@ -101,9 +103,10 @@ function ProjectPage() {
       ).then(async () => {
         toast.success(MESSAGES.PROJECT.DELETE.SUCCESS);
       });
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       toast.error(MESSAGES.PROJECT.DELETE.ERROR);
+      errorManager(`Error deleting project ${projectId}`, error);
       setIsStepper(false);
     } finally {
       setIsDeleting(false);

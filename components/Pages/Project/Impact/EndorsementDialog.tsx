@@ -17,6 +17,7 @@ import { useStepper } from "@/store/modals/txStepper";
 import { Hex } from "viem";
 import { config } from "@/utilities/wagmi/config";
 import { useEndorsementStore } from "@/store/modals/endorsement";
+import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -102,8 +103,12 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
           }
         });
       closeModal();
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
+      errorManager(
+        `Error of user ${address} endorsing project ${project?.uid}`,
+        error
+      );
     } finally {
       setIsLoading(false);
       setIsStepper(false);

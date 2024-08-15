@@ -1,4 +1,5 @@
 import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks";
 import { useProjectStore } from "@/store";
@@ -116,8 +117,8 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
           // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
           await new Promise((resolve) => setTimeout(resolve, 1500));
         });
-    } catch (error) {
-      console.log(error);
+    } catch (error: any) {
+      errorManager(`Error marking grant ${grant.uid} as complete`, error);
       toast.error(MESSAGES.GRANT.MARK_AS_COMPLETE.ERROR);
     } finally {
       setIsStepper(false);

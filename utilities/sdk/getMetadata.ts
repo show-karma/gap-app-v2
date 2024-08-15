@@ -1,5 +1,6 @@
 import type { Hex } from "@show-karma/karma-gap-sdk";
 import { envVars } from "../enviromentVars";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 export const getMetadata = async <T>(
   type: "projects" | "communities" | "grants",
@@ -12,7 +13,8 @@ export const getMetadata = async <T>(
     const response = await fetch(url).then((res) => res.json());
 
     return response as T & { uid: Hex };
-  } catch (error) {
+  } catch (error: any) {
+    errorManager(`Error getting metadata of ${type}: ${uid}`, error);
     console.log(error);
     return undefined;
   }

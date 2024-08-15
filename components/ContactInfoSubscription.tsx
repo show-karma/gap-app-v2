@@ -11,6 +11,8 @@ import { ContactsDropdown } from "./Pages/Project/ContactsDropdown";
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
 
+import { errorManager } from "./Utilities/errorManager";
+
 const labelStyle = "text-sm font-bold";
 const inputStyle =
   "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white";
@@ -90,6 +92,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
             refreshProject();
           } else {
             toast.error("Something went wrong. Please try again later.");
+            throw new Error("Something went wrong while creating contact info");
           }
         });
       } else {
@@ -109,11 +112,13 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
             refreshProject();
           } else {
             toast.error("Something went wrong. Please try again later.");
+            throw new Error("Something went wrong while updating contact info");
           }
         });
       }
       // const subscription = await fetchData(INDEXER.NOTIFICATIONS.UPDATE())
     } catch (error: any) {
+      errorManager("Error while updating contact info", error);
       toast.error("Something went wrong. Please try again later.");
       console.log(error);
     } finally {
@@ -145,6 +150,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
       });
       // const subscription = await fetchData(INDEXER.NOTIFICATIONS.UPDATE())
     } catch (error: any) {
+      errorManager("Error deleting contact info", error);
       toast.error("Something went wrong. Please try again later.");
       console.log(error);
     } finally {

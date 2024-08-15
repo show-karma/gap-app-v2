@@ -25,6 +25,8 @@ import * as Sentry from "@sentry/nextjs";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
+import { errorManager } from "@/components/Utilities/errorManager";
+
 interface UpdateTagProps {
   index: number;
 }
@@ -139,9 +141,9 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
             await new Promise((resolve) => setTimeout(resolve, 1500));
           }
         });
-    } catch (error) {
-      console.log(error);
+    } catch (error: any) {
       toast.error(MESSAGES.GRANT.GRANT_UPDATE.UNDO.ERROR);
+      errorManager(`Error deleting grant update ${update.uid}`, error);
     } finally {
       setIsDeletingGrantUpdate(false);
       setIsStepper(false);

@@ -16,6 +16,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { INDEXER } from "@/utilities/indexer";
 
+import { errorManager } from "@/components/Utilities/errorManager";
+
 type IntroDialogProps = {};
 
 const schema = z.object({
@@ -81,7 +83,8 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
       }
       closeModal();
       toast.success("Successfully requested intro!");
-    } catch (error) {
+    } catch (error: any) {
+      errorManager(`Error while requesting intro`, error);
       console.log(error);
     } finally {
       setIsLoading(false);

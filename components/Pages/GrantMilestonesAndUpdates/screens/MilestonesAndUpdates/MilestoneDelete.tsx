@@ -17,6 +17,7 @@ import toast from "react-hot-toast";
 import { Hex } from "viem";
 import { useAccount, useSwitchChain } from "wagmi";
 
+import { errorManager } from "@/components/Utilities/errorManager";
 interface MilestoneDeleteProps {
   milestone: IMilestoneResponse;
 }
@@ -93,8 +94,12 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
           // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
           await new Promise((resolve) => setTimeout(resolve, 1500));
         });
-    } catch (error) {
+    } catch (error: any) {
       toast.error(MESSAGES.MILESTONES.DELETE.ERROR(milestone.data.title));
+      errorManager(
+        `Error deleting milestone ${milestone.uid} from grant ${milestone.refUID}`,
+        error
+      );
       throw error;
     } finally {
       setIsDeletingMilestone(false);

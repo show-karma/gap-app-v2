@@ -1,3 +1,4 @@
+import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient } from "@/hooks";
 import { zeroUID } from "@/utilities/commons";
 import { appNetwork } from "@/utilities/network";
@@ -20,6 +21,7 @@ export const getProjectById = async (
     return fetchedProject;
   } catch (error: any) {
     console.log(error);
+    errorManager(`Error getting project: ${projectId}`, error);
     throw new Error(error);
   }
 };

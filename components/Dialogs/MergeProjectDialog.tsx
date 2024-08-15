@@ -27,6 +27,7 @@ import { z } from "zod";
 import { getGapClient, useGap } from "@/hooks";
 import { ProjectPointer } from "@show-karma/karma-gap-sdk";
 import { useRouter } from "next/navigation";
+import { errorManager } from "../Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -247,8 +248,9 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
               });
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
+      errorManager(`Error creating project pointer`, error);
       toast.error(MESSAGES.PROJECT_POINTER_FORM.ERROR);
     } finally {
       setIsStepper(false);

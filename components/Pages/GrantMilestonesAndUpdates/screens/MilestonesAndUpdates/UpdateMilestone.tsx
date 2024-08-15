@@ -22,6 +22,8 @@ import { getGapClient, useGap } from "@/hooks";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
+import { errorManager } from "@/components/Utilities/errorManager";
+
 interface NotUpdatingCaseProps {
   milestone: IMilestoneResponse;
   isAuthorized: boolean;
@@ -160,9 +162,13 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
               });
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       toast.error(MESSAGES.MILESTONES.COMPLETE.ERROR);
+      errorManager(
+        `Error completing milestone ${milestone.uid} from grant ${milestone.refUID}`,
+        error
+      );
     } finally {
       setIsStepper(false);
     }
@@ -236,9 +242,13 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
               });
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       toast.error(MESSAGES.MILESTONES.UPDATE_COMPLETION.ERROR);
+      errorManager(
+        `Error updating completion of milestone ${milestone.uid} from grant ${milestone.refUID}`,
+        error
+      );
     } finally {
       setIsStepper(false);
     }

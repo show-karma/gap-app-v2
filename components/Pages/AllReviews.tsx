@@ -18,6 +18,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { getReviewsOf, getAnonReviewsOf } from "@/utilities/sdk";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { errorManager } from "../Utilities/errorManager";
 
 interface GrantAllReviewsProps {
   grant: IGrantResponse | undefined;
@@ -89,8 +90,14 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
         const slicedData = sortedData.slice(0, pageLimit);
 
         setReviews(slicedData);
-      } catch (error) {
+      } catch (error: any) {
         console.log(error);
+        errorManager(
+          `Error getting reviews of grant ${
+            grant?.details?.data?.title || grant?.uid
+          }`,
+          error
+        );
         setReviews([]);
       } finally {
         setIsFetching(false);
@@ -121,7 +128,13 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
         const slicedData = sortedData.slice(0, pageLimit);
 
         setAnonReviews(slicedData);
-      } catch (error) {
+      } catch (error: any) {
+        errorManager(
+          `Error getting anon reviews of grant ${
+            grant?.details?.data?.title || grant?.uid
+          }`,
+          error
+        );
         console.log(error);
         setAnonReviews([]);
       } finally {
