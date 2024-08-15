@@ -28,8 +28,9 @@ import Image from "next/image";
 import { blo } from "blo";
 import { IntroDialog } from "./IntroDialog";
 import { useIntroModalStore } from "@/store/modals/intro";
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 import { useGap } from "@/hooks";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 interface ProjectWrapperProps {
   project: IProjectResponse;
@@ -74,9 +75,13 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
         );
 
         setProjectContactsInfo(data);
-      } catch (error) {
+      } catch (error: any) {
         console.error(error);
         setProjectContactsInfo(undefined);
+        errorManager(
+          `Error fetching project contacts info from project ${projectId}`,
+          error
+        );
       } finally {
         setContactInfoLoading(false);
       }
@@ -115,8 +120,12 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
             setIsProjectOwner(res);
           })
           .finally(() => setIsProjectOwnerLoading(false));
-      } catch {
+      } catch (error: any) {
         setIsProjectOwner(false);
+        errorManager(
+          `Error checking if user ${address} is project owner from project ${projectId}`,
+          error
+        );
       } finally {
         setIsProjectOwnerLoading(false);
       }
@@ -178,8 +187,8 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
               url: isLink(hasUrl)
                 ? hasUrl
                 : hasUrl.includes(prefix)
-                  ? addPrefix(url)
-                  : prefix + url,
+                ? addPrefix(url)
+                : prefix + url,
               icon,
             };
           }
@@ -267,17 +276,17 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
     return members;
   };
 
-
   useEffect(() => {
     if (project && project?.pointers?.length > 0) {
-      gap?.fetch?.projectById(project.pointers[0].data?.ogProjectUID).then((_project) => {
-        if (_project) {
-          router.push(`/project/${_project?.details?.data?.slug}`);
-        }
-      });
+      gap?.fetch
+        ?.projectById(project.pointers[0].data?.ogProjectUID)
+        .then((_project) => {
+          if (_project) {
+            router.push(`/project/${_project?.details?.data?.slug}`);
+          }
+        });
     }
   }, [project]);
-
 
   const members = mountMembers();
   const { isIntroModalOpen } = useIntroModalStore();
@@ -362,7 +371,9 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
                   Built by
                 </p>
                 <div className="flex flex-row gap-0 w-max">
-                  {Array.from(new Set(members.map(member => member.recipient))).map((member, index) => (
+                  {Array.from(
+                    new Set(members.map((member) => member.recipient))
+                  ).map((member, index) => (
                     <span
                       key={index}
                       className="-ml-1.5"

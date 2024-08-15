@@ -10,25 +10,19 @@ import {
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MarkdownEditor } from "../../Utilities/MarkdownEditor";
 import { useAccount, useSwitchChain } from "wagmi";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { Community, GAP, nullRef } from "@show-karma/karma-gap-sdk";
+import { GAP } from "@show-karma/karma-gap-sdk";
 import { Button } from "../../Utilities/Button";
-import { useProjectStore } from "@/store";
 import { MESSAGES } from "@/utilities/messages";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { appNetwork, getChainIdByName } from "@/utilities/network";
-import { cn } from "@/utilities/tailwind";
-import { useAuthStore } from "@/store/auth";
-import { getGapClient, useGap } from "@/hooks";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { getWalletClient } from "@wagmi/core";
 import { useStepper } from "@/store/modals/txStepper";
 import toast from "react-hot-toast";
 import { config } from "@/utilities/wagmi/config";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+
+import { errorManager } from "@/components/Utilities/errorManager";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -82,7 +76,8 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
 
   const { changeStepperStep, setIsStepper } = useStepper();
 
-  const removeAdmin = async () => {
+  const onSubmit = async () => {
+    setIsLoading(true); // Set loading state to true
     if (chain?.id != chainid) {
       await switchChainAsync?.({ chainId: chainid });
     }
@@ -138,7 +133,7 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
               closeModal(); // Close the dialog upon successful submission
               break;
             }
-          } catch (error) {
+          } catch (error: any) {
             console.log("Retrying...");
           }
 
@@ -147,22 +142,12 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
           await new Promise((resolve) => setTimeout(resolve, 1500));
         }
       });
-    } catch (error) {
+    } catch (error: any) {
+      errorManager(`Error removing admin of ${UUID}`, error);
       console.log(error);
     } finally {
       setIsStepper(false);
       setIsLoading(false);
-    }
-  };
-
-  const onSubmit = async () => {
-    setIsLoading(true); // Set loading state to true
-    try {
-      await removeAdmin(); // Call the addAdmin function
-    } catch (error) {
-      console.error("Error removing Community Admin:", error);
-    } finally {
-      setIsLoading(false); // Reset loading state
     }
   };
 

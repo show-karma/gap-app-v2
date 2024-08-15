@@ -6,6 +6,8 @@ import { ReportMilestonePage } from "@/components/Pages/Admin/ReportMilestonePag
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
+import { errorManager } from "@/components/Utilities/errorManager";
+
 export const metadata = defaultMetadata;
 
 interface Props {
@@ -16,11 +18,16 @@ const getGrantTitles = async (communityId: string): Promise<string[]> => {
   try {
     const [data] = await fetchData(INDEXER.COMMUNITY.GRANT_TITLES(communityId));
     if (!data) {
-      throw new Error("No data");
+      throw new Error(
+        `No data found on grant titles of community ${communityId}`
+      );
     }
     return data;
-  } catch (error) {
-    console.log(error);
+  } catch (error: any) {
+    errorManager(
+      `Error while fetching grant titles of community ${communityId}`,
+      error
+    );
     return [];
   }
 };

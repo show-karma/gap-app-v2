@@ -22,6 +22,8 @@ import { config } from "@/utilities/wagmi/config";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
+import { errorManager } from "@/components/Utilities/errorManager";
+
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
 const labelStyle =
@@ -91,7 +93,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
 
   const { changeStepperStep, setIsStepper } = useStepper();
 
-  const addAdmin = async (data: SchemaType) => {
+  const onSubmit = async (data: SchemaType) => {
     if (chain?.id != chainid) {
       await switchChainAsync?.({ chainId: chainid });
     }
@@ -147,7 +149,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
               closeModal(); // Close the dialog upon successful submission
               break;
             }
-          } catch (error) {
+          } catch (error: any) {
             console.log("Retrying...");
           }
 
@@ -156,22 +158,15 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
           await new Promise((resolve) => setTimeout(resolve, 1500));
         }
       });
-    } catch (error) {
+    } catch (error: any) {
+      errorManager(
+        `Error adding admin ${data.address} to community ${UUID}`,
+        error
+      );
       console.log(error);
     } finally {
       setIsStepper(false);
       setIsLoading(false);
-    }
-  };
-
-  const onSubmit = async (data: SchemaType) => {
-    try {
-      setIsLoading(true); // Set loading state to true
-      await addAdmin(data); // Call the addAdmin function
-    } catch (error) {
-      console.error("Error Adding Community Admin:", error);
-    } finally {
-      setIsLoading(false); // Reset loading state
     }
   };
 

@@ -1,3 +1,4 @@
+import { errorManager } from "@/components/Utilities/errorManager";
 import { TxStepperSteps } from "@/store/modals/txStepper";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -44,6 +45,7 @@ export const deleteProject = async (
       }
     });
   } catch (error: any) {
+    errorManager(`Error deleting project: ${project.uid}`, error);
     throw new Error(error);
   }
 };

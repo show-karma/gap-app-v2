@@ -20,11 +20,12 @@ import { PAGES } from "@/utilities/pages";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { defaultMetadata } from "@/utilities/meta";
-import { cn } from "@/utilities/tailwind";
+
 import { useAuthStore } from "@/store/auth";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { QuestionCreationDialog } from "@/components/Pages/Admin/QuestionCreationDialog";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 const MarkdownPreview = dynamic(() => import("@uiw/react-markdown-preview"), {
   ssr: false,
@@ -73,6 +74,7 @@ export default function AssignQuestionsPage() {
           throw new Error("Community not found");
         setCommunity(result);
       } catch (error: any) {
+        errorManager(`Error fetching community ${communityId}`, error);
         console.error("Error fetching data:", error);
         if (
           error.message === "Community not found" ||
@@ -101,7 +103,11 @@ export default function AssignQuestionsPage() {
           signer
         );
         setIsAdmin(checkAdmin);
-      } catch (error) {
+      } catch (error: any) {
+        errorManager(
+          `Error checking if ${address} is admin of community ${communityId}`,
+          error
+        );
         console.log(error);
         setIsAdmin(false);
       } finally {
@@ -138,7 +144,11 @@ export default function AssignQuestionsPage() {
             );
             setQuestionsAssigned(previousQuestions);
           }
-        } catch (error) {
+        } catch (error: any) {
+          errorManager(
+            `Error fetching categories of community ${communityId}`,
+            error
+          );
           setCategories([]);
           console.error(error);
         } finally {
@@ -155,7 +165,11 @@ export default function AssignQuestionsPage() {
           if (data) {
             setQuestions(data);
           }
-        } catch (error) {
+        } catch (error: any) {
+          errorManager(
+            `Error fetching questions of community ${communityId}`,
+            error
+          );
           setQuestions([]);
           console.error(error);
         } finally {
@@ -211,6 +225,10 @@ export default function AssignQuestionsPage() {
         toast.error(
           MESSAGES.CATEGORIES.ASSIGN_QUESTIONS.ERROR.GENERIC(category.name)
         );
+        errorManager(
+          `Error saving questions of community ${communityId}`,
+          error
+        );
       }
       console.error(error);
     } finally {
@@ -225,7 +243,11 @@ export default function AssignQuestionsPage() {
       if (data) {
         setQuestions(data);
       }
-    } catch (error) {
+    } catch (error: any) {
+      errorManager(
+        `Error refreshing questions of community ${communityId}`,
+        error
+      );
       setQuestions([]);
       console.error(error);
     } finally {

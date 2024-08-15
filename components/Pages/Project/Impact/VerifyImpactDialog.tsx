@@ -25,6 +25,7 @@ import {
   IProjectImpact,
   IProjectImpactStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -148,8 +149,12 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
           // addVerification(newVerified);
         });
       closeModal();
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
+      errorManager(
+        `Error of user ${address} verifying impact from project ${project?.uid}`,
+        error
+      );
       toast.error(MESSAGES.PROJECT.IMPACT.VERIFY.ERROR);
     } finally {
       setIsLoading(false);

@@ -13,7 +13,6 @@ import {
   Grant,
   Milestone,
   MilestoneCompleted,
-  Community,
 } from "@show-karma/karma-gap-sdk";
 import type { FC } from "react";
 import { useEffect, useState } from "react";
@@ -54,6 +53,8 @@ import {
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+
+import { errorManager } from "@/components/Utilities/errorManager";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -445,9 +446,12 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             await new Promise((resolve) => setTimeout(resolve, 1500));
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       toast.error(MESSAGES.GRANT.CREATE.ERROR);
-      console.log(error);
+      errorManager(
+        `Error creating grant to project ${selectedProject.uid}`,
+        error
+      );
     } finally {
       setIsLoading(false);
       setIsStepper(false);
@@ -541,8 +545,12 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             await new Promise((resolve) => setTimeout(resolve, 1500));
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       toast.error(MESSAGES.GRANT.UPDATE.ERROR);
+      errorManager(
+        `Error updating grant ${oldGrant.uid} from project ${selectedProject.uid}`,
+        error
+      );
       console.log(error);
     } finally {
       setIsLoading(false);
@@ -666,7 +674,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         const result = await gapIndexerApi.communities();
         setAllCommunities(result.data);
         return result;
-      } catch (error) {
+      } catch (error: any) {
         console.log(error);
         setAllCommunities([]);
         return undefined;
@@ -692,8 +700,12 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           signer
         );
         setIsCommunityAllowed(result);
-      } catch {
+      } catch (error: any) {
         setIsCommunityAllowed(false);
+        errorManager(
+          `Error checking if ${address} is community admin for ${communityToSearch}`,
+          error
+        );
       }
     }
     const communityIdEdit =

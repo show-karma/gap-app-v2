@@ -1,4 +1,5 @@
 import { DeleteDialog } from "@/components/DeleteDialog";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
@@ -90,13 +91,13 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
               });
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       toast.error(
         MESSAGES.GRANT.DELETE.ERROR(
           grant.details?.data?.title || shortAddress(grant.uid)
         )
       );
-      console.log(error);
+      errorManager(`Error deleting grant ${grant.uid}`, error);
     } finally {
       setIsDeletingGrant(false);
       setIsStepper(false);

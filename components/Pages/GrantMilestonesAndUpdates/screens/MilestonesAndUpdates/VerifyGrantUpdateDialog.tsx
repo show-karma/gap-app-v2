@@ -20,6 +20,8 @@ import {
   IGrantUpdate,
   IGrantUpdateStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+
+import { errorManager } from "@/components/Utilities/errorManager";
 import { GrantUpdate } from "@show-karma/karma-gap-sdk";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -144,9 +146,13 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
           }
         });
       closeModal();
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       toast.error(MESSAGES.GRANT.GRANT_UPDATE.VERIFY.ERROR);
+      errorManager(
+        `Error verifying grant update ${grantUpdate.uid} from grant ${grantUpdate.refUID}`,
+        error
+      );
     } finally {
       setIsLoading(false);
       setIsStepper(false);
