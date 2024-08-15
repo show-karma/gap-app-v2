@@ -1,3 +1,4 @@
+import { errorManager } from "@/components/Utilities/ErrorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -7,6 +8,7 @@ export const getReviewsOf = async (grantUID: string | `0x${string}`) => {
     return data;
   } catch (error) {
     console.log(error);
+    errorManager(`Error getting reviews of grant: ${grantUID}`, error);
     return [];
   }
 };
@@ -16,6 +18,7 @@ export const getAnonReviewsOf = async (grantUID: string | `0x${string}`) => {
     return data;
   } catch (error) {
     console.log(error);
+    errorManager(`Error getting anon reviews of grant: ${grantUID}`, error);
     return [];
   }
 };

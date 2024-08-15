@@ -19,6 +19,8 @@ import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karm
 import { Button } from "@/components/Utilities/Button";
 import { useOnboarding } from "@/store/modals/onboarding";
 import { useMixpanel } from "@/hooks/useMixpanel";
+import * as Sentry from "@sentry/react";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 const ProjectDialog = dynamic(
   () =>
@@ -96,6 +98,7 @@ export default function MyProjects() {
       } catch (error) {
         console.error(error);
         setMyProjects([]);
+        errorManager(`Error fetching projects of ${address}`, error);
       } finally {
         setIsLoading(false);
       }

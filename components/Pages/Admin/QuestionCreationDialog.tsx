@@ -13,6 +13,7 @@ import { useAuthStore } from "@/store/auth";
 import { useAuth } from "@/hooks/useAuth";
 import { INDEXER } from "@/utilities/indexer";
 import * as Sentry from "@sentry/nextjs";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 type QuestionCreationDialogProps = {
   refreshQuestions: () => Promise<void>;
@@ -75,9 +76,7 @@ export const QuestionCreationDialog: FC<QuestionCreationDialogProps> = ({
       closeModal();
     } catch (error) {
       console.log(error);
-      Sentry.captureException(
-        `Error creating question of ${communityId}: ${error}`
-      );
+      errorManager(`Error creating question of ${communityId}`, error);
       toast.error("An error occurred while creating the question");
     } finally {
       setIsLoading(false);

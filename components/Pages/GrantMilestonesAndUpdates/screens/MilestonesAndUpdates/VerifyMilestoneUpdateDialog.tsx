@@ -7,7 +7,6 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/auth";
-import { Milestone, MilestoneCompleted } from "@show-karma/karma-gap-sdk";
 import { useAccount, useSwitchChain } from "wagmi";
 import { getWalletClient } from "@wagmi/core";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -21,6 +20,8 @@ import {
   IMilestoneCompleted,
   IMilestoneResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import * as Sentry from "@sentry/react";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 type VerifyMilestoneUpdateDialogProps = {
   milestone: IMilestoneResponse;
@@ -132,6 +133,10 @@ export const VerifyMilestoneUpdateDialog: FC<
     } catch (error) {
       console.log(error);
       toast.error(MESSAGES.MILESTONES.VERIFY.ERROR);
+      errorManager(
+        `Error verifying milestone ${milestone.uid} from grant ${milestone.refUID}`,
+        error
+      );
     } finally {
       setIsLoading(false);
       setIsStepper(false);

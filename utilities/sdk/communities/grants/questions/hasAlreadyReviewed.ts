@@ -3,6 +3,7 @@ import axios from "axios";
 
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 export const hasAlreadyReviewed = async (
   grantUID: string | Hex,
@@ -14,6 +15,10 @@ export const hasAlreadyReviewed = async (
     );
     return data?.answers?.length > 0;
   } catch (error) {
+    errorManager(
+      `Error checking if user ${address} has already reviewed grant: ${grantUID}`,
+      error
+    );
     return false;
   }
 };

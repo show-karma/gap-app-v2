@@ -14,7 +14,8 @@ import { type FC, useState } from "react";
 import toast from "react-hot-toast";
 import { Hex } from "viem";
 import { useAccount, useSwitchChain } from "wagmi";
-
+import * as Sentry from "@sentry/react";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 interface MilestoneDeleteProps {
   milestone: IMilestoneResponse;
 }
@@ -85,6 +86,10 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
         });
     } catch (error) {
       toast.error(MESSAGES.MILESTONES.DELETE.ERROR(milestone.data.title));
+      errorManager(
+        `Error deleting milestone ${milestone.uid} from grant ${milestone.refUID}`,
+        error
+      );
       throw error;
     } finally {
       setIsDeletingMilestone(false);

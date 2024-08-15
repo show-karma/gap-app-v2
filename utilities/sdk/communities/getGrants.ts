@@ -2,6 +2,7 @@ import type { Grant, Hex } from "@show-karma/karma-gap-sdk";
 import type { SortByOptions, StatusOptions } from "@/types/filters";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 export interface GrantsResponse {
   grants: Grant[];
@@ -39,6 +40,7 @@ export const getGrants = async (
 
     return { grants, pageInfo };
   } catch (error) {
+    errorManager(`Error getting grants of community: ${uid}`, error);
     console.log(error);
     return { grants: [], pageInfo: {} };
   }

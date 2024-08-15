@@ -28,6 +28,8 @@ import { useCommunityAdminStore } from "@/store/community";
 import { useStepper } from "@/store/modals/txStepper";
 import { config } from "@/utilities/wagmi/config";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import * as Sentry from "@sentry/react";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 const milestoneSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.MILESTONES.FORM.TITLE }),
@@ -65,7 +67,12 @@ interface NewMilestoneProps {
 }
 
 export const NewMilestone: FC<NewMilestoneProps> = ({
-  grant: { uid, chainID, recipient: grantRecipient },
+  grant: {
+    uid,
+    chainID,
+    recipient: grantRecipient,
+    project: { uid: projectUID },
+  },
 }) => {
   const form = useForm<z.infer<typeof milestoneSchema>>({
     resolver: zodResolver(milestoneSchema),
@@ -182,6 +189,10 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
     } catch (error) {
       console.error(error);
       toast.error(MESSAGES.MILESTONES.CREATE.ERROR);
+      errorManager(
+        `Error creating milestone for grant ${uid} from project ${projectUID}`,
+        error
+      );
     } finally {
       setIsLoading(false);
       setIsStepper(false);

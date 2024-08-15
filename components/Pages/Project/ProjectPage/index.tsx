@@ -39,6 +39,8 @@ import { useIntroModalStore } from "@/store/modals/intro";
 import { GrantsGenieDialog } from "@/components/Dialogs/GrantGenieDialog";
 import { ProjectBlocks } from "./ProjectBlocks";
 import { ProjectBodyTabs } from "./ProjectBodyTabs";
+import * as Sentry from "@sentry/react";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 const ProjectDialog = dynamic(
   () =>
@@ -104,6 +106,7 @@ function ProjectPage() {
     } catch (error) {
       console.log(error);
       toast.error(MESSAGES.PROJECT.DELETE.ERROR);
+      errorManager(`Error deleting project ${projectId}`, error);
       setIsStepper(false);
     } finally {
       setIsDeleting(false);
@@ -142,7 +145,6 @@ function ProjectPage() {
             },
           });
         }
-
       });
     }
     const alreadyHasOwner = project?.members.find(
@@ -192,7 +194,7 @@ function ProjectPage() {
                     shortAddress(member.recipient)}
                 </p>
                 {member.recipient?.toLowerCase() ===
-                  project?.recipient?.toLowerCase() ? (
+                project?.recipient?.toLowerCase() ? (
                   <p className="text-sm text-brand-blue font-medium leading-none">
                     Owner
                   </p>

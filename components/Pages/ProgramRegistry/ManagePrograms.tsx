@@ -40,6 +40,8 @@ import { useStepper } from "@/store/modals/txStepper";
 import { useSearchParams } from "next/navigation";
 import { useRegistryStore } from "@/store/registry";
 import { useQuery } from "@tanstack/react-query";
+import * as Sentry from "@sentry/react";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 export const ManagePrograms = () => {
   const searchParams = useSearchParams();
@@ -86,6 +88,10 @@ export const ManagePrograms = () => {
           setIsPoolManager(isManager);
         }
       } catch (error) {
+        errorManager(
+          `Error while checking if ${address} is a registry admin or pool manager`,
+          error
+        );
         console.log(error);
       } finally {
         setIsRegistryAdminLoading(false);
@@ -129,7 +135,7 @@ export const ManagePrograms = () => {
           setSelectedProgram(data);
         }
       } catch (error) {
-        console.log(error);
+        errorManager(`Error while searching for program by id`, error);
       }
     };
     if (programId) {
@@ -167,6 +173,7 @@ export const ManagePrograms = () => {
         };
       }
     } catch (error: any) {
+      errorManager(`Error while fetching grant programs`, error);
       console.log(error);
       return {
         programs: [] as GrantProgram[],
@@ -327,7 +334,11 @@ export const ManagePrograms = () => {
       }
       toast.success(`Program ${value} successfully`);
       await refreshPrograms();
-    } catch {
+    } catch (error) {
+      errorManager(
+        `Error ${messageDict[value]} program ${program._id.$oid}`,
+        error
+      );
       console.log(`Error ${messageDict[value]} program ${program._id.$oid}`);
       toast.error(`Error ${messageDict[value]} program ${program._id.$oid}`);
     } finally {

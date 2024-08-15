@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks";
 import { useProjectStore } from "@/store";
@@ -132,6 +133,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
     } catch (error) {
       console.log(error);
       toast.error(MESSAGES.PROJECT.IMPACT.ERROR);
+      errorManager(`Error adding impact to project ${project.uid}`, error);
     } finally {
       setIsLoading(false);
       setIsStepper(false);

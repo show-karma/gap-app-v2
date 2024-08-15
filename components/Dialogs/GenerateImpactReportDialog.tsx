@@ -34,6 +34,7 @@ import {
   IProjectResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { envVars } from "@/utilities/enviromentVars";
+import { errorManager } from "../Utilities/ErrorManager";
 
 // Create styles
 const styles = StyleSheet.create({});
@@ -680,7 +681,7 @@ export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
       closeModal();
     } catch (error) {
       toast.error("Something went wrong. Please try again later.");
-      Sentry.captureException(`Error generating impact report: ${error}`);
+      errorManager(`Error generating impact report`, error);
       console.error(error);
     } finally {
       setIsLoading(false);

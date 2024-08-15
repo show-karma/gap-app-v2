@@ -13,7 +13,6 @@ import {
   Grant,
   Milestone,
   MilestoneCompleted,
-  Community,
 } from "@show-karma/karma-gap-sdk";
 import type { FC } from "react";
 import { useEffect, useState } from "react";
@@ -52,6 +51,8 @@ import {
   IGrantResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import * as Sentry from "@sentry/react";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -363,15 +364,15 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       // eslint-disable-next-line no-param-reassign
       grant.updates = data.grantUpdate
         ? [
-          new GrantUpdate({
-            data: {
-              text: data.grantUpdate || "",
-              title: "",
-            },
-            schema: gapClient.findSchema("Milestone"),
-            recipient: grant.recipient,
-          }),
-        ]
+            new GrantUpdate({
+              data: {
+                text: data.grantUpdate || "",
+                title: "",
+              },
+              schema: gapClient.findSchema("Milestone"),
+              recipient: grant.recipient,
+            }),
+          ]
         : [];
 
       // eslint-disable-next-line no-param-reassign
@@ -437,7 +438,10 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         });
     } catch (error) {
       toast.error(MESSAGES.GRANT.CREATE.ERROR);
-      console.log(error);
+      errorManager(
+        `Error creating grant to project ${selectedProject.uid}`,
+        error
+      );
     } finally {
       setIsLoading(false);
       setIsStepper(false);
@@ -525,6 +529,10 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         });
     } catch (error) {
       toast.error(MESSAGES.GRANT.UPDATE.ERROR);
+      errorManager(
+        `Error updating grant ${oldGrant.uid} from project ${selectedProject.uid}`,
+        error
+      );
       console.log(error);
     } finally {
       setIsLoading(false);
@@ -674,8 +682,12 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           signer
         );
         setIsCommunityAllowed(result);
-      } catch {
+      } catch (error) {
         setIsCommunityAllowed(false);
+        errorManager(
+          `Error checking if ${address} is community admin for ${communityToSearch}`,
+          error
+        );
       }
     }
     const communityIdEdit =

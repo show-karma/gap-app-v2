@@ -23,6 +23,7 @@ import toast from "react-hot-toast";
 import { useStepper } from "@/store/modals/txStepper";
 import { config } from "@/utilities/wagmi/config";
 import * as Sentry from "@sentry/nextjs";
+import { errorManager } from "../Utilities/ErrorManager";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -159,8 +160,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
           }
         });
     } catch (error) {
-      console.error("Error creating community:", error);
-      Sentry.captureException(`Error creating community: ${error}`);
+      errorManager(`Error creating community`, error);
       toast.error("Error creating community");
     } finally {
       setIsLoading(false); // Reset loading state

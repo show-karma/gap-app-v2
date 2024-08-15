@@ -1,6 +1,7 @@
 import type { StatsResponse } from "@/types";
 import { INDEXER } from "../indexer";
 import fetchData from "../fetchData";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 export const getGAPStats = async (): Promise<StatsResponse> => {
   try {
@@ -8,6 +9,7 @@ export const getGAPStats = async (): Promise<StatsResponse> => {
     return data;
   } catch (error) {
     console.log(error);
+    errorManager(`Error fetching GAP stats`, error);
     return [];
   }
 };
@@ -18,6 +20,7 @@ export const getGAPWeeklyActiveUsers = async (): Promise<StatsResponse> => {
     return data;
   } catch (error) {
     console.log(error);
+    errorManager(`Error fetching GAP weekly active users`, error);
     return [];
   }
 };

@@ -11,6 +11,7 @@ import { ContactsDropdown } from "./Pages/Project/ContactsDropdown";
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
 import * as Sentry from "@sentry/nextjs";
+import { errorManager } from "./Utilities/ErrorManager";
 
 const labelStyle = "text-sm font-bold";
 const inputStyle =
@@ -117,7 +118,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
       }
       // const subscription = await fetchData(INDEXER.NOTIFICATIONS.UPDATE())
     } catch (error: any) {
-      Sentry.captureException(error);
+      errorManager("Error while updating contact info", error);
       toast.error("Something went wrong. Please try again later.");
       console.log(error);
     } finally {
@@ -149,7 +150,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
       });
       // const subscription = await fetchData(INDEXER.NOTIFICATIONS.UPDATE())
     } catch (error: any) {
-      Sentry.captureException(`Error deleting contact info: ${error}`);
+      errorManager("Error deleting contact info", error);
       toast.error("Something went wrong. Please try again later.");
       console.log(error);
     } finally {

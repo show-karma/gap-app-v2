@@ -1,3 +1,4 @@
+import { errorManager } from "@/components/Utilities/ErrorManager";
 import { TxStepperSteps } from "@/store/modals/txStepper";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import {
@@ -102,6 +103,7 @@ export const updateProject = async (
     return project;
   } catch (error) {
     project.details?.setValues(oldProjectData);
+    errorManager(`Error editing project: ${project.uid}`, error);
     throw error;
   }
 };

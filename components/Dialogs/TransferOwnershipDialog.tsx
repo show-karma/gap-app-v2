@@ -14,6 +14,7 @@ import { useStepper } from "@/store/modals/txStepper";
 import { getProjectById, getProjectOwner } from "@/utilities/sdk";
 import { config } from "@/utilities/wagmi/config";
 import * as Sentry from "@sentry/nextjs";
+import { errorManager } from "../Utilities/ErrorManager";
 
 type TransferOwnershipProps = {
   buttonElement?: {
@@ -94,8 +95,9 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
       closeModal();
     } catch (error) {
       toast.error("Something went wrong. Please try again later.");
-      Sentry.captureException(
-        `Error transfering ownership from ${project.recipient} to ${newOwner}: ${error}`
+      errorManager(
+        `Error transferring ownership from ${project.recipient} to ${newOwner}`,
+        error
       );
       console.error(error);
     } finally {

@@ -20,7 +20,8 @@ import {
   IGrantUpdate,
   IGrantUpdateStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { GrantUpdate } from "@show-karma/karma-gap-sdk";
+import * as Sentry from "@sentry/react";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 type VerifyGrantUpdateDialogProps = {
   grantUpdate: IGrantUpdate;
@@ -137,6 +138,10 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
     } catch (error) {
       console.log(error);
       toast.error(MESSAGES.GRANT.GRANT_UPDATE.VERIFY.ERROR);
+      errorManager(
+        `Error verifying grant update ${grantUpdate.uid} from grant ${grantUpdate.refUID}`,
+        error
+      );
     } finally {
       setIsLoading(false);
       setIsStepper(false);

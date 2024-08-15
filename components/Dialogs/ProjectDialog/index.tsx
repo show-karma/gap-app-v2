@@ -56,6 +56,7 @@ import { config } from "@/utilities/wagmi/config";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getProjectById } from "@/utilities/sdk";
 import { NetworkDropdown } from "./NetworkDropdown";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -488,7 +489,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       setContacts([]);
     } catch (error) {
       console.log({ error });
-      Sentry.captureException(`Error creating project: ${error}`);
+      errorManager(`Error creating project`, error);
       toast.error(MESSAGES.PROJECT.CREATE.ERROR);
       setIsStepper(false);
       openModal();
@@ -560,10 +561,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       });
     } catch (error) {
       console.log(error);
-      Sentry.captureException(
+      errorManager(
         `Error updating project ${
           projectToUpdate?.details?.data?.slug || projectToUpdate?.uid
-        }: ${error}`
+        }`,
+        error
       );
       toast.error(MESSAGES.PROJECT.UPDATE.ERROR);
       openModal();

@@ -40,6 +40,7 @@ import { useRegistryStore } from "@/store/registry";
 import { Popover } from "@headlessui/react";
 import { formatDate } from "@/utilities/formatDate";
 import { DayPicker } from "react-day-picker";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 const labelStyle = "text-sm font-bold text-[#344054] dark:text-zinc-100";
 const inputStyle =
@@ -326,8 +327,7 @@ export default function AddProgram({
       );
       router.push(PAGES.REGISTRY.ROOT);
     } catch (error) {
-      console.log(error);
-      Sentry.captureException(error);
+      errorManager(`Error while creating a program`, error);
       toast.error("An error occurred while creating the program");
     } finally {
       setIsLoading(false);
@@ -468,7 +468,7 @@ export default function AddProgram({
         backTo?.();
       });
     } catch (error) {
-      Sentry.captureException(error);
+      errorManager(`Error while editing a program`, error);
       console.log(error);
       toast.error("An error occurred while editing the program");
     } finally {

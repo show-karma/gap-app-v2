@@ -10,6 +10,7 @@ import type { Hex } from "@show-karma/karma-gap-sdk";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { type FC, type ReactNode, useEffect, useState, Fragment } from "react";
 import * as Sentry from "@sentry/nextjs";
+import { errorManager } from "./Utilities/ErrorManager";
 
 interface VotingPowerPopoverProps {
   reviewer: string | Hex;
@@ -48,8 +49,9 @@ export const VotingPowerPopover: FC<VotingPowerPopoverProps> = ({
         }
         setIsDelegate(!!data);
       } catch (error) {
-        Sentry.captureException(
-          `Error fetching voting power for reviewer ${reviewer}: ${error}`
+        errorManager(
+          `Error fetching voting power for reviewer ${reviewer}`,
+          error
         );
         console.log(error);
         setVotingPower(null);

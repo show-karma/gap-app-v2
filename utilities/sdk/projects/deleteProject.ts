@@ -1,3 +1,4 @@
+import { errorManager } from "@/components/Utilities/ErrorManager";
 import { TxStepperSteps } from "@/store/modals/txStepper";
 import { PAGES } from "@/utilities/pages";
 import { Project } from "@show-karma/karma-gap-sdk";
@@ -34,6 +35,7 @@ export const deleteProject = async (
       }
     });
   } catch (error: any) {
+    errorManager(`Error deleting project: ${project.uid}`, error);
     throw new Error(error);
   }
 };

@@ -25,6 +25,7 @@ import {
   IProjectImpact,
   IProjectImpactStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 type VerifyImpactDialogProps = {
   impact: IProjectImpact;
@@ -140,6 +141,10 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
       closeModal();
     } catch (error) {
       console.log(error);
+      errorManager(
+        `Error of user ${address} verifying impact from project ${project?.uid}`,
+        error
+      );
       toast.error(MESSAGES.PROJECT.IMPACT.VERIFY.ERROR);
     } finally {
       setIsLoading(false);

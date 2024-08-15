@@ -1,6 +1,7 @@
 import axios from "axios";
 
 import { karmaAPI } from "../karma";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 export const isDelegateOf = async (community: string, address: string) => {
   try {
@@ -12,6 +13,10 @@ export const isDelegateOf = async (community: string, address: string) => {
       address,
       " in community: ",
       community,
+      error
+    );
+    errorManager(
+      `Error trying to get voting power of: ${address} in community: ${community}`,
       error
     );
     return null;

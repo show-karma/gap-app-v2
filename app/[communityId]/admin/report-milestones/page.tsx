@@ -6,6 +6,7 @@ import { ReportMilestonePage } from "@/components/Pages/Admin/ReportMilestonePag
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import * as Sentry from "@sentry/nextjs";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 export const metadata = defaultMetadata;
 
@@ -23,8 +24,10 @@ const getGrantTitles = async (communityId: string): Promise<string[]> => {
     }
     return data;
   } catch (error) {
-    Sentry.captureException(error);
-    console.log(error);
+    errorManager(
+      `Error while fetching grant titles of community ${communityId}`,
+      error
+    );
     return [];
   }
 };

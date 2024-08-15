@@ -21,6 +21,8 @@ import {
   IGrantUpdate,
   IGrantUpdateStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import * as Sentry from "@sentry/react";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 interface UpdateTagProps {
   index: number;
@@ -129,8 +131,8 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
           }
         });
     } catch (error) {
-      console.log(error);
       toast.error(MESSAGES.GRANT.GRANT_UPDATE.UNDO.ERROR);
+      errorManager(`Error deleting grant update ${update.uid}`, error);
     } finally {
       setIsDeletingGrantUpdate(false);
       setIsStepper(false);

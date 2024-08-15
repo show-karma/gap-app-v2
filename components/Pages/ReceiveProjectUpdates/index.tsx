@@ -1,5 +1,6 @@
 "use client";
 import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Spinner } from "@/components/Utilities/Spinner";
 import fetchData from "@/utilities/fetchData";
@@ -63,6 +64,10 @@ const SubscribeForm = ({ address, changeIsSubscribed }: SubscribeFormProps) => {
       );
     } catch (error) {
       console.error(error);
+      errorManager(
+        `Error of user ${address}/${data.email} subscribing to all projects funded by his wallet`,
+        error
+      );
       toast.error("An error occurred while subscribing, try again later.");
       changeIsSubscribed(false);
     } finally {

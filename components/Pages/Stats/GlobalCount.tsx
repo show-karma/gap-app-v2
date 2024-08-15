@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { ArrowPathIcon } from "@heroicons/react/24/solid";
 import { Card, LineChart, Title } from "@tremor/react";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 export function GlobalCount() {
   const [stats, setStats] = useState<any>([]);
@@ -34,6 +35,7 @@ export function GlobalCount() {
       }
     } catch (error) {
       console.error("Error fetching stats:", error);
+      errorManager("Error fetching stats", error);
       setError(error);
     } finally {
       setLoading(false);

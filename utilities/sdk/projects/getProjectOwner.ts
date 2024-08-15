@@ -1,3 +1,4 @@
+import { errorManager } from "@/components/Utilities/ErrorManager";
 import {
   GAP,
   type Project,
@@ -9,11 +10,15 @@ export async function getProjectOwner(
   project: Project
 ): Promise<boolean> {
   const publicAddress = signer.getAddress();
+  try {
+    const { uid, chainID } = project;
 
-  const { uid, chainID } = project;
-
-  const resolver = await GAP.getProjectResolver(signer as any, chainID);
-  const response = await resolver.isAdmin(uid, publicAddress);
-  const isowner = response;
-  return isowner;
+    const resolver = await GAP.getProjectResolver(signer as any, chainID);
+    const response = await resolver.isAdmin(uid, publicAddress);
+    const isowner = response;
+    return isowner;
+  } catch (error) {
+    errorManager(`Error getting project owner: ${project.uid}`, error);
+    return false;
+  }
 }

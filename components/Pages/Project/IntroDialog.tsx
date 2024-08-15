@@ -15,6 +15,8 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { INDEXER } from "@/utilities/indexer";
+import * as Sentry from "@sentry/react";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 type IntroDialogProps = {};
 
@@ -82,6 +84,7 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
       closeModal();
       toast.success("Successfully requested intro!");
     } catch (error) {
+      errorManager(`Error while requesting intro`, error);
       console.log(error);
     } finally {
       setIsLoading(false);

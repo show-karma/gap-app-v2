@@ -28,6 +28,7 @@ import { getGapClient, useGap } from "@/hooks";
 import { ProjectPointer } from "@show-karma/karma-gap-sdk";
 import { useRouter } from "next/navigation";
 import * as Sentry from "@sentry/nextjs";
+import { errorManager } from "../Utilities/ErrorManager";
 
 type MergeProjectProps = {
   buttonElement?: {
@@ -240,7 +241,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
         });
     } catch (error) {
       console.log(error);
-      Sentry.captureException(`Error creating project pointer: ${error}`);
+      errorManager(`Error creating project pointer`, error);
       toast.error(MESSAGES.PROJECT_POINTER_FORM.ERROR);
     } finally {
       setIsStepper(false);

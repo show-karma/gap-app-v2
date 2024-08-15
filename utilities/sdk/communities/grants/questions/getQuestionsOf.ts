@@ -2,6 +2,7 @@ import axios from "axios";
 
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 export const getQuestionsOf = async (grantUID: string | `0x${string}`) => {
   try {
@@ -13,6 +14,7 @@ export const getQuestionsOf = async (grantUID: string | `0x${string}`) => {
     return [];
   } catch (error) {
     console.log(error);
+    errorManager(`Error getting questions of grant: ${grantUID}`, error);
     return [];
   }
 };

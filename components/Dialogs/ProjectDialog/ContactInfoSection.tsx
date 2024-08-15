@@ -13,6 +13,7 @@ import Image from "next/image";
 import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import { generateRandomString } from "@/utilities/generateRandomString";
 import * as Sentry from "@sentry/nextjs";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 const labelStyle = "text-sm font-bold";
 const inputStyle =
@@ -301,8 +302,7 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
       }
     } catch (error: any) {
       toast.error("Something went wrong. Please try again later.");
-      Sentry.captureException(`Error creating contact: ${error}`);
-      console.log(error);
+      errorManager(`Error creating contact`, error);
     } finally {
       setIsLoading(false);
     }
@@ -350,10 +350,11 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
       toast.error("Something went wrong. Please try again later.", {
         className: "z-[9999]",
       });
-      Sentry.captureException(
+      errorManager(
         `Error deleting contact ${contactId} from project ${
           project?.details?.data?.slug || project?.uid
-        }: ${error}`
+        }`,
+        error
       );
       console.log(error);
     } finally {

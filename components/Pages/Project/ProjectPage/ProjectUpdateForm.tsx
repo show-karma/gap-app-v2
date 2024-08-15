@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks";
 import { useProjectStore } from "@/store";
@@ -110,6 +111,10 @@ export const ProjectUpdateForm: FC = () => {
           }
         });
     } catch (error) {
+      errorManager(
+        `Error of user ${address} creating project update for project ${project?.uid}`,
+        error
+      );
       console.log(error);
       toast.error(MESSAGES.PROJECT_UPDATE_FORM.ERROR);
     } finally {

@@ -23,6 +23,8 @@ import {
   IMilestoneResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getGapClient, useGap } from "@/hooks";
+import * as Sentry from "@sentry/react";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 interface UpdatesProps {
   milestone: IMilestoneResponse;
@@ -100,6 +102,10 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
     } catch (error) {
       console.log(error);
       toast.error(MESSAGES.MILESTONES.COMPLETE.UNDO.ERROR);
+      errorManager(
+        `Error deleting milestone completion of ${milestone.uid} from grant ${milestone.refUID}`,
+        error
+      );
     } finally {
       setIsStepper(false);
     }

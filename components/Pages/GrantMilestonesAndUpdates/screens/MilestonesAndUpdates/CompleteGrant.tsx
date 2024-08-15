@@ -22,6 +22,7 @@ import toast from "react-hot-toast";
 import { Hex } from "viem";
 import { useAccount, useSwitchChain } from "wagmi";
 import * as Sentry from "@sentry/nextjs";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 
@@ -108,10 +109,7 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
           await new Promise((resolve) => setTimeout(resolve, 1500));
         });
     } catch (error) {
-      console.log(error);
-      Sentry.captureException(
-        `Error marking grant ${grant.uid} as complete: ${error}`
-      );
+      errorManager(`Error marking grant ${grant.uid} as complete`, error);
       toast.error(MESSAGES.GRANT.MARK_AS_COMPLETE.ERROR);
     } finally {
       setIsStepper(false);

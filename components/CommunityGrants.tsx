@@ -21,6 +21,7 @@ import { useQuery } from "@tanstack/react-query";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import * as Sentry from "@sentry/nextjs";
+import { errorManager } from "./Utilities/ErrorManager";
 
 const sortOptions: Record<SortByOptions, string> = {
   recent: "Recent",
@@ -139,7 +140,7 @@ export const CommunityGrants = ({
         }
       } catch (error) {
         console.log("error", error);
-        Sentry.captureException(error);
+        errorManager("Error while fetching community grants", error);
         setGrants([]);
       } finally {
         setLoading(false);

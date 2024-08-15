@@ -23,6 +23,7 @@ import { additionalQuestion } from "@/utilities/tabs";
 import { INDEXER } from "@/utilities/indexer";
 import { cn } from "@/utilities/tailwind";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 interface ReviewFormProps {
   grant: IGrantResponse;
@@ -198,9 +199,7 @@ export const ReviewForm: FC<ReviewFormProps> = ({
           email: infos.choice === "yes" ? infos.email : undefined,
           categories: infos.choice === "yes" ? infos.categories : undefined,
         }
-      ).catch((error) => {
-        console.log(error);
-      });
+      );
       await fetchData(INDEXER.GRANTS.REVIEWS.SEND(grant.uid), "POST", {
         publicAddress: address,
         answers: mountAnswers,
@@ -214,6 +213,10 @@ export const ReviewForm: FC<ReviewFormProps> = ({
         setHasSubmitted(true);
       });
     } catch (error) {
+      errorManager(
+        `Error of user ${address} saving review for grant ${grant.uid}`,
+        error
+      );
       toast.error(
         MESSAGES.GRANT.REVIEW.ERROR(
           project?.details?.data?.title as string,

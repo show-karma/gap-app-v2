@@ -1,4 +1,5 @@
 "use client";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 import { useCallback, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -23,6 +24,7 @@ export function useCopyToClipboard(): [CopiedValue, CopyFn] {
         toast.success(message);
         return true;
       } catch (error) {
+        errorManager("Copy to clipboard failed", error);
         console.warn("Copy failed", error);
         setCopiedText(null);
         return false;

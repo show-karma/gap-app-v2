@@ -25,6 +25,7 @@ import { useAuthStore } from "@/store/auth";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { QuestionCreationDialog } from "@/components/Pages/Admin/QuestionCreationDialog";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 const MarkdownPreview = dynamic(() => import("@uiw/react-markdown-preview"), {
   ssr: false,
@@ -73,9 +74,7 @@ export default function AssignQuestionsPage() {
           throw new Error("Community not found");
         setCommunity(result);
       } catch (error: any) {
-        Sentry.captureException(
-          `Error fetching community ${communityId}: ${error}`
-        );
+        errorManager(`Error fetching community ${communityId}`, error);
         console.error("Error fetching data:", error);
         if (
           error.message === "Community not found" ||
@@ -105,8 +104,9 @@ export default function AssignQuestionsPage() {
         );
         setIsAdmin(checkAdmin);
       } catch (error) {
-        Sentry.captureException(
-          `Error checking if ${address} is admin of community ${communityId}: ${error}`
+        errorManager(
+          `Error checking if ${address} is admin of community ${communityId}`,
+          error
         );
         console.log(error);
         setIsAdmin(false);
@@ -145,8 +145,9 @@ export default function AssignQuestionsPage() {
             setQuestionsAssigned(previousQuestions);
           }
         } catch (error) {
-          Sentry.captureException(
-            `Error fetching categories of community ${communityId}: ${error}`
+          errorManager(
+            `Error fetching categories of community ${communityId}`,
+            error
           );
           setCategories([]);
           console.error(error);
@@ -165,8 +166,9 @@ export default function AssignQuestionsPage() {
             setQuestions(data);
           }
         } catch (error) {
-          Sentry.captureException(
-            `Error fetching questions of community ${communityId}: ${error}`
+          errorManager(
+            `Error fetching questions of community ${communityId}`,
+            error
           );
           setQuestions([]);
           console.error(error);
@@ -223,8 +225,9 @@ export default function AssignQuestionsPage() {
         toast.error(
           MESSAGES.CATEGORIES.ASSIGN_QUESTIONS.ERROR.GENERIC(category.name)
         );
-        Sentry.captureException(
-          `Error saving questions of community ${communityId}: ${error}`
+        errorManager(
+          `Error saving questions of community ${communityId}`,
+          error
         );
       }
       console.error(error);
@@ -241,8 +244,9 @@ export default function AssignQuestionsPage() {
         setQuestions(data);
       }
     } catch (error) {
-      Sentry.captureException(
-        `Error refreshing questions of community ${communityId}: ${error}`
+      errorManager(
+        `Error refreshing questions of community ${communityId}`,
+        error
       );
       setQuestions([]);
       console.error(error);

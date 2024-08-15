@@ -19,6 +19,8 @@ import { useStepper } from "@/store/modals/txStepper";
 import { config } from "@/utilities/wagmi/config";
 import { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getGapClient, useGap } from "@/hooks";
+import * as Sentry from "@sentry/react";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 interface NotUpdatingCaseProps {
   milestone: IMilestoneResponse;
@@ -153,6 +155,10 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
     } catch (error) {
       console.log(error);
       toast.error(MESSAGES.MILESTONES.COMPLETE.ERROR);
+      errorManager(
+        `Error completing milestone ${milestone.uid} from grant ${milestone.refUID}`,
+        error
+      );
     } finally {
       setIsStepper(false);
     }
@@ -221,6 +227,10 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
     } catch (error) {
       console.log(error);
       toast.error(MESSAGES.MILESTONES.UPDATE_COMPLETION.ERROR);
+      errorManager(
+        `Error updating completion of milestone ${milestone.uid} from grant ${milestone.refUID}`,
+        error
+      );
     } finally {
       setIsStepper(false);
     }

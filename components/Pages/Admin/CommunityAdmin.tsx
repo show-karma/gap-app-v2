@@ -19,6 +19,7 @@ import CommunityStats from "@/components/CommunityStats";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import * as Sentry from "@sentry/nextjs";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 interface CommunityAdmin {
   id: string;
@@ -66,7 +67,7 @@ export default function CommunitiesToAdminPage() {
       return result;
     } catch (error) {
       console.log(error);
-      Sentry.captureException(`Error fetching all communities: ${error}`);
+      errorManager(`Error fetching all communities`, error);
       setAllCommunities([]);
       return undefined;
     } finally {

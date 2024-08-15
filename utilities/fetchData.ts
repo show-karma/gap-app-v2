@@ -2,6 +2,7 @@ import axios, { Method } from "axios";
 import { envVars } from "./enviromentVars";
 import Cookies from "universal-cookie";
 import { authCookiePath } from "@/hooks/useAuth";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 export default async function fetchData(
   endpoint: string,
@@ -33,6 +34,7 @@ export default async function fetchData(
     let pageInfo = res.data.pageInfo || null;
     return [resData, null, pageInfo];
   } catch (err: any) {
+    errorManager(`Error in fetch data ${endpoint}`, err);
     let error = "";
     if (!err.response) {
       error = "No server response";

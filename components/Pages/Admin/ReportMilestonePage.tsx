@@ -27,6 +27,7 @@ import { useOwnerStore } from "@/store";
 import { SearchDropdown } from "../ProgramRegistry/SearchDropdown";
 import { useQueryState } from "nuqs";
 import * as Sentry from "@sentry/nextjs";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 interface Report {
   _id: {
@@ -146,8 +147,9 @@ export const ReportMilestonePage = ({
         );
         setIsAdmin(checkAdmin);
       } catch (error) {
-        Sentry.captureException(
-          `Error checking if ${address} is admin of ${communityId}: ${error}`
+        errorManager(
+          `Error checking if ${address} is admin of ${communityId}`,
+          error
         );
         console.log(error);
         setIsAdmin(false);

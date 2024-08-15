@@ -22,6 +22,7 @@ import { config } from "@/utilities/wagmi/config";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import * as Sentry from "@sentry/nextjs";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -135,7 +136,7 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
         }
       });
     } catch (error) {
-      Sentry.captureException(`Error removing admin of ${UUID}: ${error}`);
+      errorManager(`Error removing admin of ${UUID}`, error);
       console.log(error);
     } finally {
       setIsStepper(false);

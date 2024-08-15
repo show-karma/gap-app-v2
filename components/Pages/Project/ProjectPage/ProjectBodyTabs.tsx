@@ -21,6 +21,8 @@ import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useAccount, useSwitchChain } from "wagmi";
 import { config } from "@/utilities/wagmi/config";
 import { Hex } from "viem";
+import * as Sentry from "@sentry/react";
+import { errorManager } from "@/components/Utilities/ErrorManager";
 
 const InformationTab: FC = () => {
   const { project } = useProjectStore();
@@ -155,6 +157,10 @@ const UpdateBlock = ({
     } catch (error) {
       console.log(error);
       toast.error(MESSAGES.PROJECT_UPDATE_FORM.DELETE.ERROR);
+      errorManager(
+        `Error deleting project update ${update.uid} from project ${project?.uid}`,
+        error
+      );
     } finally {
       setIsDeletingUpdate(false);
       setIsStepper(false);
