@@ -1,5 +1,3 @@
-import axios from "axios";
-
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
 import { errorManager } from "@/components/Utilities/ErrorManager";
