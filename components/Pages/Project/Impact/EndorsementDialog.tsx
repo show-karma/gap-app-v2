@@ -17,6 +17,8 @@ import { useStepper } from "@/store/modals/txStepper";
 import { Hex } from "viem";
 import { config } from "@/utilities/wagmi/config";
 import { useEndorsementStore } from "@/store/modals/endorsement";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 type EndorsementDialogProps = {};
 
@@ -64,7 +66,15 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
       });
       await endorsement
         .attest(walletSigner, changeStepperStep)
-        .then(async () => {
+        .then(async (res) => {
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, endorsement.chainID),
+              "POST",
+              {}
+            );
+          }
           let retries = 1000;
           refreshProject();
           let fetchedProject: Project | null = null;

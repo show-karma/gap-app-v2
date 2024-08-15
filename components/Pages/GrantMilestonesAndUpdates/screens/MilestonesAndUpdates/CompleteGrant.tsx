@@ -5,6 +5,8 @@ import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { shortAddress } from "@/utilities/shortAddress";
 import { config } from "@/utilities/wagmi/config";
@@ -82,10 +84,18 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
           },
           changeStepperStep
         )
-        .then(async () => {
+        .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
           let fetchedProject = null;
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, grant.chainID),
+              "POST",
+              {}
+            );
+          }
           while (retries > 0) {
             fetchedProject = await gapClient!.fetch
               .projectById(project.uid as Hex)

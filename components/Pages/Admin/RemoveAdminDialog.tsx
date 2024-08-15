@@ -99,8 +99,15 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
       const communityResponse = await communityResolver.delist(UUID, Admin);
 
       changeStepperStep("pending");
-
+      const { hash } = communityResponse;
       await communityResponse.wait().then(async () => {
+        if (hash) {
+          await fetchData(
+            INDEXER.ATTESTATION_LISTENER(hash, chainid),
+            "POST",
+            {}
+          );
+        }
         changeStepperStep("indexing");
         let retries = 1000;
         let addressRemoved = false;

@@ -142,7 +142,6 @@ function ProjectPage() {
             },
           });
         }
-
       });
     }
     const alreadyHasOwner = project?.members.find(
@@ -192,7 +191,7 @@ function ProjectPage() {
                     shortAddress(member.recipient)}
                 </p>
                 {member.recipient?.toLowerCase() ===
-                  project?.recipient?.toLowerCase() ? (
+                project?.recipient?.toLowerCase() ? (
                   <p className="text-sm text-brand-blue font-medium leading-none">
                     Owner
                   </p>

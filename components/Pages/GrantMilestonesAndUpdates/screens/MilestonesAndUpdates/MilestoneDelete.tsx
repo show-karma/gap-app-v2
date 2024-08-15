@@ -4,6 +4,8 @@ import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { config } from "@/utilities/wagmi/config";
 import { TrashIcon } from "@heroicons/react/24/outline";
@@ -56,9 +58,17 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
       if (!milestoneInstance) return;
       await milestoneInstance
         .revoke(walletSigner, changeStepperStep)
-        .then(async () => {
+        .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, milestoneInstance.chainID),
+              "POST",
+              {}
+            );
+          }
           let fetchedProject = null;
           while (retries > 0) {
             if (selectedProject) {

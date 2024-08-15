@@ -21,6 +21,9 @@ import {
   IGrantUpdate,
   IGrantUpdateStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import * as Sentry from "@sentry/nextjs";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 interface UpdateTagProps {
   index: number;
@@ -106,10 +109,18 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
       if (!grantUpdateInstance) return;
       await grantUpdateInstance
         .revoke(walletSigner as any, changeStepperStep)
-        .then(async () => {
+        .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
           let fetchedProject = null;
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, grantUpdateInstance.chainID),
+              "POST",
+              {}
+            );
+          }
           while (retries > 0) {
             fetchedProject = await gapClient!.fetch
               .projectById(selectedProject?.uid as Hex)

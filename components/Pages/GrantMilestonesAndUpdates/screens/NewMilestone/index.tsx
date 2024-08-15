@@ -28,6 +28,8 @@ import { useCommunityAdminStore } from "@/store/community";
 import { useStepper } from "@/store/modals/txStepper";
 import { config } from "@/utilities/wagmi/config";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 const milestoneSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.MILESTONES.FORM.TITLE }),
@@ -152,9 +154,17 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
       const walletSigner = await walletClientToSigner(walletClient);
       await milestoneToAttest
         .attest(walletSigner as any, changeStepperStep)
-        .then(async () => {
+        .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, chainID),
+              "POST",
+              {}
+            );
+          }
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {
