@@ -38,6 +38,7 @@ export const SearchList: React.FC<Props> = ({
   const { isAuth } = useAuthStore();
   const { openConnectModal } = useConnectModal();
   const [shouldOpen, setShouldOpen] = useState(false);
+  const { ensData } = useENS();
 
   const triggerCreateProjectModal = () => {
     if (!isConnected || !isAuth) {
@@ -63,7 +64,6 @@ export const SearchList: React.FC<Props> = ({
     title: string,
     href: string
   ) => {
-    const { ensData } = useENS();
     return (
       <Link
         key={item.uid}
