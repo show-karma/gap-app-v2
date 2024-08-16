@@ -196,7 +196,6 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
             </label>
             <div className="w-full bg-transparent" data-color-mode="light">
               <MarkdownEditor
-                className="bg-transparent"
                 value={description}
                 onChange={(newValue: string) => setDescription(newValue || "")}
                 placeholderText="To share updates on the progress of this grant, please add the details here."

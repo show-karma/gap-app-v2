@@ -158,7 +158,6 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
             </label>
             <div className="w-full bg-transparent" data-color-mode="light">
               <MarkdownEditor
-                className="bg-transparent"
                 value={description}
                 onChange={(newValue: string) => setDescription(newValue || "")}
               />

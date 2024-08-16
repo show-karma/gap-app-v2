@@ -1066,7 +1066,6 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                 data-color-mode="light"
               >
                 <MarkdownEditor
-                  className="bg-transparent"
                   value={grantUpdate}
                   onChange={(newValue: string) =>
                     setGrantUpdate(newValue || "")
