@@ -11,6 +11,7 @@ import { usePublicClient, useWalletClient } from "wagmi";
 
 export function publicClientToProvider(client: Client<Transport, Chain>) {
   const { chain, transport } = client;
+  if (!chain) return;
   const network = {
     chainId: chain.id,
     name: chain.name,

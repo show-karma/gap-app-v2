@@ -98,23 +98,24 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   const hasContactInfo = Boolean(projectContactsInfo?.length);
 
   const signer = useSigner();
-  const { address, isConnected, isConnecting } = useAccount();
+  const { address, isConnected, isConnecting, chain } = useAccount();
   const { isAuth } = useAuthStore();
   const { gap } = useGap();
 
   useEffect(() => {
-    if (!project || !project?.chainID || !isAuth || !isConnected) {
+    if (!project || !project?.chainID || !isAuth || !isConnected || !chain) {
       setIsProjectOwner(false);
       setIsProjectOwnerLoading(false);
       return;
     }
 
-    const setupOwner = async () => {
+    const setupProjectOwner = async () => {
       try {
         setIsProjectOwnerLoading(true);
         const walletClient = await getWalletClient(config, {
           chainId: project.chainID,
-        });
+        }).catch(() => undefined);
+
         if (!walletClient) return;
         const walletSigner = await walletClientToSigner(walletClient).catch(
           () => undefined
@@ -136,8 +137,8 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
         setIsProjectOwnerLoading(false);
       }
     };
-    setupOwner();
-  }, [project?.uid, address, isAuth, isConnected, signer]);
+    setupProjectOwner();
+  }, [project?.uid, address, isAuth, isConnected, signer, chain]);
 
   const socials = useMemo(() => {
     const types = [
@@ -148,7 +149,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
       { name: "LinkedIn", prefix: "linkedin.com/", icon: LinkedInIcon },
     ];
 
-    const isLink = (link?: string) => {
+    const hasHttpOrWWW = (link?: string) => {
       if (!link) return false;
       if (
         link.includes("http://") ||
@@ -169,39 +170,39 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
       }
       const alreadyHasPrefix = link.includes(prefix);
       if (alreadyHasPrefix) {
-        if (isLink(link)) {
+        if (hasHttpOrWWW(link)) {
           return link;
         }
         return addPrefix(link);
       }
 
-      return isLink(prefix + link) ? prefix + link : addPrefix(prefix + link);
+      return hasHttpOrWWW(prefix + link)
+        ? prefix + link
+        : addPrefix(prefix + link);
     };
 
     return types
       .map(({ name, prefix, icon }) => {
-        const hasUrl = project?.details?.data?.links?.find(
+        const socialLink = project?.details?.data?.links?.find(
           (link) => link.type === name.toLowerCase()
         )?.url;
 
-        if (hasUrl) {
+        if (socialLink) {
           if (name === "Twitter") {
-            const hasAt = hasUrl?.includes("@");
-            const url = hasAt ? hasUrl?.replace("@", "") || "" : hasUrl;
+            const url = socialLink?.includes("@")
+              ? socialLink?.replace("@", "") || ""
+              : socialLink;
+
             return {
               name,
-              url: isLink(hasUrl)
-                ? hasUrl
-                : hasUrl.includes(prefix)
-                ? addPrefix(url)
-                : prefix + url,
+              url: formatPrefix(prefix, url),
               icon,
             };
           }
 
           return {
             name,
-            url: formatPrefix(prefix, hasUrl),
+            url: formatPrefix(prefix, socialLink),
             icon,
           };
         }
