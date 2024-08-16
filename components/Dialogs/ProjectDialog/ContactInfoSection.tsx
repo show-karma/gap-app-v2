@@ -223,10 +223,7 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
       true
     ).catch(() => []);
     if (error) {
-      const ignoreErrors = [403, 401];
-      if (!ignoreErrors.includes(error.response.status)) {
-        errorManager(`Error in refreshing contact section`, error);
-      }
+      errorManager(`Error in refreshing contact section`, error);
       setProjectContactsInfo([]);
       return;
     }
