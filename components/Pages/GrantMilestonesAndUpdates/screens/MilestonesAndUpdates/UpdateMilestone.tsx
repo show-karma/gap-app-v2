@@ -23,6 +23,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
+import { sanitizeInput } from "@/utilities/sanitize";
 
 interface NotUpdatingCaseProps {
   milestone: IMilestoneResponse;
@@ -119,8 +120,9 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
       const milestoneInstance = grantInstance.milestones.find(
         (u) => u.uid.toLowerCase() === milestone.uid.toLowerCase()
       );
+      const sanitizedText = sanitizeInput(text);
       await milestoneInstance
-        ?.complete(walletSigner, text, changeStepperStep)
+        ?.complete(walletSigner, sanitizedText, changeStepperStep)
         .then(async (res) => {
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
@@ -198,8 +200,9 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
       const milestoneInstance = grantInstance.milestones.find(
         (u) => u.uid.toLowerCase() === milestone.uid.toLowerCase()
       );
+      const sanitizedText = sanitizeInput(text);
       await milestoneInstance
-        ?.complete(walletSigner, text, changeStepperStep)
+        ?.complete(walletSigner, sanitizedText, changeStepperStep)
         .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");

@@ -42,6 +42,7 @@ import { useRegistryStore } from "@/store/registry";
 import { useQuery } from "@tanstack/react-query";
 
 import { errorManager } from "@/components/Utilities/errorManager";
+import { sanitizeObject } from "@/utilities/sanitize";
 
 export const ManagePrograms = () => {
   const searchParams = useSearchParams();
@@ -278,7 +279,7 @@ export const ManagePrograms = () => {
 
         const args: any = {
           profileId,
-          roundMetadata: metadata,
+          roundMetadata: sanitizeObject(metadata),
           applicationStart: _currentTimestamp + 3600, // 1 hour later   registrationStartTime
           applicationEnd: _currentTimestamp + 432000, // 5 days later   registrationEndTime
           roundStart: _currentTimestamp + 7200, // 2 hours later  allocationStartTime

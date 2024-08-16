@@ -23,6 +23,7 @@ import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
 
 import { errorManager } from "@/components/Utilities/errorManager";
+import { sanitizeObject } from "@/utilities/sanitize";
 
 const updateSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.GRANT.UPDATE.FORM.TITLE }),
@@ -93,12 +94,13 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
       if (!walletClient || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
 
+      const sanitizedGrantUpdate = sanitizeObject({
+        text,
+        title,
+        type: "grant-update",
+      });
       const grantUpdate = new GrantUpdate({
-        data: {
-          text,
-          title,
-          type: "grant-update",
-        },
+        data: sanitizedGrantUpdate,
         recipient: grantToUpdate.recipient,
         refUID: grantToUpdate.uid,
         schema: gapClient.findSchema("GrantDetails"),

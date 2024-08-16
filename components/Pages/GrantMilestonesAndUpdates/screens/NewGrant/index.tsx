@@ -55,6 +55,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
+import { sanitizeObject } from "@/utilities/sanitize";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -345,32 +346,35 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         recipient: (data.recipient as Hex) || address,
         uid: nullRef,
       });
+      const sanitizedDetails = sanitizeObject({
+        amount: data.amount || "",
+        description: data.description,
+        proposalURL: data.linkToProposal,
+        title: data.title,
+        assetAndChainId: ["0x0", 1],
+        payoutAddress: address,
+        // cycle: data.cycle,
+        // season: data.season,
+        questions: data.questions,
+        startDate: data.startDate,
+      });
+
       grant.details = new GrantDetails({
-        data: {
-          amount: data.amount || "",
-          description: data.description,
-          proposalURL: data.linkToProposal,
-          title: data.title,
-          assetAndChainId: ["0x0", 1],
-          payoutAddress: address,
-          // cycle: data.cycle,
-          // season: data.season,
-          questions: data.questions,
-          startDate: data.startDate,
-        },
+        data: sanitizedDetails,
         refUID: grant.uid,
         schema: gapClient.findSchema("GrantDetails"),
         recipient: grant.recipient,
         uid: nullRef,
       });
       // eslint-disable-next-line no-param-reassign
+      const sanitizedUpdate = sanitizeObject({
+        text: data.grantUpdate || "",
+        title: "",
+      });
       grant.updates = data.grantUpdate
         ? [
             new GrantUpdate({
-              data: {
-                text: data.grantUpdate || "",
-                title: "",
-              },
+              data: sanitizedUpdate,
               schema: gapClient.findSchema("Milestone"),
               recipient: grant.recipient,
             }),
@@ -379,24 +383,26 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
 
       // eslint-disable-next-line no-param-reassign
       grant.milestones = data.milestones.map((milestone) => {
+        const sanitizedMilestone = sanitizeObject({
+          title: milestone.title,
+          description: milestone.description,
+          endsAt: milestone.endsAt,
+          startsAt: milestone.startsAt,
+        });
         const created = new Milestone({
-          data: {
-            title: milestone.title,
-            description: milestone.description,
-            endsAt: milestone.endsAt,
-            startsAt: milestone.startsAt,
-          },
+          data: sanitizedMilestone,
           refUID: grant.uid,
           schema: gapClient.findSchema("Milestone"),
           recipient: grant.recipient,
           uid: nullRef,
         });
         if (milestone.completedText) {
+          const sanitizedCompleted = sanitizeObject({
+            reason: milestone.completedText,
+            type: "completed",
+          });
           created.completed = new MilestoneCompleted({
-            data: {
-              reason: milestone.completedText,
-              type: "completed",
-            },
+            data: sanitizedCompleted,
             refUID: created.uid,
             schema: gapClient.findSchema("MilestoneCompleted"),
             recipient: grant.recipient,
@@ -476,7 +482,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       oldGrantInstance.setValues({
         communityUID: data.community,
       });
-      const grantData = {
+      const grantData = sanitizeObject({
         amount: data.amount || "",
         description: data.description,
         proposalURL: data.linkToProposal,
@@ -486,7 +492,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         // season: data.season,
         questions: data.questions,
         startDate: data.startDate,
-      };
+      });
       oldGrantInstance.details?.setValues(grantData);
       const walletClient = await getWalletClient(config, {
         chainId: oldGrant.chainID,

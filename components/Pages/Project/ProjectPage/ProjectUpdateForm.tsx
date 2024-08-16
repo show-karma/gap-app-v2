@@ -9,6 +9,7 @@ import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
+import { sanitizeObject } from "@/utilities/sanitize";
 import { config } from "@/utilities/wagmi/config";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProjectUpdate } from "@show-karma/karma-gap-sdk";
@@ -71,12 +72,13 @@ export const ProjectUpdateForm: FC = () => {
       if (!walletClient || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
 
+      const sanitizedData = sanitizeObject({
+        text,
+        title,
+        type: "project-update",
+      });
       const projectUpdate = new ProjectUpdate({
-        data: {
-          text,
-          title,
-          type: "project-update",
-        },
+        data: sanitizedData,
         recipient: project.recipient,
         refUID: project.uid,
         schema: gapClient.findSchema("ProjectUpdate"),

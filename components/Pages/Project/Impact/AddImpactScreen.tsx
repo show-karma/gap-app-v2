@@ -10,6 +10,7 @@ import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
+import { sanitizeObject } from "@/utilities/sanitize";
 import { config } from "@/utilities/wagmi/config";
 import { Popover } from "@headlessui/react";
 import { CalendarIcon } from "@heroicons/react/24/outline";
@@ -91,14 +92,14 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
       });
       if (!walletClient || !address || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      const dataToAttest = {
+      const dataToAttest = sanitizeObject({
         work,
         impact,
         proof,
         startedAt: startedAt.getTime() / 1000,
         completedAt: completedAt.getTime() / 1000,
         verified: [],
-      };
+      });
       const newImpact = new ProjectImpact({
         data: dataToAttest,
         recipient: address,
