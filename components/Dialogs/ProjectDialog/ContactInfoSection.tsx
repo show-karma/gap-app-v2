@@ -214,7 +214,7 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
   };
 
   const refreshList = async (projectId: Hex) => {
-    const [data] = await fetchData(
+    const [data, error] = await fetchData(
       INDEXER.SUBSCRIPTION.GET(projectId),
       "GET",
       {},
@@ -222,6 +222,15 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
       {},
       true
     ).catch(() => []);
+    if (error) {
+      const ignoreErrors = [403, 401];
+      if (!ignoreErrors.includes(error.response.status)) {
+        errorManager(`Error in refreshing contact section`, error);
+      }
+      setProjectContactsInfo([]);
+      return;
+    }
+
     if (data) {
       setProjectContactsInfo(data);
     }

@@ -65,7 +65,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
     const getContactInfo = async () => {
       setContactInfoLoading(true);
       try {
-        const [data] = await fetchData(
+        const [data, error] = await fetchData(
           INDEXER.SUBSCRIPTION.GET(projectId),
           "GET",
           {},
@@ -73,6 +73,17 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
           {},
           true
         );
+
+        if (error) {
+          const ignoreErrors = [403, 401];
+          if (!ignoreErrors.includes(error.response.status)) {
+            errorManager(
+              `Error fetching project contacts info from project ${projectId}`,
+              error
+            );
+          }
+          return;
+        }
 
         setProjectContactsInfo(data);
       } catch (error: any) {
