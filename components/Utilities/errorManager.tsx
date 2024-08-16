@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/nextjs";
 
-export const errorManager = (errorMessage: string, error: any) => {
+export const errorManager = (errorMessage: string, error: any, extra?: any) => {
   if (error?.originalError || error?.message) {
     const wasRejected =
       error?.originalError?.code?.toLowerCase()?.includes("rejected") ||
@@ -15,6 +15,7 @@ export const errorManager = (errorMessage: string, error: any) => {
   Sentry.captureException(error, {
     extra: {
       errorMessage,
+      ...extra,
     },
   });
 };
