@@ -178,7 +178,6 @@ export const ProjectUpdateForm: FC = () => {
           </label>
           <div className="w-full bg-transparent" data-color-mode="light">
             <MarkdownEditor
-              className="bg-transparent"
               value={watch("text")}
               onChange={(newValue: string) =>
                 setValue("text", newValue, {

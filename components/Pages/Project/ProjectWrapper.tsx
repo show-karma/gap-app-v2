@@ -308,7 +308,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
           <div className="flex flex-col gap-4">
             <h1
               className={
-                "text-[32px] font-bold leading-tight text-black dark:text-zinc-100"
+                "text-[32px] font-bold leading-tight text-black dark:text-zinc-100 line-clamp-2"
               }
             >
               {project?.details?.data?.title}
@@ -357,7 +357,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
               {isProjectOwner ? (
                 <ExternalLink
                   href={"https://tally.so/r/w8e6GP"}
-                  className="bg-black dark:bg-zinc-800 text-white justify-center items-center dark:text-zinc-400 flex flex-row gap-2.5 py-2 px-5 rounded-full"
+                  className="bg-black dark:bg-zinc-800 text-white justify-center items-center dark:text-zinc-400 flex flex-row gap-2.5 py-2 px-5 rounded-full w-max min-w-max"
                 >
                   <Image
                     src="/icons/alert.png"

@@ -178,7 +178,6 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
             </label>
             <div className="w-full bg-transparent" data-color-mode="light">
               <MarkdownEditor
-                className="bg-transparent"
                 value={work}
                 onChange={(newValue: string) => setWork(newValue || "")}
                 placeholderText="Organized an onboarding event"
@@ -277,7 +276,6 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
             </label>
             <div className="w-full bg-transparent" data-color-mode="light">
               <MarkdownEditor
-                className="bg-transparent"
                 value={impact}
                 onChange={(newValue: string) => setImpact(newValue || "")}
                 placeholderText="We onboarded 100 users on to the platform (Add as much details as possible)."
@@ -290,7 +288,6 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
             </label>
             <div className="w-full bg-transparent" data-color-mode="light">
               <MarkdownEditor
-                className="bg-transparent"
                 value={proof}
                 onChange={(newValue: string) => setProof(newValue || "")}
                 placeholderText="Add links to charts, videos, dashboards etc. that evaluators can check to verify your work and impact"

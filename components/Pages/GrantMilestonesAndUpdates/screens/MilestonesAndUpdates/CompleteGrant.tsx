@@ -139,8 +139,7 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
       <div className="flex w-full max-w-3xl flex-col gap-6 rounded-md bg-gray-200 dark:bg-zinc-800 px-4 py-6 max-lg:max-w-full">
         <div className="flex w-full flex-row justify-between">
           <h4 className="text-2xl font-bold text-black dark:text-zinc-100">
-            Complete {grant.details?.data?.title || shortAddress(grant.uid)}{" "}
-            Grant
+            Grant completion summary
           </h4>
           <button
             onClick={() => {
@@ -158,9 +157,9 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
             </label>
             <div className="w-full bg-transparent" data-color-mode="light">
               <MarkdownEditor
-                className="bg-transparent"
                 value={description}
                 onChange={(newValue: string) => setDescription(newValue || "")}
+                placeholderText="Summarize your grant work, your experience working on the grant and the potential impact it will have."
               />
             </div>
           </div>

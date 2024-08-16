@@ -351,7 +351,6 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
             </label>
             <div className="mt-2 w-full bg-transparent" data-color-mode="light">
               <MarkdownEditor
-                className="bg-transparent"
                 value={description}
                 onChange={(newValue: string) => setDescription(newValue || "")}
                 placeholderText="Please provide a concise description of your objectives for this milestone"
@@ -364,7 +363,6 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
             </label>
             <div className="mt-2 w-full bg-transparent" data-color-mode="light">
               <MarkdownEditor
-                className="bg-transparent"
                 value={completedUpdate}
                 onChange={(newValue: string) =>
                   setCompletedUpdate(newValue || "")
