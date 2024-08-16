@@ -17,6 +17,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "../Utilities/errorManager";
+import { sanitizeInput } from "@/utilities/sanitize";
 
 type TransferOwnershipProps = {
   buttonElement?: {
@@ -52,6 +53,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
   const setIsProjectOwner = useProjectStore((state) => state.setIsProjectOwner);
   const { switchChainAsync } = useSwitchChain();
   const { changeStepperStep, setIsStepper } = useStepper();
+
   const transfer = async () => {
     if (!project) return;
     if (!newOwner || !isAddress(newOwner)) {
@@ -72,7 +74,11 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
       const fetchedProject = await getProjectById(project.uid);
       if (!fetchedProject) return;
       await fetchedProject
-        .transferOwnership(walletSigner, newOwner, changeStepperStep)
+        .transferOwnership(
+          walletSigner,
+          sanitizeInput(newOwner),
+          changeStepperStep
+        )
         .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");

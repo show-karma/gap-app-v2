@@ -2,6 +2,7 @@ import axios, { Method } from "axios";
 import { envVars } from "./enviromentVars";
 import Cookies from "universal-cookie";
 import { authCookiePath } from "@/hooks/useAuth";
+import { sanitizeObject } from "./sanitize";
 
 export default async function fetchData(
   endpoint: string,
@@ -16,6 +17,7 @@ export default async function fetchData(
     const cookies = new Cookies();
     const token = cookies.get(authCookiePath);
 
+    const sanitizedData = sanitizeObject(axiosData);
     const res = await axios.request({
       url:
         `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${endpoint}` +
@@ -25,7 +27,7 @@ export default async function fetchData(
         Authorization: isAuthorized ? token || undefined : undefined,
         ...headers,
       },
-      data: axiosData,
+      data: sanitizedData,
       timeout: 60000,
       params,
     });

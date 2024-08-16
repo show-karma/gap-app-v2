@@ -26,6 +26,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "../Utilities/errorManager";
+import { sanitizeObject } from "@/utilities/sanitize";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -123,18 +124,14 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
       });
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-
+      const sanitizedData = sanitizeObject({
+        name: data.name,
+        description: description as string,
+        imageURL: data.imageURL as string,
+        slug: data.slug as string,
+      });
       await newCommunity
-        .attest(
-          walletSigner as any,
-          {
-            name: data.name,
-            description: description as string,
-            imageURL: data.imageURL as string,
-            slug: data.slug as string,
-          },
-          changeStepperStep
-        )
+        .attest(walletSigner as any, sanitizedData, changeStepperStep)
         .then(async (res) => {
           const txHash = res?.tx[0]?.hash;
           if (txHash) {

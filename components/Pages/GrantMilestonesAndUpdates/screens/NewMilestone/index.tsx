@@ -32,6 +32,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
+import { sanitizeObject } from "@/utilities/sanitize";
 
 const milestoneSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.MILESTONES.FORM.TITLE }),
@@ -68,14 +69,9 @@ interface NewMilestoneProps {
   grant: IGrantResponse;
 }
 
-export const NewMilestone: FC<NewMilestoneProps> = ({
-  grant: {
-    uid,
-    chainID,
-    recipient: grantRecipient,
-    project: { uid: projectUID },
-  },
-}) => {
+export const NewMilestone: FC<NewMilestoneProps> = ({ grant }) => {
+  const { uid, chainID, recipient: grantRecipient } = grant;
+  const projectUID = grant?.project?.uid;
   const form = useForm<z.infer<typeof milestoneSchema>>({
     resolver: zodResolver(milestoneSchema),
   });
@@ -132,26 +128,28 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
         await switchChainAsync?.({ chainId: chainID });
         gapClient = getGapClient(chainID);
       }
+      const sanitizedMilestone = sanitizeObject({
+        description: milestone.description,
+        endsAt: milestone.endsAt,
+        startsAt: milestone.startsAt,
+        title: milestone.title,
+      });
       const milestoneToAttest = new Milestone({
         refUID: uid,
         schema: gapClient.findSchema("Milestone"),
         recipient: (recipient as Hex) || address,
-        data: {
-          description: milestone.description,
-          endsAt: milestone.endsAt,
-          startsAt: milestone.startsAt,
-          title: milestone.title,
-        },
+        data: sanitizedMilestone,
       });
       if (milestone.completedText) {
+        const sanitizedCompletedData = sanitizeObject({
+          reason: milestone.completedText,
+          type: "completed",
+        });
         milestoneToAttest.completed = new MilestoneCompleted({
           refUID: milestoneToAttest.uid,
           schema: gapClient.findSchema("MilestoneCompleted"),
           recipient: (recipient as Hex) || address,
-          data: {
-            reason: milestone.completedText,
-            type: "completed",
-          },
+          data: sanitizedCompletedData,
         });
       }
       const walletClient = await getWalletClient(config, {

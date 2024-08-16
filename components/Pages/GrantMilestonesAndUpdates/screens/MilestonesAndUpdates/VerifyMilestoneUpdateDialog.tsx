@@ -24,6 +24,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
+import { sanitizeInput } from "@/utilities/sanitize";
 
 type VerifyMilestoneUpdateDialogProps = {
   milestone: IMilestoneResponse;
@@ -95,7 +96,7 @@ export const VerifyMilestoneUpdateDialog: FC<
       );
       if (!milestoneInstance) return;
       await milestoneInstance
-        .verify(walletSigner, data.comment, changeStepperStep)
+        .verify(walletSigner, sanitizeInput(data.comment), changeStepperStep)
         .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
