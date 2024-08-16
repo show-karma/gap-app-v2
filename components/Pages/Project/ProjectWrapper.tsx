@@ -9,7 +9,7 @@ import { config } from "@/utilities/wagmi/config";
 import { INDEXER } from "@/utilities/indexer";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { useEffect, useMemo } from "react";
-import { useProjectStore } from "@/store";
+import { useOwnerStore, useProjectStore } from "@/store";
 import { useAccount } from "wagmi";
 import {
   DiscordIcon,
@@ -60,8 +60,11 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
     setProject(project);
   }, [project]);
 
+  const isOwner = useOwnerStore((state) => state.isOwner);
+  const isAuthorized = isOwner || isProjectOwner;
+
   useEffect(() => {
-    if (!projectId) return;
+    if (!projectId || !isAuthorized) return;
     const getContactInfo = async () => {
       setContactInfoLoading(true);
       try {
@@ -73,16 +76,8 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
           {},
           true
         );
-
         if (error) {
-          const ignoreErrors = [403, 401];
-          if (!ignoreErrors.includes(error.response.status)) {
-            errorManager(
-              `Error fetching project contacts info from project ${projectId}`,
-              error
-            );
-          }
-          return;
+          throw error;
         }
 
         setProjectContactsInfo(data);
@@ -98,7 +93,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
       }
     };
     getContactInfo();
-  }, [projectId]);
+  }, [projectId, isAuthorized]);
 
   const hasContactInfo = Boolean(projectContactsInfo?.length);
 
