@@ -3,7 +3,7 @@
 import { blo } from "blo";
 import { FC, useEffect, useState } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { useENSNames } from "@/store/ensNames";
+import { useENS } from "@/store/ens";
 import { formatDate } from "@/utilities/formatDate";
 import { VerificationsDialog } from "./VerificationsDialog";
 import {
@@ -12,7 +12,6 @@ import {
   IGrantUpdateStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { Hex } from "viem";
-import { useENSAvatar } from "@/store/ensAvatars";
 
 interface VerifiedBadgeProps {
   verifications:
@@ -31,8 +30,7 @@ const BlockieTooltip = ({
   date: Date;
   reason?: string;
 }) => {
-  const { ensNames, populateEnsNames } = useENSNames();
-  const { ensAvatars } = useENSAvatar();
+  const { ensData, populateEnsNames } = useENS();
 
   useEffect(() => {
     populateEnsNames([address]);
@@ -44,7 +42,7 @@ const BlockieTooltip = ({
         <Tooltip.Trigger asChild>
           <div>
             <img
-              src={ensAvatars[address]?.avatar || blo(address, 8)}
+              src={ensData[address]?.avatar || blo(address, 8)}
               alt={address}
               className="h-8 w-8 min-h-8 min-w-8 rounded-full ring-2 ring-white dark:ring-gray-800"
             />
@@ -59,7 +57,7 @@ const BlockieTooltip = ({
             <div>
               <div>
                 <p className="text-xs font-bold truncate">
-                  {ensNames[address]?.name || address}
+                  {ensData[address]?.name || address}
                 </p>
                 <p className="text-xs font-normal">on {formatDate(date)}</p>
               </div>

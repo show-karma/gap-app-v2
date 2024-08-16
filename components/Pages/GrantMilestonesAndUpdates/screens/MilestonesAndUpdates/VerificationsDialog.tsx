@@ -5,7 +5,7 @@ import { XMarkIcon } from "@heroicons/react/24/solid";
 
 import { blo } from "blo";
 import { Hex } from "viem";
-import { useENSNames } from "@/store/ensNames";
+import { useENS } from "@/store/ens";
 import { useProjectStore } from "@/store/project";
 import { formatDate } from "@/utilities/formatDate";
 import {
@@ -18,7 +18,6 @@ import { Tabs, TabContent, TabTrigger } from "@/components/Utilities/Tabs";
 import { useGrant } from "@/components/Pages/GrantMilestonesAndUpdates/GrantContext";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { useAccount } from "wagmi";
-import { useENSAvatar } from "@/store/ensAvatars";
 
 interface VerificationsDialogProps {
   verifications: (
@@ -36,23 +35,21 @@ interface VerificationsItemProps {
 }
 
 const VerificationItem = ({ verification }: VerificationsItemProps) => {
-  const { ensNames } = useENSNames();
-  const { ensAvatars } = useENSAvatar();
+  const { ensData } = useENS();
 
   return (
     <div className="flex flex-col items-start gap-1.5 p-4">
       <div className="flex flex-row gap-3 items-center">
         <img
           src={
-            ensAvatars[verification.attester as Hex]?.avatar ||
+            ensData[verification.attester as Hex]?.avatar ||
             blo(verification.attester as Hex, 8)
           }
           alt={verification.attester}
           className="h-8 w-8 min-h-8 min-w-8 rounded-full"
         />
         <p className="text-sm font-bold text-brand-darkblue font-body dark:text-zinc-200">
-          {ensNames[verification.attester as Hex]?.name ||
-            verification.attester}
+          {ensData[verification.attester as Hex]?.name || verification.attester}
           <span className="ml-1 font-normal font-body text-[#344054] dark:text-zinc-300">
             reviewed on {formatDate(verification.createdAt)}
           </span>
@@ -77,7 +74,7 @@ export const VerificationsDialog: FC<VerificationsDialogProps> = ({
   const communityUid = useMemo(() => grant?.data.communityUID, [grant]);
   const [communityAdmins, setCommunityAdmins] = useState<string[]>();
 
-  const { populateEnsNames } = useENSNames();
+  const { populateEnsNames } = useENS();
   useEffect(() => {
     populateEnsNames(verifications.map((v) => v.attester as string));
   }, [populateEnsNames, verifications]);

@@ -17,11 +17,13 @@ import { cn } from "@/utilities/tailwind";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import EthereumAddressToENSAvatar from "./EthereumAddressToENSAvatar";
+import { useENS } from "@/store/ens";
 
 export const CommunityFeed = () => {
   const params = useParams<{ communityId: string }>();
   const communityId = params.communityId;
   const { theme } = useTheme();
+  const { ensData } = useENS();
 
   const itemsPerPage = 12; // Set the total number of items you want returned from the API
   const [page, setPage] = useState<number>(1);
@@ -94,7 +96,14 @@ export const CommunityFeed = () => {
                         />
                       </div>
                       <div className="flex flex-row items-center gap-1 flex-wrap">
-                        <EthereumAddressToENSAvatar address={item.attester} />
+                        <img
+                          src={
+                            ensData[item.attester as `0x${string}`]?.avatar ||
+                            blo(item.attester as Hex, 8)
+                          }
+                          alt={item.attester}
+                          className="h-5 w-5 rounded-full border-1 border-gray-100 dark:border-zinc-900"
+                        />
                         <p className="text-sm text-center font-bold text-black dark:text-zinc-200 max-2xl:text-[13px]">
                           <EthereumAddressToENSName address={item.attester} />
                         </p>

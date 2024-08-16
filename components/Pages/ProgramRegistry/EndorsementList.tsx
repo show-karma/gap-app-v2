@@ -3,7 +3,7 @@
 import { FC, useMemo, useState } from "react";
 import { blo } from "blo";
 import { Hex } from "viem";
-import { useENSNames } from "@/store/ensNames";
+import { useENS } from "@/store/ens";
 import { shortAddress } from "@/utilities/shortAddress";
 import { formatDate } from "@/utilities/formatDate";
 import { EmptyEndorsmentList } from "../Project/Impact/EmptyEndorsmentList";
@@ -12,15 +12,13 @@ import pluralize from "pluralize";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { IProjectEndorsement } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useENSAvatar } from "@/store/ensAvatars";
 
 interface EndorsementRowProps {
   endorsement: IProjectEndorsement;
 }
 
 const EndorsementRow: FC<EndorsementRowProps> = ({ endorsement }) => {
-  const { ensNames } = useENSNames();
-  const { ensAvatars } = useENSAvatar();
+  const { ensData } = useENS();
 
   return (
     <div className="flex flex-col w-full p-4 gap-3">
@@ -28,7 +26,7 @@ const EndorsementRow: FC<EndorsementRowProps> = ({ endorsement }) => {
         <div className="flex flex-row gap-2 w-full items-center">
           <img
             src={
-              ensAvatars[endorsement.recipient]?.avatar ||
+              ensData[endorsement.recipient]?.avatar ||
               blo(endorsement.recipient, 6)
             }
             alt={endorsement.recipient}
@@ -36,7 +34,7 @@ const EndorsementRow: FC<EndorsementRowProps> = ({ endorsement }) => {
           />
           <div className="flex flex-row gap-3 w-full items-start justify-between">
             <p className="text-sm font-bold text-brand-darkblue dark:text-zinc-100">
-              {ensNames[endorsement?.recipient]?.name ||
+              {ensData[endorsement?.recipient]?.name ||
                 shortAddress(endorsement.recipient)}
               {` `}
               <span className="text-sm font-normal text-[#344054] dark:text-zinc-200">
@@ -71,7 +69,7 @@ export const EndorsementList: FC = () => {
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
 
-  const { populateEnsNames } = useENSNames();
+  const { populateEnsNames } = useENS();
 
   useMemo(() => {
     const endorsements = project?.endorsements || [];

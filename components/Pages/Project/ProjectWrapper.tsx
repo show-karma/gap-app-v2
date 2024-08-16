@@ -30,7 +30,7 @@ import { IntroDialog } from "./IntroDialog";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { useRouter } from "next/navigation";
 import { useGap } from "@/hooks";
-import { useENSAvatar } from "@/store/ensAvatars";
+import { useENS } from "@/store/ens";
 
 interface ProjectWrapperProps {
   project: IProjectResponse;
@@ -283,7 +283,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   const members = mountMembers();
   const { isIntroModalOpen } = useIntroModalStore();
   const { isEndorsementOpen } = useEndorsementStore();
-  const { ensAvatars } = useENSAvatar();
+  const { ensData } = useENS();
   return (
     <>
       {isIntroModalOpen ? <IntroDialog /> : null}
@@ -374,8 +374,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
                         width={20}
                         height={20}
                         src={
-                          ensAvatars[member.recipient as `0x${string}`]
-                            ?.avatar ||
+                          ensData[member.recipient as `0x${string}`]?.avatar ||
                           blo(member.recipient as `0x${string}`, 8)
                         }
                         alt={member.recipient}

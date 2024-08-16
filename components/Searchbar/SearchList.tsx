@@ -18,7 +18,8 @@ import { useAuthStore } from "@/store/auth";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useEffect, useState } from "react";
 import { useMobileStore } from "@/store/mobile";
-import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
+import { useENS } from "@/store/ens";
+import { Hex } from "viem";
 
 interface Props {
   data: ISearchResponse; // Will be modular in the future
@@ -62,6 +63,7 @@ export const SearchList: React.FC<Props> = ({
     title: string,
     href: string
   ) => {
+    const { ensData } = useENS();
     return (
       <Link
         key={item.uid}
@@ -80,7 +82,15 @@ export const SearchList: React.FC<Props> = ({
             <div className="mt-3 flex items-center">
               <small className="mr-2">By</small>
               <div className="flex flex-row gap-1 items-center font-medium">
-                <EthereumAddressToENSAvatar address={item.recipient} />
+                <img
+                  src={
+                    ensData[item.recipient as Hex]?.avatar ||
+                    blo(item.recipient as Hex, 8)
+                  }
+                  className="w-4 h-4  rounded-full border-1 border-gray-100 dark:border-zinc-900"
+                  alt="Recipient's Profile Picture"
+                />
+
                 <EthereumAddressToENSName address={item.recipient} />
               </div>
             </div>
