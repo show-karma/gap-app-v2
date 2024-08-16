@@ -223,7 +223,9 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
       true
     ).catch(() => []);
     if (error) {
-      throw error;
+      errorManager(`Error in refreshing contact section`, error);
+      setProjectContactsInfo([]);
+      return;
     }
 
     if (data) {
