@@ -65,7 +65,7 @@ export const useAuth = () => {
       return signedMessage;
     } catch (err) {
       // eslint-disable-next-line no-console
-      await disconnectAsync();
+      await disconnectAsync?.();
       errorManager(`Error in signing message of user ${address}`, err);
       console.log(err);
       return null;
@@ -87,6 +87,9 @@ export const useAuth = () => {
             publicAddress,
             signedMessage,
           });
+      if (!response) {
+        throw new Error("No response from authentication");
+      }
       const { token, walletType } = response;
       return { token, walletType };
     } catch (error: any) {
@@ -194,7 +197,7 @@ export const useAuth = () => {
 
     setIsAuth(false);
     setWalletType(undefined);
-    disconnectAsync();
+    await disconnectAsync?.();
   };
 
   const softDisconnect = (newAddress: Hex) => {
