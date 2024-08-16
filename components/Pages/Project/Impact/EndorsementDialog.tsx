@@ -20,6 +20,7 @@ import { useEndorsementStore } from "@/store/modals/endorsement";
 import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { sanitizeInput } from "@/utilities/sanitize";
 
 type EndorsementDialogProps = {};
 
@@ -59,7 +60,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
       const walletSigner = await walletClientToSigner(walletClient);
       const endorsement = new ProjectEndorsement({
         data: {
-          comment,
+          comment: sanitizeInput(comment),
         },
         schema: gapClient!.findSchema("ProjectEndorsement"),
         refUID: project?.uid,

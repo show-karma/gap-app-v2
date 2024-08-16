@@ -41,6 +41,7 @@ import { Popover } from "@headlessui/react";
 import { formatDate } from "@/utilities/formatDate";
 import { DayPicker } from "react-day-picker";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { sanitizeObject } from "@/utilities/sanitize";
 
 const labelStyle = "text-sm font-bold text-[#344054] dark:text-zinc-100";
 const inputStyle =
@@ -261,7 +262,7 @@ export default function AddProgram({
       }
       const chainSelected = data.networkToCreate;
 
-      const metadata = {
+      const metadata = sanitizeObject({
         title: data.name,
         description: data.description,
         programBudget: data.budget,
@@ -298,7 +299,7 @@ export default function AddProgram({
         status: "Active",
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
-      };
+      });
 
       const [request, error] = await fetchData(
         INDEXER.REGISTRY.CREATE,
@@ -352,7 +353,7 @@ export default function AddProgram({
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
 
-      const metadata = {
+      const metadata = sanitizeObject({
         title: data.name,
         description: data.description,
         programBudget: data.budget,
@@ -389,7 +390,7 @@ export default function AddProgram({
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
         status: data.status,
-      };
+      });
 
       const isSameAddress =
         programToEdit?.createdByAddress?.toLowerCase() ===

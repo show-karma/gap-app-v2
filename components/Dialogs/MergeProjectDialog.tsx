@@ -30,6 +30,7 @@ import { useRouter } from "next/navigation";
 import { errorManager } from "../Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { sanitizeInput } from "@/utilities/sanitize";
 
 type MergeProjectProps = {
   buttonElement?: {
@@ -58,14 +59,15 @@ function SearchProject({
   };
 
   const debouncedSearch = debounce(async (value: string) => {
-    if (value.length < 3) {
+    const sanitizedValue = sanitizeInput(value);
+    if (sanitizedValue.length < 3) {
       setResults({ communities: [], projects: [] });
       return setIsSearchListOpen(false);
     }
 
     setIsLoading(true);
     setIsSearchListOpen(true);
-    const result = await gapIndexerApi.search(value);
+    const result = await gapIndexerApi.search(sanitizedValue);
     setResults(result.data);
     return setIsLoading(false);
   }, 500);

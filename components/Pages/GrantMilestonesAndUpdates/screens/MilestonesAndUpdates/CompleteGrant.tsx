@@ -9,6 +9,7 @@ import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
+import { sanitizeObject } from "@/utilities/sanitize";
 import { shortAddress } from "@/utilities/shortAddress";
 import { config } from "@/utilities/wagmi/config";
 import { XMarkIcon } from "@heroicons/react/24/solid";
@@ -76,15 +77,12 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
         (g) => g.uid.toLowerCase() === grantToComplete.uid.toLowerCase()
       );
       if (!grantInstance) return;
+      const sanitizedGrantComplete = sanitizeObject({
+        title: data.title || "",
+        text: data.text || "",
+      });
       await grantInstance
-        .complete(
-          walletSigner,
-          {
-            title: data.title || "",
-            text: data.text || "",
-          },
-          changeStepperStep
-        )
+        .complete(walletSigner, sanitizedGrantComplete, changeStepperStep)
         .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");

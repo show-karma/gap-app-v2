@@ -56,6 +56,7 @@ import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-ind
 import { getProjectById } from "@/utilities/sdk";
 import { NetworkDropdown } from "./NetworkDropdown";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { sanitizeObject } from "@/utilities/sanitize";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -585,10 +586,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   };
 
   const onSubmit = async (data: SchemaType) => {
+    const sanitizedData = sanitizeObject(data);
     if (projectToUpdate) {
-      updateThisProject(data);
+      updateThisProject(sanitizedData);
     } else {
-      createProject(data);
+      createProject(sanitizedData);
     }
   };
 

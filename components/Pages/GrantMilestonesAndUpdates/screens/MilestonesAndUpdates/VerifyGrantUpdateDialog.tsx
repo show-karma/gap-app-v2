@@ -25,6 +25,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { GrantUpdate } from "@show-karma/karma-gap-sdk";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { sanitizeInput } from "@/utilities/sanitize";
 
 type VerifyGrantUpdateDialogProps = {
   grantUpdate: IGrantUpdate;
@@ -101,7 +102,7 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
       );
       if (!grantUpdateInstance) return;
       await grantUpdateInstance
-        .verify(walletSigner, data.comment, changeStepperStep)
+        .verify(walletSigner, sanitizeInput(data.comment), changeStepperStep)
         .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
