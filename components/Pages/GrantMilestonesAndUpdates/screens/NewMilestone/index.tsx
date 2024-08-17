@@ -71,7 +71,8 @@ interface NewMilestoneProps {
 
 export const NewMilestone: FC<NewMilestoneProps> = ({ grant }) => {
   const { uid, chainID, recipient: grantRecipient } = grant;
-  const projectUID = grant?.project?.uid;
+  const project = useProjectStore((state) => state.project);
+  const projectUID = project?.uid;
   const form = useForm<z.infer<typeof milestoneSchema>>({
     resolver: zodResolver(milestoneSchema),
   });
