@@ -1,6 +1,6 @@
 import {
   Review,
-  BadgeListProps,
+  Badge,
   BadgeName,
   BadgeDescription,
   ReviewMode,
@@ -10,13 +10,13 @@ import { create } from "zustand";
 interface ReviewStore {
   review: Review[];
   setReview: (review: Review[]) => void;
-  badgeList: BadgeListProps[][];
-  setBadgeList: (badgeList: BadgeListProps[][]) => void;
+  badgeList: Badge[][];
+  setBadgeList: (badgeList: Badge[][]) => void;
   isOpenReview: ReviewMode;
   setIsOpenReview: (isOpenReview: ReviewMode) => void;
 }
 
-const initialBadgeList: BadgeListProps[][] = [
+const initialBadgeList: Badge[][] = [
   [
     {
       name: BadgeName.CLEAR_GOALS,
@@ -327,7 +327,7 @@ export const useReviewStore = create<ReviewStore>((set, get) => ({
   review: defaultReviews,
   setReview: (review: Review[]) => set((state) => ({ ...state, review })),
   badgeList: initialBadgeList,
-  setBadgeList: (badgeList: BadgeListProps[][]) =>
+  setBadgeList: (badgeList: Badge[][]) =>
     set((state) => ({ ...state, badgeList })),
   isOpenReview: ReviewMode.READ,
   setIsOpenReview: (isOpenReview: ReviewMode) =>
