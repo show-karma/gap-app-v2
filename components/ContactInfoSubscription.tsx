@@ -248,7 +248,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
   };
 
   return isAuthorized ? (
-    <div className="px-4 py-4 rounded-md border border-transparent dark:bg-zinc-800  dark:border flex flex-col gap-4 items-start">
+    <div className="px-4 py-4 rounded-md border border-transparent dark:bg-zinc-800 dark:border flex flex-col gap-4 items-start">
       <h3 className="text-xl font-bold leading-6 text-gray-900 dark:text-zinc-100">
         Contact Info
       </h3>
@@ -258,8 +258,11 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
         provide reminders about milestones and grant deadlines.
       </p>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-row gap-8">
-        <div className="flex w-full min-w-[320px] flex-col gap-3">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        className="flex flex-col md:flex-row gap-8"
+      >
+        <div className="flex w-full flex-col gap-3">
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="name-input" className={labelStyle}>
               Name *
@@ -303,7 +306,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
             isLoading={isLoading}
             disabled={isLoading || !isValid || !isAuthorized || isDeleteLoading}
             type="submit"
-            className="flex disabled:opacity-50 flex-row dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+            className="flex disabled:opacity-50 dark:bg-zinc-900 hover:text-white dark:text-white gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
           >
             Save
           </Button>
@@ -321,7 +324,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
       </form>
     </div>
   ) : (
-    <div className="px-4 py-4 rounded-md border border-transparent dark:bg-zinc-800  dark:border flex flex-col gap-4 items-start">
+    <div className="px-4 py-4 rounded-md border border-transparent dark:bg-zinc-800 dark:border flex flex-col gap-4 items-start">
       <h3 className="text-xl font-bold leading-6 text-gray-900 dark:text-zinc-100">
         You are not authorized
       </h3>
