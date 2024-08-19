@@ -570,6 +570,7 @@ const categories = [
   "Research",
   "Yield Farming",
   "Infrastructure",
+  "DeSci",
 ];
 const grantTypes = [
   "Direct Grants",
