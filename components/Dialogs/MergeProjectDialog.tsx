@@ -15,7 +15,6 @@ import debounce from "lodash.debounce";
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import { Spinner } from "../Utilities/Spinner";
 import EthereumAddressToENSName from "../EthereumAddressToENSName";
-import { blo } from "blo";
 import { PAGES } from "@/utilities/pages";
 import {
   IProjectResponse,

@@ -10,8 +10,6 @@ import { ExternalLink } from "./Utilities/ExternalLink";
 import { feedIconDictionary, getFeedHref } from "@/utilities/feed";
 import { formatDate } from "@/utilities/formatDate";
 import EthereumAddressToENSName from "./EthereumAddressToENSName";
-import { blo } from "blo";
-import { Hex } from "viem";
 import { MarkdownPreview } from "./Utilities/MarkdownPreview";
 import { useTheme } from "next-themes";
 import { cn } from "@/utilities/tailwind";

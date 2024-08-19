@@ -145,10 +145,9 @@ export const VerifiedBadge: FC<VerifiedBadgeProps> = ({
         onClick={openDialog}
       >
         {orderedSort.slice(0, 4).map((verification) => (
-          <img
+          <EthereumAddressToENSAvatar
             key={verification.attester}
-            src={blo(verification.attester as Hex, 8)}
-            alt={verification.attester}
+            address={verification.attester}
             className="h-8 w-8 min-h-8 min-w-8 rounded-full ring-2 ring-white dark:ring-gray-800"
           />
         ))}
