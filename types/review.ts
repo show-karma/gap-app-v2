@@ -8,7 +8,7 @@ export enum BadgeName {
   FAST_DISBURSEMENT = "Fast Disbursement",
 }
 
-export interface BadgeListProps {
+export interface Badge {
   name: BadgeName;
   description: string;
   score: number;
@@ -18,7 +18,7 @@ export interface Review {
   id: number;
   date: number; // UNIX Timestamp
   averageScore: number;
-  reviews: BadgeListProps[];
+  reviews: Badge[];
 }
 
 export const BadgeDescription: Record<BadgeName, string> = {
