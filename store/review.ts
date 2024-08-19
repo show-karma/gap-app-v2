@@ -14,6 +14,8 @@ interface ReviewStore {
   setBadgeList: (badgeList: Badge[][]) => void;
   isOpenReview: ReviewMode;
   setIsOpenReview: (isOpenReview: ReviewMode) => void;
+  isStarSelected: number | null;
+  setIsStarSelected: (isStarSelected: number | null) => void;
 }
 
 const initialBadgeList: Badge[][] = [
@@ -332,4 +334,7 @@ export const useReviewStore = create<ReviewStore>((set, get) => ({
   isOpenReview: ReviewMode.READ,
   setIsOpenReview: (isOpenReview: ReviewMode) =>
     set((state) => ({ ...state, isOpenReview })),
+  isStarSelected: null,
+  setIsStarSelected: (isStarSelected: number | null) =>
+    set((state) => ({ ...state, isStarSelected })),
 }));

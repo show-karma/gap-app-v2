@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { formatDate } from "@/utilities/formatDate";
 import { StarReviewIcon } from "@/components/Icons/StarReview";
 import { CardReview } from "@/components/Pages/Project/Review/CardReview";
@@ -9,8 +8,15 @@ import { useReviewStore } from "@/store/review";
 import { Review } from "@/types/review";
 
 export const NavbarReview = () => {
-  const [isStarSelected, setIsStarSelected] = useState<number | null>(null); // ID
   const review = useReviewStore((state) => state.review);
+  const isStarSelected = useReviewStore((state) => state.isStarSelected);
+
+  const handleToggleReviewSelected = (id: number) => {
+    const currentSelection = useReviewStore.getState().isStarSelected;
+    useReviewStore.setState({
+      isStarSelected: currentSelection === id ? null : id,
+    });
+  };
 
   return (
     <div className="w-full flex flex-col">
@@ -29,21 +35,19 @@ export const NavbarReview = () => {
                 <StarReviewIcon
                   props={{
                     className: `w-20 h-20 ${
-                      isStarSelected === index && "text-[#004EEB]"
+                      isStarSelected === miniReview.id && "text-[#004EEB]"
                     }`,
                   }}
                   pathProps={{
                     className: "cursor-pointer",
-                    fill: `${isStarSelected === index && "#004EEB"} `,
+                    fill: `${isStarSelected === miniReview.id && "#004EEB"} `,
                     onClick: () => {
-                      setIsStarSelected((prev) =>
-                        prev === index ? null : index
-                      );
+                      handleToggleReviewSelected(miniReview.id);
                     },
                   }}
                 />
                 <p>{miniReview.averageScore}</p>
-                {isStarSelected === index && (
+                {isStarSelected === miniReview.id && (
                   <div>
                     <ChevronDown />
                   </div>

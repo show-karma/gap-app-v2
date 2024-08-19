@@ -58,6 +58,7 @@ export const CardNewReview = () => {
   );
   const setIsOpenReview = useReviewStore((state) => state.setIsOpenReview);
   const setReview = useReviewStore((state) => state.setReview);
+  const setIsStarSelected = useReviewStore((state) => state.setIsStarSelected);
   const review = useReviewStore((state) => state.review);
   const _currentTimestamp = Math.floor(new Date().getTime() / 1000);
 
@@ -84,6 +85,7 @@ export const CardNewReview = () => {
     };
 
     setReview([...review, newReviewData]);
+    setIsStarSelected(newReviewData.id);
     toast.success("Review submitted successfully!");
     setNewReview(defaultInitialNewReviewList);
     setIsOpenReview(ReviewMode.READ);

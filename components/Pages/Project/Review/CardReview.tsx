@@ -7,12 +7,14 @@ import { Badge, ReviewMode } from "@/types/review";
 
 export const CardReview = ({ id }: { id: number }) => {
   const review = useReviewStore((state) => state.review);
-  const selectedBadgeList = review[id].reviews || [];
+
+  const isReviewSelected = review.find((review) => review.id === id);
+  const reviews = isReviewSelected?.reviews || [];
 
   return (
     <div className="flex w-full flex-col justify-center gap-4">
       <div className="w-full flex flex-col px-2 gap-2">
-        {selectedBadgeList.map((badge: Badge, index: number) => (
+        {reviews.map((badge: Badge, index: number) => (
           <div key={index} className="flex flex-col w-full px-14 mt-4">
             <div className="flex flex-row w-full items-center gap-3">
               <div>
