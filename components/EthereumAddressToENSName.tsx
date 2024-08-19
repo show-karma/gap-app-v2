@@ -1,5 +1,5 @@
 "use client";
-import { useENSNames } from "@/store/ensNames";
+import { useENS } from "@/store/ens";
 import React, { useEffect } from "react";
 
 interface Props {
@@ -15,8 +15,8 @@ const EthereumAddressToENSName: React.FC<Props> = ({
   //   address: address,
   //   cacheTime: 50000,
   // });
-  const ensNames = useENSNames((state) => state.ensNames);
-  const populateEnsNames = useENSNames((state) => state.populateEnsNames);
+  const ensNames = useENS((state) => state.ensData);
+  const populateEnsNames = useENS((state) => state.populateEnsNames);
 
   useEffect(() => {
     populateEnsNames([address]);

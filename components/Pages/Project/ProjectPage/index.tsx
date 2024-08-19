@@ -1,13 +1,13 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
+
 import { useProjectStore } from "@/store";
 import { useOwnerStore } from "@/store/owner";
 import { useEffect, useState } from "react";
 import { useAccount, useSwitchChain } from "wagmi";
 import toast from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+
 import dynamic from "next/dynamic";
 import { useGap } from "@/hooks";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -17,13 +17,13 @@ import { PAGES } from "@/utilities/pages";
 import { getWalletClient } from "@wagmi/core";
 import { Button } from "@/components/Utilities/Button";
 import Link from "next/link";
-import { EndorsementList } from "@/components/Pages/ProgramRegistry/EndorsementList";
+
 import { useStepper } from "@/store/modals/txStepper";
 import { config } from "@/utilities/wagmi/config";
 import { getProjectById } from "@/utilities/sdk";
 import { shortAddress } from "@/utilities/shortAddress";
 import { blo } from "blo";
-import { useENSNames } from "@/store/ensNames";
+import { useENS } from "@/store/ens";
 import { Hex } from "viem";
 import { ChevronRightIcon } from "@heroicons/react/24/solid";
 import { cn } from "@/utilities/tailwind";
@@ -39,6 +39,7 @@ import { useIntroModalStore } from "@/store/modals/intro";
 import { GrantsGenieDialog } from "@/components/Dialogs/GrantGenieDialog";
 import { ProjectBlocks } from "./ProjectBlocks";
 import { ProjectBodyTabs } from "./ProjectBodyTabs";
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 
@@ -114,7 +115,7 @@ function ProjectPage() {
     }
   };
 
-  const { populateEnsNames, ensNames } = useENSNames();
+  const { populateEnsNames, ensData } = useENS();
 
   useEffect(() => {
     if (project?.members) {
@@ -182,15 +183,14 @@ function ProjectPage() {
               key={member.uid}
               className="flex items-center flex-row gap-3 p-3"
             >
-              <img
-                src={blo(member.recipient as `0x${string}`, 8)}
-                alt={member.details?.name || member.recipient}
+              <EthereumAddressToENSAvatar
+                address={member.recipient}
                 className="h-8 w-8 rounded-full"
               />
               <div className="flex flex-col gap-1">
                 <p className="text-sm font-bold text-[#101828] dark:text-gray-400 line-clamp-1 text-wrap whitespace-nowrap w-full">
                   {member.details?.name ||
-                    ensNames[member.recipient as Hex]?.name ||
+                    ensData[member.recipient as Hex]?.name ||
                     shortAddress(member.recipient)}
                 </p>
                 {member.recipient?.toLowerCase() ===
@@ -201,7 +201,7 @@ function ProjectPage() {
                 ) : null}
                 <div className="flex flex-row gap-2 justify-between items-center w-full max-w-max">
                   <p className="text-sm font-medium text-[#475467] dark:text-gray-300 line-clamp-1 text-wrap whitespace-nowrap">
-                    {ensNames[member.recipient as Hex]?.name ||
+                    {ensData[member.recipient as Hex]?.name ||
                       shortAddress(member.recipient)}
                   </p>
                   <button type="button" onClick={() => copy(member.recipient)}>
