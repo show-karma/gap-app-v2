@@ -371,16 +371,6 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
                       className="-ml-1.5"
                       style={{ zIndex: 1 + index }}
                     >
-                      {/* <Image
-                        width={20}
-                        height={20}
-                        src={
-                          ensData[member.recipient as `0x${string}`]?.avatar ||
-                          blo(member.recipient as `0x${string}`, 8)
-                        }
-                        alt={member.recipient}
-                        className="h-5 w-5 rounded-full border border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5"
-                      /> */}
                       <EthereumAddressToENSAvatar
                         address={member.recipient}
                         className="h-5 w-5 rounded-full border border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5"

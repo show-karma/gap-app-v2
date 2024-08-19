@@ -42,11 +42,6 @@ const BlockieTooltip = ({
       <Tooltip.Root delayDuration={0.5}>
         <Tooltip.Trigger asChild>
           <div>
-            {/* <img
-              src={ensData[address]?.avatar || blo(address, 8)}
-              alt={address}
-              className="h-8 w-8 min-h-8 min-w-8 rounded-full ring-2 ring-white dark:ring-gray-800"
-            /> */}
             <EthereumAddressToENSAvatar
               address={address}
               className="h-8 w-8 min-h-8 min-w-8 rounded-full ring-2 ring-white dark:ring-gray-800"

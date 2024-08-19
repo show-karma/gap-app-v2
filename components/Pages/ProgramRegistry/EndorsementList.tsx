@@ -1,6 +1,6 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { FC, useMemo, useState } from "react";
+import { FC, useEffect, useMemo, useState } from "react";
 import { blo } from "blo";
 import { Hex } from "viem";
 import { useENS } from "@/store/ens";
@@ -12,24 +12,24 @@ import pluralize from "pluralize";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { IProjectEndorsement } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 
 interface EndorsementRowProps {
   endorsement: IProjectEndorsement;
 }
 
 const EndorsementRow: FC<EndorsementRowProps> = ({ endorsement }) => {
-  const { ensData } = useENS();
+  const { ensData, populateEnsNames } = useENS();
+  useEffect(() => {
+    populateEnsNames([endorsement.recipient]);
+  }, [endorsement.recipient, populateEnsNames]);
 
   return (
     <div className="flex flex-col w-full p-4 gap-3">
       <div className="flex flex-row gap-2 w-full items-start">
         <div className="flex flex-row gap-2 w-full items-center">
-          <img
-            src={
-              ensData[endorsement.recipient]?.avatar ||
-              blo(endorsement.recipient, 6)
-            }
-            alt={endorsement.recipient}
+          <EthereumAddressToENSAvatar
+            address={endorsement.recipient}
             className="h-6 w-6 rounded-full"
           />
           <div className="flex flex-row gap-3 w-full items-start justify-between">

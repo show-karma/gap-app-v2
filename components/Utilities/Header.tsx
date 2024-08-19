@@ -474,14 +474,7 @@ export default function Header() {
                                 className="flex w-max items-center flex-row gap-2 rounded-full bg-gray-500 p-0 pl-3 text-sm font-semibold text-white hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
                               >
                                 {account.displayName}
-                                {/* <img
-                                  src={
-                                    ensAvatars[account.address as Hex]
-                                      ?.avatar || blo(account.address as Hex)
-                                  }
-                                  alt="avatar"
-                                  className="h-10 w-10 rounded-full"
-                                /> */}
+
                                 <EthereumAddressToENSAvatar
                                   address={account.address}
                                   className="h-10 w-10 rounded-full"

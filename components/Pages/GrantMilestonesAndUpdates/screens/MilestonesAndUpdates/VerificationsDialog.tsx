@@ -3,7 +3,6 @@ import { FC, Fragment, useEffect, useMemo, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 
-import { blo } from "blo";
 import { Hex } from "viem";
 import { useENS } from "@/store/ens";
 import { useProjectStore } from "@/store/project";
@@ -37,18 +36,15 @@ interface VerificationsItemProps {
 
 const VerificationItem = ({ verification }: VerificationsItemProps) => {
   const { ensData } = useENS();
+  const populateEnsNames = useENS((state) => state.populateEnsNames);
+
+  useEffect(() => {
+    populateEnsNames([verification.attester]);
+  }, [verification.attester, populateEnsNames]);
 
   return (
     <div className="flex flex-col items-start gap-1.5 p-4">
       <div className="flex flex-row gap-3 items-center">
-        {/* <img
-          src={
-            ensData[verification.attester as Hex]?.avatar ||
-            blo(verification.attester as Hex, 8)
-          }
-          alt={verification.attester}
-          className="h-8 w-8 min-h-8 min-w-8 rounded-full"
-        /> */}
         <EthereumAddressToENSAvatar
           address={verification.attester}
           className="h-8 w-8 min-h-8 min-w-8 rounded-full"

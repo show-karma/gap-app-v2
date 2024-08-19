@@ -39,6 +39,7 @@ import { useIntroModalStore } from "@/store/modals/intro";
 import { GrantsGenieDialog } from "@/components/Dialogs/GrantGenieDialog";
 import { ProjectBlocks } from "./ProjectBlocks";
 import { ProjectBodyTabs } from "./ProjectBodyTabs";
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 
 const ProjectDialog = dynamic(
   () =>
@@ -168,7 +169,6 @@ function ProjectPage() {
   const { setActivityTab } = useActivityTabStore();
 
   const Team = () => {
-    const { ensData } = useENS();
     return members.length ? (
       <div className="flex flex-col gap-2 w-full min-w-48">
         <div className="font-semibold text-black dark:text-white leading-none">
@@ -180,12 +180,8 @@ function ProjectPage() {
               key={member.uid}
               className="flex items-center flex-row gap-3 p-3"
             >
-              <img
-                src={
-                  ensData[member.recipient as `0x${string}`]?.avatar ||
-                  blo(member.recipient as `0x${string}`, 8)
-                }
-                alt={member.details?.name || member.recipient}
+              <EthereumAddressToENSAvatar
+                address={member.recipient}
                 className="h-8 w-8 rounded-full"
               />
               <div className="flex flex-col gap-1">

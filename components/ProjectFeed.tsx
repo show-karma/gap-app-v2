@@ -112,14 +112,6 @@ export const ProjectFeed = ({ initialFeed = [] }: ProjectFeedProps) => {
                         />
                       </div>
                       <div className="flex flex-row items-center gap-1 flex-wrap">
-                        {/* <img
-                          src={
-                            ensData[item.attester as Hex]?.avatar ||
-                            blo(item.attester as Hex, 8)
-                          }
-                          alt={item.attester}
-                          className="h-5 w-5 rounded-full border-1 border-gray-100 dark:border-zinc-900"
-                        /> */}
                         <EthereumAddressToENSAvatar
                           address={item.attester}
                           className="h-5 w-5 rounded-full border-1 border-gray-100 dark:border-zinc-900"

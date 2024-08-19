@@ -6,7 +6,7 @@ import Link from "next/link";
 
 import { Spinner } from "../Utilities/Spinner";
 import EthereumAddressToENSName from "../EthereumAddressToENSName";
-import { blo } from "blo";
+
 import { PAGES } from "@/utilities/pages";
 import {
   IProjectResponse,
@@ -18,8 +18,7 @@ import { useAuthStore } from "@/store/auth";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useEffect, useState } from "react";
 import { useMobileStore } from "@/store/mobile";
-import { useENS } from "@/store/ens";
-import { Hex } from "viem";
+
 import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
 
 interface Props {
@@ -39,7 +38,6 @@ export const SearchList: React.FC<Props> = ({
   const { isAuth } = useAuthStore();
   const { openConnectModal } = useConnectModal();
   const [shouldOpen, setShouldOpen] = useState(false);
-  const { ensData } = useENS();
 
   const triggerCreateProjectModal = () => {
     if (!isConnected || !isAuth) {
@@ -83,14 +81,6 @@ export const SearchList: React.FC<Props> = ({
             <div className="mt-3 flex items-center">
               <small className="mr-2">By</small>
               <div className="flex flex-row gap-1 items-center font-medium">
-                {/* <img
-                  src={
-                    ensData[item.recipient as Hex]?.avatar ||
-                    blo(item.recipient as Hex, 8)
-                  }
-                  className="w-4 h-4  rounded-full border-1 border-gray-100 dark:border-zinc-900"
-                  alt="Recipient's Profile Picture"
-                /> */}
                 <EthereumAddressToENSAvatar
                   address={item.recipient}
                   className="w-4 h-4  rounded-full border-1 border-gray-100 dark:border-zinc-900"
