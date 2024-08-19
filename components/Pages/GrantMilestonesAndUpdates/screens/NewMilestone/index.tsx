@@ -28,6 +28,11 @@ import { useCommunityAdminStore } from "@/store/community";
 import { useStepper } from "@/store/modals/txStepper";
 import { config } from "@/utilities/wagmi/config";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+
+import { errorManager } from "@/components/Utilities/errorManager";
+import { sanitizeObject } from "@/utilities/sanitize";
 
 const milestoneSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.MILESTONES.FORM.TITLE }),
@@ -64,9 +69,10 @@ interface NewMilestoneProps {
   grant: IGrantResponse;
 }
 
-export const NewMilestone: FC<NewMilestoneProps> = ({
-  grant: { uid, chainID, recipient: grantRecipient },
-}) => {
+export const NewMilestone: FC<NewMilestoneProps> = ({ grant }) => {
+  const { uid, chainID, recipient: grantRecipient } = grant;
+  const project = useProjectStore((state) => state.project);
+  const projectUID = project?.uid;
   const form = useForm<z.infer<typeof milestoneSchema>>({
     resolver: zodResolver(milestoneSchema),
   });
@@ -123,26 +129,28 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
         await switchChainAsync?.({ chainId: chainID });
         gapClient = getGapClient(chainID);
       }
+      const sanitizedMilestone = sanitizeObject({
+        description: milestone.description,
+        endsAt: milestone.endsAt,
+        startsAt: milestone.startsAt,
+        title: milestone.title,
+      });
       const milestoneToAttest = new Milestone({
         refUID: uid,
         schema: gapClient.findSchema("Milestone"),
         recipient: (recipient as Hex) || address,
-        data: {
-          description: milestone.description,
-          endsAt: milestone.endsAt,
-          startsAt: milestone.startsAt,
-          title: milestone.title,
-        },
+        data: sanitizedMilestone,
       });
       if (milestone.completedText) {
+        const sanitizedCompletedData = sanitizeObject({
+          reason: milestone.completedText,
+          type: "completed",
+        });
         milestoneToAttest.completed = new MilestoneCompleted({
           refUID: milestoneToAttest.uid,
           schema: gapClient.findSchema("MilestoneCompleted"),
           recipient: (recipient as Hex) || address,
-          data: {
-            reason: milestone.completedText,
-            type: "completed",
-          },
+          data: sanitizedCompletedData,
         });
       }
       const walletClient = await getWalletClient(config, {
@@ -152,9 +160,17 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
       const walletSigner = await walletClientToSigner(walletClient);
       await milestoneToAttest
         .attest(walletSigner as any, changeStepperStep)
-        .then(async () => {
+        .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, chainID),
+              "POST",
+              {}
+            );
+          }
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {
@@ -179,9 +195,13 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
               });
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       toast.error(MESSAGES.MILESTONES.CREATE.ERROR);
+      errorManager(
+        `Error creating milestone for grant ${uid} from project ${projectUID}`,
+        error
+      );
     } finally {
       setIsLoading(false);
       setIsStepper(false);
@@ -330,7 +350,6 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
             </label>
             <div className="mt-2 w-full bg-transparent" data-color-mode="light">
               <MarkdownEditor
-                className="bg-transparent"
                 value={description}
                 onChange={(newValue: string) => setDescription(newValue || "")}
                 placeholderText="Please provide a concise description of your objectives for this milestone"
@@ -343,7 +362,6 @@ export const NewMilestone: FC<NewMilestoneProps> = ({
             </label>
             <div className="mt-2 w-full bg-transparent" data-color-mode="light">
               <MarkdownEditor
-                className="bg-transparent"
                 value={completedUpdate}
                 onChange={(newValue: string) =>
                   setCompletedUpdate(newValue || "")

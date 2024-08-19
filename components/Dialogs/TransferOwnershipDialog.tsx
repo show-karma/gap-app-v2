@@ -8,12 +8,16 @@ import { isAddress } from "viem";
 import { useProjectStore } from "@/store";
 import { useAccount, useSwitchChain } from "wagmi";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { appNetwork } from "@/utilities/network";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { getWalletClient } from "@wagmi/core";
 import { useStepper } from "@/store/modals/txStepper";
 import { getProjectById, getProjectOwner } from "@/utilities/sdk";
 import { config } from "@/utilities/wagmi/config";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+
+import { errorManager } from "../Utilities/errorManager";
+import { sanitizeInput } from "@/utilities/sanitize";
 
 type TransferOwnershipProps = {
   buttonElement?: {
@@ -49,6 +53,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
   const setIsProjectOwner = useProjectStore((state) => state.setIsProjectOwner);
   const { switchChainAsync } = useSwitchChain();
   const { changeStepperStep, setIsStepper } = useStepper();
+
   const transfer = async () => {
     if (!project) return;
     if (!newOwner || !isAddress(newOwner)) {
@@ -69,10 +74,22 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
       const fetchedProject = await getProjectById(project.uid);
       if (!fetchedProject) return;
       await fetchedProject
-        .transferOwnership(walletSigner, newOwner, changeStepperStep)
-        .then(async () => {
+        .transferOwnership(
+          walletSigner,
+          sanitizeInput(newOwner),
+          changeStepperStep
+        )
+        .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, project.chainID),
+              "POST",
+              {}
+            );
+          }
           while (retries > 0) {
             const stillProjectOwner = await getProjectOwner(
               walletSigner || signer,
@@ -92,8 +109,12 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
           toast.success("Ownership transferred successfully");
         });
       closeModal();
-    } catch (error) {
+    } catch (error: any) {
       toast.error("Something went wrong. Please try again later.");
+      errorManager(
+        `Error transferring ownership from ${project.recipient} to ${newOwner}`,
+        error
+      );
       console.error(error);
     } finally {
       setIsLoading(false);

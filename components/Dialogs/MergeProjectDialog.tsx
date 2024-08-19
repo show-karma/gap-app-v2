@@ -27,6 +27,10 @@ import { getGapClient, useGap } from "@/hooks";
 import { ProjectPointer } from "@show-karma/karma-gap-sdk";
 import { useRouter } from "next/navigation";
 import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
+import { errorManager } from "../Utilities/errorManager";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { sanitizeInput } from "@/utilities/sanitize";
 
 type MergeProjectProps = {
   buttonElement?: {
@@ -55,14 +59,15 @@ function SearchProject({
   };
 
   const debouncedSearch = debounce(async (value: string) => {
-    if (value.length < 3) {
+    const sanitizedValue = sanitizeInput(value);
+    if (sanitizedValue.length < 3) {
       setResults({ communities: [], projects: [] });
       return setIsSearchListOpen(false);
     }
 
     setIsLoading(true);
     setIsSearchListOpen(true);
-    const result = await gapIndexerApi.search(value);
+    const result = await gapIndexerApi.search(sanitizedValue);
     setResults(result.data);
     return setIsLoading(false);
   }, 500);
@@ -85,8 +90,10 @@ function SearchProject({
             <div className="mt-3 flex items-center">
               <small className="mr-2">By</small>
               <div className="flex flex-row gap-1 items-center font-medium">
-                <EthereumAddressToENSAvatar address={item.recipient} />
-                <EthereumAddressToENSName address={item.recipient} />
+                <EthereumAddressToENSAvatar
+                  address={item.recipient}
+                  className="w-4 h-4  rounded-full border-1 border-gray-100 dark:border-zinc-900"
+                />
               </div>
             </div>
           </div>
@@ -202,9 +209,17 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
 
       await projectPointer
         .attest(walletSigner as any, changeStepperStep)
-        .then(async () => {
+        .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, project.chainID),
+              "POST",
+              {}
+            );
+          }
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {
@@ -233,8 +248,9 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
               });
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
+      errorManager(`Error creating project pointer`, error);
       toast.error(MESSAGES.PROJECT_POINTER_FORM.ERROR);
     } finally {
       setIsStepper(false);

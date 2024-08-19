@@ -6,6 +6,8 @@ import { Dialog, Transition } from "@headlessui/react";
 import { Button } from "@/components/Utilities/Button";
 import { ArrowPathIcon, ChartBarSquareIcon } from "@heroicons/react/24/solid";
 
+import { errorManager } from "./Utilities/errorManager";
+
 interface CommunityStatsProps {
   communityId: string;
 }
@@ -66,8 +68,9 @@ export default function CommunityStats({ communityId }: CommunityStatsProps) {
           setError("No stats found for community");
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error fetching stats:", error);
+      errorManager(`Error fetching stats: ${error}`, error);
       setError(error);
     } finally {
       setLoading(false);

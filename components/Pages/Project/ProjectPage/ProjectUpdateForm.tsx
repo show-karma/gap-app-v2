@@ -1,11 +1,15 @@
 /* eslint-disable @next/next/no-img-element */
 import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
+import { sanitizeObject } from "@/utilities/sanitize";
 import { config } from "@/utilities/wagmi/config";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProjectUpdate } from "@show-karma/karma-gap-sdk";
@@ -68,12 +72,13 @@ export const ProjectUpdateForm: FC = () => {
       if (!walletClient || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
 
+      const sanitizedData = sanitizeObject({
+        text,
+        title,
+        type: "project-update",
+      });
       const projectUpdate = new ProjectUpdate({
-        data: {
-          text,
-          title,
-          type: "project-update",
-        },
+        data: sanitizedData,
         recipient: project.recipient,
         refUID: project.uid,
         schema: gapClient.findSchema("ProjectUpdate"),
@@ -81,7 +86,15 @@ export const ProjectUpdateForm: FC = () => {
 
       await projectUpdate
         .attest(walletSigner as any, changeStepperStep)
-        .then(async () => {
+        .then(async (res) => {
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, projectUpdate.chainID),
+              "POST",
+              {}
+            );
+          }
           let retries = 1000;
           changeStepperStep("indexing");
           while (retries > 0) {
@@ -109,7 +122,11 @@ export const ProjectUpdateForm: FC = () => {
               });
           }
         });
-    } catch (error) {
+    } catch (error: any) {
+      errorManager(
+        `Error of user ${address} creating project update for project ${project?.uid}`,
+        error
+      );
       console.log(error);
       toast.error(MESSAGES.PROJECT_UPDATE_FORM.ERROR);
     } finally {
@@ -163,7 +180,6 @@ export const ProjectUpdateForm: FC = () => {
           </label>
           <div className="w-full bg-transparent" data-color-mode="light">
             <MarkdownEditor
-              className="bg-transparent"
               value={watch("text")}
               onChange={(newValue: string) =>
                 setValue("text", newValue, {

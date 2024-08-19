@@ -13,7 +13,6 @@ import {
   Grant,
   Milestone,
   MilestoneCompleted,
-  Community,
 } from "@show-karma/karma-gap-sdk";
 import type { FC } from "react";
 import { useEffect, useState } from "react";
@@ -52,6 +51,11 @@ import {
   IGrantResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+
+import { errorManager } from "@/components/Utilities/errorManager";
+import { sanitizeObject } from "@/utilities/sanitize";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -342,58 +346,63 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         recipient: (data.recipient as Hex) || address,
         uid: nullRef,
       });
+      const sanitizedDetails = sanitizeObject({
+        amount: data.amount || "",
+        description: data.description,
+        proposalURL: data.linkToProposal,
+        title: data.title,
+        assetAndChainId: ["0x0", 1],
+        payoutAddress: address,
+        // cycle: data.cycle,
+        // season: data.season,
+        questions: data.questions,
+        startDate: data.startDate,
+      });
+
       grant.details = new GrantDetails({
-        data: {
-          amount: data.amount || "",
-          description: data.description,
-          proposalURL: data.linkToProposal,
-          title: data.title,
-          assetAndChainId: ["0x0", 1],
-          payoutAddress: address,
-          // cycle: data.cycle,
-          // season: data.season,
-          questions: data.questions,
-          startDate: data.startDate,
-        },
+        data: sanitizedDetails,
         refUID: grant.uid,
         schema: gapClient.findSchema("GrantDetails"),
         recipient: grant.recipient,
         uid: nullRef,
       });
       // eslint-disable-next-line no-param-reassign
+      const sanitizedUpdate = sanitizeObject({
+        text: data.grantUpdate || "",
+        title: "",
+      });
       grant.updates = data.grantUpdate
         ? [
-          new GrantUpdate({
-            data: {
-              text: data.grantUpdate || "",
-              title: "",
-            },
-            schema: gapClient.findSchema("Milestone"),
-            recipient: grant.recipient,
-          }),
-        ]
+            new GrantUpdate({
+              data: sanitizedUpdate,
+              schema: gapClient.findSchema("Milestone"),
+              recipient: grant.recipient,
+            }),
+          ]
         : [];
 
       // eslint-disable-next-line no-param-reassign
       grant.milestones = data.milestones.map((milestone) => {
+        const sanitizedMilestone = sanitizeObject({
+          title: milestone.title,
+          description: milestone.description,
+          endsAt: milestone.endsAt,
+          startsAt: milestone.startsAt,
+        });
         const created = new Milestone({
-          data: {
-            title: milestone.title,
-            description: milestone.description,
-            endsAt: milestone.endsAt,
-            startsAt: milestone.startsAt,
-          },
+          data: sanitizedMilestone,
           refUID: grant.uid,
           schema: gapClient.findSchema("Milestone"),
           recipient: grant.recipient,
           uid: nullRef,
         });
         if (milestone.completedText) {
+          const sanitizedCompleted = sanitizeObject({
+            reason: milestone.completedText,
+            type: "completed",
+          });
           created.completed = new MilestoneCompleted({
-            data: {
-              reason: milestone.completedText,
-              type: "completed",
-            },
+            data: sanitizedCompleted,
             refUID: created.uid,
             schema: gapClient.findSchema("MilestoneCompleted"),
             recipient: grant.recipient,
@@ -409,10 +418,18 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       const walletSigner = await walletClientToSigner(walletClient);
       await grant
         .attest(walletSigner as any, selectedProject.chainID, changeStepperStep)
-        .then(async () => {
+        .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
           let fetchedProject = null;
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, grant.chainID),
+              "POST",
+              {}
+            );
+          }
           while (retries > 0) {
             fetchedProject = await gapClient!.fetch
               .projectById(selectedProject.uid as Hex)
@@ -435,9 +452,12 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             await new Promise((resolve) => setTimeout(resolve, 1500));
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       toast.error(MESSAGES.GRANT.CREATE.ERROR);
-      console.log(error);
+      errorManager(
+        `Error creating grant to project ${selectedProject.uid}`,
+        error
+      );
     } finally {
       setIsLoading(false);
       setIsStepper(false);
@@ -462,7 +482,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       oldGrantInstance.setValues({
         communityUID: data.community,
       });
-      const grantData = {
+      const grantData = sanitizeObject({
         amount: data.amount || "",
         description: data.description,
         proposalURL: data.linkToProposal,
@@ -472,7 +492,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         // season: data.season,
         questions: data.questions,
         startDate: data.startDate,
-      };
+      });
       oldGrantInstance.details?.setValues(grantData);
       const walletClient = await getWalletClient(config, {
         chainId: oldGrant.chainID,
@@ -487,9 +507,17 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       );
       await oldGrantInstance.details
         ?.attest(walletSigner as any, changeStepperStep)
-        .then(async () => {
+        .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, oldGrant.chainID),
+              "POST",
+              {}
+            );
+          }
           while (retries > 0) {
             const fetchedProject = await gapIndexerApi
               .projectBySlug(oldGrant.refUID)
@@ -523,8 +551,12 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             await new Promise((resolve) => setTimeout(resolve, 1500));
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       toast.error(MESSAGES.GRANT.UPDATE.ERROR);
+      errorManager(
+        `Error updating grant ${oldGrant.uid} from project ${selectedProject.uid}`,
+        error
+      );
       console.log(error);
     } finally {
       setIsLoading(false);
@@ -648,7 +680,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         const result = await gapIndexerApi.communities();
         setAllCommunities(result.data);
         return result;
-      } catch (error) {
+      } catch (error: any) {
         console.log(error);
         setAllCommunities([]);
         return undefined;
@@ -674,8 +706,12 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           signer
         );
         setIsCommunityAllowed(result);
-      } catch {
+      } catch (error: any) {
         setIsCommunityAllowed(false);
+        errorManager(
+          `Error checking if ${address} is community admin for ${communityToSearch}`,
+          error
+        );
       }
     }
     const communityIdEdit =
@@ -1036,7 +1072,6 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                 data-color-mode="light"
               >
                 <MarkdownEditor
-                  className="bg-transparent"
                   value={grantUpdate}
                   onChange={(newValue: string) =>
                     setGrantUpdate(newValue || "")

@@ -39,7 +39,7 @@ import { useProjectStore } from "@/store";
 import { useOwnerStore } from "@/store/owner";
 import { MESSAGES } from "@/utilities/messages";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
+
 import { appNetwork } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -54,6 +54,9 @@ import { INDEXER } from "@/utilities/indexer";
 import { config } from "@/utilities/wagmi/config";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getProjectById } from "@/utilities/sdk";
+import { NetworkDropdown } from "./NetworkDropdown";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { sanitizeObject } from "@/utilities/sanitize";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -64,6 +67,10 @@ const labelStyle =
 
 const schema = z.object({
   title: z.string().min(3, { message: MESSAGES.PROJECT_FORM.TITLE }),
+  chainID: z.number({
+    required_error: "Network is required",
+    message: "Network is required",
+  }),
   locationOfImpact: z.string().optional(),
   description: z
     .string({
@@ -145,6 +152,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   previousContacts,
 }) => {
   const dataToUpdate = {
+    chainID: projectToUpdate?.chainID,
     description: projectToUpdate?.details?.data?.description || "",
     title: projectToUpdate?.details?.data?.title || "",
     problem: projectToUpdate?.details?.data?.problem,
@@ -209,9 +217,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   }
   function openModal() {
     setIsOpen(true);
-    if (!projectToUpdate) {
-      setContacts([]);
-    }
   }
 
   // const addMemberToArray = () => {
@@ -259,7 +264,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         !!errors?.problem ||
         !!errors?.solution ||
         !!errors?.missionSummary ||
-        !watch("title")
+        !watch("title") ||
+        !watch("description") ||
+        !watch("problem") ||
+        !watch("solution") ||
+        !watch("missionSummary")
       );
     }
     if (step === 1) {
@@ -272,7 +281,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       );
     }
     if (step === 3) {
-      return !contacts.length;
+      return !contacts.length || !!errors?.chainID || !watch("chainID");
     }
     // if (step === 2) {
     //   return (
@@ -295,6 +304,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         "missionSummary",
       ],
       1: ["twitter", "github", "discord", "website", "linkedin"],
+      3: ["chainID"],
     };
 
     if (stepsToValidate[step]) {
@@ -318,11 +328,13 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       }
       if (!address) return;
       if (!gap) return;
-      let gapClient = gap;
 
-      if (!checkNetworkIsValid(chain?.id)) {
-        await switchChainAsync?.({ chainId: appNetwork[0].id });
-        gapClient = getGapClient(appNetwork[0].id);
+      const chainSelected = data.chainID;
+      let gapClient = getGapClient(chainSelected);
+
+      if (chain?.id !== chainSelected) {
+        await switchChainAsync?.({ chainId: chainSelected });
+        gapClient = getGapClient(chainSelected);
       }
 
       const project = new Project({
@@ -340,9 +352,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         links: ExternalLink;
         recipient?: string;
       }
-
+      const { chainID, ...rest } = data;
       const newProjectInfo: NewProjectData = {
-        ...data,
+        ...rest,
         // members: team.map((item) => item as Hex),
         members: [(data.recipient || address) as Hex],
         links: [
@@ -370,9 +382,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         imageURL: "",
       };
 
-      if (!gap) return;
+      if (!gapClient) return;
 
-      const slug = await gap.generateSlug(newProjectInfo.title);
+      const slug = await gapClient.generateSlug(newProjectInfo.title);
       // eslint-disable-next-line no-param-reassign
       project.details = new ProjectDetails({
         data: {
@@ -382,7 +394,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           solution: newProjectInfo.solution,
           missionSummary: newProjectInfo.missionSummary,
           locationOfImpact: newProjectInfo.locationOfImpact,
-
           imageURL: "",
           links: newProjectInfo.links,
           slug,
@@ -395,7 +406,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           pathToTake: newProjectInfo.pathToTake,
         },
         refUID: project.uid,
-        schema: gap.findSchema("ProjectDetails"),
+        schema: gapClient.findSchema("ProjectDetails"),
         recipient: project.recipient,
         uid: nullRef,
       });
@@ -414,7 +425,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             new MemberOf({
               recipient: member,
               refUID: project.uid,
-              schema: gap.findSchema("MemberOf"),
+              schema: gapClient.findSchema("MemberOf"),
               uid: nullRef,
               data: {
                 memberOf: true,
@@ -430,45 +441,55 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       const walletSigner = await walletClientToSigner(walletClient);
       closeModal();
       changeStepperStep("preparing");
-      await project.attest(walletSigner, changeStepperStep).then(async () => {
-        let retries = 1000;
-        let fetchedProject: Project | null = null;
-        changeStepperStep("indexing");
-        while (retries > 0) {
-          // eslint-disable-next-line no-await-in-loop
-          fetchedProject = await (slug
-            ? gap.fetch.projectBySlug(slug)
-            : gap.fetch.projectById(project.uid as Hex)
-          ).catch(() => null);
-          if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
+      await project
+        .attest(walletSigner, changeStepperStep)
+        .then(async (res) => {
+          let retries = 1000;
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
             await fetchData(
-              INDEXER.SUBSCRIPTION.CREATE(fetchedProject.uid),
+              INDEXER.ATTESTATION_LISTENER(txHash, project.chainID),
               "POST",
-              { contacts },
-              {},
-              {},
-              true
-            ).then(([res, error]) => {
-              if (error) {
-                toast.error(
-                  "Something went wrong with contact info save. Please try again later.",
-                  {
-                    className: "z-[9999]",
-                  }
-                );
-              }
-              retries = 0;
-              toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
-              router.push(PAGES.PROJECT.GRANTS(slug || project.uid));
-              changeStepperStep("indexed");
-              return;
-            });
+              {}
+            );
           }
-          retries -= 1;
-          // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-          await new Promise((resolve) => setTimeout(resolve, 1500));
-        }
-      })
+          let fetchedProject: Project | null = null;
+          changeStepperStep("indexing");
+          while (retries > 0) {
+            // eslint-disable-next-line no-await-in-loop
+            fetchedProject = await (slug
+              ? gapClient.fetch.projectBySlug(slug)
+              : gapClient.fetch.projectById(project.uid as Hex)
+            ).catch(() => null);
+            if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
+              await fetchData(
+                INDEXER.SUBSCRIPTION.CREATE(fetchedProject.uid),
+                "POST",
+                { contacts },
+                {},
+                {},
+                true
+              ).then(([res, error]) => {
+                if (error) {
+                  toast.error(
+                    "Something went wrong with contact info save. Please try again later.",
+                    {
+                      className: "z-[9999]",
+                    }
+                  );
+                }
+                retries = 0;
+                toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
+                router.push(PAGES.PROJECT.GRANTS(slug || project.uid));
+                changeStepperStep("indexed");
+                return;
+              });
+            }
+            retries -= 1;
+            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+          }
+        });
 
       reset();
       setTeam([]);
@@ -476,8 +497,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       setStep(0);
       setIsStepper(false);
       setContacts([]);
-    } catch (error) {
+    } catch (error: any) {
       console.log({ error });
+      errorManager(`Error creating project`, error);
       toast.error(MESSAGES.PROJECT.CREATE.ERROR);
       setIsStepper(false);
       openModal();
@@ -547,8 +569,14 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           router.push(PAGES.PROJECT.OVERVIEW(project));
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
+      errorManager(
+        `Error updating project ${
+          projectToUpdate?.details?.data?.slug || projectToUpdate?.uid
+        }`,
+        error
+      );
       toast.error(MESSAGES.PROJECT.UPDATE.ERROR);
       openModal();
     } finally {
@@ -558,10 +586,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   };
 
   const onSubmit = async (data: SchemaType) => {
+    const sanitizedData = sanitizeObject(data);
     if (projectToUpdate) {
-      updateThisProject(data);
+      updateThisProject(sanitizedData);
     } else {
-      createProject(data);
+      createProject(sanitizedData);
     }
   };
 
@@ -870,7 +899,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       title: "Contact info",
       desc: "How can we contact you?",
       fields: (
-        <div className="flex w-full min-w-[320px] flex-col gap-2">
+        <div className="flex w-full min-w-[320px] flex-col gap-8">
           <ContactInfoSection
             existingContacts={contacts}
             isEditing={!!projectToUpdate}
@@ -885,6 +914,23 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               setContacts(contacts.filter((c) => c.id !== contact.id))
             }
           />
+          {!projectToUpdate ? (
+            <div className="flex w-full flex-col gap-2 border-t border-zinc-200 dark:border-zinc-700 pt-8">
+              <label htmlFor="chain-id-input" className={labelStyle}>
+                Choose a network to create your project
+              </label>
+              <NetworkDropdown
+                onSelectFunction={(networkId) => {
+                  setValue("chainID", networkId, {
+                    shouldValidate: true,
+                  });
+                }}
+                networks={appNetwork}
+                previousValue={watch("chainID")}
+              />
+              <p className="text-red-500">{errors.chainID?.message}</p>
+            </div>
+          ) : null}
         </div>
       ),
     },

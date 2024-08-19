@@ -32,6 +32,7 @@ import { watchAccount } from "@wagmi/core";
 import { usePathname } from "next/navigation";
 import { useRegistryStore } from "@/store/registry";
 import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
+import { errorManager } from "./errorManager";
 
 const ProjectDialog = dynamic(
   () =>
@@ -70,7 +71,8 @@ export default function Header() {
       } else {
         setCommunities([]);
       }
-    } catch {
+    } catch (e) {
+      errorManager(`Error fetching communities of user ${address} is admin`, e);
       setCommunities([]);
     } finally {
       setIsLoading(false);

@@ -4,6 +4,8 @@ import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { config } from "@/utilities/wagmi/config";
 import { TrashIcon } from "@heroicons/react/24/outline";
@@ -15,6 +17,7 @@ import toast from "react-hot-toast";
 import { Hex } from "viem";
 import { useAccount, useSwitchChain } from "wagmi";
 
+import { errorManager } from "@/components/Utilities/errorManager";
 interface MilestoneDeleteProps {
   milestone: IMilestoneResponse;
 }
@@ -56,9 +59,17 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
       if (!milestoneInstance) return;
       await milestoneInstance
         .revoke(walletSigner, changeStepperStep)
-        .then(async () => {
+        .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, milestoneInstance.chainID),
+              "POST",
+              {}
+            );
+          }
           let fetchedProject = null;
           while (retries > 0) {
             if (selectedProject) {
@@ -83,8 +94,12 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
           // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
           await new Promise((resolve) => setTimeout(resolve, 1500));
         });
-    } catch (error) {
+    } catch (error: any) {
       toast.error(MESSAGES.MILESTONES.DELETE.ERROR(milestone.data.title));
+      errorManager(
+        `Error deleting milestone ${milestone.uid} from grant ${milestone.refUID}`,
+        error
+      );
       throw error;
     } finally {
       setIsDeletingMilestone(false);

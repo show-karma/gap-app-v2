@@ -1,40 +1,33 @@
 "use client";
-import React, { Fragment, useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
+import React, { useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
 import { useAccount } from "wagmi";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { getGrants } from "@/utilities/sdk/communities/getGrants";
-import { Hex } from "viem";
 import fetchData from "@/utilities/fetchData";
 import TablePagination from "@/components/Utilities/TablePagination";
-import { CheckIcon, ChevronLeftIcon } from "@heroicons/react/20/solid";
-import { Listbox, Transition } from "@headlessui/react";
+import { ChevronLeftIcon } from "@heroicons/react/20/solid";
 import {
   ChevronDownIcon,
   ChevronUpDownIcon,
   ChevronUpIcon,
 } from "@heroicons/react/24/solid";
-import toast from "react-hot-toast";
-import pluralize from "pluralize";
 import { Button } from "@/components/Utilities/Button";
 import Link from "next/link";
-import { CategoryCreationDialog } from "@/components/Pages/Admin/CategoryCreationDialog";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
-import { zeroUID } from "@/utilities/commons";
 import { PAGES } from "@/utilities/pages";
 import { INDEXER } from "@/utilities/indexer";
-import { reduceText } from "@/utilities/reduceText";
 import { defaultMetadata } from "@/utilities/meta";
-import { cn } from "@/utilities/tailwind";
 import { MESSAGES } from "@/utilities/messages";
 import { useAuthStore } from "@/store/auth";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useQuery } from "@tanstack/react-query";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useOwnerStore } from "@/store";
+import { SearchDropdown } from "../ProgramRegistry/SearchDropdown";
+import { useQueryState } from "nuqs";
+
+import { errorManager } from "@/components/Utilities/errorManager";
 
 interface Report {
   _id: {
@@ -65,12 +58,18 @@ const fetchReports = async (
   page: number,
   pageLimit: number,
   sortBy = "totalMilestones",
-  sortOrder = "desc"
+  sortOrder = "desc",
+  selectedGrantTitles: string[] = []
 ) => {
+  const queryGrantTitles = selectedGrantTitles.join(",");
+  // encode the queryGrantTitles
+  const encodedQueryGrantTitles = encodeURIComponent(queryGrantTitles);
   const [data]: any = await fetchData(
     `${INDEXER.COMMUNITY.REPORT.GET(
       communityId as string
-    )}?limit=${pageLimit}&page=${page}&sort=${sortBy}&sortOrder=${sortOrder}`
+    )}?limit=${pageLimit}&page=${page}&sort=${sortBy}&sortOrder=${sortOrder}${
+      queryGrantTitles ? `&grantTitle=${encodedQueryGrantTitles}` : ""
+    }`
   );
   return data || [];
 };
@@ -81,10 +80,12 @@ const skeletonArray = Array.from({ length: 12 }, (_, index) => index);
 
 interface ReportMilestonePageProps {
   community: ICommunityResponse;
+  grantTitles: string[];
 }
 
 export const ReportMilestonePage = ({
   community,
+  grantTitles,
 }: ReportMilestonePageProps) => {
   const params = useParams();
   const communityId = params.communityId as string;
@@ -97,11 +98,33 @@ export const ReportMilestonePage = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("totalMilestones");
   const [sortOrder, setSortOrder] = useState("desc");
+  const [selectedGrantTitles, setSelectedGrantTitles] = useQueryState(
+    "grantTitles",
+    {
+      defaultValue: [] as string[],
+      serialize: (value) => value?.join(","),
+      parse: (value) => (value ? value.split(",") : null),
+    }
+  );
 
   const { data, isLoading } = useQuery<ReportAPIResponse>({
-    queryKey: ["reportMilestones", communityId, currentPage, sortBy, sortOrder],
+    queryKey: [
+      "reportMilestones",
+      communityId,
+      currentPage,
+      sortBy,
+      sortOrder,
+      selectedGrantTitles,
+    ],
     queryFn: async () =>
-      fetchReports(communityId, currentPage, itemsPerPage, sortBy, sortOrder),
+      fetchReports(
+        communityId,
+        currentPage,
+        itemsPerPage,
+        sortBy,
+        sortOrder,
+        selectedGrantTitles
+      ),
     enabled: Boolean(communityId) && isAuthorized,
   });
 
@@ -123,7 +146,11 @@ export const ReportMilestonePage = ({
           signer
         );
         setIsAdmin(checkAdmin);
-      } catch (error) {
+      } catch (error: any) {
+        errorManager(
+          `Error checking if ${address} is admin of ${communityId}`,
+          error
+        );
         console.log(error);
         setIsAdmin(false);
       }
@@ -156,6 +183,33 @@ export const ReportMilestonePage = ({
                 Return to admin page
               </Button>
             </Link>
+          </div>
+          <div>
+            <SearchDropdown
+              list={grantTitles}
+              onSelectFunction={(value: string) =>
+                // onChangeGeneric(value, setSelectedGrantTitles)
+                setSelectedGrantTitles((oldArray) => {
+                  setCurrentPage(1);
+                  const newArray = [...oldArray];
+                  if (newArray.includes(value)) {
+                    const filteredArray = newArray.filter(
+                      (item) => item !== value
+                    );
+                    return filteredArray;
+                  } else {
+                    newArray.push(value);
+                  }
+                  return newArray;
+                })
+              }
+              cleanFunction={() => {
+                setSelectedGrantTitles([]);
+              }}
+              type={"Grant Titles"}
+              selected={selectedGrantTitles}
+              // imageDictionary={}
+            />
           </div>
           <div className="flex flex-col justify-center w-full max-w-full overflow-x-auto rounded-md border">
             <table className="pt-3 min-w-full divide-y dark:bg-zinc-900 divide-gray-300 dark:divide-zinc-800 dark:text-white">

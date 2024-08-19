@@ -13,6 +13,7 @@ import { useOnboarding } from "@/store/modals/onboarding";
 import { PAGES } from "@/utilities/pages";
 import { usePathname, useRouter } from "next/navigation";
 import { useMixpanel } from "./useMixpanel";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 export const authCookiePath = "gap_auth";
 export const authWalletTypeCookiePath = "gap_auth_wallet_type";
@@ -24,9 +25,10 @@ const getNonce = async (publicAddress: string) => {
     });
     const { nonceMessage } = data;
     return nonceMessage;
-  } catch (error) {
+  } catch (error: any) {
     // eslint-disable-next-line no-console
     console.error("Error in login:", error);
+    errorManager(`Error in login of user ${publicAddress}`, error);
     return null;
   }
 };
@@ -63,7 +65,8 @@ export const useAuth = () => {
       return signedMessage;
     } catch (err) {
       // eslint-disable-next-line no-console
-      await disconnectAsync();
+      await disconnectAsync?.();
+      errorManager(`Error in signing message of user ${address}`, err);
       console.log(err);
       return null;
     }
@@ -74,16 +77,28 @@ export const useAuth = () => {
     signedMessage: string
   ) => {
     try {
-      const [response] = await fetchData("/auth/authentication", "POST", {
-        publicAddress,
-        signedMessage,
-        chainId,
-      });
+      const [response] = chainId
+        ? await fetchData("/auth/authentication", "POST", {
+            publicAddress,
+            signedMessage,
+            chainId,
+          })
+        : await fetchData("/auth/authentication", "POST", {
+            publicAddress,
+            signedMessage,
+          });
+      if (!response) {
+        throw new Error("No response from authentication");
+      }
       const { token, walletType } = response;
       return { token, walletType };
-    } catch (error) {
+    } catch (error: any) {
       // eslint-disable-next-line no-console
-      console.log("Error in getAccountAssets", error);
+      errorManager(
+        `Error in get account token of user ${publicAddress}`,
+        error
+      );
+      console.log("Error in get account token", error);
       return { token: undefined, walletType: undefined };
     }
   };
@@ -165,6 +180,7 @@ export const useAuth = () => {
       }
       return true;
     } catch (error: any) {
+      errorManager(`Error in authenticate user ${newAddress}`, error);
       // eslint-disable-next-line no-console
       console.log(error);
       return;
@@ -181,7 +197,7 @@ export const useAuth = () => {
 
     setIsAuth(false);
     setWalletType(undefined);
-    disconnectAsync();
+    await disconnectAsync?.();
   };
 
   const softDisconnect = (newAddress: Hex) => {

@@ -1,18 +1,19 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FC, useState } from "react";
-import { SubmitHandler, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { z } from "zod";
 import toast from "react-hot-toast";
-import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectStore } from "@/store";
 import { Contact } from "@/types/project";
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
-import { ContactsDropdown } from "@/components/Pages/Project/ContactsDropdown";
 import { Button } from "@/components/Utilities/Button";
 import { Hex } from "viem";
 import Image from "next/image";
 import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import { generateRandomString } from "@/utilities/generateRandomString";
+
+import { errorManager } from "@/components/Utilities/errorManager";
 
 const labelStyle = "text-sm font-bold";
 const inputStyle =
@@ -213,7 +214,7 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
   };
 
   const refreshList = async (projectId: Hex) => {
-    const [data] = await fetchData(
+    const [data, error] = await fetchData(
       INDEXER.SUBSCRIPTION.GET(projectId),
       "GET",
       {},
@@ -221,6 +222,12 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
       {},
       true
     ).catch(() => []);
+    if (error) {
+      errorManager(`Error in refreshing contact section`, error);
+      setProjectContactsInfo([]);
+      return;
+    }
+
     if (data) {
       setProjectContactsInfo(data);
     }
@@ -301,7 +308,7 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
       }
     } catch (error: any) {
       toast.error("Something went wrong. Please try again later.");
-      console.log(error);
+      errorManager(`Error creating contact`, error);
     } finally {
       setIsLoading(false);
     }
@@ -349,6 +356,12 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
       toast.error("Something went wrong. Please try again later.", {
         className: "z-[9999]",
       });
+      errorManager(
+        `Error deleting contact ${contactId} from project ${
+          project?.details?.data?.slug || project?.uid
+        }`,
+        error
+      );
       console.log(error);
     } finally {
       setIsDeleteLoading(false);

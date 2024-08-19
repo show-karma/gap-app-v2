@@ -15,6 +15,7 @@ import { useTheme } from "next-themes";
 import { cn } from "@/utilities/tailwind";
 
 import EthereumAddressToENSAvatar from "./EthereumAddressToENSAvatar";
+import { errorManager } from "./Utilities/errorManager";
 
 interface ProjectFeedProps {
   initialFeed?: Feed[];
@@ -47,8 +48,12 @@ export const ProjectFeed = ({ initialFeed = [] }: ProjectFeedProps) => {
         setFeed(newFeed);
         const canLoadMore = oldFeed.length !== newFeed.length;
         setHasMore(canLoadMore);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching data:", error);
+        errorManager(
+          `Error fetching data feed for project ${projectId}`,
+          error
+        );
       } finally {
         setFeedLoading(false);
       }

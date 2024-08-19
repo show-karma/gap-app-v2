@@ -10,11 +10,10 @@ import {
 import { renderToHTML } from "@/utilities/markdown";
 import { Button } from "../Utilities/Button";
 import toast from "react-hot-toast";
-import { isAddress } from "viem";
+
 import { useProjectStore } from "@/store";
 import { useAccount, useSwitchChain } from "wagmi";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { appNetwork } from "@/utilities/network";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { getWalletClient } from "@wagmi/core";
 import { getProjectById, getProjectOwner } from "@/utilities/sdk";
@@ -35,6 +34,7 @@ import {
   IProjectResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { envVars } from "@/utilities/enviromentVars";
+import { errorManager } from "../Utilities/errorManager";
 
 // Create styles
 const styles = StyleSheet.create({});
@@ -82,10 +82,54 @@ function GenerateDocument({
   impactRecipientTestimonial: string;
   impactBannerImageURL: string;
 }): ReactNode {
+  const isLink = (link?: string) => {
+    if (!link) return false;
+    if (
+      link.includes("http://") ||
+      link.includes("https://") ||
+      link.includes("www.")
+    ) {
+      return true;
+    }
+    return false;
+  };
+
+  const addPrefix = (link: string) => `https://${link}`;
+
+  const removeHTTP = (link: string) => {
+    if (link.includes("https://")) {
+      return link.split("https://")[1];
+    }
+    if (link.includes("http://")) {
+      return link.split("http://")[1];
+    }
+    return link;
+  };
+
+  const getTwitterUserNameOnly = (text: string) => {
+    console.log("getTwitterUserNameOnly -> text", text);
+    if (text.includes("twitter.com/")) {
+      const twitterUsername = text.split("twitter.com/")[1];
+      return twitterUsername;
+    }
+
+    if (text.includes("@")) {
+      const twitterUsername = text.split("@")[1];
+      return twitterUsername;
+    }
+
+    if (text.includes("x.com/")) {
+      const twitterUsername = text.split("x.com/")[1];
+      return twitterUsername;
+    }
+
+    return text;
+  };
+
   return (
     <Document>
       <Page
-        size="A4"
+        size={{ width: 595.28 }}
         style={{
           fontFamily: "Open Sans",
           lineHeight: 1.3,
@@ -112,7 +156,7 @@ function GenerateDocument({
             <View
               style={{
                 flexDirection: "row",
-                width: "20%",
+                width: "17%",
               }}
             >
               <Image
@@ -145,7 +189,7 @@ function GenerateDocument({
                 fontSize: 10,
                 flexDirection: "row",
                 justifyContent: "flex-end",
-                width: "80%",
+                width: "auto",
                 alignItems: "center",
               }}
             >
@@ -155,7 +199,7 @@ function GenerateDocument({
                 }
                 style={{
                   borderRadius: 50,
-                  marginRight: 2,
+                  marginRight: 1,
                   width: 15,
                   height: 15,
                 }}
@@ -165,12 +209,11 @@ function GenerateDocument({
                   marginRight: 10,
                 }}
               >
-                @
-                {
+                {`${getTwitterUserNameOnly(
                   project?.details?.data?.links?.find(
                     (social) => social?.type === "twitter"
-                  )?.url
-                }
+                  )?.url as string
+                )}`}
               </Text>
 
               <Image
@@ -179,7 +222,7 @@ function GenerateDocument({
                 }
                 style={{
                   borderRadius: 50,
-                  marginRight: 5,
+                  marginRight: 4,
                   padding: -3,
                   width: 10,
                   height: 10,
@@ -190,11 +233,11 @@ function GenerateDocument({
                   marginRight: 10,
                 }}
               >
-                {
+                {`${removeHTTP(
                   project?.details?.data?.links?.find(
                     (social) => social?.type === "website"
-                  )?.url
-                }
+                  )?.url as string
+                )}`}
               </Text>
 
               <Image
@@ -204,7 +247,7 @@ function GenerateDocument({
                 style={{
                   backgroundColor: "black",
                   borderRadius: 50,
-                  marginRight: 5,
+                  marginRight: 4,
                   padding: -5,
                   width: 10,
                   height: 10,
@@ -215,11 +258,10 @@ function GenerateDocument({
                   marginRight: 10,
                 }}
               >
-                github.com/
                 {
                   project?.details?.data?.links?.find(
                     (social) => social?.type === "github"
-                  )?.url
+                  )?.url as string
                 }
               </Text>
             </View>
@@ -637,8 +679,9 @@ export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
       if (!fetchedProject) return;
 
       closeModal();
-    } catch (error) {
+    } catch (error: any) {
       toast.error("Something went wrong. Please try again later.");
+      errorManager(`Error generating impact report`, error);
       console.error(error);
     } finally {
       setIsLoading(false);

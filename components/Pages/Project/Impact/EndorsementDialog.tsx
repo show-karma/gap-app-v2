@@ -17,6 +17,10 @@ import { useStepper } from "@/store/modals/txStepper";
 import { Hex } from "viem";
 import { config } from "@/utilities/wagmi/config";
 import { useEndorsementStore } from "@/store/modals/endorsement";
+import { errorManager } from "@/components/Utilities/errorManager";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { sanitizeInput } from "@/utilities/sanitize";
 
 type EndorsementDialogProps = {};
 
@@ -56,7 +60,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
       const walletSigner = await walletClientToSigner(walletClient);
       const endorsement = new ProjectEndorsement({
         data: {
-          comment,
+          comment: sanitizeInput(comment),
         },
         schema: gapClient!.findSchema("ProjectEndorsement"),
         refUID: project?.uid,
@@ -64,7 +68,15 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
       });
       await endorsement
         .attest(walletSigner, changeStepperStep)
-        .then(async () => {
+        .then(async (res) => {
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, endorsement.chainID),
+              "POST",
+              {}
+            );
+          }
           let retries = 1000;
           refreshProject();
           let fetchedProject: Project | null = null;
@@ -92,8 +104,12 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
           }
         });
       closeModal();
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
+      errorManager(
+        `Error of user ${address} endorsing project ${project?.uid}`,
+        error
+      );
     } finally {
       setIsLoading(false);
       setIsStepper(false);

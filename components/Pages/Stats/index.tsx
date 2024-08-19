@@ -19,6 +19,7 @@ import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
 import { useQueryState } from "nuqs";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 // const valueFormatter = (number) =>
 //   `$ ${new Intl.NumberFormat('us').format(number).toString()}`;
@@ -100,8 +101,9 @@ export const Stats = () => {
         };
       });
       setData(stats);
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
+      errorManager("Error fetching GAP stats", error);
     } finally {
       setIsLoading(false);
     }

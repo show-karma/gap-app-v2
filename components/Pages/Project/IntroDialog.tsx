@@ -14,6 +14,9 @@ import { MESSAGES } from "@/utilities/messages";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { INDEXER } from "@/utilities/indexer";
+
+import { errorManager } from "@/components/Utilities/errorManager";
 
 type IntroDialogProps = {};
 
@@ -22,6 +25,7 @@ const schema = z.object({
     message: MESSAGES.PROJECT.INTRO.EMAIL,
   }),
   telegram: z.string(),
+  message: z.string(),
 });
 
 type SchemaType = z.infer<typeof schema>;
@@ -55,14 +59,32 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
 
   const handleFunction = async (data: SchemaType) => {
     let gapClient = gap;
+
     setIsLoading(true);
     try {
       if (!project) return;
       // const [data, error] = await fetchData(
       // )
+      const [response, error] = await fetchData(
+        INDEXER.PROJECT.REQUEST_INTRO(project.details?.data.slug as string),
+        "POST",
+        {
+          email: data.email,
+          telegram: data.telegram,
+          message: data.message,
+        },
+        {},
+        {},
+        false,
+        true
+      );
+      if (!response || error) {
+        toast.error(`Error requesting intro: ${error}`);
+      }
       closeModal();
       toast.success("Successfully requested intro!");
-    } catch (error) {
+    } catch (error: any) {
+      errorManager(`Error while requesting intro`, error);
       console.log(error);
     } finally {
       setIsLoading(false);
@@ -139,6 +161,20 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
                       />
                       <p className="text-red-600 mb-2">
                         {errors.telegram?.message}
+                      </p>
+                    </div>
+                    <div className="flex w-full flex-col gap-2">
+                      <label htmlFor="message-input" className={labelStyle}>
+                        Message
+                      </label>
+                      <textarea
+                        id="message-input"
+                        className={inputStyle}
+                        placeholder="Enter your request message"
+                        {...register("message")}
+                      />
+                      <p className="text-red-600 mb-2">
+                        {errors.message?.message}
                       </p>
                     </div>
                   </div>

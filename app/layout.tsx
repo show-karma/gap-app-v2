@@ -27,7 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full" style={{ scrollBehavior: "smooth" }}>
       {process.env.NEXT_PUBLIC_GA_TRACKING_ID &&
-        process.env.NEXT_PUBLIC_ENV === "prod" && (
+        process.env.NEXT_PUBLIC_ENV === "production" && (
           <GoogleAnalytics
             gaId={process.env.NEXT_PUBLIC_GA_TRACKING_ID as string}
           />

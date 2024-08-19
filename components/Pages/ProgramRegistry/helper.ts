@@ -576,6 +576,8 @@ const grantTypes = [
   "Bounties",
   "Retro Funding",
   "Quadratic Funding",
+  "Hackathons",
+  "Accelerators",
 ];
 const platformsUsed = [
   "Gitcoin",

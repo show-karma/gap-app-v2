@@ -1,6 +1,8 @@
 import { Hex } from "viem";
 
 export const INDEXER = {
+  ATTESTATION_LISTENER: (hash: Hex | string, chainId: number) =>
+    `/attestations/index-by-transaction/${hash}/${chainId}`,
   REGISTRY: {
     GET_ALL: "/registry",
     FIND_BY_ID: (id: string, chainId: number) =>
@@ -18,6 +20,8 @@ export const INDEXER = {
     FEED: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/feed`,
     FUNDEDBY: (address: string) => `/projects/fundedby/${address}`,
     GRANTS_GENIE: (projectId: string) => `/projects/${projectId}/grants-genie`,
+    REQUEST_INTRO: (projectIdOrSlug: string) =>
+      `/projects/requestintro/${projectIdOrSlug}`,
   },
   QUESTIONS: {
     CREATE: (idOrSlug: string) => `/questions/create/${idOrSlug}`,
@@ -37,6 +41,8 @@ export const INDEXER = {
       GET: (communityIdOrSlug: string) =>
         `/communities/${communityIdOrSlug}/report`,
     },
+    GRANT_TITLES: (communityIdOrSlug: string) =>
+      `/communities/${communityIdOrSlug}/grant-titles`,
     GRANTS: (
       communityIdOrSlug: string,
       {

@@ -5,6 +5,8 @@ import { getGapClient, useGap } from "@/hooks";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { config } from "@/utilities/wagmi/config";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -19,6 +21,9 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
+
+import { errorManager } from "@/components/Utilities/errorManager";
+import { sanitizeObject } from "@/utilities/sanitize";
 
 const updateSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.GRANT.UPDATE.FORM.TITLE }),
@@ -89,12 +94,13 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
       if (!walletClient || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
 
+      const sanitizedGrantUpdate = sanitizeObject({
+        text,
+        title,
+        type: "grant-update",
+      });
       const grantUpdate = new GrantUpdate({
-        data: {
-          text,
-          title,
-          type: "grant-update",
-        },
+        data: sanitizedGrantUpdate,
         recipient: grantToUpdate.recipient,
         refUID: grantToUpdate.uid,
         schema: gapClient.findSchema("GrantDetails"),
@@ -102,9 +108,17 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
 
       await grantUpdate
         .attest(walletSigner as any, changeStepperStep)
-        .then(async () => {
+        .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, grantUpdate.chainID),
+              "POST",
+              {}
+            );
+          }
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {
@@ -133,9 +147,13 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
               });
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       toast.error(MESSAGES.GRANT.GRANT_UPDATE.ERROR);
+      errorManager(
+        `Error creating grant update for grant ${grantToUpdate.uid} from project ${project.uid}`,
+        error
+      );
     } finally {
       setIsStepper(false);
     }
@@ -180,7 +198,6 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
             </label>
             <div className="w-full bg-transparent" data-color-mode="light">
               <MarkdownEditor
-                className="bg-transparent"
                 value={description}
                 onChange={(newValue: string) => setDescription(newValue || "")}
                 placeholderText="To share updates on the progress of this grant, please add the details here."

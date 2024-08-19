@@ -19,6 +19,11 @@ import { useStepper } from "@/store/modals/txStepper";
 import { config } from "@/utilities/wagmi/config";
 import { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getGapClient, useGap } from "@/hooks";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+
+import { errorManager } from "@/components/Utilities/errorManager";
+import { sanitizeInput } from "@/utilities/sanitize";
 
 interface NotUpdatingCaseProps {
   milestone: IMilestoneResponse;
@@ -115,9 +120,18 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
       const milestoneInstance = grantInstance.milestones.find(
         (u) => u.uid.toLowerCase() === milestone.uid.toLowerCase()
       );
+      const sanitizedText = sanitizeInput(text);
       await milestoneInstance
-        ?.complete(walletSigner, text, changeStepperStep)
-        .then(async () => {
+        ?.complete(walletSigner, sanitizedText, changeStepperStep)
+        .then(async (res) => {
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, milestoneInstance.chainID),
+              "POST",
+              {}
+            );
+          }
           let retries = 1000;
           changeStepperStep("indexing");
           while (retries > 0) {
@@ -150,9 +164,13 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
               });
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       toast.error(MESSAGES.MILESTONES.COMPLETE.ERROR);
+      errorManager(
+        `Error completing milestone ${milestone.uid} from grant ${milestone.refUID}`,
+        error
+      );
     } finally {
       setIsStepper(false);
     }
@@ -182,11 +200,20 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
       const milestoneInstance = grantInstance.milestones.find(
         (u) => u.uid.toLowerCase() === milestone.uid.toLowerCase()
       );
+      const sanitizedText = sanitizeInput(text);
       await milestoneInstance
-        ?.complete(walletSigner, text, changeStepperStep)
-        .then(async () => {
+        ?.complete(walletSigner, sanitizedText, changeStepperStep)
+        .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, milestoneInstance.chainID),
+              "POST",
+              {}
+            );
+          }
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {
@@ -218,9 +245,13 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
               });
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       toast.error(MESSAGES.MILESTONES.UPDATE_COMPLETION.ERROR);
+      errorManager(
+        `Error updating completion of milestone ${milestone.uid} from grant ${milestone.refUID}`,
+        error
+      );
     } finally {
       setIsStepper(false);
     }
