@@ -32,6 +32,8 @@ import { useRouter } from "next/navigation";
 import { useGap } from "@/hooks";
 import { errorManager } from "@/components/Utilities/errorManager";
 
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+
 interface ProjectWrapperProps {
   project: IProjectResponse;
   projectId: string;
@@ -298,6 +300,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   const members = mountMembers();
   const { isIntroModalOpen } = useIntroModalStore();
   const { isEndorsementOpen } = useEndorsementStore();
+
   return (
     <>
       {isIntroModalOpen ? <IntroDialog /> : null}
@@ -386,11 +389,8 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
                       className="-ml-1.5"
                       style={{ zIndex: 1 + index }}
                     >
-                      <Image
-                        width={20}
-                        height={20}
-                        src={blo(member as `0x${string}`, 8)}
-                        alt={member}
+                      <EthereumAddressToENSAvatar
+                        address={member}
                         className="h-5 w-5 rounded-full border border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5"
                       />
                     </span>

@@ -3,7 +3,7 @@
 import { blo } from "blo";
 import { FC, useEffect, useState } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { useENSNames } from "@/store/ensNames";
+import { useENS } from "@/store/ens";
 import { formatDate } from "@/utilities/formatDate";
 import { VerificationsDialog } from "./VerificationsDialog";
 import {
@@ -12,6 +12,7 @@ import {
   IGrantUpdateStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { Hex } from "viem";
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 
 interface VerifiedBadgeProps {
   verifications:
@@ -30,7 +31,7 @@ const BlockieTooltip = ({
   date: Date;
   reason?: string;
 }) => {
-  const { ensNames, populateEnsNames } = useENSNames();
+  const { ensData, populateEnsNames } = useENS();
 
   useEffect(() => {
     populateEnsNames([address]);
@@ -41,9 +42,8 @@ const BlockieTooltip = ({
       <Tooltip.Root delayDuration={0.5}>
         <Tooltip.Trigger asChild>
           <div>
-            <img
-              src={blo(address, 8)}
-              alt={address}
+            <EthereumAddressToENSAvatar
+              address={address}
               className="h-8 w-8 min-h-8 min-w-8 rounded-full ring-2 ring-white dark:ring-gray-800"
             />
           </div>
@@ -57,7 +57,7 @@ const BlockieTooltip = ({
             <div>
               <div>
                 <p className="text-xs font-bold truncate">
-                  {ensNames[address]?.name || address}
+                  {ensData[address]?.name || address}
                 </p>
                 <p className="text-xs font-normal">on {formatDate(date)}</p>
               </div>
@@ -145,10 +145,9 @@ export const VerifiedBadge: FC<VerifiedBadgeProps> = ({
         onClick={openDialog}
       >
         {orderedSort.slice(0, 4).map((verification) => (
-          <img
+          <EthereumAddressToENSAvatar
             key={verification.attester}
-            src={blo(verification.attester as Hex, 8)}
-            alt={verification.attester}
+            address={verification.attester}
             className="h-8 w-8 min-h-8 min-w-8 rounded-full ring-2 ring-white dark:ring-gray-800"
           />
         ))}

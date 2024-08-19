@@ -15,7 +15,6 @@ import debounce from "lodash.debounce";
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import { Spinner } from "../Utilities/Spinner";
 import EthereumAddressToENSName from "../EthereumAddressToENSName";
-import { blo } from "blo";
 import { PAGES } from "@/utilities/pages";
 import {
   IProjectResponse,
@@ -27,6 +26,7 @@ import { z } from "zod";
 import { getGapClient, useGap } from "@/hooks";
 import { ProjectPointer } from "@show-karma/karma-gap-sdk";
 import { useRouter } from "next/navigation";
+import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
 import { errorManager } from "../Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -90,12 +90,10 @@ function SearchProject({
             <div className="mt-3 flex items-center">
               <small className="mr-2">By</small>
               <div className="flex flex-row gap-1 items-center font-medium">
-                <img
-                  src={blo(item.recipient)}
+                <EthereumAddressToENSAvatar
+                  address={item.recipient}
                   className="w-4 h-4  rounded-full border-1 border-gray-100 dark:border-zinc-900"
-                  alt="Recipient's Profile Picture"
                 />
-                <EthereumAddressToENSName address={item.recipient} />
               </div>
             </div>
           </div>
