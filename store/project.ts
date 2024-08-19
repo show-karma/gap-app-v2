@@ -38,20 +38,23 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   refreshContactInfo: async () => {
     const project = get();
     if (!project.project?.id) return;
-
-    const [data] = await fetchData(
-      INDEXER.SUBSCRIPTION.GET(project.project.id),
-      "GET",
-      {},
-      {},
-      {},
-      true
-    ).catch(() => []);
-    if (data) {
-      set({ projectContactsInfo: data });
-      console.log(data);
+    try {
+      const [data] = await fetchData(
+        INDEXER.SUBSCRIPTION.GET(project.project.uid),
+        "GET",
+        {},
+        {},
+        {},
+        true
+      );
+      if (data) {
+        set({ projectContactsInfo: data });
+        console.log(data);
+      }
+      return data;
+    } catch (error) {
+      console.log(error);
     }
-    return data;
   },
   loading: false,
   setLoading: (loading: boolean) => set({ loading }),
