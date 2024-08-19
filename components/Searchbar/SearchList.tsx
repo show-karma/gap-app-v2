@@ -20,6 +20,7 @@ import { useEffect, useState } from "react";
 import { useMobileStore } from "@/store/mobile";
 import { useENS } from "@/store/ens";
 import { Hex } from "viem";
+import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
 
 interface Props {
   data: ISearchResponse; // Will be modular in the future
@@ -82,15 +83,18 @@ export const SearchList: React.FC<Props> = ({
             <div className="mt-3 flex items-center">
               <small className="mr-2">By</small>
               <div className="flex flex-row gap-1 items-center font-medium">
-                <img
+                {/* <img
                   src={
                     ensData[item.recipient as Hex]?.avatar ||
                     blo(item.recipient as Hex, 8)
                   }
                   className="w-4 h-4  rounded-full border-1 border-gray-100 dark:border-zinc-900"
                   alt="Recipient's Profile Picture"
+                /> */}
+                <EthereumAddressToENSAvatar
+                  address={item.recipient}
+                  className="w-4 h-4  rounded-full border-1 border-gray-100 dark:border-zinc-900"
                 />
-
                 <EthereumAddressToENSName address={item.recipient} />
               </div>
             </div>

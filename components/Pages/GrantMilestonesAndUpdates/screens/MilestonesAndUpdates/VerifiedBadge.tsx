@@ -12,6 +12,7 @@ import {
   IGrantUpdateStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { Hex } from "viem";
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 
 interface VerifiedBadgeProps {
   verifications:
@@ -41,9 +42,13 @@ const BlockieTooltip = ({
       <Tooltip.Root delayDuration={0.5}>
         <Tooltip.Trigger asChild>
           <div>
-            <img
+            {/* <img
               src={ensData[address]?.avatar || blo(address, 8)}
               alt={address}
+              className="h-8 w-8 min-h-8 min-w-8 rounded-full ring-2 ring-white dark:ring-gray-800"
+            /> */}
+            <EthereumAddressToENSAvatar
+              address={address}
               className="h-8 w-8 min-h-8 min-w-8 rounded-full ring-2 ring-white dark:ring-gray-800"
             />
           </div>

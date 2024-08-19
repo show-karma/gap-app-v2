@@ -15,7 +15,8 @@ import { Hex } from "viem";
 import { MarkdownPreview } from "./Utilities/MarkdownPreview";
 import { useTheme } from "next-themes";
 import { cn } from "@/utilities/tailwind";
-import { useENS } from "@/store/ens";
+
+import EthereumAddressToENSAvatar from "./EthereumAddressToENSAvatar";
 
 interface ProjectFeedProps {
   initialFeed?: Feed[];
@@ -31,7 +32,6 @@ export const ProjectFeed = ({ initialFeed = [] }: ProjectFeedProps) => {
   const [page, setPage] = useState<number>(1);
   const { theme } = useTheme();
   const [hasMore, setHasMore] = useState<boolean>(true);
-  const { ensData } = useENS();
 
   // Fetch the feed data from the API
 
@@ -112,12 +112,16 @@ export const ProjectFeed = ({ initialFeed = [] }: ProjectFeedProps) => {
                         />
                       </div>
                       <div className="flex flex-row items-center gap-1 flex-wrap">
-                        <img
+                        {/* <img
                           src={
                             ensData[item.attester as Hex]?.avatar ||
                             blo(item.attester as Hex, 8)
                           }
                           alt={item.attester}
+                          className="h-5 w-5 rounded-full border-1 border-gray-100 dark:border-zinc-900"
+                        /> */}
+                        <EthereumAddressToENSAvatar
+                          address={item.attester}
                           className="h-5 w-5 rounded-full border-1 border-gray-100 dark:border-zinc-900"
                         />
                         <p className="text-sm text-center font-bold text-black dark:text-zinc-200 max-2xl:text-[13px]">

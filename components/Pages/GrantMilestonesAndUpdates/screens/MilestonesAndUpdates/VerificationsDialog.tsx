@@ -18,6 +18,7 @@ import { Tabs, TabContent, TabTrigger } from "@/components/Utilities/Tabs";
 import { useGrant } from "@/components/Pages/GrantMilestonesAndUpdates/GrantContext";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { useAccount } from "wagmi";
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 
 interface VerificationsDialogProps {
   verifications: (
@@ -40,12 +41,16 @@ const VerificationItem = ({ verification }: VerificationsItemProps) => {
   return (
     <div className="flex flex-col items-start gap-1.5 p-4">
       <div className="flex flex-row gap-3 items-center">
-        <img
+        {/* <img
           src={
             ensData[verification.attester as Hex]?.avatar ||
             blo(verification.attester as Hex, 8)
           }
           alt={verification.attester}
+          className="h-8 w-8 min-h-8 min-w-8 rounded-full"
+        /> */}
+        <EthereumAddressToENSAvatar
+          address={verification.attester}
           className="h-8 w-8 min-h-8 min-w-8 rounded-full"
         />
         <p className="text-sm font-bold text-brand-darkblue font-body dark:text-zinc-200">

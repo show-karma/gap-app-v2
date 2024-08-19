@@ -32,7 +32,6 @@ import { watchAccount } from "@wagmi/core";
 import { usePathname } from "next/navigation";
 import { useRegistryStore } from "@/store/registry";
 import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
-import { useENS } from "@/store/ens";
 
 const ProjectDialog = dynamic(
   () =>
@@ -49,7 +48,6 @@ export default function Header() {
   const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
   const { isConnected, address } = useAccount();
   const { isAuth, isAuthenticating } = useAuthStore();
-  const { ensData } = useENS();
   const { communities, setCommunities, setIsLoading } = useCommunitiesStore();
 
   const signer = useSigner();
@@ -331,13 +329,19 @@ export default function Header() {
                                         className="flex w-full py-1 justify-center items-center flex-row gap-2 rounded-full bg-gray-500 text-sm font-semibold text-white  hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
                                       >
                                         {account.displayName}
-                                        <img
+                                        {/* <img
                                           src={
-                                            ensData[account.address as Hex]
-                                              ?.avatar ||
+                                            ensAvatars[
+                                              "0x225f137127d9067788314bc7fcc1f36746a3c3B5" as Hex
+                                            ]?.avatar ||
                                             blo(account.address as Hex)
                                           }
                                           alt="avatar"
+                                          className="h-8 w-8 rounded-full"
+                                        /> */}
+
+                                        <EthereumAddressToENSAvatar
+                                          address={account.address}
                                           className="h-8 w-8 rounded-full"
                                         />
                                       </Button>
@@ -470,12 +474,16 @@ export default function Header() {
                                 className="flex w-max items-center flex-row gap-2 rounded-full bg-gray-500 p-0 pl-3 text-sm font-semibold text-white hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
                               >
                                 {account.displayName}
-                                <img
+                                {/* <img
                                   src={
-                                    ensData[account.address as Hex]?.avatar ||
-                                    blo(account.address as Hex)
+                                    ensAvatars[account.address as Hex]
+                                      ?.avatar || blo(account.address as Hex)
                                   }
                                   alt="avatar"
+                                  className="h-10 w-10 rounded-full"
+                                /> */}
+                                <EthereumAddressToENSAvatar
+                                  address={account.address}
                                   className="h-10 w-10 rounded-full"
                                 />
                               </Button>
