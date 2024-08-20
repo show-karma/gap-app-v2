@@ -21,7 +21,7 @@ export async function GET(request: Request) {
         "Content-Length": imageBuffer.byteLength,
       } as any,
     });
-  } catch (error) {
+  } catch (error: any) {
     return NextResponse.json(
       { error: "Failed to proxy image" },
       { status: 500 }

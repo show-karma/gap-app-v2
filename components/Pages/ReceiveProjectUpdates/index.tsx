@@ -1,5 +1,6 @@
 "use client";
 import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Spinner } from "@/components/Utilities/Spinner";
 import fetchData from "@/utilities/fetchData";
@@ -61,8 +62,12 @@ const SubscribeForm = ({ address, changeIsSubscribed }: SubscribeFormProps) => {
       toast.success(
         "You have subscribed to all the projects funded by your wallet"
       );
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
+      errorManager(
+        `Error of user ${address}/${data.email} subscribing to all projects funded by his wallet`,
+        error
+      );
       toast.error("An error occurred while subscribing, try again later.");
       changeIsSubscribed(false);
     } finally {
@@ -144,7 +149,7 @@ export const ReceiveProjectUpdates = ({
         });
         setStep("lookup");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
       setProjectsFunded(0);
       setStep("lookup");

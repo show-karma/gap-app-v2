@@ -3,6 +3,7 @@ import { envVars } from "../enviromentVars";
 import { arbitrum, sepolia } from "viem/chains";
 import AlloRegistryABI from "@show-karma/karma-gap-sdk/core/abi/AlloRegistry.json";
 import { AlloContracts } from "@show-karma/karma-gap-sdk";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 export const isMemberOfProfile = async (address: string): Promise<boolean> => {
   try {
@@ -13,34 +14,31 @@ export const isMemberOfProfile = async (address: string): Promise<boolean> => {
       ),
     });
 
-    const call = await wallet
-      .readContract({
-        abi: AlloRegistryABI,
-        address: AlloContracts.registry as Hex,
-        functionName: "isMemberOfProfile",
-        args: [
-          envVars.PROFILE_ID,
-          address, //address
-        ],
-      })
-      .catch(() => false);
+    const call = await wallet.readContract({
+      abi: AlloRegistryABI,
+      address: AlloContracts.registry as Hex,
+      functionName: "isMemberOfProfile",
+      args: [
+        envVars.PROFILE_ID,
+        address, //address
+      ],
+    });
 
     if (call) return true;
 
-    const checkBothCall = await wallet
-      .readContract({
-        abi: AlloRegistryABI,
-        address: AlloContracts.registry as Hex,
-        functionName: "isOwnerOrMemberOfProfile",
-        args: [
-          envVars.PROFILE_ID,
-          address, //address
-        ],
-      })
-      .catch(() => false);
+    const checkBothCall = await wallet.readContract({
+      abi: AlloRegistryABI,
+      address: AlloContracts.registry as Hex,
+      functionName: "isOwnerOrMemberOfProfile",
+      args: [
+        envVars.PROFILE_ID,
+        address, //address
+      ],
+    });
 
     return (checkBothCall || call) as boolean;
-  } catch {
+  } catch (error: any) {
+    errorManager(`Error checking if user is member of profile`, error);
     return false;
   }
 };

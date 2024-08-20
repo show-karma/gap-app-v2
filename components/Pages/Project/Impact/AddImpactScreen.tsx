@@ -1,12 +1,16 @@
 /* eslint-disable @next/next/no-img-element */
 import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
+import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
+import { sanitizeObject } from "@/utilities/sanitize";
 import { config } from "@/utilities/wagmi/config";
 import { Popover } from "@headlessui/react";
 import { CalendarIcon } from "@heroicons/react/24/outline";
@@ -88,14 +92,14 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
       });
       if (!walletClient || !address || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
-      const dataToAttest = {
+      const dataToAttest = sanitizeObject({
         work,
         impact,
         proof,
         startedAt: startedAt.getTime() / 1000,
         completedAt: completedAt.getTime() / 1000,
         verified: [],
-      };
+      });
       const newImpact = new ProjectImpact({
         data: dataToAttest,
         recipient: address,
@@ -106,7 +110,15 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
       });
       await newImpact
         .attest(walletSigner as any, changeStepperStep)
-        .then(async () => {
+        .then(async (res) => {
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, newImpact.chainID),
+              "POST",
+              {}
+            );
+          }
           let retries = 1000;
           changeStepperStep("indexing");
           let fetchedProject = null;
@@ -129,9 +141,10 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
             await new Promise((resolve) => setTimeout(resolve, 1500));
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       toast.error(MESSAGES.PROJECT.IMPACT.ERROR);
+      errorManager(`Error adding impact to project ${project.uid}`, error);
     } finally {
       setIsLoading(false);
       setIsStepper(false);
@@ -166,7 +179,6 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
             </label>
             <div className="w-full bg-transparent" data-color-mode="light">
               <MarkdownEditor
-                className="bg-transparent"
                 value={work}
                 onChange={(newValue: string) => setWork(newValue || "")}
                 placeholderText="Organized an onboarding event"
@@ -265,7 +277,6 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
             </label>
             <div className="w-full bg-transparent" data-color-mode="light">
               <MarkdownEditor
-                className="bg-transparent"
                 value={impact}
                 onChange={(newValue: string) => setImpact(newValue || "")}
                 placeholderText="We onboarded 100 users on to the platform (Add as much details as possible)."
@@ -278,7 +289,6 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
             </label>
             <div className="w-full bg-transparent" data-color-mode="light">
               <MarkdownEditor
-                className="bg-transparent"
                 value={proof}
                 onChange={(newValue: string) => setProof(newValue || "")}
                 placeholderText="Add links to charts, videos, dashboards etc. that evaluators can check to verify your work and impact"

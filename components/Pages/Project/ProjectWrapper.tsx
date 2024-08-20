@@ -9,7 +9,7 @@ import { config } from "@/utilities/wagmi/config";
 import { INDEXER } from "@/utilities/indexer";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { useEffect, useMemo } from "react";
-import { useProjectStore } from "@/store";
+import { useOwnerStore, useProjectStore } from "@/store";
 import { useAccount } from "wagmi";
 import {
   DiscordIcon,
@@ -32,6 +32,9 @@ import { useRouter } from "next/navigation";
 import { useGap } from "@/hooks";
 import { useProgressModalStore } from "@/store/modals/progress";
 import { ProgressDialog } from "@/components/Dialogs/ProgressDialog";
+import { errorManager } from "@/components/Utilities/errorManager";
+
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 
 interface ProjectWrapperProps {
   project: IProjectResponse;
@@ -61,12 +64,15 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
     setProject(project);
   }, [project]);
 
+  const isOwner = useOwnerStore((state) => state.isOwner);
+  const isAuthorized = isOwner || isProjectOwner;
+
   useEffect(() => {
-    if (!projectId) return;
+    if (!projectId || !isAuthorized) return;
     const getContactInfo = async () => {
       setContactInfoLoading(true);
       try {
-        const [data] = await fetchData(
+        const [data, error] = await fetchData(
           INDEXER.SUBSCRIPTION.GET(projectId),
           "GET",
           {},
@@ -74,38 +80,46 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
           {},
           true
         );
+        if (error) {
+          throw error;
+        }
 
         setProjectContactsInfo(data);
-      } catch (error) {
+      } catch (error: any) {
         console.error(error);
         setProjectContactsInfo(undefined);
+        errorManager(
+          `Error fetching project contacts info from project ${projectId}`,
+          error
+        );
       } finally {
         setContactInfoLoading(false);
       }
     };
     getContactInfo();
-  }, [projectId]);
+  }, [projectId, isAuthorized]);
 
   const hasContactInfo = Boolean(projectContactsInfo?.length);
 
   const signer = useSigner();
-  const { address, isConnected, isConnecting } = useAccount();
+  const { address, isConnected, isConnecting, chain } = useAccount();
   const { isAuth } = useAuthStore();
   const { gap } = useGap();
 
   useEffect(() => {
-    if (!project || !project?.chainID || !isAuth || !isConnected) {
+    if (!project || !project?.chainID || !isAuth || !isConnected || !chain) {
       setIsProjectOwner(false);
       setIsProjectOwnerLoading(false);
       return;
     }
 
-    const setupOwner = async () => {
+    const setupProjectOwner = async () => {
       try {
         setIsProjectOwnerLoading(true);
         const walletClient = await getWalletClient(config, {
           chainId: project.chainID,
-        });
+        }).catch(() => undefined);
+
         if (!walletClient) return;
         const walletSigner = await walletClientToSigner(walletClient).catch(
           () => undefined
@@ -117,14 +131,18 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
             setIsProjectOwner(res);
           })
           .finally(() => setIsProjectOwnerLoading(false));
-      } catch {
+      } catch (error: any) {
         setIsProjectOwner(false);
+        errorManager(
+          `Error checking if user ${address} is project owner from project ${projectId}`,
+          error
+        );
       } finally {
         setIsProjectOwnerLoading(false);
       }
     };
-    setupOwner();
-  }, [project?.uid, address, isAuth, isConnected, signer]);
+    setupProjectOwner();
+  }, [project?.uid, address, isAuth, isConnected, signer, chain]);
 
   const socials = useMemo(() => {
     const types = [
@@ -135,7 +153,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
       { name: "LinkedIn", prefix: "linkedin.com/", icon: LinkedInIcon },
     ];
 
-    const isLink = (link?: string) => {
+    const hasHttpOrWWW = (link?: string) => {
       if (!link) return false;
       if (
         link.includes("http://") ||
@@ -156,39 +174,39 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
       }
       const alreadyHasPrefix = link.includes(prefix);
       if (alreadyHasPrefix) {
-        if (isLink(link)) {
+        if (hasHttpOrWWW(link)) {
           return link;
         }
         return addPrefix(link);
       }
 
-      return isLink(prefix + link) ? prefix + link : addPrefix(prefix + link);
+      return hasHttpOrWWW(prefix + link)
+        ? prefix + link
+        : addPrefix(prefix + link);
     };
 
     return types
       .map(({ name, prefix, icon }) => {
-        const hasUrl = project?.details?.data?.links?.find(
+        const socialLink = project?.details?.data?.links?.find(
           (link) => link.type === name.toLowerCase()
         )?.url;
 
-        if (hasUrl) {
+        if (socialLink) {
           if (name === "Twitter") {
-            const hasAt = hasUrl?.includes("@");
-            const url = hasAt ? hasUrl?.replace("@", "") || "" : hasUrl;
+            const url = socialLink?.includes("@")
+              ? socialLink?.replace("@", "") || ""
+              : socialLink;
+
             return {
               name,
-              url: isLink(hasUrl)
-                ? hasUrl
-                : hasUrl.includes(prefix)
-                ? addPrefix(url)
-                : prefix + url,
+              url: formatPrefix(prefix, url),
               icon,
             };
           }
 
           return {
             name,
-            url: formatPrefix(prefix, hasUrl),
+            url: formatPrefix(prefix, socialLink),
             icon,
           };
         }
@@ -285,6 +303,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   const { isIntroModalOpen } = useIntroModalStore();
   const { isEndorsementOpen } = useEndorsementStore();
   const { isProgressModalOpen } = useProgressModalStore();
+
   return (
     <>
       {isIntroModalOpen ? <IntroDialog /> : null}
@@ -296,7 +315,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
           <div className="flex flex-col gap-4">
             <h1
               className={
-                "text-[32px] font-bold leading-tight text-black dark:text-zinc-100"
+                "text-[32px] font-bold leading-tight text-black dark:text-zinc-100 line-clamp-2"
               }
             >
               {project?.details?.data?.title}
@@ -345,7 +364,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
               {isProjectOwner ? (
                 <ExternalLink
                   href={"https://tally.so/r/w8e6GP"}
-                  className="bg-black dark:bg-zinc-800 text-white justify-center items-center dark:text-zinc-400 flex flex-row gap-2.5 py-2 px-5 rounded-full"
+                  className="bg-black dark:bg-zinc-800 text-white justify-center items-center dark:text-zinc-400 flex flex-row gap-2.5 py-2 px-5 rounded-full w-max min-w-max"
                 >
                   <Image
                     src="/icons/alert.png"
@@ -374,11 +393,8 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
                       className="-ml-1.5"
                       style={{ zIndex: 1 + index }}
                     >
-                      <Image
-                        width={20}
-                        height={20}
-                        src={blo(member as `0x${string}`, 8)}
-                        alt={member}
+                      <EthereumAddressToENSAvatar
+                        address={member}
                         className="h-5 w-5 rounded-full border border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5"
                       />
                     </span>

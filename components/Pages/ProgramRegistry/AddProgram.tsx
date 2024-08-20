@@ -40,6 +40,8 @@ import { useRegistryStore } from "@/store/registry";
 import { Popover } from "@headlessui/react";
 import { formatDate } from "@/utilities/formatDate";
 import { DayPicker } from "react-day-picker";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { sanitizeObject } from "@/utilities/sanitize";
 
 const labelStyle = "text-sm font-bold text-[#344054] dark:text-zinc-100";
 const inputStyle =
@@ -260,7 +262,7 @@ export default function AddProgram({
       }
       const chainSelected = data.networkToCreate;
 
-      const metadata = {
+      const metadata = sanitizeObject({
         title: data.name,
         description: data.description,
         programBudget: data.budget,
@@ -297,7 +299,7 @@ export default function AddProgram({
         status: "Active",
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
-      };
+      });
 
       const [request, error] = await fetchData(
         INDEXER.REGISTRY.CREATE,
@@ -325,8 +327,8 @@ export default function AddProgram({
         }
       );
       router.push(PAGES.REGISTRY.ROOT);
-    } catch (error) {
-      console.log(error);
+    } catch (error: any) {
+      errorManager(`Error while creating a program`, error);
       toast.error("An error occurred while creating the program");
     } finally {
       setIsLoading(false);
@@ -351,7 +353,7 @@ export default function AddProgram({
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
 
-      const metadata = {
+      const metadata = sanitizeObject({
         title: data.name,
         description: data.description,
         programBudget: data.budget,
@@ -388,7 +390,7 @@ export default function AddProgram({
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
         status: data.status,
-      };
+      });
 
       const isSameAddress =
         programToEdit?.createdByAddress?.toLowerCase() ===
@@ -466,7 +468,8 @@ export default function AddProgram({
       await refreshPrograms?.().then(() => {
         backTo?.();
       });
-    } catch (error) {
+    } catch (error: any) {
+      errorManager(`Error while editing a program`, error);
       console.log(error);
       toast.error("An error occurred while editing the program");
     } finally {

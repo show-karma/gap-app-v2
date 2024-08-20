@@ -13,6 +13,8 @@ import Image from "next/image";
 import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import { generateRandomString } from "@/utilities/generateRandomString";
 
+import { errorManager } from "@/components/Utilities/errorManager";
+
 const labelStyle = "text-sm font-bold";
 const inputStyle =
   "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white";
@@ -212,7 +214,7 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
   };
 
   const refreshList = async (projectId: Hex) => {
-    const [data] = await fetchData(
+    const [data, error] = await fetchData(
       INDEXER.SUBSCRIPTION.GET(projectId),
       "GET",
       {},
@@ -220,6 +222,12 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
       {},
       true
     ).catch(() => []);
+    if (error) {
+      errorManager(`Error in refreshing contact section`, error);
+      setProjectContactsInfo([]);
+      return;
+    }
+
     if (data) {
       setProjectContactsInfo(data);
     }
@@ -300,7 +308,7 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
       }
     } catch (error: any) {
       toast.error("Something went wrong. Please try again later.");
-      console.log(error);
+      errorManager(`Error creating contact`, error);
     } finally {
       setIsLoading(false);
     }
@@ -348,6 +356,12 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
       toast.error("Something went wrong. Please try again later.", {
         className: "z-[9999]",
       });
+      errorManager(
+        `Error deleting contact ${contactId} from project ${
+          project?.details?.data?.slug || project?.uid
+        }`,
+        error
+      );
       console.log(error);
     } finally {
       setIsDeleteLoading(false);

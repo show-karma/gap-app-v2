@@ -21,6 +21,8 @@ import { useQuery } from "@tanstack/react-query";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
+import { errorManager } from "./Utilities/errorManager";
+
 const sortOptions: Record<SortByOptions, string> = {
   recent: "Recent",
   completed: "Completed",
@@ -136,8 +138,9 @@ export const CommunityGrants = ({
             setTotalGrants(0);
           }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.log("error", error);
+        errorManager("Error while fetching community grants", error);
         setGrants([]);
       } finally {
         setLoading(false);

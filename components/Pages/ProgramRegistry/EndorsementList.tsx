@@ -1,9 +1,9 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { FC, useMemo, useState } from "react";
+import { FC, useEffect, useMemo, useState } from "react";
 import { blo } from "blo";
 import { Hex } from "viem";
-import { useENSNames } from "@/store/ensNames";
+import { useENS } from "@/store/ens";
 import { shortAddress } from "@/utilities/shortAddress";
 import { formatDate } from "@/utilities/formatDate";
 import { EmptyEndorsmentList } from "../Project/Impact/EmptyEndorsmentList";
@@ -12,26 +12,29 @@ import pluralize from "pluralize";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { IProjectEndorsement } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 
 interface EndorsementRowProps {
   endorsement: IProjectEndorsement;
 }
 
 const EndorsementRow: FC<EndorsementRowProps> = ({ endorsement }) => {
-  const { ensNames } = useENSNames();
+  const { ensData, populateEns } = useENS();
+  useEffect(() => {
+    populateEns([endorsement.recipient]);
+  }, [endorsement.recipient]);
 
   return (
     <div className="flex flex-col w-full p-4 gap-3">
       <div className="flex flex-row gap-2 w-full items-start">
         <div className="flex flex-row gap-2 w-full items-center">
-          <img
-            src={blo(endorsement.recipient, 6)}
-            alt={endorsement.recipient}
+          <EthereumAddressToENSAvatar
+            address={endorsement.recipient}
             className="h-6 w-6 rounded-full"
           />
           <div className="flex flex-row gap-3 w-full items-start justify-between">
             <p className="text-sm font-bold text-brand-darkblue dark:text-zinc-100">
-              {ensNames[endorsement?.recipient]?.name ||
+              {ensData[endorsement?.recipient]?.name ||
                 shortAddress(endorsement.recipient)}
               {` `}
               <span className="text-sm font-normal text-[#344054] dark:text-zinc-200">
@@ -66,14 +69,14 @@ export const EndorsementList: FC = () => {
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
 
-  const { populateEnsNames } = useENSNames();
+  const { populateEns } = useENS();
 
   useMemo(() => {
     const endorsements = project?.endorsements || [];
     const allAddresses = endorsements.map(
       (endorsement) => endorsement.recipient
     );
-    populateEnsNames(allAddresses);
+    populateEns(allAddresses);
 
     const checkUniqueEndorsements = () => {
       const addresses: Record<Hex, IProjectEndorsement> = {};
@@ -100,7 +103,7 @@ export const EndorsementList: FC = () => {
       setHandledEndorsements(sliced);
     };
     checkUniqueEndorsements();
-  }, [project?.endorsements, populateEnsNames, page]);
+  }, [project?.endorsements, page]);
 
   return (
     <div className="w-full flex flex-col gap-3">

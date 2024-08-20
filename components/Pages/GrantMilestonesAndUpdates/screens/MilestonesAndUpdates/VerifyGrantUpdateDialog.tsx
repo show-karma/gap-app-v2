@@ -20,7 +20,12 @@ import {
   IGrantUpdate,
   IGrantUpdateStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+
+import { errorManager } from "@/components/Utilities/errorManager";
 import { GrantUpdate } from "@show-karma/karma-gap-sdk";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { sanitizeInput } from "@/utilities/sanitize";
 
 type VerifyGrantUpdateDialogProps = {
   grantUpdate: IGrantUpdate;
@@ -97,10 +102,18 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
       );
       if (!grantUpdateInstance) return;
       await grantUpdateInstance
-        .verify(walletSigner, data.comment, changeStepperStep)
-        .then(async () => {
+        .verify(walletSigner, sanitizeInput(data.comment), changeStepperStep)
+        .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, grantUpdateInstance.chainID),
+              "POST",
+              {}
+            );
+          }
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {
@@ -134,9 +147,13 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
           }
         });
       closeModal();
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       toast.error(MESSAGES.GRANT.GRANT_UPDATE.VERIFY.ERROR);
+      errorManager(
+        `Error verifying grant update ${grantUpdate.uid} from grant ${grantUpdate.refUID}`,
+        error
+      );
     } finally {
       setIsLoading(false);
       setIsStepper(false);

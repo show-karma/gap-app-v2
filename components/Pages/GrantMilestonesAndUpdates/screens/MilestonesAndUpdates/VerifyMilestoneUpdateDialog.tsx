@@ -7,7 +7,6 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/auth";
-import { Milestone, MilestoneCompleted } from "@show-karma/karma-gap-sdk";
 import { useAccount, useSwitchChain } from "wagmi";
 import { getWalletClient } from "@wagmi/core";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -21,6 +20,11 @@ import {
   IMilestoneCompleted,
   IMilestoneResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+
+import { errorManager } from "@/components/Utilities/errorManager";
+import { sanitizeInput } from "@/utilities/sanitize";
 
 type VerifyMilestoneUpdateDialogProps = {
   milestone: IMilestoneResponse;
@@ -92,10 +96,18 @@ export const VerifyMilestoneUpdateDialog: FC<
       );
       if (!milestoneInstance) return;
       await milestoneInstance
-        .verify(walletSigner, data.comment, changeStepperStep)
-        .then(async () => {
+        .verify(walletSigner, sanitizeInput(data.comment), changeStepperStep)
+        .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, milestoneInstance.chainID),
+              "POST",
+              {}
+            );
+          }
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {
@@ -129,9 +141,13 @@ export const VerifyMilestoneUpdateDialog: FC<
           }
         });
       closeModal();
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       toast.error(MESSAGES.MILESTONES.VERIFY.ERROR);
+      errorManager(
+        `Error verifying milestone ${milestone.uid} from grant ${milestone.refUID}`,
+        error
+      );
     } finally {
       setIsLoading(false);
       setIsStepper(false);

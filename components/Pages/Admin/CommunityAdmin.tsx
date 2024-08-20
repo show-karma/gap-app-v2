@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
@@ -18,6 +19,8 @@ import { useOwnerStore } from "@/store";
 import CommunityStats from "@/components/CommunityStats";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+
+import { errorManager } from "@/components/Utilities/errorManager";
 
 interface CommunityAdmin {
   id: string;
@@ -63,8 +66,9 @@ export default function CommunitiesToAdminPage() {
       setCommunityAdmins(communityAdmins);
 
       return result;
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
+      errorManager(`Error fetching all communities`, error);
       setAllCommunities([]);
       return undefined;
     } finally {
