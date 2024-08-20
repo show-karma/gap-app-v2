@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 
 import { blo } from "blo";
-import { FC, useEffect, useState } from "react";
+import { FC, useEffect, useMemo, useState } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { useENS } from "@/store/ens";
 import { formatDate } from "@/utilities/formatDate";
@@ -35,7 +35,7 @@ const BlockieTooltip = ({
 
   useEffect(() => {
     populateEns([address]);
-  }, [address]);
+  }, [address, populateEns]);
 
   return (
     <Tooltip.Provider>
