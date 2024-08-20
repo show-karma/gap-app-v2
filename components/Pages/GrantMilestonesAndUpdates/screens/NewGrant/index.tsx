@@ -66,7 +66,7 @@ import { sanitizeObject } from "@/utilities/sanitize";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
-  "mt-2 w-full rounded-lg border border-gray-200 bg-transparent px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:text-zinc-100 dark:border-gray-600";
+  "mt-2 w-full rounded-lg border border-gray-200 bg-transparent px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:text-zinc-100 dark:border-gray-600 disabled:bg-gray-100 disabled:text-gray-400";
 const textAreaStyle =
   "mt-2 w-full rounded-lg border border-gray-200 bg-transparent px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:text-zinc-100 dark:border-gray-600";
 
@@ -212,8 +212,10 @@ interface NewGrantData {
 
 export function SearchGrantProgram({
   setProgram,
+  setProgramId,
 }: {
   setProgram: (value: GrantProgram) => void;
+  setProgramId: (value: string | undefined) => void;
 }) {
   const [results, setResults] = useState<any>([]);
   const [isSearchListOpen, setIsSearchListOpen] = useState<boolean>(false);
@@ -255,6 +257,7 @@ export function SearchGrantProgram({
         key={item.txHash}
         onClick={() => {
           setProgram(item);
+          setProgramId(`${item?.programId}_${item?.chainID}`);
           closeSearchList();
         }}
       >
@@ -695,6 +698,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   };
 
   const onSubmit = async (data: GrantType) => {
+    console.log("ProgramId: ", data.programId);
     saveAllMilestones();
     let questions: {
       type: string;
@@ -883,6 +887,10 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     if (program?.metadata?.title) {
       setValue("title", program?.metadata?.title);
     }
+
+    if (grantToEdit?.details?.data?.programId && !program) {
+      setValue("programId", grantToEdit?.details?.data?.programId);
+    }
   }, [program]);
 
   return (
@@ -915,27 +923,34 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             <label htmlFor="grant-title" className={labelStyle}>
               Grant title *
             </label>
-            <SearchGrantProgram setProgram={setProgram} />
+            <SearchGrantProgram setProgram={setProgram} setProgramId={
+              (value: string | undefined) => {
+                setValue("programId", value);
+              }
+            } />
 
             {program ? (
               <div className="bg-blue-100 p-3 mb-2 rounded-md flex justify-between items-start">
                 <div>
-                  <p className="mb-2">Selected Grant:</p>
+                  <p className="mb-2">You have selected this grant from the registry:</p>
                   <p className="font-bold text-2xl">{`${program?.metadata?.title}`}</p>
-                  <p className="text-md">{`/${program?.metadata?.description}`}</p>
+                  <p className="text-md">{`${program?.programId} | ${program?.metadata?.description}`}</p>
                 </div>
                 <button onClick={() => {
                   setProgram(null)
+                  setValue("programId", undefined)
                 }}>
                   <XMarkIcon className="w-6 h-6" ></XMarkIcon>
                 </button>
               </div>
             ) : (
-              <div>Select a grant from our registry or enter
-                the title of the grant you want to create.
+              <div>
+                Select a grant from our registry or enter
+                the title of the grant you wish to add.
               </div>
             )}
             <input
+              disabled={!!program}
               id="grant-title"
               className={inputStyle}
               placeholder="Ex: Optimism Dashboard, Gitcoin Round 18 etc."
