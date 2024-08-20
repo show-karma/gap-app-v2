@@ -19,10 +19,10 @@ interface EndorsementRowProps {
 }
 
 const EndorsementRow: FC<EndorsementRowProps> = ({ endorsement }) => {
-  const { ensData, populateEnsNames } = useENS();
+  const { ensData, populateEns } = useENS();
   useEffect(() => {
-    populateEnsNames([endorsement.recipient]);
-  }, [endorsement.recipient, populateEnsNames]);
+    populateEns([endorsement.recipient]);
+  }, [endorsement.recipient]);
 
   return (
     <div className="flex flex-col w-full p-4 gap-3">
@@ -69,14 +69,14 @@ export const EndorsementList: FC = () => {
   const [page, setPage] = useState<number>(1);
   const [hasMore, setHasMore] = useState<boolean>(true);
 
-  const { populateEnsNames } = useENS();
+  const { populateEns } = useENS();
 
   useMemo(() => {
     const endorsements = project?.endorsements || [];
     const allAddresses = endorsements.map(
       (endorsement) => endorsement.recipient
     );
-    populateEnsNames(allAddresses);
+    populateEns(allAddresses);
 
     const checkUniqueEndorsements = () => {
       const addresses: Record<Hex, IProjectEndorsement> = {};
@@ -103,7 +103,7 @@ export const EndorsementList: FC = () => {
       setHandledEndorsements(sliced);
     };
     checkUniqueEndorsements();
-  }, [project?.endorsements, populateEnsNames, page]);
+  }, [project?.endorsements, page]);
 
   return (
     <div className="w-full flex flex-col gap-3">

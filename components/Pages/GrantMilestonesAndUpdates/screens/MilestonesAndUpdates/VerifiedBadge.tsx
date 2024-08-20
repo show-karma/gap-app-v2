@@ -31,11 +31,11 @@ const BlockieTooltip = ({
   date: Date;
   reason?: string;
 }) => {
-  const { ensData, populateEnsNames } = useENS();
+  const { ensData, populateEns } = useENS();
 
   useEffect(() => {
-    populateEnsNames([address]);
-  }, [address, populateEnsNames]);
+    populateEns([address]);
+  }, [address]);
 
   return (
     <Tooltip.Provider>

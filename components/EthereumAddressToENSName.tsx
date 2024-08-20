@@ -16,11 +16,11 @@ const EthereumAddressToENSName: React.FC<Props> = ({
   //   cacheTime: 50000,
   // });
   const ensNames = useENS((state) => state.ensData);
-  const populateEnsNames = useENS((state) => state.populateEnsNames);
+  const populateEns = useENS((state) => state.populateEns);
 
   useEffect(() => {
-    populateEnsNames([address]);
-  }, [address, populateEnsNames]);
+    populateEns([address]);
+  }, [address]);
 
   const addressToDisplay = shouldTruncate
     ? address?.slice(0, 6) + "..." + address?.slice(-6)

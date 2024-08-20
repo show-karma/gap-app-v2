@@ -115,13 +115,13 @@ function ProjectPage() {
     }
   };
 
-  const { populateEnsNames, ensData } = useENS();
+  const { populateEns, ensData } = useENS();
 
   useEffect(() => {
     if (project?.members) {
-      populateEnsNames(project?.members?.map((v) => v.recipient));
+      populateEns(project?.members?.map((v) => v.recipient));
     }
-  }, [populateEnsNames, project?.members]);
+  }, [project?.members]);
 
   const [, copy] = useCopyToClipboard();
 
