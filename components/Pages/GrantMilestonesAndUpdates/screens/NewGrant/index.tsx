@@ -1,11 +1,17 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+
+import {
+  GrantProgram,
+} from "@/components/Pages/ProgramRegistry/ProgramList";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { MilestoneWithCompleted } from "@/types/milestones";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
+import { Spinner } from "@/components/Utilities/Spinner";
 import {
   GrantDetails,
   nullRef,
@@ -53,7 +59,8 @@ import {
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-
+import debounce from "lodash.debounce";
+import { sanitizeInput } from "@/utilities/sanitize";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { sanitizeObject } from "@/utilities/sanitize";
 
@@ -79,6 +86,7 @@ const TIMEFRAME_QUESTIONS = ["What is the timeframe for the work funded?"];
 
 const grantSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.GRANT.FORM.TITLE }),
+  programId: z.string().optional(),
   amount: z.string().optional(),
   community: z.string().nonempty({ message: MESSAGES.GRANT.FORM.COMMUNITY }),
   // season: z.string(),
@@ -189,6 +197,7 @@ interface NewGrantData {
   milestones: MilestoneWithCompleted[];
   community: string;
   season?: string;
+  programId?: string;
   cycle?: string;
   recipient?: string;
   grantUpdate?: string;
@@ -198,6 +207,110 @@ interface NewGrantData {
     query: string;
     explanation: string;
   }[];
+}
+
+
+export function SearchGrantProgram({
+  setProgram,
+}: {
+  setProgram: (value: GrantProgram) => void;
+}) {
+  const [results, setResults] = useState<any>([]);
+  const [isSearchListOpen, setIsSearchListOpen] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  const closeSearchList = () => {
+    setTimeout(() => {
+      setIsSearchListOpen(false);
+    }, 200);
+  };
+
+  const debouncedSearch = debounce(async (value: string) => {
+    const sanitizedValue = sanitizeInput(value);
+    if (sanitizedValue.length < 3) {
+      setResults({ programs: [], count: 0 });
+      return setIsSearchListOpen(false);
+    }
+
+    setIsLoading(true);
+    setIsSearchListOpen(true);
+    const [result, error] = await fetchData(
+      INDEXER.REGISTRY.GET_ALL +
+      `?limit=${10}&name=${sanitizedValue}&status=${"Active"}`
+    );
+
+    if (error) {
+      console.log(error);
+    }
+
+    console.log(result);
+
+    setResults(result);
+    return setIsLoading(false);
+  }, 500);
+
+  const renderItem = (item: GrantProgram, href: string) => {
+    return (
+      <div
+        key={item.txHash}
+        onClick={() => {
+          setProgram(item);
+          closeSearchList();
+        }}
+      >
+        <div className=":last:border-b-0 cursor-pointer select-none border-b border-slate-100 px-4 py-2 transition hover:bg-slate-200 dark:hover:bg-zinc-700">
+          <b className="max-w-full text-ellipsis font-bold text-black dark:text-zinc-100">
+            {item?.metadata?.title}
+          </b>
+          <br />
+          <div className="text-gray-500 dark:text-gray-200">
+            {item?.metadata?.description}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div
+      className="relative mb-4 flex flex-row items-center gap-3 rounded-lg h-max w-full bg-zinc-100 px-4 max-2xl:gap-1 max-2xl:px-2 text-gray-600 dark:text-gray-200 dark:bg-zinc-800"
+      onBlur={() => closeSearchList()}
+    >
+      <MagnifyingGlassIcon className="h-5 w-5" />
+      <input
+        type="text"
+        placeholder="Search from the grant program"
+        className="w-full min-w-[160px] bg-transparent placeholder:text-gray-400 px-1 py-2 text-gray-600 dark:text-gray-200 border-none border-b-zinc-800 outline-none focus:ring-0"
+        onChange={(e) => debouncedSearch(e.target.value)}
+        onFocus={() =>
+          results?.programs?.length > 0 &&
+          setIsSearchListOpen(true)
+        }
+      />
+      {isSearchListOpen && (
+        <div className="absolute left-0 top-10 mt-3 max-h-32 min-w-full overflow-y-scroll rounded-md bg-white dark:bg-zinc-800 py-4 border border-zinc-200">
+          {results?.programs?.length > 0 &&
+            results?.programs?.map((grantProgram: GrantProgram) =>
+              renderItem(
+                grantProgram,
+                PAGES.REGISTRY.ROOT
+              )
+            )}
+
+          {isLoading && (
+            <div className="flex justify-center ">
+              <Spinner />
+            </div>
+          )}
+          {!isLoading && results?.programs?.length === 0 && (
+            <div className="flex flex-col items-center text-center">
+              <div className="w-full text-center">No results found.</div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
@@ -210,6 +323,8 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { isAuth } = useAuthStore();
 
   const refreshProject = useProjectStore((state) => state.refreshProject);
+  const [program, setProgram] = useState<GrantProgram | null>(null);
+
   const [description, setDescription] = useState(
     grantScreen === "edit-grant"
       ? grantToEdit?.details?.data?.description || ""
@@ -269,7 +384,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     mode: "onChange",
     defaultValues: {
       title:
-        grantScreen === "edit-grant" ? grantToEdit?.details?.data?.title : "",
+        grantScreen === "edit-grant" ? grantToEdit?.details?.data?.title : program?.metadata?.title || "",
       amount:
         grantScreen === "edit-grant" ? grantToEdit?.details?.data?.amount : "",
       community:
@@ -357,6 +472,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         // season: data.season,
         questions: data.questions,
         startDate: data.startDate,
+        programId: data?.programId
       });
 
       grant.details = new GrantDetails({
@@ -373,12 +489,12 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       });
       grant.updates = data.grantUpdate
         ? [
-            new GrantUpdate({
-              data: sanitizedUpdate,
-              schema: gapClient.findSchema("Milestone"),
-              recipient: grant.recipient,
-            }),
-          ]
+          new GrantUpdate({
+            data: sanitizedUpdate,
+            schema: gapClient.findSchema("Milestone"),
+            recipient: grant.recipient,
+          }),
+        ]
         : [];
 
       // eslint-disable-next-line no-param-reassign
@@ -492,6 +608,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         // season: data.season,
         questions: data.questions,
         startDate: data.startDate,
+        programId: data?.programId
       });
       oldGrantInstance.details?.setValues(grantData);
       const walletClient = await getWalletClient(config, {
@@ -646,7 +763,10 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       grantUpdate,
       questions,
       startDate: data.startDate.getTime() / 1000,
+      programId: data?.programId
     };
+
+
     if (grantScreen === "edit-grant" && grantToEdit) {
       updateGrant(grantToEdit, newGrant);
     } else {
@@ -670,6 +790,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const [allCommunities, setAllCommunities] = useState<ICommunityResponse[]>(
     []
   );
+
 
   const community = form.getValues("community");
 
@@ -758,6 +879,12 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     return "";
   };
 
+  useEffect(() => {
+    if (program?.metadata?.title) {
+      setValue("title", program?.metadata?.title);
+    }
+  }, [program]);
+
   return (
     <div className={"flex w-full flex-col items-start  justify-center"}>
       <div className="flex w-full max-w-3xl flex-col items-start justify-start gap-6 rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-zinc-900 px-6 pb-6 pt-5 max-lg:max-w-full">
@@ -788,6 +915,26 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             <label htmlFor="grant-title" className={labelStyle}>
               Grant title *
             </label>
+            <SearchGrantProgram setProgram={setProgram} />
+
+            {program ? (
+              <div className="bg-blue-100 p-3 mb-2 rounded-md flex justify-between items-start">
+                <div>
+                  <p className="mb-2">Selected Grant:</p>
+                  <p className="font-bold text-2xl">{`${program?.metadata?.title}`}</p>
+                  <p className="text-md">{`/${program?.metadata?.description}`}</p>
+                </div>
+                <button onClick={() => {
+                  setProgram(null)
+                }}>
+                  <XMarkIcon className="w-6 h-6" ></XMarkIcon>
+                </button>
+              </div>
+            ) : (
+              <div>Select a grant from our registry or enter
+                the title of the grant you want to create.
+              </div>
+            )}
             <input
               id="grant-title"
               className={inputStyle}
