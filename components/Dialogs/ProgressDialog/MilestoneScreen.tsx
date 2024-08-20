@@ -7,6 +7,7 @@ import { PAGES } from "@/utilities/pages";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Dropdown } from "./Dropdown";
 
 export const MilestoneScreen = () => {
   const { project } = useProjectStore();
@@ -55,27 +56,19 @@ export const MilestoneScreen = () => {
         <label className="text-sm font-bold text-black dark:text-zinc-100">
           Select Grant
         </label>
-        <select
-          value={selectedGrant?.uid}
-          className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300"
-        >
-          <option
-            value={undefined}
-            onClick={() => setSelectedGrant(undefined)}
-            className="text-gray-400"
-          >
-            Select Grant
-          </option>
-          {grants.map((grant) => (
-            <option
-              key={grant.uid}
-              value={grant.uid}
-              onClick={() => setSelectedGrant(grant)}
-            >
-              {grant.details?.data.title}
-            </option>
-          ))}
-        </select>
+        <Dropdown
+          list={grants.map((grant) => ({
+            value: grant.details?.data.title || "",
+            id: grant.uid,
+            timestamp: grant.createdAt,
+          }))}
+          onSelectFunction={(value: string) => {
+            const newGrant = grants.find((grant) => grant.uid === value);
+            setSelectedGrant(newGrant);
+          }}
+          type={"Grants"}
+          selected={selectedGrant?.uid || ""}
+        />
       </div>
       <div className="flex flex-col gap-2">
         {selectedGrant ? (

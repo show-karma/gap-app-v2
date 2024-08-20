@@ -3,7 +3,11 @@ import {
   ProgressModalScreen,
   useProgressModalStore,
 } from "@/store/modals/progress";
-import { XMarkIcon } from "@heroicons/react/24/solid";
+import {
+  ArrowLeftCircleIcon,
+  ArrowLeftIcon,
+  XMarkIcon,
+} from "@heroicons/react/24/solid";
 import Image from "next/image";
 import { FC, Fragment, ReactNode, useState } from "react";
 import { Button } from "../../Utilities/Button";
@@ -144,6 +148,7 @@ export const ProgressDialog = () => {
     isProgressModalOpen: isOpen,
     setIsProgressModalOpen,
     progressModalScreen,
+    setProgressModalScreen,
   } = useProgressModalStore();
 
   const closeModal = () => {
@@ -185,18 +190,26 @@ export const ProgressDialog = () => {
               leaveTo="opacity-0 scale-95"
             >
               <Dialog.Panel className="w-full max-w-2xl h-max transform overflow-hidden rounded dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
-                <button
-                  className="p-2 text-black dark:text-white absolute top-4 right-4"
-                  onClick={() => closeModal()}
-                >
-                  <XMarkIcon className="w-6 h-6" />
-                </button>
                 <div className="flex flex-col gap-6">
-                  <h2 className="text-2xl font-bold dark:text-zinc-200 text-black w-full text-center">
-                    {progressModalScreen === "menu"
-                      ? `Select Update Type`
-                      : "Craft Your Update"}
-                  </h2>
+                  <div className="flex flex-row gap-2 px-4 py-4 items-center">
+                    {progressModalScreen !== "menu" ? (
+                      <button onClick={() => setProgressModalScreen("menu")}>
+                        <ArrowLeftIcon className="w-6 h-6" />
+                      </button>
+                    ) : null}
+
+                    <h2 className="text-2xl font-bold dark:text-zinc-200 text-black w-full text-center">
+                      {progressModalScreen === "menu"
+                        ? `Select Update Type`
+                        : "Craft Your Update"}
+                    </h2>
+                    <button
+                      className="p-2 text-black dark:text-white"
+                      onClick={() => closeModal()}
+                    >
+                      <XMarkIcon className="w-6 h-6" />
+                    </button>
+                  </div>
                   {screenToShow[progressModalScreen]}
                 </div>
               </Dialog.Panel>

@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 import { MilestoneUpdateForm } from "@/components/Forms/MilestoneUpdate";
+import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 import { Button } from "@/components/Utilities/Button";
 import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
@@ -11,6 +12,7 @@ import {
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Dropdown } from "./Dropdown";
 
 export const MilestoneUpdateScreen = () => {
   const { project } = useProjectStore();
@@ -23,6 +25,8 @@ export const MilestoneUpdateScreen = () => {
     IMilestoneResponse | undefined
   >();
   const grants: IGrantResponse[] = project?.grants || [];
+  const { setProgressModalScreen } = useProgressModalStore();
+
   if (!grants.length && project) {
     return (
       <div
@@ -67,23 +71,27 @@ export const MilestoneUpdateScreen = () => {
         <label className="text-sm font-bold text-black dark:text-zinc-100">
           Select Grant
         </label>
-        <select
-          value={selectedGrant?.uid}
-          className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300"
-        >
-          <option value={undefined} disabled className="text-gray-400">
-            Select Grant
-          </option>
-          {grants.map((grant) => (
-            <option
-              key={grant.uid}
-              value={grant.uid}
-              onClick={() => setSelectedGrant(grant)}
-            >
-              {grant.details?.data.title}
-            </option>
-          ))}
-        </select>
+        <Dropdown
+          list={grants.map((grant) => ({
+            value: grant.details?.data.title || "",
+            id: grant.uid,
+            timestamp: grant.createdAt,
+          }))}
+          onSelectFunction={(value: string) => {
+            const newGrant = grants.find((grant) => grant.uid === value);
+            setSelectedGrant(newGrant);
+            const availableMilestones = newGrant?.milestones.filter(
+              (milestone) => !milestone.completed
+            );
+            if (availableMilestones && availableMilestones.length > 0) {
+              setSelectedMilestone(availableMilestones[0]);
+            } else {
+              setSelectedMilestone(undefined);
+            }
+          }}
+          type={"Grants"}
+          selected={selectedGrant?.uid || ""}
+        />
       </div>
     );
   };
@@ -94,28 +102,23 @@ export const MilestoneUpdateScreen = () => {
         <label className="text-sm font-bold text-black dark:text-zinc-100">
           Select Milestone
         </label>
-        <select
-          value={selectedMilestone?.uid}
-          className="w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300"
-        >
-          <option
-            value={undefined}
-            disabled
-            onClick={() => setSelectedMilestone(undefined)}
-            className="text-gray-400"
-          >
-            Select Milestone
-          </option>
-          {selectedGrant?.milestones?.map((milestone) => (
-            <option
-              key={milestone.uid}
-              value={milestone.uid}
-              onClick={() => setSelectedMilestone(milestone)}
-            >
-              {milestone?.data?.title}
-            </option>
-          ))}
-        </select>
+        {selectedGrant?.milestones?.length ? (
+          <Dropdown
+            list={selectedGrant?.milestones.map((milestone) => ({
+              value: milestone.data.title || "",
+              id: milestone.uid,
+              timestamp: milestone.createdAt,
+            }))}
+            onSelectFunction={(value: string) => {
+              const newMilestone = selectedGrant?.milestones.find(
+                (milestone) => milestone.uid === value
+              );
+              setSelectedMilestone(newMilestone);
+            }}
+            type={"Milestones"}
+            selected={selectedMilestone?.uid || ""}
+          />
+        ) : null}
       </div>
     );
   };
@@ -136,14 +139,7 @@ export const MilestoneUpdateScreen = () => {
           <div className="flex flex-row justify-start gap-4 max-sm:w-full max-sm:flex-col">
             <Button
               onClick={() => {
-                router.push(
-                  PAGES.PROJECT.TABS.SELECTED_TAB(
-                    (project?.details?.data.slug || project?.uid) as string,
-                    selectedGrant?.uid,
-                    "create-milestone"
-                  )
-                );
-                closeProgressModal();
+                setProgressModalScreen("milestone");
               }}
               className="flex h-max w-max  flex-row items-center  hover:opacity-75 justify-center gap-3 rounded border border-[#155EEF] bg-[#155EEF] px-3 py-1 text-sm font-semibold text-white   max-sm:w-full"
             >
