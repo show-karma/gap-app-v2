@@ -121,7 +121,7 @@ function ProjectPage() {
     if (project?.members) {
       populateEns(project?.members?.map((v) => v.recipient));
     }
-  }, [project?.members, populateEns]);
+  }, [project?.members]);
 
   const [, copy] = useCopyToClipboard();
 
