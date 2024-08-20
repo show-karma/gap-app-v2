@@ -2,7 +2,7 @@
 "use client";
 import { useENS } from "@/store/ens";
 import { blo } from "blo";
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import { cn } from "@/utilities/tailwind";
 
 interface Props {
@@ -15,11 +15,11 @@ const EthereumAddressToENSAvatar: React.FC<Props> = ({
   className,
 }) => {
   const ensAvatars = useENS((state) => state.ensData);
-  const populateEnsAvatars = useENS((state) => state.populateEnsAvatars);
+  const populateEns = useENS((state) => state.populateEns);
 
-  useEffect(() => {
-    populateEnsAvatars([address]);
-  }, [address, populateEnsAvatars]);
+  useMemo(() => {
+    // populateEns([address]);
+  }, [address]);
 
   return (
     <div>
