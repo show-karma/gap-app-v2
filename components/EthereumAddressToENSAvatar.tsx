@@ -17,8 +17,10 @@ const EthereumAddressToENSAvatar: React.FC<Props> = ({
   const ensAvatars = useENS((state) => state.ensData);
   const populateEns = useENS((state) => state.populateEns);
 
-  useMemo(() => {
-    populateEns([address]);
+  useEffect(() => {
+    if (!ensAvatars[address.toLowerCase()]) {
+      populateEns([address]);
+    }
   }, [address]);
 
   return (

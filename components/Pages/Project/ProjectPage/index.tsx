@@ -3,7 +3,7 @@
 
 import { useProjectStore } from "@/store";
 import { useOwnerStore } from "@/store/owner";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAccount, useSwitchChain } from "wagmi";
 import toast from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation";
