@@ -30,7 +30,9 @@ export const fetchENS = async (addresses: (Hex | string)[]) => {
     const names = await Promise.all(calls);
     return names;
   } catch (error: any) {
-    // errorManager(`Error in fetch ens names`, error);
+    errorManager(`Error in fetch ens names`, error, {
+      addresses,
+    });
     console.log(error);
     return addresses.map((address) => ({
       name: undefined,
