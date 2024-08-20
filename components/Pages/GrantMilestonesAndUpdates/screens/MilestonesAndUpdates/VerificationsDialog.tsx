@@ -40,7 +40,7 @@ const VerificationItem = ({ verification }: VerificationsItemProps) => {
 
   useEffect(() => {
     populateEns([verification.attester]);
-  }, [verification.attester]);
+  }, [verification.attester, populateEns]);
 
   return (
     <div className="flex flex-col items-start gap-1.5 p-4">
@@ -78,7 +78,7 @@ export const VerificationsDialog: FC<VerificationsDialogProps> = ({
   const { populateEns } = useENS();
   useEffect(() => {
     populateEns(verifications.map((v) => v.attester as string));
-  }, [verifications]);
+  }, [verifications, populateEns]);
 
   useEffect(() => {
     if (communityUid) {

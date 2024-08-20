@@ -22,7 +22,7 @@ const EndorsementRow: FC<EndorsementRowProps> = ({ endorsement }) => {
   const { ensData, populateEns } = useENS();
   useEffect(() => {
     populateEns([endorsement.recipient]);
-  }, [endorsement.recipient]);
+  }, [endorsement.recipient, populateEns]);
 
   return (
     <div className="flex flex-col w-full p-4 gap-3">
