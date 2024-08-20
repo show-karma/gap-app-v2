@@ -11,11 +11,10 @@ export const errorManager = (errorMessage: string, error: any, extra?: any) => {
       return;
     }
   }
-  console.log(error);
-  // Sentry.captureException(error, {
-  //   extra: {
-  //     errorMessage,
-  //     ...extra,
-  //   },
-  // });
+  Sentry.captureException(error, {
+    extra: {
+      errorMessage,
+      ...extra,
+    },
+  });
 };
