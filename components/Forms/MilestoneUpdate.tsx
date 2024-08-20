@@ -17,6 +17,7 @@ import { config } from "@/utilities/wagmi/config";
 import { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getGapClient, useGap } from "@/hooks";
 import { ShareDialog } from "../Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/ShareDialog";
+import { errorManager } from "../Utilities/errorManager";
 
 interface MilestoneUpdateFormProps {
   milestone: IMilestoneResponse;
@@ -36,7 +37,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   const selectedProject = useProjectStore((state) => state.project);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isSubmitLoading, setIsSubmitLoading] = useState(false);
-  const { chain } = useAccount();
+  const { chain, address } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const [description, setDescription] = useState(previousDescription || "");
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
@@ -125,6 +126,16 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     } catch (error) {
       console.log(error);
       toast.error(MESSAGES.MILESTONES.COMPLETE.ERROR);
+      errorManager(
+        `Error completing milestone ${milestone.uid} from grant ${milestone.refUID}`,
+        error,
+        {
+          grantUID: milestone.refUID,
+          projectUID: project?.uid,
+          address: address,
+          data: milestone,
+        }
+      );
     } finally {
       setIsStepper(false);
     }

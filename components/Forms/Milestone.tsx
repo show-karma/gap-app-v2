@@ -29,6 +29,7 @@ import { config } from "@/utilities/wagmi/config";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
+import { errorManager } from "../Utilities/errorManager";
 
 const milestoneSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.MILESTONES.FORM.TITLE }),
@@ -99,6 +100,8 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );
+  const project = useProjectStore((state) => state.project);
+  const projectUID = project?.uid;
 
   const { changeStepperStep, setIsStepper } = useStepper();
 
@@ -195,6 +198,16 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
     } catch (error) {
       console.error(error);
       toast.error(MESSAGES.MILESTONES.CREATE.ERROR);
+      errorManager(
+        `Error creating milestone for grant ${uid} from project ${projectUID}`,
+        error,
+        {
+          grantUID: uid,
+          projectUID: projectUID,
+          address: address,
+          data: milestone,
+        }
+      );
     } finally {
       setIsLoading(false);
       setIsStepper(false);

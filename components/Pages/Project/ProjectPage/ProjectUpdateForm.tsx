@@ -125,7 +125,12 @@ export const ProjectUpdateForm: FC = () => {
     } catch (error: any) {
       errorManager(
         `Error of user ${address} creating project update for project ${project?.uid}`,
-        error
+        error,
+        {
+          projectUID: project?.uid,
+          address: address,
+          data: { title, text },
+        }
       );
       console.log(error);
       toast.error(MESSAGES.PROJECT_UPDATE_FORM.ERROR);

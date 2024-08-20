@@ -20,6 +20,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
+import { errorManager } from "../Utilities/errorManager";
 
 const updateSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.PROJECT_UPDATE_FORM.TITLE }),
@@ -124,6 +125,15 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
           }
         });
     } catch (error) {
+      errorManager(
+        `Error of user ${address} creating project update for project ${project?.uid}`,
+        error,
+        {
+          projectUID: project?.uid,
+          address: address,
+          data: { title, text },
+        }
+      );
       console.log(error);
       toast.error(MESSAGES.PROJECT_UPDATE_FORM.ERROR);
     } finally {

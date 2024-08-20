@@ -200,7 +200,13 @@ export const NewMilestone: FC<NewMilestoneProps> = ({ grant }) => {
       toast.error(MESSAGES.MILESTONES.CREATE.ERROR);
       errorManager(
         `Error creating milestone for grant ${uid} from project ${projectUID}`,
-        error
+        error,
+        {
+          grantUID: uid,
+          projectUID: projectUID,
+          address: address,
+          data: milestone,
+        }
       );
     } finally {
       setIsLoading(false);

@@ -152,7 +152,16 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
       toast.error(MESSAGES.GRANT.GRANT_UPDATE.ERROR);
       errorManager(
         `Error creating grant update for grant ${grantToUpdate.uid} from project ${project.uid}`,
-        error
+        error,
+        {
+          grantUID: grantToUpdate.uid,
+          projectUID: project.uid,
+          address: address,
+          data: {
+            title,
+            text,
+          },
+        }
       );
     } finally {
       setIsStepper(false);
