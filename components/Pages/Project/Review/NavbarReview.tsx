@@ -20,7 +20,7 @@ export const NavbarReview = () => {
 
   return (
     <div className="w-full flex flex-col">
-      <div className="w-full flex px-2 gap-2 overflow-x-auto pb-4 relative">
+      <div className="w-full flex px-2 gap-2 overflow-x-auto pb-4 relative scroller">
         {review
           .sort((a, b) => b.date - a.date)
           .map((miniReview: Review, index: number) => (
