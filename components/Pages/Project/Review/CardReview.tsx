@@ -16,13 +16,15 @@ export const CardReview = ({ id }: { id: number }) => {
       <div className="w-full flex flex-col px-2 gap-2">
         {reviews.map((badge: Badge, index: number) => (
           <div key={index} className="flex flex-col w-full px-14 mt-4">
-            <div className="flex flex-row w-full items-center gap-3">
+            <div className="flex justify-center sm:justify-normal flex-col sm:flex-row w-full items-center gap-3">
               <div>
                 <BadgeIcon badgeName={badge.name} className="w-20 h-20" />
               </div>
               <div>
-                <div className="text-lg">{badge.name}</div>
-                <div className="text-sm">{badge.description}</div>
+                <div className="sm:text-lg sm:text-start text-center text-xl">
+                  {badge.name}
+                </div>
+                <div className="sm:text-sm">{badge.description}</div>
               </div>
               <div>
                 <DynamicStarsReview
