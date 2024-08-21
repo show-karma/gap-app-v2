@@ -402,7 +402,7 @@ export const ProjectGrantsPage = () => {
             </nav>
           </div>
         ) : null}
-        <div className="flex-1 pl-5 pt-5 pb-20 max-lg:px-0 max-lg:pt-0">
+        <div className="flex-1 pl-5 pt-5 pb-20 max-lg:px-0 max-lg:pt-0 overflow-hidden">
           {/* Grants tabs start */}
           {project?.grants.length ? (
             <div className="flex flex-row gap-4 justify-between max-md:flex-col border-b border-b-zinc-900 dark:border-b-zinc-200 pb-2 mb-4">
@@ -434,7 +434,7 @@ export const ProjectGrantsPage = () => {
             </div>
           ) : null}
           {project?.grants.length && currentTab !== "create-grant" ? (
-            <div className="sm:block">
+            <div className="sm:block overflow-x-auto">
               <nav
                 className="isolate flex flex-row max-lg:w-full flex-wrap gap-4 divide-x divide-gray-200 rounded-lg py-1 px-1  bg-[#F2F4F7] dark:bg-zinc-900 w-max transition-all duration-300 ease-in-out"
                 aria-label="Tabs"
