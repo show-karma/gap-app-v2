@@ -92,7 +92,7 @@ export const VerifyMilestoneUpdateDialog: FC<
       );
       if (!milestoneInstance) return;
       await milestoneInstance
-        .verify(walletSigner, data.comment, changeStepperStep)
+        .verify(walletSigner, {reason: data.comment}, changeStepperStep)
         .then(async () => {
           let retries = 1000;
           changeStepperStep("indexing");

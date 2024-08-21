@@ -97,7 +97,7 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
       );
       if (!grantUpdateInstance) return;
       await grantUpdateInstance
-        .verify(walletSigner, data.comment, changeStepperStep)
+        .verify(walletSigner, { reason: data.comment}, changeStepperStep)
         .then(async () => {
           let retries = 1000;
           changeStepperStep("indexing");
