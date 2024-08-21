@@ -13,6 +13,8 @@ import { useAuthStore } from "@/store/auth";
 import { useAuth } from "@/hooks/useAuth";
 import { INDEXER } from "@/utilities/indexer";
 
+import { errorManager } from "@/components/Utilities/errorManager";
+
 type QuestionCreationDialogProps = {
   refreshQuestions: () => Promise<void>;
 };
@@ -72,8 +74,9 @@ export const QuestionCreationDialog: FC<QuestionCreationDialogProps> = ({
       toast.success("Question created successfully");
       refreshQuestions();
       closeModal();
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
+      errorManager(`Error creating question of ${communityId}`, error);
       toast.error("An error occurred while creating the question");
     } finally {
       setIsLoading(false);

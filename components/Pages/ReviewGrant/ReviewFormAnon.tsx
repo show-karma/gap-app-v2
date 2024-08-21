@@ -27,6 +27,7 @@ import { ExclamationTriangleIcon } from "@heroicons/react/20/solid";
 import { createHash } from "crypto";
 import { envVars } from "@/utilities/enviromentVars";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 interface ReviewFormAnonProps {
   grant: IGrantResponse;
@@ -244,9 +245,7 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
           email: infos.choice === "yes" ? infos.email : undefined,
           categories: infos.choice === "yes" ? infos.categories : undefined,
         }
-      ).catch((error) => {
-        console.log(error);
-      });
+      );
 
       localStorage.setItem("mountAnswers", JSON.stringify(mountAnswers));
 
@@ -276,8 +275,12 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
       } else {
         console.log("User cancelled the proof generation");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
+      errorManager(
+        `Error of user ${address} saving anon review for grant ${grant.uid}`,
+        error
+      );
       toast.error(
         MESSAGES.GRANT.REVIEW.ERROR(
           project?.details?.data?.title as string,
@@ -317,6 +320,10 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
       })
       .catch((error) => {
         console.log("Error in storing anon reviews: ", error);
+        errorManager(
+          `Error of user ${address} sending anon answers for grant ${grant.uid}`,
+          error
+        );
         toast.error(
           MESSAGES.GRANT.REVIEW.ERROR(
             project?.details?.data?.title as string,
@@ -628,14 +635,18 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
             onClick={() => {
               let cachedMountAnswers = localStorage.getItem("mountAnswers");
               if (cachedMountAnswers) {
-                alert("Found cached answers, sending...");
+                toast("Found cached answers, sending...");
                 sendAnonAnswers(JSON.parse(cachedMountAnswers))
                   .then(() => {
-                    alert("Answers sent anonymously!");
+                    toast.success("Answers sent anonymously!");
                     // localStorage.removeItem("mountAnswers");
                   })
                   .catch((e) => {
-                    alert("Error sending answers: " + e);
+                    errorManager(
+                      `Error of user ${address} sending anon answers for grant ${grant.uid}`,
+                      e
+                    );
+                    toast.error("Error sending answers: " + e);
                   });
               }
             }}

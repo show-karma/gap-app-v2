@@ -13,6 +13,8 @@ import { useAuthStore } from "@/store/auth";
 import { useAuth } from "@/hooks/useAuth";
 import { INDEXER } from "@/utilities/indexer";
 
+import { errorManager } from "@/components/Utilities/errorManager";
+
 type CategoryCreationDialogProps = {
   refreshCategories: () => Promise<void>;
 };
@@ -72,7 +74,11 @@ export const CategoryCreationDialog: FC<CategoryCreationDialogProps> = ({
       toast.success("Category created successfully");
       refreshCategories();
       closeModal();
-    } catch (error) {
+    } catch (error: any) {
+      errorManager(
+        `Error creating category of community ${communityId}`,
+        error
+      );
       console.log(error);
       toast.error("An error occurred while creating the category");
     } finally {

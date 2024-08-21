@@ -39,7 +39,7 @@ import { useProjectStore } from "@/store";
 import { useOwnerStore } from "@/store/owner";
 import { MESSAGES } from "@/utilities/messages";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
+
 import { appNetwork } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -55,6 +55,8 @@ import { config } from "@/utilities/wagmi/config";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getProjectById } from "@/utilities/sdk";
 import { NetworkDropdown } from "./NetworkDropdown";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { sanitizeObject } from "@/utilities/sanitize";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -439,45 +441,55 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       const walletSigner = await walletClientToSigner(walletClient);
       closeModal();
       changeStepperStep("preparing");
-      await project.attest(walletSigner, changeStepperStep).then(async () => {
-        let retries = 1000;
-        let fetchedProject: Project | null = null;
-        changeStepperStep("indexing");
-        while (retries > 0) {
-          // eslint-disable-next-line no-await-in-loop
-          fetchedProject = await (slug
-            ? gapClient.fetch.projectBySlug(slug)
-            : gapClient.fetch.projectById(project.uid as Hex)
-          ).catch(() => null);
-          if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
+      await project
+        .attest(walletSigner, changeStepperStep)
+        .then(async (res) => {
+          let retries = 1000;
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
             await fetchData(
-              INDEXER.SUBSCRIPTION.CREATE(fetchedProject.uid),
+              INDEXER.ATTESTATION_LISTENER(txHash, project.chainID),
               "POST",
-              { contacts },
-              {},
-              {},
-              true
-            ).then(([res, error]) => {
-              if (error) {
-                toast.error(
-                  "Something went wrong with contact info save. Please try again later.",
-                  {
-                    className: "z-[9999]",
-                  }
-                );
-              }
-              retries = 0;
-              toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
-              router.push(PAGES.PROJECT.GRANTS(slug || project.uid));
-              changeStepperStep("indexed");
-              return;
-            });
+              {}
+            );
           }
-          retries -= 1;
-          // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-          await new Promise((resolve) => setTimeout(resolve, 1500));
-        }
-      });
+          let fetchedProject: Project | null = null;
+          changeStepperStep("indexing");
+          while (retries > 0) {
+            // eslint-disable-next-line no-await-in-loop
+            fetchedProject = await (slug
+              ? gapClient.fetch.projectBySlug(slug)
+              : gapClient.fetch.projectById(project.uid as Hex)
+            ).catch(() => null);
+            if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
+              await fetchData(
+                INDEXER.SUBSCRIPTION.CREATE(fetchedProject.uid),
+                "POST",
+                { contacts },
+                {},
+                {},
+                true
+              ).then(([res, error]) => {
+                if (error) {
+                  toast.error(
+                    "Something went wrong with contact info save. Please try again later.",
+                    {
+                      className: "z-[9999]",
+                    }
+                  );
+                }
+                retries = 0;
+                toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
+                router.push(PAGES.PROJECT.GRANTS(slug || project.uid));
+                changeStepperStep("indexed");
+                return;
+              });
+            }
+            retries -= 1;
+            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
+            await new Promise((resolve) => setTimeout(resolve, 1500));
+          }
+        });
 
       reset();
       setTeam([]);
@@ -485,8 +497,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       setStep(0);
       setIsStepper(false);
       setContacts([]);
-    } catch (error) {
+    } catch (error: any) {
       console.log({ error });
+      errorManager(`Error creating project`, error);
       toast.error(MESSAGES.PROJECT.CREATE.ERROR);
       setIsStepper(false);
       openModal();
@@ -556,8 +569,14 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           router.push(PAGES.PROJECT.OVERVIEW(project));
         }
       });
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
+      errorManager(
+        `Error updating project ${
+          projectToUpdate?.details?.data?.slug || projectToUpdate?.uid
+        }`,
+        error
+      );
       toast.error(MESSAGES.PROJECT.UPDATE.ERROR);
       openModal();
     } finally {
@@ -567,10 +586,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   };
 
   const onSubmit = async (data: SchemaType) => {
+    const sanitizedData = sanitizeObject(data);
     if (projectToUpdate) {
-      updateThisProject(data);
+      updateThisProject(sanitizedData);
     } else {
-      createProject(data);
+      createProject(sanitizedData);
     }
   };
 

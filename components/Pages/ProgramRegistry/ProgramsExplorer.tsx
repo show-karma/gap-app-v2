@@ -5,8 +5,6 @@ import { useState, useEffect } from "react";
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import { CheckIcon } from "@heroicons/react/24/solid";
 import { Spinner } from "@/components/Utilities/Spinner";
-import Link from "next/link";
-import { PAGES } from "@/utilities/pages";
 import debounce from "lodash.debounce";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -17,7 +15,6 @@ import {
 import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 import { useQueryState } from "nuqs";
-import { useAuthStore } from "@/store/auth";
 import { useAccount } from "wagmi";
 import Pagination from "@/components/Utilities/Pagination";
 import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
@@ -26,8 +23,9 @@ import { checkIsPoolManager } from "@/utilities/registry/checkIsPoolManager";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { KarmaLogo } from "@/components/Icons/Karma";
 import { useRegistryStore } from "@/store/registry";
+
+import { errorManager } from "@/components/Utilities/errorManager";
 
 const statuses = ["Active", "Inactive"];
 
@@ -160,7 +158,11 @@ export const ProgramsExplorer = () => {
           const isManager = await checkIsPoolManager(address);
           setIsPoolManager(isManager);
         }
-      } catch (error) {
+      } catch (error: any) {
+        errorManager(
+          `Error while checking if ${address} is a registry admin or pool manager`,
+          error
+        );
         console.log(error);
       }
     };
@@ -221,7 +223,8 @@ export const ProgramsExplorer = () => {
         if (data) {
           setSelectedProgram(data);
         }
-      } catch (error) {
+      } catch (error: any) {
+        errorManager(`Error while searching for program by id`, error);
         console.log(error);
       }
     };

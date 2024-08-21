@@ -22,13 +22,22 @@ import { config } from "@/utilities/wagmi/config";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
+import { errorManager } from "@/components/Utilities/errorManager";
+import { sanitizeInput } from "@/utilities/sanitize";
+import { isAddress } from "viem";
+
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
 const labelStyle =
   "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
 const schema = z.object({
-  address: z.string().min(3, { message: MESSAGES.COMMUNITY_FORM.TITLE }),
+  address: z
+    .string()
+    .min(3, { message: "Address too short" })
+    .refine((data) => isAddress(data.toLowerCase()), {
+      message: "Invalid address",
+    }),
 });
 
 type SchemaType = z.infer<typeof schema>;
@@ -91,7 +100,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
 
   const { changeStepperStep, setIsStepper } = useStepper();
 
-  const addAdmin = async (data: SchemaType) => {
+  const onSubmit = async (data: SchemaType) => {
     if (chain?.id != chainid) {
       await switchChainAsync?.({ chainId: chainid });
     }
@@ -103,12 +112,18 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
     try {
       const communityResolver = await GAP.getCommunityResolver(walletSigner);
       changeStepperStep("preparing");
-      const communityResponse = await communityResolver.enlist(
-        UUID,
-        data.address
-      );
+      const address = sanitizeInput(data.address.toLowerCase());
+      const communityResponse = await communityResolver.enlist(UUID, address);
       changeStepperStep("pending");
+      const { hash } = communityResponse;
       await communityResponse.wait().then(async () => {
+        if (hash) {
+          await fetchData(
+            INDEXER.ATTESTATION_LISTENER(hash, chainid),
+            "POST",
+            {}
+          );
+        }
         changeStepperStep("indexing");
         let retries = 1000;
         let addressAdded = false;
@@ -139,7 +154,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
               closeModal(); // Close the dialog upon successful submission
               break;
             }
-          } catch (error) {
+          } catch (error: any) {
             console.log("Retrying...");
           }
 
@@ -148,22 +163,15 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
           await new Promise((resolve) => setTimeout(resolve, 1500));
         }
       });
-    } catch (error) {
+    } catch (error: any) {
+      errorManager(
+        `Error adding admin ${data.address} to community ${UUID}`,
+        error
+      );
       console.log(error);
     } finally {
       setIsStepper(false);
       setIsLoading(false);
-    }
-  };
-
-  const onSubmit = async (data: SchemaType) => {
-    try {
-      setIsLoading(true); // Set loading state to true
-      await addAdmin(data); // Call the addAdmin function
-    } catch (error) {
-      console.error("Error Adding Community Admin:", error);
-    } finally {
-      setIsLoading(false); // Reset loading state
     }
   };
 
@@ -240,6 +248,9 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
                           placeholder='e.g. "0x5cd3g343..."'
                           {...register("address")}
                         />
+                        <p className="text-red-500 text-sm">
+                          {errors.address?.message}
+                        </p>
                       </div>
                     </div>
 

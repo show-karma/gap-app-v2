@@ -21,6 +21,10 @@ import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useAccount, useSwitchChain } from "wagmi";
 import { config } from "@/utilities/wagmi/config";
 import { Hex } from "viem";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+
+import { errorManager } from "@/components/Utilities/errorManager";
 
 const InformationTab: FC = () => {
   const { project } = useProjectStore();
@@ -130,7 +134,15 @@ const UpdateBlock = ({
       }
       await findUpdate
         .revoke(walletSigner as any, changeStepperStep)
-        .then(async () => {
+        .then(async (res) => {
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, findUpdate.chainID),
+              "POST",
+              {}
+            );
+          }
           let retries = 1000;
           changeStepperStep("indexing");
           let fetchedProject = null;
@@ -152,9 +164,13 @@ const UpdateBlock = ({
             await new Promise((resolve) => setTimeout(resolve, 1500));
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       toast.error(MESSAGES.PROJECT_UPDATE_FORM.DELETE.ERROR);
+      errorManager(
+        `Error deleting project update ${update.uid} from project ${project?.uid}`,
+        error
+      );
     } finally {
       setIsDeletingUpdate(false);
       setIsStepper(false);

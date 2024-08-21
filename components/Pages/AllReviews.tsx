@@ -6,11 +6,10 @@ import { Spinner } from "../Utilities/Spinner";
 import { useEffect, useState } from "react";
 import { additionalQuestion, votingPowerCommunities } from "@/utilities/tabs";
 import { ExternalLink } from "../Utilities/ExternalLink";
-import { Hex } from "viem";
 import EthereumAddressToENSName from "../EthereumAddressToENSName";
+import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
 import { useProjectStore } from "@/store";
 import { VotingPowerPopover } from "../VotingPowerPopover";
-import { blo } from "blo";
 import Link from "next/link";
 import { MarkdownPreview } from "../Utilities/MarkdownPreview";
 import { formatDate } from "@/utilities/formatDate";
@@ -18,6 +17,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { getReviewsOf, getAnonReviewsOf } from "@/utilities/sdk";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { errorManager } from "../Utilities/errorManager";
 
 interface GrantAllReviewsProps {
   grant: IGrantResponse | undefined;
@@ -89,8 +89,14 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
         const slicedData = sortedData.slice(0, pageLimit);
 
         setReviews(slicedData);
-      } catch (error) {
+      } catch (error: any) {
         console.log(error);
+        errorManager(
+          `Error getting reviews of grant ${
+            grant?.details?.data?.title || grant?.uid
+          }`,
+          error
+        );
         setReviews([]);
       } finally {
         setIsFetching(false);
@@ -121,7 +127,13 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
         const slicedData = sortedData.slice(0, pageLimit);
 
         setAnonReviews(slicedData);
-      } catch (error) {
+      } catch (error: any) {
+        errorManager(
+          `Error getting anon reviews of grant ${
+            grant?.details?.data?.title || grant?.uid
+          }`,
+          error
+        );
         console.log(error);
         setAnonReviews([]);
       } finally {
@@ -213,13 +225,8 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
                                 community={grant.community}
                               >
                                 <div className="flex flex-row gap-3 bg-transparent p-0 hover:bg-transparent">
-                                  <img
-                                    src={blo(
-                                      "0x0000000000000000000000000000000000000000" as Hex,
-                                      8
-                                    )}
-                                    alt={review.nullifier}
-                                    className="h-6 w-6 items-center rounded-full border-1 border-gray-100 dark:border-zinc-900"
+                                  <EthereumAddressToENSAvatar
+                                    address={review.nullifier}
                                   />
                                   <p className="text-base font-body font-normal underline text-black dark:text-zinc-100">
                                     <EthereumAddressToENSName
@@ -231,10 +238,8 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
                             ) : null
                           ) : (
                             <div className="flex flex-row gap-3 items-center bg-transparent p-0 hover:bg-transparent">
-                              <img
-                                src={blo(review.nullifier as Hex, 8)}
-                                alt={review.nullifier}
-                                className="h-6 w-6 rounded-full"
+                              <EthereumAddressToENSAvatar
+                                address={review.nullifier}
                               />
                               <p className="text-base font-body font-normal text-black dark:text-white">
                                 <EthereumAddressToENSName
@@ -324,10 +329,8 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
                                 community={grant.community}
                               >
                                 <div className="flex flex-row gap-3 bg-transparent p-0 hover:bg-transparent">
-                                  <img
-                                    src={blo(review.publicAddress as Hex, 8)}
-                                    alt={review.publicAddress}
-                                    className="h-6 w-6 items-center rounded-full border-1 border-gray-100 dark:border-zinc-900"
+                                  <EthereumAddressToENSAvatar
+                                    address={review.publicAddress}
                                   />
                                   <p className="text-base font-body font-normal underline text-black dark:text-zinc-100">
                                     <EthereumAddressToENSName
@@ -339,10 +342,8 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
                             ) : null
                           ) : (
                             <div className="flex flex-row gap-3 items-center bg-transparent p-0 hover:bg-transparent">
-                              <img
-                                src={blo(review.publicAddress as Hex, 8)}
-                                alt={review.publicAddress}
-                                className="h-6 w-6 rounded-full"
+                              <EthereumAddressToENSAvatar
+                                address={review.publicAddress}
                               />
                               <p className="text-base font-body font-normal text-black dark:text-white">
                                 <EthereumAddressToENSName

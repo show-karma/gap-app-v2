@@ -23,6 +23,10 @@ import {
   IMilestoneResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getGapClient, useGap } from "@/hooks";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+
+import { errorManager } from "@/components/Utilities/errorManager";
 
 interface UpdatesProps {
   milestone: IMilestoneResponse;
@@ -68,9 +72,17 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
       if (!instanceMilestone) return;
       await instanceMilestone
         .revokeCompletion(walletSigner as any, changeStepperStep)
-        .then(async () => {
+        .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, instanceMilestone.chainID),
+              "POST",
+              {}
+            );
+          }
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {
@@ -97,9 +109,13 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
               });
           }
         });
-    } catch (error) {
+    } catch (error: any) {
       console.log(error);
       toast.error(MESSAGES.MILESTONES.COMPLETE.UNDO.ERROR);
+      errorManager(
+        `Error deleting milestone completion of ${milestone.uid} from grant ${milestone.refUID}`,
+        error
+      );
     } finally {
       setIsStepper(false);
     }

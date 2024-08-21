@@ -1,6 +1,6 @@
 "use client";
-import { useENSNames } from "@/store/ensNames";
-import React, { useEffect } from "react";
+import { useENS } from "@/store/ens";
+import React, { useEffect, useMemo } from "react";
 
 interface Props {
   address: any;
@@ -15,12 +15,14 @@ const EthereumAddressToENSName: React.FC<Props> = ({
   //   address: address,
   //   cacheTime: 50000,
   // });
-  const ensNames = useENSNames((state) => state.ensNames);
-  const populateEnsNames = useENSNames((state) => state.populateEnsNames);
+  const ensNames = useENS((state) => state.ensData);
+  const populateEns = useENS((state) => state.populateEns);
 
   useEffect(() => {
-    populateEnsNames([address]);
-  }, [address, populateEnsNames]);
+    if (!ensNames[address.toLowerCase()]) {
+      populateEns([address]);
+    }
+  }, [address, ensNames]);
 
   const addressToDisplay = shouldTruncate
     ? address?.slice(0, 6) + "..." + address?.slice(-6)

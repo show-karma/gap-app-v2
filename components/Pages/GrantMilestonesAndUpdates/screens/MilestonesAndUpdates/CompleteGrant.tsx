@@ -1,11 +1,15 @@
 import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
+import { sanitizeObject } from "@/utilities/sanitize";
 import { shortAddress } from "@/utilities/shortAddress";
 import { config } from "@/utilities/wagmi/config";
 import { XMarkIcon } from "@heroicons/react/24/solid";
@@ -73,19 +77,24 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
         (g) => g.uid.toLowerCase() === grantToComplete.uid.toLowerCase()
       );
       if (!grantInstance) return;
+      const sanitizedGrantComplete = sanitizeObject({
+        title: data.title || "",
+        text: data.text || "",
+      });
       await grantInstance
-        .complete(
-          walletSigner,
-          {
-            title: data.title || "",
-            text: data.text || "",
-          },
-          changeStepperStep
-        )
-        .then(async () => {
+        .complete(walletSigner, sanitizedGrantComplete, changeStepperStep)
+        .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
           let fetchedProject = null;
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, grant.chainID),
+              "POST",
+              {}
+            );
+          }
           while (retries > 0) {
             fetchedProject = await gapClient!.fetch
               .projectById(project.uid as Hex)
@@ -106,8 +115,8 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
           // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
           await new Promise((resolve) => setTimeout(resolve, 1500));
         });
-    } catch (error) {
-      console.log(error);
+    } catch (error: any) {
+      errorManager(`Error marking grant ${grant.uid} as complete`, error);
       toast.error(MESSAGES.GRANT.MARK_AS_COMPLETE.ERROR);
     } finally {
       setIsStepper(false);
@@ -128,8 +137,7 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
       <div className="flex w-full max-w-3xl flex-col gap-6 rounded-md bg-gray-200 dark:bg-zinc-800 px-4 py-6 max-lg:max-w-full">
         <div className="flex w-full flex-row justify-between">
           <h4 className="text-2xl font-bold text-black dark:text-zinc-100">
-            Complete {grant.details?.data?.title || shortAddress(grant.uid)}{" "}
-            Grant
+            Grant completion summary
           </h4>
           <button
             onClick={() => {
@@ -147,9 +155,9 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
             </label>
             <div className="w-full bg-transparent" data-color-mode="light">
               <MarkdownEditor
-                className="bg-transparent"
                 value={description}
                 onChange={(newValue: string) => setDescription(newValue || "")}
+                placeholderText="Summarize your grant work, your experience working on the grant and the potential impact it will have."
               />
             </div>
           </div>

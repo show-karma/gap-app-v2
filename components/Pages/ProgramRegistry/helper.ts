@@ -570,12 +570,15 @@ const categories = [
   "Research",
   "Yield Farming",
   "Infrastructure",
+  "DeSci",
 ];
 const grantTypes = [
   "Direct Grants",
   "Bounties",
   "Retro Funding",
   "Quadratic Funding",
+  "Hackathons",
+  "Accelerators",
 ];
 const platformsUsed = [
   "Gitcoin",
