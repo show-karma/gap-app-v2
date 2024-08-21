@@ -163,6 +163,14 @@ export const ProgressDialog = () => {
     milestone_update: <MilestoneUpdateScreen />,
   };
 
+  const screenTitle: Record<ProgressModalScreen, string> = {
+    menu: `Select Update Type`,
+    grant_update: `Craft your Grant Update`,
+    project_update: `Craft your Project Update`,
+    milestone: `Craft your Milestone`,
+    milestone_update: `Craft your Milestone Update`,
+  };
+
   return (
     <Transition appear show={isOpen} as={Fragment}>
       <Dialog as="div" className="relative z-10" onClose={closeModal}>
@@ -199,9 +207,7 @@ export const ProgressDialog = () => {
                     ) : null}
 
                     <h2 className="text-2xl font-bold dark:text-zinc-200 text-black w-full text-center">
-                      {progressModalScreen === "menu"
-                        ? `Select Update Type`
-                        : "Craft Your Update"}
+                      {screenTitle[progressModalScreen]}
                     </h2>
                     <button
                       className="p-2 text-black dark:text-white"

@@ -100,6 +100,7 @@ export const Dropdown: FC<DropdownProps> = ({
                   <div
                     onClick={() => {
                       onSelectFunction(item.id);
+                      setOpen(false);
                     }}
                     className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
                   >
