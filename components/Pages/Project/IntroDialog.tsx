@@ -6,7 +6,7 @@ import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useProjectStore } from "@/store";
 import { shortAddress } from "@/utilities/shortAddress";
-import { getGapClient, useGap } from "@/hooks";
+import { useGap } from "@/hooks";
 import { useIntroModalStore } from "@/store/modals/intro";
 import fetchData from "@/utilities/fetchData";
 import toast from "react-hot-toast";
@@ -23,7 +23,10 @@ const schema = z.object({
     message: MESSAGES.PROJECT.INTRO.EMAIL,
   }),
   telegram: z.string(),
-  message: z.string(),
+  message: z
+    .string()
+    .describe(MESSAGES.PROJECT.INTRO.MESSAGE)
+    .min(3, MESSAGES.PROJECT.INTRO.MESSAGE),
 });
 
 type SchemaType = z.infer<typeof schema>;
@@ -38,9 +41,9 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
 
   const { isIntroModalOpen: isOpen, setIsIntroModalOpen: setIsOpen } =
     useIntroModalStore();
-  const [comment, setComment] = useState<string>("");
+
   const project = useProjectStore((state) => state.project);
-  const { gap } = useGap();
+  const contactsInfo = useProjectStore((state) => state.projectContactsInfo);
 
   const {
     register,
@@ -56,13 +59,16 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
   }
 
   const handleFunction = async (data: SchemaType) => {
-    let gapClient = gap;
-
     setIsLoading(true);
     try {
-      if (!project) return;
-      // const [data, error] = await fetchData(
-      // )
+      console.log(contactsInfo?.length);
+      if ((contactsInfo?.length as number) < 1) {
+        toast.error("No contact info found");
+        return;
+      }
+
+      if (!project || !data.email || !data.message) return;
+
       const [response, error] = await fetchData(
         INDEXER.PROJECT.REQUEST_INTRO(project.details?.data.slug as string),
         "POST",
@@ -162,7 +168,7 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
                     </div>
                     <div className="flex w-full flex-col gap-2">
                       <label htmlFor="message-input" className={labelStyle}>
-                        Message
+                        Message *
                       </label>
                       <textarea
                         id="message-input"

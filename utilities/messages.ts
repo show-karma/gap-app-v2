@@ -171,6 +171,7 @@ export const MESSAGES = {
     INTRO: {
       EMAIL: "E-mail must be a valid email address",
       TELEGRAM: "Telegram handle must be at least 3 characters",
+      MESSAGE: "Enter your request message",
     },
     SUBSCRIPTION: {
       NAME: "Name must be at least 3 characters",
