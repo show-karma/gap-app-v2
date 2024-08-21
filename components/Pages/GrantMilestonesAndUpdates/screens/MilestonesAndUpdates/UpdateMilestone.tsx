@@ -122,7 +122,13 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
       );
       const sanitizedText = sanitizeInput(text);
       await milestoneInstance
-        ?.complete(walletSigner, sanitizedText, changeStepperStep)
+        ?.complete(
+          walletSigner,
+          {
+            reason: sanitizedText,
+          },
+          changeStepperStep
+        )
         .then(async (res) => {
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
@@ -202,7 +208,13 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
       );
       const sanitizedText = sanitizeInput(text);
       await milestoneInstance
-        ?.complete(walletSigner, sanitizedText, changeStepperStep)
+        ?.complete(
+          walletSigner,
+          {
+            reason: sanitizedText,
+          },
+          changeStepperStep
+        )
         .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
