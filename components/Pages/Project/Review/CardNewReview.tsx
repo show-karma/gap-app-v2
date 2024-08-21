@@ -96,7 +96,7 @@ export const CardNewReview = () => {
       <div className="w-full flex flex-col px-2 gap-2">
         {newReview.map((badge: Badge, index: number) => (
           <div key={index} className="flex flex-col w-full px-14 mt-4">
-            <div className="flex flex-row w-full items-center gap-3">
+            <div className="flex justify-center sm:justify-normal flex-col sm:flex-row w-full items-center gap-3">
               <div>
                 <BadgeIcon badgeName={badge.name} className="w-20 h-20" />
               </div>
