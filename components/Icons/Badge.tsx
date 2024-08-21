@@ -148,7 +148,7 @@ export const BadgeIcon: React.FC<BadgeIconProps> = ({
         />
         <circle cx="36" cy="38" r="18" fill="#1D58CD" fillOpacity="0.05" />
         <circle cx="36" cy="38" r="22" fill="#1D58CD" fillOpacity="0.05" />
-        <g clip-path="url(#clip0_380_946)">
+        <g clipPath="url(#clip0_380_946)">
           <path
             d="M49.2272 27.6664C49.2272 27.1763 48.8321 26.7759 48.3367 26.7759H21.6742C21.1841 26.7759 20.7837 27.171 20.7837 27.6664V32.1821H49.2219V27.6664H49.2272Z"
             fill="#1D58CD"
@@ -198,7 +198,7 @@ export const BadgeIcon: React.FC<BadgeIconProps> = ({
             width="70.3535"
             height="77.5244"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
             <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
@@ -264,7 +264,7 @@ export const BadgeIcon: React.FC<BadgeIconProps> = ({
         />
         <circle cx="36.5" cy="38" r="18" fill="#1D58CD" fillOpacity="0.05" />
         <circle cx="36.5" cy="38" r="22" fill="#1D58CD" fillOpacity="0.05" />
-        <g clip-path="url(#clip0_380_930)">
+        <g clipPath="url(#clip0_380_930)">
           <path
             d="M30.8354 48.5337H21.9336C22.3572 50.5976 24.193 52.1617 26.3817 52.1617C28.576 52.1617 30.4063 50.603 30.8354 48.5337Z"
             fill="#1D58CD"
@@ -298,7 +298,7 @@ export const BadgeIcon: React.FC<BadgeIconProps> = ({
             width="70.3535"
             height="77.5244"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
             <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
@@ -471,7 +471,7 @@ export const BadgeIcon: React.FC<BadgeIconProps> = ({
             width="70.3535"
             height="77.5244"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
             <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
@@ -753,7 +753,7 @@ export const BadgeIcon: React.FC<BadgeIconProps> = ({
             width="70.3535"
             height="77.5244"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
             <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
@@ -870,7 +870,7 @@ export const BadgeIcon: React.FC<BadgeIconProps> = ({
             d="M19.5568 36.0149C19.4662 35.7351 19.2139 35.5499 18.9223 35.5499H16.6286L15.927 33.4532C15.8364 33.1852 15.5842 33 15.2965 33C15.0088 33 14.7605 33.1852 14.6659 33.4532L13.9604 35.5499H11.6667C11.3751 35.5499 11.1189 35.7391 11.0322 36.0149C10.9415 36.2948 11.048 36.5943 11.2805 36.7598L13.1171 38.0525L12.4155 40.1255C12.3249 40.3975 12.4195 40.7009 12.6481 40.8704C12.8806 41.0399 13.1959 41.0438 13.4284 40.8783L15.2886 39.5698L17.1488 40.8783C17.3932 41.0438 17.7006 41.0398 17.9292 40.8704C18.1617 40.7009 18.2523 40.3974 18.1617 40.1255L17.468 38.0485L19.3046 36.7558C19.541 36.5864 19.6475 36.2869 19.5568 36.0149ZM16.2975 37.2446C16.0571 37.4141 15.9546 37.7215 16.0492 37.9973L16.262 38.6279L15.6748 38.218C15.4422 38.0565 15.1388 38.0565 14.9102 38.218L14.3269 38.6279L14.5397 37.9973C14.6343 37.7175 14.5319 37.414 14.2914 37.2446L13.7672 36.8781H14.4372C14.7249 36.8781 14.9732 36.6929 15.0678 36.4249L15.2925 35.7509L15.5171 36.4249C15.6078 36.6929 15.86 36.8781 16.1477 36.8781H16.8177L16.2975 37.2446Z"
             fill="#191B2A"
           />
-          <g clip-path="url(#clip0_380_886)">
+          <g clipPath="url(#clip0_380_886)">
             <path
               d="M34.5687 29.2512H27.6239C27.1338 29.2512 26.7334 28.856 26.7334 28.3607C26.7334 27.8707 27.1286 27.4702 27.6239 27.4702H34.5634C35.0534 27.4702 35.4539 27.8654 35.4539 28.3607C35.454 28.8559 35.0587 29.2512 34.5687 29.2512Z"
               fill="#191B2A"
@@ -933,7 +933,7 @@ export const BadgeIcon: React.FC<BadgeIconProps> = ({
             width="70.3535"
             height="77.5244"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
             <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix
@@ -999,7 +999,7 @@ export const BadgeIcon: React.FC<BadgeIconProps> = ({
         />
         <circle cx="36" cy="38" r="18" fill="#1D58CD" fillOpacity="0.05" />
         <circle cx="36" cy="38" r="22" fill="#1D58CD" fillOpacity="0.05" />
-        <g clip-path="url(#clip0_380_966)">
+        <g clipPath="url(#clip0_380_966)">
           <path
             d="M28.3737 46.9486C29.5907 46.9486 30.9289 44.8201 30.9289 42.8813C30.9289 40.953 29.538 40.5474 28.3737 40.5474C27.2093 40.5474 25.8184 40.9478 25.8184 42.8813C25.8184 44.8201 27.1619 46.9486 28.3737 46.9486Z"
             fill="white"
@@ -1049,7 +1049,7 @@ export const BadgeIcon: React.FC<BadgeIconProps> = ({
             width="70.3535"
             height="77.5244"
             filterUnits="userSpaceOnUse"
-            color-interpolation-filters="sRGB"
+            colorInterpolationFilters="sRGB"
           >
             <feFlood floodOpacity="0" result="BackgroundImageFix" />
             <feColorMatrix

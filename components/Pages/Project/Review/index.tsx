@@ -1,6 +1,5 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { useState } from "react";
 import { useProjectStore } from "@/store";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { StarIcon } from "@/components/Icons";

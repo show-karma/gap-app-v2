@@ -7,14 +7,14 @@ import { DynamicStarsReview } from "./DynamicStarsReview";
 import { useReviewStore } from "@/store/review";
 import {
   BadgeDescription,
-  BadgeListProps,
+  Badge,
   BadgeName,
   Review,
   ReviewMode,
 } from "@/types/review";
 import toast from "react-hot-toast";
 
-const defaultInitialNewReviewList: BadgeListProps[] = [
+const defaultInitialNewReviewList: Badge[] = [
   {
     name: BadgeName.CLEAR_GOALS,
     description: BadgeDescription[BadgeName.CLEAR_GOALS],
@@ -53,11 +53,12 @@ const defaultInitialNewReviewList: BadgeListProps[] = [
 ];
 
 export const CardNewReview = () => {
-  const [newReview, setNewReview] = useState<BadgeListProps[]>(
+  const [newReview, setNewReview] = useState<Badge[]>(
     defaultInitialNewReviewList
   );
   const setIsOpenReview = useReviewStore((state) => state.setIsOpenReview);
   const setReview = useReviewStore((state) => state.setReview);
+  const setIsStarSelected = useReviewStore((state) => state.setIsStarSelected);
   const review = useReviewStore((state) => state.review);
   const _currentTimestamp = Math.floor(new Date().getTime() / 1000);
 
@@ -84,6 +85,7 @@ export const CardNewReview = () => {
     };
 
     setReview([...review, newReviewData]);
+    setIsStarSelected(newReviewData.id);
     toast.success("Review submitted successfully!");
     setNewReview(defaultInitialNewReviewList);
     setIsOpenReview(ReviewMode.READ);
@@ -92,9 +94,9 @@ export const CardNewReview = () => {
   return (
     <div className="flex w-full flex-col justify-center gap-4">
       <div className="w-full flex flex-col px-2 gap-2">
-        {newReview.map((badge: BadgeListProps, index: number) => (
+        {newReview.map((badge: Badge, index: number) => (
           <div key={index} className="flex flex-col w-full px-14 mt-4">
-            <div className="flex flex-row w-full items-center gap-3">
+            <div className="flex justify-center sm:justify-normal flex-col sm:flex-row w-full items-center gap-3">
               <div>
                 <BadgeIcon badgeName={badge.name} className="w-20 h-20" />
               </div>
