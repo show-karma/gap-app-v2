@@ -201,8 +201,7 @@ function ProjectPage() {
                 ) : null}
                 <div className="flex flex-row gap-2 justify-between items-center w-full max-w-max">
                   <p className="text-sm font-medium text-[#475467] dark:text-gray-300 line-clamp-1 text-wrap whitespace-nowrap">
-                    {ensData[member.recipient as Hex]?.name ||
-                      shortAddress(member.recipient)}
+                    {shortAddress(member.recipient)}
                   </p>
                   <button type="button" onClick={() => copy(member.recipient)}>
                     <img
