@@ -35,7 +35,7 @@ const BlockieTooltip = ({
 
   useEffect(() => {
     populateEns([address]);
-  }, [address, populateEns]);
+  }, [address]);
 
   return (
     <Tooltip.Provider>
