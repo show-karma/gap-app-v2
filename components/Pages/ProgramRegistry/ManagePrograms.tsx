@@ -5,7 +5,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import { ProgramListPending } from "@/components/Pages/ProgramRegistry/ProgramListPending";
+import { ManageProgramList } from "@/components/Pages/ProgramRegistry/ManageProgramList";
 import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
 import { useQueryState } from "nuqs";
@@ -68,6 +68,8 @@ export const ManagePrograms = () => {
     isRegistryAdmin,
     setIsRegistryAdminLoading,
     isRegistryAdminLoading,
+    isPoolManagerLoading,
+    setIsPoolManagerLoading,
   } = useRegistryStore();
 
   const isAllowed = address && (isRegistryAdmin || isPoolManager) && isAuth;
@@ -76,11 +78,13 @@ export const ManagePrograms = () => {
     if (!address || !isConnected) {
       setIsRegistryAdmin(false);
       setIsRegistryAdminLoading(false);
+      setIsPoolManagerLoading(false);
       return;
     }
 
     const getMemberOf = async () => {
       setIsRegistryAdminLoading(true);
+      setIsPoolManagerLoading(true);
       try {
         const call = await isMemberOfProfile(address);
         setIsRegistryAdmin(call);
@@ -96,6 +100,7 @@ export const ManagePrograms = () => {
         console.log(error);
       } finally {
         setIsRegistryAdminLoading(false);
+        setIsPoolManagerLoading(false);
       }
     };
     getMemberOf();
@@ -156,7 +161,8 @@ export const ManagePrograms = () => {
         (page - 1) * pageSize
       }`;
       const searchParam = searchInput ? `&name=${searchInput}` : "";
-      const ownerParam = address && !isRegistryAdmin ? `&owner=${address}` : "";
+      const ownerParam =
+        address && !isRegistryAdmin ? `&owners=${address}` : "";
       const url = isRegistryAdmin
         ? `${baseUrl}${queryParams}${searchParam}`
         : `${baseUrl}${queryParams}${ownerParam}${searchParam}`;
@@ -187,9 +193,16 @@ export const ManagePrograms = () => {
     programs: GrantProgram[];
     count: number;
   }>({
-    queryKey: ["grantPrograms", tab, page, searchInput, isRegistryAdminLoading],
+    queryKey: [
+      "grantPrograms",
+      tab,
+      page,
+      searchInput,
+      isRegistryAdminLoading,
+      isPoolManagerLoading,
+    ],
     queryFn: () => getGrantPrograms(),
-    enabled: !isRegistryAdminLoading,
+    enabled: !isRegistryAdminLoading || !isPoolManagerLoading,
   });
   const grantPrograms = data?.programs || [];
   const totalPrograms = data?.count || 0;
@@ -212,8 +225,8 @@ export const ManagePrograms = () => {
     };
     try {
       const id = program._id.$oid;
-      const { programId, createdAtBlock, chainID, metadata, createdByAddress } =
-        program;
+      const { programId, createdAtBlock, chainID, metadata, admins } = program;
+
       if (value === "accepted" && !programId && !createdAtBlock) {
         if (!isConnected || !isAuth) {
           openConnectModal?.();
@@ -506,7 +519,7 @@ export const ManagePrograms = () => {
                       <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                         <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
                           {isRegistryAdmin ? (
-                            <ProgramListPending
+                            <ManageProgramList
                               approveOrReject={approveOrReject}
                               grantPrograms={grantPrograms}
                               tab={tab as "pending" | "accepted" | "rejected"}
