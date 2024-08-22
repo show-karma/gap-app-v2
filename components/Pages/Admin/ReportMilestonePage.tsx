@@ -74,7 +74,7 @@ const fetchReports = async (
   return data || [];
 };
 
-const itemsPerPage = 12;
+const itemsPerPage = 50;
 
 const skeletonArray = Array.from({ length: 12 }, (_, index) => index);
 
@@ -172,6 +172,20 @@ export const ReportMilestonePage = ({
     setCurrentPage(1);
   };
 
+  // To calculate the total number of projects in the community
+  const totalProjects = (projects: Report[]) => {
+    const uniqueProjects = new Set<string>();
+
+    for (const project of projects) {
+      uniqueProjects.add(project.projectUid);
+    }
+
+    return uniqueProjects.size;
+  };
+
+  const totalNoOfProjects = totalProjects(data?.data || []);
+
+  console.log(totalNoOfProjects);
   return (
     <div className="mt-12 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
       {isAuthorized ? (
@@ -184,7 +198,7 @@ export const ReportMilestonePage = ({
               </Button>
             </Link>
           </div>
-          <div>
+          <div className="flex flex-col md:flex-row justify-start md:items-center md:justify-between">
             <SearchDropdown
               list={grantTitles}
               onSelectFunction={(value: string) =>
@@ -210,6 +224,7 @@ export const ReportMilestonePage = ({
               selected={selectedGrantTitles}
               // imageDictionary={}
             />
+            <div className="text-zinc-700 dark:text-zinc-200 font-medium mt-4 md:mt-0 ">{`Total Projects : ${totalNoOfProjects}`}</div>
           </div>
           <div className="flex flex-col justify-center w-full max-w-full overflow-x-auto rounded-md border">
             <table className="pt-3 min-w-full divide-y dark:bg-zinc-900 divide-gray-300 dark:divide-zinc-800 dark:text-white">
