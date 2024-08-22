@@ -117,7 +117,7 @@ export const GrantTitleDropdown: FC<{
                         </span>
                     </div>
                 </Popover.Trigger>
-                <Popover.Content className="mt-4 w-max max-w-[320px] z-10 bg-white border border-zinc-200 dark:border-zinc-700 rounded-md dark:text-white dark:bg-zinc-800  max-h-60 overflow-y-auto overflow-x-hidden py-2">
+                <Popover.Content className="mt-4 w-[400px] z-10 bg-white border border-zinc-200 dark:border-zinc-700 rounded-md dark:text-white dark:bg-zinc-800  max-h-60 overflow-y-auto overflow-x-hidden py-2">
                     <Command>
                         {canSearch ? (
                             <div className="w-full px-2">

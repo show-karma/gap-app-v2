@@ -245,14 +245,14 @@ export function SearchGrantProgram({
   }, []);
 
   return (
-    <div className="min-w-[280px] max-w-full w-max justify-between">
+    <div className="w-full max-w-[400px]">
       {isLoading ? (
         <div className="bg-zinc-100 p-3 text-sm ring-1 ring-zinc-200 rounded">
           Loading Grants...
         </div>
       ) : !communityUID ? (
         <div className="bg-zinc-100 p-3 text-sm ring-1 ring-zinc-200 rounded">
-          Select a community
+          Select a community to proceed
         </div>
       ) : (
         <GrantTitleDropdown
@@ -873,7 +873,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         </div>
         <form className="flex w-full flex-col gap-4">
           <div className="flex w-full flex-col">
-            <label htmlFor="grant-title" className={labelStyle}>
+            <label htmlFor="grant-title" className={`${labelStyle} mb-1`}>
               Community *
             </label>
             <CommunitiesDropdown
@@ -892,7 +892,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             </p>
           </div>
           <div className="flex w-full flex-col">
-            <label htmlFor="grant-title" className={labelStyle}>
+            <label htmlFor="grant-title" className={`${labelStyle} mb-1`}>
               Grant title*
             </label>
             <SearchGrantProgram
