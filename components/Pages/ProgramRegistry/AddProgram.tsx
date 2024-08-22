@@ -395,10 +395,13 @@ export default function AddProgram({
       const isSameAddress =
         programToEdit?.createdByAddress?.toLowerCase() ===
         address?.toLowerCase();
-
+      const lowercasedAdmins = programToEdit?.admins?.map((item) =>
+        item.toLowerCase()
+      );
       const permissionToEditOnChain = !!(
         programToEdit?.txHash &&
-        (isSameAddress || isRegistryAdmin)
+        (isSameAddress || isRegistryAdmin) &&
+        lowercasedAdmins?.includes(address?.toLowerCase())
       );
       if (permissionToEditOnChain) {
         const allo = new AlloBase(
