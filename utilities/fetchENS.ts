@@ -17,7 +17,6 @@ export const fetchENS = async (addresses: (Hex | string)[]) => {
   });
 
   try {
-    console.log("addresses", addresses);
     const calls = addresses.map(async (address) => {
       const name = await retry(
         async () => await client.getEnsName({ address: address as Hex }),
