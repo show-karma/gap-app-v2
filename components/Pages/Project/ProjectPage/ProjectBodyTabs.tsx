@@ -4,7 +4,7 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { cn } from "@/utilities/tailwind";
 import { useQueryState } from "nuqs";
-import { ButtonHTMLAttributes, FC, useState } from "react";
+import { ButtonHTMLAttributes, FC, useEffect, useState } from "react";
 import { ProjectUpdateForm } from "./ProjectUpdateForm";
 import { IProjectUpdate } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { formatDate } from "@/utilities/formatDate";
@@ -23,8 +23,8 @@ import { config } from "@/utilities/wagmi/config";
 import { Hex } from "viem";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-
 import { errorManager } from "@/components/Utilities/errorManager";
+import axios from "axios"
 
 const InformationTab: FC = () => {
   const { project } = useProjectStore();
@@ -86,6 +86,119 @@ const InformationTab: FC = () => {
           </div>
         </div>
       )}
+    </>
+  );
+};
+const StatsTab: FC = () => {
+  const { project } = useProjectStore();
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<any>(null);
+
+  useEffect(() => {
+    (async () => {
+      const res = await axios.post("https://www.opensource.observer/api/v1/graphql", {
+        query: `
+          query Oso_projectsV1 {
+   oso_codeMetricsByProjectV1(where: { displayName: { _eq: "${"1Hive Gardens" // project?.details?.data?.title
+          }" } }) {
+        activeDeveloperCount6Months
+        closedIssueCount6Months
+        commitCount6Months
+        contributorCount
+        contributorCount6Months
+        displayName
+        eventSource
+        firstCommitDate
+        forkCount
+        fulltimeDeveloperAverage6Months
+        lastCommitDate
+        mergedPullRequestCount6Months
+        newContributorCount6Months
+        openedIssueCount6Months
+        openedPullRequestCount6Months
+        projectId
+        projectName
+        projectNamespace
+        projectSource
+        repositoryCount
+        starCount
+    }
+}
+
+          `});
+
+
+      if (res?.data?.data?.oso_codeMetricsByProjectV1?.length > 0) {
+        setStats(res.data.data.oso_codeMetricsByProjectV1[0]);
+        setLoading(false);
+      }
+
+      console.log(res);
+    })();
+  }, [project]);
+
+  return (
+    <>
+      <div className="flex flex-col gap-1">
+        <div className="text-base font-bold leading-normal text-black dark:text-zinc-100">
+          Code statistics
+        </div>
+
+        <div className="mt-2 space-y-5 ">
+          {loading ? <div>Loading...</div> : (
+            <div className="mt-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg shadow-sm">
+                <div className="text-lg font-semibold">Active Developers (6 Months)</div>
+                <div className="text-2xl font-bold">{stats?.activeDeveloperCount6Months}</div>
+              </div>
+              <div className="p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg shadow-sm">
+                <div className="text-lg font-semibold">Closed Issues (6 Months)</div>
+                <div className="text-2xl font-bold">{stats?.closedIssueCount6Months}</div>
+              </div>
+              <div className="p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg shadow-sm">
+                <div className="text-lg font-semibold">Commits (6 Months)</div>
+                <div className="text-2xl font-bold">{stats?.commitCount6Months}</div>
+              </div>
+              <div className="p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg shadow-sm">
+                <div className="text-lg font-semibold">Contributors</div>
+                <div className="text-2xl font-bold">{stats?.contributorCount}</div>
+              </div>
+              <div className="p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg shadow-sm">
+                <div className="text-lg font-semibold">Contributors (6 Months)</div>
+                <div className="text-2xl font-bold">{stats?.contributorCount6Months}</div>
+              </div>
+              <div className="p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg shadow-sm">
+                <div className="text-lg font-semibold">Merged Pull Requests (6 Months)</div>
+                <div className="text-2xl font-bold">{stats?.mergedPullRequestCount6Months}</div>
+              </div>
+              <div className="p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg shadow-sm">
+                <div className="text-lg font-semibold">New Contributors (6 Months)</div>
+                <div className="text-2xl font-bold">{stats?.newContributorCount6Months}</div>
+              </div>
+              <div className="p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg shadow-sm">
+                <div className="text-lg font-semibold">Opened Issues (6 Months)</div>
+                <div className="text-2xl font-bold">{stats?.openedIssueCount6Months}</div>
+              </div>
+              <div className="p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg shadow-sm">
+                <div className="text-lg font-semibold">Opened Pull Requests (6 Months)</div>
+                <div className="text-2xl font-bold">{stats?.openedPullRequestCount6Months}</div>
+              </div>
+              <div className="p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg shadow-sm">
+                <div className="text-lg font-semibold">Fork Count</div>
+                <div className="text-2xl font-bold">{stats?.forkCount}</div>
+              </div>
+              <div className="p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg shadow-sm">
+                <div className="text-lg font-semibold">Star Count</div>
+                <div className="text-2xl font-bold">{stats?.starCount}</div>
+              </div>
+              <div className="p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg shadow-sm">
+                <div className="text-lg font-semibold">Repository Count</div>
+                <div className="text-2xl font-bold">{stats?.repositoryCount}</div>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </>
   );
 };
@@ -333,6 +446,7 @@ const UpdatesTab: FC = () => {
 const tabs = {
   info: InformationTab,
   updates: UpdatesTab,
+  stats: StatsTab,
   "post-update": ProjectUpdateForm,
 };
 
@@ -371,6 +485,7 @@ const protectedTabs = ["post-update"];
 const nestedTabs: Record<string, string[]> = {
   info: [],
   updates: ["post-update"],
+  stats: [],
 };
 
 export function ProjectBodyTabs() {
@@ -408,6 +523,14 @@ export function ProjectBodyTabs() {
           onClick={() => setActiveTab("updates")}
         >
           Updates
+        </TabButton>
+        <TabButton
+          isActive={
+            activeTab === "stats" || nestedTabs["stats"].includes(activeTab)
+          }
+          onClick={() => setActiveTab("stats")}
+        >
+          Stats
         </TabButton>
       </div>
       {getActiveTab()}
