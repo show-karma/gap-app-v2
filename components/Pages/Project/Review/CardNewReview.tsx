@@ -100,8 +100,10 @@ export const CardNewReview = () => {
               <div>
                 <BadgeIcon badgeName={badge.name} className="w-20 h-20" />
               </div>
-              <div className="text-sm">{badge.description}</div>
-              <div>
+              <div className="text-sm order-2 sm:order-1 sm:text-start text-center">
+                {badge.description}
+              </div>
+              <div className="order-1 sm:order-2">
                 <DynamicStarsReview
                   totalStars={5}
                   rating={badge.score}

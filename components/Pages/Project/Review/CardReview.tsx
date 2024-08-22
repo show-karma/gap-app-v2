@@ -20,19 +20,23 @@ export const CardReview = ({ id }: { id: number }) => {
               <div>
                 <BadgeIcon badgeName={badge.name} className="w-20 h-20" />
               </div>
-              <div>
-                <div className="sm:text-lg sm:text-start text-center text-xl">
-                  {badge.name}
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <div className="order-2 sm:order-1">
+                  <div className="sm:text-lg sm:text-start text-center text-xl">
+                    {badge.name}
+                  </div>
+                  <div className="sm:text-sm sm:text-start text-center">
+                    {badge.description}
+                  </div>
                 </div>
-                <div className="sm:text-sm">{badge.description}</div>
-              </div>
-              <div>
-                <DynamicStarsReview
-                  totalStars={5}
-                  rating={badge.score}
-                  setRating={() => {}}
-                  mode={ReviewMode.READ}
-                />
+                <div className="order-1 sm:order-2">
+                  <DynamicStarsReview
+                    totalStars={5}
+                    rating={badge.score}
+                    setRating={() => {}}
+                    mode={ReviewMode.READ}
+                  />
+                </div>
               </div>
             </div>
           </div>
