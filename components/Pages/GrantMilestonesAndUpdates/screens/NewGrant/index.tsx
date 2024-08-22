@@ -63,6 +63,8 @@ import debounce from "lodash.debounce";
 import { sanitizeInput } from "@/utilities/sanitize";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { sanitizeObject } from "@/utilities/sanitize";
+import { GrantTitleDropdown } from "./GrantTitleDropdown";
+
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -211,107 +213,60 @@ interface NewGrantData {
 
 
 export function SearchGrantProgram({
-  setProgram,
-  setProgramId,
+  grantToEdit,
+  communityUID,
+  chainId,
+  setValue,
+  watch,
 }: {
-  setProgram: (value: GrantProgram) => void;
-  setProgramId: (value: string | undefined) => void;
+  grantToEdit?: IGrantResponse;
+  communityUID: string;
+  chainId: number;
+  setValue: any;
+  watch: any;
 }) {
-  const [results, setResults] = useState<any>([]);
-  const [isSearchListOpen, setIsSearchListOpen] = useState<boolean>(false);
+  const [allPrograms, setAllPrograms] = useState<GrantProgram[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(null);
 
-  const closeSearchList = () => {
-    setTimeout(() => {
-      setIsSearchListOpen(false);
-    }, 200);
-  };
 
-  const debouncedSearch = debounce(async (value: string) => {
-    const sanitizedValue = sanitizeInput(value);
-    if (sanitizedValue.length < 3) {
-      setResults({ programs: [], count: 0 });
-      return setIsSearchListOpen(false);
-    }
-
-    setIsLoading(true);
-    setIsSearchListOpen(true);
-    const [result, error] = await fetchData(
-      INDEXER.REGISTRY.GET_ALL +
-      `?limit=${10}&name=${sanitizedValue}&status=${"Active"}`
-    );
-
-    if (error) {
-      console.log(error);
-    }
-
-    console.log(result);
-
-    setResults(result);
-    return setIsLoading(false);
-  }, 500);
-
-  const renderItem = (item: GrantProgram, href: string) => {
-    return (
-      <div
-        key={item.txHash}
-        onClick={() => {
-          setProgram(item);
-          setProgramId(`${item?.programId}_${item?.chainID}`);
-          closeSearchList();
-        }}
-      >
-        <div className=":last:border-b-0 cursor-pointer select-none border-b border-slate-100 px-4 py-2 transition hover:bg-slate-200 dark:hover:bg-zinc-700">
-          <b className="max-w-full text-ellipsis font-bold text-black dark:text-zinc-100">
-            {item?.metadata?.title}
-          </b>
-          <br />
-          <div className="text-gray-500 dark:text-gray-200">
-            {item?.metadata?.description}
-          </div>
-        </div>
-      </div>
-    );
-  };
+  useEffect(() => {
+    (async () => {
+      setIsLoading(true);
+      const [result, error] = await fetchData(
+        INDEXER.REGISTRY.GET_ALL + `?status=${"Active"}`
+      );
+      if (error) {
+        console.log(error);
+      }
+      setAllPrograms(result.programs);
+      setIsLoading(false);
+    })();
+  }, []);
 
   return (
-    <div
-      className="relative mb-4 flex flex-row items-center gap-3 rounded-lg h-max w-full bg-zinc-100 px-4 max-2xl:gap-1 max-2xl:px-2 text-gray-600 dark:text-gray-200 dark:bg-zinc-800"
-      onBlur={() => closeSearchList()}
-    >
-      <MagnifyingGlassIcon className="h-5 w-5" />
-      <input
-        type="text"
-        placeholder="Search from the grant program"
-        className="w-full min-w-[160px] bg-transparent placeholder:text-gray-400 px-1 py-2 text-gray-600 dark:text-gray-200 border-none border-b-zinc-800 outline-none focus:ring-0"
-        onChange={(e) => debouncedSearch(e.target.value)}
-        onFocus={() =>
-          results?.programs?.length > 0 &&
-          setIsSearchListOpen(true)
-        }
-      />
-      {isSearchListOpen && (
-        <div className="absolute left-0 top-10 mt-3 max-h-32 min-w-full overflow-y-scroll rounded-md bg-white dark:bg-zinc-800 py-4 border border-zinc-200">
-          {results?.programs?.length > 0 &&
-            results?.programs?.map((grantProgram: GrantProgram) =>
-              renderItem(
-                grantProgram,
-                PAGES.REGISTRY.ROOT
-              )
-            )}
-
-          {isLoading && (
-            <div className="flex justify-center ">
-              <Spinner />
-            </div>
-          )}
-          {!isLoading && results?.programs?.length === 0 && (
-            <div className="flex flex-col items-center text-center">
-              <div className="w-full text-center">No results found.</div>
-            </div>
-          )}
+    <div className="min-w-[280px] max-w-full w-max justify-between">
+      {isLoading ? (
+        <div className="bg-zinc-100 p-3 text-sm ring-1 ring-zinc-200 rounded">
+          Loading Grants...
         </div>
-      )}
+      ) : !communityUID ? (
+        <div className="bg-zinc-100 p-3 text-sm ring-1 ring-zinc-200 rounded">
+          Select a community
+        </div>
+      ) : (
+        <GrantTitleDropdown
+          chainId={chainId}
+          list={allPrograms}
+          setValue={setValue}
+          setSelectedProgram={setSelectedProgram}
+          type={"Grant"}
+          grantToEdit={grantToEdit}
+          selectedProgram={selectedProgram}
+          prefixUnselected="Select"
+          buttonClassname="w-full max-w-full"
+          canAdd
+        />)}
     </div>
   );
 }
@@ -326,7 +281,6 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { isAuth } = useAuthStore();
 
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const [program, setProgram] = useState<GrantProgram | null>(null);
 
   const [description, setDescription] = useState(
     grantScreen === "edit-grant"
@@ -387,7 +341,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     mode: "onChange",
     defaultValues: {
       title:
-        grantScreen === "edit-grant" ? grantToEdit?.details?.data?.title : program?.metadata?.title || "",
+        grantScreen === "edit-grant" ? grantToEdit?.details?.data?.title : "",
       amount:
         grantScreen === "edit-grant" ? grantToEdit?.details?.data?.amount : "",
       community:
@@ -429,6 +383,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const {
     register,
     handleSubmit,
+    watch,
     setValue,
     formState: { errors, isValid, isSubmitting },
   } = form;
@@ -584,6 +539,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   };
 
   const updateGrant = async (oldGrant: IGrantResponse, data: NewGrantData) => {
+    console.log("Data: ", data);
     if (!address || !oldGrant.refUID || !selectedProject) return;
     let gapClient = gap;
     try {
@@ -884,14 +840,11 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   };
 
   useEffect(() => {
-    if (program?.metadata?.title) {
-      setValue("title", program?.metadata?.title);
-    }
 
-    if (grantToEdit?.details?.data?.programId && !program) {
+    if (grantToEdit?.details?.data?.programId) {
       setValue("programId", grantToEdit?.details?.data?.programId);
     }
-  }, [program]);
+  }, []);
 
   return (
     <div className={"flex w-full flex-col items-start  justify-center"}>
@@ -921,49 +874,12 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         <form className="flex w-full flex-col gap-4">
           <div className="flex w-full flex-col">
             <label htmlFor="grant-title" className={labelStyle}>
-              Grant title *
-            </label>
-            <SearchGrantProgram setProgram={setProgram} setProgramId={
-              (value: string | undefined) => {
-                setValue("programId", value);
-              }
-            } />
-
-            {program ? (
-              <div className="bg-blue-100 p-3 mb-2 rounded-md flex justify-between items-start">
-                <div>
-                  <p className="mb-2">You have selected this grant from the registry:</p>
-                  <p className="font-bold text-2xl">{`${program?.metadata?.title}`}</p>
-                  <p className="text-md">{`${program?.programId} | ${program?.metadata?.description}`}</p>
-                </div>
-                <button onClick={() => {
-                  setProgram(null)
-                  setValue("programId", undefined)
-                }}>
-                  <XMarkIcon className="w-6 h-6" ></XMarkIcon>
-                </button>
-              </div>
-            ) : (
-              <div>
-                Select a grant from our registry or enter
-                the title of the grant you wish to add.
-              </div>
-            )}
-            <input
-              disabled={!!program}
-              id="grant-title"
-              className={inputStyle}
-              placeholder="Ex: Optimism Dashboard, Gitcoin Round 18 etc."
-              {...register("title")}
-            />
-            <p className="text-base text-red-400">{errors.title?.message}</p>
-          </div>
-          <div className="flex w-full flex-col">
-            <label htmlFor="grant-title" className={labelStyle}>
               Community *
             </label>
             <CommunitiesDropdown
-              onSelectFunction={setCommunityValue}
+              onSelectFunction={
+                setCommunityValue
+              }
               previousValue={
                 grantScreen === "edit-grant"
                   ? grantToEdit?.data?.communityUID
@@ -975,6 +891,21 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
               {errors.community?.message}
             </p>
           </div>
+          <div className="flex w-full flex-col">
+            <label htmlFor="grant-title" className={labelStyle}>
+              Grant title*
+            </label>
+            <SearchGrantProgram
+              grantToEdit={grantToEdit}
+              communityUID={form.getValues("community")}
+              chainId={communityNetworkId}
+              setValue={setValue}
+              watch={watch}
+            />
+
+            <p className="text-base text-red-400">{errors.title?.message}</p>
+          </div>
+
           <div className="flex w-full flex-col">
             <Controller
               name="startDate"
