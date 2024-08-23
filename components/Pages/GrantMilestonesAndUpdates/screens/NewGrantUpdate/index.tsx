@@ -24,13 +24,20 @@ import { z } from "zod";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { sanitizeObject } from "@/utilities/sanitize";
+import { urlRegex } from "@/utilities/regexs/urlRegex";
 
 const updateSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.GRANT.UPDATE.FORM.TITLE }),
   description: z
     .string()
     .min(3, { message: MESSAGES.GRANT.UPDATE.FORM.DESCRIPTION }),
-  proofOfWork: z.string().optional(),
+  proofOfWork: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: "Please enter a valid URL",
+    })
+    .optional()
+    .or(z.literal("")),
 });
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
