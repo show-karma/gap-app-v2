@@ -27,6 +27,10 @@ import { sanitizeObject } from "@/utilities/sanitize";
 
 const updateSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.GRANT.UPDATE.FORM.TITLE }),
+  description: z
+    .string()
+    .min(3, { message: MESSAGES.GRANT.UPDATE.FORM.DESCRIPTION }),
+  proofOfWork: z.string().optional(),
 });
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
@@ -40,8 +44,6 @@ interface NewGrantUpdateProps {
 }
 
 export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
-  const [description, setDescription] = useState("");
-
   const { address } = useAccount();
   const { chain } = useAccount();
   const { switchChainAsync } = useSwitchChain();
@@ -51,6 +53,8 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors, isSubmitting, isValid },
   } = useForm<UpdateType>({
     resolver: zodResolver(updateSchema),
@@ -63,15 +67,10 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
     event?.preventDefault();
     event?.stopPropagation();
     setIsLoading(true);
-    await createGrantUpdate(grant, {
-      title: data.title,
-      text: description,
-    }).finally(() => {
+    await createGrantUpdate(grant, data).finally(() => {
       setIsLoading(false);
     });
   };
-
-  const isDescriptionValid = !!description.length;
 
   const { changeStepperStep, setIsStepper } = useStepper();
 
@@ -79,7 +78,7 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
 
   const createGrantUpdate = async (
     grantToUpdate: IGrantResponse,
-    { title, text }: { title: string; text: string }
+    data: UpdateType
   ) => {
     let gapClient = gap;
     if (!address || !project) return;
@@ -95,8 +94,9 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
       const walletSigner = await walletClientToSigner(walletClient);
 
       const sanitizedGrantUpdate = sanitizeObject({
-        text,
-        title,
+        text: data.description,
+        title: data.title,
+        proofOfWork: data.proofOfWork,
         type: "grant-update",
       });
       const grantUpdate = new GrantUpdate({
@@ -198,22 +198,35 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
             </label>
             <div className="w-full bg-transparent" data-color-mode="light">
               <MarkdownEditor
-                value={description}
-                onChange={(newValue: string) => setDescription(newValue || "")}
+                value={watch("description") || ""}
+                onChange={(newValue: string) => {
+                  setValue("description", newValue || "", {
+                    shouldValidate: true,
+                  });
+                }}
                 placeholderText="To share updates on the progress of this grant, please add the details here."
               />
             </div>
+          </div>
+          <div className="flex w-full flex-col">
+            <label htmlFor="update-proof-of-work" className={labelStyle}>
+              Proof of Work (optional)
+            </label>
+            <input
+              id="update-proof-of-work"
+              className={inputStyle}
+              placeholder="Add links to charts, videos, dashboards etc. that evaluators can verify your work"
+              {...register("proofOfWork")}
+            />
+            <p className="text-base text-red-400">
+              {errors.proofOfWork?.message}
+            </p>
           </div>
           <div className="flex w-full flex-row-reverse">
             <Button
               type="submit"
               className="flex w-max flex-row bg-slate-600 text-slate-200 hover:bg-slate-800 hover:text-slate-200"
-              disabled={
-                isSubmitting ||
-                !isValid ||
-                !isDescriptionValid ||
-                !description.length
-              }
+              disabled={isSubmitting || !isValid}
               isLoading={isSubmitting || isLoading}
             >
               Post update

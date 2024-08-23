@@ -27,6 +27,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
 
 interface UpdatesProps {
   milestone: IMilestoneResponse;
@@ -179,27 +180,41 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
               {milestone.completed.data?.reason}
             </ReadMore>
 
-            <div className="flex w-full flex-row items-center justify-end">
-              {isAuthorized ? (
-                <div className="flex w-max flex-row items-center gap-2">
-                  <Button
-                    type="button"
-                    className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
-                    onClick={() => handleEditing(true)}
-                  >
-                    <PencilSquareIcon className="h-5 w-5" />
-                    Edit
-                  </Button>
-                  <Button
-                    type="button"
-                    className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
-                    onClick={() => undoMilestoneCompletion(milestone)}
-                  >
-                    <TrashIcon className="h-5 w-5" />
-                    Remove
-                  </Button>
-                </div>
+            <div className="flex w-full flex-row items-center justify-between">
+              {milestone.completed.data?.proofOfWork ? (
+                <ExternalLink
+                  href={
+                    milestone.completed.data?.proofOfWork.includes("http")
+                      ? milestone.completed.data?.proofOfWork
+                      : `https://${milestone.completed.data?.proofOfWork}`
+                  }
+                  className="flex flex-row w-max gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent"
+                >
+                  View Proof of Work
+                </ExternalLink>
               ) : null}
+              <div className="flex flex-1 flex-row items-center justify-end">
+                {isAuthorized ? (
+                  <div className="flex w-max flex-row items-center gap-2">
+                    <Button
+                      type="button"
+                      className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
+                      onClick={() => handleEditing(true)}
+                    >
+                      <PencilSquareIcon className="h-5 w-5" />
+                      Edit
+                    </Button>
+                    <Button
+                      type="button"
+                      className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
+                      onClick={() => undoMilestoneCompletion(milestone)}
+                    >
+                      <TrashIcon className="h-5 w-5" />
+                      Remove
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
         ) : null}
@@ -211,7 +226,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
     <UpdateMilestone
       milestone={milestone}
       isEditing={isEditing}
-      previousDescription={milestone.completed?.data?.reason || ""}
+      previousData={milestone.completed?.data}
       cancelEditing={handleEditing}
     />
   );

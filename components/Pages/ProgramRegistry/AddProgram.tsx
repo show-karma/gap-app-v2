@@ -42,13 +42,11 @@ import { formatDate } from "@/utilities/formatDate";
 import { DayPicker } from "react-day-picker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { sanitizeObject } from "@/utilities/sanitize";
+import { urlRegex } from "@/utilities/regexs/urlRegex";
 
 const labelStyle = "text-sm font-bold text-[#344054] dark:text-zinc-100";
 const inputStyle =
   "mt-1 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100";
-
-const urlRegex =
-  /^((https?):\/\/)?([a-z0-9]+(-[a-z0-9]+)*\.)+[a-z]{2,}(\/.*)?$/;
 
 const createProgramSchema = z.object({
   name: z.string().min(3, { message: MESSAGES.REGISTRY.FORM.NAME }),
