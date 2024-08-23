@@ -159,7 +159,6 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
       const milestoneInstance = grantInstance.milestones.find(
         (u) => u.uid.toLowerCase() === milestone.uid.toLowerCase()
       );
-      console.log("completeMilestone");
       await milestoneInstance
         ?.complete(
           walletSigner,
@@ -180,7 +179,6 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
           }
           let retries = 1000;
           changeStepperStep("indexing");
-          console.log("indexing");
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {
@@ -231,7 +229,6 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
     setIsSubmitLoading(true);
     let gapClient = gap;
     try {
-      console.log("updateMilestoneCompletion");
       if (chain?.id !== milestone.chainID) {
         await switchChainAsync?.({ chainId: milestone.chainID });
         gapClient = getGapClient(milestone.chainID);
