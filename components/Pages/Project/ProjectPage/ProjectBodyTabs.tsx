@@ -24,7 +24,15 @@ import { Hex } from "viem";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { errorManager } from "@/components/Utilities/errorManager";
-import axios from "axios"
+import axios from "axios";
+import TimeAgo from 'javascript-time-ago'
+
+// English.
+import en from 'javascript-time-ago/locale/en'
+
+TimeAgo.addDefaultLocale(en)
+// Create formatter (English).
+const timeAgo = new TimeAgo('en-US')
 
 const InformationTab: FC = () => {
   const { project } = useProjectStore();
@@ -92,15 +100,20 @@ const InformationTab: FC = () => {
 const StatsTab: FC = () => {
   const { project } = useProjectStore();
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<{
+    code: any
+    onchain: any
+  }>({
+    code: [],
+    onchain: []
+  });
 
   useEffect(() => {
     (async () => {
       const res = await axios.post("https://www.opensource.observer/api/v1/graphql", {
         query: `
           query Oso_projectsV1 {
-   oso_codeMetricsByProjectV1(where: { displayName: { _eq: "${"1Hive Gardens" // project?.details?.data?.title
-          }" } }) {
+    oso_codeMetricsByProjectV1(where: { displayName: { _eq: "${project?.details?.data?.title}" } }) {
         activeDeveloperCount6Months
         closedIssueCount6Months
         commitCount6Months
@@ -123,81 +136,201 @@ const StatsTab: FC = () => {
         repositoryCount
         starCount
     }
-}
-
+    oso_onchainMetricsByProjectV1(where: { displayName: { _eq: "${"DefiLens" // project?.details?.data?.title
+          }" } }) {
+        activeContractCount90Days
+        addressCount
+        addressCount90Days
+        daysSinceFirstTransaction
+        displayName
+        eventSource
+        gasFeesSum
+        gasFeesSum6Months
+        highActivityAddressCount90Days
+        lowActivityAddressCount90Days
+        mediumActivityAddressCount90Days
+        multiProjectAddressCount90Days
+        newAddressCount90Days
+        projectId
+        projectName
+        projectNamespace
+        projectSource
+        returningAddressCount90Days
+        transactionCount
+        transactionCount6Months
+    }
+} 
           `});
 
 
       if (res?.data?.data?.oso_codeMetricsByProjectV1?.length > 0) {
-        setStats(res.data.data.oso_codeMetricsByProjectV1[0]);
+        let code = res.data.data.oso_codeMetricsByProjectV1[0];
+        let onchain = res.data.data.oso_onchainMetricsByProjectV1[0];
+
+        setStats({
+          code: [{
+            title: "Repositories",
+            value: code?.repositoryCount
+          },
+          {
+            title: "Star Count",
+            value: code?.starCount
+          }, {
+            title: "Fork Count",
+            value: code?.forkCount
+          },
+          {
+            title: "Commits (6 Months)",
+            value: code?.commitCount6Months
+          },
+
+          {
+            title: "First Commit",
+            value: timeAgo.format(new Date(code?.firstCommitDate))
+          }, {
+            title: "Last Commit",
+            value: timeAgo.format(new Date(code?.lastCommitDate))
+          },
+          {
+            title: "Contributors",
+            value: code?.contributorCount
+          },
+          {
+            title: "Contributors (6 Months)",
+            value: code?.contributorCount6Months
+          }, {
+            title: "New Contributors (6 Months)",
+            value: code?.newContributorCount6Months
+          },
+          {
+            title: "Active Developers (6 Months)",
+            value: code?.activeDeveloperCount6Months
+          },
+          {
+            title: "Full-time Developers (6 Months)",
+            value: code?.fulltimeDeveloperAverage6Months
+          },
+          {
+            title: "Opened Issues (6 Months)",
+            value: code?.openedIssueCount6Months
+          }, {
+            title: "Closed Issues (6 Months)",
+            value: code?.closedIssueCount6Months
+          },
+          {
+            title: "Merged Pull Requests (6 Months)",
+            value: code?.mergedPullRequestCount6Months
+          },
+          {
+            title: "Opened Pull Requests (6 Months)",
+            value: code?.openedPullRequestCount6Months
+          },
+          ],
+          onchain: [
+            {
+              title: "Gas Fees Sum",
+              value: `${onchain?.gasFeesSum || 0} ETH`
+            },
+            {
+              title: "Gas Fees Sum (6 Months)",
+              value: `${onchain?.gasFeesSum6Months || 0} ETH`
+            },
+            {
+              title: "Addresses",
+              value: onchain?.addressCount
+            },
+            {
+              title: "Addresses (90 Days)",
+              value: onchain?.addressCount90Days
+            },
+            {
+              title: "Transaction Count",
+              value: onchain?.transactionCount
+            },
+            {
+              title: "Transaction Count (6 Months)",
+              value: onchain?.transactionCount6Months
+            },
+            {
+              title: "Active Contract Count (90 Days)",
+              value: onchain?.activeContractCount90Days
+            },
+            {
+              title: "First Transaction",
+              value: onchain?.daysSinceFirstTransaction ? `${onchain?.daysSinceFirstTransaction} days ago` : "N/A"
+            },
+
+            {
+              title: "High Activity Addresses (90 Days)",
+              value: onchain?.highActivityAddressCount90Days
+            },
+            {
+              title: "Medium Activity Addresses (90 Days)",
+              value: onchain?.mediumActivityAddressCount90Days
+            },
+            {
+              title: "Low Activity Addresses (90 Days)",
+              value: onchain?.lowActivityAddressCount90Days
+            },
+
+            {
+              title: "Multi Project Addresses (90 Days)",
+              value: onchain?.multiProjectAddressCount90Days
+            },
+            {
+              title: "New Addresses (90 Days)",
+              value: onchain?.newAddressCount90Days
+            },
+            {
+              title: "Returning Addresses (90 Days)",
+              value: onchain?.returningAddressCount90Days
+            },
+          ]
+        });
         setLoading(false);
       }
-
-      console.log(res);
     })();
   }, [project]);
 
   return (
     <>
       <div className="flex flex-col gap-1">
-        <div className="text-base font-bold leading-normal text-black dark:text-zinc-100">
-          Code statistics
-        </div>
 
-        <div className="mt-2 space-y-5 ">
-          {loading ? <div>Loading...</div> : (
-            <div className="mt-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg shadow-sm">
-                <div className="text-lg font-semibold">Active Developers (6 Months)</div>
-                <div className="text-2xl font-bold">{stats?.activeDeveloperCount6Months}</div>
-              </div>
-              <div className="p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg shadow-sm">
-                <div className="text-lg font-semibold">Closed Issues (6 Months)</div>
-                <div className="text-2xl font-bold">{stats?.closedIssueCount6Months}</div>
-              </div>
-              <div className="p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg shadow-sm">
-                <div className="text-lg font-semibold">Commits (6 Months)</div>
-                <div className="text-2xl font-bold">{stats?.commitCount6Months}</div>
-              </div>
-              <div className="p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg shadow-sm">
-                <div className="text-lg font-semibold">Contributors</div>
-                <div className="text-2xl font-bold">{stats?.contributorCount}</div>
-              </div>
-              <div className="p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg shadow-sm">
-                <div className="text-lg font-semibold">Contributors (6 Months)</div>
-                <div className="text-2xl font-bold">{stats?.contributorCount6Months}</div>
-              </div>
-              <div className="p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg shadow-sm">
-                <div className="text-lg font-semibold">Merged Pull Requests (6 Months)</div>
-                <div className="text-2xl font-bold">{stats?.mergedPullRequestCount6Months}</div>
-              </div>
-              <div className="p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg shadow-sm">
-                <div className="text-lg font-semibold">New Contributors (6 Months)</div>
-                <div className="text-2xl font-bold">{stats?.newContributorCount6Months}</div>
-              </div>
-              <div className="p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg shadow-sm">
-                <div className="text-lg font-semibold">Opened Issues (6 Months)</div>
-                <div className="text-2xl font-bold">{stats?.openedIssueCount6Months}</div>
-              </div>
-              <div className="p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg shadow-sm">
-                <div className="text-lg font-semibold">Opened Pull Requests (6 Months)</div>
-                <div className="text-2xl font-bold">{stats?.openedPullRequestCount6Months}</div>
-              </div>
-              <div className="p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg shadow-sm">
-                <div className="text-lg font-semibold">Fork Count</div>
-                <div className="text-2xl font-bold">{stats?.forkCount}</div>
-              </div>
-              <div className="p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg shadow-sm">
-                <div className="text-lg font-semibold">Star Count</div>
-                <div className="text-2xl font-bold">{stats?.starCount}</div>
-              </div>
-              <div className="p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg shadow-sm">
-                <div className="text-lg font-semibold">Repository Count</div>
-                <div className="text-2xl font-bold">{stats?.repositoryCount}</div>
-              </div>
+        {loading ? <div>Loading stats from the Open Source Observatory...</div> : (
+          <div className="mt-2 space-y-5 ">
+            <div className="text-base font-bold leading-normal text-black dark:text-zinc-100">
+              Code statistics
             </div>
-          )}
-        </div>
+            <div className="mt-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {stats.code.map((stat: any, index: number) => (
+                <div
+                  key={index}
+                  className="shadow-md p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg"
+                >
+                  <div className="text-md font-semibold">{stat.title}</div>
+                  <div className="text-xl font-bold">{stat.value}</div>
+                </div>
+              ))}
+            </div>
+
+            <hr />
+
+            <div className="text-base font-bold leading-normal text-black dark:text-zinc-100">
+              On-chain statistics
+            </div>
+            <div className="mt-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {stats.onchain.map((stat: any, index: number) => (
+                <div
+                  key={index}
+                  className="p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg shadow-md"
+                >
+                  <div className="text-md font-semibold">{stat.title}</div>
+                  <div className="text-xl font-bold">{stat.value}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

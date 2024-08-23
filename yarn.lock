@@ -7585,6 +7585,13 @@ jake@^10.8.5:
     filelist "^1.0.4"
     minimatch "^3.1.2"
 
+javascript-time-ago@^2.5.10:
+  version "2.5.10"
+  resolved "https://registry.yarnpkg.com/javascript-time-ago/-/javascript-time-ago-2.5.10.tgz#f1c188496203a1aa37318276703a2ebd2941c1b1"
+  integrity sha512-EUxp4BP74QH8xiYHyeSHopx1XhMMJ9qEX4rcBdFtpVWmKRdzpxbNzz2GSbuekZr5wt0rmLehuyp0PE34EAJT9g==
+  dependencies:
+    relative-time-format "^1.1.6"
+
 jay-peg@^1.0.2:
   version "1.0.2"
   resolved "https://registry.npmjs.org/jay-peg/-/jay-peg-1.0.2.tgz#17a54d386e472f5f313f3d6e88770b170ea569f4"
@@ -10099,6 +10106,11 @@ rehype@~13.0.0:
     rehype-parse "^9.0.0"
     rehype-stringify "^10.0.0"
     unified "^11.0.0"
+
+relative-time-format@^1.1.6:
+  version "1.1.6"
+  resolved "https://registry.yarnpkg.com/relative-time-format/-/relative-time-format-1.1.6.tgz#724a5fbc3794b8e0471b6b61419af2ce699eb9f1"
+  integrity sha512-aCv3juQw4hT1/P/OrVltKWLlp15eW1GRcwP1XdxHrPdZE9MtgqFpegjnTjLhi2m2WI9MT/hQQtE+tjEWG1hgkQ==
 
 remark-gfm@~4.0.0:
   version "4.0.0"
