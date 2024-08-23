@@ -8,6 +8,9 @@ const ContactInfoPage = () => {
   const contactInfoLoading = useProjectStore(
     (state) => state.contactInfoLoading
   );
+  const refreshContactInfo = useProjectStore(
+    (state) => state.refreshContactInfo
+  );
 
   const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);
   const isProjectOwnerLoading = useProjectStore(
@@ -28,6 +31,7 @@ const ContactInfoPage = () => {
         <ContactInfoSubscription
           contactInfo={contactsInfo?.[contactsInfo.length - 1]}
           existingContacts={contactsInfo}
+          refreshContactInfo={refreshContactInfo}
         />
       )}
     </div>
