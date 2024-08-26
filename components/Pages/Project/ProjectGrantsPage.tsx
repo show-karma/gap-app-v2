@@ -31,16 +31,13 @@ import { GrantMilestonesAndUpdates } from "@/components/Pages/GrantMilestonesAnd
 import { GrantContext } from "@/components/Pages/GrantMilestonesAndUpdates/GrantContext";
 import { GrantAllReviews } from "@/components/Pages/AllReviews";
 import { ReviewGrant } from "@/components/Pages/ReviewGrant";
-import { GenerateImpactReportDialog } from "@/components/Dialogs/GenerateImpactReportDialog";
-
+import dynamic from "next/dynamic";
 import { useQueryState } from "nuqs";
 import {
-  getMetadata,
   getQuestionsOf,
   getReviewsOf,
   isCommunityAdminOf,
 } from "@/utilities/sdk";
-import { zeroUID } from "@/utilities/commons";
 import { cn } from "@/utilities/tailwind";
 import { MESSAGES } from "@/utilities/messages";
 import { formatDate } from "@/utilities/formatDate";
@@ -55,8 +52,15 @@ import { GrantsAccordion } from "@/components/GrantsAccordion";
 import { PAGES } from "@/utilities/pages";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { GrantsGenieDialog } from "@/components/Dialogs/GrantGenieDialog";
 import { errorManager } from "@/components/Utilities/errorManager";
+
+const GenerateImpactReportDialog = dynamic(
+  () =>
+    import("@/components/Dialogs/GenerateImpactReportDialog").then(
+      (mod) => mod.GenerateImpactReportDialog
+    ),
+  { ssr: false }
+);
 
 interface Tab {
   name: string;
