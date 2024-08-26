@@ -15,6 +15,7 @@ import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { useGrantFormStore } from "./store";
+import { urlRegex } from "@/utilities/regexs/urlRegex";
 
 interface MilestoneProps {
   currentMilestone: MilestoneWithCompleted;
@@ -48,6 +49,15 @@ const milestoneSchema = z.object({
         path: ["dates", "startsAt"],
       }
     ),
+  description: z.string().optional(),
+  update: z.string().optional(),
+  proofOfWork: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: "Please enter a valid URL",
+    })
+    .optional()
+    .or(z.literal("")),
 });
 
 type MilestoneType = z.infer<typeof milestoneSchema>;
@@ -63,9 +73,6 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
     switchMilestoneEditing,
     milestonesForms,
   } = useGrantFormStore();
-
-  const [description, setDescription] = useState("");
-  const [update, setUpdate] = useState("");
 
   const {
     register,
@@ -89,12 +96,13 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
     saveMilestone(
       {
         title: data.title,
-        description,
+        description: data.description || "",
         endsAt: data.dates.endsAt.getTime() / 1000,
         startsAt: data.dates.startsAt
           ? data.dates.startsAt.getTime() / 1000
           : undefined,
-        completedText: update,
+        completedText: data.update,
+        proofOfWork: data.proofOfWork,
       },
       index
     );
@@ -103,6 +111,9 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
   useEffect(() => {
     if (isValid) {
       const title = watch("title") || currentMilestone.title;
+      const description = watch("description") || currentMilestone.description;
+      const update = watch("update") || currentMilestone.completedText;
+      const proofOfWork = watch("proofOfWork") || currentMilestone.proofOfWork;
       const endsAt =
         watch("dates.endsAt").getTime() / 1000 || currentMilestone.endsAt;
       const startsAt = watch("dates.startsAt")
@@ -113,14 +124,15 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
         isEditing: milestonesForms[index].isEditing,
         data: {
           title,
-          description: description || currentMilestone.description,
+          description,
           endsAt,
           startsAt,
-          completedText: update || currentMilestone.completedText,
+          completedText: update,
+          proofOfWork,
         },
       });
     }
-  }, [isValid, description, update]);
+  }, [isValid]);
 
   return milestonesForms[index].isEditing ? (
     <div className="flex w-full flex-col gap-6 rounded-md bg-gray-200 dark:bg-zinc-700 px-4 py-6">
@@ -246,8 +258,12 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
           </label>
           <div className="mt-3 w-full bg-transparent" data-color-mode="light">
             <MarkdownEditor
-              value={description}
-              onChange={(newValue: string) => setDescription(newValue || "")}
+              value={watch("description") || ""}
+              onChange={(newValue: string) => {
+                setValue("description", newValue || "", {
+                  shouldValidate: true,
+                });
+              }}
               placeholderText="Please provide a concise description of your objectives for this milestone"
             />
           </div>
@@ -258,11 +274,28 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
           </label>
           <div className="mt-3 w-full bg-transparent" data-color-mode="light">
             <MarkdownEditor
-              value={update}
-              onChange={(newValue: string) => setUpdate(newValue || "")}
+              value={watch("update") || ""}
+              onChange={(newValue: string) => {
+                setValue("update", newValue || "", {
+                  shouldValidate: true,
+                });
+              }}
               placeholderText="If this milestone is complete, please provide details for the community to understand more about its completion. Alternatively, you can post an update about this milestone at a later date"
             />
           </div>
+        </div>
+        <div className="flex w-full flex-col gap-2">
+          <label htmlFor="proofOfWork-input" className={labelStyle}>
+            Proof of Work (optional)
+          </label>
+          <input
+            id="proofOfWork-input"
+            placeholder="Add links to charts, videos, dashboards etc. that evaluators can verify your work"
+            type="text"
+            className={inputStyle}
+            {...register("proofOfWork")}
+          />
+          <p className="text-red-500">{errors.proofOfWork?.message}</p>
         </div>
         <div className="flex w-full flex-row-reverse">
           <Button

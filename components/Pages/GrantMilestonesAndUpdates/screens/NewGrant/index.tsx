@@ -56,6 +56,7 @@ import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { sanitizeObject } from "@/utilities/sanitize";
+import { urlRegex } from "@/utilities/regexs/urlRegex";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -86,6 +87,13 @@ const grantSchema = z.object({
   startDate: z.date({
     required_error: MESSAGES.GRANT.FORM.DATE,
   }),
+  proofOfWorkGrantUpdate: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: "Please enter a valid URL",
+    })
+    .optional()
+    .or(z.literal("")),
   linkToProposal: z
     .string()
     .url({
@@ -185,6 +193,7 @@ interface NewGrantData {
   title: string;
   description: string;
   linkToProposal: string;
+  proofOfWorkGrantUpdate?: string;
   amount?: string;
   milestones: MilestoneWithCompleted[];
   community: string;
@@ -370,16 +379,18 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       const sanitizedUpdate = sanitizeObject({
         text: data.grantUpdate || "",
         title: "",
+        proofOfWork: data.proofOfWorkGrantUpdate,
       });
-      grant.updates = data.grantUpdate
-        ? [
-            new GrantUpdate({
-              data: sanitizedUpdate,
-              schema: gapClient.findSchema("Milestone"),
-              recipient: grant.recipient,
-            }),
-          ]
-        : [];
+      grant.updates =
+        data.grantUpdate || data.proofOfWorkGrantUpdate
+          ? [
+              new GrantUpdate({
+                data: sanitizedUpdate,
+                schema: gapClient.findSchema("Milestone"),
+                recipient: grant.recipient,
+              }),
+            ]
+          : [];
 
       // eslint-disable-next-line no-param-reassign
       grant.milestones = data.milestones.map((milestone) => {
@@ -396,9 +407,10 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           recipient: grant.recipient,
           uid: nullRef,
         });
-        if (milestone.completedText) {
+        if (milestone.completedText || milestone.proofOfWork) {
           const sanitizedCompleted = sanitizeObject({
-            reason: milestone.completedText,
+            reason: milestone.completedText || "",
+            proofOfWork: milestone.proofOfWork,
             type: "completed",
           });
           created.completed = new MilestoneCompleted({
@@ -410,6 +422,8 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         }
         return created;
       });
+
+      console.log(grant.updates, grant.milestones);
 
       const walletClient = await getWalletClient(config, {
         chainId: communityNetworkId,
@@ -646,6 +660,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       grantUpdate,
       questions,
       startDate: data.startDate.getTime() / 1000,
+      proofOfWorkGrantUpdate: data.proofOfWorkGrantUpdate,
     };
     if (grantScreen === "edit-grant" && grantToEdit) {
       updateGrant(grantToEdit, newGrant);
@@ -1063,21 +1078,41 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             />
           ))}
           {grantScreen === "create-grant" && (
-            <div className="flex w-full flex-col">
-              <label htmlFor="grant-update" className={labelStyle}>
-                Grant update (optional)
-              </label>
-              <div
-                className="mt-2 w-full bg-transparent"
-                data-color-mode="light"
-              >
-                <MarkdownEditor
-                  value={grantUpdate}
-                  onChange={(newValue: string) =>
-                    setGrantUpdate(newValue || "")
-                  }
-                  placeholderText="To share updates on the progress of this grant, please add the details here."
+            <div className="flex w-full flex-col gap-2">
+              <div className="flex w-full flex-col">
+                <label htmlFor="grant-update" className={labelStyle}>
+                  Grant update (optional)
+                </label>
+                <div
+                  className="mt-2 w-full bg-transparent"
+                  data-color-mode="light"
+                >
+                  <MarkdownEditor
+                    value={grantUpdate}
+                    onChange={(newValue: string) =>
+                      setGrantUpdate(newValue || "")
+                    }
+                    placeholderText="To share updates on the progress of this grant, please add the details here."
+                  />
+                </div>
+              </div>
+              <div className="flex w-full flex-col gap-2">
+                <label
+                  htmlFor="proofOfWorkGrantUpdate-input"
+                  className={labelStyle}
+                >
+                  Grant Update - Proof of Work (optional)
+                </label>
+                <input
+                  id="proofOfWorkGrantUpdate-input"
+                  placeholder="Add links to charts, videos, dashboards etc. that evaluators can verify your update"
+                  type="text"
+                  className={inputStyle}
+                  {...register("proofOfWorkGrantUpdate")}
                 />
+                <p className="text-red-500">
+                  {errors.proofOfWorkGrantUpdate?.message}
+                </p>
               </div>
             </div>
           )}
