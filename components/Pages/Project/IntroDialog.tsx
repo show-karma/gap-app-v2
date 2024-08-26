@@ -173,7 +173,7 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
                       <textarea
                         id="message-input"
                         className={inputStyle}
-                        placeholder="Enter your request message"
+                        placeholder="Tell us why you want to connect with them. Keep your message concise and to the point."
                         {...register("message")}
                       />
                       <p className="text-red-600 mb-2">
