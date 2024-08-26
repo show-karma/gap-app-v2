@@ -4,6 +4,8 @@ import { BadgeIcon } from "@/components/Icons/Badge";
 import { DynamicStarsReview } from "./DynamicStarsReview";
 import { useReviewStore } from "@/store/review";
 import { Badge, ReviewMode } from "@/types/review";
+import { useEffect } from "react";
+import { getBadge } from "@/utilities/review/getBadge";
 
 export const CardReview = ({ id }: { id: number }) => {
   const review = useReviewStore((state) => state.review);
@@ -11,6 +13,18 @@ export const CardReview = ({ id }: { id: number }) => {
   const isReviewSelected = review.find((review) => review.id === id);
   const reviews = isReviewSelected?.reviews || [];
 
+  // Testing getBadge
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const badge = await getBadge(String(id));
+        console.log("badge", badge);
+      } catch (error) {
+        console.log("error");
+      }
+    };
+    fetchData();
+  }, [id]);
   return (
     <div className="flex w-full flex-col justify-center gap-4">
       <div className="w-full flex flex-col px-2 gap-2">
