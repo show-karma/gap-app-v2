@@ -3,7 +3,6 @@ import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 
-import { MilestoneWithCompleted } from "@/types/milestones";
 import { formatDate } from "@/utilities/formatDate";
 import { Popover } from "@headlessui/react";
 import { CalendarIcon, PencilIcon } from "@heroicons/react/24/outline";
@@ -15,10 +14,10 @@ import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { useGrantFormStore } from "./store";
-import { urlRegex } from "@/utilities/regexs/urlRegex";
+import { IMilestone } from "@show-karma/karma-gap-sdk";
 
 interface MilestoneProps {
-  currentMilestone: MilestoneWithCompleted;
+  currentMilestone: IMilestone;
   index: number;
 }
 
@@ -50,14 +49,6 @@ const milestoneSchema = z.object({
       }
     ),
   description: z.string().optional(),
-  update: z.string().optional(),
-  proofOfWork: z
-    .string()
-    .refine((value) => urlRegex.test(value), {
-      message: "Please enter a valid URL",
-    })
-    .optional()
-    .or(z.literal("")),
 });
 
 type MilestoneType = z.infer<typeof milestoneSchema>;
@@ -101,8 +92,6 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
         startsAt: data.dates.startsAt
           ? data.dates.startsAt.getTime() / 1000
           : undefined,
-        completedText: data.update,
-        proofOfWork: data.proofOfWork,
       },
       index
     );
@@ -112,8 +101,6 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
     if (isValid) {
       const title = watch("title") || currentMilestone.title;
       const description = watch("description") || currentMilestone.description;
-      const update = watch("update") || currentMilestone.completedText;
-      const proofOfWork = watch("proofOfWork") || currentMilestone.proofOfWork;
       const endsAt =
         watch("dates.endsAt").getTime() / 1000 || currentMilestone.endsAt;
       const startsAt = watch("dates.startsAt")
@@ -127,8 +114,6 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
           description,
           endsAt,
           startsAt,
-          completedText: update,
-          proofOfWork,
         },
       });
     }
@@ -268,35 +253,7 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
             />
           </div>
         </div>
-        <div className="flex w-full flex-col">
-          <label htmlFor="milestone-update" className={labelStyle}>
-            Milestone update (optional)
-          </label>
-          <div className="mt-3 w-full bg-transparent" data-color-mode="light">
-            <MarkdownEditor
-              value={watch("update") || ""}
-              onChange={(newValue: string) => {
-                setValue("update", newValue || "", {
-                  shouldValidate: true,
-                });
-              }}
-              placeholderText="If this milestone is complete, please provide details for the community to understand more about its completion. Alternatively, you can post an update about this milestone at a later date"
-            />
-          </div>
-        </div>
-        <div className="flex w-full flex-col gap-2">
-          <label htmlFor="proofOfWork-input" className={labelStyle}>
-            Proof of Work (optional)
-          </label>
-          <input
-            id="proofOfWork-input"
-            placeholder="Add links to charts, videos, dashboards etc. that evaluators can verify your work"
-            type="text"
-            className={inputStyle}
-            {...register("proofOfWork")}
-          />
-          <p className="text-red-500">{errors.proofOfWork?.message}</p>
-        </div>
+
         <div className="flex w-full flex-row-reverse">
           <Button
             type="submit"

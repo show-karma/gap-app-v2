@@ -4,7 +4,6 @@
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { MilestoneWithCompleted } from "@/types/milestones";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   GrantDetails,
@@ -13,6 +12,7 @@ import {
   Grant,
   Milestone,
   MilestoneCompleted,
+  IMilestone,
 } from "@show-karma/karma-gap-sdk";
 import type { FC } from "react";
 import { useEffect, useState } from "react";
@@ -195,7 +195,7 @@ interface NewGrantData {
   linkToProposal: string;
   proofOfWorkGrantUpdate?: string;
   amount?: string;
-  milestones: MilestoneWithCompleted[];
+  milestones: IMilestone[];
   community: string;
   season?: string;
   cycle?: string;
@@ -375,22 +375,6 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         recipient: grant.recipient,
         uid: nullRef,
       });
-      // eslint-disable-next-line no-param-reassign
-      const sanitizedUpdate = {
-        text: sanitizeInput(data.grantUpdate) || " ",
-        title: " ",
-        proofOfWork: sanitizeInput(data.proofOfWorkGrantUpdate),
-      };
-      grant.updates =
-        data.grantUpdate || data.proofOfWorkGrantUpdate
-          ? [
-              new GrantUpdate({
-                data: sanitizedUpdate,
-                schema: gapClient.findSchema("GrantUpdate"),
-                recipient: grant.recipient,
-              }),
-            ]
-          : [];
 
       // eslint-disable-next-line no-param-reassign
       grant.milestones = data.milestones.map((milestone) => {
@@ -407,18 +391,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           recipient: grant.recipient,
           uid: nullRef,
         });
-        if (milestone.completedText || milestone.proofOfWork) {
-          created.completed = new MilestoneCompleted({
-            data: {
-              reason: sanitizeInput(milestone.completedText) || " ",
-              proofOfWork: sanitizeInput(milestone.proofOfWork),
-              type: "completed",
-            },
-            refUID: created.uid,
-            schema: gapClient.findSchema("MilestoneCompleted"),
-            recipient: grant.recipient,
-          });
-        }
+
         return created;
       });
 
@@ -1074,66 +1047,6 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
               )}
             />
           ))}
-          {grantScreen === "create-grant" && (
-            <div className="flex w-full flex-col gap-2">
-              <div className="flex w-full flex-col">
-                <label htmlFor="grant-update" className={labelStyle}>
-                  Grant update (optional)
-                </label>
-                <div
-                  className="mt-2 w-full bg-transparent"
-                  data-color-mode="light"
-                >
-                  <MarkdownEditor
-                    value={grantUpdate}
-                    onChange={(newValue: string) =>
-                      setGrantUpdate(newValue || "")
-                    }
-                    placeholderText="To share updates on the progress of this grant, please add the details here."
-                  />
-                </div>
-              </div>
-              <div className="flex w-full flex-col gap-2">
-                <label
-                  htmlFor="proofOfWorkGrantUpdate-input"
-                  className={labelStyle}
-                >
-                  Output of your work (optional)
-                </label>
-                <p className="text-sm text-gray-500">
-                  Provide a link that demonstrates your work. This could be a
-                  link to a tweet announcement, a dashboard, a Google Doc, a
-                  blog post, a video, or any other resource that highlights the
-                  progress or results of your work
-                </p>
-                <div className="flex flex-row gap-2 items-center py-2">
-                  <input
-                    type="checkbox"
-                    className="rounded-sm w-5 h-5 bg-white fill-black"
-                    checked={noProofCheckbox}
-                    onChange={() => {
-                      setNoProofCheckbox((oldValue) => !oldValue);
-                      setValue("proofOfWorkGrantUpdate", "", {
-                        shouldValidate: true,
-                      });
-                    }}
-                  />
-                  <p className="text-base text-zinc-900 dark:text-zinc-100">{`I don't have any output to show for this milestone`}</p>
-                </div>
-                <input
-                  id="proofOfWorkGrantUpdate-input"
-                  placeholder="Add links to charts, videos, dashboards etc. that evaluators can verify your work"
-                  type="text"
-                  className={cn(inputStyle, "disabled:opacity-50")}
-                  disabled={noProofCheckbox}
-                  {...register("proofOfWorkGrantUpdate")}
-                />
-                <p className="text-red-500">
-                  {errors.proofOfWorkGrantUpdate?.message}
-                </p>
-              </div>
-            </div>
-          )}
         </form>
         {grantScreen === "create-grant" && (
           <div className="flex w-full flex-col items-center justify-center gap-8 py-8">
