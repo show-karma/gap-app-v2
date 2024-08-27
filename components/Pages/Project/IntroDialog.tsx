@@ -125,7 +125,7 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
                   as="h3"
                   className="text-xl font-normal leading-6 text-gray-900 dark:text-zinc-100"
                 >
-                  You will be introduced to{" "}
+                  Request Intro to{" "}
                   <b>
                     {project?.details?.data?.title ||
                       (project?.uid
