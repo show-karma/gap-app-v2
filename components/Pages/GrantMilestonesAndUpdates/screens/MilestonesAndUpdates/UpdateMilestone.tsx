@@ -30,6 +30,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
+import { cn } from "@/utilities/tailwind";
 
 const labelStyle =
   "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
@@ -104,6 +105,7 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
   const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [noProofCheckbox, setNoProofCheckbox] = useState(false);
 
   const {
     register,
@@ -338,7 +340,7 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
           className="flex w-full flex-col items-start gap-2"
           data-color-mode="light"
         >
-          <label className={labelStyle}>Description</label>
+          <label className={labelStyle}>Description (optional)</label>
           <div className="w-full" data-color-mode="light">
             <MarkdownEditor
               value={watch("description") || ""}
@@ -352,13 +354,34 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
         </div>
         <div className="flex w-full flex-col gap-2">
           <label htmlFor="proofOfWork-input" className={labelStyle}>
-            Proof of Work (optional)
+            Output of your work *
           </label>
+          <p className="text-sm text-gray-500">
+            Provide a link that demonstrates your work. This could be a link to
+            a tweet announcement, a dashboard, a Google Doc, a blog post, a
+            video, or any other resource that highlights the progress or results
+            of your work
+          </p>
+          <div className="flex flex-row gap-2 items-center py-2">
+            <input
+              type="checkbox"
+              className="rounded-sm w-5 h-5 bg-white fill-black"
+              checked={noProofCheckbox}
+              onChange={() => {
+                setNoProofCheckbox((oldValue) => !oldValue);
+                setValue("proofOfWork", "", {
+                  shouldValidate: true,
+                });
+              }}
+            />
+            <p className="text-base text-zinc-900 dark:text-zinc-100">{`I don't have any output to show for this milestone`}</p>
+          </div>
           <input
             id="proofOfWork-input"
             placeholder="Add links to charts, videos, dashboards etc. that evaluators can verify your work"
             type="text"
-            className={inputStyle}
+            className={cn(inputStyle, "disabled:opacity-50")}
+            disabled={noProofCheckbox}
             {...register("proofOfWork")}
           />
           <p className="text-red-500">{errors.proofOfWork?.message}</p>
@@ -380,7 +403,11 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
         <Button
           type="submit"
           isLoading={isSubmitLoading}
-          disabled={isSubmitLoading || !isValid}
+          disabled={
+            isSubmitLoading ||
+            !isValid ||
+            (!noProofCheckbox && !watch("proofOfWork"))
+          }
           className="flex h-min w-max flex-row gap-2 items-center rounded bg-brand-blue px-4 py-2.5 hover:bg-brand-blue"
         >
           <p className="text-base font-semibold text-white ">

@@ -32,7 +32,9 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
-import { sanitizeObject } from "@/utilities/sanitize";
+import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
+import { urlRegex } from "@/utilities/regexs/urlRegex";
+import { cn } from "@/utilities/tailwind";
 
 const milestoneSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.MILESTONES.FORM.TITLE }),
@@ -57,6 +59,14 @@ const milestoneSchema = z.object({
         path: ["dates", "startsAt"],
       }
     ),
+  completedUpdate: z.string().optional(),
+  proofOfWork: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: "Please enter a valid URL",
+    })
+    .optional()
+    .or(z.literal("")),
 });
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
@@ -79,7 +89,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({ grant }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const [description, setDescription] = useState("");
   const [recipient, setRecipient] = useState("");
-  const [completedUpdate, setCompletedUpdate] = useState("");
+  const [noProofCheckbox, setNoProofCheckbox] = useState(false);
 
   const { address } = useAccount();
   const signer = useSigner();
@@ -121,7 +131,8 @@ export const NewMilestone: FC<NewMilestoneProps> = ({ grant }) => {
       startsAt: data.dates.startsAt
         ? data.dates.startsAt.getTime() / 1000
         : undefined,
-      completedText: completedUpdate,
+      completedText: data.completedUpdate,
+      proofOfWork: data.proofOfWork,
     };
 
     try {
@@ -141,16 +152,16 @@ export const NewMilestone: FC<NewMilestoneProps> = ({ grant }) => {
         recipient: (recipient as Hex) || address,
         data: sanitizedMilestone,
       });
-      if (milestone.completedText) {
-        const sanitizedCompletedData = sanitizeObject({
-          reason: milestone.completedText,
-          type: "completed",
-        });
+      if (milestone.completedText || milestone.proofOfWork) {
         milestoneToAttest.completed = new MilestoneCompleted({
           refUID: milestoneToAttest.uid,
           schema: gapClient.findSchema("MilestoneCompleted"),
           recipient: (recipient as Hex) || address,
-          data: sanitizedCompletedData,
+          data: {
+            reason: sanitizeInput(milestone.completedText),
+            type: "completed",
+            proofOfWork: milestone.proofOfWork,
+          },
         });
       }
       const walletClient = await getWalletClient(config, {
@@ -362,13 +373,49 @@ export const NewMilestone: FC<NewMilestoneProps> = ({ grant }) => {
             </label>
             <div className="mt-2 w-full bg-transparent" data-color-mode="light">
               <MarkdownEditor
-                value={completedUpdate}
+                value={watch("completedUpdate") || ""}
                 onChange={(newValue: string) =>
-                  setCompletedUpdate(newValue || "")
+                  setValue("completedUpdate", newValue || "", {
+                    shouldValidate: true,
+                  })
                 }
                 placeholderText="If this milestone is complete, please provide details for the community to understand more about its completion. Alternatively, you can post an update about this milestone at a later date"
               />
             </div>
+          </div>
+          <div className="flex w-full flex-col gap-2">
+            <label htmlFor="proofOfWork-input" className={labelStyle}>
+              Output of your work (optional)
+            </label>
+            <p className="text-sm text-gray-500">
+              Provide a link that demonstrates your work. This could be a link
+              to a tweet announcement, a dashboard, a Google Doc, a blog post, a
+              video, or any other resource that highlights the progress or
+              results of your work
+            </p>
+            <div className="flex flex-row gap-2 items-center py-2">
+              <input
+                type="checkbox"
+                className="rounded-sm w-5 h-5 bg-white fill-black"
+                checked={noProofCheckbox}
+                onChange={() => {
+                  setNoProofCheckbox((oldValue) => !oldValue);
+                  setValue("proofOfWork", "", {
+                    shouldValidate: true,
+                  });
+                }}
+              />
+              <p className="text-base text-zinc-900 dark:text-zinc-100">{`I don't have any output to show for this milestone`}</p>
+            </div>
+            <input
+              id="proofOfWork-input"
+              placeholder="Add links to charts, videos, dashboards etc. that evaluators can verify your work"
+              type="text"
+              className={cn(inputStyle, "disabled:opacity-50")}
+              disabled={noProofCheckbox}
+              {...register("proofOfWork")}
+            />
+            <p className="text-red-500">{errors.proofOfWork?.message}</p>
           </div>
           <div className="flex w-full flex-row-reverse">
             <Button

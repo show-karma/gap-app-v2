@@ -55,7 +55,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
-import { sanitizeObject } from "@/utilities/sanitize";
+import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
@@ -211,7 +211,7 @@ interface NewGrantData {
 
 export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { address } = useAccount();
-
+  const [noProofCheckbox, setNoProofCheckbox] = useState(false);
   const isOwner = useOwnerStore((state) => state.isOwner);
   const searchParams = useSearchParams();
   const grantScreen = searchParams?.get("tab");
@@ -376,17 +376,17 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         uid: nullRef,
       });
       // eslint-disable-next-line no-param-reassign
-      const sanitizedUpdate = sanitizeObject({
-        text: data.grantUpdate || "",
-        title: "",
-        proofOfWork: data.proofOfWorkGrantUpdate,
-      });
+      const sanitizedUpdate = {
+        text: sanitizeInput(data.grantUpdate) || " ",
+        title: " ",
+        proofOfWork: sanitizeInput(data.proofOfWorkGrantUpdate),
+      };
       grant.updates =
         data.grantUpdate || data.proofOfWorkGrantUpdate
           ? [
               new GrantUpdate({
                 data: sanitizedUpdate,
-                schema: gapClient.findSchema("Milestone"),
+                schema: gapClient.findSchema("GrantUpdate"),
                 recipient: grant.recipient,
               }),
             ]
@@ -394,12 +394,12 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
 
       // eslint-disable-next-line no-param-reassign
       grant.milestones = data.milestones.map((milestone) => {
-        const sanitizedMilestone = sanitizeObject({
-          title: milestone.title,
-          description: milestone.description,
+        const sanitizedMilestone = {
+          title: sanitizeInput(milestone.title),
+          description: sanitizeInput(milestone.description),
           endsAt: milestone.endsAt,
           startsAt: milestone.startsAt,
-        });
+        };
         const created = new Milestone({
           data: sanitizedMilestone,
           refUID: grant.uid,
@@ -408,13 +408,12 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           uid: nullRef,
         });
         if (milestone.completedText || milestone.proofOfWork) {
-          const sanitizedCompleted = sanitizeObject({
-            reason: milestone.completedText || "",
-            proofOfWork: milestone.proofOfWork,
-            type: "completed",
-          });
           created.completed = new MilestoneCompleted({
-            data: sanitizedCompleted,
+            data: {
+              reason: sanitizeInput(milestone.completedText) || " ",
+              proofOfWork: sanitizeInput(milestone.proofOfWork),
+              type: "completed",
+            },
             refUID: created.uid,
             schema: gapClient.findSchema("MilestoneCompleted"),
             recipient: grant.recipient,
@@ -422,8 +421,6 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         }
         return created;
       });
-
-      console.log(grant.updates, grant.milestones);
 
       const walletClient = await getWalletClient(config, {
         chainId: communityNetworkId,
@@ -1101,13 +1098,34 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                   htmlFor="proofOfWorkGrantUpdate-input"
                   className={labelStyle}
                 >
-                  Grant Update - Proof of Work (optional)
+                  Output of your work (optional)
                 </label>
+                <p className="text-sm text-gray-500">
+                  Provide a link that demonstrates your work. This could be a
+                  link to a tweet announcement, a dashboard, a Google Doc, a
+                  blog post, a video, or any other resource that highlights the
+                  progress or results of your work
+                </p>
+                <div className="flex flex-row gap-2 items-center py-2">
+                  <input
+                    type="checkbox"
+                    className="rounded-sm w-5 h-5 bg-white fill-black"
+                    checked={noProofCheckbox}
+                    onChange={() => {
+                      setNoProofCheckbox((oldValue) => !oldValue);
+                      setValue("proofOfWorkGrantUpdate", "", {
+                        shouldValidate: true,
+                      });
+                    }}
+                  />
+                  <p className="text-base text-zinc-900 dark:text-zinc-100">{`I don't have any output to show for this milestone`}</p>
+                </div>
                 <input
                   id="proofOfWorkGrantUpdate-input"
-                  placeholder="Add links to charts, videos, dashboards etc. that evaluators can verify your update"
+                  placeholder="Add links to charts, videos, dashboards etc. that evaluators can verify your work"
                   type="text"
-                  className={inputStyle}
+                  className={cn(inputStyle, "disabled:opacity-50")}
+                  disabled={noProofCheckbox}
                   {...register("proofOfWorkGrantUpdate")}
                 />
                 <p className="text-red-500">
