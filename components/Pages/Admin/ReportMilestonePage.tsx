@@ -49,6 +49,7 @@ interface ReportAPIResponse {
     page: number;
     pageLimit: number;
   };
+  uniqueProjectCount: number;
 }
 
 export const metadata = defaultMetadata;
@@ -173,19 +174,10 @@ export const ReportMilestonePage = ({
   };
 
   // To calculate the total number of projects in the community
-  const totalProjects = (projects: Report[]) => {
-    const uniqueProjects = new Set<string>();
 
-    for (const project of projects) {
-      uniqueProjects.add(project.projectUid);
-    }
+  const totalNoOfProjects = data?.uniqueProjectCount;
+  console.log(data);
 
-    return uniqueProjects.size;
-  };
-
-  const totalNoOfProjects = totalProjects(data?.data || []);
-
-  console.log(totalNoOfProjects);
   return (
     <div className="mt-12 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
       {isAuthorized ? (
