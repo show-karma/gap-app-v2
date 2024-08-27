@@ -20,6 +20,8 @@ import {
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { GrantProgram } from "./ProgramList";
+import { shortAddress } from "@/utilities/shortAddress";
+import { useAccount } from "wagmi";
 
 interface MyProgramListProps {
   grantPrograms: GrantProgram[];
@@ -36,6 +38,7 @@ export const MyProgramList: FC<MyProgramListProps> = ({
   selectProgram,
   isAllowed,
 }) => {
+  const { address } = useAccount();
   const columns = useMemo<ColumnDef<GrantProgram>[]>(
     () => [
       {
@@ -395,6 +398,35 @@ export const MyProgramList: FC<MyProgramListProps> = ({
         header: () => (
           <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
             Types
+          </div>
+        ),
+      },
+      {
+        accessorFn: (row) => row,
+        id: "Admins",
+        cell: (info) => {
+          const program = info.row.original;
+
+          return (
+            <div className="whitespace-nowrap max-w-[220px] flex flex-row flex-wrap gap-1 px-3 py-5 text-sm text-black dark:text-zinc-300">
+              {program.admins?.map((admin, index) => (
+                <span
+                  key={index}
+                  className={`mr-1 inline-flex items-center rounded-md  px-2 py-1 text-xs font-medium text-black ring-1 ring-inset ring-zinc-600/20 ${
+                    admin.toLowerCase() === address?.toLowerCase()
+                      ? "bg-blue-100"
+                      : "bg-zinc-50"
+                  }`}
+                >
+                  {shortAddress(admin.toLowerCase())}
+                </span>
+              ))}
+            </div>
+          );
+        },
+        header: () => (
+          <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
+            Admins
           </div>
         ),
       },

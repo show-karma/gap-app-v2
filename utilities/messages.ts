@@ -100,6 +100,7 @@ export const MESSAGES = {
       ERROR: "There was an error editing the grant. Please try again.",
       FORM: {
         TITLE: "Title must be at least 3 characters",
+        DESCRIPTION: "Description must be a valid text",
       },
     },
     DELETE: {

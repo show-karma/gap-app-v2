@@ -1,10 +1,10 @@
-import { MilestoneWithCompleted } from "@/types";
+import { IMilestone } from "@show-karma/karma-gap-sdk";
 import { create } from "zustand";
 
 interface MilestonesForms {
   isValid: boolean;
   isEditing: boolean;
-  data: MilestoneWithCompleted;
+  data: IMilestone;
 }
 
 interface GrantFormStore {
@@ -16,7 +16,7 @@ interface GrantFormStore {
   switchMilestoneEditing: (index: number) => void;
   createMilestone: () => void;
   removeMilestone: (index: number) => void;
-  saveMilestone: (milestone: MilestoneWithCompleted, index: number) => void;
+  saveMilestone: (milestone: IMilestone, index: number) => void;
   clearMilestonesForms: () => void;
 }
 
@@ -43,7 +43,7 @@ export const useGrantFormStore = create<GrantFormStore>((set, get) => ({
     milestonesForms.splice(index, 1);
     set({ milestonesForms: milestonesForms });
   },
-  saveMilestone: (milestone: MilestoneWithCompleted, index: number) => {
+  saveMilestone: (milestone: IMilestone, index: number) => {
     const { milestonesForms } = get();
     milestonesForms[index].data = milestone;
     milestonesForms[index].isValid = true;

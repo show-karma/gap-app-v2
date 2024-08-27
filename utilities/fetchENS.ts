@@ -1,6 +1,7 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import { createPublicClient, type Hex, http } from "viem";
 import { mainnet } from "viem/chains";
+import { retry } from "./retries";
 
 export const fetchENS = async (addresses: (Hex | string)[]) => {
   const alchemyTransport = http(
@@ -17,10 +18,21 @@ export const fetchENS = async (addresses: (Hex | string)[]) => {
 
   try {
     const calls = addresses.map(async (address) => {
-      const name =
-        (await client.getEnsName({ address: address as Hex })) || null;
+      const name = await retry(
+        async () => await client.getEnsName({ address: address as Hex }),
+        3, // maxRetries
+        1000, // initialDelay
+        5000, // maxDelay
+        2 // backoff factor
+      );
       if (!name) return { name: undefined, address };
-      const avatar = (await client.getEnsAvatar({ name })) || null;
+      const avatar = await retry(
+        async () => await client.getEnsAvatar({ name }),
+        5, // maxRetries
+        1000, // initialDelay
+        5000, // maxDelay
+        1 // backoff factor
+      );
       return {
         name,
         address,

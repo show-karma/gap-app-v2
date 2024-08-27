@@ -138,7 +138,9 @@ export const MilestonesAndUpdates = ({ grant }: MilestonesAndUpdatesProps) => {
   return (
     <div className="space-y-5">
       {grant?.completed &&
-      (grant?.completed.data.title || grant?.completed.data.text) ? (
+      (grant?.completed.data.title ||
+        grant?.completed.data.text ||
+        grant?.completed?.data?.proofOfWork) ? (
         <GrantCompletionCard completion={grant?.completed} />
       ) : null}
       {hasMilestonesOrUpdates ? (
