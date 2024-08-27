@@ -148,7 +148,8 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
           </div>
         </div>
         {((isAuthorized && !milestone?.completed) ||
-          milestone?.completed?.data?.reason) && (
+          milestone?.completed?.data?.reason ||
+          milestone?.completed?.data?.proofOfWork) && (
           <div className="mx-6 mt-4 rounded-lg bg-transparent pb-4">
             <Updates milestone={milestone} />
           </div>
