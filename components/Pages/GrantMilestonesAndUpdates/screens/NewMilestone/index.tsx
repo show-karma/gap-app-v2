@@ -32,7 +32,9 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
-import { sanitizeObject } from "@/utilities/sanitize";
+import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
+import { urlRegex } from "@/utilities/regexs/urlRegex";
+import { cn } from "@/utilities/tailwind";
 
 const milestoneSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.MILESTONES.FORM.TITLE }),
@@ -79,7 +81,6 @@ export const NewMilestone: FC<NewMilestoneProps> = ({ grant }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const [description, setDescription] = useState("");
   const [recipient, setRecipient] = useState("");
-  const [completedUpdate, setCompletedUpdate] = useState("");
 
   const { address } = useAccount();
   const signer = useSigner();
@@ -121,7 +122,6 @@ export const NewMilestone: FC<NewMilestoneProps> = ({ grant }) => {
       startsAt: data.dates.startsAt
         ? data.dates.startsAt.getTime() / 1000
         : undefined,
-      completedText: completedUpdate,
     };
 
     try {
@@ -141,18 +141,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({ grant }) => {
         recipient: (recipient as Hex) || address,
         data: sanitizedMilestone,
       });
-      if (milestone.completedText) {
-        const sanitizedCompletedData = sanitizeObject({
-          reason: milestone.completedText,
-          type: "completed",
-        });
-        milestoneToAttest.completed = new MilestoneCompleted({
-          refUID: milestoneToAttest.uid,
-          schema: gapClient.findSchema("MilestoneCompleted"),
-          recipient: (recipient as Hex) || address,
-          data: sanitizedCompletedData,
-        });
-      }
+
       const walletClient = await getWalletClient(config, {
         chainId: chainID,
       });
@@ -356,20 +345,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({ grant }) => {
               />
             </div>
           </div>
-          <div className="flex w-full flex-col">
-            <label htmlFor="milestone-completed-update" className={labelStyle}>
-              Milestone update (optional)
-            </label>
-            <div className="mt-2 w-full bg-transparent" data-color-mode="light">
-              <MarkdownEditor
-                value={completedUpdate}
-                onChange={(newValue: string) =>
-                  setCompletedUpdate(newValue || "")
-                }
-                placeholderText="If this milestone is complete, please provide details for the community to understand more about its completion. Alternatively, you can post an update about this milestone at a later date"
-              />
-            </div>
-          </div>
+
           <div className="flex w-full flex-row-reverse">
             <Button
               type="submit"

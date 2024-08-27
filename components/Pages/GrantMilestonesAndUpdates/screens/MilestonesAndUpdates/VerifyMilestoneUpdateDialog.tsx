@@ -96,7 +96,11 @@ export const VerifyMilestoneUpdateDialog: FC<
       );
       if (!milestoneInstance) return;
       await milestoneInstance
-        .verify(walletSigner, sanitizeInput(data.comment), changeStepperStep)
+        .verify(
+          walletSigner,
+          { reason: sanitizeInput(data.comment) },
+          changeStepperStep
+        )
         .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");

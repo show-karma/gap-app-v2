@@ -27,6 +27,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
 
 interface UpdatesProps {
   milestone: IMilestoneResponse;
@@ -139,8 +140,11 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   useEffect(() => {
     setVerifiedMilestones(milestone?.verified || []);
   }, [milestone]);
-
-  if (!isEditing && milestone?.completed?.data?.reason?.length) {
+  if (
+    !isEditing &&
+    (milestone?.completed?.data?.reason?.length ||
+      milestone?.completed?.data?.proofOfWork)
+  ) {
     return (
       <div className="flex flex-col gap-3 bg-[#F8F9FC] dark:bg-zinc-900 rounded-md px-4 py-2 max-lg:max-w-2xl max-sm:max-w-full">
         <div className="flex w-full flex-row flex-wrap items-center justify-between gap-2">
@@ -169,37 +173,52 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
           </p>
         </div>
 
-        {milestone.completed?.data?.reason ? (
+        {milestone.completed?.data?.reason ||
+        milestone.completed?.data?.proofOfWork ? (
           <div className="flex flex-col items-start " data-color-mode="light">
             <ReadMore
               readLessText="Read less"
               readMoreText="Read more"
               side="left"
             >
-              {milestone.completed.data?.reason}
+              {milestone.completed.data?.reason || ""}
             </ReadMore>
 
-            <div className="flex w-full flex-row items-center justify-end">
-              {isAuthorized ? (
-                <div className="flex w-max flex-row items-center gap-2">
-                  <Button
-                    type="button"
-                    className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
-                    onClick={() => handleEditing(true)}
-                  >
-                    <PencilSquareIcon className="h-5 w-5" />
-                    Edit
-                  </Button>
-                  <Button
-                    type="button"
-                    className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
-                    onClick={() => undoMilestoneCompletion(milestone)}
-                  >
-                    <TrashIcon className="h-5 w-5" />
-                    Remove
-                  </Button>
-                </div>
+            <div className="flex w-full flex-row items-center justify-between">
+              {milestone.completed.data?.proofOfWork ? (
+                <ExternalLink
+                  href={
+                    milestone.completed.data?.proofOfWork.includes("http")
+                      ? milestone.completed.data?.proofOfWork
+                      : `https://${milestone.completed.data?.proofOfWork}`
+                  }
+                  className="flex flex-row w-max gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent"
+                >
+                  View Proof of Work
+                </ExternalLink>
               ) : null}
+              <div className="flex flex-1 flex-row items-center justify-end">
+                {isAuthorized ? (
+                  <div className="flex w-max flex-row items-center gap-2">
+                    <Button
+                      type="button"
+                      className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
+                      onClick={() => handleEditing(true)}
+                    >
+                      <PencilSquareIcon className="h-5 w-5" />
+                      Edit
+                    </Button>
+                    <Button
+                      type="button"
+                      className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
+                      onClick={() => undoMilestoneCompletion(milestone)}
+                    >
+                      <TrashIcon className="h-5 w-5" />
+                      Remove
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
         ) : null}
@@ -211,7 +230,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
     <UpdateMilestone
       milestone={milestone}
       isEditing={isEditing}
-      previousDescription={milestone.completed?.data?.reason || ""}
+      previousData={milestone.completed?.data}
       cancelEditing={handleEditing}
     />
   );
