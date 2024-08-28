@@ -147,22 +147,22 @@ export const ProjectGrantsPage = () => {
     tabName: GrantScreen;
     current: boolean;
   }[] = [
-    {
-      name: "Overview",
-      tabName: "overview",
-      current: true,
-    },
-    {
-      name: "Milestones and Updates",
-      tabName: "milestones-and-updates",
-      current: false,
-    },
-    {
-      name: "Impact Criteria",
-      tabName: "impact-criteria",
-      current: false,
-    },
-  ];
+      {
+        name: "Overview",
+        tabName: "overview",
+        current: true,
+      },
+      {
+        name: "Milestones and Updates",
+        tabName: "milestones-and-updates",
+        current: false,
+      },
+      {
+        name: "Impact Criteria",
+        tabName: "impact-criteria",
+        current: false,
+      },
+    ];
 
   useEffect(() => {
     const mountTabs = async () => {
@@ -588,9 +588,8 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
               </div>
               {/* <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10"> */}
               <span
-                className={`h-max items-center justify-center rounded-2xl  px-2 py-1 text-center text-xs font-medium leading-none text-white ${
-                  +getPercentage() > 0 ? "bg-blue-600" : "bg-gray-500"
-                }`}
+                className={`h-max items-center justify-center rounded-2xl  px-2 py-1 text-center text-xs font-medium leading-none text-white ${+getPercentage() > 0 ? "bg-blue-600" : "bg-gray-500"
+                  }`}
               >
                 {getPercentage()}% complete
               </span>
@@ -603,7 +602,7 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
                 <a
                   href={PAGES.COMMUNITY.ALL_GRANTS(
                     grant?.community?.details?.data?.slug ||
-                      (grant?.community?.uid as Hex)
+                    (grant?.community?.uid as Hex)
                   )}
                 >
                   <div className="w-full inline-flex items-center gap-x-2 rounded-3xl bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900">
@@ -651,6 +650,23 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
                     className="inline-flex items-center gap-x-1 rounded-md  px-2 py-1 text-xs font-medium text-blue-700 dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500"
                   >
                     <span className="text-base font-semibold">Details</span>
+                    <ArrowTopRightOnSquareIcon className="w-4 h-4" />
+                  </ExternalLink>
+                </div>
+              ) : null}
+              {grant?.details?.data?.programId ? (
+                <div className="flex items-center justify-between">
+                  <div className="text-gray-500  font-semibold text-base dark:text-gray-300">
+                    Funding Map
+                  </div>
+                  <ExternalLink
+                    href={PAGES.REGISTRY.BY_PROGRAM_ID(grant?.details?.data?.programId.split("_")[0])}
+                    className="inline-flex items-center gap-x-1 rounded-md  px-2 py-1 text-xs font-medium text-blue-700 dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500"
+                  >
+                    <span className="text-base font-semibold">{
+                      // grant?.details?.data?.programId.split("_")[0]
+                      "Link"
+                    }</span>
                     <ArrowTopRightOnSquareIcon className="w-4 h-4" />
                   </ExternalLink>
                 </div>
