@@ -1,10 +1,10 @@
 import { readContract } from "viem/actions";
-import { createPublicClient, http, stringToBytes } from "viem";
+import { createPublicClient, http } from "viem";
 import { arbitrum } from "viem/chains";
 import { BADGE_REGISTRY } from "./constants/constants";
 import { BADGE_REGISTRY_ABI } from "./constants/abi";
-import { encodeBytes32String } from "ethers";
-interface Badge {
+export interface BadgeOfficial {
+  // TODO: Refactor this name to use Badge instead of BadgeOffical. Only used for now to don't crash the application with the used name 'Badge' for the mocks
   name: string;
   description: string;
   metadata: string; // Image IPFS
@@ -33,26 +33,25 @@ function toBytes32(hexString: string): string {
   return "0x" + hexString;
 }
 
-export async function getBadge(badgeId: string): Promise<Badge | Error> {
-  //Testing
-  console.log("badgeId", badgeId);
-  const badgeIdBytes32 = stringToBytes(badgeId, { size: 32 });
-  const badgeIdBytes312 = encodeBytes32String(badgeId);
-  console.log("badgeIdBytes32", badgeIdBytes32);
-  console.log("badgeIdBytes312", badgeIdBytes312);
-  console.log("tobytes", toBytes32(badgeId));
-
+/**
+ * Retrieves a badge by its ID.
+ *
+ * @param badgeId - The ID of the badge to retrieve. Should be in Bytes32.
+ * @returns A promise that resolves to the retrieved badge.
+ * @throws If there is an error when reading the contract.
+ */
+export async function getBadge(badgeId: number): Promise<BadgeOfficial> {
   try {
     const badgeData = await readContract(publicClient, {
       address: BADGE_REGISTRY,
       functionName: "getBadge",
       abi: BADGE_REGISTRY_ABI,
-      args: [badgeIdBytes312],
+      args: [badgeId],
     });
 
-    return badgeData as Badge;
+    return badgeData as BadgeOfficial;
   } catch (error) {
-    console.log("error", error);
-    return Error("Error when reading the contract");
+    console.log("Error when reading the contract", error);
+    throw new Error("Error when reading the contract");
   }
 }
