@@ -4,7 +4,7 @@ import { arbitrum } from "viem/chains";
 import { RESOLVER_TRUSTFUL } from "./constants/constants";
 import { RESOLVER_TRUSTFUL_ABI } from "./constants/abi";
 
-interface GrantStory {
+export interface GrantStory {
   timestamp: number;
   txUID: string;
   badgeIds: string[];
