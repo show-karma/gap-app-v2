@@ -232,7 +232,7 @@ function ProjectPage() {
         <div className="flex w-full lg:hidden">
           <Team />
         </div>
-        {isProjectOwner || isOwner ? (
+        {/* {isProjectOwner || isOwner ? (
           <div className="flex flex-col gap-2">
             <div className="grid grid-cols-3 flex-row flex-wrap justify-between gap-2 max-lg:flex-col w-full max-lg:max-w-80">
               <Link
@@ -288,7 +288,7 @@ function ProjectPage() {
               />
             </div>
           </div>
-        ) : null}
+        ) : null} */}
         <div className="flex w-full lg:hidden">
           {project ? <ProjectSubscription project={project} /> : null}
         </div>

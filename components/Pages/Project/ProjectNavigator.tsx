@@ -9,6 +9,8 @@ import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import * as Popover from "@radix-ui/react-popover";
+import { ProjectOptionsMenu } from "./ProjectOptionsMenu";
 
 export const ProjectNavigator = ({
   hasContactInfo,
@@ -67,7 +69,7 @@ export const ProjectNavigator = ({
 
   const { setIsProgressModalOpen } = useProgressModalStore();
   return (
-    <div className="flex flex-row gap-2 justify-between items-center">
+    <div className="flex flex-row gap-2 justify-between items-end max-lg:flex-col-reverse max-lg:items-center">
       <nav className="gap-10 flex flex-row max-w-full w-max items-center max-lg:gap-8 overflow-x-auto">
         {tabs.map((tab) => (
           <Link
@@ -93,13 +95,16 @@ export const ProjectNavigator = ({
         ))}
       </nav>
       {isAuthorized ? (
-        <Button
-          type="button"
-          className="w-max bg-brand-blue text-white px-4 py-2 rounded-lg"
-          onClick={() => setIsProgressModalOpen(true)}
-        >
-          Post an update
-        </Button>
+        <div className="flex flex-row gap-2 items-center mb-1">
+          <Button
+            type="button"
+            className="w-max bg-brand-blue text-white px-4 py-2 rounded-lg"
+            onClick={() => setIsProgressModalOpen(true)}
+          >
+            Post an update
+          </Button>
+          <ProjectOptionsMenu />
+        </div>
       ) : null}
     </div>
   );
