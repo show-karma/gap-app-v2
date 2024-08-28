@@ -57,6 +57,7 @@ import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-index
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { GrantsGenieDialog } from "@/components/Dialogs/GrantGenieDialog";
 import { ReviewSection } from "@/components/Pages/Project/Review/";
+import { useReviewStore } from "@/store/review";
 
 interface Tab {
   name: string;
@@ -105,6 +106,7 @@ export const ProjectGrantsPage = () => {
   const [, changeTab] = useQueryState("tab");
   const [, changeGrantId] = useQueryState("grantId");
   const { address } = useAccount();
+  const setGrantUID = useReviewStore((state) => state.setGrantUID);
 
   // UseEffect to check if current URL changes
   useEffect(() => {
@@ -158,6 +160,11 @@ export const ProjectGrantsPage = () => {
       tabName: "impact-criteria",
       current: false,
     },
+    {
+      name: "Review",
+      tabName: "review",
+      current: false,
+    },
   ];
 
   useEffect(() => {
@@ -186,11 +193,6 @@ export const ProjectGrantsPage = () => {
         {
           name: "Review this grant",
           tabName: "review-this-grant",
-          current: false,
-        },
-        {
-          name: "Review",
-          tabName: "review",
           current: false,
         },
       ];
@@ -350,6 +352,7 @@ export const ProjectGrantsPage = () => {
                     <button
                       onClick={() => {
                         changeGrantId(item.uid);
+                        setGrantUID(item.uid);
                       }}
                       className={cn(
                         item.current
