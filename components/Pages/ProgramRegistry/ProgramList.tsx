@@ -18,7 +18,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { Button } from "@/components/Utilities/Button";
-import { formatDate } from "@/utilities/formatDate";
+import { StarReviewIcon } from "@/components/Icons/StarReview";
 
 export type GrantProgram = {
   _id: {
@@ -417,6 +417,30 @@ export const ProgramList: FC<ProgramListProps> = ({
         header: () => (
           <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
             Types
+          </div>
+        ),
+      },
+      {
+        accessorFn: (row) => row,
+        id: "AverageScore",
+        cell: () => {
+          return (
+            <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
+              <span className="mr-1 inline-flex items-center text-lg font-medium ">
+                <StarReviewIcon
+                  props={{
+                    className:
+                      "w-20 h-20 transparent hover:fill-transparent hover:stroke-transparent",
+                  }}
+                  score={2} //TODO: GetGrantProgramScore
+                />
+              </span>
+            </div>
+          );
+        },
+        header: () => (
+          <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
+            Average Score
           </div>
         ),
       },
