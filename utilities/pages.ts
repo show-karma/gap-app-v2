@@ -46,6 +46,7 @@ export const PAGES = {
   },
   REGISTRY: {
     ROOT: `/funding-map`,
+    BY_PROGRAM_ID: (programId: string) => `/funding-map?programId=${programId}`,
     ADD_PROGRAM: `/funding-map/add-program`,
     MANAGE_PROGRAMS: `/funding-map/manage-programs`,
   },
