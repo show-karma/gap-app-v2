@@ -215,7 +215,7 @@ export const ReportMilestonePage = ({
               selected={selectedGrantTitles}
               // imageDictionary={}
             />
-            <div className="text-zinc-700 dark:text-zinc-200 font-medium mt-4 md:mt-0 ">{`Total Projects : ${totalNoOfProjects}`}</div>
+            <div className="text-zinc-700 dark:text-zinc-200 font-medium mt-4 md:mt-0 ">{`Total Projects: ${totalNoOfProjects}`}</div>
           </div>
           <div className="flex flex-col justify-center w-full max-w-full overflow-x-auto rounded-md border">
             <table className="pt-3 min-w-full divide-y dark:bg-zinc-900 divide-gray-300 dark:divide-zinc-800 dark:text-white">
