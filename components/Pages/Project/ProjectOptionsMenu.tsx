@@ -1,3 +1,4 @@
+"use client";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useGap } from "@/hooks";
@@ -133,45 +134,39 @@ export const ProjectOptionsMenu = () => {
           <div className="flex flex-col gap-1 px-1 py-1">
             <div className="flex flex-col gap-1">
               <Menu.Item>
-                {({ active }) => (
-                  <Link
-                    href={PAGES.PROJECT.IMPACT.ADD_IMPACT(
-                      project?.details?.data?.slug || projectId
-                    )}
-                    className={buttonClassName}
-                  >
-                    <PlusIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
-                    Add impact
-                  </Link>
-                )}
+                <Link
+                  href={PAGES.PROJECT.IMPACT.ADD_IMPACT(
+                    project?.details?.data?.slug || projectId
+                  )}
+                  className={buttonClassName}
+                >
+                  <PlusIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
+                  Add impact
+                </Link>
               </Menu.Item>
               <Menu.Item>
-                {({ active }) => (
-                  <ProjectDialog
-                    key={project?.uid}
-                    buttonElement={{
-                      icon: (
-                        <PencilSquareIcon
-                          className={"mr-1 h-5 w-5"}
-                          aria-hidden="true"
-                        />
-                      ),
-                      iconSide: "left",
-                      text: "Edit project",
-                      styleClass: buttonClassName,
-                    }}
-                    projectToUpdate={project}
-                    previousContacts={contactsInfo}
-                  />
-                )}
+                <ProjectDialog
+                  key={project?.uid}
+                  buttonElement={{
+                    icon: (
+                      <PencilSquareIcon
+                        className={"mr-1 h-5 w-5"}
+                        aria-hidden="true"
+                      />
+                    ),
+                    iconSide: "left",
+                    text: "Edit project",
+                    styleClass: buttonClassName,
+                  }}
+                  projectToUpdate={project}
+                  previousContacts={contactsInfo}
+                />
               </Menu.Item>
               <Menu.Item>
-                {({ active }) => (
-                  <GrantsGenieDialog
-                    buttonText="Grant genie"
-                    buttonClassName={buttonClassName}
-                  />
-                )}
+                <GrantsGenieDialog
+                  buttonText="Grant genie"
+                  buttonClassName={buttonClassName}
+                />
               </Menu.Item>
             </div>
             <div className="flex flex-col gap-1 border-t border-gray-200 dark:border-zinc-700 pt-2">
