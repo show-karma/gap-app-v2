@@ -102,7 +102,13 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
       if (!walletClient || !address || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
       await findImpact
-        .verify(walletSigner, sanitizeInput(data.comment), changeStepperStep)
+        .verify(
+          walletSigner,
+          {
+            reason: sanitizeInput(data.comment),
+          },
+          changeStepperStep
+        )
         .then(async (res) => {
           if (!project) return;
           const txHash = res?.tx[0]?.hash;

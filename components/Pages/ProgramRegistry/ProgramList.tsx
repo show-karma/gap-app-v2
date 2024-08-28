@@ -82,6 +82,7 @@ export type GrantProgram = {
   txHash?: string;
   createdAt: string;
   updatedAt: string;
+  admins?: string[];
 };
 
 interface ProgramListProps {

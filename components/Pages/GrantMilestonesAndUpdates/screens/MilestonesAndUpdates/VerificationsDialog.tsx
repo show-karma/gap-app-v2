@@ -36,11 +36,11 @@ interface VerificationsItemProps {
 
 const VerificationItem = ({ verification }: VerificationsItemProps) => {
   const { ensData } = useENS();
-  const populateEnsNames = useENS((state) => state.populateEnsNames);
+  const populateEns = useENS((state) => state.populateEns);
 
   useEffect(() => {
-    populateEnsNames([verification.attester]);
-  }, [verification.attester, populateEnsNames]);
+    populateEns([verification.attester]);
+  }, [verification.attester]);
 
   return (
     <div className="flex flex-col items-start gap-1.5 p-4">
@@ -75,10 +75,10 @@ export const VerificationsDialog: FC<VerificationsDialogProps> = ({
   const communityUid = useMemo(() => grant?.data.communityUID, [grant]);
   const [communityAdmins, setCommunityAdmins] = useState<string[]>();
 
-  const { populateEnsNames } = useENS();
+  const { populateEns } = useENS();
   useEffect(() => {
-    populateEnsNames(verifications.map((v) => v.attester as string));
-  }, [populateEnsNames, verifications]);
+    populateEns(verifications.map((v) => v.attester as string));
+  }, [verifications]);
 
   useEffect(() => {
     if (communityUid) {

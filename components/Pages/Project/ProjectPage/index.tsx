@@ -3,7 +3,7 @@
 
 import { useProjectStore } from "@/store";
 import { useOwnerStore } from "@/store/owner";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAccount, useSwitchChain } from "wagmi";
 import toast from "react-hot-toast";
 import { useParams, useRouter } from "next/navigation";
@@ -115,13 +115,13 @@ function ProjectPage() {
     }
   };
 
-  const { populateEnsNames, ensData } = useENS();
+  const { populateEns, ensData } = useENS();
 
   useEffect(() => {
     if (project?.members) {
-      populateEnsNames(project?.members?.map((v) => v.recipient));
+      populateEns(project?.members?.map((v) => v.recipient));
     }
-  }, [populateEnsNames, project?.members]);
+  }, [project?.members]);
 
   const [, copy] = useCopyToClipboard();
 
@@ -201,8 +201,7 @@ function ProjectPage() {
                 ) : null}
                 <div className="flex flex-row gap-2 justify-between items-center w-full max-w-max">
                   <p className="text-sm font-medium text-[#475467] dark:text-gray-300 line-clamp-1 text-wrap whitespace-nowrap">
-                    {ensData[member.recipient as Hex]?.name ||
-                      shortAddress(member.recipient)}
+                    {shortAddress(member.recipient)}
                   </p>
                   <button type="button" onClick={() => copy(member.recipient)}>
                     <img

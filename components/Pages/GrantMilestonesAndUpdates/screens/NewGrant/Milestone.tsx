@@ -3,7 +3,6 @@ import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 
-import { MilestoneWithCompleted } from "@/types/milestones";
 import { formatDate } from "@/utilities/formatDate";
 import { Popover } from "@headlessui/react";
 import { CalendarIcon, PencilIcon } from "@heroicons/react/24/outline";
@@ -15,9 +14,10 @@ import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { useGrantFormStore } from "./store";
+import { IMilestone } from "@show-karma/karma-gap-sdk";
 
 interface MilestoneProps {
-  currentMilestone: MilestoneWithCompleted;
+  currentMilestone: IMilestone;
   index: number;
 }
 
@@ -48,6 +48,7 @@ const milestoneSchema = z.object({
         path: ["dates", "startsAt"],
       }
     ),
+  description: z.string().optional(),
 });
 
 type MilestoneType = z.infer<typeof milestoneSchema>;
@@ -63,9 +64,6 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
     switchMilestoneEditing,
     milestonesForms,
   } = useGrantFormStore();
-
-  const [description, setDescription] = useState("");
-  const [update, setUpdate] = useState("");
 
   const {
     register,
@@ -89,12 +87,11 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
     saveMilestone(
       {
         title: data.title,
-        description,
+        description: data.description || "",
         endsAt: data.dates.endsAt.getTime() / 1000,
         startsAt: data.dates.startsAt
           ? data.dates.startsAt.getTime() / 1000
           : undefined,
-        completedText: update,
       },
       index
     );
@@ -103,6 +100,7 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
   useEffect(() => {
     if (isValid) {
       const title = watch("title") || currentMilestone.title;
+      const description = watch("description") || currentMilestone.description;
       const endsAt =
         watch("dates.endsAt").getTime() / 1000 || currentMilestone.endsAt;
       const startsAt = watch("dates.startsAt")
@@ -113,14 +111,13 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
         isEditing: milestonesForms[index].isEditing,
         data: {
           title,
-          description: description || currentMilestone.description,
+          description,
           endsAt,
           startsAt,
-          completedText: update || currentMilestone.completedText,
         },
       });
     }
-  }, [isValid, description, update]);
+  }, [isValid]);
 
   return milestonesForms[index].isEditing ? (
     <div className="flex w-full flex-col gap-6 rounded-md bg-gray-200 dark:bg-zinc-700 px-4 py-6">
@@ -246,24 +243,17 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
           </label>
           <div className="mt-3 w-full bg-transparent" data-color-mode="light">
             <MarkdownEditor
-              value={description}
-              onChange={(newValue: string) => setDescription(newValue || "")}
+              value={watch("description") || ""}
+              onChange={(newValue: string) => {
+                setValue("description", newValue || "", {
+                  shouldValidate: true,
+                });
+              }}
               placeholderText="Please provide a concise description of your objectives for this milestone"
             />
           </div>
         </div>
-        <div className="flex w-full flex-col">
-          <label htmlFor="milestone-update" className={labelStyle}>
-            Milestone update (optional)
-          </label>
-          <div className="mt-3 w-full bg-transparent" data-color-mode="light">
-            <MarkdownEditor
-              value={update}
-              onChange={(newValue: string) => setUpdate(newValue || "")}
-              placeholderText="If this milestone is complete, please provide details for the community to understand more about its completion. Alternatively, you can post an update about this milestone at a later date"
-            />
-          </div>
-        </div>
+
         <div className="flex w-full flex-row-reverse">
           <Button
             type="submit"

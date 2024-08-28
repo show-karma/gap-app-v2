@@ -11,7 +11,6 @@ export const errorManager = (errorMessage: string, error: any, extra?: any) => {
       return;
     }
   }
-
   Sentry.captureException(error, {
     extra: {
       errorMessage,
