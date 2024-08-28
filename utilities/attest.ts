@@ -34,12 +34,17 @@ const publicClient = createPublicClient({
   transport: http(),
 });
 
-export async function submitAttest(
-  EAS_CONTRACT: Hex,
-  from: Hex,
-  schemaUID: Hex,
-  attestationRequestData: AttestationRequestData
-): Promise<TransactionReceipt | Error> {
+export async function submitAttest({
+  EAS_CONTRACT,
+  from,
+  schemaUID,
+  attestationRequestData,
+}: {
+  EAS_CONTRACT: Hex;
+  from: Hex;
+  schemaUID: Hex;
+  attestationRequestData: AttestationRequestData;
+}): Promise<TransactionReceipt | Error> {
   const walletClient = await getWalletClient(config);
   let gasLimit;
 
