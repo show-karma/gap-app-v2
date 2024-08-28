@@ -353,7 +353,7 @@ export const ReportMilestonePage = ({
                           key={index}
                           className="dark:text-zinc-300 text-gray-900 px-4 py-4"
                         >
-                          <td className="px-4 py-2 font-medium h-16">
+                          <td className="px-4 py-2 font-medium h-16 max-w-[220px]">
                             <ExternalLink
                               href={PAGES.PROJECT.GRANT(
                                 report.projectUid,
@@ -364,7 +364,7 @@ export const ReportMilestonePage = ({
                               {report.grantTitle}
                             </ExternalLink>
                           </td>
-                          <td className="px-4 py-2">
+                          <td className="px-4 py-2 max-w-[220px]">
                             <ExternalLink
                               href={PAGES.PROJECT.OVERVIEW(report.projectUid)}
                               className="max-w-full line-clamp-2 underline w-max"
@@ -372,13 +372,13 @@ export const ReportMilestonePage = ({
                               {report.projectTitle}
                             </ExternalLink>
                           </td>
-                          <td className="px-4 py-2">
+                          <td className="px-4 py-2 max-w-[220px]">
                             {report.totalMilestones}
                           </td>
-                          <td className="px-4 py-2">
+                          <td className="px-4 py-2 max-w-[220px]">
                             {report.pendingMilestones}
                           </td>
-                          <td className="px-4 py-2">
+                          <td className="px-4 py-2 max-w-[220px]">
                             {report.completedMilestones}
                           </td>
                         </tr>
