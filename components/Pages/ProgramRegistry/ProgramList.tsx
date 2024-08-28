@@ -432,6 +432,7 @@ export const ProgramList: FC<ProgramListProps> = ({
                     className:
                       "w-20 h-20 transparent hover:fill-transparent hover:stroke-transparent",
                   }}
+                  isHovered={false}
                   score={2} //TODO: GetGrantProgramScore
                 />
               </span>

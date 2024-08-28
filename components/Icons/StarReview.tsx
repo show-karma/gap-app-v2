@@ -4,9 +4,13 @@ import type { SVGProps } from "react";
 export const StarReviewIcon = ({
   props,
   pathProps,
+  score,
+  isHovered = true,
 }: {
   props?: SVGProps<SVGSVGElement>;
   pathProps?: React.SVGProps<SVGPathElement>;
+  score?: number;
+  isHovered?: boolean;
 }) => {
   return (
     <svg
@@ -26,10 +30,15 @@ export const StarReviewIcon = ({
         strokeLinecap="round"
         strokeLinejoin="round"
         className={cn(
-          "hover:fill-[#004EEB] hover:stroke-[#004eeb81]",
+          isHovered ? "hover:fill-[#004EEB] hover:stroke-[#004eeb81]" : "",
           pathProps?.className || ""
         )}
       />
+      {score !== undefined && (
+        <text x="12" y="16" textAnchor="middle" fontSize="12" fill="#000000">
+          {score}
+        </text>
+      )}
     </svg>
   );
 };
