@@ -241,7 +241,7 @@ export function SearchGrantProgram({
     (async () => {
       setIsLoading(true);
       const [result, error] = await fetchData(
-        INDEXER.REGISTRY.GET_ALL + `?status=${"Active"}`
+        INDEXER.REGISTRY.GET_ALL + `?status=${"Active"}&limit=1000&withTrackedProjects=false&withProgramAdmins=false`
       );
       if (error) {
         console.log(error);
