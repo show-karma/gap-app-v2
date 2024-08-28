@@ -7,7 +7,7 @@ export async function fetchFromLocalApi<T>(
   headers?: Record<string, string>
 ): Promise<T> {
   // const url = `${process.env.VERCEL_URL}/api${endpoint}`;
-  const url = `http://localhost:3000/api${endpoint}`;
+  const url = `https://gap-app-v2-git-feat-post-progress-karma-devs.vercel.app/api${endpoint}`;
 
   const options: RequestInit = {
     method,
