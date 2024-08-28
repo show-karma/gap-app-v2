@@ -5,17 +5,49 @@ import {
   BadgeDescription,
   ReviewMode,
 } from "@/types/review";
+import { BadgeOfficial } from "@/utilities/review/getBadge";
+import { GrantStory } from "@/utilities/review/getGrantStories";
 import { create } from "zustand";
 
+// TODO: Mock - Should remove this.
+const grantStoryMockData: GrantStory[] = [
+  {
+    timestamp: 1620414884, // 07 May, 2021 in Unix timestamp,
+    txUID: "0x7681b353ede51eadfbf7165c592a8449808ef4f37999cd9c819cb29dc923ad1a",
+    badgeIds: ["1", "2", "3", "4", "5", "6", "7"],
+    badgeScores: [5, 4, 3, 2, 1, 2, 3],
+    averageScore: 3.3,
+  },
+  {
+    timestamp: 1620414884, // 07 May, 2021 in Unix timestamp,
+    txUID: "0x7681b353ede51eadfbf7165c592a8449808ef4f37999cd9c819cb29dc923ad1a",
+    badgeIds: ["1", "2", "3", "4", "5", "6", "7"],
+    badgeScores: [5, 5, 5, 5, 1, 4, 4],
+    averageScore: 0,
+  },
+];
+
 interface ReviewStore {
+  // Mocks
   review: Review[];
   setReview: (review: Review[]) => void;
   badgeList: Badge[][];
   setBadgeList: (badgeList: Badge[][]) => void;
+
+  /// UI
   isOpenReview: ReviewMode;
   setIsOpenReview: (isOpenReview: ReviewMode) => void;
   isStarSelected: number | null;
   setIsStarSelected: (isStarSelected: number | null) => void;
+
+  /// This are setters used by the blockchain calls
+  stories: GrantStory[];
+  setStories: (stories: GrantStory[]) => void;
+  badge: BadgeOfficial[] | null;
+  setBadge: (badge: BadgeOfficial[] | null) => void;
+
+  grantUID: string | null;
+  setGrantUID: (grantUID: string | null) => void;
 }
 
 const initialBadgeList: Badge[][] = [
@@ -337,4 +369,13 @@ export const useReviewStore = create<ReviewStore>((set, get) => ({
   isStarSelected: null,
   setIsStarSelected: (isStarSelected: number | null) =>
     set((state) => ({ ...state, isStarSelected })),
+  stories: grantStoryMockData,
+  setStories: (stories: GrantStory[]) =>
+    set((state) => ({ ...state, stories })),
+  badge: null,
+  setBadge: (badge: BadgeOfficial[] | null) =>
+    set((state) => ({ ...state, badge })),
+  grantUID: null,
+  setGrantUID: (grantUID: string | null) =>
+    set((state) => ({ ...state, grantUID })),
 }));
