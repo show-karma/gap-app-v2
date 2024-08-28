@@ -1,12 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 import { fetchMetadata } from "frames.js/next/pages-router/client";
 import { envVars } from "@/utilities/enviromentVars";
-import { Hex } from "viem";
-import { getMetadata } from "@/utilities/sdk";
 import { ProjectWrapper } from "@/components/Pages/Project/ProjectWrapper";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { zeroUID } from "@/utilities/commons";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { defaultMetadata } from "@/utilities/meta";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";

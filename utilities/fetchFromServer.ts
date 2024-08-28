@@ -6,14 +6,15 @@ export async function fetchFromLocalApi<T>(
   body?: any,
   headers?: Record<string, string>
 ): Promise<T> {
+  // const url = `${process.env.VERCEL_URL}/api${endpoint}`;
   const url = `http://localhost:3000/api${endpoint}`;
 
   const options: RequestInit = {
     method,
-    headers: {
-      "Content-Type": "application/json",
-      ...headers,
-    },
+    // headers: {
+    //   "Content-Type": "application/json",
+    //   ...headers,
+    // },
   };
 
   if (body && (method === "POST" || method === "PUT" || method === "PATCH")) {
@@ -27,7 +28,7 @@ export async function fetchFromLocalApi<T>(
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data: T = await response.json();
+    const data = await response.json();
     return data;
   } catch (error) {
     console.error("Error fetching from local API:", error);
