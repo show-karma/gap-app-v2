@@ -18,6 +18,7 @@ import { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-i
 import { getGapClient, useGap } from "@/hooks";
 import { ShareDialog } from "../Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/ShareDialog";
 import { errorManager } from "../Utilities/errorManager";
+import { sanitizeInput } from "@/utilities/sanitize";
 
 interface MilestoneUpdateFormProps {
   milestone: IMilestoneResponse;
@@ -88,7 +89,13 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         (u) => u.uid.toLowerCase() === milestone.uid.toLowerCase()
       );
       await milestoneInstance
-        ?.complete(walletSigner, text, changeStepperStep)
+        ?.complete(
+          walletSigner,
+          {
+            reason: sanitizeInput(text),
+          },
+          changeStepperStep
+        )
         .then(async () => {
           let retries = 1000;
           changeStepperStep("indexing");
@@ -166,7 +173,13 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         (u) => u.uid.toLowerCase() === milestone.uid.toLowerCase()
       );
       await milestoneInstance
-        ?.complete(walletSigner, text, changeStepperStep)
+        ?.complete(
+          walletSigner,
+          {
+            reason: sanitizeInput(text),
+          },
+          changeStepperStep
+        )
         .then(async () => {
           let retries = 1000;
           changeStepperStep("indexing");

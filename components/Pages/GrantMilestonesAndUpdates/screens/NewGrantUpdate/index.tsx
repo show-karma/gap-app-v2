@@ -1,3 +1,4 @@
+"use client";
 /* eslint-disable @next/next/no-img-element */
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
@@ -168,8 +169,8 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
           projectUID: project.uid,
           address: address,
           data: {
-            title,
-            text,
+            title: data.title,
+            text: data.description,
           },
         }
       );

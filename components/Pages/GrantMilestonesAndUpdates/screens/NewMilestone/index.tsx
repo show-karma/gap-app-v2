@@ -1,3 +1,4 @@
+"use client";
 /* eslint-disable @next/next/no-img-element */
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Milestone, MilestoneCompleted } from "@show-karma/karma-gap-sdk";

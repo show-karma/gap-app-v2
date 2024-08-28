@@ -104,7 +104,9 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
       await grantUpdateInstance
         .verify(
           walletSigner,
-          { reason: sanitizeInput(data.comment) },
+          {
+            reason: sanitizeInput(data.comment),
+          },
           changeStepperStep
         )
         .then(async (res) => {

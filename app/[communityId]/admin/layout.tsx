@@ -27,13 +27,13 @@ export default async function AdminLayout({ children, params }: Props) {
         <div className="flex justify-center">
           {/* eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text */}
           <img
-            src={community?.details?.data.imageURL}
+            src={community?.details?.data?.imageURL}
             className={cn("h-14 w-14 rounded-full")}
           />
         </div>
 
         <div className="mt-3 text-3xl font-black text-white w-max flex flex-row gap-2">
-          <span>{community ? community.details?.data.name : ""}</span> Admin
+          <span>{community ? community.details?.data?.name : ""}</span> Admin
         </div>
       </div>
       {children}
