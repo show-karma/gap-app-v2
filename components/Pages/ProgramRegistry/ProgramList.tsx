@@ -19,6 +19,8 @@ import {
 } from "@tanstack/react-table";
 import { Button } from "@/components/Utilities/Button";
 import { formatDate } from "@/utilities/formatDate";
+import Link from "next/link";
+import { PAGES } from "@/utilities/pages";
 
 export type GrantProgram = {
   _id: {
@@ -27,6 +29,7 @@ export type GrantProgram = {
   id?: string;
   createdAtBlock?: string;
   createdByAddress?: string;
+  trackedProjects?: number;
   metadata?: {
     tags?: string[];
     type?: string;
@@ -229,6 +232,7 @@ export const ProgramList: FC<ProgramListProps> = ({
           </div>
         ),
       },
+
       {
         accessorFn: (row) => row,
         id: "Networks",
@@ -421,6 +425,24 @@ export const ProgramList: FC<ProgramListProps> = ({
           </div>
         ),
       },
+      // {
+      //   accessorFn: (row) => row,
+      //   id: "Tracked Projects",
+      //   cell: (info) => {
+      //     const program = info.row.original;
+      //     const data = program?.trackedProjects || 0;
+      //     return (
+      //       <Link href={""} target="_blank" className="w-full flex flex-row flex-wrap gap-1 my-2 items-center">
+      //         {data}
+      //       </Link>
+      //     );
+      //   },
+      //   header: () => (
+      //     <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
+      //       Tracked Projects
+      //     </div>
+      //   ),
+      // },
       {
         accessorFn: (row) => row,
         id: "Apply",
@@ -501,9 +523,8 @@ export const ProgramList: FC<ProgramListProps> = ({
                   key={row.id}
                   style={{
                     height: `${virtualRow.size}px`,
-                    transform: `translateY(${
-                      virtualRow.start - index * virtualRow.size
-                    }px)`,
+                    transform: `translateY(${virtualRow.start - index * virtualRow.size
+                      }px)`,
                   }}
                 >
                   {row.getVisibleCells().map((cell) => {
