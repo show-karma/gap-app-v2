@@ -39,8 +39,8 @@ const Box = ({
       className={cn(
         `flex flex-1 w-full max-w-[300px] h-[230px] flex-col gap-8 justify-center items-center rounded border px-4 py-4 bg-white`,
         isSelected
-          ? "border-black dark:border-zinc-100"
-          : "border-gray-400 dark:border-zinc-600"
+          ? "border-blue-500 bg-blue-500/5 dark:border-blue-500"
+          : "border-gray-400 dark:bg-zinc-900 dark:border-zinc-600"
       )}
     >
       <Image
