@@ -40,7 +40,7 @@ function toBytes32(hexString: string): string {
  * @returns A promise that resolves to the retrieved badge.
  * @throws If there is an error when reading the contract.
  */
-export async function getBadge(badgeId: number): Promise<BadgeOfficial> {
+export async function getBadge(badgeId: string): Promise<BadgeOfficial> {
   try {
     const badgeData = await readContract(publicClient, {
       address: BADGE_REGISTRY,
