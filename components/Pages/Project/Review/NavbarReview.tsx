@@ -5,11 +5,23 @@ import { StarReviewIcon } from "@/components/Icons/StarReview";
 import { CardReview } from "@/components/Pages/Project/Review/CardReview";
 import { ChevronDown } from "@/components/Icons";
 import { useReviewStore } from "@/store/review";
-import { Review } from "@/types/review";
+import {
+  getGrantStories,
+  GrantStory,
+} from "@/utilities/review/getGrantStories";
+import { useEffect } from "react";
+import { getBadge } from "@/utilities/review/getBadge";
+import { getBadgeIds } from "@/utilities/review/getBadgeIds";
+import { useSearchParams } from "next/navigation";
 
 export const NavbarReview = () => {
   const review = useReviewStore((state) => state.review);
   const isStarSelected = useReviewStore((state) => state.isStarSelected);
+  const stories = useReviewStore((state) => state.stories);
+  const setStories = useReviewStore((state) => state.setStories);
+  const grantUID = useReviewStore((state) => state.grantUID);
+  const searchParams = useSearchParams();
+  const grantIdFromQueryParam = searchParams?.get("grantId");
 
   const handleToggleReviewSelected = (id: number) => {
     const currentSelection = useReviewStore.getState().isStarSelected;
@@ -18,36 +30,63 @@ export const NavbarReview = () => {
     });
   };
 
+  const setBadge = useReviewStore((state) => state.setBadge);
+
+  useEffect(() => {
+    const fetchGrantStories = async () => {
+      if (!grantIdFromQueryParam) return;
+      const grantStories = await getGrantStories(
+        grantUID ? grantUID : grantIdFromQueryParam
+      );
+      // setStories(grantStories); //TODO: uncomment this line to setStories
+    };
+    fetchGrantStories();
+  }, [grantIdFromQueryParam, grantUID]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const badgeIds = await getBadgeIds();
+        const badges = await Promise.all(badgeIds.map((id) => getBadge(id)));
+        setBadge(badges);
+      } catch (error) {
+        console.log("error", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
   return (
     <div className="w-full flex flex-col">
       <div className="w-full flex px-2 gap-2 overflow-x-auto pb-4 relative scroller">
-        {review
-          .sort((a, b) => b.date - a.date)
-          .map((miniReview: Review, index: number) => (
+        {stories
+          .sort((a, b) => b.timestamp - a.timestamp)
+          .map((storie: GrantStory, index: number) => (
             <div
-              key={miniReview.id}
+              key={index}
               className="flex flex-col justify-center items-center text-center relative"
             >
               <p className="w-full">
-                {formatDate(new Date(miniReview.date * 1000))}
+                {formatDate(new Date(storie.timestamp * 1000))}
               </p>
               <div className="w-full flex flex-col items-center sm:px-14 px-4">
                 <StarReviewIcon
                   props={{
                     className: `w-20 h-20 ${
-                      isStarSelected === miniReview.id && "text-[#004EEB]"
+                      isStarSelected === index && "text-[#004EEB]"
                     }`,
                   }}
                   pathProps={{
                     className: "cursor-pointer",
-                    fill: `${isStarSelected === miniReview.id && "#004EEB"} `,
+                    fill: `${isStarSelected === index && "#004EEB"} `,
                     onClick: () => {
-                      handleToggleReviewSelected(miniReview.id);
+                      handleToggleReviewSelected(index);
                     },
                   }}
                 />
-                <p>{miniReview.averageScore}</p>
-                {isStarSelected === miniReview.id && (
+                <p>{storie.averageScore}</p>
+                {isStarSelected === index && (
                   <div>
                     <ChevronDown />
                   </div>
@@ -60,7 +99,9 @@ export const NavbarReview = () => {
           ))}
       </div>
       <div className="w-full flex flex-col">
-        {isStarSelected !== null && <CardReview id={isStarSelected} />}
+        {isStarSelected !== null && (
+          <CardReview storie={stories[isStarSelected]} />
+        )}
       </div>
     </div>
   );
