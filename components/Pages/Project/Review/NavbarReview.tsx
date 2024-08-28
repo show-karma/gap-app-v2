@@ -33,7 +33,7 @@ export const NavbarReview = () => {
     const fetchGrantStories = async () => {
       if (!grantIdFromQueryParam) return;
       const grantStories = await getGrantStories(
-        "0x635c2d0642c81e3191e6eff8623ba601b7e22e832d7791712b6bc28d052ff2b5"
+        "0x635c2d0642c81e3191e6eff8623ba601b7e22e832d7791712b6bc28d052ff2b5" // TODO: Remove this hardcoded value
         // grantUID ? grantUID : grantIdFromQueryParam
       );
       console.log("grantStories", grantStories);
@@ -85,7 +85,11 @@ export const NavbarReview = () => {
                     },
                   }}
                 />
-                <p>{storie.averageScore}</p>
+                <p>
+                  {parseFloat(
+                    Number(storie.averageScore).toFixed(2).substring(0, 3)
+                  ) / 100}
+                </p>
                 {isStarSelected === index && (
                   <div>
                     <ChevronDown />
