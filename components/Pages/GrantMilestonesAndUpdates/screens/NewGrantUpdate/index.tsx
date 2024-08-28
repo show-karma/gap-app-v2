@@ -21,36 +21,50 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
+import { Checkbox } from "@radix-ui/react-checkbox";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { sanitizeObject } from "@/utilities/sanitize";
-
-const updateSchema = z.object({
-  title: z.string().min(3, { message: MESSAGES.GRANT.UPDATE.FORM.TITLE }),
-});
+import { urlRegex } from "@/utilities/regexs/urlRegex";
+import { cn } from "@/utilities/tailwind";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
   "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300";
 
-type UpdateType = z.infer<typeof updateSchema>;
-
 interface NewGrantUpdateProps {
   grant: IGrantResponse;
 }
+const updateSchema = z.object({
+  title: z.string().min(3, { message: MESSAGES.GRANT.UPDATE.FORM.TITLE }),
+  description: z
+    .string()
+    .min(3, { message: MESSAGES.GRANT.UPDATE.FORM.DESCRIPTION }),
+  proofOfWork: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: "Please enter a valid URL",
+    })
+    .optional()
+    .or(z.literal("")),
+});
+type UpdateType = z.infer<typeof updateSchema>;
 
 export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
-  const [description, setDescription] = useState("");
-
   const { address } = useAccount();
   const { chain } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [, changeTab] = useQueryState("tab");
+  const [noProofCheckbox, setNoProofCheckbox] = useState(false);
+
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
+    clearErrors,
     formState: { errors, isSubmitting, isValid },
   } = useForm<UpdateType>({
     resolver: zodResolver(updateSchema),
@@ -63,15 +77,10 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
     event?.preventDefault();
     event?.stopPropagation();
     setIsLoading(true);
-    await createGrantUpdate(grant, {
-      title: data.title,
-      text: description,
-    }).finally(() => {
+    await createGrantUpdate(grant, data).finally(() => {
       setIsLoading(false);
     });
   };
-
-  const isDescriptionValid = !!description.length;
 
   const { changeStepperStep, setIsStepper } = useStepper();
 
@@ -79,7 +88,7 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
 
   const createGrantUpdate = async (
     grantToUpdate: IGrantResponse,
-    { title, text }: { title: string; text: string }
+    data: UpdateType
   ) => {
     let gapClient = gap;
     if (!address || !project) return;
@@ -95,8 +104,9 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
       const walletSigner = await walletClientToSigner(walletClient);
 
       const sanitizedGrantUpdate = sanitizeObject({
-        text,
-        title,
+        text: data.description,
+        title: data.title,
+        proofOfWork: data.proofOfWork,
         type: "grant-update",
       });
       const grantUpdate = new GrantUpdate({
@@ -198,11 +208,50 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
             </label>
             <div className="w-full bg-transparent" data-color-mode="light">
               <MarkdownEditor
-                value={description}
-                onChange={(newValue: string) => setDescription(newValue || "")}
+                value={watch("description") || ""}
+                onChange={(newValue: string) => {
+                  setValue("description", newValue || "", {
+                    shouldValidate: true,
+                  });
+                }}
                 placeholderText="To share updates on the progress of this grant, please add the details here."
               />
             </div>
+          </div>
+          <div className="flex w-full flex-col">
+            <label htmlFor="update-proof-of-work" className={labelStyle}>
+              Output of your work *
+            </label>
+            <p className="text-sm text-gray-500">
+              Provide a link that demonstrates your work. This could be a link
+              to a tweet announcement, a dashboard, a Google Doc, a blog post, a
+              video, or any other resource that highlights the progress or
+              results of your work
+            </p>
+            <div className="flex flex-row gap-2 items-center py-2">
+              <input
+                type="checkbox"
+                className="rounded-sm w-5 h-5 bg-white fill-black"
+                checked={noProofCheckbox}
+                onChange={() => {
+                  setNoProofCheckbox((oldValue) => !oldValue);
+                  setValue("proofOfWork", "", {
+                    shouldValidate: true,
+                  });
+                }}
+              />
+              <p className="text-base text-zinc-900 dark:text-zinc-100">{`I don't have any output to show for this milestone`}</p>
+            </div>
+            <input
+              id="update-proof-of-work"
+              className={cn(inputStyle, "disabled:opacity-50")}
+              disabled={!!noProofCheckbox}
+              placeholder="Add links to charts, videos, dashboards etc. that evaluators can verify your work"
+              {...register("proofOfWork")}
+            />
+            <p className="text-base text-red-400">
+              {errors.proofOfWork?.message}
+            </p>
           </div>
           <div className="flex w-full flex-row-reverse">
             <Button
@@ -211,8 +260,7 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
               disabled={
                 isSubmitting ||
                 !isValid ||
-                !isDescriptionValid ||
-                !description.length
+                (!noProofCheckbox && !watch("proofOfWork"))
               }
               isLoading={isSubmitting || isLoading}
             >

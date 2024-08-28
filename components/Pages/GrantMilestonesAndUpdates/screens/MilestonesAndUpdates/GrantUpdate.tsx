@@ -26,6 +26,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
 
 interface UpdateTagProps {
   index: number;
@@ -215,13 +216,25 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
           {title}
         </p>
       ) : null}
-      <div>
+      <div className="flex flex-col gap-2">
         <ReadMore
           readLessText="Read less update"
           readMoreText="Read full update"
         >
           {description}
         </ReadMore>
+        {update.data.proofOfWork ? (
+          <ExternalLink
+            href={
+              update.data.proofOfWork.includes("http")
+                ? update.data.proofOfWork
+                : `https://${update.data.proofOfWork}`
+            }
+            className="flex flex-row w-max gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent"
+          >
+            View Proof of Work
+          </ExternalLink>
+        ) : null}
       </div>
     </div>
   );

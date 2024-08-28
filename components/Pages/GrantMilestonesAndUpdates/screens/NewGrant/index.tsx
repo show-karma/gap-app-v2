@@ -1,11 +1,16 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+
+import {
+  GrantProgram,
+} from "@/components/Pages/ProgramRegistry/ProgramList";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { MilestoneWithCompleted } from "@/types/milestones";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
+import { Spinner } from "@/components/Utilities/Spinner";
 import {
   GrantDetails,
   nullRef,
@@ -13,6 +18,7 @@ import {
   Grant,
   Milestone,
   MilestoneCompleted,
+  IMilestone,
 } from "@show-karma/karma-gap-sdk";
 import type { FC } from "react";
 import { useEffect, useState } from "react";
@@ -53,13 +59,15 @@ import {
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-
+import debounce from "lodash.debounce";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { sanitizeObject } from "@/utilities/sanitize";
+import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
+import { urlRegex } from "@/utilities/regexs/urlRegex";
+import { GrantTitleDropdown } from "./GrantTitleDropdown";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
-  "mt-2 w-full rounded-lg border border-gray-200 bg-transparent px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:text-zinc-100 dark:border-gray-600";
+  "mt-2 w-full rounded-lg border border-gray-200 bg-transparent px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:text-zinc-100 dark:border-gray-600 disabled:bg-gray-100 disabled:text-gray-400";
 const textAreaStyle =
   "mt-2 w-full rounded-lg border border-gray-200 bg-transparent px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:text-zinc-100 dark:border-gray-600";
 
@@ -79,6 +87,7 @@ const TIMEFRAME_QUESTIONS = ["What is the timeframe for the work funded?"];
 
 const grantSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.GRANT.FORM.TITLE }),
+  programId: z.string().optional(),
   amount: z.string().optional(),
   community: z.string().nonempty({ message: MESSAGES.GRANT.FORM.COMMUNITY }),
   // season: z.string(),
@@ -86,6 +95,13 @@ const grantSchema = z.object({
   startDate: z.date({
     required_error: MESSAGES.GRANT.FORM.DATE,
   }),
+  proofOfWorkGrantUpdate: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: "Please enter a valid URL",
+    })
+    .optional()
+    .or(z.literal("")),
   linkToProposal: z
     .string()
     .url({
@@ -185,10 +201,12 @@ interface NewGrantData {
   title: string;
   description: string;
   linkToProposal: string;
+  proofOfWorkGrantUpdate?: string;
   amount?: string;
-  milestones: MilestoneWithCompleted[];
+  milestones: IMilestone[];
   community: string;
   season?: string;
+  programId?: string;
   cycle?: string;
   recipient?: string;
   grantUpdate?: string;
@@ -200,9 +218,69 @@ interface NewGrantData {
   }[];
 }
 
+
+export function SearchGrantProgram({
+  grantToEdit,
+  communityUID,
+  chainId,
+  setValue,
+  watch,
+}: {
+  grantToEdit?: IGrantResponse;
+  communityUID: string;
+  chainId: number;
+  setValue: any;
+  watch: any;
+}) {
+  const [allPrograms, setAllPrograms] = useState<GrantProgram[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(null);
+
+
+  useEffect(() => {
+    (async () => {
+      setIsLoading(true);
+      const [result, error] = await fetchData(
+        INDEXER.REGISTRY.GET_ALL + `?status=${"Active"}&limit=1000&withTrackedProjects=false&withProgramAdmins=false`
+      );
+      if (error) {
+        console.log(error);
+      }
+      setAllPrograms(result.programs);
+      setIsLoading(false);
+    })();
+  }, []);
+
+  return (
+    <div className="w-full max-w-[400px]">
+      {isLoading ? (
+        <div className="bg-zinc-100 p-3 text-sm ring-1 ring-zinc-200 rounded">
+          Loading Grants...
+        </div>
+      ) : !communityUID ? (
+        <div className="bg-zinc-100 p-3 text-sm ring-1 ring-zinc-200 rounded">
+          Select a community to proceed
+        </div>
+      ) : (
+        <GrantTitleDropdown
+          chainId={chainId}
+          list={allPrograms}
+          setValue={setValue}
+          setSelectedProgram={setSelectedProgram}
+          type={"Grant"}
+          grantToEdit={grantToEdit}
+          selectedProgram={selectedProgram}
+          prefixUnselected="Select"
+          buttonClassname="w-full max-w-full"
+          canAdd
+        />)}
+    </div>
+  );
+}
+
 export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { address } = useAccount();
-
+  const [noProofCheckbox, setNoProofCheckbox] = useState(false);
   const isOwner = useOwnerStore((state) => state.isOwner);
   const searchParams = useSearchParams();
   const grantScreen = searchParams?.get("tab");
@@ -210,6 +288,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { isAuth } = useAuthStore();
 
   const refreshProject = useProjectStore((state) => state.refreshProject);
+
   const [description, setDescription] = useState(
     grantScreen === "edit-grant"
       ? grantToEdit?.details?.data?.description || ""
@@ -311,6 +390,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const {
     register,
     handleSubmit,
+    watch,
     setValue,
     formState: { errors, isValid, isSubmitting },
   } = form;
@@ -357,6 +437,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         // season: data.season,
         questions: data.questions,
         startDate: data.startDate,
+        programId: data?.programId
       });
 
       grant.details = new GrantDetails({
@@ -366,29 +447,15 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         recipient: grant.recipient,
         uid: nullRef,
       });
-      // eslint-disable-next-line no-param-reassign
-      const sanitizedUpdate = sanitizeObject({
-        text: data.grantUpdate || "",
-        title: "",
-      });
-      grant.updates = data.grantUpdate
-        ? [
-            new GrantUpdate({
-              data: sanitizedUpdate,
-              schema: gapClient.findSchema("Milestone"),
-              recipient: grant.recipient,
-            }),
-          ]
-        : [];
 
       // eslint-disable-next-line no-param-reassign
       grant.milestones = data.milestones.map((milestone) => {
-        const sanitizedMilestone = sanitizeObject({
-          title: milestone.title,
-          description: milestone.description,
+        const sanitizedMilestone = {
+          title: sanitizeInput(milestone.title),
+          description: sanitizeInput(milestone.description),
           endsAt: milestone.endsAt,
           startsAt: milestone.startsAt,
-        });
+        };
         const created = new Milestone({
           data: sanitizedMilestone,
           refUID: grant.uid,
@@ -396,18 +463,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           recipient: grant.recipient,
           uid: nullRef,
         });
-        if (milestone.completedText) {
-          const sanitizedCompleted = sanitizeObject({
-            reason: milestone.completedText,
-            type: "completed",
-          });
-          created.completed = new MilestoneCompleted({
-            data: sanitizedCompleted,
-            refUID: created.uid,
-            schema: gapClient.findSchema("MilestoneCompleted"),
-            recipient: grant.recipient,
-          });
-        }
+
         return created;
       });
 
@@ -465,6 +521,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   };
 
   const updateGrant = async (oldGrant: IGrantResponse, data: NewGrantData) => {
+    console.log("Data: ", data);
     if (!address || !oldGrant.refUID || !selectedProject) return;
     let gapClient = gap;
     try {
@@ -492,6 +549,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         // season: data.season,
         questions: data.questions,
         startDate: data.startDate,
+        programId: data?.programId
       });
       oldGrantInstance.details?.setValues(grantData);
       const walletClient = await getWalletClient(config, {
@@ -578,6 +636,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   };
 
   const onSubmit = async (data: GrantType) => {
+    console.log("ProgramId: ", data.programId);
     saveAllMilestones();
     let questions: {
       type: string;
@@ -646,7 +705,11 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       grantUpdate,
       questions,
       startDate: data.startDate.getTime() / 1000,
+      programId: data?.programId,
+      proofOfWorkGrantUpdate: data.proofOfWorkGrantUpdate,
     };
+
+
     if (grantScreen === "edit-grant" && grantToEdit) {
       updateGrant(grantToEdit, newGrant);
     } else {
@@ -670,6 +733,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const [allCommunities, setAllCommunities] = useState<ICommunityResponse[]>(
     []
   );
+
 
   const community = form.getValues("community");
 
@@ -758,6 +822,13 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     return "";
   };
 
+  useEffect(() => {
+
+    if (grantToEdit?.details?.data?.programId) {
+      setValue("programId", grantToEdit?.details?.data?.programId);
+    }
+  }, []);
+
   return (
     <div className={"flex w-full flex-col items-start  justify-center"}>
       <div className="flex w-full max-w-3xl flex-col items-start justify-start gap-6 rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-zinc-900 px-6 pb-6 pt-5 max-lg:max-w-full">
@@ -785,23 +856,13 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         </div>
         <form className="flex w-full flex-col gap-4">
           <div className="flex w-full flex-col">
-            <label htmlFor="grant-title" className={labelStyle}>
-              Grant title *
-            </label>
-            <input
-              id="grant-title"
-              className={inputStyle}
-              placeholder="Ex: Optimism Dashboard, Gitcoin Round 18 etc."
-              {...register("title")}
-            />
-            <p className="text-base text-red-400">{errors.title?.message}</p>
-          </div>
-          <div className="flex w-full flex-col">
-            <label htmlFor="grant-title" className={labelStyle}>
+            <label htmlFor="grant-title" className={`${labelStyle} mb-1`}>
               Community *
             </label>
             <CommunitiesDropdown
-              onSelectFunction={setCommunityValue}
+              onSelectFunction={
+                setCommunityValue
+              }
               previousValue={
                 grantScreen === "edit-grant"
                   ? grantToEdit?.data?.communityUID
@@ -813,6 +874,21 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
               {errors.community?.message}
             </p>
           </div>
+          <div className="flex w-full flex-col">
+            <label htmlFor="grant-title" className={`${labelStyle} mb-1`}>
+              Grant title*
+            </label>
+            <SearchGrantProgram
+              grantToEdit={grantToEdit}
+              communityUID={form.getValues("community")}
+              chainId={communityNetworkId}
+              setValue={setValue}
+              watch={watch}
+            />
+
+            <p className="text-base text-red-400">{errors.title?.message}</p>
+          </div>
+
           <div className="flex w-full flex-col">
             <Controller
               name="startDate"
@@ -1062,25 +1138,6 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
               )}
             />
           ))}
-          {grantScreen === "create-grant" && (
-            <div className="flex w-full flex-col">
-              <label htmlFor="grant-update" className={labelStyle}>
-                Grant update (optional)
-              </label>
-              <div
-                className="mt-2 w-full bg-transparent"
-                data-color-mode="light"
-              >
-                <MarkdownEditor
-                  value={grantUpdate}
-                  onChange={(newValue: string) =>
-                    setGrantUpdate(newValue || "")
-                  }
-                  placeholderText="To share updates on the progress of this grant, please add the details here."
-                />
-              </div>
-            </div>
-          )}
         </form>
         {grantScreen === "create-grant" && (
           <div className="flex w-full flex-col items-center justify-center gap-8 py-8">

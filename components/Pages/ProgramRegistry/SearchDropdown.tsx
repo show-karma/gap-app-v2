@@ -53,11 +53,11 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
     {
       value: string;
       image:
-        | {
-            light: string;
-            dark: string;
-          }
-        | undefined;
+      | {
+        light: string;
+        dark: string;
+      }
+      | undefined;
     }[]
   >([]);
 
@@ -69,14 +69,14 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
 
     const sortedList = shouldSort
       ? parsedArray.sort((a, b) => {
-          if (a.value < b.value) {
-            return -1;
-          }
-          if (a.value > b.value) {
-            return 1;
-          }
-          return 0;
-        })
+        if (a.value < b.value) {
+          return -1;
+        }
+        if (a.value > b.value) {
+          return 1;
+        }
+        return 0;
+      })
       : parsedArray;
     setOrderedList(sortedList);
   }, []);
@@ -113,9 +113,9 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
           <p className="block w-max">
             {selected.length
               ? `${selected.length} ${pluralize(
-                  type,
-                  selected.length
-                ).toLowerCase()} selected`
+                type,
+                selected.length
+              ).toLowerCase()} selected`
               : `${prefixUnselected} ${type}`}
           </p>
           <span>
@@ -227,7 +227,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
                   className="px-3 py-2 text-sm rounded-md bg-zinc-600 dark:bg-zinc-900 text-white dark:text-white w-full"
                   onClick={() => setAdding(true)}
                 >
-                  {`Add a ${pluralize(type, 1).toLowerCase()}`}
+                  {`Add ${pluralize(type, 1).toLowerCase()}`}
                 </button>
               </div>
             )

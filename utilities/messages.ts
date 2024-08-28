@@ -100,6 +100,7 @@ export const MESSAGES = {
       ERROR: "There was an error editing the grant. Please try again.",
       FORM: {
         TITLE: "Title must be at least 3 characters",
+        DESCRIPTION: "Description must be a valid text",
       },
     },
     DELETE: {
@@ -171,6 +172,7 @@ export const MESSAGES = {
     INTRO: {
       EMAIL: "E-mail must be a valid email address",
       TELEGRAM: "Telegram handle must be at least 3 characters",
+      MESSAGE: "Enter your request message",
     },
     SUBSCRIPTION: {
       NAME: "Name must be at least 3 characters",
