@@ -176,7 +176,6 @@ export const ReportMilestonePage = ({
   // To calculate the total number of projects in the community
 
   const totalNoOfProjects = data?.uniqueProjectCount;
-  console.log(data);
 
   return (
     <div className="mt-12 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
