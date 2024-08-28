@@ -21,7 +21,7 @@ import { Hex, isAddress } from "viem";
 import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
 import { Milestone as MilestoneComponent } from "./Milestone";
-import { useRouter } from "next/navigation";
+import { useParams, usePathname, useRouter } from "next/navigation";
 import { CommunitiesDropdown } from "@/components/CommunitiesDropdown";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { getGapClient, useGap } from "@/hooks";
@@ -57,6 +57,8 @@ import { INDEXER } from "@/utilities/indexer";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
+import Link from "next/link";
+import { GrantScreen } from "@/types";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -213,8 +215,10 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { address } = useAccount();
   const [noProofCheckbox, setNoProofCheckbox] = useState(false);
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const searchParams = useSearchParams();
-  const grantScreen = searchParams?.get("tab");
+  const pathname = usePathname();
+  const grantScreen: GrantScreen = pathname.includes("edit-grant")
+    ? "edit-grant"
+    : "create-grant";
   const { milestonesForms: milestones, createMilestone } = useGrantFormStore();
   const { isAuth } = useAuthStore();
 
@@ -235,9 +239,6 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { switchChainAsync } = useSwitchChain();
   const { gap } = useGap();
   const { isConnected } = useAccount();
-
-  const [, changeTab] = useQueryState("tab");
-  const [, changeGrant] = useQueryState("grantId");
 
   function premade<T extends GenericQuestion>(
     type: QuestionType,
@@ -427,8 +428,12 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
               retries = 0;
               toast.success(MESSAGES.GRANT.CREATE.SUCCESS);
               changeStepperStep("indexed");
-              changeTab("overview");
-              changeGrant(grant.uid);
+              router.push(
+                PAGES.PROJECT.GRANT(
+                  selectedProject.details?.data.slug || selectedProject.uid,
+                  grant.uid
+                )
+              );
               await refreshProject();
             }
             retries -= 1;
@@ -519,8 +524,6 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
               retries = 0;
               toast.success(MESSAGES.GRANT.UPDATE.SUCCESS);
               changeStepperStep("indexed");
-              changeTab("overview");
-              changeGrant(oldGrant.uid);
               await refreshProject().then(() => {
                 router.push(
                   PAGES.PROJECT.GRANT(
@@ -750,23 +753,23 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           <h3 className="text-2xl font-bold text-black dark:text-zinc-100">
             {grantScreen === "edit-grant" ? "Edit grant" : "Create a new grant"}
           </h3>
-          <Button
-            className="bg-transparent px-1 hover:bg-transparent hover:opacity-75 text-black dark:text-zinc-100"
-            onClick={() => {
-              if (!selectedProject) return;
-              if (!grantToEdit) {
-                router.push(
-                  PAGES.PROJECT.GRANTS(
-                    selectedProject.details?.data?.slug || selectedProject?.uid
+          <Link
+            href={
+              grantToEdit
+                ? PAGES.PROJECT.GRANT(
+                    (selectedProject?.details?.data?.slug ||
+                      selectedProject?.uid) as string,
+                    grantToEdit?.uid as string
                   )
-                );
-                return;
-              }
-              changeTab("overview");
-            }}
+                : PAGES.PROJECT.GRANTS(
+                    (selectedProject?.details?.data?.slug ||
+                      selectedProject?.uid) as string
+                  )
+            }
+            className="bg-transparent px-1 hover:bg-transparent hover:opacity-75 text-black dark:text-zinc-100"
           >
             <XMarkIcon className="h-8 w-8 " />
-          </Button>
+          </Link>
         </div>
         <form className="flex w-full flex-col gap-4">
           <div className="flex w-full flex-col">
@@ -1081,7 +1084,12 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                 );
                 return;
               }
-              changeTab("overview");
+              router.push(
+                PAGES.PROJECT.GRANT(
+                  selectedProject.details?.data?.slug || selectedProject?.uid,
+                  grantToEdit.uid
+                )
+              );
             }}
           >
             Cancel

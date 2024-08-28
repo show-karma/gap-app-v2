@@ -19,30 +19,19 @@ export const PAGES = {
   PROJECT: {
     OVERVIEW: (project: string) => `/project/${project}`,
     UPDATES: (project: string) => `/project/${project}?tab=updates`,
-    GRANTS_STANDALONE: (project: string) => `/project/${project}/grants`,
-    GRANTS: (project: string) => `/project/${project}/grants?tab=overview`,
+    GRANTS: (project: string) => `/project/${project}/grants`,
     GRANT: (project: string, grant: string) =>
-      `/project/${project}/grants?grantId=${grant}&tab=overview`,
+      `/project/${project}/grants/${grant}`,
     CONTACT_INFO: (project: string) => `/project/${project}/contact-info`,
     IMPACT: {
       ROOT: (project: string) => `/project/${project}/impact`,
       ADD_IMPACT: (project: string) =>
         `/project/${project}/impact?tab=add-impact`,
     },
-    TABS: {
-      OVERVIEW: (project: string, grant: string) =>
-        `/project/${project}/grants?grantId=${grant}&tab=overview`,
-
-      SELECTED_TAB: (project: string, grant?: string, tab?: string) =>
-        `/project/${project}/grants?${grant ? `&grantId=${grant}` : ""}${
-          tab ? `&tab=${tab}` : ""
-        }`,
-      IMPACT_CRITERIA: (project: string, grant: string) =>
-        `/project/${project}/grants?grantId=${grant}&tab=impact-criteria`,
-      REVIEW_THIS_GRANT: (project: string, grant: string) =>
-        `/project/${project}/grants?grantId=${grant}&tab=review-this-grant`,
-      REVIEWS: (project: string, grant: string) =>
-        `/project/${project}/grants?grantId=${grant}&tab=reviews`,
+    SCREENS: {
+      NEW_GRANT: (project: string) => `/project/${project}/grants/create-grant`,
+      SELECTED_SCREEN: (project: string, grant: string, screen: string) =>
+        `/project/${project}/grants/${grant}/${screen}`,
     },
     TEAM: (project: string) => `/project/${project}/team`,
   },

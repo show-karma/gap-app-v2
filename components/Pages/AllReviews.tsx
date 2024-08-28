@@ -426,9 +426,10 @@ export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
                   </p>
                   {grant && (
                     <Link
-                      href={PAGES.PROJECT.TABS.REVIEW_THIS_GRANT(
+                      href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
                         project?.details?.data?.slug || project?.uid || "",
-                        grant?.uid || ""
+                        grant?.uid || "",
+                        "review-this-grant"
                       )}
                     >
                       <Button>Review this grant</Button>

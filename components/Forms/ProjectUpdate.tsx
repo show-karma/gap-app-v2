@@ -12,7 +12,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ProjectUpdate } from "@show-karma/karma-gap-sdk";
 import { getWalletClient } from "@wagmi/core";
 import { useRouter } from "next/navigation";
-import { useQueryState } from "nuqs";
 import type { FC } from "react";
 import { useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
@@ -45,7 +44,6 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const { switchChainAsync } = useSwitchChain();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const [, changeTab] = useQueryState("tab");
   const {
     register,
     handleSubmit,

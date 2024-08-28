@@ -23,15 +23,10 @@ export const NoGrant = () => {
       <button
         type="button"
         className="items-center flex flex-row justify-center gap-2 rounded border border-blue-600 bg-blue-600 px-4 py-2.5 text-base font-semibold text-white hover:bg-blue-600"
-        //   onClick={() => {
-        //     changeTab("create-grant");
-        //   }}
         onClick={() => {
           router.push(
-            PAGES.PROJECT.TABS.SELECTED_TAB(
-              project.details?.data.slug || project.uid,
-              undefined,
-              "create-grant"
+            PAGES.PROJECT.SCREENS.NEW_GRANT(
+              project.details?.data.slug || project.uid
             )
           );
           closeProgressModal();

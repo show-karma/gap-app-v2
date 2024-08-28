@@ -137,7 +137,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
                   afterSubmit?.();
                   toast.success(MESSAGES.GRANT.GRANT_UPDATE.SUCCESS);
                   router.push(
-                    PAGES.PROJECT.TABS.SELECTED_TAB(
+                    PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
                       project.uid,
                       grantToUpdate.uid,
                       "milestones-and-updates"

@@ -1,11 +1,10 @@
 import React from "react";
 import { Hex } from "viem";
 import { Metadata } from "next";
-import type { IProjectDetails } from "@show-karma/karma-gap-sdk";
 import { getMetadata } from "@/utilities/sdk";
 import { zeroUID } from "@/utilities/commons";
 import { defaultMetadata } from "@/utilities/meta";
-import { shortAddress } from "@/utilities/shortAddress";
+import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 export async function generateMetadata({
   params,
@@ -14,8 +13,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const projectId = params.projectId;
 
-  const projectInfo = await getMetadata<IProjectDetails>(
-    "projects",
+  const projectInfo = await getMetadata<IProjectResponse>(
+    "project",
     projectId as Hex
   );
 
@@ -27,8 +26,8 @@ export async function generateMetadata({
   }
 
   return {
-    title: `Karma GAP - ${projectInfo.title}`,
-    description: projectInfo.description?.substring(0, 80) || "",
+    title: `Karma GAP - ${projectInfo.details?.data?.title}`,
+    description: projectInfo.details?.data?.description?.substring(0, 80) || "",
     twitter: {
       creator: defaultMetadata.twitter.creator,
       site: defaultMetadata.twitter.site,
@@ -36,11 +35,12 @@ export async function generateMetadata({
     },
     openGraph: {
       url: defaultMetadata.openGraph.url,
-      title: `Karma GAP - ${projectInfo.title}`,
-      description: projectInfo.description?.substring(0, 80) || "",
+      title: `Karma GAP - ${projectInfo.details?.data?.title}`,
+      description:
+        projectInfo.details?.data?.description?.substring(0, 80) || "",
       images: defaultMetadata.openGraph.images.map((image) => ({
         url: image,
-        alt: `Karma GAP - ${projectInfo.title}`,
+        alt: `Karma GAP - ${projectInfo.details?.data?.title}`,
       })),
     },
     icons: {
@@ -52,8 +52,8 @@ export async function generateMetadata({
 const TeamPage = async ({ params }: { params: { projectId: string } }) => {
   const projectId = params.projectId;
 
-  const projectInfo = await getMetadata<IProjectDetails>(
-    "projects",
+  const projectInfo = await getMetadata<IProjectResponse>(
+    "project",
     projectId as Hex
   );
 

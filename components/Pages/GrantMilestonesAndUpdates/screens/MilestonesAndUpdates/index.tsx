@@ -1,26 +1,49 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { Button } from "@/components/Utilities/Button";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { MilestonesList } from "./MilestonesList";
+// import { MilestonesList } from "./MilestonesList";
 import { useRouter } from "next/navigation";
-import { useQueryState } from "nuqs";
 import { MESSAGES } from "@/utilities/messages";
 import { ReadMore } from "@/utilities/ReadMore";
 import { formatDate } from "@/utilities/formatDate";
 import { useCommunityAdminStore } from "@/store/community";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import {
+  IGrantResponse,
+  IProjectResponse,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import Link from "next/link";
+import { PAGES } from "@/utilities/pages";
 
-export const EmptyMilestone = ({ grant }: { grant?: IGrantResponse }) => {
+import dynamic from "next/dynamic";
+import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
+import { useGrantStore } from "@/store/grant";
+
+const MilestonesList = dynamic(
+  () =>
+    import(
+      "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/MilestonesList"
+    ).then((mod) => mod.MilestonesList),
+  {
+    loading: () => <DefaultLoading />,
+  }
+);
+
+export const EmptyMilestone = ({
+  grant,
+  project,
+}: {
+  grant?: IGrantResponse;
+  project?: IProjectResponse;
+}) => {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );
+
   const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
-  const router = useRouter();
-  const project = useProjectStore((state) => state.project);
-  const [, changeTab] = useQueryState("tab");
+  // const router = useRouter();
+  // const project = useProjectStore((state) => state.project);
 
   if (!isAuthorized) {
     return (
@@ -56,13 +79,13 @@ export const EmptyMilestone = ({ grant }: { grant?: IGrantResponse }) => {
             {MESSAGES.PROJECT.EMPTY.GRANTS.NOT_ADDED_MILESTONE}
           </p>
           <div className="flex w-max flex-row flex-wrap gap-6 max-sm:w-full max-sm:flex-col">
-            <Button
+            <Link
+              href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
+                project?.details?.data.slug || project?.uid || "",
+                grant?.uid || "",
+                "create-milestone"
+              )}
               className="items-center flex flex-row justify-center gap-2 rounded border border-blue-600 dark:bg-blue-800 bg-brand-blue px-4 py-2.5 text-base font-semibold text-white hover:bg-brand-blue"
-              onClick={() => {
-                if (project && grant) {
-                  changeTab("create-milestone");
-                }
-              }}
             >
               <img
                 src="/icons/plus.svg"
@@ -70,17 +93,17 @@ export const EmptyMilestone = ({ grant }: { grant?: IGrantResponse }) => {
                 className="relative h-5 w-5"
               />
               Add a new Milestone
-            </Button>
-            <Button
+            </Link>
+            <Link
               className="items-center justify-center gap-2 rounded border dark:bg-zinc-800 dark:text-white border-black bg-white px-4 py-2.5 text-base font-semibold text-zinc-900 hover:bg-white"
-              onClick={() => {
-                if (project && grant) {
-                  changeTab("grant-update");
-                }
-              }}
+              href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
+                project?.details?.data.slug || project?.uid || "",
+                grant?.uid || "",
+                "grant-update"
+              )}
             >
               Post an update
-            </Button>
+            </Link>
           </div>
         </div>
       </div>
@@ -121,10 +144,10 @@ const GrantCompletionCard = ({ completion }: GrantCompletionCardProps) => {
   );
 };
 
-interface MilestonesAndUpdatesProps {
-  grant: IGrantResponse | undefined;
-}
-export const MilestonesAndUpdates = ({ grant }: MilestonesAndUpdatesProps) => {
+export const MilestonesAndUpdates = () => {
+  const { grant } = useGrantStore();
+  const project = useProjectStore((state) => state.project);
+
   const hasMilestonesOrUpdates =
     grant?.milestones?.length || grant?.updates?.length;
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
@@ -133,8 +156,6 @@ export const MilestonesAndUpdates = ({ grant }: MilestonesAndUpdatesProps) => {
     (state) => state.isCommunityAdmin
   );
   const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
-  const project = useProjectStore((state) => state.project);
-  const [, changeTab] = useQueryState("tab");
 
   return (
     <div className="space-y-5">
@@ -156,29 +177,29 @@ export const MilestonesAndUpdates = ({ grant }: MilestonesAndUpdatesProps) => {
                   <div className="flex flex-row justify-start gap-4 max-sm:w-full max-sm:flex-col">
                     {isAuthorized ? (
                       <div className="flex items-center">
-                        <Button
-                          onClick={() => {
-                            if (project) {
-                              changeTab("grant-update");
-                            }
-                          }}
+                        <Link
+                          href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
+                            project?.details?.data.slug || project?.uid || "",
+                            grant?.uid || "",
+                            "grant-update"
+                          )}
                           className="flex h-max w-max dark:bg-zinc-900 dark:text-white text-zinc-900 flex-row items-center justify-center gap-3 rounded border border-black bg-transparent px-3 py-1 text-sm font-semibold hover:bg-transparent hover:opacity-75 max-sm:w-full"
                         >
                           <p>Post a grant update</p>
-                        </Button>
+                        </Link>
                       </div>
                     ) : null}
                     {isAuthorized && (
-                      <Button
-                        onClick={() => {
-                          if (project) {
-                            changeTab("create-milestone");
-                          }
-                        }}
+                      <Link
+                        href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
+                          project?.details?.data.slug || project?.uid || "",
+                          grant?.uid || "",
+                          "create-milestone"
+                        )}
                         className="flex h-max w-max  flex-row items-center  hover:opacity-75 justify-center gap-3 rounded border border-[#155EEF] bg-[#155EEF] px-3 py-1 text-sm font-semibold text-white   max-sm:w-full"
                       >
                         <p>Add a new milestone</p>
-                      </Button>
+                      </Link>
                     )}
                   </div>
                 </div>
@@ -188,7 +209,7 @@ export const MilestonesAndUpdates = ({ grant }: MilestonesAndUpdatesProps) => {
           )}
         </div>
       ) : (
-        <EmptyMilestone grant={grant} />
+        <EmptyMilestone grant={grant} project={project} />
       )}
     </div>
   );

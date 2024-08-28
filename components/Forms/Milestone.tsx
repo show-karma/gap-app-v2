@@ -17,8 +17,6 @@ import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { Popover } from "@headlessui/react";
 import { DayPicker } from "react-day-picker";
 import { CalendarIcon } from "@heroicons/react/24/outline";
-import { XMarkIcon } from "@heroicons/react/24/solid";
-import { useQueryState } from "nuqs";
 import { MESSAGES } from "@/utilities/messages";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { formatDate } from "@/utilities/formatDate";
@@ -96,7 +94,6 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   const { chain } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const [, changeTab] = useQueryState("tab");
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );
@@ -175,10 +172,10 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
                   changeStepperStep("indexed");
                   toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS);
                   router.push(
-                    PAGES.PROJECT.TABS.SELECTED_TAB(
+                    PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
                       (fetchedProject?.details?.data.slug ||
                         fetchedProject?.uid) as string,
-                      fetchedGrant?.uid,
+                      fetchedGrant?.uid as string,
                       "milestones-and-updates"
                     )
                   );

@@ -14,7 +14,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { GrantUpdate } from "@show-karma/karma-gap-sdk";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getWalletClient } from "@wagmi/core";
-import { useQueryState } from "nuqs";
 import type { FC } from "react";
 import { useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
@@ -28,6 +27,9 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { cn } from "@/utilities/tailwind";
+import { useRouter } from "next/navigation";
+import { PAGES } from "@/utilities/pages";
+import Link from "next/link";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -57,7 +59,6 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
   const { switchChainAsync } = useSwitchChain();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const [, changeTab] = useQueryState("tab");
   const [noProofCheckbox, setNoProofCheckbox] = useState(false);
 
   const {
@@ -86,6 +87,7 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
   const { changeStepperStep, setIsStepper } = useStepper();
 
   const { gap } = useGap();
+  const router = useRouter();
 
   const createGrantUpdate = async (
     grantToUpdate: IGrantResponse,
@@ -145,7 +147,13 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
                   retries = 0;
                   changeStepperStep("indexed");
                   toast.success(MESSAGES.GRANT.GRANT_UPDATE.SUCCESS);
-                  changeTab("milestones-and-updates");
+                  router.push(
+                    PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
+                      project.details?.data?.slug || project?.uid,
+                      grantToUpdate.uid,
+                      "milestones-and-updates"
+                    )
+                  );
                 }
                 retries -= 1;
                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
@@ -186,14 +194,16 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
           <h4 className="text-2xl font-bold text-black dark:text-zinc-100">
             Post a grant update
           </h4>
-          <button
+          <Link
+            href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
+              project?.details?.data?.slug || project?.uid || "",
+              grant.uid,
+              "milestones-and-updates"
+            )}
             className="bg-transparent p-4 hover:bg-transparent hover:opacity-75"
-            onClick={() => {
-              changeTab("milestones-and-updates");
-            }}
           >
             <img src="/icons/close.svg" alt="Close" className="h-5 w-5 " />
-          </button>
+          </Link>
         </div>
         <form
           onSubmit={handleSubmit(onSubmit)}

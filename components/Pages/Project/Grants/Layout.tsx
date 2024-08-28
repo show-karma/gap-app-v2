@@ -1,58 +1,36 @@
-"use client";
 /* eslint-disable @next/next/no-img-element */
-import React, { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import {
-  ArrowTopRightOnSquareIcon,
-  PencilSquareIcon,
-} from "@heroicons/react/24/outline";
-import formatCurrency from "@/utilities/formatCurrency";
-import { Hex } from "viem";
-import markdownStyles from "@/styles/markdown.module.css";
+"use client";
 
-import { CheckCircleIcon, PlusIcon } from "@heroicons/react/20/solid";
-import { Button } from "@/components/Utilities/Button";
-import {
-  EmptyGrantsSection,
-  NewGrant,
-} from "@/components/Pages/GrantMilestonesAndUpdates/screens";
-import { useRouter } from "next/navigation";
-import { GrantScreen } from "@/types/grant";
-import { NewMilestone } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewMilestone";
-import { NewGrantUpdate } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewGrantUpdate";
-import { useAccount } from "wagmi";
-import { GrantDelete } from "@/components/Pages/GrantMilestonesAndUpdates/GrantDelete";
-import { GrantCompleteButton } from "@/components/Pages/GrantMilestonesAndUpdates/GrantCompleteButton";
-import { GrantCompletion } from "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/CompleteGrant";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-// import { GrantMilestonesAndUpdates } from "@/components/Pages/GrantMilestonesAndUpdates";
-import { GrantContext } from "@/components/Pages/GrantMilestonesAndUpdates/GrantContext";
-import { GrantAllReviews } from "@/components/Pages/AllReviews";
-import { ReviewGrant } from "@/components/Pages/ReviewGrant";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { EmptyGrantsSection } from "../../GrantMilestonesAndUpdates/screens";
+import { GrantContext } from "../../GrantMilestonesAndUpdates/GrantContext";
+import { cn } from "@/utilities/tailwind";
+import { GrantCompleteButton } from "../../GrantMilestonesAndUpdates/GrantCompleteButton";
+import { GrantDelete } from "../../GrantMilestonesAndUpdates/GrantDelete";
 import dynamic from "next/dynamic";
-import { useQueryState } from "nuqs";
+import { PAGES } from "@/utilities/pages";
+import { useAccount } from "wagmi";
+import { useEffect, useState } from "react";
+import { GrantScreen } from "@/types";
+import { useParams, usePathname, useRouter } from "next/navigation";
+import { useCommunityAdminStore } from "@/store/community";
+import { useCommunitiesStore } from "@/store/communities";
 import {
   getQuestionsOf,
   getReviewsOf,
   isCommunityAdminOf,
 } from "@/utilities/sdk";
-import { cn } from "@/utilities/tailwind";
-import { MESSAGES } from "@/utilities/messages";
-import { formatDate } from "@/utilities/formatDate";
-import { useCommunityAdminStore } from "@/store/community";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { useGap } from "@/hooks";
 import { useAuthStore } from "@/store/auth";
-import { useCommunitiesStore } from "@/store/communities";
-import { chainImgDictionary } from "@/utilities/chainImgDictionary";
-import { chainNameDictionary } from "@/utilities/chainNameDictionary";
-import { GrantsAccordion } from "@/components/GrantsAccordion";
-import { PAGES } from "@/utilities/pages";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { GrantsAccordion } from "@/components/GrantsAccordion";
+import { CheckCircleIcon, PlusIcon } from "@heroicons/react/20/solid";
+import { Button } from "@/components/Utilities/Button";
+import { PencilSquareIcon } from "@heroicons/react/24/outline";
+import Link from "next/link";
+import { useGrantStore } from "@/store/grant";
 
 const GenerateImpactReportDialog = dynamic(
   () =>
@@ -61,6 +39,10 @@ const GenerateImpactReportDialog = dynamic(
     ),
   { ssr: false }
 );
+
+interface GrantsLayoutProps {
+  children: React.ReactNode;
+}
 
 interface Tab {
   name: string;
@@ -76,12 +58,43 @@ const authorizedViews: GrantScreen[] = [
   "complete-grant",
 ];
 
-export const ProjectGrantsPage = () => {
-  const searchParams = useSearchParams();
-  const tabFromQueryParam = searchParams?.get("tab");
-  const grantIdFromQueryParam = searchParams?.get("grantId");
+const allViews: GrantScreen[] = [
+  "milestones-and-updates",
+  "create-milestone",
+  "create-grant",
+  "edit-grant",
+  "grant-update",
+  "impact-criteria",
+  "overview",
+  "complete-grant",
+  "review-this-grant",
+  "reviews",
+  "grant-update",
+];
+
+const getScreen = (pathname: string): GrantScreen | undefined => {
+  const screen: GrantScreen = pathname.split("/")[5] as GrantScreen;
+  if (screen && allViews.includes(screen)) {
+    return screen;
+  }
+  if (
+    pathname.split("/")[4] &&
+    allViews.includes(pathname.split("/")[4] as GrantScreen)
+  ) {
+    return pathname.split("/")[4] as GrantScreen;
+  }
+  return "overview";
+};
+
+export const GrantsLayout = ({ children }: GrantsLayoutProps) => {
+  const pathname = usePathname();
+  const screen = getScreen(pathname);
+  const grantIdFromQueryParam = useParams().grantUid as string;
   const [currentTab, setCurrentTab] = useState("overview");
-  const [grant, setGrant] = useState<IGrantResponse | undefined>(undefined);
+  const [grant, setGrant] = useGrantStore((state) => [
+    state.grant,
+    state.setGrant,
+  ]);
   const project = useProjectStore((state) => state.project);
   const navigation =
     project?.grants?.map((item) => ({
@@ -106,13 +119,12 @@ export const ProjectGrantsPage = () => {
   const { communities } = useCommunitiesStore();
   const isCommunityAdminOfSome = communities.length !== 0;
   const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
-  const [, changeTab] = useQueryState("tab");
-  const [, changeGrantId] = useQueryState("grantId");
+
   const { address } = useAccount();
 
-  // UseEffect to check if current URL changes
+  //   UseEffect to check if current URL changes
   useEffect(() => {
-    if (tabFromQueryParam) {
+    if (screen) {
       if (
         !isAuthorized &&
         currentTab &&
@@ -120,10 +132,10 @@ export const ProjectGrantsPage = () => {
       ) {
         setCurrentTab("overview");
       } else {
-        setCurrentTab(tabFromQueryParam);
+        setCurrentTab(screen);
       }
     }
-  }, [tabFromQueryParam, isAuthorized, address]);
+  }, [screen, isAuthorized, address]);
 
   useEffect(() => {
     if (project) {
@@ -143,7 +155,6 @@ export const ProjectGrantsPage = () => {
 
   const defaultTabs: {
     name: string;
-
     tabName: GrantScreen;
     current: boolean;
   }[] = [
@@ -262,6 +273,14 @@ export const ProjectGrantsPage = () => {
     checkIfAdmin();
   }, [address, grant?.uid, signer, isAuth]);
 
+  if (screen === "create-grant") {
+    return (
+      <div className="flex-1 pl-5 pt-5 pb-20 max-lg:px-0 max-lg:pt-0">
+        {children}
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="flex max-lg:flex-col">
@@ -271,10 +290,11 @@ export const ProjectGrantsPage = () => {
               <GrantsAccordion>
                 {navigation.map((item) => (
                   <div key={item.uid}>
-                    <button
-                      onClick={() => {
-                        changeGrantId(item.uid);
-                      }}
+                    <Link
+                      href={PAGES.PROJECT.GRANT(
+                        project.details?.data.slug || project?.uid || "",
+                        item.uid
+                      )}
                       className={cn(
                         " text-[#155eef] hover:text-primary-600",
                         "flex items-center rounded-md text-sm leading-6 font-semibold w-full"
@@ -292,22 +312,20 @@ export const ProjectGrantsPage = () => {
                           )}
                         </div>
                       </div>
-                    </button>
+                    </Link>
                   </div>
                 ))}
                 {(isAuthorized || isCommunityAdminOfSome) && (
                   <div className="mt-4">
-                    <Button
-                      onClick={() => {
-                        if (project) {
-                          changeTab("create-grant");
-                        }
-                      }}
+                    <Link
+                      href={PAGES.PROJECT.SCREENS.NEW_GRANT(
+                        project?.details?.data.slug || project?.uid || ""
+                      )}
                       className="flex h-max w-full  flex-row items-center  hover:opacity-75 justify-center gap-3 rounded border border-[#155EEF] bg-[#155EEF] px-3 py-2 text-sm font-semibold text-white   max-sm:w-full"
                     >
                       <p>Add a new grant</p>
                       <PlusIcon className="w-5 h-5" />
-                    </Button>
+                    </Link>
                   </div>
                 )}
               </GrantsAccordion>
@@ -347,10 +365,11 @@ export const ProjectGrantsPage = () => {
               <ul role="list" className="space-y-2 mt-8">
                 {navigation.map((item) => (
                   <li key={item.uid}>
-                    <button
-                      onClick={() => {
-                        changeGrantId(item.uid);
-                      }}
+                    <Link
+                      href={PAGES.PROJECT.GRANT(
+                        project.details?.data.slug || project?.uid || "",
+                        item.uid
+                      )}
                       className={cn(
                         item.current
                           ? "bg-[#eef4ff] dark:bg-zinc-800 dark:text-primary-300  text-[#155eef]"
@@ -380,7 +399,7 @@ export const ProjectGrantsPage = () => {
                           )}
                         </div>
                       </div>
-                    </button>
+                    </Link>
                   </li>
                 ))}
                 {(isAuthorized || isCommunityAdminOfSome) && (
@@ -388,7 +407,11 @@ export const ProjectGrantsPage = () => {
                     <Button
                       onClick={() => {
                         if (project) {
-                          changeTab("create-grant");
+                          router.push(
+                            PAGES.PROJECT.SCREENS.NEW_GRANT(
+                              project.details?.data.slug || project.uid
+                            )
+                          );
                         }
                       }}
                       className="flex h-max w-full  flex-row items-center  hover:opacity-75 justify-center gap-3 rounded border border-[#155EEF] bg-[#155EEF] px-3 py-2 text-sm font-semibold text-white   max-sm:w-full"
@@ -411,15 +434,17 @@ export const ProjectGrantsPage = () => {
                   {grant?.details?.data.title}
                 </div>
                 {isAuthorized && project && grant && (
-                  <button
-                    onClick={() => {
-                      changeTab("edit-grant");
-                    }}
+                  <Link
+                    href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
+                      project.details?.data.slug || project?.uid || "",
+                      grant?.uid as string,
+                      "edit-grant"
+                    )}
                     className="rounded-md items-center text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-35 hover:opacity-75 transition-all ease-in-out duration-300 flex h-max w-max flex-row gap-2 bg-zinc-800 p-2 text-white hover:bg-zinc-800 hover:text-white"
                   >
                     Edit grant
                     <PencilSquareIcon className="h-4 w-4" />
-                  </button>
+                  </Link>
                 )}
               </div>
               {isAuthorized && grant ? (
@@ -440,21 +465,23 @@ export const ProjectGrantsPage = () => {
                 aria-label="Tabs"
               >
                 {tabs.map((tab) => (
-                  <button
+                  <Link
                     key={tab.name}
-                    onClick={() => {
-                      changeTab(tab.tabName);
-                    }}
+                    href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
+                      project.details?.data.slug || project?.uid || "",
+                      grant?.uid as string,
+                      tab.tabName === "overview" ? "" : tab.tabName
+                    )}
                     className={cn(
-                      tabFromQueryParam === tab.tabName ||
-                        (tab.tabName === "overview" && !tabFromQueryParam)
+                      screen === tab.tabName ||
+                        (tab.tabName === "overview" && !screen)
                         ? "text-gray-900 bg-white dark:bg-zinc-700 dark:text-zinc-100"
                         : "text-gray-500 hover:text-gray-700 dark:text-zinc-400",
                       "group relative min-w-0 w-max border-none overflow-hidden rounded-lg py-2 px-3 text-center text-sm font-semibold hover:bg-gray-50 dark:hover:bg-zinc-800 dark:hover:text-white focus:z-10 transition-all duration-300 ease-in-out"
                     )}
                   >
                     <span>{tab.name}</span>
-                  </button>
+                  </Link>
                 ))}
               </nav>
             </div>
@@ -463,35 +490,7 @@ export const ProjectGrantsPage = () => {
           {project?.grants.length || currentTab === "create-grant" ? (
             <div className="flex flex-col py-5">
               <GrantContext.Provider value={grant}>
-                {/* {currentTab === "milestones-and-updates" && (
-                  <GrantMilestonesAndUpdates grant={grant} />
-                )} */}
-                {currentTab === "impact-criteria" && (
-                  <GrantImpactCriteria grant={grant} />
-                )}
-                {currentTab === "reviews" && <GrantAllReviews grant={grant} />}
-                {currentTab === "review-this-grant" && (
-                  <Suspense>
-                    <ReviewGrant grant={grant} />
-                  </Suspense>
-                )}
-                {/*  */}
-                {currentTab === "create-grant" && project?.uid && <NewGrant />}
-                {currentTab === "edit-grant" && project?.uid && grant && (
-                  <NewGrant grantToEdit={grant} />
-                )}
-                {(currentTab === "create-milestone" ||
-                  currentTab === "edit-milestone") &&
-                  grant && <NewMilestone grant={grant} />}
-                {currentTab === "grant-update" && grant && (
-                  <NewGrantUpdate grant={grant} />
-                )}
-                {/* {currentTab === "complete-grant" && grant && project && (
-                  <GrantCompletion project={project} grant={grant} />
-                )} */}
-                {(currentTab === "overview" || !currentTab) && (
-                  <GrantOverview grant={grant} />
-                )}
+                {children}
               </GrantContext.Provider>
             </div>
           ) : (
@@ -502,212 +501,5 @@ export const ProjectGrantsPage = () => {
         </div>
       </div>
     </>
-  );
-};
-
-interface GrantOverviewProps {
-  grant: IGrantResponse | undefined;
-}
-
-const isValidAmount = (amount?: string | undefined) => {
-  if (!amount) return undefined;
-
-  const number = Number(amount);
-  if (Number.isNaN(number)) return amount;
-
-  return formatCurrency(+amount);
-};
-
-const GrantOverview = ({ grant }: GrantOverviewProps) => {
-  const milestones = grant?.milestones;
-  const project = useProjectStore((state) => state.project);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useCommunityAdminStore(
-    (state) => state.isCommunityAdmin
-  );
-  const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
-  const [, changeTab] = useQueryState("tab");
-
-  const getPercentage = () => {
-    if (!milestones) return 0;
-
-    const total = milestones.length;
-    const completed = milestones.filter(
-      (milestone) => milestone.completed
-    ).length;
-
-    const percent = grant?.completed ? 100 : (completed / total) * 100;
-    return Number.isNaN(percent) ? 0 : +percent.toFixed(2);
-  };
-
-  const grantData: { stat?: number | string; title: string }[] = [
-    {
-      stat: isValidAmount(grant?.details?.data?.amount),
-      title: "Total Grant Amount",
-    },
-    {
-      stat: grant?.details?.data?.startDate
-        ? formatDate(grant?.details?.data?.startDate * 1000)
-        : undefined,
-      title: "Start Date",
-    },
-    // {
-    //   stat: grant?.details?.season,
-    //   title: "Season",
-    // },
-    // {
-    //   stat: grant?.details?.cycle,
-    //   title: "Cycle",
-    // },
-  ];
-
-  return (
-    <>
-      {/* Grant Overview Start */}
-
-      <div className="mt-5 flex flex-row max-lg:flex-col-reverse gap-4 ">
-        {grant?.details?.data?.description && (
-          <div className="w-8/12 max-lg:w-full p-5 gap-2 bg-[#EEF4FF] dark:bg-zinc-900 dark:border-gray-800 rounded-xl  text-black dark:text-zinc-100">
-            <h3 className="text-sm text-slate-600 dark:text-slate-400 uppercase font-semibold">
-              GRANT DESCRIPTION
-            </h3>
-            <div className="mt-2">
-              <MarkdownPreview
-                className={markdownStyles.wmdeMarkdown}
-                source={grant?.details?.data?.description}
-              />
-            </div>
-          </div>
-        )}
-        <div className="w-4/12 max-lg:w-full">
-          <div className="border border-gray-200 rounded-xl bg-white  dark:bg-zinc-900 dark:border-gray-800">
-            <div className="flex items-center justify-between p-5">
-              <div className="font-semibold text-black dark:text-white">
-                Grant Overview
-              </div>
-              {/* <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10"> */}
-              <span
-                className={`h-max items-center justify-center rounded-2xl  px-2 py-1 text-center text-xs font-medium leading-none text-white ${
-                  +getPercentage() > 0 ? "bg-blue-600" : "bg-gray-500"
-                }`}
-              >
-                {getPercentage()}% complete
-              </span>
-            </div>
-            <div className="flex flex-col gap-4  px-5 pt-5 pb-5 border-t border-gray-200">
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-gray-500 text-base  font-semibold dark:text-gray-300">
-                  Community
-                </div>
-                <a
-                  href={PAGES.COMMUNITY.ALL_GRANTS(
-                    grant?.community?.details?.data?.slug ||
-                      (grant?.community?.uid as Hex)
-                  )}
-                >
-                  <div className="w-full inline-flex items-center gap-x-2 rounded-3xl bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={grant?.community?.details?.data?.imageURL}
-                      alt=""
-                      className="h-5 w-5 rounded-full"
-                    />
-                    <p className="max-w-xs truncate text-base font-semibold text-black dark:text-gray-100 max-md:text-sm w-full break-words whitespace-break-spaces">
-                      {grant?.community?.details?.data?.name}
-                    </p>
-                  </div>
-                </a>
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <div className="text-gray-500 text-base  font-semibold dark:text-gray-300">
-                  Network
-                </div>
-
-                <div className="inline-flex items-center gap-x-2 rounded-full bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={chainImgDictionary(
-                      grant?.community?.details?.chainID as number
-                    )}
-                    alt=""
-                    className="h-5 w-5 rounded-full"
-                  />
-                  <p className="max-w-xs truncate text-base font-semibold text-black dark:text-gray-100 max-md:text-sm  w-full break-words whitespace-break-spaces">
-                    {chainNameDictionary(
-                      grant?.community?.details?.chainID as number
-                    )}
-                  </p>
-                </div>
-              </div>
-
-              {grant?.details?.data?.proposalURL ? (
-                <div className="flex items-center justify-between">
-                  <div className="text-gray-500  font-semibold text-base dark:text-gray-300">
-                    Proposal
-                  </div>
-                  <ExternalLink
-                    href={grant?.details?.data?.proposalURL}
-                    className="inline-flex items-center gap-x-1 rounded-md  px-2 py-1 text-xs font-medium text-blue-700 dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500"
-                  >
-                    <span className="text-base font-semibold">Details</span>
-                    <ArrowTopRightOnSquareIcon className="w-4 h-4" />
-                  </ExternalLink>
-                </div>
-              ) : null}
-              {grantData.map((data) =>
-                data.stat ? (
-                  <div
-                    key={data.title}
-                    className="flex flex-row items-center justify-between gap-2"
-                  >
-                    <h4
-                      className={
-                        "text-gray-500  font-semibold text-base dark:text-gray-300"
-                      }
-                    >
-                      {data.title}
-                    </h4>
-                    <p className={"text-base text-gray-900 dark:text-gray-100"}>
-                      {data.stat}
-                    </p>
-                  </div>
-                ) : null
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-      {/* Grant Overview End */}
-    </>
-  );
-};
-
-interface GrantImpactCriteriaProps {
-  grant: IGrantResponse | undefined;
-}
-
-const GrantImpactCriteria = ({ grant }: GrantImpactCriteriaProps) => {
-  const questions = grant?.details?.data.questions;
-  return (
-    <div className="space-y-5 max-w-prose">
-      {questions ? (
-        <div className="flex flex-col gap-4">
-          {questions.map((item) => (
-            <div
-              className="p-5 bg-white border border-gray-200 dark:bg-zinc-800 dark:border-zinc-600 rounded-xl text-base font-semibold  text-black dark:text-zinc-100"
-              key={item.query + item.explanation}
-            >
-              <h3>{item.query}</h3>
-              <p className="text-normal font-normal">{item.explanation}</p>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <p className="text-black dark:text-zinc-100">
-          {MESSAGES.GRANT.IMPACT_CRITERIA.EMPTY}
-        </p>
-      )}
-    </div>
   );
 };
