@@ -95,10 +95,10 @@ export const ProjectNavigator = ({
       {isAuthorized ? (
         <Button
           type="button"
-          className="w-max bg-brand-blue text-white px-4 py-2 rounded-lg mb-1"
+          className="w-max bg-brand-blue text-white px-4 py-2 rounded-lg"
           onClick={() => setIsProgressModalOpen(true)}
         >
-          Update Progress
+          Post an update
         </Button>
       ) : null}
     </div>
