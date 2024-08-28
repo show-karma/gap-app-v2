@@ -4,9 +4,9 @@ import {
   BadgeName,
   BadgeDescription,
   ReviewMode,
+  BadgeOfficial,
+  GrantStory,
 } from "@/types/review";
-import { BadgeOfficial } from "@/utilities/review/getBadge";
-import { GrantStory } from "@/utilities/review/getGrantStories";
 import { create } from "zustand";
 
 // TODO: Mock - Should remove this.
@@ -31,8 +31,6 @@ interface ReviewStore {
   // Mocks
   review: Review[];
   setReview: (review: Review[]) => void;
-  badgeList: Badge[][];
-  setBadgeList: (badgeList: Badge[][]) => void;
 
   /// UI
   isOpenReview: ReviewMode;
@@ -50,6 +48,7 @@ interface ReviewStore {
   setGrantUID: (grantUID: string | null) => void;
 }
 
+// TODO: Mock - Should remove this.
 const initialBadgeList: Badge[][] = [
   [
     {
@@ -312,6 +311,7 @@ const initialBadgeList: Badge[][] = [
   ],
 ];
 
+// TODO: Mock - Should remove this.
 const defaultReviews: Review[] = [
   {
     id: 0,
@@ -360,9 +360,6 @@ const defaultReviews: Review[] = [
 export const useReviewStore = create<ReviewStore>((set, get) => ({
   review: defaultReviews,
   setReview: (review: Review[]) => set((state) => ({ ...state, review })),
-  badgeList: initialBadgeList,
-  setBadgeList: (badgeList: Badge[][]) =>
-    set((state) => ({ ...state, badgeList })),
   isOpenReview: ReviewMode.READ,
   setIsOpenReview: (isOpenReview: ReviewMode) =>
     set((state) => ({ ...state, isOpenReview })),

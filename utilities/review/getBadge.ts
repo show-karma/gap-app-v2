@@ -3,13 +3,7 @@ import { createPublicClient, http } from "viem";
 import { arbitrum } from "viem/chains";
 import { BADGE_REGISTRY } from "./constants/constants";
 import { BADGE_REGISTRY_ABI } from "./constants/abi";
-export interface BadgeOfficial {
-  // TODO: Refactor this name to use Badge instead of BadgeOffical. Only used for now to don't crash the application with the used name 'Badge' for the mocks
-  name: string;
-  description: string;
-  metadata: string; // Image IPFS
-  data: string;
-}
+import { BadgeOfficial } from "@/types/review";
 
 const publicClient = createPublicClient({
   chain: arbitrum,

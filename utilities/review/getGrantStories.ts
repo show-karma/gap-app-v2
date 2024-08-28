@@ -3,14 +3,7 @@ import { createPublicClient, http } from "viem";
 import { arbitrum } from "viem/chains";
 import { RESOLVER_TRUSTFUL } from "./constants/constants";
 import { RESOLVER_TRUSTFUL_ABI } from "./constants/abi";
-
-export interface GrantStory {
-  timestamp: number;
-  txUID: string;
-  badgeIds: string[];
-  badgeScores: number[];
-  averageScore: number;
-}
+import { GrantStory } from "@/types/review";
 
 const publicClient = createPublicClient({
   chain: arbitrum,

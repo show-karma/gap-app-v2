@@ -3,20 +3,11 @@
 
 import { DynamicStarsReview } from "./DynamicStarsReview";
 import { useReviewStore } from "@/store/review";
-import { ReviewMode } from "@/types/review";
-import { BadgeOfficial } from "@/utilities/review/getBadge";
-import { GrantStory } from "@/utilities/review/getGrantStories";
+import { BadgeOfficial, GrantStory, ReviewMode } from "@/types/review";
+import { addPrefixToIPFSLink } from "@/utilities/review/constants/utilitary";
 
 export const CardReview = ({ storie }: { storie: GrantStory }) => {
   const badge = useReviewStore((state) => state.badge);
-
-  const addPrefixToIPFSLink = (link: string) => {
-    if (link.startsWith("ipfs://")) {
-      return link.replace("ipfs://", "https://ipfs.io/ipfs/");
-    } else {
-      return link;
-    }
-  };
 
   //TODO: Select latest badge by default
   return (
