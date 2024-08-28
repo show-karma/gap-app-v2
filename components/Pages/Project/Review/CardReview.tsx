@@ -1,60 +1,58 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { BadgeIcon } from "@/components/Icons/Badge";
 import { DynamicStarsReview } from "./DynamicStarsReview";
 import { useReviewStore } from "@/store/review";
-import { Badge, ReviewMode } from "@/types/review";
-import { useEffect } from "react";
-import { getBadge } from "@/utilities/review/getBadge";
+import { ReviewMode } from "@/types/review";
+import { BadgeOfficial } from "@/utilities/review/getBadge";
+import { GrantStory } from "@/utilities/review/getGrantStories";
 
-export const CardReview = ({ id }: { id: number }) => {
-  const review = useReviewStore((state) => state.review);
+export const CardReview = ({ storie }: { storie: GrantStory }) => {
+  const badge = useReviewStore((state) => state.badge);
 
-  const isReviewSelected = review.find((review) => review.id === id);
-  const reviews = isReviewSelected?.reviews || [];
+  const addPrefixToIPFSLink = (link: string) => {
+    if (link.startsWith("ipfs://")) {
+      return link.replace("ipfs://", "https://ipfs.io/ipfs/");
+    } else {
+      return link;
+    }
+  };
 
-  // Testing getBadge
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const badge = await getBadge(String(id));
-        console.log("badge", badge);
-      } catch (error) {
-        console.log("error");
-      }
-    };
-    fetchData();
-  }, [id]);
+  //TODO: Select latest badge by default
   return (
     <div className="flex w-full flex-col justify-center gap-4">
       <div className="w-full flex flex-col px-2 gap-2">
-        {reviews.map((badge: Badge, index: number) => (
-          <div key={index} className="flex flex-col w-full px-14 mt-4">
-            <div className="flex justify-center sm:justify-normal flex-col sm:flex-row w-full items-center gap-3">
-              <div>
-                <BadgeIcon badgeName={badge.name} className="w-20 h-20" />
-              </div>
-              <div className="flex flex-col sm:flex-row items-center gap-3">
-                <div className="order-2 sm:order-1">
-                  <div className="sm:text-lg sm:text-start text-center text-xl">
-                    {badge.name}
+        {badge &&
+          badge.map((badge: BadgeOfficial, index: number) => (
+            <div key={index} className="flex flex-col w-full px-14 mt-4">
+              <div className="flex justify-center sm:justify-normal flex-col sm:flex-row w-full items-center gap-3">
+                <img
+                  src={addPrefixToIPFSLink(badge.metadata)}
+                  alt="Badge Metadata"
+                  className="h-20"
+                />
+
+                <div className="flex flex-col sm:flex-row items-center gap-3">
+                  <div className="order-2 sm:order-1">
+                    <div className="sm:text-lg sm:text-start text-center text-xl">
+                      {badge.name}
+                    </div>
+                    <div className="sm:text-sm sm:text-start text-center">
+                      {badge.description}
+                    </div>
                   </div>
-                  <div className="sm:text-sm sm:text-start text-center">
-                    {badge.description}
+                  <div className="order-1 sm:order-2">
+                    <DynamicStarsReview
+                      totalStars={5}
+                      rating={storie.badgeScores[index]}
+                      setRating={() => {}}
+                      mode={ReviewMode.READ}
+                    />
                   </div>
-                </div>
-                <div className="order-1 sm:order-2">
-                  <DynamicStarsReview
-                    totalStars={5}
-                    rating={badge.score}
-                    setRating={() => {}}
-                    mode={ReviewMode.READ}
-                  />
                 </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))}
       </div>
     </div>
   );
