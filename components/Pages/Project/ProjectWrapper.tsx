@@ -35,6 +35,7 @@ import { ProgressDialog } from "@/components/Dialogs/ProgressDialog";
 import { errorManager } from "@/components/Utilities/errorManager";
 
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import { fetchFromLocalApi } from "@/utilities/fetchFromServer";
 
 interface ProjectWrapperProps {
   project: IProjectResponse;
@@ -59,6 +60,9 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   );
 
   const router = useRouter();
+  fetchFromLocalApi<IProjectResponse>(
+    `/metadata?type=project&uid=${projectId}`
+  ).then((res) => console.log(res));
 
   useEffect(() => {
     setProject(project);
