@@ -8,8 +8,7 @@ import { Metadata } from "next";
 
 import { zeroUID } from "@/utilities/commons";
 import { defaultMetadata } from "@/utilities/meta";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { fetchFromLocalApi } from "@/utilities/fetchFromServer";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 
 export async function generateMetadata({
   params,
@@ -20,9 +19,10 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const projectId = params?.projectId as string;
 
-  const projectInfo = await fetchFromLocalApi<IProjectResponse>(
-    `/metadata?type=project&uid=${projectId}`
-  );
+  const projectInfo = await gapIndexerApi
+    .projectBySlug(projectId)
+    .then((res) => res.data)
+    .catch(() => notFound());
 
   if (projectInfo?.uid === zeroUID || !projectInfo) {
     notFound();

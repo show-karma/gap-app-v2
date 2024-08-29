@@ -21,10 +21,10 @@ export const useGrantStore = create<GrantStore>((set, get) => ({
     set({ loading: true });
     try {
       const refreshedGrant = await gapIndexerApi
-        .grantsBySlug(grant.uid)
+        .grantBySlug(grant.uid)
         .then((res) => res.data);
-      set({ grant: refreshedGrant[0], loading: false });
-      return refreshedGrant[0];
+      set({ grant: refreshedGrant, loading: false });
+      return refreshedGrant;
     } catch (error) {
       console.error("Failed to refresh grant:", error);
       set({ loading: false });

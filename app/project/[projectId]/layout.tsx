@@ -7,8 +7,6 @@ import { zeroUID } from "@/utilities/commons";
 import { defaultMetadata } from "@/utilities/meta";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { fetchFromLocalApi } from "@/utilities/fetchFromServer";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 
 export async function generateMetadata({
@@ -17,9 +15,11 @@ export async function generateMetadata({
   params: { projectId: string };
 }) {
   const projectId = params.projectId;
-  const projectInfo = await fetchFromLocalApi<IProjectResponse>(
-    `/metadata?type=project&uid=${projectId}`
-  );
+
+  const projectInfo = await gapIndexerApi
+    .projectBySlug(projectId)
+    .then((res) => res.data)
+    .catch(() => notFound());
 
   if (!projectInfo || projectInfo?.uid === zeroUID) {
     notFound();
@@ -82,9 +82,6 @@ export default async function RootLayout({
   children: React.ReactNode;
   params: { projectId: string };
 }) {
-  // const project = await fetchFromLocalApi<IProjectResponse>(
-  //   `/metadata?type=project&uid=${projectId}`
-  // ).catch(() => notFound());
   const project = await gapIndexerApi
     .projectBySlug(projectId)
     .then((res) => res.data)

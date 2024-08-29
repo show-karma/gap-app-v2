@@ -26,7 +26,7 @@ export const getMetadata = async <T>(
     }
     if (type === "grant") {
       const grant = await gapIndexerApi
-        .grantsBySlug(uid)
+        .grantBySlug(uid)
         .then((res) => res.data)
         .catch(() => undefined);
       return grant as T;

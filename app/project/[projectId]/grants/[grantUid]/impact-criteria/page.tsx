@@ -1,6 +1,7 @@
 import { GrantImpactCriteria } from "@/components/Pages/Grants/ImpactCriteria";
 import { zeroUID } from "@/utilities/commons";
 import { fetchFromLocalApi } from "@/utilities/fetchFromServer";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { defaultMetadata } from "@/utilities/meta";
 import {
   IGrantResponse,
@@ -20,9 +21,10 @@ export async function generateMetadata({
   const projectId = params?.projectId as string;
   const grantUid = params?.grantUid as string;
 
-  const projectInfo = await fetchFromLocalApi<IProjectResponse>(
-    `/metadata?type=project&uid=${projectId}`
-  );
+  const projectInfo = await gapIndexerApi
+    .projectBySlug(projectId as `0x${string}`)
+    .then((res) => res.data)
+    .catch(() => notFound());
 
   if (projectInfo?.uid === zeroUID || !projectInfo) {
     notFound();
@@ -35,9 +37,10 @@ export async function generateMetadata({
     icons: defaultMetadata.icons,
   };
   if (grantUid) {
-    const grantInfo = await fetchFromLocalApi<IGrantResponse>(
-      `/metadata?type=grant&uid=${grantUid}`
-    );
+    const grantInfo = await gapIndexerApi
+      .grantBySlug(grantUid as `0x${string}`)
+      .then((res) => res.data)
+      .catch(() => notFound());
     if (grantInfo) {
       const pageMetadata = {
         title: `Karma GAP - ${projectInfo?.details?.data?.title} - ${grantInfo?.details?.data?.title} grant impact criteria`,
