@@ -1,25 +1,21 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import React, { Dispatch, useMemo } from "react";
-import { useState, useEffect } from "react";
-import { CheckIcon } from "@heroicons/react/24/solid";
-import { Spinner } from "@/components/Utilities/Spinner";
-import debounce from "lodash.debounce";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { useAccount, useChainId } from "wagmi";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { errorManager } from "@/components/Utilities/errorManager";
+import React from "react";
+import { useState, } from "react";
+import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
-import { useGap } from "@/hooks";
 import { TransactionLink } from "@/components/Utilities/TransactionLink";
 import axios from "axios";
 import { formatEther } from "viem";
 import { donationsByApplicationQuery } from "@/utilities/allo-v2-queries/donationsByApplication";
 import { applicationsQuery } from "@/utilities/allo-v2-queries/applications";
 import { envVars } from "@/utilities/enviromentVars";
-import { getGitcoinAirdropContractConfig } from "@/utilities/getGitcoinAirdropContractConfig";
 import { useWriteContract, useReadContract, } from "wagmi";
+import { NetworkDropdown } from "@/components/Dialogs/ProjectDialog/NetworkDropdown";
+import { appNetwork, getChainNameById } from "@/utilities/network";
+import AirdropNFTABI from "@show-karma/karma-gap-sdk/core/abi/AirdropNFT.json"
+import { Networks } from "@show-karma/karma-gap-sdk";
+import toast from "react-hot-toast";
 
 async function getGitcoinDonations(
     chainId: number,
@@ -54,11 +50,10 @@ async function getProjectDetails(chainId: number, applicationId: string, roundId
 
 const PlatformFeeNote = () => {
     const chainId = useChainId()
-    const { address, abi } = getGitcoinAirdropContractConfig()
     const { data: platformFee }: any = useReadContract({
         chainId,
-        address: address(chainId) as `0x${string}`,
-        abi,
+        address: Networks[getChainNameById(chainId)]?.contracts?.airdropNFT as `0x${string}`,
+        abi: AirdropNFTABI,
         functionName: "PLATFORM_FEE"
     })
 
@@ -78,10 +73,14 @@ function MintNFTs({
 }) {
     const [fileUploading, setFileUploading] = useState(false);
     const [imageIPFSHash, setImageIPFSHash] = useState<string | null>(null);
+    const [chainSelected, setChainSelected] = useState<number>(
+        envVars.isDev ? 84532 : 42161 // 84532 is base sepolia, 42161 is arbitrum
+    );
     const [metadataIPFSHash, setMetadataIPFSHash] = useState<string | null>(null);
     const [metadata, setMetadata] = useState<any>(null)
     const [customDescription, setCustomDescription] = useState("");
-    const { writeContract, data: txData, isPending: isMinting, error: mintError } = useWriteContract()
+    const { writeContract, data: txData, isPending: isMinting, error: mintError, isSuccess, } = useWriteContract()
+    const { switchChainAsync } = useSwitchChain();
 
     const chainId = useChainId()
 
@@ -144,12 +143,17 @@ function MintNFTs({
             return;
         }
 
+
+        if (chainId !== chainSelected) {
+            await switchChainAsync?.({ chainId: chainSelected });
+
+        }
+
         try {
             console.log("Minting NFTs for", donations.length, "donors with IPFS hash:", metadataIPFSHash);
-            const { address, abi } = getGitcoinAirdropContractConfig()
             const tx = writeContract({
-                address: address(chainId) as `0x${string}`,
-                abi,
+                address: Networks[getChainNameById(chainId)]?.contracts?.airdropNFT as `0x${string}`,
+                abi: AirdropNFTABI,
                 functionName: "mintNFTsToContributors",
                 args: [
                     `${projectDetails.chainId}_${projectDetails.roundId}_${projectDetails.id}`,
@@ -160,13 +164,14 @@ function MintNFTs({
             });
 
             if (mintError) {
-                alert("Error minting NFTs: " + mintError?.message);
+                toast.error(mintError.message.includes("insufficient funds") ? "Insufficient funds for transaction" : mintError.message.includes("Project already exists") ? "Project already minted" : mintError.message)
             }
-            console.log("Transaction sent:", tx, txData, isMinting, mintError);
         } catch (error) {
             console.error("Error minting NFTs:", error);
         }
     };
+
+
 
     return (
         <div className="flex flex-row items-start gap-4 w-full h-full mx-auto mt-3 p-5 bg-gray-100 dark:bg-gray-800 rounded-xl">
@@ -175,6 +180,20 @@ function MintNFTs({
                 <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
                     Choose an image/file for the NFT, add a custom message, and mint it for all your contributors.
                 </p>
+
+                <div className="flex w-full flex-col gap-2 border-b border-zinc-200 dark:border-zinc-700 pb-3 mb-2 mt-2">
+                    <label htmlFor="chain-id-input" className="block text-sm font-bold text-gray-700 dark:text-gray-300">
+                        Choose a network
+                    </label>
+                    <div className="w-fit shadow-md">
+                        <NetworkDropdown
+                            onSelectFunction={(networkId) => {
+                                setChainSelected(networkId)
+                            }}
+                            networks={appNetwork}
+                            previousValue={chainSelected}
+                        /></div>
+                </div>
 
                 <div className="mb-2">
                     <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
@@ -218,14 +237,20 @@ function MintNFTs({
                 )}
                 <button
                     onClick={handleMintNFTs}
-                    disabled={!imageIPFSHash || isMinting}
+                    disabled={!imageIPFSHash || isMinting || isSuccess}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed mb-2"
                 >
-                    {isMinting ? "Minting..." : "Mint NFTs to Contributors"}
+                    {isMinting ? "Minting..." : isSuccess ? "NFTs minted successfully!" : "Mint NFTs to Contributors"}
                 </button>
-                <p className="text-sm text-gray-600 dark:text-gray-300">
+                {isSuccess && <p className="text-green-500 text-sm">
+                    View transaction on <TransactionLink chainId={chainId} transactionHash={txData} />
+                </p>}
+                {mintError && <p className="text-red-500 text-sm">
+                    {mintError.message.includes("insufficient funds") ? "Insufficient funds for transaction" : mintError.message.includes("Project already exists") ? "Project already minted" : mintError.message}
+                </p>}
+                <div className="text-sm text-gray-600 dark:text-gray-300">
                     <PlatformFeeNote />
-                </p>
+                </div>
             </div>
             <div className="w-1/2 h-full ">
                 {fileUploading ? (
@@ -355,7 +380,6 @@ export const GitcoinAirdropsManager = () => {
                                 src={`/api/img-proxy?url=https://gateway.pinata.cloud/ipfs/${projectData?.details?.project?.metadata?.logoImg}`}
                                 alt="Project Logo"
                                 className="w-20 h-20 rounded-full object-cover"
-
                             />
                             <div>
                                 <p className="text-2xl font-bold">{projectData?.details?.project?.metadata?.title || "N/A"}</p>
