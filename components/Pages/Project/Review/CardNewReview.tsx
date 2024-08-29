@@ -3,47 +3,58 @@
 import toast from "react-hot-toast";
 import { useEffect } from "react";
 import { useReviewStore } from "@/store/review";
+import { useSearchParams } from "next/navigation";
 
-import { encodeFunctionData, getContract, Hex } from "viem";
+import { Hex } from "viem";
 import { arbitrum } from "viem/chains";
 import { useAccount, useSwitchChain } from "wagmi";
-import { getWalletClient } from "@wagmi/core";
 
 import { ReviewMode, Badge } from "@/types/review";
 import { Button } from "@/components/Utilities/Button";
 import { DynamicStarsReview } from "./DynamicStarsReview";
 
 import { AbiCoder } from "ethers";
-import { ARB_ONE_SCHEMA_REGISTRY } from "@/utilities/review/constants/constants";
+import { KARMA_EAS_SCHEMA_UID } from "@/utilities/review/constants/constants";
 import { addPrefixToIPFSLink } from "@/utilities/review/constants/utilitary";
 import { submitAttest } from "@/utilities/review/attest";
+import { Spinner } from "@/components/Utilities/Spinner";
 
-export const CardNewReview = () => {
+export const CardNewReview = ({
+  activeBadges,
+  activeBadgeIds,
+}: {
+  activeBadges: Badge[];
+  activeBadgeIds: Hex[];
+}) => {
   const setIsOpenReview = useReviewStore((state: any) => state.setIsOpenReview);
-  const badges = useReviewStore((state: any) => state.badges);
-  const stories = useReviewStore((state: any) => state.stories);
   const setBadgeScores = useReviewStore((state: any) => state.setBadgeScores);
   const badgeScores = useReviewStore((state: any) => state.badgeScores);
   const grantUID = useReviewStore((state: any) => state.grantUID);
+  const setGrantUID = useReviewStore((state: any) => state.setGrantUID);
   const { address, chainId } = useAccount();
   const { switchChain } = useSwitchChain();
+  const searchParams = useSearchParams();
 
   useEffect(() => {
-    setBadgeScores(Array(badges.length).fill(1));
-  }, []);
-
-  // Grab all recent badges and save on state
-  // const handleStoryBadges = async () => {
-  //   const badgeIds = await getBadgeIds(SCORER_ID);
-  //   const badges = await Promise.all(badgeIds.map((id) => getBadge(id)));
-  //   setBadges(badges);
-  // };
+    // Fill the starts with a score of 1 when the badges render
+    if (activeBadges) {
+      setBadgeScores(Array(activeBadges.length).fill(1));
+    }
+    const grantIdFromQueryParam = searchParams?.get("grantId");
+    if (grantIdFromQueryParam) {
+      setGrantUID(grantIdFromQueryParam);
+    }
+  }, [activeBadges]);
 
   // Score of the new review
   const handleSetRating = (index: number, rating: number) => {
-    const updatededBadges = [...badgeScores];
-    updatededBadges[index] = rating;
-    setBadgeScores(updatededBadges);
+    if (rating >= 1 || rating <= 5) {
+      const updatededBadges = [...badgeScores];
+      updatededBadges[index] = rating;
+      setBadgeScores(updatededBadges);
+    } else {
+      toast.error("Invalid rating. Can only score between 1 and 5");
+    }
   };
 
   // TODO: Should create the submit to blockchain
@@ -58,16 +69,22 @@ export const CardNewReview = () => {
       toast.error("Must connect to Arbitrum to review");
     }
 
+    if (activeBadges.length !== badgeScores.length) {
+      toast.error(
+        "Different number of badges and scores. Code should be unreachable, contact the team!",
+      );
+    }
+
     // Encode the data
     const abiCoder = new AbiCoder();
     const encodedData = abiCoder.encode(
       ["bytes32", "bytes32[]", "uint8[]"],
-      [grantUID, , badgeScores], // badgeIds[] state goes in the middle
+      [grantUID, activeBadgeIds, badgeScores],
     );
 
     const response = await submitAttest(
       address,
-      ARB_ONE_SCHEMA_REGISTRY,
+      KARMA_EAS_SCHEMA_UID,
       address,
       BigInt(0),
       false,
@@ -78,40 +95,52 @@ export const CardNewReview = () => {
     console.log(response);
 
     toast.success("Review submitted successfully!");
-    setBadgeScores(Array(badges.length).fill(1));
+    setBadgeScores(Array(activeBadges.length).fill(1));
     setIsOpenReview(ReviewMode.READ);
   };
 
   return (
     <div className="flex w-full flex-col justify-center gap-4">
       <div className="w-full flex flex-col px-2 gap-2">
-        {badges &&
-          badges.map((badge: Badge, index: number) => (
-            <div key={index} className="flex flex-col w-full px-14 mt-4">
+        {activeBadges ? (
+          activeBadges.map((badge: Badge, index: number) => (
+            <div key={index} className="flex flex-col w-full sm:pr-14 mt-4">
               <div className="flex justify-center sm:justify-normal flex-col sm:flex-row w-full items-center gap-3">
                 <img
                   src={addPrefixToIPFSLink(badge.metadata)}
                   alt="Badge Metadata"
                   className="h-20"
                 />
-                <div className="text-sm order-2 sm:order-1 sm:text-start text-center">
-                  {badge.description}
-                </div>
-                <div className="order-1 sm:order-2">
-                  <DynamicStarsReview
-                    totalStars={5}
-                    rating={badgeScores[index]}
-                    setRating={(rating) => handleSetRating(index, rating)}
-                    mode={ReviewMode.WRITE}
-                  />
+                <div className="flex flex-col sm:flex-row items-center gap-3">
+                  <div className="order-2 sm:order-1">
+                    <div className="sm:text-lg sm:text-start text-center text-xl">{badge.name}</div>
+                    <div className="text-sm order-2 sm:order-1 sm:text-start text-center">
+                      {badge.description}
+                    </div>
+                  </div>
+                  <div className="order-1 sm:order-2">
+                    <DynamicStarsReview
+                      totalStars={5}
+                      rating={badgeScores[index]}
+                      setRating={(rating) => handleSetRating(index, rating)}
+                      mode={ReviewMode.WRITE}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
-          ))}
+          ))
+        ) : (
+          <div className="space-y-5 flex w-full flex-row items-center justify-start">
+            <Spinner />
+          </div>
+        )}
       </div>
-      <div className="flex justify-end w-full">
-        <Button onClick={handleSubmitReview}>Submit Review</Button>
-      </div>
+      {activeBadges && (
+        <div className="sm:flex-row sm:items-center justify-center flex sm:justify-end w-full sm:pr-14 mt-4">
+          <Button onClick={handleSubmitReview}>Submit Review</Button>
+        </div>
+      )}
     </div>
   );
 };
