@@ -38,7 +38,6 @@ export const NavbarReview = () => {
         "0x635c2d0642c81e3191e6eff8623ba601b7e22e832d7791712b6bc28d052ff2b5", // TODO: Remove this hardcoded value
         // grantUID ? grantUID : grantIdFromQueryParam
       );
-      console.log("grantStories", grantStories);
       setStories(grantStories);
     };
     fetchGrantStories();
@@ -58,13 +57,12 @@ export const NavbarReview = () => {
     fetchData();
   }, []);
 
-  console.log("stories", stories);
   return (
     <div className="w-full flex flex-col">
       <div className="w-full flex px-2 gap-2 overflow-x-auto pb-4 relative scroller">
         {stories &&
           stories
-            .sort((a: any, b: any) => b.timestamp - a.timestamp)
+            .sort((a: any, b: any) => Number(b.timestamp) - Number(a.timestamp))
             .map((storie: GrantStory, index: number) => (
               <div
                 key={index}

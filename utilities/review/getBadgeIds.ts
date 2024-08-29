@@ -32,14 +32,14 @@ export async function getBadgeIds(scorerId: number): Promise<Hex[]> {
   };
 
   try {
-    const grantStory = await readContract(publicClient, {
+    const badgeIds = await readContract(publicClient, {
       address: TRUSTFUL_SCORER,
       functionName: "getBadgesIds", // TODO rename to getBadgeIds
       abi: [abi],
       args: [scorerId],
     });
 
-    return grantStory as Hex[];
+    return badgeIds as Hex[];
   } catch (error) {
     throw new Error(`Error when reading the contract. ${error}`);
   }

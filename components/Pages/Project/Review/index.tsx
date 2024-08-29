@@ -31,14 +31,17 @@ interface GrantAllReviewsProps {
 export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
   const isProjectLoading = useProjectStore((state: any) => state.loading);
   if (isProjectLoading || !grant) {
-    <div className="space-y-5 flex w-full flex-row items-center justify-start">
+    <div className="space-y-5 flex w-full flex-row items-center justify-center">
       <Spinner />
     </div>;
   }
   const project = useProjectStore((state: any) => state.project);
   const isOpenReview = useReviewStore((state: any) => state.isOpenReview);
   const setIsOpenReview = useReviewStore((state: any) => state.setIsOpenReview);
-  const setBadges = useReviewStore((state: any) => state.setBadges);
+
+  const setActiveBadges = useReviewStore((state: any) => state.setActiveBadges);
+  const setActiveBadgeIds = useReviewStore((state: any) => state.setActiveBadgeIds);
+
   const { openConnectModal } = useConnectModal();
   const { isConnected, address, chainId } = useAccount();
   const { switchChain } = useSwitchChain();
@@ -52,8 +55,17 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
         toast.error("Must connect to Arbitrum to review");
       } else {
         setIsOpenReview(ReviewMode.WRITE);
+        handleStoryBadges();
       }
     }
+  };
+
+  // Grab all recent badges and save on state
+  const handleStoryBadges = async () => {
+    const badgeIds = await getBadgeIds(SCORER_ID);
+    const badges = await Promise.all(badgeIds.map((id) => getBadge(id)));
+    setActiveBadgeIds(badgeIds);
+    setActiveBadges(badges);
   };
 
   return (
@@ -109,7 +121,7 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
                     )}
                   </div>
                   <div>
-                    <p>Aggregate a reputation to a grants program</p>
+                    <p>Review your favorite Grant Program!</p>
                   </div>
                 </div>
                 <NavbarReview />
