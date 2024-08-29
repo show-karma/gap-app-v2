@@ -1,4 +1,4 @@
-import { ReviewMode, BadgeOfficial, GrantStory } from "@/types/review";
+import { ReviewMode, Badge, GrantStory } from "@/types/review";
 import { create } from "zustand";
 
 interface ReviewStore {
@@ -12,8 +12,8 @@ interface ReviewStore {
   stories: GrantStory[] | null;
   setStories: (stories: GrantStory[] | null) => void;
 
-  badge: BadgeOfficial[] | null;
-  setBadge: (badge: BadgeOfficial[] | null) => void;
+  badge: Badge[] | null;
+  setBadge: (badge: Badge[] | null) => void;
 
   grantUID: string | null;
   setGrantUID: (grantUID: string | null) => void;
@@ -34,8 +34,7 @@ export const useReviewStore = create<ReviewStore>((set, get) => ({
   setStories: (stories: GrantStory[] | null) =>
     set((state) => ({ ...state, stories })),
   badge: null,
-  setBadge: (badge: BadgeOfficial[] | null) =>
-    set((state) => ({ ...state, badge })),
+  setBadge: (badge: Badge[] | null) => set((state) => ({ ...state, badge })),
   grantUID: null,
   setGrantUID: (grantUID: string | null) =>
     set((state) => ({ ...state, grantUID })),

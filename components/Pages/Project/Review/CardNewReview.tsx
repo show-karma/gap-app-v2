@@ -4,7 +4,7 @@
 import { Button } from "@/components/Utilities/Button";
 import { DynamicStarsReview } from "./DynamicStarsReview";
 import { useReviewStore } from "@/store/review";
-import { ReviewMode, BadgeOfficial } from "@/types/review";
+import { ReviewMode, Badge } from "@/types/review";
 import toast from "react-hot-toast";
 import { AttestationRequestData, submitAttest } from "@/utilities/attest";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
@@ -137,7 +137,7 @@ export const CardNewReview = () => {
     <div className="flex w-full flex-col justify-center gap-4">
       <div className="w-full flex flex-col px-2 gap-2">
         {badge &&
-          badge.map((badge: BadgeOfficial, index: number) => (
+          badge.map((badge: Badge, index: number) => (
             <div key={index} className="flex flex-col w-full px-14 mt-4">
               <div className="flex justify-center sm:justify-normal flex-col sm:flex-row w-full items-center gap-3">
                 <img

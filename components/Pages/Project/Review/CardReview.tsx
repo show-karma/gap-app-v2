@@ -3,7 +3,7 @@
 
 import { DynamicStarsReview } from "./DynamicStarsReview";
 import { useReviewStore } from "@/store/review";
-import { BadgeOfficial, GrantStory, ReviewMode } from "@/types/review";
+import { Badge, GrantStory, ReviewMode } from "@/types/review";
 import { addPrefixToIPFSLink } from "@/utilities/review/constants/utilitary";
 
 export const CardReview = ({ storie }: { storie: GrantStory }) => {
@@ -14,7 +14,7 @@ export const CardReview = ({ storie }: { storie: GrantStory }) => {
     <div className="flex w-full flex-col justify-center gap-4">
       <div className="w-full flex flex-col px-2 gap-2">
         {badge &&
-          badge.map((badge: BadgeOfficial, index: number) => (
+          badge.map((badge: Badge, index: number) => (
             <div key={index} className="flex flex-col w-full px-14 mt-4">
               <div className="flex justify-center sm:justify-normal flex-col sm:flex-row w-full items-center gap-3">
                 <img
