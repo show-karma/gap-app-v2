@@ -7,8 +7,6 @@ import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 import { TransactionLink } from "@/components/Utilities/TransactionLink";
 import axios from "axios";
 import { formatEther } from "viem";
-import { donationsByApplicationQuery } from "@/utilities/allo-v2-queries/donationsByApplication";
-import { applicationsQuery } from "@/utilities/allo-v2-queries/applications";
 import { envVars } from "@/utilities/enviromentVars";
 import { useWriteContract, useReadContract, } from "wagmi";
 import { NetworkDropdown } from "@/components/Dialogs/ProjectDialog/NetworkDropdown";
@@ -16,47 +14,51 @@ import { appNetwork, getChainNameById } from "@/utilities/network";
 import AirdropNFTABI from "@show-karma/karma-gap-sdk/core/abi/AirdropNFT.json"
 import { Networks } from "@show-karma/karma-gap-sdk";
 import toast from "react-hot-toast";
+import { getGitcoinDonations } from "@/utilities/allo/getGitcoinDonations";
+import { getProjectDetails } from "@/utilities/allo/getProjectDetails";
+import { errorManager } from "@/components/Utilities/errorManager";
 
-async function getGitcoinDonations(
-    chainId: number,
-    applicationId: string,
+
+type ProjectApplicationData = {
+    project: {
+        metadata: {
+            title: string
+            logoImg: string
+        }
+    },
+    totalAmountDonatedInUsd: string
+    uniqueDonorsCount: number
+    chainId: number
     roundId: string
-) {
-    const donations = await axios.post("https://grants-stack-indexer-v2.gitcoin.co/graphql", donationsByApplicationQuery(
-        chainId,
-        applicationId,
-        roundId
-    )).then((res) => res.data.data.donations).catch((err) => {
-        console.log("error", err)
-        return []
-    })
+    id: string
+};
 
-    return donations
+type DonationData = {
+    donorAddress: string
+    amountInUsd: string
+    transactionHash: string
+    chainId: number
 }
 
-async function getProjectDetails(chainId: number, applicationId: string, roundId: string) {
-    const projectDetails = await axios.post("https://grants-stack-indexer-v2.gitcoin.co/graphql", applicationsQuery(
-        chainId,
-        applicationId,
-        roundId
-    )).then((res) => res.data.data.applications[0]).catch((err) => {
-        console.log("error", err)
-        return null
-    })
-
-    return projectDetails
+type Metadata = {
+    name: string
+    description: string
+    image: string
+    attributes: {
+        trait_type: string
+        value: string
+    }[]
 }
 
 
-const PlatformFeeNote = () => {
-    const chainId = useChainId()
-    const { data: platformFee }: any = useReadContract({
-        chainId,
-        address: Networks[getChainNameById(chainId)]?.contracts?.airdropNFT as `0x${string}`,
-        abi: AirdropNFTABI,
-        functionName: "PLATFORM_FEE"
-    })
 
+const PlatformFeeNote = (
+    {
+        platformFee
+    }: {
+        platformFee: bigint
+    }
+) => {
     return (
         <p className="text-sm text-gray-600 dark:text-gray-300">
             Note: A platform fee of {platformFee ? formatEther(platformFee) : "N/A"} ETH will be charged, excluding gas fees.
@@ -68,8 +70,8 @@ function MintNFTs({
     projectDetails,
     donations
 }: {
-    projectDetails: any,
-    donations: any
+    projectDetails: ProjectApplicationData,
+    donations: DonationData[]
 }) {
     const [fileUploading, setFileUploading] = useState(false);
     const [imageIPFSHash, setImageIPFSHash] = useState<string | null>(null);
@@ -77,12 +79,20 @@ function MintNFTs({
         envVars.isDev ? 84532 : 42161 // 84532 is base sepolia, 42161 is arbitrum
     );
     const [metadataIPFSHash, setMetadataIPFSHash] = useState<string | null>(null);
-    const [metadata, setMetadata] = useState<any>(null)
+    const [metadata, setMetadata] = useState<Metadata | null>(null)
     const [customDescription, setCustomDescription] = useState("");
-    const { writeContract, data: txData, isPending: isMinting, error: mintError, isSuccess, } = useWriteContract()
+
     const { switchChainAsync } = useSwitchChain();
 
     const chainId = useChainId()
+    const { data: platformFee }: any = useReadContract({
+        chainId,
+        address: Networks[getChainNameById(chainId)]?.contracts?.airdropNFT as `0x${string}`,
+        abi: AirdropNFTABI,
+        functionName: "PLATFORM_FEE"
+    })
+    const { writeContract: mintNFTs, data: txData, isPending: isMinting, error: mintError, isSuccess, } = useWriteContract()
+
 
     const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files[0]) {
@@ -97,7 +107,6 @@ function MintNFTs({
                 }
             }).then(async (response) => {
                 setImageIPFSHash(response.data.IpfsHash);
-                console.log('File uploaded to IPFS with hash:', response.data.IpfsHash);
 
                 const defaultDescription = `This NFT is issued to honor and recognize your invaluable support of donors who have generously funded ${projectDetails.project.metadata.title}, symbolizing their crucial role in driving impactful change.`;
                 const fullDescription = customDescription ? `${customDescription} \n|\n ${defaultDescription}` : defaultDescription;
@@ -122,16 +131,13 @@ function MintNFTs({
                 }).then((metadataResponse) => {
                     setMetadata(metadata)
                     setMetadataIPFSHash(metadataResponse.data.IpfsHash);
-                    console.log('Metadata uploaded to IPFS with hash:', metadataResponse.data.IpfsHash);
                     setFileUploading(false);
                 }).catch((err) => {
-                    console.log("error", err)
-                    console.error('Failed to upload to IPFS');
+                    errorManager("Error uploading to IPFS", err)
                     setFileUploading(false);
                 })
             }).catch((err) => {
-                console.log("error", err)
-                console.error('Error uploading to IPFS:', err);
+                errorManager("Error uploading to IPFS", err)
                 setFileUploading(false);
             })
         }
@@ -150,8 +156,8 @@ function MintNFTs({
         }
 
         try {
-            console.log("Minting NFTs for", donations.length, "donors with IPFS hash:", metadataIPFSHash);
-            const tx = writeContract({
+            console.log("Minting NFTs for", donations.length, "contributors with IPFS hash:", metadataIPFSHash);
+            mintNFTs({
                 address: Networks[getChainNameById(chainId)]?.contracts?.airdropNFT as `0x${string}`,
                 abi: AirdropNFTABI,
                 functionName: "mintNFTsToContributors",
@@ -160,22 +166,24 @@ function MintNFTs({
                     `ipfs://${metadataIPFSHash}`,
                     Array.from(new Set(donations.map((donation: any) => donation.donorAddress)))
                 ],
-                value: BigInt(1000)
+                value: BigInt(
+                    platformFee ? platformFee : 0
+                )
             });
 
             if (mintError) {
                 toast.error(mintError.message.includes("insufficient funds") ? "Insufficient funds for transaction" : mintError.message.includes("Project already exists") ? "Project already minted" : mintError.message)
             }
         } catch (error) {
-            console.error("Error minting NFTs:", error);
+            errorManager("Error minting NFTs", error)
         }
     };
 
 
 
     return (
-        <div className="flex flex-row items-start gap-4 w-full h-full mx-auto mt-3 p-5 bg-gray-100 dark:bg-gray-800 rounded-xl">
-            <div className="flex flex-col justify-between items-between w-1/2 h-full pr-4">
+        <div className="flex flex-col md:flex-row items-start gap-4 w-full h-full mx-auto mt-3 p-5 bg-gray-100 dark:bg-gray-800 rounded-xl">
+            <div className="flex flex-col justify-between items-between w-full md:w-1/2 h-full md:pr-4">
                 <h2 className="text-xl font-bold text-black dark:text-white mb-2">Mint NFTs for {projectDetails.uniqueDonorsCount} contributors, across {donations.length} donations</h2>
                 <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
                     Choose an image/file for the NFT, add a custom message, and mint it for all your contributors.
@@ -226,12 +234,12 @@ function MintNFTs({
                     <div className="text-sm mb-4 bg-gray-100 dark:bg-gray-700 my-2 rounded-md">
                         <p className="font-semibold mb-2">Metadata:</p>
                         <div className="bg-gray-100 text-zinc-800 dark:bg-gray-700 py-2 rounded-md">
-                            <div className="grid grid-cols-2 gap-2">
+                            {metadata && <div className="grid grid-cols-2 gap-2">
                                 <div className="font-medium">NFT Name:</div>
                                 <div>{metadata.name}</div>
                                 <div className="font-medium">NFT Description:</div>
                                 <div>{metadata.description}</div>
-                            </div>
+                            </div>}
                         </div>
                     </div>
                 )}
@@ -249,10 +257,10 @@ function MintNFTs({
                     {mintError.message.includes("insufficient funds") ? "Insufficient funds for transaction" : mintError.message.includes("Project already exists") ? "Project already minted" : mintError.message}
                 </p>}
                 <div className="text-sm text-gray-600 dark:text-gray-300">
-                    <PlatformFeeNote />
+                    <PlatformFeeNote platformFee={platformFee} />
                 </div>
             </div>
-            <div className="w-1/2 h-full ">
+            <div className="w-full md:w-1/2 h-full mt-4 md:mt-0">
                 {fileUploading ? (
                     <div className="w-full min-h-80   flex items-center justify-center bg-gray-200 dark:bg-gray-700 rounded-xl">
                         <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500">
@@ -275,24 +283,24 @@ function MintNFTs({
 }
 
 
-
-
-
 export const GitcoinAirdropsManager = () => {
-    const { address, isConnected } = useAccount();
-    const { chain } = useAccount();
+    const itemsPerPage = 10;
 
     const [projectURL, setProjectURL] = useState("")
     const [loading, setLoading] = useState(false)
     const [page, setPage] = useState(1)
-    const [itemsPerPage, setItemsPerPage] = useState(10)
     const [totalPages, setTotalPages] = useState(0)
-    const [projectData, setProjectData] = useState<{ details: any, donations: any }>(
+    const [projectData, setProjectData] = useState<{
+        details: ProjectApplicationData | null, donations: DonationData[]
+    }>(
         {
             details: null,
             donations: []
         }
     )
+
+    const { address } = useAccount()
+
 
     async function handleGitcoinDataFetch() {
         setLoading(true);
@@ -319,13 +327,13 @@ export const GitcoinAirdropsManager = () => {
     }
 
     return (
-        <section className="my-8 flex container mx-auto flex-col justify-between items-center gap-6 px-6 pb-7 max-2xl:px-4 max-md:px-4 max-md:pt-0 max-md:my-4">
+        <section className="my-8 flex container mx-auto flex-col justify-between items-center gap-6 px-4 pb-7 max-md:pt-0 max-md:my-4">
             <div className="flex flex-col w-full gap-3">
                 <div className="flex flex-[3] flex-col gap-3 items-start justify-start text-left max-lg:gap-1">
                     <h1 className="text-2xl tracking-[-0.72px] 2xl:text-4xl font-bold text-start text-black dark:text-white max-lg:tracking-normal">
                         {`Airdrop NFTs for your gitcoin round contributors!`}
                     </h1>
-                    <p className="text-start text-lg max-lg:text-base max-w-5xl text-black dark:text-white">
+                    <p className="text-start text-base md:text-lg max-w-5xl text-black dark:text-white">
                         Get started with Gitcoin supporter airdrops now!
                     </p>
                 </div>
@@ -351,14 +359,18 @@ export const GitcoinAirdropsManager = () => {
                     />
                 </div>
 
-                <button className="border-2 border-blue-500 text-blue-500 flex items-center gap-2 px-4 py-3 rounded-md mt-4" onClick={handleGitcoinDataFetch}>
+                <button
+                    className={`border-2 border-blue-500 text-blue-500 flex items-center gap-2 px-4 py-3 rounded-md mt-4 ${!address ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    onClick={handleGitcoinDataFetch}
+                    disabled={!address}
+                >
                     {loading ? (
                         <span>Loading...</span>
                     ) : (
-                        <>
+                        address ? <>
                             <img src="/logos/gitcoin.png" alt="Gitcoin Logo" className="w-5 h-5 inline-block mr-2" />
-                            <span>Retrieve project from Gitcoin</span>
-                        </>
+                            <span>Fetch project from Gitcoin</span>
+                        </> : <span>Connect wallet to get started</span>
                     )}
                 </button>
 
@@ -375,14 +387,14 @@ export const GitcoinAirdropsManager = () => {
                         <h2 className="text-xl font-semibold mb-4 text-black dark:text-white">
                             You have selected the following project:
                         </h2>
-                        <div className="flex justify-start gap-4 items-center bg-gray-100  dark:bg-gray-800 p-4 rounded-xl ">
+                        <div className="flex flex-col sm:flex-row justify-start gap-4 items-center bg-gray-100 dark:bg-gray-800 p-4 rounded-xl">
                             <img
                                 src={`/api/img-proxy?url=https://gateway.pinata.cloud/ipfs/${projectData?.details?.project?.metadata?.logoImg}`}
                                 alt="Project Logo"
                                 className="w-20 h-20 rounded-full object-cover"
                             />
-                            <div>
-                                <p className="text-2xl font-bold">{projectData?.details?.project?.metadata?.title || "N/A"}</p>
+                            <div className="text-center sm:text-left mt-2 sm:mt-0">
+                                <p className="text-xl sm:text-2xl font-bold">{projectData?.details?.project?.metadata?.title || "N/A"}</p>
                                 <p className="text-black dark:text-white"><strong>Funding received in round:</strong> {projectData.details?.totalAmountDonatedInUsd} USD</p>
                             </div>
                         </div>
@@ -421,8 +433,8 @@ export const GitcoinAirdropsManager = () => {
                                             ))}
                                         </tbody>
                                     </table>
-                                    <div className="flex justify-between items-center mt-4">
-                                        <button className="bg-blue-500 text-white px-4 py-2 rounded-md" onClick={() => setPage(page - 1)} disabled={page === 1}>Previous</button>
+                                    <div className="flex flex-col sm:flex-row justify-between items-center mt-4">
+                                        <button className="bg-blue-500 text-white px-4 py-2 rounded-md mb-2 sm:mb-0" onClick={() => setPage(page - 1)} disabled={page === 1}>Previous</button>
                                         <span className="mx-4 text-black dark:text-white">{page} / {totalPages}</span>
                                         <button className="bg-blue-500 text-white px-4 py-2 rounded-md" onClick={() => setPage(page + 1)} disabled={page === totalPages}>Next</button>
 
@@ -437,7 +449,7 @@ export const GitcoinAirdropsManager = () => {
                     </div>
                 ) : (
                     <div className="flex justify-start items-center">
-                        <p className="text-lg text-black dark:text-white">Please enter a valid Gitcoin project URL.</p>
+                        {address && <p className="text-lg text-black dark:text-white">Please enter a valid Gitcoin project URL.</p>}
                     </div>
                 )}
             </section>
