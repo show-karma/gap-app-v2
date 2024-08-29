@@ -1,20 +1,14 @@
 import { GrantsLayout } from "@/components/Pages/Project/Grants/Layout";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Suspense } from "react";
-import { ProjectGrantsPage } from "@/components/Pages/Project/ProjectGrantsPage";
 /* eslint-disable @next/next/no-img-element */
 import { notFound } from "next/navigation";
 
-import { Hex } from "viem";
 import { Metadata } from "next";
 
-import { getMetadata } from "@/utilities/sdk";
 import { zeroUID } from "@/utilities/commons";
 import { defaultMetadata } from "@/utilities/meta";
-import {
-  IGrantDetails,
-  IProjectResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { fetchFromLocalApi } from "@/utilities/fetchFromServer";
 
 export async function generateMetadata({
