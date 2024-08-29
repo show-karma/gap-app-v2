@@ -5,11 +5,12 @@ export const GRANT_REGISTRY = "0xD77D641CDB298ea53C89e0F3Abf7d4340254cB73";
 export const BADGE_REGISTRY = "0x2AE204CA953227B2592734a79969821e224B83e7";
 
 export const ARB_ONE_EAS = "0xbD75f629A22Dc1ceD33dDA0b68c546A1c035c458";
-export const ARB_ONE_SCHEMA_REGISTRY =
-  "0xA310da9c5B885E7fb3fbA9D66E9Ba6Df512b78eB";
+export const ARB_ONE_SCHEMA_REGISTRY = "0xA310da9c5B885E7fb3fbA9D66E9Ba6Df512b78eB";
 
 export const KARMA_EAS_SCHEMA_UID =
   "0x8ed3306e7f0e419609a1ceb0c6c2ad85fbc7cf9031d851792b90058fc14c1b8a";
 
-//The Karma-Gap scorer ID constant.
+// The Karma-Gap scorer ID constant.
 export const SCORER_ID = 1;
+// The Karma-Gap scorer decimals amount.
+export const SCORER_DECIMALS = 18;

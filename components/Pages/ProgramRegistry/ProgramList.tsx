@@ -1,7 +1,7 @@
 "use client";
 import { ReadMore } from "@/utilities/ReadMore";
 import Image from "next/image";
-import { FC, useEffect, useMemo, useRef } from "react";
+import { FC, useMemo, useRef } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { registryHelper } from "./helper";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -10,13 +10,7 @@ import { DiscussionIcon } from "@/components/Icons/Discussion";
 import { BlogIcon } from "@/components/Icons/Blog";
 import { OrganizationIcon } from "@/components/Icons/Organization";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import {
-  ColumnDef,
-  Row,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-} from "@tanstack/react-table";
+import { ColumnDef, Row, flexRender, getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { Button } from "@/components/Utilities/Button";
 import { StarReviewIcon } from "@/components/Icons/StarReview";
 
@@ -87,10 +81,7 @@ interface ProgramListProps {
   selectProgram: (program: GrantProgram) => void;
 }
 
-export const ProgramList: FC<ProgramListProps> = ({
-  grantPrograms,
-  selectProgram,
-}) => {
+export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram }) => {
   const columns = useMemo<ColumnDef<GrantProgram>[]>(
     () => [
       {
@@ -111,10 +102,7 @@ export const ProgramList: FC<ProgramListProps> = ({
 
                 <div className="flex flex-row gap-1 w-full">
                   {grant.metadata?.socialLinks?.website ? (
-                    <ExternalLink
-                      href={grant.metadata?.socialLinks?.website}
-                      className="w-max"
-                    >
+                    <ExternalLink href={grant.metadata?.socialLinks?.website} className="w-max">
                       <Image
                         className="w-5 h-5 text-black dark:text-white dark:hidden"
                         width={20}
@@ -132,42 +120,27 @@ export const ProgramList: FC<ProgramListProps> = ({
                     </ExternalLink>
                   ) : null}
                   {grant.metadata?.socialLinks?.twitter ? (
-                    <ExternalLink
-                      href={grant.metadata?.socialLinks?.twitter}
-                      className="w-max"
-                    >
+                    <ExternalLink href={grant.metadata?.socialLinks?.twitter} className="w-max">
                       <Twitter2Icon className="w-5 h-5 text-black dark:text-white" />
                     </ExternalLink>
                   ) : null}
                   {grant.metadata?.socialLinks?.discord ? (
-                    <ExternalLink
-                      href={grant.metadata?.socialLinks?.discord}
-                      className="w-max"
-                    >
+                    <ExternalLink href={grant.metadata?.socialLinks?.discord} className="w-max">
                       <Discord2Icon className="w-5 h-5 text-black dark:text-white" />
                     </ExternalLink>
                   ) : null}
                   {grant.metadata?.socialLinks?.forum ? (
-                    <ExternalLink
-                      href={grant.metadata?.socialLinks?.forum}
-                      className="w-max"
-                    >
+                    <ExternalLink href={grant.metadata?.socialLinks?.forum} className="w-max">
                       <DiscussionIcon className="w-5 h-5 text-black dark:text-white" />
                     </ExternalLink>
                   ) : null}
                   {grant.metadata?.socialLinks?.blog ? (
-                    <ExternalLink
-                      href={grant.metadata?.socialLinks?.blog}
-                      className="w-max"
-                    >
+                    <ExternalLink href={grant.metadata?.socialLinks?.blog} className="w-max">
                       <BlogIcon className="w-5 h-5 text-black dark:text-white" />
                     </ExternalLink>
                   ) : null}
                   {grant.metadata?.socialLinks?.orgWebsite ? (
-                    <ExternalLink
-                      href={grant.metadata?.socialLinks?.orgWebsite}
-                      className="w-max"
-                    >
+                    <ExternalLink href={grant.metadata?.socialLinks?.orgWebsite} className="w-max">
                       <OrganizationIcon className="w-5 h-5 text-black dark:text-white" />
                     </ExternalLink>
                   ) : null}
@@ -189,10 +162,7 @@ export const ProgramList: FC<ProgramListProps> = ({
           const grant = info.row.original;
           return (
             <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-400 max-w-[285px]">
-              <div
-                className="w-[420px] max-w-[420px] text-wrap pr-8"
-                data-color-mode="light"
-              >
+              <div className="w-[420px] max-w-[420px] text-wrap pr-8" data-color-mode="light">
                 <ReadMore
                   readLessText="Show less description"
                   readMoreText="Show full description"
@@ -248,22 +218,14 @@ export const ProgramList: FC<ProgramListProps> = ({
                             <Image
                               width={20}
                               height={20}
-                              src={
-                                registryHelper.networkImages[
-                                  network.toLowerCase()
-                                ].light
-                              }
+                              src={registryHelper.networkImages[network.toLowerCase()].light}
                               alt={network}
                               className="rounded-full w-5 h-5  dark:hidden"
                             />
                             <Image
                               width={20}
                               height={20}
-                              src={
-                                registryHelper.networkImages[
-                                  network.toLowerCase()
-                                ].dark
-                              }
+                              src={registryHelper.networkImages[network.toLowerCase()].dark}
                               alt={network}
                               className="rounded-full w-5 h-5  hidden dark:block"
                             />
@@ -281,17 +243,11 @@ export const ProgramList: FC<ProgramListProps> = ({
                       >
                         <div className="flex flex-col gap-3">
                           <div className="flex flex-row gap-2 items-center">
-                            {registryHelper.networkImages[
-                              network.toLowerCase()
-                            ] ? (
+                            {registryHelper.networkImages[network.toLowerCase()] ? (
                               <Image
                                 width={16}
                                 height={16}
-                                src={
-                                  registryHelper.networkImages[
-                                    network.toLowerCase()
-                                  ].dark
-                                }
+                                src={registryHelper.networkImages[network.toLowerCase()].dark}
                                 alt={network}
                                 className="rounded-full w-4 h-4"
                               />
@@ -328,21 +284,12 @@ export const ProgramList: FC<ProgramListProps> = ({
                       >
                         <div className="flex flex-col gap-3">
                           {restNetworks.map((item) => (
-                            <div
-                              key={item}
-                              className="flex flex-row gap-2 items-center"
-                            >
-                              {registryHelper.networkImages[
-                                item.toLowerCase()
-                              ] ? (
+                            <div key={item} className="flex flex-row gap-2 items-center">
+                              {registryHelper.networkImages[item.toLowerCase()] ? (
                                 <Image
                                   width={16}
                                   height={16}
-                                  src={
-                                    registryHelper.networkImages[
-                                      item.toLowerCase()
-                                    ].dark
-                                  }
+                                  src={registryHelper.networkImages[item.toLowerCase()].dark}
                                   alt={item}
                                   className="rounded-full w-4 h-4"
                                 />
@@ -426,18 +373,24 @@ export const ProgramList: FC<ProgramListProps> = ({
         id: "AverageScore",
         cell: (info) => {
           const grant = info.row.original;
-          console.log("grant.programId", grant);
+
           return (
             <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-              <span className="mr-1 inline-flex items-center text-lg font-medium ">
-                <StarReviewIcon
-                  props={{
-                    className:
-                      "w-20 h-20 transparent hover:fill-transparent hover:stroke-transparent",
-                  }}
-                  isHovered={false}
-                  score={grant.programScore} //TODO: GetGrantProgramScore
-                />
+              <span className="mr-1 inline-flex items-center text-lg font-medium">
+                {grant.programScore ? (
+                  <StarReviewIcon
+                    props={{
+                      className:
+                        "text-[#004EEB] w-20 h-20 transparent hover:fill-transparent hover:stroke-transparent",
+                      fontSize: 7,
+                      color: "#FFF",
+                    }}
+                    isHovered={false}
+                    score={grant.programScore}
+                  />
+                ) : (
+                  <></>
+                )}
               </span>
             </div>
           );
@@ -467,7 +420,7 @@ export const ProgramList: FC<ProgramListProps> = ({
         header: () => <div />,
       },
     ],
-    []
+    [],
   );
 
   const table = useReactTable({
@@ -507,12 +460,7 @@ export const ProgramList: FC<ProgramListProps> = ({
                       style={{ width: header.getSize() }}
                     >
                       {header.isPlaceholder ? null : (
-                        <div>
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                        </div>
+                        <div>{flexRender(header.column.columnDef.header, header.getContext())}</div>
                       )}
                     </th>
                   );
@@ -528,18 +476,13 @@ export const ProgramList: FC<ProgramListProps> = ({
                   key={row.id}
                   style={{
                     height: `${virtualRow.size}px`,
-                    transform: `translateY(${
-                      virtualRow.start - index * virtualRow.size
-                    }px)`,
+                    transform: `translateY(${virtualRow.start - index * virtualRow.size}px)`,
                   }}
                 >
                   {row.getVisibleCells().map((cell) => {
                     return (
                       <td key={cell.id}>
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     );
                   })}

@@ -31,11 +31,17 @@ export const StarReviewIcon = ({
         strokeLinejoin="round"
         className={cn(
           isHovered ? "hover:fill-[#004EEB] hover:stroke-[#004eeb81]" : "",
-          pathProps?.className || ""
+          pathProps?.className || "",
         )}
       />
       {score !== undefined && (
-        <text x="12" y="16" textAnchor="middle" fontSize="12" fill="#000000">
+        <text
+          x="12"
+          y="16"
+          textAnchor="middle"
+          fontSize={props?.fontSize || "12"}
+          fill={props?.color || "#000000"}
+        >
           {score}
         </text>
       )}
