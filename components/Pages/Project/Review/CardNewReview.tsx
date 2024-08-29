@@ -19,18 +19,15 @@ import { addPrefixToIPFSLink } from "@/utilities/review/constants/utilitary";
 import { submitAttest } from "@/utilities/review/attest";
 import { Spinner } from "@/components/Utilities/Spinner";
 
-export const CardNewReview = ({
-  activeBadges,
-  activeBadgeIds,
-}: {
-  activeBadges: Badge[];
-  activeBadgeIds: Hex[];
-}) => {
+export const CardNewReview = () => {
   const setIsOpenReview = useReviewStore((state: any) => state.setIsOpenReview);
   const setBadgeScores = useReviewStore((state: any) => state.setBadgeScores);
   const badgeScores = useReviewStore((state: any) => state.badgeScores);
   const grantUID = useReviewStore((state: any) => state.grantUID);
   const setGrantUID = useReviewStore((state: any) => state.setGrantUID);
+  const activeBadges = useReviewStore((state: any) => state.activeBadges);
+  const activeBadgeIds = useReviewStore((state: any) => state.activeBadgeIds);
+
   const { address, chainId } = useAccount();
   const { switchChain } = useSwitchChain();
   const searchParams = useSearchParams();
@@ -131,7 +128,7 @@ export const CardNewReview = ({
             </div>
           ))
         ) : (
-          <div className="space-y-5 flex w-full flex-row items-center justify-start">
+          <div className="space-y-5 flex w-full flex-row items-center justify-center">
             <Spinner />
           </div>
         )}

@@ -4,14 +4,14 @@ import toast from "react-hot-toast";
 import { useProjectStore } from "@/store";
 import { useReviewStore } from "@/store/review";
 
-import { Hex, isAddressEqual } from "viem";
+import { isAddressEqual } from "viem";
 import { useAccount, useSwitchChain } from "wagmi";
 import { arbitrum } from "@wagmi/core/chains";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
-import { Badge, ReviewMode } from "@/types/review";
+import { ReviewMode } from "@/types/review";
 import { StarIcon } from "@/components/Icons";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/Utilities/Button";
@@ -23,7 +23,6 @@ import { getBadge } from "@/utilities/review/getBadge";
 
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { CardNewReview } from "./CardNewReview";
-import { useState } from "react";
 
 interface GrantAllReviewsProps {
   grant: IGrantResponse | undefined;
@@ -32,19 +31,20 @@ interface GrantAllReviewsProps {
 export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
   const isProjectLoading = useProjectStore((state: any) => state.loading);
   if (isProjectLoading || !grant) {
-    <div className="space-y-5 flex w-full flex-row items-center justify-start">
+    <div className="space-y-5 flex w-full flex-row items-center justify-center">
       <Spinner />
     </div>;
   }
   const project = useProjectStore((state: any) => state.project);
   const isOpenReview = useReviewStore((state: any) => state.isOpenReview);
   const setIsOpenReview = useReviewStore((state: any) => state.setIsOpenReview);
+
+  const setActiveBadges = useReviewStore((state: any) => state.setActiveBadges);
+  const setActiveBadgeIds = useReviewStore((state: any) => state.setActiveBadgeIds);
+
   const { openConnectModal } = useConnectModal();
   const { isConnected, address, chainId } = useAccount();
   const { switchChain } = useSwitchChain();
-
-  const [activeBadges, setActiveBadges] = useState<Badge[]>([]);
-  const [activeBadgeIds, setActiveBadgeIds] = useState<Hex[]>([]);
 
   const handleReviewButton = () => {
     if (!isConnected && openConnectModal) {
@@ -86,7 +86,7 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
                   <XMarkIcon className="w-6 h-6" />
                 </button>
               </div>
-              <CardNewReview activeBadges={activeBadges} activeBadgeIds={activeBadgeIds} />
+              <CardNewReview />
             </>
           ) : (
             isOpenReview === ReviewMode.READ && (
