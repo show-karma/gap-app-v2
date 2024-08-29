@@ -10,23 +10,6 @@ const publicClient = createPublicClient({
   transport: http(),
 });
 
-//Test
-function toBytes32(hexString: string): string {
-  if (hexString.startsWith("0x")) {
-    hexString = hexString.slice(2);
-  }
-
-  if (hexString.length > 64) {
-    throw new Error("Hex string is too long to be converted to bytes32");
-  }
-
-  while (hexString.length < 64) {
-    hexString = "0" + hexString;
-  }
-
-  return "0x" + hexString;
-}
-
 /**
  * Retrieves a badge by its ID.
  *
