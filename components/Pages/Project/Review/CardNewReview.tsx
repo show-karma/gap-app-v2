@@ -1,17 +1,10 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { DynamicStarsReview } from "./DynamicStarsReview";
 import { useReviewStore } from "@/store/review";
-import {
-  BadgeDescription,
-  Badge,
-  BadgeName,
-  Review,
-  ReviewMode,
-  BadgeOfficial,
-} from "@/types/review";
+import { ReviewMode, BadgeOfficial } from "@/types/review";
 import toast from "react-hot-toast";
 import { AttestationRequestData, submitAttest } from "@/utilities/attest";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
@@ -28,63 +21,17 @@ import { config } from "@/utilities/wagmi/config";
 import { arbitrum } from "viem/chains";
 import { addPrefixToIPFSLink } from "@/utilities/review/constants/utilitary";
 
-const defaultInitialNewReviewList: Badge[] = [
-  {
-    name: BadgeName.CLEAR_GOALS,
-    description: BadgeDescription[BadgeName.CLEAR_GOALS],
-    score: 0,
-  },
-  {
-    name: BadgeName.SMOOTH_APPLICATION,
-    description: BadgeDescription[BadgeName.SMOOTH_APPLICATION],
-    score: 0,
-  },
-  {
-    name: BadgeName.FAIR_ROUNDS,
-    description: BadgeDescription[BadgeName.FAIR_ROUNDS],
-    score: 0,
-  },
-  {
-    name: BadgeName.EASY_TEACH,
-    description: BadgeDescription[BadgeName.EASY_TEACH],
-    score: 0,
-  },
-  {
-    name: BadgeName.SUPPORTIVE_TEAM,
-    description: BadgeDescription[BadgeName.SUPPORTIVE_TEAM],
-    score: 0,
-  },
-  {
-    name: BadgeName.GREAT_REVIEWERS,
-    description: BadgeDescription[BadgeName.GREAT_REVIEWERS],
-    score: 0,
-  },
-  {
-    name: BadgeName.FAST_DISBURSEMENT,
-    description: BadgeDescription[BadgeName.FAST_DISBURSEMENT],
-    score: 0,
-  },
-];
-
 export const CardNewReview = () => {
-  const [newReview, setNewReview] = useState<Badge[]>(
-    defaultInitialNewReviewList
-  );
   const setIsOpenReview = useReviewStore((state) => state.setIsOpenReview);
-  const setReview = useReviewStore((state) => state.setReview);
-  const setIsStarSelected = useReviewStore((state) => state.setIsStarSelected);
-  const review = useReviewStore((state) => state.review);
-  const _currentTimestamp = Math.floor(new Date().getTime() / 1000);
   const badge = useReviewStore((state) => state.badge);
   const stories = useReviewStore((state) => state.stories);
   const setBadgeScore = useReviewStore((state) => state.setBadgeScore);
   const badgeScore = useReviewStore((state) => state.badgeScore);
 
-  console.log("stories", stories);
+  // Score of the new review
   const handleSetRating = (index: number, rating: number) => {
     const updatededBadges = [...badgeScore];
     updatededBadges[index] = rating;
-    console.log("badgeScores", badgeScore);
     setBadgeScore(updatededBadges);
   };
 
@@ -126,7 +73,6 @@ export const CardNewReview = () => {
     //   }
   };
 
-  console.log("signer", signer);
   async function main() {
     if (!signer) return;
     console.log("Writting a review with account:", signer.address);
