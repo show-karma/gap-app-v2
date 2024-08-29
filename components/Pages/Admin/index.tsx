@@ -12,31 +12,17 @@ export const CommunitiesToAdmin = () => {
 
   return (
     <div className="px-4 sm:px-6 lg:px-12 py-5">
-      <div className="text-2xl font-bold">Communities to review</div>
-      <div className="mt-5 grid grid-cols-4 gap-5">
-        {communitiesToAdmin.length ? (
-          communitiesToAdmin.map((community) => (
-            <Link
-              href={PAGES.ADMIN.ROOT(community.details?.slug || community.uid)}
-              key={community.uid + community.details?.name}
-            >
-              <div className="flex w-full flex-col items-center justify-center rounded-lg p-4">
-                <img
-                  src={community.details?.imageURL}
-                  className="h-[100px] w-full object-cover"
-                  alt={community.details?.name}
-                />
-                <p className="text-base font-normal text-black dark:text-white">
-                  {community.details?.name}
-                </p>
-              </div>
-            </Link>
-          ))
-        ) : isLoading ? (
-          <Spinner />
-        ) : (
-          <p>{MESSAGES.REVIEWS.NOT_ADMIN}</p>
-        )}
+      <div className="flex flex-row flex-wrap gap-8">
+        <a href={PAGES.ADMIN.COMMUNITIES}>
+          <button className="px-10 py-8 bg-green-200 rounded-md  transition-all ease-in-out duration-200 dark:bg-green-900">
+            Communities
+          </button>
+        </a>
+        <a href={PAGES.ADMIN.COMMUNITY_STATS}>
+          <button className="px-10 py-8 bg-blue-200 rounded-md  transition-all ease-in-out duration-200 dark:bg-blue-900">
+            Community Stats
+          </button>
+        </a>
       </div>
     </div>
   );
