@@ -80,6 +80,7 @@ function MintNFTs({
     const [imageIPFSHash, setImageIPFSHash] = useState<string | null>(null);
     const [metadataIPFSHash, setMetadataIPFSHash] = useState<string | null>(null);
     const [metadata, setMetadata] = useState<any>(null)
+    const [customDescription, setCustomDescription] = useState("");
     const { writeContract, data: txData, isPending: isMinting, error: mintError } = useWriteContract()
 
     const chainId = useChainId()
@@ -99,12 +100,14 @@ function MintNFTs({
                 setImageIPFSHash(response.data.IpfsHash);
                 console.log('File uploaded to IPFS with hash:', response.data.IpfsHash);
 
+                const defaultDescription = `This NFT is issued to honor and recognize your invaluable support of donors who have generously funded ${projectDetails.project.metadata.title}, symbolizing their crucial role in driving impactful change.`;
+                const fullDescription = customDescription ? `${customDescription} \n|\n ${defaultDescription}` : defaultDescription;
+
                 const metadata = {
                     name: `${projectDetails.project.metadata.title} - Karma GAP Patron`,
-                    description: `This NFT is issued to honor and recognize your invaluable support of donors who have generously funded ${projectDetails.project.metadata.title}, symbolizing their crucial role in driving impactful change.`,
+                    description: fullDescription,
                     image: `ipfs://${response.data.IpfsHash}`,
-                    attributes: [
-                    ]
+                    attributes: []
                 };
 
                 await axios.post('https://api.pinata.cloud/pinning/pinJSONToIPFS', {
@@ -166,15 +169,29 @@ function MintNFTs({
     };
 
     return (
-        <div className="flex flex-row items-start gap-4 w-full mx-auto mt-3 p-5 bg-gray-100 dark:bg-gray-800 rounded-xl">
+        <div className="flex flex-row items-start gap-4 w-full h-full mx-auto mt-3 p-5 bg-gray-100 dark:bg-gray-800 rounded-xl">
             <div className="flex flex-col justify-between items-between w-1/2 h-full pr-4">
                 <h2 className="text-xl font-bold text-black dark:text-white mb-2">Mint NFTs for {projectDetails.uniqueDonorsCount} contributors, across {donations.length} donations</h2>
                 <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
-                    Choose an image/file for the NFT and mint it for all your contributors.
+                    Choose an image/file for the NFT, add a custom message, and mint it for all your contributors.
                 </p>
+
+                <div className="mb-2">
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                        Add a message (optional)
+                    </label>
+                    <textarea
+                        value={customDescription}
+                        onChange={(e) => setCustomDescription(e.target.value)}
+                        className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none"
+                        rows={2}
+                        placeholder="Enter a custom description for your NFT"
+                    ></textarea>
+                </div>
+
                 <div className="mb-4">
                     <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-                        Upload file for NFT
+                        Upload file for NFT *
                     </label>
                     <input
                         type="file"
@@ -183,6 +200,9 @@ function MintNFTs({
                         className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                     />
                 </div>
+
+
+
                 {imageIPFSHash && metadataIPFSHash && (
                     <div className="text-sm mb-4 bg-gray-100 dark:bg-gray-700 my-2 rounded-md">
                         <p className="font-semibold mb-2">Metadata:</p>
@@ -199,7 +219,7 @@ function MintNFTs({
                 <button
                     onClick={handleMintNFTs}
                     disabled={!imageIPFSHash || isMinting}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed mb-4"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed mb-2"
                 >
                     {isMinting ? "Minting..." : "Mint NFTs to Contributors"}
                 </button>
@@ -207,9 +227,9 @@ function MintNFTs({
                     <PlatformFeeNote />
                 </p>
             </div>
-            <div className="w-1/2">
+            <div className="w-1/2 h-full ">
                 {fileUploading ? (
-                    <div className="w-full h-64 flex items-center justify-center bg-gray-200 dark:bg-gray-700 rounded-xl">
+                    <div className="w-full min-h-80   flex items-center justify-center bg-gray-200 dark:bg-gray-700 rounded-xl">
                         <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500">
                         </div>
                     </div>
@@ -220,7 +240,7 @@ function MintNFTs({
                         className="w-full h-auto rounded-xl bg-zinc-300"
                     />
                 ) : (
-                    <div className="w-full h-64 flex items-center justify-center bg-gray-200 dark:bg-gray-700 rounded-xl">
+                    <div className="w-full  min-h-80   flex items-center justify-center bg-gray-200 dark:bg-gray-700 rounded-xl">
                         <p className="text-gray-500 dark:text-gray-400">No image uploaded</p>
                     </div>
                 )}
