@@ -75,7 +75,6 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   const isOwner = useOwnerStore((state) => state.isOwner);
   const [description, setDescription] = useState("");
   const [recipient, setRecipient] = useState("");
-  const [completedUpdate, setCompletedUpdate] = useState("");
 
   const { address } = useAccount();
   const {
@@ -118,7 +117,6 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
       startsAt: data.dates.startsAt
         ? data.dates.startsAt.getTime() / 1000
         : undefined,
-      completedText: completedUpdate,
     };
 
     try {
@@ -137,17 +135,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
           title: milestone.title,
         },
       });
-      if (milestone.completedText) {
-        milestoneToAttest.completed = new MilestoneCompleted({
-          refUID: milestoneToAttest.uid,
-          schema: gapClient.findSchema("MilestoneCompleted"),
-          recipient: (recipient as Hex) || address,
-          data: {
-            reason: milestone.completedText,
-            type: "completed",
-          },
-        });
-      }
+
       const walletClient = await getWalletClient(config, {
         chainId: chainID,
       });
@@ -345,19 +333,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
           />
         </div>
       </div>
-      <div className="flex w-full flex-col">
-        <label htmlFor="milestone-completed-update" className={labelStyle}>
-          Milestone update (optional)
-        </label>
-        <div className="mt-2 w-full bg-transparent" data-color-mode="light">
-          <MarkdownEditor
-            className="bg-transparent"
-            value={completedUpdate}
-            onChange={(newValue: string) => setCompletedUpdate(newValue || "")}
-            placeholderText="If this milestone is complete, please provide details for the community to understand more about its completion. Alternatively, you can post an update about this milestone at a later date"
-          />
-        </div>
-      </div>
+
       <div className="flex w-full flex-row-reverse">
         <Button
           type="submit"

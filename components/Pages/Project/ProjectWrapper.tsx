@@ -60,9 +60,6 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   );
 
   const router = useRouter();
-  fetchFromLocalApi<IProjectResponse>(
-    `/metadata?type=project&uid=${projectId}`
-  ).then((res) => console.log(res));
 
   useEffect(() => {
     setProject(project);

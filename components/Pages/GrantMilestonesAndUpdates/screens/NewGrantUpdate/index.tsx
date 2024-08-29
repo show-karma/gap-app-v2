@@ -66,7 +66,6 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
     handleSubmit,
     watch,
     setValue,
-    clearErrors,
     formState: { errors, isSubmitting, isValid },
   } = useForm<UpdateType>({
     resolver: zodResolver(updateSchema),
@@ -177,8 +176,10 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
           projectUID: project.uid,
           address: address,
           data: {
-            title: data.title,
             text: data.description,
+            title: data.title,
+            proofOfWork: data.proofOfWork,
+            type: "grant-update",
           },
         }
       );

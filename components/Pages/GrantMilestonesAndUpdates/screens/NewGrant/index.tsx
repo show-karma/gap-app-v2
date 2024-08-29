@@ -524,7 +524,6 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   };
 
   const updateGrant = async (oldGrant: IGrantResponse, data: NewGrantData) => {
-    console.log("Data: ", data);
     if (!address || !oldGrant.refUID || !selectedProject) return;
     let gapClient = gap;
     try {

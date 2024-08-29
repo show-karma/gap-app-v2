@@ -904,7 +904,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             existingContacts={contacts}
             isEditing={!!projectToUpdate}
             addContact={(contact) => {
-              console.log("contact", contact, contacts);
               const withoutContact = contacts.filter(
                 (c) => c.id !== contact.id
               );

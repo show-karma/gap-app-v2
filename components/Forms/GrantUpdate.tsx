@@ -23,9 +23,21 @@ import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
+import { urlRegex } from "@/utilities/regexs/urlRegex";
+import { sanitizeObject } from "@/utilities/sanitize";
 
 const updateSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.GRANT.UPDATE.FORM.TITLE }),
+  description: z
+    .string()
+    .min(3, { message: MESSAGES.GRANT.UPDATE.FORM.DESCRIPTION }),
+  proofOfWork: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: "Please enter a valid URL",
+    })
+    .optional()
+    .or(z.literal("")),
 });
 
 const labelStyleDefault = "text-sm font-bold text-black dark:text-zinc-100";
@@ -49,16 +61,19 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
 }) => {
   const labelStyle = cn(labelStyleDefault, labelStyleProps);
   const inputStyle = cn(inputStyleDefault, inputStyleProps);
-  const [description, setDescription] = useState("");
 
   const { address } = useAccount();
   const { chain } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
+  const [noProofCheckbox, setNoProofCheckbox] = useState(false);
+
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors, isSubmitting, isValid },
   } = useForm<UpdateType>({
     resolver: zodResolver(updateSchema),
@@ -71,15 +86,10 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
     event?.preventDefault();
     event?.stopPropagation();
     setIsLoading(true);
-    await createGrantUpdate(grant, {
-      title: data.title,
-      text: description,
-    }).finally(() => {
+    await createGrantUpdate(grant, data).finally(() => {
       setIsLoading(false);
     });
   };
-
-  const isDescriptionValid = !!description.length;
 
   const { changeStepperStep, setIsStepper } = useStepper();
 
@@ -89,7 +99,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
 
   const createGrantUpdate = async (
     grantToUpdate: IGrantResponse,
-    { title, text }: { title: string; text: string }
+    data: UpdateType
   ) => {
     let gapClient = gap;
     if (!address || !project) return;
@@ -104,12 +114,14 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
       if (!walletClient || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
 
+      const sanitizedGrantUpdate = sanitizeObject({
+        text: data.description,
+        title: data.title,
+        proofOfWork: data.proofOfWork,
+        type: "grant-update",
+      });
       const grantUpdate = new GrantUpdate({
-        data: {
-          text,
-          title,
-          type: "grant-update",
-        },
+        data: sanitizedGrantUpdate,
         recipient: grantToUpdate.recipient,
         refUID: grantToUpdate.uid,
         schema: gapClient.findSchema("GrantDetails"),
@@ -166,8 +178,10 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
           projectUID: project.uid,
           address: address,
           data: {
-            title,
-            text,
+            text: data.description,
+            title: data.title,
+            proofOfWork: data.proofOfWork,
+            type: "grant-update",
           },
         }
       );
@@ -202,11 +216,50 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
           <div className="w-full bg-transparent" data-color-mode="light">
             <MarkdownEditor
               className="bg-transparent"
-              value={description}
-              onChange={(newValue: string) => setDescription(newValue || "")}
+              value={watch("description") || ""}
+              onChange={(newValue: string) => {
+                setValue("description", newValue || "", {
+                  shouldValidate: true,
+                });
+              }}
               placeholderText="To share updates on the progress of this grant, please add the details here."
             />
           </div>
+        </div>
+        <div className="flex w-full flex-col">
+          <label htmlFor="update-proof-of-work" className={labelStyle}>
+            Output of your work *
+          </label>
+          <p className="text-sm text-gray-500">
+            Provide a link that demonstrates your work. This could be a link to
+            a tweet announcement, a dashboard, a Google Doc, a blog post, a
+            video, or any other resource that highlights the progress or results
+            of your work
+          </p>
+          <div className="flex flex-row gap-2 items-center py-2">
+            <input
+              type="checkbox"
+              className="rounded-sm w-5 h-5 bg-white fill-black"
+              checked={noProofCheckbox}
+              onChange={() => {
+                setNoProofCheckbox((oldValue) => !oldValue);
+                setValue("proofOfWork", "", {
+                  shouldValidate: true,
+                });
+              }}
+            />
+            <p className="text-base text-zinc-900 dark:text-zinc-100">{`I don't have any output to show for this milestone`}</p>
+          </div>
+          <input
+            id="update-proof-of-work"
+            className={cn(inputStyle, "disabled:opacity-50")}
+            disabled={!!noProofCheckbox}
+            placeholder="Add links to charts, videos, dashboards etc. that evaluators can verify your work"
+            {...register("proofOfWork")}
+          />
+          <p className="text-base text-red-400">
+            {errors.proofOfWork?.message}
+          </p>
         </div>
         <div className="flex w-full flex-row-reverse">
           <Button
@@ -215,8 +268,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
             disabled={
               isSubmitting ||
               !isValid ||
-              !isDescriptionValid ||
-              !description.length
+              (!noProofCheckbox && !watch("proofOfWork"))
             }
             isLoading={isSubmitting || isLoading}
           >
