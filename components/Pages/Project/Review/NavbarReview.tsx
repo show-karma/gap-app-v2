@@ -11,7 +11,7 @@ import { ChevronDown } from "@/components/Icons";
 
 import { formatDate } from "@/utilities/formatDate";
 import { getGrantStories } from "@/utilities/review/getGrantStories";
-import { SCORER_ID } from "@/utilities/review/constants/constants";
+import { SCORER_ID, SCORER_DECIMALS } from "@/utilities/review/constants/constants";
 import { getBadge } from "@/utilities/review/getBadge";
 import { getBadgeIds } from "@/utilities/review/getBadgeIds";
 
@@ -82,7 +82,7 @@ export const NavbarReview = () => {
                       },
                     }}
                   />
-                  <p>{parseFloat(Number(storie.averageScore).toFixed(2).substring(0, 3)) / 100}</p>
+                  <p>{(Number(storie.averageScore) / 10 ** SCORER_DECIMALS).toFixed(1)}</p>
                   {isStarSelected === index && (
                     <div>
                       <ChevronDown />
