@@ -27,6 +27,8 @@ import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { cn } from "@/utilities/tailwind";
+import { useRouter } from "next/navigation";
+import { PAGES } from "@/utilities/pages";
 
 interface MilestoneUpdateFormProps {
   milestone: IMilestoneResponse;
@@ -75,6 +77,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [noProofCheckbox, setNoProofCheckbox] = useState(false);
+  const router = useRouter();
 
   const {
     register,
@@ -162,6 +165,13 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                   toast.success(MESSAGES.MILESTONES.COMPLETE.SUCCESS);
                   closeDialog();
                   afterSubmit?.();
+                  router.push(
+                    PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
+                      fetchedProject?.uid as string,
+                      grantInstance.uid,
+                      "milestones-and-updates"
+                    )
+                  );
                 }
                 retries -= 1;
                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
@@ -249,6 +259,11 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                   changeStepperStep("indexed");
                   toast.success(MESSAGES.MILESTONES.UPDATE_COMPLETION.SUCCESS);
                   closeDialog();
+                  PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
+                    fetchedProject?.uid as string,
+                    grantInstance.uid,
+                    "milestones-and-updates"
+                  );
                 }
                 retries -= 1;
                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
