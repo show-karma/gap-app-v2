@@ -19,8 +19,8 @@ interface ReviewStore {
   setGrantUID: (grantUID: string | null) => void;
 
   // New Review Related
-  badgeScore: number[];
-  setBadgeScore: (badgeScore: number[]) => void;
+  badgeScores: number[];
+  setBadgeScores: (badgeScores: number[]) => void;
 }
 
 export const useReviewStore = create<ReviewStore>((set: any, get: any) => ({
