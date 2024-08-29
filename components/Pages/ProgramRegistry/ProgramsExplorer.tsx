@@ -28,6 +28,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { KarmaLogo } from "@/components/Icons/Karma";
 import { useRegistryStore } from "@/store/registry";
+import { getGrantProgramScore } from "@/utilities/review/getGrantProgramScore";
 
 const statuses = ["Active", "Inactive"];
 
@@ -502,13 +503,27 @@ export const ProgramsExplorer = () => {
             <div className="w-full flex flex-col">
               {grantPrograms.length ? (
                 <div className="mt-8 flow-root">
-                  <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                  <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-6">
                     <div
                       className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8"
                       // {...virtualizer.containerProps}
                     >
                       <ProgramList
-                        grantPrograms={grantPrograms}
+                        grantPrograms={grantPrograms.map(
+                          async (program: any) => {
+                            let programScore;
+                            if (program?.programId === "107") {
+                              programScore = await getGrantProgramScore(
+                                program.programId
+                              );
+                            }
+
+                            return {
+                              ...program,
+                              programScore,
+                            };
+                          }
+                        )}
                         selectProgram={(program) => {
                           setSelectedProgram(program);
                           setProgramId(program.programId || "");

@@ -1,7 +1,7 @@
 "use client";
 import { ReadMore } from "@/utilities/ReadMore";
 import Image from "next/image";
-import { FC, useMemo, useRef } from "react";
+import { FC, useEffect, useMemo, useRef } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { registryHelper } from "./helper";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -18,7 +18,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { Button } from "@/components/Utilities/Button";
-import { formatDate } from "@/utilities/formatDate";
+import { StarReviewIcon } from "@/components/Icons/StarReview";
 
 export type GrantProgram = {
   _id: {
@@ -74,6 +74,7 @@ export type GrantProgram = {
   registryAddress?: string;
   anchorAddress?: string;
   programId?: string;
+  programScore?: number;
   chainID?: number;
   isValid?: boolean;
   txHash?: string;
@@ -417,6 +418,33 @@ export const ProgramList: FC<ProgramListProps> = ({
         header: () => (
           <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
             Types
+          </div>
+        ),
+      },
+      {
+        accessorFn: (row) => row,
+        id: "AverageScore",
+        cell: (info) => {
+          const grant = info.row.original;
+          console.log("grant.programId", grant);
+          return (
+            <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
+              <span className="mr-1 inline-flex items-center text-lg font-medium ">
+                <StarReviewIcon
+                  props={{
+                    className:
+                      "w-20 h-20 transparent hover:fill-transparent hover:stroke-transparent",
+                  }}
+                  isHovered={false}
+                  score={grant.programScore} //TODO: GetGrantProgramScore
+                />
+              </span>
+            </div>
+          );
+        },
+        header: () => (
+          <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
+            Average Score
           </div>
         ),
       },
