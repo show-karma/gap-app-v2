@@ -9,7 +9,7 @@ const publicClient = createPublicClient({
   transport: http(),
 });
 
-export async function getGrantProgramScore(grantUID: string): Promise<number> {
+export async function getGrantProgramScore(grantUID: number): Promise<number> {
   try {
     const grantStory = await readContract(publicClient, {
       address: RESOLVER_TRUSTFUL,
@@ -20,6 +20,7 @@ export async function getGrantProgramScore(grantUID: string): Promise<number> {
 
     return grantStory as number;
   } catch (error) {
+    console.log("error", error);
     throw new Error("Error when reading the contract");
   }
 }

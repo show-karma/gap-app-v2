@@ -46,6 +46,8 @@ interface ReviewStore {
 
   grantUID: string | null;
   setGrantUID: (grantUID: string | null) => void;
+  badgeScore: number[];
+  setBadgeScore: (badgeScore: number[]) => void;
 }
 
 // TODO: Mock - Should remove this.
@@ -375,4 +377,7 @@ export const useReviewStore = create<ReviewStore>((set, get) => ({
   grantUID: null,
   setGrantUID: (grantUID: string | null) =>
     set((state) => ({ ...state, grantUID })),
+  badgeScore: [], // TODO: Get lenght of badgesIds and add fill 1 into array based on the lenght or add a toast to advice the user to fill minimum 1 star by badge
+  setBadgeScore: (badgeScore: number[]) =>
+    set((state) => ({ ...state, badgeScore })),
 }));
