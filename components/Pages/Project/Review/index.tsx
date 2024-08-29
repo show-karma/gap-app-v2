@@ -7,12 +7,16 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/Utilities/Button";
 import { NavbarReview } from "@/components/Pages/Project/Review/NavbarReview";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { useAccount } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import { CardNewReview } from "./CardNewReview";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { isAddressEqual } from "viem";
 import { ReviewMode } from "@/types/review";
 import { useReviewStore } from "@/store/review";
+import {
+  arbitrum,
+} from "@wagmi/core/chains";
+import toast from "react-hot-toast";
 
 interface GrantAllReviewsProps {
   grant: IGrantResponse | undefined;
@@ -29,13 +33,19 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
   const setIsOpenReview = useReviewStore((state) => state.setIsOpenReview);
   const project = useProjectStore((state) => state.project);
   const { openConnectModal } = useConnectModal();
-  const { isConnected, address } = useAccount();
+  const { isConnected, address, chainId } = useAccount();
+  const { switchChain } = useSwitchChain();
 
   const handleReviewButton = () => {
     if (!isConnected && openConnectModal) {
-      openConnectModal();
+        openConnectModal();
     } else {
+      if(chainId != arbitrum.id) {
+        switchChain({ chainId: arbitrum.id });
+        toast.error("Must connect to Arbitrum to review");
+      } else {
       setIsOpenReview(ReviewMode.WRITE);
+      }
     }
   };
 
