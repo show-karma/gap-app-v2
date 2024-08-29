@@ -28,6 +28,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { KarmaLogo } from "@/components/Icons/Karma";
 import { useRegistryStore } from "@/store/registry";
+import { getGrantProgramScore } from "@/utilities/review/getGrantProgramScore";
 
 const statuses = ["Active", "Inactive"];
 
@@ -508,7 +509,21 @@ export const ProgramsExplorer = () => {
                       // {...virtualizer.containerProps}
                     >
                       <ProgramList
-                        grantPrograms={grantPrograms}
+                        grantPrograms={grantPrograms.map(
+                          async (program: any) => {
+                            let programScore;
+                            if (program?.programId === "107") {
+                              programScore = await getGrantProgramScore(
+                                program.programId
+                              );
+                            }
+
+                            return {
+                              ...program,
+                              programScore,
+                            };
+                          }
+                        )}
                         selectProgram={(program) => {
                           setSelectedProgram(program);
                           setProgramId(program.programId || "");
