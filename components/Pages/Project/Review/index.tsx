@@ -4,14 +4,14 @@ import toast from "react-hot-toast";
 import { useProjectStore } from "@/store";
 import { useReviewStore } from "@/store/review";
 
-import { isAddressEqual } from "viem";
+import { Hex, isAddressEqual } from "viem";
 import { useAccount, useSwitchChain } from "wagmi";
 import { arbitrum } from "@wagmi/core/chains";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
-import { ReviewMode } from "@/types/review";
+import { Badge, ReviewMode } from "@/types/review";
 import { StarIcon } from "@/components/Icons";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/Utilities/Button";
@@ -23,6 +23,7 @@ import { getBadge } from "@/utilities/review/getBadge";
 
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { CardNewReview } from "./CardNewReview";
+import { useState } from "react";
 
 interface GrantAllReviewsProps {
   grant: IGrantResponse | undefined;
@@ -38,10 +39,12 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
   const project = useProjectStore((state: any) => state.project);
   const isOpenReview = useReviewStore((state: any) => state.isOpenReview);
   const setIsOpenReview = useReviewStore((state: any) => state.setIsOpenReview);
-  const setBadges = useReviewStore((state: any) => state.setBadges);
   const { openConnectModal } = useConnectModal();
   const { isConnected, address, chainId } = useAccount();
   const { switchChain } = useSwitchChain();
+
+  const [activeBadges, setActiveBadges] = useState<Badge[]>([]);
+  const [activeBadgeIds, setActiveBadgeIds] = useState<Hex[]>([]);
 
   const handleReviewButton = () => {
     if (!isConnected && openConnectModal) {
@@ -52,8 +55,17 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
         toast.error("Must connect to Arbitrum to review");
       } else {
         setIsOpenReview(ReviewMode.WRITE);
+        handleStoryBadges();
       }
     }
+  };
+
+  // Grab all recent badges and save on state
+  const handleStoryBadges = async () => {
+    const badgeIds = await getBadgeIds(SCORER_ID);
+    const badges = await Promise.all(badgeIds.map((id) => getBadge(id)));
+    setActiveBadgeIds(badgeIds);
+    setActiveBadges(badges);
   };
 
   return (
@@ -74,7 +86,7 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
                   <XMarkIcon className="w-6 h-6" />
                 </button>
               </div>
-              <CardNewReview />
+              <CardNewReview activeBadges={activeBadges} activeBadgeIds={activeBadgeIds} />
             </>
           ) : (
             isOpenReview === ReviewMode.READ && (
@@ -109,7 +121,7 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
                     )}
                   </div>
                   <div>
-                    <p>Aggregate a reputation to a grants program</p>
+                    <p>Review your favorite Grant Program!</p>
                   </div>
                 </div>
                 <NavbarReview />
