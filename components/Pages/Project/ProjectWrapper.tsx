@@ -30,9 +30,12 @@ import { IntroDialog } from "./IntroDialog";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { useRouter } from "next/navigation";
 import { useGap } from "@/hooks";
+import { useProgressModalStore } from "@/store/modals/progress";
+import { ProgressDialog } from "@/components/Dialogs/ProgressDialog";
 import { errorManager } from "@/components/Utilities/errorManager";
 
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import { fetchFromLocalApi } from "@/utilities/fetchFromServer";
 
 interface ProjectWrapperProps {
   project: IProjectResponse;
@@ -300,11 +303,13 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   const members = mountMembers();
   const { isIntroModalOpen } = useIntroModalStore();
   const { isEndorsementOpen } = useEndorsementStore();
+  const { isProgressModalOpen } = useProgressModalStore();
 
   return (
     <>
       {isIntroModalOpen ? <IntroDialog /> : null}
       {isEndorsementOpen ? <EndorsementDialog /> : null}
+      {isProgressModalOpen ? <ProgressDialog /> : null}
 
       <div className="relative border-b border-gray-200 ">
         <div className="px-4 sm:px-6 lg:px-12 lg:flex py-5 lg:items-start lg:justify-between flex flex-row max-lg:flex-col max-lg:justify-center max-lg:items-center gap-4">

@@ -95,7 +95,7 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
   const selectedProject = useProjectStore((state) => state.project);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isSubmitLoading, setIsSubmitLoading] = useState(false);
-  const { chain } = useAccount();
+  const { chain, address } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
@@ -217,7 +217,14 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
       toast.error(MESSAGES.MILESTONES.COMPLETE.ERROR);
       errorManager(
         `Error completing milestone ${milestone.uid} from grant ${milestone.refUID}`,
-        error
+        error,
+        {
+          milestoneUID: milestone.uid,
+          grantUID: milestone.refUID,
+          projectUID: project?.uid,
+          address: address,
+          data: milestone,
+        }
       );
     } finally {
       setIsSubmitLoading(false);

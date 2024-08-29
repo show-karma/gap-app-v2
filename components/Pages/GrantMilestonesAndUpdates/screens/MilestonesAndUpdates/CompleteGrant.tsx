@@ -1,25 +1,24 @@
+"use client";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks";
 import { useProjectStore } from "@/store";
+import { useGrantStore } from "@/store/grant";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { shortAddress } from "@/utilities/shortAddress";
 import { config } from "@/utilities/wagmi/config";
 import { XMarkIcon } from "@heroicons/react/24/solid";
-import { Grant } from "@show-karma/karma-gap-sdk";
-import {
-  IGrantResponse,
-  IProjectResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getWalletClient } from "@wagmi/core";
-import { useQueryState } from "nuqs";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import type { FC } from "react";
 import { useState } from "react";
 import toast from "react-hot-toast";
@@ -28,24 +27,18 @@ import { useAccount, useSwitchChain } from "wagmi";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 
-interface GrantCompletionProps {
-  grant: IGrantResponse;
-  project: IProjectResponse;
-}
-
-export const GrantCompletion: FC<GrantCompletionProps> = ({
-  grant,
-  project,
-}) => {
+export const GrantCompletion: FC = () => {
+  const { grant } = useGrantStore();
+  const { project } = useProjectStore();
   const [description, setDescription] = useState("");
 
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const { chain } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const signer = useSigner();
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const [, changeTab] = useQueryState("tab");
 
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
@@ -90,14 +83,14 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
             await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, grant.chainID),
+              INDEXER.ATTESTATION_LISTENER(txHash, grant?.chainID as number),
               "POST",
               {}
             );
           }
           while (retries > 0) {
             fetchedProject = await gapClient!.fetch
-              .projectById(project.uid as Hex)
+              .projectById(project?.uid as Hex)
               .catch(() => null);
             const grant = fetchedProject?.grants?.find(
               (g) => g.uid === grantToComplete.uid
@@ -107,7 +100,12 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
               changeStepperStep("indexed");
               toast.success(MESSAGES.GRANT.MARK_AS_COMPLETE.SUCCESS);
               await refreshProject().then(() => {
-                changeTab("milestones-and-updates");
+                router.push(
+                  PAGES.PROJECT.GRANT(
+                    project?.details?.data.slug || (project?.uid as Hex),
+                    grant?.uid as Hex
+                  )
+                );
               });
             }
           }
@@ -116,7 +114,7 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
           await new Promise((resolve) => setTimeout(resolve, 1500));
         });
     } catch (error: any) {
-      errorManager(`Error marking grant ${grant.uid} as complete`, error);
+      errorManager(`Error marking grant ${grant?.uid} as complete`, error);
       toast.error(MESSAGES.GRANT.MARK_AS_COMPLETE.ERROR);
     } finally {
       setIsStepper(false);
@@ -125,7 +123,7 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
 
   const onSubmit = async () => {
     setIsLoading(true);
-    await markGrantAsComplete(grant, {
+    await markGrantAsComplete(grant as IGrantResponse, {
       text: description,
     }).finally(() => {
       setIsLoading(false);
@@ -139,14 +137,15 @@ export const GrantCompletion: FC<GrantCompletionProps> = ({
           <h4 className="text-2xl font-bold text-black dark:text-zinc-100">
             Grant completion summary
           </h4>
-          <button
-            onClick={() => {
-              changeTab("overview");
-            }}
+          <Link
+            href={PAGES.PROJECT.GRANT(
+              project?.details?.data.slug || (project?.uid as Hex),
+              grant?.uid as Hex
+            )}
             className="bg-transparent p-4 hover:bg-transparent hover:opacity-75"
           >
             <XMarkIcon className="h-6 w-6 " />
-          </button>
+          </Link>
         </div>
         <div className="flex w-full flex-col gap-4">
           <div className="flex w-full flex-col gap-2">

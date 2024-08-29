@@ -402,7 +402,7 @@ export const ReportMilestonePage = ({
         <div className="flex w-full items-center justify-center">
           <p>
             {MESSAGES.ADMIN.NOT_AUTHORIZED(
-              community?.details?.data.name || communityId || ""
+              community?.details?.data?.name || communityId || ""
             )}
           </p>
         </div>

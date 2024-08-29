@@ -6,4 +6,7 @@ export type GrantScreen =
   | "grant-update"
   | "impact-criteria"
   | "overview"
-  | "complete-grant";
+  | "complete-grant"
+  | "review-this-grant"
+  | "reviews"
+  | "grant-update";

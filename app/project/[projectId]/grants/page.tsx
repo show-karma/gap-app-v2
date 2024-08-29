@@ -1,36 +1,31 @@
-import { ProjectGrantsPage } from "@/components/Pages/Project/ProjectGrantsPage";
-/* eslint-disable @next/next/no-img-element */
-import { Suspense } from "react";
-import { notFound } from "next/navigation";
-import { IGrantDetails, IProjectDetails } from "@show-karma/karma-gap-sdk";
-
-import { Hex } from "viem";
-import { Metadata } from "next";
-
-import { getMetadata } from "@/utilities/sdk";
+import { GrantOverview } from "@/components/Pages/Project/Grants/Overview";
 import { zeroUID } from "@/utilities/commons";
+import { fetchFromLocalApi } from "@/utilities/fetchFromServer";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { defaultMetadata } from "@/utilities/meta";
+import {
+  IGrantResponse,
+  IProjectResponse,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { Hex } from "viem";
 
 export async function generateMetadata({
   params,
-  searchParams,
 }: {
   params: {
     projectId: string;
-  };
-  searchParams: {
-    grantId: string;
-    tab: string;
+    grantUid: string;
   };
 }): Promise<Metadata> {
   const projectId = params?.projectId as string;
-  const grant = searchParams?.grantId as string | undefined;
-  const tab = searchParams?.tab as string | undefined;
+  const grantUid = params?.grantUid as string;
 
-  const projectInfo = await getMetadata<IProjectDetails>(
-    "projects",
-    projectId as Hex
-  );
+  const projectInfo = await gapIndexerApi
+    .projectBySlug(projectId)
+    .then((res) => res.data)
+    .catch(() => notFound());
 
   if (projectInfo?.uid === zeroUID || !projectInfo) {
     notFound();
@@ -42,8 +37,11 @@ export async function generateMetadata({
     openGraph: defaultMetadata.openGraph,
     icons: defaultMetadata.icons,
   };
-  if (grant && tab) {
-    const grantInfo = await getMetadata<IGrantDetails>("grants", grant as Hex);
+  if (grantUid) {
+    const grantInfo = await gapIndexerApi
+      .grantBySlug(grantUid as Hex)
+      .then((res) => res.data)
+      .catch(() => notFound());
     if (grantInfo) {
       const tabMetadata: Record<
         string,
@@ -53,62 +51,25 @@ export async function generateMetadata({
         }
       > = {
         overview: {
-          title: `Karma GAP - ${projectInfo?.title || projectInfo?.uid} - ${
-            grantInfo?.title
-          } grant overview`,
+          title: `Karma GAP - ${projectInfo?.details?.data?.title} - ${grantInfo?.details?.data?.title} grant overview`,
           description:
-            `${grantInfo?.description?.slice(0, 160)}${
-              grantInfo?.description && grantInfo?.description?.length >= 160
+            `${grantInfo?.details?.data?.description?.slice(0, 160)}${
+              grantInfo?.details?.data?.description &&
+              grantInfo?.details?.data?.description?.length >= 160
                 ? "..."
                 : ""
             }` || "",
-        },
-
-        "milestones-and-updates": {
-          title: `Karma GAP - ${projectInfo?.title || projectInfo?.uid} - ${
-            grantInfo?.title
-          } grant milestones and updates`,
-          description: `View all milestones and updates by ${
-            projectInfo?.title || projectInfo?.uid
-          } for ${grantInfo?.title} grant.`,
-        },
-
-        "impact-criteria": {
-          title: `Karma GAP - ${projectInfo?.title || projectInfo?.uid} - ${
-            grantInfo?.title
-          } grant impact criteria`,
-          description: `Impact criteria defined by ${
-            projectInfo?.title || projectInfo?.uid
-          } for ${grantInfo?.title} grant.`,
-        },
-
-        reviews: {
-          title: `Karma GAP - ${projectInfo?.title || projectInfo?.uid} - ${
-            grantInfo?.title
-          } grant community reviews`,
-          description: `View all community reviews of ${
-            projectInfo?.title || projectInfo?.uid
-          }'s ${grantInfo?.title} grant.`,
-        },
-
-        "review-this-grant": {
-          title: `Karma GAP - ${projectInfo?.title || projectInfo?.uid} - ${
-            grantInfo?.title
-          } grant`,
-          description: `As a community contributor, you can review ${
-            projectInfo?.title || projectInfo?.uid
-          }'s ${grantInfo?.title} grant now!`,
         },
       };
 
       metadata = {
         ...metadata,
         title:
-          tabMetadata[tab || "overview"]?.title ||
+          tabMetadata["overview"]?.title ||
           tabMetadata["overview"]?.title ||
           "",
         description:
-          tabMetadata[tab || "overview"]?.description ||
+          tabMetadata["overview"]?.description ||
           tabMetadata["overview"]?.description ||
           "",
       };
@@ -116,8 +77,9 @@ export async function generateMetadata({
   } else {
     metadata = {
       ...metadata,
-      title: `Karma GAP - ${projectInfo?.title}`,
-      description: projectInfo?.description?.substring(0, 80) || "",
+      title: `Karma GAP - ${projectInfo?.details?.data?.title}`,
+      description:
+        projectInfo?.details?.data?.description?.substring(0, 80) || "",
     };
   }
 
@@ -144,7 +106,7 @@ export async function generateMetadata({
 }
 
 const Page = () => {
-  return <ProjectGrantsPage />;
+  return <GrantOverview />;
 };
 
 export default Page;

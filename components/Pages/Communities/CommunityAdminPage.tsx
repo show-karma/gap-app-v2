@@ -62,7 +62,7 @@ export const CommunityAdminPage = ({
         <div className="flex flex-row flex-wrap gap-8">
           <a
             href={PAGES.ADMIN.ASSIGN_QUESTIONS(
-              community?.details?.data.slug || communityId
+              community?.details?.data?.slug || communityId
             )}
           >
             <button className="px-10 py-8 bg-green-200 rounded-md  transition-all ease-in-out duration-200 dark:bg-green-900">
@@ -71,7 +71,7 @@ export const CommunityAdminPage = ({
           </a>
           <a
             href={PAGES.ADMIN.EDIT_CATEGORIES(
-              community?.details?.data.slug || communityId
+              community?.details?.data?.slug || communityId
             )}
           >
             <button className="px-10 py-8 bg-blue-200 rounded-md  transition-all ease-in-out duration-200 dark:bg-blue-900">
@@ -80,7 +80,7 @@ export const CommunityAdminPage = ({
           </a>
           <a
             href={PAGES.ADMIN.MILESTONES(
-              community?.details?.data.slug || communityId
+              community?.details?.data?.slug || communityId
             )}
           >
             <button className="px-10 py-8 bg-yellow-200 rounded-md  transition-all ease-in-out duration-200 dark:bg-yellow-900">

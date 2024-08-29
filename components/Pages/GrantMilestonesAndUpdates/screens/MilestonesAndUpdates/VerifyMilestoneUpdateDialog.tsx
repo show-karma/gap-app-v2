@@ -98,7 +98,9 @@ export const VerifyMilestoneUpdateDialog: FC<
       await milestoneInstance
         .verify(
           walletSigner,
-          { reason: sanitizeInput(data.comment) },
+          {
+            reason: sanitizeInput(data.comment),
+          },
           changeStepperStep
         )
         .then(async (res) => {

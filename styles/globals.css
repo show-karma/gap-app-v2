@@ -20,7 +20,8 @@ body * {
   @apply font-sans;
 }
 p,
-label {
+label,
+option {
   @apply font-body;
 }
 

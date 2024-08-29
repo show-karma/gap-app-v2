@@ -292,7 +292,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     return false;
   };
 
-  const checkForm = async (callback?: () => void) => {
+  const checkFormAndTriggerErrors = async (callback?: () => void) => {
     const stepsToValidate: Record<number, (keyof SchemaType)[]> = {
       0: [
         "title",
@@ -904,7 +904,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             existingContacts={contacts}
             isEditing={!!projectToUpdate}
             addContact={(contact) => {
-              console.log("contact", contact, contacts);
               const withoutContact = contacts.filter(
                 (c) => c.id !== contact.id
               );
@@ -1157,7 +1156,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                                           ? oldStep
                                           : oldStep + 1
                                       );
-                                    checkForm(nextStep);
+                                    checkFormAndTriggerErrors(nextStep);
                                   }}
                                   disabled={hasErrors() || isLoading}
                                   isLoading={isLoading}

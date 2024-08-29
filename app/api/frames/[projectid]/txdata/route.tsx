@@ -8,7 +8,6 @@ import { SchemaEncoder } from "@ethereum-attestation-service/eas-sdk";
 import { frames } from "@/utilities/frames";
 
 const handleRequest = frames(async (ctx) => {
-  console.log(ctx.message?.inputText);
   const EtherToWei = ethers.parseUnits(
     ctx.message?.inputText as string,
     "ether"

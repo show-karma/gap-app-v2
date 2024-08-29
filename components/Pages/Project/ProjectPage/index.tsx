@@ -68,52 +68,9 @@ const MergeProjectDialog = dynamic(() =>
 
 function ProjectPage() {
   const project = useProjectStore((state) => state.project);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const { address } = useAccount();
-  const { chain } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
-  const router = useRouter();
-  const { gap } = useGap();
+
   const params = useParams();
   const projectId = params.projectId as string;
-  const { changeStepperStep, setIsStepper } = useStepper();
-  const contactsInfo = useProjectStore((state) => state.projectContactsInfo);
-
-  const deleteFn = async () => {
-    if (!address || !project) return;
-    setIsDeleting(true);
-    try {
-      if (chain?.id !== project.chainID) {
-        await switchChainAsync?.({ chainId: project.chainID });
-      }
-      const walletClient = await getWalletClient(config, {
-        chainId: project.chainID,
-      });
-      if (!walletClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
-      const fetchedProject = await getProjectById(projectId);
-      if (!fetchedProject) return;
-      await deleteProject(
-        fetchedProject,
-        walletSigner,
-        gap,
-        router,
-        changeStepperStep
-      ).then(async () => {
-        toast.success(MESSAGES.PROJECT.DELETE.SUCCESS);
-      });
-    } catch (error: any) {
-      console.log(error);
-      toast.error(MESSAGES.PROJECT.DELETE.ERROR);
-      errorManager(`Error deleting project ${projectId}`, error);
-      setIsStepper(false);
-    } finally {
-      setIsDeleting(false);
-      setIsStepper(false);
-    }
-  };
 
   const { populateEns, ensData } = useENS();
 
@@ -232,63 +189,7 @@ function ProjectPage() {
         <div className="flex w-full lg:hidden">
           <Team />
         </div>
-        {isProjectOwner || isOwner ? (
-          <div className="flex flex-col gap-2">
-            <div className="grid grid-cols-3 flex-row flex-wrap justify-between gap-2 max-lg:flex-col w-full max-lg:max-w-80">
-              <Link
-                href={PAGES.PROJECT.IMPACT.ADD_IMPACT(
-                  project?.details?.data?.slug || projectId
-                )}
-                className="flex flex-1 min-w-[49%] max-lg:w-full"
-              >
-                <Button className="bg-brand-blue text-white hover:bg-black dark:bg-zinc-800 items-center flex flex-row justify-center w-full">
-                  Add impact
-                </Button>
-              </Link>
-              <ProjectDialog
-                key={project?.uid}
-                buttonElement={{
-                  icon: null,
-                  text: "Edit project",
-                  styleClass:
-                    "rounded-md bg-black px-3 py-2 text-sm font-semibold text-white border-none  disabled:opacity-75 transition-all ease-in-out duration-300  flex-1 max-lg:w-full",
-                }}
-                projectToUpdate={project}
-                previousContacts={contactsInfo}
-              />
-              <GrantsGenieDialog />
-            </div>
-            <div className="flex flex-row flex-wrap justify-between gap-2 max-lg:flex-col w-full max-lg:max-w-80">
-              <MergeProjectDialog
-                buttonElement={{
-                  icon: null,
-                  text: "Merge",
-                  styleClass:
-                    "bg-red-600 items-center justify-center hover:bg-red-500 flex-1 max-lg:w-full",
-                }}
-              />
-              <TransferOwnershipDialog
-                buttonElement={{
-                  icon: null,
-                  text: "Transfer Ownership",
-                  styleClass:
-                    "bg-red-600 items-center justify-center hover:bg-red-500 flex-1 max-lg:w-full",
-                }}
-              />
-              <DeleteDialog
-                title="Are you sure you want to delete this project?"
-                deleteFunction={deleteFn}
-                isLoading={isDeleting}
-                buttonElement={{
-                  icon: null,
-                  text: "Delete project",
-                  styleClass:
-                    "bg-red-600 items-center justify-center hover:bg-red-500 flex-1 max-lg:w-full",
-                }}
-              />
-            </div>
-          </div>
-        ) : null}
+
         <div className="flex w-full lg:hidden">
           {project ? <ProjectSubscription project={project} /> : null}
         </div>

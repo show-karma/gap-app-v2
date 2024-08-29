@@ -1,19 +1,13 @@
 /* eslint-disable @next/next/no-img-element */
-import type { IProjectDetails } from "@show-karma/karma-gap-sdk";
 import { fetchMetadata } from "frames.js/next/pages-router/client";
 import { envVars } from "@/utilities/enviromentVars";
-import { Hex } from "viem";
-import { getMetadata } from "@/utilities/sdk";
 import { ProjectWrapper } from "@/components/Pages/Project/ProjectWrapper";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { zeroUID } from "@/utilities/commons";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { defaultMetadata } from "@/utilities/meta";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-
-
-type ProjectDetailsWithUid = IProjectDetails & { uid: Hex };
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 
 export async function generateMetadata({
   params,
@@ -21,39 +15,30 @@ export async function generateMetadata({
   params: { projectId: string };
 }) {
   const projectId = params.projectId;
-  let projectInfo: ProjectDetailsWithUid | null = null;
 
-  await Promise.all(
-    [
-      async () => {
-        const info = await getMetadata<IProjectDetails>(
-          "projects",
-          projectId as Hex
-        );
-        projectInfo = info as ProjectDetailsWithUid;
-      },
-    ].map((func) => func())
-  );
+  const projectInfo = await gapIndexerApi
+    .projectBySlug(projectId)
+    .then((res) => res.data)
+    .catch(() => notFound());
 
-  if (!projectInfo || (projectInfo as ProjectDetailsWithUid)?.uid === zeroUID) {
+  if (!projectInfo || projectInfo?.uid === zeroUID) {
     notFound();
   }
 
   const dynamicMetadata = {
-    title: `Karma GAP - ${(projectInfo as ProjectDetailsWithUid).title}`,
+    title: `Karma GAP - ${projectInfo.details?.data?.title}`,
     description:
-      (projectInfo as ProjectDetailsWithUid).description?.substring(0, 160) ||
-      "",
+      projectInfo.details?.data?.description?.substring(0, 160) || "",
   };
 
   const framesAdditionalMetatags = Object.entries(
     await fetchMetadata(
       new URL(
         `/api/frames/${projectId}?projectInfo=${
-        // Base64 encoded projectInfo
-        encodeURIComponent(
-          Buffer.from(JSON.stringify(projectInfo)).toString("base64")
-        )
+          // Base64 encoded projectInfo
+          encodeURIComponent(
+            Buffer.from(JSON.stringify(projectInfo)).toString("base64")
+          )
         }`,
         envVars.VERCEL_URL
       )
@@ -97,8 +82,6 @@ export default async function RootLayout({
   children: React.ReactNode;
   params: { projectId: string };
 }) {
-
-
   const project = await gapIndexerApi
     .projectBySlug(projectId)
     .then((res) => res.data)
@@ -107,8 +90,6 @@ export default async function RootLayout({
   if (!project || project.uid === zeroUID) {
     notFound();
   }
-
-
 
   return (
     <Suspense

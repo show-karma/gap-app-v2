@@ -4,7 +4,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { zeroUID } from "@/utilities/commons";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { getMetadata } from "@/utilities/sdk";
-import type { ICommunityDetails } from "@show-karma/karma-gap-sdk";
+import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Hex } from "viem";
@@ -17,23 +17,25 @@ type Props = {
 
 export async function generateMetadata({ params }: Props) {
   const communityId = params.communityId;
-  const communityInfo = await getMetadata<ICommunityDetails>(
-    "communities",
+  const communityInfo = await getMetadata<ICommunityResponse>(
+    "community",
     communityId as Hex
   );
   if (
     communityInfo?.uid === zeroUID ||
     !communityInfo ||
     !grantReviewDictionary[
-      communityInfo.slug as keyof typeof grantReviewDictionary
+      communityInfo.details?.data?.slug as keyof typeof grantReviewDictionary
     ]
   ) {
     notFound();
   }
   return {
-    title: `Community Grants - ${communityInfo.name || communityId}`,
+    title: `Community Grants - ${
+      communityInfo.details?.data?.name || communityId
+    }`,
     description: `View the list of grants issued by ${
-      communityInfo.name || communityId
+      communityInfo.details?.data?.name || communityId
     } and the grantee updates.`,
   };
 }
