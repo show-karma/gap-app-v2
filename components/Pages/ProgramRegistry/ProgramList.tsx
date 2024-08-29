@@ -1,7 +1,7 @@
 "use client";
 import { ReadMore } from "@/utilities/ReadMore";
 import Image from "next/image";
-import { FC, useMemo, useRef } from "react";
+import { FC, useEffect, useMemo, useRef } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { registryHelper } from "./helper";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -74,6 +74,7 @@ export type GrantProgram = {
   registryAddress?: string;
   anchorAddress?: string;
   programId?: string;
+  programScore?: number;
   chainID?: number;
   isValid?: boolean;
   txHash?: string;
@@ -423,7 +424,9 @@ export const ProgramList: FC<ProgramListProps> = ({
       {
         accessorFn: (row) => row,
         id: "AverageScore",
-        cell: () => {
+        cell: (info) => {
+          const grant = info.row.original;
+          console.log("grant.programId", grant);
           return (
             <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
               <span className="mr-1 inline-flex items-center text-lg font-medium ">
@@ -433,7 +436,7 @@ export const ProgramList: FC<ProgramListProps> = ({
                       "w-20 h-20 transparent hover:fill-transparent hover:stroke-transparent",
                   }}
                   isHovered={false}
-                  score={2} //TODO: GetGrantProgramScore
+                  score={grant.programScore} //TODO: GetGrantProgramScore
                 />
               </span>
             </div>
