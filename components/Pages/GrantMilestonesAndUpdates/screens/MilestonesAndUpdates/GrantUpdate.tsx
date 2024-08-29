@@ -127,8 +127,12 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
             fetchedProject = await gapClient!.fetch
               .projectById(selectedProject?.uid as Hex)
               .catch(() => null);
-            const stillExists = fetchedProject?.grants?.find(
-              (grantUpdate) => grantUpdate.uid === update.uid
+            const grant = fetchedProject?.grants?.find(
+              (item) => item.uid.toLowerCase() === update.refUID.toLowerCase()
+            );
+            const stillExists = grant?.updates?.find(
+              (grantUpdate) =>
+                grantUpdate.uid.toLowerCase() === update.uid.toLowerCase()
             );
             if (!stillExists) {
               retries = 0;
