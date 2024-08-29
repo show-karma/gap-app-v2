@@ -111,6 +111,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     data: SchemaType
   ) => {
     let gapClient = gap;
+    setIsSubmitLoading(true);
     try {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
         await switchChainAsync?.({ chainId: milestone.chainID });
@@ -188,6 +189,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
       );
     } finally {
       setIsStepper(false);
+      setIsSubmitLoading(false);
     }
   };
 
