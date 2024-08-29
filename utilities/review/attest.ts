@@ -1,19 +1,9 @@
 import { getWalletClient } from "@wagmi/core";
 import { config } from "@/utilities/wagmi/config";
-import {
-  createPublicClient,
-  encodeFunctionData,
-  Hex,
-  http,
-  type TransactionReceipt,
-} from "viem";
-import {
-  sendTransaction,
-  estimateGas,
-  waitForTransactionReceipt,
-} from "viem/actions";
+import { createPublicClient, encodeFunctionData, Hex, http, type TransactionReceipt } from "viem";
+import { sendTransaction, estimateGas, waitForTransactionReceipt } from "viem/actions";
 import { arbitrum } from "viem/chains";
-import { ARB_ONE_EAS } from "./review/constants/constants";
+import { ARB_ONE_EAS } from "./constants/constants";
 
 export interface AttestationRequestData {
   recipient: Hex;
@@ -34,23 +24,15 @@ const publicClient = createPublicClient({
   transport: http(),
 });
 
-export async function submitAttest({
-  from,
-  schemaUID,
-  recipient,
-  expirationTime,
-  revocable,
-  refUID,
-  data,
-}: {
-  from: Hex;
-  schemaUID: Hex;
-  recipient: Hex;
-  expirationTime: bigint;
-  revocable: boolean;
-  refUID: Hex;
-  data: Hex;
-}): Promise<TransactionReceipt | Error> {
+export async function submitAttest(
+  from: Hex,
+  schemaUID: Hex,
+  recipient: Hex,
+  expirationTime: bigint,
+  revocable: boolean,
+  refUID: Hex,
+  data: Hex,
+): Promise<TransactionReceipt | Error> {
   const walletClient = await getWalletClient(config);
   let gasLimit;
 
@@ -133,10 +115,9 @@ export async function submitAttest({
       chain: walletClient.chain,
     });
 
-    const transactionReceipt: TransactionReceipt =
-      await waitForTransactionReceipt(publicClient, {
-        hash: transactionHash,
-      });
+    const transactionReceipt: TransactionReceipt = await waitForTransactionReceipt(publicClient, {
+      hash: transactionHash,
+    });
 
     return transactionReceipt;
   } catch (error) {
