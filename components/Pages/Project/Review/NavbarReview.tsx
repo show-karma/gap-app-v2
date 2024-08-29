@@ -19,6 +19,7 @@ export const NavbarReview = () => {
   const setStories = useReviewStore((state: any) => state.setStories);
   const grantUID = useReviewStore((state: any) => state.grantUID);
   const setGrantUID = useReviewStore((state: any) => state.setGrantUID);
+  const setBadges = useReviewStore((state: any) => state.setBadges);
 
   const searchParams = useSearchParams();
 
@@ -65,6 +66,7 @@ export const NavbarReview = () => {
                       className: "cursor-pointer",
                       fill: `${isStarSelected === index && "#004EEB"} `,
                       onClick: () => {
+                        setBadges(null);
                         handleToggleReviewSelected(index);
                       },
                     }}

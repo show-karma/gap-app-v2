@@ -10,10 +10,11 @@ import { getBadge } from "@/utilities/review/getBadge";
 import { DynamicStarsReview } from "./DynamicStarsReview";
 
 export const CardReview = ({ storie }: { storie: GrantStory }) => {
-  const [badges, setBadges] = useState<Badge[]>([]);
+  const badges = useReviewStore((state: any) => state.badges);
+  const setBadges = useReviewStore((state: any) => state.setBadges);
 
   useEffect(() => {
-    if (storie.badgeIds.length > 0 && badges.length === 0) {
+    if (storie.badgeIds.length > 0 && badges === null) {
       handleBadges();
     }
   }, [storie]);
@@ -28,7 +29,6 @@ export const CardReview = ({ storie }: { storie: GrantStory }) => {
     setBadges(badges);
   };
 
-  //TODO: Select latest badge by default
   return (
     <div className="flex w-full flex-col justify-center gap-4">
       <div className="w-full flex flex-col px-2 gap-2">
@@ -41,7 +41,6 @@ export const CardReview = ({ storie }: { storie: GrantStory }) => {
                   alt="Badge Metadata"
                   className="h-20"
                 />
-
                 <div className="flex flex-col sm:flex-row items-center gap-3">
                   <div className="order-2 sm:order-1">
                     <div className="sm:text-lg sm:text-start text-center text-xl">{badge.name}</div>
