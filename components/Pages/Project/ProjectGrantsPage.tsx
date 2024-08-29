@@ -115,6 +115,10 @@ export const ProjectGrantsPage = () => {
         }
       }
       setGrant(project?.grants?.[0]);
+      // We need to set this UID here because sometimes the project loads without the
+      // search parameters and the page assumes the zeroth index grant is the one to be
+      // displayed, therefore we set it here in this case
+      setGrantUID(project?.grants?.[0]?.uid);
     }
   }, [project, grantIdFromQueryParam]);
 
@@ -426,7 +430,7 @@ export const ProjectGrantsPage = () => {
           ) : null}
           {/* Grants tabs end */}
           {project?.grants.length || currentTab === "create-grant" ? (
-            <div className="flex flex-col py-5">
+            <div className="flex flex-col pt-5">
               <GrantContext.Provider value={grant}>
                 {currentTab === "milestones-and-updates" && (
                   <GrantMilestonesAndUpdates grant={grant} />
@@ -454,7 +458,7 @@ export const ProjectGrantsPage = () => {
               </GrantContext.Provider>
             </div>
           ) : (
-            <div className="w-full py-5">
+            <div className="w-full pt-5">
               <EmptyGrantsSection />
             </div>
           )}
