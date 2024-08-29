@@ -42,7 +42,7 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
   return (
     <div className="space-y-5 flex w-full flex-col items-start justify-start gap-8">
       <div className="flex w-full max-w-5xl flex-col gap-8">
-        <div className="flex w-full flex-col items-start justify-between gap-6 border-b border-b-zinc-300 pb-8">
+        <div className="flex w-full flex-col items-start justify-between gap-6 pb-8">
           {isOpenReview === ReviewMode.WRITE ? (
             <>
               <div className="flex w-full justify-between">
