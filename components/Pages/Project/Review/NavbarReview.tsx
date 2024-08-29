@@ -11,18 +11,31 @@ import { ChevronDown } from "@/components/Icons";
 
 import { formatDate } from "@/utilities/formatDate";
 import { getGrantStories } from "@/utilities/review/getGrantStories";
-import { SCORER_ID, SCORER_DECIMALS } from "@/utilities/review/constants/constants";
-import { getBadge } from "@/utilities/review/getBadge";
-import { getBadgeIds } from "@/utilities/review/getBadgeIds";
+import { SCORER_DECIMALS } from "@/utilities/review/constants/constants";
 
 export const NavbarReview = () => {
   const isStarSelected = useReviewStore((state: any) => state.isStarSelected);
   const stories = useReviewStore((state: any) => state.stories);
   const setStories = useReviewStore((state: any) => state.setStories);
   const grantUID = useReviewStore((state: any) => state.grantUID);
-  const setBadges = useReviewStore((state: any) => state.setBadges);
+  const setGrantUID = useReviewStore((state: any) => state.setGrantUID);
+
   const searchParams = useSearchParams();
-  const grantIdFromQueryParam = searchParams?.get("grantId");
+
+  useEffect(() => {
+    const grantIdFromQueryParam = searchParams?.get("grantId");
+    if (!grantUID && grantIdFromQueryParam) {
+      setGrantUID(grantIdFromQueryParam);
+    }
+    if (grantUID && !stories) {
+      fetchGrantStories();
+    }
+  }, [grantUID, stories]);
+
+  const fetchGrantStories = async () => {
+    const grantStories = await getGrantStories(grantUID);
+    setStories(grantStories);
+  };
 
   const handleToggleReviewSelected = (id: number) => {
     const currentSelection = useReviewStore.getState().isStarSelected;
@@ -31,36 +44,10 @@ export const NavbarReview = () => {
     });
   };
 
-  useEffect(() => {
-    const fetchGrantStories = async () => {
-      if (!grantIdFromQueryParam) return;
-      const grantStories = await getGrantStories(
-        "0x635c2d0642c81e3191e6eff8623ba601b7e22e832d7791712b6bc28d052ff2b5", // TODO: Remove this hardcoded value
-        // grantUID ? grantUID : grantIdFromQueryParam
-      );
-      setStories(grantStories);
-    };
-    fetchGrantStories();
-  }, [grantIdFromQueryParam, grantUID]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const badgeIds = await getBadgeIds(SCORER_ID);
-        const badges = await Promise.all(badgeIds.map((id) => getBadge(id)));
-        setBadges(badges);
-      } catch (error) {
-        console.log("error", error);
-      }
-    };
-
-    fetchData();
-  }, []);
-
   return (
     <div className="w-full flex flex-col">
       <div className="w-full flex px-2 gap-2 overflow-x-auto pb-4 relative scroller">
-        {stories &&
+        {stories ? (
           stories
             .sort((a: any, b: any) => Number(b.timestamp) - Number(a.timestamp))
             .map((storie: GrantStory, index: number) => (
@@ -93,7 +80,15 @@ export const NavbarReview = () => {
                   )}
                 </div>
               </div>
-            ))}
+            ))
+        ) : (
+          <div>
+            <p>
+              Be the first to share your thoughts! Reach out to the grantee and encourage them to
+              leave a review.
+            </p>
+          </div>
+        )}
       </div>
       <div className="w-full flex flex-col">
         {isStarSelected !== null && stories && <CardReview storie={stories[isStarSelected]} />}

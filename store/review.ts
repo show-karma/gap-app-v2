@@ -52,6 +52,6 @@ export const useReviewStore = create<ReviewStore>((set: any, get: any) => ({
   activeBadgeIds: null,
   setActiveBadgeIds: (activeBadgeIds: Badge[] | null) =>
     set((state: any) => ({ ...state, activeBadgeIds })),
-  badgeScores: [], // TODO: Get lenght of badgesIds and add fill 1 into array based on the lenght or add a toast to advice the user to fill minimum 1 star by badge
+  badgeScores: [],
   setBadgeScores: (badgeScores: number[]) => set((state: any) => ({ ...state, badgeScores })),
 }));

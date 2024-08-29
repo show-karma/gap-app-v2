@@ -27,6 +27,7 @@ export const CardNewReview = () => {
   const setGrantUID = useReviewStore((state: any) => state.setGrantUID);
   const activeBadges = useReviewStore((state: any) => state.activeBadges);
   const activeBadgeIds = useReviewStore((state: any) => state.activeBadgeIds);
+  const setStories = useReviewStore((state: any) => state.setStories);
 
   const { address, chainId } = useAccount();
   const { switchChain } = useSwitchChain();
@@ -89,11 +90,15 @@ export const CardNewReview = () => {
       encodedData as Hex,
     );
 
-    console.log(response);
+    if (response instanceof Error) {
+      toast.error("Error submitting review. Please try again.");
+      return;
+    }
 
     toast.success("Review submitted successfully!");
     setBadgeScores(Array(activeBadges.length).fill(1));
     setIsOpenReview(ReviewMode.READ);
+    setStories(null);
   };
 
   return (
