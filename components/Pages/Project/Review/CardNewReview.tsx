@@ -23,18 +23,19 @@ import { AttestationRequestData, submitAttest } from "@/utilities/attest";
 
 export const CardNewReview = () => {
   const setIsOpenReview = useReviewStore((state: any) => state.setIsOpenReview);
-  const badge = useReviewStore((state: any) => state.badge);
+  const badges = useReviewStore((state: any) => state.badges);
   const stories = useReviewStore((state: any) => state.stories);
   const setBadgeScore = useReviewStore((state: any) => state.setBadgeScore);
-  const badgeScore = useReviewStore((state: any) => state.badgeScore);
+  const badgeScores = useReviewStore((state: any) => state.badgeScores);
   const { address, chainId } = useAccount();
   const { switchChain } = useSwitchChain();
 
   // Score of the new review
   const handleSetRating = (index: number, rating: number) => {
-    const updatededBadges = [...badgeScore];
+    const updatededBadges = [...badgeScores];
     updatededBadges[index] = rating;
     setBadgeScore(updatededBadges);
+    console.log("badgeScores to submit for review", badgeScores);
   };
 
   // TODO: Should create the submit to blockchain
@@ -53,9 +54,9 @@ export const CardNewReview = () => {
     console.log("data", data);
 
     toast.success("Review submitted successfully!");
-    if (badge) {
-      const updatedBadgeScore = Array(badge.length).fill(1);
-      console.log("updatedBadgeScore", updatedBadgeScore);
+    if (badges) {
+      const updatedBadgeScore = Array(badges.length).fill(1);
+      console.log("reseted badge scores", updatedBadgeScore);
       setBadgeScore(updatedBadgeScore);
     }
     setIsOpenReview(ReviewMode.READ);
@@ -148,8 +149,8 @@ export const CardNewReview = () => {
   return (
     <div className="flex w-full flex-col justify-center gap-4">
       <div className="w-full flex flex-col px-2 gap-2">
-        {badge &&
-          badge.map((badge: Badge, index: number) => (
+        {badges &&
+          badges.map((badge: Badge, index: number) => (
             <div key={index} className="flex flex-col w-full px-14 mt-4">
               <div className="flex justify-center sm:justify-normal flex-col sm:flex-row w-full items-center gap-3">
                 <img
@@ -163,7 +164,7 @@ export const CardNewReview = () => {
                 <div className="order-1 sm:order-2">
                   <DynamicStarsReview
                     totalStars={5}
-                    rating={badgeScore[index]}
+                    rating={badgeScores[index]}
                     setRating={(rating) => handleSetRating(index, rating)}
                     mode={ReviewMode.WRITE}
                   />

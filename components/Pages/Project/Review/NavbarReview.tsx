@@ -13,11 +13,11 @@ import { useSearchParams } from "next/navigation";
 import { GrantStory } from "@/types/review";
 
 export const NavbarReview = () => {
-  const isStarSelected = useReviewStore((state) => state.isStarSelected);
-  const stories = useReviewStore((state) => state.stories);
-  const setStories = useReviewStore((state) => state.setStories);
-  const grantUID = useReviewStore((state) => state.grantUID);
-  const setBadge = useReviewStore((state) => state.setBadge);
+  const isStarSelected = useReviewStore((state: any) => state.isStarSelected);
+  const stories = useReviewStore((state: any) => state.stories);
+  const setStories = useReviewStore((state: any) => state.setStories);
+  const grantUID = useReviewStore((state: any) => state.grantUID);
+  const setBadges = useReviewStore((state: any) => state.setBadges);
   const searchParams = useSearchParams();
   const grantIdFromQueryParam = searchParams?.get("grantId");
 
@@ -46,7 +46,7 @@ export const NavbarReview = () => {
       try {
         const badgeIds = await getBadgeIds();
         const badges = await Promise.all(badgeIds.map((id) => getBadge(id)));
-        setBadge(badges);
+        setBadges(badges);
       } catch (error) {
         console.log("error", error);
       }
@@ -61,7 +61,7 @@ export const NavbarReview = () => {
       <div className="w-full flex px-2 gap-2 overflow-x-auto pb-4 relative scroller">
         {stories &&
           stories
-            .sort((a, b) => b.timestamp - a.timestamp)
+            .sort((a: any, b: any) => b.timestamp - a.timestamp)
             .map((storie: GrantStory, index: number) => (
               <div
                 key={index}
