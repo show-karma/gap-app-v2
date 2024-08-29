@@ -10,30 +10,8 @@ const publicClient = createPublicClient({
   transport: http(),
 });
 
-//Test
-function toBytes32(hexString: string): string {
-  if (hexString.startsWith("0x")) {
-    hexString = hexString.slice(2);
-  }
-
-  if (hexString.length > 64) {
-    throw new Error("Hex string is too long to be converted to bytes32");
-  }
-
-  while (hexString.length < 64) {
-    hexString = "0" + hexString;
-  }
-
-  return "0x" + hexString;
-}
-
-/**
- * Retrieves a badge by its ID.
- *
- * @param badgeId - The ID of the badge to retrieve. Should be in Bytes32.
- * @returns A promise that resolves to the retrieved badge.
- * @throws If there is an error when reading the contract.
- */
+/// See {BadgeRegistry-getBadge} in the contract.
+/// Retrieves a badge by its ID.
 export async function getBadge(badgeId: string): Promise<Badge> {
   try {
     const badgeData = await readContract(publicClient, {
@@ -45,7 +23,6 @@ export async function getBadge(badgeId: string): Promise<Badge> {
 
     return badgeData as Badge;
   } catch (error) {
-    console.log("Error when reading the contract", error);
-    throw new Error("Error when reading the contract");
+    throw new Error(`Error when reading the contract. ${error}`);
   }
 }

@@ -1,19 +1,9 @@
 import { getWalletClient } from "@wagmi/core";
-import {
-  createPublicClient,
-  encodeFunctionData,
-  Hex,
-  http,
-  type TransactionReceipt,
-} from "viem";
-import {
-  sendTransaction,
-  estimateGas,
-  waitForTransactionReceipt,
-} from "viem/actions";
-
 import { config } from "@/utilities/wagmi/config";
-import { mainnet } from "viem/chains";
+import { createPublicClient, encodeFunctionData, Hex, http, type TransactionReceipt } from "viem";
+import { sendTransaction, estimateGas, waitForTransactionReceipt } from "viem/actions";
+import { arbitrum } from "viem/chains";
+import { ARB_ONE_EAS } from "./constants/constants";
 
 export interface AttestationRequestData {
   recipient: Hex;
@@ -30,30 +20,37 @@ export interface AttestationRequest {
 }
 
 const publicClient = createPublicClient({
-  chain: mainnet,
+  chain: arbitrum,
   transport: http(),
 });
 
-export async function submitAttest({
-  EAS_CONTRACT,
-  from,
-  schemaUID,
-  attestationRequestData,
-}: {
-  EAS_CONTRACT: Hex;
-  from: Hex;
-  schemaUID: Hex;
-  attestationRequestData: AttestationRequestData;
-}): Promise<TransactionReceipt | Error> {
+export async function submitAttest(
+  from: Hex,
+  schemaUID: Hex,
+  recipient: Hex,
+  expirationTime: bigint,
+  revocable: boolean,
+  refUID: Hex,
+  data: Hex,
+): Promise<TransactionReceipt | Error> {
   const walletClient = await getWalletClient(config);
   let gasLimit;
+
+  const attestationRequestData: AttestationRequestData = {
+    recipient: recipient,
+    expirationTime: expirationTime,
+    revocable: revocable,
+    refUID: refUID,
+    data: data,
+    value: BigInt(0),
+  };
 
   const AttestationRequest: AttestationRequest = {
     schema: schemaUID,
     data: attestationRequestData,
   };
 
-  const data = encodeFunctionData({
+  const encodedData = encodeFunctionData({
     abi: [
       {
         inputs: [
@@ -100,9 +97,9 @@ export async function submitAttest({
   try {
     gasLimit = await estimateGas(publicClient, {
       account: from as Hex,
-      to: EAS_CONTRACT as Hex,
-      data: data,
-      value: attestationRequestData.value,
+      to: ARB_ONE_EAS as Hex,
+      data: encodedData,
+      value: BigInt(0),
     });
   } catch (error) {
     return Error("Error estimating gas.");
@@ -111,20 +108,19 @@ export async function submitAttest({
   try {
     const transactionHash = await sendTransaction(walletClient, {
       account: from as Hex,
-      to: EAS_CONTRACT as Hex,
+      to: ARB_ONE_EAS as Hex,
       gasLimit: gasLimit,
-      data: data,
-      value: attestationRequestData.value,
+      data: encodedData,
+      value: BigInt(0),
       chain: walletClient.chain,
     });
 
-    const transactionReceipt: TransactionReceipt =
-      await waitForTransactionReceipt(publicClient, {
-        hash: transactionHash,
-      });
+    const transactionReceipt: TransactionReceipt = await waitForTransactionReceipt(publicClient, {
+      hash: transactionHash,
+    });
 
     return transactionReceipt;
   } catch (error) {
-    return Error("Error sending transaction.");
+    return Error(`Error sending transaction. ${error}`);
   }
 }
