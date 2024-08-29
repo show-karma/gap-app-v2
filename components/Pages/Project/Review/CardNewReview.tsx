@@ -95,10 +95,10 @@ export const CardNewReview = () => {
       return;
     }
 
-    toast.success("Review submitted successfully!");
-    setBadgeScores(Array(activeBadges.length).fill(1));
-    setIsOpenReview(ReviewMode.READ);
     setStories(null);
+    setBadgeScores(Array(activeBadges.length).fill(1));
+    toast.success("Review submitted successfully!");
+    setIsOpenReview(ReviewMode.READ);
   };
 
   return (

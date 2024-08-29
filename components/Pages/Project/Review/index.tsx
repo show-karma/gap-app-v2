@@ -66,8 +66,6 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
     const badges = await Promise.all(badgeIds.map((id) => getBadge(id)));
     setActiveBadgeIds(badgeIds);
     setActiveBadges(badges);
-    console.log("badgeIds", badgeIds);
-    console.log("badges", badges);
   };
 
   return (
