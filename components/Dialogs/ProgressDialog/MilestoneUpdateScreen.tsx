@@ -67,20 +67,23 @@ export const MilestoneUpdateScreen = () => {
   };
 
   const MilestoneSelection = () => {
+    const possibleMilestones = selectedGrant?.milestones.filter(
+      (milestone) => !milestone.completed
+    );
     return (
       <div className="flex flex-col gap-2">
         <label className="text-sm font-bold text-black dark:text-zinc-100">
           Select Milestone
         </label>
-        {selectedGrant?.milestones?.length ? (
+        {possibleMilestones?.length ? (
           <Dropdown
-            list={selectedGrant?.milestones.map((milestone) => ({
+            list={possibleMilestones.map((milestone) => ({
               value: milestone.data.title || "",
               id: milestone.uid,
               timestamp: milestone.createdAt,
             }))}
             onSelectFunction={(value: string) => {
-              const newMilestone = selectedGrant?.milestones.find(
+              const newMilestone = possibleMilestones.find(
                 (milestone) => milestone.uid === value
               );
               setSelectedMilestone(newMilestone);
