@@ -1,23 +1,17 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import React, { Dispatch, useMemo } from "react";
+import React, { Dispatch } from "react";
 import { useState, useEffect } from "react";
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import { CheckIcon } from "@heroicons/react/24/solid";
 import { Spinner } from "@/components/Utilities/Spinner";
-import Link from "next/link";
-import { PAGES } from "@/utilities/pages";
 import debounce from "lodash.debounce";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import {
-  GrantProgram,
-  ProgramList,
-} from "@/components/Pages/ProgramRegistry/ProgramList";
+import { GrantProgram, ProgramList } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 import { useQueryState } from "nuqs";
-import { useAuthStore } from "@/store/auth";
 import { useAccount } from "wagmi";
 import Pagination from "@/components/Utilities/Pagination";
 import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
@@ -26,7 +20,6 @@ import { checkIsPoolManager } from "@/utilities/registry/checkIsPoolManager";
 import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { KarmaLogo } from "@/components/Icons/Karma";
 import { useRegistryStore } from "@/store/registry";
 import { getGrantProgramScore } from "@/utilities/review/getGrantProgramScore";
 
@@ -35,10 +28,8 @@ const statuses = ["Active", "Inactive"];
 const links = {
   funding_block: "https://tally.so/r/w2rJ8M",
   add_program: "/funding-map/add-program",
-  cryptographer:
-    "https://sovs.notion.site/Cartographer-Syndicate-a574b48ae162451cb73c17326f471b6a",
-  notion:
-    "https://www.notion.so/sovs/Onchain-Grant-Registry-8fde2610cf6c4422a07216d4b2506c73",
+  cryptographer: "https://sovs.notion.site/Cartographer-Syndicate-a574b48ae162451cb73c17326f471b6a",
+  notion: "https://www.notion.so/sovs/Onchain-Grant-Registry-8fde2610cf6c4422a07216d4b2506c73",
 };
 
 export const ProgramsExplorer = () => {
@@ -94,31 +85,23 @@ export const ProgramsExplorer = () => {
     serialize: (value) => (value.length ? value?.join(",") : ""),
     parse: (value) => (value.length > 0 ? value.split(",") : []),
   });
-  const [selectedEcosystems, setSelectedEcosystems] = useQueryState(
-    "ecosystems",
-    {
-      defaultValue: defaultEcosystems,
-      serialize: (value) => (value.length ? value?.join(",") : ""),
-      parse: (value) => (value.length > 0 ? value.split(",") : []),
-    }
-  );
-  const [selectedGrantTypes, setSelectedGrantTypes] = useQueryState(
-    "grantTypes",
-    {
-      defaultValue: defaultGrantTypes,
-      serialize: (value) => (value.length ? value?.join(",") : ""),
-      parse: (value) => (value.length > 0 ? value.split(",") : []),
-    }
-  );
+  const [selectedEcosystems, setSelectedEcosystems] = useQueryState("ecosystems", {
+    defaultValue: defaultEcosystems,
+    serialize: (value) => (value.length ? value?.join(",") : ""),
+    parse: (value) => (value.length > 0 ? value.split(",") : []),
+  });
+  const [selectedGrantTypes, setSelectedGrantTypes] = useQueryState("grantTypes", {
+    defaultValue: defaultGrantTypes,
+    serialize: (value) => (value.length ? value?.join(",") : ""),
+    parse: (value) => (value.length > 0 ? value.split(",") : []),
+  });
 
   const [programId, setProgramId] = useQueryState("programId", {
     defaultValue: defaultProgramId,
     throttleMs: 500,
   });
 
-  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(
-    null
-  );
+  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(null);
 
   const debouncedSearch = debounce((value: string) => {
     setPage(1);
@@ -127,7 +110,7 @@ export const ProgramsExplorer = () => {
 
   const onChangeGeneric = (
     value: string,
-    setToChange: Dispatch<React.SetStateAction<string[]>>
+    setToChange: Dispatch<React.SetStateAction<string[]>>,
   ) => {
     setToChange((oldArray) => {
       setPage(1);
@@ -184,21 +167,11 @@ export const ProgramsExplorer = () => {
         INDEXER.REGISTRY.GET_ALL +
           `?limit=${pageSize}&offset=${(page - 1) * pageSize}${
             searchInput ? `&name=${searchInput}` : ""
-          }${
-            selectedGrantTypes.length ? `&grantTypes=${selectedGrantTypes}` : ""
-          }${status ? `&status=${status}` : ""}${
-            selectedNetworks.length
-              ? `&networks=${selectedNetworks.join(",")}`
-              : ""
-          }${
-            selectedEcosystems.length
-              ? `&ecosystems=${selectedEcosystems.join(",")}`
-              : ""
-          }${
-            selectedCategory.length
-              ? `&categories=${selectedCategory.join(",")}`
-              : ""
-          }`
+          }${selectedGrantTypes.length ? `&grantTypes=${selectedGrantTypes}` : ""}${
+            status ? `&status=${status}` : ""
+          }${selectedNetworks.length ? `&networks=${selectedNetworks.join(",")}` : ""}${
+            selectedEcosystems.length ? `&ecosystems=${selectedEcosystems.join(",")}` : ""
+          }${selectedCategory.length ? `&categories=${selectedCategory.join(",")}` : ""}`,
       );
       if (error) {
         throw new Error(error);
@@ -209,6 +182,51 @@ export const ProgramsExplorer = () => {
   const grantPrograms = data?.programs || [];
   const totalPrograms = data?.count || 0;
 
+  const [grantProgramsWithScore, setGrantProgramsWithScore] = useState<GrantProgram[] | undefined>(
+    undefined,
+  );
+  useEffect(() => {
+    setLoading(true);
+
+    const programsWithScore = (grantPrograms as GrantProgram[]).map(
+      async (program: GrantProgram) => {
+        let programScore: undefined | number;
+        if (program?.programId) {
+          try {
+            /**
+             * Refer to getGrantProgramScore.ts to identify the cases when the score is undefined.
+             */
+            programScore = (await getGrantProgramScore(Number(program.programId))) || undefined;
+          } catch {
+            programScore = undefined;
+          }
+        }
+
+        return { ...program, programScore };
+      },
+    );
+
+    Promise.allSettled(programsWithScore)
+      .then((scoredPrograms) => {
+        const grantProgramsWithScore: GrantProgram[] = [];
+
+        scoredPrograms.forEach((program, idx) => {
+          if (program.status === "fulfilled") {
+            grantProgramsWithScore.push(program.value);
+          } else {
+            grantProgramsWithScore.push(grantPrograms[idx]);
+          }
+        });
+
+        setGrantProgramsWithScore(grantProgramsWithScore);
+      })
+      .catch((error) => {
+        setGrantProgramsWithScore([...grantPrograms]);
+      });
+
+    setLoading(false);
+  }, [grantPrograms]);
+
   useEffect(() => {
     setLoading(isLoading);
   }, [isLoading]);
@@ -217,7 +235,7 @@ export const ProgramsExplorer = () => {
     const searchProgramById = async (id: string) => {
       try {
         const [data, error] = await fetchData(
-          INDEXER.REGISTRY.FIND_BY_ID(id, registryHelper.supportedNetworks)
+          INDEXER.REGISTRY.FIND_BY_ID(id, registryHelper.supportedNetworks),
         );
         if (data) {
           setSelectedProgram(data);
@@ -250,23 +268,16 @@ export const ProgramsExplorer = () => {
               {`The best grant program directory you’ll find`}
             </h1>
             <p className="text-start text-lg max-lg:text-base max-w-5xl text-black dark:text-white">
-              Explore our curated list of grant programs for innovators and
-              creators: from tech pioneers to community leaders, there is a
-              grant program to elevate your project. Find and apply for a grant
-              now!
+              Explore our curated list of grant programs for innovators and creators: from tech
+              pioneers to community leaders, there is a grant program to elevate your project. Find
+              and apply for a grant now!
             </p>
           </div>
           <div className="flex flex-row gap-4 flex-wrap">
             <div className="bg-[#DBFFC5] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full max-sm:max-w-full">
-              <img
-                src="/icons/funding.png"
-                alt="Funding"
-                className="w-6 h-6 mt-1"
-              />
+              <img src="/icons/funding.png" alt="Funding" className="w-6 h-6 mt-1" />
               <div className="flex flex-col gap-1">
-                <p className="text-black text-sm font-semibold">
-                  Looking for funding?
-                </p>
+                <p className="text-black text-sm font-semibold">Looking for funding?</p>
                 <p className="text-[#344054] text-sm font-normal">
                   <ExternalLink
                     href={links.funding_block}
@@ -279,15 +290,9 @@ export const ProgramsExplorer = () => {
               </div>
             </div>
             <div className="bg-[#DDF9F2] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full max-sm:max-w-full">
-              <img
-                src="/icons/reward.png"
-                alt="Reward"
-                className="w-6 h-6 mt-1"
-              />
+              <img src="/icons/reward.png" alt="Reward" className="w-6 h-6 mt-1" />
               <div className="flex flex-col gap-1">
-                <p className="text-black text-sm font-semibold">
-                  Are we missing a grant program?
-                </p>
+                <p className="text-black text-sm font-semibold">Are we missing a grant program?</p>
                 <p className="text-[#344054] text-sm font-normal">
                   <ExternalLink
                     href={links.add_program}
@@ -321,11 +326,7 @@ export const ProgramsExplorer = () => {
               </div>
             </div>
             <div className="bg-[#ECE9FE] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full max-sm:max-w-full">
-              <img
-                src="/icons/karma-logo-rounded.png"
-                alt="Karma Logo"
-                className="w-6 h-6 mt-1"
-              />
+              <img src="/icons/karma-logo-rounded.png" alt="Karma Logo" className="w-6 h-6 mt-1" />
               <div className="flex flex-col gap-1">
                 <p className="text-black text-sm font-semibold">
                   Our vision and roadmap for the funding map.
@@ -374,9 +375,7 @@ export const ProgramsExplorer = () => {
               }`}
             >
               All categories
-              {!selectedCategory.length ? (
-                <CheckIcon className="w-4 h-4" />
-              ) : null}
+              {!selectedCategory.length ? <CheckIcon className="w-4 h-4" /> : null}
             </button>
             {registryHelper.categories.map((type) => (
               <button
@@ -391,9 +390,7 @@ export const ProgramsExplorer = () => {
                 }`}
               >
                 {type}
-                {selectedCategory.includes(type) ? (
-                  <CheckIcon className="w-4 h-4" />
-                ) : null}
+                {selectedCategory.includes(type) ? <CheckIcon className="w-4 h-4" /> : null}
               </button>
             ))}
           </div>
@@ -462,9 +459,7 @@ export const ProgramsExplorer = () => {
 
               <SearchDropdown
                 list={registryHelper.networks}
-                onSelectFunction={(value: string) =>
-                  onChangeGeneric(value, setSelectedNetworks)
-                }
+                onSelectFunction={(value: string) => onChangeGeneric(value, setSelectedNetworks)}
                 cleanFunction={() => {
                   setSelectedNetworks([]);
                 }}
@@ -474,9 +469,7 @@ export const ProgramsExplorer = () => {
               />
               <SearchDropdown
                 list={registryHelper.ecosystems}
-                onSelectFunction={(value: string) =>
-                  onChangeGeneric(value, setSelectedEcosystems)
-                }
+                onSelectFunction={(value: string) => onChangeGeneric(value, setSelectedEcosystems)}
                 cleanFunction={() => {
                   setSelectedEcosystems([]);
                 }}
@@ -486,9 +479,7 @@ export const ProgramsExplorer = () => {
               />
               <SearchDropdown
                 list={registryHelper.grantTypes}
-                onSelectFunction={(value: string) =>
-                  onChangeGeneric(value, setSelectedGrantTypes)
-                }
+                onSelectFunction={(value: string) => onChangeGeneric(value, setSelectedGrantTypes)}
                 cleanFunction={() => {
                   setSelectedGrantTypes([]);
                 }}
@@ -499,7 +490,7 @@ export const ProgramsExplorer = () => {
             </div>
           </div>
 
-          {!loading ? (
+          {!loading && typeof grantProgramsWithScore !== "undefined" ? (
             <div className="w-full flex flex-col">
               {grantPrograms.length ? (
                 <div className="mt-8 flow-root">
@@ -509,21 +500,7 @@ export const ProgramsExplorer = () => {
                       // {...virtualizer.containerProps}
                     >
                       <ProgramList
-                        grantPrograms={grantPrograms.map(
-                          async (program: any) => {
-                            let programScore;
-                            if (program?.programId === "107") {
-                              programScore = await getGrantProgramScore(
-                                program.programId
-                              );
-                            }
-
-                            return {
-                              ...program,
-                              programScore,
-                            };
-                          }
-                        )}
+                        grantPrograms={grantProgramsWithScore}
                         selectProgram={(program) => {
                           setSelectedProgram(program);
                           setProgramId(program.programId || "");

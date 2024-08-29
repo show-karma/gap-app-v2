@@ -10,6 +10,8 @@ const publicClient = createPublicClient({
   transport: http(),
 });
 
+/// See {TrustfulResolver-getGrantStories} in the contract.
+/// Get the stories of the grant in the timeline.
 export async function getGrantStories(grantUID: string): Promise<GrantStory[]> {
   try {
     const grantStory = await readContract(publicClient, {

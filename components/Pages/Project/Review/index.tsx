@@ -1,48 +1,77 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
+import toast from "react-hot-toast";
 import { useProjectStore } from "@/store";
+import { useReviewStore } from "@/store/review";
+
+import { isAddressEqual } from "viem";
+import { useAccount, useSwitchChain } from "wagmi";
+import { arbitrum } from "@wagmi/core/chains";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
+
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+
+import { ReviewMode } from "@/types/review";
 import { StarIcon } from "@/components/Icons";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/Utilities/Button";
 import { NavbarReview } from "@/components/Pages/Project/Review/NavbarReview";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { useAccount } from "wagmi";
-import { CardNewReview } from "./CardNewReview";
+
+import { SCORER_ID } from "@/utilities/review/constants/constants";
+import { getBadgeIds } from "@/utilities/review/getBadgeIds";
+import { getBadge } from "@/utilities/review/getBadge";
+
 import { XMarkIcon } from "@heroicons/react/24/solid";
-import { isAddressEqual } from "viem";
-import { ReviewMode } from "@/types/review";
-import { useReviewStore } from "@/store/review";
+import { CardNewReview } from "./CardNewReview";
 
 interface GrantAllReviewsProps {
   grant: IGrantResponse | undefined;
 }
 
 export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
-  const isProjectLoading = useProjectStore((state) => state.loading);
+  const isProjectLoading = useProjectStore((state: any) => state.loading);
   if (isProjectLoading || !grant) {
-    <div className="space-y-5 flex w-full flex-row items-center justify-start">
+    <div className="space-y-5 flex w-full flex-row items-center justify-center">
       <Spinner />
     </div>;
   }
-  const isOpenReview = useReviewStore((state) => state.isOpenReview);
-  const setIsOpenReview = useReviewStore((state) => state.setIsOpenReview);
-  const project = useProjectStore((state) => state.project);
+  const project = useProjectStore((state: any) => state.project);
+  const isOpenReview = useReviewStore((state: any) => state.isOpenReview);
+  const setIsOpenReview = useReviewStore((state: any) => state.setIsOpenReview);
+
+  const setActiveBadges = useReviewStore((state: any) => state.setActiveBadges);
+  const setActiveBadgeIds = useReviewStore((state: any) => state.setActiveBadgeIds);
+
   const { openConnectModal } = useConnectModal();
-  const { isConnected, address } = useAccount();
+  const { isConnected, address, chainId } = useAccount();
+  const { switchChain } = useSwitchChain();
 
   const handleReviewButton = () => {
     if (!isConnected && openConnectModal) {
       openConnectModal();
     } else {
-      setIsOpenReview(ReviewMode.WRITE);
+      if (chainId != arbitrum.id) {
+        switchChain({ chainId: arbitrum.id });
+        toast.error("Must connect to Arbitrum to review");
+      } else {
+        setIsOpenReview(ReviewMode.WRITE);
+        handleStoryBadges();
+      }
     }
+  };
+
+  // Grab all recent badges and save on state
+  const handleStoryBadges = async () => {
+    const badgeIds = await getBadgeIds(SCORER_ID);
+    const badges = await Promise.all(badgeIds.map((id) => getBadge(id)));
+    setActiveBadgeIds(badgeIds);
+    setActiveBadges(badges);
   };
 
   return (
     <div className="space-y-5 flex w-full flex-col items-start justify-start gap-8">
       <div className="flex w-full max-w-5xl flex-col gap-8">
-        <div className="flex w-full flex-col items-start justify-between gap-6 border-b border-b-zinc-300 pb-8">
+        <div className="flex w-full flex-col items-start justify-between gap-6 pb-8">
           {isOpenReview === ReviewMode.WRITE ? (
             <>
               <div className="flex w-full justify-between">
@@ -92,7 +121,7 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
                     )}
                   </div>
                   <div>
-                    <p>Aggregate a reputation to a grants program</p>
+                    <p>Review your favorite Grant Program!</p>
                   </div>
                 </div>
                 <NavbarReview />

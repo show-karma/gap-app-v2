@@ -1,37 +1,8 @@
-import {
-  Review,
-  Badge,
-  BadgeName,
-  BadgeDescription,
-  ReviewMode,
-  BadgeOfficial,
-  GrantStory,
-} from "@/types/review";
+import { ReviewMode, Badge, GrantStory } from "@/types/review";
+import { Hex } from "viem";
 import { create } from "zustand";
 
-// TODO: Mock - Should remove this.
-const grantStoryMockData: GrantStory[] = [
-  {
-    timestamp: 1620414884, // 07 May, 2021 in Unix timestamp,
-    txUID: "0x7681b353ede51eadfbf7165c592a8449808ef4f37999cd9c819cb29dc923ad1a",
-    badgeIds: ["1", "2", "3", "4", "5", "6", "7"],
-    badgeScores: [5, 4, 3, 2, 1, 2, 3],
-    averageScore: 3.3,
-  },
-  {
-    timestamp: 1620414884, // 07 May, 2021 in Unix timestamp,
-    txUID: "0x7681b353ede51eadfbf7165c592a8449808ef4f37999cd9c819cb29dc923ad1a",
-    badgeIds: ["1", "2", "3", "4", "5", "6", "7"],
-    badgeScores: [5, 5, 5, 5, 1, 4, 4],
-    averageScore: 0,
-  },
-];
-
 interface ReviewStore {
-  // Mocks
-  review: Review[];
-  setReview: (review: Review[]) => void;
-
   /// UI
   isOpenReview: ReviewMode;
   setIsOpenReview: (isOpenReview: ReviewMode) => void;
@@ -39,345 +10,48 @@ interface ReviewStore {
   setIsStarSelected: (isStarSelected: number | null) => void;
 
   /// This are setters used by the blockchain calls
-  stories: GrantStory[];
-  setStories: (stories: GrantStory[]) => void;
-  badge: BadgeOfficial[] | null;
-  setBadge: (badge: BadgeOfficial[] | null) => void;
+  stories: GrantStory[] | null;
+  setStories: (stories: GrantStory[] | null) => void;
 
+  /// Used to store the badges of a story
+  badges: Badge[] | null;
+  setBadges: (badges: Badge[] | null) => void;
+
+  /// The grant UID that is being reviewed at current context
   grantUID: string | null;
   setGrantUID: (grantUID: string | null) => void;
-  badgeScore: number[];
-  setBadgeScore: (badgeScore: number[]) => void;
+
+  /// Used to store the badges that are currently active in the Scorer to write a new review
+  activeBadges: Badge[] | null;
+  setActiveBadges: (activeBadges: Badge[] | null) => void;
+
+  /// Used to store the array of badgeIds that are currently active in the Scorer
+  activeBadgeIds: Hex[] | null;
+  setActiveBadgeIds: (activeBadgeIds: Hex[] | null) => void;
+
+  // Used to store the array of scores that the user has given to each active badge
+  badgeScores: number[];
+  setBadgeScores: (badgeScores: number[]) => void;
 }
 
-// TODO: Mock - Should remove this.
-const initialBadgeList: Badge[][] = [
-  [
-    {
-      name: BadgeName.CLEAR_GOALS,
-      description: BadgeDescription[BadgeName.CLEAR_GOALS],
-      score: 5,
-    },
-    {
-      name: BadgeName.SMOOTH_APPLICATION,
-      description: BadgeDescription[BadgeName.SMOOTH_APPLICATION],
-      score: 4,
-    },
-    {
-      name: BadgeName.FAIR_ROUNDS,
-      description: BadgeDescription[BadgeName.FAIR_ROUNDS],
-      score: 4,
-    },
-    {
-      name: BadgeName.EASY_TEACH,
-      description: BadgeDescription[BadgeName.EASY_TEACH],
-      score: 4,
-    },
-    {
-      name: BadgeName.SUPPORTIVE_TEAM,
-      description: BadgeDescription[BadgeName.SUPPORTIVE_TEAM],
-      score: 4,
-    },
-    {
-      name: BadgeName.GREAT_REVIEWERS,
-      description: BadgeDescription[BadgeName.GREAT_REVIEWERS],
-      score: 4,
-    },
-    {
-      name: BadgeName.FAST_DISBURSEMENT,
-      description: BadgeDescription[BadgeName.FAST_DISBURSEMENT],
-      score: 4,
-    },
-  ],
-  [
-    {
-      name: BadgeName.CLEAR_GOALS,
-      description: BadgeDescription[BadgeName.CLEAR_GOALS],
-      score: 2,
-    },
-    {
-      name: BadgeName.SMOOTH_APPLICATION,
-      description: BadgeDescription[BadgeName.SMOOTH_APPLICATION],
-      score: 3,
-    },
-    {
-      name: BadgeName.FAIR_ROUNDS,
-      description: BadgeDescription[BadgeName.FAIR_ROUNDS],
-      score: 5,
-    },
-    {
-      name: BadgeName.EASY_TEACH,
-      description: BadgeDescription[BadgeName.EASY_TEACH],
-      score: 1,
-    },
-    {
-      name: BadgeName.SUPPORTIVE_TEAM,
-      description: BadgeDescription[BadgeName.SUPPORTIVE_TEAM],
-      score: 1,
-    },
-    {
-      name: BadgeName.GREAT_REVIEWERS,
-      description: BadgeDescription[BadgeName.GREAT_REVIEWERS],
-      score: 2,
-    },
-    {
-      name: BadgeName.FAST_DISBURSEMENT,
-      description: BadgeDescription[BadgeName.FAST_DISBURSEMENT],
-      score: 3,
-    },
-  ],
-  [
-    {
-      name: BadgeName.CLEAR_GOALS,
-      description: BadgeDescription[BadgeName.CLEAR_GOALS],
-      score: 4,
-    },
-    {
-      name: BadgeName.SMOOTH_APPLICATION,
-      description: BadgeDescription[BadgeName.SMOOTH_APPLICATION],
-      score: 4,
-    },
-    {
-      name: BadgeName.FAIR_ROUNDS,
-      description: BadgeDescription[BadgeName.FAIR_ROUNDS],
-      score: 2,
-    },
-    {
-      name: BadgeName.EASY_TEACH,
-      description: BadgeDescription[BadgeName.EASY_TEACH],
-      score: 3,
-    },
-    {
-      name: BadgeName.SUPPORTIVE_TEAM,
-      description: BadgeDescription[BadgeName.SUPPORTIVE_TEAM],
-      score: 5,
-    },
-    {
-      name: BadgeName.GREAT_REVIEWERS,
-      description: BadgeDescription[BadgeName.GREAT_REVIEWERS],
-      score: 2,
-    },
-    {
-      name: BadgeName.FAST_DISBURSEMENT,
-      description: BadgeDescription[BadgeName.FAST_DISBURSEMENT],
-      score: 1,
-    },
-  ],
-  [
-    {
-      name: BadgeName.CLEAR_GOALS,
-      description: BadgeDescription[BadgeName.CLEAR_GOALS],
-      score: 2,
-    },
-    {
-      name: BadgeName.SMOOTH_APPLICATION,
-      description: BadgeDescription[BadgeName.SMOOTH_APPLICATION],
-      score: 2,
-    },
-    {
-      name: BadgeName.FAIR_ROUNDS,
-      description: BadgeDescription[BadgeName.FAIR_ROUNDS],
-      score: 3,
-    },
-    {
-      name: BadgeName.EASY_TEACH,
-      description: BadgeDescription[BadgeName.EASY_TEACH],
-      score: 1,
-    },
-    {
-      name: BadgeName.SUPPORTIVE_TEAM,
-      description: BadgeDescription[BadgeName.SUPPORTIVE_TEAM],
-      score: 1,
-    },
-    {
-      name: BadgeName.GREAT_REVIEWERS,
-      description: BadgeDescription[BadgeName.GREAT_REVIEWERS],
-      score: 2,
-    },
-    {
-      name: BadgeName.FAST_DISBURSEMENT,
-      description: BadgeDescription[BadgeName.FAST_DISBURSEMENT],
-      score: 1,
-    },
-  ],
-  [
-    {
-      name: BadgeName.CLEAR_GOALS,
-      description: BadgeDescription[BadgeName.CLEAR_GOALS],
-      score: 1,
-    },
-    {
-      name: BadgeName.SMOOTH_APPLICATION,
-      description: BadgeDescription[BadgeName.SMOOTH_APPLICATION],
-      score: 2,
-    },
-    {
-      name: BadgeName.FAIR_ROUNDS,
-      description: BadgeDescription[BadgeName.FAIR_ROUNDS],
-      score: 2,
-    },
-    {
-      name: BadgeName.EASY_TEACH,
-      description: BadgeDescription[BadgeName.EASY_TEACH],
-      score: 3,
-    },
-    {
-      name: BadgeName.SUPPORTIVE_TEAM,
-      description: BadgeDescription[BadgeName.SUPPORTIVE_TEAM],
-      score: 5,
-    },
-    {
-      name: BadgeName.GREAT_REVIEWERS,
-      description: BadgeDescription[BadgeName.GREAT_REVIEWERS],
-      score: 3,
-    },
-    {
-      name: BadgeName.FAST_DISBURSEMENT,
-      description: BadgeDescription[BadgeName.FAST_DISBURSEMENT],
-      score: 2,
-    },
-  ],
-  [
-    {
-      name: BadgeName.CLEAR_GOALS,
-      description: BadgeDescription[BadgeName.CLEAR_GOALS],
-      score: 5,
-    },
-    {
-      name: BadgeName.SMOOTH_APPLICATION,
-      description: BadgeDescription[BadgeName.SMOOTH_APPLICATION],
-      score: 4,
-    },
-    {
-      name: BadgeName.FAIR_ROUNDS,
-      description: BadgeDescription[BadgeName.FAIR_ROUNDS],
-      score: 3,
-    },
-    {
-      name: BadgeName.EASY_TEACH,
-      description: BadgeDescription[BadgeName.EASY_TEACH],
-      score: 5,
-    },
-    {
-      name: BadgeName.SUPPORTIVE_TEAM,
-      description: BadgeDescription[BadgeName.SUPPORTIVE_TEAM],
-      score: 5,
-    },
-    {
-      name: BadgeName.GREAT_REVIEWERS,
-      description: BadgeDescription[BadgeName.GREAT_REVIEWERS],
-      score: 4,
-    },
-    {
-      name: BadgeName.FAST_DISBURSEMENT,
-      description: BadgeDescription[BadgeName.FAST_DISBURSEMENT],
-      score: 4,
-    },
-  ],
-  [
-    {
-      name: BadgeName.CLEAR_GOALS,
-      description: BadgeDescription[BadgeName.CLEAR_GOALS],
-      score: 2,
-    },
-    {
-      name: BadgeName.SMOOTH_APPLICATION,
-      description: BadgeDescription[BadgeName.SMOOTH_APPLICATION],
-      score: 2,
-    },
-    {
-      name: BadgeName.FAIR_ROUNDS,
-      description: BadgeDescription[BadgeName.FAIR_ROUNDS],
-      score: 1,
-    },
-    {
-      name: BadgeName.EASY_TEACH,
-      description: BadgeDescription[BadgeName.EASY_TEACH],
-      score: 5,
-    },
-    {
-      name: BadgeName.SUPPORTIVE_TEAM,
-      description: BadgeDescription[BadgeName.SUPPORTIVE_TEAM],
-      score: 5,
-    },
-    {
-      name: BadgeName.GREAT_REVIEWERS,
-      description: BadgeDescription[BadgeName.GREAT_REVIEWERS],
-      score: 4,
-    },
-    {
-      name: BadgeName.FAST_DISBURSEMENT,
-      description: BadgeDescription[BadgeName.FAST_DISBURSEMENT],
-      score: 4,
-    },
-  ],
-];
-
-// TODO: Mock - Should remove this.
-const defaultReviews: Review[] = [
-  {
-    id: 0,
-    date: 1620414884, // 07 May, 2021 in Unix timestamp
-    averageScore: 4.6,
-    reviews: initialBadgeList[0],
-  },
-  {
-    id: 1,
-    date: 1673723684, // 14 January, 2023 in Unix timestamp
-    averageScore: 4.4,
-    reviews: initialBadgeList[1],
-  },
-  {
-    id: 2,
-    date: 1498072484, // 21 Jun 2017 in Unix timestamp
-    averageScore: 4.1,
-    reviews: initialBadgeList[2],
-  },
-  {
-    id: 3,
-    date: 1351188884, // 25 Oct 2012 in Unix timestamp
-    averageScore: 4.9,
-    reviews: initialBadgeList[3],
-  },
-  {
-    id: 4,
-    date: 1719792000, // 1 July, 2024 in Unix timestamp
-    averageScore: 4.9,
-    reviews: initialBadgeList[4],
-  },
-  {
-    id: 5,
-    date: 1672531200, // 1 January, 2023 in Unix timestamp
-    averageScore: 4.9,
-    reviews: initialBadgeList[5],
-  },
-  {
-    id: 6,
-    date: 1356998400, // 1 January, 2013 in Unix timestamp
-    averageScore: 4.9,
-    reviews: initialBadgeList[6],
-  },
-];
-
-export const useReviewStore = create<ReviewStore>((set, get) => ({
-  review: defaultReviews,
-  setReview: (review: Review[]) => set((state) => ({ ...state, review })),
+export const useReviewStore = create<ReviewStore>((set: any, get: any) => ({
   isOpenReview: ReviewMode.READ,
-  setIsOpenReview: (isOpenReview: ReviewMode) =>
-    set((state) => ({ ...state, isOpenReview })),
+  setIsOpenReview: (isOpenReview: ReviewMode) => set((state: any) => ({ ...state, isOpenReview })),
   isStarSelected: null,
   setIsStarSelected: (isStarSelected: number | null) =>
-    set((state) => ({ ...state, isStarSelected })),
-  stories: grantStoryMockData,
-  setStories: (stories: GrantStory[]) =>
-    set((state) => ({ ...state, stories })),
-  badge: null,
-  setBadge: (badge: BadgeOfficial[] | null) =>
-    set((state) => ({ ...state, badge })),
+    set((state: any) => ({ ...state, isStarSelected })),
+  stories: null,
+  setStories: (stories: GrantStory[] | null) => set((state: any) => ({ ...state, stories })),
+  badges: null,
+  setBadges: (badges: Badge[] | null) => set((state: any) => ({ ...state, badges })),
   grantUID: null,
-  setGrantUID: (grantUID: string | null) =>
-    set((state) => ({ ...state, grantUID })),
-  badgeScore: [], // TODO: Get lenght of badgesIds and add fill 1 into array based on the lenght or add a toast to advice the user to fill minimum 1 star by badge
-  setBadgeScore: (badgeScore: number[]) =>
-    set((state) => ({ ...state, badgeScore })),
+  setGrantUID: (grantUID: string | null) => set((state: any) => ({ ...state, grantUID })),
+  activeBadges: null,
+  setActiveBadges: (activeBadges: Badge[] | null) =>
+    set((state: any) => ({ ...state, activeBadges })),
+  activeBadgeIds: null,
+  setActiveBadgeIds: (activeBadgeIds: Badge[] | null) =>
+    set((state: any) => ({ ...state, activeBadgeIds })),
+  badgeScores: [], // TODO: Get lenght of badgesIds and add fill 1 into array based on the lenght or add a toast to advice the user to fill minimum 1 star by badge
+  setBadgeScores: (badgeScores: number[]) => set((state: any) => ({ ...state, badgeScores })),
 }));

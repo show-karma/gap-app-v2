@@ -4,20 +4,14 @@ import React, { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import {
-  ArrowTopRightOnSquareIcon,
-  PencilSquareIcon,
-} from "@heroicons/react/24/outline";
+import { ArrowTopRightOnSquareIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import formatCurrency from "@/utilities/formatCurrency";
 import { Hex } from "viem";
 import markdownStyles from "@/styles/markdown.module.css";
 
 import { CheckCircleIcon, PlusIcon } from "@heroicons/react/20/solid";
 import { Button } from "@/components/Utilities/Button";
-import {
-  EmptyGrantsSection,
-  NewGrant,
-} from "@/components/Pages/GrantMilestonesAndUpdates/screens";
+import { EmptyGrantsSection, NewGrant } from "@/components/Pages/GrantMilestonesAndUpdates/screens";
 import { useRouter } from "next/navigation";
 import { GrantScreen } from "@/types/grant";
 import { NewMilestone } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewMilestone";
@@ -34,12 +28,7 @@ import { ReviewGrant } from "@/components/Pages/ReviewGrant";
 import { GenerateImpactReportDialog } from "@/components/Dialogs/GenerateImpactReportDialog";
 
 import { useQueryState } from "nuqs";
-import {
-  getMetadata,
-  getQuestionsOf,
-  getReviewsOf,
-  isCommunityAdminOf,
-} from "@/utilities/sdk";
+import { getMetadata, getQuestionsOf, getReviewsOf, isCommunityAdminOf } from "@/utilities/sdk";
 import { zeroUID } from "@/utilities/commons";
 import { cn } from "@/utilities/tailwind";
 import { MESSAGES } from "@/utilities/messages";
@@ -79,15 +68,12 @@ export const ProjectGrantsPage = () => {
   const grantIdFromQueryParam = searchParams?.get("grantId");
   const [currentTab, setCurrentTab] = useState("overview");
   const [grant, setGrant] = useState<IGrantResponse | undefined>(undefined);
-  const project = useProjectStore((state) => state.project);
+  const project = useProjectStore((state: any) => state.project);
   const navigation =
-    project?.grants?.map((item) => ({
+    project?.grants?.map((item: any) => ({
       uid: item.uid,
       name: item.details?.data?.title || "",
-      href: PAGES.PROJECT.GRANT(
-        project.details?.data?.slug || project.uid,
-        item.uid
-      ),
+      href: PAGES.PROJECT.GRANT(project.details?.data?.slug || project.uid, item.uid),
       icon: item.community?.details?.data?.imageURL || "",
       current: item.uid === grantIdFromQueryParam || item.uid === grant?.uid,
       completed: item.completed,
@@ -95,27 +81,21 @@ export const ProjectGrantsPage = () => {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const router = useRouter();
 
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useCommunityAdminStore(
-    (state) => state.isCommunityAdmin
-  );
+  const isProjectOwner = useProjectStore((state: any) => state.isProjectOwner);
+  const isContractOwner = useOwnerStore((state: any) => state.isOwner);
+  const isCommunityAdmin = useCommunityAdminStore((state: any) => state.isCommunityAdmin);
   const { communities } = useCommunitiesStore();
   const isCommunityAdminOfSome = communities.length !== 0;
   const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
   const [, changeTab] = useQueryState("tab");
   const [, changeGrantId] = useQueryState("grantId");
   const { address } = useAccount();
-  const setGrantUID = useReviewStore((state) => state.setGrantUID);
+  const setGrantUID = useReviewStore((state: any) => state.setGrantUID);
 
   // UseEffect to check if current URL changes
   useEffect(() => {
     if (tabFromQueryParam) {
-      if (
-        !isAuthorized &&
-        currentTab &&
-        authorizedViews.includes(currentTab as GrantScreen)
-      ) {
+      if (!isAuthorized && currentTab && authorizedViews.includes(currentTab as GrantScreen)) {
         setCurrentTab("overview");
       } else {
         setCurrentTab(tabFromQueryParam);
@@ -127,8 +107,7 @@ export const ProjectGrantsPage = () => {
     if (project) {
       if (grantIdFromQueryParam) {
         const grantFound = project?.grants?.find(
-          (grant) =>
-            grant.uid?.toLowerCase() === grantIdFromQueryParam?.toLowerCase()
+          (grant: any) => grant.uid?.toLowerCase() === grantIdFromQueryParam?.toLowerCase(),
         );
         if (grantFound) {
           setGrant(grantFound);
@@ -136,6 +115,10 @@ export const ProjectGrantsPage = () => {
         }
       }
       setGrant(project?.grants?.[0]);
+      // We need to set this UID here because sometimes the project loads without the
+      // search parameters and the page assumes the zeroth index grant is the one to be
+      // displayed, therefore we set it here in this case
+      setGrantUID(project?.grants?.[0]?.uid);
     }
   }, [project, grantIdFromQueryParam]);
 
@@ -171,11 +154,7 @@ export const ProjectGrantsPage = () => {
     const mountTabs = async () => {
       const firstTabs: Tab[] = [...defaultTabs];
 
-      if (
-        !grant ||
-        !grant.categories?.length ||
-        grant.categories?.length <= 0
-      ) {
+      if (!grant || !grant.categories?.length || grant.categories?.length <= 0) {
         setTabs(firstTabs);
         return;
       }
@@ -222,11 +201,9 @@ export const ProjectGrantsPage = () => {
     mountTabs();
   }, [grant?.uid]);
 
-  const setIsCommunityAdmin = useCommunityAdminStore(
-    (state) => state.setIsCommunityAdmin
-  );
+  const setIsCommunityAdmin = useCommunityAdminStore((state: any) => state.setIsCommunityAdmin);
   const setIsCommunityAdminLoading = useCommunityAdminStore(
-    (state) => state.setIsCommunityAdminLoading
+    (state: any) => state.setIsCommunityAdminLoading,
   );
 
   const signer = useSigner();
@@ -246,11 +223,7 @@ export const ProjectGrantsPage = () => {
       const community = await gapIndexerApi
         .communityBySlug(grant.data.communityUID)
         .then((res) => res.data);
-      const result = await isCommunityAdminOf(
-        community,
-        address as string,
-        signer
-      );
+      const result = await isCommunityAdminOf(community, address as string, signer);
       setIsCommunityAdmin(result);
     } catch (error) {
       console.log(error);
@@ -271,7 +244,7 @@ export const ProjectGrantsPage = () => {
           <div className="w-full max-w-[320px] max-lg:max-w-full py-5 border-none max-lg:w-full max-lg:px-0">
             <div className=" lg:hidden">
               <GrantsAccordion>
-                {navigation.map((item) => (
+                {navigation.map((item: any) => (
                   <div key={item.uid}>
                     <button
                       onClick={() => {
@@ -279,7 +252,7 @@ export const ProjectGrantsPage = () => {
                       }}
                       className={cn(
                         " text-[#155eef] hover:text-primary-600",
-                        "flex items-center rounded-md text-sm leading-6 font-semibold w-full"
+                        "flex items-center rounded-md text-sm leading-6 font-semibold w-full",
                       )}
                     >
                       <div className="flex flex-row w-full items-center gap-2 justify-between">
@@ -314,10 +287,7 @@ export const ProjectGrantsPage = () => {
                 )}
               </GrantsAccordion>
             </div>
-            <nav
-              className="flex flex-1 flex-col gap-4 max-lg:hidden"
-              aria-label="Sidebar"
-            >
+            <nav className="flex flex-1 flex-col gap-4 max-lg:hidden" aria-label="Sidebar">
               <div className="flex w-full min-w-[240px] flex-row items-center gap-2">
                 <svg
                   width="16"
@@ -342,12 +312,10 @@ export const ProjectGrantsPage = () => {
                   </defs>
                 </svg>
 
-                <p className="text-xs font-bold text-black dark:text-zinc-300 ">
-                  GRANTS
-                </p>
+                <p className="text-xs font-bold text-black dark:text-zinc-300 ">GRANTS</p>
               </div>
               <ul role="list" className="space-y-2 mt-8">
-                {navigation.map((item) => (
+                {navigation.map((item: any) => (
                   <li key={item.uid}>
                     <button
                       onClick={() => {
@@ -358,7 +326,7 @@ export const ProjectGrantsPage = () => {
                         item.current
                           ? "bg-[#eef4ff] dark:bg-zinc-800 dark:text-primary-300  text-[#155eef]"
                           : "text-gray-700 hover:text-primary-600 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700",
-                        "flex items-center rounded-md text-sm leading-6 font-semibold w-full"
+                        "flex items-center rounded-md text-sm leading-6 font-semibold w-full",
                       )}
                     >
                       <div className="flex flex-row w-full items-center gap-2 justify-between px-4 py-2">
@@ -370,7 +338,7 @@ export const ProjectGrantsPage = () => {
                               item.current
                                 ? "text-primary-600"
                                 : "text-gray-400 group-hover:text-primary-600",
-                              "h-5 w-5 shrink-0 rounded-full object-cover"
+                              "h-5 w-5 shrink-0 rounded-full object-cover",
                             )}
                           />
                           <p className="line-clamp-2 break-normal font-medium text-left text-lg">
@@ -427,9 +395,7 @@ export const ProjectGrantsPage = () => {
               </div>
               {isAuthorized && grant ? (
                 <div className="flex flex-row gap-2">
-                  {project ? (
-                    <GrantCompleteButton project={project} grant={grant} />
-                  ) : null}
+                  {project ? <GrantCompleteButton project={project} grant={grant} /> : null}
                   <GenerateImpactReportDialog grant={grant} />
                   <GrantDelete grant={grant} />
                 </div>
@@ -453,7 +419,7 @@ export const ProjectGrantsPage = () => {
                         (tab.tabName === "overview" && !tabFromQueryParam)
                         ? "text-gray-900 bg-white dark:bg-zinc-700 dark:text-zinc-100"
                         : "text-gray-500 hover:text-gray-700 dark:text-zinc-400",
-                      "group relative min-w-0 w-max border-none overflow-hidden rounded-lg py-2 px-3 text-center text-sm font-semibold hover:bg-gray-50 dark:hover:bg-zinc-800 dark:hover:text-white focus:z-10 transition-all duration-300 ease-in-out"
+                      "group relative min-w-0 w-max border-none overflow-hidden rounded-lg py-2 px-3 text-center text-sm font-semibold hover:bg-gray-50 dark:hover:bg-zinc-800 dark:hover:text-white focus:z-10 transition-all duration-300 ease-in-out",
                     )}
                   >
                     <span>{tab.name}</span>
@@ -464,14 +430,12 @@ export const ProjectGrantsPage = () => {
           ) : null}
           {/* Grants tabs end */}
           {project?.grants.length || currentTab === "create-grant" ? (
-            <div className="flex flex-col py-5">
+            <div className="flex flex-col pt-5">
               <GrantContext.Provider value={grant}>
                 {currentTab === "milestones-and-updates" && (
                   <GrantMilestonesAndUpdates grant={grant} />
                 )}
-                {currentTab === "impact-criteria" && (
-                  <GrantImpactCriteria grant={grant} />
-                )}
+                {currentTab === "impact-criteria" && <GrantImpactCriteria grant={grant} />}
                 {currentTab === "reviews" && <GrantAllReviews grant={grant} />}
                 {currentTab === "review-this-grant" && (
                   <Suspense>
@@ -484,22 +448,17 @@ export const ProjectGrantsPage = () => {
                 {currentTab === "edit-grant" && project?.uid && grant && (
                   <NewGrant grantToEdit={grant} />
                 )}
-                {(currentTab === "create-milestone" ||
-                  currentTab === "edit-milestone") &&
+                {(currentTab === "create-milestone" || currentTab === "edit-milestone") &&
                   grant && <NewMilestone grant={grant} />}
-                {currentTab === "grant-update" && grant && (
-                  <NewGrantUpdate grant={grant} />
-                )}
+                {currentTab === "grant-update" && grant && <NewGrantUpdate grant={grant} />}
                 {currentTab === "complete-grant" && grant && project && (
                   <GrantCompletion project={project} grant={grant} />
                 )}
-                {(currentTab === "overview" || !currentTab) && (
-                  <GrantOverview grant={grant} />
-                )}
+                {(currentTab === "overview" || !currentTab) && <GrantOverview grant={grant} />}
               </GrantContext.Provider>
             </div>
           ) : (
-            <div className="w-full py-5">
+            <div className="w-full pt-5">
               <EmptyGrantsSection />
             </div>
           )}
@@ -524,12 +483,10 @@ const isValidAmount = (amount?: string | undefined) => {
 
 const GrantOverview = ({ grant }: GrantOverviewProps) => {
   const milestones = grant?.milestones;
-  const project = useProjectStore((state) => state.project);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isCommunityAdmin = useCommunityAdminStore(
-    (state) => state.isCommunityAdmin
-  );
+  const project = useProjectStore((state: any) => state.project);
+  const isProjectOwner = useProjectStore((state: any) => state.isProjectOwner);
+  const isContractOwner = useOwnerStore((state: any) => state.isOwner);
+  const isCommunityAdmin = useCommunityAdminStore((state: any) => state.isCommunityAdmin);
   const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
   const [, changeTab] = useQueryState("tab");
 
@@ -537,9 +494,7 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
     if (!milestones) return 0;
 
     const total = milestones.length;
-    const completed = milestones.filter(
-      (milestone) => milestone.completed
-    ).length;
+    const completed = milestones.filter((milestone) => milestone.completed).length;
 
     const percent = grant?.completed ? 100 : (completed / total) * 100;
     return Number.isNaN(percent) ? 0 : +percent.toFixed(2);
@@ -587,9 +542,7 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
         <div className="w-4/12 max-lg:w-full">
           <div className="border border-gray-200 rounded-xl bg-white  dark:bg-zinc-900 dark:border-gray-800">
             <div className="flex items-center justify-between p-5">
-              <div className="font-semibold text-black dark:text-white">
-                Grant Overview
-              </div>
+              <div className="font-semibold text-black dark:text-white">Grant Overview</div>
               {/* <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10"> */}
               <span
                 className={`h-max items-center justify-center rounded-2xl  px-2 py-1 text-center text-xs font-medium leading-none text-white ${
@@ -606,8 +559,7 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
                 </div>
                 <a
                   href={PAGES.COMMUNITY.ALL_GRANTS(
-                    grant?.community?.details?.data?.slug ||
-                      (grant?.community?.uid as Hex)
+                    grant?.community?.details?.data?.slug || (grant?.community?.uid as Hex),
                   )}
                 >
                   <div className="w-full inline-flex items-center gap-x-2 rounded-3xl bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900">
@@ -631,16 +583,12 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
                 <div className="inline-flex items-center gap-x-2 rounded-full bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={chainImgDictionary(
-                      grant?.community?.details?.chainID as number
-                    )}
+                    src={chainImgDictionary(grant?.community?.details?.chainID as number)}
                     alt=""
                     className="h-5 w-5 rounded-full"
                   />
                   <p className="max-w-xs truncate text-base font-semibold text-black dark:text-gray-100 max-md:text-sm  w-full break-words whitespace-break-spaces">
-                    {chainNameDictionary(
-                      grant?.community?.details?.chainID as number
-                    )}
+                    {chainNameDictionary(grant?.community?.details?.chainID as number)}
                   </p>
                 </div>
               </div>
@@ -665,18 +613,12 @@ const GrantOverview = ({ grant }: GrantOverviewProps) => {
                     key={data.title}
                     className="flex flex-row items-center justify-between gap-2"
                   >
-                    <h4
-                      className={
-                        "text-gray-500  font-semibold text-base dark:text-gray-300"
-                      }
-                    >
+                    <h4 className={"text-gray-500  font-semibold text-base dark:text-gray-300"}>
                       {data.title}
                     </h4>
-                    <p className={"text-base text-gray-900 dark:text-gray-100"}>
-                      {data.stat}
-                    </p>
+                    <p className={"text-base text-gray-900 dark:text-gray-100"}>{data.stat}</p>
                   </div>
-                ) : null
+                ) : null,
               )}
             </div>
           </div>
@@ -708,9 +650,7 @@ const GrantImpactCriteria = ({ grant }: GrantImpactCriteriaProps) => {
           ))}
         </div>
       ) : (
-        <p className="text-black dark:text-zinc-100">
-          {MESSAGES.GRANT.IMPACT_CRITERIA.EMPTY}
-        </p>
+        <p className="text-black dark:text-zinc-100">{MESSAGES.GRANT.IMPACT_CRITERIA.EMPTY}</p>
       )}
     </div>
   );

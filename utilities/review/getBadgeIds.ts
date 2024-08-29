@@ -1,31 +1,46 @@
 import { readContract } from "viem/actions";
-import { createPublicClient, http } from "viem";
+import { createPublicClient, http, Hex } from "viem";
 import { arbitrum } from "viem/chains";
-import { SCORER_ID, TRUSTFUL_SCORER } from "./constants/constants";
-import { TRUSTFUL_SCORER_ABI } from "./constants/abi";
+import { TRUSTFUL_SCORER } from "./constants/constants";
 
 const publicClient = createPublicClient({
   chain: arbitrum,
   transport: http(),
 });
 
-/**
- * Retrieves the badge IDs from the contract.
- * @returns A promise that resolves to an array of string badge IDs.
- * @throws If there is an error when reading the contract.
- */
-export async function getBadgeIds(): Promise<string[]> {
+/// See {TrustfulScorer-getBadgesIds} in the contract.
+/// Returns the badge IDs contained in a scorer.
+export async function getBadgeIds(scorerId: number): Promise<Hex[]> {
+  const abi = {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "scorerId",
+        type: "uint256",
+      },
+    ],
+    name: "getBadgesIds",
+    outputs: [
+      {
+        internalType: "bytes32[]",
+        name: "",
+        type: "bytes32[]",
+      },
+    ],
+    stateMutability: "view",
+    type: "function",
+  };
+
   try {
     const badgeIds = await readContract(publicClient, {
       address: TRUSTFUL_SCORER,
-      functionName: "getBadgesIds",
-      abi: TRUSTFUL_SCORER_ABI,
-      args: [SCORER_ID],
+      functionName: "getBadgesIds", // TODO rename to getBadgeIds
+      abi: [abi],
+      args: [scorerId],
     });
 
-    return badgeIds as string[];
+    return badgeIds as Hex[];
   } catch (error) {
-    console.log("Error when reading the contract", error);
-    throw new Error("Error when reading the contract");
+    throw new Error(`Error when reading the contract. ${error}`);
   }
 }
