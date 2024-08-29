@@ -90,9 +90,5 @@ const ReviewGrant = dynamic(
   }
 );
 export default function Page() {
-  const { grant } = useGrantStore();
-  if (!grant) {
-    return null;
-  }
-  return <ReviewGrant grant={grant} />;
+  return <ReviewGrant />;
 }

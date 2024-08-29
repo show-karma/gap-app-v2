@@ -1,7 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 import { MilestoneUpdateForm } from "@/components/Forms/MilestoneUpdate";
-import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 import { Button } from "@/components/Utilities/Button";
 import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
@@ -9,14 +8,12 @@ import {
   IGrantResponse,
   IMilestoneResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Dropdown } from "./Dropdown";
 import { NoGrant } from "./NoGrant";
 
 export const MilestoneUpdateScreen = () => {
   const { project } = useProjectStore();
-  const router = useRouter();
   const { closeProgressModal } = useProgressModalStore();
   const [selectedGrant, setSelectedGrant] = useState<
     IGrantResponse | undefined

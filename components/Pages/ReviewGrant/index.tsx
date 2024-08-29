@@ -1,7 +1,8 @@
 "use client";
 /* eslint-disable no-nested-ternary */
 
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import dynamic from "next/dynamic";
+
 import { type FC, useEffect, useState, Suspense } from "react";
 import { useAccount } from "wagmi";
 
@@ -22,16 +23,16 @@ import { useAuthStore } from "@/store/auth";
 import { useSearchParams } from "next/navigation";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useGrantStore } from "@/store/grant";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 interface ReviewGrantProps {
   grant: IGrantResponse | undefined;
 }
 
-function classNames(...classes: any) {
-  return classes.filter(Boolean).join(" ");
-}
+export const ReviewGrant: FC = () => {
+  const { grant } = useGrantStore();
 
-export const ReviewGrant: FC<ReviewGrantProps> = ({ grant }) => {
   const searchParams = useSearchParams();
 
   const [zkgroup, setZkGroup] = useState<any>(null);

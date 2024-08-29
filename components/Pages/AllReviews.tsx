@@ -18,6 +18,7 @@ import { PAGES } from "@/utilities/pages";
 import { getReviewsOf, getAnonReviewsOf } from "@/utilities/sdk";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { errorManager } from "../Utilities/errorManager";
+import { useGrantStore } from "@/store/grant";
 
 interface GrantAllReviewsProps {
   grant: IGrantResponse | undefined;
@@ -45,7 +46,8 @@ type AnonReview = {
   createdAt: string;
 };
 
-export const GrantAllReviews = ({ grant }: GrantAllReviewsProps) => {
+export const GrantAllReviews = () => {
+  const { grant } = useGrantStore();
   const isProjectLoading = useProjectStore((state) => state.loading);
   if (isProjectLoading || !grant) {
     <div className="space-y-5 flex w-full flex-row items-center justify-start">
