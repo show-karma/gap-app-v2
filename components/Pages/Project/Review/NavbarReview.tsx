@@ -1,16 +1,19 @@
 "use client";
+import { useEffect } from "react";
+import { useReviewStore } from "@/store/review";
+import { useSearchParams } from "next/navigation";
 
-import { formatDate } from "@/utilities/formatDate";
+import { GrantStory } from "@/types/review";
+
 import { StarReviewIcon } from "@/components/Icons/StarReview";
 import { CardReview } from "@/components/Pages/Project/Review/CardReview";
 import { ChevronDown } from "@/components/Icons";
-import { useReviewStore } from "@/store/review";
+
+import { formatDate } from "@/utilities/formatDate";
 import { getGrantStories } from "@/utilities/review/getGrantStories";
-import { useEffect } from "react";
+import { SCORER_ID } from "@/utilities/review/constants/constants";
 import { getBadge } from "@/utilities/review/getBadge";
 import { getBadgeIds } from "@/utilities/review/getBadgeIds";
-import { useSearchParams } from "next/navigation";
-import { GrantStory } from "@/types/review";
 
 export const NavbarReview = () => {
   const isStarSelected = useReviewStore((state: any) => state.isStarSelected);
@@ -32,7 +35,7 @@ export const NavbarReview = () => {
     const fetchGrantStories = async () => {
       if (!grantIdFromQueryParam) return;
       const grantStories = await getGrantStories(
-        "0x635c2d0642c81e3191e6eff8623ba601b7e22e832d7791712b6bc28d052ff2b5" // TODO: Remove this hardcoded value
+        "0x635c2d0642c81e3191e6eff8623ba601b7e22e832d7791712b6bc28d052ff2b5", // TODO: Remove this hardcoded value
         // grantUID ? grantUID : grantIdFromQueryParam
       );
       console.log("grantStories", grantStories);
@@ -44,7 +47,7 @@ export const NavbarReview = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const badgeIds = await getBadgeIds();
+        const badgeIds = await getBadgeIds(SCORER_ID);
         const badges = await Promise.all(badgeIds.map((id) => getBadge(id)));
         setBadges(badges);
       } catch (error) {
@@ -67,15 +70,11 @@ export const NavbarReview = () => {
                 key={index}
                 className="flex flex-col justify-center items-center text-center relative"
               >
-                <p className="w-full">
-                  {formatDate(new Date(Number(storie.timestamp) * 1000))}
-                </p>
+                <p className="w-full">{formatDate(new Date(Number(storie.timestamp) * 1000))}</p>
                 <div className="w-full flex flex-col items-center sm:px-14 px-4">
                   <StarReviewIcon
                     props={{
-                      className: `w-20 h-20 ${
-                        isStarSelected === index && "text-[#004EEB]"
-                      }`,
+                      className: `w-20 h-20 ${isStarSelected === index && "text-[#004EEB]"}`,
                     }}
                     pathProps={{
                       className: "cursor-pointer",
@@ -85,11 +84,7 @@ export const NavbarReview = () => {
                       },
                     }}
                   />
-                  <p>
-                    {parseFloat(
-                      Number(storie.averageScore).toFixed(2).substring(0, 3)
-                    ) / 100}
-                  </p>
+                  <p>{parseFloat(Number(storie.averageScore).toFixed(2).substring(0, 3)) / 100}</p>
                   {isStarSelected === index && (
                     <div>
                       <ChevronDown />
@@ -103,9 +98,7 @@ export const NavbarReview = () => {
             ))}
       </div>
       <div className="w-full flex flex-col">
-        {isStarSelected !== null && stories && (
-          <CardReview storie={stories[isStarSelected]} />
-        )}
+        {isStarSelected !== null && stories && <CardReview storie={stories[isStarSelected]} />}
       </div>
     </div>
   );

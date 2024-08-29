@@ -17,6 +17,10 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/Utilities/Button";
 import { NavbarReview } from "@/components/Pages/Project/Review/NavbarReview";
 
+import { SCORER_ID } from "@/utilities/review/constants/constants";
+import { getBadgeIds } from "@/utilities/review/getBadgeIds";
+import { getBadge } from "@/utilities/review/getBadge";
+
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { CardNewReview } from "./CardNewReview";
 
@@ -31,22 +35,23 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
       <Spinner />
     </div>;
   }
+  const project = useProjectStore((state: any) => state.project);
   const isOpenReview = useReviewStore((state: any) => state.isOpenReview);
   const setIsOpenReview = useReviewStore((state: any) => state.setIsOpenReview);
-  const project = useProjectStore((state: any) => state.project);
+  const setBadges = useReviewStore((state: any) => state.setBadges);
   const { openConnectModal } = useConnectModal();
   const { isConnected, address, chainId } = useAccount();
   const { switchChain } = useSwitchChain();
 
   const handleReviewButton = () => {
     if (!isConnected && openConnectModal) {
-        openConnectModal();
+      openConnectModal();
     } else {
-      if(chainId != arbitrum.id) {
+      if (chainId != arbitrum.id) {
         switchChain({ chainId: arbitrum.id });
         toast.error("Must connect to Arbitrum to review");
       } else {
-      setIsOpenReview(ReviewMode.WRITE);
+        setIsOpenReview(ReviewMode.WRITE);
       }
     }
   };

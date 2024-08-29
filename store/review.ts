@@ -25,20 +25,16 @@ interface ReviewStore {
 
 export const useReviewStore = create<ReviewStore>((set: any, get: any) => ({
   isOpenReview: ReviewMode.READ,
-  setIsOpenReview: (isOpenReview: ReviewMode) =>
-    set((state: any) => ({ ...state, isOpenReview })),
+  setIsOpenReview: (isOpenReview: ReviewMode) => set((state: any) => ({ ...state, isOpenReview })),
   isStarSelected: null,
   setIsStarSelected: (isStarSelected: number | null) =>
     set((state: any) => ({ ...state, isStarSelected })),
   stories: null,
-  setStories: (stories: GrantStory[] | null) =>
-    set((state: any) => ({ ...state, stories })),
+  setStories: (stories: GrantStory[] | null) => set((state: any) => ({ ...state, stories })),
   badges: null,
   setBadges: (badges: Badge[] | null) => set((state: any) => ({ ...state, badges })),
   grantUID: null,
-  setGrantUID: (grantUID: string | null) =>
-    set((state: any) => ({ ...state, grantUID })),
+  setGrantUID: (grantUID: string | null) => set((state: any) => ({ ...state, grantUID })),
   badgeScores: [], // TODO: Get lenght of badgesIds and add fill 1 into array based on the lenght or add a toast to advice the user to fill minimum 1 star by badge
-  setBadgeScores: (badgeScores: number[]) =>
-    set((state: any) => ({ ...state, badgeScores })),
+  setBadgeScores: (badgeScores: number[]) => set((state: any) => ({ ...state, badgeScores })),
 }));
