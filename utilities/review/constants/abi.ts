@@ -8,8 +8,8 @@ export const RESOLVER_TRUSTFUL_ABI = [
     type: "constructor",
   },
   { inputs: [], name: "BadgeNotRegistered", type: "error" },
-  { inputs: [], name: "GrantProgramNonExistant", type: "error" },
   { inputs: [], name: "GrantProgramNotReviewed", type: "error" },
+  { inputs: [], name: "InvalidBadgeScoreLength", type: "error" },
   { inputs: [], name: "OnlyEASResolver", type: "error" },
   {
     inputs: [{ internalType: "address", name: "owner", type: "address" }],
@@ -20,6 +20,27 @@ export const RESOLVER_TRUSTFUL_ABI = [
     inputs: [{ internalType: "address", name: "account", type: "address" }],
     name: "OwnableUnauthorizedAccount",
     type: "error",
+  },
+  { inputs: [], name: "ResolverNotRegistered", type: "error" },
+  { inputs: [], name: "ScorerNotInitialized", type: "error" },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "oldResolver",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "newResolver",
+        type: "address",
+      },
+    ],
+    name: "EASResolverUpdated",
+    type: "event",
   },
   {
     anonymous: false,
@@ -45,6 +66,44 @@ export const RESOLVER_TRUSTFUL_ABI = [
     inputs: [
       {
         indexed: true,
+        internalType: "uint256",
+        name: "oldScorerId",
+        type: "uint256",
+      },
+      {
+        indexed: true,
+        internalType: "uint256",
+        name: "newScorerId",
+        type: "uint256",
+      },
+    ],
+    name: "ScorerIdUpdated",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
+        internalType: "address",
+        name: "oldScorer",
+        type: "address",
+      },
+      {
+        indexed: true,
+        internalType: "address",
+        name: "newScorer",
+        type: "address",
+      },
+    ],
+    name: "ScorerUpdated",
+    type: "event",
+  },
+  {
+    anonymous: false,
+    inputs: [
+      {
+        indexed: true,
         internalType: "bytes32",
         name: "grantUID",
         type: "bytes32",
@@ -57,9 +116,9 @@ export const RESOLVER_TRUSTFUL_ABI = [
       },
       {
         indexed: true,
-        internalType: "string",
-        name: "grantProgramLabel",
-        type: "string",
+        internalType: "uint256",
+        name: "grantProgramUID",
+        type: "uint256",
       },
       {
         indexed: false,
@@ -85,15 +144,14 @@ export const RESOLVER_TRUSTFUL_ABI = [
   },
   {
     inputs: [
-      { internalType: "uint256", name: "scorerId", type: "uint256" },
       { internalType: "bytes32", name: "grantUID", type: "bytes32" },
       { internalType: "bytes32", name: "txUID", type: "bytes32" },
+      { internalType: "uint256", name: "grantProgramUID", type: "uint256" },
       { internalType: "bytes32[]", name: "badges", type: "bytes32[]" },
       { internalType: "uint8[]", name: "scores", type: "uint8[]" },
-      { internalType: "string", name: "grantProgramLabel", type: "string" },
     ],
     name: "createStory",
-    outputs: [],
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
     stateMutability: "nonpayable",
     type: "function",
   },
@@ -106,18 +164,27 @@ export const RESOLVER_TRUSTFUL_ABI = [
   },
   {
     inputs: [
-      { internalType: "string", name: "grantProgramLabel", type: "string" },
+      { internalType: "uint256", name: "grantProgramUID", type: "uint256" },
     ],
-    name: "getGrantProgramReviewCount",
+    name: "getGrantProgramScore",
     outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
     type: "function",
   },
   {
     inputs: [
-      { internalType: "string", name: "grantProgramLabel", type: "string" },
+      { internalType: "uint256", name: "grantProgramUID", type: "uint256" },
     ],
-    name: "getGrantProgramScore",
+    name: "getGrantProgramTotalReviewCount",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "uint256", name: "grantProgramUID", type: "uint256" },
+    ],
+    name: "getGrantProgramValidReviewCount",
     outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
     stateMutability: "view",
     type: "function",
@@ -204,10 +271,17 @@ export const RESOLVER_TRUSTFUL_ABI = [
     type: "function",
   },
   {
+    inputs: [],
+    name: "scorerId",
+    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+    stateMutability: "view",
+    type: "function",
+  },
+  {
     inputs: [
       { internalType: "address", name: "_easResolver", type: "address" },
     ],
-    name: "setEasResolver",
+    name: "setEASResolver",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
@@ -215,6 +289,13 @@ export const RESOLVER_TRUSTFUL_ABI = [
   {
     inputs: [{ internalType: "address", name: "_scorer", type: "address" }],
     name: "setScorer",
+    outputs: [],
+    stateMutability: "nonpayable",
+    type: "function",
+  },
+  {
+    inputs: [{ internalType: "uint256", name: "_scorerId", type: "uint256" }],
+    name: "setScorerId",
     outputs: [],
     stateMutability: "nonpayable",
     type: "function",
