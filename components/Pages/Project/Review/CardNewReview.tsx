@@ -28,6 +28,8 @@ export const CardNewReview = () => {
   const activeBadges = useReviewStore((state: any) => state.activeBadges);
   const activeBadgeIds = useReviewStore((state: any) => state.activeBadgeIds);
   const setStories = useReviewStore((state: any) => state.setStories);
+  const setIsStarSelected = useReviewStore((state: any) => state.setIsStarSelected);
+  const setBadges = useReviewStore((state: any) => state.setBadges);
 
   const { address, chainId } = useAccount();
   const { switchChain } = useSwitchChain();
@@ -95,7 +97,9 @@ export const CardNewReview = () => {
       return;
     }
 
+    setBadges(null);
     setStories(null);
+    setIsStarSelected(0);
     setBadgeScores(Array(activeBadges.length).fill(1));
     toast.success("Review submitted successfully!");
     setIsOpenReview(ReviewMode.READ);
