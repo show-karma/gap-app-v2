@@ -70,7 +70,7 @@ export const ProjectGrantsPage = () => {
   const [grant, setGrant] = useState<IGrantResponse | undefined>(undefined);
   const project = useProjectStore((state: any) => state.project);
   const navigation =
-    project?.grants?.map((item) => ({
+    project?.grants?.map((item: any) => ({
       uid: item.uid,
       name: item.details?.data?.title || "",
       href: PAGES.PROJECT.GRANT(project.details?.data?.slug || project.uid, item.uid),
@@ -107,7 +107,7 @@ export const ProjectGrantsPage = () => {
     if (project) {
       if (grantIdFromQueryParam) {
         const grantFound = project?.grants?.find(
-          (grant) => grant.uid?.toLowerCase() === grantIdFromQueryParam?.toLowerCase(),
+          (grant: any) => grant.uid?.toLowerCase() === grantIdFromQueryParam?.toLowerCase(),
         );
         if (grantFound) {
           setGrant(grantFound);
@@ -240,7 +240,7 @@ export const ProjectGrantsPage = () => {
           <div className="w-full max-w-[320px] max-lg:max-w-full py-5 border-none max-lg:w-full max-lg:px-0">
             <div className=" lg:hidden">
               <GrantsAccordion>
-                {navigation.map((item) => (
+                {navigation.map((item: any) => (
                   <div key={item.uid}>
                     <button
                       onClick={() => {
@@ -311,7 +311,7 @@ export const ProjectGrantsPage = () => {
                 <p className="text-xs font-bold text-black dark:text-zinc-300 ">GRANTS</p>
               </div>
               <ul role="list" className="space-y-2 mt-8">
-                {navigation.map((item) => (
+                {navigation.map((item: any) => (
                   <li key={item.uid}>
                     <button
                       onClick={() => {
