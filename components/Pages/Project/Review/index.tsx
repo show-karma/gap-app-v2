@@ -1,37 +1,39 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
+import toast from "react-hot-toast";
 import { useProjectStore } from "@/store";
+import { useReviewStore } from "@/store/review";
+
+import { isAddressEqual } from "viem";
+import { useAccount, useSwitchChain } from "wagmi";
+import { arbitrum } from "@wagmi/core/chains";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
+
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+
+import { ReviewMode } from "@/types/review";
 import { StarIcon } from "@/components/Icons";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/Utilities/Button";
 import { NavbarReview } from "@/components/Pages/Project/Review/NavbarReview";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { useAccount, useSwitchChain } from "wagmi";
-import { CardNewReview } from "./CardNewReview";
+
 import { XMarkIcon } from "@heroicons/react/24/solid";
-import { isAddressEqual } from "viem";
-import { ReviewMode } from "@/types/review";
-import { useReviewStore } from "@/store/review";
-import {
-  arbitrum,
-} from "@wagmi/core/chains";
-import toast from "react-hot-toast";
+import { CardNewReview } from "./CardNewReview";
 
 interface GrantAllReviewsProps {
   grant: IGrantResponse | undefined;
 }
 
 export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
-  const isProjectLoading = useProjectStore((state) => state.loading);
+  const isProjectLoading = useProjectStore((state: any) => state.loading);
   if (isProjectLoading || !grant) {
     <div className="space-y-5 flex w-full flex-row items-center justify-start">
       <Spinner />
     </div>;
   }
-  const isOpenReview = useReviewStore((state) => state.isOpenReview);
-  const setIsOpenReview = useReviewStore((state) => state.setIsOpenReview);
-  const project = useProjectStore((state) => state.project);
+  const isOpenReview = useReviewStore((state: any) => state.isOpenReview);
+  const setIsOpenReview = useReviewStore((state: any) => state.setIsOpenReview);
+  const project = useProjectStore((state: any) => state.project);
   const { openConnectModal } = useConnectModal();
   const { isConnected, address, chainId } = useAccount();
   const { switchChain } = useSwitchChain();

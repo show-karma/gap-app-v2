@@ -1,32 +1,34 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
+/* eslint-disable @next/next/no-img-element */
+import toast from "react-hot-toast";
+import { useReviewStore } from "@/store/review";
 
+import { encodeFunctionData, getContract } from "viem";
+import { arbitrum } from "viem/chains";
+import { useAccount, useSwitchChain } from "wagmi";
+import { getWalletClient } from "@wagmi/core";
+
+import { ReviewMode, Badge } from "@/types/review";
 import { Button } from "@/components/Utilities/Button";
 import { DynamicStarsReview } from "./DynamicStarsReview";
-import { useReviewStore } from "@/store/review";
-import { ReviewMode, Badge } from "@/types/review";
-import toast from "react-hot-toast";
-import { AttestationRequestData, submitAttest } from "@/utilities/attest";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { SchemaEncoder } from "@ethereum-attestation-service/eas-sdk";
-import { AbiCoder, Contract, ethers } from "ethers";
-import {
-  ARB_ONE_EAS,
-  ARB_ONE_SCHEMA_REGISTRY,
-} from "@/utilities/review/constants/constants";
-import { ARB_ONE_EAS_ABI } from "@/utilities/review/constants/abi";
-import { encodeFunctionData, getContract } from "viem";
-import { getWalletClient } from "@wagmi/core";
+
 import { config } from "@/utilities/wagmi/config";
-import { arbitrum } from "viem/chains";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { AbiCoder, Contract, ethers } from "ethers";
+import { ARB_ONE_EAS, ARB_ONE_SCHEMA_REGISTRY } from "@/utilities/review/constants/constants";
+import { ARB_ONE_EAS_ABI } from "@/utilities/review/constants/abi";
 import { addPrefixToIPFSLink } from "@/utilities/review/constants/utilitary";
+import { AttestationRequestData, submitAttest } from "@/utilities/attest";
 
 export const CardNewReview = () => {
-  const setIsOpenReview = useReviewStore((state) => state.setIsOpenReview);
-  const badge = useReviewStore((state) => state.badge);
-  const stories = useReviewStore((state) => state.stories);
-  const setBadgeScore = useReviewStore((state) => state.setBadgeScore);
-  const badgeScore = useReviewStore((state) => state.badgeScore);
+  const setIsOpenReview = useReviewStore((state: any) => state.setIsOpenReview);
+  const badge = useReviewStore((state: any) => state.badge);
+  const stories = useReviewStore((state: any) => state.stories);
+  const setBadgeScore = useReviewStore((state: any) => state.setBadgeScore);
+  const badgeScore = useReviewStore((state: any) => state.badgeScore);
+  const { address, chainId } = useAccount();
+  const { switchChain } = useSwitchChain();
 
   // Score of the new review
   const handleSetRating = (index: number, rating: number) => {
@@ -37,6 +39,16 @@ export const CardNewReview = () => {
 
   // TODO: Should create the submit to blockchain
   const handleSubmitReview = async () => {
+    if(!address) {
+      toast.error("Must connect to submit a review");
+      return;
+    }
+
+    if(chainId != arbitrum.id) {
+      switchChain({ chainId: arbitrum.id });
+      toast.error("Must connect to Arbitrum to review");
+    }
+
     const data = await main();
     console.log("data", data);
 
