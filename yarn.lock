@@ -2624,9 +2624,9 @@
     "@sentry/cli" "^1.77.1"
     webpack-sources "^2.0.0 || ^3.0.0"
 
-"@show-karma/karma-gap-sdk@git+https://github.com/show-karma/karma-gap-sdk.git#3f0c9e3":
+"@show-karma/karma-gap-sdk@git+https://github.com/show-karma/karma-gap-sdk.git#02edf8198bd3672aa1c96119ac8b09d3a8dbffed":
   version "0.3.43"
-  resolved "git+https://github.com/show-karma/karma-gap-sdk.git#3f0c9e33812365a226c6558ee9c57d35a0bd6dd7"
+  resolved "git+https://github.com/show-karma/karma-gap-sdk.git#02edf8198bd3672aa1c96119ac8b09d3a8dbffed"
   dependencies:
     "@allo-team/allo-v2-sdk" "^1.0.63"
     "@ethereum-attestation-service/eas-sdk" "1.4.2"
