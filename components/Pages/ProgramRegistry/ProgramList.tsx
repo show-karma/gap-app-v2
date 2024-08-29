@@ -381,7 +381,7 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram
                   <StarReviewIcon
                     props={{
                       className:
-                        "text-[#004EEB] w-20 h-20 transparent hover:fill-transparent hover:stroke-transparent",
+                        "text-[#004EEB] w-14 h-14 transparent hover:fill-transparent hover:stroke-transparent",
                       fontSize: 7,
                       color: "#FFF",
                     }}
@@ -397,7 +397,7 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram
         },
         header: () => (
           <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
-            Average Score
+            Score
           </div>
         ),
       },

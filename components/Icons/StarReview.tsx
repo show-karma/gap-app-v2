@@ -37,7 +37,7 @@ export const StarReviewIcon = ({
       {score !== undefined && (
         <text
           x="12"
-          y="16"
+          y="15"
           textAnchor="middle"
           fontSize={props?.fontSize || "12"}
           fill={props?.color || "#000000"}
