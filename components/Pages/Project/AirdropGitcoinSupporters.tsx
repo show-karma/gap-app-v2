@@ -7,7 +7,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import debounce from "lodash.debounce";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { useAccount } from "wagmi";
+import { useAccount, useChainId } from "wagmi";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { errorManager } from "@/components/Utilities/errorManager";
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
@@ -53,11 +53,15 @@ async function getProjectDetails(chainId: number, applicationId: string, roundId
 
 
 const PlatformFeeNote = () => {
+    const chainId = useChainId()
+    const { address, abi } = getGitcoinAirdropContractConfig()
     const { data: platformFee }: any = useReadContract({
-        address: getGitcoinAirdropContractConfig().address as `0x${string}`,
-        abi: getGitcoinAirdropContractConfig().abi,
+        chainId,
+        address: address(chainId) as `0x${string}`,
+        abi,
         functionName: "PLATFORM_FEE"
     })
+
     return (
         <p className="text-sm text-gray-600 dark:text-gray-300">
             Note: A platform fee of {platformFee ? formatEther(platformFee) : "N/A"} ETH will be charged, excluding gas fees.
@@ -78,6 +82,8 @@ function MintNFTs({
     const [metadata, setMetadata] = useState<any>(null)
     const { writeContract, data: txData, isPending: isMinting, error: mintError } = useWriteContract()
 
+    const chainId = useChainId()
+
     const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files[0]) {
             setFileUploading(true);
@@ -94,23 +100,17 @@ function MintNFTs({
                 console.log('File uploaded to IPFS with hash:', response.data.IpfsHash);
 
                 const metadata = {
-                    name: projectDetails.project.metadata.title,
-                    description: projectDetails.project.metadata.description,
+                    name: `${projectDetails.project.metadata.title} - Karma GAP Patron`,
+                    description: `This NFT is issued to honor and recognize your invaluable support of donors who have generously funded ${projectDetails.project.metadata.title}, symbolizing their crucial role in driving impactful change.`,
                     image: `ipfs://${response.data.IpfsHash}`,
                     attributes: [
-                        {
-                            trait_type: "Contribution",
-                            value: "Gitcoin Round Supporter"
-                        }
                     ]
                 };
-
-
 
                 await axios.post('https://api.pinata.cloud/pinning/pinJSONToIPFS', {
                     pinataContent: metadata,
                     pinataMetadata: {
-                        name: "Gitcoin Airdrop NFT Metadata"
+                        name: "Karma GAP Patron NFT Metadata"
                     }
                 }, {
                     headers: {
@@ -120,7 +120,7 @@ function MintNFTs({
                 }).then((metadataResponse) => {
                     setMetadata(metadata)
                     setMetadataIPFSHash(metadataResponse.data.IpfsHash);
-                    console.log('Metadata uploaded to IPFS with hash:', metadataResponse.data.IpfsHashsHash);
+                    console.log('Metadata uploaded to IPFS with hash:', metadataResponse.data.IpfsHash);
                     setFileUploading(false);
                 }).catch((err) => {
                     console.log("error", err)
@@ -145,9 +145,9 @@ function MintNFTs({
             console.log("Minting NFTs for", donations.length, "donors with IPFS hash:", metadataIPFSHash);
             const { address, abi } = getGitcoinAirdropContractConfig()
             const tx = writeContract({
-                address: address as `0x${string}`,
+                address: address(chainId) as `0x${string}`,
                 abi,
-                functionName: "mintProjectNFTs",
+                functionName: "mintNFTsToContributors",
                 args: [
                     `${projectDetails.chainId}_${projectDetails.roundId}_${projectDetails.id}`,
                     `ipfs://${metadataIPFSHash}`,
@@ -167,13 +167,13 @@ function MintNFTs({
 
     return (
         <div className="flex flex-row items-start gap-4 w-full mx-auto mt-3 p-5 bg-gray-100 dark:bg-gray-800 rounded-xl">
-            <div className="flex flex-col w-1/2 pr-4">
+            <div className="flex flex-col justify-between items-between w-1/2 h-full pr-4">
                 <h2 className="text-xl font-bold text-black dark:text-white mb-2">Mint NFTs for {projectDetails.uniqueDonorsCount} contributors, across {donations.length} donations</h2>
                 <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
                     Choose an image/file for the NFT and mint it for all your contributors.
                 </p>
                 <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
                         Upload file for NFT
                     </label>
                     <input
@@ -184,11 +184,16 @@ function MintNFTs({
                     />
                 </div>
                 {imageIPFSHash && metadataIPFSHash && (
-                    <div className="text-sm text-green-600 dark:text-green-400 mb-4">
-                        <p className="font-semibold mb-2">Metadata uploaded to IPFS:</p>
-                        <pre className="bg-gray-100 dark:bg-gray-700 p-3 rounded-md overflow-x-auto">
-                            {JSON.stringify(metadata, null, 2)}
-                        </pre>
+                    <div className="text-sm mb-4 bg-gray-100 dark:bg-gray-700 my-2 rounded-md">
+                        <p className="font-semibold mb-2">Metadata:</p>
+                        <div className="bg-gray-100 text-zinc-800 dark:bg-gray-700 py-2 rounded-md">
+                            <div className="grid grid-cols-2 gap-2">
+                                <div className="font-medium">NFT Name:</div>
+                                <div>{metadata.name}</div>
+                                <div className="font-medium">NFT Description:</div>
+                                <div>{metadata.description}</div>
+                            </div>
+                        </div>
                     </div>
                 )}
                 <button
@@ -196,7 +201,7 @@ function MintNFTs({
                     disabled={!imageIPFSHash || isMinting}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed mb-4"
                 >
-                    {isMinting ? "Minting..." : "Mint NFTs for All Donors"}
+                    {isMinting ? "Minting..." : "Mint NFTs to Contributors"}
                 </button>
                 <p className="text-sm text-gray-600 dark:text-gray-300">
                     <PlatformFeeNote />

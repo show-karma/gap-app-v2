@@ -1,11 +1,21 @@
 import { Abi } from "viem";
 
 export const getGitcoinAirdropContractConfig = (): {
-    address: string;
+    address: (chainId: number) => string;
     abi: Abi;
 } => {
     return {
-        address: "0xA75Ca1a79E80Ad211B1f0A00b09EF226E91a1FfD",
+        address: (chainId: number) => {
+            if (chainId === 11155420) {
+                return "0x57d6A954E051145D7E9dD81decaeA6d7Feb640ee"
+            } else if (chainId === 11155111) {
+                return "0x11f48e68Ff894D417956839263337a2989822703"
+            } else if (chainId === 84532
+            ) {
+                return "0xa9c31794385A217832D4C8E200CfA6A8da9c7B32"
+            }
+            return "0x11f48e68Ff894D417956839263337a2989822703"
+        },
         abi: [
             {
                 "inputs": [
@@ -23,135 +33,15 @@ export const getGitcoinAirdropContractConfig = (): {
                         "internalType": "uint256",
                         "name": "_platformFee",
                         "type": "uint256"
+                    },
+                    {
+                        "internalType": "string",
+                        "name": "_contractURI",
+                        "type": "string"
                     }
                 ],
                 "stateMutability": "nonpayable",
                 "type": "constructor"
-            },
-            {
-                "inputs": [
-                    {
-                        "internalType": "address",
-                        "name": "sender",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "tokenId",
-                        "type": "uint256"
-                    },
-                    {
-                        "internalType": "address",
-                        "name": "owner",
-                        "type": "address"
-                    }
-                ],
-                "name": "ERC721IncorrectOwner",
-                "type": "error"
-            },
-            {
-                "inputs": [
-                    {
-                        "internalType": "address",
-                        "name": "operator",
-                        "type": "address"
-                    },
-                    {
-                        "internalType": "uint256",
-                        "name": "tokenId",
-                        "type": "uint256"
-                    }
-                ],
-                "name": "ERC721InsufficientApproval",
-                "type": "error"
-            },
-            {
-                "inputs": [
-                    {
-                        "internalType": "address",
-                        "name": "approver",
-                        "type": "address"
-                    }
-                ],
-                "name": "ERC721InvalidApprover",
-                "type": "error"
-            },
-            {
-                "inputs": [
-                    {
-                        "internalType": "address",
-                        "name": "operator",
-                        "type": "address"
-                    }
-                ],
-                "name": "ERC721InvalidOperator",
-                "type": "error"
-            },
-            {
-                "inputs": [
-                    {
-                        "internalType": "address",
-                        "name": "owner",
-                        "type": "address"
-                    }
-                ],
-                "name": "ERC721InvalidOwner",
-                "type": "error"
-            },
-            {
-                "inputs": [
-                    {
-                        "internalType": "address",
-                        "name": "receiver",
-                        "type": "address"
-                    }
-                ],
-                "name": "ERC721InvalidReceiver",
-                "type": "error"
-            },
-            {
-                "inputs": [
-                    {
-                        "internalType": "address",
-                        "name": "sender",
-                        "type": "address"
-                    }
-                ],
-                "name": "ERC721InvalidSender",
-                "type": "error"
-            },
-            {
-                "inputs": [
-                    {
-                        "internalType": "uint256",
-                        "name": "tokenId",
-                        "type": "uint256"
-                    }
-                ],
-                "name": "ERC721NonexistentToken",
-                "type": "error"
-            },
-            {
-                "inputs": [
-                    {
-                        "internalType": "address",
-                        "name": "owner",
-                        "type": "address"
-                    }
-                ],
-                "name": "OwnableInvalidOwner",
-                "type": "error"
-            },
-            {
-                "inputs": [
-                    {
-                        "internalType": "address",
-                        "name": "account",
-                        "type": "address"
-                    }
-                ],
-                "name": "OwnableUnauthorizedAccount",
-                "type": "error"
             },
             {
                 "anonymous": false,
@@ -209,6 +99,19 @@ export const getGitcoinAirdropContractConfig = (): {
                     {
                         "indexed": false,
                         "internalType": "string",
+                        "name": "contractURI",
+                        "type": "string"
+                    }
+                ],
+                "name": "ContractURIUpdated",
+                "type": "event"
+            },
+            {
+                "anonymous": false,
+                "inputs": [
+                    {
+                        "indexed": false,
+                        "internalType": "string",
                         "name": "projectId",
                         "type": "string"
                     },
@@ -245,6 +148,19 @@ export const getGitcoinAirdropContractConfig = (): {
                     }
                 ],
                 "name": "OwnershipTransferred",
+                "type": "event"
+            },
+            {
+                "anonymous": false,
+                "inputs": [
+                    {
+                        "indexed": false,
+                        "internalType": "uint256",
+                        "name": "platformFee",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "PlatformFeeUpdated",
                 "type": "event"
             },
             {
@@ -336,6 +252,19 @@ export const getGitcoinAirdropContractConfig = (): {
                 "type": "function"
             },
             {
+                "inputs": [],
+                "name": "contractURI",
+                "outputs": [
+                    {
+                        "internalType": "string",
+                        "name": "",
+                        "type": "string"
+                    }
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
                 "inputs": [
                     {
                         "internalType": "string",
@@ -409,7 +338,7 @@ export const getGitcoinAirdropContractConfig = (): {
                         "type": "address[]"
                     }
                 ],
-                "name": "mintProjectNFTs",
+                "name": "mintNFTsToContributors",
                 "outputs": [],
                 "stateMutability": "payable",
                 "type": "function"
@@ -572,6 +501,32 @@ export const getGitcoinAirdropContractConfig = (): {
             {
                 "inputs": [
                     {
+                        "internalType": "string",
+                        "name": "_contractURI",
+                        "type": "string"
+                    }
+                ],
+                "name": "setContractURI",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
+                        "internalType": "uint256",
+                        "name": "_platformFee",
+                        "type": "uint256"
+                    }
+                ],
+                "name": "setPlatformFee",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {
                         "internalType": "bytes4",
                         "name": "interfaceId",
                         "type": "bytes4"
@@ -596,25 +551,6 @@ export const getGitcoinAirdropContractConfig = (): {
                         "internalType": "string",
                         "name": "",
                         "type": "string"
-                    }
-                ],
-                "stateMutability": "view",
-                "type": "function"
-            },
-            {
-                "inputs": [
-                    {
-                        "internalType": "uint256",
-                        "name": "",
-                        "type": "uint256"
-                    }
-                ],
-                "name": "tokenToOwner",
-                "outputs": [
-                    {
-                        "internalType": "address",
-                        "name": "",
-                        "type": "address"
                     }
                 ],
                 "stateMutability": "view",
@@ -701,6 +637,6 @@ export const getGitcoinAirdropContractConfig = (): {
                 "stateMutability": "nonpayable",
                 "type": "function"
             }
-        ]
+        ],
     };
 };
