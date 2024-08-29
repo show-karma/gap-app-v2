@@ -2,12 +2,13 @@
 import React from "react";
 import { Metadata } from "next";
 import { Hex } from "viem";
-import { IProjectDetails } from "@show-karma/karma-gap-sdk";
 import { getMetadata } from "@/utilities/sdk";
 import { zeroUID } from "@/utilities/commons";
 import { defaultMetadata } from "@/utilities/meta";
-import { ImpactComponent } from "@/components/Pages/Project/Impact";
 import { notFound } from "next/navigation";
+import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
+import dynamic from "next/dynamic";
 
 export async function generateMetadata({
   params,
@@ -16,8 +17,8 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const projectId = params.projectId;
 
-  const projectInfo = await getMetadata<IProjectDetails>(
-    "projects",
+  const projectInfo = await getMetadata<IProjectResponse>(
+    "project",
     projectId as Hex
   );
 
@@ -26,8 +27,8 @@ export async function generateMetadata({
   }
 
   return {
-    title: `Karma GAP - ${projectInfo.title}`,
-    description: projectInfo.description?.substring(0, 80) || "",
+    title: `Karma GAP - ${projectInfo.details?.data?.title}`,
+    description: projectInfo.details?.data?.description?.substring(0, 80) || "",
     twitter: {
       creator: defaultMetadata.twitter.creator,
       site: defaultMetadata.twitter.site,
@@ -35,11 +36,12 @@ export async function generateMetadata({
     },
     openGraph: {
       url: defaultMetadata.openGraph.url,
-      title: `Karma GAP - ${projectInfo.title}`,
-      description: projectInfo.description?.substring(0, 80) || "",
+      title: `Karma GAP - ${projectInfo.details?.data?.title}`,
+      description:
+        projectInfo.details?.data?.description?.substring(0, 80) || "",
       images: defaultMetadata.openGraph.images.map((image) => ({
         url: image,
-        alt: `Karma GAP - ${projectInfo.title}`,
+        alt: `Karma GAP - ${projectInfo.details?.data?.title}`,
       })),
     },
     icons: {
@@ -47,6 +49,16 @@ export async function generateMetadata({
     },
   };
 }
+
+const ImpactComponent = dynamic(
+  () =>
+    import("@/components/Pages/Project/Impact").then(
+      (mod) => mod.ImpactComponent
+    ),
+  {
+    loading: () => <DefaultLoading />,
+  }
+);
 
 const ImpactPage = () => {
   return (

@@ -28,7 +28,7 @@ export const DynamicStars: FC<DynamicStarsProps> = ({
               name="rating"
               value={currentRating}
               onChange={() => setRating(currentRating)}
-              className="star-radio"
+              className="star-radio hidden"
             />
 
             <StarIcon

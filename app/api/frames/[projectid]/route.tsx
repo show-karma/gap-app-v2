@@ -53,8 +53,6 @@ const handleRequest = frames(async (ctx) => {
       ],
     };
   } else {
-    // console.log("\n\nprojectId", projectId);
-
     // Get project info from URL query params - base64 decode
     const projectInfo = JSON.parse(
       Buffer.from(
@@ -62,8 +60,6 @@ const handleRequest = frames(async (ctx) => {
         "base64"
       ).toString()
     );
-
-    // console.log("\n\nprojectInfo", projectInfo);
 
     return {
       image: (

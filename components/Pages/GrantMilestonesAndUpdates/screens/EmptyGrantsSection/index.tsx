@@ -5,10 +5,13 @@ import { useQueryState } from "nuqs";
 import { MESSAGES } from "@/utilities/messages";
 import { useCommunityAdminStore } from "@/store/community";
 import { useCommunitiesStore } from "@/store/communities";
+import Link from "next/link";
+import { PAGES } from "@/utilities/pages";
 
 export const EmptyGrantsSection: FC = () => {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isOwner = useOwnerStore((state) => state.isOwner);
+  const project = useProjectStore((state) => state.project);
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );
@@ -16,7 +19,6 @@ export const EmptyGrantsSection: FC = () => {
   const isCommunityAdminOfSome = communities.length !== 0;
   const isAuthorized =
     isProjectOwner || isOwner || isCommunityAdmin || isCommunityAdminOfSome;
-  const [, changeTab] = useQueryState("tab");
   if (!isAuthorized) {
     return (
       <div className="flex w-full items-center justify-center rounded border border-gray-200 px-6 py-10">
@@ -49,15 +51,15 @@ export const EmptyGrantsSection: FC = () => {
         <p className="w-full text-center text-lg break-words h-max font-semibold text-black dark:text-zinc-200">
           Go ahead and create your first grant
         </p>
-        <button
+        <Link
+          href={PAGES.PROJECT.SCREENS.NEW_GRANT(
+            project?.details?.data.slug || project?.uid || ""
+          )}
           className="items-center flex flex-row justify-center gap-2 rounded border border-blue-600 bg-blue-600 px-4 py-2.5 text-base font-semibold text-white hover:bg-blue-600"
-          onClick={() => {
-            changeTab("create-grant");
-          }}
         >
           <img src="/icons/plus.svg" alt="Add" className="relative h-5 w-5" />
           Add a Grant
-        </button>
+        </Link>
       </div>
       <div className="flex w-full items-center justify-center rounded border border-gray-200 px-6 py-10 dark:bg-zinc-900">
         <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">

@@ -17,8 +17,12 @@ import {
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { envVars } from "@/utilities/enviromentVars";
 import { Spinner } from "../Utilities/Spinner";
+import { cn } from "@/utilities/tailwind";
 
-type Props = {};
+type Props = {
+  buttonClassName: string;
+  buttonText: string;
+};
 
 function GrantGenieRecommendations({ projectId }: { projectId: string }) {
   const [isLoading, setIsLoading] = useState(false);
@@ -89,7 +93,10 @@ function GrantGenieRecommendations({ projectId }: { projectId: string }) {
   );
 }
 
-export const GrantsGenieDialog: FC<Props> = ({}) => {
+export const GrantsGenieDialog: FC<Props> = ({
+  buttonClassName,
+  buttonText,
+}) => {
   const project = useProjectStore((state) => state.project);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const setIsProjectOwner = useProjectStore((state) => state.setIsProjectOwner);
@@ -108,9 +115,13 @@ export const GrantsGenieDialog: FC<Props> = ({}) => {
     <>
       <Button
         onClick={openModal}
-        className="flex items-center justify-center gap-x-1 rounded-md bg-teal-300 dark:bg-teal-900/50 px-3 py-2 text-sm font-semibold text-teal-600 dark:text-zinc-100  hover:bg-teal-100 dark:hover:bg-teal-900 border border-teal-200 dark:border-teal-900"
+        className={cn(
+          "flex items-center justify-center gap-x-1 rounded-md bg-teal-300 dark:bg-teal-900/50 px-3 py-2 text-sm font-semibold text-teal-600 dark:text-zinc-100  hover:bg-teal-100 dark:hover:bg-teal-900 border border-teal-200 dark:border-teal-900",
+          buttonClassName
+        )}
       >
-        <LightBulbIcon className="h-4 w-4 text-teal-900" />
+        <LightBulbIcon className="h-4 w-4 mr-1" />
+        {buttonText}
       </Button>
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeModal}>

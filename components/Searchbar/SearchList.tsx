@@ -110,7 +110,7 @@ export const SearchList: React.FC<Props> = ({
           data.communities.map((community) =>
             renderItem(
               community,
-              community.details?.data.name || "Untitled Community",
+              community.details?.data?.name || "Untitled Community",
               PAGES.COMMUNITY.ALL_GRANTS(
                 community.details?.data.slug || community.uid
               )

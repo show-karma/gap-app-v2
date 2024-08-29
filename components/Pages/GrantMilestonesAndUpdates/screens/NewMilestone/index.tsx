@@ -1,3 +1,4 @@
+"use client";
 /* eslint-disable @next/next/no-img-element */
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Milestone, MilestoneCompleted } from "@show-karma/karma-gap-sdk";
@@ -19,7 +20,6 @@ import { Popover } from "@headlessui/react";
 import { DayPicker } from "react-day-picker";
 import { CalendarIcon } from "@heroicons/react/24/outline";
 import { XMarkIcon } from "@heroicons/react/24/solid";
-import { useQueryState } from "nuqs";
 import { MESSAGES } from "@/utilities/messages";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { formatDate } from "@/utilities/formatDate";
@@ -35,6 +35,9 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { cn } from "@/utilities/tailwind";
+import { useRouter } from "next/navigation";
+import { PAGES } from "@/utilities/pages";
+import Link from "next/link";
 
 const milestoneSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.MILESTONES.FORM.TITLE }),
@@ -84,7 +87,7 @@ export const NewMilestone: FC<NewMilestoneProps> = ({ grant }) => {
 
   const { address } = useAccount();
   const signer = useSigner();
-
+  const router = useRouter();
   const {
     register,
     handleSubmit,
@@ -101,7 +104,6 @@ export const NewMilestone: FC<NewMilestoneProps> = ({ grant }) => {
   const { chain } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const [, changeTab] = useQueryState("tab");
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );
@@ -171,7 +173,15 @@ export const NewMilestone: FC<NewMilestoneProps> = ({ grant }) => {
                   retries = 0;
                   changeStepperStep("indexed");
                   toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS);
-                  changeTab("milestones-and-updates");
+                  router.push(
+                    PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
+                      fetchedProject?.details?.data?.slug ||
+                        fetchedProject?.uid ||
+                        "",
+                      grant?.uid || "",
+                      "milestones-and-updates"
+                    )
+                  );
                 }
                 retries -= 1;
                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
@@ -189,7 +199,13 @@ export const NewMilestone: FC<NewMilestoneProps> = ({ grant }) => {
       toast.error(MESSAGES.MILESTONES.CREATE.ERROR);
       errorManager(
         `Error creating milestone for grant ${uid} from project ${projectUID}`,
-        error
+        error,
+        {
+          grantUID: uid,
+          projectUID: projectUID,
+          address: address,
+          data: milestone,
+        }
       );
     } finally {
       setIsLoading(false);
@@ -204,14 +220,16 @@ export const NewMilestone: FC<NewMilestoneProps> = ({ grant }) => {
           <h4 className="text-2xl font-bold text-black dark:text-zinc-100">
             Add milestone
           </h4>
-          <Button
+          <Link
+            href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
+              project?.details?.data?.slug || project?.uid || "",
+              grant.uid,
+              "milestones-and-updates"
+            )}
             className="bg-transparent p-4 hover:bg-transparent hover:opacity-75 text-black dark:text-zinc-100"
-            onClick={() => {
-              changeTab("milestones-and-updates");
-            }}
           >
             <XMarkIcon className="h-8 w-8" />
-          </Button>
+          </Link>
         </div>
         <form
           onSubmit={handleSubmit(onSubmit)}

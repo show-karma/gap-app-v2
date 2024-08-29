@@ -63,7 +63,6 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
   const handleFunction = async (data: SchemaType) => {
     setIsLoading(true);
     try {
-      console.log(contactsInfo?.length);
       if ((contactsInfo?.length as number) < 1) {
         toast.error("No contact info found");
         return;
