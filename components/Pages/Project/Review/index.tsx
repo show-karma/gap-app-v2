@@ -120,9 +120,6 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
                       )
                     )}
                   </div>
-                  <div>
-                    <p>Review your favorite Grant Program!</p>
-                  </div>
                 </div>
                 <NavbarReview />
               </>
