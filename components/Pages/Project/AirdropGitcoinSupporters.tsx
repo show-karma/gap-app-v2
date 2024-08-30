@@ -112,7 +112,7 @@ function MintNFTs({
                 const fullDescription = customDescription ? `${customDescription} \n|\n ${defaultDescription}` : defaultDescription;
 
                 const metadata = {
-                    name: `${projectDetails.project.metadata.title} - Karma GAP Patron`,
+                    name: `${projectDetails.project.metadata.title}`,
                     description: fullDescription,
                     image: `ipfs://${response.data.IpfsHash}`,
                     attributes: []
