@@ -17,6 +17,12 @@ import toast from "react-hot-toast";
 import { getGitcoinDonations } from "@/utilities/allo/getGitcoinDonations";
 import { getProjectDetails } from "@/utilities/allo/getProjectDetails";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { useEffect } from "react";
+import { Dispatch, SetStateAction } from "react";
+
 
 
 type ProjectApplicationData = {
@@ -54,14 +60,46 @@ type Metadata = {
 
 const PlatformFeeNote = (
     {
-        platformFee
+        setPlatformFee,
+        chainId,
+
     }: {
-        platformFee: bigint
+        chainId: number
+        setPlatformFee: Dispatch<SetStateAction<string | null>>
     }
 ) => {
+    const { data: platformFee, isLoading: isPlatformFeeLoading, error: platformFeeError }: any = useReadContract({
+        chainId,
+        address: Networks[getChainNameById(chainId)]?.contracts?.airdropNFT as `0x${string}`,
+        abi: AirdropNFTABI,
+        functionName: "PLATFORM_FEE"
+    })
+
+    const { address: walletAddress } = useAccount()
+
+    useEffect(() => {
+        if (platformFee) {
+            setPlatformFee(formatEther(platformFee))
+        }
+    }, [platformFee])
+
+    useEffect(() => {
+        if (platformFeeError) {
+            errorManager("Error fetching platform fee", platformFeeError)
+        }
+    }, [platformFeeError])
+
+
     return (
-        <p className="text-sm text-gray-600 dark:text-gray-300">
-            Note: A platform fee of {platformFee ? formatEther(platformFee) : "N/A"} ETH will be charged, excluding gas fees.
+        !isPlatformFeeLoading ? <p className="text-sm text-gray-600 dark:text-gray-300">
+            {walletAddress ?
+                platformFee ?
+                    `Note: A platform fee of ${formatEther(platformFee)} ETH will be charged, excluding gas fees.`
+                    : "Warning: Couldn't fetch platform fee, please contact support"
+                : "Note: Connect your wallet to fetch the platform fee for the selected network."
+            }
+        </p> : <p className="text-sm text-gray-600 dark:text-gray-300">
+            Loading platform fee...
         </p>
     )
 }
@@ -82,15 +120,12 @@ function MintNFTs({
     const [metadata, setMetadata] = useState<Metadata | null>(null)
     const [customDescription, setCustomDescription] = useState("");
 
+    const [platformFee, setPlatformFee] = useState<string | null>(null);
+
     const { switchChainAsync } = useSwitchChain();
 
     const chainId = useChainId()
-    const { data: platformFee }: any = useReadContract({
-        chainId,
-        address: Networks[getChainNameById(chainId)]?.contracts?.airdropNFT as `0x${string}`,
-        abi: AirdropNFTABI,
-        functionName: "PLATFORM_FEE"
-    })
+
     const { writeContract: mintNFTs, data: txData, isPending: isMinting, error: mintError, isSuccess, } = useWriteContract()
 
 
@@ -210,7 +245,7 @@ function MintNFTs({
                     <textarea
                         value={customDescription}
                         onChange={(e) => setCustomDescription(e.target.value)}
-                        className="w-full px-3 py-2 text-gray-700 border rounded-lg focus:outline-none"
+                        className="w-full px-3 py-2 text-gray-700 dark:text-gray-300 border rounded-lg focus:outline-none dark:bg-gray-700"
                         rows={2}
                         placeholder="Enter a custom description for your NFT"
                     ></textarea>
@@ -232,8 +267,8 @@ function MintNFTs({
 
                 {imageIPFSHash && metadataIPFSHash && (
                     <div className="text-sm mb-4 bg-gray-100 dark:bg-gray-700 my-2 rounded-md">
-                        <p className="font-semibold mb-2">Metadata:</p>
-                        <div className="bg-gray-100 text-zinc-800 dark:bg-gray-700 py-2 rounded-md">
+                        <p className="font-semibold mb-2 text-black dark:text-white">Metadata:</p>
+                        <div className="bg-gray-100 text-zinc-800 dark:bg-gray-700 dark:text-gray-300 py-2 rounded-md">
                             {metadata && <div className="grid grid-cols-2 gap-2">
                                 <div className="font-medium">NFT Name:</div>
                                 <div>{metadata.name}</div>
@@ -257,7 +292,7 @@ function MintNFTs({
                     {mintError.message.includes("insufficient funds") ? "Insufficient funds for transaction" : mintError.message.includes("Project already exists") ? "Project already minted" : mintError.message}
                 </p>}
                 <div className="text-sm text-gray-600 dark:text-gray-300">
-                    <PlatformFeeNote platformFee={platformFee} />
+                    <PlatformFeeNote setPlatformFee={setPlatformFee} chainId={chainSelected} />
                 </div>
             </div>
             <div className="w-full md:w-1/2 h-full mt-4 md:mt-0">
@@ -283,6 +318,20 @@ function MintNFTs({
 }
 
 
+const schema = z.object({
+    gitcoinProjectUrl: z.string().url("Please enter a valid URL").refine(
+        (url) => {
+            const urlPattern = /https:\/\/explorer\.gitcoin\.co\/#\/round\/(\d+)\/([0-9a-fA-F]{40}|0x[0-9a-fA-F]{40}|[0-9]+)\/([0-9a-fA-F]{40}|0x[0-9a-fA-F]{40}|[0-9]+)(-\d+)?/;
+            return urlPattern.test(url);
+        },
+        {
+            message: "Please enter a valid Gitcoin project URL",
+        }
+    ),
+});
+
+type FormData = z.infer<typeof schema>;
+
 export const GitcoinAirdropsManager = () => {
     const itemsPerPage = 10;
 
@@ -301,6 +350,24 @@ export const GitcoinAirdropsManager = () => {
 
     const { address } = useAccount()
 
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+    } = useForm<FormData>({
+        resolver: zodResolver(schema),
+        mode: "onChange",
+    });
+
+    const onSubmit = async (data: FormData) => {
+        setProjectURL(data.gitcoinProjectUrl);
+    };
+
+    useEffect(() => {
+        if (projectURL) {
+            handleGitcoinDataFetch()
+        }
+    }, [projectURL])
 
     async function handleGitcoinDataFetch() {
         setLoading(true);
@@ -313,12 +380,12 @@ export const GitcoinAirdropsManager = () => {
         const donations = await getGitcoinDonations(chainId, applicationId, roundId)
         const projectDetails = await getProjectDetails(chainId, applicationId, roundId)
 
-        setLoading(false)
         setProjectData({
             details: projectDetails,
             donations: donations
         })
         setTotalPages(Math.ceil(donations.length / itemsPerPage))
+        setLoading(false)
     }
 
     function isValidGitcoinURL(url: string) {
@@ -341,39 +408,38 @@ export const GitcoinAirdropsManager = () => {
 
 
             <section className="container">
-                <div className="flex flex-col w-full gap-3">
+                <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col w-full gap-3">
                     <label htmlFor="gitcoinProjectUrl" className="text-lg font-medium text-black dark:text-white">
                         Enter your Gitcoin project URL
                     </label>
                     <input
                         type="text"
                         id="gitcoinProjectUrl"
-                        name="gitcoinProjectUrl"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        placeholder="Ex: https://explorer.gitcoin.co/#/round/42161/26/21"
-                        onChange={
-                            (e) => {
-                                setProjectURL(e.target.value)
-                            }
-                        }
+                        {...register("gitcoinProjectUrl")}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-300"
+                        placeholder="Eg. https://explorer.gitcoin.co/#/round/42161/26/21"
                     />
-                </div>
-
-                <button
-                    className={`border-2 border-blue-500 text-blue-500 flex items-center gap-2 px-4 py-3 rounded-md mt-4 ${!address ? 'opacity-50 cursor-not-allowed' : ''}`}
-                    onClick={handleGitcoinDataFetch}
-                    disabled={!address}
-                >
-                    {loading ? (
-                        <span>Loading...</span>
-                    ) : (
-                        address ? <>
-                            <img src="/logos/gitcoin.png" alt="Gitcoin Logo" className="w-5 h-5 inline-block mr-2" />
-                            <span>Fetch project from Gitcoin</span>
-                        </> : <span>Connect wallet to get started</span>
+                    {errors.gitcoinProjectUrl && (
+                        <p className="text-red-500 text-sm">{errors.gitcoinProjectUrl.message}</p>
                     )}
-                </button>
-
+                    <button
+                        type="submit"
+                        className={`w-fit border-2 border-blue-500 text-blue-500 flex items-center gap-2 px-4 py-3 rounded-md mt-4 ${!address ? 'opacity-50 cursor-not-allowed' : ''
+                            }`}
+                        disabled={!address || loading}
+                    >
+                        {loading ? (
+                            <span>Loading...</span>
+                        ) : address ? (
+                            <>
+                                <img src="/logos/gitcoin.png" alt="Gitcoin Logo" className="w-5 h-5 inline-block mr-2" />
+                                <span>Fetch project from Gitcoin</span>
+                            </>
+                        ) : (
+                            <span>Connect wallet to get started</span>
+                        )}
+                    </button>
+                </form>
             </section>
 
             <section className="container">
@@ -382,7 +448,7 @@ export const GitcoinAirdropsManager = () => {
                         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
                         <p className="text-lg text-black dark:text-white">Loading project data...</p>
                     </div>
-                ) : projectData?.details && projectData.donations.length > 0 ? (
+                ) : projectData?.details && projectData?.donations?.length > 0 ? (
                     <div className="mt-8">
                         <h2 className="text-xl font-semibold mb-4 text-black dark:text-white">
                             You have selected the following project:
@@ -394,7 +460,7 @@ export const GitcoinAirdropsManager = () => {
                                 className="w-20 h-20 rounded-full object-cover"
                             />
                             <div className="text-center sm:text-left mt-2 sm:mt-0">
-                                <p className="text-xl sm:text-2xl font-bold">{projectData?.details?.project?.metadata?.title || "N/A"}</p>
+                                <p className="text-xl sm:text-2xl font-bold text-black dark:text-white">{projectData?.details?.project?.metadata?.title || "N/A"}</p>
                                 <p className="text-black dark:text-white"><strong>Funding received in round:</strong> {projectData.details?.totalAmountDonatedInUsd} USD</p>
                             </div>
                         </div>
