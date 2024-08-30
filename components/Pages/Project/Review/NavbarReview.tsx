@@ -32,10 +32,8 @@ export const NavbarReview = () => {
       setIsStarSelected(0);
       setGrantUID(grantIdFromQueryParam);
     }
-    console.log("grant uid", grantUID);
-    console.log("stories", stories);
+
     if (grantUID && !stories) {
-      console.log("entrou fetchGrantStories");
       fetchGrantStories();
     }
   }, [grantUID, stories]);
@@ -43,7 +41,6 @@ export const NavbarReview = () => {
   const fetchGrantStories = async () => {
     const grantStories = await getGrantStories(grantUID);
     setStories(grantStories);
-    console.log("grantStories", grantStories);
   };
 
   const handleToggleReviewSelected = (id: number) => {
