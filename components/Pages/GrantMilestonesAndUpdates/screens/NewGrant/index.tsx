@@ -871,7 +871,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           </div>
           <div className="flex w-full flex-col">
             <label htmlFor="grant-title" className={`${labelStyle} mb-1`}>
-              Grant title*
+              Choose Grant Program or Add New*
             </label>
             <SearchGrantProgram
               grantToEdit={grantToEdit}
