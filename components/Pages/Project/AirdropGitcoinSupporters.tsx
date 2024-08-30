@@ -21,6 +21,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useEffect } from "react";
+import { Dispatch, SetStateAction } from "react";
+
 
 
 type ProjectApplicationData = {
@@ -58,16 +60,44 @@ type Metadata = {
 
 const PlatformFeeNote = (
     {
-        platformFee,
-        isLoading
+        setPlatformFee,
+        chainId,
+
     }: {
-        platformFee: bigint
-        isLoading: boolean
+        chainId: number
+        setPlatformFee: Dispatch<SetStateAction<string | null>>
     }
 ) => {
+    const { data: platformFee, isLoading: isPlatformFeeLoading, error: platformFeeError }: any = useReadContract({
+        chainId,
+        address: Networks[getChainNameById(chainId)]?.contracts?.airdropNFT as `0x${string}`,
+        abi: AirdropNFTABI,
+        functionName: "PLATFORM_FEE"
+    })
+
+    const { address: walletAddress } = useAccount()
+
+    useEffect(() => {
+        if (platformFee) {
+            setPlatformFee(formatEther(platformFee))
+        }
+    }, [platformFee])
+
+    useEffect(() => {
+        if (platformFeeError) {
+            errorManager("Error fetching platform fee", platformFeeError)
+        }
+    }, [platformFeeError])
+
+
     return (
-        !isLoading ? <p className="text-sm text-gray-600 dark:text-gray-300">
-            Note: A platform fee of {platformFee ? formatEther(platformFee) : "N/A"} ETH will be charged, excluding gas fees.
+        !isPlatformFeeLoading ? <p className="text-sm text-gray-600 dark:text-gray-300">
+            {walletAddress ?
+                platformFee ?
+                    `Note: A platform fee of ${formatEther(platformFee)} ETH will be charged, excluding gas fees.`
+                    : "Warning: Couldn't fetch platform fee, please contact support"
+                : "Note: Connect your wallet to fetch the platform fee for the selected network."
+            }
         </p> : <p className="text-sm text-gray-600 dark:text-gray-300">
             Loading platform fee...
         </p>
@@ -90,15 +120,12 @@ function MintNFTs({
     const [metadata, setMetadata] = useState<Metadata | null>(null)
     const [customDescription, setCustomDescription] = useState("");
 
+    const [platformFee, setPlatformFee] = useState<string | null>(null);
+
     const { switchChainAsync } = useSwitchChain();
 
     const chainId = useChainId()
-    const { data: platformFee, isLoading: isPlatformFeeLoading }: any = useReadContract({
-        chainId,
-        address: Networks[getChainNameById(chainId)]?.contracts?.airdropNFT as `0x${string}`,
-        abi: AirdropNFTABI,
-        functionName: "PLATFORM_FEE"
-    })
+
     const { writeContract: mintNFTs, data: txData, isPending: isMinting, error: mintError, isSuccess, } = useWriteContract()
 
 
@@ -265,7 +292,7 @@ function MintNFTs({
                     {mintError.message.includes("insufficient funds") ? "Insufficient funds for transaction" : mintError.message.includes("Project already exists") ? "Project already minted" : mintError.message}
                 </p>}
                 <div className="text-sm text-gray-600 dark:text-gray-300">
-                    <PlatformFeeNote platformFee={platformFee} isLoading={isPlatformFeeLoading} />
+                    <PlatformFeeNote setPlatformFee={setPlatformFee} chainId={chainSelected} />
                 </div>
             </div>
             <div className="w-full md:w-1/2 h-full mt-4 md:mt-0">
