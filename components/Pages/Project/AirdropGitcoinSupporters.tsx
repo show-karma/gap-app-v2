@@ -79,12 +79,15 @@ const PlatformFeeNote = (
 
     useEffect(() => {
         if (platformFee) {
-            setPlatformFee(formatEther(platformFee))
+            setPlatformFee(String(platformFee))
+        } else {
+            setPlatformFee(String(8000000000000000))
         }
     }, [platformFee])
 
     useEffect(() => {
         if (platformFeeError) {
+            console.log("Error fetching platform fee", platformFeeError)
             errorManager("Error fetching platform fee", platformFeeError)
         }
     }, [platformFeeError])
@@ -93,9 +96,7 @@ const PlatformFeeNote = (
     return (
         !isPlatformFeeLoading ? <p className="text-sm text-gray-600 dark:text-gray-300">
             {walletAddress ?
-                platformFee ?
-                    `Note: A platform fee of ${formatEther(platformFee)} ETH will be charged, excluding gas fees.`
-                    : "Warning: Couldn't fetch platform fee, please contact support"
+                `Note: A platform fee of ${formatEther(platformFee || String(8000000000000000))} ETH will be charged, excluding gas fees.`
                 : "Note: Connect your wallet to fetch the platform fee for the selected network."
             }
         </p> : <p className="text-sm text-gray-600 dark:text-gray-300">
@@ -126,8 +127,7 @@ function MintNFTs({
 
     const chainId = useChainId()
 
-    const { writeContract: mintNFTs, data: txData, isPending: isMinting, error: mintError, isSuccess, } = useWriteContract()
-
+    const { writeContract: mintNFTs, data: txData, isPending: isMinting, error: mintError, isSuccess, isError: isMintError } = useWriteContract()
 
     const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         if (event.target.files && event.target.files[0]) {
@@ -185,11 +185,6 @@ function MintNFTs({
         }
 
 
-        if (chainId !== chainSelected) {
-            await switchChainAsync?.({ chainId: chainSelected });
-
-        }
-
         try {
             console.log("Minting NFTs for", donations.length, "contributors with IPFS hash:", metadataIPFSHash);
             mintNFTs({
@@ -210,11 +205,27 @@ function MintNFTs({
                 toast.error(mintError.message.includes("insufficient funds") ? "Insufficient funds for transaction" : mintError.message.includes("Project already exists") ? "Project already minted" : mintError.message)
             }
         } catch (error) {
+            console.log("Error minting NFTs", error)
             errorManager("Error minting NFTs", error)
         }
     };
 
+    useEffect(() => {
+        const checkAndSwitchChain = async () => {
+            if (chainId !== chainSelected) {
+                console.log("Switching chains")
+                await switchChainAsync?.({ chainId: chainSelected }).catch(
+                    (err) => {
+                        if (err.message.includes("wallet_switchEthereumChain")) {
+                            console.log("Already switching");
+                        }
+                    }
+                )
+            }
+        };
 
+        checkAndSwitchChain();
+    }, [chainId, chainSelected])
 
     return (
         <div className="flex flex-col md:flex-row items-start gap-4 w-full h-full mx-auto mt-3 p-5 bg-gray-100 dark:bg-gray-800 rounded-xl">
@@ -280,16 +291,16 @@ function MintNFTs({
                 )}
                 <button
                     onClick={handleMintNFTs}
-                    disabled={!imageIPFSHash || isMinting || isSuccess}
+                    disabled={!imageIPFSHash || isMinting || isSuccess || isMintError}
                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:bg-gray-400 disabled:cursor-not-allowed mb-2"
                 >
-                    {isMinting ? "Minting..." : isSuccess ? "NFTs minted successfully!" : "Mint NFTs to Contributors"}
+                    {isMinting ? "Minting..." : isSuccess ? "NFTs minted successfully!" : mintError ? "Error minting NFTs" : "Mint NFTs to Contributors"}
                 </button>
                 {isSuccess && <p className="text-green-500 text-sm">
                     View transaction on <TransactionLink chainId={chainId} transactionHash={txData} />
                 </p>}
                 {mintError && <p className="text-red-500 text-sm">
-                    {mintError.message.includes("insufficient funds") ? "Insufficient funds for transaction" : mintError.message.includes("Project already exists") ? "Project already minted" : mintError.message}
+                    {mintError.message.includes("insufficient funds") ? "Insufficient funds for transaction" : mintError.message.includes("Project already exists") ? "Project already minted" : mintError.message.includes("User rejected") ? "Transaction cancelled" : mintError.message}
                 </p>}
                 <div className="text-sm text-gray-600 dark:text-gray-300">
                     <PlatformFeeNote setPlatformFee={setPlatformFee} chainId={chainSelected} />
@@ -348,7 +359,6 @@ export const GitcoinAirdropsManager = () => {
         }
     )
 
-    const { address } = useAccount()
 
     const {
         register,
@@ -424,20 +434,15 @@ export const GitcoinAirdropsManager = () => {
                     )}
                     <button
                         type="submit"
-                        className={`w-fit border-2 border-blue-500 text-blue-500 flex items-center gap-2 px-4 py-3 rounded-md mt-4 ${!address ? 'opacity-50 cursor-not-allowed' : ''
-                            }`}
-                        disabled={!address || loading}
+                        className={`w-fit border-2 border-blue-500 text-blue-500 flex items-center gap-2 px-4 py-3 rounded-md mt-4`}
+                        disabled={loading}
                     >
                         {loading ? (
                             <span>Loading...</span>
-                        ) : address ? (
-                            <>
-                                <img src="/logos/gitcoin.png" alt="Gitcoin Logo" className="w-5 h-5 inline-block mr-2" />
-                                <span>Fetch project from Gitcoin</span>
-                            </>
-                        ) : (
-                            <span>Connect wallet to get started</span>
-                        )}
+                        ) : <>
+                            <img src="/logos/gitcoin.png" alt="Gitcoin Logo" className="w-5 h-5 inline-block mr-2" />
+                            <span>Fetch project from Gitcoin</span>
+                        </>}
                     </button>
                 </form>
             </section>
@@ -515,7 +520,7 @@ export const GitcoinAirdropsManager = () => {
                     </div>
                 ) : (
                     <div className="flex justify-start items-center">
-                        {address && <p className="text-lg text-black dark:text-white">Please enter a valid Gitcoin project URL.</p>}
+                        <p className="text-lg text-black dark:text-white">Please enter a valid Gitcoin project URL.</p>
                     </div>
                 )}
             </section>
