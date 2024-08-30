@@ -2,14 +2,13 @@ import { readContract } from "viem/actions";
 import { createPublicClient, http } from "viem";
 import { arbitrum } from "viem/chains";
 import { RESOLVER_TRUSTFUL, SCORER_DECIMALS } from "./constants/constants";
-import { RESOLVER_TRUSTFUL_ABI } from "./constants/abi";
 
 const publicClient = createPublicClient({
   chain: arbitrum,
   transport: http(),
 });
 
-/// See {TrustfulResolver-getGrantProgramScore} in the contract.
+/// See {TrustfulResolver-getGrantProgramAverageScore} in the contract.
 /// Gets the average score of a grant program.
 ///
 /// Requirement:
@@ -19,12 +18,22 @@ const publicClient = createPublicClient({
 /// NOTE: The result will be multiplied by the decimals in the Scorer.
 /// Solidity can't handle floating points, so you can get the decimals by
 /// calling {ITrustfulScorer.getScorerDecimals} and dividing the result.
-export async function getGrantProgramScore(grantUID: number): Promise<number> {
+export async function getGrantProgramAverageScore(grantUID: number): Promise<number | null> {
+  const abi = [
+    {
+      inputs: [{ internalType: "uint256", name: "grantProgramUID", type: "uint256" }],
+      name: "getGrantProgramAverageScore",
+      outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
+      stateMutability: "view",
+      type: "function",
+    },
+  ];
+
   try {
     const grantProgramScore = await readContract(publicClient, {
       address: RESOLVER_TRUSTFUL,
-      functionName: "getGrantProgramScore",
-      abi: RESOLVER_TRUSTFUL_ABI,
+      functionName: "getGrantProgramAverageScore",
+      abi: abi,
       args: [grantUID],
     });
 
@@ -32,10 +41,10 @@ export async function getGrantProgramScore(grantUID: number): Promise<number> {
       const grantStoryAsANumber = Number(grantProgramScore);
 
       if (Number.isNaN(grantStoryAsANumber)) {
-        throw new Error("The result can't be NaN: getGrantProgramScore");
+        console.log("The result can't be NaN: getGrantProgramAverageScore");
       }
     } catch (error) {
-      throw new Error("Error when converting the result to a number: getGrantProgramScore");
+      console.log("Error when converting the result to a number: getGrantProgramAverageScore");
     }
 
     // format big number to floated point number
@@ -43,6 +52,7 @@ export async function getGrantProgramScore(grantUID: number): Promise<number> {
 
     return Number(floatedNumber);
   } catch (error) {
-    throw new Error("Error when reading the contract");
+    console.log("Error when reading the contract");
   }
+  return null;
 }

@@ -93,7 +93,6 @@ export async function submitAttest(
 
     args: [AttestationRequest],
   });
-
   try {
     gasLimit = await estimateGas(publicClient, {
       account: from as Hex,
