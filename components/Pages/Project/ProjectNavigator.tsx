@@ -9,7 +9,6 @@ import { ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import * as Popover from "@radix-ui/react-popover";
 import { ProjectOptionsMenu } from "./ProjectOptionsMenu";
 
 export const ProjectNavigator = ({
@@ -31,10 +30,7 @@ export const ProjectNavigator = ({
       name: "Grants",
       href: PAGES.PROJECT.GRANTS(project?.details?.data?.slug || projectId),
     },
-    // {
-    //   name: "Team",
-    //   href: PAGES.PROJECT.TEAM(project?.details?.data?.slug || projectId),
-    // },
+
     {
       name: "Impact",
       href: PAGES.PROJECT.IMPACT.ROOT(

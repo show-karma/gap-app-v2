@@ -142,7 +142,7 @@ type ProjectDialogProps = {
   previousContacts?: Contact[];
 };
 
-export const ProjectDialog: FC<ProjectDialogProps> = ({
+export const EditProjectDialog: FC<ProjectDialogProps> = ({
   buttonElement = {
     icon: <PlusIcon className="h-4 w-4 text-white" />,
     iconSide: "left",
@@ -186,8 +186,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   };
 
   const [contacts, setContacts] = useState<Contact[]>(previousContacts || []);
-  const { isProjectEditModalOpen } = useProjectEditModalStore();
-  const [isOpen, setIsOpen] = useState(false);
+  const {
+    isProjectEditModalOpen: isOpen,
+    setIsProjectEditModalOpen: setIsOpen,
+  } = useProjectEditModalStore();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [step, setStep] = useState(0);
   const isOwner = useOwnerStore((state) => state.isOwner);
