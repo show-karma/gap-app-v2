@@ -56,7 +56,7 @@ export const NavbarReview = () => {
   return (
     <div className="w-full flex flex-col">
       <div className="w-full flex px-2 gap-2 overflow-x-auto pb-4 relative scroller">
-        {stories ? (
+        {stories && stories.length > 0 ? (
           stories
             .sort((a: any, b: any) => Number(b.timestamp) - Number(a.timestamp))
             .map((storie: GrantStory, index: number) => (

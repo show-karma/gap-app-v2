@@ -1,6 +1,6 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useReviewStore } from "@/store/review";
 
 import { Badge, GrantStory, ReviewMode } from "@/types/review";
@@ -8,6 +8,7 @@ import { addPrefixToIPFSLink } from "@/utilities/review/constants/utilitary";
 import { getBadge } from "@/utilities/review/getBadge";
 
 import { DynamicStarsReview } from "./DynamicStarsReview";
+import { Hex } from "viem";
 
 export const CardReview = ({ storie }: { storie: GrantStory }) => {
   const badges = useReviewStore((state: any) => state.badges);
@@ -22,7 +23,7 @@ export const CardReview = ({ storie }: { storie: GrantStory }) => {
   const handleBadges = async () => {
     const badgesIds = storie.badgeIds;
     const badges = await Promise.all(
-      badgesIds.map(async (badgeId: string): Promise<Badge | null> => {
+      badgesIds.map(async (badgeId: Hex): Promise<Badge | null> => {
         return await getBadge(badgeId);
       }),
     );

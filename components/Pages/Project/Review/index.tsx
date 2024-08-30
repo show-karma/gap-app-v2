@@ -63,7 +63,7 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
   // Grab all recent badges and save on state
   const handleStoryBadges = async () => {
     const badgeIds = await getBadgeIds(SCORER_ID);
-    const badges = await Promise.all(badgeIds.map((id) => getBadge(id)));
+    const badges = badgeIds && (await Promise.all(badgeIds.map((id) => getBadge(id))));
     setActiveBadgeIds(badgeIds);
     setActiveBadges(badges);
   };
