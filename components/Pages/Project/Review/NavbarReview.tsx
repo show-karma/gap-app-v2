@@ -82,7 +82,7 @@ export const NavbarReview = () => {
                   <p>{(Number(storie.averageScore) / 10 ** SCORER_DECIMALS).toFixed(1)}</p>
                   {isStarSelected === index && (
                     <div>
-                      <ChevronDown />
+                      <ChevronDown className="text-[#004EEB]" />
                     </div>
                   )}
                   {index < stories.length - 1 && (
