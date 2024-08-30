@@ -247,7 +247,7 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
               Provide a link that demonstrates your work. This could be a link
               to a tweet announcement, a dashboard, a Google Doc, a blog post, a
               video, or any other resource that highlights the progress or
-              results of your work
+              result of your work
             </p>
             <div className="flex flex-row gap-2 items-center py-2">
               <input
