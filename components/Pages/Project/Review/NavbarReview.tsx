@@ -16,19 +16,26 @@ import { SCORER_DECIMALS } from "@/utilities/review/constants/constants";
 export const NavbarReview = () => {
   const isStarSelected = useReviewStore((state: any) => state.isStarSelected);
   const stories = useReviewStore((state: any) => state.stories);
-  const setStories = useReviewStore((state: any) => state.setStories);
   const grantUID = useReviewStore((state: any) => state.grantUID);
   const setGrantUID = useReviewStore((state: any) => state.setGrantUID);
   const setBadges = useReviewStore((state: any) => state.setBadges);
+  const setStories = useReviewStore((state: any) => state.setStories);
+  const setIsStarSelected = useReviewStore((state: any) => state.setIsStarSelected);
 
   const searchParams = useSearchParams();
 
   useEffect(() => {
     const grantIdFromQueryParam = searchParams?.get("grantId");
-    if (!grantUID && grantIdFromQueryParam) {
+    if (grantIdFromQueryParam && grantUID !== grantIdFromQueryParam) {
+      setBadges(null);
+      setStories(null);
+      setIsStarSelected(0);
       setGrantUID(grantIdFromQueryParam);
     }
+    console.log("grant uid", grantUID);
+    console.log("stories", stories);
     if (grantUID && !stories) {
+      console.log("entrou fetchGrantStories");
       fetchGrantStories();
     }
   }, [grantUID, stories]);
@@ -36,6 +43,7 @@ export const NavbarReview = () => {
   const fetchGrantStories = async () => {
     const grantStories = await getGrantStories(grantUID);
     setStories(grantStories);
+    console.log("grantStories", grantStories);
   };
 
   const handleToggleReviewSelected = (id: number) => {
