@@ -14,7 +14,7 @@ const publicClient = createPublicClient({
 
 /// See {BadgeRegistry-getBadge} in the contract.
 /// Retrieves a badge by its ID.
-export async function getBadge(badgeId: string): Promise<Badge> {
+export async function getBadge(badgeId: string): Promise<Badge | null> {
   try {
     const badgeData = await readContract(publicClient, {
       address: BADGE_REGISTRY,
@@ -25,6 +25,7 @@ export async function getBadge(badgeId: string): Promise<Badge> {
 
     return badgeData as Badge;
   } catch (error) {
-    throw new Error(`Error when reading the contract. ${error}`);
+    console.log(`Error when reading the contract. Probably CORS. ${error}`);
   }
+  return null;
 }

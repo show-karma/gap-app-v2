@@ -14,15 +14,15 @@ export const CardReview = ({ storie }: { storie: GrantStory }) => {
   const setBadges = useReviewStore((state: any) => state.setBadges);
 
   useEffect(() => {
-    if (storie.badgeIds.length > 0 && badges === null) {
+    if (storie && storie.badgeIds.length > 0 && badges === null) {
       handleBadges();
     }
   }, [storie]);
 
   const handleBadges = async () => {
     const badgesIds = storie.badgeIds;
-    const badges: Badge[] = await Promise.all(
-      badgesIds.map(async (badgeId: string): Promise<Badge> => {
+    const badges = await Promise.all(
+      badgesIds.map(async (badgeId: string): Promise<Badge | null> => {
         return await getBadge(badgeId);
       }),
     );
@@ -32,7 +32,8 @@ export const CardReview = ({ storie }: { storie: GrantStory }) => {
   return (
     <div className="flex w-full flex-col justify-center gap-4">
       <div className="w-full flex flex-col px-2 gap-2">
-        {badges &&
+        {storie &&
+          badges &&
           badges.map((badge: Badge, index: number) => (
             <div key={index} className="flex flex-col w-full px-14 mt-4">
               <div className="flex justify-center sm:justify-normal flex-col sm:flex-row w-full items-center gap-3">

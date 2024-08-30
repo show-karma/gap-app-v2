@@ -80,6 +80,7 @@ export const ProjectGrantsPage = () => {
     })) || [];
   const [tabs, setTabs] = useState<Tab[]>([]);
   const router = useRouter();
+  const { address } = useAccount();
 
   const isProjectOwner = useProjectStore((state: any) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state: any) => state.isOwner);
@@ -89,8 +90,11 @@ export const ProjectGrantsPage = () => {
   const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
   const [, changeTab] = useQueryState("tab");
   const [, changeGrantId] = useQueryState("grantId");
-  const { address } = useAccount();
+
   const setGrantUID = useReviewStore((state: any) => state.setGrantUID);
+  const setStories = useReviewStore((state: any) => state.setStories);
+  const setIsStarSelected = useReviewStore((state: any) => state.setIsStarSelected);
+  const setBadges = useReviewStore((state: any) => state.setBadges);
 
   // UseEffect to check if current URL changes
   useEffect(() => {
@@ -119,6 +123,9 @@ export const ProjectGrantsPage = () => {
       // search parameters and the page assumes the zeroth index grant is the one to be
       // displayed, therefore we set it here in this case
       setGrantUID(project?.grants?.[0]?.uid);
+      setBadges(null);
+      setStories(null);
+      setIsStarSelected(0);
     }
   }, [project, grantIdFromQueryParam]);
 
