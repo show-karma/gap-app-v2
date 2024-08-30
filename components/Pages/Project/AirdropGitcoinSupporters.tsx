@@ -120,7 +120,7 @@ function MintNFTs({
                 const fullDescription = customDescription ? `${customDescription} \n|\n ${defaultDescription}` : defaultDescription;
 
                 const metadata = {
-                    name: `${projectDetails.project.metadata.title} - Karma GAP Patron`,
+                    name: `${projectDetails.project.metadata.title}`,
                     description: fullDescription,
                     image: `ipfs://${response.data.IpfsHash}`,
                     attributes: []
@@ -371,7 +371,7 @@ export const GitcoinAirdropsManager = () => {
             <div className="flex flex-col w-full gap-3">
                 <div className="flex flex-[3] flex-col gap-3 items-start justify-start text-left max-lg:gap-1">
                     <h1 className="text-2xl tracking-[-0.72px] 2xl:text-4xl font-bold text-start text-black dark:text-white max-lg:tracking-normal">
-                        {`Airdrop NFTs for your gitcoin round contributors!`}
+                        {`Airdrop NFT to your Gitcoin round contributors!`}
                     </h1>
                     <p className="text-start text-base md:text-lg max-w-5xl text-black dark:text-white">
                         Get started with Gitcoin supporter airdrops now!
@@ -383,14 +383,14 @@ export const GitcoinAirdropsManager = () => {
             <section className="container">
                 <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col w-full gap-3">
                     <label htmlFor="gitcoinProjectUrl" className="text-lg font-medium text-black dark:text-white">
-                        Gitcoin Project URL
+                        Enter your Gitcoin project URL
                     </label>
                     <input
                         type="text"
                         id="gitcoinProjectUrl"
                         {...register("gitcoinProjectUrl")}
                         className="w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-gray-300"
-                        placeholder="Enter your Gitcoin project URL. Eg. https://explorer.gitcoin.co/#/round/42161/26/21"
+                        placeholder="Eg. https://explorer.gitcoin.co/#/round/42161/26/21"
                     />
                     {errors.gitcoinProjectUrl && (
                         <p className="text-red-500 text-sm">{errors.gitcoinProjectUrl.message}</p>
