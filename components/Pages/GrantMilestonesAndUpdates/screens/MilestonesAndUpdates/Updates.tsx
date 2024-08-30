@@ -140,6 +140,17 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   useEffect(() => {
     setVerifiedMilestones(milestone?.verified || []);
   }, [milestone]);
+
+  /*
+   * Check if the milestone completion was created after the launch date of the feature
+   * @returns {boolean}
+   */
+  const checkProofLaunch = () => {
+    return new Date("2024-08-30") <= new Date(milestone?.completed?.createdAt);
+  };
+
+  const isAfterProofLaunch = checkProofLaunch();
+
   if (
     !isEditing &&
     (milestone?.completed?.data?.reason?.length ||
@@ -185,18 +196,48 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
             </ReadMore>
 
             <div className="flex w-full flex-row items-center justify-between">
-              {milestone.completed.data?.proofOfWork ? (
-                <ExternalLink
-                  href={
-                    milestone.completed.data?.proofOfWork.includes("http")
-                      ? milestone.completed.data?.proofOfWork
-                      : `https://${milestone.completed.data?.proofOfWork}`
-                  }
-                  className="flex flex-row w-max gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent"
-                >
-                  View Proof of Work
-                </ExternalLink>
+              {isAfterProofLaunch ? (
+                <div className="flex flex-row items-center gap-1 flex-1 max-w-full">
+                  <p className="text-sm w-full min-w-max max-w-max font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
+                    Proof of work:
+                  </p>
+                  {milestone?.completed?.data.proofOfWork ? (
+                    <ExternalLink
+                      href={
+                        milestone?.completed?.data.proofOfWork.includes("http")
+                          ? milestone?.completed?.data.proofOfWork
+                          : `https://${milestone?.completed?.data.proofOfWork}`
+                      }
+                      className="flex flex-row w-max max-w-full gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent"
+                    >
+                      {milestone?.completed?.data.proofOfWork.includes("http")
+                        ? `${milestone?.completed?.data.proofOfWork.slice(
+                            0,
+                            80
+                          )}${
+                            milestone?.completed?.data.proofOfWork.slice(0, 80)
+                              .length >= 80
+                              ? "..."
+                              : ""
+                          }`
+                        : `https://${milestone?.completed?.data.proofOfWork.slice(
+                            0,
+                            80
+                          )}${
+                            milestone?.completed?.data.proofOfWork.slice(0, 80)
+                              .length >= 80
+                              ? "..."
+                              : ""
+                          }`}
+                    </ExternalLink>
+                  ) : (
+                    <p className="text-sm font-medium text-gray-500 dark:text-zinc-300 max-sm:text-xs">
+                      Grantee indicated there is no proof for this milestone.
+                    </p>
+                  )}
+                </div>
               ) : null}
+
               <div className="flex flex-1 flex-row items-center justify-end">
                 {isAuthorized ? (
                   <div className="flex w-max flex-row items-center gap-2">

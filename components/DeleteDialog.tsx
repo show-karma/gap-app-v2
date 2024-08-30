@@ -12,7 +12,7 @@ type DeleteDialogProps = {
     text: string;
     icon: ReactNode;
     styleClass: string;
-  };
+  } | null;
   isLoading: boolean;
   afterFunction?: () => void;
 };
@@ -51,10 +51,12 @@ export const DeleteDialog: FC<DeleteDialogProps> = ({
 
   return (
     <>
-      <Button onClick={openModal} className={buttonElement.styleClass}>
-        {buttonElement.icon}
-        {buttonElement.text}
-      </Button>
+      {buttonElement ? (
+        <Button onClick={openModal} className={buttonElement.styleClass}>
+          {buttonElement.icon}
+          {buttonElement.text}
+        </Button>
+      ) : null}
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeModal}>
           <Transition.Child

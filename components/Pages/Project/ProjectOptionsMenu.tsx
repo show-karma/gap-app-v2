@@ -3,6 +3,10 @@ import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useGap } from "@/hooks";
 import { useProjectStore } from "@/store";
+import { useGrantGenieModalStore } from "@/store/modals/genie";
+import { useMergeModalStore } from "@/store/modals/merge";
+import { useProjectEditModalStore } from "@/store/modals/projectEdit";
+import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
@@ -20,10 +24,15 @@ import {
 import {
   ArrowDownOnSquareIcon,
   ArrowsRightLeftIcon,
+  LightBulbIcon,
   PencilSquareIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
-import { ChevronDownIcon, PlusIcon } from "@heroicons/react/24/solid";
+import {
+  ChevronDownIcon,
+  EllipsisVerticalIcon,
+  PlusIcon,
+} from "@heroicons/react/24/solid";
 import { getWalletClient } from "@wagmi/core";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -34,8 +43,8 @@ import { useAccount, useSwitchChain } from "wagmi";
 
 const ProjectDialog = dynamic(
   () =>
-    import("@/components/Dialogs/ProjectDialog/index").then(
-      (mod) => mod.ProjectDialog
+    import("@/components/Dialogs/ProjectDialog/EditProjectDialog").then(
+      (mod) => mod.EditProjectDialog
     ),
   { ssr: false }
 );
@@ -76,6 +85,13 @@ export const ProjectOptionsMenu = () => {
   const router = useRouter();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
+  const { isProjectEditModalOpen, openProjectEditModal } =
+    useProjectEditModalStore();
+  const { isMergeModalOpen, openMergeModal } = useMergeModalStore();
+  const { openGrantGenieModal, isGrantGenieModalOpen } =
+    useGrantGenieModalStore();
+  const { isTransferOwnershipModalOpen, openTransferOwnershipModal } =
+    useTransferOwnershipModalStore();
 
   const deleteFn = async () => {
     if (!address || !project) return;
@@ -112,27 +128,80 @@ export const ProjectOptionsMenu = () => {
   };
 
   return (
-    <Menu as="div" className="relative inline-block text-left">
-      <div>
-        <Menu.Button
-          // className="inline-flex w-full justify-center rounded-md bg-black/20 px-4 py-2 text-sm font-medium text-white hover:bg-black/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75"
-          className="w-max bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-100 hover:dark:bg-zinc-800 text-black dark:text-white px-4 py-2 rounded-lg"
+    <>
+      {isProjectEditModalOpen ? (
+        <ProjectDialog
+          key={project?.uid}
+          buttonElement={null}
+          projectToUpdate={project}
+          previousContacts={contactsInfo}
+        />
+      ) : null}
+      {isMergeModalOpen ? <MergeProjectDialog buttonElement={null} /> : null}
+      {isGrantGenieModalOpen ? <GrantsGenieDialog /> : null}
+      {isTransferOwnershipModalOpen ? (
+        <TransferOwnershipDialog buttonElement={null} />
+      ) : null}
+      <Menu as="div" className="relative inline-block text-left">
+        <div>
+          <Menu.Button className="w-max bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-100 hover:dark:bg-zinc-800 text-black dark:text-white p-2 rounded-lg">
+            <EllipsisVerticalIcon className="h-5 w-5" aria-hidden="true" />
+          </Menu.Button>
+        </div>
+        <Transition
+          as={Fragment}
+          enter="transition ease-out duration-100"
+          enterFrom="transform opacity-0 scale-95"
+          enterTo="transform opacity-100 scale-100"
+          leave="transition ease-in duration-75"
+          leaveFrom="transform opacity-100 scale-100"
+          leaveTo="transform opacity-0 scale-95"
         >
-          ...
-        </Menu.Button>
-      </div>
-      <Transition
-        as={Fragment}
-        enter="transition ease-out duration-100"
-        enterFrom="transform opacity-0 scale-95"
-        enterTo="transform opacity-100 scale-100"
-        leave="transition ease-in duration-75"
-        leaveFrom="transform opacity-100 scale-100"
-        leaveTo="transform opacity-0 scale-95"
-      >
-        <Menu.Items className="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white dark:bg-zinc-800 shadow-lg ring-1 ring-black/5 focus:outline-none">
-          <div className="flex flex-col gap-1 px-1 py-1">
-            <div className="flex flex-col gap-1">
+          <Menu.Items
+            modal
+            className="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white dark:bg-zinc-800 shadow-lg ring-1 ring-black/5 focus:outline-none"
+          >
+            <div className="flex flex-col gap-1 px-1 py-1">
+              <Menu.Item>
+                <button
+                  type="button"
+                  onClick={openProjectEditModal}
+                  className={buttonClassName}
+                >
+                  <PencilSquareIcon
+                    className={"mr-2 h-5 w-5"}
+                    aria-hidden="true"
+                  />
+                  Edit project
+                </button>
+              </Menu.Item>
+              <Menu.Item>
+                <button
+                  type="button"
+                  onClick={openMergeModal}
+                  className={buttonClassName}
+                >
+                  <ArrowDownOnSquareIcon
+                    className={"mr-2 h-5 w-5"}
+                    aria-hidden="true"
+                  />
+                  Merge
+                </button>
+              </Menu.Item>
+
+              <Menu.Item>
+                <button
+                  type="button"
+                  onClick={openTransferOwnershipModal}
+                  className={buttonClassName}
+                >
+                  <ArrowsRightLeftIcon
+                    className={"mr-2 h-5 w-5"}
+                    aria-hidden="true"
+                  />
+                  Transfer ownership
+                </button>
+              </Menu.Item>
               <Menu.Item>
                 <Link
                   href={PAGES.PROJECT.IMPACT.ADD_IMPACT(
@@ -145,86 +214,36 @@ export const ProjectOptionsMenu = () => {
                 </Link>
               </Menu.Item>
               <Menu.Item>
-                <ProjectDialog
-                  key={project?.uid}
+                <button
+                  type="button"
+                  onClick={openGrantGenieModal}
+                  className={buttonClassName}
+                >
+                  <LightBulbIcon className="h-5 w-5 mr-2" />
+                  Grant genie
+                </button>
+              </Menu.Item>
+              <Menu.Item>
+                <DeleteDialog
+                  title="Are you sure you want to delete this project?"
+                  deleteFunction={deleteFn}
+                  isLoading={isDeleting}
                   buttonElement={{
                     icon: (
-                      <PencilSquareIcon
-                        className={"mr-1 h-5 w-5"}
+                      <TrashIcon
+                        className={"mr-2 h-5 w-5"}
                         aria-hidden="true"
                       />
                     ),
-                    iconSide: "left",
-                    text: "Edit project",
+                    text: "Delete project",
                     styleClass: buttonClassName,
                   }}
-                  projectToUpdate={project}
-                  previousContacts={contactsInfo}
-                />
-              </Menu.Item>
-              <Menu.Item>
-                <GrantsGenieDialog
-                  buttonText="Grant genie"
-                  buttonClassName={buttonClassName}
                 />
               </Menu.Item>
             </div>
-            <div className="flex flex-col gap-1 border-t border-gray-200 dark:border-zinc-700 pt-2">
-              <Menu.Item>
-                {({ active }) => (
-                  <MergeProjectDialog
-                    buttonElement={{
-                      icon: (
-                        <ArrowDownOnSquareIcon
-                          className={"mr-2 h-5 w-5"}
-                          aria-hidden="true"
-                        />
-                      ),
-                      text: "Merge",
-                      styleClass: buttonClassName,
-                    }}
-                  />
-                )}
-              </Menu.Item>
-              <Menu.Item>
-                {({ active }) => (
-                  <TransferOwnershipDialog
-                    buttonElement={{
-                      icon: (
-                        <ArrowsRightLeftIcon
-                          className={"mr-2 h-5 w-5"}
-                          aria-hidden="true"
-                        />
-                      ),
-                      text: "Transfer ownership",
-                      styleClass: buttonClassName,
-                    }}
-                  />
-                )}
-              </Menu.Item>
-              <Menu.Item>
-                {({ active }) => (
-                  <DeleteDialog
-                    title="Are you sure you want to delete this project?"
-                    deleteFunction={deleteFn}
-                    isLoading={isDeleting}
-                    buttonElement={{
-                      icon: (
-                        <TrashIcon
-                          className={"mr-2 h-5 w-5"}
-                          aria-hidden="true"
-                        />
-                      ),
-                      text: "Delete project",
-                      styleClass: buttonClassName,
-                    }}
-                  />
-                )}
-              </Menu.Item>
-            </div>
-          </div>
-        </Menu.Items>
-      </Transition>
-    </Menu>
+          </Menu.Items>
+        </Transition>
+      </Menu>
+    </>
   );
 };

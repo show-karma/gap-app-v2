@@ -14,7 +14,6 @@ import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import debounce from "lodash.debounce";
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
 import { Spinner } from "../Utilities/Spinner";
-import EthereumAddressToENSName from "../EthereumAddressToENSName";
 import { PAGES } from "@/utilities/pages";
 import {
   IProjectResponse,
@@ -31,13 +30,14 @@ import { errorManager } from "../Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { sanitizeInput } from "@/utilities/sanitize";
+import { useMergeModalStore } from "@/store/modals/merge";
 
 type MergeProjectProps = {
   buttonElement?: {
     text: string;
     icon: ReactNode;
     styleClass: string;
-  };
+  } | null;
 };
 
 function SearchProject({
@@ -153,12 +153,13 @@ type PointerType = z.infer<typeof pointerSchema>;
 export const MergeProjectDialog: FC<MergeProjectProps> = ({
   buttonElement = {
     icon: <PlusIcon className="h-4 w-4 text-primary-600" />,
-    text: "New Project",
+    text: "Merge",
     styleClass:
       "flex items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100  hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900",
   },
 }) => {
-  let [isOpen, setIsOpen] = useState(false);
+  const { isMergeModalOpen: isOpen, setIsMergeModalOpen: setIsOpen } =
+    useMergeModalStore();
   const [primaryProject, setPrimaryProject] = useState<IProjectResponse | null>(
     null
   );
@@ -264,14 +265,16 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
 
   return (
     <>
-      <Button
-        disabled={!isProjectOwner}
-        onClick={openModal}
-        className={buttonElement.styleClass}
-      >
-        {buttonElement.icon}
-        {buttonElement.text}
-      </Button>
+      {buttonElement ? (
+        <Button
+          disabled={!isProjectOwner}
+          onClick={openModal}
+          className={buttonElement.styleClass}
+        >
+          {buttonElement.icon}
+          {buttonElement.text}
+        </Button>
+      ) : null}
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeModal}>
           <Transition.Child

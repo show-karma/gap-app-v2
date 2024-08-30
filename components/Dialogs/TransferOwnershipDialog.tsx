@@ -18,13 +18,14 @@ import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "../Utilities/errorManager";
 import { sanitizeInput } from "@/utilities/sanitize";
+import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership";
 
 type TransferOwnershipProps = {
   buttonElement?: {
     text: string;
     icon: ReactNode;
     styleClass: string;
-  };
+  } | null;
 };
 
 export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
@@ -35,16 +36,15 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
       "flex items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100  hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900",
   },
 }) => {
-  let [isOpen, setIsOpen] = useState(false);
+  const {
+    isTransferOwnershipModalOpen: isOpen,
+    openTransferOwnershipModal: openModal,
+    closeTransferOwnershipModal: closeModal,
+  } = useTransferOwnershipModalStore();
   const [newOwner, setNewOwner] = useState<string>();
   const [isLoading, setIsLoading] = useState(false);
   const [validAddress, setValidAddress] = useState(true);
-  function closeModal() {
-    setIsOpen(false);
-  }
-  function openModal() {
-    setIsOpen(true);
-  }
+
   const signer = useSigner();
   const { chain } = useAccount();
   const project = useProjectStore((state) => state.project);
@@ -128,14 +128,16 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
 
   return (
     <>
-      <Button
-        disabled={!isProjectOwner}
-        onClick={openModal}
-        className={buttonElement.styleClass}
-      >
-        {buttonElement.icon}
-        {buttonElement.text}
-      </Button>
+      {buttonElement ? (
+        <Button
+          disabled={!isProjectOwner}
+          onClick={openModal}
+          className={buttonElement.styleClass}
+        >
+          {buttonElement.icon}
+          {buttonElement.text}
+        </Button>
+      ) : null}
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeModal}>
           <Transition.Child
@@ -194,7 +196,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
                     <Button
                       className="text-white text-lg bg-red-600 border-black  hover:bg-red-600 hover:text-white"
                       onClick={transfer}
-                      disabled={isLoading || !newOwner}
+                      disabled={isLoading || !validAddress || !newOwner}
                       isLoading={isLoading}
                       type="button"
                     >
