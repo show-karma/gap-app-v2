@@ -181,9 +181,7 @@ export const ProjectOptionsMenu = () => {
                         />
                       ),
                       text: "Merge",
-                      styleClass: `${
-                        active ? "bg-red-600 " : ""
-                      } group text-white border-none ring-none font-normal  bg-red-600 hover:bg-red-500 hover:opacity-100 hover:text-white flex w-full items-start justify-start rounded-md px-2 py-2 text-sm`,
+                      styleClass: buttonClassName,
                     }}
                   />
                 )}
@@ -199,9 +197,7 @@ export const ProjectOptionsMenu = () => {
                         />
                       ),
                       text: "Transfer ownership",
-                      styleClass: `${
-                        active ? "bg-red-600 " : ""
-                      } group text-white border-none ring-none font-normal  bg-red-600 hover:bg-red-500 hover:opacity-100 hover:text-white flex w-full items-start justify-start rounded-md px-2 py-2 text-sm`,
+                      styleClass: buttonClassName,
                     }}
                   />
                 )}
@@ -220,9 +216,7 @@ export const ProjectOptionsMenu = () => {
                         />
                       ),
                       text: "Delete project",
-                      styleClass: `${
-                        active ? "bg-red-600 " : ""
-                      } group text-white border-none ring-none font-normal  bg-red-600 hover:bg-red-500 hover:opacity-100 hover:text-white flex w-full items-start justify-start rounded-md px-2 py-2 text-sm`,
+                      styleClass: buttonClassName,
                     }}
                   />
                 )}
