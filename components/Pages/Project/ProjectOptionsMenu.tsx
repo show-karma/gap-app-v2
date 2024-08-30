@@ -130,98 +130,90 @@ export const ProjectOptionsMenu = () => {
         leaveFrom="transform opacity-100 scale-100"
         leaveTo="transform opacity-0 scale-95"
       >
-        <Menu.Items className="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white dark:bg-zinc-800 shadow-lg ring-1 ring-black/5 focus:outline-none">
+        <Menu.Items
+          modal
+          className="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white dark:bg-zinc-800 shadow-lg ring-1 ring-black/5 focus:outline-none"
+        >
           <div className="flex flex-col gap-1 px-1 py-1">
-            <div className="flex flex-col gap-1">
-              <Menu.Item>
-                <Link
-                  href={PAGES.PROJECT.IMPACT.ADD_IMPACT(
-                    project?.details?.data?.slug || projectId
-                  )}
-                  className={buttonClassName}
-                >
-                  <PlusIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
-                  Add impact
-                </Link>
-              </Menu.Item>
-              <Menu.Item>
-                <ProjectDialog
-                  key={project?.uid}
-                  buttonElement={{
-                    icon: (
-                      <PencilSquareIcon
-                        className={"mr-1 h-5 w-5"}
-                        aria-hidden="true"
-                      />
-                    ),
-                    iconSide: "left",
-                    text: "Edit project",
-                    styleClass: buttonClassName,
-                  }}
-                  projectToUpdate={project}
-                  previousContacts={contactsInfo}
-                />
-              </Menu.Item>
-              <Menu.Item>
-                <GrantsGenieDialog
-                  buttonText="Grant genie"
-                  buttonClassName={buttonClassName}
-                />
-              </Menu.Item>
-            </div>
-            <div className="flex flex-col gap-1 border-t border-gray-200 dark:border-zinc-700 pt-2">
-              <Menu.Item>
-                {({ active }) => (
-                  <MergeProjectDialog
-                    buttonElement={{
-                      icon: (
-                        <ArrowDownOnSquareIcon
-                          className={"mr-2 h-5 w-5"}
-                          aria-hidden="true"
-                        />
-                      ),
-                      text: "Merge",
-                      styleClass: buttonClassName,
-                    }}
-                  />
+            <Menu.Item>
+              <ProjectDialog
+                key={project?.uid}
+                buttonElement={{
+                  icon: (
+                    <PencilSquareIcon
+                      className={"mr-1 h-5 w-5"}
+                      aria-hidden="true"
+                    />
+                  ),
+                  iconSide: "left",
+                  text: "Edit project",
+                  styleClass: buttonClassName,
+                }}
+                projectToUpdate={project}
+                previousContacts={contactsInfo}
+              />
+            </Menu.Item>
+            <Menu.Item>
+              <MergeProjectDialog
+                buttonElement={{
+                  icon: (
+                    <ArrowDownOnSquareIcon
+                      className={"mr-2 h-5 w-5"}
+                      aria-hidden="true"
+                    />
+                  ),
+                  text: "Merge",
+                  styleClass: buttonClassName,
+                }}
+              />
+            </Menu.Item>
+
+            <Menu.Item>
+              <TransferOwnershipDialog
+                buttonElement={{
+                  icon: (
+                    <ArrowsRightLeftIcon
+                      className={"mr-2 h-5 w-5"}
+                      aria-hidden="true"
+                    />
+                  ),
+                  text: "Transfer ownership",
+                  styleClass: buttonClassName,
+                }}
+              />
+            </Menu.Item>
+
+            <Menu.Item>
+              <Link
+                href={PAGES.PROJECT.IMPACT.ADD_IMPACT(
+                  project?.details?.data?.slug || projectId
                 )}
-              </Menu.Item>
-              <Menu.Item>
-                {({ active }) => (
-                  <TransferOwnershipDialog
-                    buttonElement={{
-                      icon: (
-                        <ArrowsRightLeftIcon
-                          className={"mr-2 h-5 w-5"}
-                          aria-hidden="true"
-                        />
-                      ),
-                      text: "Transfer ownership",
-                      styleClass: buttonClassName,
-                    }}
-                  />
-                )}
-              </Menu.Item>
-              <Menu.Item>
-                {({ active }) => (
-                  <DeleteDialog
-                    title="Are you sure you want to delete this project?"
-                    deleteFunction={deleteFn}
-                    isLoading={isDeleting}
-                    buttonElement={{
-                      icon: (
-                        <TrashIcon
-                          className={"mr-2 h-5 w-5"}
-                          aria-hidden="true"
-                        />
-                      ),
-                      text: "Delete project",
-                      styleClass: buttonClassName,
-                    }}
-                  />
-                )}
-              </Menu.Item>
-            </div>
+                className={buttonClassName}
+              >
+                <PlusIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
+                Add impact
+              </Link>
+            </Menu.Item>
+            <Menu.Item>
+              <GrantsGenieDialog
+                buttonText="Grant genie"
+                buttonClassName={buttonClassName}
+              />
+            </Menu.Item>
+            <Menu.Item>
+              <DeleteDialog
+                title="Are you sure you want to delete this project?"
+                deleteFunction={deleteFn}
+                isLoading={isDeleting}
+                buttonElement={{
+                  icon: (
+                    <TrashIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
+                  ),
+                  text: "Delete project",
+                  styleClass: buttonClassName,
+                }}
+              />
+            </Menu.Item>
           </div>
         </Menu.Items>
       </Transition>

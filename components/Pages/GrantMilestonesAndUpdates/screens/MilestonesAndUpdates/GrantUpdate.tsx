@@ -174,8 +174,18 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
     setVerifiedUpdate(update?.verified || []);
   }, [update]);
 
+  /*
+   * Check if the grant update was created after the launch date of the feature
+   * @returns {boolean}
+   */
+  const checkProofLaunch = () => {
+    return new Date("2024-08-30") <= new Date(update?.createdAt);
+  };
+
+  const isAfterProofLaunch = checkProofLaunch();
+
   return (
-    <div className="flex w-full flex-1 flex-col gap-4 rounded-lg border border-zinc-200 dark:bg-zinc-800 dark:border-zinc-700 bg-white p-4 transition-all duration-200 ease-in-out  max-sm:px-2">
+    <div className="flex w-full flex-1 max-w-full flex-col gap-4 rounded-lg border border-zinc-200 dark:bg-zinc-800 dark:border-zinc-700 bg-white p-4 transition-all duration-200 ease-in-out  max-sm:px-2">
       <div className="flex flex-row items-center justify-between">
         <div className="flex flex-row gap-3 items-center">
           <UpdateTag index={index} />
@@ -219,24 +229,45 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
           {title}
         </p>
       ) : null}
-      <div className="flex flex-col gap-2">
+      <div className="flex flex-col gap-2 w-full">
         <ReadMore
           readLessText="Read less update"
           readMoreText="Read full update"
         >
           {description}
         </ReadMore>
-        {update.data.proofOfWork ? (
-          <ExternalLink
-            href={
-              update.data.proofOfWork.includes("http")
-                ? update.data.proofOfWork
-                : `https://${update.data.proofOfWork}`
-            }
-            className="flex flex-row w-max gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent"
-          >
-            View Proof of Work
-          </ExternalLink>
+        {isAfterProofLaunch ? (
+          <div className="flex flex-row items-center gap-1 flex-1 max-w-full">
+            <p className="text-sm w-full min-w-max max-w-max font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
+              Proof of work:
+            </p>
+            {update?.data.proofOfWork ? (
+              <ExternalLink
+                href={
+                  update?.data.proofOfWork.includes("http")
+                    ? update?.data.proofOfWork
+                    : `https://${update?.data.proofOfWork}`
+                }
+                className="flex flex-row w-max max-w-full gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent"
+              >
+                {update?.data.proofOfWork.includes("http")
+                  ? `${update?.data.proofOfWork.slice(0, 80)}${
+                      update?.data.proofOfWork.slice(0, 80).length >= 80
+                        ? "..."
+                        : ""
+                    }`
+                  : `https://${update?.data.proofOfWork.slice(0, 80)}${
+                      update?.data.proofOfWork.slice(0, 80).length >= 80
+                        ? "..."
+                        : ""
+                    }`}
+              </ExternalLink>
+            ) : (
+              <p className="text-sm font-medium text-gray-500 dark:text-zinc-300 max-sm:text-xs">
+                Grantee indicated there is no proof for this milestone.
+              </p>
+            )}
+          </div>
         ) : null}
       </div>
     </div>

@@ -120,7 +120,7 @@ export const GrantsGenieDialog: FC<Props> = ({
           buttonClassName
         )}
       >
-        <LightBulbIcon className="h-4 w-4 mr-1" />
+        <LightBulbIcon className="h-5 w-5 mr-1" />
         {buttonText}
       </Button>
       <Transition appear show={isOpen} as={Fragment}>
