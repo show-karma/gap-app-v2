@@ -21,7 +21,7 @@ import { useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useRegistryStore } from "@/store/registry";
-import { getGrantProgramScore } from "@/utilities/review/getGrantProgramScore";
+import { getGrantProgramAverageScore } from "@/utilities/review/getGrantProgramAverageScore";
 
 const statuses = ["Active", "Inactive"];
 
@@ -194,9 +194,10 @@ export const ProgramsExplorer = () => {
         if (program?.programId) {
           try {
             /**
-             * Refer to getGrantProgramScore.ts to identify the cases when the score is undefined.
+             * Refer to getGrantProgramAverageScore.ts to identify the cases when the score is undefined.
              */
-            programScore = (await getGrantProgramScore(Number(program.programId))) || undefined;
+            programScore =
+              (await getGrantProgramAverageScore(Number(program.programId))) || undefined;
           } catch {
             programScore = undefined;
           }

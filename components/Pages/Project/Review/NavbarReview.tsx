@@ -32,10 +32,8 @@ export const NavbarReview = () => {
       setIsStarSelected(0);
       setGrantUID(grantIdFromQueryParam);
     }
-    console.log("grant uid", grantUID);
-    console.log("stories", stories);
+
     if (grantUID && !stories) {
-      console.log("entrou fetchGrantStories");
       fetchGrantStories();
     }
   }, [grantUID, stories]);
@@ -43,7 +41,6 @@ export const NavbarReview = () => {
   const fetchGrantStories = async () => {
     const grantStories = await getGrantStories(grantUID);
     setStories(grantStories);
-    console.log("grantStories", grantStories);
   };
 
   const handleToggleReviewSelected = (id: number) => {
@@ -56,7 +53,7 @@ export const NavbarReview = () => {
   return (
     <div className="w-full flex flex-col">
       <div className="w-full flex px-2 gap-2 overflow-x-auto pb-4 relative scroller">
-        {stories ? (
+        {stories && stories.length > 0 ? (
           stories
             .sort((a: any, b: any) => Number(b.timestamp) - Number(a.timestamp))
             .map((storie: GrantStory, index: number) => (
@@ -82,7 +79,7 @@ export const NavbarReview = () => {
                   <p>{(Number(storie.averageScore) / 10 ** SCORER_DECIMALS).toFixed(1)}</p>
                   {isStarSelected === index && (
                     <div>
-                      <ChevronDown />
+                      <ChevronDown className="text-[#004EEB]" />
                     </div>
                   )}
                   {index < stories.length - 1 && (

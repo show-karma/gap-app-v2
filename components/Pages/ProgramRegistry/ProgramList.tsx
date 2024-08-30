@@ -376,22 +376,37 @@ export const ProgramList: FC<ProgramListProps> = ({ grantPrograms, selectProgram
 
           return (
             <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-              <span className="mr-1 inline-flex items-center text-lg font-medium">
+              <Tooltip.Provider>
                 {grant.programScore ? (
-                  <StarReviewIcon
-                    props={{
-                      className:
-                        "text-[#004EEB] w-14 h-14 transparent hover:fill-transparent hover:stroke-transparent",
-                      fontSize: 7,
-                      color: "#FFF",
-                    }}
-                    isHovered={false}
-                    score={grant.programScore}
-                  />
+                  <Tooltip.Root>
+                    <Tooltip.Trigger asChild>
+                      <span className="mr-1 inline-flex items-center text-lg font-medium">
+                        <StarReviewIcon
+                          props={{
+                            className:
+                              "text-[#004EEB] w-14 h-14 transparent hover:fill-transparent hover:stroke-transparent",
+                            fontSize: 7,
+                            color: "#FFF",
+                          }}
+                          isHovered={false}
+                          score={grant.programScore}
+                        />
+                      </span>
+                    </Tooltip.Trigger>
+                    <Tooltip.Portal>
+                      <Tooltip.Content
+                        sideOffset={5}
+                        className="tooltip-content rounded bg-black p-2 text-white shadow-lg"
+                      >
+                        {`Score: ${grant.programScore} out of 5`}
+                        <Tooltip.Arrow className="tooltip-arrow fill-black" />
+                      </Tooltip.Content>
+                    </Tooltip.Portal>
+                  </Tooltip.Root>
                 ) : (
                   <></>
                 )}
-              </span>
+              </Tooltip.Provider>
             </div>
           );
         },

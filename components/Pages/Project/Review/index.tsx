@@ -63,7 +63,7 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
   // Grab all recent badges and save on state
   const handleStoryBadges = async () => {
     const badgeIds = await getBadgeIds(SCORER_ID);
-    const badges = await Promise.all(badgeIds.map((id) => getBadge(id)));
+    const badges = badgeIds && (await Promise.all(badgeIds.map((id) => getBadge(id))));
     setActiveBadgeIds(badgeIds);
     setActiveBadges(badges);
   };
@@ -99,7 +99,7 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
                     {isConnected &&
                     project?.recipient &&
                     address &&
-                    !isAddressEqual(project.recipient, address) ? ( //TODO: Remove this (negation)!
+                    isAddressEqual(project.recipient, address) ? ( // Check if the address is equal to the grant recipient address
                       <Button
                         disabled={false}
                         onClick={handleReviewButton}
