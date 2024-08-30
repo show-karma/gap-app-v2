@@ -149,3 +149,7 @@ label {
     @apply list-disc list-inside;
   }
 }
+
+  .scroller {
+    scrollbar-width: thin;
+  }
