@@ -57,7 +57,10 @@ export const CardNewReview = () => {
     }
   };
 
-  // TODO: Should create the submit to blockchain
+  /**
+   * Handles the submission of a review to submitAttest.
+   *
+   */
   const handleSubmitReview = async () => {
     if (!address) {
       toast.error("Must connect to submit a review");
@@ -109,44 +112,46 @@ export const CardNewReview = () => {
     <div className="flex w-full flex-col justify-center gap-4">
       <div className="w-full flex flex-col px-2 gap-2">
         {activeBadges ? (
-          activeBadges.map((badge: Badge, index: number) => (
-            <div key={index} className="flex flex-col w-full sm:pr-14 mt-4">
-              <div className="flex justify-center sm:justify-normal flex-col sm:flex-row w-full items-center gap-3">
-                <img
-                  src={addPrefixToIPFSLink(badge.metadata)}
-                  alt="Badge Metadata"
-                  className="h-20"
-                />
-                <div className="flex flex-col sm:flex-row items-center gap-3">
-                  <div className="order-2 sm:order-1">
-                    <div className="sm:text-lg sm:text-start text-center text-xl">{badge.name}</div>
-                    <div className="text-sm order-2 sm:order-1 sm:text-start text-center">
-                      {badge.description}
+          <>
+            {activeBadges.map((badge: Badge, index: number) => (
+              <div key={index} className="flex flex-col w-full sm:pr-14 mt-4">
+                <div className="flex justify-center sm:justify-normal flex-col sm:flex-row w-full items-center gap-3">
+                  <img
+                    src={addPrefixToIPFSLink(badge.metadata)}
+                    alt="Badge Metadata"
+                    className="h-20"
+                  />
+                  <div className="flex flex-col sm:flex-row items-center gap-3">
+                    <div className="order-2 sm:order-1">
+                      <div className="sm:text-lg sm:text-start text-center text-xl">
+                        {badge.name}
+                      </div>
+                      <div className="text-sm order-2 sm:order-1 sm:text-start text-center">
+                        {badge.description}
+                      </div>
                     </div>
-                  </div>
-                  <div className="order-1 sm:order-2">
-                    <DynamicStarsReview
-                      totalStars={5}
-                      rating={badgeScores[index]}
-                      setRating={(rating) => handleSetRating(index, rating)}
-                      mode={ReviewMode.WRITE}
-                    />
+                    <div className="order-1 sm:order-2">
+                      <DynamicStarsReview
+                        totalStars={5}
+                        rating={badgeScores[index]}
+                        setRating={(rating) => handleSetRating(index, rating)}
+                        mode={ReviewMode.WRITE}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
+            ))}
+            <div className="sm:flex-row sm:items-center justify-center flex sm:justify-end w-full sm:pr-14 mt-4">
+              <Button onClick={handleSubmitReview}>Submit Review</Button>
             </div>
-          ))
+          </>
         ) : (
           <div className="space-y-5 flex w-full flex-row items-center justify-center">
             <Spinner />
           </div>
         )}
       </div>
-      {activeBadges && (
-        <div className="sm:flex-row sm:items-center justify-center flex sm:justify-end w-full sm:pr-14 mt-4">
-          <Button onClick={handleSubmitReview}>Submit Review</Button>
-        </div>
-      )}
     </div>
   );
 };
