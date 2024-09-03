@@ -315,7 +315,7 @@ function MintNFTs({
         </div>
         <div className="mb-4 ">
           <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-            Mint for top
+            Mint for top {topDonors} donors
           </label>
           <input
             type="number"
