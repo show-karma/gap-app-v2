@@ -22,8 +22,6 @@ export const PAGES = {
     GRANTS: (project: string) => `/project/${project}/grants`,
     ROADMAP: {
       ROOT: (project: string) => `/project/${project}/roadmap`,
-      CREATE_OBJECTIVE: (project: string) =>
-        `/project/${project}/roadmap/create-objective`,
     },
     GRANT: (project: string, grant: string) =>
       `/project/${project}/grants/${grant}`,
