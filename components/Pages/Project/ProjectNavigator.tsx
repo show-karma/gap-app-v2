@@ -30,10 +30,15 @@ export const ProjectNavigator = ({
       name: "Grants",
       href: PAGES.PROJECT.GRANTS(project?.details?.data?.slug || projectId),
     },
-
     {
       name: "Impact",
       href: PAGES.PROJECT.IMPACT.ROOT(
+        project?.details?.data?.slug || projectId
+      ),
+    },
+    {
+      name: "Roadmap",
+      href: PAGES.PROJECT.ROADMAP.ROOT(
         project?.details?.data?.slug || projectId
       ),
     },

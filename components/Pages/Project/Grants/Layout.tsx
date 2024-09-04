@@ -130,6 +130,11 @@ export const GrantsLayout = ({ children }: GrantsLayoutProps) => {
         currentTab &&
         authorizedViews.includes(currentTab as GrantScreen)
       ) {
+        router.push(
+          PAGES.PROJECT.GRANTS(
+            project?.details?.data.slug || project?.uid || "",
+          )
+        );
         setCurrentTab("overview");
       } else {
         setCurrentTab(screen);
