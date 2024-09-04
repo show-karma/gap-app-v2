@@ -51,7 +51,7 @@ export async function generateMetadata({
         }
       > = {
         overview: {
-          title: `Karma GAP - ${projectInfo?.details?.data?.title} - ${grantInfo?.details?.data?.title} grant overview`,
+          title: `${projectInfo?.details?.data?.title} - ${grantInfo?.details?.data?.title} grant overview | Karma GAP`,
           description:
             `${grantInfo?.details?.data?.description?.slice(0, 160)}${
               grantInfo?.details?.data?.description &&
@@ -64,20 +64,14 @@ export async function generateMetadata({
 
       metadata = {
         ...metadata,
-        title:
-          tabMetadata["overview"]?.title ||
-          tabMetadata["overview"]?.title ||
-          "",
-        description:
-          tabMetadata["overview"]?.description ||
-          tabMetadata["overview"]?.description ||
-          "",
+        title: tabMetadata["overview"]?.title || "",
+        description: tabMetadata["overview"]?.description || "",
       };
     }
   } else {
     metadata = {
       ...metadata,
-      title: `Karma GAP - ${projectInfo?.details?.data?.title}`,
+      title: `${projectInfo?.details?.data?.title} | Karma GAP`,
       description:
         projectInfo?.details?.data?.description?.substring(0, 80) || "",
     };

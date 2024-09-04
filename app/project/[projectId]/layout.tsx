@@ -26,7 +26,7 @@ export async function generateMetadata({
   }
 
   const dynamicMetadata = {
-    title: `Karma GAP - ${projectInfo.details?.data?.title}`,
+    title: `${projectInfo.details?.data?.title} | Karma GAP`,
     description:
       projectInfo.details?.data?.description?.substring(0, 160) || "",
   };

@@ -44,7 +44,7 @@ export async function generateMetadata({
       .catch(() => notFound());
     if (grantInfo) {
       const pageMetadata = {
-        title: `Karma GAP - ${projectInfo?.details?.data?.title} - ${grantInfo?.details?.data.title} grant milestones and updates`,
+        title: `${projectInfo?.details?.data?.title} - ${grantInfo?.details?.data.title} grant milestones and updates | Karma GAP`,
         description: `View all milestones and updates by ${projectInfo?.details?.data?.title} for ${grantInfo?.details?.data.title} grant.`,
       };
 
@@ -58,7 +58,7 @@ export async function generateMetadata({
   } else {
     metadata = {
       ...metadata,
-      title: `Karma GAP - ${projectInfo?.details?.data?.title}`,
+      title: `${projectInfo?.details?.data?.title} | Karma GAP`,
       description:
         projectInfo?.details?.data?.description?.substring(0, 80) || "",
     };
