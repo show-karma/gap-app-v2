@@ -48,7 +48,8 @@ const buttonClassName = `group border-none ring-none font-normal bg-transparent 
 
 interface ObjectiveOptionsMenuProps {
   objectiveId: string;
-  editFn: (editState: boolean) => void;
+  completeFn: (completeState: boolean) => void;
+  alreadyCompleted: boolean;
 }
 
 const EditIcon = () => (
@@ -78,7 +79,8 @@ const EditIcon = () => (
 
 export const ObjectiveOptionsMenu = ({
   objectiveId,
-  editFn,
+  completeFn,
+  alreadyCompleted,
 }: ObjectiveOptionsMenuProps) => {
   const { project } = useProjectStore();
   const params = useParams();
@@ -90,11 +92,10 @@ export const ObjectiveOptionsMenu = ({
   const router = useRouter();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
-  const uidOrSlug = useParams().projectId as string;
 
   const { refetch } = useQuery<IProjectMilestoneResponse[]>({
     queryKey: ["projectMilestones"],
-    queryFn: () => getProjectObjectives(uidOrSlug),
+    queryFn: () => getProjectObjectives(projectId),
   });
 
   const deleteFn = async () => {
@@ -170,84 +171,6 @@ export const ObjectiveOptionsMenu = ({
     }
   };
 
-  const markAsCompleted = async () => {
-    if (!address || !project) return;
-    let gapClient = gap;
-    try {
-      if (chain?.id !== project.chainID) {
-        await switchChainAsync?.({ chainId: project.chainID });
-        gapClient = getGapClient(project.chainID);
-      }
-      const walletClient = await getWalletClient(config, {
-        chainId: project.chainID,
-      });
-      if (!walletClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
-      const fetchedProject = await getProjectById(projectId);
-      if (!fetchedProject) return;
-      const fetchedMilestones = await gapIndexerApi
-        .projectMilestones(projectId)
-        .then((res) => res.data);
-      if (!fetchedMilestones || !gapClient?.network) return;
-      const objectivesInstances = ProjectMilestone.from(
-        fetchedMilestones,
-        gapClient?.network
-      );
-      const objectiveInstance = objectivesInstances.find(
-        (item) => item.uid.toLowerCase() === objectiveId.toLowerCase()
-      );
-      if (!objectiveInstance) return;
-      await objectiveInstance
-        .complete(
-          walletSigner,
-          {
-            type: `project-milestone-completed`,
-          },
-          changeStepperStep
-        )
-        .then(async (res) => {
-          let retries = 1000;
-          changeStepperStep("indexing");
-          let fetchedObjectives = null;
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, objectiveInstance.chainID),
-              "POST",
-              {}
-            );
-          }
-          while (retries > 0) {
-            fetchedObjectives = await getProjectObjectives(projectId);
-            const isCompleted = fetchedObjectives.find(
-              (item) => item.uid.toLowerCase() === objectiveId.toLowerCase()
-            )?.completed;
-
-            if (isCompleted) {
-              retries = 0;
-              changeStepperStep("indexed");
-              toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.SUCCESS);
-              await refetch();
-            }
-            retries -= 1;
-            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-            await new Promise((resolve) => setTimeout(resolve, 1500));
-          }
-        });
-    } catch (error: any) {
-      console.log(error);
-      toast.error(MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.ERROR);
-      errorManager(`Error completing objective ${objectiveId}`, error, {
-        project: projectId,
-        objective: objectiveId,
-      });
-      setIsStepper(false);
-    } finally {
-      setIsDeleting(false);
-      setIsStepper(false);
-    }
-  };
-
   return (
     <>
       <Menu as="div" className="relative inline-block text-left">
@@ -273,17 +196,12 @@ export const ObjectiveOptionsMenu = ({
             className="absolute right-0 mt-2 w-48 origin-top-right divide-y divide-gray-100 rounded-md bg-white dark:bg-zinc-800 shadow-lg ring-1 ring-black/5 focus:outline-none"
           >
             <div className="flex flex-col gap-1 px-1 py-1">
-              {/* <Menu.Item>
+              <Menu.Item>
                 <Button
                   className={buttonClassName}
-                  onClick={() => editFn(true)}
+                  onClick={() => completeFn(true)}
+                  disabled={alreadyCompleted}
                 >
-                  <EditIcon />
-                  Edit
-                </Button>
-              </Menu.Item> */}
-              <Menu.Item>
-                <Button className={buttonClassName} onClick={markAsCompleted}>
                   <CheckCircleIcon className="w-5 h-5" />
                   Mark as Complete
                 </Button>

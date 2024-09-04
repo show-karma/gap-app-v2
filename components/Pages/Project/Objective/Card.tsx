@@ -5,8 +5,9 @@ import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 import { formatDate } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
 import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import dynamic from "next/dynamic";
 import { useState } from "react";
+import dynamic from "next/dynamic";
+import { ObjectiveCardComplete } from "./Completion";
 
 const ObjectiveOptionsMenu = dynamic(
   () => import("./Options").then((mod) => mod.ObjectiveOptionsMenu),
@@ -15,10 +16,10 @@ const ObjectiveOptionsMenu = dynamic(
   }
 );
 
-const ProjectObjectiveForm = dynamic(
+const ProjectObjectiveCompletion = dynamic(
   () =>
-    import("@/components/Forms/ProjectObjective").then(
-      (mod) => mod.ProjectObjectiveForm
+    import("@/components/Forms/ProjectObjectiveCompletion").then(
+      (mod) => mod.ProjectObjectiveCompletionForm
     ),
   {
     ssr: false,
@@ -34,18 +35,13 @@ export const ObjectiveCard = ({
   objective,
   isAuthorized,
 }: ObjectiveCardProps) => {
-  const [isEditing, setIsEditing] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
 
-  const handleEditing = (isEditing: boolean) => {
-    setIsEditing(isEditing);
+  const handleCompleting = (isCompleting: boolean) => {
+    setIsCompleting(isCompleting);
   };
 
-  return isEditing ? (
-    <ProjectObjectiveForm
-      stateHandler={handleEditing}
-      previousObjective={objective}
-    />
-  ) : (
+  return (
     <div className="border border-[#D0D5DD] dark:border-zinc-400 rounded-xl p-6 gap-3 flex flex-col items-start justify-start">
       <div className="flex flex-row gap-3 items-start justify-between w-full">
         <div className="flex flex-row gap-3 items-center">
@@ -66,7 +62,8 @@ export const ObjectiveCard = ({
         {isAuthorized ? (
           <ObjectiveOptionsMenu
             objectiveId={objective.uid}
-            editFn={handleEditing}
+            completeFn={handleCompleting}
+            alreadyCompleted={!!objective.completed}
           />
         ) : null}
       </div>
@@ -92,6 +89,17 @@ export const ObjectiveCard = ({
           </p>
         ) : null}
       </div>
+      {isCompleting ||
+      objective.completed?.data?.reason ||
+      objective.completed?.data?.proofOfWork ? (
+        <div className="w-full flex-col flex gap-2 px-4 py-2 bg-[#F8F9FC] dark:bg-zinc-800 rounded-lg">
+          <ObjectiveCardComplete
+            objective={objective}
+            isCompleting={isCompleting}
+            handleCompleting={handleCompleting}
+          />
+        </div>
+      ) : null}
     </div>
   );
 };

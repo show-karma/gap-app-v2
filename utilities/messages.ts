@@ -34,6 +34,11 @@ export const MESSAGES = {
     COMPLETE: {
       SUCCESS: "Objective completed successfully",
       ERROR: "There was an error completing the objective. Please try again",
+      DELETE: {
+        SUCCESS: "Objective completion deleted successfully",
+        ERROR:
+          "There was an error deleting the objective completion. Please try again",
+      },
     },
     EDIT: {
       SUCCESS: "Objective edited successfully",
@@ -188,10 +193,6 @@ export const MESSAGES = {
     NOT_CONNECTED: "Please login to view all your projects",
   },
   PROJECT: {
-    OBJECTIVE: {
-      TITLE: "Set an Objective",
-      TEXT: "Your roadmap needs objectives. Define clear objectives to guide your progress and stay on course.",
-    },
     INTRO: {
       EMAIL: "E-mail must be a valid email address",
       TELEGRAM: "Telegram handle must be at least 3 characters",
