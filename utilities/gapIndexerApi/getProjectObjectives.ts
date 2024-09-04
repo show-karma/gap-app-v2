@@ -2,6 +2,8 @@ import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/
 import { gapIndexerApi } from ".";
 import { errorManager } from "@/components/Utilities/errorManager";
 
+export type StatusOptions = "all" | "completed" | "pending";
+
 export async function getProjectObjectives(
   uidOrSlug: string
 ): Promise<IProjectMilestoneResponse[]> {
@@ -9,6 +11,7 @@ export async function getProjectObjectives(
     const objectives = await gapIndexerApi
       .projectMilestones(uidOrSlug)
       .then((res) => res.data);
+
     return objectives || [];
   } catch (error) {
     errorManager("Error fetching project objectives", error, {

@@ -48,6 +48,7 @@ const buttonClassName = `group border-none ring-none font-normal bg-transparent 
 
 interface ObjectiveOptionsMenuProps {
   objectiveId: string;
+  editFn: (editState: boolean) => void;
 }
 
 const EditIcon = () => (
@@ -77,6 +78,7 @@ const EditIcon = () => (
 
 export const ObjectiveOptionsMenu = ({
   objectiveId,
+  editFn,
 }: ObjectiveOptionsMenuProps) => {
   const { project } = useProjectStore();
   const params = useParams();
@@ -271,12 +273,15 @@ export const ObjectiveOptionsMenu = ({
             className="absolute right-0 mt-2 w-48 origin-top-right divide-y divide-gray-100 rounded-md bg-white dark:bg-zinc-800 shadow-lg ring-1 ring-black/5 focus:outline-none"
           >
             <div className="flex flex-col gap-1 px-1 py-1">
-              <Menu.Item>
-                <Button className={buttonClassName}>
+              {/* <Menu.Item>
+                <Button
+                  className={buttonClassName}
+                  onClick={() => editFn(true)}
+                >
                   <EditIcon />
                   Edit
                 </Button>
-              </Menu.Item>
+              </Menu.Item> */}
               <Menu.Item>
                 <Button className={buttonClassName} onClick={markAsCompleted}>
                   <CheckCircleIcon className="w-5 h-5" />

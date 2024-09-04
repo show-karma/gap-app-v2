@@ -1,6 +1,7 @@
 "use client";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
+
 import { formatDate } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
 import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
@@ -9,6 +10,16 @@ import { useState } from "react";
 
 const ObjectiveOptionsMenu = dynamic(
   () => import("./Options").then((mod) => mod.ObjectiveOptionsMenu),
+  {
+    ssr: false,
+  }
+);
+
+const ProjectObjectiveForm = dynamic(
+  () =>
+    import("@/components/Forms/ProjectObjective").then(
+      (mod) => mod.ProjectObjectiveForm
+    ),
   {
     ssr: false,
   }
@@ -23,7 +34,18 @@ export const ObjectiveCard = ({
   objective,
   isAuthorized,
 }: ObjectiveCardProps) => {
-  return (
+  const [isEditing, setIsEditing] = useState(false);
+
+  const handleEditing = (isEditing: boolean) => {
+    setIsEditing(isEditing);
+  };
+
+  return isEditing ? (
+    <ProjectObjectiveForm
+      stateHandler={handleEditing}
+      previousObjective={objective}
+    />
+  ) : (
     <div className="border border-[#D0D5DD] dark:border-zinc-400 rounded-xl p-6 gap-3 flex flex-col items-start justify-start">
       <div className="flex flex-row gap-3 items-center justify-between w-full">
         <div className="flex flex-row gap-3 items-center">
@@ -42,7 +64,10 @@ export const ObjectiveCard = ({
           ) : null}
         </div>
         {isAuthorized ? (
-          <ObjectiveOptionsMenu objectiveId={objective.uid} />
+          <ObjectiveOptionsMenu
+            objectiveId={objective.uid}
+            editFn={handleEditing}
+          />
         ) : null}
       </div>
       <ReadMore>{objective.data.text}</ReadMore>
