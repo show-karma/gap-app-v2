@@ -26,7 +26,7 @@ export async function generateMetadata({
   }
 
   const dynamicMetadata = {
-    title: `Karma GAP - ${projectInfo.details?.data?.title}`,
+    title: `${projectInfo.details?.data?.title} | Karma GAP`,
     description:
       projectInfo.details?.data?.description?.substring(0, 160) || "",
   };
@@ -35,10 +35,10 @@ export async function generateMetadata({
     await fetchMetadata(
       new URL(
         `/api/frames/${projectId}?projectInfo=${
-          // Base64 encoded projectInfo
-          encodeURIComponent(
-            Buffer.from(JSON.stringify(projectInfo)).toString("base64")
-          )
+        // Base64 encoded projectInfo
+        encodeURIComponent(
+          Buffer.from(JSON.stringify(projectInfo)).toString("base64")
+        )
         }`,
         envVars.VERCEL_URL
       )

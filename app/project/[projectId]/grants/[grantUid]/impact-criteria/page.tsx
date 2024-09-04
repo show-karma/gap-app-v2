@@ -43,7 +43,7 @@ export async function generateMetadata({
       .catch(() => notFound());
     if (grantInfo) {
       const pageMetadata = {
-        title: `Karma GAP - ${projectInfo?.details?.data?.title} - ${grantInfo?.details?.data?.title} grant impact criteria`,
+        title: `Impact Criteria for ${grantInfo?.details?.data?.title} Grant | ${projectInfo?.details?.data?.title} | Karma GAP`,
         description: `Impact criteria defined by ${projectInfo?.details?.data?.title} for ${grantInfo?.details?.data?.title} grant.`,
       };
 
