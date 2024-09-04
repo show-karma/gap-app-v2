@@ -47,7 +47,7 @@ export const ObjectiveCard = ({
     />
   ) : (
     <div className="border border-[#D0D5DD] dark:border-zinc-400 rounded-xl p-6 gap-3 flex flex-col items-start justify-start">
-      <div className="flex flex-row gap-3 items-center justify-between w-full">
+      <div className="flex flex-row gap-3 items-start justify-between w-full">
         <div className="flex flex-row gap-3 items-center">
           <p
             className="text-xl font-bold text-[#101828] dark:text-zinc-100 pl-4 border-l-4"
@@ -70,14 +70,16 @@ export const ObjectiveCard = ({
           />
         ) : null}
       </div>
-      <ReadMore>{objective.data.text}</ReadMore>
-      <div className="flex flex-row gap-4 items-center justify-between w-full">
-        <div className="flex flex-row gap-2 items-center">
-          <p>Posted on {formatDate(objective.createdAt)} by</p>
+      <ReadMore side="left">{objective.data.text}</ReadMore>
+      <div className="flex flex-row gap-x-4 gap-y-2 items-center justify-between w-full flex-wrap">
+        <div className="flex flex-row gap-2 items-center flex-wrap">
+          <p className="text-zinc-800 dark:text-zinc-300 text-sm lg:text-base">
+            Posted on {formatDate(objective.createdAt)} by
+          </p>
           <div className="flex flex-row gap-1 items-center">
             <EthereumAddressToENSAvatar
               address={objective.attester}
-              className="h-5 w-5 rounded-full border-1 border-gray-100 dark:border-zinc-900"
+              className="h-5 w-5 min-h-5 min-w-5 rounded-full border-1 border-gray-100 dark:border-zinc-900"
             />
             <p className="text-sm text-center font-bold text-black dark:text-zinc-200 max-2xl:text-[13px]">
               <EthereumAddressToENSName address={objective.attester} />
@@ -85,7 +87,7 @@ export const ObjectiveCard = ({
           </div>
         </div>
         {!objective.completed ? (
-          <p className="px-3 py-1 bg-[#FFFAEB] text-[#B54708] rounded-full text-sm border border-[#FEDF89]">
+          <p className="px-3 py-1 bg-[#FFFAEB] text-[#B54708] dark:bg-[#FFFAEB]/10 dark:text-orange-100 rounded-full text-sm border border-[#FEDF89]">
             Pending
           </p>
         ) : null}

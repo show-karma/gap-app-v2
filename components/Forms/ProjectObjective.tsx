@@ -290,7 +290,7 @@ export const ProjectObjectiveForm = ({
               type="text"
               className={cn(
                 inputStyle,
-                "text-xl py-1 font-bold text-[#101828] dark:text-zinc-100 pl-4 border-l-4 rounded-none w-full"
+                "text-xl py-1 font-bold text-[#101828] dark:text-zinc-100 pl-4 border-l-4 rounded-sm w-full"
               )}
               style={{
                 borderLeftColor: previousObjective?.completed
