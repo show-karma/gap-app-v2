@@ -164,6 +164,7 @@ export const MESSAGES = {
       `You must be Admin of this Community${
         uid ? `(${uid})` : ""
       } to see this page.`,
+    NO_COMMUNITIES: "You are not an admin of any community.",
   },
   MY_PROJECTS: {
     NOT_CONNECTED: "Please login to view all your projects",
