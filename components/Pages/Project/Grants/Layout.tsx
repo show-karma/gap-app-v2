@@ -67,8 +67,6 @@ const allViews: GrantScreen[] = [
   "impact-criteria",
   "overview",
   "complete-grant",
-  "review-this-grant",
-  "reviews",
   "grant-update",
 ];
 
@@ -186,44 +184,6 @@ export const GrantsLayout = ({ children }: GrantsLayoutProps) => {
       ) {
         setTabs(firstTabs);
         return;
-      }
-
-      const hasQuestions = await getQuestionsOf(grant.uid)
-        .then((data) => data.length > 0)
-        .catch(() => false);
-
-      const reviewTabs = [
-        {
-          name: "Reviews",
-          tabName: "reviews",
-          current: false,
-        },
-        {
-          name: "Review this grant",
-          tabName: "review-this-grant",
-          current: false,
-        },
-      ];
-
-      if (hasQuestions) {
-        const finalTabs = firstTabs.concat(reviewTabs);
-        setTabs(finalTabs);
-      } else {
-        const hasReviews = await getReviewsOf(grant.uid)
-          .then((data) => data.length > 0)
-          .catch(() => false);
-        if (hasReviews) {
-          const allReviewsTabTogether = firstTabs.concat([
-            {
-              name: "Reviews",
-              tabName: "reviews",
-              current: false,
-            },
-          ]);
-          setTabs(allReviewsTabTogether);
-          return;
-        }
-        setTabs(firstTabs);
       }
     };
 
