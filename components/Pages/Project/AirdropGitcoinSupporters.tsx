@@ -302,39 +302,41 @@ function MintNFTs({
           ></textarea>
         </div>
 
-        <div className="mb-4">
-          <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-            Upload file for NFT *
-          </label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleImageUpload}
-            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-          />
-        </div>
-        <div className="mb-4 ">
-          <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
-            Mint for top {topDonors} donors
-          </label>
-          <input
-            type="number"
-            max={donations.length}
-            min={1}
-            value={topDonors}
-            onChange={(e) => {
-              const value = parseInt(e.target.value, 10);
-              // Ensure the value does not exceed the donations length
-              if (value <= donations.length && value >= 1) {
-                setTopDonors(value);
-              } else if (value < 1) {
-                setTopDonors(1); // Set it to the minimum value
-              } else {
-                setTopDonors(donations.length); // Cap it to the max value
-              }
-            }}
-            className="block w-1/6 text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-          />
+        <div className="mb-4 flex justify-between">
+          <div>
+            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+              Upload file for NFT *
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+              Mint for top {topDonors} donors
+            </label>
+            <input
+              type="number"
+              max={donations.length}
+              min={1}
+              value={topDonors}
+              onChange={(e) => {
+                const value = parseInt(e.target.value, 10);
+                // Ensure the value does not exceed the donations length
+                if (value <= donations.length && value >= 1) {
+                  setTopDonors(value);
+                } else if (value < 1) {
+                  setTopDonors(1); // Set it to the minimum value
+                } else {
+                  setTopDonors(donations.length); // Cap it to the max value
+                }
+              }}
+              className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 border rounded-lg"
+            />
+          </div>
         </div>
 
         {imageIPFSHash && metadataIPFSHash && (
