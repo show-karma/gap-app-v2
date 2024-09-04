@@ -77,20 +77,15 @@ export const ObjectiveCardComplete = ({
       const fetchedMilestones = await gapIndexerApi
         .projectMilestones(projectId)
         .then((res) => res.data);
-      console.log("1");
       if (!fetchedMilestones || !gapClient?.network) return;
-      console.log("2");
       const objectivesInstances = ProjectMilestone.from(
         fetchedMilestones,
         gapClient?.network
       );
-      console.log("3");
       const objectiveInstance = objectivesInstances.find(
         (item) => item.uid.toLowerCase() === objective.uid.toLowerCase()
       )?.completed;
-      console.log("4");
       if (!objectiveInstance) return;
-      console.log("objectiveInstance", objectiveInstance);
       await objectiveInstance
         .revoke(walletSigner as any, changeStepperStep)
         .then(async (res) => {
@@ -189,7 +184,7 @@ export const ObjectiveCardComplete = ({
               )}
             </div>
 
-            <div className="flex flex-1 flex-row items-center justify-end">
+            {/* <div className="flex flex-1 flex-row items-center justify-end">
               {isAuthorized ? (
                 <div className="flex w-max flex-row items-center gap-2">
                   <Button
@@ -202,7 +197,7 @@ export const ObjectiveCardComplete = ({
                   </Button>
                 </div>
               ) : null}
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
