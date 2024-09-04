@@ -27,18 +27,18 @@ export const ProjectNavigator = ({
       href: PAGES.PROJECT.OVERVIEW(project?.details?.data?.slug || projectId),
     },
     {
+      name: "Roadmap",
+      href: PAGES.PROJECT.ROADMAP.ROOT(
+        project?.details?.data?.slug || projectId
+      ),
+    },
+    {
       name: "Grants",
       href: PAGES.PROJECT.GRANTS(project?.details?.data?.slug || projectId),
     },
     {
       name: "Impact",
       href: PAGES.PROJECT.IMPACT.ROOT(
-        project?.details?.data?.slug || projectId
-      ),
-    },
-    {
-      name: "Roadmap",
-      href: PAGES.PROJECT.ROADMAP.ROOT(
         project?.details?.data?.slug || projectId
       ),
     },
