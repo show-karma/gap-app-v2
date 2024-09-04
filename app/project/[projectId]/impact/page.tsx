@@ -27,7 +27,7 @@ export async function generateMetadata({
   }
 
   return {
-    title: `${projectInfo.details?.data?.title} | Karma GAP`,
+    title: `View Impact for ${projectInfo.details?.data?.title} | Karma GAP`,
     description: projectInfo.details?.data?.description?.substring(0, 80) || "",
     twitter: {
       creator: defaultMetadata.twitter.creator,
@@ -36,12 +36,12 @@ export async function generateMetadata({
     },
     openGraph: {
       url: defaultMetadata.openGraph.url,
-      title: `${projectInfo.details?.data?.title} | Karma GAP`,
+      title: `View Impact for ${projectInfo.details?.data?.title} | Karma GAP`,
       description:
         projectInfo.details?.data?.description?.substring(0, 80) || "",
       images: defaultMetadata.openGraph.images.map((image) => ({
         url: image,
-        alt: `${projectInfo.details?.data?.title} | Karma GAP`,
+        alt: `View Impact for ${projectInfo.details?.data?.title} | Karma GAP`,
       })),
     },
     icons: {

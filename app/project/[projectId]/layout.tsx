@@ -35,10 +35,10 @@ export async function generateMetadata({
     await fetchMetadata(
       new URL(
         `/api/frames/${projectId}?projectInfo=${
-          // Base64 encoded projectInfo
-          encodeURIComponent(
-            Buffer.from(JSON.stringify(projectInfo)).toString("base64")
-          )
+        // Base64 encoded projectInfo
+        encodeURIComponent(
+          Buffer.from(JSON.stringify(projectInfo)).toString("base64")
+        )
         }`,
         envVars.VERCEL_URL
       )

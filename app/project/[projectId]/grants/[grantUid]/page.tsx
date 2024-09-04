@@ -51,13 +51,12 @@ export async function generateMetadata({
         }
       > = {
         overview: {
-          title: `${projectInfo?.details?.data?.title} - ${grantInfo?.details?.data?.title} grant overview | Karma GAP`,
+          title: `${grantInfo?.details?.data?.title} Grant Overview | ${projectInfo?.details?.data?.title} | Karma GAP`,
           description:
-            `${grantInfo?.details?.data?.description?.slice(0, 160)}${
-              grantInfo?.details?.data?.description &&
+            `${grantInfo?.details?.data?.description?.slice(0, 160)}${grantInfo?.details?.data?.description &&
               grantInfo?.details?.data?.description?.length >= 160
-                ? "..."
-                : ""
+              ? "..."
+              : ""
             }` || "",
         },
       };

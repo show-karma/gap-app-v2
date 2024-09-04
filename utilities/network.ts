@@ -20,7 +20,7 @@ export function getExplorerUrl(chainId: number, transactionHash: string) {
   const chain = [optimism, arbitrum, celo, sei, optimismSepolia, baseSepolia, sepolia].find(c => c.id === chainId);
   if (!chain || !chain.blockExplorers?.default?.url) {
     // Return a fallback block explorer URL if the chain or its explorer is not found
-    return `https://etherscan.io/tx/${transactionHash}`;
+    return `https://www.oklink.com/multi-search#key=${transactionHash}`;
   }
   return `${chain.blockExplorers.default.url}/tx/${transactionHash}`;
 }

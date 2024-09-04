@@ -37,7 +37,7 @@ export async function generateMetadata({
 
   metadata = {
     ...metadata,
-    title: `${projectInfo?.details?.data?.title} | Karma GAP`,
+    title: `${projectInfo?.details?.data?.title} Grants | Karma GAP`,
     description:
       projectInfo?.details?.data?.description?.substring(0, 80) || "",
   };

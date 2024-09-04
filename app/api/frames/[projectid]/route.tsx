@@ -1,6 +1,8 @@
 import { Button } from "frames.js/next/pages-router/server";
 import { envVars } from "@/utilities/enviromentVars";
 import { frames } from "@/utilities/frames";
+import { getExplorerUrl } from "@/utilities/network";
+
 
 const handleRequest = frames(async (ctx) => {
   const url = new URL(ctx.request.url);
@@ -10,6 +12,14 @@ const handleRequest = frames(async (ctx) => {
   const projectId = url.pathname.split("/").pop();
 
   if (ctx.message?.transactionId) {
+    // Get project info from URL query params - base64 decode
+    const projectInfo = JSON.parse(
+      Buffer.from(
+        decodeURIComponent(urlSafeBase64ProjectInfo) as string,
+        "base64"
+      ).toString()
+    );
+
     let txHash = ctx.message?.transactionId;
 
     return {
@@ -39,7 +49,7 @@ const handleRequest = frames(async (ctx) => {
         <Button
           key={1}
           action="link"
-          target={`https://www.onceupon.gg/tx/${txHash}`}
+          target={getExplorerUrl(projectInfo?.chainID, txHash)}
         >
           View Tx
         </Button>,
