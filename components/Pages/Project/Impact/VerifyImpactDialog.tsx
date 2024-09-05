@@ -28,7 +28,7 @@ import {
 import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { sanitizeInput } from "@/utilities/sanitize";
+import { sanitizeObject } from "@/utilities/sanitize";
 
 type VerifyImpactDialogProps = {
   impact: IProjectImpact;
@@ -104,9 +104,9 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
       await findImpact
         .verify(
           walletSigner,
-          {
-            reason: sanitizeInput(data.comment),
-          },
+          sanitizeObject({
+            reason: data.comment,
+          }),
           changeStepperStep
         )
         .then(async (res) => {
