@@ -298,8 +298,6 @@ export default function AddProgram({
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
       };
-      console.log(metadata, sanitizeObject(metadata));
-      return;
 
       const [request, error] = await fetchData(
         INDEXER.REGISTRY.CREATE,
