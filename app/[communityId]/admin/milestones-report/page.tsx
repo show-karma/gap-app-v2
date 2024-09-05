@@ -34,12 +34,16 @@ const getGrantTitles = async (communityId: string): Promise<string[]> => {
 
 export default async function Page({ params }: Props) {
   const communityId = params.communityId;
+
+  console.log("communityId", communityId);
   const { data: community } = await gapIndexerApi
     .communityBySlug(communityId)
     .catch(() => {
+      console.log("communityId", communityId);
       notFound();
     });
   if (!community || community?.uid === zeroUID) {
+    console.log("communityId", communityId);
     notFound();
   }
   const grantTitles = await getGrantTitles(communityId);

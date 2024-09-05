@@ -26,6 +26,8 @@ import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useOwnerStore } from "@/store";
 import { SearchDropdown } from "../ProgramRegistry/SearchDropdown";
 import { useQueryState } from "nuqs";
+import ProgramDropdown from "./ProgramDropdown";
+import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 
@@ -68,8 +70,7 @@ const fetchReports = async (
   const [data]: any = await fetchData(
     `${INDEXER.COMMUNITY.REPORT.GET(
       communityId as string
-    )}?limit=${pageLimit}&page=${page}&sort=${sortBy}&sortOrder=${sortOrder}${
-      queryGrantTitles ? `&grantTitle=${encodedQueryGrantTitles}` : ""
+    )}?limit=${pageLimit}&page=${page}&sort=${sortBy}&sortOrder=${sortOrder}${queryGrantTitles ? `&grantTitle=${encodedQueryGrantTitles}` : ""
     }`
   );
   return data || [];
@@ -107,6 +108,27 @@ export const ReportMilestonePage = ({
       parse: (value) => (value ? value.split(",") : null),
     }
   );
+
+  const [allPrograms, setAllPrograms] = useState<GrantProgram[]>([]);
+  const [isProgramLoading, setIsProgramLoading] = useState<boolean>(false);
+  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(
+    null
+  );
+
+  useEffect(() => {
+    (async () => {
+      setIsProgramLoading(true);
+      const [result, error] = await fetchData(
+        INDEXER.REGISTRY.GET_ALL +
+        `?status=${"Active"}&limit=1000&withTrackedProjects=false&withProgramAdmins=false`
+      );
+      if (error) {
+        console.log(error);
+      }
+      setAllPrograms(result.programs);
+      setIsProgramLoading(false);
+    })();
+  }, []);
 
   const { data, isLoading } = useQuery<ReportAPIResponse>({
     queryKey: [
@@ -190,6 +212,23 @@ export const ReportMilestonePage = ({
             </Link>
           </div>
           <div className="flex flex-col md:flex-row justify-start md:items-center md:justify-between">
+
+            <div className="w-full max-w-[400px]">
+              {isProgramLoading ? (
+                <div className="bg-zinc-100 p-3 text-sm ring-1 ring-zinc-200 rounded">
+                  Loading Grants...
+                </div>
+              ) : (
+                <ProgramDropdown
+                  list={allPrograms}
+                  setSelectedProgram={setSelectedProgram}
+
+                  selectedProgram={selectedProgram}
+                  prefixUnselected="Select"
+                  buttonClassname="w-full max-w-full"
+                />
+              )}
+            </div>
             <SearchDropdown
               list={grantTitles}
               onSelectFunction={(value: string) =>
@@ -213,7 +252,7 @@ export const ReportMilestonePage = ({
               }}
               type={"Grant Titles"}
               selected={selectedGrantTitles}
-              // imageDictionary={}
+            // imageDictionary={}
             />
             <div className="text-zinc-700 dark:text-zinc-200 font-medium mt-4 md:mt-0 ">{`Total Projects: ${totalNoOfProjects}`}</div>
           </div>
@@ -326,64 +365,64 @@ export const ReportMilestonePage = ({
               <tbody className="px-4 divide-y divide-gray-200 dark:divide-zinc-800">
                 {isLoading
                   ? skeletonArray.map((index) => {
-                      return (
-                        <tr key={index}>
-                          <td className="px-4 py-2 font-medium h-16">
-                            <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4" />
-                          </td>
-                          <td className="px-4 py-2">
-                            <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4" />
-                          </td>
-                          <td className="px-4 py-2">
-                            {" "}
-                            <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-14" />
-                          </td>
-                          <td className="px-4 py-2">
-                            <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-14" />
-                          </td>
-                          <td className="px-4 py-2">
-                            <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-14" />
-                          </td>
-                        </tr>
-                      );
-                    })
+                    return (
+                      <tr key={index}>
+                        <td className="px-4 py-2 font-medium h-16">
+                          <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4" />
+                        </td>
+                        <td className="px-4 py-2">
+                          <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4" />
+                        </td>
+                        <td className="px-4 py-2">
+                          {" "}
+                          <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-14" />
+                        </td>
+                        <td className="px-4 py-2">
+                          <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-14" />
+                        </td>
+                        <td className="px-4 py-2">
+                          <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-14" />
+                        </td>
+                      </tr>
+                    );
+                  })
                   : reports?.map((report, index) => {
-                      return (
-                        <tr
-                          key={index}
-                          className="dark:text-zinc-300 text-gray-900 px-4 py-4"
-                        >
-                          <td className="px-4 py-2 font-medium h-16 max-w-[220px]">
-                            <ExternalLink
-                              href={PAGES.PROJECT.GRANT(
-                                report.projectUid,
-                                report.grantUid
-                              )}
-                              className="max-w-max w-full line-clamp-2 underline"
-                            >
-                              {report.grantTitle}
-                            </ExternalLink>
-                          </td>
-                          <td className="px-4 py-2 max-w-[220px]">
-                            <ExternalLink
-                              href={PAGES.PROJECT.OVERVIEW(report.projectUid)}
-                              className="max-w-full line-clamp-2 underline w-max"
-                            >
-                              {report.projectTitle}
-                            </ExternalLink>
-                          </td>
-                          <td className="px-4 py-2 max-w-[220px]">
-                            {report.totalMilestones}
-                          </td>
-                          <td className="px-4 py-2 max-w-[220px]">
-                            {report.pendingMilestones}
-                          </td>
-                          <td className="px-4 py-2 max-w-[220px]">
-                            {report.completedMilestones}
-                          </td>
-                        </tr>
-                      );
-                    })}
+                    return (
+                      <tr
+                        key={index}
+                        className="dark:text-zinc-300 text-gray-900 px-4 py-4"
+                      >
+                        <td className="px-4 py-2 font-medium h-16 max-w-[220px]">
+                          <ExternalLink
+                            href={PAGES.PROJECT.GRANT(
+                              report.projectUid,
+                              report.grantUid
+                            )}
+                            className="max-w-max w-full line-clamp-2 underline"
+                          >
+                            {report.grantTitle}
+                          </ExternalLink>
+                        </td>
+                        <td className="px-4 py-2 max-w-[220px]">
+                          <ExternalLink
+                            href={PAGES.PROJECT.OVERVIEW(report.projectUid)}
+                            className="max-w-full line-clamp-2 underline w-max"
+                          >
+                            {report.projectTitle}
+                          </ExternalLink>
+                        </td>
+                        <td className="px-4 py-2 max-w-[220px]">
+                          {report.totalMilestones}
+                        </td>
+                        <td className="px-4 py-2 max-w-[220px]">
+                          {report.pendingMilestones}
+                        </td>
+                        <td className="px-4 py-2 max-w-[220px]">
+                          {report.completedMilestones}
+                        </td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
             <div className="dark:bg-zinc-900 flex flex-col pb-4 items-end">
