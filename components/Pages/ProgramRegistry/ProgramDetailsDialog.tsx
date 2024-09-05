@@ -126,7 +126,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                         <div className="flex flex-row gap-1">
                           {program.metadata?.socialLinks?.grantsSite ? (
                             <ExternalLink
-                              href={program.metadata?.socialLinks?.grantsSite}
+                              href={program.metadata?.socialLinks?.grantsSite.includes('http') ? program.metadata?.socialLinks?.grantsSite : `https://${program.metadata?.socialLinks?.grantsSite}`}
                               className="w-max"
                             >
                               <Image
@@ -153,7 +153,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                           ) : null}
                           {program.metadata?.socialLinks?.twitter ? (
                             <ExternalLink
-                              href={program.metadata?.socialLinks?.twitter}
+                              href={program.metadata?.socialLinks?.twitter.includes('http') ? program.metadata?.socialLinks?.twitter : `https://${program.metadata?.socialLinks?.twitter}`}
                               className="w-max"
                             >
                               <Twitter2Icon
@@ -163,7 +163,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                           ) : null}
                           {program.metadata?.socialLinks?.discord ? (
                             <ExternalLink
-                              href={program.metadata?.socialLinks?.discord}
+                              href={program.metadata?.socialLinks?.discord.includes('http') ? program.metadata?.socialLinks?.discord : `https://${program.metadata?.socialLinks?.discord}`}
                               className="w-max"
                             >
                               <Discord2Icon
@@ -173,7 +173,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                           ) : null}
                           {program.metadata?.socialLinks?.forum ? (
                             <ExternalLink
-                              href={program.metadata?.socialLinks?.forum}
+                              href={program.metadata?.socialLinks?.forum.includes('http') ? program.metadata?.socialLinks?.forum : `https://${program.metadata?.socialLinks?.forum}`}
                               className="w-max"
                             >
                               <DiscussionIcon
@@ -183,7 +183,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                           ) : null}
                           {program.metadata?.socialLinks?.blog ? (
                             <ExternalLink
-                              href={program.metadata?.socialLinks?.blog}
+                              href={program.metadata?.socialLinks?.blog.includes('http') ? program.metadata?.socialLinks?.blog : `https://${program.metadata?.socialLinks?.blog}`}
                               className="w-max"
                             >
                               <BlogIcon className={iconsClassnames.general} />
@@ -191,7 +191,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                           ) : null}
                           {program.metadata?.socialLinks?.orgWebsite ? (
                             <ExternalLink
-                              href={program.metadata?.socialLinks?.orgWebsite}
+                              href={program.metadata?.socialLinks?.orgWebsite.includes('http') ? program.metadata?.socialLinks?.orgWebsite : `https://${program.metadata?.socialLinks?.orgWebsite}`}
                               className="w-max"
                             >
                               <OrganizationIcon
@@ -433,7 +433,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                       ) : null}
                       {program.metadata?.socialLinks?.grantsSite ? (
                         <ExternalLink
-                          href={program.metadata?.socialLinks?.grantsSite}
+                          href={program.metadata?.socialLinks?.grantsSite.includes('http') ? program.metadata?.socialLinks?.grantsSite : `https://${program.metadata?.socialLinks?.grantsSite}`}
                         >
                           <Button className="text-base font-body px-6 py-3 bg-brand-blue hover:bg-brand-blue rounded">
                             Apply
