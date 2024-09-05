@@ -113,7 +113,7 @@ export const ProjectObjectiveCompletionForm = ({
           {
             proofOfWork: sanitizeInput(data.proofOfWork),
             reason: sanitizeInput(data.description),
-            type: `completed`,
+            type: `project-milestone-completed`,
           },
           changeStepperStep
         )
