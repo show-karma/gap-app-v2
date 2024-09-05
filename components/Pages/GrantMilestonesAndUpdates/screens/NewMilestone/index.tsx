@@ -32,9 +32,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
-import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
-import { urlRegex } from "@/utilities/regexs/urlRegex";
-import { cn } from "@/utilities/tailwind";
+import { sanitizeObject } from "@/utilities/sanitize";
 import { useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
 import Link from "next/link";

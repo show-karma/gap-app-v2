@@ -22,10 +22,9 @@ import {
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 import { errorManager } from "@/components/Utilities/errorManager";
-import { GrantUpdate } from "@show-karma/karma-gap-sdk";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { sanitizeInput } from "@/utilities/sanitize";
+import { sanitizeObject } from "@/utilities/sanitize";
 
 type VerifyGrantUpdateDialogProps = {
   grantUpdate: IGrantUpdate;
@@ -104,9 +103,9 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
       await grantUpdateInstance
         .verify(
           walletSigner,
-          {
-            reason: sanitizeInput(data.comment),
-          },
+          sanitizeObject({
+            reason: data.comment,
+          }),
           changeStepperStep
         )
         .then(async (res) => {
