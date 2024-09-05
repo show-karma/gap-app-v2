@@ -84,10 +84,10 @@ export const ObjectiveCardComplete = ({
       );
       const objectiveInstance = objectivesInstances.find(
         (item) => item.uid.toLowerCase() === objective.uid.toLowerCase()
-      )?.completed;
+      );
       if (!objectiveInstance) return;
       await objectiveInstance
-        .revoke(walletSigner as any, changeStepperStep)
+        .revokeCompletion(walletSigner as any, changeStepperStep)
         .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
@@ -104,7 +104,7 @@ export const ObjectiveCardComplete = ({
             fetchedObjectives = await getProjectObjectives(projectId);
             const stillExists = fetchedObjectives.find(
               (item) => item.uid.toLowerCase() === objective.uid.toLowerCase()
-            );
+            )?.completed;
 
             if (!stillExists) {
               retries = 0;
@@ -184,7 +184,7 @@ export const ObjectiveCardComplete = ({
               )}
             </div>
 
-            {/* <div className="flex flex-1 flex-row items-center justify-end">
+            <div className="flex flex-1 flex-row items-center justify-end">
               {isAuthorized ? (
                 <div className="flex w-max flex-row items-center gap-2">
                   <Button
@@ -197,7 +197,7 @@ export const ObjectiveCardComplete = ({
                   </Button>
                 </div>
               ) : null}
-            </div> */}
+            </div>
           </div>
         </div>
       </div>
