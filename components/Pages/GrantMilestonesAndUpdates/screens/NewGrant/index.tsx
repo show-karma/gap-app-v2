@@ -57,7 +57,7 @@ import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
+import { sanitizeObject } from "@/utilities/sanitize";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import Link from "next/link";
 import { GrantScreen } from "@/types";
@@ -449,12 +449,12 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
 
       // eslint-disable-next-line no-param-reassign
       grant.milestones = data.milestones.map((milestone) => {
-        const sanitizedMilestone = {
-          title: sanitizeInput(milestone.title),
-          description: sanitizeInput(milestone.description),
+        const sanitizedMilestone = sanitizeObject({
+          title: milestone.title,
+          description: milestone.description,
           endsAt: milestone.endsAt,
           startsAt: milestone.startsAt,
-        };
+        });
         const created = new Milestone({
           data: sanitizedMilestone,
           refUID: grant.uid,

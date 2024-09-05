@@ -24,7 +24,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
-import { sanitizeInput } from "@/utilities/sanitize";
+import { sanitizeObject } from "@/utilities/sanitize";
 
 type VerifyMilestoneUpdateDialogProps = {
   milestone: IMilestoneResponse;
@@ -98,9 +98,9 @@ export const VerifyMilestoneUpdateDialog: FC<
       await milestoneInstance
         .verify(
           walletSigner,
-          {
-            reason: sanitizeInput(data.comment),
-          },
+          sanitizeObject({
+            reason: data.comment,
+          }),
           changeStepperStep
         )
         .then(async (res) => {
