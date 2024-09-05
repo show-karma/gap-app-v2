@@ -483,7 +483,7 @@ export const CommunityGrants = ({
       </div>
       <section className="flex flex-col gap-4 md:flex-row">
         <div>
-          <div className="text-base font-semibold text-gray-900 dark:text-zinc-100 max-2xl:text-sm mb-2 mt-5">
+          <div className="text-base text-nowrap font-semibold text-gray-900 dark:text-zinc-100 max-2xl:text-sm mb-2 mt-5">
             Filter by Programs
           </div>
           {programsLoading ? (
@@ -498,7 +498,7 @@ export const CommunityGrants = ({
                 }
               } aria-label="Server size">
                 <div className="space-y-2">
-                  <Field className="flex items-center gap-2 bg-zinc-200 rounded-md p-2">
+                  <Field className="flex items-center gap-2 dark:bg-zinc-800 dark:text-zinc-200 bg-zinc-200 rounded-md p-2">
                     <Radio
                       value={null}
                       className="group flex size-5 items-center justify-center rounded-full border bg-white data-[checked]:bg-blue-400"
@@ -508,7 +508,7 @@ export const CommunityGrants = ({
                     <Label>All</Label>
                   </Field>
                   {programs.map((program: GrantProgram) => (
-                    <Field key={program.programId} className="flex items-center gap-2 bg-zinc-200 rounded-md p-2">
+                    <Field key={program.programId} className="flex items-center gap-2 dark:bg-zinc-800 dark:text-zinc-200 bg-zinc-200 rounded-md p-2">
                       <Radio
                         value={program.programId}
                         className="group flex size-5 items-center justify-center rounded-full border bg-white data-[checked]:bg-blue-400"
