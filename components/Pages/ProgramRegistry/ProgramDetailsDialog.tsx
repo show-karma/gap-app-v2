@@ -442,7 +442,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                       ) : null}
                     </div>
                   </div>
-                  <div className="border-t border-t-zinc-200 dark:border-t-zinc-600 px-6 py-3">
+                  {program.programId ? <div className="border-t border-t-zinc-200 dark:border-t-zinc-600 px-6 py-3">
                     <p className="text-black dark:text-white">
                       Are you the manager of this grant program?{" "}
                       <ExternalLink
@@ -453,7 +453,7 @@ export const ProgramDetailsDialog: FC<ProgramDetailsDialogProps> = ({
                       </ExternalLink>{" "}
                       this program to update it.
                     </p>
-                  </div>
+                  </div> : null}
                 </Dialog.Panel>
               </Transition.Child>
             </div>
