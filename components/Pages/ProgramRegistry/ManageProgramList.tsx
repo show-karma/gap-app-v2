@@ -16,15 +16,12 @@ import {
   Row,
   flexRender,
   getCoreRowModel,
-  getSortedRowModel,
   useReactTable,
-  SortingState,
 } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { GrantProgram } from "./ProgramList";
 import { shortAddress } from "@/utilities/shortAddress";
 import { useAccount } from "wagmi";
-import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
 
 interface ManageProgramListProps {
   grantPrograms: GrantProgram[];
@@ -47,7 +44,6 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
   isAllowed,
 }) => {
   const { address } = useAccount();
-  const [sorting, setSorting] = useState<SortingState>([]);
   const columns = useMemo<ColumnDef<GrantProgram>[]>(
     () => [
       {
@@ -352,51 +348,26 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
         ),
       },
       {
-        accessorFn: (row) =>
-          row.metadata?.createdAt ? +row.metadata.createdAt : null,
-        id: "Date Added",
+        accessorFn: (row) => row,
+        id: "Budget",
         cell: (info) => {
           const grant = info.row.original;
 
           return (
             <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-              {grant?.metadata?.createdAt
-                ? formatDate(+grant?.metadata?.createdAt) === "NaN"
-                  ? grant?.metadata?.createdAt
-                  : `${formatDate(+grant?.metadata?.createdAt)}`
+              {grant?.metadata?.programBudget
+                ? formatCurrency(+grant?.metadata?.programBudget) === "NaN"
+                  ? grant?.metadata?.programBudget
+                  : `$${formatCurrency(+grant?.metadata?.programBudget)}`
                 : ""}
             </div>
           );
         },
-        header: ({ column }) => (
-          <div className="flex items-center gap-1">
-            {" "}
-            <div
-              className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64 cursor-pointer"
-              onClick={() => column.toggleSorting()}
-            >
-              Date Added
-            </div>
-            <div className="flex flex-col items-center gap-0.5">
-              {column.getIsSorted() === "asc" && (
-                <ChevronUpIcon className="w-4 h-4 inline-block" />
-              )}
-              {column.getIsSorted() === "desc" && (
-                <ChevronDownIcon className="w-4 h-4" />
-              )}
-            </div>
+        header: () => (
+          <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
+            Budget
           </div>
         ),
-        enableSorting: true,
-        sortingFn: (a, b) => {
-          const dateA = a.original.metadata?.createdAt
-            ? +a.original.metadata.createdAt
-            : 0;
-          const dateB = b.original.metadata?.createdAt
-            ? +b.original.metadata.createdAt
-            : 0;
-          return dateA - dateB;
-        },
       },
       // {
       //   accessorFn: (row) => row,
@@ -608,10 +579,7 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
   const table = useReactTable({
     data: grantPrograms,
     columns: columns as any,
-    state: { sorting },
-    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
   });
 
   const { rows } = table.getRowModel();
