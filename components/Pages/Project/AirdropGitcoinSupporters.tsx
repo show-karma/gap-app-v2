@@ -527,9 +527,9 @@ export const GitcoinAirdropsManager = () => {
             placeholder="E.g., https://explorer.gitcoin.co/#/round/42161/26/21"
           />
           {errors.gitcoinProjectUrl && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.gitcoinProjectUrl.message}
-            </p>
+            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md">
+              <p className="text-lg">{errors.gitcoinProjectUrl.message}</p>
+            </div>
           )}
           <button
             type="submit"
@@ -693,13 +693,7 @@ export const GitcoinAirdropsManager = () => {
                 No project data available. Please fetch Gitcoin data first.
               </p>
             </div>
-          ) : (
-            <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md">
-              <p className="text-lg">
-                Please enter a valid Gitcoin project URL.
-              </p>
-            </div>
-          )}
+          ) : null}
         </section>
       </div>
     </section>
