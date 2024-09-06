@@ -71,7 +71,7 @@ const GrantProgramRegistry = () => {
       >
         <GitcoinAirdropsManager />
       </Suspense>
-      <div className="flex flex-col gap-4  p-6 rounded-lg shadow-md max-h-max h-full">
+      <div className="flex flex-col gap-4 bg-white dark:bg-slate-800 p-6 rounded-lg shadow-md max-h-max h-full">
         <h3 className="text-xl font-bold">Recent Gitcoin Rounds</h3>
         <div className="flex flex-col gap-2">
           {rounds.map((round) => (
