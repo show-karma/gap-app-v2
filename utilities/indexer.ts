@@ -43,6 +43,8 @@ export const INDEXER = {
     },
     GRANT_TITLES: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/grant-titles`,
+    PROGRAMS: (communityIdOrSlug: string) =>
+      `/communities/${communityIdOrSlug}/programs`,
     GRANTS: (
       communityIdOrSlug: string,
       {
@@ -51,21 +53,20 @@ export const INDEXER = {
         categories,
         sort,
         status,
+        selectedProgramId,
       }: {
         page?: number;
         pageLimit?: number;
         categories?: string;
         sort?: string;
         status?: string;
+        selectedProgramId?: string;
       }
     ) =>
-      `/communities/${communityIdOrSlug}/grants?${
-        page || page === 0 ? `&page=${page}` : ""
-      }${pageLimit ? `&pageLimit=${pageLimit}` : ""}${
-        status ? `&status=${status}` : ""
-      }${sort ? `&sort=${sort}` : ""}${
-        categories ? `&categories=${categories}` : ""
-      }`,
+      `/communities/${communityIdOrSlug}/grants?${page || page === 0 ? `&page=${page}` : ""
+      }${pageLimit ? `&pageLimit=${pageLimit}` : ""}${status ? `&status=${status}` : ""
+      }${sort ? `&sort=${sort}` : ""}${categories ? `&categories=${categories}` : ""
+      }${selectedProgramId ? `&selectedProgramIds=${selectedProgramId}` : ""}`,
     FEED: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/feed`,
     CATEGORIES: (communityIdOrSlug: string) =>
