@@ -349,23 +349,23 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
       },
       {
         accessorFn: (row) => row,
-        id: "Budget",
+        id: "Date Added",
         cell: (info) => {
           const grant = info.row.original;
 
           return (
             <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-              {grant?.metadata?.programBudget
-                ? formatCurrency(+grant?.metadata?.programBudget) === "NaN"
-                  ? grant?.metadata?.programBudget
-                  : `$${formatCurrency(+grant?.metadata?.programBudget)}`
+              {grant?.metadata?.createdAt
+                ? formatDate(+grant?.metadata?.createdAt) === "NaN"
+                  ? grant?.metadata?.createdAt
+                  : `${formatDate(+grant?.metadata?.createdAt)}`
                 : ""}
             </div>
           );
         },
         header: () => (
           <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
-            Budget
+            Date Added
           </div>
         ),
       },
