@@ -6,7 +6,11 @@ import { cn } from "@/utilities/tailwind";
 import { useQueryState } from "nuqs";
 import { ButtonHTMLAttributes, FC, useState } from "react";
 import { ProjectUpdateForm } from "./ProjectUpdateForm";
-import { IProjectUpdate } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import {
+  IMilestoneResponse,
+  IProjectUpdate,
+  IGrantUpdate,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { formatDate } from "@/utilities/formatDate";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { TrashIcon } from "@heroicons/react/24/outline";
@@ -25,6 +29,9 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
+
+import Link from "next/link";
+import { PAGES } from "@/utilities/pages";
 
 const InformationTab: FC = () => {
   const { project } = useProjectStore();
@@ -94,7 +101,7 @@ const UpdateBlock = ({
   update,
   index,
 }: {
-  update: IProjectUpdate;
+  update: IProjectUpdate | IGrantUpdate | IMilestoneResponse;
   index: number;
 }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
@@ -110,6 +117,7 @@ const UpdateBlock = ({
 
   const deleteProjectUpdate = async () => {
     let gapClient = gap;
+
     try {
       setIsDeletingUpdate(true);
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== update.chainID) {
@@ -198,14 +206,20 @@ const UpdateBlock = ({
               />
             </svg>
 
-            <p className="text-xs font-bold text-white">UPDATE</p>
+            <p className="text-xs font-bold text-white">
+              {update.type == "ProjectUpdate"
+                ? "UPDATE"
+                : update.type == "GrantUpdate"
+                ? "GRANT UPDATE"
+                : "MILESTONE"}
+            </p>
           </div>
         </div>
         <div className="flex flex-row gap-3 items-center">
           <p className="text-sm font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
             Posted on {formatDate(update.createdAt)}
           </p>
-          {isAuthorized ? (
+          {isAuthorized && update.type == "ProjectUpdate" ? (
             <DeleteDialog
               deleteFunction={deleteProjectUpdate}
               isLoading={isDeletingUpdate}
@@ -230,15 +244,30 @@ const UpdateBlock = ({
           {update.data.title}
         </p>
       ) : null}
-      <div>
-        <ReadMore
-          readLessText="Read less update"
-          readMoreText="Read full update"
-          markdownClass="text-black font-normal text-base"
-          side="left"
-        >
-          {update.data.text}
-        </ReadMore>
+      <div className="flex justify-between items-end">
+        <div>
+          <ReadMore
+            readLessText="Read less update"
+            readMoreText="Read full update"
+            markdownClass="text-black font-normal text-base"
+            side="left"
+          >
+            {update.data.type == "milestone"
+              ? update.data.description
+              : update.data.text}
+          </ReadMore>
+        </div>
+        {update.type != "ProjectUpdate" ? (
+          <Link
+            href={PAGES.PROJECT.MILESTONESANDUPDATES(
+              project?.details?.data.slug || "",
+              update.refUID
+            )}
+            className="text-blue-600 dark:text-blue-400 font-semibold text-sm hover:underline"
+          >
+            Grant
+          </Link>
+        ) : null}
       </div>
     </div>
   );
@@ -255,12 +284,26 @@ const UpdatesTab: FC = () => {
   });
 
   const updates: IProjectUpdate[] = project?.updates || [];
+  console.log(project?.updates);
+  console.log(project?.grants);
+  const grantUpdates: IGrantUpdate[] = [];
+  const grantMilestones: IMilestoneResponse[] = [];
+  project?.grants.forEach((grant) => {
+    grantUpdates.push(...grant.updates);
+    grantMilestones.push(...grant.milestones);
+  });
 
+  const allUpdates = [...updates, ...grantUpdates, ...grantMilestones];
+  allUpdates.sort((a, b) => {
+    const dateA = new Date(a.createdAt).getTime();
+    const dateB = new Date(b.createdAt).getTime();
+    return dateB - dateA;
+  });
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-row gap-4 justify-between">
         <p className="font-bold text-black dark:text-zinc-200 text-base">
-          Updates {updates.length ? `(${updates.length})` : ""}
+          Updates {allUpdates.length ? `(${allUpdates.length})` : ""}
         </p>
         {isAuthorized ? (
           <Button
@@ -273,7 +316,7 @@ const UpdatesTab: FC = () => {
       </div>
       {updates.length ? (
         <div className="flex flex-col gap-6">
-          {updates.map((update, index) => (
+          {allUpdates.map((update, index) => (
             <UpdateBlock key={update.id} update={update} index={index} />
           ))}
         </div>

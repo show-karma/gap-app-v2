@@ -3,11 +3,6 @@ import { zeroUID } from "@/utilities/commons";
 import { defaultMetadata } from "@/utilities/meta";
 import MilestonesAndUpdates from "@/components/Pages/Grants/MilestonesAndUpdates";
 import { Metadata } from "next";
-import { fetchFromLocalApi } from "@/utilities/fetchFromServer";
-import {
-  IGrantResponse,
-  IProjectResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { notFound } from "next/navigation";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 
