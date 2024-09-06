@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo } from "react";
+import React, { Dispatch, useMemo } from "react";
 import { useState, useEffect } from "react";
 import { Spinner } from "@/components/Utilities/Spinner";
 import fetchData from "@/utilities/fetchData";
@@ -43,12 +43,47 @@ import { useQuery } from "@tanstack/react-query";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { sanitizeObject } from "@/utilities/sanitize";
+import { SearchDropdown } from "./SearchDropdown";
 
 export const ManagePrograms = () => {
   const searchParams = useSearchParams();
   const defaultTab = searchParams.get("tab") || "";
   const defaultName = searchParams.get("name") || "";
   const defaultProgramId = searchParams.get("programId") || "";
+  const defaultNetworks = ((searchParams.get("networks") as string) || "")
+    .split(",")
+    .filter((category) => category.trim());
+
+  const defaultEcosystems = ((searchParams.get("ecosystems") as string) || "")
+    .split(",")
+    .filter((ecosystems) => ecosystems.trim());
+  const defaultGrantTypes = ((searchParams.get("grantTypes") as string) || "")
+    .split(",")
+    .filter((grantType) => grantType.trim());
+
+  const [selectedNetworks, setSelectedNetworks] = useQueryState("networks", {
+    defaultValue: defaultNetworks,
+    serialize: (value) => (value.length ? value?.join(",") : ""),
+    parse: (value) => (value.length > 0 ? value.split(",") : []),
+  });
+
+  const [selectedEcosystems, setSelectedEcosystems] = useQueryState(
+    "ecosystems",
+    {
+      defaultValue: defaultEcosystems,
+      serialize: (value) => (value.length ? value?.join(",") : ""),
+      parse: (value) => (value.length > 0 ? value.split(",") : []),
+    }
+  );
+
+  const [selectedGrantTypes, setSelectedGrantTypes] = useQueryState(
+    "grantTypes",
+    {
+      defaultValue: defaultGrantTypes,
+      serialize: (value) => (value.length ? value?.join(",") : ""),
+      parse: (value) => (value.length > 0 ? value.split(",") : []),
+    }
+  );
 
   // const [grantPrograms, setGrantPrograms] = useState<GrantProgram[]>([]);
   const [isEditing, setIsEditing] = useState(false);
@@ -161,11 +196,22 @@ export const ManagePrograms = () => {
         (page - 1) * pageSize
       }`;
       const searchParam = searchInput ? `&name=${searchInput}` : "";
+      const networkParam = selectedNetworks.length
+        ? `&networks=${selectedNetworks.join(",")}`
+        : "";
+      const ecosystemParam = selectedEcosystems.length
+        ? `&ecosystems=${selectedEcosystems.join(",")}`
+        : "";
+
+      const grantTypeParam = selectedGrantTypes.length
+        ? `&grantTypes=${selectedGrantTypes.join(",")}`
+        : "";
+      const filterParams = networkParam + ecosystemParam + grantTypeParam;
       const ownerParam =
         address && !isRegistryAdmin ? `&owners=${address}` : "";
       const url = isRegistryAdmin
-        ? `${baseUrl}${queryParams}${searchParam}`
-        : `${baseUrl}${queryParams}${ownerParam}${searchParam}`;
+        ? `${baseUrl}${queryParams}${searchParam}${filterParams}`
+        : `${baseUrl}${queryParams}${ownerParam}${searchParam}${filterParams}`;
 
       const [res, error] = await fetchData(url);
       if (!error && res) {
@@ -200,6 +246,9 @@ export const ManagePrograms = () => {
       searchInput,
       isRegistryAdminLoading,
       isPoolManagerLoading,
+      selectedEcosystems,
+      selectedGrantTypes,
+      selectedNetworks,
     ],
     queryFn: () => getGrantPrograms(),
     enabled: !isRegistryAdminLoading || !isPoolManagerLoading,
@@ -362,6 +411,23 @@ export const ManagePrograms = () => {
 
   const { openConnectModal } = useConnectModal();
 
+  const onChangeGeneric = (
+    value: string,
+    setToChange: Dispatch<React.SetStateAction<string[]>>
+  ) => {
+    setToChange((oldArray) => {
+      setPage(1);
+      const newArray = [...oldArray];
+      if (newArray.includes(value)) {
+        const filteredArray = newArray.filter((item) => item !== value);
+        return filteredArray;
+      } else {
+        newArray.push(value);
+      }
+      return newArray;
+    });
+  };
+
   const NotAllowedCases = () => {
     if (!address || !isAuth || !isConnected) {
       return (
@@ -511,6 +577,45 @@ export const ManagePrograms = () => {
                         onChange={(e) => debouncedSearch(e.target.value)}
                       />
                     </div>
+                  </div>
+                  <div className="flex flex-row gap-2 w-max flex-1 max-md:flex-wrap max-md:flex-col justify-end">
+                    <SearchDropdown
+                      list={registryHelper.networks}
+                      onSelectFunction={(value: string) =>
+                        onChangeGeneric(value, setSelectedNetworks)
+                      }
+                      cleanFunction={() => {
+                        setSelectedNetworks([]);
+                      }}
+                      type={"Networks"}
+                      selected={selectedNetworks}
+                      imageDictionary={registryHelper.networkImages}
+                    />
+
+                    <SearchDropdown
+                      list={registryHelper.ecosystems}
+                      onSelectFunction={(value: string) =>
+                        onChangeGeneric(value, setSelectedEcosystems)
+                      }
+                      cleanFunction={() => {
+                        setSelectedEcosystems([]);
+                      }}
+                      type={"Ecosystems"}
+                      selected={selectedEcosystems}
+                      // imageDictionary={}
+                    />
+                    <SearchDropdown
+                      list={registryHelper.grantTypes}
+                      onSelectFunction={(value: string) =>
+                        onChangeGeneric(value, setSelectedGrantTypes)
+                      }
+                      cleanFunction={() => {
+                        setSelectedGrantTypes([]);
+                      }}
+                      type={"Funding Mechanisms"}
+                      selected={selectedGrantTypes}
+                      // imageDictionary={}
+                    />
                   </div>
                 </div>
                 {!isLoading ? (
