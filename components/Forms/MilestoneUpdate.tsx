@@ -21,7 +21,7 @@ import {
 import { getGapClient, useGap } from "@/hooks";
 import { ShareDialog } from "../Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/ShareDialog";
 import { errorManager } from "../Utilities/errorManager";
-import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
+import {  sanitizeObject } from "@/utilities/sanitize";
 import { z } from "zod";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { useForm } from "react-hook-form";
@@ -137,10 +137,10 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
       await milestoneInstance
         ?.complete(
           walletSigner,
-          {
-            reason: sanitizeInput(data.description),
-            proofOfWork: sanitizeInput(data.proofOfWork),
-          },
+          sanitizeObject({
+            reason: data.description,
+            proofOfWork: data.proofOfWork,
+          }),
           changeStepperStep
         )
         .then(async () => {
@@ -231,10 +231,10 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
       await milestoneInstance
         ?.complete(
           walletSigner,
-          {
-            reason: sanitizeInput(data.description),
-            proofOfWork: sanitizeInput(data.proofOfWork),
-          },
+          sanitizeObject({
+            reason: data.description,
+            proofOfWork: data.proofOfWork,
+          }),
           changeStepperStep
         )
         .then(async () => {

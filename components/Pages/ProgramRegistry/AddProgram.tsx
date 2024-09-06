@@ -260,7 +260,7 @@ export default function AddProgram({
       }
       const chainSelected = data.networkToCreate;
 
-      const metadata = sanitizeObject({
+      const metadata = {
         title: data.name,
         description: data.description,
         programBudget: data.budget,
@@ -297,7 +297,7 @@ export default function AddProgram({
         status: "Active",
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
-      });
+      };
 
       const [request, error] = await fetchData(
         INDEXER.REGISTRY.CREATE,
@@ -389,6 +389,7 @@ export default function AddProgram({
         tags: ["karma-gap", "grant-program-registry"],
         status: data.status,
       });
+     
 
       const isSameAddress =
         programToEdit?.createdByAddress?.toLowerCase() ===

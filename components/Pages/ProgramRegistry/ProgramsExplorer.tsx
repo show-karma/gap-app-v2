@@ -363,42 +363,6 @@ export const ProgramsExplorer = () => {
         </div>
 
         <div className="flex flex-row items-center justify-end max-sm:justify-start gap-2.5  flex-wrap w-full">
-          <div className="flex flex-row items-center gap-2 flex-wrap">
-            <button
-              onClick={() => {
-                setSelectedCategory([]);
-              }}
-              key={"All"}
-              className={`px-3 py-1 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${
-                !selectedCategory.length
-                  ? "bg-black text-white dark:bg-white dark:text-black"
-                  : "border border-black text-black dark:border-white dark:text-white"
-              }`}
-            >
-              All categories
-              {!selectedCategory.length ? (
-                <CheckIcon className="w-4 h-4" />
-              ) : null}
-            </button>
-            {registryHelper.categories.map((type) => (
-              <button
-                onClick={() => {
-                  onChangeGeneric(type, setSelectedCategory);
-                }}
-                key={type}
-                className={`px-3 py-1 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${
-                  selectedCategory.includes(type)
-                    ? "bg-black text-white dark:bg-white dark:text-black"
-                    : "border border-black text-black dark:border-white dark:text-white"
-                }`}
-              >
-                {type}
-                {selectedCategory.includes(type) ? (
-                  <CheckIcon className="w-4 h-4" />
-                ) : null}
-              </button>
-            ))}
-          </div>
           <div className="flex flex-row items-center gap-2  flex-wrap">
             <p className="text-black dark:text-white font-semibold">Status</p>
             <button

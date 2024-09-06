@@ -25,7 +25,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
-import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
+import { sanitizeObject } from "@/utilities/sanitize";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -165,10 +165,10 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
       await milestoneInstance
         ?.complete(
           walletSigner,
-          {
-            reason: sanitizeInput(data.description),
-            proofOfWork: sanitizeInput(data.proofOfWork),
-          },
+          sanitizeObject({
+            reason: data.description,
+            proofOfWork: data.proofOfWork,
+          }),
           changeStepperStep
         )
         .then(async (res) => {
@@ -260,10 +260,10 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
       await milestoneInstance
         ?.complete(
           walletSigner,
-          {
-            reason: sanitizeInput(data.description),
-            proofOfWork: sanitizeInput(data.proofOfWork),
-          },
+          sanitizeObject({
+            reason: data.description,
+            proofOfWork: data.proofOfWork,
+          }),
           changeStepperStep
         )
         .then(async (res) => {

@@ -19,6 +19,7 @@ export const getGrants = async (
     categories?: string[];
     sortBy?: SortByOptions;
     status?: StatusOptions;
+    selectedProgramId?: string;
   },
   paginationOps?: {
     page: number;
@@ -33,6 +34,7 @@ export const getGrants = async (
         categories: filter?.categories?.join(","),
         sort: filter?.sortBy,
         status: filter?.status,
+        selectedProgramId: filter?.selectedProgramId
       })
     );
     const { data: grants, pageInfo } = response;
