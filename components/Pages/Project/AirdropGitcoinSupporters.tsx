@@ -498,7 +498,7 @@ export const GitcoinAirdropsManager = () => {
   }
 
   return (
-    <section className="my-8 container mx-auto px-4 pb-7 max-md:pt-0 max-md:my-4">
+    <section className="container pb-7 max-md:pt-0 max-md:my-4">
       <div className="flex flex-col w-full gap-6">
         <div className="flex flex-col gap-3 items-start justify-start text-left">
           <h1 className="text-3xl md:text-4xl font-bold text-black dark:text-white tracking-tight">
