@@ -26,9 +26,6 @@ import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useOwnerStore } from "@/store";
 import { SearchDropdown } from "../ProgramRegistry/SearchDropdown";
 import { useQueryState } from "nuqs";
-import ProgramDropdown from "./ProgramDropdown";
-import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-
 import { errorManager } from "@/components/Utilities/errorManager";
 
 interface Report {
@@ -52,6 +49,16 @@ interface ReportAPIResponse {
     pageLimit: number;
   };
   uniqueProjectCount: number;
+  stats: {
+    totalGrants: number;
+    totalProjectsWithMilestones: number;
+    totalMilestones: number;
+    totalCompletedMilestones: number;
+    totalPendingMilestones: number;
+    percentageProjectsWithMilestones: number;
+    percentageCompletedMilestones: number;
+    percentagePendingMilestones: number;
+  }
 }
 
 export const metadata = defaultMetadata;
@@ -109,26 +116,7 @@ export const ReportMilestonePage = ({
     }
   );
 
-  const [allPrograms, setAllPrograms] = useState<GrantProgram[]>([]);
-  const [isProgramLoading, setIsProgramLoading] = useState<boolean>(false);
-  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(
-    null
-  );
 
-  useEffect(() => {
-    (async () => {
-      setIsProgramLoading(true);
-      const [result, error] = await fetchData(
-        INDEXER.REGISTRY.GET_ALL +
-        `?status=${"Active"}&limit=1000&withTrackedProjects=false&withProgramAdmins=false`
-      );
-      if (error) {
-        console.log(error);
-      }
-      setAllPrograms(result.programs);
-      setIsProgramLoading(false);
-    })();
-  }, []);
 
   const { data, isLoading } = useQuery<ReportAPIResponse>({
     queryKey: [
@@ -153,6 +141,15 @@ export const ReportMilestonePage = ({
 
   const pageInfo = data?.pageInfo;
   const reports = data?.data;
+  const totalNoOfProjects = data?.uniqueProjectCount;
+  const totalGrants = data?.stats?.totalGrants || 0;
+  const totalProjectsWithMilestones = data?.stats?.totalProjectsWithMilestones || 0;
+  const totalMilestones = data?.stats?.totalMilestones || 0;
+  const totalCompletedMilestones = data?.stats?.totalCompletedMilestones || 0;
+  const totalPendingMilestones = data?.stats?.totalPendingMilestones || 0;
+  const percentageProjectsWithMilestones = data?.stats?.percentageProjectsWithMilestones || 0;
+  const percentageCompletedMilestones = data?.stats?.percentageCompletedMilestones || 0;
+  const percentagePendingMilestones = data?.stats?.percentagePendingMilestones || 0;
 
   const totalItems: any = pageInfo?.totalItems || 0;
 
@@ -195,9 +192,18 @@ export const ReportMilestonePage = ({
     setCurrentPage(1);
   };
 
-  // To calculate the total number of projects in the community
 
-  const totalNoOfProjects = data?.uniqueProjectCount;
+  function StatCard({ title, value }: { title: string, value: string }) {
+    return (
+      <div className="bg-white dark:bg-zinc-800 p-4 rounded-lg shadow">
+        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">{title}</h3>
+        <p className="text-2xl font-semibold text-blue-600 dark:text-blue-400">
+          {value}
+        </p>
+      </div>
+    );
+  }
+
 
   return (
     <div className="mt-12 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
@@ -211,51 +217,72 @@ export const ReportMilestonePage = ({
               </Button>
             </Link>
           </div>
-          <div className="flex flex-col md:flex-row justify-start md:items-center md:justify-between">
 
-            <div className="w-full max-w-[400px]">
-              {isProgramLoading ? (
-                <div className="bg-zinc-100 p-3 text-sm ring-1 ring-zinc-200 rounded">
-                  Loading Grants...
-                </div>
+
+          <section className="flex flex-col gap-4">
+            <div className="flex flex-row justify-between items-center" >
+              <h1 className="text-2xl font-bold">Milestones Report</h1>
+              <SearchDropdown
+                list={grantTitles}
+                onSelectFunction={(value: string) =>
+                  // onChangeGeneric(value, setSelectedGrantTitles)
+                  setSelectedGrantTitles((oldArray) => {
+                    setCurrentPage(1);
+                    const newArray = [...oldArray];
+                    if (newArray.includes(value)) {
+                      const filteredArray = newArray.filter(
+                        (item) => item !== value
+                      );
+                      return filteredArray;
+                    } else {
+                      newArray.push(value);
+                    }
+                    return newArray;
+                  })
+                }
+                cleanFunction={() => {
+                  setSelectedGrantTitles([]);
+                }}
+                prefixUnselected="All"
+                type={"Grant Programs"}
+                selected={selectedGrantTitles}
+              // imageDictionary={}
+              /></div>
+            <div className="mb-2 grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 w-full">
+              {isLoading ? (
+                <>
+                  {[...Array(8)].map((_, index) => (
+                    <div key={index} className="bg-white dark:bg-zinc-800 p-4 rounded-lg shadow">
+                      <Skeleton className="h-4 w-3/4 mb-2" />
+                      <Skeleton className="h-6 w-1/2" />
+                    </div>
+                  ))}
+                </>
               ) : (
-                <ProgramDropdown
-                  list={allPrograms}
-                  setSelectedProgram={setSelectedProgram}
-
-                  selectedProgram={selectedProgram}
-                  prefixUnselected="Select"
-                  buttonClassname="w-full max-w-full"
-                />
+                <>
+                  <StatCard title="Total Grants" value={`${data?.stats.totalGrants}`} />
+                  <StatCard title="Total projects with Milestones" value={`${data?.stats.totalProjectsWithMilestones}`} />
+                  <StatCard
+                    title="% of project who added Milestones"
+                    value={`${data?.stats.percentageProjectsWithMilestones.toFixed(2)}%`}
+                  />
+                  <StatCard title="Total Milestones" value={`${data?.stats.totalMilestones}`} />
+                  <StatCard title="Total Completed Milestones" value={`${data?.stats.totalCompletedMilestones}`} />
+                  <StatCard title="Total Pending Milestones" value={`${data?.stats.totalPendingMilestones}`} />
+                  <StatCard
+                    title="Milestones Completion %"
+                    value={`${data?.stats.percentageCompletedMilestones.toFixed(2)}%`}
+                  />
+                  <StatCard
+                    title="Milestones Pending %"
+                    value={`${data?.stats.percentagePendingMilestones.toFixed(2)}%`}
+                  />
+                </>
               )}
             </div>
-            <SearchDropdown
-              list={grantTitles}
-              onSelectFunction={(value: string) =>
-                // onChangeGeneric(value, setSelectedGrantTitles)
-                setSelectedGrantTitles((oldArray) => {
-                  setCurrentPage(1);
-                  const newArray = [...oldArray];
-                  if (newArray.includes(value)) {
-                    const filteredArray = newArray.filter(
-                      (item) => item !== value
-                    );
-                    return filteredArray;
-                  } else {
-                    newArray.push(value);
-                  }
-                  return newArray;
-                })
-              }
-              cleanFunction={() => {
-                setSelectedGrantTitles([]);
-              }}
-              type={"Grant Titles"}
-              selected={selectedGrantTitles}
-            // imageDictionary={}
-            />
-            <div className="text-zinc-700 dark:text-zinc-200 font-medium mt-4 md:mt-0 ">{`Total Projects: ${totalNoOfProjects}`}</div>
-          </div>
+          </section>
+
+
           <div className="flex flex-col justify-center w-full max-w-full overflow-x-auto rounded-md border">
             <table className="pt-3 min-w-full divide-y dark:bg-zinc-900 divide-gray-300 dark:divide-zinc-800 dark:text-white">
               <thead>
