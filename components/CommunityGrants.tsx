@@ -132,6 +132,7 @@ export const CommunityGrants = ({
     if (!communityId || communityId === zeroUID) return;
 
     const fetchNewGrants = async () => {
+
       setLoading(true);
       try {
         const { grants: fetchedGrants, pageInfo } = await getGrants(
@@ -495,6 +496,7 @@ export const CommunityGrants = ({
               <RadioGroup value={selectedProgramId} onChange={
                 (programId) => {
                   setSelectedProgramId(programId);
+                  setGrants([])
                 }
               } aria-label="Server size">
                 <div className="space-y-2">
