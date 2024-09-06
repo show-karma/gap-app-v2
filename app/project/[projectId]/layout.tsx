@@ -99,10 +99,10 @@ export default async function RootLayout({
         </div>
       }
     >
-      <div>
+      <>
         <ProjectWrapper projectId={projectId} project={project} />
         <div className="px-4 sm:px-6 lg:px-12">{children}</div>
-      </div>
+      </>
     </Suspense>
   );
 }
