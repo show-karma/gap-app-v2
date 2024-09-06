@@ -284,8 +284,6 @@ const UpdatesTab: FC = () => {
   });
 
   const updates: IProjectUpdate[] = project?.updates || [];
-  console.log(project?.updates);
-  console.log(project?.grants);
   const grantUpdates: IGrantUpdate[] = [];
   const grantMilestones: IMilestoneResponse[] = [];
   project?.grants.forEach((grant) => {
