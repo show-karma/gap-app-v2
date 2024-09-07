@@ -496,28 +496,52 @@ export const CommunityGrants = ({
               <RadioGroup value={selectedProgramId} onChange={
                 (programId) => {
                   setSelectedProgramId(programId);
+                  setCurrentPage(0);
                   setGrants([])
                 }
               } aria-label="Server size">
                 <div className="space-y-2">
-                  <Field className="flex items-center gap-2 dark:bg-zinc-800 dark:text-zinc-200 bg-zinc-200 rounded-md p-2">
+                  <Field
+                    onClick={() => {
+                      setSelectedProgramId(null);
+                      setCurrentPage(0);
+                      setGrants([])
+                    }}
+                    className={cn(
+                      selectedProgramId === null
+                        ? "bg-[#eef4ff] dark:bg-zinc-800 dark:text-primary-300  text-[#155eef]"
+                        : "text-gray-700 hover:text-primary-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700",
+                      "flex items-center rounded-md text-sm leading-6 font-semibold w-full py-1 hover:cursor-pointer px-2"
+                    )}>
                     <Radio
                       value={null}
-                      className="group flex size-5 items-center justify-center rounded-full border bg-white data-[checked]:bg-blue-400"
+                      className="group flex size-4 items-center justify-center rounded-full border bg-white data-[checked]:bg-blue-400"
                     >
                       <span className="invisible size-2 rounded-full bg-white group-data-[checked]:visible" />
                     </Radio>
-                    <Label>All</Label>
+                    <Label className="ml-2 hover:cursor-pointer">All</Label>
                   </Field>
                   {programs.map((program: GrantProgram) => (
-                    <Field key={program.programId} className="flex items-center gap-2 dark:bg-zinc-800 dark:text-zinc-200 bg-zinc-200 rounded-md p-2">
+                    <Field key={program.programId}
+                      onClick={() => {
+                        setSelectedProgramId(program.programId as string);
+                        setCurrentPage(0);
+                        setGrants([])
+                      }}
+                      className={cn(
+                        selectedProgramId === program.programId
+                          ? "bg-[#eef4ff] dark:bg-zinc-800 dark:text-primary-300  text-[#155eef]"
+                          : "text-gray-700 hover:text-primary-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700",
+                        "flex items-center rounded-md text-sm leading-6 font-semibold w-full py-1 hover:cursor-pointer px-2"
+                      )}
+                    >
                       <Radio
                         value={program.programId}
-                        className="group flex size-5 items-center justify-center rounded-full border bg-white data-[checked]:bg-blue-400"
+                        className="group flex size-4 items-center justify-center rounded-full border bg-white data-[checked]:bg-blue-400"
                       >
                         <span className="invisible size-2 rounded-full bg-white group-data-[checked]:visible" />
                       </Radio>
-                      <Label>{program.metadata?.title}</Label>
+                      <Label className="ml-2 hover:cursor-pointer">{program.metadata?.title}</Label>
                     </Field>
                   ))}
                 </div>
