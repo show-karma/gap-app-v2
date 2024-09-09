@@ -51,6 +51,10 @@ const rounds: {
     title: "Asia Round",
     url: "https://explorer.gitcoin.co/#/round/10/44",
   },
+  {
+    title: "Sei Creator Fund: Round #2",
+    url: "https://explorer.gitcoin.co/#/round/1329/9",
+  },
 ];
 
 export const RecentRounds = () => {
