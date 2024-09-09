@@ -245,7 +245,16 @@ export function SearchGrantProgram({
       if (error) {
         console.log(error);
       }
-      setAllPrograms(result.programs);
+      const sortedAlphabetically = result.programs.sort(
+        (a: GrantProgram, b: GrantProgram) => {
+          const aTitle = a.metadata?.title || "";
+          const bTitle = b.metadata?.title || "";
+          if (aTitle < bTitle) return -1;
+          if (aTitle > bTitle) return 1;
+          return 0;
+        }
+      );
+      setAllPrograms(sortedAlphabetically);
       setIsLoading(false);
     })();
   }, []);
