@@ -43,7 +43,7 @@ export const GrantTitleDropdown: FC<{
 }> = ({
   setValue,
   selectedProgram,
-  list,
+  list: listProp,
   grantToEdit,
   type,
   chainId,
@@ -59,6 +59,7 @@ export const GrantTitleDropdown: FC<{
   const { address: owner } = useAccount();
   const [title, setTitle] = useState("");
   const [search, setSearch] = useState("");
+  const [list, setList] = useState(listProp);
 
   const addCustom = async (custom: string) => {
     if (!custom) {
@@ -95,8 +96,12 @@ export const GrantTitleDropdown: FC<{
         });
         setAdding(false);
         setSelectedProgram(request);
-        setOpen(false);
-        setSearch("");
+        if (search.length) {
+          setSearch("");
+          setTimeout(() => {
+            setSearch(custom);
+          }, 100);
+        }
         setTitle("");
       }
     } catch (error) {
