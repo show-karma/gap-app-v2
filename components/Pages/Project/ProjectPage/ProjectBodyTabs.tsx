@@ -4,7 +4,7 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { cn } from "@/utilities/tailwind";
 import { useQueryState } from "nuqs";
-import { ButtonHTMLAttributes, FC, useState } from "react";
+import { ButtonHTMLAttributes, FC, useEffect, useState } from "react";
 import { ProjectUpdateForm } from "./ProjectUpdateForm";
 import {
   IMilestoneResponse,
@@ -32,6 +32,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 
 import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 
 const InformationTab: FC = () => {
   const { project } = useProjectStore();
@@ -114,6 +115,7 @@ const UpdateBlock = ({
   const { switchChainAsync } = useSwitchChain();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
+  const [grantInfo, setGrantInfo] = useState<any>(null);
 
   const deleteProjectUpdate = async () => {
     let gapClient = gap;
@@ -185,6 +187,21 @@ const UpdateBlock = ({
     }
   };
 
+  useEffect(() => {
+    if (project) {
+      if (update.type !== "ProjectUpdate") {
+        const grantFound = project?.grants?.find(
+          (grant) => grant.uid?.toLowerCase() === grant.uid?.toLowerCase()
+        );
+        if (grantFound) {
+          console.log(grantFound);
+          setGrantInfo(grantFound);
+          return;
+        }
+      }
+    }
+  }, [project, update]);
+
   return (
     <div className="flex w-full flex-1 flex-col gap-4 rounded-lg  dark:bg-zinc-800 bg-[#F8F9FC] p-4 transition-all duration-200 ease-in-out  max-sm:px-2">
       <div className="flex flex-row items-center justify-between">
@@ -244,8 +261,8 @@ const UpdateBlock = ({
           {update.data.title}
         </p>
       ) : null}
-      <div className="flex justify-between items-end">
-        <div>
+      <div className="relative flex justify-between items-end">
+        <div className="flex-grow">
           <ReadMore
             readLessText="Read less update"
             readMoreText="Read full update"
@@ -263,9 +280,9 @@ const UpdateBlock = ({
               project?.details?.data.slug || "",
               update.refUID
             )}
-            className="text-blue-600 dark:text-blue-400 font-semibold text-sm hover:underline"
+            className="absolute right-0 text-blue-600 dark:text-blue-400 font-semibold text-sm hover:underline"
           >
-            Grant
+            {grantInfo?.details?.data.title}
           </Link>
         ) : null}
       </div>
