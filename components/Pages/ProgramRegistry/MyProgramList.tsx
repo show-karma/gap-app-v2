@@ -22,6 +22,8 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { GrantProgram } from "./ProgramList";
 import { shortAddress } from "@/utilities/shortAddress";
 import { useAccount } from "wagmi";
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
+import { useSearchParams } from "next/navigation";
 
 interface MyProgramListProps {
   grantPrograms: GrantProgram[];
@@ -29,6 +31,8 @@ interface MyProgramListProps {
   editFn: (program: GrantProgram) => any;
   selectProgram: (program: GrantProgram) => void;
   isAllowed: boolean;
+  setSortField: (field: string) => void;
+  setSortOrder: (order: "asc" | "desc") => void;
 }
 
 export const MyProgramList: FC<MyProgramListProps> = ({
@@ -37,7 +41,10 @@ export const MyProgramList: FC<MyProgramListProps> = ({
   editFn,
   selectProgram,
   isAllowed,
+  setSortField,
+  setSortOrder,
 }) => {
+  const searchParams = useSearchParams();
   const { address } = useAccount();
   const columns = useMemo<ColumnDef<GrantProgram>[]>(
     () => [
@@ -307,24 +314,47 @@ export const MyProgramList: FC<MyProgramListProps> = ({
         ),
       },
       {
-        accessorFn: (row) => row,
-        id: "Budget",
+        accessorFn: (row) =>
+          row.metadata?.createdAt ? +row.metadata.createdAt : null,
+        id: "Date Added",
         cell: (info) => {
           const grant = info.row.original;
 
           return (
             <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-              {grant?.metadata?.programBudget
-                ? formatCurrency(+grant?.metadata?.programBudget) === "NaN"
-                  ? grant?.metadata?.programBudget
-                  : `$${formatCurrency(+grant?.metadata?.programBudget)}`
+              {grant?.metadata?.createdAt
+                ? formatDate(+grant?.metadata?.createdAt) === "NaN"
+                  ? grant?.metadata?.createdAt
+                  : `${formatDate(+grant?.metadata?.createdAt)}`
                 : ""}
             </div>
           );
         },
         header: () => (
-          <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
-            Budget
+          <div className="flex items-center gap-1">
+            {" "}
+            <div
+              className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64 cursor-pointer"
+              onClick={() => {
+                setSortField("createdAt");
+                if (searchParams.get("sortField") === "createdAt") {
+                  setSortOrder(
+                    searchParams.get("sortOrder") === "asc" ? "desc" : "asc"
+                  );
+                }
+                setSortOrder("asc");
+              }}
+            >
+              Date Added
+            </div>
+            <div className="flex flex-col items-center gap-0.5">
+              {searchParams.get("sortField") === "asc" && (
+                <ChevronUpIcon className="w-4 h-4 inline-block" />
+              )}
+              {searchParams.get("sortField") === "desc" && (
+                <ChevronDownIcon className="w-4 h-4" />
+              )}
+            </div>
           </div>
         ),
       },

@@ -25,6 +25,7 @@ import { GrantProgram } from "./ProgramList";
 import { shortAddress } from "@/utilities/shortAddress";
 import { useAccount } from "wagmi";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
+import { useSearchParams } from "next/navigation";
 
 interface ManageProgramListProps {
   grantPrograms: GrantProgram[];
@@ -36,6 +37,10 @@ interface ManageProgramListProps {
   editFn: (program: GrantProgram) => any;
   selectProgram: (program: GrantProgram) => void;
   isAllowed: boolean;
+  setSortField: (field: string) => void;
+  setSortOrder: (order: "asc" | "desc") => void;
+  defaultSort: string;
+  defaultSortOrder: string;
 }
 
 export const ManageProgramList: FC<ManageProgramListProps> = ({
@@ -45,8 +50,13 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
   editFn,
   selectProgram,
   isAllowed,
+  setSortField,
+  setSortOrder,
+  defaultSort,
+  defaultSortOrder,
 }) => {
   const { address } = useAccount();
+  const searchParams = useSearchParams();
   const [sorting, setSorting] = useState<SortingState>([]);
   const columns = useMemo<ColumnDef<GrantProgram>[]>(
     () => [
@@ -368,35 +378,28 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
             </div>
           );
         },
-        header: ({ column }) => (
+        header: () => (
           <div className="flex items-center gap-1">
             {" "}
             <div
               className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64 cursor-pointer"
-              onClick={() => column.toggleSorting()}
+              onClick={() => {
+                setSortField("createdAt");
+                setSortOrder(defaultSortOrder === "asc" ? "desc" : "asc");
+              }}
             >
               Date Added
             </div>
             <div className="flex flex-col items-center gap-0.5">
-              {column.getIsSorted() === "asc" && (
+              {searchParams.get("sortField") === "asc" && (
                 <ChevronUpIcon className="w-4 h-4 inline-block" />
               )}
-              {column.getIsSorted() === "desc" && (
+              {searchParams.get("sortField") === "desc" && (
                 <ChevronDownIcon className="w-4 h-4" />
               )}
             </div>
           </div>
         ),
-        enableSorting: true,
-        sortingFn: (a, b) => {
-          const dateA = a.original.metadata?.createdAt
-            ? +a.original.metadata.createdAt
-            : 0;
-          const dateB = b.original.metadata?.createdAt
-            ? +b.original.metadata.createdAt
-            : 0;
-          return dateA - dateB;
-        },
       },
       // {
       //   accessorFn: (row) => row,

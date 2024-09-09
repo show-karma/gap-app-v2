@@ -49,6 +49,9 @@ export const ManagePrograms = () => {
   const searchParams = useSearchParams();
   const defaultTab = searchParams.get("tab") || "";
   const defaultName = searchParams.get("name") || "";
+  const defaultSort = searchParams.get("sortField") || "updatedAt";
+  const defaultSortOrder = searchParams.get("sortOrder") || "desc";
+
   const defaultProgramId = searchParams.get("programId") || "";
   const defaultNetworks = ((searchParams.get("networks") as string) || "")
     .split(",")
@@ -162,6 +165,14 @@ export const ManagePrograms = () => {
     throttleMs: 500,
   });
 
+  const [sortField, setSortField] = useQueryState("sortField", {
+    defaultValue: defaultSort,
+  });
+
+  const [sortOrder, setSortOrder] = useQueryState("sortOrder", {
+    defaultValue: defaultSortOrder,
+  });
+
   const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(
     null
   );
@@ -206,7 +217,10 @@ export const ManagePrograms = () => {
       const grantTypeParam = selectedGrantTypes.length
         ? `&grantTypes=${selectedGrantTypes.join(",")}`
         : "";
-      const filterParams = networkParam + ecosystemParam + grantTypeParam;
+
+      const sortParams = `&sortField=${sortField}&sortOrder=${sortOrder}`;
+      const filterParams =
+        networkParam + ecosystemParam + grantTypeParam + sortParams;
       const ownerParam =
         address && !isRegistryAdmin ? `&owners=${address}` : "";
       const url = isRegistryAdmin
@@ -249,6 +263,8 @@ export const ManagePrograms = () => {
       selectedEcosystems,
       selectedGrantTypes,
       selectedNetworks,
+      sortField,
+      sortOrder,
     ],
     queryFn: () => getGrantPrograms(),
     enabled: !isRegistryAdminLoading || !isPoolManagerLoading,
@@ -637,6 +653,10 @@ export const ManagePrograms = () => {
                                 setSelectedProgram(program);
                               }}
                               isAllowed={isAllowed}
+                              setSortField={setSortField}
+                              setSortOrder={setSortOrder}
+                              defaultSort={defaultSort}
+                              defaultSortOrder={defaultSortOrder}
                             />
                           ) : (
                             <MyProgramList
@@ -651,6 +671,8 @@ export const ManagePrograms = () => {
                                 setSelectedProgram(program);
                               }}
                               isAllowed={isAllowed}
+                              setSortField={setSortField}
+                              setSortOrder={setSortOrder}
                             />
                           )}
                           <Pagination
