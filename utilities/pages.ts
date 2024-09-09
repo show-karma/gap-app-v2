@@ -25,7 +25,7 @@ export const PAGES = {
     GRANT: (project: string, grant: string) =>
       `/project/${project}/grants/${grant}`,
     CONTACT_INFO: (project: string) => `/project/${project}/contact-info`,
-    MILESTONESANDUPDATES: (project: string, grant: string) =>
+    MILESTONES_AND_UPDATES: (project: string, grant: string) =>
       `/project/${project}/grants/${grant}/milestones-and-updates`,
     IMPACT: {
       ROOT: (project: string) => `/project/${project}/impact`,

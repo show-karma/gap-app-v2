@@ -194,7 +194,6 @@ const UpdateBlock = ({
           (grant) => grant.uid?.toLowerCase() === grant.uid?.toLowerCase()
         );
         if (grantFound) {
-          console.log(grantFound);
           setGrantInfo(grantFound);
           return;
         }
@@ -276,7 +275,7 @@ const UpdateBlock = ({
         </div>
         {update.type != "ProjectUpdate" ? (
           <Link
-            href={PAGES.PROJECT.MILESTONESANDUPDATES(
+            href={PAGES.PROJECT.MILESTONES_AND_UPDATES(
               project?.details?.data.slug || "",
               update.refUID
             )}
@@ -308,12 +307,13 @@ const UpdatesTab: FC = () => {
     grantMilestones.push(...grant.milestones);
   });
 
-  const allUpdates = [...updates, ...grantUpdates, ...grantMilestones];
-  allUpdates.sort((a, b) => {
-    const dateA = new Date(a.createdAt).getTime();
-    const dateB = new Date(b.createdAt).getTime();
-    return dateB - dateA;
-  });
+  const allUpdates = [...updates, ...grantUpdates, ...grantMilestones].sort(
+    (a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return dateB - dateA;
+    }
+  );
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-row gap-4 justify-between">
