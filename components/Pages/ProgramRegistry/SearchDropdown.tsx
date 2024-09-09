@@ -96,7 +96,15 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
         value: customNetwork,
         image: imageDictionary?.[customNetwork.toLowerCase()],
       });
-      setSearch("");
+      if (search.length) {
+        new Promise<void>((resolve) => {
+          setSearch("");
+          resolve();
+        }).then(() => {
+          setSearch(customNetwork);
+        });
+      }
+
       setTitle("");
     } else {
       if (!selected.includes(customNetwork)) {
