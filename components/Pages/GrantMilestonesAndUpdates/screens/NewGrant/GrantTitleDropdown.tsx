@@ -57,6 +57,8 @@ export const GrantTitleDropdown: FC<{
   const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);
   const { address: owner } = useAccount();
+  const [title, setTitle] = useState("");
+  const [search, setSearch] = useState("");
 
   const addCustom = async (custom: string) => {
     if (!custom) {
@@ -92,6 +94,10 @@ export const GrantTitleDropdown: FC<{
           shouldValidate: true,
         });
         setAdding(false);
+        setSelectedProgram(request);
+        setOpen(false);
+        setSearch("");
+        setTitle("");
       }
     } catch (error) {
       errorManager("Error creating program", error, {
@@ -129,6 +135,10 @@ export const GrantTitleDropdown: FC<{
               <CommandInput
                 className="rounded-md px-2 w-full dark:text-white dark:bg-zinc-800"
                 placeholder={`Search ${type}...`}
+                value={search}
+                onValueChange={(value) => {
+                  setSearch(value);
+                }}
               />
             </div>
           ) : null}
@@ -212,10 +222,14 @@ export const GrantTitleDropdown: FC<{
                 <input
                   className="rounded-md py-1 px-2 w-full dark:text-white dark:bg-zinc-800 border-zinc-200"
                   placeholder={`${pluralize(type, 1)} name...`}
+                  value={title}
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                  }}
                   // on enter key press, add the network
                   onKeyDown={(e: any) => {
                     if (e.key === "Enter") {
-                      addCustom(e.target?.value);
+                      addCustom(title);
                     }
                   }}
                 />
@@ -224,7 +238,17 @@ export const GrantTitleDropdown: FC<{
               <div className="my-2 px-2">
                 <button
                   className="px-3 py-2 text-sm rounded-md bg-zinc-600 dark:bg-zinc-900 text-white dark:text-white w-full"
-                  onClick={() => setAdding(true)}
+                  onClick={(e) => {
+                    e?.preventDefault?.();
+                    if (search.length >= 3) {
+                      addCustom(search);
+                    } else if (search.length) {
+                      setTitle(search);
+                      setAdding(true);
+                    } else {
+                      setAdding(true);
+                    }
+                  }}
                 >
                   {`Add ${pluralize(type, 1).toLowerCase()}`}
                 </button>
