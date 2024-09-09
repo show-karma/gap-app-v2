@@ -240,7 +240,7 @@ export function SearchGrantProgram({
       setIsLoading(true);
       const [result, error] = await fetchData(
         INDEXER.REGISTRY.GET_ALL +
-          `?status=${"Active"}&limit=1000&withTrackedProjects=false&withProgramAdmins=false`
+          `?limit=1000&withTrackedProjects=false&withProgramAdmins=false`
       );
       if (error) {
         console.log(error);
