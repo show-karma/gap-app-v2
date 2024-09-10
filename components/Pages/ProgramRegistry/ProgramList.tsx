@@ -449,11 +449,33 @@ export const ProgramList: FC<ProgramListProps> = ({
         cell: (info) => {
           const grant = info.row.original;
 
+          const isDisabled = () => {
+            const endsAt = grant?.metadata?.endsAt;
+            const status = grant?.metadata?.status?.toLowerCase();
+            const hasEnded = endsAt && new Date(endsAt) < new Date();
+            const isActive = status === "active";
+
+            return (!endsAt && !isActive) || hasEnded;
+          };
+
           return (
             <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
               {grant.metadata?.socialLinks?.grantsSite ? (
-                <ExternalLink href={grant.metadata?.socialLinks?.grantsSite}>
-                  <Button>Apply</Button>
+                <ExternalLink onClick={(event) => {
+                  if (isDisabled()) {
+                    event.preventDefault();
+                  }
+                }} href={isDisabled() ? "" : grant.metadata?.socialLinks?.grantsSite}>
+                  <div className={`relative group`}>
+                    <Button className={isDisabled() ? "cursor-not-allowed" : ""} disabled={isDisabled() as boolean}>
+                      Apply
+                    </Button>
+                    {isDisabled() && (
+                      <div className="cursor-not-allowed absolute bottom-full left-1/2 transform -translate-x-3/4 mb-2 px-3 py-1 bg-gray-800 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        This program has ended
+                      </div>
+                    )}
+                  </div>
                 </ExternalLink>
               ) : null}
             </div>
