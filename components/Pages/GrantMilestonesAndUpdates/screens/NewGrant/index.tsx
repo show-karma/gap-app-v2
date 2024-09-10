@@ -6,15 +6,11 @@ import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
-import { Spinner } from "@/components/Utilities/Spinner";
 import {
   GrantDetails,
   nullRef,
-  GrantUpdate,
   Grant,
   Milestone,
-  MilestoneCompleted,
   IMilestone,
 } from "@show-karma/karma-gap-sdk";
 import type { FC } from "react";
@@ -24,15 +20,13 @@ import { Hex, isAddress } from "viem";
 import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
 import { Milestone as MilestoneComponent } from "./Milestone";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { CommunitiesDropdown } from "@/components/CommunitiesDropdown";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { getGapClient, useGap } from "@/hooks";
 import toast from "react-hot-toast";
-import { useSearchParams } from "next/navigation";
 import { CalendarIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { getWalletClient } from "@wagmi/core";
-import { useQueryState } from "nuqs";
 import { useGrantFormStore } from "./store";
 import { MESSAGES } from "@/utilities/messages";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -43,7 +37,6 @@ import { DayPicker } from "react-day-picker";
 import { useAuthStore } from "@/store/auth";
 import { formatDate } from "@/utilities/formatDate";
 import { getProjectById, isCommunityAdminOf } from "@/utilities/sdk";
-import { useCommunityAdminStore } from "@/store/community";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { useCommunitiesStore } from "@/store/communities";
 import { cn } from "@/utilities/tailwind";
