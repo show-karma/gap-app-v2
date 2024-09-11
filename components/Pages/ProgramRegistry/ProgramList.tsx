@@ -46,6 +46,7 @@ export type GrantProgram = {
       website?: string;
       orgWebsite?: string;
       grantsSite?: string;
+      telegram?: string;
     };
     bugBounty?: string;
     bounties?: string[];
@@ -432,7 +433,11 @@ export const ProgramList: FC<ProgramListProps> = ({
           const program = info.row.original;
           const data = program?.trackedProjects || 0;
           return (
-            <Link href={""} target="_blank" className="w-full flex flex-row flex-wrap gap-1 my-2 items-center">
+            <Link
+              href={""}
+              target="_blank"
+              className="w-full flex flex-row flex-wrap gap-1 my-2 items-center"
+            >
               {data}
             </Link>
           );
@@ -461,13 +466,21 @@ export const ProgramList: FC<ProgramListProps> = ({
           return (
             <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
               {grant.metadata?.socialLinks?.grantsSite ? (
-                <ExternalLink onClick={(event) => {
-                  if (isDisabled()) {
-                    event.preventDefault();
+                <ExternalLink
+                  onClick={(event) => {
+                    if (isDisabled()) {
+                      event.preventDefault();
+                    }
+                  }}
+                  href={
+                    isDisabled() ? "" : grant.metadata?.socialLinks?.grantsSite
                   }
-                }} href={isDisabled() ? "" : grant.metadata?.socialLinks?.grantsSite}>
+                >
                   <div className={`relative group`}>
-                    <Button className={isDisabled() ? "cursor-not-allowed" : ""} disabled={isDisabled() as boolean}>
+                    <Button
+                      className={isDisabled() ? "cursor-not-allowed" : ""}
+                      disabled={isDisabled() as boolean}
+                    >
                       Apply
                     </Button>
                     {isDisabled() && (
@@ -545,8 +558,9 @@ export const ProgramList: FC<ProgramListProps> = ({
                   key={row.id}
                   style={{
                     height: `${virtualRow.size}px`,
-                    transform: `translateY(${virtualRow.start - index * virtualRow.size
-                      }px)`,
+                    transform: `translateY(${
+                      virtualRow.start - index * virtualRow.size
+                    }px)`,
                   }}
                 >
                   {row.getVisibleCells().map((cell) => {

@@ -23,7 +23,7 @@ import { SearchDropdown } from "./SearchDropdown";
 import { appNetwork } from "@/utilities/network";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { cn } from "@/utilities/tailwind";
-import { WebsiteIcon } from "@/components/Icons";
+import { Telegram2Icon, WebsiteIcon } from "@/components/Icons";
 import { BlogIcon } from "@/components/Icons/Blog";
 import { DiscussionIcon } from "@/components/Icons/Discussion";
 import { OrganizationIcon } from "@/components/Icons/Organization";
@@ -43,6 +43,7 @@ import { DayPicker } from "react-day-picker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
+import { te } from "date-fns/locale";
 
 const labelStyle = "text-sm font-bold text-[#344054] dark:text-zinc-100";
 const inputStyle =
@@ -113,6 +114,13 @@ const createProgramSchema = z.object({
     message: "Please enter a valid URL",
   }),
   bugBounty: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: "Please enter a valid URL",
+    })
+    .optional()
+    .or(z.literal("")),
+  telegram: z
     .string()
     .refine((value) => urlRegex.test(value), {
       message: "Please enter a valid URL",
@@ -198,6 +206,7 @@ export default function AddProgram({
       bugBounty: programToEdit?.metadata?.bugBounty,
       website: programToEdit?.metadata?.website,
       twitter: programToEdit?.metadata?.projectTwitter,
+      telegram: programToEdit?.metadata?.socialLinks?.telegram,
       discord: programToEdit?.metadata?.socialLinks?.discord,
       orgWebsite: programToEdit?.metadata?.socialLinks?.orgWebsite,
       blog: programToEdit?.metadata?.socialLinks?.blog,
@@ -280,6 +289,7 @@ export default function AddProgram({
           blog: data.blog || "",
           forum: data.forum || "",
           grantsSite: data.grantsSite || "",
+          telegram: data.telegram || "",
         },
         bugBounty: data.bugBounty,
         categories: data.categories,
@@ -371,6 +381,7 @@ export default function AddProgram({
           blog: data.blog || "",
           forum: data.forum || "",
           grantsSite: data.grantsSite || "",
+          telegram: data.telegram || "",
         },
         bugBounty: data.bugBounty,
         categories: data.categories,
@@ -389,7 +400,6 @@ export default function AddProgram({
         tags: ["karma-gap", "grant-program-registry"],
         status: data.status,
       });
-     
 
       const isSameAddress =
         programToEdit?.createdByAddress?.toLowerCase() ===
@@ -1019,7 +1029,6 @@ export default function AddProgram({
                   {errors.orgWebsite?.message}
                 </p>
               </div>
-
               <div className="flex w-full flex-col gap-2 justify-between">
                 <label htmlFor="program-bug-bounty" className={labelStyle}>
                   Link to Bug bounty
@@ -1037,6 +1046,26 @@ export default function AddProgram({
                 </div>
                 <p className="text-base text-red-400">
                   {errors.bugBounty?.message}
+                </p>
+              </div>
+
+              <div className="flex w-full flex-col gap-2 justify-between">
+                <label htmlFor="program-telegram" className={labelStyle}>
+                  Telegram
+                </label>
+                <div className="w-full relative">
+                  <div className="h-full w-max absolute flex justify-center items-center mx-3">
+                    <Telegram2Icon className="text-zinc-500 w-4 h-4" />
+                  </div>
+                  <input
+                    className={cn(inputStyle, "pl-10 mt-0")}
+                    placeholder="Ex: https://t.me/yourusername"
+                    id="program-telegram"
+                    {...register("telegram")}
+                  />
+                </div>
+                <p className="text-base text-red-400">
+                  {errors.telegram?.message}
                 </p>
               </div>
             </div>
