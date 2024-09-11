@@ -33,16 +33,24 @@ export async function generateMetadata({
       creator: defaultMetadata.twitter.creator,
       site: defaultMetadata.twitter.site,
       card: "summary_large_image",
+      images: [
+        {
+          url: `https://gap-app-v2-git-feat-metadata-og-karma-devs.vercel.app/api/metadata/projects/${projectId}`,
+          alt: `View Impact for ${projectInfo.details?.data?.title} | Karma GAP`,
+        },
+      ],
     },
     openGraph: {
       url: defaultMetadata.openGraph.url,
       title: `View Impact for ${projectInfo.details?.data?.title} | Karma GAP`,
       description:
         projectInfo.details?.data?.description?.substring(0, 80) || "",
-      images: defaultMetadata.openGraph.images.map((image) => ({
-        url: `https://gap-app-v2-git-feat-metadata-og-karma-devs.vercel.app/api/metadata/projects/${projectId}` || image,
-        alt: `View Impact for ${projectInfo.details?.data?.title} | Karma GAP`,
-      })),
+      images: [
+        {
+          url: `https://gap-app-v2-git-feat-metadata-og-karma-devs.vercel.app/api/metadata/projects/${projectId}`,
+          alt: `View Impact for ${projectInfo.details?.data?.title} | Karma GAP`,
+        },
+      ],
     },
     icons: {
       icon: "/favicon.ico",
