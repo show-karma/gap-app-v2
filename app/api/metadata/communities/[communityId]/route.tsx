@@ -42,14 +42,15 @@ export async function GET(
     {
       title: "Grants",
       value: grants || 0,
-      icon: "https://i.imgur.com/AI87RxN.png",
+      icon: "https://gap.karmahq.xyz/icons/funding-lg.png",
     },
     {
       title: "Projects",
       value: projects || 0,
-      icon: "https://i.imgur.com/iqRnnys.png",
+      icon: "https://gap.karmahq.xyz/icons/projects.png",
     },
   ];
+
   return new ImageResponse(
     (
       <div
@@ -66,8 +67,7 @@ export async function GET(
         <div
           tw="bg-white w-full h-full flex flex-row justify-between items-center pr-[42px] pl-[68px]"
           style={{
-            backgroundImage: `url(https://i.imgur.com/K9KtjYy.png)`,
-            // backgroundImage: `url(/assets/previews/background.png)`,
+            backgroundImage: `url(https://gap.karmahq.xyz/assets/previews/background.png)`,
           }}
         >
           <div tw="flex flex-col items-start justify-start w-[520px]">
@@ -78,6 +78,10 @@ export async function GET(
                 width={120}
                 height={120}
                 tw="rounded-full"
+                style={{
+                  objectFit: "contain",
+                  aspectRatio: "1/1",
+                }}
               />
             ) : null}
             <span tw="text-white text-5xl font-extrabold font-body w-full text-start flex flex-col items-start justify-start mt-10 mb-1">
@@ -89,8 +93,7 @@ export async function GET(
             <div tw="flex flex-row items-center justify-end w-full">
               <img
                 alt="Karma GAP Logo"
-                // src="/assets/previews/karma-gap-logo.png"
-                src="https://i.imgur.com/EgWcBH5.png"
+                src="https://gap.karmahq.xyz/assets/previews/karma-gap-logo.png"
                 style={{
                   width: 292,
                   height: 50,
@@ -117,7 +120,6 @@ export async function GET(
                     {item.title}
                   </p>
                   <img
-                    // src={`https://gap.karmahq.xyz/icons/${item.icon}`}
                     src={item.icon}
                     alt={item.title}
                     width={35}
