@@ -4,6 +4,7 @@ import { getTotalProjects } from "@/utilities/karma/totalProjects";
 import { getGrants, getProjectById } from "@/utilities/sdk";
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
+import pluralize from "pluralize";
 // App router includes @vercel/og.
 // No need to install it.
 
@@ -40,12 +41,12 @@ export async function GET(
 
   const stats = [
     {
-      title: "Grants",
+      title: pluralize("Grant", grants),
       value: grants || 0,
       icon: "https://gap.karmahq.xyz/icons/funding-lg.png",
     },
     {
-      title: "Projects",
+      title: pluralize("Project", projects),
       value: projects || 0,
       icon: "https://gap.karmahq.xyz/icons/projects.png",
     },
@@ -77,10 +78,9 @@ export async function GET(
                 src={community?.details?.data.imageURL}
                 width={120}
                 height={120}
-                tw="rounded-full"
+                tw="rounded-full object-contain"
                 style={{
                   objectFit: "contain",
-                  aspectRatio: "1/1",
                 }}
               />
             ) : null}
@@ -93,7 +93,7 @@ export async function GET(
             <div tw="flex flex-row items-center justify-end w-full">
               <img
                 alt="Karma GAP Logo"
-                src="https://gap.karmahq.xyz/assets/previews/karma-gap-logo.png"
+                src="https://gap.karmahq.xyz/assets/previews/karma-gap-logo-glow.png"
                 style={{
                   width: 292,
                   height: 50,
