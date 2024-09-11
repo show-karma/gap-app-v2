@@ -297,7 +297,7 @@ export const ProjectObjectiveForm = ({
                   ? "#2ED3B7"
                   : "#FDB022",
               }}
-              placeholder="Enter your objective title"
+              placeholder="Enter a concise and descriptive project title"
               {...register("title")}
             />
           </div>
