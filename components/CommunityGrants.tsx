@@ -104,8 +104,6 @@ export const CommunityGrants = ({
     const fetchPrograms = async () => {
       const programs = await getPrograms(communityId as Hex);
 
-      console.log("programs", programs);
-
       setPrograms(programs);
       setProgramsLoading(false);
     };
