@@ -8,6 +8,7 @@ import { zeroUID } from "@/utilities/commons";
 import { defaultMetadata } from "@/utilities/meta";
 import ContactInfoPage from "@/components/Pages/Project/ContactInfoPage";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { envVars } from "@/utilities/enviromentVars";
 
 export async function generateMetadata({
   params,
@@ -37,7 +38,7 @@ export async function generateMetadata({
       card: "summary_large_image",
       images: [
         {
-          url: `https://gap-app-v2-git-feat-metadata-og-karma-devs.vercel.app/api/metadata/projects/${projectId}`,
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
           alt: `${projectInfo.details?.data.title} | Karma GAP`,
         },
       ],
@@ -50,7 +51,7 @@ export async function generateMetadata({
 
       images: [
         {
-          url: `https://gap-app-v2-git-feat-metadata-og-karma-devs.vercel.app/api/metadata/projects/${projectId}`,
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
           alt: `${projectInfo.details?.data.title} | Karma GAP`,
         },
       ],

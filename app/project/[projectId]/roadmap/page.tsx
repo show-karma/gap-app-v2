@@ -1,6 +1,7 @@
 import { ObjectiveFilter } from "@/components/Pages/Project/Objective/Filter";
 import { ObjectiveList } from "@/components/Pages/Project/Objective/List";
 import { zeroUID } from "@/utilities/commons";
+import { envVars } from "@/utilities/enviromentVars";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { defaultMetadata } from "@/utilities/meta";
 import { Metadata } from "next";
@@ -46,7 +47,7 @@ export async function generateMetadata({
       card: "summary_large_image",
       images: [
         {
-          url: `https://gap-app-v2-git-feat-metadata-og-karma-devs.vercel.app/api/metadata/projects/${projectId}`,
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
           alt: metadata.title,
         },
       ],
@@ -57,7 +58,7 @@ export async function generateMetadata({
       description: metadata.description,
       images: [
         {
-          url: `https://gap-app-v2-git-feat-metadata-og-karma-devs.vercel.app/api/metadata/projects/${projectId}`,
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
           alt: metadata.title,
         },
       ],

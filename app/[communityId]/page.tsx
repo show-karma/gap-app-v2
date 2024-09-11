@@ -14,6 +14,7 @@ import { pagesOnRoot } from "@/utilities/pagesOnRoot";
 import { notFound } from "next/navigation";
 import { ReceiveProjectUpdates } from "@/components/Pages/ReceiveProjectUpdates";
 import { communitiesToBulkSubscribe } from "@/utilities/subscribe";
+import { envVars } from "@/utilities/enviromentVars";
 
 type Props = {
   params: {
@@ -45,7 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       site: defaultMetadata.twitter.site,
       images: [
         {
-          url: `https://gap-app-v2-git-feat-metadata-og-karma-devs.vercel.app/api/metadata/communities/${communityId}`,
+          url: `${envVars.VERCEL_URL}/api/metadata/communities/${communityId}`,
           alt: dynamicMetadata.title || defaultMetadata.title,
         },
       ],

@@ -57,7 +57,7 @@ export async function generateMetadata({
       cardType: "summary_large_image",
       images: [
         {
-          url: `https://gap-app-v2-git-feat-metadata-og-karma-devs.vercel.app/api/metadata/projects/${projectId}`,
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
           alt: dynamicMetadata.title || defaultMetadata.title,
         },
       ],
@@ -68,7 +68,7 @@ export async function generateMetadata({
       description: dynamicMetadata.description || defaultMetadata.description,
       images: [
         {
-          url: `https://gap-app-v2-git-feat-metadata-og-karma-devs.vercel.app/api/metadata/projects/${projectId}`,
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
           alt: dynamicMetadata.title || defaultMetadata.title,
         },
       ],
