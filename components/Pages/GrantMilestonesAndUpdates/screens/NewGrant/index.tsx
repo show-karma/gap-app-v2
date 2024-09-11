@@ -50,7 +50,7 @@ import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
+import { sanitizeObject } from "@/utilities/sanitize";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import Link from "next/link";
 import { GrantScreen } from "@/types";
@@ -233,12 +233,21 @@ export function SearchGrantProgram({
       setIsLoading(true);
       const [result, error] = await fetchData(
         INDEXER.REGISTRY.GET_ALL +
-          `?status=${"Active"}&limit=1000&withTrackedProjects=false&withProgramAdmins=false`
+          `?limit=1000&withTrackedProjects=false&withProgramAdmins=false`
       );
       if (error) {
         console.log(error);
       }
-      setAllPrograms(result.programs);
+      const sortedAlphabetically = result.programs.sort(
+        (a: GrantProgram, b: GrantProgram) => {
+          const aTitle = a.metadata?.title || "";
+          const bTitle = b.metadata?.title || "";
+          if (aTitle < bTitle) return -1;
+          if (aTitle > bTitle) return 1;
+          return 0;
+        }
+      );
+      setAllPrograms(sortedAlphabetically);
       setIsLoading(false);
     })();
   }, []);
@@ -442,12 +451,12 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
 
       // eslint-disable-next-line no-param-reassign
       grant.milestones = data.milestones.map((milestone) => {
-        const sanitizedMilestone = {
-          title: sanitizeInput(milestone.title),
-          description: sanitizeInput(milestone.description),
+        const sanitizedMilestone = sanitizeObject({
+          title: milestone.title,
+          description: milestone.description,
           endsAt: milestone.endsAt,
           startsAt: milestone.startsAt,
-        };
+        });
         const created = new Milestone({
           data: sanitizedMilestone,
           refUID: grant.uid,

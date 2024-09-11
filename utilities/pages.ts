@@ -14,7 +14,7 @@ export const PAGES = {
       `/${community}/admin/assign-questions`,
     EDIT_CATEGORIES: (community: string) =>
       `/${community}/admin/edit-categories`,
-    MILESTONES: (community: string) => `/${community}/admin/report-milestones`,
+    MILESTONES: (community: string) => `/${community}/admin/milestones-report`,
     COMMUNITIES: `/admin/communities`,
     COMMUNITY_STATS: `/admin/communities/stats`,
   },
@@ -22,6 +22,9 @@ export const PAGES = {
     OVERVIEW: (project: string) => `/project/${project}`,
     UPDATES: (project: string) => `/project/${project}?tab=updates`,
     GRANTS: (project: string) => `/project/${project}/grants`,
+    ROADMAP: {
+      ROOT: (project: string) => `/project/${project}/roadmap`,
+    },
     GRANT: (project: string, grant: string) =>
       `/project/${project}/grants/${grant}`,
     CONTACT_INFO: (project: string) => `/project/${project}/contact-info`,

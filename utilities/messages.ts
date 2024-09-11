@@ -26,6 +26,29 @@ export const MESSAGES = {
       ERROR: "There was an error deleting the update. Please try again",
     },
   },
+  PROJECT_OBJECTIVE_FORM: {
+    TITLE: "Title must be at least 3 characters",
+    TEXT: "Text must be at least 3 characters",
+    SUCCESS: "Objective was successfully added to the project.",
+    ERROR: "There was an error creating the objective. Please try again.",
+    COMPLETE: {
+      SUCCESS: "Objective completed successfully",
+      ERROR: "There was an error completing the objective. Please try again",
+      DELETE: {
+        SUCCESS: "Objective completion deleted successfully",
+        ERROR:
+          "There was an error deleting the objective completion. Please try again",
+      },
+    },
+    EDIT: {
+      SUCCESS: "Objective edited successfully",
+      ERROR: "There was an error editing the objective. Please try again",
+    },
+    DELETE: {
+      SUCCESS: "Objective deleted successfully",
+      ERROR: "There was an error deleting the objective. Please try again",
+    },
+  },
   COMMUNITY_FORM: {
     TITLE: "Title must be at least 3 characters",
     IMAGE_URL: "ENTER a valid Image url",

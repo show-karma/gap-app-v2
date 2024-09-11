@@ -20,6 +20,7 @@ import { useEffect, useState } from "react";
 import { useMobileStore } from "@/store/mobile";
 
 import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
+import { groupSimilarCommunities } from "@/utilities/communityHelpers"; // You'll need to create this utility function
 
 interface Props {
   data: ISearchResponse; // Will be modular in the future
@@ -94,6 +95,8 @@ export const SearchList: React.FC<Props> = ({
     );
   };
 
+  const groupedCommunities = groupSimilarCommunities(data.communities);
+
   return (
     isOpen && (
       <div className="absolute left-0 top-10 mt-3 max-h-64 min-w-full overflow-y-auto rounded-md bg-white dark:bg-zinc-800 py-4 border border-zinc-200">
@@ -106,8 +109,8 @@ export const SearchList: React.FC<Props> = ({
             )
           )}
 
-        {data.communities.length > 0 &&
-          data.communities.map((community) =>
+        {groupedCommunities.length > 0 &&
+          groupedCommunities.map((community) =>
             renderItem(
               community,
               community.details?.data?.name || "Untitled Community",

@@ -182,11 +182,14 @@ function ProjectPage() {
         <ProjectBlocks />
         <Team />
       </div>
+      <div className="flex w-full flex-col gap-2 lg:hidden">
+        <ProjectBlocks />
+      </div>
       <div className="flex flex-col flex-[7.5] max-lg:w-full gap-4">
         <ProjectBodyTabs />
       </div>
       <div className="flex flex-col flex-[4] gap-8 max-lg:w-full">
-        <div className="flex w-full lg:hidden">
+        <div className="flex w-full flex-col gap-2 lg:hidden">
           <Team />
         </div>
 

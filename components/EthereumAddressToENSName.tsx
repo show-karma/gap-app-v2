@@ -17,20 +17,23 @@ const EthereumAddressToENSName: React.FC<Props> = ({
   // });
   const ensNames = useENS((state) => state.ensData);
   const populateEns = useENS((state) => state.populateEns);
+  const lowerCasedAddress = address.toLowerCase();
 
   useEffect(() => {
-    if (!ensNames[address.toLowerCase()]) {
-      populateEns([address]);
+    if (!ensNames[lowerCasedAddress]) {
+      populateEns([lowerCasedAddress]);
     }
-  }, [address, ensNames]);
+  }, [lowerCasedAddress, ensNames]);
 
   const addressToDisplay = shouldTruncate
-    ? address?.slice(0, 6) + "..." + address?.slice(-6)
-    : address;
+    ? lowerCasedAddress?.slice(0, 6) + "..." + lowerCasedAddress?.slice(-6)
+    : lowerCasedAddress;
 
   return (
-    <span>
-      {!ensNames[address]?.name ? addressToDisplay : ensNames[address].name}
+    <span className="font-body">
+      {!ensNames[lowerCasedAddress.toLowerCase()]?.name
+        ? addressToDisplay
+        : ensNames[lowerCasedAddress.toLowerCase()].name}
     </span>
   );
 };
