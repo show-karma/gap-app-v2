@@ -69,20 +69,6 @@ const inputStyle =
 const textAreaStyle =
   "mt-2 w-full rounded-lg border border-gray-200 bg-transparent px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:text-zinc-100 dark:border-gray-600";
 
-const SUCCESS_QUESTIONS = ["How should the success of your grant be measured?"];
-
-const IMPACT_QUESTIONS = [
-  "What is the intended direct impact your project will have on the ecosystem?",
-  "What is the long-term impact of your grant?",
-];
-
-const INNOVATION_QUESTIONS = [
-  "How will receiving a grant enable you to foster growth or innovation within the ecosystem?",
-];
-
-const FUND_QUESTIONS = ["How will the grant funds be used?"];
-const TIMEFRAME_QUESTIONS = ["What is the timeframe for the work funded?"];
-
 const grantSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.GRANT.FORM.TITLE }),
   programId: z.string().optional(),
@@ -113,41 +99,13 @@ const grantSchema = z.object({
       (input) => !input || input?.length === 0 || isAddress(input),
       MESSAGES.GRANT.FORM.RECIPIENT
     ),
-  successQuestions: z.array(
+  questions: z.array(
     z.object({
       query: z.string().min(1),
       explanation: z.string().optional(),
-      type: z.literal("SUCCESS_MEASURE"),
+      type: z.string().min(1),
     })
-  ),
-  impactQuestions: z.array(
-    z.object({
-      query: z.string().min(1),
-      explanation: z.string().optional(),
-      type: z.literal("IMPACT_MEASUREMENT"),
-    })
-  ),
-  innovationQuestions: z.array(
-    z.object({
-      query: z.string().min(1),
-      explanation: z.string().optional(),
-      type: z.literal("INNOVATION"),
-    })
-  ),
-  fundQuestions: z.array(
-    z.object({
-      query: z.string().min(1),
-      explanation: z.string().optional(),
-      type: z.literal("FUND_USAGE"),
-    })
-  ),
-  timeframeQuestions: z.array(
-    z.object({
-      query: z.string().min(1),
-      explanation: z.string().optional(),
-      type: z.literal("TIMEFRAME"),
-    })
-  ),
+  ).optional(),
 });
 
 type GrantType = z.infer<typeof grantSchema>;
@@ -156,43 +114,17 @@ interface NewGrantProps {
   grantToEdit?: IGrantResponse;
 }
 
-interface SuccessQuestion {
+interface Question {
   query: string;
   explanation: string;
-  type: "SUCCESS_MEASURE";
-}
-interface ImpactQuestion {
-  query: string;
-  explanation: string;
-  type: "IMPACT_MEASUREMENT";
-}
-interface FundQuestion {
-  query: string;
-  explanation: string;
-  type: "FUND_USAGE";
-}
-interface TimeframeQuestion {
-  query: string;
-  explanation: string;
-  type: "TIMEFRAME";
-}
-interface InnovationQuestion {
-  query: string;
-  explanation: string;
-  type: "INNOVATION";
+  type: string;
 }
 
-type QuestionType =
-  | "SUCCESS_MEASURE"
-  | "IMPACT_MEASUREMENT"
-  | "INNOVATION"
-  | "TIMEFRAME"
-  | "FUND_USAGE";
 
 interface GenericQuestion {
   query: string;
   explanation: string;
-  type: QuestionType;
+  type: string;
 }
 
 interface NewGrantData {
@@ -240,7 +172,7 @@ export function SearchGrantProgram({
       setIsLoading(true);
       const [result, error] = await fetchData(
         INDEXER.REGISTRY.GET_ALL +
-          `?limit=1000&withTrackedProjects=false&withProgramAdmins=false`
+        `?limit=1000&withTrackedProjects=false&withProgramAdmins=false`
       );
       if (error) {
         console.log(error);
@@ -317,36 +249,26 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { gap } = useGap();
   const { isConnected } = useAccount();
 
-  function premade<T extends GenericQuestion>(
-    type: QuestionType,
-    questions: string[]
-  ): T[] {
+  function premade<T extends GenericQuestion>(): T[] {
     const hasQuestions = grantToEdit?.details?.data?.questions?.filter(
-      (item) => item.type === type
+      (item) => item?.type && item?.explanation && item?.query
     );
     if (grantScreen === "edit-grant" && hasQuestions?.length) {
-      if (hasQuestions.length !== questions.length) {
-        const fillQuestions = questions.map((item) => ({
-          query: item,
-          explanation: "",
-          type,
+      if (hasQuestions.length !== grantToEdit?.details?.data?.questions.length) {
+        const fillQuestions = grantToEdit?.details?.data?.questions.map((item: GenericQuestion) => ({
+          query: item?.query,
+          explanation: item?.explanation,
+          type: item?.type,
         })) as T[];
-        fillQuestions.forEach((_, i) => {
-          const match = hasQuestions.find((item) => {
-            return item.query === fillQuestions[i]?.query;
-          });
-          if (match) {
-            fillQuestions[i] = match as T;
-          }
-        });
+
         return fillQuestions;
       }
       return hasQuestions as T[];
     }
-    return questions.map((item) => ({
-      query: item,
+    return grantToEdit?.details?.data?.questions?.map(() => ({
+      query: "",
       explanation: "",
-      type,
+      type: "",
     })) as T[];
   }
 
@@ -375,23 +297,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         grantScreen === "edit-grant" && grantToEdit?.details?.data?.startDate
           ? new Date(grantToEdit?.details?.data?.startDate * 1000)
           : undefined,
-      successQuestions: premade<SuccessQuestion>(
-        "SUCCESS_MEASURE",
-        SUCCESS_QUESTIONS
-      ),
-      impactQuestions: premade<ImpactQuestion>(
-        "IMPACT_MEASUREMENT",
-        IMPACT_QUESTIONS
-      ),
-      innovationQuestions: premade<InnovationQuestion>(
-        "INNOVATION",
-        INNOVATION_QUESTIONS
-      ),
-      timeframeQuestions: premade<TimeframeQuestion>(
-        "TIMEFRAME",
-        TIMEFRAME_QUESTIONS
-      ),
-      fundQuestions: premade<FundQuestion>("FUND_USAGE", FUND_QUESTIONS),
+      questions: premade<Question>(),
     },
   });
 
@@ -443,7 +349,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         payoutAddress: address,
         // cycle: data.cycle,
         // season: data.season,
-        questions: data.questions,
+        questions: data?.questions,
         startDate: data.startDate,
         programId: data?.programId,
       });
@@ -651,55 +557,14 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       type: string;
       query: string;
       explanation: string;
-    }[] = data.successQuestions
-      .map((item) => ({
-        type: "SUCCESS_MEASURE",
-        query: item.query,
-        explanation: item.explanation || "",
-      }))
-      .concat(
-        data.impactQuestions.map((item) => ({
-          type: "IMPACT_MEASUREMENT",
+    }[] = data?.questions && data?.questions?.length > 0
+        ? data?.questions?.map((item) => ({
+          type: item.type,
           query: item.query,
           explanation: item.explanation || "",
         }))
-      );
-    const hasFundQuestions = data.fundQuestions.filter(
-      (item) => item.explanation && item.explanation.length > 0
-    );
-    if (hasFundQuestions.length > 0) {
-      questions = questions.concat(
-        hasFundQuestions.map((item) => ({
-          type: "FUND_USAGE",
-          query: item.query,
-          explanation: item.explanation || "",
-        }))
-      );
-    }
-    const hasTimeQuestions = data.timeframeQuestions.filter(
-      (item) => item.explanation && item.explanation.length > 0
-    );
-    if (hasTimeQuestions.length > 0) {
-      questions = questions.concat(
-        hasTimeQuestions.map((item) => ({
-          type: "TIMEFRAME",
-          query: item.query,
-          explanation: item.explanation || "",
-        }))
-      );
-    }
-    const hasInnovation = data.innovationQuestions.filter(
-      (item) => item.explanation && item.explanation.length > 0
-    );
-    if (hasInnovation.length > 0) {
-      questions = questions.concat(
-        hasInnovation.map((item) => ({
-          type: "INNOVATION",
-          query: item.query,
-          explanation: item.explanation || "",
-        }))
-      );
-    }
+        : [];
+
     const milestonesData = milestones.map((item) => item.data);
     const newGrant = {
       amount: data.amount,
@@ -846,14 +711,14 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             href={
               grantToEdit
                 ? PAGES.PROJECT.GRANT(
-                    (selectedProject?.details?.data?.slug ||
-                      selectedProject?.uid) as string,
-                    grantToEdit?.uid as string
-                  )
+                  (selectedProject?.details?.data?.slug ||
+                    selectedProject?.uid) as string,
+                  grantToEdit?.uid as string
+                )
                 : PAGES.PROJECT.GRANTS(
-                    (selectedProject?.details?.data?.slug ||
-                      selectedProject?.uid) as string
-                  )
+                  (selectedProject?.details?.data?.slug ||
+                    selectedProject?.uid) as string
+                )
             }
             className="bg-transparent px-1 hover:bg-transparent hover:opacity-75 text-black dark:text-zinc-100"
           >
@@ -1022,23 +887,23 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             ) : null}
           </div>
 
-          {IMPACT_QUESTIONS.map((item, index) => (
+          {form.getValues("questions") && form.getValues("questions")?.map((item, index) => (
             <Controller
-              key={item}
+              key={index}
               control={form.control}
-              name={`impactQuestions.${index}.explanation`}
+              name={`questions.${index}.explanation`}
               render={({ field, formState }) => (
                 <div className="flex flex-col gap-2">
                   <label
-                    id={`impactQuestions.${index}.explanation`}
+                    id={`questions.${index}.explanation`}
                     className={labelStyle}
                   >
-                    {item} (optional)
+                    {item.query} (optional)
                   </label>
                   <textarea className={textAreaStyle} {...field} />
                   <p>
                     {
-                      formState.errors.impactQuestions?.[index]?.explanation
+                      formState.errors.questions?.[index]?.explanation
                         ?.message
                     }
                   </p>
@@ -1046,102 +911,8 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
               )}
             />
           ))}
-          {SUCCESS_QUESTIONS.map((item, index) => (
-            <Controller
-              key={item}
-              control={form.control}
-              name={`successQuestions.${index}.explanation`}
-              render={({ field, formState }) => (
-                <div className="flex flex-col gap-2">
-                  <label
-                    id={`successQuestions.${index}.explanation`}
-                    className={labelStyle}
-                  >
-                    {item} (optional)
-                  </label>
-                  <textarea className={textAreaStyle} {...field} />
-                  <p>
-                    {
-                      formState.errors.successQuestions?.[index]?.explanation
-                        ?.message
-                    }
-                  </p>
-                </div>
-              )}
-            />
-          ))}
-          {INNOVATION_QUESTIONS.map((item, index) => (
-            <Controller
-              key={item}
-              control={form.control}
-              name={`innovationQuestions.${index}.explanation`}
-              render={({ field, formState }) => (
-                <div className="flex flex-col gap-2">
-                  <label
-                    id={`innovationQuestions.${index}.explanation`}
-                    className={labelStyle}
-                  >
-                    {item} (optional)
-                  </label>
-                  <textarea className={textAreaStyle} {...field} />
-                  <p>
-                    {
-                      formState.errors.innovationQuestions?.[index]?.explanation
-                        ?.message
-                    }
-                  </p>
-                </div>
-              )}
-            />
-          ))}
-          {FUND_QUESTIONS.map((item, index) => (
-            <Controller
-              key={item}
-              control={form.control}
-              name={`fundQuestions.${index}.explanation`}
-              render={({ field, formState }) => (
-                <div className="flex flex-col gap-2">
-                  <label
-                    id={`fundQuestions.${index}.explanation`}
-                    className={labelStyle}
-                  >
-                    {item} (optional)
-                  </label>
-                  <textarea className={textAreaStyle} {...field} />
-                  <p>
-                    {
-                      formState.errors.fundQuestions?.[index]?.explanation
-                        ?.message
-                    }
-                  </p>
-                </div>
-              )}
-            />
-          ))}
-          {TIMEFRAME_QUESTIONS.map((item, index) => (
-            <Controller
-              key={item}
-              control={form.control}
-              name={`timeframeQuestions.${index}.explanation`}
-              render={({ field, formState }) => (
-                <div className="flex flex-col gap-2">
-                  <label
-                    id={`timeframeQuestions.${index}.explanation`}
-                    className={labelStyle}
-                  >
-                    {item} (optional)
-                  </label>
-                  <textarea className={textAreaStyle} {...field} />
-                  <p>
-                    {
-                      formState.errors.timeframeQuestions?.[index]?.explanation
-                        ?.message
-                    }
-                  </p>
-                </div>
-              )}
-            />
-          ))}
+
+
         </form>
         {grantScreen === "create-grant" && (
           <div className="flex w-full flex-col items-center justify-center gap-8 py-8">
