@@ -22,6 +22,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "./Utilities/errorManager";
+import { getTotalProjects } from "@/utilities/karma/totalProjects";
 
 const sortOptions: Record<SortByOptions, string> = {
   recent: "Recent",
@@ -42,24 +43,6 @@ interface CommunityGrantsProps {
   defaultSortBy: SortByOptions;
   defaultSelectedStatus: StatusOptions;
 }
-
-const getTotalProjects = async (communityId: string) => {
-  try {
-    const [data, error] = await fetchData(
-      INDEXER.COMMUNITY.STATS(communityId),
-      "GET",
-      {},
-      {},
-      {},
-      false,
-      true
-    );
-    if (error || !data.projects) return 0;
-    return data.projects;
-  } catch {
-    return 0;
-  }
-};
 
 export const CommunityGrants = ({
   categoriesOptions,
