@@ -21,10 +21,10 @@ import { useQuery } from "@tanstack/react-query";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { errorManager } from "./Utilities/errorManager";
+import { getTotalProjects } from "@/utilities/karma/totalProjects";
 import { getPrograms } from "@/utilities/sdk/communities/getPrograms";
 import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import { Field, Label, Radio, RadioGroup } from '@headlessui/react'
-
+import { Field, Label, Radio, RadioGroup } from "@headlessui/react";
 
 const sortOptions: Record<SortByOptions, string> = {
   recent: "Recent",
@@ -45,24 +45,6 @@ interface CommunityGrantsProps {
   defaultSortBy: SortByOptions;
   defaultSelectedStatus: StatusOptions;
 }
-
-const getTotalProjects = async (communityId: string) => {
-  try {
-    const [data, error] = await fetchData(
-      INDEXER.COMMUNITY.STATS(communityId),
-      "GET",
-      {},
-      {},
-      {},
-      false,
-      true
-    );
-    if (error || !data.projects) return 0;
-    return data.projects;
-  } catch {
-    return 0;
-  }
-};
 
 export const CommunityGrants = ({
   categoriesOptions,
@@ -101,7 +83,9 @@ export const CommunityGrants = ({
   // Call API
   const [programs, setPrograms] = useState<GrantProgram[]>([]);
   const [programsLoading, setProgramsLoading] = useState<boolean>(true);
-  const [selectedProgramId, setSelectedProgramId] = useState<string | null>(null);
+  const [selectedProgramId, setSelectedProgramId] = useState<string | null>(
+    null
+  );
   const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
   const [grants, setGrants] = useState<Grant[]>([]); // Data returned from the API
   const itemsPerPage = 12; // Set the total number of items you want returned from the API
@@ -120,8 +104,6 @@ export const CommunityGrants = ({
     const fetchPrograms = async () => {
       const programs = await getPrograms(communityId as Hex);
 
-      console.log("programs", programs);
-
       setPrograms(programs);
       setProgramsLoading(false);
     };
@@ -132,7 +114,6 @@ export const CommunityGrants = ({
     if (!communityId || communityId === zeroUID) return;
 
     const fetchNewGrants = async () => {
-
       setLoading(true);
       try {
         const { grants: fetchedGrants, pageInfo } = await getGrants(
@@ -151,7 +132,9 @@ export const CommunityGrants = ({
         if (fetchedGrants && fetchedGrants.length) {
           setHaveMore(fetchedGrants.length === itemsPerPage);
           setGrants((prev) =>
-            currentPage === 0 || selectedProgramId ? fetchedGrants : [...prev, ...fetchedGrants]
+            currentPage === 0 || selectedProgramId
+              ? fetchedGrants
+              : [...prev, ...fetchedGrants]
           );
           setTotalGrants((prev) => pageInfo?.totalItems || prev);
         } else {
@@ -203,8 +186,6 @@ export const CommunityGrants = ({
     queryKey: ["totalProjects", communityId],
     queryFn: () => getTotalProjects(communityId),
   });
-
-
 
   return (
     <div className="w-full">
@@ -493,26 +474,29 @@ export const CommunityGrants = ({
             </div>
           ) : (
             <div>
-              <RadioGroup value={selectedProgramId} onChange={
-                (programId) => {
+              <RadioGroup
+                value={selectedProgramId}
+                onChange={(programId) => {
                   setSelectedProgramId(programId);
                   setCurrentPage(0);
-                  setGrants([])
-                }
-              } aria-label="Server size">
+                  setGrants([]);
+                }}
+                aria-label="Server size"
+              >
                 <div className="space-y-2">
                   <Field
                     onClick={() => {
                       setSelectedProgramId(null);
                       setCurrentPage(0);
-                      setGrants([])
+                      setGrants([]);
                     }}
                     className={cn(
                       selectedProgramId === null
                         ? "bg-[#eef4ff] dark:bg-zinc-800 dark:text-primary-300  text-[#155eef]"
                         : "text-gray-700 hover:text-primary-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700",
                       "flex items-center rounded-md text-sm leading-6 font-semibold w-full py-1 hover:cursor-pointer px-2"
-                    )}>
+                    )}
+                  >
                     <Radio
                       value={null}
                       className="group flex size-4 items-center justify-center rounded-full border bg-white data-[checked]:bg-blue-400"
@@ -522,11 +506,12 @@ export const CommunityGrants = ({
                     <Label className="ml-2 hover:cursor-pointer">All</Label>
                   </Field>
                   {programs.map((program: GrantProgram) => (
-                    <Field key={program.programId}
+                    <Field
+                      key={program.programId}
                       onClick={() => {
                         setSelectedProgramId(program.programId as string);
                         setCurrentPage(0);
-                        setGrants([])
+                        setGrants([]);
                       }}
                       className={cn(
                         selectedProgramId === program.programId
@@ -541,7 +526,9 @@ export const CommunityGrants = ({
                       >
                         <span className="invisible size-2 rounded-full bg-white group-data-[checked]:visible" />
                       </Radio>
-                      <Label className="ml-2 hover:cursor-pointer">{program.metadata?.title}</Label>
+                      <Label className="ml-2 hover:cursor-pointer">
+                        {program.metadata?.title}
+                      </Label>
                     </Field>
                   ))}
                 </div>
@@ -584,7 +571,9 @@ export const CommunityGrants = ({
                       width={width}
                       rowCount={Math.ceil(grants.length / columnCounter)}
                       rowHeight={360}
-                      columnWidth={columnWidth - 20 < 240 ? 240 : columnWidth - 5}
+                      columnWidth={
+                        columnWidth - 20 < 240 ? 240 : columnWidth - 5
+                      }
                       columnCount={columnCounter}
                       cellRenderer={({ columnIndex, key, rowIndex, style }) => {
                         const grant =

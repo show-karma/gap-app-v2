@@ -317,12 +317,10 @@ export const ManagePrograms = () => {
         if (!hasRegistry) {
           throw new Error("No registry found");
         }
-        const { txHash } = hasRegistry;
         const [request, error] = await fetchData(
           INDEXER.REGISTRY.APPROVE,
           "POST",
           {
-            txHash,
             id,
             isValid: value,
           },

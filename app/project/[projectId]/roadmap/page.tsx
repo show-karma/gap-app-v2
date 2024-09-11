@@ -1,6 +1,7 @@
 import { ObjectiveFilter } from "@/components/Pages/Project/Objective/Filter";
 import { ObjectiveList } from "@/components/Pages/Project/Objective/List";
 import { zeroUID } from "@/utilities/commons";
+import { envVars } from "@/utilities/enviromentVars";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { defaultMetadata } from "@/utilities/meta";
 import { Metadata } from "next";
@@ -44,15 +45,23 @@ export async function generateMetadata({
       creator: defaultMetadata.twitter.creator,
       site: defaultMetadata.twitter.site,
       card: "summary_large_image",
+      images: [
+        {
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
+          alt: metadata.title,
+        },
+      ],
     },
     openGraph: {
       url: defaultMetadata.openGraph.url,
       title: metadata.title,
       description: metadata.description,
-      images: defaultMetadata.openGraph.images.map((image) => ({
-        url: image,
-        alt: metadata.title,
-      })),
+      images: [
+        {
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
+          alt: metadata.title,
+        },
+      ],
       // site_name: defaultMetadata.openGraph.siteName,
     },
     icons: metadata.icons,
