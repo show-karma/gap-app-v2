@@ -35,10 +35,10 @@ export async function generateMetadata({
     await fetchMetadata(
       new URL(
         `/api/frames/${projectId}?projectInfo=${
-        // Base64 encoded projectInfo
-        encodeURIComponent(
-          Buffer.from(JSON.stringify(projectInfo)).toString("base64")
-        )
+          // Base64 encoded projectInfo
+          encodeURIComponent(
+            Buffer.from(JSON.stringify(projectInfo)).toString("base64")
+          )
         }`,
         envVars.VERCEL_URL
       )
@@ -55,15 +55,23 @@ export async function generateMetadata({
       handle: defaultMetadata.twitter.creator,
       site: defaultMetadata.twitter.site,
       cardType: "summary_large_image",
+      images: [
+        {
+          url: `https://gap-app-v2-git-feat-metadata-og-karma-devs.vercel.app/api/metadata/projects/${projectId}`,
+          alt: dynamicMetadata.title || defaultMetadata.title,
+        },
+      ],
     },
     openGraph: {
       url: defaultMetadata.openGraph.url,
       title: dynamicMetadata.title || defaultMetadata.title,
       description: dynamicMetadata.description || defaultMetadata.description,
-      images: defaultMetadata.openGraph.images.map((image) => ({
-        url: image,
-        alt: dynamicMetadata.title || defaultMetadata.title,
-      })),
+      images: [
+        {
+          url: `https://gap-app-v2-git-feat-metadata-og-karma-devs.vercel.app/api/metadata/projects/${projectId}`,
+          alt: dynamicMetadata.title || defaultMetadata.title,
+        },
+      ],
     },
     additionalLinkTags: [
       {

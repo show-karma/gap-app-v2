@@ -40,7 +40,7 @@ export async function generateMetadata({
       description:
         projectInfo.details?.data?.description?.substring(0, 80) || "",
       images: defaultMetadata.openGraph.images.map((image) => ({
-        url: image,
+        url: `https://gap-app-v2-git-feat-metadata-og-karma-devs.vercel.app/api/metadata/projects/${projectId}` || image,
         alt: `View Impact for ${projectInfo.details?.data?.title} | Karma GAP`,
       })),
     },
