@@ -20,20 +20,28 @@ const getGrantPrograms = async (communityId: string): Promise<string[]> => {
       INDEXER.COMMUNITY.PROGRAMS(communityId)
     );
     if (error) {
-      console.log("Error with fetching grant programs for community", communityId, error);
+      console.log(
+        "Error with fetching grant programs for community",
+        communityId,
+        error
+      );
     }
-    const programTitles = result.map((program: GrantProgram) => program.metadata?.title);
+    const programTitles = result.map(
+      (program: GrantProgram) => program.metadata?.title
+    );
     return programTitles;
   } catch (error: any) {
-    errorManager(`Error while fetching grant programs of community ${communityId}`, error);
+    errorManager(
+      `Error while fetching grant programs of community ${communityId}`,
+      error
+    );
     return [];
   }
-}
+};
 
 export default async function Page({ params }: Props) {
   const communityId = params.communityId;
 
-  console.log("communityId", communityId);
   const { data: community } = await gapIndexerApi
     .communityBySlug(communityId)
     .catch(() => {
