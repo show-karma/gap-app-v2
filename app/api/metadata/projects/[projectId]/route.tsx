@@ -1,6 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { getProjectById } from "@/utilities/sdk";
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
 // App router includes @vercel/og.
@@ -37,18 +36,18 @@ export async function GET(
       title: "Grants",
       value: project?.grants.length || 0,
       // icon: "funding.png",
-      icon: "https://i.imgur.com/AI87RxN.png",
+      icon: "https://gap.karmahq.xyz/icons/funding-lg.png",
     },
     {
       title: "Impacts",
       value: project?.impacts.length || 0,
-      icon: "https://i.imgur.com/Nxy1So4.png",
+      icon: "https://gap.karmahq.xyz/icons/impact.png",
     },
     {
       title: "Endorsements",
       value: project?.endorsements.length || 0,
       // icon: "endorsements.png",
-      icon: "https://i.imgur.com/ni4teBV.png",
+      icon: "https://gap.karmahq.xyz/icons/endorsements-lg.png",
     },
   ];
 
@@ -68,15 +67,13 @@ export async function GET(
         <div
           tw="bg-white w-full h-full flex flex-row justify-between items-center pr-[42px] pl-[68px]"
           style={{
-            backgroundImage: `url(https://i.imgur.com/K9KtjYy.png)`,
-            // backgroundImage: `url(/assets/previews/background.png)`,
+            backgroundImage: `url(https://gap.karmahq.xyz/assets/previews/background.png)`,
           }}
         >
           <div tw="flex flex-col items-start justify-center mt-8 w-[520px]">
             <img
               alt="Karma GAP Logo"
-              // src="/assets/previews/karma-gap-logo.png"
-              src="https://i.imgur.com/EgWcBH5.png"
+              src="https://gap.karmahq.xyz/assets/previews/karma-gap-logo.png"
               style={{
                 width: 292,
                 height: 50,
@@ -108,7 +105,6 @@ export async function GET(
                     {item.title}
                   </p>
                   <img
-                    // src={`https://gap.karmahq.xyz/icons/${item.icon}`}
                     src={item.icon}
                     alt={item.title}
                     width={35}
