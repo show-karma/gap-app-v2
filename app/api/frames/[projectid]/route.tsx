@@ -1,4 +1,4 @@
-import { Button } from "frames.js/next/pages-router/server";
+import { Button } from "frames.js/next";
 import { envVars } from "@/utilities/enviromentVars";
 import { frames } from "@/utilities/frames";
 import { getExplorerUrl } from "@/utilities/network";

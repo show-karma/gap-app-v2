@@ -8,6 +8,7 @@ import { zeroUID } from "@/utilities/commons";
 import { defaultMetadata } from "@/utilities/meta";
 import ContactInfoPage from "@/components/Pages/Project/ContactInfoPage";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { envVars } from "@/utilities/enviromentVars";
 
 export async function generateMetadata({
   params,
@@ -35,16 +36,25 @@ export async function generateMetadata({
       creator: defaultMetadata.twitter.creator,
       site: defaultMetadata.twitter.site,
       card: "summary_large_image",
+      images: [
+        {
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
+          alt: `${projectInfo.details?.data.title} | Karma GAP`,
+        },
+      ],
     },
     openGraph: {
       url: defaultMetadata.openGraph.url,
       title: `${projectInfo.details?.data.title} | Karma GAP`,
       description:
         projectInfo.details?.data.description?.substring(0, 80) || "",
-      images: defaultMetadata.openGraph.images.map((image) => ({
-        url: image,
-        alt: `${projectInfo.details?.data.title} | Karma GAP`,
-      })),
+
+      images: [
+        {
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
+          alt: `${projectInfo.details?.data.title} | Karma GAP`,
+        },
+      ],
     },
     icons: {
       icon: "/favicon.ico",
