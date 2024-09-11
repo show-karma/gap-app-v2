@@ -57,7 +57,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       description: dynamicMetadata.description || defaultMetadata.description,
       images: [
         {
-          url: `https://gap-app-v2-git-feat-metadata-og-karma-devs.vercel.app/api/metadata/communities/${communityId}`,
+          url: `${envVars.VERCEL_URL}/api/metadata/communities/${communityId}`,
           alt: dynamicMetadata.title || defaultMetadata.title,
         },
       ],
