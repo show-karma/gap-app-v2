@@ -2,6 +2,7 @@
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
+import pluralize from "pluralize";
 // App router includes @vercel/og.
 // No need to install it.
 
@@ -33,20 +34,18 @@ export async function GET(
 
   const stats = [
     {
-      title: "Grants",
+      title: pluralize("Grant", project?.grants.length || 0),
       value: project?.grants.length || 0,
-      // icon: "funding.png",
       icon: "https://gap.karmahq.xyz/icons/funding-lg.png",
     },
     {
-      title: "Impacts",
+      title: pluralize("Impact", project?.impacts.length || 0),
       value: project?.impacts.length || 0,
       icon: "https://gap.karmahq.xyz/icons/impact.png",
     },
     {
-      title: "Endorsements",
+      title: pluralize("Endorsement", project?.endorsements.length || 0),
       value: project?.endorsements.length || 0,
-      // icon: "endorsements.png",
       icon: "https://gap.karmahq.xyz/icons/endorsements-lg.png",
     },
   ];
@@ -73,7 +72,7 @@ export async function GET(
           <div tw="flex flex-col items-start justify-center mt-8 w-[520px]">
             <img
               alt="Karma GAP Logo"
-              src="https://gap.karmahq.xyz/assets/previews/karma-gap-logo.png"
+              src="https://gap.karmahq.xyz/assets/previews/karma-gap-logo-glow.png"
               style={{
                 width: 292,
                 height: 50,
