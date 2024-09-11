@@ -7,7 +7,7 @@ export const GrantImpactCriteria = () => {
   const questions = grant?.details?.data.questions;
   return (
     <div className="space-y-5 max-w-prose">
-      {questions ? (
+      {questions && questions?.length > 0 ? (
         <div className="flex flex-col gap-4">
           {questions.map((item) => (
             <div
