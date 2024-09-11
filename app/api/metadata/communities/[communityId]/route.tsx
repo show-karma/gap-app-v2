@@ -80,7 +80,7 @@ export async function GET(
                 tw="rounded-full"
               />
             ) : null}
-            <span tw="text-white text-5xl font-extrabold font-body w-full text-start flex flex-col items-center justify-center mt-10 mb-1">
+            <span tw="text-white text-5xl font-extrabold font-body w-full text-start flex flex-col items-start justify-start mt-10 mb-1">
               {community?.details?.data.name}
             </span>
             <p tw="text-white text-2xl font-normal font-body mt-4 break-normal text-wrap whitespace-nowrap">
