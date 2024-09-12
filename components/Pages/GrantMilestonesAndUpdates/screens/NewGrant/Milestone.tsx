@@ -6,7 +6,11 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 
 import { formatDate } from "@/utilities/formatDate";
 import { Popover } from "@headlessui/react";
-import { CalendarIcon, PencilIcon } from "@heroicons/react/24/outline";
+import {
+  CalendarIcon,
+  ChevronDownIcon,
+  PencilIcon,
+} from "@heroicons/react/24/outline";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type FC, useState, useEffect } from "react";
@@ -14,7 +18,7 @@ import { DayPicker } from "react-day-picker";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
-import { useGrantFormStore } from "./store";
+import { MilestonesForms, useGrantFormStore } from "./store";
 import { IMilestone } from "@show-karma/karma-gap-sdk";
 
 interface MilestoneProps {
@@ -28,6 +32,7 @@ const inputStyle =
 
 const milestoneSchema = z.object({
   title: z.string().min(3, { message: "Title must be at least 3 characters" }),
+  priority: z.number().optional(),
   dates: z
     .object({
       endsAt: z.date({
@@ -64,6 +69,8 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
     changeMilestoneForm,
     switchMilestoneEditing,
     milestonesForms,
+    formPriorities,
+    setFormPriorities,
   } = useGrantFormStore();
 
   const {
@@ -93,6 +100,7 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
         startsAt: data.dates.startsAt
           ? data.dates.startsAt.getTime() / 1000
           : undefined,
+        priority: data.priority,
       },
       index
     );
@@ -107,6 +115,7 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
       const startsAt = watch("dates.startsAt")
         ? watch("dates.startsAt")!.getTime() / 1000
         : currentMilestone.startsAt;
+      const priority = watch("priority") || currentMilestone.priority;
       changeMilestoneForm(index, {
         isValid: isValid,
         isEditing: milestonesForms[index].isEditing,
@@ -115,17 +124,27 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
           description,
           endsAt,
           startsAt,
+          priority,
         },
       });
     }
   }, [isValid]);
+
+  const priorities = Array.from({ length: 5 }, (_, index) => index + 1);
+
+  console.log("formPriorities", formPriorities);
 
   return milestonesForms[index].isEditing ? (
     <div className="flex w-full flex-col gap-6 rounded-md bg-gray-200 dark:bg-zinc-700 px-4 py-6">
       <div className="flex w-full flex-row justify-between">
         <h4 className="text-2xl font-bold">Add milestone {index + 1}</h4>
         <Button
-          onClick={() => removeMilestone(index)}
+          onClick={() => {
+            removeMilestone(index);
+            setFormPriorities(
+              formPriorities.filter((p) => p !== watch("priority"))
+            );
+          }}
           className="bg-transparent p-4 hover:bg-transparent hover:opacity-75"
         >
           <img src="/icons/close.svg" alt="Close" className="h-4 w-4 " />
@@ -147,7 +166,98 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
           />
           <p className="text-base text-red-400">{errors.title?.message}</p>
         </div>
+        <div className="flex w-full flex-row items-center justify-between gap-4">
+          <div className="flex w-full flex-row justify-between gap-4">
+            <Controller
+              name="priority"
+              control={form.control}
+              render={({ field, formState, fieldState }) => (
+                <div className="flex w-full flex-col gap-2">
+                  <label className={labelStyle}>
+                    Milestone priority (optional)
+                  </label>
+                  <div>
+                    <Popover className="relative">
+                      <Popover.Button className="max-lg:w-full w-max text-sm flex-row flex gap-2 items-center text-black dark:text-white border border-gray-200 bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
+                        {field.value
+                          ? `Priority ${field.value}`
+                          : `Select priority`}
+                        <ChevronDownIcon className="ml-auto h-4 w-4 opacity-50 text-black dark:text-white" />
+                      </Popover.Button>
+                      <Popover.Panel className="absolute z-10 bg-white dark:bg-zinc-800 mt-4 rounded-md w-[160px] scroll-smooth overflow-y-auto overflow-x-hidden py-2">
+                        {({ close }) => (
+                          <>
+                            <button
+                              key={"none"}
+                              className="cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 w-full disabled:opacity-30 disabled:cursor-not-allowed disabled:bg-zinc-200 dark:disabled:bg-zinc-900"
+                              onClick={(event) => {
+                                event?.preventDefault();
+                                event?.stopPropagation();
+                                field.onChange(undefined);
+                                setValue("priority", undefined, {
+                                  shouldValidate: true,
+                                });
 
+                                close();
+                              }}
+                            >
+                              None
+                            </button>
+                            {priorities.map((priority) => (
+                              <button
+                                key={priority}
+                                className="cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 w-full disabled:opacity-30 disabled:cursor-not-allowed disabled:bg-zinc-200 dark:disabled:bg-zinc-900"
+                                disabled={
+                                  watch("priority") === priority
+                                    ? false
+                                    : formPriorities.includes(priority)
+                                }
+                                onClick={(event) => {
+                                  event?.preventDefault();
+                                  event?.stopPropagation();
+                                  if (watch("priority") === priority) {
+                                    field.onChange(undefined);
+                                    setValue("priority", undefined, {
+                                      shouldValidate: true,
+                                    });
+                                  } else {
+                                    field.onChange(priority);
+                                    setValue("priority", priority, {
+                                      shouldValidate: true,
+                                    });
+                                  }
+                                  const watchPriority = watch("priority");
+                                  if (formPriorities.includes(priority)) {
+                                    const newPriorities = formPriorities.filter(
+                                      (p) =>
+                                        p !== priority && p !== watchPriority
+                                    );
+                                    setFormPriorities(newPriorities);
+                                  } else {
+                                    setFormPriorities([
+                                      ...formPriorities,
+                                      priority,
+                                    ]);
+                                  }
+                                  close();
+                                }}
+                              >
+                                Priority {priority}
+                              </button>
+                            ))}
+                          </>
+                        )}
+                      </Popover.Panel>
+                    </Popover>
+                  </div>
+                  <p className="text-base text-red-400">
+                    {formState.errors.dates?.endsAt?.message}
+                  </p>
+                </div>
+              )}
+            />
+          </div>
+        </div>
         <div className="flex w-full flex-row items-center justify-between gap-4">
           <div className="flex w-full flex-row justify-between gap-4">
             <Controller

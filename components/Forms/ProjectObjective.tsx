@@ -14,7 +14,7 @@ import { getWalletClient } from "@wagmi/core";
 import { config } from "@/utilities/wagmi/config";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { useStepper } from "@/store/modals/txStepper";
-import { sanitizeInput } from "@/utilities/sanitize";
+import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
 import toast from "react-hot-toast";
 import { useState } from "react";
 import fetchData from "@/utilities/fetchData";
@@ -94,11 +94,11 @@ export const ProjectObjectiveForm = ({
         gapClient = getGapClient(project?.chainID as number);
       }
       const newObjective = new ProjectMilestone({
-        data: {
+        data: sanitizeObject({
           title: data.title,
           text: data.text,
           type: "project-milestone",
-        },
+        }),
         schema: gapClient.findSchema("ProjectMilestone"),
         refUID: project?.uid,
         recipient: address || "0x00",

@@ -20,6 +20,7 @@ import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
+import { sanitizeObject } from "@/utilities/sanitize";
 
 const updateSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.PROJECT_UPDATE_FORM.TITLE }),
@@ -77,11 +78,11 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       const walletSigner = await walletClientToSigner(walletClient);
 
       const projectUpdate = new ProjectUpdate({
-        data: {
+        data: sanitizeObject({
           text,
           title,
           type: "project-update",
-        },
+        }),
         recipient: project.recipient,
         refUID: project.uid,
         schema: gapClient.findSchema("ProjectUpdate"),
