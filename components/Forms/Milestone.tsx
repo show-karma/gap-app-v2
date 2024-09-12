@@ -384,7 +384,6 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         </label>
         <div className="mt-2 w-full bg-transparent" data-color-mode="light">
           <MarkdownEditor
-            className="bg-transparent"
             value={watch("description") || ""}
             onChange={(newValue: string) => {
               setValue("description", newValue || "", {
