@@ -19,20 +19,11 @@ import {
 } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
-import { envVars } from "@/utilities/enviromentVars";
-import { getWalletClient } from "@wagmi/core";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { AlloBase } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/Allo";
-import {
-  Address,
-  ApplicationMetadata,
-} from "@show-karma/karma-gap-sdk/core/class/types/allo";
-import { AlloContracts } from "@show-karma/karma-gap-sdk/core/consts";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
 import Pagination from "@/components/Utilities/Pagination";
 import debounce from "lodash.debounce";
 import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
 import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
-import { config } from "@/utilities/wagmi/config";
 import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
 import { checkIsPoolManager } from "@/utilities/registry/checkIsPoolManager";
 import { MyProgramList } from "@/components/Pages/ProgramRegistry/MyProgramList";
@@ -56,10 +47,6 @@ export const ManagePrograms = () => {
 
   const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore();
-
-  const { chain } = useAccount();
-
-  const signer = useSigner();
 
   const {
     setIsRegistryAdmin,
@@ -225,126 +212,27 @@ export const ManagePrograms = () => {
     };
     try {
       const id = program._id.$oid;
-      const { programId, createdAtBlock, chainID, metadata, admins } = program;
 
-      if (value === "accepted" && !programId && !createdAtBlock) {
-        if (!isConnected || !isAuth) {
-          openConnectModal?.();
-          return;
-        }
-        if (chain?.id !== chainID) {
-          await switchChainAsync?.({ chainId: chainID as number });
-        }
-
-        const walletClient = await getWalletClient(config, {
-          chainId: chainID,
-        });
-        if (!walletClient) return;
-        const walletSigner = await walletClientToSigner(walletClient);
-        const _currentTimestamp = Math.floor(new Date().getTime() / 1000);
-        const matchinFundAmount = 0;
-
-        const allo = new AlloBase(
-          walletSigner as any,
-          envVars.IPFS_TOKEN,
-          chainID as number
-        );
-
-        const profileId = envVars.PROFILE_ID;
-
-        const applicationMetadata: ApplicationMetadata = {
-          version: "1.0.0",
-          lastUpdatedOn: new Date().getTime(),
-          applicationSchema: {
-            questions: [
-              {
-                id: 0,
-                info: "Email Address",
-                type: "email",
-                title: "Email Address",
-                hidden: false,
-                required: false,
-                encrypted: false,
-              },
-            ],
-            requirements: {
-              github: {
-                required: false,
-                verification: false,
-              },
-              twitter: {
-                required: false,
-                verification: false,
-              },
-            },
-          },
-        };
-
-        const [currentManagers, fetchError] = await fetchData(
-          INDEXER.REGISTRY.MANAGERS(profileId, chainID as number),
-          "GET"
-        );
-        if (fetchError) throw new Error("Error fetching current managers");
-
-        const managers = currentManagers.concat([
-          program.createdByAddress as Address,
-        ]);
-
-        const args: any = {
-          profileId,
-          roundMetadata: sanitizeObject(metadata),
-          applicationStart: _currentTimestamp + 3600, // 1 hour later   registrationStartTime
-          applicationEnd: _currentTimestamp + 432000, // 5 days later   registrationEndTime
-          roundStart: _currentTimestamp + 7200, // 2 hours later  allocationStartTime
-          roundEnd: _currentTimestamp + 864000, // 10 days later  allocaitonEndTime
-          matchingFundAmt: matchinFundAmount,
-          applicationMetadata,
-          managers, // managers
-          strategy: AlloContracts.strategy
-            .DonationVotingMerkleDistributionDirectTransferStrategy as Address, // strategy
-          payoutToken: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE", // Eg. ETH
-        };
-
-        const hasRegistry = await allo
-          .createGrant(args, changeStepperStep)
-          .then((res) => {
-            return res;
-          })
-          .catch((error) => {
-            throw new Error(error);
-          });
-        changeStepperStep("indexing");
-        if (!hasRegistry) {
-          throw new Error("No registry found");
-        }
-        const [request, error] = await fetchData(
-          INDEXER.REGISTRY.APPROVE,
-          "POST",
-          {
-            id,
-            isValid: value,
-          },
-          {},
-          {},
-          true
-        );
+      const request = fetchData(
+        INDEXER.REGISTRY.APPROVE,
+        "POST",
+        {
+          id,
+          isValid: value,
+        },
+        {},
+        {},
+        true
+      ).then(([res, error]) => {
         if (error) throw new Error("Error approving program");
-        changeStepperStep("indexed");
-      } else {
-        const [request, error] = await fetchData(
-          INDEXER.REGISTRY.APPROVE,
-          "POST",
-          {
-            id,
-            isValid: value,
-          },
-          {},
-          {},
-          true
-        );
-        if (error) throw new Error(`Program failed when updating to ${value}`);
-      }
-      toast.success(`Program ${value} successfully`);
+        return res;
+      });
+      await toast.promise(request, {
+        loading: "Approving program...",
+        success: `Program ${value} successfully`,
+        error: "Error approving program",
+      });
+
       await refreshPrograms();
     } catch (error: any) {
       errorManager(
@@ -353,8 +241,6 @@ export const ManagePrograms = () => {
       );
       console.log(`Error ${messageDict[value]} program ${program._id.$oid}`);
       toast.error(`Error ${messageDict[value]} program ${program._id.$oid}`);
-    } finally {
-      setIsStepper(false);
     }
   };
 

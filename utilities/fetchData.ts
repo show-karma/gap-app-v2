@@ -28,7 +28,7 @@ export default async function fetchData(
         ...headers,
       },
       data: sanitizedData,
-      timeout: 60000,
+      timeout: 360000,
       params,
     });
     let resData = res.data;
