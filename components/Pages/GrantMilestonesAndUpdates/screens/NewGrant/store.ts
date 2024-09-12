@@ -1,7 +1,7 @@
 import { IMilestone } from "@show-karma/karma-gap-sdk";
 import { create } from "zustand";
 
-interface MilestonesForms {
+export interface MilestonesForms {
   isValid: boolean;
   isEditing: boolean;
   data: IMilestone;
@@ -18,6 +18,8 @@ interface GrantFormStore {
   removeMilestone: (index: number) => void;
   saveMilestone: (milestone: IMilestone, index: number) => void;
   clearMilestonesForms: () => void;
+  formPriorities: number[];
+  setFormPriorities: (priorities: number[]) => void;
 }
 
 export const useGrantFormStore = create<GrantFormStore>((set, get) => ({
@@ -40,8 +42,8 @@ export const useGrantFormStore = create<GrantFormStore>((set, get) => ({
   },
   removeMilestone: (index: number) => {
     const { milestonesForms } = get();
-    milestonesForms.splice(index, 1);
-    set({ milestonesForms: milestonesForms });
+    const newMilestoneForm = milestonesForms.filter((_, i) => i !== index);
+    set({ milestonesForms: newMilestoneForm });
   },
   saveMilestone: (milestone: IMilestone, index: number) => {
     const { milestonesForms } = get();
@@ -66,4 +68,7 @@ export const useGrantFormStore = create<GrantFormStore>((set, get) => ({
   isMilestonesFormsLoading: true,
   setIsMilestonesFormsLoading: (isMilestonesFormsLoading: boolean) =>
     set({ isMilestonesFormsLoading }),
+  formPriorities: [],
+  setFormPriorities: (priorities: number[]) =>
+    set({ formPriorities: priorities }),
 }));

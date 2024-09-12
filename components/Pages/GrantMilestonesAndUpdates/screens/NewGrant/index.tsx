@@ -92,13 +92,15 @@ const grantSchema = z.object({
       (input) => !input || input?.length === 0 || isAddress(input),
       MESSAGES.GRANT.FORM.RECIPIENT
     ),
-  questions: z.array(
-    z.object({
-      query: z.string().min(1),
-      explanation: z.string().optional(),
-      type: z.string().min(1),
-    })
-  ).optional(),
+  questions: z
+    .array(
+      z.object({
+        query: z.string().min(1),
+        explanation: z.string().optional(),
+        type: z.string().min(1),
+      })
+    )
+    .optional(),
 });
 
 type GrantType = z.infer<typeof grantSchema>;
@@ -112,7 +114,6 @@ interface Question {
   explanation: string;
   type: string;
 }
-
 
 interface GenericQuestion {
   query: string;
@@ -165,7 +166,7 @@ export function SearchGrantProgram({
       setIsLoading(true);
       const [result, error] = await fetchData(
         INDEXER.REGISTRY.GET_ALL +
-        `?limit=1000&withTrackedProjects=false&withProgramAdmins=false`
+          `?limit=1000&withTrackedProjects=false&withProgramAdmins=false`
       );
       if (error) {
         console.log(error);
@@ -214,13 +215,16 @@ export function SearchGrantProgram({
 
 export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { address } = useAccount();
-  const [noProofCheckbox, setNoProofCheckbox] = useState(false);
   const isOwner = useOwnerStore((state) => state.isOwner);
   const pathname = usePathname();
   const grantScreen: GrantScreen = pathname.includes("edit-grant")
     ? "edit-grant"
     : "create-grant";
-  const { milestonesForms: milestones, createMilestone } = useGrantFormStore();
+  const {
+    milestonesForms: milestones,
+    createMilestone,
+    setFormPriorities,
+  } = useGrantFormStore();
   const { isAuth } = useAuthStore();
 
   const refreshProject = useProjectStore((state) => state.refreshProject);
@@ -247,12 +251,16 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       (item) => item?.type && item?.explanation && item?.query
     );
     if (grantScreen === "edit-grant" && hasQuestions?.length) {
-      if (hasQuestions.length !== grantToEdit?.details?.data?.questions.length) {
-        const fillQuestions = grantToEdit?.details?.data?.questions.map((item: GenericQuestion) => ({
-          query: item?.query,
-          explanation: item?.explanation,
-          type: item?.type,
-        })) as T[];
+      if (
+        hasQuestions.length !== grantToEdit?.details?.data?.questions.length
+      ) {
+        const fillQuestions = grantToEdit?.details?.data?.questions.map(
+          (item: GenericQuestion) => ({
+            query: item?.query,
+            explanation: item?.explanation,
+            type: item?.type,
+          })
+        ) as T[];
 
         return fillQuestions;
       }
@@ -362,6 +370,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           description: milestone.description,
           endsAt: milestone.endsAt,
           startsAt: milestone.startsAt,
+          priority: milestone.priority,
         });
         const created = new Milestone({
           data: sanitizedMilestone,
@@ -412,6 +421,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                   grant.uid
                 )
               );
+              setFormPriorities([]);
               await refreshProject();
             }
             retries -= 1;
@@ -550,12 +560,13 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       type: string;
       query: string;
       explanation: string;
-    }[] = data?.questions && data?.questions?.length > 0
+    }[] =
+      data?.questions && data?.questions?.length > 0
         ? data?.questions?.map((item) => ({
-          type: item.type,
-          query: item.query,
-          explanation: item.explanation || "",
-        }))
+            type: item.type,
+            query: item.query,
+            explanation: item.explanation || "",
+          }))
         : [];
 
     const milestonesData = milestones.map((item) => item.data);
@@ -704,14 +715,14 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             href={
               grantToEdit
                 ? PAGES.PROJECT.GRANT(
-                  (selectedProject?.details?.data?.slug ||
-                    selectedProject?.uid) as string,
-                  grantToEdit?.uid as string
-                )
+                    (selectedProject?.details?.data?.slug ||
+                      selectedProject?.uid) as string,
+                    grantToEdit?.uid as string
+                  )
                 : PAGES.PROJECT.GRANTS(
-                  (selectedProject?.details?.data?.slug ||
-                    selectedProject?.uid) as string
-                )
+                    (selectedProject?.details?.data?.slug ||
+                      selectedProject?.uid) as string
+                  )
             }
             className="bg-transparent px-1 hover:bg-transparent hover:opacity-75 text-black dark:text-zinc-100"
           >
@@ -880,32 +891,31 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             ) : null}
           </div>
 
-          {form.getValues("questions") && form.getValues("questions")?.map((item, index) => (
-            <Controller
-              key={index}
-              control={form.control}
-              name={`questions.${index}.explanation`}
-              render={({ field, formState }) => (
-                <div className="flex flex-col gap-2">
-                  <label
-                    id={`questions.${index}.explanation`}
-                    className={labelStyle}
-                  >
-                    {item.query} (optional)
-                  </label>
-                  <textarea className={textAreaStyle} {...field} />
-                  <p>
-                    {
-                      formState.errors.questions?.[index]?.explanation
-                        ?.message
-                    }
-                  </p>
-                </div>
-              )}
-            />
-          ))}
-
-
+          {form.getValues("questions") &&
+            form.getValues("questions")?.map((item, index) => (
+              <Controller
+                key={index}
+                control={form.control}
+                name={`questions.${index}.explanation`}
+                render={({ field, formState }) => (
+                  <div className="flex flex-col gap-2">
+                    <label
+                      id={`questions.${index}.explanation`}
+                      className={labelStyle}
+                    >
+                      {item.query} (optional)
+                    </label>
+                    <textarea className={textAreaStyle} {...field} />
+                    <p>
+                      {
+                        formState.errors.questions?.[index]?.explanation
+                          ?.message
+                      }
+                    </p>
+                  </div>
+                )}
+              />
+            ))}
         </form>
         {grantScreen === "create-grant" && (
           <div className="flex w-full flex-col items-center justify-center gap-8 py-8">
