@@ -329,7 +329,7 @@ const UpdatesTab: FC = () => {
           </Button>
         ) : null}
       </div>
-      {updates.length ? (
+      {allUpdates.length ? (
         <div className="flex flex-col gap-6">
           {allUpdates.map((update, index) => (
             <UpdateBlock key={update.id} update={update} index={index} />
