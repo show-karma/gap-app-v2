@@ -5,7 +5,7 @@ import { FC, useMemo, useRef } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { registryHelper } from "./helper";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { Discord2Icon, Twitter2Icon } from "@/components/Icons";
+import { Discord2Icon, Telegram2Icon, Twitter2Icon } from "@/components/Icons";
 import { DiscussionIcon } from "@/components/Icons/Discussion";
 import { BlogIcon } from "@/components/Icons/Blog";
 import { OrganizationIcon } from "@/components/Icons/Organization";
@@ -149,6 +149,14 @@ export const ProgramList: FC<ProgramListProps> = ({
                       className="w-max"
                     >
                       <Discord2Icon className="w-5 h-5 text-black dark:text-white" />
+                    </ExternalLink>
+                  ) : null}
+                  {grant.metadata?.socialLinks?.telegram ? (
+                    <ExternalLink
+                      href={grant.metadata?.socialLinks?.telegram}
+                      className="w-max"
+                    >
+                      <Telegram2Icon className="w-5 h-5 text-black dark:text-white" />
                     </ExternalLink>
                   ) : null}
                   {grant.metadata?.socialLinks?.forum ? (
