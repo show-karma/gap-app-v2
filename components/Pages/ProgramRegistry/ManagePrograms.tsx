@@ -19,20 +19,11 @@ import {
 } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
-import { envVars } from "@/utilities/enviromentVars";
-import { getWalletClient } from "@wagmi/core";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { AlloBase } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/Allo";
-import {
-  Address,
-  ApplicationMetadata,
-} from "@show-karma/karma-gap-sdk/core/class/types/allo";
-import { AlloContracts } from "@show-karma/karma-gap-sdk/core/consts";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
 import Pagination from "@/components/Utilities/Pagination";
 import debounce from "lodash.debounce";
 import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
 import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
-import { config } from "@/utilities/wagmi/config";
 import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
 import { checkIsPoolManager } from "@/utilities/registry/checkIsPoolManager";
 import { MyProgramList } from "@/components/Pages/ProgramRegistry/MyProgramList";
@@ -56,10 +47,6 @@ export const ManagePrograms = () => {
 
   const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore();
-
-  const { chain } = useAccount();
-
-  const signer = useSigner();
 
   const {
     setIsRegistryAdmin,
@@ -226,8 +213,7 @@ export const ManagePrograms = () => {
     try {
       const id = program._id.$oid;
 
-      changeStepperStep("indexing");
-      const [request, error] = await fetchData(
+      const request = fetchData(
         INDEXER.REGISTRY.APPROVE,
         "POST",
         {
@@ -237,11 +223,16 @@ export const ManagePrograms = () => {
         {},
         {},
         true
-      );
-      if (error) throw new Error("Error approving program");
-      changeStepperStep("indexed");
+      ).then(([res, error]) => {
+        if (error) throw new Error("Error approving program");
+        return res;
+      });
+      await toast.promise(request, {
+        loading: "Approving program...",
+        success: `Program ${value} successfully`,
+        error: "Error approving program",
+      });
 
-      toast.success(`Program ${value} successfully`);
       await refreshPrograms();
     } catch (error: any) {
       errorManager(
@@ -250,8 +241,6 @@ export const ManagePrograms = () => {
       );
       console.log(`Error ${messageDict[value]} program ${program._id.$oid}`);
       toast.error(`Error ${messageDict[value]} program ${program._id.$oid}`);
-    } finally {
-      setIsStepper(false);
     }
   };
 
