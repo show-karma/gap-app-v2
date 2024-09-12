@@ -28,6 +28,7 @@ import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-index
 import { useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
 import { errorManager } from "../Utilities/errorManager";
+import { sanitizeObject } from "@/utilities/sanitize";
 
 const milestoneSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.MILESTONES.FORM.TITLE }),
@@ -128,12 +129,12 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         refUID: uid,
         schema: gapClient.findSchema("Milestone"),
         recipient: (recipient as Hex) || address,
-        data: {
+        data: sanitizeObject({
           description: milestone.description,
           endsAt: milestone.endsAt,
           startsAt: milestone.startsAt,
           title: milestone.title,
-        },
+        }),
       });
 
       const walletClient = await getWalletClient(config, {
