@@ -240,6 +240,22 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
                     <Popover.Panel className="absolute z-10 bg-white dark:bg-zinc-800 mt-4 rounded-md w-[160px] scroll-smooth overflow-y-auto overflow-x-hidden py-2">
                       {({ close }) => (
                         <>
+                          <button
+                            key={"none"}
+                            className="cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 w-full disabled:opacity-30 disabled:cursor-not-allowed disabled:bg-zinc-200 dark:disabled:bg-zinc-900"
+                            onClick={(event) => {
+                              event?.preventDefault();
+                              event?.stopPropagation();
+                              field.onChange(undefined);
+                              setValue("priority", undefined, {
+                                shouldValidate: true,
+                              });
+
+                              close();
+                            }}
+                          >
+                            None
+                          </button>
                           {priorities.map((priority) => (
                             <button
                               key={priority}
@@ -251,10 +267,17 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
                               onClick={(event) => {
                                 event?.preventDefault();
                                 event?.stopPropagation();
-                                field.onChange(priority);
-                                setValue("priority", priority, {
-                                  shouldValidate: true,
-                                });
+                                if (watch("priority") === priority) {
+                                  field.onChange(undefined);
+                                  setValue("priority", undefined, {
+                                    shouldValidate: true,
+                                  });
+                                } else {
+                                  field.onChange(priority);
+                                  setValue("priority", priority, {
+                                    shouldValidate: true,
+                                  });
+                                }
                                 close();
                               }}
                             >

@@ -147,15 +147,14 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
 
     const pendingMilestonesToSet = unsortedPendingMilestones.sort((a, b) => {
       const getDate = (item: any) => {
-        return (
-          new Date(item.object.endsAt).getTime() ||
-          new Date(item.object.createdAt).getTime()
-        );
+        return new Date(item.object.endsAt) || new Date(item.object.createdAt);
       };
       const bDate = getDate(b);
       const aDate = getDate(a);
-      return aDate - bDate;
+
+      return aDate < bDate ? -1 : 1;
     });
+    console.log("pendingMilestonesToSet", pendingMilestonesToSet);
 
     const allMilestonesToSet = unsortedAllMilestones.sort((a, b) => {
       const getDate = (item: any) => {
