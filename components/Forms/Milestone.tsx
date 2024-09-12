@@ -63,7 +63,7 @@ type MilestoneType = z.infer<typeof milestoneSchema>;
 
 interface MilestoneFormProps {
   grant: IGrantResponse;
-  afterSubmit: () => void;
+  afterSubmit?: () => void;
 }
 
 export const MilestoneForm: FC<MilestoneFormProps> = ({
