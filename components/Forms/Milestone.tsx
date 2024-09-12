@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Milestone, MilestoneCompleted } from "@show-karma/karma-gap-sdk";
+import { Milestone } from "@show-karma/karma-gap-sdk";
 import type { FC } from "react";
 import { useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
@@ -16,7 +16,7 @@ import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { Popover } from "@headlessui/react";
 import { DayPicker } from "react-day-picker";
-import { CalendarIcon } from "@heroicons/react/24/outline";
+import { CalendarIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { MESSAGES } from "@/utilities/messages";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { formatDate } from "@/utilities/formatDate";
@@ -24,7 +24,10 @@ import { getWalletClient } from "@wagmi/core";
 import { useCommunityAdminStore } from "@/store/community";
 import { useStepper } from "@/store/modals/txStepper";
 import { config } from "@/utilities/wagmi/config";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import {
+  IGrantResponse,
+  IMilestoneResponse,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
 import { errorManager } from "../Utilities/errorManager";
@@ -32,6 +35,8 @@ import { sanitizeObject } from "@/utilities/sanitize";
 
 const milestoneSchema = z.object({
   title: z.string().min(3, { message: MESSAGES.MILESTONES.FORM.TITLE }),
+  priority: z.number().optional(),
+  description: z.string().optional(),
   dates: z
     .object({
       endsAt: z.date({
@@ -67,14 +72,13 @@ interface MilestoneFormProps {
 }
 
 export const MilestoneForm: FC<MilestoneFormProps> = ({
-  grant: { uid, chainID, recipient: grantRecipient },
+  grant: { uid, chainID, milestones },
   afterSubmit,
 }) => {
   const form = useForm<z.infer<typeof milestoneSchema>>({
     resolver: zodResolver(milestoneSchema),
   });
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const [description, setDescription] = useState("");
   const [recipient, setRecipient] = useState("");
 
   const { address } = useAccount();
@@ -111,14 +115,15 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
     if (!address) return;
     if (!gap) throw new Error("Please, connect a wallet");
     let gapClient = gap;
-    const milestone = {
+    const milestone = sanitizeObject({
       title: data.title,
-      description,
+      description: data.description || "",
       endsAt: data.dates.endsAt.getTime() / 1000,
       startsAt: data.dates.startsAt
         ? data.dates.startsAt.getTime() / 1000
         : undefined,
-    };
+      priority: data.priority,
+    });
 
     try {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== chainID) {
@@ -129,12 +134,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         refUID: uid,
         schema: gapClient.findSchema("Milestone"),
         recipient: (recipient as Hex) || address,
-        data: sanitizeObject({
-          description: milestone.description,
-          endsAt: milestone.endsAt,
-          startsAt: milestone.startsAt,
-          title: milestone.title,
-        }),
+        data: milestone,
       });
 
       const walletClient = await getWalletClient(config, {
@@ -200,6 +200,8 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
     }
   };
 
+  const priorities = Array.from({ length: 5 }, (_, index) => index + 1);
+
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
@@ -216,6 +218,61 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
           {...register("title")}
         />
         <p className="text-base text-red-400">{errors.title?.message}</p>
+      </div>
+      <div className="flex w-full flex-row items-center justify-between gap-4">
+        <div className="flex w-full flex-row justify-between gap-4">
+          <Controller
+            name="priority"
+            control={form.control}
+            render={({ field, formState, fieldState }) => (
+              <div className="flex w-full flex-col gap-2">
+                <label className={labelStyle}>
+                  Milestone priority (optional)
+                </label>
+                <div>
+                  <Popover className="relative">
+                    <Popover.Button className="max-lg:w-full w-max text-sm flex-row flex gap-2 items-center text-black dark:text-white border border-gray-200 bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
+                      {field.value
+                        ? `Priority ${field.value}`
+                        : `Select priority`}
+                      <ChevronDownIcon className="ml-auto h-4 w-4 opacity-50 text-black dark:text-white" />
+                    </Popover.Button>
+                    <Popover.Panel className="absolute z-10 bg-white dark:bg-zinc-800 mt-4 rounded-md w-[160px] scroll-smooth overflow-y-auto overflow-x-hidden py-2">
+                      {({ close }) => (
+                        <>
+                          {priorities.map((priority) => (
+                            <button
+                              key={priority}
+                              className="cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 w-full disabled:opacity-30 disabled:cursor-not-allowed disabled:bg-zinc-200 dark:disabled:bg-zinc-900"
+                              disabled={milestones.some(
+                                (m: IMilestoneResponse) =>
+                                  m.data.priority === priority
+                              )}
+                              onClick={(event) => {
+                                event?.preventDefault();
+                                event?.stopPropagation();
+                                field.onChange(priority);
+                                setValue("priority", priority, {
+                                  shouldValidate: true,
+                                });
+                                close();
+                              }}
+                            >
+                              Priority {priority}
+                            </button>
+                          ))}
+                        </>
+                      )}
+                    </Popover.Panel>
+                  </Popover>
+                </div>
+                <p className="text-base text-red-400">
+                  {formState.errors.dates?.endsAt?.message}
+                </p>
+              </div>
+            )}
+          />
+        </div>
       </div>
       <div className="flex w-full flex-row items-center justify-between gap-4">
         <div className="flex w-full flex-row justify-between gap-4">
@@ -328,8 +385,12 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         <div className="mt-2 w-full bg-transparent" data-color-mode="light">
           <MarkdownEditor
             className="bg-transparent"
-            value={description}
-            onChange={(newValue: string) => setDescription(newValue || "")}
+            value={watch("description") || ""}
+            onChange={(newValue: string) => {
+              setValue("description", newValue || "", {
+                shouldValidate: true,
+              });
+            }}
             placeholderText="Please provide a concise description of your objectives for this milestone"
           />
         </div>
