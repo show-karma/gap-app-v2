@@ -146,8 +146,8 @@ export const ObjectiveCardComplete = ({
             {objective.completed.data?.reason || ""}
           </ReadMore>
 
-          <div className="flex w-full flex-row items-center justify-between w-full">
-            <div className="flex flex-row items-center gap-1 flex-1 max-w-full">
+          <div className="flex w-full flex-row items-center justify-between max-lg:flex-wrap max-lg:flex-col max-lg:items-start max-lg:gap-2">
+            <div className="flex flex-row items-center gap-1 flex-1 max-w-full max-lg:flex-wrap">
               <p className="text-sm w-full min-w-max max-w-max font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
                 Proof of work:
               </p>
@@ -189,7 +189,7 @@ export const ObjectiveCardComplete = ({
                 <div className="flex w-max flex-row items-center gap-2">
                   <Button
                     type="button"
-                    className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
+                    className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent max-lg:px-0"
                     onClick={() => deleteObjectiveCompletion()}
                   >
                     <TrashIcon className="h-5 w-5" />
