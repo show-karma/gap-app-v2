@@ -31,7 +31,10 @@ const inputStyle =
   "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white";
 
 const milestoneSchema = z.object({
-  title: z.string().min(3, { message: "Title must be at least 3 characters" }),
+  title: z
+    .string()
+    .min(3, { message: "Title must be at least 3 characters" })
+    .max(30, { message: "Title must be less than 30 characters" }),
   priority: z.number().optional(),
   dates: z
     .object({

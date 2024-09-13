@@ -49,7 +49,10 @@ const inputStyle =
   "mt-1 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100";
 
 const createProgramSchema = z.object({
-  name: z.string().min(3, { message: MESSAGES.REGISTRY.FORM.NAME }),
+  name: z
+    .string()
+    .min(3, { message: MESSAGES.REGISTRY.FORM.NAME.MIN })
+    .max(30, { message: MESSAGES.REGISTRY.FORM.NAME.MAX }),
   dates: z
     .object({
       endsAt: z.date().optional(),
@@ -389,7 +392,6 @@ export default function AddProgram({
         tags: ["karma-gap", "grant-program-registry"],
         status: data.status,
       });
-     
 
       const isSameAddress =
         programToEdit?.createdByAddress?.toLowerCase() ===
