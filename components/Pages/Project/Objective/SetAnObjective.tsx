@@ -1,7 +1,6 @@
 "use client";
 import { ProjectObjectiveForm } from "@/components/Forms/ProjectObjective";
 import { Button } from "@/components/Utilities/Button";
-import { MESSAGES } from "@/utilities/messages";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 
@@ -26,7 +25,7 @@ export const SetAnObjective = ({
           <p className="text-zinc-900 dark:text-zinc-300 font-normal text-xl">
             {hasObjectives ? "Set an Objective" : "Set your first Objective"}
           </p>
-          <p className="text-[#1D2939] dark:text-zinc-300 p-4 border border-[#DCDFEA] rounded-md font-normal text-base bg-transparent">
+          <p className="text-[#1D2939] dark:text-zinc-300 rounded-md font-normal text-base bg-transparent">
             Your roadmap needs objectives. Define clear objectives to guide your
             progress and stay on course.
           </p>

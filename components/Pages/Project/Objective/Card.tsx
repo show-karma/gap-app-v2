@@ -42,9 +42,15 @@ export const ObjectiveCard = ({
   };
 
   return (
-    <div className="border border-[#D0D5DD] dark:border-zinc-400 rounded-xl p-6 gap-3 flex flex-col items-start justify-start">
+    <div
+      className={`border ${
+        objective.completed
+          ? "border-brand-blue"
+          : "border-[#D0D5DD] dark:border-zinc-400"
+      } bg-white dark:bg-zinc-800 rounded-xl p-6 gap-3 flex flex-col items-start justify-start`}
+    >
       <div className="flex flex-row gap-3 items-start justify-between w-full">
-        <div className="flex flex-row gap-3 items-center">
+        <div className="flex flex-row gap-3 items-center max-lg:flex-col-reverse max-lg:items-start max-lg:gap-2 w-full">
           <p
             className="text-xl font-bold text-[#101828] dark:text-zinc-100 pl-4 border-l-4"
             style={{
@@ -92,7 +98,7 @@ export const ObjectiveCard = ({
       {isCompleting ||
       objective.completed?.data?.reason ||
       objective.completed?.data?.proofOfWork ? (
-        <div className="w-full flex-col flex gap-2 px-4 py-2 bg-[#F8F9FC] dark:bg-zinc-800 rounded-lg">
+        <div className="w-full flex-col flex gap-2 px-4 py-2 bg-[#F8F9FC] dark:bg-zinc-700 rounded-lg">
           <ObjectiveCardComplete
             objective={objective}
             isCompleting={isCompleting}

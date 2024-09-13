@@ -57,13 +57,15 @@ export const ObjectiveList = () => {
       {isLoading ? (
         <DefaultLoading />
       ) : orderedObjectives && orderedObjectives?.length > 0 ? (
-        orderedObjectives?.map((item, index) => (
-          <ObjectiveCard
-            isAuthorized={isAuthorized}
-            key={index}
-            objective={item}
-          />
-        ))
+        <div className="flex w-full flex-col gap-6 px-6 py-10 bg-[#F9FAFB] dark:bg-zinc-900 rounded-xl max-lg:px-2 max-lg:py-4">
+          {orderedObjectives?.map((item, index) => (
+            <ObjectiveCard
+              isAuthorized={isAuthorized}
+              key={index}
+              objective={item}
+            />
+          ))}
+        </div>
       ) : !isAuthorized ? (
         <div className="flex flex-col gap-2 justify-center items-start border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-8 w-full">
           <p className="text-zinc-900 font-bold text-center text-lg w-full dark:text-zinc-300">
