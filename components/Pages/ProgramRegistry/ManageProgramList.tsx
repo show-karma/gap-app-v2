@@ -6,7 +6,7 @@ import { FC, useEffect, useMemo, useRef, useState } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { registryHelper } from "./helper";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { Discord2Icon, Twitter2Icon } from "@/components/Icons";
+import { Discord2Icon, Telegram2Icon, Twitter2Icon } from "@/components/Icons";
 import { DiscussionIcon } from "@/components/Icons/Discussion";
 import { BlogIcon } from "@/components/Icons/Blog";
 import { OrganizationIcon } from "@/components/Icons/Organization";
@@ -64,7 +64,11 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
                 <div className="flex flex-row gap-1 w-full">
                   {grant.metadata?.socialLinks?.grantsSite ? (
                     <ExternalLink
-                      href={grant.metadata?.socialLinks?.grantsSite}
+                      href={
+                        grant.metadata?.socialLinks?.grantsSite.includes("http")
+                          ? grant.metadata?.socialLinks?.grantsSite
+                          : `https://${grant.metadata?.socialLinks?.grantsSite}`
+                      }
                       className="w-max"
                     >
                       <Image
@@ -85,7 +89,11 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
                   ) : null}
                   {grant.metadata?.socialLinks?.twitter ? (
                     <ExternalLink
-                      href={grant.metadata?.socialLinks?.twitter}
+                      href={
+                        grant.metadata?.socialLinks?.twitter.includes("http")
+                          ? grant.metadata?.socialLinks?.twitter
+                          : `https://${grant.metadata?.socialLinks?.twitter}`
+                      }
                       className="w-max"
                     >
                       <Twitter2Icon className="w-5 h-5 text-black dark:text-white" />
@@ -93,15 +101,35 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
                   ) : null}
                   {grant.metadata?.socialLinks?.discord ? (
                     <ExternalLink
-                      href={grant.metadata?.socialLinks?.discord}
+                      href={
+                        grant.metadata?.socialLinks?.discord.includes("http")
+                          ? grant.metadata?.socialLinks?.discord
+                          : `https://${grant.metadata?.socialLinks?.discord}`
+                      }
                       className="w-max"
                     >
                       <Discord2Icon className="w-5 h-5 text-black dark:text-white" />
                     </ExternalLink>
                   ) : null}
+                  {grant.metadata?.socialLinks?.telegram ? (
+                    <ExternalLink
+                      href={
+                        grant.metadata?.socialLinks?.telegram.includes("http")
+                          ? grant.metadata?.socialLinks?.telegram
+                          : `https://${grant.metadata?.socialLinks?.telegram}`
+                      }
+                      className="w-max"
+                    >
+                      <Telegram2Icon className="w-5 h-5 text-black dark:text-white" />
+                    </ExternalLink>
+                  ) : null}
                   {grant.metadata?.socialLinks?.forum ? (
                     <ExternalLink
-                      href={grant.metadata?.socialLinks?.forum}
+                      href={
+                        grant.metadata?.socialLinks?.forum.includes("http")
+                          ? grant.metadata?.socialLinks?.forum
+                          : `https://${grant.metadata?.socialLinks?.forum}`
+                      }
                       className="w-max"
                     >
                       <DiscussionIcon className="w-5 h-5 text-black dark:text-white" />
@@ -109,7 +137,11 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
                   ) : null}
                   {grant.metadata?.socialLinks?.blog ? (
                     <ExternalLink
-                      href={grant.metadata?.socialLinks?.blog}
+                      href={
+                        grant.metadata?.socialLinks?.blog.includes("http")
+                          ? grant.metadata?.socialLinks?.blog
+                          : `https://${grant.metadata?.socialLinks?.blog}`
+                      }
                       className="w-max"
                     >
                       <BlogIcon className="w-5 h-5 text-black dark:text-white" />
@@ -117,7 +149,11 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
                   ) : null}
                   {grant.metadata?.socialLinks?.orgWebsite ? (
                     <ExternalLink
-                      href={grant.metadata?.socialLinks?.orgWebsite}
+                      href={
+                        grant.metadata?.socialLinks?.orgWebsite.includes("http")
+                          ? grant.metadata?.socialLinks?.orgWebsite
+                          : `https://${grant.metadata?.socialLinks?.orgWebsite}`
+                      }
                       className="w-max"
                     >
                       <OrganizationIcon className="w-5 h-5 text-black dark:text-white" />
