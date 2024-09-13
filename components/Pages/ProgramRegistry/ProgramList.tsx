@@ -5,7 +5,7 @@ import { FC, useMemo, useRef } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { registryHelper } from "./helper";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { Discord2Icon, Twitter2Icon } from "@/components/Icons";
+import { Discord2Icon, Telegram2Icon, Twitter2Icon } from "@/components/Icons";
 import { DiscussionIcon } from "@/components/Icons/Discussion";
 import { BlogIcon } from "@/components/Icons/Blog";
 import { OrganizationIcon } from "@/components/Icons/Organization";
@@ -46,6 +46,7 @@ export type GrantProgram = {
       website?: string;
       orgWebsite?: string;
       grantsSite?: string;
+      telegram?: string;
     };
     bugBounty?: string;
     bounties?: string[];
@@ -115,7 +116,11 @@ export const ProgramList: FC<ProgramListProps> = ({
                 <div className="flex flex-row gap-1 w-full">
                   {grant.metadata?.socialLinks?.website ? (
                     <ExternalLink
-                      href={grant.metadata?.socialLinks?.website}
+                      href={
+                        grant.metadata?.socialLinks?.website.includes("http")
+                          ? grant.metadata?.socialLinks?.website
+                          : `https://${grant.metadata?.socialLinks?.website}`
+                      }
                       className="w-max"
                     >
                       <Image
@@ -136,7 +141,11 @@ export const ProgramList: FC<ProgramListProps> = ({
                   ) : null}
                   {grant.metadata?.socialLinks?.twitter ? (
                     <ExternalLink
-                      href={grant.metadata?.socialLinks?.twitter}
+                      href={
+                        grant.metadata?.socialLinks?.twitter.includes("http")
+                          ? grant.metadata?.socialLinks?.twitter
+                          : `https://${grant.metadata?.socialLinks?.twitter}`
+                      }
                       className="w-max"
                     >
                       <Twitter2Icon className="w-5 h-5 text-black dark:text-white" />
@@ -144,15 +153,35 @@ export const ProgramList: FC<ProgramListProps> = ({
                   ) : null}
                   {grant.metadata?.socialLinks?.discord ? (
                     <ExternalLink
-                      href={grant.metadata?.socialLinks?.discord}
+                      href={
+                        grant.metadata?.socialLinks?.discord.includes("http")
+                          ? grant.metadata?.socialLinks?.discord
+                          : `https://${grant.metadata?.socialLinks?.discord}`
+                      }
                       className="w-max"
                     >
                       <Discord2Icon className="w-5 h-5 text-black dark:text-white" />
                     </ExternalLink>
                   ) : null}
+                  {grant.metadata?.socialLinks?.telegram ? (
+                    <ExternalLink
+                      href={
+                        grant.metadata?.socialLinks?.telegram.includes("http")
+                          ? grant.metadata?.socialLinks?.telegram
+                          : `https://${grant.metadata?.socialLinks?.telegram}`
+                      }
+                      className="w-max"
+                    >
+                      <Telegram2Icon className="w-5 h-5 text-black dark:text-white" />
+                    </ExternalLink>
+                  ) : null}
                   {grant.metadata?.socialLinks?.forum ? (
                     <ExternalLink
-                      href={grant.metadata?.socialLinks?.forum}
+                      href={
+                        grant.metadata?.socialLinks?.forum.includes("http")
+                          ? grant.metadata?.socialLinks?.forum
+                          : `https://${grant.metadata?.socialLinks?.forum}`
+                      }
                       className="w-max"
                     >
                       <DiscussionIcon className="w-5 h-5 text-black dark:text-white" />
@@ -160,7 +189,11 @@ export const ProgramList: FC<ProgramListProps> = ({
                   ) : null}
                   {grant.metadata?.socialLinks?.blog ? (
                     <ExternalLink
-                      href={grant.metadata?.socialLinks?.blog}
+                      href={
+                        grant.metadata?.socialLinks?.blog.includes("http")
+                          ? grant.metadata?.socialLinks?.blog
+                          : `https://${grant.metadata?.socialLinks?.blog}`
+                      }
                       className="w-max"
                     >
                       <BlogIcon className="w-5 h-5 text-black dark:text-white" />
@@ -168,7 +201,11 @@ export const ProgramList: FC<ProgramListProps> = ({
                   ) : null}
                   {grant.metadata?.socialLinks?.orgWebsite ? (
                     <ExternalLink
-                      href={grant.metadata?.socialLinks?.orgWebsite}
+                      href={
+                        grant.metadata?.socialLinks?.orgWebsite.includes("http")
+                          ? grant.metadata?.socialLinks?.orgWebsite
+                          : `https://${grant.metadata?.socialLinks?.orgWebsite}`
+                      }
                       className="w-max"
                     >
                       <OrganizationIcon className="w-5 h-5 text-black dark:text-white" />
@@ -432,7 +469,11 @@ export const ProgramList: FC<ProgramListProps> = ({
           const program = info.row.original;
           const data = program?.trackedProjects || 0;
           return (
-            <Link href={""} target="_blank" className="w-full flex flex-row flex-wrap gap-1 my-2 items-center">
+            <Link
+              href={""}
+              target="_blank"
+              className="w-full flex flex-row flex-wrap gap-1 my-2 items-center"
+            >
               {data}
             </Link>
           );
@@ -461,13 +502,25 @@ export const ProgramList: FC<ProgramListProps> = ({
           return (
             <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
               {grant.metadata?.socialLinks?.grantsSite ? (
-                <ExternalLink onClick={(event) => {
-                  if (isDisabled()) {
-                    event.preventDefault();
+                <ExternalLink
+                  onClick={(event) => {
+                    if (isDisabled()) {
+                      event.preventDefault();
+                    }
+                  }}
+                  href={
+                    isDisabled()
+                      ? ""
+                      : grant.metadata?.socialLinks?.grantsSite.includes("http")
+                      ? grant.metadata?.socialLinks?.grantsSite
+                      : `https://${grant.metadata?.socialLinks?.grantsSite}`
                   }
-                }} href={isDisabled() ? "" : grant.metadata?.socialLinks?.grantsSite}>
+                >
                   <div className={`relative group`}>
-                    <Button className={isDisabled() ? "cursor-not-allowed" : ""} disabled={isDisabled() as boolean}>
+                    <Button
+                      className={isDisabled() ? "cursor-not-allowed" : ""}
+                      disabled={isDisabled() as boolean}
+                    >
                       Apply
                     </Button>
                     {isDisabled() && (
@@ -545,8 +598,9 @@ export const ProgramList: FC<ProgramListProps> = ({
                   key={row.id}
                   style={{
                     height: `${virtualRow.size}px`,
-                    transform: `translateY(${virtualRow.start - index * virtualRow.size
-                      }px)`,
+                    transform: `translateY(${
+                      virtualRow.start - index * virtualRow.size
+                    }px)`,
                   }}
                 >
                   {row.getVisibleCells().map((cell) => {
