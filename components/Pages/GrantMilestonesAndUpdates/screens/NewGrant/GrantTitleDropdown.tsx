@@ -65,51 +65,42 @@ export const GrantTitleDropdown: FC<{
     if (!custom) {
       return;
     }
-    try {
-      const [request, error] = await fetchData(
-        INDEXER.REGISTRY.CREATE,
-        "POST",
-        {
-          owner,
-          chainId: registryHelper.supportedNetworks,
-          metadata: {
-            title: custom,
-            description: custom,
-            socialLinks: {
-              grantsSite: "https://gap.showkarma.xyz",
-            },
-          },
-        },
-        {},
-        {},
-        true
-      );
-
-      if (error) {
-        throw new Error("Error creating program");
-      } else {
-        list.push(request);
-        console.log("Program created successfully");
-        setValue("programId", undefined);
-        setValue("title", request?.metadata?.title, {
-          shouldValidate: true,
-        });
-        setAdding(false);
-        setSelectedProgram(request);
-        if (search.length) {
-          setSearch("");
-          setTimeout(() => {
-            setSearch(custom);
-          }, 100);
-        }
-        setTitle("");
-      }
-    } catch (error) {
-      errorManager("Error creating program", error, {
+    let requestProgram: GrantProgram = {
+      metadata: {
         title: custom,
-        owner,
-      });
+        status: "active",
+        description: "",
+        website: "",
+        tags: [],
+      },
+      programId: custom,
+      chainID: chainId,
+      _id: { $oid: custom },
+      createdAt: new Date().getTime().toString(),
+      updatedAt: new Date().getTime().toString(),
+    };
+    const programAlreadyExists = list.find(
+      (item) => item.metadata?.title === custom
+    );
+    if (programAlreadyExists) {
+      requestProgram = programAlreadyExists;
+    } else {
+      list.push(requestProgram);
     }
+
+    setValue("programId", undefined);
+    setValue("title", custom, {
+      shouldValidate: true,
+    });
+    setAdding(false);
+    setSelectedProgram(requestProgram);
+    if (search.length) {
+      setSearch("");
+      setTimeout(() => {
+        setSearch(custom);
+      }, 100);
+    }
+    setTitle("");
   };
 
   return (
