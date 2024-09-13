@@ -509,7 +509,11 @@ export const ProgramList: FC<ProgramListProps> = ({
                     }
                   }}
                   href={
-                    isDisabled() ? "" : grant.metadata?.socialLinks?.grantsSite
+                    isDisabled()
+                      ? ""
+                      : grant.metadata?.socialLinks?.grantsSite.includes("http")
+                      ? grant.metadata?.socialLinks?.grantsSite
+                      : `https://${grant.metadata?.socialLinks?.grantsSite}`
                   }
                 >
                   <div className={`relative group`}>
