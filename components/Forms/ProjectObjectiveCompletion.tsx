@@ -44,7 +44,7 @@ const labelStyle =
   "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
 const inputStyle =
-  "bg-white border border-gray-300 rounded-md p-2 dark:bg-zinc-900";
+  "bg-white border border-gray-300 rounded-md p-2 dark:bg-zinc-900 max-lg:text-sm";
 
 interface ProjectObjectiveCompletionFormProps {
   objectiveUID: string;
@@ -186,7 +186,7 @@ export const ProjectObjectiveCompletionForm = ({
           <label htmlFor="proofOfWork-input" className={labelStyle}>
             Output of your work *
           </label>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
+          <p className="text-sm text-gray-500 dark:text-gray-400 max-lg:text-xs">
             Provide a link that demonstrates your work. This could be a link to
             a tweet announcement, a dashboard, a Google Doc, a blog post, a
             video, or any other resource that highlights the progress or result
@@ -204,7 +204,7 @@ export const ProjectObjectiveCompletionForm = ({
                 });
               }}
             />
-            <p className="text-base text-zinc-900 dark:text-zinc-100">{`I don't have any output to show for this milestone`}</p>
+            <p className="text-base text-zinc-900 dark:text-zinc-100 max-lg:text-xs">{`I don't have any output to show for this milestone`}</p>
           </div>
           <input
             id="proofOfWork-input"
@@ -220,13 +220,13 @@ export const ProjectObjectiveCompletionForm = ({
       <div className="flex flex-row gap-4 justify-end">
         <Button
           disabled={isCompleting}
-          className="w-full max-w-max text-zinc-900 bg-transparent text-sm px-3 py-2  border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-transparent dark:hover:bg-zinc-900 dark:hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
+          className="w-full max-w-max text-zinc-900 bg-transparent text-sm px-3 py-2  border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-transparent dark:hover:bg-zinc-900 dark:hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900 max-lg:text-xs"
           onClick={() => handleCompleting(false)}
         >
           Cancel
         </Button>
         <Button
-          className="w-full max-w-max bg-brand-blue text-white text-sm px-3 py-2"
+          className="w-full max-w-max bg-brand-blue text-white text-sm px-3 py-2 max-lg:text-xs"
           type="submit"
           disabled={
             !isValid ||

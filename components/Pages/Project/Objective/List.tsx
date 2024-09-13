@@ -57,7 +57,7 @@ export const ObjectiveList = () => {
       {isLoading ? (
         <DefaultLoading />
       ) : orderedObjectives && orderedObjectives?.length > 0 ? (
-        <div className="flex w-full flex-col gap-6 px-6 py-10 bg-[#F9FAFB] dark:bg-zinc-900 rounded-xl">
+        <div className="flex w-full flex-col gap-6 px-6 py-10 bg-[#F9FAFB] dark:bg-zinc-900 rounded-xl max-lg:px-2 max-lg:py-4">
           {orderedObjectives?.map((item, index) => (
             <ObjectiveCard
               isAuthorized={isAuthorized}

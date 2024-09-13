@@ -50,7 +50,7 @@ export const ObjectiveCard = ({
       } bg-white dark:bg-zinc-800 rounded-xl p-6 gap-3 flex flex-col items-start justify-start`}
     >
       <div className="flex flex-row gap-3 items-start justify-between w-full">
-        <div className="flex flex-row gap-3 items-center">
+        <div className="flex flex-row gap-3 items-center max-lg:flex-col-reverse max-lg:items-start max-lg:gap-2 w-full">
           <p
             className="text-xl font-bold text-[#101828] dark:text-zinc-100 pl-4 border-l-4"
             style={{

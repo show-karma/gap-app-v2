@@ -31,7 +31,7 @@ export const ObjectivesSub = () => {
   if (totalObjectives === 0) return null;
 
   return (
-    <div className="flex flex-row gap-2 items-center justify-start">
+    <div className="flex flex-row gap-2 items-center justify-start max-lg:flex-col max-lg:items-start max-lg:justify-center max-lg:gap-1">
       <p className="text-base font-normal text-[#475467] dark:text-gray-400">
         {`${totalObjectives} ${pluralize(
           "Objective",
@@ -43,7 +43,7 @@ export const ObjectivesSub = () => {
       </p>
       {lastUpdated ? (
         <>
-          <div className="w-[4px] h-[4px] rounded-full bg-gray-500" />
+          <div className="w-[4px] h-[4px] rounded-full bg-gray-500 max-lg:hidden" />
           <p className="text-base font-normal text-[#475467] dark:text-gray-400">
             {`Last Updated on ${formatDate(lastUpdated)}`}
           </p>
