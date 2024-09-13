@@ -79,7 +79,7 @@ export const GrantTitleDropdown: FC<{
       updatedAt: new Date().getTime().toString(),
     };
     const programAlreadyExists = list.find(
-      (item) => item.metadata?.title === custom
+      (item) => item.metadata?.title?.toLowerCase() === custom.toLowerCase()
     );
     if (programAlreadyExists) {
       requestProgram = programAlreadyExists;
