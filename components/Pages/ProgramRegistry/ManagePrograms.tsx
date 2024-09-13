@@ -224,13 +224,16 @@ export const ManagePrograms = () => {
         {},
         true
       ).then(([res, error]) => {
-        if (error) throw new Error("Error approving program");
+        if (error)
+          throw new Error(
+            `Error while changing program ${program.metadata?.title} to ${value}.`
+          );
         return res;
       });
       await toast.promise(request, {
-        loading: "Approving program...",
-        success: `Program ${value} successfully`,
-        error: "Error approving program",
+        loading: `Changing program ${program.metadata?.title} to ${value}...`,
+        success: `Program changed to ${value} successfully`,
+        error: `Error while changing program ${program.metadata?.title} to ${value}.`,
       });
 
       await refreshPrograms();
@@ -240,7 +243,6 @@ export const ManagePrograms = () => {
         error
       );
       console.log(`Error ${messageDict[value]} program ${program._id.$oid}`);
-      toast.error(`Error ${messageDict[value]} program ${program._id.$oid}`);
     }
   };
 
