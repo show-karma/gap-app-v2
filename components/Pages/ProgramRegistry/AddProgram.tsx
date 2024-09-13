@@ -312,7 +312,7 @@ export default function AddProgram({
         true
       );
       if (error) {
-        throw new Error("Error creating program");
+        throw new Error(error);
       }
       toast.success(
         <p className="text-left">
@@ -326,8 +326,13 @@ export default function AddProgram({
       );
       router.push(PAGES.REGISTRY.ROOT);
     } catch (error: any) {
-      errorManager(`Error while creating a program`, error);
-      toast.error("An error occurred while creating the program");
+      const errorMessage = error.message;
+      if (errorMessage?.includes("already exists")) {
+        toast.error("A program with this name already exists");
+      } else {
+        toast.error("An error occurred while creating the program");
+        errorManager(`Error while creating a program`, error);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -389,7 +394,6 @@ export default function AddProgram({
         tags: ["karma-gap", "grant-program-registry"],
         status: data.status,
       });
-     
 
       const isSameAddress =
         programToEdit?.createdByAddress?.toLowerCase() ===
