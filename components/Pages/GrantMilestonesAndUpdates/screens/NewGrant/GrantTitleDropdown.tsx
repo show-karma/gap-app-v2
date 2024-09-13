@@ -56,7 +56,6 @@ export const GrantTitleDropdown: FC<{
 }) => {
   const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);
-  const { address: owner } = useAccount();
   const [title, setTitle] = useState("");
   const [search, setSearch] = useState("");
   const [list, setList] = useState(listProp);
