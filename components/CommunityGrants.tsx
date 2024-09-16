@@ -132,9 +132,7 @@ export const CommunityGrants = ({
         if (fetchedGrants && fetchedGrants.length) {
           setHaveMore(fetchedGrants.length === itemsPerPage);
           setGrants((prev) =>
-            currentPage === 0 || selectedProgramId
-              ? fetchedGrants
-              : [...prev, ...fetchedGrants]
+            currentPage === 0 ? fetchedGrants : [...prev, ...fetchedGrants]
           );
           setTotalGrants((prev) => pageInfo?.totalItems || prev);
         } else {
