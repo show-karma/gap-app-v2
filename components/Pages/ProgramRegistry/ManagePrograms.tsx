@@ -653,10 +653,6 @@ export const ManagePrograms = () => {
                                 setSelectedProgram(program);
                               }}
                               isAllowed={isAllowed}
-                              setSortField={setSortField}
-                              setSortOrder={setSortOrder}
-                              defaultSort={defaultSort}
-                              defaultSortOrder={defaultSortOrder}
                             />
                           ) : (
                             <MyProgramList

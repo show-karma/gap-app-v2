@@ -26,6 +26,7 @@ import { shortAddress } from "@/utilities/shortAddress";
 import { useAccount } from "wagmi";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
 import { useSearchParams } from "next/navigation";
+import { useQueryState } from "nuqs";
 
 interface ManageProgramListProps {
   grantPrograms: GrantProgram[];
@@ -37,10 +38,6 @@ interface ManageProgramListProps {
   editFn: (program: GrantProgram) => any;
   selectProgram: (program: GrantProgram) => void;
   isAllowed: boolean;
-  setSortField: (field: string) => void;
-  setSortOrder: (order: "asc" | "desc") => void;
-  defaultSort: string;
-  defaultSortOrder: string;
 }
 
 export const ManageProgramList: FC<ManageProgramListProps> = ({
@@ -50,14 +47,20 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
   editFn,
   selectProgram,
   isAllowed,
-  setSortField,
-  setSortOrder,
-  defaultSort,
-  defaultSortOrder,
 }) => {
   const { address } = useAccount();
   const searchParams = useSearchParams();
   const [sorting, setSorting] = useState<SortingState>([]);
+
+  const defaultSort = searchParams.get("sortField") || "updatedAt";
+  const defaultSortOrder = searchParams.get("sortOrder") || "desc";
+  const [sortField, setSortField] = useQueryState("sortField", {
+    defaultValue: defaultSort,
+  });
+  const [sortOrder, setSortOrder] = useQueryState("sortOrder", {
+    defaultValue: defaultSortOrder,
+  });
+
   const columns = useMemo<ColumnDef<GrantProgram>[]>(
     () => [
       {
@@ -379,26 +382,24 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
           );
         },
         header: () => (
-          <div className="flex items-center gap-1">
-            {" "}
-            <div
-              className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64 cursor-pointer"
-              onClick={() => {
-                setSortField("createdAt");
-                setSortOrder(defaultSortOrder === "asc" ? "desc" : "asc");
-              }}
-            >
+          <button
+            type="button"
+            className="flex items-center gap-1"
+            onClick={() => {
+              setSortField("createdAt");
+              setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+            }}
+          >
+            <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64 cursor-pointer">
               Date Added
             </div>
             <div className="flex flex-col items-center gap-0.5">
-              {searchParams.get("sortField") === "asc" && (
+              {sortOrder === "asc" && (
                 <ChevronUpIcon className="w-4 h-4 inline-block" />
               )}
-              {searchParams.get("sortField") === "desc" && (
-                <ChevronDownIcon className="w-4 h-4" />
-              )}
+              {sortOrder === "desc" && <ChevronDownIcon className="w-4 h-4" />}
             </div>
-          </div>
+          </button>
         ),
       },
       // {
