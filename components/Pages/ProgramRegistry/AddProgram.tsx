@@ -293,7 +293,6 @@ export default function AddProgram({
         logoImgData: {},
         bannerImgData: {},
         credentials: {},
-        createdAt: new Date().getTime(),
         status: "Active",
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
@@ -384,12 +383,10 @@ export default function AddProgram({
         logoImgData: {},
         bannerImgData: {},
         credentials: {},
-        createdAt: new Date().getTime(),
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
         status: data.status,
       });
-     
 
       const isSameAddress =
         programToEdit?.createdByAddress?.toLowerCase() ===

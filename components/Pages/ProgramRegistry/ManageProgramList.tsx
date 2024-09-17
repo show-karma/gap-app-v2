@@ -365,19 +365,14 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
         ),
       },
       {
-        accessorFn: (row) =>
-          row.metadata?.createdAt ? +row.metadata.createdAt : null,
+        accessorFn: (row) => (row.createdAt ? row.createdAt : null),
         id: "Date Added",
         cell: (info) => {
-          const grant = info.row.original;
+          const program = info.row.original;
 
           return (
             <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-              {grant?.metadata?.createdAt
-                ? formatDate(+grant?.metadata?.createdAt) === "NaN"
-                  ? grant?.metadata?.createdAt
-                  : `${formatDate(+grant?.metadata?.createdAt)}`
-                : ""}
+              {program?.createdAt ? formatDate(program?.createdAt) : ""}
             </div>
           );
         },
