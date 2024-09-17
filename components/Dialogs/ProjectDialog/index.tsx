@@ -17,7 +17,7 @@ import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useAccount, useSwitchChain } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import {
-  type ExternalLink,
+  ExternalLink,
   type IProjectDetails,
   MemberOf,
   Project,
@@ -58,6 +58,13 @@ import { NetworkDropdown } from "./NetworkDropdown";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { useProjectEditModalStore } from "@/store/modals/projectEdit";
+import debounce from "lodash.debounce";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { Skeleton } from "@/components/Utilities/Skeleton";
+import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
+import { SimilarProjectsDialog } from "../SimilarProjectsDialog";
+import { ExternalLink as ExternalLinkComponent } from "@/components/Utilities/ExternalLink";
+import { SOCIALS } from "@/utilities/socials";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -203,14 +210,24 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const router = useRouter();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
+  const { openSimilarProjectsModal, isSimilarProjectsModalOpen } =
+    useSimilarProjectsModalStore();
 
-  const { register, handleSubmit, reset, watch, setValue, trigger, formState } =
-    useForm<SchemaType>({
-      resolver: zodResolver(schema),
-      reValidateMode: "onChange",
-      mode: "onChange",
-      defaultValues: dataToUpdate,
-    });
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    setValue,
+    trigger,
+    formState,
+    setError,
+  } = useForm<SchemaType>({
+    resolver: zodResolver(schema),
+    reValidateMode: "onChange",
+    mode: "onChange",
+    defaultValues: dataToUpdate,
+  });
   const { errors, isValid } = formState;
 
   const [team, setTeam] = useState<string[]>(dataToUpdate?.members || []);
@@ -607,12 +624,66 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     }
   }, [contactsInfo]);
 
+  const tooltipText = () => {
+    const errors = hasErrors();
+    if (isLoading) {
+      return <p>Loading...</p>;
+    }
+    if (!errors) {
+      return;
+    }
+
+    return <p>Please fill all the required fields</p>;
+  };
+
+  const [isSearchingProject, setIsSearchingProject] = useState(false);
+  const [existingProjects, setExistingProjects] = useState<IProjectResponse[]>(
+    []
+  );
+
+  const searchByExistingName = debounce(async (value: string) => {
+    if (value.length < 3) {
+      return;
+    }
+    try {
+      setIsSearchingProject(true);
+      const result = await gapIndexerApi
+        .searchProjects(value)
+        .then((res) => res.data);
+      const hasEqualTitle =
+        result.filter(
+          (item) =>
+            item.details?.data.title.toLowerCase() === value.toLowerCase()
+        ).length > 0;
+      if (hasEqualTitle) {
+        setExistingProjects(result);
+        setError("title", {
+          message:
+            "We found a project with similar name. Please double check to make sure you don't already have a project in our platform.",
+        });
+      } else {
+        setExistingProjects([]);
+      }
+      return;
+    } catch (error) {
+      console.log("error", error);
+    } finally {
+      setIsSearchingProject(false);
+    }
+  }, 500);
+
   const categories = [
     {
       title: "General info",
       desc: "These are the basics about your project",
       fields: (
         <div className="flex w-full flex-col gap-8 max-w-3xl">
+          {isSimilarProjectsModalOpen ? (
+            <SimilarProjectsDialog
+              similarProjects={existingProjects}
+              projectName={watch("title")}
+            />
+          ) : null}
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="name-input" className={labelStyle}>
               Name *
@@ -623,8 +694,48 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               className={inputStyle}
               placeholder='e.g. "My awesome project"'
               {...register("title")}
+              onBlur={() => {
+                searchByExistingName(watch("title"));
+              }}
             />
-            <p className="text-red-500">{errors.title?.message}</p>
+            <div className="flex flex-col gap-1 justify-start items-start">
+              {isSearchingProject ? (
+                <Skeleton className="w-full h-6" />
+              ) : (
+                <p className="text-red-500">
+                  {errors.title?.message}{" "}
+                  {errors.title?.message &&
+                  errors.title?.message.includes("similar") ? (
+                    <>
+                      <span>
+                        If you need help getting access to your project, message
+                        us{" "}
+                      </span>
+                      <ExternalLinkComponent
+                        className="underline text-red-700 dark:text-red-300"
+                        href={SOCIALS.TELEGRAM}
+                      >
+                        {SOCIALS.TELEGRAM}.
+                      </ExternalLinkComponent>{" "}
+                    </>
+                  ) : null}
+                </p>
+              )}
+              {errors.title?.message &&
+              errors.title?.message.includes("similar") ? (
+                <span
+                  className="text-blue-500 underline cursor-pointer"
+                  style={{
+                    userSelect: "none",
+                  }}
+                  onClick={() => {
+                    openSimilarProjectsModal();
+                  }}
+                >
+                  View similar projects
+                </span>
+              ) : null}
+            </div>
           </div>
 
           <div className="flex w-full flex-col gap-2" data-color-mode="light">
@@ -999,18 +1110,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     // },
   ];
 
-  const tooltipText = () => {
-    const errors = hasErrors();
-    if (isLoading) {
-      return <p>Loading...</p>;
-    }
-    if (!errors) {
-      return;
-    }
-
-    return <p>Please fill all the required fields</p>;
-  };
-
   return (
     <>
       {buttonElement ? (
@@ -1028,6 +1127,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           {buttonElement.iconSide === "right" && buttonElement.icon}
         </button>
       ) : null}
+
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-[100]" onClose={closeModal}>
           <Transition.Child
