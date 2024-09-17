@@ -167,9 +167,24 @@ export const MyProgramList: FC<MyProgramListProps> = ({
           );
         },
         header: () => (
-          <div className="py-3.5 px-3 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body">
-            Name
-          </div>
+          <button
+            type="button"
+            className="flex items-center gap-1"
+            onClick={() => {
+              setSortField("name");
+              setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+            }}
+          >
+            <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64 cursor-pointer">
+              Name
+            </div>
+            <div className="flex flex-col items-center gap-0.5">
+              {sortOrder === "asc" && (
+                <ChevronUpIcon className="w-4 h-4 inline-block" />
+              )}
+              {sortOrder === "desc" && <ChevronDownIcon className="w-4 h-4" />}
+            </div>
+          </button>
         ),
       },
       {
