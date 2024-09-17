@@ -21,7 +21,10 @@ const labelStyle =
   "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
 const schema = z.object({
-  name: z.string().optional(),
+  name: z
+    .string()
+    .max(30, { message: MESSAGES.PROJECT.SUBSCRIPTION.NAME.MAX })
+    .optional(),
   email: z
     .string()
     .email({

@@ -63,7 +63,10 @@ const textAreaStyle =
   "mt-2 w-full rounded-lg border border-gray-200 bg-transparent px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:text-zinc-100 dark:border-gray-600";
 
 const grantSchema = z.object({
-  title: z.string().min(3, { message: MESSAGES.GRANT.FORM.TITLE }),
+  title: z
+    .string()
+    .min(3, { message: MESSAGES.GRANT.FORM.TITLE.MIN })
+    .max(30, { message: MESSAGES.GRANT.FORM.TITLE.MAX }),
   programId: z.string().optional(),
   amount: z.string().optional(),
   community: z.string().nonempty({ message: MESSAGES.GRANT.FORM.COMMUNITY }),

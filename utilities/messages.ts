@@ -1,6 +1,9 @@
 export const MESSAGES = {
   PROJECT_FORM: {
-    TITLE: "Title must be at least 3 characters",
+    TITLE: {
+      MIN: "Title must be at least 3 characters",
+      MAX: "Title must be less than 30 characters",
+    },
     RECIPIENT: "Invalid address",
     TAGS: "Each category must be at least 3 characters",
     SOCIALS: {
@@ -17,7 +20,10 @@ export const MESSAGES = {
     },
   },
   PROJECT_UPDATE_FORM: {
-    TITLE: "Title must be at least 3 characters",
+    TITLE: {
+      MIN: "Title must be at least 3 characters",
+      MAX: "Title must be less than 30 characters",
+    },
     TEXT: "Text must be at least 3 characters",
     SUCCESS: "Update was successfully added to the project.",
     ERROR: "There was an error creating the update. Please try again.",
@@ -27,7 +33,10 @@ export const MESSAGES = {
     },
   },
   PROJECT_OBJECTIVE_FORM: {
-    TITLE: "Title must be at least 3 characters",
+    TITLE: {
+      MIN: "Title must be at least 3 characters",
+      MAX: "Title must be less than 30 characters",
+    },
     TEXT: "Text must be at least 3 characters",
     SUCCESS: "Objective was successfully added to the project.",
     ERROR: "There was an error creating the objective. Please try again.",
@@ -50,7 +59,10 @@ export const MESSAGES = {
     },
   },
   COMMUNITY_FORM: {
-    TITLE: "Title must be at least 3 characters",
+    TITLE: {
+      MIN: "Title must be at least 3 characters",
+      MAX: "Title must be less than 30 characters",
+    },
     IMAGE_URL: "ENTER a valid Image url",
     DESCRIPTION: "Enter a valid description",
     SLUG: "Slug  must be at least 3 characters",
@@ -99,7 +111,10 @@ export const MESSAGES = {
       ERROR: "There was an error creating the grant. Please try again.",
     },
     FORM: {
-      TITLE: `Title must be at least 3 characters`,
+      TITLE: {
+        MIN: "Title must be at least 3 characters",
+        MAX: "Title must be less than 30 characters",
+      },
       LINK_TO_PROPOSAL: `This link must be a valid URL`,
       RECIPIENT: "Invalid address",
       COMMUNITY: "Community is required",
@@ -122,7 +137,10 @@ export const MESSAGES = {
       SUCCESS: "Your grant was edited successfully!",
       ERROR: "There was an error editing the grant. Please try again.",
       FORM: {
-        TITLE: "Title must be at least 3 characters",
+        TITLE: {
+          MIN: "Title must be at least 3 characters",
+          MAX: "Title must be less than 30 characters",
+        },
         DESCRIPTION: "Description must be a valid text",
       },
     },
@@ -134,7 +152,10 @@ export const MESSAGES = {
   },
   MILESTONES: {
     FORM: {
-      TITLE: "Title must be at least 3 characters",
+      TITLE: {
+        MIN: "Title must be at least 3 characters",
+        MAX: "Title must be less than 30 characters",
+      },
       DATE: "Date is required",
     },
     DELETE: {
@@ -199,7 +220,10 @@ export const MESSAGES = {
       MESSAGE: "Enter your request message",
     },
     SUBSCRIPTION: {
-      NAME: "Name must be at least 3 characters",
+      NAME: {
+        MIN: "Name must be at least 3 characters",
+        MAX: "Name must be less than 30 characters",
+      },
       EMAIL: "E-mail must be at least 3 characters",
     },
     CREATE: {
@@ -265,7 +289,10 @@ export const MESSAGES = {
   },
   REGISTRY: {
     FORM: {
-      NAME: "Name must be at least 3 characters",
+      NAME: {
+        MIN: "Name must be at least 3 characters",
+        MAX: "Name must be less than 30 characters",
+      },
       DESCRIPTION: "Description must be at least 3 characters",
       BUDGET: "You need to specify a budget",
       AMOUNT_DISTRIBUTED: "You need to specify an amount distributed to date",

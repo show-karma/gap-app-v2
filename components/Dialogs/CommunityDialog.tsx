@@ -34,7 +34,10 @@ const labelStyle =
   "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
 const schema = z.object({
-  name: z.string().min(3, { message: MESSAGES.COMMUNITY_FORM.TITLE }),
+  name: z
+    .string()
+    .min(3, { message: MESSAGES.COMMUNITY_FORM.TITLE.MIN })
+    .max(30, { message: MESSAGES.COMMUNITY_FORM.TITLE.MAX }),
   slug: z.string().min(3, { message: MESSAGES.COMMUNITY_FORM.SLUG }),
   imageURL: z.string().min(1, { message: MESSAGES.COMMUNITY_FORM.IMAGE_URL }),
 });

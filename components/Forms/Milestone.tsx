@@ -34,7 +34,10 @@ import { errorManager } from "../Utilities/errorManager";
 import { sanitizeObject } from "@/utilities/sanitize";
 
 const milestoneSchema = z.object({
-  title: z.string().min(3, { message: MESSAGES.MILESTONES.FORM.TITLE }),
+  title: z
+    .string()
+    .min(3, { message: MESSAGES.MILESTONES.FORM.TITLE.MIN })
+    .max(30, { message: MESSAGES.MILESTONES.FORM.TITLE.MAX }),
   priority: z.number().optional(),
   description: z.string().optional(),
   dates: z

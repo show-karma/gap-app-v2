@@ -152,7 +152,10 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
   const subscriptionShema = z
     .object({
       id: z.string().min(1),
-      name: z.string().min(3, "Name must be at least 3 characters long"),
+      name: z
+        .string()
+        .min(3, "Name must be at least 3 characters long")
+        .max(30, "Name must be less than 30 characters long"),
       telegram: z.string(),
       email: z
         .string()
