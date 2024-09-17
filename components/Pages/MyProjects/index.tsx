@@ -21,6 +21,8 @@ import { useOnboarding } from "@/store/modals/onboarding";
 import { useMixpanel } from "@/hooks/useMixpanel";
 
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useQuery } from "@tanstack/react-query";
+import { LoadingCard } from "./LoadingCard";
 
 const ProjectDialog = dynamic(
   () =>
@@ -73,46 +75,54 @@ const OnboardingButton = () => {
   );
 };
 
+const fetchMyProjects = async (address: `0x${string}` | undefined) => {
+  if (!address) return;
+  try {
+    const { data: projectsOf } = await gapIndexerApi.projectsOf(address);
+    return projectsOf;
+  } catch (error: any) {
+    errorManager(`Error fetching projects of ${address}`, error);
+  }
+};
+
 export default function MyProjects() {
   const { isConnected, address } = useAccount();
   const { isAuth } = useAuthStore();
   const { theme: currentTheme } = useTheme();
-  const [myProjects, setMyProjects] = useState<IProjectResponse[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const itemsPerPage = 12;
   const [page, setPage] = useState<number>(1);
-  const [totalProjects, setTotalProjects] = useState<number>(0);
 
-  useEffect(() => {
-    const fetchMyProjects = async () => {
-      if (!address) return;
-      setIsLoading(true);
-      try {
-        const { data: projectsOf } = await gapIndexerApi.projectsOf(address);
-        setTotalProjects(projectsOf.length);
-        const projectsPiece = projectsOf.slice(
-          itemsPerPage * (page - 1),
-          itemsPerPage * page
-        );
-        setMyProjects(projectsPiece || []);
-      } catch (error: any) {
-        console.error(error);
-        setMyProjects([]);
-        errorManager(`Error fetching projects of ${address}`, error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const {
+    data: projects,
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ["totalProjects"],
+    queryFn: () => fetchMyProjects(address),
+    enabled: Boolean(address),
+  });
 
-    fetchMyProjects();
-  }, [address, page]);
+  const totalProjects: number = projects?.length || 0;
+  const myProjects: IProjectResponse[] =
+    projects?.slice(itemsPerPage * (page - 1), itemsPerPage * page) || [];
+
+  // do a empty array of 12
+  const loadingArray = Array.from({ length: 12 }, (_, index) => index);
 
   return (
     <div className="px-4 sm:px-6 lg:px-12 py-5">
       <div className="mt-5 w-full gap-5">
         {isConnected && isAuth ? (
           <div className="flex flex-col gap-4">
-            {myProjects.length > 0 ? (
+            {isLoading ? (
+              <div className="flex flex-col gap-4 justify-start">
+                <div className="grid grid-cols-4 gap-7 pb-4 max-xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1">
+                  {loadingArray.map((item) => (
+                    <LoadingCard key={item} />
+                  ))}
+                </div>
+              </div>
+            ) : myProjects.length > 0 ? (
               <div className="flex flex-col gap-4 justify-start">
                 <div className="grid grid-cols-4 gap-7 pb-4 max-xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1">
                   {myProjects.map((card, index) => {
@@ -199,16 +209,18 @@ export default function MyProjects() {
                     );
                   })}
                 </div>
-                {totalProjects > itemsPerPage ? (
+                {totalProjects && totalProjects > itemsPerPage ? (
                   <Pagination
                     currentPage={page}
                     postsPerPage={itemsPerPage}
                     totalPosts={totalProjects}
-                    setCurrentPage={setPage}
+                    setCurrentPage={(newPage) => {
+                      setPage(newPage);
+                    }}
                   />
                 ) : null}
               </div>
-            ) : !isLoading ? (
+            ) : (
               <div className="flex w-full flex-row items-center justify-center">
                 <div
                   className="flex h-96 border-spacing-4 flex-col items-center justify-center gap-5 rounded border border-blue-600 bg-[#EEF4FF] px-8 max-sm:px-1"
@@ -227,11 +239,8 @@ export default function MyProjects() {
                   <ProjectDialog />
                 </div>
               </div>
-            ) : (
-              <div className="flex items-center justify-center">
-                <Spinner />
-              </div>
             )}
+
             <div className="flex mt-20 justify-center items-center w-full">
               <OnboardingButton />
             </div>
