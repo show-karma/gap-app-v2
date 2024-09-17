@@ -5,6 +5,7 @@ import { getMetadata } from "@/utilities/sdk";
 import { zeroUID } from "@/utilities/commons";
 import { defaultMetadata } from "@/utilities/meta";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { envVars } from "@/utilities/enviromentVars";
 
 export async function generateMetadata({
   params,
@@ -26,22 +27,31 @@ export async function generateMetadata({
   }
 
   return {
-    title: `Karma GAP - ${projectInfo.details?.data?.title}`,
+    title: `${projectInfo.details?.data?.title} | Karma GAP`,
     description: projectInfo.details?.data?.description?.substring(0, 80) || "",
     twitter: {
       creator: defaultMetadata.twitter.creator,
       site: defaultMetadata.twitter.site,
       card: "summary_large_image",
+      images: [
+        {
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
+          alt: `${projectInfo.details?.data?.title} | Karma GAP`,
+        },
+      ],
     },
     openGraph: {
       url: defaultMetadata.openGraph.url,
-      title: `Karma GAP - ${projectInfo.details?.data?.title}`,
+      title: `${projectInfo.details?.data?.title} | Karma GAP`,
       description:
         projectInfo.details?.data?.description?.substring(0, 80) || "",
-      images: defaultMetadata.openGraph.images.map((image) => ({
-        url: image,
-        alt: `Karma GAP - ${projectInfo.details?.data?.title}`,
-      })),
+
+      images: [
+        {
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
+          alt: `${projectInfo.details?.data?.title} | Karma GAP`,
+        },
+      ],
     },
     icons: {
       icon: "/favicon.ico",

@@ -34,9 +34,10 @@ export const getGrants = async (
         categories: filter?.categories?.join(","),
         sort: filter?.sortBy,
         status: filter?.status,
-        selectedProgramId: filter?.selectedProgramId
+        selectedProgramId: filter?.selectedProgramId,
       })
     );
+    if (!response) return { grants: [], pageInfo: {} };
     const { data: grants, pageInfo } = response;
     if (!grants || grants.length === 0) return { grants: [], pageInfo: {} };
 

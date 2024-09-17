@@ -28,7 +28,7 @@ export default async function fetchData(
         ...headers,
       },
       data: sanitizedData,
-      timeout: 60000,
+      timeout: 360000,
       params,
     });
     let resData = res.data;
@@ -38,8 +38,6 @@ export default async function fetchData(
     let error = "";
     if (!err.response) {
       error = "No server response";
-    } else if (err.response.status >= 500) {
-      error = "Internal server error";
     } else {
       error = err.response.data.message || err.message;
     }

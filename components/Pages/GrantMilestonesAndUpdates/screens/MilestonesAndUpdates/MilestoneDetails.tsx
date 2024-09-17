@@ -64,7 +64,7 @@ export const MilestoneDateStatus: FC<MilestoneDateStatusProps> = ({
 
   return (
     <div className="flex w-max flex-row items-center justify-center gap-4 max-lg:justify-start">
-      <p className="text-sm font-semibold text-gray-500 dark:text-gray-4000">
+      <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">
         {milestone.data.startsAt
           ? `${formatDate(milestone.data.startsAt * 1000)} - ${formatDate(
               milestone.data.endsAt * 1000
@@ -84,12 +84,20 @@ export const MilestoneDateStatus: FC<MilestoneDateStatusProps> = ({
 
 interface MilestoneTagProps {
   index: number;
+  priority?: number;
 }
-export const MilestoneTag: FC<MilestoneTagProps> = ({ index }) => {
+export const MilestoneTag: FC<MilestoneTagProps> = ({ index, priority }) => {
   return (
-    <div className="flex w-max flex-row gap-3 rounded-full bg-[#F5F3FF] dark:bg-zinc-900 px-3 py-1 text-[#5720B7] dark:text-violet-100">
-      <FlagIcon />
-      <p className="text-xs font-bold">MILESTONE {index}</p>
+    <div className="flex flex-row gap-3">
+      <div className="flex w-max flex-row gap-3 rounded-full bg-[#F5F3FF] dark:bg-zinc-900 px-3 py-1 text-[#5720B7] dark:text-violet-100">
+        <FlagIcon />
+        <p className="text-xs font-bold">MILESTONE {index}</p>
+      </div>
+      {priority ? (
+        <div className="flex w-max flex-row gap-3 rounded-full bg-slate-100 dark:bg-zinc-700 px-3 py-1 text-zinc-700 dark:text-zinc-100">
+          <p className="text-xs font-bold">PRIORITY {priority}</p>
+        </div>
+      ) : null}
     </div>
   );
 };
@@ -125,7 +133,10 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
         >
           <div className="flex w-full flex-row items-start justify-between px-4 max-lg:mb-4 max-lg:flex-col">
             <div className="flex flex-col gap-3">
-              <MilestoneTag index={index} />
+              <MilestoneTag
+                index={index}
+                priority={milestone?.data?.priority}
+              />
               <h4 className="text-base font-bold leading-normal text-black dark:text-zinc-100">
                 {milestone.data.title}
               </h4>

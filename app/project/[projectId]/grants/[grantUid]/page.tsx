@@ -1,5 +1,6 @@
 import { GrantOverview } from "@/components/Pages/Project/Grants/Overview";
 import { zeroUID } from "@/utilities/commons";
+import { envVars } from "@/utilities/enviromentVars";
 import { fetchFromLocalApi } from "@/utilities/fetchFromServer";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { defaultMetadata } from "@/utilities/meta";
@@ -53,30 +54,25 @@ export async function generateMetadata({
         overview: {
           title: `${grantInfo?.details?.data?.title} Grant Overview | ${projectInfo?.details?.data?.title} | Karma GAP`,
           description:
-            `${grantInfo?.details?.data?.description?.slice(0, 160)}${grantInfo?.details?.data?.description &&
+            `${grantInfo?.details?.data?.description?.slice(0, 160)}${
+              grantInfo?.details?.data?.description &&
               grantInfo?.details?.data?.description?.length >= 160
-              ? "..."
-              : ""
+                ? "..."
+                : ""
             }` || "",
         },
       };
 
       metadata = {
         ...metadata,
-        title:
-          tabMetadata["overview"]?.title ||
-          tabMetadata["overview"]?.title ||
-          "",
-        description:
-          tabMetadata["overview"]?.description ||
-          tabMetadata["overview"]?.description ||
-          "",
+        title: tabMetadata["overview"]?.title || "",
+        description: tabMetadata["overview"]?.description || "",
       };
     }
   } else {
     metadata = {
       ...metadata,
-      title: `Karma GAP - ${projectInfo?.details?.data?.title}`,
+      title: `${projectInfo?.details?.data?.title} | Karma GAP`,
       description:
         projectInfo?.details?.data?.description?.substring(0, 80) || "",
     };
@@ -89,16 +85,23 @@ export async function generateMetadata({
       creator: defaultMetadata.twitter.creator,
       site: defaultMetadata.twitter.site,
       card: "summary_large_image",
+      images: [
+        {
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
+          alt: metadata.title,
+        },
+      ],
     },
     openGraph: {
       url: defaultMetadata.openGraph.url,
       title: metadata.title,
       description: metadata.description,
-      images: defaultMetadata.openGraph.images.map((image) => ({
-        url: image,
-        alt: metadata.title,
-      })),
-      // site_name: defaultMetadata.openGraph.siteName,
+      images: [
+        {
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
+          alt: metadata.title,
+        },
+      ],
     },
     icons: metadata.icons,
   };

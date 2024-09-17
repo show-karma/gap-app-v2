@@ -35,10 +35,10 @@ export async function generateMetadata({
     await fetchMetadata(
       new URL(
         `/api/frames/${projectId}?projectInfo=${
-        // Base64 encoded projectInfo
-        encodeURIComponent(
-          Buffer.from(JSON.stringify(projectInfo)).toString("base64")
-        )
+          // Base64 encoded projectInfo
+          encodeURIComponent(
+            Buffer.from(JSON.stringify(projectInfo)).toString("base64")
+          )
         }`,
         envVars.VERCEL_URL
       )
@@ -55,15 +55,23 @@ export async function generateMetadata({
       handle: defaultMetadata.twitter.creator,
       site: defaultMetadata.twitter.site,
       cardType: "summary_large_image",
+      images: [
+        {
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
+          alt: dynamicMetadata.title || defaultMetadata.title,
+        },
+      ],
     },
     openGraph: {
       url: defaultMetadata.openGraph.url,
       title: dynamicMetadata.title || defaultMetadata.title,
       description: dynamicMetadata.description || defaultMetadata.description,
-      images: defaultMetadata.openGraph.images.map((image) => ({
-        url: image,
-        alt: dynamicMetadata.title || defaultMetadata.title,
-      })),
+      images: [
+        {
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
+          alt: dynamicMetadata.title || defaultMetadata.title,
+        },
+      ],
     },
     additionalLinkTags: [
       {
@@ -99,10 +107,10 @@ export default async function RootLayout({
         </div>
       }
     >
-      <div>
+      <>
         <ProjectWrapper projectId={projectId} project={project} />
         <div className="px-4 sm:px-6 lg:px-12">{children}</div>
-      </div>
+      </>
     </Suspense>
   );
 }
