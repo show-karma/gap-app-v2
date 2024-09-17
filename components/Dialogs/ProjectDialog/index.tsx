@@ -17,7 +17,7 @@ import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useAccount, useSwitchChain } from "wagmi";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import {
-  type ExternalLink,
+  ExternalLink,
   type IProjectDetails,
   MemberOf,
   Project,
@@ -63,6 +63,8 @@ import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
 import { SimilarProjectsDialog } from "../SimilarProjectsDialog";
+import { ExternalLink as ExternalLinkComponent } from "@/components/Utilities/ExternalLink";
+import { SOCIALS } from "@/utilities/socials";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -697,19 +699,38 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               {isSearchingProject ? (
                 <Skeleton className="w-full h-6" />
               ) : (
-                <p className="text-red-500">{errors.title?.message} </p>
+                <p className="text-red-500">
+                  {errors.title?.message}{" "}
+                  {errors.title?.message &&
+                  errors.title?.message.includes("similar") ? (
+                    <>
+                      <span>
+                        If you need help getting access to your project, message
+                        us{" "}
+                      </span>
+                      <ExternalLinkComponent
+                        className="underline text-red-700 dark:text-red-300"
+                        href={SOCIALS.TELEGRAM}
+                      >
+                        {SOCIALS.TELEGRAM}.
+                      </ExternalLinkComponent>{" "}
+                    </>
+                  ) : null}
+                </p>
               )}
               {errors.title?.message &&
               errors.title?.message.includes("similar") ? (
-                <Button
-                  type="button"
-                  className="text-zinc-700 dark:text-zinc-300 px-3 py-2 bg-zinc-100 dark:bg-zinc-900 rounded hover:bg-zinc-200 dark:hover:bg-zinc-950"
+                <span
+                  className="text-blue-500 underline cursor-pointer"
+                  style={{
+                    userSelect: "none",
+                  }}
                   onClick={() => {
                     openSimilarProjectsModal();
                   }}
                 >
                   View similar projects
-                </Button>
+                </span>
               ) : null}
             </div>
           </div>
