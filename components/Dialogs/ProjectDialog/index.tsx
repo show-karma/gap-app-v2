@@ -67,7 +67,10 @@ const labelStyle =
   "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
 const schema = z.object({
-  title: z.string().min(3, { message: MESSAGES.PROJECT_FORM.TITLE }),
+  title: z
+    .string()
+    .min(3, { message: MESSAGES.PROJECT_FORM.TITLE.MIN })
+    .max(30, { message: MESSAGES.PROJECT_FORM.TITLE.MAX }),
   chainID: z.number({
     required_error: "Network is required",
     message: "Network is required",

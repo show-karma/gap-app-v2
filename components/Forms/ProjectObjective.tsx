@@ -23,15 +23,15 @@ import { useParams, useRouter } from "next/navigation";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { XMarkIcon } from "@heroicons/react/24/solid";
-import { formatDate } from "@/utilities/formatDate";
-import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
-import EthereumAddressToENSName from "../EthereumAddressToENSName";
 import { cn } from "@/utilities/tailwind";
 import { useQuery } from "@tanstack/react-query";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 
 const objectiveSchema = z.object({
-  title: z.string().min(3, { message: MESSAGES.PROJECT_OBJECTIVE_FORM.TITLE }),
+  title: z
+    .string()
+    .min(3, { message: MESSAGES.PROJECT_OBJECTIVE_FORM.TITLE.MIN })
+    .max(30, { message: MESSAGES.PROJECT_OBJECTIVE_FORM.TITLE.MAX }),
   text: z.string().min(3, { message: MESSAGES.PROJECT_OBJECTIVE_FORM.TEXT }),
 });
 

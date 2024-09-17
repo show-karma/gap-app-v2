@@ -39,7 +39,10 @@ interface NewGrantUpdateProps {
   grant: IGrantResponse;
 }
 const updateSchema = z.object({
-  title: z.string().min(3, { message: MESSAGES.GRANT.UPDATE.FORM.TITLE }),
+  title: z
+    .string()
+    .min(3, { message: MESSAGES.GRANT.UPDATE.FORM.TITLE.MIN })
+    .max(30, { message: MESSAGES.GRANT.UPDATE.FORM.TITLE.MAX }),
   description: z
     .string()
     .min(3, { message: MESSAGES.GRANT.UPDATE.FORM.DESCRIPTION }),
