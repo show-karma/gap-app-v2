@@ -220,7 +220,10 @@ export const MESSAGES = {
       MESSAGE: "Enter your request message",
     },
     SUBSCRIPTION: {
-      NAME: "Name must be at least 3 characters",
+      NAME: {
+        MIN: "Name must be at least 3 characters",
+        MAX: "Name must be less than 30 characters",
+      },
       EMAIL: "E-mail must be at least 3 characters",
     },
     CREATE: {
