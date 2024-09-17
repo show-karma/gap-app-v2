@@ -106,7 +106,7 @@ export const ReportMilestonePage = ({
   const { isAuth } = useAuthStore();
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isAuthorized = isConnected && isAuth && (!isAdmin || isContractOwner);
+  const isAuthorized = isConnected && isAuth && (isAdmin || isContractOwner);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("totalMilestones");
