@@ -631,7 +631,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     return <p>Please fill all the required fields</p>;
   };
 
-  const [hasExistingProject, setHasExistingProject] = useState(false);
   const [isSearchingProject, setIsSearchingProject] = useState(false);
   const [existingProjects, setExistingProjects] = useState<IProjectResponse[]>(
     []
@@ -653,13 +652,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         ).length > 0;
       if (hasEqualTitle) {
         setExistingProjects(result);
-        setHasExistingProject(hasEqualTitle);
         setError("title", {
           message:
             "We found a project with similar name. Please double check to make sure you don't already have a project in our platform.",
         });
       } else {
-        setHasExistingProject(false);
         setExistingProjects([]);
       }
       return;
