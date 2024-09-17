@@ -290,128 +290,30 @@ export const ManagePrograms = () => {
     };
     try {
       const id = program._id.$oid;
-      const { programId, createdAtBlock, chainID, metadata, admins } = program;
 
-      if (value === "accepted" && !programId && !createdAtBlock) {
-        if (!isConnected || !isAuth) {
-          openConnectModal?.();
-          return;
-        }
-        if (chain?.id !== chainID) {
-          await switchChainAsync?.({ chainId: chainID as number });
-        }
+      const request = fetchData(
+        INDEXER.REGISTRY.APPROVE,
+        "POST",
+        {
+          id,
+          isValid: value,
+        },
+        {},
+        {},
+        true
+      ).then(([res, error]) => {
+        if (error)
+          throw new Error(
+            `Error while changing program ${program.metadata?.title} to ${value}.`
+          );
+        return res;
+      });
+      await toast.promise(request, {
+        loading: `Changing program ${program.metadata?.title} to ${value}...`,
+        success: `Program changed to ${value} successfully`,
+        error: `Error while changing program ${program.metadata?.title} to ${value}.`,
+      });
 
-        const walletClient = await getWalletClient(config, {
-          chainId: chainID,
-        });
-        if (!walletClient) return;
-        const walletSigner = await walletClientToSigner(walletClient);
-        const _currentTimestamp = Math.floor(new Date().getTime() / 1000);
-        const matchinFundAmount = 0;
-
-        const allo = new AlloBase(
-          walletSigner as any,
-          envVars.IPFS_TOKEN,
-          chainID as number
-        );
-
-        const profileId = envVars.PROFILE_ID;
-
-        const applicationMetadata: ApplicationMetadata = {
-          version: "1.0.0",
-          lastUpdatedOn: new Date().getTime(),
-          applicationSchema: {
-            questions: [
-              {
-                id: 0,
-                info: "Email Address",
-                type: "email",
-                title: "Email Address",
-                hidden: false,
-                required: false,
-                encrypted: false,
-              },
-            ],
-            requirements: {
-              github: {
-                required: false,
-                verification: false,
-              },
-              twitter: {
-                required: false,
-                verification: false,
-              },
-            },
-          },
-        };
-
-        const [currentManagers, fetchError] = await fetchData(
-          INDEXER.REGISTRY.MANAGERS(profileId, chainID as number),
-          "GET"
-        );
-        if (fetchError) throw new Error("Error fetching current managers");
-
-        const managers = currentManagers.concat([
-          program.createdByAddress as Address,
-        ]);
-
-        const args: any = {
-          profileId,
-          roundMetadata: sanitizeObject(metadata),
-          applicationStart: _currentTimestamp + 3600, // 1 hour later   registrationStartTime
-          applicationEnd: _currentTimestamp + 432000, // 5 days later   registrationEndTime
-          roundStart: _currentTimestamp + 7200, // 2 hours later  allocationStartTime
-          roundEnd: _currentTimestamp + 864000, // 10 days later  allocaitonEndTime
-          matchingFundAmt: matchinFundAmount,
-          applicationMetadata,
-          managers, // managers
-          strategy: AlloContracts.strategy
-            .DonationVotingMerkleDistributionDirectTransferStrategy as Address, // strategy
-          payoutToken: "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE", // Eg. ETH
-        };
-
-        const hasRegistry = await allo
-          .createGrant(args, changeStepperStep)
-          .then((res) => {
-            return res;
-          })
-          .catch((error) => {
-            throw new Error(error);
-          });
-        changeStepperStep("indexing");
-        if (!hasRegistry) {
-          throw new Error("No registry found");
-        }
-        const { txHash } = hasRegistry;
-        const [request, error] = await fetchData(
-          INDEXER.REGISTRY.APPROVE,
-          "POST",
-          {
-            txHash,
-            id,
-            isValid: value,
-          },
-          {},
-          {},
-          true
-        );
-        if (error) throw new Error("Error approving program");
-        changeStepperStep("indexed");
-      } else {
-        const [request, error] = await fetchData(
-          INDEXER.REGISTRY.APPROVE,
-          "POST",
-          {
-            id,
-            isValid: value,
-          },
-          {},
-          {},
-          true
-        );
-        if (error) throw new Error(`Program failed when updating to ${value}`);
-      }
-      toast.success(`Program ${value} successfully`);
       await refreshPrograms();
     } catch (error: any) {
       errorManager(
@@ -419,9 +321,6 @@ export const ManagePrograms = () => {
         error
       );
       console.log(`Error ${messageDict[value]} program ${program._id.$oid}`);
-      toast.error(`Error ${messageDict[value]} program ${program._id.$oid}`);
-    } finally {
-      setIsStepper(false);
     }
   };
 
