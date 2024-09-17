@@ -17,9 +17,12 @@ const labelStyle = "text-sm font-bold";
 const inputStyle =
   "mt-2 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white";
 
-const subscriptionShema = z.object({
+const subscriptionSchema = z.object({
   id: z.string().min(1),
-  name: z.string().min(3, "Name must be at least 3 characters long"),
+  name: z
+    .string()
+    .min(3, "Name must be at least 3 characters long")
+    .max(30, "Name must be less than 30 characters"),
   telegram: z.string(),
   email: z
     .string()
@@ -29,7 +32,7 @@ const subscriptionShema = z.object({
     .min(3, "E-mail must be at least 3 characters long"),
 });
 
-type FormType = z.infer<typeof subscriptionShema>;
+type FormType = z.infer<typeof subscriptionSchema>;
 
 interface ContactBlockProps {
   onSelectFunction: (value: string) => void;
@@ -139,7 +142,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
     watch,
     formState: { errors, isValid },
   } = useForm<FormType>({
-    resolver: zodResolver(subscriptionShema),
+    resolver: zodResolver(subscriptionSchema),
     reValidateMode: "onChange",
     mode: "onChange",
     defaultValues: dataToUpdate,
