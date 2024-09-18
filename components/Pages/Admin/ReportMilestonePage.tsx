@@ -40,10 +40,14 @@ interface Report {
   pendingMilestones: number;
   completedMilestones: number;
   proofOfWorkLinks: string[];
-  rating: number | null;
-  reasons: string[];
+  evaluations: Evaluation[] | null | undefined;
 }
 
+interface Evaluation {
+  _id: string;
+  rating: number;
+  reasons: string[];
+}
 interface ReportAPIResponse {
   data: Report[];
   pageInfo: {
@@ -143,23 +147,13 @@ export const ReportMilestonePage = ({
 
   const pageInfo = data?.pageInfo;
   const reports = data?.data;
-  const totalNoOfProjects = data?.uniqueProjectCount;
-  const totalGrants = data?.stats?.totalGrants || 0;
-  const totalProjectsWithMilestones =
-    data?.stats?.totalProjectsWithMilestones || 0;
-  const totalMilestones = data?.stats?.totalMilestones || 0;
-  const totalCompletedMilestones = data?.stats?.totalCompletedMilestones || 0;
-  const totalPendingMilestones = data?.stats?.totalPendingMilestones || 0;
-  const percentageProjectsWithMilestones =
-    data?.stats?.percentageProjectsWithMilestones || 0;
-  const percentageCompletedMilestones =
-    data?.stats?.percentageCompletedMilestones || 0;
-  const percentagePendingMilestones =
-    data?.stats?.percentagePendingMilestones || 0;
+
 
   const totalItems: any = pageInfo?.totalItems || 0;
 
   const signer = useSigner();
+
+  const modelToUse = "gpt-4o-mini"
 
   useEffect(() => {
     if (!address || !signer || !community || !isAuth) return;
@@ -435,7 +429,6 @@ export const ReportMilestonePage = ({
                         <ChevronUpDownIcon className="h-4 w-4" />
                       )}
                     </button>
-
                   </th>
                   <th
                     scope="col"
@@ -520,16 +513,27 @@ export const ReportMilestonePage = ({
                           <div className="flex text-primary  ">
                             {[...Array(10)].map((_, index) => (
                               <span key={index} className="text-sm">
-                                {index + 1 <= Math.round(report?.rating || 0) ? '🟢' : '🔴'}
+                                {index + 1 <= Math.round(report?.evaluations?.find((evaluation: Evaluation) => evaluation._id === "gpt-4o-mini")?.rating || 0)
+                                  ? "🟢"
+                                  : "🔴"}
                               </span>
                             ))}
                           </div>
                         </td>
                         <td className="px-4 py-2 max-w-[220px]">
-                          <ReasonsModal text={report.rating && report.rating >= 4 ? 'Include' : 'Exclude'} reasons={report?.reasons} />
+                          <ReasonsModal
+                            text={
+                              (report?.evaluations?.find(
+                                (evaluation: Evaluation) => evaluation._id === modelToUse)
+                                ?.rating as number) >= 4
+                                ? "Include"
+                                : "Exclude"
+                            }
+                            reasons={report?.evaluations?.find((evaluation: Evaluation) => evaluation._id === modelToUse)?.reasons || []}
+                          />
                         </td>
                         <td className="px-4 py-2 max-w-[220px]">
-                          <div className="flex flex-col gap-1">
+                          <div className="flex flex-col gap-1 overflow-x-auto max-w-[220px] w-max">
                             {outputsFiltered.map((item, index) => (
                               <ExternalLink
                                 key={index}
