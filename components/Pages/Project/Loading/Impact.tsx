@@ -32,16 +32,8 @@ const SkeletonRow = () => {
 };
 
 export const ProjectImpactLoading = () => {
-  // add empty array of 5 elements
   const emptyArray = Array.from({ length: 5 }, (_, index) => index);
   return (
-    // <div className="pt-5 pb-20 flex flex-col gap-4">
-    //   <Skeleton className="w-full h-8" />
-    //   <Skeleton className="w-full h-8" />
-    //   <Skeleton className="w-full h-8" />
-    //   <Skeleton className="w-full h-8" />
-    //   <Skeleton className="w-full h-8" />
-    // </div>
     <table className="overflow-x-auto w-full">
       <thead>
         <tr>
