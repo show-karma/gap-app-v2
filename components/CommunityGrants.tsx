@@ -83,9 +83,15 @@ export const CommunityGrants = ({
   // Call API
   const [programs, setPrograms] = useState<GrantProgram[]>([]);
   const [programsLoading, setProgramsLoading] = useState<boolean>(true);
-  const [selectedProgramId, setSelectedProgramId] = useState<string | null>(
-    null
-  );
+
+  const [selectedProgramId, changeSelectedProgramIdQuery] = useQueryState<
+    string | null
+  >("programId", {
+    defaultValue: null,
+    serialize: (value) => value ?? "",
+    parse: (value) => value || null,
+  });
+
   const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
   const [grants, setGrants] = useState<Grant[]>([]); // Data returned from the API
   const itemsPerPage = 12; // Set the total number of items you want returned from the API
@@ -103,8 +109,15 @@ export const CommunityGrants = ({
     setProgramsLoading(true);
     const fetchPrograms = async () => {
       const programs = await getPrograms(communityId as Hex);
+      const orderProgramsByTitle = (programs: GrantProgram[]) => {
+        return programs.sort((a, b) => {
+          const aTime = new Date(a.createdAt).getTime();
+          const bTime = new Date(b.createdAt).getTime();
+          return bTime - aTime;
+        });
+      };
 
-      setPrograms(programs);
+      setPrograms(orderProgramsByTitle(programs));
       setProgramsLoading(false);
     };
     fetchPrograms();
@@ -475,7 +488,7 @@ export const CommunityGrants = ({
               <RadioGroup
                 value={selectedProgramId}
                 onChange={(programId) => {
-                  setSelectedProgramId(programId);
+                  changeSelectedProgramIdQuery(programId);
                   setCurrentPage(0);
                   setGrants([]);
                 }}
@@ -484,7 +497,7 @@ export const CommunityGrants = ({
                 <div className="space-y-2">
                   <Field
                     onClick={() => {
-                      setSelectedProgramId(null);
+                      changeSelectedProgramIdQuery(null);
                       setCurrentPage(0);
                       setGrants([]);
                     }}
@@ -507,7 +520,9 @@ export const CommunityGrants = ({
                     <Field
                       key={program.programId}
                       onClick={() => {
-                        setSelectedProgramId(program.programId as string);
+                        changeSelectedProgramIdQuery(
+                          program.programId as string
+                        );
                         setCurrentPage(0);
                         setGrants([]);
                       }}
