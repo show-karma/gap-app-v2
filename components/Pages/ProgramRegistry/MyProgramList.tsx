@@ -14,10 +14,13 @@ import { Button } from "@/components/Utilities/Button";
 import {
   ColumnDef,
   Row,
+  SortingState,
   flexRender,
   getCoreRowModel,
+  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { useQueryState } from "nuqs";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { GrantProgram } from "./ProgramList";
 import { shortAddress } from "@/utilities/shortAddress";
@@ -41,11 +44,21 @@ export const MyProgramList: FC<MyProgramListProps> = ({
   editFn,
   selectProgram,
   isAllowed,
-  setSortField,
-  setSortOrder,
 }) => {
   const searchParams = useSearchParams();
   const { address } = useAccount();
+
+  const [sorting, setSorting] = useState<SortingState>([]);
+
+  const defaultSort = searchParams.get("sortField") || "updatedAt";
+  const defaultSortOrder = searchParams.get("sortOrder") || "desc";
+  const [sortField, setSortField] = useQueryState("sortField", {
+    defaultValue: defaultSort,
+  });
+  const [sortOrder, setSortOrder] = useQueryState("sortOrder", {
+    defaultValue: defaultSortOrder,
+  });
+
   const columns = useMemo<ColumnDef<GrantProgram>[]>(
     () => [
       {
@@ -543,7 +556,10 @@ export const MyProgramList: FC<MyProgramListProps> = ({
   const table = useReactTable({
     data: grantPrograms,
     columns: columns as any,
+    state: { sorting },
+    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
   });
 
   const { rows } = table.getRowModel();
