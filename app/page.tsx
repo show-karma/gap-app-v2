@@ -1,8 +1,3 @@
-// /* eslint-disable @next/next/no-img-element */
-
-import { Suspense } from "react";
-// import { Presentation } from "@/components/Pages/Home/Presentation";
-import dynamic from "next/dynamic";
 import { defaultMetadata } from "@/utilities/meta";
 import { Presentation } from "@/components/Pages/Home/Presentation";
 import { NewFeatureBanner } from "@/components/Pages/Home/NewFeatureBanner";
