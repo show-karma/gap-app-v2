@@ -1,26 +1,37 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 import { CheckIcon } from "@heroicons/react/24/outline";
-import {
-  ReactTypedWrapper,
-  TypedLoading,
-} from "@/components/Pages/Home/ReactTypedWrapp";
+import { TypedLoading } from "@/components/Pages/Home/ReactTypedWrap";
 import dynamic from "next/dynamic";
+import { Button } from "@/components/Utilities/Button";
 // import { ProjectDialog } from "@/components/Dialogs/ProjectDialog";
 
-// const ReactTypedWrapper = dynamic(
-//   () =>
-//     import("@/components/Pages/Home/ReactTypedWrapp").then(
-//       (mod) => mod.ReactTypedWrapper
-//     ),
-//   { ssr: false, loading: () => <TypedLoading /> }
-// );
+const ReactTypedWrapper = dynamic(
+  () =>
+    import("@/components/Pages/Home/ReactTypedWrap").then(
+      (mod) => mod.ReactTypedWrapper
+    ),
+  { ssr: false, loading: () => <TypedLoading /> }
+);
 
 const ProjectDialog = dynamic(
   () =>
     import("@/components/Dialogs/ProjectDialog/index").then(
       (mod) => mod.ProjectDialog
     ),
-  { ssr: false, loading: () => <TypedLoading /> }
+  {
+    ssr: false,
+    loading: () => (
+      <Button className="flex rounded-md hover:opacity-75 border-none transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-3 bg-brand-darkblue dark:bg-gray-700 px-7 py-4 text-lg font-semibold leading-7 text-white hover:bg-brand-darkblue max-2xl:px-5 max-2xl:text-base max-lg:text-sm">
+        Add your project
+        <img
+          className="h-6 w-6 text-white"
+          alt="Contact"
+          src="/icons/arrow-right-2.svg"
+        />
+      </Button>
+    ),
+  }
 );
 export const Presentation = () => {
   return (
