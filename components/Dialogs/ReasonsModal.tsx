@@ -3,7 +3,8 @@
 import { FC, Fragment, ReactNode, useEffect, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import {
-    BookOpenIcon
+    CheckIcon,
+    XMarkIcon
 } from "@heroicons/react/24/solid";
 import { Button } from "../Utilities/Button";
 
@@ -25,7 +26,7 @@ export const ReasonsModal: FC<{
                         : 'text-red-800 bg-red-100 hover:bg-red-200 border-red-200'
                         } dark:bg-primary-900/50 dark:text-zinc-100 dark:hover:bg-primary-900 dark:border-primary-900`}
                 >
-                    <BookOpenIcon className="h-4 w-4" />
+                    {text === "Include" ? <CheckIcon className="h-4 w-4" /> : <XMarkIcon className="h-4 w-4" />}
                     <span className={`inline-block px-3 py-1 text-sm font-semibold rounded-full`}>
                         {text}
                     </span>
@@ -55,19 +56,24 @@ export const ReasonsModal: FC<{
                                     leaveFrom="opacity-100 scale-100"
                                     leaveTo="opacity-0 scale-95"
                                 >
-                                    <Dialog.Panel className=" w-full max-w-xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
+                                    <Dialog.Panel className="w-full max-w-7xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle transition-all ease-in-out duration-300">
                                         <Dialog.Title
                                             as="h3"
-                                            className="text-xl font-medium leading-6 text-gray-900 dark:text-zinc-100"
+                                            className=" text-gray-900 dark:text-zinc-100"
                                         >
-                                            Reasons to {text}
+                                            <h2 className="text-2xl font-bold leading-6">
+                                                Reasons to {text.toLowerCase()} this project
+                                            </h2>
+                                            <p className="mt-2">
+                                                *as evaluated by Karma AI
+                                            </p>
                                         </Dialog.Title>
                                         <div className="max-h-[60vh] flex flex-col gap-2 mt-8 overflow-y-auto">
                                             {reasons && reasons.length > 0 ? (
                                                 <div className="space-y-3">
                                                     {reasons.map((reason, index) => (
                                                         <div key={index} className="text-gray-700 dark:text-gray-300">
-                                                            <span className="font-semibold">#{index + 1}</span> <p>{reason}</p>
+                                                            <span className="font-semibold">Milestone #{index + 1}</span> <p>{reason}</p>
                                                         </div>
                                                     ))}
                                                 </div>
