@@ -10,11 +10,8 @@ export const ProjectOverviewLoading = () => {
           Team
         </div>
         <div className="flex flex-col divide-y divide-y-zinc-200 border border-zinc-200 rounded-xl">
-          {members?.map((member) => (
-            <div
-              key={member.uid}
-              className="flex items-center flex-row gap-3 p-3"
-            >
+          {members?.map((member, index) => (
+            <div key={index} className="flex items-center flex-row gap-3 p-3">
               <Skeleton className="h-8 w-8 rounded-full" />
               <div className="flex flex-col gap-1">
                 <Skeleton className="h-4 w-40" />

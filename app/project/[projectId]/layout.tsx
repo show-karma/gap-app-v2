@@ -7,7 +7,7 @@ import { defaultMetadata } from "@/utilities/meta";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import HeaderLoading from "./loading";
+import ProjectHeaderLoading from "@/components/Pages/Project/Loading/Header";
 
 export async function generateMetadata({
   params,
@@ -101,7 +101,7 @@ export default async function RootLayout({
 
   return (
     <>
-      <Suspense fallback={<HeaderLoading />}>
+      <Suspense fallback={<ProjectHeaderLoading />}>
         <ProjectWrapper projectId={projectId} project={project} />
       </Suspense>
       <div className="px-4 sm:px-6 lg:px-12">{children}</div>

@@ -1,4 +1,5 @@
 import { GrantOverview } from "@/components/Pages/Project/Grants/Overview";
+import { ProjectGrantsOverviewLoading } from "@/components/Pages/Project/Loading/Grants/Overview";
 import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
 import { fetchFromLocalApi } from "@/utilities/fetchFromServer";
@@ -10,6 +11,7 @@ import {
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 
 export async function generateMetadata({
   params,
@@ -108,7 +110,9 @@ export async function generateMetadata({
 }
 
 const Page = () => {
-  return <GrantOverview />;
+  <Suspense fallback={<ProjectGrantsOverviewLoading />}>
+    <GrantOverview />
+  </Suspense>;
 };
 
 export default Page;

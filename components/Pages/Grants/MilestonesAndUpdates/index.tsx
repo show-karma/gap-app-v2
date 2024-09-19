@@ -13,6 +13,7 @@ import {
 import Link from "next/link";
 import dynamic from "next/dynamic";
 import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
+import { ProjectGrantsMilestonesListLoading } from "../../Project/Loading/Grants/MilestonesAndUpdate";
 
 const EmptyMilestone = ({
   grant,
@@ -134,7 +135,7 @@ const MilestonesList = dynamic(
       "@/components/Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/MilestonesList"
     ).then((mod) => mod.MilestonesList),
   {
-    loading: () => <DefaultLoading />,
+    loading: () => <ProjectGrantsMilestonesListLoading />,
   }
 );
 
