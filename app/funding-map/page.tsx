@@ -1,25 +1,25 @@
-import { ProgramsExplorer } from "@/components/Pages/ProgramRegistry/ProgramsExplorer";
-import { Suspense } from "react";
-import { Spinner } from "@/components/Utilities/Spinner";
+import dynamic from "next/dynamic";
+
 import { Metadata } from "next";
+import { LoadingPrograms } from "@/components/Pages/ProgramRegistry/Loading/Programs";
 
 export const metadata: Metadata = {
   title: `Karma GAP - Grant Program Aggregator`,
   description: `Find all the funding opportunities across web3 ecosystem.`,
 };
 
+const ProgramsExplorer = dynamic(
+  () =>
+    import("@/components/Pages/ProgramRegistry/ProgramsExplorer").then(
+      (mod) => mod.ProgramsExplorer
+    ),
+  {
+    loading: () => <LoadingPrograms />,
+  }
+);
+
 const GrantProgramRegistry = () => {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex h-screen w-full items-center justify-center">
-          <Spinner />
-        </div>
-      }
-    >
-      <ProgramsExplorer />
-    </Suspense>
-  );
+  return <ProgramsExplorer />;
 };
 
 export default GrantProgramRegistry;
