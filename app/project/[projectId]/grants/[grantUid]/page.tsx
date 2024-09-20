@@ -110,9 +110,11 @@ export async function generateMetadata({
 }
 
 const Page = () => {
-  <Suspense fallback={<ProjectGrantsOverviewLoading />}>
-    <GrantOverview />
-  </Suspense>;
+  return (
+    <Suspense fallback={<ProjectGrantsOverviewLoading />}>
+      <GrantOverview />
+    </Suspense>
+  );
 };
 
 export default Page;
