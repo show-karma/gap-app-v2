@@ -1,7 +1,6 @@
-import React, { Suspense } from "react";
+import React from "react";
 import { defaultMetadata } from "@/utilities/meta";
-import AddProgram from "@/components/Pages/ProgramRegistry/AddProgram";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { AddProgramWrapper } from "@/components/Pages/ProgramRegistry/AddProgramWrapper";
 
 export const metadata = {
   ...defaultMetadata,
@@ -11,15 +10,5 @@ export const metadata = {
 };
 
 export default function AddProgramPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex h-screen w-full items-center justify-center">
-          <Spinner />
-        </div>
-      }
-    >
-      <AddProgram />
-    </Suspense>
-  );
+  return <AddProgramWrapper />;
 }

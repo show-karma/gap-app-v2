@@ -1,8 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { Metadata } from "next";
 import { defaultMetadata } from "@/utilities/meta";
-import dynamic from "next/dynamic";
-import { LoadingManagePrograms } from "@/components/Pages/ProgramRegistry/Loading/ManagePrograms";
+import ManageProgramsWrapper from "@/components/Pages/ProgramRegistry/ManageProgramsWrapper";
 
 export const metadata: Metadata = {
   title: `Karma GAP - Grant Program Aggregator`,
@@ -29,18 +28,8 @@ export const metadata: Metadata = {
   ],
 };
 
-const ManagePrograms = dynamic(
-  () =>
-    import("@/components/Pages/ProgramRegistry/ManagePrograms").then(
-      (mod) => mod.ManagePrograms
-    ),
-  {
-    loading: () => <LoadingManagePrograms />,
-  }
-);
-
 const GrantProgramRegistry = () => {
-  return <ManagePrograms />;
+  return <ManageProgramsWrapper />;
 };
 
 export default GrantProgramRegistry;
