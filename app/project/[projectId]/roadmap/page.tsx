@@ -82,7 +82,5 @@ export default async function RoadmapPage({
     notFound();
   }
 
-  // return <ProjectRoadmapLoading />;
-
   return <ProjectRoadmap project={project} />;
 }
