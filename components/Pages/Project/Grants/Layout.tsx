@@ -413,7 +413,7 @@ export const GrantsLayout = ({ children }: GrantsLayoutProps) => {
                       )}
                       className="rounded-md items-center text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-35 hover:opacity-75 transition-all ease-in-out duration-300 flex h-max w-max flex-row gap-2 bg-zinc-800 p-2 text-white hover:bg-zinc-800 hover:text-white"
                     >
-                      Edit grant
+                      Update grant
                       <PencilSquareIcon className="h-4 w-4" />
                     </Link>
                   ) : null}
