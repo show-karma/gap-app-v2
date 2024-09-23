@@ -38,7 +38,6 @@ export const NavbarReview = () => {
       timeDifferenceSorted.push(timestamps[i] - timestamps[i + 1]);
     }
 
-    console.log("timeDifferenceSorted", timeDifferenceSorted);
     setTimeDiference(timeDifferenceSorted);
     const timeDifferenceSum = timeDifferenceSorted.reduce(
       (accumulator, current) => Number(accumulator) + Number(current),
