@@ -43,6 +43,9 @@ export const NavbarReview = () => {
       (accumulator, current) => Number(accumulator) + Number(current),
       0,
     );
+    /**
+    *  Below we calculate the average time that it takes for the given grant to receive a new review
+    */
     setAvarageTimeDifference(timeDifferenceSum / grantStoriesLenght);
   };
 
