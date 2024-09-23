@@ -208,6 +208,16 @@ export const GrantOverview = () => {
                     data-color-mode="light"
                   >
                     <MarkdownPreview
+                      components={{
+                        // eslint-disable-next-line react/no-unstable-nested-components
+                        table: ({ children }) => {
+                          return (
+                            <table className="w-full text-black">
+                              {children}
+                            </table>
+                          );
+                        },
+                      }}
                       source={formatFundUsage(grant?.details?.data?.fundUsage)}
                     />
                   </div>
