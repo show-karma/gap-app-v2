@@ -715,7 +715,9 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       <div className="flex w-full max-w-3xl flex-col items-start justify-start gap-6 rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-zinc-900 px-6 pb-6 pt-5 max-lg:max-w-full">
         <div className="flex w-full items-center flex-row justify-between">
           <h3 className="text-2xl font-bold text-black dark:text-zinc-100">
-            {grantScreen === "edit-grant" ? "Edit grant" : "Create a new grant"}
+            {grantScreen === "edit-grant"
+              ? "Update grant"
+              : "Create a new grant"}
           </h3>
           <Link
             href={
@@ -995,7 +997,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                     isLoading={isSubmitting || isLoading}
                   >
                     {grantScreen === "edit-grant"
-                      ? "Edit grant"
+                      ? "Update grant"
                       : "Create grant"}
                   </Button>
                 </div>
