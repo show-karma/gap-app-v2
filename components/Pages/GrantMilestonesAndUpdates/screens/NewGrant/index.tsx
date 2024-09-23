@@ -193,11 +193,11 @@ export function SearchGrantProgram({
   return (
     <div className="w-full max-w-[400px]">
       {isLoading ? (
-        <div className="bg-zinc-100 p-3 text-sm ring-1 ring-zinc-200 rounded">
+        <div className="bg-zinc-100 p-3 text-sm ring-1 ring-zinc-200 rounded dark:bg-zinc-900">
           Loading Grants...
         </div>
       ) : !communityUID ? (
-        <div className="bg-zinc-100 p-3 text-sm ring-1 ring-zinc-200 rounded">
+        <div className="bg-zinc-100 p-3 text-sm ring-1 ring-zinc-200 rounded dark:bg-zinc-900">
           Select a community to proceed
         </div>
       ) : (
@@ -218,10 +218,11 @@ export function SearchGrantProgram({
   );
 }
 
-const defaultFundUsage = `| Budget Item    | Allocation |
+const defaultFundUsage = `| Budget Item    | % of Allocated funding |
 | -------- | ------- |
-| Item 1  | $    |
-| Item 2 | $     |`;
+| Item 1  | X%   |
+| Item 2 | Y%     |
+| Item 3 | Z%     |`;
 
 export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { address } = useAccount();
@@ -871,7 +872,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                 type="text"
                 className={cn(
                   inputStyle,
-                  "text-gray-500 dark:text-gray-300 cursor-not-allowed"
+                  "text-gray-500 dark:text-gray-300 cursor-not-allowed dark:bg-zinc-900"
                 )}
                 placeholder="0xab...0xbf2"
                 // {...register("recipient")}
@@ -1005,7 +1006,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
               <Tooltip.Portal>
                 <Tooltip.Content className="TooltipContent" sideOffset={5}>
                   {actionButtonDisable ? (
-                    <div className="px-2 bg-red-100 rounded-md py-2">
+                    <div className="px-2 bg-red-100 rounded-md py-2 dark:bg-red-900">
                       <p>{handleButtonDisableMessage()}</p>
                     </div>
                   ) : null}

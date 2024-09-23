@@ -11,7 +11,6 @@ import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import { useGrantStore } from "@/store/grant";
 import formatCurrency from "@/utilities/formatCurrency";
-import { cn } from "@/utilities/tailwind";
 
 interface GrantOverviewProps {
   grant: IGrantResponse | undefined;
@@ -61,30 +60,6 @@ export const GrantOverview = () => {
     //   title: "Cycle",
     // },
   ];
-
-  const formatFundUsage = (text: string) => {
-    if (!text) return "";
-
-    const lines = text.split("\n");
-    const formattedLines = lines.map((line) => {
-      const parts = line.split("|").map((part) => part.trim());
-      if (parts.length === 4 && parts[2].startsWith("$")) {
-        const oldPart2 = parts[2];
-        const amount = parseFloat(parts[2].replace("$", "").trim());
-        if (Number.isNaN(amount)) {
-          parts[2] = oldPart2;
-        } else {
-          parts[2] = `$ ${amount.toLocaleString("en-US", {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 2,
-          })}`;
-        }
-      }
-      return parts.join(" | ");
-    });
-
-    return formattedLines.join("\n");
-  };
 
   return (
     <>
@@ -198,33 +173,33 @@ export const GrantOverview = () => {
                   </div>
                 ) : null
               )}
-              {grant?.details?.data?.fundUsage ? (
-                <div className="flex items-center justify-between flex-col">
-                  <div className="text-gray-500 text-start font-semibold text-base dark:text-gray-300 w-full items-start">
-                    Breakdown of Fund Usage
-                  </div>
-                  <div
-                    className="flex flex-col gap-4 py-4 w-full items-start"
-                    data-color-mode="light"
-                  >
-                    <MarkdownPreview
-                      components={{
-                        // eslint-disable-next-line react/no-unstable-nested-components
-                        table: ({ children }) => {
-                          return (
-                            <table className="w-full text-black">
-                              {children}
-                            </table>
-                          );
-                        },
-                      }}
-                      source={formatFundUsage(grant?.details?.data?.fundUsage)}
-                    />
-                  </div>
-                </div>
-              ) : null}
             </div>
           </div>
+          {grant?.details?.data?.fundUsage ? (
+            <div className="border border-gray-200 rounded-xl bg-white  dark:bg-zinc-900 dark:border-gray-800">
+              <div className="flex items-center justify-between p-5">
+                <p className="font-semibold text-black dark:text-white">
+                  Breakdown of Fund Usage
+                </p>
+              </div>
+              <div
+                className="flex flex-col gap-4 px-4 py-4 border-t border-gray-200 w-full"
+                data-color-mode="light"
+              >
+                <MarkdownPreview
+                  components={{
+                    // eslint-disable-next-line react/no-unstable-nested-components
+                    table: ({ children }) => {
+                      return (
+                        <table className="w-full text-black">{children}</table>
+                      );
+                    },
+                  }}
+                  source={grant?.details?.data?.fundUsage}
+                />
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
       {/* Grant Overview End */}
