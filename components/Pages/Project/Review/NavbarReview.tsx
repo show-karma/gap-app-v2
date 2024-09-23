@@ -32,7 +32,6 @@ export const NavbarReview = () => {
     timestamps: number[],
     grantStoriesLenght: number,
   ) => {
-    console.log("timestamps", timestamps);
     const timeDifferenceSorted: number[] = [];
 
     for (let i = 0; i < timestamps.length - 1; i++) {
