@@ -26,8 +26,12 @@ export const NavbarReview = () => {
   const searchParams = useSearchParams();
   const setTimestamp = useReviewStore((state: any) => state.setTimestamp);
   const [timeDifference, setTimeDiference] = useState<number[]>([]);
+  const [avarageTimeDifference, setAvarageTimeDifference] = useState<number>(0);
 
-  const getTimestampDifferenceBetweenTimestamps = (timestamps: number[]) => {
+  const getTimestampDifferenceBetweenTimestamps = (
+    timestamps: number[],
+    grantStoriesLenght: number,
+  ) => {
     console.log("timestamps", timestamps);
     const timeDifferenceSorted: number[] = [];
 
@@ -37,6 +41,11 @@ export const NavbarReview = () => {
 
     console.log("timeDifferenceSorted", timeDifferenceSorted);
     setTimeDiference(timeDifferenceSorted);
+    const timeDifferenceSum = timeDifferenceSorted.reduce(
+      (accumulator, current) => Number(accumulator) + Number(current),
+      0,
+    );
+    setAvarageTimeDifference(timeDifferenceSum / grantStoriesLenght);
   };
 
   useEffect(() => {
@@ -61,7 +70,7 @@ export const NavbarReview = () => {
         .sort((a: any, b: any) => Number(b.timestamp) - Number(a.timestamp))
         .map((grantStorie) => grantStorie.timestamp);
       setTimestamp(timestamps);
-      getTimestampDifferenceBetweenTimestamps(timestamps);
+      getTimestampDifferenceBetweenTimestamps(timestamps, grantStories.length);
     }
   };
 
