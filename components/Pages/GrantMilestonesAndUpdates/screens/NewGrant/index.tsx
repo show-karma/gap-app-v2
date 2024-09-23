@@ -69,6 +69,7 @@ const grantSchema = z.object({
     .max(30, { message: MESSAGES.GRANT.FORM.TITLE.MAX }),
   programId: z.string().optional(),
   amount: z.string().optional(),
+  fundUsage: z.string().optional(),
   community: z.string().nonempty({ message: MESSAGES.GRANT.FORM.COMMUNITY }),
   // season: z.string(),
   // cycle: z.string(),
@@ -143,6 +144,7 @@ interface NewGrantData {
     query: string;
     explanation: string;
   }[];
+  fundUsage?: string;
 }
 
 export function SearchGrantProgram({
@@ -191,11 +193,11 @@ export function SearchGrantProgram({
   return (
     <div className="w-full max-w-[400px]">
       {isLoading ? (
-        <div className="bg-zinc-100 p-3 text-sm ring-1 ring-zinc-200 rounded">
+        <div className="bg-zinc-100 p-3 text-sm ring-1 ring-zinc-200 rounded dark:bg-zinc-900">
           Loading Grants...
         </div>
       ) : !communityUID ? (
-        <div className="bg-zinc-100 p-3 text-sm ring-1 ring-zinc-200 rounded">
+        <div className="bg-zinc-100 p-3 text-sm ring-1 ring-zinc-200 rounded dark:bg-zinc-900">
           Select a community to proceed
         </div>
       ) : (
@@ -215,6 +217,12 @@ export function SearchGrantProgram({
     </div>
   );
 }
+
+const defaultFundUsage = `| Budget Item    | % of Allocated funding |
+| -------- | ------- |
+| Item 1  | X%   |
+| Item 2 | Y%     |
+| Item 3 | Z%     |`;
 
 export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { address } = useAccount();
@@ -289,6 +297,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         grantScreen === "edit-grant" ? grantToEdit?.data?.communityUID : "",
       // season: grantScreen === "edit-grant" ? grantToEdit?.details?.season : "",
       // cycle: grantScreen === "edit-grant" ? grantToEdit?.details?.cycle : "",
+      fundUsage: grantToEdit?.details?.data?.fundUsage || defaultFundUsage,
       recipient:
         grantScreen === "edit-grant"
           ? grantToEdit?.recipient
@@ -345,18 +354,16 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         uid: nullRef,
       });
       const sanitizedDetails = sanitizeObject({
+        ...data,
         amount: data.amount || "",
-        description: data.description,
         proposalURL: data.linkToProposal,
-        title: data.title,
         assetAndChainId: ["0x0", 1],
         payoutAddress: address,
         // cycle: data.cycle,
         // season: data.season,
-        questions: data?.questions,
-        startDate: data.startDate,
-        programId: data?.programId,
       });
+
+      console.log(sanitizedDetails, data?.fundUsage);
 
       grant.details = new GrantDetails({
         data: sanitizedDetails,
@@ -463,16 +470,11 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         communityUID: data.community,
       });
       const grantData = sanitizeObject({
-        amount: data.amount || "",
-        description: data.description,
+        ...data,
         proposalURL: data.linkToProposal,
-        title: data.title,
         payoutAddress: address,
         // cycle: data.cycle,
         // season: data.season,
-        questions: data.questions,
-        startDate: data.startDate,
-        programId: data?.programId,
       });
       oldGrantInstance.details?.setValues(grantData);
       const walletClient = await getWalletClient(config, {
@@ -588,6 +590,8 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       startDate: data.startDate.getTime() / 1000,
       programId: data?.programId,
       proofOfWorkGrantUpdate: data.proofOfWorkGrantUpdate,
+      fundUsage:
+        data?.fundUsage === defaultFundUsage ? undefined : data?.fundUsage,
     };
 
     if (grantScreen === "edit-grant" && grantToEdit) {
@@ -712,7 +716,9 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       <div className="flex w-full max-w-3xl flex-col items-start justify-start gap-6 rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-zinc-900 px-6 pb-6 pt-5 max-lg:max-w-full">
         <div className="flex w-full items-center flex-row justify-between">
           <h3 className="text-2xl font-bold text-black dark:text-zinc-100">
-            {grantScreen === "edit-grant" ? "Edit grant" : "Create a new grant"}
+            {grantScreen === "edit-grant"
+              ? "Update grant"
+              : "Create a new grant"}
           </h3>
           <Link
             href={
@@ -866,7 +872,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                 type="text"
                 className={cn(
                   inputStyle,
-                  "text-gray-500 dark:text-gray-300 cursor-not-allowed"
+                  "text-gray-500 dark:text-gray-300 cursor-not-allowed dark:bg-zinc-900"
                 )}
                 placeholder="0xab...0xbf2"
                 // {...register("recipient")}
@@ -892,6 +898,23 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             {grantScreen === "edit-grant" && !isDescriptionValid ? (
               <p className="text-red-500">Description is required</p>
             ) : null}
+          </div>
+          <div className="flex w-full flex-col">
+            <label htmlFor="grant-description" className={labelStyle}>
+              Breakdown of funds usage (optional)
+            </label>
+            <div className="mt-2 w-full bg-transparent dark:border-gray-600">
+              <MarkdownEditor
+                className="bg-transparent dark:border-gray-600"
+                value={watch("fundUsage") || ""}
+                onChange={(newValue: string) =>
+                  setValue("fundUsage", newValue || "", {
+                    shouldValidate: true,
+                  })
+                }
+                placeholderText="Enter a breakdown of how the funds will be used (e.g. development costs, marketing, etc.)"
+              />
+            </div>
           </div>
 
           {form.getValues("questions") &&
@@ -975,7 +998,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                     isLoading={isSubmitting || isLoading}
                   >
                     {grantScreen === "edit-grant"
-                      ? "Edit grant"
+                      ? "Update grant"
                       : "Create grant"}
                   </Button>
                 </div>
@@ -983,7 +1006,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
               <Tooltip.Portal>
                 <Tooltip.Content className="TooltipContent" sideOffset={5}>
                   {actionButtonDisable ? (
-                    <div className="px-2 bg-red-100 rounded-md py-2">
+                    <div className="px-2 bg-red-100 rounded-md py-2 dark:bg-red-900">
                       <p>{handleButtonDisableMessage()}</p>
                     </div>
                   ) : null}
