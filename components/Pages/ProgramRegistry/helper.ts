@@ -13,6 +13,8 @@ const networks = [
   "Polkadot",
   "Ripple",
   "Solana",
+  "Soneium",
+  "Starknet",
   "Stellar",
   "TON",
   "Tezos",
@@ -444,6 +446,18 @@ const networkImages: Record<
   solana: {
     light: "/images/networks/solana.svg",
     dark: "/images/networks/solana.svg",
+  },
+  sony: {
+    light: "/images/networks/soneium-light.svg",
+    dark: "/images/networks/soneium-dark.svg",
+  },
+  soneium: {
+    light: "/images/networks/soneium-light.svg",
+    dark: "/images/networks/soneium-dark.svg",
+  },
+  starknet: {
+    light: "/images/networks/starknet-light.svg",
+    dark: "/images/networks/starknet-dark.svg",
   },
   stellar: {
     light: "/images/networks/stellar-light.svg",
