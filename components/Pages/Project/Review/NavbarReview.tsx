@@ -1,5 +1,6 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useReviewStore } from "@/store/review";
 import { useSearchParams } from "next/navigation";
 
@@ -23,6 +24,20 @@ export const NavbarReview = () => {
   const setIsStarSelected = useReviewStore((state: any) => state.setIsStarSelected);
 
   const searchParams = useSearchParams();
+  const setTimestamp = useReviewStore((state: any) => state.setTimestamp);
+  const [timeDifference, setTimeDiference] = useState<number[]>([]);
+
+  const getTimestampDifferenceBetweenTimestamps = (timestamps: number[]) => {
+    console.log("timestamps", timestamps);
+    const timeDifferenceSorted: number[] = [];
+
+    for (let i = 0; i < timestamps.length - 1; i++) {
+      timeDifferenceSorted.push(timestamps[i] - timestamps[i + 1]);
+    }
+
+    console.log("timeDifferenceSorted", timeDifferenceSorted);
+    setTimeDiference(timeDifferenceSorted);
+  };
 
   useEffect(() => {
     const grantIdFromQueryParam = searchParams?.get("grantId");
@@ -41,6 +56,13 @@ export const NavbarReview = () => {
   const fetchGrantStories = async () => {
     const grantStories = await getGrantStories(grantUID);
     setStories(grantStories);
+    if (grantStories) {
+      const timestamps = grantStories
+        .sort((a: any, b: any) => Number(b.timestamp) - Number(a.timestamp))
+        .map((grantStorie) => grantStorie.timestamp);
+      setTimestamp(timestamps);
+      getTimestampDifferenceBetweenTimestamps(timestamps);
+    }
   };
 
   const handleToggleReviewSelected = (id: number) => {
@@ -83,7 +105,15 @@ export const NavbarReview = () => {
                     </div>
                   )}
                   {index < stories.length - 1 && (
-                    <div className="absolute right-0 top-1/2 h-3/4 w-[2px] bg-zinc-300 transform -translate-y-1/2"></div>
+                    <>
+                      <div className="absolute right-0 top-1/2 h-3/4 w-[2px] bg-zinc-300 transform -translate-y-1/2">
+                        <p className="flex">
+                          {Number(timeDifference[index]) / 86400 >= 1
+                            ? `${Math.ceil(Number(timeDifference[index]) / 86400)} days`
+                            : "Less than 1 day"}
+                        </p>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>

@@ -32,6 +32,9 @@ interface ReviewStore {
   // Used to store the array of scores that the user has given to each active badge
   badgeScores: number[];
   setBadgeScores: (badgeScores: number[]) => void;
+
+  timestamp: number[];
+  setTimestamp: (timestamp: number[]) => void;
 }
 
 export const useReviewStore = create<ReviewStore>((set: any, get: any) => ({
@@ -50,8 +53,11 @@ export const useReviewStore = create<ReviewStore>((set: any, get: any) => ({
   setActiveBadges: (activeBadges: Badge[] | null) =>
     set((state: any) => ({ ...state, activeBadges })),
   activeBadgeIds: null,
-  setActiveBadgeIds: (activeBadgeIds: Badge[] | null) =>
+  setActiveBadgeIds: (activeBadgeIds: Hex[] | null) =>
     set((state: any) => ({ ...state, activeBadgeIds })),
   badgeScores: [],
   setBadgeScores: (badgeScores: number[]) => set((state: any) => ({ ...state, badgeScores })),
+
+  timestamp: [],
+  setTimestamp: (timestamp: number[]) => set((state: any) => ({ ...state, timestamp })),
 }));
