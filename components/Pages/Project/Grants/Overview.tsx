@@ -1,6 +1,5 @@
 "use client";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import markdownStyles from "@/styles/markdown.module.css";
@@ -11,6 +10,7 @@ import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import { useGrantStore } from "@/store/grant";
+import formatCurrency from "@/utilities/formatCurrency";
 
 interface GrantOverviewProps {
   grant: IGrantResponse | undefined;
@@ -79,7 +79,7 @@ export const GrantOverview = () => {
             </div>
           </div>
         )}
-        <div className="w-4/12 max-lg:w-full">
+        <div className="w-4/12 max-lg:w-full flex flex-col gap-4">
           <div className="border border-gray-200 rounded-xl bg-white  dark:bg-zinc-900 dark:border-gray-800">
             <div className="flex items-center justify-between p-5">
               <div className="font-semibold text-black dark:text-white">
@@ -175,6 +175,31 @@ export const GrantOverview = () => {
               )}
             </div>
           </div>
+          {grant?.details?.data?.fundUsage ? (
+            <div className="border border-gray-200 rounded-xl bg-white  dark:bg-zinc-900 dark:border-gray-800">
+              <div className="flex items-center justify-between p-5">
+                <p className="font-semibold text-black dark:text-white">
+                  Breakdown of Fund Usage
+                </p>
+              </div>
+              <div
+                className="flex flex-col gap-4 px-4 py-4 border-t border-gray-200 w-full"
+                data-color-mode="light"
+              >
+                <MarkdownPreview
+                  components={{
+                    // eslint-disable-next-line react/no-unstable-nested-components
+                    table: ({ children }) => {
+                      return (
+                        <table className="w-full text-black">{children}</table>
+                      );
+                    },
+                  }}
+                  source={grant?.details?.data?.fundUsage}
+                />
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
       {/* Grant Overview End */}
