@@ -69,6 +69,7 @@ const grantSchema = z.object({
     .max(30, { message: MESSAGES.GRANT.FORM.TITLE.MAX }),
   programId: z.string().optional(),
   amount: z.string().optional(),
+  fundUsage: z.string().optional(),
   community: z.string().nonempty({ message: MESSAGES.GRANT.FORM.COMMUNITY }),
   // season: z.string(),
   // cycle: z.string(),
@@ -143,6 +144,7 @@ interface NewGrantData {
     query: string;
     explanation: string;
   }[];
+  fundUsage?: string;
 }
 
 export function SearchGrantProgram({
@@ -215,6 +217,11 @@ export function SearchGrantProgram({
     </div>
   );
 }
+
+const defaultFundUsage = `| Budget Item    | Allocation |
+| -------- | ------- |
+| Item 1  | $    |
+| Item 2 | $     |`;
 
 export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { address } = useAccount();
@@ -289,6 +296,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         grantScreen === "edit-grant" ? grantToEdit?.data?.communityUID : "",
       // season: grantScreen === "edit-grant" ? grantToEdit?.details?.season : "",
       // cycle: grantScreen === "edit-grant" ? grantToEdit?.details?.cycle : "",
+      fundUsage: grantToEdit?.details?.data?.fundUsage || defaultFundUsage,
       recipient:
         grantScreen === "edit-grant"
           ? grantToEdit?.recipient
@@ -345,18 +353,16 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         uid: nullRef,
       });
       const sanitizedDetails = sanitizeObject({
+        ...data,
         amount: data.amount || "",
-        description: data.description,
         proposalURL: data.linkToProposal,
-        title: data.title,
         assetAndChainId: ["0x0", 1],
         payoutAddress: address,
         // cycle: data.cycle,
         // season: data.season,
-        questions: data?.questions,
-        startDate: data.startDate,
-        programId: data?.programId,
       });
+
+      console.log(sanitizedDetails, data?.fundUsage);
 
       grant.details = new GrantDetails({
         data: sanitizedDetails,
@@ -463,16 +469,11 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         communityUID: data.community,
       });
       const grantData = sanitizeObject({
-        amount: data.amount || "",
-        description: data.description,
+        ...data,
         proposalURL: data.linkToProposal,
-        title: data.title,
         payoutAddress: address,
         // cycle: data.cycle,
         // season: data.season,
-        questions: data.questions,
-        startDate: data.startDate,
-        programId: data?.programId,
       });
       oldGrantInstance.details?.setValues(grantData);
       const walletClient = await getWalletClient(config, {
@@ -588,6 +589,8 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       startDate: data.startDate.getTime() / 1000,
       programId: data?.programId,
       proofOfWorkGrantUpdate: data.proofOfWorkGrantUpdate,
+      fundUsage:
+        data?.fundUsage === defaultFundUsage ? undefined : data?.fundUsage,
     };
 
     if (grantScreen === "edit-grant" && grantToEdit) {
@@ -892,6 +895,23 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             {grantScreen === "edit-grant" && !isDescriptionValid ? (
               <p className="text-red-500">Description is required</p>
             ) : null}
+          </div>
+          <div className="flex w-full flex-col">
+            <label htmlFor="grant-description" className={labelStyle}>
+              Breakdown of funds usage (optional)
+            </label>
+            <div className="mt-2 w-full bg-transparent dark:border-gray-600">
+              <MarkdownEditor
+                className="bg-transparent dark:border-gray-600"
+                value={watch("fundUsage") || ""}
+                onChange={(newValue: string) =>
+                  setValue("fundUsage", newValue || "", {
+                    shouldValidate: true,
+                  })
+                }
+                placeholderText="Enter a breakdown of how the funds will be used (e.g. development costs, marketing, etc.)"
+              />
+            </div>
           </div>
 
           {form.getValues("questions") &&
