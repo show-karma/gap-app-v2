@@ -26,7 +26,7 @@ export const NavbarReview = () => {
   const searchParams = useSearchParams();
   const setTimestamp = useReviewStore((state: any) => state.setTimestamp);
   const [timeDifference, setTimeDifference] = useState<number[]>([]);
-  const [avarageTimeDifference, setAvarageTimeDifference] = useState<number>(0);
+  const [averageTimeDifference, setAverageTimeDifference] = useState<number | undefined>(undefined);
 
   const getTimestampDifferenceBetweenTimestamps = (
     timestamps: number[],
