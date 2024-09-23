@@ -116,7 +116,7 @@ export const NavbarReview = () => {
                   )}
                   {index < stories.length - 1 && (
                     <>
-                      <div className="absolute right-0 top-1/2 h-3/4 w-[2px] bg-zinc-300 transform -translate-y-1/2">
+                      <div className="absolute right-0 top-1/2 h-3/4 w-0.5 bg-zinc-300 transform -translate-y-1/2">
                         <p className="flex">
                           {Number(timeDifference[index]) / 86400 >= 1
                             ? `${Math.ceil(Number(timeDifference[index]) / 86400)} days`
