@@ -92,6 +92,13 @@ export const CardNewReview = () => {
       return;
     }
 
+    if (walletClient.chain.id !== arbitrum.id) {
+      toast.error("Must connect to Arbitrum to review", {
+        id: "connect-to-arbitrum-to-review",
+      });
+      switchChain({ chainId: arbitrum.id });
+    }
+
     const response = await submitAttest(
       address,
       KARMA_EAS_SCHEMA_UID,
