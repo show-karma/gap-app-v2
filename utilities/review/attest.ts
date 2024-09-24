@@ -115,6 +115,10 @@ export async function submitAttest(
       hash: transactionHash,
     });
 
+    if (transactionReceipt.status !== "success") {
+      return Error("Transaction reverted");
+    }
+
     return transactionReceipt;
   } catch (error) {
     console.error(error);
