@@ -1,7 +1,14 @@
 import { getWalletClient } from "@wagmi/core";
 import { config } from "@/utilities/wagmi/config";
-import { createPublicClient, encodeFunctionData, Hex, http, type TransactionReceipt } from "viem";
-import { sendTransaction, estimateGas, waitForTransactionReceipt } from "viem/actions";
+import {
+  createPublicClient,
+  encodeFunctionData,
+  Hex,
+  http,
+  WalletClient,
+  type TransactionReceipt,
+} from "viem";
+import { sendTransaction, waitForTransactionReceipt } from "viem/actions";
 import { arbitrum } from "viem/chains";
 import { ARB_ONE_EAS } from "./constants/constants";
 
@@ -34,7 +41,6 @@ export async function submitAttest(
   data: Hex,
 ): Promise<TransactionReceipt | Error> {
   const walletClient = await getWalletClient(config);
-  let gasLimit;
 
   const attestationRequestData: AttestationRequestData = {
     recipient: recipient,
@@ -59,16 +65,8 @@ export async function submitAttest(
               { internalType: "bytes32", name: "schema", type: "bytes32" },
               {
                 components: [
-                  {
-                    internalType: "address",
-                    name: "recipient",
-                    type: "address",
-                  },
-                  {
-                    internalType: "uint64",
-                    name: "expirationTime",
-                    type: "uint64",
-                  },
+                  { internalType: "address", name: "recipient", type: "address" },
+                  { internalType: "uint64", name: "expirationTime", type: "uint64" },
                   { internalType: "bool", name: "revocable", type: "bool" },
                   { internalType: "bytes32", name: "refUID", type: "bytes32" },
                   { internalType: "bytes", name: "data", type: "bytes" },
@@ -93,24 +91,18 @@ export async function submitAttest(
 
     args: [AttestationRequest],
   });
-  try {
-    gasLimit = await estimateGas(publicClient, {
-      account: from as Hex,
-      to: ARB_ONE_EAS as Hex,
-      data: encodedData,
-      value: BigInt(0),
-    });
-  } catch (error) {
-    return Error("Error estimating gas.");
-  }
 
   try {
     const transactionHash = await sendTransaction(walletClient, {
-      account: from as Hex,
-      to: ARB_ONE_EAS as Hex,
-      gasLimit: gasLimit,
-      data: encodedData,
+      /**
+       * 10 million gas units is a lot, but based on the gas units
+       * used in the attest function, it is enough for all transactions.
+       */
+      gas: BigInt(10_000_000),
       value: BigInt(0),
+      account: from,
+      to: ARB_ONE_EAS,
+      data: encodedData,
       chain: walletClient.chain,
     });
 
@@ -120,6 +112,7 @@ export async function submitAttest(
 
     return transactionReceipt;
   } catch (error) {
+    console.error(error);
     return Error(`Error sending transaction. ${error}`);
   }
 }
