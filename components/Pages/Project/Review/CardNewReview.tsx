@@ -33,7 +33,7 @@ export const CardNewReview = () => {
   const setBadges = useReviewStore((state: any) => state.setBadges);
 
   const { address, chainId } = useAccount();
-  const { switchChain } = useSwitchChain();
+  const { switchChainAsync } = useSwitchChain();
   const searchParams = useSearchParams();
   const { data: walletClient } = useWalletClient({ config });
 
@@ -70,8 +70,8 @@ export const CardNewReview = () => {
     }
 
     if (chainId != arbitrum.id) {
-      switchChain({ chainId: arbitrum.id });
       toast.error("Must connect to Arbitrum to review");
+      await switchChainAsync?.({ chainId: arbitrum.id });
     }
 
     if (activeBadges.length !== badgeScores.length) {
@@ -93,10 +93,11 @@ export const CardNewReview = () => {
     }
 
     if (walletClient.chain.id !== arbitrum.id) {
-      switchChain({ chainId: arbitrum.id });
       toast.error("Must connect to Arbitrum to review", {
         id: "connect-to-arbitrum-to-review",
       });
+      await switchChainAsync?.({ chainId: arbitrum.id });
+      return;
     }
 
     const response = await submitAttest(
@@ -111,7 +112,7 @@ export const CardNewReview = () => {
     );
 
     if (response instanceof Error) {
-      toast.error("Error submitting review. Please try again.");
+      toast.error("Error submitting review. Try again.");
       return;
     }
 

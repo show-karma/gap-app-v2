@@ -11,6 +11,7 @@ import {
 import { sendTransaction, waitForTransactionReceipt } from "viem/actions";
 import { arbitrum } from "viem/chains";
 import { ARB_ONE_EAS } from "./constants/constants";
+import toast from "react-hot-toast";
 
 export interface AttestationRequestData {
   recipient: Hex;
@@ -90,6 +91,11 @@ export async function submitAttest(
 
     args: [AttestationRequest],
   });
+
+  if (walletClient.chain?.id !== arbitrum.id) {
+    walletClient.switchChain({ id: arbitrum.id });
+    return Error("Must connect to Arbitrum to review");
+  }
 
   try {
     const transactionHash = await sendTransaction(walletClient, {
