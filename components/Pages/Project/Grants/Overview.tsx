@@ -14,10 +14,6 @@ import { Suspense } from "react";
 import { ProjectGrantsOverviewLoading } from "../Loading/Grants/Overview";
 import formatCurrency from "@/utilities/formatCurrency";
 
-interface GrantOverviewProps {
-  grant: IGrantResponse | undefined;
-}
-
 const isValidAmount = (amount?: string | undefined) => {
   if (!amount) return undefined;
 
@@ -27,7 +23,10 @@ const isValidAmount = (amount?: string | undefined) => {
   return formatCurrency(+amount);
 };
 export const GrantOverview = () => {
-  const { grant } = useGrantStore();
+  const { grant, loading } = useGrantStore();
+  if (loading) {
+    return <ProjectGrantsOverviewLoading />;
+  }
   const milestones = grant?.milestones;
 
   const getPercentage = () => {

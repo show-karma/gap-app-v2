@@ -92,10 +92,7 @@ export const GrantsLayout = ({ children, project }: GrantsLayoutProps) => {
   const screen = getScreen(pathname);
   const grantIdFromQueryParam = useParams().grantUid as string;
   const [currentTab, setCurrentTab] = useState("overview");
-  const [grant, setGrant] = useGrantStore((state) => [
-    state.grant,
-    state.setGrant,
-  ]);
+  const { grant, setGrant, loading, setLoading } = useGrantStore();
 
   const navigation =
     project?.grants?.map((item) => ({
@@ -144,6 +141,7 @@ export const GrantsLayout = ({ children, project }: GrantsLayoutProps) => {
   }, [screen, isAuthorized, address]);
 
   useEffect(() => {
+    setLoading(true);
     if (project) {
       if (grantIdFromQueryParam) {
         const grantFound = project?.grants?.find(
@@ -152,10 +150,12 @@ export const GrantsLayout = ({ children, project }: GrantsLayoutProps) => {
         );
         if (grantFound) {
           setGrant(grantFound);
+          setLoading(false);
           return;
         }
       }
       setGrant(project?.grants?.[0]);
+      setLoading(false);
     }
   }, [project, grantIdFromQueryParam]);
 
@@ -241,8 +241,8 @@ export const GrantsLayout = ({ children, project }: GrantsLayoutProps) => {
     checkIfAdmin();
   }, [address, grant?.uid, signer, isAuth]);
 
-  if (!grant) {
-    return <ProjectGrantsLayoutLoading />;
+  if (loading || (!grant && project.grants?.length > 0)) {
+    return <ProjectGrantsLayoutLoading>{children}</ProjectGrantsLayoutLoading>;
   }
 
   if (screen === "create-grant") {
