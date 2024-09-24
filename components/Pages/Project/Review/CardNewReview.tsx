@@ -33,7 +33,6 @@ export const CardNewReview = () => {
   const setBadges = useReviewStore((state: any) => state.setBadges);
 
   const { address, chainId } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
   const searchParams = useSearchParams();
   const { data: walletClient } = useWalletClient({ config });
 
@@ -69,9 +68,14 @@ export const CardNewReview = () => {
       return;
     }
 
+    if (!walletClient) {
+      toast.error("Error getting wallet client for wallet interaction. Please try again.");
+      return;
+    }
+
     if (chainId != arbitrum.id) {
       toast.error("Must connect to Arbitrum to review");
-      await switchChainAsync?.({ chainId: arbitrum.id });
+      await walletClient.switchChain({ id: arbitrum.id });
     }
 
     if (activeBadges.length !== badgeScores.length) {
@@ -96,7 +100,7 @@ export const CardNewReview = () => {
       toast.error("Must connect to Arbitrum to review", {
         id: "connect-to-arbitrum-to-review",
       });
-      await switchChainAsync?.({ chainId: arbitrum.id });
+      await walletClient.switchChain({ id: arbitrum.id });
       return;
     }
 
