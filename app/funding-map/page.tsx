@@ -1,6 +1,4 @@
-import { ProgramsExplorer } from "@/components/Pages/ProgramRegistry/ProgramsExplorer";
-import { Suspense } from "react";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { FundingMapWrapper } from "@/components/Pages/ProgramRegistry/FundingMapWrapper";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -9,17 +7,7 @@ export const metadata: Metadata = {
 };
 
 const GrantProgramRegistry = () => {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex h-screen w-full items-center justify-center">
-          <Spinner />
-        </div>
-      }
-    >
-      <ProgramsExplorer />
-    </Suspense>
-  );
+  return <FundingMapWrapper />;
 };
 
 export default GrantProgramRegistry;

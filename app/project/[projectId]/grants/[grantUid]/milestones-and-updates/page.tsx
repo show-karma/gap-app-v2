@@ -1,15 +1,11 @@
-import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
 import { zeroUID } from "@/utilities/commons";
 import { defaultMetadata } from "@/utilities/meta";
 import MilestonesAndUpdates from "@/components/Pages/Grants/MilestonesAndUpdates";
 import { Metadata } from "next";
-import { fetchFromLocalApi } from "@/utilities/fetchFromServer";
-import {
-  IGrantResponse,
-  IProjectResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { notFound } from "next/navigation";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { Suspense } from "react";
+import { ProjectGrantsMilestonesAndUpdatesLoading } from "@/components/Pages/Project/Loading/Grants/MilestonesAndUpdate";
 
 export async function generateMetadata({
   params,
@@ -86,5 +82,9 @@ export async function generateMetadata({
   };
 }
 export default function Page() {
-  return <MilestonesAndUpdates />;
+  return (
+    <Suspense fallback={<ProjectGrantsMilestonesAndUpdatesLoading />}>
+      <MilestonesAndUpdates />
+    </Suspense>
+  );
 }

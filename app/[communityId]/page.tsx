@@ -15,6 +15,7 @@ import { notFound } from "next/navigation";
 import { ReceiveProjectUpdates } from "@/components/Pages/ReceiveProjectUpdates";
 import { communitiesToBulkSubscribe } from "@/utilities/subscribe";
 import { envVars } from "@/utilities/enviromentVars";
+import { CommunitiesLoading } from "@/components/Pages/Communities/Loading";
 
 type Props = {
   params: {

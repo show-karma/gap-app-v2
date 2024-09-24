@@ -7,9 +7,9 @@ import { zeroUID } from "@/utilities/commons";
 import { defaultMetadata } from "@/utilities/meta";
 import { notFound } from "next/navigation";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
-import dynamic from "next/dynamic";
 import { envVars } from "@/utilities/enviromentVars";
+import ImpactWrapper from "@/components/Pages/Project/Impact/ImpactWrapper";
+import { ProjectImpactLoading } from "@/components/Pages/Project/Loading/Impact";
 
 export async function generateMetadata({
   params,
@@ -59,22 +59,6 @@ export async function generateMetadata({
   };
 }
 
-const ImpactComponent = dynamic(
-  () =>
-    import("@/components/Pages/Project/Impact").then(
-      (mod) => mod.ImpactComponent
-    ),
-  {
-    loading: () => <DefaultLoading />,
-  }
-);
-
-const ImpactPage = () => {
-  return (
-    <div className="pt-5 pb-20">
-      <ImpactComponent />
-    </div>
-  );
-};
-
-export default ImpactPage;
+export default function Page() {
+  return <ImpactWrapper />;
+}

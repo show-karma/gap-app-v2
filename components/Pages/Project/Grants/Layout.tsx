@@ -31,6 +31,8 @@ import { Button } from "@/components/Utilities/Button";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useGrantStore } from "@/store/grant";
+import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { ProjectGrantsLayoutLoading } from "../Loading/Grants/Layout";
 
 const GenerateImpactReportDialog = dynamic(
   () =>
@@ -42,6 +44,7 @@ const GenerateImpactReportDialog = dynamic(
 
 interface GrantsLayoutProps {
   children: React.ReactNode;
+  project: IProjectResponse;
 }
 
 interface Tab {
@@ -84,7 +87,7 @@ const getScreen = (pathname: string): GrantScreen | undefined => {
   return "overview";
 };
 
-export const GrantsLayout = ({ children }: GrantsLayoutProps) => {
+export const GrantsLayout = ({ children, project }: GrantsLayoutProps) => {
   const pathname = usePathname();
   const screen = getScreen(pathname);
   const grantIdFromQueryParam = useParams().grantUid as string;
@@ -93,7 +96,7 @@ export const GrantsLayout = ({ children }: GrantsLayoutProps) => {
     state.grant,
     state.setGrant,
   ]);
-  const project = useProjectStore((state) => state.project);
+
   const navigation =
     project?.grants?.map((item) => ({
       uid: item.uid,
@@ -237,6 +240,10 @@ export const GrantsLayout = ({ children }: GrantsLayoutProps) => {
   useEffect(() => {
     checkIfAdmin();
   }, [address, grant?.uid, signer, isAuth]);
+
+  if (!grant) {
+    return <ProjectGrantsLayoutLoading />;
+  }
 
   if (screen === "create-grant") {
     return (

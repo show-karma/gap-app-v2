@@ -25,7 +25,6 @@ import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-ind
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import Image from "next/image";
-import { blo } from "blo";
 import { IntroDialog } from "./IntroDialog";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { useRouter } from "next/navigation";
@@ -35,7 +34,6 @@ import { ProgressDialog } from "@/components/Dialogs/ProgressDialog";
 import { errorManager } from "@/components/Utilities/errorManager";
 
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
-import { fetchFromLocalApi } from "@/utilities/fetchFromServer";
 
 interface ProjectWrapperProps {
   project: IProjectResponse;

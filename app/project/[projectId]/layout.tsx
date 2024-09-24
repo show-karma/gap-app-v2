@@ -2,12 +2,12 @@
 import { fetchMetadata } from "frames.js/next/pages-router/client";
 import { envVars } from "@/utilities/enviromentVars";
 import { ProjectWrapper } from "@/components/Pages/Project/ProjectWrapper";
-import { Spinner } from "@/components/Utilities/Spinner";
 import { zeroUID } from "@/utilities/commons";
 import { defaultMetadata } from "@/utilities/meta";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import ProjectHeaderLoading from "@/components/Pages/Project/Loading/Header";
 
 export async function generateMetadata({
   params,
@@ -100,17 +100,11 @@ export default async function RootLayout({
   }
 
   return (
-    <Suspense
-      fallback={
-        <div className="flex flex-col w-full h-full items-center justify-center">
-          <Spinner />
-        </div>
-      }
-    >
-      <>
+    <>
+      <Suspense fallback={<ProjectHeaderLoading />}>
         <ProjectWrapper projectId={projectId} project={project} />
-        <div className="px-4 sm:px-6 lg:px-12">{children}</div>
-      </>
-    </Suspense>
+      </Suspense>
+      <div className="px-4 sm:px-6 lg:px-12">{children}</div>
+    </>
   );
 }
