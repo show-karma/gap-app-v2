@@ -93,10 +93,10 @@ export const CardNewReview = () => {
     }
 
     if (walletClient.chain.id !== arbitrum.id) {
+      switchChain({ chainId: arbitrum.id });
       toast.error("Must connect to Arbitrum to review", {
         id: "connect-to-arbitrum-to-review",
       });
-      switchChain({ chainId: arbitrum.id });
     }
 
     const response = await submitAttest(
