@@ -76,6 +76,7 @@ export const CardNewReview = () => {
     if (chainId != arbitrum.id) {
       toast.error("Must connect to Arbitrum to review");
       await walletClient.switchChain({ id: arbitrum.id });
+      return;
     }
 
     if (activeBadges.length !== badgeScores.length) {
@@ -90,19 +91,6 @@ export const CardNewReview = () => {
       ["bytes32", "bytes32[]", "uint8[]"],
       [grantUID, activeBadgeIds, badgeScores],
     );
-
-    if (!walletClient) {
-      toast.error("Error getting wallet client for wallet interaction. Please try again.");
-      return;
-    }
-
-    if (walletClient.chain.id !== arbitrum.id) {
-      toast.error("Must connect to Arbitrum to review", {
-        id: "connect-to-arbitrum-to-review",
-      });
-      await walletClient.switchChain({ id: arbitrum.id });
-      return;
-    }
 
     const response = await submitAttest(
       address,
