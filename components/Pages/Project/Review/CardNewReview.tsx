@@ -7,7 +7,7 @@ import { useSearchParams } from "next/navigation";
 
 import { Hex } from "viem";
 import { arbitrum } from "viem/chains";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount, useSwitchChain, useWalletClient } from "wagmi";
 
 import { ReviewMode, Badge } from "@/types/review";
 import { Button } from "@/components/Utilities/Button";
@@ -18,6 +18,7 @@ import { KARMA_EAS_SCHEMA_UID } from "@/utilities/review/constants/constants";
 import { addPrefixToIPFSLink } from "@/utilities/review/constants/utilitary";
 import { submitAttest } from "@/utilities/review/attest";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { config } from "@/utilities/wagmi/config";
 
 export const CardNewReview = () => {
   const setIsOpenReview = useReviewStore((state: any) => state.setIsOpenReview);
@@ -32,8 +33,8 @@ export const CardNewReview = () => {
   const setBadges = useReviewStore((state: any) => state.setBadges);
 
   const { address, chainId } = useAccount();
-  const { switchChain } = useSwitchChain();
   const searchParams = useSearchParams();
+  const { data: walletClient } = useWalletClient({ config });
 
   useEffect(() => {
     // Fill the starts with a score of 1 when the badges render
@@ -67,9 +68,15 @@ export const CardNewReview = () => {
       return;
     }
 
+    if (!walletClient) {
+      toast.error("Error getting wallet client for wallet interaction. Please try again.");
+      return;
+    }
+
     if (chainId != arbitrum.id) {
-      switchChain({ chainId: arbitrum.id });
       toast.error("Must connect to Arbitrum to review");
+      await walletClient.switchChain({ id: arbitrum.id });
+      return;
     }
 
     if (activeBadges.length !== badgeScores.length) {
@@ -93,10 +100,11 @@ export const CardNewReview = () => {
       false,
       grantUID,
       encodedData as Hex,
+      walletClient,
     );
 
     if (response instanceof Error) {
-      toast.error("Error submitting review. Please try again.");
+      toast.error("Error submitting review. Try again.");
       return;
     }
 
