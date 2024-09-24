@@ -1,9 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { Metadata } from "next";
 import { defaultMetadata } from "@/utilities/meta";
-import { ManagePrograms } from "@/components/Pages/ProgramRegistry/ManagePrograms";
-import { Suspense } from "react";
-import { Spinner } from "@/components/Utilities/Spinner";
+import ManageProgramsWrapper from "@/components/Pages/ProgramRegistry/ManageProgramsWrapper";
 
 export const metadata: Metadata = {
   title: `Karma GAP - Grant Program Aggregator`,
@@ -31,17 +29,7 @@ export const metadata: Metadata = {
 };
 
 const GrantProgramRegistry = () => {
-  return (
-    <Suspense
-      fallback={
-        <div className="flex h-screen w-full items-center justify-center">
-          <Spinner />
-        </div>
-      }
-    >
-      <ManagePrograms />
-    </Suspense>
-  );
+  return <ManageProgramsWrapper />;
 };
 
 export default GrantProgramRegistry;

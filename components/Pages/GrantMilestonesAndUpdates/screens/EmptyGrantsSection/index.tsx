@@ -1,7 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import type { FC } from "react";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useQueryState } from "nuqs";
 import { MESSAGES } from "@/utilities/messages";
 import { useCommunityAdminStore } from "@/store/community";
 import { useCommunitiesStore } from "@/store/communities";

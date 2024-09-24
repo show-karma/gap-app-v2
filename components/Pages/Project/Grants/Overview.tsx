@@ -10,6 +10,8 @@ import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import { useGrantStore } from "@/store/grant";
+import { Suspense } from "react";
+import { ProjectGrantsOverviewLoading } from "../Loading/Grants/Overview";
 import formatCurrency from "@/utilities/formatCurrency";
 
 interface GrantOverviewProps {
@@ -62,9 +64,8 @@ export const GrantOverview = () => {
   ];
 
   return (
-    <>
+    <Suspense fallback={<ProjectGrantsOverviewLoading />}>
       {/* Grant Overview Start */}
-
       <div className="mt-5 flex flex-row max-lg:flex-col-reverse gap-4 ">
         {grant?.details?.data?.description && (
           <div className="w-8/12 max-lg:w-full p-5 gap-2 bg-[#EEF4FF] dark:bg-zinc-900 dark:border-gray-800 rounded-xl  text-black dark:text-zinc-100">
@@ -203,6 +204,6 @@ export const GrantOverview = () => {
         </div>
       </div>
       {/* Grant Overview End */}
-    </>
+    </Suspense>
   );
 };

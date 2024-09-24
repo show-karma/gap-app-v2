@@ -25,6 +25,10 @@ import { getTotalProjects } from "@/utilities/karma/totalProjects";
 import { getPrograms } from "@/utilities/sdk/communities/getPrograms";
 import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { Field, Label, Radio, RadioGroup } from "@headlessui/react";
+import {
+  CardListSkeleton,
+  FilterByProgramsSkeleton,
+} from "./Pages/Communities/Loading";
 
 const sortOptions: Record<SortByOptions, string> = {
   recent: "Recent",
@@ -480,9 +484,7 @@ export const CommunityGrants = ({
             Filter by Programs
           </div>
           {programsLoading ? (
-            <div className="flex justify-center items-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
-            </div>
+            <FilterByProgramsSkeleton />
           ) : (
             <div>
               <RadioGroup
@@ -634,8 +636,8 @@ export const CommunityGrants = ({
             </InfiniteScroll>
           ) : null}
           {loading ? (
-            <div className="w-full py-8 flex items-center justify-center">
-              <Spinner />
+            <div className="w-full flex items-center justify-center">
+              <CardListSkeleton />
             </div>
           ) : null}
         </div>

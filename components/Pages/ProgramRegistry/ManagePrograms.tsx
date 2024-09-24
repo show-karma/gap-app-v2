@@ -43,6 +43,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { sanitizeObject } from "@/utilities/sanitize";
+import { LoadingProgramTable } from "./Loading/Programs";
 import { SearchDropdown } from "./SearchDropdown";
 
 export const ManagePrograms = () => {
@@ -587,9 +588,7 @@ export const ManagePrograms = () => {
                     </div>
                   )
                 ) : (
-                  <div className="py-10 px-4 justify-center flex items-center">
-                    <Spinner />
-                  </div>
+                  <LoadingProgramTable />
                 )}
               </div>
             </>

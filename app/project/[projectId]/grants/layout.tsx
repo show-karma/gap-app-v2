@@ -10,6 +10,7 @@ import { zeroUID } from "@/utilities/commons";
 import { defaultMetadata } from "@/utilities/meta";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { envVars } from "@/utilities/enviromentVars";
+import { ProjectGrantsLayoutLoading } from "@/components/Pages/Project/Loading/Grants/Layout";
 
 export async function generateMetadata({
   params,
@@ -79,6 +80,15 @@ export default async function RootLayout({
   children: React.ReactNode;
   params: { projectId: string };
 }) {
+  const project = await gapIndexerApi
+    .projectBySlug(projectId)
+    .then((res) => res.data)
+    .catch(() => notFound());
+
+  if (!project || project?.uid === zeroUID) {
+    notFound();
+  }
+
   return (
     <Suspense
       fallback={
@@ -88,7 +98,9 @@ export default async function RootLayout({
       }
     >
       <div className="w-full h-full">
-        <GrantsLayout>{children}</GrantsLayout>
+        <Suspense fallback={<ProjectGrantsLayoutLoading />}>
+          <GrantsLayout project={project}>{children}</GrantsLayout>
+        </Suspense>
       </div>
     </Suspense>
   );

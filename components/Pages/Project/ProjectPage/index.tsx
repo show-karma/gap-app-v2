@@ -5,8 +5,6 @@ import { useProjectStore } from "@/store";
 import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 
-import dynamic from "next/dynamic";
-
 import { PAGES } from "@/utilities/pages";
 import Link from "next/link";
 
