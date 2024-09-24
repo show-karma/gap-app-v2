@@ -8,7 +8,7 @@ import {
   WalletClient,
   type TransactionReceipt,
 } from "viem";
-import { sendTransaction, waitForTransactionReceipt } from "viem/actions";
+import { waitForTransactionReceipt } from "viem/actions";
 import { arbitrum } from "viem/chains";
 import { ARB_ONE_EAS } from "./constants/constants";
 
@@ -39,9 +39,8 @@ export async function submitAttest(
   revocable: boolean,
   refUID: Hex,
   data: Hex,
+  walletClient: WalletClient,
 ): Promise<TransactionReceipt | Error> {
-  const walletClient = await getWalletClient(config);
-
   const attestationRequestData: AttestationRequestData = {
     recipient: recipient,
     expirationTime: expirationTime,
@@ -93,7 +92,7 @@ export async function submitAttest(
   });
 
   try {
-    const transactionHash = await sendTransaction(walletClient, {
+    const transactionHash = await walletClient.sendTransaction({
       /**
        * 10 million gas units is a lot, but based on the gas units
        * used in the attest function, it is enough for all transactions.
