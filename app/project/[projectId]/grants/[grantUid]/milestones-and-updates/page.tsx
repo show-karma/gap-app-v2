@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { Suspense } from "react";
 import { ProjectGrantsMilestonesAndUpdatesLoading } from "@/components/Pages/Project/Loading/Grants/MilestonesAndUpdate";
+import { envVars } from "@/utilities/enviromentVars";
 
 export async function generateMetadata({
   params,
@@ -67,15 +68,23 @@ export async function generateMetadata({
       creator: defaultMetadata.twitter.creator,
       site: defaultMetadata.twitter.site,
       card: "summary_large_image",
+      images: [
+        {
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
+          alt: metadata.title || defaultMetadata.title,
+        },
+      ],
     },
     openGraph: {
       url: defaultMetadata.openGraph.url,
       title: metadata.title,
       description: metadata.description,
-      images: defaultMetadata.openGraph.images.map((image) => ({
-        url: image,
-        alt: metadata.title,
-      })),
+      images: [
+        {
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
+          alt: metadata.title || defaultMetadata.title,
+        },
+      ],
       // site_name: defaultMetadata.openGraph.siteName,
     },
     icons: metadata.icons,
