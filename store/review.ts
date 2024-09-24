@@ -50,7 +50,7 @@ export const useReviewStore = create<ReviewStore>((set: any, get: any) => ({
   setActiveBadges: (activeBadges: Badge[] | null) =>
     set((state: any) => ({ ...state, activeBadges })),
   activeBadgeIds: null,
-  setActiveBadgeIds: (activeBadgeIds: Badge[] | null) =>
+  setActiveBadgeIds: (activeBadgeIds: Hex[] | null) =>
     set((state: any) => ({ ...state, activeBadgeIds })),
   badgeScores: [],
   setBadgeScores: (badgeScores: number[]) => set((state: any) => ({ ...state, badgeScores })),
