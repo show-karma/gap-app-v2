@@ -1,6 +1,11 @@
 import { Skeleton } from "@/components/Utilities/Skeleton";
+import { ReactNode } from "react";
 
-export const ProjectGrantsLayoutLoading = () => {
+export const ProjectGrantsLayoutLoading = ({
+  children,
+}: {
+  children?: ReactNode;
+}) => {
   const emptyArray = Array.from({ length: 3 }, (_, index) => index);
   return (
     <>
@@ -80,6 +85,7 @@ export const ProjectGrantsLayoutLoading = () => {
               />
             </nav>
           </div>
+          {children}
         </div>
       </div>
     </>

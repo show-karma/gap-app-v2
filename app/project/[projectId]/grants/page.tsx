@@ -1,6 +1,7 @@
 import { GrantOverview } from "@/components/Pages/Project/Grants/Overview";
 import { ProjectGrantsOverviewLoading } from "@/components/Pages/Project/Loading/Grants/Overview";
 import { zeroUID } from "@/utilities/commons";
+import { envVars } from "@/utilities/enviromentVars";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { defaultMetadata } from "@/utilities/meta";
 import { Metadata } from "next";
@@ -87,16 +88,23 @@ export async function generateMetadata({
       creator: defaultMetadata.twitter.creator,
       site: defaultMetadata.twitter.site,
       card: "summary_large_image",
+      images: [
+        {
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
+          alt: metadata.title || defaultMetadata.title,
+        },
+      ],
     },
     openGraph: {
       url: defaultMetadata.openGraph.url,
       title: metadata.title,
       description: metadata.description,
-      images: defaultMetadata.openGraph.images.map((image) => ({
-        url: image,
-        alt: metadata.title,
-      })),
-      // site_name: defaultMetadata.openGraph.siteName,
+      images: [
+        {
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
+          alt: metadata.title || defaultMetadata.title,
+        },
+      ],
     },
     icons: metadata.icons,
   };
