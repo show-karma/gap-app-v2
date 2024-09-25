@@ -5,15 +5,7 @@ import axios from "axios";
 
 
 export async function generateSitemaps() {
-  // Fetch all communities
-  const response = await axios.get("https://gapapi.karmahq.xyz/communities")
-  const communities = response.data
-    .filter((community: any) => community?.details?.data?.slug !== undefined)
-    .map((_: any, index: number) => ({
-      id: index
-    }));
-
-  return communities as { id: number }[]
+  return [{ id: 1 }, { id: 2 }, { id: 3 }, { id: 4 }]
 }
 
 export default async function sitemap(
@@ -22,50 +14,60 @@ export default async function sitemap(
   const response = await axios.get("https://gapapi.karmahq.xyz/communities")
   const communities = response.data
     .filter((community: any) => community?.details?.data?.slug !== undefined)
-    .map((_: any, i: number) => ({
-      id: i,
+    .map((_: any) => ({
       slug: _?.details?.data?.slug
     }));
 
-  const community = communities[id].slug;
+  let final: MetadataRoute.Sitemap = []
 
+  for (const { slug: community } of communities) {
+    if (community !== undefined) {
+      console.log("Fetching sitemaps for community", community, id);
+      const response = await axios.get(`https://gapapi.karmahq.xyz/communities/${community}/sitemaps`);
+      const sitemaps = response.data;
 
-  if (community) {
-    console.log("Fetching sitemaps for community", community, id);
-    const response = await axios.get(`https://gapapi.karmahq.xyz/communities/${community}/sitemaps`);
-    const sitemaps = response.data;
+      let sitemap: MetadataRoute.Sitemap = [];
+      switch (id) {
+        case 1:
+          sitemap = sitemaps.projects ? sitemaps.projects.map((url: string) => ({
+            url,
+            lastModified: new Date().toISOString(),
+            changeFrequency: "daily",
+            priority: 1,
+          })) : [];
+          break;
+        case 2:
+          sitemap = sitemaps.impacts ? sitemaps.impacts.map((url: string) => ({
+            url,
+            lastModified: new Date().toISOString(),
+            changeFrequency: "daily",
+            priority: 1,
+          })) : [];
+          break;
+        case 3:
+          sitemap = sitemaps.grants ? sitemaps.grants.map((url: string) => ({
+            url,
+            lastModified: new Date().toISOString(),
+            changeFrequency: "daily",
+            priority: 1,
+          })) : [];
+          break;
+        case 4:
+          sitemap = sitemaps.milestonesAndUpdates ? sitemaps.milestonesAndUpdates.map((url: string) => ({
+            url,
+            lastModified: new Date().toISOString(),
+            changeFrequency: "daily",
+            priority: 1,
+          })) : [];
+          break;
+        default:
+          sitemap = [];
+      }
 
-    let sitemap: MetadataRoute.Sitemap = [
-      ...sitemaps.projects.map((url: string) => ({
-        url,
-        lastModified: new Date().toISOString(),
-        changeFrequency: "daily",
-        priority: 1,
-      })),
-      ...sitemaps.impacts.map((url: string) => ({
-        url,
-        lastModified: new Date().toISOString(),
-        changeFrequency: "daily",
-        priority: 1,
-      })),
-      ...sitemaps.grants.map((url: string) => ({
-        url,
-        lastModified: new Date().toISOString(),
-        changeFrequency: "daily",
-        priority: 1,
-      })),
-      ...sitemaps.milestonesAndUpdates.map((url: string) => ({
-        url,
-        lastModified: new Date().toISOString(),
-        changeFrequency: "daily",
-        priority: 1,
-      }))
-    ];
-
-    console.log("Totally ", sitemap.length, " URLs generated on sitemap");
-
-    return sitemap;
-  } else {
-    return [];
+      final.push(...sitemap);
+    }
+    console.log("Totally ", final.length, " URLs generated on sitemap");
   }
+
+  return final;
 }
