@@ -90,18 +90,14 @@ export default async function RootLayout({
   }
 
   return (
-    <Suspense
-      fallback={
-        <div className="flex flex-col w-full h-full items-center justify-center">
-          <Spinner />
-        </div>
-      }
-    >
-      <div className="w-full h-full">
-        <Suspense fallback={<ProjectGrantsLayoutLoading />}>
-          <GrantsLayout project={project}>{children}</GrantsLayout>
-        </Suspense>
-      </div>
-    </Suspense>
+    <div className="w-full h-full">
+      <Suspense
+        fallback={
+          <ProjectGrantsLayoutLoading>{children}</ProjectGrantsLayoutLoading>
+        }
+      >
+        <GrantsLayout project={project}>{children}</GrantsLayout>
+      </Suspense>
+    </div>
   );
 }
