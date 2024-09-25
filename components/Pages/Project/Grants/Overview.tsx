@@ -19,16 +19,17 @@ const isValidAmount = (amount?: string | undefined) => {
   let amountToFormat = amount;
 
   const split = amountToFormat.split(" ");
-  if (!Number.isNaN(split[0]) && split.length > 1) {
-    if (+split[0] < 1000) {
+  const split0 = split[0]?.replace(",", "");
+  if (!Number.isNaN(Number(split0)) && split.length > 1) {
+    if (+split0 < 1000) {
       amountToFormat = new Intl.NumberFormat("en-US", {
         minimumFractionDigits: 0,
         maximumFractionDigits: 2,
-      }).format(+split[0]);
+      }).format(+split0);
       return amountToFormat + " " + split[1];
     }
     // it should format and round to 2 decimal places without use formatCurrency
-    return formatCurrency(+split[0]) + " " + split[1];
+    return formatCurrency(+split0) + " " + split[1];
   }
   const number = Number(amountToFormat);
   if (Number.isNaN(number)) return amountToFormat;
