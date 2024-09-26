@@ -13,3 +13,11 @@ export type APIContact = {
   name?: string;
   updatedAt: string;
 };
+
+export interface ProjectReport {
+  contact: Contact[];
+  createdAt: string;
+  title: string;
+  description: string;
+  categories: string[];
+}
