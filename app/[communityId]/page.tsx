@@ -15,7 +15,7 @@ import { notFound } from "next/navigation";
 import { ReceiveProjectUpdates } from "@/components/Pages/ReceiveProjectUpdates";
 import { communitiesToBulkSubscribe } from "@/utilities/subscribe";
 import { envVars } from "@/utilities/enviromentVars";
-import { CommunitiesLoading } from "@/components/Pages/Communities/Loading";
+import { zeroUID } from "@/utilities/commons";
 
 type Props = {
   params: {
@@ -30,8 +30,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const { data } = await gapIndexerApi.communityBySlug(communityId);
     communityName = data?.details?.data?.name || communityId;
+    if (!data || data?.uid === zeroUID || !data?.details?.data?.name) {
+      notFound();
+    }
   } catch {
-    console.log("Not found community", communityId);
+    notFound();
   }
 
   const dynamicMetadata = {
