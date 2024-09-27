@@ -16,11 +16,25 @@ import formatCurrency from "@/utilities/formatCurrency";
 
 const isValidAmount = (amount?: string | undefined) => {
   if (!amount) return undefined;
+  let amountToFormat = amount;
 
-  const number = Number(amount);
-  if (Number.isNaN(number)) return amount;
+  const split = amountToFormat.split(" ");
+  const split0 = split[0]?.replace(",", "");
+  if (!Number.isNaN(Number(split0)) && split.length > 1) {
+    if (+split0 < 1000) {
+      amountToFormat = new Intl.NumberFormat("en-US", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      }).format(+split0);
+      return amountToFormat + " " + split[1];
+    }
+    // it should format and round to 2 decimal places without use formatCurrency
+    return formatCurrency(+split0) + " " + split[1];
+  }
+  const number = Number(amountToFormat);
+  if (Number.isNaN(number)) return amountToFormat;
 
-  return formatCurrency(+amount);
+  return formatCurrency(+amountToFormat);
 };
 export const GrantOverview = () => {
   const { grant, loading } = useGrantStore();

@@ -34,14 +34,6 @@ import { useGrantStore } from "@/store/grant";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { ProjectGrantsLayoutLoading } from "../Loading/Grants/Layout";
 
-const GenerateImpactReportDialog = dynamic(
-  () =>
-    import("@/components/Dialogs/GenerateImpactReportDialog").then(
-      (mod) => mod.GenerateImpactReportDialog
-    ),
-  { ssr: false }
-);
-
 interface GrantsLayoutProps {
   children: React.ReactNode;
   project: IProjectResponse;
