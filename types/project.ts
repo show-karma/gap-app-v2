@@ -18,6 +18,6 @@ export interface ProjectReport {
   contact: Contact[];
   createdAt: string;
   title: string;
-  description: string;
+  description: string | string[];
   categories: string[];
 }

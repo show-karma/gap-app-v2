@@ -120,7 +120,10 @@ export const AllProjects = () => {
                         <td className="w-1/5 min-w-[300px] max-w-1/5 px-2 py-1">
                           <ProjectDescriptionDialog
                             projectName={project.title}
-                            description={project.description}
+                            description={
+                              project.description[0] ||
+                              (project.description as string)
+                            }
                           />
                         </td>
                         <td className="w-1/5 min-w-[320px] max-w-1/5 px-2 py-1">
