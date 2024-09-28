@@ -2,9 +2,9 @@
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 <sitemap><loc>https://gap.karmahq.xyz/sitemap-0.xml</loc></sitemap>
 <sitemap><loc>https://gap.karmahq.xyz/sitemap-1.xml</loc></sitemap> 
-<sitemap><loc>https://gap.karmahq.xyz/sitemaps/projects/sitemap/1.xml</loc></sitemap>
+<!-- <sitemap><loc>https://gap.karmahq.xyz/sitemaps/projects/sitemap/1.xml</loc></sitemap>
 <sitemap><loc>https://gap.karmahq.xyz/sitemaps/projects/sitemap/2.xml</loc></sitemap>
 <sitemap><loc>https://gap.karmahq.xyz/sitemaps/projects/sitemap/3.xml</loc></sitemap>
-<sitemap><loc>https://gap.karmahq.xyz/sitemaps/projects/sitemap/4.xml</loc></sitemap> 
+<sitemap><loc>https://gap.karmahq.xyz/sitemaps/projects/sitemap/4.xml</loc></sitemap>  -->
 <sitemap><loc>https://gap.karmahq.xyz/sitemaps/communities/sitemap.xml</loc></sitemap>
 </sitemapindex>
