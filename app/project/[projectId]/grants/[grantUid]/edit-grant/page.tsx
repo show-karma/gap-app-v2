@@ -12,7 +12,7 @@ const NewGrant = dynamic(
     loading: () => <DefaultLoading />,
   }
 );
-export default async function Page() {
+export default function Page() {
   const { grant } = useGrantStore();
   return <NewGrant grantToEdit={grant} />;
 }
