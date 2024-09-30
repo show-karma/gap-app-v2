@@ -13,18 +13,31 @@ import { ProjectCardListSkeleton } from "./Loading";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Listbox, Transition } from "@headlessui/react";
 import { useQueryState } from "nuqs";
-import { ChevronUpDownIcon } from "@heroicons/react/24/solid";
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  ChevronDownIcon,
+  ChevronUpDownIcon,
+  ChevronUpIcon,
+} from "@heroicons/react/24/solid";
 import { cn } from "@/utilities/tailwind";
 import { CheckIcon } from "@heroicons/react/20/solid";
 import { queryClient } from "@/components/Utilities/WagmiProvider";
 
-type SortByOptions = "createdAt" | "updatedAt";
+type SortByOptions =
+  | "createdAt"
+  | "updatedAt"
+  | "title"
+  | "noOfGrants"
+  | "noOfProjectMilestones";
+
+type SortOrder = "asc" | "desc";
 
 const getNewProjects = async (
   pageSize: number,
   page: number = 0,
   sortBy: SortByOptions = "createdAt",
-  sortOrder: "asc" | "desc" = "desc"
+  sortOrder: SortOrder = "desc"
 ): Promise<{
   projects: ProjectFromList[];
   pageInfo: PageInfo;
@@ -55,6 +68,9 @@ const getNewProjects = async (
 const sortOptions: Record<SortByOptions, string> = {
   createdAt: "Recently Added",
   updatedAt: "Recently Updated",
+  title: "Title",
+  noOfGrants: "No. of Grants",
+  noOfProjectMilestones: "No. of Project Milestones",
 };
 
 export const NewProjectsPage = () => {
@@ -64,6 +80,11 @@ export const NewProjectsPage = () => {
     serialize: (value) => value,
     parse: (value) =>
       value ? (value as SortByOptions) : ("createdAt" as SortByOptions),
+  });
+  const [selectedSortOrder, changeSortOrderQuery] = useQueryState("sortOrder", {
+    defaultValue: "desc",
+    serialize: (value) => value,
+    parse: (value) => (value ? (value as SortOrder) : ("desc" as SortOrder)),
   });
 
   const {
@@ -76,7 +97,12 @@ export const NewProjectsPage = () => {
   } = useInfiniteQuery({
     queryKey: ["new-projects"],
     queryFn: (ctx) =>
-      getNewProjects(12, ctx.pageParam, selectedSort as SortByOptions),
+      getNewProjects(
+        12,
+        ctx.pageParam,
+        selectedSort as SortByOptions,
+        selectedSortOrder as SortOrder
+      ),
     getNextPageParam: (lastGroup) => lastGroup.nextOffset,
     initialPageParam: 0,
   });
@@ -87,6 +113,8 @@ export const NewProjectsPage = () => {
 
   const changeSort = async (newValue: SortByOptions) => {
     changeSortQuery(newValue);
+    changeSortOrderQuery(selectedSortOrder === "asc" ? "desc" : "asc");
+
     queryClient.removeQueries({
       queryKey: ["new-projects"],
       exact: true,
@@ -119,10 +147,11 @@ export const NewProjectsPage = () => {
                         {sortOptions[selectedSort as SortByOptions]}
                       </span>
                       <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                        <ChevronUpDownIcon
-                          className="h-5 w-5 text-gray-400"
-                          aria-hidden="true"
-                        />
+                        {selectedSortOrder === "asc" ? (
+                          <ArrowUpIcon className="h-5 w-5 text-gray-400" />
+                        ) : (
+                          <ArrowDownIcon className="h-5 w-5 text-gray-400" />
+                        )}
                       </span>
                     </Listbox.Button>
 
@@ -253,6 +282,7 @@ export const NewProjectsPage = () => {
                               <div
                                 style={{
                                   height: "100%",
+                                  width: "100%",
                                 }}
                               >
                                 <ProjectCard
