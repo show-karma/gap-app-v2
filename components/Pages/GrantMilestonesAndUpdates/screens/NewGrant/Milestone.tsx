@@ -34,7 +34,7 @@ const milestoneSchema = z.object({
   title: z
     .string()
     .min(3, { message: "Title must be at least 3 characters" })
-    .max(30, { message: "Title must be less than 30 characters" }),
+    .max(50, { message: "Title must be less than 50 characters" }),
   priority: z.number().optional(),
   dates: z
     .object({
