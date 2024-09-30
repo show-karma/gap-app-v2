@@ -4,6 +4,7 @@ import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { create } from "zustand";
+import { useGrantStore } from "./grant";
 
 interface ProjectStore {
   project: IProjectResponse | undefined;
@@ -32,7 +33,19 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       .projectBySlug(project.uid)
       .then((res) => res.data);
 
+    const currentGrantState = useGrantStore.getState();
+    const shareSameGrant = refreshedProject.grants.find(
+      (g) => g.uid.toLowerCase() === currentGrantState.grant?.uid?.toLowerCase()
+    );
+
+    console.log("currentGrantState", currentGrantState.grant, shareSameGrant);
+    if (shareSameGrant) {
+      console.log("they do");
+      currentGrantState.setGrant(shareSameGrant);
+    }
+
     set({ project: refreshedProject });
+
     return refreshedProject;
   },
   refreshContactInfo: async () => {

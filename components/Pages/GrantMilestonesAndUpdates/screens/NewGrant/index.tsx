@@ -431,6 +431,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                   grant.uid
                 )
               );
+              router.refresh();
               setFormPriorities([]);
               await refreshProject();
             }
@@ -525,6 +526,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                     oldGrant.uid
                   )
                 );
+                router.refresh();
               });
             }
             retries -= 1;
@@ -974,6 +976,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                     selectedProject.details?.data?.slug || selectedProject?.uid
                   )
                 );
+                router.refresh();
                 return;
               }
               router.push(
@@ -982,6 +985,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                   grantToEdit.uid
                 )
               );
+              router.refresh();
             }}
           >
             Cancel

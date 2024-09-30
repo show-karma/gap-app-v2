@@ -376,6 +376,7 @@ export const GrantsLayout = ({ children, project }: GrantsLayoutProps) => {
                               project.details?.data.slug || project.uid
                             )
                           );
+                          router.refresh();
                         }
                       }}
                       className="flex h-max w-full  flex-row items-center  hover:opacity-75 justify-center gap-3 rounded border border-[#155EEF] bg-[#155EEF] px-3 py-2 text-sm font-semibold text-white   max-sm:w-full"

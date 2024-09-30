@@ -235,6 +235,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
                   router.push(
                     `/project/${primaryProject?.details?.data?.slug}`
                   );
+                  router.refresh();
                   changeStepperStep("indexed");
                   toast.success(MESSAGES.PROJECT_POINTER_FORM.SUCCESS);
                 }

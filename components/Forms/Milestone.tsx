@@ -37,7 +37,7 @@ const milestoneSchema = z.object({
   title: z
     .string()
     .min(3, { message: MESSAGES.MILESTONES.FORM.TITLE.MIN })
-    .max(30, { message: MESSAGES.MILESTONES.FORM.TITLE.MAX }),
+    .max(50, { message: MESSAGES.MILESTONES.FORM.TITLE.MAX }),
   priority: z.number().optional(),
   description: z.string().optional(),
   dates: z
@@ -171,6 +171,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
                       "milestones-and-updates"
                     )
                   );
+                  router.refresh();
                   afterSubmit?.();
                 }
                 retries -= 1;

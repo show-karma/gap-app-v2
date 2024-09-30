@@ -25,6 +25,7 @@ import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { sanitizeObject } from "@/utilities/sanitize";
+import { useGrantStore } from "@/store/grant";
 
 const updateSchema = z.object({
   title: z
@@ -64,6 +65,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
 }) => {
   const labelStyle = cn(labelStyleDefault, labelStyleProps);
   const inputStyle = cn(inputStyleDefault, inputStyleProps);
+  const { setGrant } = useGrantStore((state) => state);
 
   const { address } = useAccount();
   const { chain } = useAccount();
@@ -158,6 +160,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
                       "milestones-and-updates"
                     )
                   );
+                  router.refresh();
                 }
                 retries -= 1;
                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return

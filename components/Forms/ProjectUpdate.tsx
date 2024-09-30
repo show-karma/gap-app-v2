@@ -114,6 +114,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                       project?.details?.data.slug || project.uid
                     )
                   );
+                  router.refresh();
                 }
                 retries -= 1;
                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return

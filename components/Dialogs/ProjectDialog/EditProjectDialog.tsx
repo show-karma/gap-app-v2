@@ -505,6 +505,7 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
                 retries = 0;
                 toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
                 router.push(PAGES.PROJECT.GRANTS(slug || project.uid));
+                router.refresh();
                 changeStepperStep("indexed");
                 return;
               });
@@ -591,6 +592,7 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
         } else {
           const project = res.details?.slug || res.uid;
           router.push(PAGES.PROJECT.OVERVIEW(project));
+          router.refresh();
         }
       });
     } catch (error: any) {
