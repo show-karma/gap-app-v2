@@ -16,7 +16,7 @@ export function NewFeatureBanner() {
             </p>{" "}
             <Link
               href={PAGES.PROJECTS_EXPLORER}
-              className="text-sm font-semibold text-blue-900 max-md:text-xs underline"
+              className="text-sm font-semibold text-blue-600 max-md:text-xs underline"
             >
               Explore all projects on Karma GAP!
             </Link>
