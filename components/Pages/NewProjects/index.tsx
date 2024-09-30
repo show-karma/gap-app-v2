@@ -230,13 +230,11 @@ export const NewProjectsPage = () => {
             >
               <AutoSizer disableHeight>
                 {({ width }) => {
-                  const screenWidthPerCommonWidth = Math.floor(
-                    width / commonWidth
-                  );
-                  const columnCounter = screenWidthPerCommonWidth
-                    ? screenWidthPerCommonWidth > 4
+                  const columns = Math.floor(width / commonWidth);
+                  const columnCounter = columns
+                    ? columns > 4
                       ? 4
-                      : screenWidthPerCommonWidth
+                      : columns
                     : 1;
                   const columnWidth = Math.floor(width / columnCounter);
                   const gutterSize = 20;
@@ -249,11 +247,7 @@ export const NewProjectsPage = () => {
                       width={width}
                       rowCount={Math.ceil(projects.length / columnCounter)}
                       rowHeight={260}
-                      columnWidth={
-                        columnWidth - 20 < commonWidth
-                          ? commonWidth
-                          : columnWidth - 5
-                      }
+                      columnWidth={columnWidth}
                       columnCount={columnCounter}
                       cellRenderer={({ columnIndex, key, rowIndex, style }) => {
                         const project =
@@ -264,17 +258,15 @@ export const NewProjectsPage = () => {
                             style={{
                               ...style,
                               left:
-                                columnIndex === 0
-                                  ? +(style.left || 0)
-                                  : +(style.left || 0) + gutterSize,
-                              width:
-                                columnIndex === 0
-                                  ? +(style.width || 0)
-                                  : +(style.width || 0) - gutterSize,
+                                +(style.left || 0) +
+                                (columnIndex * gutterSize) /
+                                  (columnCounter - 1),
+                              width: +(style.width || 0) - gutterSize,
                               top:
                                 rowIndex === 0
                                   ? +(style.top || 0)
                                   : +(style.top || 0) + gutterSize,
+
                               height: +(style.height || 0) - gutterSize,
                             }}
                           >
