@@ -65,7 +65,7 @@ export const AllProjects = () => {
         setCurrentPageInfo(res.pageInfo);
         return res;
       }),
-    enabled: isAuth,
+    enabled: isAuth && isOwner,
   });
   const projects = data?.data || [];
 
