@@ -21,3 +21,14 @@ export interface ProjectReport {
   description: string | string[];
   categories: string[];
 }
+
+export interface ProjectFromList {
+  uid: string;
+  slug: string;
+  title: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+  noOfGrants: number;
+  noOfProjectMilestones: number;
+}
