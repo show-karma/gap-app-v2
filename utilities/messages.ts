@@ -154,7 +154,7 @@ export const MESSAGES = {
     FORM: {
       TITLE: {
         MIN: "Title must be at least 3 characters",
-        MAX: "Title must be less than 30 characters",
+        MAX: "Title must be less than 50 characters",
       },
       DATE: "Date is required",
     },
