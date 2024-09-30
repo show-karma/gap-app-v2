@@ -123,7 +123,7 @@ export const NewProjectsPage = () => {
 
   return (
     <div className="flex w-full max-w-full flex-row justify-start gap-6 px-12 pb-7 pt-5 max-2xl:px-8 max-md:px-4 max-lg:flex-col">
-      <div className="flex w-full max-w-full flex-col justify-start items-center gap-6">
+      <div className="flex w-full max-w-full flex-col justify-start items-center gap-6 mt-4">
         <div className="flex flex-row justify-between items-center gap-3 w-full">
           <h1 className="text-2xl font-bold text-black dark:text-white">
             Projects on GAP
@@ -215,7 +215,7 @@ export const NewProjectsPage = () => {
         </div>
 
         {/* <div className="flex gap-8 flex-row max-lg:flex-col-reverse w-full h-full"> */}
-        <div className="h-full w-full my-8">
+        <div className="h-full w-full my-4">
           {projects && projects.length > 0 ? (
             <InfiniteScroll
               dataLength={projects.length}
