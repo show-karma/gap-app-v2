@@ -21,7 +21,7 @@ import {
 import { getGapClient, useGap } from "@/hooks";
 import { ShareDialog } from "../Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/ShareDialog";
 import { errorManager } from "../Utilities/errorManager";
-import {  sanitizeObject } from "@/utilities/sanitize";
+import { sanitizeObject } from "@/utilities/sanitize";
 import { z } from "zod";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { useForm } from "react-hook-form";
@@ -172,6 +172,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                       "milestones-and-updates"
                     )
                   );
+                  router.refresh();
                 }
                 retries -= 1;
                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return

@@ -171,6 +171,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
                       "milestones-and-updates"
                     )
                   );
+                  router.refresh();
                   afterSubmit?.();
                 }
                 retries -= 1;

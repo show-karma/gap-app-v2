@@ -141,6 +141,7 @@ const MilestonesList = dynamic(
 
 export default function MilestonesAndUpdates() {
   const { grant } = useGrantStore();
+  console.log("GRANT", grant);
   const project = useProjectStore((state) => state.project);
   const hasMilestonesOrUpdates =
     grant?.milestones?.length || grant?.updates?.length;

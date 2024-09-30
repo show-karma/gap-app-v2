@@ -29,6 +29,7 @@ export const NoGrant = () => {
               project.details?.data.slug || project.uid
             )
           );
+          router.refresh();
           closeProgressModal();
         }}
       >
