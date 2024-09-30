@@ -18,7 +18,7 @@ const pickColor = (index: number) => {
 
 const ProjectCardSkeleton = ({ index }: { index: number }) => {
   return (
-    <div className="flex h-[260px] w-full max-w-full relative flex-col items-start justify-between gap-3 rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2 transition-all duration-300 ease-in-out hover:opacity-80">
+    <div className="flex h-[240px] w-full max-w-full relative flex-col items-start justify-between gap-3 rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2 transition-all duration-300 ease-in-out hover:opacity-80">
       <div className="w-full flex flex-col gap-1 ">
         <div
           className="h-[4px] w-full rounded-full mb-2.5"
@@ -44,8 +44,8 @@ const ProjectCardSkeleton = ({ index }: { index: number }) => {
       </div>
 
       <div className="flex w-full flex-col flex-wrap justify-start gap-1">
-        <Skeleton className="flex h-4 w-full items-center justify-start rounded-full px-3 py-1 max-2xl:px-2" />
-        <Skeleton className="flex h-4 w-full items-center justify-start rounded-full px-3 py-1 max-2xl:px-2" />
+        <Skeleton className="flex h-6 w-full items-center justify-start rounded-full px-3 py-1 max-2xl:px-2" />
+        <Skeleton className="flex h-6 w-full items-center justify-start rounded-full px-3 py-1 max-2xl:px-2" />
       </div>
     </div>
   );
@@ -54,7 +54,7 @@ const ProjectCardSkeleton = ({ index }: { index: number }) => {
 export const ProjectCardListSkeleton = () => {
   const cardArray = Array.from({ length: 12 }, (_, index) => index);
   return (
-    <div className="grid grid-cols-4 w-full gap-4 max-[1600px]:grid-cols-4 max-xl:grid-cols-2 max-lg:grid-cols-3 max-md:grid-cols-2 max-sm:grid-cols-1">
+    <div className="grid grid-cols-4 w-full gap-4 max-[1600px]:grid-cols-4 max-[1500px]:grid-cols-3 max-[1100px]:grid-cols-2 max-sm:grid-cols-1">
       {cardArray.map((_, index) => (
         <ProjectCardSkeleton key={index} index={index} />
       ))}

@@ -295,7 +295,7 @@ export const NewProjectsPage = () => {
           ) : null}
           {isLoading || isFetching ? (
             <div className="w-full flex items-center justify-center">
-              <Spinner />
+              <ProjectCardListSkeleton />
             </div>
           ) : null}
         </div>
