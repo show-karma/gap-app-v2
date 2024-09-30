@@ -17,13 +17,19 @@ import toast from "react-hot-toast";
 import { ProjectDescriptionDialog } from "./Dialog";
 import { ProjectContacts } from "./Contacts";
 import { AllProjectsLoadingTable } from "./Loading";
+import { useAuthStore } from "@/store/auth";
 
 const getAllProjects = async (
   offset: number,
   limit: number
 ): Promise<{ data: ProjectReport[]; pageInfo: PageInfo }> => {
   const response = await fetchData(
-    INDEXER.PROJECT.ALL_REPORT(offset, limit)
+    INDEXER.PROJECT.ALL_REPORT(offset, limit),
+    "GET",
+    undefined,
+    undefined,
+    undefined,
+    true
   ).then(([res, error]) => {
     if (!error) {
       return res;
@@ -50,6 +56,7 @@ export const AllProjects = () => {
     undefined
   );
 
+  const { isAuth } = useAuthStore();
   // const isLoading = true;
   const { data, isLoading } = useQuery({
     queryKey: ["all-projects", page, pageSize],
@@ -58,6 +65,7 @@ export const AllProjects = () => {
         setCurrentPageInfo(res.pageInfo);
         return res;
       }),
+    enabled: isAuth,
   });
   const projects = data?.data || [];
 
