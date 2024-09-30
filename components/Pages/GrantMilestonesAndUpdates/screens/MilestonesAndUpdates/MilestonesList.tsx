@@ -154,7 +154,6 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
 
       return aDate < bDate ? -1 : 1;
     });
-    console.log("pendingMilestonesToSet", pendingMilestonesToSet);
 
     const allMilestonesToSet = unsortedAllMilestones.sort((a, b) => {
       const getDate = (item: any) => {
