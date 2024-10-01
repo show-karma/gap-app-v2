@@ -73,7 +73,7 @@ export const Presentation = () => {
                 }}
               />
               <Link href={PAGES.PROJECTS_EXPLORER}>
-                <Button className="flex rounded-md hover:opacity-75 border-none transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-3 bg-transparent dark:bg-transparent px-7 py-4 text-lg font-semibold leading-7 text-black hover:bg-transparent max-2xl:px-5 max-2xl:text-base max-lg:text-sm">
+                <Button className="flex rounded-md hover:opacity-75 border-none transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-3 bg-transparent dark:bg-transparent px-7 py-4 text-lg font-semibold leading-7 text-black dark:text-zinc-100 hover:bg-transparent max-2xl:px-5 max-2xl:text-base max-lg:text-sm ">
                   Projects Explorer
                 </Button>
               </Link>
