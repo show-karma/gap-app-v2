@@ -9,6 +9,7 @@ import {
   IMilestoneResponse,
   IProjectUpdate,
   IGrantUpdate,
+  IProjectImpact,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { formatDate } from "@/utilities/formatDate";
 import { DeleteDialog } from "@/components/DeleteDialog";
@@ -102,7 +103,7 @@ const UpdateBlock = ({
   update,
   index,
 }: {
-  update: IProjectUpdate | IGrantUpdate | IMilestoneResponse;
+  update: IProjectUpdate | IGrantUpdate | IMilestoneResponse | IProjectImpact;
   index: number;
 }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
@@ -115,7 +116,6 @@ const UpdateBlock = ({
   const { switchChainAsync } = useSwitchChain();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const [grantInfo, setGrantInfo] = useState<any>(null);
 
   const deleteProjectUpdate = async () => {
     let gapClient = gap;
@@ -187,19 +187,12 @@ const UpdateBlock = ({
     }
   };
 
-  useEffect(() => {
-    if (project) {
-      if (update.type !== "ProjectUpdate") {
-        const grantFound = project?.grants?.find(
-          (grant) => grant.uid?.toLowerCase() === update.refUID?.toLowerCase()
-        );
-        if (grantFound) {
-          setGrantInfo(grantFound);
-          return;
-        }
-      }
-    }
-  }, [project, update]);
+  const labelDictionary = {
+    ProjectUpdate: "UPDATE",
+    GrantUpdate: "GRANT UPDATE",
+    Milestone: "MILESTONE",
+    ProjectImpact: "IMPACT",
+  };
 
   return (
     <div className="flex w-full flex-1 flex-col gap-4 rounded-lg  dark:bg-zinc-800 bg-[#F8F9FC] p-4 transition-all duration-200 ease-in-out  max-sm:px-2">
@@ -223,11 +216,7 @@ const UpdateBlock = ({
             </svg>
 
             <p className="text-xs font-bold text-white">
-              {update.type == "ProjectUpdate"
-                ? "UPDATE"
-                : update.type == "GrantUpdate"
-                ? "GRANT UPDATE"
-                : "MILESTONE"}
+              {labelDictionary[update.type as keyof typeof labelDictionary]}
             </p>
           </div>
         </div>
@@ -255,11 +244,12 @@ const UpdateBlock = ({
           ) : null}
         </div>
       </div>
-      {update.data.title ? (
-        <p className="text-lg font-semibold text-black dark:text-zinc-100 max-sm:text-base">
-          {update.data.title}
-        </p>
-      ) : null}
+      {update.type !== "ProjectImpact" &&
+        (update.data && "title" in update.data && update.data.title ? (
+          <p className="text-lg font-semibold text-black dark:text-zinc-100 max-sm:text-base">
+            {update.data.title}
+          </p>
+        ) : null)}
       <div className="relative flex justify-between items-end">
         <div className="flex-grow">
           <ReadMore
@@ -267,23 +257,55 @@ const UpdateBlock = ({
             readMoreText="Read full update"
             markdownClass="text-black font-normal text-base"
             side="left"
+            othersideButton={
+              update.type != "ProjectUpdate" &&
+              update.type != "ProjectImpact" ? (
+                <Link
+                  href={PAGES.PROJECT.MILESTONES_AND_UPDATES(
+                    project?.details?.data.slug || "",
+                    update.refUID
+                  )}
+                  className="underline text-blue-600 dark:text-blue-400 font-semibold text-sm hover:underline"
+                >
+                  {
+                    project?.grants?.find(
+                      (grant) =>
+                        grant.uid?.toLowerCase() ===
+                        update.refUID?.toLowerCase()
+                    )?.details?.data.title
+                  }
+                </Link>
+              ) : update.type === "ProjectImpact" ? (
+                <Link
+                  href={PAGES.PROJECT.IMPACT.ROOT(
+                    project?.details?.data.slug || project?.uid || ""
+                  )}
+                  className="underline text-blue-600 dark:text-blue-400 font-semibold text-sm hover:underline"
+                >
+                  See impact
+                </Link>
+              ) : null
+            }
           >
-            {update.data.type == "milestone"
-              ? update.data.description
-              : update.data.text}
+            {(() => {
+              switch (update.type) {
+                case "ProjectUpdate":
+                case "GrantUpdate":
+                  return update.data.text;
+                case "Milestone":
+                  return "description" in update.data
+                    ? update.data.description
+                    : "";
+                case "ProjectImpact":
+                  const data = update.data as IProjectImpact["data"];
+                  const { impact, proof, work } = data;
+                  return `### Work \n${work} \n\n### Impact \n${impact} \n\n### Proof \n${proof}`;
+                default:
+                  return "";
+              }
+            })()}
           </ReadMore>
         </div>
-        {update.type != "ProjectUpdate" ? (
-          <Link
-            href={PAGES.PROJECT.MILESTONES_AND_UPDATES(
-              project?.details?.data.slug || "",
-              update.refUID
-            )}
-            className="absolute right-0 text-blue-600 dark:text-blue-400 font-semibold text-sm hover:underline"
-          >
-            {grantInfo?.details?.data.title}
-          </Link>
-        ) : null}
       </div>
     </div>
   );
@@ -321,21 +343,31 @@ const UpdatesTab: FC = () => {
     defaultValue: "info",
   });
 
-  const updates: IProjectUpdate[] = project?.updates || [];
-  const grantUpdates: IGrantUpdate[] = [];
-  const grantMilestones: IMilestoneResponse[] = [];
-  project?.grants.forEach((grant) => {
-    grantUpdates.push(...grant.updates);
-    grantMilestones.push(...grant.milestones);
-  });
+  const [allUpdates, setAllUpdates] = useState<any[]>([]);
 
-  const allUpdates = [...updates, ...grantUpdates, ...grantMilestones].sort(
-    (a, b) => {
+  useEffect(() => {
+    const updates: IProjectUpdate[] = project?.updates || [];
+    const grantUpdates: IGrantUpdate[] = [];
+    const grantMilestones: IMilestoneResponse[] = [];
+    const projectImpacts: IProjectImpact[] = project?.impacts || [];
+    project?.grants.forEach((grant) => {
+      grantUpdates.push(...grant.updates);
+      grantMilestones.push(...grant.milestones);
+    });
+    const sortedUpdates = [
+      ...updates,
+      ...grantUpdates,
+      ...grantMilestones,
+      ...projectImpacts,
+    ].sort((a, b) => {
       const dateA = new Date(a.createdAt).getTime();
       const dateB = new Date(b.createdAt).getTime();
       return dateB - dateA;
-    }
-  );
+    });
+    console.log(sortedUpdates);
+    setAllUpdates(sortedUpdates);
+  }, [project?.grants, project?.updates, project?.impacts]);
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-row gap-4 justify-between">
