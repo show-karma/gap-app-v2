@@ -112,8 +112,12 @@ export const NewProjectsPage = () => {
   const commonWidth = 359;
 
   const changeSort = async (newValue: SortByOptions) => {
-    changeSortQuery(newValue);
-    changeSortOrderQuery(selectedSortOrder === "asc" ? "desc" : "asc");
+    if (newValue === selectedSort) {
+      changeSortOrderQuery(selectedSortOrder === "asc" ? "desc" : "asc");
+    } else {
+      changeSortQuery(newValue);
+      changeSortOrderQuery("desc");
+    }
 
     queryClient.removeQueries({
       queryKey: ["new-projects"],
