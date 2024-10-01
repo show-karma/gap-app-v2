@@ -77,7 +77,8 @@ export const CategoryCreationDialog: FC<CategoryCreationDialogProps> = ({
     } catch (error: any) {
       errorManager(
         `Error creating category of community ${communityId}`,
-        error
+        error,
+        data
       );
       console.log(error);
       toast.error("An error occurred while creating the category");

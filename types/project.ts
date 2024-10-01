@@ -13,3 +13,22 @@ export type APIContact = {
   name?: string;
   updatedAt: string;
 };
+
+export interface ProjectReport {
+  contact: Contact[];
+  createdAt: string;
+  title: string;
+  description: string | string[];
+  categories: string[];
+}
+
+export interface ProjectFromList {
+  uid: string;
+  slug: string;
+  title: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+  noOfGrants: number;
+  noOfProjectMilestones: number;
+}

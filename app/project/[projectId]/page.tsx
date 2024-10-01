@@ -1,10 +1,11 @@
-import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
+"use client";
+import { ProjectOverviewLoading } from "@/components/Pages/Project/Loading/Overview";
 import dynamic from "next/dynamic";
 
 const ProjectPage = dynamic(
   () => import("@/components/Pages/Project/ProjectPage"),
   {
-    loading: () => <DefaultLoading />,
+    loading: () => <ProjectOverviewLoading />,
   }
 );
 

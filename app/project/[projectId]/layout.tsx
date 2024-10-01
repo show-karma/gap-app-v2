@@ -2,12 +2,12 @@
 import { fetchMetadata } from "frames.js/next/pages-router/client";
 import { envVars } from "@/utilities/enviromentVars";
 import { ProjectWrapper } from "@/components/Pages/Project/ProjectWrapper";
-import { Spinner } from "@/components/Utilities/Spinner";
 import { zeroUID } from "@/utilities/commons";
 import { defaultMetadata } from "@/utilities/meta";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import ProjectHeaderLoading from "@/components/Pages/Project/Loading/Header";
 
 export async function generateMetadata({
   params,
@@ -35,10 +35,10 @@ export async function generateMetadata({
     await fetchMetadata(
       new URL(
         `/api/frames/${projectId}?projectInfo=${
-        // Base64 encoded projectInfo
-        encodeURIComponent(
-          Buffer.from(JSON.stringify(projectInfo)).toString("base64")
-        )
+          // Base64 encoded projectInfo
+          encodeURIComponent(
+            Buffer.from(JSON.stringify(projectInfo)).toString("base64")
+          )
         }`,
         envVars.VERCEL_URL
       )
@@ -55,15 +55,23 @@ export async function generateMetadata({
       handle: defaultMetadata.twitter.creator,
       site: defaultMetadata.twitter.site,
       cardType: "summary_large_image",
+      images: [
+        {
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
+          alt: dynamicMetadata.title || defaultMetadata.title,
+        },
+      ],
     },
     openGraph: {
       url: defaultMetadata.openGraph.url,
       title: dynamicMetadata.title || defaultMetadata.title,
       description: dynamicMetadata.description || defaultMetadata.description,
-      images: defaultMetadata.openGraph.images.map((image) => ({
-        url: image,
-        alt: dynamicMetadata.title || defaultMetadata.title,
-      })),
+      images: [
+        {
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
+          alt: dynamicMetadata.title || defaultMetadata.title,
+        },
+      ],
     },
     additionalLinkTags: [
       {
@@ -92,17 +100,11 @@ export default async function RootLayout({
   }
 
   return (
-    <Suspense
-      fallback={
-        <div className="flex flex-col w-full h-full items-center justify-center">
-          <Spinner />
-        </div>
-      }
-    >
-      <div>
+    <>
+      <Suspense fallback={<ProjectHeaderLoading />}>
         <ProjectWrapper projectId={projectId} project={project} />
-        <div className="px-4 sm:px-6 lg:px-12">{children}</div>
-      </div>
-    </Suspense>
+      </Suspense>
+      <div className="px-4 sm:px-6 lg:px-12">{children}</div>
+    </>
   );
 }

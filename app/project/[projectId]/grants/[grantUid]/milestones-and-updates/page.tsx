@@ -1,10 +1,12 @@
-import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
 import { zeroUID } from "@/utilities/commons";
 import { defaultMetadata } from "@/utilities/meta";
 import MilestonesAndUpdates from "@/components/Pages/Grants/MilestonesAndUpdates";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { Suspense } from "react";
+import { ProjectGrantsMilestonesAndUpdatesLoading } from "@/components/Pages/Project/Loading/Grants/MilestonesAndUpdate";
+import { envVars } from "@/utilities/enviromentVars";
 
 export async function generateMetadata({
   params,
@@ -53,7 +55,7 @@ export async function generateMetadata({
   } else {
     metadata = {
       ...metadata,
-      title: `Karma GAP - ${projectInfo?.details?.data?.title}`,
+      title: `${projectInfo?.details?.data?.title} | Karma GAP`,
       description:
         projectInfo?.details?.data?.description?.substring(0, 80) || "",
     };
@@ -66,20 +68,32 @@ export async function generateMetadata({
       creator: defaultMetadata.twitter.creator,
       site: defaultMetadata.twitter.site,
       card: "summary_large_image",
+      images: [
+        {
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
+          alt: metadata.title || defaultMetadata.title,
+        },
+      ],
     },
     openGraph: {
       url: defaultMetadata.openGraph.url,
       title: metadata.title,
       description: metadata.description,
-      images: defaultMetadata.openGraph.images.map((image) => ({
-        url: image,
-        alt: metadata.title,
-      })),
+      images: [
+        {
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
+          alt: metadata.title || defaultMetadata.title,
+        },
+      ],
       // site_name: defaultMetadata.openGraph.siteName,
     },
     icons: metadata.icons,
   };
 }
 export default function Page() {
-  return <MilestonesAndUpdates />;
+  return (
+    <Suspense fallback={<ProjectGrantsMilestonesAndUpdatesLoading />}>
+      <MilestonesAndUpdates />
+    </Suspense>
+  );
 }

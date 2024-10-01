@@ -97,6 +97,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
                   (project.details?.data?.slug || project?.uid) as string
                 )
               );
+              router.refresh();
             }
             retries -= 1;
             // eslint-disable-next-line no-await-in-loop, no-promise-executor-return

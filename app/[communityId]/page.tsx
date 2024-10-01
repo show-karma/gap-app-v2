@@ -14,6 +14,8 @@ import { pagesOnRoot } from "@/utilities/pagesOnRoot";
 import { notFound } from "next/navigation";
 import { ReceiveProjectUpdates } from "@/components/Pages/ReceiveProjectUpdates";
 import { communitiesToBulkSubscribe } from "@/utilities/subscribe";
+import { envVars } from "@/utilities/enviromentVars";
+import { zeroUID } from "@/utilities/commons";
 
 type Props = {
   params: {
@@ -28,8 +30,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const { data } = await gapIndexerApi.communityBySlug(communityId);
     communityName = data?.details?.data?.name || communityId;
+    if (!data || data?.uid === zeroUID || !data?.details?.data?.name) {
+      notFound();
+    }
   } catch {
-    console.log("Not found community", communityId);
+    notFound();
   }
 
   const dynamicMetadata = {
@@ -43,15 +48,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     twitter: {
       creator: defaultMetadata.twitter.creator,
       site: defaultMetadata.twitter.site,
+      images: [
+        {
+          url: `${envVars.VERCEL_URL}/api/metadata/communities/${communityId}`,
+          alt: dynamicMetadata.title || defaultMetadata.title,
+        },
+      ],
     },
     openGraph: {
       url: defaultMetadata.openGraph.url,
       title: dynamicMetadata.title || defaultMetadata.title,
       description: dynamicMetadata.description || defaultMetadata.description,
-      images: defaultMetadata.openGraph.images.map((image) => ({
-        url: image,
-        alt: dynamicMetadata.title || defaultMetadata.title,
-      })),
+      images: [
+        {
+          url: `${envVars.VERCEL_URL}/api/metadata/communities/${communityId}`,
+          alt: dynamicMetadata.title || defaultMetadata.title,
+        },
+      ],
     },
     // link: [
     //   {

@@ -152,7 +152,10 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
   const subscriptionShema = z
     .object({
       id: z.string().min(1),
-      name: z.string().min(3, "Name must be at least 3 characters long"),
+      name: z
+        .string()
+        .min(3, "Name must be at least 3 characters long")
+        .max(30, "Name must be less than 30 characters long"),
       telegram: z.string(),
       email: z
         .string()
@@ -223,7 +226,9 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
       true
     ).catch(() => []);
     if (error) {
-      errorManager(`Error in refreshing contact section`, error);
+      errorManager(`Error in refreshing contact section`, error, {
+        project: projectId,
+      });
       setProjectContactsInfo([]);
       return;
     }
@@ -302,13 +307,16 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
             clear();
             refreshList(project!.uid as Hex);
           } else {
-            toast.error("Something went wrong. Please try again later.");
+            throw Error(error);
           }
         });
       }
     } catch (error: any) {
       toast.error("Something went wrong. Please try again later.");
-      errorManager(`Error creating contact`, error);
+      errorManager(`Error creating contact`, error, {
+        project: project?.details?.data?.slug || project?.uid,
+        data,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -346,9 +354,7 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
           });
           refreshList(project!.uid as Hex);
         } else {
-          toast.error("Something went wrong. Please try again later.", {
-            className: "z-[9999]",
-          });
+          throw Error(error);
         }
       });
       // const subscription = await fetchData(INDEXER.NOTIFICATIONS.UPDATE())
@@ -360,7 +366,11 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
         `Error deleting contact ${contactId} from project ${
           project?.details?.data?.slug || project?.uid
         }`,
-        error
+        error,
+        {
+          project: project?.details?.data?.slug || project?.uid,
+          contactId,
+        }
       );
       console.log(error);
     } finally {

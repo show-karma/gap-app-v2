@@ -14,6 +14,17 @@ export const INDEXER = {
     MANAGERS: (profileId: string, chainId: number) =>
       `/registry/profile/${profileId}/${chainId}/members`,
   },
+  PROJECTS: {
+    GET_ALL: (
+      offset: number,
+      limit: number,
+      sortField: string,
+      sortOrder: "asc" | "desc"
+    ) =>
+      `/projects/list?offset=${offset}&limit=${limit}${
+        sortField ? `&sortField=${sortField}` : ""
+      }${sortOrder ? `&sortOrder=${sortOrder}` : ""}`,
+  },
   PROJECT: {
     SUBSCRIBE: (projectId: Hex) => `/projects/${projectId}/subscribe`,
     GET: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}`,
@@ -22,6 +33,8 @@ export const INDEXER = {
     GRANTS_GENIE: (projectId: string) => `/projects/${projectId}/grants-genie`,
     REQUEST_INTRO: (projectIdOrSlug: string) =>
       `/projects/requestintro/${projectIdOrSlug}`,
+    ALL_REPORT: (offset: number, limit: number) =>
+      `/projects/report?offset=${offset}&limit=${limit}`,
   },
   QUESTIONS: {
     CREATE: (idOrSlug: string) => `/questions/create/${idOrSlug}`,
@@ -63,9 +76,12 @@ export const INDEXER = {
         selectedProgramId?: string;
       }
     ) =>
-      `/communities/${communityIdOrSlug}/grants?${page || page === 0 ? `&page=${page}` : ""
-      }${pageLimit ? `&pageLimit=${pageLimit}` : ""}${status ? `&status=${status}` : ""
-      }${sort ? `&sort=${sort}` : ""}${categories ? `&categories=${categories}` : ""
+      `/communities/${communityIdOrSlug}/grants?${
+        page || page === 0 ? `&page=${page}` : ""
+      }${pageLimit ? `&pageLimit=${pageLimit}` : ""}${
+        status ? `&status=${status}` : ""
+      }${sort ? `&sort=${sort}` : ""}${
+        categories ? `&categories=${categories}` : ""
       }${selectedProgramId ? `&selectedProgramIds=${selectedProgramId}` : ""}`,
     FEED: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/feed`,

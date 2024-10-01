@@ -23,7 +23,7 @@ import { SearchDropdown } from "./SearchDropdown";
 import { appNetwork } from "@/utilities/network";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { cn } from "@/utilities/tailwind";
-import { WebsiteIcon } from "@/components/Icons";
+import { Telegram2Icon, WebsiteIcon } from "@/components/Icons";
 import { BlogIcon } from "@/components/Icons/Blog";
 import { DiscussionIcon } from "@/components/Icons/Discussion";
 import { OrganizationIcon } from "@/components/Icons/Organization";
@@ -43,13 +43,17 @@ import { DayPicker } from "react-day-picker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
+import { te } from "date-fns/locale";
 
 const labelStyle = "text-sm font-bold text-[#344054] dark:text-zinc-100";
 const inputStyle =
   "mt-1 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100";
 
 const createProgramSchema = z.object({
-  name: z.string().min(3, { message: MESSAGES.REGISTRY.FORM.NAME }),
+  name: z
+    .string()
+    .min(3, { message: MESSAGES.REGISTRY.FORM.NAME.MIN })
+    .max(30, { message: MESSAGES.REGISTRY.FORM.NAME.MAX }),
   dates: z
     .object({
       endsAt: z.date().optional(),
@@ -113,6 +117,13 @@ const createProgramSchema = z.object({
     message: "Please enter a valid URL",
   }),
   bugBounty: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: "Please enter a valid URL",
+    })
+    .optional()
+    .or(z.literal("")),
+  telegram: z
     .string()
     .refine((value) => urlRegex.test(value), {
       message: "Please enter a valid URL",
@@ -198,6 +209,7 @@ export default function AddProgram({
       bugBounty: programToEdit?.metadata?.bugBounty,
       website: programToEdit?.metadata?.website,
       twitter: programToEdit?.metadata?.projectTwitter,
+      telegram: programToEdit?.metadata?.socialLinks?.telegram,
       discord: programToEdit?.metadata?.socialLinks?.discord,
       orgWebsite: programToEdit?.metadata?.socialLinks?.orgWebsite,
       blog: programToEdit?.metadata?.socialLinks?.blog,
@@ -280,6 +292,7 @@ export default function AddProgram({
           blog: data.blog || "",
           forum: data.forum || "",
           grantsSite: data.grantsSite || "",
+          telegram: data.telegram || "",
         },
         bugBounty: data.bugBounty,
         categories: data.categories,
@@ -293,7 +306,6 @@ export default function AddProgram({
         logoImgData: {},
         bannerImgData: {},
         credentials: {},
-        createdAt: new Date().getTime(),
         status: "Active",
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
@@ -312,7 +324,7 @@ export default function AddProgram({
         true
       );
       if (error) {
-        throw new Error("Error creating program");
+        throw new Error(error);
       }
       toast.success(
         <p className="text-left">
@@ -326,8 +338,13 @@ export default function AddProgram({
       );
       router.push(PAGES.REGISTRY.ROOT);
     } catch (error: any) {
-      errorManager(`Error while creating a program`, error);
-      toast.error("An error occurred while creating the program");
+      const errorMessage = error.message;
+      if (errorMessage?.includes("already exists")) {
+        toast.error("A program with this name already exists");
+      } else {
+        toast.error("An error occurred while creating the program");
+        errorManager(`Error while creating a program`, error);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -371,6 +388,7 @@ export default function AddProgram({
           blog: data.blog || "",
           forum: data.forum || "",
           grantsSite: data.grantsSite || "",
+          telegram: data.telegram || "",
         },
         bugBounty: data.bugBounty,
         categories: data.categories,
@@ -384,12 +402,10 @@ export default function AddProgram({
         logoImgData: {},
         bannerImgData: {},
         credentials: {},
-        createdAt: new Date().getTime(),
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
         status: data.status,
       });
-     
 
       const isSameAddress =
         programToEdit?.createdByAddress?.toLowerCase() ===
@@ -463,8 +479,7 @@ export default function AddProgram({
           {},
           true
         );
-        if (error)
-          throw new Error("An error occurred while editing the program");
+        if (error) throw new Error(error);
       }
       toast.success("Program updated successfully!");
       await refreshPrograms?.().then(() => {
@@ -1019,7 +1034,6 @@ export default function AddProgram({
                   {errors.orgWebsite?.message}
                 </p>
               </div>
-
               <div className="flex w-full flex-col gap-2 justify-between">
                 <label htmlFor="program-bug-bounty" className={labelStyle}>
                   Link to Bug bounty
@@ -1037,6 +1051,26 @@ export default function AddProgram({
                 </div>
                 <p className="text-base text-red-400">
                   {errors.bugBounty?.message}
+                </p>
+              </div>
+
+              <div className="flex w-full flex-col gap-2 justify-between">
+                <label htmlFor="program-telegram" className={labelStyle}>
+                  Telegram
+                </label>
+                <div className="w-full relative">
+                  <div className="h-full w-max absolute flex justify-center items-center mx-3">
+                    <Telegram2Icon className="text-zinc-500 w-4 h-4" />
+                  </div>
+                  <input
+                    className={cn(inputStyle, "pl-10 mt-0")}
+                    placeholder="Ex: https://t.me/yourusername"
+                    id="program-telegram"
+                    {...register("telegram")}
+                  />
+                </div>
+                <p className="text-base text-red-400">
+                  {errors.telegram?.message}
                 </p>
               </div>
             </div>

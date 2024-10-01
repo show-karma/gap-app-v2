@@ -248,6 +248,11 @@ export default function Header() {
                           Get Funding
                         </button>
                       </Link>
+                      <ExternalLink href={"https://docs.gap.karmahq.xyz/"}>
+                        <button className="rounded-md bg-white w-full dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
+                          Docs
+                        </button>
+                      </ExternalLink>
                       {isReady ? (
                         <>
                           {isFundingMap ? (
@@ -347,10 +352,6 @@ export default function Header() {
                       ) : null}
                     </div>
                     <div className="w-full flex flex-col  border-t border-t-[#dcdfea] mt-4 pt-4  items-center justify-center">
-                      <ExternalLink href={"https://docs.gap.karmahq.xyz/"}>
-                        <button className={buttonStyle}>Docs</button>
-                      </ExternalLink>
-
                       <div className="flex h-[40px] flex-row items-center justify-center gap-2">
                         {socials.map((social) => {
                           return (
@@ -379,6 +380,9 @@ export default function Header() {
                   <Link href={PAGES.REGISTRY.ROOT}>
                     <button className={buttonStyle}>Get Funding</button>
                   </Link>
+                  <ExternalLink href={"https://docs.gap.karmahq.xyz/"}>
+                    <button className={buttonStyle}>Docs</button>
+                  </ExternalLink>
                   {isFundingMap ? (
                     isRegistryAllowed ? (
                       <Link href={PAGES.REGISTRY.MANAGE_PROGRAMS}>
@@ -498,9 +502,6 @@ export default function Header() {
               </button>
               {/* Color mode toggle end */}
               <div className="flex h-[40px] flex-row items-center gap-2 border-l border-l-[#dcdfea] pl-4">
-                <ExternalLink href={"https://docs.gap.karmahq.xyz/"}>
-                  <button className={buttonStyle}>Docs</button>
-                </ExternalLink>
                 {socials.map((social) => {
                   return (
                     <ExternalLink

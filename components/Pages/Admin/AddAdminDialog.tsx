@@ -166,7 +166,11 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
     } catch (error: any) {
       errorManager(
         `Error adding admin ${data.address} to community ${UUID}`,
-        error
+        error,
+        {
+          community: UUID,
+          address: data.address,
+        }
       );
       console.log(error);
     } finally {

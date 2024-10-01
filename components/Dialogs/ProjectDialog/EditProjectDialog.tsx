@@ -58,6 +58,13 @@ import { NetworkDropdown } from "./NetworkDropdown";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { useProjectEditModalStore } from "@/store/modals/projectEdit";
+import { SimilarProjectsDialog } from "../SimilarProjectsDialog";
+import debounce from "lodash.debounce";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
+import { Skeleton } from "@/components/Utilities/Skeleton";
+import { ExternalLink as ExternalLinkComponent } from "@/components/Utilities/ExternalLink";
+import { SOCIALS } from "@/utilities/socials";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -67,7 +74,10 @@ const labelStyle =
   "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
 const schema = z.object({
-  title: z.string().min(3, { message: MESSAGES.PROJECT_FORM.TITLE }),
+  title: z
+    .string()
+    .min(3, { message: MESSAGES.PROJECT_FORM.TITLE.MIN })
+    .max(30, { message: MESSAGES.PROJECT_FORM.TITLE.MAX }),
   chainID: z.number({
     required_error: "Network is required",
     message: "Network is required",
@@ -202,14 +212,24 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
   const router = useRouter();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
+  const { openSimilarProjectsModal, isSimilarProjectsModalOpen } =
+    useSimilarProjectsModalStore();
 
-  const { register, handleSubmit, reset, watch, setValue, trigger, formState } =
-    useForm<SchemaType>({
-      resolver: zodResolver(schema),
-      reValidateMode: "onChange",
-      mode: "onChange",
-      defaultValues: dataToUpdate,
-    });
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    setValue,
+    trigger,
+    formState,
+    setError,
+  } = useForm<SchemaType>({
+    resolver: zodResolver(schema),
+    reValidateMode: "onChange",
+    mode: "onChange",
+    defaultValues: dataToUpdate,
+  });
   const { errors, isValid } = formState;
 
   const [team, setTeam] = useState<string[]>(dataToUpdate?.members || []);
@@ -485,6 +505,7 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
                 retries = 0;
                 toast.success(MESSAGES.PROJECT.CREATE.SUCCESS);
                 router.push(PAGES.PROJECT.GRANTS(slug || project.uid));
+                router.refresh();
                 changeStepperStep("indexed");
                 return;
               });
@@ -571,6 +592,7 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
         } else {
           const project = res.details?.slug || res.uid;
           router.push(PAGES.PROJECT.OVERVIEW(project));
+          router.refresh();
         }
       });
     } catch (error: any) {
@@ -579,7 +601,8 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
         `Error updating project ${
           projectToUpdate?.details?.data?.slug || projectToUpdate?.uid
         }`,
-        error
+        error,
+        data
       );
       toast.error(MESSAGES.PROJECT.UPDATE.ERROR);
       openModal();
@@ -606,12 +629,58 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
     }
   }, [contactsInfo]);
 
+  const [isSearchingProject, setIsSearchingProject] = useState(false);
+  const [existingProjects, setExistingProjects] = useState<IProjectResponse[]>(
+    []
+  );
+
+  const searchByExistingName = debounce(async (value: string) => {
+    if (
+      value.length < 3 ||
+      value.toLowerCase() ===
+        projectToUpdate?.details?.data?.title?.toLowerCase()
+    ) {
+      return;
+    }
+    try {
+      setIsSearchingProject(true);
+      const result = await gapIndexerApi
+        .searchProjects(value)
+        .then((res) => res.data);
+      const hasEqualTitle =
+        result.filter(
+          (item) =>
+            item.details?.data.title.toLowerCase() === value.toLowerCase()
+        ).length > 0;
+      if (hasEqualTitle) {
+        setExistingProjects(result);
+        setError("title", {
+          message:
+            "We found a project with similar name. Please double check to make sure you don't already have a project in our platform.",
+        });
+      } else {
+        setExistingProjects([]);
+      }
+      return;
+    } catch (error) {
+      console.log("error", error);
+    } finally {
+      setIsSearchingProject(false);
+    }
+  }, 500);
+
   const categories = [
     {
       title: "General info",
       desc: "These are the basics about your project",
       fields: (
         <div className="flex w-full flex-col gap-8 max-w-3xl">
+          {isSimilarProjectsModalOpen ? (
+            <SimilarProjectsDialog
+              similarProjects={existingProjects}
+              projectName={watch("title")}
+            />
+          ) : null}
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="name-input" className={labelStyle}>
               Name *
@@ -622,8 +691,48 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
               className={inputStyle}
               placeholder='e.g. "My awesome project"'
               {...register("title")}
+              onBlur={() => {
+                searchByExistingName(watch("title"));
+              }}
             />
-            <p className="text-red-500">{errors.title?.message}</p>
+            <div className="flex flex-col gap-1 justify-start items-start">
+              {isSearchingProject ? (
+                <Skeleton className="w-full h-6" />
+              ) : (
+                <p className="text-red-500">
+                  {errors.title?.message}{" "}
+                  {errors.title?.message &&
+                  errors.title?.message.includes("similar") ? (
+                    <>
+                      <span>
+                        If you need help getting access to your project, message
+                        us{" "}
+                      </span>
+                      <ExternalLinkComponent
+                        className="underline text-red-700 dark:text-red-300"
+                        href={SOCIALS.TELEGRAM}
+                      >
+                        {SOCIALS.TELEGRAM}.
+                      </ExternalLinkComponent>{" "}
+                    </>
+                  ) : null}
+                </p>
+              )}
+              {errors.title?.message &&
+              errors.title?.message.includes("similar") ? (
+                <span
+                  className="text-blue-500 underline cursor-pointer"
+                  style={{
+                    userSelect: "none",
+                  }}
+                  onClick={() => {
+                    openSimilarProjectsModal();
+                  }}
+                >
+                  View similar projects
+                </span>
+              ) : null}
+            </div>
           </div>
 
           <div className="flex w-full flex-col gap-2" data-color-mode="light">

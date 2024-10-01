@@ -13,7 +13,7 @@ interface GrantStore {
 export const useGrantStore = create<GrantStore>((set, get) => ({
   grant: undefined,
   setGrant: (grant: IGrantResponse | undefined) => set({ grant }),
-  loading: false,
+  loading: true,
   setLoading: (loading: boolean) => set({ loading }),
   refreshGrant: async () => {
     const { grant } = get();

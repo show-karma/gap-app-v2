@@ -5,7 +5,6 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { cn } from "@/utilities/tailwind";
 import { useQueryState } from "nuqs";
 import { ButtonHTMLAttributes, FC, useEffect, useState } from "react";
-import { ProjectUpdateForm } from "./ProjectUpdateForm";
 import {
   IMilestoneResponse,
   IProjectUpdate,
@@ -29,6 +28,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
+import { ProjectUpdateForm } from "@/components/Forms/ProjectUpdate";
 
 import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
@@ -289,6 +289,28 @@ const UpdateBlock = ({
   );
 };
 
+const ProjectUpdateFormBlock = () => {
+  const [, changeTab] = useQueryState("tab");
+  return (
+    <div className="flex w-full flex-col gap-6 rounded-md bg-gray-200 dark:bg-zinc-900  px-4 py-6 max-lg:max-w-full">
+      <div className="flex w-full flex-row justify-between">
+        <h4 className="text-2xl font-bold text-black dark:text-zinc-100">
+          Post a project update
+        </h4>
+        <button
+          className="bg-transparent p-4 hover:bg-transparent hover:opacity-75"
+          onClick={() => {
+            changeTab("updates");
+          }}
+        >
+          <img src="/icons/close.svg" alt="Close" className="h-5 w-5 " />
+        </button>
+      </div>
+      <ProjectUpdateForm />
+    </div>
+  );
+};
+
 const UpdatesTab: FC = () => {
   const { project } = useProjectStore();
 
@@ -391,7 +413,7 @@ const UpdatesTab: FC = () => {
 const tabs = {
   info: InformationTab,
   updates: UpdatesTab,
-  "post-update": ProjectUpdateForm,
+  "post-update": ProjectUpdateFormBlock,
 };
 
 const tabClasses =

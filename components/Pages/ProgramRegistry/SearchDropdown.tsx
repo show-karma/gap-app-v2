@@ -48,16 +48,18 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
 }) => {
   const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);
+  const [title, setTitle] = useState("");
+  const [search, setSearch] = useState("");
 
   const [orderedList, setOrderedList] = useState<
     {
       value: string;
       image:
-      | {
-        light: string;
-        dark: string;
-      }
-      | undefined;
+        | {
+            light: string;
+            dark: string;
+          }
+        | undefined;
     }[]
   >([]);
 
@@ -69,14 +71,14 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
 
     const sortedList = shouldSort
       ? parsedArray.sort((a, b) => {
-        if (a.value < b.value) {
-          return -1;
-        }
-        if (a.value > b.value) {
-          return 1;
-        }
-        return 0;
-      })
+          if (a.value < b.value) {
+            return -1;
+          }
+          if (a.value > b.value) {
+            return 1;
+          }
+          return 0;
+        })
       : parsedArray;
     setOrderedList(sortedList);
   }, []);
@@ -94,6 +96,16 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
         value: customNetwork,
         image: imageDictionary?.[customNetwork.toLowerCase()],
       });
+      if (search.length) {
+        new Promise<void>((resolve) => {
+          setSearch("");
+          resolve();
+        }).then(() => {
+          setSearch(customNetwork);
+        });
+      }
+
+      setTitle("");
     } else {
       if (!selected.includes(customNetwork)) {
         onSelectFunction(customNetwork);
@@ -113,9 +125,9 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
           <p className="block w-max">
             {selected.length
               ? `${selected.length} ${pluralize(
-                type,
-                selected.length
-              ).toLowerCase()} selected`
+                  type,
+                  selected.length
+                ).toLowerCase()} selected`
               : `${prefixUnselected} ${type}`}
           </p>
           <span>
@@ -130,6 +142,10 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
               <CommandInput
                 className="rounded-md px-2 w-full dark:text-white dark:bg-zinc-800"
                 placeholder={`Search ${type}...`}
+                value={search}
+                onValueChange={(value) => {
+                  setSearch(value);
+                }}
               />
             </div>
           ) : null}
@@ -219,13 +235,24 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
                       addCustomNetwork(e.target?.value);
                     }
                   }}
+                  value={title}
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                  }}
                 />
               </div>
             ) : (
               <div className="my-2 px-2">
                 <button
                   className="px-3 py-2 text-sm rounded-md bg-zinc-600 dark:bg-zinc-900 text-white dark:text-white w-full"
-                  onClick={() => setAdding(true)}
+                  onClick={(e) => {
+                    e?.preventDefault?.();
+                    if (search.length) {
+                      addCustomNetwork(search);
+                    } else {
+                      setAdding(true);
+                    }
+                  }}
                 >
                   {`Add ${pluralize(type, 1).toLowerCase()}`}
                 </button>

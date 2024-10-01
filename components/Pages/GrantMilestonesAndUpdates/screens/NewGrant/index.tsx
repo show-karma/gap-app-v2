@@ -6,15 +6,11 @@ import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
-import { Spinner } from "@/components/Utilities/Spinner";
 import {
   GrantDetails,
   nullRef,
-  GrantUpdate,
   Grant,
   Milestone,
-  MilestoneCompleted,
   IMilestone,
 } from "@show-karma/karma-gap-sdk";
 import type { FC } from "react";
@@ -24,15 +20,13 @@ import { Hex, isAddress } from "viem";
 import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
 import { Milestone as MilestoneComponent } from "./Milestone";
-import { useParams, usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { CommunitiesDropdown } from "@/components/CommunitiesDropdown";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { getGapClient, useGap } from "@/hooks";
 import toast from "react-hot-toast";
-import { useSearchParams } from "next/navigation";
 import { CalendarIcon, XMarkIcon } from "@heroicons/react/24/outline";
 import { getWalletClient } from "@wagmi/core";
-import { useQueryState } from "nuqs";
 import { useGrantFormStore } from "./store";
 import { MESSAGES } from "@/utilities/messages";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -43,7 +37,6 @@ import { DayPicker } from "react-day-picker";
 import { useAuthStore } from "@/store/auth";
 import { formatDate } from "@/utilities/formatDate";
 import { getProjectById, isCommunityAdminOf } from "@/utilities/sdk";
-import { useCommunityAdminStore } from "@/store/community";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { useCommunitiesStore } from "@/store/communities";
 import { cn } from "@/utilities/tailwind";
@@ -69,24 +62,11 @@ const inputStyle =
 const textAreaStyle =
   "mt-2 w-full rounded-lg border border-gray-200 bg-transparent px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:text-zinc-100 dark:border-gray-600";
 
-const SUCCESS_QUESTIONS = ["How should the success of your grant be measured?"];
-
-const IMPACT_QUESTIONS = [
-  "What is the intended direct impact your project will have on the ecosystem?",
-  "What is the long-term impact of your grant?",
-];
-
-const INNOVATION_QUESTIONS = [
-  "How will receiving a grant enable you to foster growth or innovation within the ecosystem?",
-];
-
-const FUND_QUESTIONS = ["How will the grant funds be used?"];
-const TIMEFRAME_QUESTIONS = ["What is the timeframe for the work funded?"];
-
 const grantSchema = z.object({
-  title: z.string().min(3, { message: MESSAGES.GRANT.FORM.TITLE }),
+  title: z.string().min(1, { message: MESSAGES.GRANT.FORM.TITLE.MIN }),
   programId: z.string().optional(),
   amount: z.string().optional(),
+  fundUsage: z.string().optional(),
   community: z.string().nonempty({ message: MESSAGES.GRANT.FORM.COMMUNITY }),
   // season: z.string(),
   // cycle: z.string(),
@@ -113,41 +93,15 @@ const grantSchema = z.object({
       (input) => !input || input?.length === 0 || isAddress(input),
       MESSAGES.GRANT.FORM.RECIPIENT
     ),
-  successQuestions: z.array(
-    z.object({
-      query: z.string().min(1),
-      explanation: z.string().optional(),
-      type: z.literal("SUCCESS_MEASURE"),
-    })
-  ),
-  impactQuestions: z.array(
-    z.object({
-      query: z.string().min(1),
-      explanation: z.string().optional(),
-      type: z.literal("IMPACT_MEASUREMENT"),
-    })
-  ),
-  innovationQuestions: z.array(
-    z.object({
-      query: z.string().min(1),
-      explanation: z.string().optional(),
-      type: z.literal("INNOVATION"),
-    })
-  ),
-  fundQuestions: z.array(
-    z.object({
-      query: z.string().min(1),
-      explanation: z.string().optional(),
-      type: z.literal("FUND_USAGE"),
-    })
-  ),
-  timeframeQuestions: z.array(
-    z.object({
-      query: z.string().min(1),
-      explanation: z.string().optional(),
-      type: z.literal("TIMEFRAME"),
-    })
-  ),
+  questions: z
+    .array(
+      z.object({
+        query: z.string().min(1),
+        explanation: z.string().optional(),
+        type: z.string().min(1),
+      })
+    )
+    .optional(),
 });
 
 type GrantType = z.infer<typeof grantSchema>;
@@ -156,43 +110,16 @@ interface NewGrantProps {
   grantToEdit?: IGrantResponse;
 }
 
-interface SuccessQuestion {
+interface Question {
   query: string;
   explanation: string;
-  type: "SUCCESS_MEASURE";
+  type: string;
 }
-interface ImpactQuestion {
-  query: string;
-  explanation: string;
-  type: "IMPACT_MEASUREMENT";
-}
-interface FundQuestion {
-  query: string;
-  explanation: string;
-  type: "FUND_USAGE";
-}
-interface TimeframeQuestion {
-  query: string;
-  explanation: string;
-  type: "TIMEFRAME";
-}
-interface InnovationQuestion {
-  query: string;
-  explanation: string;
-  type: "INNOVATION";
-}
-
-type QuestionType =
-  | "SUCCESS_MEASURE"
-  | "IMPACT_MEASUREMENT"
-  | "INNOVATION"
-  | "TIMEFRAME"
-  | "FUND_USAGE";
 
 interface GenericQuestion {
   query: string;
   explanation: string;
-  type: QuestionType;
+  type: string;
 }
 
 interface NewGrantData {
@@ -214,6 +141,7 @@ interface NewGrantData {
     query: string;
     explanation: string;
   }[];
+  fundUsage?: string;
 }
 
 export function SearchGrantProgram({
@@ -240,12 +168,21 @@ export function SearchGrantProgram({
       setIsLoading(true);
       const [result, error] = await fetchData(
         INDEXER.REGISTRY.GET_ALL +
-          `?status=${"Active"}&limit=1000&withTrackedProjects=false&withProgramAdmins=false`
+          `?limit=1000&withTrackedProjects=false&withProgramAdmins=false`
       );
       if (error) {
         console.log(error);
       }
-      setAllPrograms(result.programs);
+      const sortedAlphabetically = result.programs.sort(
+        (a: GrantProgram, b: GrantProgram) => {
+          const aTitle = a.metadata?.title || "";
+          const bTitle = b.metadata?.title || "";
+          if (aTitle < bTitle) return -1;
+          if (aTitle > bTitle) return 1;
+          return 0;
+        }
+      );
+      setAllPrograms(sortedAlphabetically);
       setIsLoading(false);
     })();
   }, []);
@@ -253,11 +190,11 @@ export function SearchGrantProgram({
   return (
     <div className="w-full max-w-[400px]">
       {isLoading ? (
-        <div className="bg-zinc-100 p-3 text-sm ring-1 ring-zinc-200 rounded">
+        <div className="bg-zinc-100 p-3 text-sm ring-1 ring-zinc-200 rounded dark:bg-zinc-900">
           Loading Grants...
         </div>
       ) : !communityUID ? (
-        <div className="bg-zinc-100 p-3 text-sm ring-1 ring-zinc-200 rounded">
+        <div className="bg-zinc-100 p-3 text-sm ring-1 ring-zinc-200 rounded dark:bg-zinc-900">
           Select a community to proceed
         </div>
       ) : (
@@ -278,15 +215,24 @@ export function SearchGrantProgram({
   );
 }
 
+const defaultFundUsage = `| Budget Item    | % of Allocated funding |
+| -------- | ------- |
+| Item 1  | X%   |
+| Item 2 | Y%     |
+| Item 3 | Z%     |`;
+
 export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { address } = useAccount();
-  const [noProofCheckbox, setNoProofCheckbox] = useState(false);
   const isOwner = useOwnerStore((state) => state.isOwner);
   const pathname = usePathname();
   const grantScreen: GrantScreen = pathname.includes("edit-grant")
     ? "edit-grant"
     : "create-grant";
-  const { milestonesForms: milestones, createMilestone } = useGrantFormStore();
+  const {
+    milestonesForms: milestones,
+    createMilestone,
+    setFormPriorities,
+  } = useGrantFormStore();
   const { isAuth } = useAuthStore();
 
   const refreshProject = useProjectStore((state) => state.refreshProject);
@@ -308,36 +254,30 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { gap } = useGap();
   const { isConnected } = useAccount();
 
-  function premade<T extends GenericQuestion>(
-    type: QuestionType,
-    questions: string[]
-  ): T[] {
+  function premade<T extends GenericQuestion>(): T[] {
     const hasQuestions = grantToEdit?.details?.data?.questions?.filter(
-      (item) => item.type === type
+      (item) => item?.type && item?.explanation && item?.query
     );
     if (grantScreen === "edit-grant" && hasQuestions?.length) {
-      if (hasQuestions.length !== questions.length) {
-        const fillQuestions = questions.map((item) => ({
-          query: item,
-          explanation: "",
-          type,
-        })) as T[];
-        fillQuestions.forEach((_, i) => {
-          const match = hasQuestions.find((item) => {
-            return item.query === fillQuestions[i]?.query;
-          });
-          if (match) {
-            fillQuestions[i] = match as T;
-          }
-        });
+      if (
+        hasQuestions.length !== grantToEdit?.details?.data?.questions.length
+      ) {
+        const fillQuestions = grantToEdit?.details?.data?.questions.map(
+          (item: GenericQuestion) => ({
+            query: item?.query,
+            explanation: item?.explanation,
+            type: item?.type,
+          })
+        ) as T[];
+
         return fillQuestions;
       }
       return hasQuestions as T[];
     }
-    return questions.map((item) => ({
-      query: item,
+    return grantToEdit?.details?.data?.questions?.map(() => ({
+      query: "",
       explanation: "",
-      type,
+      type: "",
     })) as T[];
   }
 
@@ -354,6 +294,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         grantScreen === "edit-grant" ? grantToEdit?.data?.communityUID : "",
       // season: grantScreen === "edit-grant" ? grantToEdit?.details?.season : "",
       // cycle: grantScreen === "edit-grant" ? grantToEdit?.details?.cycle : "",
+      fundUsage: grantToEdit?.details?.data?.fundUsage || defaultFundUsage,
       recipient:
         grantScreen === "edit-grant"
           ? grantToEdit?.recipient
@@ -366,23 +307,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         grantScreen === "edit-grant" && grantToEdit?.details?.data?.startDate
           ? new Date(grantToEdit?.details?.data?.startDate * 1000)
           : undefined,
-      successQuestions: premade<SuccessQuestion>(
-        "SUCCESS_MEASURE",
-        SUCCESS_QUESTIONS
-      ),
-      impactQuestions: premade<ImpactQuestion>(
-        "IMPACT_MEASUREMENT",
-        IMPACT_QUESTIONS
-      ),
-      innovationQuestions: premade<InnovationQuestion>(
-        "INNOVATION",
-        INNOVATION_QUESTIONS
-      ),
-      timeframeQuestions: premade<TimeframeQuestion>(
-        "TIMEFRAME",
-        TIMEFRAME_QUESTIONS
-      ),
-      fundQuestions: premade<FundQuestion>("FUND_USAGE", FUND_QUESTIONS),
+      questions: premade<Question>(),
     },
   });
 
@@ -426,18 +351,16 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         uid: nullRef,
       });
       const sanitizedDetails = sanitizeObject({
+        ...data,
         amount: data.amount || "",
-        description: data.description,
         proposalURL: data.linkToProposal,
-        title: data.title,
         assetAndChainId: ["0x0", 1],
         payoutAddress: address,
         // cycle: data.cycle,
         // season: data.season,
-        questions: data.questions,
-        startDate: data.startDate,
-        programId: data?.programId,
       });
+
+      console.log(sanitizedDetails, data?.fundUsage);
 
       grant.details = new GrantDetails({
         data: sanitizedDetails,
@@ -454,6 +377,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           description: milestone.description,
           endsAt: milestone.endsAt,
           startsAt: milestone.startsAt,
+          priority: milestone.priority,
         });
         const created = new Milestone({
           data: sanitizedMilestone,
@@ -504,6 +428,8 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                   grant.uid
                 )
               );
+              router.refresh();
+              setFormPriorities([]);
               await refreshProject();
             }
             retries -= 1;
@@ -542,16 +468,11 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         communityUID: data.community,
       });
       const grantData = sanitizeObject({
-        amount: data.amount || "",
-        description: data.description,
+        ...data,
         proposalURL: data.linkToProposal,
-        title: data.title,
         payoutAddress: address,
         // cycle: data.cycle,
         // season: data.season,
-        questions: data.questions,
-        startDate: data.startDate,
-        programId: data?.programId,
       });
       oldGrantInstance.details?.setValues(grantData);
       const walletClient = await getWalletClient(config, {
@@ -602,6 +523,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                     oldGrant.uid
                   )
                 );
+                router.refresh();
               });
             }
             retries -= 1;
@@ -642,55 +564,15 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       type: string;
       query: string;
       explanation: string;
-    }[] = data.successQuestions
-      .map((item) => ({
-        type: "SUCCESS_MEASURE",
-        query: item.query,
-        explanation: item.explanation || "",
-      }))
-      .concat(
-        data.impactQuestions.map((item) => ({
-          type: "IMPACT_MEASUREMENT",
-          query: item.query,
-          explanation: item.explanation || "",
-        }))
-      );
-    const hasFundQuestions = data.fundQuestions.filter(
-      (item) => item.explanation && item.explanation.length > 0
-    );
-    if (hasFundQuestions.length > 0) {
-      questions = questions.concat(
-        hasFundQuestions.map((item) => ({
-          type: "FUND_USAGE",
-          query: item.query,
-          explanation: item.explanation || "",
-        }))
-      );
-    }
-    const hasTimeQuestions = data.timeframeQuestions.filter(
-      (item) => item.explanation && item.explanation.length > 0
-    );
-    if (hasTimeQuestions.length > 0) {
-      questions = questions.concat(
-        hasTimeQuestions.map((item) => ({
-          type: "TIMEFRAME",
-          query: item.query,
-          explanation: item.explanation || "",
-        }))
-      );
-    }
-    const hasInnovation = data.innovationQuestions.filter(
-      (item) => item.explanation && item.explanation.length > 0
-    );
-    if (hasInnovation.length > 0) {
-      questions = questions.concat(
-        hasInnovation.map((item) => ({
-          type: "INNOVATION",
-          query: item.query,
-          explanation: item.explanation || "",
-        }))
-      );
-    }
+    }[] =
+      data?.questions && data?.questions?.length > 0
+        ? data?.questions?.map((item) => ({
+            type: item.type,
+            query: item.query,
+            explanation: item.explanation || "",
+          }))
+        : [];
+
     const milestonesData = milestones.map((item) => item.data);
     const newGrant = {
       amount: data.amount,
@@ -707,6 +589,8 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       startDate: data.startDate.getTime() / 1000,
       programId: data?.programId,
       proofOfWorkGrantUpdate: data.proofOfWorkGrantUpdate,
+      fundUsage:
+        data?.fundUsage === defaultFundUsage ? undefined : data?.fundUsage,
     };
 
     if (grantScreen === "edit-grant" && grantToEdit) {
@@ -831,7 +715,9 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       <div className="flex w-full max-w-3xl flex-col items-start justify-start gap-6 rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-zinc-900 px-6 pb-6 pt-5 max-lg:max-w-full">
         <div className="flex w-full items-center flex-row justify-between">
           <h3 className="text-2xl font-bold text-black dark:text-zinc-100">
-            {grantScreen === "edit-grant" ? "Edit grant" : "Create a new grant"}
+            {grantScreen === "edit-grant"
+              ? "Update grant"
+              : "Create a new grant"}
           </h3>
           <Link
             href={
@@ -985,7 +871,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                 type="text"
                 className={cn(
                   inputStyle,
-                  "text-gray-500 dark:text-gray-300 cursor-not-allowed"
+                  "text-gray-500 dark:text-gray-300 cursor-not-allowed dark:bg-zinc-900"
                 )}
                 placeholder="0xab...0xbf2"
                 // {...register("recipient")}
@@ -1012,127 +898,49 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
               <p className="text-red-500">Description is required</p>
             ) : null}
           </div>
+          <div className="flex w-full flex-col">
+            <label htmlFor="grant-description" className={labelStyle}>
+              Breakdown of funds usage (optional)
+            </label>
+            <div className="mt-2 w-full bg-transparent dark:border-gray-600">
+              <MarkdownEditor
+                className="bg-transparent dark:border-gray-600"
+                value={watch("fundUsage") || ""}
+                onChange={(newValue: string) =>
+                  setValue("fundUsage", newValue || "", {
+                    shouldValidate: true,
+                  })
+                }
+                placeholderText="Enter a breakdown of how the funds will be used (e.g. development costs, marketing, etc.)"
+              />
+            </div>
+          </div>
 
-          {IMPACT_QUESTIONS.map((item, index) => (
-            <Controller
-              key={item}
-              control={form.control}
-              name={`impactQuestions.${index}.explanation`}
-              render={({ field, formState }) => (
-                <div className="flex flex-col gap-2">
-                  <label
-                    id={`impactQuestions.${index}.explanation`}
-                    className={labelStyle}
-                  >
-                    {item} (optional)
-                  </label>
-                  <textarea className={textAreaStyle} {...field} />
-                  <p>
-                    {
-                      formState.errors.impactQuestions?.[index]?.explanation
-                        ?.message
-                    }
-                  </p>
-                </div>
-              )}
-            />
-          ))}
-          {SUCCESS_QUESTIONS.map((item, index) => (
-            <Controller
-              key={item}
-              control={form.control}
-              name={`successQuestions.${index}.explanation`}
-              render={({ field, formState }) => (
-                <div className="flex flex-col gap-2">
-                  <label
-                    id={`successQuestions.${index}.explanation`}
-                    className={labelStyle}
-                  >
-                    {item} (optional)
-                  </label>
-                  <textarea className={textAreaStyle} {...field} />
-                  <p>
-                    {
-                      formState.errors.successQuestions?.[index]?.explanation
-                        ?.message
-                    }
-                  </p>
-                </div>
-              )}
-            />
-          ))}
-          {INNOVATION_QUESTIONS.map((item, index) => (
-            <Controller
-              key={item}
-              control={form.control}
-              name={`innovationQuestions.${index}.explanation`}
-              render={({ field, formState }) => (
-                <div className="flex flex-col gap-2">
-                  <label
-                    id={`innovationQuestions.${index}.explanation`}
-                    className={labelStyle}
-                  >
-                    {item} (optional)
-                  </label>
-                  <textarea className={textAreaStyle} {...field} />
-                  <p>
-                    {
-                      formState.errors.innovationQuestions?.[index]?.explanation
-                        ?.message
-                    }
-                  </p>
-                </div>
-              )}
-            />
-          ))}
-          {FUND_QUESTIONS.map((item, index) => (
-            <Controller
-              key={item}
-              control={form.control}
-              name={`fundQuestions.${index}.explanation`}
-              render={({ field, formState }) => (
-                <div className="flex flex-col gap-2">
-                  <label
-                    id={`fundQuestions.${index}.explanation`}
-                    className={labelStyle}
-                  >
-                    {item} (optional)
-                  </label>
-                  <textarea className={textAreaStyle} {...field} />
-                  <p>
-                    {
-                      formState.errors.fundQuestions?.[index]?.explanation
-                        ?.message
-                    }
-                  </p>
-                </div>
-              )}
-            />
-          ))}
-          {TIMEFRAME_QUESTIONS.map((item, index) => (
-            <Controller
-              key={item}
-              control={form.control}
-              name={`timeframeQuestions.${index}.explanation`}
-              render={({ field, formState }) => (
-                <div className="flex flex-col gap-2">
-                  <label
-                    id={`timeframeQuestions.${index}.explanation`}
-                    className={labelStyle}
-                  >
-                    {item} (optional)
-                  </label>
-                  <textarea className={textAreaStyle} {...field} />
-                  <p>
-                    {
-                      formState.errors.timeframeQuestions?.[index]?.explanation
-                        ?.message
-                    }
-                  </p>
-                </div>
-              )}
-            />
-          ))}
+          {form.getValues("questions") &&
+            form.getValues("questions")?.map((item, index) => (
+              <Controller
+                key={index}
+                control={form.control}
+                name={`questions.${index}.explanation`}
+                render={({ field, formState }) => (
+                  <div className="flex flex-col gap-2">
+                    <label
+                      id={`questions.${index}.explanation`}
+                      className={labelStyle}
+                    >
+                      {item.query} (optional)
+                    </label>
+                    <textarea className={textAreaStyle} {...field} />
+                    <p>
+                      {
+                        formState.errors.questions?.[index]?.explanation
+                          ?.message
+                      }
+                    </p>
+                  </div>
+                )}
+              />
+            ))}
         </form>
         {grantScreen === "create-grant" && (
           <div className="flex w-full flex-col items-center justify-center gap-8 py-8">
@@ -1165,6 +973,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                     selectedProject.details?.data?.slug || selectedProject?.uid
                   )
                 );
+                router.refresh();
                 return;
               }
               router.push(
@@ -1173,6 +982,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                   grantToEdit.uid
                 )
               );
+              router.refresh();
             }}
           >
             Cancel
@@ -1189,7 +999,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
                     isLoading={isSubmitting || isLoading}
                   >
                     {grantScreen === "edit-grant"
-                      ? "Edit grant"
+                      ? "Update grant"
                       : "Create grant"}
                   </Button>
                 </div>
@@ -1197,7 +1007,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
               <Tooltip.Portal>
                 <Tooltip.Content className="TooltipContent" sideOffset={5}>
                   {actionButtonDisable ? (
-                    <div className="px-2 bg-red-100 rounded-md py-2">
+                    <div className="px-2 bg-red-100 rounded-md py-2 dark:bg-red-900">
                       <p>{handleButtonDisableMessage()}</p>
                     </div>
                   ) : null}

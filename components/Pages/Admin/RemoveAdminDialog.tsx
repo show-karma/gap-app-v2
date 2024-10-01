@@ -30,7 +30,10 @@ const labelStyle =
   "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
 const schema = z.object({
-  address: z.string().min(3, { message: MESSAGES.COMMUNITY_FORM.TITLE }),
+  address: z
+    .string()
+    .min(3, { message: MESSAGES.COMMUNITY_FORM.TITLE.MIN })
+    .max(30, { message: MESSAGES.COMMUNITY_FORM.TITLE.MAX }),
 });
 
 type SchemaType = z.infer<typeof schema>;

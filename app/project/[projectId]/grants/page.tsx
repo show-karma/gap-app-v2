@@ -1,14 +1,12 @@
 import { GrantOverview } from "@/components/Pages/Project/Grants/Overview";
+import { ProjectGrantsOverviewLoading } from "@/components/Pages/Project/Loading/Grants/Overview";
 import { zeroUID } from "@/utilities/commons";
-import { fetchFromLocalApi } from "@/utilities/fetchFromServer";
+import { envVars } from "@/utilities/enviromentVars";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { defaultMetadata } from "@/utilities/meta";
-import {
-  IGrantResponse,
-  IProjectResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { Hex } from "viem";
 
 export async function generateMetadata({
@@ -51,7 +49,7 @@ export async function generateMetadata({
         }
       > = {
         overview: {
-          title: `Karma GAP - ${projectInfo?.details?.data?.title} - ${grantInfo?.details?.data?.title} grant overview`,
+          title: `${projectInfo?.details?.data?.title} - ${grantInfo?.details?.data?.title} grant overview | Karma GAP`,
           description:
             `${grantInfo?.details?.data?.description?.slice(0, 160)}${
               grantInfo?.details?.data?.description &&
@@ -77,7 +75,7 @@ export async function generateMetadata({
   } else {
     metadata = {
       ...metadata,
-      title: `Karma GAP - ${projectInfo?.details?.data?.title}`,
+      title: `${projectInfo?.details?.data?.title} | Karma GAP`,
       description:
         projectInfo?.details?.data?.description?.substring(0, 80) || "",
     };
@@ -90,23 +88,34 @@ export async function generateMetadata({
       creator: defaultMetadata.twitter.creator,
       site: defaultMetadata.twitter.site,
       card: "summary_large_image",
+      images: [
+        {
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
+          alt: metadata.title || defaultMetadata.title,
+        },
+      ],
     },
     openGraph: {
       url: defaultMetadata.openGraph.url,
       title: metadata.title,
       description: metadata.description,
-      images: defaultMetadata.openGraph.images.map((image) => ({
-        url: image,
-        alt: metadata.title,
-      })),
-      // site_name: defaultMetadata.openGraph.siteName,
+      images: [
+        {
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
+          alt: metadata.title || defaultMetadata.title,
+        },
+      ],
     },
     icons: metadata.icons,
   };
 }
 
 const Page = () => {
-  return <GrantOverview />;
+  return (
+    <Suspense fallback={<ProjectGrantsOverviewLoading />}>
+      <GrantOverview />
+    </Suspense>
+  );
 };
 
 export default Page;

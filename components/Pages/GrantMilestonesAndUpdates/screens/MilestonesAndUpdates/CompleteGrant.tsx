@@ -106,6 +106,7 @@ export const GrantCompletion: FC = () => {
                     grant?.uid as Hex
                   )
                 );
+                router.refresh();
               });
             }
           }

@@ -7,8 +7,9 @@ import { zeroUID } from "@/utilities/commons";
 import { defaultMetadata } from "@/utilities/meta";
 import { notFound } from "next/navigation";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
-import dynamic from "next/dynamic";
+import { envVars } from "@/utilities/enviromentVars";
+import ImpactWrapper from "@/components/Pages/Project/Impact/ImpactWrapper";
+import { ProjectImpactLoading } from "@/components/Pages/Project/Loading/Impact";
 
 export async function generateMetadata({
   params,
@@ -33,16 +34,24 @@ export async function generateMetadata({
       creator: defaultMetadata.twitter.creator,
       site: defaultMetadata.twitter.site,
       card: "summary_large_image",
+      images: [
+        {
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
+          alt: `View Impact for ${projectInfo.details?.data?.title} | Karma GAP`,
+        },
+      ],
     },
     openGraph: {
       url: defaultMetadata.openGraph.url,
       title: `View Impact for ${projectInfo.details?.data?.title} | Karma GAP`,
       description:
         projectInfo.details?.data?.description?.substring(0, 80) || "",
-      images: defaultMetadata.openGraph.images.map((image) => ({
-        url: image,
-        alt: `View Impact for ${projectInfo.details?.data?.title} | Karma GAP`,
-      })),
+      images: [
+        {
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
+          alt: `View Impact for ${projectInfo.details?.data?.title} | Karma GAP`,
+        },
+      ],
     },
     icons: {
       icon: "/favicon.ico",
@@ -50,22 +59,6 @@ export async function generateMetadata({
   };
 }
 
-const ImpactComponent = dynamic(
-  () =>
-    import("@/components/Pages/Project/Impact").then(
-      (mod) => mod.ImpactComponent
-    ),
-  {
-    loading: () => <DefaultLoading />,
-  }
-);
-
-const ImpactPage = () => {
-  return (
-    <div className="pt-5 pb-20">
-      <ImpactComponent />
-    </div>
-  );
-};
-
-export default ImpactPage;
+export default function Page() {
+  return <ImpactWrapper />;
+}

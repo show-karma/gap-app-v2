@@ -6,7 +6,7 @@ import { FC, useEffect, useMemo, useRef, useState } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { registryHelper } from "./helper";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { Discord2Icon, Twitter2Icon } from "@/components/Icons";
+import { Discord2Icon, Telegram2Icon, Twitter2Icon } from "@/components/Icons";
 import { DiscussionIcon } from "@/components/Icons/Discussion";
 import { BlogIcon } from "@/components/Icons/Blog";
 import { OrganizationIcon } from "@/components/Icons/Organization";
@@ -14,14 +14,19 @@ import { Button } from "@/components/Utilities/Button";
 import {
   ColumnDef,
   Row,
+  SortingState,
   flexRender,
   getCoreRowModel,
+  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { useQueryState } from "nuqs";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { GrantProgram } from "./ProgramList";
 import { shortAddress } from "@/utilities/shortAddress";
 import { useAccount } from "wagmi";
+import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
+import { useSearchParams } from "next/navigation";
 
 interface MyProgramListProps {
   grantPrograms: GrantProgram[];
@@ -29,6 +34,8 @@ interface MyProgramListProps {
   editFn: (program: GrantProgram) => any;
   selectProgram: (program: GrantProgram) => void;
   isAllowed: boolean;
+  setSortField: (field: string) => void;
+  setSortOrder: (order: "asc" | "desc") => void;
 }
 
 export const MyProgramList: FC<MyProgramListProps> = ({
@@ -38,7 +45,20 @@ export const MyProgramList: FC<MyProgramListProps> = ({
   selectProgram,
   isAllowed,
 }) => {
+  const searchParams = useSearchParams();
   const { address } = useAccount();
+
+  const [sorting, setSorting] = useState<SortingState>([]);
+
+  const defaultSort = searchParams.get("sortField") || "updatedAt";
+  const defaultSortOrder = searchParams.get("sortOrder") || "desc";
+  const [sortField, setSortField] = useQueryState("sortField", {
+    defaultValue: defaultSort,
+  });
+  const [sortOrder, setSortOrder] = useQueryState("sortOrder", {
+    defaultValue: defaultSortOrder,
+  });
+
   const columns = useMemo<ColumnDef<GrantProgram>[]>(
     () => [
       {
@@ -59,7 +79,11 @@ export const MyProgramList: FC<MyProgramListProps> = ({
                 <div className="flex flex-row gap-1 w-full">
                   {grant.metadata?.socialLinks?.grantsSite ? (
                     <ExternalLink
-                      href={grant.metadata?.socialLinks?.grantsSite}
+                      href={
+                        grant.metadata?.socialLinks?.grantsSite.includes("http")
+                          ? grant.metadata?.socialLinks?.grantsSite
+                          : `https://${grant.metadata?.socialLinks?.grantsSite}`
+                      }
                       className="w-max"
                     >
                       <Image
@@ -80,7 +104,11 @@ export const MyProgramList: FC<MyProgramListProps> = ({
                   ) : null}
                   {grant.metadata?.socialLinks?.twitter ? (
                     <ExternalLink
-                      href={grant.metadata?.socialLinks?.twitter}
+                      href={
+                        grant.metadata?.socialLinks?.twitter.includes("http")
+                          ? grant.metadata?.socialLinks?.twitter
+                          : `https://${grant.metadata?.socialLinks?.twitter}`
+                      }
                       className="w-max"
                     >
                       <Twitter2Icon className="w-5 h-5 text-black dark:text-white" />
@@ -88,15 +116,35 @@ export const MyProgramList: FC<MyProgramListProps> = ({
                   ) : null}
                   {grant.metadata?.socialLinks?.discord ? (
                     <ExternalLink
-                      href={grant.metadata?.socialLinks?.discord}
+                      href={
+                        grant.metadata?.socialLinks?.discord.includes("http")
+                          ? grant.metadata?.socialLinks?.discord
+                          : `https://${grant.metadata?.socialLinks?.discord}`
+                      }
                       className="w-max"
                     >
                       <Discord2Icon className="w-5 h-5 text-black dark:text-white" />
                     </ExternalLink>
                   ) : null}
+                  {grant.metadata?.socialLinks?.telegram ? (
+                    <ExternalLink
+                      href={
+                        grant.metadata?.socialLinks?.telegram.includes("http")
+                          ? grant.metadata?.socialLinks?.telegram
+                          : `https://${grant.metadata?.socialLinks?.telegram}`
+                      }
+                      className="w-max"
+                    >
+                      <Telegram2Icon className="w-5 h-5 text-black dark:text-white" />
+                    </ExternalLink>
+                  ) : null}
                   {grant.metadata?.socialLinks?.forum ? (
                     <ExternalLink
-                      href={grant.metadata?.socialLinks?.forum}
+                      href={
+                        grant.metadata?.socialLinks?.forum.includes("http")
+                          ? grant.metadata?.socialLinks?.forum
+                          : `https://${grant.metadata?.socialLinks?.forum}`
+                      }
                       className="w-max"
                     >
                       <DiscussionIcon className="w-5 h-5 text-black dark:text-white" />
@@ -104,7 +152,11 @@ export const MyProgramList: FC<MyProgramListProps> = ({
                   ) : null}
                   {grant.metadata?.socialLinks?.blog ? (
                     <ExternalLink
-                      href={grant.metadata?.socialLinks?.blog}
+                      href={
+                        grant.metadata?.socialLinks?.blog.includes("http")
+                          ? grant.metadata?.socialLinks?.blog
+                          : `https://${grant.metadata?.socialLinks?.blog}`
+                      }
                       className="w-max"
                     >
                       <BlogIcon className="w-5 h-5 text-black dark:text-white" />
@@ -112,7 +164,11 @@ export const MyProgramList: FC<MyProgramListProps> = ({
                   ) : null}
                   {grant.metadata?.socialLinks?.orgWebsite ? (
                     <ExternalLink
-                      href={grant.metadata?.socialLinks?.orgWebsite}
+                      href={
+                        grant.metadata?.socialLinks?.orgWebsite.includes("http")
+                          ? grant.metadata?.socialLinks?.orgWebsite
+                          : `https://${grant.metadata?.socialLinks?.orgWebsite}`
+                      }
                       className="w-max"
                     >
                       <OrganizationIcon className="w-5 h-5 text-black dark:text-white" />
@@ -124,9 +180,24 @@ export const MyProgramList: FC<MyProgramListProps> = ({
           );
         },
         header: () => (
-          <div className="py-3.5 px-3 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 font-body">
+          // <button
+          // type="button"
+          // className="flex items-center gap-1"
+          // onClick={() => {
+          // setSortField("name");
+          // setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+          // }}
+          // >
+          <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64 cursor-pointer">
             Name
           </div>
+          //     <div className="flex flex-col items-center gap-0.5">
+          //      {sortOrder === "asc" && (
+          //        <ChevronUpIcon className="w-4 h-4 inline-block" />
+          //      )}
+          //      {sortOrder === "desc" && <ChevronDownIcon className="w-4 h-4" />}
+          //    </div>
+          //   </button>
         ),
       },
       {
@@ -307,24 +378,41 @@ export const MyProgramList: FC<MyProgramListProps> = ({
         ),
       },
       {
-        accessorFn: (row) => row,
-        id: "Budget",
+        accessorFn: (row) => (row.createdAt ? row.createdAt : null),
+        id: "Date Added",
         cell: (info) => {
-          const grant = info.row.original;
+          const program = info.row.original;
 
           return (
             <div className="whitespace-nowrap px-3 py-5 text-sm text-black dark:text-zinc-300">
-              {grant?.metadata?.programBudget
-                ? formatCurrency(+grant?.metadata?.programBudget) === "NaN"
-                  ? grant?.metadata?.programBudget
-                  : `$${formatCurrency(+grant?.metadata?.programBudget)}`
-                : ""}
+              {program?.createdAt ? formatDate(program?.createdAt) : ""}
             </div>
           );
         },
         header: () => (
-          <div className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64">
-            Budget
+          <div className="flex items-center gap-1">
+            <div
+              className="px-3 py-3.5 text-left text-sm font-bold text-gray-900 dark:text-zinc-100 sm:pl-0 font-body max-w-64 cursor-pointer"
+              onClick={() => {
+                setSortField("createdAt");
+                if (searchParams.get("sortField") === "createdAt") {
+                  setSortOrder(
+                    searchParams.get("sortOrder") === "asc" ? "desc" : "asc"
+                  );
+                }
+                setSortOrder("asc");
+              }}
+            >
+              Date Added
+            </div>
+            <div className="flex flex-col items-center gap-0.5">
+              {searchParams.get("sortField") === "asc" && (
+                <ChevronUpIcon className="w-4 h-4 inline-block" />
+              )}
+              {searchParams.get("sortField") === "desc" && (
+                <ChevronDownIcon className="w-4 h-4" />
+              )}
+            </div>
           </div>
         ),
       },
@@ -467,7 +555,10 @@ export const MyProgramList: FC<MyProgramListProps> = ({
   const table = useReactTable({
     data: grantPrograms,
     columns: columns as any,
+    state: { sorting },
+    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
   });
 
   const { rows } = table.getRowModel();

@@ -1,0 +1,16 @@
+.List {
+  padding: 4px;
+  height: 100%;
+  max-width: 100%;
+}
+
+.ListItemEven,
+.ListItemOdd {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ListItemEven {
+  background-color: #e6e4dc;
+}

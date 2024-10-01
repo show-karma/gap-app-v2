@@ -31,17 +31,12 @@ import { Button } from "@/components/Utilities/Button";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import { useGrantStore } from "@/store/grant";
-
-const GenerateImpactReportDialog = dynamic(
-  () =>
-    import("@/components/Dialogs/GenerateImpactReportDialog").then(
-      (mod) => mod.GenerateImpactReportDialog
-    ),
-  { ssr: false }
-);
+import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { ProjectGrantsLayoutLoading } from "../Loading/Grants/Layout";
 
 interface GrantsLayoutProps {
   children: React.ReactNode;
+  project: IProjectResponse;
 }
 
 interface Tab {
@@ -84,16 +79,13 @@ const getScreen = (pathname: string): GrantScreen | undefined => {
   return "overview";
 };
 
-export const GrantsLayout = ({ children }: GrantsLayoutProps) => {
+export const GrantsLayout = ({ children, project }: GrantsLayoutProps) => {
   const pathname = usePathname();
   const screen = getScreen(pathname);
   const grantIdFromQueryParam = useParams().grantUid as string;
   const [currentTab, setCurrentTab] = useState("overview");
-  const [grant, setGrant] = useGrantStore((state) => [
-    state.grant,
-    state.setGrant,
-  ]);
-  const project = useProjectStore((state) => state.project);
+  const { grant, setGrant, loading, setLoading } = useGrantStore();
+
   const navigation =
     project?.grants?.map((item) => ({
       uid: item.uid,
@@ -128,6 +120,11 @@ export const GrantsLayout = ({ children }: GrantsLayoutProps) => {
         currentTab &&
         authorizedViews.includes(currentTab as GrantScreen)
       ) {
+        router.push(
+          PAGES.PROJECT.GRANTS(
+            project?.details?.data.slug || project?.uid || ""
+          )
+        );
         setCurrentTab("overview");
       } else {
         setCurrentTab(screen);
@@ -136,6 +133,7 @@ export const GrantsLayout = ({ children }: GrantsLayoutProps) => {
   }, [screen, isAuthorized, address]);
 
   useEffect(() => {
+    setLoading(true);
     if (project) {
       if (grantIdFromQueryParam) {
         const grantFound = project?.grants?.find(
@@ -144,10 +142,12 @@ export const GrantsLayout = ({ children }: GrantsLayoutProps) => {
         );
         if (grantFound) {
           setGrant(grantFound);
+          setLoading(false);
           return;
         }
       }
       setGrant(project?.grants?.[0]);
+      setLoading(false);
     }
   }, [project, grantIdFromQueryParam]);
 
@@ -232,6 +232,10 @@ export const GrantsLayout = ({ children }: GrantsLayoutProps) => {
   useEffect(() => {
     checkIfAdmin();
   }, [address, grant?.uid, signer, isAuth]);
+
+  if (loading || (!grant && project.grants?.length > 0)) {
+    return <ProjectGrantsLayoutLoading>{children}</ProjectGrantsLayoutLoading>;
+  }
 
   if (screen === "create-grant") {
     return (
@@ -372,6 +376,7 @@ export const GrantsLayout = ({ children }: GrantsLayoutProps) => {
                               project.details?.data.slug || project.uid
                             )
                           );
+                          router.refresh();
                         }
                       }}
                       className="flex h-max w-full  flex-row items-center  hover:opacity-75 justify-center gap-3 rounded border border-[#155EEF] bg-[#155EEF] px-3 py-2 text-sm font-semibold text-white   max-sm:w-full"
@@ -393,26 +398,25 @@ export const GrantsLayout = ({ children }: GrantsLayoutProps) => {
                 <div className="text-xl font-semibold text-black dark:text-zinc-100">
                   {grant?.details?.data.title}
                 </div>
-                {isAuthorized && project && grant && (
-                  <Link
-                    href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                      project.details?.data.slug || project?.uid || "",
-                      grant?.uid as string,
-                      "edit-grant"
-                    )}
-                    className="rounded-md items-center text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-35 hover:opacity-75 transition-all ease-in-out duration-300 flex h-max w-max flex-row gap-2 bg-zinc-800 p-2 text-white hover:bg-zinc-800 hover:text-white"
-                  >
-                    Edit grant
-                    <PencilSquareIcon className="h-4 w-4" />
-                  </Link>
-                )}
               </div>
               {isAuthorized && grant ? (
                 <div className="flex flex-row gap-2">
                   {project ? (
                     <GrantCompleteButton project={project} grant={grant} />
                   ) : null}
-                  <GenerateImpactReportDialog grant={grant} />
+                  {project ? (
+                    <Link
+                      href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
+                        project.details?.data.slug || project?.uid || "",
+                        grant?.uid as string,
+                        "edit-grant"
+                      )}
+                      className="rounded-md items-center text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-35 hover:opacity-75 transition-all ease-in-out duration-300 flex h-max w-max flex-row gap-2 bg-zinc-800 p-2 text-white hover:bg-zinc-800 hover:text-white"
+                    >
+                      Update grant
+                      <PencilSquareIcon className="h-4 w-4" />
+                    </Link>
+                  ) : null}
                   <GrantDelete grant={grant} />
                 </div>
               ) : null}

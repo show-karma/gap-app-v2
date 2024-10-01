@@ -1,6 +1,5 @@
 "use client";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import markdownStyles from "@/styles/markdown.module.css";
@@ -11,21 +10,37 @@ import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
 import { useGrantStore } from "@/store/grant";
-
-interface GrantOverviewProps {
-  grant: IGrantResponse | undefined;
-}
+import { Suspense } from "react";
+import { ProjectGrantsOverviewLoading } from "../Loading/Grants/Overview";
+import formatCurrency from "@/utilities/formatCurrency";
 
 const isValidAmount = (amount?: string | undefined) => {
   if (!amount) return undefined;
+  let amountToFormat = amount;
 
-  const number = Number(amount);
-  if (Number.isNaN(number)) return amount;
+  const split = amountToFormat.split(" ");
+  const split0 = split[0]?.replace(",", "");
+  if (!Number.isNaN(Number(split0)) && split.length > 1) {
+    if (+split0 < 1000) {
+      amountToFormat = new Intl.NumberFormat("en-US", {
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 2,
+      }).format(+split0);
+      return amountToFormat + " " + split[1];
+    }
+    // it should format and round to 2 decimal places without use formatCurrency
+    return formatCurrency(+split0) + " " + split[1];
+  }
+  const number = Number(amountToFormat);
+  if (Number.isNaN(number)) return amountToFormat;
 
-  return formatCurrency(+amount);
+  return formatCurrency(+amountToFormat);
 };
 export const GrantOverview = () => {
-  const { grant } = useGrantStore();
+  const { grant, loading } = useGrantStore();
+  if (loading) {
+    return <ProjectGrantsOverviewLoading />;
+  }
   const milestones = grant?.milestones;
 
   const getPercentage = () => {
@@ -62,9 +77,8 @@ export const GrantOverview = () => {
   ];
 
   return (
-    <>
+    <Suspense fallback={<ProjectGrantsOverviewLoading />}>
       {/* Grant Overview Start */}
-
       <div className="mt-5 flex flex-row max-lg:flex-col-reverse gap-4 ">
         {grant?.details?.data?.description && (
           <div className="w-8/12 max-lg:w-full p-5 gap-2 bg-[#EEF4FF] dark:bg-zinc-900 dark:border-gray-800 rounded-xl  text-black dark:text-zinc-100">
@@ -79,7 +93,7 @@ export const GrantOverview = () => {
             </div>
           </div>
         )}
-        <div className="w-4/12 max-lg:w-full">
+        <div className="w-4/12 max-lg:w-full flex flex-col gap-4">
           <div className="border border-gray-200 rounded-xl bg-white  dark:bg-zinc-900 dark:border-gray-800">
             <div className="flex items-center justify-between p-5">
               <div className="font-semibold text-black dark:text-white">
@@ -175,9 +189,34 @@ export const GrantOverview = () => {
               )}
             </div>
           </div>
+          {grant?.details?.data?.fundUsage ? (
+            <div className="border border-gray-200 rounded-xl bg-white  dark:bg-zinc-900 dark:border-gray-800">
+              <div className="flex items-center justify-between p-5">
+                <p className="font-semibold text-black dark:text-white">
+                  Breakdown of Fund Usage
+                </p>
+              </div>
+              <div
+                className="flex flex-col gap-4 px-4 py-4 border-t border-gray-200 w-full"
+                data-color-mode="light"
+              >
+                <MarkdownPreview
+                  components={{
+                    // eslint-disable-next-line react/no-unstable-nested-components
+                    table: ({ children }) => {
+                      return (
+                        <table className="w-full text-black">{children}</table>
+                      );
+                    },
+                  }}
+                  source={grant?.details?.data?.fundUsage}
+                />
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
       {/* Grant Overview End */}
-    </>
+    </Suspense>
   );
 };

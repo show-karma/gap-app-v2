@@ -1,13 +1,15 @@
 "use client";
 import { useGrantStore } from "@/store/grant";
 import { MESSAGES } from "@/utilities/messages";
+import { ProjectGrantsImpactLoading } from "../../Project/Loading/Grants/Impact";
 
 export const GrantImpactCriteria = () => {
   const { grant } = useGrantStore();
+  if (!grant) return <ProjectGrantsImpactLoading />;
   const questions = grant?.details?.data.questions;
   return (
     <div className="space-y-5 max-w-prose">
-      {questions ? (
+      {questions && questions?.length > 0 ? (
         <div className="flex flex-col gap-4">
           {questions.map((item) => (
             <div

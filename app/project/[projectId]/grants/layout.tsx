@@ -9,6 +9,8 @@ import { Metadata } from "next";
 import { zeroUID } from "@/utilities/commons";
 import { defaultMetadata } from "@/utilities/meta";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { envVars } from "@/utilities/enviromentVars";
+import { ProjectGrantsLayoutLoading } from "@/components/Pages/Project/Loading/Grants/Layout";
 
 export async function generateMetadata({
   params,
@@ -49,16 +51,23 @@ export async function generateMetadata({
       creator: defaultMetadata.twitter.creator,
       site: defaultMetadata.twitter.site,
       card: "summary_large_image",
+      images: [
+        {
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
+          alt: metadata.title,
+        },
+      ],
     },
     openGraph: {
       url: defaultMetadata.openGraph.url,
       title: metadata.title,
       description: metadata.description,
-      images: defaultMetadata.openGraph.images.map((image) => ({
-        url: image,
-        alt: metadata.title,
-      })),
-      // site_name: defaultMetadata.openGraph.siteName,
+      images: [
+        {
+          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
+          alt: metadata.title,
+        },
+      ],
     },
     icons: metadata.icons,
   };
@@ -71,17 +80,24 @@ export default async function RootLayout({
   children: React.ReactNode;
   params: { projectId: string };
 }) {
+  const project = await gapIndexerApi
+    .projectBySlug(projectId)
+    .then((res) => res.data)
+    .catch(() => notFound());
+
+  if (!project || project?.uid === zeroUID) {
+    notFound();
+  }
+
   return (
-    <Suspense
-      fallback={
-        <div className="flex flex-col w-full h-full items-center justify-center">
-          <Spinner />
-        </div>
-      }
-    >
-      <div className="w-full h-full">
-        <GrantsLayout>{children}</GrantsLayout>
-      </div>
-    </Suspense>
+    <div className="w-full h-full">
+      <Suspense
+        fallback={
+          <ProjectGrantsLayoutLoading>{children}</ProjectGrantsLayoutLoading>
+        }
+      >
+        <GrantsLayout project={project}>{children}</GrantsLayout>
+      </Suspense>
+    </div>
   );
 }

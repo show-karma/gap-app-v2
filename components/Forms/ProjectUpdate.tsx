@@ -20,9 +20,13 @@ import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
+import { sanitizeObject } from "@/utilities/sanitize";
 
 const updateSchema = z.object({
-  title: z.string().min(3, { message: MESSAGES.PROJECT_UPDATE_FORM.TITLE }),
+  title: z
+    .string()
+    .min(3, { message: MESSAGES.PROJECT_UPDATE_FORM.TITLE.MIN })
+    .max(30, { message: MESSAGES.PROJECT_UPDATE_FORM.TITLE.MAX }),
   text: z.string().min(3, { message: MESSAGES.PROJECT_UPDATE_FORM.TEXT }),
 });
 
@@ -77,11 +81,11 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       const walletSigner = await walletClientToSigner(walletClient);
 
       const projectUpdate = new ProjectUpdate({
-        data: {
+        data: sanitizeObject({
           text,
           title,
           type: "project-update",
-        },
+        }),
         recipient: project.recipient,
         refUID: project.uid,
         schema: gapClient.findSchema("ProjectUpdate"),
@@ -110,6 +114,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                       project?.details?.data.slug || project.uid
                     )
                   );
+                  router.refresh();
                 }
                 retries -= 1;
                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return

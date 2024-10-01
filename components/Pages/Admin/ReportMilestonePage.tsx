@@ -26,9 +26,8 @@ import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useOwnerStore } from "@/store";
 import { SearchDropdown } from "../ProgramRegistry/SearchDropdown";
 import { useQueryState } from "nuqs";
-
 import { errorManager } from "@/components/Utilities/errorManager";
-
+import { ReasonsModal } from "@/components/Dialogs/ReasonsModal";
 interface Report {
   _id: {
     $oid: string;
@@ -40,8 +39,15 @@ interface Report {
   totalMilestones: number;
   pendingMilestones: number;
   completedMilestones: number;
+  proofOfWorkLinks: string[];
+  evaluations: Evaluation[] | null | undefined;
 }
 
+interface Evaluation {
+  _id: string;
+  rating: number;
+  reasons: string[];
+}
 interface ReportAPIResponse {
   data: Report[];
   pageInfo: {
@@ -50,6 +56,17 @@ interface ReportAPIResponse {
     pageLimit: number;
   };
   uniqueProjectCount: number;
+  stats: {
+    totalGrants: number;
+    totalProjectsWithMilestones: number;
+    totalMilestones: number;
+    totalCompletedMilestones: number;
+    totalPendingMilestones: number;
+    percentageProjectsWithMilestones: number;
+    percentageCompletedMilestones: number;
+    percentagePendingMilestones: number;
+    proofOfWorkLinks: string[];
+  };
 }
 
 export const metadata = defaultMetadata;
@@ -136,6 +153,8 @@ export const ReportMilestonePage = ({
 
   const signer = useSigner();
 
+  const modelToUse = "gpt-4o-mini";
+
   useEffect(() => {
     if (!address || !signer || !community || !isAuth) return;
 
@@ -173,9 +192,18 @@ export const ReportMilestonePage = ({
     setCurrentPage(1);
   };
 
-  // To calculate the total number of projects in the community
-
-  const totalNoOfProjects = data?.uniqueProjectCount;
+  function StatCard({ title, value }: { title: string; value: string }) {
+    return (
+      <div className="bg-white dark:bg-zinc-800 p-4 rounded-lg shadow">
+        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+          {title}
+        </h3>
+        <p className="text-2xl font-semibold text-blue-600 dark:text-blue-400">
+          {value}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-12 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
@@ -189,34 +217,98 @@ export const ReportMilestonePage = ({
               </Button>
             </Link>
           </div>
-          <div className="flex flex-col md:flex-row justify-start md:items-center md:justify-between">
-            <SearchDropdown
-              list={grantTitles}
-              onSelectFunction={(value: string) =>
-                // onChangeGeneric(value, setSelectedGrantTitles)
-                setSelectedGrantTitles((oldArray) => {
-                  setCurrentPage(1);
-                  const newArray = [...oldArray];
-                  if (newArray.includes(value)) {
-                    const filteredArray = newArray.filter(
-                      (item) => item !== value
-                    );
-                    return filteredArray;
-                  } else {
-                    newArray.push(value);
-                  }
-                  return newArray;
-                })
-              }
-              cleanFunction={() => {
-                setSelectedGrantTitles([]);
-              }}
-              type={"Grant Titles"}
-              selected={selectedGrantTitles}
-              // imageDictionary={}
-            />
-            <div className="text-zinc-700 dark:text-zinc-200 font-medium mt-4 md:mt-0 ">{`Total Projects: ${totalNoOfProjects}`}</div>
-          </div>
+
+          <section className="flex flex-col gap-4">
+            <div className="flex flex-row justify-between items-center">
+              <h1 className="text-2xl font-bold">Milestones Report</h1>
+              <SearchDropdown
+                list={grantTitles}
+                onSelectFunction={(value: string) =>
+                  // onChangeGeneric(value, setSelectedGrantTitles)
+                  setSelectedGrantTitles((oldArray) => {
+                    setCurrentPage(1);
+                    const newArray = [...oldArray];
+                    if (newArray.includes(value)) {
+                      const filteredArray = newArray.filter(
+                        (item) => item !== value
+                      );
+                      return filteredArray;
+                    } else {
+                      newArray.push(value);
+                    }
+                    return newArray;
+                  })
+                }
+                cleanFunction={() => {
+                  setSelectedGrantTitles([]);
+                }}
+                prefixUnselected="All"
+                type={"Grant Programs"}
+                selected={selectedGrantTitles}
+                // imageDictionary={}
+              />
+            </div>
+            <div className="mb-2 grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 w-full">
+              {isLoading ? (
+                <>
+                  {[...Array(8)].map((_, index) => (
+                    <div
+                      key={index}
+                      className="bg-white dark:bg-zinc-800 p-4 rounded-lg shadow"
+                    >
+                      <Skeleton className="h-4 w-3/4 mb-2" />
+                      <Skeleton className="h-6 w-1/2" />
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <>
+                  <StatCard
+                    title="Total Grants"
+                    value={`${data?.stats.totalGrants}`}
+                  />
+                  <StatCard
+                    title="Total projects with Milestones"
+                    value={`${data?.stats.totalProjectsWithMilestones}`}
+                  />
+                  <StatCard
+                    title="% of project who added Milestones"
+                    value={`${
+                      data?.stats?.percentageProjectsWithMilestones?.toFixed(
+                        2
+                      ) || 0
+                    }%`}
+                  />
+                  <StatCard
+                    title="Total Milestones"
+                    value={`${data?.stats.totalMilestones}`}
+                  />
+                  <StatCard
+                    title="Total Completed Milestones"
+                    value={`${data?.stats.totalCompletedMilestones}`}
+                  />
+                  <StatCard
+                    title="Total Pending Milestones"
+                    value={`${data?.stats.totalPendingMilestones}`}
+                  />
+                  <StatCard
+                    title="Milestones Completion %"
+                    value={`${
+                      data?.stats?.percentageCompletedMilestones?.toFixed(2) ||
+                      0
+                    }%`}
+                  />
+                  <StatCard
+                    title="Milestones Pending %"
+                    value={`${
+                      data?.stats?.percentagePendingMilestones?.toFixed(2) || 0
+                    }%`}
+                  />
+                </>
+              )}
+            </div>
+          </section>
+
           <div className="flex flex-col justify-center w-full max-w-full overflow-x-auto rounded-md border">
             <table className="pt-3 min-w-full divide-y dark:bg-zinc-900 divide-gray-300 dark:divide-zinc-800 dark:text-white">
               <thead>
@@ -321,6 +413,42 @@ export const ReportMilestonePage = ({
                       )}
                     </button>
                   </th>
+                  <th
+                    scope="col"
+                    className="h-12 px-4 text-left align-middle font-medium"
+                  >
+                    <button
+                      className="flex flex-row gap-2 items-center p-0 bg-transparent text-zinc-700 dark:text-zinc-200"
+                      onClick={() => handleSort("avg_rating")}
+                    >
+                      Milestone quality (0 - 10)
+                      {sortBy === "avg_rating" ? (
+                        sortOrder === "asc" ? (
+                          <ChevronUpIcon className="h-4 w-4" />
+                        ) : (
+                          <ChevronDownIcon className="h-4 w-4" />
+                        )
+                      ) : (
+                        <ChevronUpDownIcon className="h-4 w-4" />
+                      )}
+                    </button>
+                  </th>
+                  <th
+                    scope="col"
+                    className="h-12 px-4 text-left align-middle font-medium"
+                  >
+                    <p className="flex flex-row gap-2 items-center p-0 bg-transparent text-zinc-700 dark:text-zinc-200">
+                      Recommendation
+                    </p>
+                  </th>
+                  <th
+                    scope="col"
+                    className="h-12 px-4 text-left align-middle font-medium"
+                  >
+                    <p className="flex flex-row gap-2 items-center p-0 bg-transparent text-zinc-700 dark:text-zinc-200">
+                      Outputs
+                    </p>
+                  </th>
                 </tr>
               </thead>
               <tbody className="px-4 divide-y divide-gray-200 dark:divide-zinc-800">
@@ -348,6 +476,9 @@ export const ReportMilestonePage = ({
                       );
                     })
                   : reports?.map((report, index) => {
+                      const outputsFiltered = report?.proofOfWorkLinks?.filter(
+                        (item) => item.length > 0
+                      );
                       return (
                         <tr
                           key={index}
@@ -380,6 +511,68 @@ export const ReportMilestonePage = ({
                           </td>
                           <td className="px-4 py-2 max-w-[220px]">
                             {report.completedMilestones}
+                          </td>
+                          <td className="px-4 py-2 max-w-[220px]">
+                            <div className="flex text-primary  ">
+                              {[...Array(10)].map((_, index) => (
+                                <span key={index} className="text-sm">
+                                  {index + 1 <=
+                                  Math.round(
+                                    report?.evaluations?.find(
+                                      (evaluation: Evaluation) =>
+                                        evaluation._id === "gpt-4o-mini"
+                                    )?.rating || 0
+                                  )
+                                    ? "🟢"
+                                    : "🔴"}
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="px-4 py-2 max-w-[220px]">
+                            <ReasonsModal
+                              text={
+                                (report?.evaluations?.find(
+                                  (evaluation: Evaluation) =>
+                                    evaluation._id === modelToUse
+                                )?.rating as number) >= 4
+                                  ? "Include"
+                                  : "Exclude"
+                              }
+                              reasons={
+                                report?.evaluations?.find(
+                                  (evaluation: Evaluation) =>
+                                    evaluation._id === modelToUse
+                                )?.reasons || []
+                              }
+                            />
+                          </td>
+                          <td className="px-4 py-2 max-w-[220px]">
+                            <div className="flex flex-col gap-1 overflow-x-auto max-w-[220px] w-max">
+                              {outputsFiltered.map((item, index) => (
+                                <ExternalLink
+                                  key={index}
+                                  href={
+                                    item.includes("http")
+                                      ? item
+                                      : `https://${item}`
+                                  }
+                                  className="underline text-blue-700 line-clamp-2"
+                                >
+                                  {item.includes("http")
+                                    ? `${item.slice(0, 80)}${
+                                        item.slice(0, 80).length >= 80
+                                          ? "..."
+                                          : ""
+                                      }`
+                                    : `https://${item.slice(0, 80)}${
+                                        item.slice(0, 80).length >= 80
+                                          ? "..."
+                                          : ""
+                                      }`}
+                                </ExternalLink>
+                              ))}
+                            </div>
                           </td>
                         </tr>
                       );
