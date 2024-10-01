@@ -112,7 +112,7 @@ export const MESSAGES = {
     },
     FORM: {
       TITLE: {
-        MIN: "Title must be at least 3 characters",
+        MIN: "Title must be at least 1 characters",
         MAX: "Title must be less than 30 characters",
       },
       LINK_TO_PROPOSAL: `This link must be a valid URL`,
