@@ -252,7 +252,11 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
         });
     } catch (error: any) {
       console.log(error);
-      errorManager(`Error creating project pointer`, error);
+      errorManager(`Error creating project pointer`, error, {
+        project: project?.details?.data?.slug || project?.uid,
+        primaryProject:
+          primaryProject?.details?.data?.slug || primaryProject?.uid,
+      });
       toast.error(MESSAGES.PROJECT_POINTER_FORM.ERROR);
     } finally {
       setIsStepper(false);

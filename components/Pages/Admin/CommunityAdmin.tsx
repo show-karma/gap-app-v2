@@ -54,7 +54,8 @@ export default function CommunitiesToAdminPage() {
             true
           );
 
-          if (error || !data) return { id: community.uid, admins: [] };
+          if (!data) return { id: community.uid, admins: [] };
+          if (error) throw Error(error);
           return data;
         } catch {
           return { id: community.uid, admins: [] };
@@ -70,6 +71,7 @@ export default function CommunitiesToAdminPage() {
       console.log(error);
       errorManager(`Error fetching all communities`, error);
       setAllCommunities([]);
+      setCommunityAdmins([]);
       return undefined;
     } finally {
       setIsLoading(false);

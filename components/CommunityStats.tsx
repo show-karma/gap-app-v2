@@ -70,7 +70,9 @@ export default function CommunityStats({ communityId }: CommunityStatsProps) {
       }
     } catch (error: any) {
       console.error("Error fetching stats:", error);
-      errorManager(`Error fetching stats: ${error}`, error);
+      errorManager(`Error fetching stats: ${error}`, error, {
+        communityId,
+      });
       setError(error);
     } finally {
       setLoading(false);

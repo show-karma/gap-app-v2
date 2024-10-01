@@ -161,7 +161,14 @@ export const CommunityGrants = ({
         }
       } catch (error: any) {
         console.log("error", error);
-        errorManager("Error while fetching community grants", error);
+        errorManager("Error while fetching community grants", error, {
+          sortBy: selectedSort,
+          status: selectedStatus,
+          categories: selectedCategoriesIds.split("_"),
+          selectedProgramId: selectedProgramId || undefined,
+          page: currentPage,
+          pageLimit: itemsPerPage,
+        });
         setGrants([]);
       } finally {
         setLoading(false);

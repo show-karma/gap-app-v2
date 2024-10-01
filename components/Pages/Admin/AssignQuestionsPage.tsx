@@ -74,7 +74,9 @@ export default function AssignQuestionsPage() {
           throw new Error("Community not found");
         setCommunity(result);
       } catch (error: any) {
-        errorManager(`Error fetching community ${communityId}`, error);
+        errorManager(`Error fetching community ${communityId}`, error, {
+          community: communityId,
+        });
         console.error("Error fetching data:", error);
         if (
           error.message === "Community not found" ||
@@ -106,7 +108,11 @@ export default function AssignQuestionsPage() {
       } catch (error: any) {
         errorManager(
           `Error checking if ${address} is admin of community ${communityId}`,
-          error
+          error,
+          {
+            community: communityId,
+            address: address,
+          }
         );
         console.log(error);
         setIsAdmin(false);
@@ -147,7 +153,10 @@ export default function AssignQuestionsPage() {
         } catch (error: any) {
           errorManager(
             `Error fetching categories of community ${communityId}`,
-            error
+            error,
+            {
+              community: communityId,
+            }
           );
           setCategories([]);
           console.error(error);
@@ -168,7 +177,10 @@ export default function AssignQuestionsPage() {
         } catch (error: any) {
           errorManager(
             `Error fetching questions of community ${communityId}`,
-            error
+            error,
+            {
+              community: communityId,
+            }
           );
           setQuestions([]);
           console.error(error);
@@ -227,7 +239,12 @@ export default function AssignQuestionsPage() {
         );
         errorManager(
           `Error saving questions of community ${communityId}`,
-          error
+          error,
+          {
+            community: communityId,
+            idOrSlug: community?.uid,
+            questions: questionsAssigned[category.id],
+          }
         );
       }
       console.error(error);
@@ -246,7 +263,10 @@ export default function AssignQuestionsPage() {
     } catch (error: any) {
       errorManager(
         `Error refreshing questions of community ${communityId}`,
-        error
+        error,
+        {
+          community: communityId,
+        }
       );
       setQuestions([]);
       console.error(error);

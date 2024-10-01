@@ -192,14 +192,17 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
             refreshProject();
             refreshContactInfo();
           } else {
-            toast.error("Something went wrong. Please try again later.");
-            throw new Error("Something went wrong while updating contact info");
+            throw Error(error);
           }
         });
       }
       // const subscription = await fetchData(INDEXER.NOTIFICATIONS.UPDATE())
     } catch (error: any) {
-      errorManager("Error while updating contact info", error);
+      errorManager("Error while updating contact info", error, {
+        project: project?.details?.data?.slug || (project?.uid as string),
+        contactId: data.id,
+        data,
+      });
       toast.error("Something went wrong. Please try again later.");
       console.log(error);
     } finally {
@@ -227,12 +230,15 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
           refreshProject();
           refreshContactInfo();
         } else {
-          toast.error("Something went wrong. Please try again later.");
+          throw Error(error);
         }
       });
       // const subscription = await fetchData(INDEXER.NOTIFICATIONS.UPDATE())
     } catch (error: any) {
-      errorManager("Error deleting contact info", error);
+      errorManager("Error deleting contact info", error, {
+        project: project?.details?.data?.slug || (project?.uid as string),
+        contactId: watch("id"),
+      });
       toast.error("Something went wrong. Please try again later.");
       console.log(error);
     } finally {
