@@ -77,7 +77,7 @@ const schema = z.object({
   title: z
     .string()
     .min(3, { message: MESSAGES.PROJECT_FORM.TITLE.MIN })
-    .max(30, { message: MESSAGES.PROJECT_FORM.TITLE.MAX }),
+    .max(50, { message: MESSAGES.PROJECT_FORM.TITLE.MAX }),
   chainID: z.number({
     required_error: "Network is required",
     message: "Network is required",

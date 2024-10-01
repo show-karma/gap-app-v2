@@ -53,7 +53,7 @@ const createProgramSchema = z.object({
   name: z
     .string()
     .min(3, { message: MESSAGES.REGISTRY.FORM.NAME.MIN })
-    .max(30, { message: MESSAGES.REGISTRY.FORM.NAME.MAX }),
+    .max(50, { message: MESSAGES.REGISTRY.FORM.NAME.MAX }),
   dates: z
     .object({
       endsAt: z.date().optional(),

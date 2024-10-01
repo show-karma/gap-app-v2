@@ -2,7 +2,7 @@ export const MESSAGES = {
   PROJECT_FORM: {
     TITLE: {
       MIN: "Title must be at least 3 characters",
-      MAX: "Title must be less than 30 characters",
+      MAX: "Title must be less than 50 characters",
     },
     RECIPIENT: "Invalid address",
     TAGS: "Each category must be at least 3 characters",
@@ -22,7 +22,7 @@ export const MESSAGES = {
   PROJECT_UPDATE_FORM: {
     TITLE: {
       MIN: "Title must be at least 3 characters",
-      MAX: "Title must be less than 30 characters",
+      MAX: "Title must be less than 50 characters",
     },
     TEXT: "Text must be at least 3 characters",
     SUCCESS: "Update was successfully added to the project.",
@@ -35,7 +35,7 @@ export const MESSAGES = {
   PROJECT_OBJECTIVE_FORM: {
     TITLE: {
       MIN: "Title must be at least 3 characters",
-      MAX: "Title must be less than 30 characters",
+      MAX: "Title must be less than 50 characters",
     },
     TEXT: "Text must be at least 3 characters",
     SUCCESS: "Objective was successfully added to the project.",
@@ -61,7 +61,7 @@ export const MESSAGES = {
   COMMUNITY_FORM: {
     TITLE: {
       MIN: "Title must be at least 3 characters",
-      MAX: "Title must be less than 30 characters",
+      MAX: "Title must be less than 50 characters",
     },
     IMAGE_URL: "ENTER a valid Image url",
     DESCRIPTION: "Enter a valid description",
@@ -113,7 +113,7 @@ export const MESSAGES = {
     FORM: {
       TITLE: {
         MIN: "Title must be at least 1 characters",
-        MAX: "Title must be less than 30 characters",
+        MAX: "Title must be less than 50 characters",
       },
       LINK_TO_PROPOSAL: `This link must be a valid URL`,
       RECIPIENT: "Invalid address",
@@ -139,7 +139,7 @@ export const MESSAGES = {
       FORM: {
         TITLE: {
           MIN: "Title must be at least 3 characters",
-          MAX: "Title must be less than 30 characters",
+          MAX: "Title must be less than 50 characters",
         },
         DESCRIPTION: "Description must be a valid text",
       },
@@ -222,7 +222,7 @@ export const MESSAGES = {
     SUBSCRIPTION: {
       NAME: {
         MIN: "Name must be at least 3 characters",
-        MAX: "Name must be less than 30 characters",
+        MAX: "Name must be less than 50 characters",
       },
       EMAIL: "E-mail must be at least 3 characters",
     },
@@ -291,7 +291,7 @@ export const MESSAGES = {
     FORM: {
       NAME: {
         MIN: "Name must be at least 3 characters",
-        MAX: "Name must be less than 30 characters",
+        MAX: "Name must be less than 50 characters",
       },
       DESCRIPTION: "Description must be at least 3 characters",
       BUDGET: "You need to specify a budget",

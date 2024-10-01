@@ -31,7 +31,7 @@ const updateSchema = z.object({
   title: z
     .string()
     .min(3, { message: MESSAGES.GRANT.UPDATE.FORM.TITLE.MIN })
-    .max(30, { message: MESSAGES.GRANT.UPDATE.FORM.TITLE.MAX }),
+    .max(50, { message: MESSAGES.GRANT.UPDATE.FORM.TITLE.MAX }),
   description: z
     .string()
     .min(3, { message: MESSAGES.GRANT.UPDATE.FORM.DESCRIPTION }),

@@ -31,7 +31,7 @@ const objectiveSchema = z.object({
   title: z
     .string()
     .min(3, { message: MESSAGES.PROJECT_OBJECTIVE_FORM.TITLE.MIN })
-    .max(30, { message: MESSAGES.PROJECT_OBJECTIVE_FORM.TITLE.MAX }),
+    .max(50, { message: MESSAGES.PROJECT_OBJECTIVE_FORM.TITLE.MAX }),
   text: z.string().min(3, { message: MESSAGES.PROJECT_OBJECTIVE_FORM.TEXT }),
 });
 
