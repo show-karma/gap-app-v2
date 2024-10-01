@@ -33,6 +33,7 @@ export interface ProjectReport {
   businessModel?: string;
   stageIn?: string;
   raisedMoney?: string;
+  fundingPath?: string;
   contact: Contact[];
 }
 

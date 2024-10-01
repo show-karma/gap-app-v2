@@ -18,7 +18,7 @@ type ProjectDescriptionDialogProps = {
   businessModel?: string;
   stageIn?: string;
   raisedMoney?: string;
-  pathToTake?: string;
+  fundingPath?: string;
 };
 
 const labelClass =
@@ -36,7 +36,7 @@ export const ProjectDescriptionDialog: FC<ProjectDescriptionDialogProps> = ({
   businessModel,
   stageIn,
   raisedMoney,
-  pathToTake,
+  fundingPath,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -86,8 +86,8 @@ export const ProjectDescriptionDialog: FC<ProjectDescriptionDialogProps> = ({
       value: raisedMoney,
     },
     {
-      label: "Path to take",
-      value: pathToTake,
+      label: "Funding Path",
+      value: fundingPath,
     },
   ];
 
