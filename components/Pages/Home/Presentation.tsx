@@ -4,6 +4,8 @@ import { CheckIcon } from "@heroicons/react/24/outline";
 import { TypedLoading } from "@/components/Pages/Home/ReactTypedWrap";
 import dynamic from "next/dynamic";
 import { Button } from "@/components/Utilities/Button";
+import Link from "next/link";
+import { PAGES } from "@/utilities/pages";
 // import { ProjectDialog } from "@/components/Dialogs/ProjectDialog";
 
 const ReactTypedWrapper = dynamic(
@@ -54,7 +56,7 @@ export const Presentation = () => {
               </h1>
             </div>
 
-            <div className="w-max">
+            <div className="w-max flex flex-row gap-2">
               <ProjectDialog
                 buttonElement={{
                   icon: (
@@ -70,6 +72,11 @@ export const Presentation = () => {
                     "flex rounded-md hover:opacity-75 border-none transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-3 bg-brand-darkblue dark:bg-gray-700 px-7 py-4 text-lg font-semibold leading-7 text-white hover:bg-brand-darkblue max-2xl:px-5 max-2xl:text-base max-lg:text-sm",
                 }}
               />
+              <Link href={PAGES.PROJECTS_EXPLORER}>
+                <Button className="flex rounded-md hover:opacity-75 border-none transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-3 bg-transparent dark:bg-transparent px-7 py-4 text-lg font-semibold leading-7 text-black dark:text-zinc-100 hover:bg-transparent max-2xl:px-5 max-2xl:text-base max-lg:text-sm ">
+                  Projects Explorer
+                </Button>
+              </Link>
             </div>
           </div>
 
