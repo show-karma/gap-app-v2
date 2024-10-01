@@ -15,11 +15,25 @@ export type APIContact = {
 };
 
 export interface ProjectReport {
-  contact: Contact[];
-  createdAt: string;
-  title: string;
-  description: string | string[];
+  uid: string;
+  slug?: string;
   categories: string[];
+  title: string;
+  createdAt: string;
+  description: string;
+  problem?: string;
+  solution?: string;
+  missionSummary?: string;
+  locationOfImpact?: string;
+  imageURL?: string;
+  links: {
+    type: string;
+    url: string;
+  }[];
+  businessModel?: string;
+  stageIn?: string;
+  raisedMoney?: string;
+  contact: Contact[];
 }
 
 export interface ProjectFromList {

@@ -81,7 +81,7 @@ const ContactBlock: FC<ContactBlockProps> = ({
         {contacts?.map((contact) => (
           <div
             key={contact.id}
-            className="h-20 p-4 bg-white dark:bg-zinc-600 rounded-xl justify-between items-end flex w-full flex-row gap-2"
+            className="min-h-max h-max max-h-max p-4 bg-white dark:bg-zinc-600 rounded-xl justify-between items-end flex w-full flex-row gap-2"
             style={{
               border:
                 value === contact.id

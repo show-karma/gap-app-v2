@@ -18,6 +18,9 @@ import { ProjectDescriptionDialog } from "./Dialog";
 import { ProjectContacts } from "./Contacts";
 import { AllProjectsLoadingTable } from "./Loading";
 import { useAuthStore } from "@/store/auth";
+import { PAGES } from "@/utilities/pages";
+import Link from "next/link";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
 
 const getAllProjects = async (
   offset: number,
@@ -118,7 +121,16 @@ export const AllProjects = () => {
                           </p>
                         </td>
                         <td className="w-1/5 min-w-[300px] max-w-1/5 px-2 py-1">
-                          <p className={cn(rowClass)}>{project.title}</p>
+                          <div className="flex flex-row gap-2 justify-center items-center">
+                            <ExternalLink
+                              href={PAGES.PROJECT.OVERVIEW(
+                                project.slug || project.uid
+                              )}
+                              className={cn(rowClass, "underline max-w-max")}
+                            >
+                              {project.title}
+                            </ExternalLink>
+                          </div>
                         </td>
                         <td className="w-1/5 min-w-[200px] max-w-1/5 px-2 py-1">
                           <p className={cn(rowClass)}>
@@ -128,10 +140,14 @@ export const AllProjects = () => {
                         <td className="w-1/5 min-w-[300px] max-w-1/5 px-2 py-1">
                           <ProjectDescriptionDialog
                             projectName={project.title}
-                            description={
-                              project.description[0] ||
-                              (project.description as string)
-                            }
+                            description={project.description}
+                            businessModel={project.businessModel}
+                            missionSummary={project.missionSummary}
+                            problem={project.problem}
+                            solution={project.solution}
+                            locationOfImpact={project.locationOfImpact}
+                            stageIn={project.stageIn}
+                            raisedMoney={project.raisedMoney}
                           />
                         </td>
                         <td className="w-1/5 min-w-[320px] max-w-1/5 px-2 py-1">

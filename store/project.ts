@@ -38,9 +38,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       (g) => g.uid.toLowerCase() === currentGrantState.grant?.uid?.toLowerCase()
     );
 
-    console.log("currentGrantState", currentGrantState.grant, shareSameGrant);
     if (shareSameGrant) {
-      console.log("they do");
       currentGrantState.setGrant(shareSameGrant);
     }
 
