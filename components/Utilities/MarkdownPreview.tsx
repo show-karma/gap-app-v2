@@ -12,9 +12,9 @@ const Preview = dynamic(() => import("@uiw/react-markdown-preview"), {
 export const MarkdownPreview: typeof Preview = (props) => {
   const { theme: currentTheme } = useTheme();
   return (
-    <div className="preview w-full max-w-full">
+    <div className="preview w-full max-w-full" data-color-mode={currentTheme}>
       <Preview
-        className={cn(styles.wmdeMarkdown)}
+        className={cn("wmdeMarkdown", styles.wmdeMarkdown)}
         rehypePlugins={[rehypeSanitize]}
         style={{
           backgroundColor: "transparent",

@@ -11,6 +11,7 @@ interface Props {
   side?: "left" | "right";
   markdownClass?: MarkdownPreviewProps["className"];
   markdownComponents?: MarkdownPreviewProps["components"];
+  othersideButton?: React.ReactNode;
 }
 
 export const ReadMore = ({
@@ -21,6 +22,7 @@ export const ReadMore = ({
   side = "right",
   markdownClass,
   markdownComponents,
+  othersideButton,
 }: Props) => {
   const [isReadMore, setIsReadMore] = useState(true);
   const toggleReadMore = () => {
@@ -56,45 +58,51 @@ export const ReadMore = ({
         {isReadMore ? (
           <MarkdownPreview
             className={markdownClass}
-            components={markdownComponents}
             source={
               text.slice(0, getMinimumText()) +
               (text.length >= getMinimumText() ? "..." : "")
             }
           />
         ) : (
-          <MarkdownPreview
-            className={markdownClass}
-            components={markdownComponents}
-            source={text}
-          />
+          <MarkdownPreview className={markdownClass} source={text} />
         )}
       </div>
-      {text.length - 1 > getMinimumText() && (
+      {text.length - 1 > getMinimumText() ? (
         <div onClick={toggleReadMore} className="read-or-hide mt-2">
           {isReadMore ? (
             <>
               <div
-                className="text-sm font-semibold leading-tight text-blue-600 dark:text-blue-300 w-full flex"
+                className="text-sm font-semibold leading-tight text-blue-600 dark:text-blue-300 w-full flex flex-row justify-between"
                 style={{
-                  justifyContent: side === "left" ? "flex-start" : "flex-end",
+                  flexDirection: side === "left" ? "row" : "row-reverse",
                 }}
               >
                 <span className="cursor-pointer">{readMoreText}</span>
+                {othersideButton}
               </div>
             </>
           ) : (
             <div
-              className="text-sm font-semibold leading-tight text-blue-600 dark:text-blue-300 w-full flex"
+              className="text-sm font-semibold leading-tight text-blue-600 dark:text-blue-300 w-full flex flex-row justify-between"
               style={{
-                justifyContent: side === "left" ? "flex-start" : "flex-end",
+                flexDirection: side === "left" ? "row" : "row-reverse",
               }}
             >
               <span className="cursor-pointer">{readLessText}</span>
+              {othersideButton}
             </div>
           )}
         </div>
-      )}
+      ) : othersideButton ? (
+        <div
+          className="text-sm font-semibold leading-tight text-blue-600 dark:text-blue-300 w-full flex flex-row justify-between"
+          style={{
+            flexDirection: side === "left" ? "row-reverse" : "row",
+          }}
+        >
+          {othersideButton}
+        </div>
+      ) : null}
     </div>
   );
 };
