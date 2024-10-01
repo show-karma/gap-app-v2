@@ -479,8 +479,7 @@ export default function AddProgram({
           {},
           true
         );
-        if (error)
-          throw new Error("An error occurred while editing the program");
+        if (error) throw new Error(error);
       }
       toast.success("Program updated successfully!");
       await refreshPrograms?.().then(() => {

@@ -184,6 +184,7 @@ export const ManagePrograms = () => {
         const [data, error] = await fetchData(
           INDEXER.REGISTRY.FIND_BY_ID(id, registryHelper.supportedNetworks)
         );
+        if (error) throw Error(error);
         if (data) {
           setSelectedProgram(data);
         }
@@ -235,10 +236,7 @@ export const ManagePrograms = () => {
           count: res.count as number,
         };
       } else {
-        return {
-          programs: [] as GrantProgram[],
-          count: 0,
-        };
+        throw Error(error);
       }
     } catch (error: any) {
       errorManager(`Error while fetching grant programs`, error);
@@ -303,10 +301,7 @@ export const ManagePrograms = () => {
         {},
         true
       ).then(([res, error]) => {
-        if (error)
-          throw new Error(
-            `Error while changing program ${program.metadata?.title} to ${value}.`
-          );
+        if (error) throw Error(error);
         return res;
       });
       await toast.promise(request, {
@@ -319,7 +314,11 @@ export const ManagePrograms = () => {
     } catch (error: any) {
       errorManager(
         `Error ${messageDict[value]} program ${program._id.$oid}`,
-        error
+        error,
+        {
+          program: program._id.$oid,
+          isValid: value,
+        }
       );
       console.log(`Error ${messageDict[value]} program ${program._id.$oid}`);
     }
