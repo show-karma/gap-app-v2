@@ -52,7 +52,7 @@ export const ProjectCard = ({ project, index }: ProjectCardProps) => {
           <p className="mb-2 text-sm font-medium text-gray-400  dark:text-zinc-400  max-2xl:text-[13px]">
             Created on {formatDate(project.createdAt)}
           </p>
-          <div className="flex flex-col gap-1 flex-1 h-[64px]">
+          <div className="flex flex-col gap-1 flex-1 h-[60px]">
             <div className="text-sm text-gray-900 dark:text-gray-400 text-ellipsis line-clamp-3">
               <MarkdownPreview source={project?.description?.slice(0, 160)} />
             </div>
