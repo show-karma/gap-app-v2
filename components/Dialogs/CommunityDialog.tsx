@@ -37,7 +37,7 @@ const schema = z.object({
   name: z
     .string()
     .min(3, { message: MESSAGES.COMMUNITY_FORM.TITLE.MIN })
-    .max(30, { message: MESSAGES.COMMUNITY_FORM.TITLE.MAX }),
+    .max(50, { message: MESSAGES.COMMUNITY_FORM.TITLE.MAX }),
   slug: z.string().min(3, { message: MESSAGES.COMMUNITY_FORM.SLUG }),
   imageURL: z.string().min(1, { message: MESSAGES.COMMUNITY_FORM.IMAGE_URL }),
 });

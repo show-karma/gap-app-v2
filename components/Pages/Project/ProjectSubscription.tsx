@@ -23,7 +23,7 @@ const labelStyle =
 const schema = z.object({
   name: z
     .string()
-    .max(30, { message: MESSAGES.PROJECT.SUBSCRIPTION.NAME.MAX })
+    .max(50, { message: MESSAGES.PROJECT.SUBSCRIPTION.NAME.MAX })
     .optional(),
   email: z
     .string()

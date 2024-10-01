@@ -33,7 +33,7 @@ const schema = z.object({
   address: z
     .string()
     .min(3, { message: MESSAGES.COMMUNITY_FORM.TITLE.MIN })
-    .max(30, { message: MESSAGES.COMMUNITY_FORM.TITLE.MAX }),
+    .max(50, { message: MESSAGES.COMMUNITY_FORM.TITLE.MAX }),
 });
 
 type SchemaType = z.infer<typeof schema>;

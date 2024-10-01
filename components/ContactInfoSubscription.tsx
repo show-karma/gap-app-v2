@@ -22,7 +22,7 @@ const subscriptionSchema = z.object({
   name: z
     .string()
     .min(3, "Name must be at least 3 characters long")
-    .max(30, "Name must be less than 30 characters"),
+    .max(50, "Name must be less than 50 characters"),
   telegram: z.string(),
   email: z
     .string()
