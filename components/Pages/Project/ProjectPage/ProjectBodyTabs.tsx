@@ -4,8 +4,13 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { cn } from "@/utilities/tailwind";
 import { useQueryState } from "nuqs";
-import { ButtonHTMLAttributes, FC, useState } from "react";
-import { IProjectUpdate } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { ButtonHTMLAttributes, FC, useEffect, useState } from "react";
+import {
+  IMilestoneResponse,
+  IProjectUpdate,
+  IGrantUpdate,
+  IProjectImpact,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { formatDate } from "@/utilities/formatDate";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { TrashIcon } from "@heroicons/react/24/outline";
@@ -25,6 +30,10 @@ import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { ProjectUpdateForm } from "@/components/Forms/ProjectUpdate";
+
+import Link from "next/link";
+import { PAGES } from "@/utilities/pages";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 
 const InformationTab: FC = () => {
   const { project } = useProjectStore();
@@ -94,7 +103,7 @@ const UpdateBlock = ({
   update,
   index,
 }: {
-  update: IProjectUpdate;
+  update: IProjectUpdate | IGrantUpdate | IMilestoneResponse | IProjectImpact;
   index: number;
 }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
@@ -110,6 +119,7 @@ const UpdateBlock = ({
 
   const deleteProjectUpdate = async () => {
     let gapClient = gap;
+
     try {
       setIsDeletingUpdate(true);
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== update.chainID) {
@@ -177,6 +187,13 @@ const UpdateBlock = ({
     }
   };
 
+  const labelDictionary = {
+    ProjectUpdate: "UPDATE",
+    GrantUpdate: "GRANT UPDATE",
+    Milestone: "MILESTONE",
+    ProjectImpact: "IMPACT",
+  };
+
   return (
     <div className="flex w-full flex-1 flex-col gap-4 rounded-lg  dark:bg-zinc-800 bg-[#F8F9FC] p-4 transition-all duration-200 ease-in-out  max-sm:px-2">
       <div className="flex flex-row items-center justify-between">
@@ -198,14 +215,16 @@ const UpdateBlock = ({
               />
             </svg>
 
-            <p className="text-xs font-bold text-white">UPDATE</p>
+            <p className="text-xs font-bold text-white">
+              {labelDictionary[update.type as keyof typeof labelDictionary]}
+            </p>
           </div>
         </div>
         <div className="flex flex-row gap-3 items-center">
           <p className="text-sm font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
             Posted on {formatDate(update.createdAt)}
           </p>
-          {isAuthorized ? (
+          {isAuthorized && update.type == "ProjectUpdate" ? (
             <DeleteDialog
               deleteFunction={deleteProjectUpdate}
               isLoading={isDeletingUpdate}
@@ -225,20 +244,68 @@ const UpdateBlock = ({
           ) : null}
         </div>
       </div>
-      {update.data.title ? (
-        <p className="text-lg font-semibold text-black dark:text-zinc-100 max-sm:text-base">
-          {update.data.title}
-        </p>
-      ) : null}
-      <div>
-        <ReadMore
-          readLessText="Read less update"
-          readMoreText="Read full update"
-          markdownClass="text-black font-normal text-base"
-          side="left"
-        >
-          {update.data.text}
-        </ReadMore>
+      {update.type !== "ProjectImpact" &&
+        (update.data && "title" in update.data && update.data.title ? (
+          <p className="text-lg font-semibold text-black dark:text-zinc-100 max-sm:text-base">
+            {update.data.title}
+          </p>
+        ) : null)}
+      <div className="relative flex justify-between items-end">
+        <div className="flex-grow">
+          <ReadMore
+            readLessText="Read less update"
+            readMoreText="Read full update"
+            markdownClass="text-black font-normal text-base"
+            side="left"
+            othersideButton={
+              update.type != "ProjectUpdate" &&
+              update.type != "ProjectImpact" ? (
+                <Link
+                  href={PAGES.PROJECT.MILESTONES_AND_UPDATES(
+                    project?.details?.data.slug || "",
+                    update.refUID
+                  )}
+                  className="underline text-blue-600 dark:text-blue-400 font-semibold text-sm hover:underline"
+                >
+                  {
+                    project?.grants?.find(
+                      (grant) =>
+                        grant.uid?.toLowerCase() ===
+                        update.refUID?.toLowerCase()
+                    )?.details?.data.title
+                  }
+                </Link>
+              ) : update.type === "ProjectImpact" ? (
+                <Link
+                  href={PAGES.PROJECT.IMPACT.ROOT(
+                    project?.details?.data.slug || project?.uid || ""
+                  )}
+                  className="underline text-blue-600 dark:text-blue-400 font-semibold text-sm hover:underline"
+                >
+                  See impact
+                </Link>
+              ) : null
+            }
+          >
+            {(() => {
+              switch (update.type) {
+                case "ProjectUpdate":
+                case "GrantUpdate":
+                  return update.data.text;
+                case "Milestone":
+                  return "description" in update.data
+                    ? update.data.description
+                    : "";
+                case "ProjectImpact":
+                  const data = update.data as IProjectImpact["data"];
+                  const { impact, proof, work } = data;
+                  return `### Work \n${work} \n\n### Impact \n${impact} \n\n### Proof \n${proof}`;
+                default:
+                  return "";
+              }
+            })()}
+          </ReadMore>
+        </div>
       </div>
     </div>
   );
@@ -276,13 +343,36 @@ const UpdatesTab: FC = () => {
     defaultValue: "info",
   });
 
-  const updates: IProjectUpdate[] = project?.updates || [];
+  const [allUpdates, setAllUpdates] = useState<any[]>([]);
+
+  useEffect(() => {
+    const updates: IProjectUpdate[] = project?.updates || [];
+    const grantUpdates: IGrantUpdate[] = [];
+    const grantMilestones: IMilestoneResponse[] = [];
+    const projectImpacts: IProjectImpact[] = project?.impacts || [];
+    project?.grants.forEach((grant) => {
+      grantUpdates.push(...grant.updates);
+      grantMilestones.push(...grant.milestones);
+    });
+    const sortedUpdates = [
+      ...updates,
+      ...grantUpdates,
+      ...grantMilestones,
+      ...projectImpacts,
+    ].sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime();
+      const dateB = new Date(b.createdAt).getTime();
+      return dateB - dateA;
+    });
+    console.log(sortedUpdates);
+    setAllUpdates(sortedUpdates);
+  }, [project?.grants, project?.updates, project?.impacts]);
 
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-row gap-4 justify-between">
         <p className="font-bold text-black dark:text-zinc-200 text-base">
-          Updates {updates.length ? `(${updates.length})` : ""}
+          Updates {allUpdates.length ? `(${allUpdates.length})` : ""}
         </p>
         {isAuthorized ? (
           <Button
@@ -293,9 +383,9 @@ const UpdatesTab: FC = () => {
           </Button>
         ) : null}
       </div>
-      {updates.length ? (
+      {allUpdates.length ? (
         <div className="flex flex-col gap-6">
-          {updates.map((update, index) => (
+          {allUpdates.map((update, index) => (
             <UpdateBlock key={update.id} update={update} index={index} />
           ))}
         </div>
