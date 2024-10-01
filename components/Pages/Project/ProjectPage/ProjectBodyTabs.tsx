@@ -191,7 +191,7 @@ const UpdateBlock = ({
     if (project) {
       if (update.type !== "ProjectUpdate") {
         const grantFound = project?.grants?.find(
-          (grant) => grant.uid?.toLowerCase() === grant.uid?.toLowerCase()
+          (grant) => grant.uid?.toLowerCase() === update.refUID?.toLowerCase()
         );
         if (grantFound) {
           setGrantInfo(grantFound);
