@@ -148,6 +148,7 @@ export const AllProjects = () => {
                             locationOfImpact={project.locationOfImpact}
                             stageIn={project.stageIn}
                             raisedMoney={project.raisedMoney}
+                            fundingPath={project.fundingPath}
                           />
                         </td>
                         <td className="w-1/5 min-w-[320px] max-w-1/5 px-2 py-1">
