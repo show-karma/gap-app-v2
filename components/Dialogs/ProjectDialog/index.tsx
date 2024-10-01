@@ -599,7 +599,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         `Error updating project ${
           projectToUpdate?.details?.data?.slug || projectToUpdate?.uid
         }`,
-        error
+        error,
+        data
       );
       toast.error(MESSAGES.PROJECT.UPDATE.ERROR);
       openModal();

@@ -106,7 +106,10 @@ export default function EditCategoriesPage() {
         console.error("Error fetching data:", error);
         errorManager(
           `Error fetching community details of ${communityId}`,
-          error
+          error,
+          {
+            community: communityId,
+          }
         );
         if (
           error.message === "Community not found" ||

@@ -33,10 +33,10 @@ export const VotingPowerPopover: FC<VotingPowerPopoverProps> = ({
     const getVotingPower = async () => {
       if (!community.details?.data?.slug) return;
       setIsFetching(true);
+      const daoDictionary: Record<string, string> = {
+        arb: "arbitrum",
+      };
       try {
-        const daoDictionary: Record<string, string> = {
-          arb: "arbitrum",
-        };
         const data = await isDelegateOf(
           daoDictionary[community.details?.data?.slug] ||
             community.details?.data?.slug,
@@ -51,7 +51,13 @@ export const VotingPowerPopover: FC<VotingPowerPopoverProps> = ({
       } catch (error: any) {
         errorManager(
           `Error fetching voting power for reviewer ${reviewer}`,
-          error
+          error,
+          {
+            reviewer,
+            community:
+              daoDictionary[community.details?.data?.slug] ||
+              community.details?.data?.slug,
+          }
         );
         console.log(error);
         setVotingPower(null);
