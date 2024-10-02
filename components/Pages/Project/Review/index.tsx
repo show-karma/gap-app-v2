@@ -21,7 +21,8 @@ import { SCORER_ID } from "@/utilities/review/constants/constants";
 import { getBadgeIds } from "@/utilities/review/getBadgeIds";
 import { getBadge } from "@/utilities/review/getBadge";
 
-import { XMarkIcon } from "@heroicons/react/24/solid";
+import { XMarkIcon, ChevronLeftIcon } from "@heroicons/react/24/solid";
+
 import { CardNewReview } from "./CardNewReview";
 
 interface GrantAllReviewsProps {
@@ -71,20 +72,19 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
   return (
     <div className="space-y-5 flex w-full flex-col items-start justify-start gap-8">
       <div className="flex w-full max-w-5xl flex-col gap-8">
-        <div className="flex w-full flex-col items-start justify-between gap-6 pb-8">
+        <div className="flex w-full flex-col items-start justify-between gap-6 pb-8 border border-[#26252A] rounded-md">
           {isOpenReview === ReviewMode.WRITE ? (
             <>
-              <div className="flex w-full justify-between">
-                <h2 className="text-2xl font-normal">Write a new review</h2>
-                <button
-                  type="button"
-                  className=" hover:opacity-75 transition-all ease-in-out duration-200 dark:text-zinc-100"
+              <div className="flex w-full gap-2 p-4 bg-[#18171C] border border-[#18171C] items-center">
+                <ChevronLeftIcon
+                  className="w-4 h-4 cursor-pointer text-[#959FA8] "
                   onClick={() => {
                     setIsOpenReview(ReviewMode.READ);
                   }}
-                >
-                  <XMarkIcon className="w-6 h-6" />
-                </button>
+                />
+                <h2 className="text-white text-base font-semibold font-['Open Sans'] leading-normal">
+                  Write a new review
+                </h2>
               </div>
               <CardNewReview />
             </>
