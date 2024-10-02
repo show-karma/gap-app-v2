@@ -6,11 +6,12 @@ import {
   RecentRounds,
   RecentRoundsMobile,
 } from "@/components/Pages/Patron/RecentRounds";
+import { customMetadata } from "@/utilities/meta";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = customMetadata({
   title: `Karma GAP - Gitcoin Supporter Airdrop`,
   description: `Airdrop NFTs for your project's supporters`,
-};
+});
 
 const GrantProgramRegistry = () => {
   return (
