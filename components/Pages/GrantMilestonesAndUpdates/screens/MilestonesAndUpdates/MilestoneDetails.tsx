@@ -63,7 +63,7 @@ export const MilestoneDateStatus: FC<MilestoneDateStatusProps> = ({
   const status = getMilestoneStatus();
 
   return (
-    <div className="flex w-max flex-row items-center justify-center gap-4 max-lg:justify-start">
+    <div className="flex max-w-full w-max max-lg:w-full flex-row items-center justify-center gap-4 max-lg:justify-start flex-wrap">
       <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">
         {milestone.data.startsAt
           ? `${formatDate(milestone.data.startsAt * 1000)} - ${formatDate(

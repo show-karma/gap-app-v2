@@ -160,7 +160,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
       <div className="flex flex-col gap-3 bg-[#F8F9FC] dark:bg-zinc-900 rounded-md px-4 py-2 max-lg:max-w-2xl max-sm:max-w-full">
         <div className="flex w-full flex-row flex-wrap items-center justify-between gap-2">
           <div className="flex flex-row gap-4 items-center flex-wrap">
-            <div className="flex items-center h-max w-max flex-row gap-2 rounded-full bg-[#5720B7] dark:bg-purple-900 px-3 py-1">
+            <div className="flex items-center h-max w-max flex-row gap-2 rounded-full bg-[#5720B7] dark:bg-purple-900 px-3 py-1  flex-wrap">
               <img
                 className="h-4 w-4"
                 alt="Update"
@@ -197,7 +197,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
 
             <div className="flex w-full flex-row items-center justify-between">
               {isAfterProofLaunch ? (
-                <div className="flex flex-row items-center gap-1 flex-1 max-w-full">
+                <div className="flex flex-row items-center gap-1 flex-1 max-w-full flex-wrap max-sm:mt-4">
                   <p className="text-sm w-full min-w-max max-w-max font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
                     Proof of work:
                   </p>
