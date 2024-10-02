@@ -74,7 +74,6 @@ const sortOptions: Record<SortByOptions, string> = {
 };
 
 export const NewProjectsPage = () => {
-  // const { data: projects, isLoading } = useQuery({
   const [selectedSort, changeSortQuery] = useQueryState("sortBy", {
     defaultValue: "updatedAt",
     serialize: (value) => value,

@@ -186,8 +186,8 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
 
   return (
     <div className="flex w-full flex-1 max-w-full flex-col gap-4 rounded-lg border border-zinc-200 dark:bg-zinc-800 dark:border-zinc-700 bg-white p-4 transition-all duration-200 ease-in-out  max-sm:px-2">
-      <div className="flex flex-row items-center justify-between">
-        <div className="flex flex-row gap-3 items-center">
+      <div className="flex flex-row items-center justify-between gap-4 flex-wrap">
+        <div className="flex flex-row gap-3 items-center flex-wrap">
           <UpdateTag index={index} />
           {verifiedUpdate.length ? (
             <VerifiedBadge
@@ -200,7 +200,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
             addVerifiedUpdate={addVerifiedUpdate}
           />
         </div>
-        <div className="flex flex-row gap-3 items-center">
+        <div className="flex flex-row gap-3 items-center flex-wrap">
           <p className="text-sm font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
             Posted on {formatDate(date)}
           </p>
@@ -237,7 +237,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
           {description}
         </ReadMore>
         {isAfterProofLaunch ? (
-          <div className="flex flex-row items-center gap-1 flex-1 max-w-full">
+          <div className="flex flex-row items-center gap-1 flex-1 max-w-full flex-wrap max-sm:mt-4">
             <p className="text-sm w-full min-w-max max-w-max font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
               Proof of work:
             </p>
