@@ -36,21 +36,21 @@ export const NavbarReview = () => {
 
     for (let i = 0; i < timestamps.length - 1; i++) {
       /**
-      * The difference between two timestamps in the received  
-      * array is the gap time between these two grant reviews. 
-      */
+       * The difference between two timestamps in the received
+       * array is the gap time between these two grant reviews.
+       */
       timeDifferenceBetweenTimestamps.push(timestamps[i] - timestamps[i + 1]);
     }
 
-    setTimeDifference(timeDifferenceSorted);
-    const timeDifferenceSum = timeDifferenceSorted.reduce(
+    setTimeDifference(timeDifferenceBetweenTimestamps);
+    const timeDifferenceSum = timeDifferenceBetweenTimestamps.reduce(
       (accumulator, current) => Number(accumulator) + Number(current),
       0,
     );
     /**
-    *  Below we calculate the average time that it takes for the given grant to receive a new review
-    */
-    setAvarageTimeDifference(timeDifferenceSum / grantStoriesLenght);
+     *  Below we calculate the average time that it takes for the given grant to receive a new review
+     */
+    setAverageTimeDifference(timeDifferenceSum / grantStoriesLenght);
   };
 
   useEffect(() => {

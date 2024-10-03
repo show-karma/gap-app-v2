@@ -1,4 +1,4 @@
-import { ReviewMode } from "@/types/review";
+import { GrantStory, ReviewMode } from "@/types/review";
 import { PlusIcon } from "@heroicons/react/24/solid";
 import { Button } from "@/components/Utilities/Button";
 import { isAddressEqual } from "viem";
@@ -10,9 +10,10 @@ import toast from "react-hot-toast";
 import { arbitrum } from "viem/chains";
 import { useReviewStore } from "@/store/review";
 import { getBadgeIds } from "@/utilities/review/getBadgeIds";
-import { SCORER_ID } from "@/utilities/review/constants/constants";
+import { SCORER_DECIMALS, SCORER_ID } from "@/utilities/review/constants/constants";
 import { getBadge } from "@/utilities/review/getBadge";
 import { ProgressBar } from "./ProgressBar";
+import { useEffect, useState } from "react";
 
 export const CardReviewSummary = () => {
   const project = useProjectStore((state: any) => state.project);
@@ -25,6 +26,7 @@ export const CardReviewSummary = () => {
   const { switchChain } = useSwitchChain();
   const { isConnected, address, chainId } = useAccount();
 
+  const [averageScoreReview, setAverageScoreReview] = useState<number | undefined>(undefined);
   // Grab all recent badges and save on state
   const handleStoryBadges = async () => {
     const badgeIds = await getBadgeIds(SCORER_ID);
@@ -46,6 +48,25 @@ export const CardReviewSummary = () => {
       }
     }
   };
+
+  const score = stories?.map((grantStorie: GrantStory) => grantStorie.averageScore) || [];
+
+  const getAverageReview = (score: number[], grantStoriesLength: number) => {
+    const averageScoreSum = score.reduce(
+      (accumulator, current) => Number(accumulator) + Number(current),
+      0,
+    );
+
+    setAverageScoreReview(
+      Number(averageScoreSum) / 10 ** SCORER_DECIMALS / Number(grantStoriesLength),
+    );
+  };
+
+  useEffect(() => {
+    if (stories) {
+      getAverageReview(score, stories.length);
+    }
+  }, [stories]);
 
   return (
     <div className="flex flex-col w-full gap-5">
@@ -114,7 +135,13 @@ export const CardReviewSummary = () => {
             </h1>
           </div>
           <div className="flex flex-col gap-2 md:items-start items-center">
-            <h2 className="font-medium text-[56px] leading-[56px] font-['Open Sans']">4.0</h2>
+            {averageScoreReview ? (
+              <h2 className="font-medium text-[56px] leading-[56px] font-['Open Sans']">
+                {averageScoreReview.toFixed(1)}
+              </h2>
+            ) : (
+              <h2 className="font-medium text-[56px] leading-[56px] font-['Open Sans']">0.0</h2>
+            )}
             <DynamicStarsReview
               totalStars={5}
               rating={4}
