@@ -35,7 +35,11 @@ export const NavbarReview = () => {
     const timeDifferenceBetweenTimestamps: number[] = [];
 
     for (let i = 0; i < timestamps.length - 1; i++) {
-      timeDifferenceSorted.push(timestamps[i] - timestamps[i + 1]);
+      /**
+      * The difference between two timestamps in the received  
+      * array is the gap time between these two grant reviews. 
+      */
+      timeDifferenceBetweenTimestamps.push(timestamps[i] - timestamps[i + 1]);
     }
 
     setTimeDifference(timeDifferenceSorted);
