@@ -85,31 +85,46 @@ export const CardReviewSummary = () => {
         )}
       </div>
       <div className="flex gap-8 border border-[#26252A] rounded-lg p-6">
-        <div className="flex flex-col gap-3">
-          <h1 className="text-[#959FA8] text-xs leading-4 font-bold font-['Open Sans']">
-            Total Review
-          </h1>
-          {stories && (
-            <h2 className="font-medium text-[56px] leading-[56px] font-['Open Sans']">
-              {stories.length}
-            </h2>
-          )}
-          <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
-            Typically reviewed 5 times per day
-          </p>
+        <div className="flex flex-col gap-3 h-full">
+          <div className="flex">
+            <h1 className="text-[#959FA8] text-xs leading-4 font-bold font-['Open Sans']">
+              Total Review
+            </h1>
+          </div>
+          <div className="flex flex-col gap-2">
+            {stories && (
+              <h2 className="font-medium text-[56px] leading-[56px] font-['Open Sans']">
+                {stories.length}
+              </h2>
+            )}
+            <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
+              Typically reviewed 5 times per day
+            </p>
+          </div>
         </div>
-        <div className="border border-[#26252A] h-full" />
-        <div>
-          <h1 className="text-[#959FA8] text-xs leading-4 font-bold font-['Open-Sans']">
-            Average Review
-          </h1>
-          <h2 className="font-medium text-[56px] leading-[56px] font-['Open Sans']">4.0</h2>
-          <DynamicStarsReview
-            totalStars={5}
-            rating={4}
-            setRating={() => {}}
-            mode={ReviewMode.READ}
-          />
+        <div className="w-6 h-[124px] justify-center items-center gap-2.5 inline-flex relative">
+          <div className="border border-[#26252A] h-full" />
+          <div className="w-[3px] h-8 bg-[#1832ed] rounded-[100px] absolute"></div>
+        </div>
+        <div className="flex flex-col gap-3 h-full">
+          <div className="flex">
+            <h1 className="text-[#959FA8] text-xs leading-4 font-bold font-['Open-Sans']">
+              Average Review
+            </h1>
+          </div>
+          <div className="flex flex-col gap-2">
+            <h2 className="font-medium text-[56px] leading-[56px] font-['Open Sans']">4.0</h2>
+            <DynamicStarsReview
+              totalStars={5}
+              rating={4}
+              setRating={() => {}}
+              mode={ReviewMode.READ}
+            />
+          </div>
+        </div>
+        <div className="w-6 h-[124px] justify-center items-center gap-2.5 inline-flex relative">
+          <div className="border border-[#26252A] h-full" />
+          <div className="w-[3px] h-8 bg-[#1832ed] rounded-[100px] absolute"></div>
         </div>
         <div>5 --------- 28%</div>
       </div>
