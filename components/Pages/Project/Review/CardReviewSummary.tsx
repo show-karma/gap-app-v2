@@ -51,6 +51,12 @@ export const CardReviewSummary = () => {
 
   const score = stories?.map((grantStorie: GrantStory) => grantStorie.averageScore) || [];
 
+  /**
+   * Calculates the average review score and updates the state with the result.
+   *
+   * @param score - An array of numbers representing individual review scores.
+   * @param grantStoriesLength - The total number of grant stories.
+   */
   const getAverageReview = (score: number[], grantStoriesLength: number) => {
     const averageScoreSum = score.reduce(
       (accumulator, current) => Number(accumulator) + Number(current),
