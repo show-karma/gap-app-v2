@@ -12,6 +12,7 @@ import { useReviewStore } from "@/store/review";
 import { getBadgeIds } from "@/utilities/review/getBadgeIds";
 import { SCORER_ID } from "@/utilities/review/constants/constants";
 import { getBadge } from "@/utilities/review/getBadge";
+import { ProgressBar } from "./ProgressBar";
 
 export const CardReviewSummary = () => {
   const project = useProjectStore((state: any) => state.project);
@@ -84,7 +85,7 @@ export const CardReviewSummary = () => {
           )
         )}
       </div>
-      <div className="flex gap-8 border border-[#26252A] rounded-lg p-6">
+      <div className="flex gap-8 border border-[#26252A] rounded-lg p-6 justify-between">
         <div className="flex flex-col gap-3 h-full">
           <div className="flex">
             <h1 className="text-[#959FA8] text-xs leading-4 font-bold font-['Open Sans']">
@@ -126,7 +127,43 @@ export const CardReviewSummary = () => {
           <div className="border border-[#26252A] h-full" />
           <div className="w-[3px] h-8 bg-[#1832ed] rounded-[100px] absolute"></div>
         </div>
-        <div>5 --------- 28%</div>
+        <div className="flex flex-col gap-1.5 items-center justify-center">
+          <div className="flex gap-2 items-center">
+            <p className="text-white text-sm font-bold font-['Open Sans'] leading-tight">5</p>
+            <ProgressBar currentStep={10} numberOfItems={100} />
+            <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
+              10%
+            </p>
+          </div>
+          <div className="flex gap-2 items-center">
+            <p className="text-white text-sm font-bold font-['Open Sans'] leading-tight">4</p>
+            <ProgressBar currentStep={30} numberOfItems={100} />
+            <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
+              30%
+            </p>
+          </div>
+          <div className="flex gap-2 items-center">
+            <p className="text-white text-sm font-bold font-['Open Sans'] leading-tight">3</p>
+            <ProgressBar currentStep={45} numberOfItems={100} />
+            <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
+              45%
+            </p>
+          </div>
+          <div className="flex gap-2 items-center">
+            <p className="text-white text-sm font-bold font-['Open Sans'] leading-tight">2</p>
+            <ProgressBar currentStep={69} numberOfItems={100} />
+            <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
+              69%
+            </p>
+          </div>
+          <div className="flex gap-2 items-center">
+            <p className="text-white text-sm font-bold font-['Open Sans'] leading-tight">1</p>
+            <ProgressBar currentStep={2} numberOfItems={100} />
+            <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
+              2%
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
