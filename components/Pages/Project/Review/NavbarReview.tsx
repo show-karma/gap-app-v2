@@ -1,5 +1,6 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useReviewStore } from "@/store/review";
 import { useSearchParams } from "next/navigation";
 
@@ -23,6 +24,34 @@ export const NavbarReview = () => {
   const setIsStarSelected = useReviewStore((state: any) => state.setIsStarSelected);
 
   const searchParams = useSearchParams();
+  const setTimestamp = useReviewStore((state: any) => state.setTimestamp);
+  const [timeDifference, setTimeDifference] = useState<number[]>([]);
+  const [averageTimeDifference, setAverageTimeDifference] = useState<number | undefined>(undefined);
+
+  const getTimestampDifferenceBetweenTimestamps = (
+    timestamps: number[],
+    grantStoriesLenght: number,
+  ) => {
+    const timeDifferenceBetweenTimestamps: number[] = [];
+
+    for (let i = 0; i < timestamps.length - 1; i++) {
+      /**
+      * The difference between two timestamps in the received  
+      * array is the gap time between these two grant reviews. 
+      */
+      timeDifferenceBetweenTimestamps.push(timestamps[i] - timestamps[i + 1]);
+    }
+
+    setTimeDifference(timeDifferenceSorted);
+    const timeDifferenceSum = timeDifferenceSorted.reduce(
+      (accumulator, current) => Number(accumulator) + Number(current),
+      0,
+    );
+    /**
+    *  Below we calculate the average time that it takes for the given grant to receive a new review
+    */
+    setAvarageTimeDifference(timeDifferenceSum / grantStoriesLenght);
+  };
 
   useEffect(() => {
     const grantIdFromQueryParam = searchParams?.get("grantId");
@@ -41,6 +70,13 @@ export const NavbarReview = () => {
   const fetchGrantStories = async () => {
     const grantStories = await getGrantStories(grantUID);
     setStories(grantStories);
+    if (grantStories) {
+      const timestamps = grantStories
+        .sort((a: any, b: any) => Number(b.timestamp) - Number(a.timestamp))
+        .map((grantStorie) => grantStorie.timestamp);
+      setTimestamp(timestamps);
+      getTimestampDifferenceBetweenTimestamps(timestamps, grantStories.length);
+    }
   };
 
   const handleToggleReviewSelected = (id: number) => {
@@ -83,7 +119,15 @@ export const NavbarReview = () => {
                     </div>
                   )}
                   {index < stories.length - 1 && (
-                    <div className="absolute right-0 top-1/2 h-3/4 w-[2px] bg-zinc-300 transform -translate-y-1/2"></div>
+                    <>
+                      <div className="absolute right-0 top-1/2 h-3/4 w-0.5 bg-zinc-300 transform -translate-y-1/2">
+                        <p className="flex">
+                          {Number(timeDifference[index]) / 86400 >= 1
+                            ? `${Math.ceil(Number(timeDifference[index]) / 86400)} days`
+                            : "Less than 1 day"}
+                        </p>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
