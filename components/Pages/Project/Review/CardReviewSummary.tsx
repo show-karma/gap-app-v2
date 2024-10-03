@@ -140,11 +140,11 @@ export const CardReviewSummary = () => {
                 {averageScoreReview.toFixed(1)}
               </h2>
             ) : (
-              <h2 className="font-medium text-[56px] leading-[56px] font-['Open Sans']">0.0</h2>
+              <h2 className="font-medium text-[56px] leading-[56px] font-['Open Sans']">0</h2>
             )}
             <DynamicStarsReview
               totalStars={5}
-              rating={4}
+              rating={averageScoreReview ? Number(averageScoreReview.toFixed(0)) : 0}
               setRating={() => {}}
               mode={ReviewMode.READ}
             />
