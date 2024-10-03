@@ -85,14 +85,14 @@ export const CardReviewSummary = () => {
           )
         )}
       </div>
-      <div className="flex gap-8 border border-[#26252A] rounded-lg p-6 justify-between">
-        <div className="flex flex-col gap-3 h-full">
+      <div className="flex gap-8 border border-[#26252A] rounded-lg p-6 justify-between md:flex-row flex-col">
+        <div className="flex flex-col gap-3 h-full items-center md:items-start">
           <div className="flex">
             <h1 className="text-[#959FA8] text-xs leading-4 font-bold font-['Open Sans']">
               Total Review
             </h1>
           </div>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 md:items-start items-center">
             {stories && (
               <h2 className="font-medium text-[56px] leading-[56px] font-['Open Sans']">
                 {stories.length}
@@ -103,17 +103,17 @@ export const CardReviewSummary = () => {
             </p>
           </div>
         </div>
-        <div className="w-6 h-[124px] justify-center items-center gap-2.5 inline-flex relative">
+        <div className="w-6 h-[124px] justify-center items-center gap-2.5 relative hidden md:inline-flex">
           <div className="border border-[#26252A] h-full" />
           <div className="w-[3px] h-8 bg-[#1832ed] rounded-[100px] absolute"></div>
         </div>
-        <div className="flex flex-col gap-3 h-full">
+        <div className="flex flex-col gap-3 h-full items-center md:items-start">
           <div className="flex">
             <h1 className="text-[#959FA8] text-xs leading-4 font-bold font-['Open-Sans']">
               Average Review
             </h1>
           </div>
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-2 md:items-start items-center">
             <h2 className="font-medium text-[56px] leading-[56px] font-['Open Sans']">4.0</h2>
             <DynamicStarsReview
               totalStars={5}
@@ -123,11 +123,11 @@ export const CardReviewSummary = () => {
             />
           </div>
         </div>
-        <div className="w-6 h-[124px] justify-center items-center gap-2.5 inline-flex relative">
+        <div className="w-6 h-[124px] justify-center items-center gap-2.5 relative hidden md:inline-flex">
           <div className="border border-[#26252A] h-full" />
           <div className="w-[3px] h-8 bg-[#1832ed] rounded-[100px] absolute"></div>
         </div>
-        <div className="flex flex-col gap-1.5 items-center justify-center">
+        <div className="flex flex-col gap-1.5 items-start justify-center">
           <div className="flex gap-2 items-center">
             <p className="text-white text-sm font-bold font-['Open Sans'] leading-tight">5</p>
             <ProgressBar currentStep={10} numberOfItems={100} />
