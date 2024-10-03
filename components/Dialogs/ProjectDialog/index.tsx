@@ -1,6 +1,13 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { type FC, Fragment, type ReactNode, useMemo, useState } from "react";
+import {
+  type FC,
+  Fragment,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import {
   ChevronRightIcon,
@@ -241,40 +248,40 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     setIsOpen(true);
   }
 
-  // const addMemberToArray = () => {
-  //   event?.preventDefault();
-  //   event?.stopPropagation();
-  //   const splittedMembers = new Set(
-  //     teamInput.split(",").map((m) => m.trim().toLowerCase())
-  //   );
-  //   const uniqueMembers = Array.from(splittedMembers).filter(
-  //     (m) => !team.includes(m)
-  //   );
-  //   setTeamInput("");
-  //   setTeam((prev) => [...prev, ...uniqueMembers]);
-  // };
+  const addMemberToArray = () => {
+    event?.preventDefault();
+    event?.stopPropagation();
+    const splittedMembers = new Set(
+      teamInput.split(",").map((m) => m.trim().toLowerCase())
+    );
+    const uniqueMembers = Array.from(splittedMembers).filter(
+      (m) => !team.includes(m)
+    );
+    setTeamInput("");
+    setTeam((prev) => [...prev, ...uniqueMembers]);
+  };
 
-  // const checkTeamError = () => {
-  //   if (isAddress(teamInput) || teamInput.length === 0) {
-  //     setTeamInputError(undefined);
-  //     return;
-  //   }
-  //   const splittedMembers = teamInput
-  //     .split(",")
-  //     .map((m) => m.trim().toLowerCase());
-  //   const checkArray = splittedMembers.every((address) => {
-  //     return isAddress(address);
-  //   });
-  //   if (checkArray) {
-  //     setTeamInputError(undefined);
-  //     return;
-  //   }
-  //   setTeamInputError(MESSAGES.PROJECT_FORM.MEMBERS);
-  // };
+  const checkTeamError = () => {
+    if (isAddress(teamInput) || teamInput.length === 0) {
+      setTeamInputError(undefined);
+      return;
+    }
+    const splittedMembers = teamInput
+      .split(",")
+      .map((m) => m.trim().toLowerCase());
+    const checkArray = splittedMembers.every((address) => {
+      return isAddress(address);
+    });
+    if (checkArray) {
+      setTeamInputError(undefined);
+      return;
+    }
+    setTeamInputError(MESSAGES.PROJECT_FORM.MEMBERS);
+  };
 
-  // useEffect(() => {
-  //   checkTeamError();
-  // }, [teamInput]);
+  useEffect(() => {
+    checkTeamError();
+  }, [teamInput]);
 
   const hasErrors = () => {
     if (step === 0) {
@@ -305,11 +312,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     if (step === 3) {
       return !contacts.length || !!errors?.chainID || !watch("chainID");
     }
-    // if (step === 2) {
-    //   return (
-    //     !!teamInputError || !team.length || !isValid || !isDescriptionValid
-    //   );
-    // }
+    if (step === 4) {
+      return !!teamInputError || !team.length;
+    }
 
     return false;
   };
@@ -377,8 +382,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       const { chainID, ...rest } = data;
       const newProjectInfo: NewProjectData = {
         ...rest,
-        // members: team.map((item) => item as Hex),
-        members: [(data.recipient || address) as Hex],
+        members: [
+          (data.recipient || address) as Hex,
+          ...team.map((item) => item as Hex),
+        ],
         links: [
           {
             type: "twitter",
@@ -1052,65 +1059,65 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         </div>
       ),
     },
-    // {
-    //   id: "teamMembers",
-    //   title: "Team members",
-    //   desc: "The wonderful people who built it",
-    //   fields: (
-    //     <div className="flex w-full flex-col gap-8">
-    //       <div className="flex w-full flex-col gap-2">
-    //         <label htmlFor="members-input" className={labelStyle}>
-    //           Invite team members *
-    //         </label>
-    //         <div className="flex w-full flex-row items-center gap-2 max-sm:flex-col">
-    //           <input
-    //             id="members-input"
-    //             type="text"
-    //             className="flex flex-1 rounded-lg border border-gray-400 bg-transparent p-2 px-4 focus-visible:outline-none max-sm:w-full"
-    //             placeholder="ETH address, comma separated"
-    //             value={teamInput}
-    //             onChange={(e) => setTeamInput(e.target.value)}
-    //           />
-    //           <button
-    //             type="button"
-    //             onClick={addMemberToArray}
-    //             className="bg-black px-12 py-2 rounded-lg text-white transition-all duration-300 ease-in-out disabled:opacity-40 max-sm:w-full"
-    //             disabled={!!teamInputError || !teamInput.length}
-    //           >
-    //             Add
-    //           </button>
-    //         </div>
-    //         <p className="text-red-500">{teamInputError}</p>
-    //         <div className="flex w-full flex-col items-center gap-4">
-    //           {team.length ? (
-    //             <div className="mt-2 h-1 w-20 rounded-full bg-gray-400" />
-    //           ) : null}
-    //           <div className="flex w-full flex-col gap-2">
-    //             {team.map((member) => (
-    //               <div
-    //                 key={member}
-    //                 className="flex w-full flex-row items-center justify-between truncate rounded border border-gray-400 p-2 max-sm:max-w-[330px]"
-    //               >
-    //                 <p className="w-min truncate font-sans font-normal text-slate-700 dark:text-zinc-100">
-    //                   {member}
-    //                 </p>
-    //                 <button
-    //                   type="button"
-    //                   className="border border-black bg-white px-8 py-2 text-black transition-all duration-300 ease-in-out disabled:opacity-40"
-    //                   onClick={() =>
-    //                     setTeam((prev) => prev.filter((m) => m !== member))
-    //                   }
-    //                 >
-    //                   Remove
-    //                 </button>
-    //               </div>
-    //             ))}
-    //           </div>
-    //         </div>
-    //       </div>
-    //     </div>
-    //   ),
-    // },
+    {
+      id: "teamMembers",
+      title: "Team members",
+      desc: "The wonderful people who built it",
+      fields: (
+        <div className="flex w-full flex-col gap-8">
+          <div className="flex w-full flex-col gap-2">
+            <label htmlFor="members-input" className={labelStyle}>
+              Invite team members *
+            </label>
+            <div className="flex w-full flex-row items-center gap-2 max-sm:flex-col">
+              <input
+                id="members-input"
+                type="text"
+                className="flex flex-1 rounded-lg border border-gray-400 bg-transparent p-2 px-4 focus-visible:outline-none max-sm:w-full"
+                placeholder="ETH address, comma separated"
+                value={teamInput}
+                onChange={(e) => setTeamInput(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={addMemberToArray}
+                className="bg-black px-12 py-2 rounded-lg text-white transition-all duration-300 ease-in-out disabled:opacity-40 max-sm:w-full"
+                disabled={!!teamInputError || !teamInput.length}
+              >
+                Add
+              </button>
+            </div>
+            <p className="text-red-500">{teamInputError}</p>
+            <div className="flex w-full flex-col items-center gap-4">
+              {team.length ? (
+                <div className="mt-2 h-1 w-20 rounded-full bg-gray-400" />
+              ) : null}
+              <div className="flex w-full flex-col gap-2">
+                {team.map((member) => (
+                  <div
+                    key={member}
+                    className="flex w-full flex-row items-center justify-between truncate rounded border border-gray-400 p-2 max-sm:max-w-[330px]"
+                  >
+                    <p className="w-min truncate font-sans font-normal text-slate-700 dark:text-zinc-100">
+                      {member}
+                    </p>
+                    <button
+                      type="button"
+                      className="border border-black bg-white px-8 py-2 text-black transition-all duration-300 ease-in-out disabled:opacity-40"
+                      onClick={() =>
+                        setTeam((prev) => prev.filter((m) => m !== member))
+                      }
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      ),
+    },
   ];
 
   return (
