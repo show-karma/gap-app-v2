@@ -18,6 +18,7 @@ export const CardReviewSummary = () => {
   const setIsOpenReview = useReviewStore((state: any) => state.setIsOpenReview);
   const setActiveBadges = useReviewStore((state: any) => state.setActiveBadges);
   const setActiveBadgeIds = useReviewStore((state: any) => state.setActiveBadgeIds);
+  const stories = useReviewStore((state: any) => state.stories);
 
   const { openConnectModal } = useConnectModal();
   const { switchChain } = useSwitchChain();
@@ -88,7 +89,11 @@ export const CardReviewSummary = () => {
           <h1 className="text-[#959FA8] text-xs leading-4 font-bold font-['Open Sans']">
             Total Review
           </h1>
-          <h2 className="font-medium text-[56px] leading-[56px] font-['Open Sans']">100</h2>
+          {stories && (
+            <h2 className="font-medium text-[56px] leading-[56px] font-['Open Sans']">
+              {stories.length}
+            </h2>
+          )}
           <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
             Typically reviewed 5 times per day
           </p>
