@@ -548,7 +548,9 @@ export const ManagePrograms = () => {
                                 setProgramToEdit(program);
                               }}
                               selectProgram={(program: GrantProgram) => {
-                                setProgramId(program.programId || "");
+                                setProgramId(
+                                  program._id.$oid || program.programId || ""
+                                );
                                 setSelectedProgram(program);
                               }}
                               isAllowed={isAllowed}
@@ -562,7 +564,9 @@ export const ManagePrograms = () => {
                                 setProgramToEdit(program);
                               }}
                               selectProgram={(program: GrantProgram) => {
-                                setProgramId(program.programId || "");
+                                setProgramId(
+                                  program._id.$oid || program.programId || ""
+                                );
                                 setSelectedProgram(program);
                               }}
                               isAllowed={isAllowed}

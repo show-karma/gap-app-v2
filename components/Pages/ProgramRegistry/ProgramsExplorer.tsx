@@ -357,7 +357,9 @@ export const ProgramsExplorer = () => {
                         grantPrograms={grantPrograms}
                         selectProgram={(program) => {
                           setSelectedProgram(program);
-                          setProgramId(program.programId || "");
+                          setProgramId(
+                            program._id.$oid || program.programId || ""
+                          );
                         }}
                       />
                     </div>
