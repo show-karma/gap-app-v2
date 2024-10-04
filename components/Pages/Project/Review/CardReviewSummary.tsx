@@ -43,7 +43,7 @@ export const CardReviewSummary = () => {
   interface StarRatingDataProps {
     stars: number;
     count: number;
-    percentage: string;
+    percentage: number;
   }
 
   // Grab all recent badges and save on state
@@ -165,7 +165,7 @@ export const CardReviewSummary = () => {
         return {
           stars: Number(stars),
           count: count,
-          percentage: percentage.toFixed(2),
+          percentage: percentage,
         };
       },
     );
@@ -264,7 +264,7 @@ export const CardReviewSummary = () => {
               <p className="text-white text-sm font-bold font-['Open Sans'] leading-tight">
                 {stars}
               </p>
-              <ProgressBar currentStep={Number(percentage)} numberOfItems={100} />
+              <ProgressBar currentStep={percentage} numberOfItems={100} />
               <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
                 {count ? percentage : "0"}%
               </p>
