@@ -91,7 +91,7 @@ export const CardReviewSummary = () => {
 
   useEffect(() => {
     if (stories) {
-      getAverageReview(score, stories.length);
+      getAverageReviewScore(score, stories.length);
       const timestamps = stories.map((story: GrantStory) => Number(story.timestamp));
       getScoreRatingFilteredReviews();
       const timestampNow = Math.floor(Date.now() / 1000); /* Get the current timestamp in seconds */
