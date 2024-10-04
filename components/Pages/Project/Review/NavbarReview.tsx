@@ -115,7 +115,9 @@ export const NavbarReview = () => {
                 }}
               >
                 <div className="flex flex-col gap-2">
-                  <p>{(Number(storie.averageScore) / 10 ** SCORER_DECIMALS).toFixed(1)}</p>
+                  <p className="text-[#b0c3ff] text-2xl font-bold font-['Open Sans']">
+                    {(Number(storie.averageScore) / 10 ** SCORER_DECIMALS).toFixed(1)}
+                  </p>
                   <DynamicStarsReview
                     totalStars={5}
                     rating={
@@ -128,7 +130,9 @@ export const NavbarReview = () => {
                   />
                 </div>
                 <div className="w-full flex flex-col items-center">
-                  <p className="w-full">{formatDate(new Date(Number(storie.timestamp) * 1000))}</p>
+                  <p className="w-full text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
+                    {formatDate(new Date(Number(storie.timestamp) * 1000))}
+                  </p>
                 </div>
               </div>
             ))
