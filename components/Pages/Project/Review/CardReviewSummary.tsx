@@ -139,7 +139,8 @@ export const CardReviewSummary = () => {
   };
 
   /**
-   * Calculates and sets the star rating data based on the average scores of stories.
+   * Calculates and sets each available score selection percentual based on the total selection each score had 
+   * alongside with the total scores selections the grant program had.
    *
    * This function maps through the stories, rounds their average scores, and filters them
    * by each star rating (1 to 5). It then calculates the percentage of each star rating
