@@ -120,7 +120,7 @@ export const CardReviewSummary = () => {
     const days = interval / (60 * 60 * 24);
 
     if (days <= 1) {
-      return `Typically reviewed 1 time ${IntervalMessage.PER_DAY}`;
+      return `Typically reviewed ${the number of reviews done so far} time${number of reviews done so far > 1 ? "s" : ""} ${IntervalMessage.PER_DAY}`;
     } else if (days <= 7) {
       return `Typically reviewed ${Math.round(7 / days)} times ${IntervalMessage.PER_WEEK}`;
     } else if (days <= 30) {
