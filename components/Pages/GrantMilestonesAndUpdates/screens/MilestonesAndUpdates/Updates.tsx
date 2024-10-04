@@ -157,7 +157,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
       milestone?.completed?.data?.proofOfWork)
   ) {
     return (
-      <div className="flex flex-col gap-3 bg-[#F8F9FC] dark:bg-zinc-900 rounded-md px-4 py-2 max-lg:max-w-2xl max-sm:max-w-full">
+      <div className="flex flex-col gap-3 bg-[#F8F9FC] dark:bg-zinc-900 rounded-md px-4 py-2 max-lg:max-w-2xl max-sm:max-w-full w-full">
         <div className="flex w-full flex-row flex-wrap items-center justify-between gap-2">
           <div className="flex flex-row gap-4 items-center flex-wrap">
             <div className="flex items-center h-max w-max flex-row gap-2 rounded-full bg-[#5720B7] dark:bg-purple-900 px-3 py-1  flex-wrap">
@@ -208,7 +208,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
                           ? milestone?.completed?.data.proofOfWork
                           : `https://${milestone?.completed?.data.proofOfWork}`
                       }
-                      className="flex flex-row w-max max-w-full gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent"
+                      className="flex flex-row w-max max-w-full break-all gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent"
                     >
                       {milestone?.completed?.data.proofOfWork.includes("http")
                         ? `${milestone?.completed?.data.proofOfWork.slice(
