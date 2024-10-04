@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useReviewStore } from "@/store/review";
 import { useSearchParams } from "next/navigation";
 
-import { GrantStory } from "@/types/review";
+import { GrantStory, ReviewMode } from "@/types/review";
 
 import { StarReviewIcon } from "@/components/Icons/StarReview";
 import { CardReview } from "@/components/Pages/Project/Review/CardReview";
@@ -14,6 +14,7 @@ import { formatDate } from "@/utilities/formatDate";
 import { getGrantStories } from "@/utilities/review/getGrantStories";
 import { SCORER_DECIMALS } from "@/utilities/review/constants/constants";
 import { ClockIcon } from "@/components/Icons/ClockIcon";
+import { DynamicStarsReview } from "./DynamicStarsReview";
 
 export const NavbarReview = () => {
   const isStarSelected = useReviewStore((state: any) => state.isStarSelected);
@@ -98,47 +99,36 @@ export const NavbarReview = () => {
           Reviews History
         </h1>
       </div>
-      <div className="w-full flex px-2 gap-2 overflow-x-auto pb-4 relative scroller">
+      <div className="w-full flex gap-3 overflow-x-auto relative scroller">
         {stories && stories.length > 0 ? (
           stories
             .sort((a: any, b: any) => Number(b.timestamp) - Number(a.timestamp))
             .map((storie: GrantStory, index: number) => (
               <div
                 key={index}
-                className="flex flex-col justify-center items-center text-center relative"
+                className={`flex flex-col justify-center xl:justify-start items-center text-center relative py-3 px-4 gap-3 cursor-pointer ${
+                  isStarSelected === index && "bg-[#26252A]"
+                }`}
+                onClick={() => {
+                  setBadges(null);
+                  handleToggleReviewSelected(index);
+                }}
               >
-                <p className="w-full">{formatDate(new Date(Number(storie.timestamp) * 1000))}</p>
-                <div className="w-full flex flex-col items-center sm:px-14 px-4">
-                  <StarReviewIcon
-                    props={{
-                      className: `w-20 h-20 ${isStarSelected === index && "text-[#004EEB]"}`,
-                    }}
-                    pathProps={{
-                      className: "cursor-pointer",
-                      fill: `${isStarSelected === index && "#004EEB"} `,
-                      onClick: () => {
-                        setBadges(null);
-                        handleToggleReviewSelected(index);
-                      },
-                    }}
-                  />
+                <div className="flex flex-col gap-2">
                   <p>{(Number(storie.averageScore) / 10 ** SCORER_DECIMALS).toFixed(1)}</p>
-                  {isStarSelected === index && (
-                    <div>
-                      <ChevronDown className="text-[#004EEB]" />
-                    </div>
-                  )}
-                  {index < stories.length - 1 && (
-                    <>
-                      <div className="absolute right-0 top-1/2 h-3/4 w-0.5 bg-zinc-300 transform -translate-y-1/2">
-                        <p className="flex">
-                          {Number(timeDifference[index]) / 86400 >= 1
-                            ? `${Math.ceil(Number(timeDifference[index]) / 86400)} days`
-                            : "Less than 1 day"}
-                        </p>
-                      </div>
-                    </>
-                  )}
+                  <DynamicStarsReview
+                    totalStars={5}
+                    rating={
+                      storie.averageScore
+                        ? Number(Number(storie.averageScore) / 10 ** SCORER_DECIMALS)
+                        : 0
+                    }
+                    setRating={() => {}}
+                    mode={ReviewMode.READ}
+                  />
+                </div>
+                <div className="w-full flex flex-col items-center">
+                  <p className="w-full">{formatDate(new Date(Number(storie.timestamp) * 1000))}</p>
                 </div>
               </div>
             ))
