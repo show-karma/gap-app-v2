@@ -133,8 +133,8 @@ export const CardReviewSummary = () => {
   };
 
   const getNumberOfReviewsPerRating = (allReviews: number[], targetedRating: number) => {
-    return scoreByEachStarRating.filter(
-      (scoreByEachStarRating) => scoreByEachStarRating === targetScore,
+    return allReviews.filter(
+      (rating) => rating === targetedRating,
     ).length;
   };
 
