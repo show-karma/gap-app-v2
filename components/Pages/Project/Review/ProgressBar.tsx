@@ -1,19 +1,20 @@
-interface ProgressBarProps {
-  currentStep: number;
-  numberOfItems: number;
-}
+/**
+ * ProgressBar component displays a progress bar indicating the completion percentage.
+ *
+ */
+export const ProgressBar = ({ actualPercentage }: { actualPercentage: number }) => {
+  const totalPercentage = 100;
 
-export const ProgressBar = ({ currentStep, numberOfItems = 100 }: ProgressBarProps) => {
   return (
     <div className="w-40 flex items-center rounded-[100px] overflow-hidden">
-      {Array(numberOfItems)
+      {Array(totalPercentage)
         .fill(0)
         .map((_, index) => {
           return (
             <div
               key={index}
               className={`h-1 w-full ${
-                currentStep > index ? "dark:bg-[#1832ED]" : "dark:bg-[#26252A]"
+                actualPercentage > index ? "dark:bg-[#1832ED]" : "dark:bg-[#26252A]"
               }`}
             />
           );

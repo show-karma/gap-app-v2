@@ -264,7 +264,7 @@ export const CardReviewSummary = () => {
                 <p className="text-white text-sm font-bold font-['Open Sans'] leading-tight">
                   {stars}
                 </p>
-                <ProgressBar currentStep={percentage} numberOfItems={100} />
+                <ProgressBar actualPercentage={percentage} />
                 <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
                   {count ? percentage : "0"}%
                 </p>
