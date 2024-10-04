@@ -144,7 +144,7 @@ export const CardReviewSummary = () => {
    *
    * This function maps through the stories, rounds their average scores, and filters them
    * by each star rating (1 to 5). It then calculates the percentage of each star rating
-   * relative to the total number of stories and sets the star rating data.
+   * relative to the total number of reviews and sets the ratings proportional selections.
    *
    */
   const getScoreRatingFilteredReviews = () => {
