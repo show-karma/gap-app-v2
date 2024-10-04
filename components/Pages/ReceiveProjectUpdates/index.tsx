@@ -158,13 +158,24 @@ export const ReceiveProjectUpdates = ({
     }
   };
   return (
-    <div className="flex flex-col gap-4  max-w-xl w-full bg-[#EEF4FF] dark:bg-zinc-800 p-5 rounded-lg">
+    <div className="flex flex-col gap-4  max-w-xl w-full bg-[#EEF4FF] dark:bg-zinc-800 p-5 rounded-lg max-lg:max-w-full">
       {step === "lookup" ? (
         <div className="flex flex-col gap-4">
-          <Image src="/icons/mail.png" width={24} height={24} alt="Mail" />
+          <div className="flex flex-row gap-2 items-start">
+            <Image
+              src="/icons/mail.png"
+              width={24}
+              height={24}
+              alt="Mail"
+              className="w-6 h-6"
+            />
+            <p className="text-brand-darkblue text-sm font-semibold dark:text-zinc-300">
+              Receive updates from your funded projects
+            </p>
+          </div>
 
           <div className="flex flex-col gap-3">
-            <p className="text-brand-darkblue text-base font-semibold dark:text-zinc-300">
+            <p className="text-brand-darkblue text-base font-semibold dark:text-zinc-300 max-lg:text-sm max-lg:mt-2">
               Enter the wallet you’ve used to fund projects on {communityName}{" "}
               to track them.
             </p>
