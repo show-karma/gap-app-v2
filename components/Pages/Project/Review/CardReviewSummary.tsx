@@ -109,7 +109,7 @@ export const CardReviewSummary = () => {
     const timestampStart = Math.min(...timestamps);
     const totalInterval = timestampNow - timestampStart;
 
-    const grantStoriesLength = timestamps.length;
+    const numberOfReviews = timestamps.length;
     const intervalPerReview = totalInterval / grantStoriesLength;
 
     setTimestampInterval(intervalPerReview);
