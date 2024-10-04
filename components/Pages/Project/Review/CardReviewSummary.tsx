@@ -76,7 +76,7 @@ export const CardReviewSummary = () => {
    * @param score - An array of numbers representing individual review scores.
    * @param grantStoriesLength - The total number of grant stories.
    */
-  const getAverageReview = (score: number[], grantStoriesLength: number) => {
+  const getAverageReviewScore = (reviewsScores: number[], reviewsLength: number) => {
     const scoresSummed = reviewsScores.reduce(
       (accumulator, current) => Number(accumulator) + Number(current),
       0,
