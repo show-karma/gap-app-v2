@@ -153,11 +153,11 @@ export const CardReviewSummary = () => {
     );
 
     const starDataFiltered = {
-      1: filterScoreReviews(scoreByEachStarRating, 1),
-      2: filterScoreReviews(scoreByEachStarRating, 2),
-      3: filterScoreReviews(scoreByEachStarRating, 3),
-      4: filterScoreReviews(scoreByEachStarRating, 4),
-      5: filterScoreReviews(scoreByEachStarRating, 5),
+      1: getNumberOfReviewsPerRating(scoresOfReviews, 1),
+      2: getNumberOfReviewsPerRating(scoresOfReviews, 2),
+      3: getNumberOfReviewsPerRating(scoresOfReviews, 3),
+      4: getNumberOfReviewsPerRating(scoresOfReviews, 4),
+      5: getNumberOfReviewsPerRating(scoresOfReviews, 5),
     };
 
     const starsRatingData: StarRatingDataProps[] = Object.entries(starDataFiltered).map(
