@@ -210,7 +210,7 @@ export const CardReviewSummary = () => {
           )
         )}
       </div>
-      <div className="flex gap-8 border border-[#26252A] rounded-lg p-6 justify-between md:flex-row flex-col">
+      <div className="flex lg:gap-4 xl:gap-8 gap-8 border border-[#26252A] rounded-lg p-6 justify-between md:flex-row flex-col">
         <div className="flex flex-col gap-3 h-full items-center md:items-start">
           <div className="flex">
             <h1 className="text-[#959FA8] text-xs leading-4 font-bold font-['Open Sans']">
@@ -258,18 +258,20 @@ export const CardReviewSummary = () => {
           <div className="border border-[#26252A] h-full" />
           <div className="w-[3px] h-8 bg-[#1832ed] rounded-[100px] absolute"></div>
         </div>
-        <div className="flex gap-1.5 items-start justify-center flex-col-reverse">
-          {starRatingFiltered.map(({ stars, count, percentage }) => (
-            <div className="flex gap-2 items-center" key={stars}>
-              <p className="text-white text-sm font-bold font-['Open Sans'] leading-tight">
-                {stars}
-              </p>
-              <ProgressBar currentStep={percentage} numberOfItems={100} />
-              <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
-                {count ? percentage : "0"}%
-              </p>
-            </div>
-          ))}
+        <div className="flex lg:justify-end justify-center">
+          <div className="flex gap-1.5 items-start justify-center flex-col-reverse">
+            {starRatingFiltered.map(({ stars, count, percentage }) => (
+              <div className="flex gap-2 items-center" key={stars}>
+                <p className="text-white text-sm font-bold font-['Open Sans'] leading-tight">
+                  {stars}
+                </p>
+                <ProgressBar currentStep={percentage} numberOfItems={100} />
+                <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
+                  {count ? percentage : "0"}%
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
