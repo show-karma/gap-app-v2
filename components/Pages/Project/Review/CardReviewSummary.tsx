@@ -223,7 +223,7 @@ export const CardReviewSummary = () => {
                 {stories.length}
               </h2>
             )}
-            <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
+            <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight text-center sm:text-start">
               {intervalMessage ? intervalMessage : "No reviewed yet"}
             </p>
           </div>
