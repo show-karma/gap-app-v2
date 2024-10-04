@@ -83,7 +83,7 @@ export const CardReviewSummary = () => {
     );
 
     setAverageScoreReview(
-      Number(averageScoreSum) / 10 ** SCORER_DECIMALS / Number(grantStoriesLength),
+      Number(scoresSummed) / 10 ** SCORER_DECIMALS / Number(reviewsLength),
     );
   };
 
