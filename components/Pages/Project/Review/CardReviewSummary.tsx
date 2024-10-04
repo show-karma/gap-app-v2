@@ -152,7 +152,7 @@ export const CardReviewSummary = () => {
       Math.round(Number(story.averageScore) / 10 ** SCORER_DECIMALS),
     );
 
-    const starDataFiltered = {
+    const reviewsFilteredByScore = {
       1: getNumberOfReviewsPerRating(scoresOfReviews, 1),
       2: getNumberOfReviewsPerRating(scoresOfReviews, 2),
       3: getNumberOfReviewsPerRating(scoresOfReviews, 3),
