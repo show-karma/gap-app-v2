@@ -170,7 +170,7 @@ export const CardReviewSummary = () => {
         };
       },
     );
-    setStarRatingFiltered(starsRatingData);
+    setStarRatingFiltered(reviewsWithPercentualRelevance);
   };
 
   return (
