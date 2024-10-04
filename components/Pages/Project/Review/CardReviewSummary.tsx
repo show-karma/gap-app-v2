@@ -142,7 +142,7 @@ export const CardReviewSummary = () => {
    * Calculates and sets each available score selection percentual based on the total selection each score had 
    * alongside with the total scores selections the grant program had.
    *
-   * This function maps through the stories, rounds their average scores, and filters them
+   * This function maps through the reviews, rounds their average scores, and filters them
    * by each star rating (1 to 5). It then calculates the percentage of each star rating
    * relative to the total number of reviews and sets the ratings proportional selections.
    *
