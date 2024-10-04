@@ -160,7 +160,7 @@ export const CardReviewSummary = () => {
       5: getNumberOfReviewsPerRating(scoresOfReviews, 5),
     };
 
-    const starsRatingData: StarRatingDataProps[] = Object.entries(starDataFiltered).map(
+    const reviewsWithPercentualRelevance: StarRatingDataProps[] = Object.entries(reviewsFilteredByScore).map(
       ([stars, count]) => {
         const percentage = (count / stories.length) * 100;
         return {
