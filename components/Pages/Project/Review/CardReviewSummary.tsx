@@ -82,9 +82,7 @@ export const CardReviewSummary = () => {
       0,
     );
 
-    setAverageScoreReview(
-      Number(scoresSummed) / 10 ** SCORER_DECIMALS / Number(reviewsLength),
-    );
+    setAverageScoreReview(Number(scoresSummed) / 10 ** SCORER_DECIMALS / Number(reviewsLength));
   };
 
   const grantIdFromQueryParam = searchParams?.get("grantId");
@@ -120,7 +118,9 @@ export const CardReviewSummary = () => {
     const days = interval / (60 * 60 * 24);
 
     if (days <= 1) {
-      return `Typically reviewed ${the number of reviews done so far} time${number of reviews done so far > 1 ? "s" : ""} ${IntervalMessage.PER_DAY}`;
+      return `Typically reviewed ${stories.length} time${stories.length > 1 ? "s" : ""} ${
+        IntervalMessage.PER_DAY
+      }`;
     } else if (days <= 7) {
       return `Typically reviewed ${Math.round(7 / days)} times ${IntervalMessage.PER_WEEK}`;
     } else if (days <= 30) {
@@ -133,13 +133,11 @@ export const CardReviewSummary = () => {
   };
 
   const getNumberOfReviewsPerRating = (allReviews: number[], targetedRating: number) => {
-    return allReviews.filter(
-      (rating) => rating === targetedRating,
-    ).length;
+    return allReviews.filter((rating) => rating === targetedRating).length;
   };
 
   /**
-   * Calculates and sets each available score selection percentual based on the total selection each score had 
+   * Calculates and sets each available score selection percentual based on the total selection each score had
    * alongside with the total scores selections the grant program had.
    *
    * This function maps through the reviews, rounds their average scores, and filters them
@@ -160,16 +158,16 @@ export const CardReviewSummary = () => {
       5: getNumberOfReviewsPerRating(scoresOfReviews, 5),
     };
 
-    const reviewsWithPercentualRelevance: StarRatingDataProps[] = Object.entries(reviewsFilteredByScore).map(
-      ([stars, count]) => {
-        const percentage = (count / stories.length) * 100;
-        return {
-          stars: Number(stars),
-          count: count,
-          percentage: percentage,
-        };
-      },
-    );
+    const reviewsWithPercentualRelevance: StarRatingDataProps[] = Object.entries(
+      reviewsFilteredByScore,
+    ).map(([stars, count]) => {
+      const percentage = (count / stories.length) * 100;
+      return {
+        stars: Number(stars),
+        count: count,
+        percentage: percentage,
+      };
+    });
     setStarRatingFiltered(reviewsWithPercentualRelevance);
   };
 
