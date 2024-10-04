@@ -21,12 +21,21 @@ export const CardReviewSummary = () => {
   const setActiveBadges = useReviewStore((state: any) => state.setActiveBadges);
   const setActiveBadgeIds = useReviewStore((state: any) => state.setActiveBadgeIds);
   const stories = useReviewStore((state: any) => state.stories);
+  const [timestampInterval, setTimestampInterval] = useState<number | undefined>(undefined);
+  const [averageScoreReview, setAverageScoreReview] = useState<number | undefined>(undefined);
+  const [intervalMessage, setIntervalMessage] = useState<string>("");
 
   const { openConnectModal } = useConnectModal();
   const { switchChain } = useSwitchChain();
   const { isConnected, address, chainId } = useAccount();
 
-  const [averageScoreReview, setAverageScoreReview] = useState<number | undefined>(undefined);
+  const enum IntervalMessage {
+    PER_DAY = "per day",
+    PER_WEEK = "per week",
+    PER_MONTH = "per month",
+    PER_YEAR = "per year",
+  }
+
   // Grab all recent badges and save on state
   const handleStoryBadges = async () => {
     const badgeIds = await getBadgeIds(SCORER_ID);
@@ -71,8 +80,41 @@ export const CardReviewSummary = () => {
   useEffect(() => {
     if (stories) {
       getAverageReview(score, stories.length);
+      const timestamps = stories.map((story: GrantStory) => Number(story.timestamp));
+      // Get the current timestamp in seconds
+      const timestampNow = Math.floor(Date.now() / 1000);
+      getTimestampInterval(timestamps, timestampNow);
     }
   }, [stories]);
+
+  const getTimestampInterval = (timestamps: number[], timestampNow: number) => {
+    if (!timestamps.length) return;
+
+    const timestampStart = Math.min(...timestamps);
+    const totalInterval = timestampNow - timestampStart;
+
+    const grantStoriesLength = timestamps.length;
+    const intervalPerReview = totalInterval / grantStoriesLength;
+
+    setTimestampInterval(intervalPerReview);
+    setIntervalMessage(getIntervalMessage(intervalPerReview));
+  };
+
+  const getIntervalMessage = (interval: number): string => {
+    const days = interval / (60 * 60 * 24);
+
+    if (days <= 1) {
+      return `Typically reviewed 1 time ${IntervalMessage.PER_DAY}`;
+    } else if (days <= 7) {
+      return `Typically reviewed ${Math.round(7 / days)} times ${IntervalMessage.PER_WEEK}`;
+    } else if (days <= 30) {
+      return `Typically reviewed ${Math.round(30 / days)} times ${IntervalMessage.PER_MONTH}`;
+    } else if (days <= 365) {
+      return `Typically reviewed ${Math.round(365 / days)} times ${IntervalMessage.PER_YEAR}`;
+    } else {
+      return `Typically reviewed each ${Math.round(days)} days`;
+    }
+  };
 
   return (
     <div className="flex flex-col w-full gap-5">
@@ -126,7 +168,7 @@ export const CardReviewSummary = () => {
               </h2>
             )}
             <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
-              Typically reviewed 5 times per day
+              {intervalMessage}
             </p>
           </div>
         </div>
