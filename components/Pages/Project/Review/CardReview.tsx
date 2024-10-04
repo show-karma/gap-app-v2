@@ -32,21 +32,36 @@ export const CardReview = ({ storie }: { storie: GrantStory }) => {
 
   return (
     <div className="flex w-full flex-col justify-center gap-4">
-      <div className="w-full flex flex-col px-2 gap-2">
+      <div className="w-full flex flex-col gap-2 border-x border-b rounded-md dark:border-[#26252A]">
+        <div className="px-4 py-3 dark:bg-[#26252A] flex gap-2 items-center rounded-t-md">
+          <p className="text-[#959fa8] text-xs font-bold font-['Open Sans'] uppercase leading-none">
+            REVIEW
+          </p>
+          <p className="text-[#959fa8] text-xs font-bold font-['Open Sans'] uppercase leading-none">
+            /
+          </p>
+          <p className="text-[#959fa8] text-xs font-bold font-['Open Sans'] uppercase leading-none">
+            September 9, 2024
+          </p>
+        </div>
         {storie &&
           badges &&
           badges.map((badge: Badge, index: number) => (
-            <div key={index} className="flex flex-col w-full px-14 mt-4">
+            <div key={index} className="flex flex-col w-full px-5 py-4 gap-6">
               <div className="flex justify-center sm:justify-normal flex-col sm:flex-row w-full items-center gap-3">
                 <img
                   src={addPrefixToIPFSLink(badge.metadata)}
                   alt="Badge Metadata"
                   className="h-20"
                 />
-                <div className="flex flex-col sm:flex-row items-center gap-3">
-                  <div className="order-2 sm:order-1">
-                    <div className="sm:text-lg sm:text-start text-center text-xl">{badge.name}</div>
-                    <div className="sm:text-sm sm:text-start text-center">{badge.description}</div>
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full justify-between">
+                  <div className="order-2 sm:order-1 flex flex-col gap-1">
+                    <div className="sm:text-lg sm:text-start text-center text-white text-base font-semiboldfont-['Open Sans'] leading-normal">
+                      {badge.name}
+                    </div>
+                    <div className="sm:text-sm sm:text-start text-center text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
+                      {badge.description}
+                    </div>
                   </div>
                   <div className="order-1 sm:order-2">
                     <DynamicStarsReview

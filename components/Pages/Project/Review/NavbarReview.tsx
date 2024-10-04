@@ -13,6 +13,7 @@ import { ChevronDown } from "@/components/Icons";
 import { formatDate } from "@/utilities/formatDate";
 import { getGrantStories } from "@/utilities/review/getGrantStories";
 import { SCORER_DECIMALS } from "@/utilities/review/constants/constants";
+import { ClockIcon } from "@/components/Icons/ClockIcon";
 
 export const NavbarReview = () => {
   const isStarSelected = useReviewStore((state: any) => state.isStarSelected);
@@ -87,7 +88,16 @@ export const NavbarReview = () => {
   };
 
   return (
-    <div className="w-full flex flex-col">
+    <div className="w-full flex flex-col gap-5">
+      <div className="flex gap-3 items-center">
+        <ClockIcon />
+        <h1
+          aria-label="Reviews History"
+          className="text-white text-base font-semibold font-['Open Sans'] leading-normal"
+        >
+          Reviews History
+        </h1>
+      </div>
       <div className="w-full flex px-2 gap-2 overflow-x-auto pb-4 relative scroller">
         {stories && stories.length > 0 ? (
           stories
