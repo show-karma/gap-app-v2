@@ -148,7 +148,7 @@ export const CardReviewSummary = () => {
    *
    */
   const getScoreRatingFilteredReviews = () => {
-    const scoreByEachStarRating = stories.map((story: GrantStory) =>
+    const scoresOfReviews = stories.map((story: GrantStory) =>
       Math.round(Number(story.averageScore) / 10 ** SCORER_DECIMALS),
     );
 
