@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { GrantStory, ReviewMode } from "@/types/review";
 import { PlusIcon } from "@heroicons/react/24/solid";
 import { Button } from "@/components/Utilities/Button";
@@ -13,7 +14,8 @@ import { getBadgeIds } from "@/utilities/review/getBadgeIds";
 import { SCORER_DECIMALS, SCORER_ID } from "@/utilities/review/constants/constants";
 import { getBadge } from "@/utilities/review/getBadge";
 import { ProgressBar } from "./ProgressBar";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 export const CardReviewSummary = () => {
   const project = useProjectStore((state: any) => state.project);
@@ -21,9 +23,11 @@ export const CardReviewSummary = () => {
   const setActiveBadges = useReviewStore((state: any) => state.setActiveBadges);
   const setActiveBadgeIds = useReviewStore((state: any) => state.setActiveBadgeIds);
   const stories = useReviewStore((state: any) => state.stories);
-  const [timestampInterval, setTimestampInterval] = useState<number | undefined>(undefined);
-  const [averageScoreReview, setAverageScoreReview] = useState<number | undefined>(undefined);
-  const [intervalMessage, setIntervalMessage] = useState<string>("");
+  const [timestampInterval, setTimestampInterval] = useState<number | null>(null);
+  const [averageScoreReview, setAverageScoreReview] = useState<number | null>(null);
+  const [intervalMessage, setIntervalMessage] = useState<string | undefined>(undefined);
+  const [starRatingFiltered, setStarRatingFiltered] = useState<StarRatingDataProps[]>([]);
+  const searchParams = useSearchParams();
 
   const { openConnectModal } = useConnectModal();
   const { switchChain } = useSwitchChain();
@@ -34,6 +38,12 @@ export const CardReviewSummary = () => {
     PER_WEEK = "per week",
     PER_MONTH = "per month",
     PER_YEAR = "per year",
+  }
+
+  interface StarRatingDataProps {
+    stars: number;
+    count: number;
+    percentage: string;
   }
 
   // Grab all recent badges and save on state
@@ -77,18 +87,24 @@ export const CardReviewSummary = () => {
     );
   };
 
+  const grantIdFromQueryParam = searchParams?.get("grantId");
+
   useEffect(() => {
     if (stories) {
       getAverageReview(score, stories.length);
       const timestamps = stories.map((story: GrantStory) => Number(story.timestamp));
-      // Get the current timestamp in seconds
-      const timestampNow = Math.floor(Date.now() / 1000);
+      getScoreRatingFilteredReviews();
+      const timestampNow = Math.floor(Date.now() / 1000); /* Get the current timestamp in seconds */
       getTimestampInterval(timestamps, timestampNow);
+    } else {
+      setTimestampInterval(null);
+      setIntervalMessage(undefined);
     }
-  }, [stories]);
+  }, [stories, grantIdFromQueryParam]);
 
   const getTimestampInterval = (timestamps: number[], timestampNow: number) => {
     if (!timestamps.length) return;
+    if (!stories.length) return;
 
     const timestampStart = Math.min(...timestamps);
     const totalInterval = timestampNow - timestampStart;
@@ -114,6 +130,46 @@ export const CardReviewSummary = () => {
     } else {
       return `Typically reviewed each ${Math.round(days)} days`;
     }
+  };
+
+  const filterScoreReviews = (scoreByEachStarRating: number[], targetScore: number) => {
+    return scoreByEachStarRating.filter(
+      (scoreByEachStarRating) => scoreByEachStarRating === targetScore,
+    ).length;
+  };
+
+  /**
+   * Calculates and sets the star rating data based on the average scores of stories.
+   *
+   * This function maps through the stories, rounds their average scores, and filters them
+   * by each star rating (1 to 5). It then calculates the percentage of each star rating
+   * relative to the total number of stories and sets the star rating data.
+   *
+   */
+  const getScoreRatingFilteredReviews = () => {
+    const scoreByEachStarRating = stories.map((story: GrantStory) =>
+      Math.round(Number(story.averageScore) / 10 ** SCORER_DECIMALS),
+    );
+
+    const starDataFiltered = {
+      1: filterScoreReviews(scoreByEachStarRating, 1),
+      2: filterScoreReviews(scoreByEachStarRating, 2),
+      3: filterScoreReviews(scoreByEachStarRating, 3),
+      4: filterScoreReviews(scoreByEachStarRating, 4),
+      5: filterScoreReviews(scoreByEachStarRating, 5),
+    };
+
+    const starsRatingData: StarRatingDataProps[] = Object.entries(starDataFiltered).map(
+      ([stars, count]) => {
+        const percentage = (count / stories.length) * 100;
+        return {
+          stars: Number(stars),
+          count: count,
+          percentage: percentage.toFixed(2),
+        };
+      },
+    );
+    setStarRatingFiltered(starsRatingData);
   };
 
   return (
@@ -168,7 +224,7 @@ export const CardReviewSummary = () => {
               </h2>
             )}
             <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
-              {intervalMessage}
+              {intervalMessage ? intervalMessage : "No reviewed yet"}
             </p>
           </div>
         </div>
@@ -178,7 +234,7 @@ export const CardReviewSummary = () => {
         </div>
         <div className="flex flex-col gap-3 h-full items-center md:items-start">
           <div className="flex">
-            <h1 className="text-[#959FA8] text-xs leading-4 font-bold font-['Open-Sans']">
+            <h1 className="text-[#959FA8] text-xs leading-4 font-bold font-['Open Sans']">
               Average Review
             </h1>
           </div>
@@ -202,42 +258,18 @@ export const CardReviewSummary = () => {
           <div className="border border-[#26252A] h-full" />
           <div className="w-[3px] h-8 bg-[#1832ed] rounded-[100px] absolute"></div>
         </div>
-        <div className="flex flex-col gap-1.5 items-start justify-center">
-          <div className="flex gap-2 items-center">
-            <p className="text-white text-sm font-bold font-['Open Sans'] leading-tight">5</p>
-            <ProgressBar currentStep={10} numberOfItems={100} />
-            <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
-              10%
-            </p>
-          </div>
-          <div className="flex gap-2 items-center">
-            <p className="text-white text-sm font-bold font-['Open Sans'] leading-tight">4</p>
-            <ProgressBar currentStep={30} numberOfItems={100} />
-            <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
-              30%
-            </p>
-          </div>
-          <div className="flex gap-2 items-center">
-            <p className="text-white text-sm font-bold font-['Open Sans'] leading-tight">3</p>
-            <ProgressBar currentStep={45} numberOfItems={100} />
-            <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
-              45%
-            </p>
-          </div>
-          <div className="flex gap-2 items-center">
-            <p className="text-white text-sm font-bold font-['Open Sans'] leading-tight">2</p>
-            <ProgressBar currentStep={69} numberOfItems={100} />
-            <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
-              69%
-            </p>
-          </div>
-          <div className="flex gap-2 items-center">
-            <p className="text-white text-sm font-bold font-['Open Sans'] leading-tight">1</p>
-            <ProgressBar currentStep={2} numberOfItems={100} />
-            <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
-              2%
-            </p>
-          </div>
+        <div className="flex gap-1.5 items-start justify-center flex-col-reverse">
+          {starRatingFiltered.map(({ stars, count, percentage }) => (
+            <div className="flex gap-2 items-center" key={stars}>
+              <p className="text-white text-sm font-bold font-['Open Sans'] leading-tight">
+                {stars}
+              </p>
+              <ProgressBar currentStep={Number(percentage)} numberOfItems={100} />
+              <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
+                {count ? percentage : "0"}%
+              </p>
+            </div>
+          ))}
         </div>
       </div>
     </div>
