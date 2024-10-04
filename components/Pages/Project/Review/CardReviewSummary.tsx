@@ -132,7 +132,7 @@ export const CardReviewSummary = () => {
     }
   };
 
-  const filterScoreReviews = (scoreByEachStarRating: number[], targetScore: number) => {
+  const getNumberOfReviewsPerRating = (allReviews: number[], targetedRating: number) => {
     return scoreByEachStarRating.filter(
       (scoreByEachStarRating) => scoreByEachStarRating === targetScore,
     ).length;
