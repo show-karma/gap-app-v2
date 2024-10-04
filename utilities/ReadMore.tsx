@@ -53,20 +53,18 @@ export const ReadMore = ({
   }, []);
 
   return (
-    <div className="text">
-      <div>
-        {isReadMore ? (
-          <MarkdownPreview
-            className={markdownClass}
-            source={
-              text.slice(0, getMinimumText()) +
-              (text.length >= getMinimumText() ? "..." : "")
-            }
-          />
-        ) : (
-          <MarkdownPreview className={markdownClass} source={text} />
-        )}
-      </div>
+    <div className="text w-full">
+      {isReadMore ? (
+        <MarkdownPreview
+          className={markdownClass}
+          source={
+            text.slice(0, getMinimumText()) +
+            (text.length >= getMinimumText() ? "..." : "")
+          }
+        />
+      ) : (
+        <MarkdownPreview className={markdownClass} source={text} />
+      )}
       {text.length - 1 > getMinimumText() ? (
         <div onClick={toggleReadMore} className="read-or-hide mt-2">
           {isReadMore ? (
