@@ -437,7 +437,7 @@ export const ProjectGrantsPage = () => {
           ) : null}
           {/* Grants tabs end */}
           {project?.grants.length || currentTab === "create-grant" ? (
-            <div className="flex flex-col pt-5">
+            <div className="flex flex-col pt-8">
               <GrantContext.Provider value={grant}>
                 {currentTab === "milestones-and-updates" && (
                   <GrantMilestonesAndUpdates grant={grant} />
