@@ -30,7 +30,7 @@ import { CheckIcon } from "@heroicons/react/24/solid";
 import axios from "axios";
 
 export const CardNewReview = () => {
-  const { control, handleSubmit, getValues } = useForm();
+  const { control, handleSubmit, getValues, trigger } = useForm();
   const setIsOpenReview = useReviewStore((state: any) => state.setIsOpenReview);
   const setBadgeScores = useReviewStore((state: any) => state.setBadgeScores);
   const badgeScores = useReviewStore((state: any) => state.badgeScores);
@@ -65,6 +65,63 @@ export const CardNewReview = () => {
       setBadgeScores(updatededBadges);
     } else {
       toast.error("Invalid rating. Can only score between 1 and 5");
+    }
+  };
+
+  const handleSubmitAnswersReview = async () => {
+    const isValid = await trigger(["WhyDidYouApplyFor", "DidYouReceiveTheGrant"]);
+
+    if (isValid && address) {
+      const values = getValues();
+      const whyDidYouApplyFor: Category = values.WhyDidYouApplyFor;
+      const didYouReceiveTheGrant: ReceivedGrant = values.DidYouReceiveTheGrant;
+
+      if (whyDidYouApplyFor.length === 0 || didYouReceiveTheGrant.length === 0) {
+        console.log("Você precisa selecionar uma opção em ambos os formulários.");
+      } else {
+        console.log("Valores do formulário:", values);
+
+        // const connectedUserAddressData = {
+        //   connectedUserAddress: address,
+        // };
+
+        // try {
+        //   const axiosPostBD = await axios.post(
+        //     "http://localhost:3001/api/v1/users",
+        //     connectedUserAddressData,
+        //   );
+        //   console.log("axiosPostBD", axiosPostBD);
+        // } catch (error) {
+        //   console.error("Error creating User:", error);
+        //   toast.error("Error creating User. Try again.");
+        //   return;
+        // }
+
+        /** Creating Request to save label info into database */
+        const newPreReview: CreatePreReviewRequest = {
+          connectedUserAddress: address,
+          preReviewAnswers: {
+            category: whyDidYouApplyFor,
+            receivedGrant: didYouReceiveTheGrant,
+          },
+          programId: 0x1dac0e2beeba6f3eec76117545f39f28e8ecc3d2c22731b6072b2d87e82fa35d,
+          // TODO: Get Category/ReceivedGrant/ProgramId dinamic
+        };
+
+        try {
+          const axiosPostBD = await axios.post(
+            "http://localhost:3001/api/v1/reviews",
+            newPreReview,
+          );
+          console.log("axiosPostBD", axiosPostBD);
+        } catch (error) {
+          console.error("Error posting review:", error);
+          toast.error("Error submitting review. Try again.");
+          return;
+        }
+      }
+    } else {
+      console.log("Validação falhou.");
     }
   };
 
@@ -113,25 +170,7 @@ export const CardNewReview = () => {
       walletClient,
     );
 
-    /** Creating Request to save label info into database */
-    const newPreReview: CreatePreReviewRequest = {
-      connectedUserAddress: address,
-      preReviewAnswers: {
-        category: Category.Community,
-        receivedGrant: ReceivedGrant.Yes,
-      },
-      programId: 0x1dac0e2beeba6f3eec76117545f39f28e8ecc3d2c22731b6072b2d87e82fa35d,
-       // TODO: Get Category/ReceivedGrant/ProgramId dinamic
-    };
-
-    try {
-      const axiosPostBD = await axios.post("http://localhost:3001/api/v1/reviews", newPreReview);
-      console.log("axiosPostBD", axiosPostBD);
-    } catch (error) {
-      console.error("Error posting review:", error);
-      toast.error("Error submitting review. Try again.");
-      return;
-    }
+    handleSubmitAnswersReview();
 
     if (response instanceof Error) {
       toast.error("Error submitting review. Try again.");
@@ -165,7 +204,7 @@ export const CardNewReview = () => {
   ];
 
   const onSubmit = (data: any) => {
-    console.log(data);
+    console.log("data", data);
   };
 
   return (
@@ -177,7 +216,7 @@ export const CardNewReview = () => {
               Why did you apply for?
             </h1>
 
-            <form onSubmit={handleSubmit(onSubmit)}>
+            <form>
               <Controller
                 name="WhyDidYouApplyFor"
                 control={control}
@@ -219,7 +258,7 @@ export const CardNewReview = () => {
             <h1 className="text-base font-semibold font-['Open Sans'] leading-normal">
               Did you receive the grant?
             </h1>
-            <form onSubmit={handleSubmit(onSubmit)} className="justify-between md:w-full">
+            <form className="justify-between md:w-full">
               <Controller
                 name="DidYouReceiveTheGrant"
                 control={control}
