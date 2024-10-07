@@ -6,9 +6,7 @@ import { useSearchParams } from "next/navigation";
 
 import { GrantStory, ReviewMode } from "@/types/review";
 
-import { StarReviewIcon } from "@/components/Icons/StarReview";
 import { CardReview } from "@/components/Pages/Project/Review/CardReview";
-import { ChevronDown } from "@/components/Icons";
 
 import { formatDate } from "@/utilities/formatDate";
 import { getGrantStories } from "@/utilities/review/getGrantStories";
@@ -94,7 +92,7 @@ export const NavbarReview = () => {
         <ClockIcon />
         <h1
           aria-label="Reviews History"
-          className="text-white text-base font-semibold font-['Open Sans'] leading-normal"
+          className="dark:text-white text-black text-base font-semibold font-['Open Sans'] leading-normal"
         >
           Reviews History
         </h1>
@@ -107,7 +105,7 @@ export const NavbarReview = () => {
               <div
                 key={index}
                 className={`flex flex-col justify-center xl:justify-start items-center text-center relative py-3 px-4 gap-3 cursor-pointer ${
-                  isStarSelected === index && "bg-[#26252A]"
+                  isStarSelected === index && "dark:bg-[#26252A] bg-[#b0c3ff]"
                 }`}
                 onClick={() => {
                   setBadges(null);
@@ -115,7 +113,7 @@ export const NavbarReview = () => {
                 }}
               >
                 <div className="flex flex-col gap-2">
-                  <p className="text-[#b0c3ff] text-2xl font-bold font-['Open Sans']">
+                  <p className="dark:text-[#b0c3ff] text-black text-2xl font-bold font-['Open Sans']">
                     {(Number(storie.averageScore) / 10 ** SCORER_DECIMALS).toFixed(1)}
                   </p>
                   <DynamicStarsReview

@@ -261,7 +261,7 @@ export const CardReviewSummary = () => {
           <div className="flex gap-1.5 items-start justify-center flex-col-reverse">
             {starRatingFiltered.map(({ stars, count, percentage }) => (
               <div className="flex gap-2 items-center" key={stars}>
-                <p className="text-white text-sm font-bold font-['Open Sans'] leading-tight">
+                <p className="dark:text-white text-[#959FA8] text-sm font-bold font-['Open Sans'] leading-tight">
                   {stars}
                 </p>
                 <ProgressBar actualPercentage={percentage} />

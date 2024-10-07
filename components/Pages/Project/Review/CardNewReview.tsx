@@ -263,7 +263,7 @@ export const CardNewReview = () => {
                 </div>
               </div>
             ))}
-            <div className="sm:flex-row sm:items-center justify-center flex sm:justify-end w-full mt-4 bg-[#18171C] py-4 md:px-6 ">
+            <div className="sm:flex-row sm:items-center justify-center flex sm:justify-end w-full mt-4 dark:bg-[#18171C] bg-[#959FA8] py-4 md:px-6 ">
               <Button onClick={handleSubmitReview} className="bg-[#0E104D] gap-2 px-3">
                 <CheckIcon className="w-3.5 h-3.5 text-white" /> Submit
               </Button>

@@ -27,17 +27,17 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
   return (
     <div className="space-y-5 flex w-full flex-col items-start justify-start gap-8">
       <div className="flex w-full max-w-5xl flex-col gap-8">
-        <div className="flex w-full flex-col items-start justify-between gap-6 pb-8">
+        <div className="flex w-full flex-col items-start justify-between gap-12 pb-8">
           {isOpenReview === ReviewMode.WRITE ? (
             <>
-              <div className="flex w-full gap-2 p-4 bg-[#18171C] border border-[#18171C] items-center">
+              <div className="flex w-full gap-2 p-4 dark:bg-[#18171C] bg-[#959FA8] border border-[#18171C] items-center">
                 <ChevronLeftIcon
-                  className="w-4 h-4 cursor-pointer text-[#959FA8] "
+                  className="w-4 h-4 cursor-pointer dark:text-[#959FA8] text-black"
                   onClick={() => {
                     setIsOpenReview(ReviewMode.READ);
                   }}
                 />
-                <h2 className="text-white text-base font-semibold font-['Open Sans'] leading-normal">
+                <h2 className="dark:text-white text-black text-base font-semibold font-['Open Sans'] leading-normal">
                   Write a new review
                 </h2>
               </div>

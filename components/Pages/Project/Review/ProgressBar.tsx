@@ -13,9 +13,7 @@ export const ProgressBar = ({ actualPercentage }: { actualPercentage: number }) 
           return (
             <div
               key={index}
-              className={`h-1 w-full ${
-                actualPercentage > index ? "dark:bg-[#1832ED]" : "dark:bg-[#26252A]"
-              }`}
+              className={`h-1 w-full ${actualPercentage > index ? "bg-[#1832ED]" : "bg-[#26252A]"}`}
             />
           );
         })}
