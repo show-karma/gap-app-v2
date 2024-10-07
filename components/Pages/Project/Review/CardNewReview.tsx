@@ -15,16 +15,22 @@ import { Button } from "@/components/Utilities/Button";
 import { DynamicStarsReview } from "./DynamicStarsReview";
 
 import { AbiCoder } from "ethers";
-import { KARMA_EAS_SCHEMA_UID } from "@/utilities/review/constants";
+import {
+  Category,
+  CreatePreReviewRequest,
+  KARMA_EAS_SCHEMA_UID,
+  ReceivedGrant,
+} from "@/utilities/review/constants";
 import { addPrefixToIPFSLink } from "@/utilities/review/constants/utilitary";
 import { submitAttest } from "@/utilities/review/attest";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { config } from "@/utilities/wagmi/config";
 import { useForm, Controller } from "react-hook-form";
 import { CheckIcon } from "@heroicons/react/24/solid";
+import axios from "axios";
 
 export const CardNewReview = () => {
-  const { control, handleSubmit } = useForm();
+  const { control, handleSubmit, getValues } = useForm();
   const setIsOpenReview = useReviewStore((state: any) => state.setIsOpenReview);
   const setBadgeScores = useReviewStore((state: any) => state.setBadgeScores);
   const badgeScores = useReviewStore((state: any) => state.badgeScores);
@@ -107,6 +113,26 @@ export const CardNewReview = () => {
       walletClient,
     );
 
+    /** Creating Request to save label info into database */
+    const newPreReview: CreatePreReviewRequest = {
+      connectedUserAddress: address,
+      preReviewAnswers: {
+        category: Category.Community,
+        receivedGrant: ReceivedGrant.Yes,
+      },
+      programId: 0x1dac0e2beeba6f3eec76117545f39f28e8ecc3d2c22731b6072b2d87e82fa35d,
+       // TODO: Get Category/ReceivedGrant/ProgramId dinamic
+    };
+
+    try {
+      const axiosPostBD = await axios.post("http://localhost:3001/api/v1/reviews", newPreReview);
+      console.log("axiosPostBD", axiosPostBD);
+    } catch (error) {
+      console.error("Error posting review:", error);
+      toast.error("Error submitting review. Try again.");
+      return;
+    }
+
     if (response instanceof Error) {
       toast.error("Error submitting review. Try again.");
       return;
@@ -121,21 +147,21 @@ export const CardNewReview = () => {
   };
 
   const optionsWhyDidYouApplyFor = [
-    { label: "Dev tooling", value: "devTooling" },
-    { label: "Education", value: "education" },
-    { label: "Marketing and Growth", value: "marketingAndGrowth" },
-    { label: "DeFi", value: "deFi" },
-    { label: "DAOs and Governance", value: "dAOsAndGovernance" },
-    { label: "Community", value: "Community" },
-    { label: "Public Goods", value: "publicGoods" },
-    { label: "ZK and privacy", value: "zkAndPrivacy" },
-    { label: "Other", value: "other" },
+    { label: Category.DevTooling, value: Category.DevTooling },
+    { label: Category.Education, value: Category.Education },
+    { label: Category.MarketingAndGrowth, value: Category.MarketingAndGrowth },
+    { label: Category.DeFi, value: Category.DeFi },
+    { label: Category.DAOsAndGovernance, value: Category.DAOsAndGovernance },
+    { label: Category.Community, value: Category.Community },
+    { label: Category.PublicGoods, value: Category.PublicGoods },
+    { label: Category.ZKAndPrivacy, value: Category.ZKAndPrivacy },
+    { label: Category.Other, value: Category.Other },
   ];
 
   const optionsDidYouReceiveTheGrant = [
-    { label: "Yes, I got approved", value: "yesIGotApproved" },
-    { label: "No", value: "no" },
-    { label: "I don't have the answer yet", value: "iDontHaveTheAnswerYet" },
+    { label: ReceivedGrant.Yes, value: ReceivedGrant.Yes },
+    { label: ReceivedGrant.No, value: ReceivedGrant.No },
+    { label: ReceivedGrant.Pending, value: ReceivedGrant.Pending },
   ];
 
   const onSubmit = (data: any) => {
@@ -171,7 +197,7 @@ export const CardNewReview = () => {
                             checked={value.includes(option.value)}
                             onChange={(e) => {
                               const newValue = e.target.checked
-                                ? [...value, option.value]
+                                ? [option.value]
                                 : value.filter((value: string) => value !== option.value);
                               onChange(newValue);
                             }}
@@ -213,7 +239,7 @@ export const CardNewReview = () => {
                             checked={value.includes(option.value)}
                             onChange={(e) => {
                               const newValue = e.target.checked
-                                ? [...value, option.value]
+                                ? [option.value]
                                 : value.filter((value: string) => value !== option.value);
                               onChange(newValue);
                             }}

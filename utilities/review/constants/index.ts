@@ -1,3 +1,5 @@
+import { Hex } from "viem";
+
 // EAS contracts
 export const ARB_ONE_EAS = "0xbD75f629A22Dc1ceD33dDA0b68c546A1c035c458";
 export const ARB_ONE_SCHEMA_REGISTRY = "0xA310da9c5B885E7fb3fbA9D66E9Ba6Df512b78eB";
@@ -16,3 +18,35 @@ export const BADGE_REGISTRY = "0xF0d7f324521B6f93EA6b9B8DB934E1D01C0c75b0";
 export const TRUSTFUL_SCORER = "0x3B0C859cD18B836Df11bB7c45E22993a5AbA0069";
 export const RESOLVER_EAS = "0x9533A8B883128412ed228e73292D5DE55fd7cAe9";
 export const RESOLVER_TRUSTFUL = "0x44b17f32Be8Dde88a43A0A39F3801343f2d5D446";
+
+/**Creating Review Configuration Answers to send to database. */
+export interface PreReviewAnswers {
+  category: Category;
+  otherCategoryDescriptions?: string;
+  receivedGrant: ReceivedGrant;
+}
+
+export interface CreatePreReviewRequest {
+  preReviewAnswers: PreReviewAnswers;
+  connectedUserAddress: Hex;
+  programId: number;
+}
+
+export enum Category {
+  DevTooling = "Dev tooling",
+  Education = "Education",
+  MarketingAndGrowth = "Marketing and Growth",
+  DeFi = "DeFi",
+  DAOsAndGovernance = "DAOs and Governance",
+  Community = "Community",
+  Gaming = "Gaming",
+  PublicGoods = "Public Goods",
+  ZKAndPrivacy = "ZK and privacy",
+  Other = "Other",
+}
+
+export enum ReceivedGrant {
+  Yes = "Yes, I got approved",
+  No = "No",
+  Pending = "I don't have the answer yet",
+}
