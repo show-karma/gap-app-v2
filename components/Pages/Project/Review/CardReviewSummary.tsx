@@ -266,7 +266,7 @@ export const CardReviewSummary = () => {
                 </p>
                 <ProgressBar actualPercentage={percentage} />
                 <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
-                  {count ? percentage : "0"}%
+                  {count ? percentage.toFixed(0) : "0"}%
                 </p>
               </div>
             ))}
