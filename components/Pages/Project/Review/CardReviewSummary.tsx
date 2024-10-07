@@ -17,6 +17,26 @@ import { ProgressBar } from "./ProgressBar";
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
+const SupportedRatings = {
+  1: 1,
+  2: 2,
+  3: 3,
+  4: 4,
+  5: 5,
+};
+
+const enum IntervalMessage {
+  PER_DAY = "per day",
+  PER_WEEK = "per week",
+  PER_MONTH = "per month",
+  PER_YEAR = "per year",
+}
+
+interface RatingData {
+  countOfReviews: number;
+  percentageComparedToAllTheReviews: number;
+}
+
 export const CardReviewSummary = () => {
   const project = useProjectStore((state: any) => state.project);
   const setIsOpenReview = useReviewStore((state: any) => state.setIsOpenReview);
@@ -26,25 +46,12 @@ export const CardReviewSummary = () => {
   const [timestampInterval, setTimestampInterval] = useState<number | null>(null);
   const [averageScoreReview, setAverageScoreReview] = useState<number | null>(null);
   const [intervalMessage, setIntervalMessage] = useState<string | undefined>(undefined);
-  const [starRatingFiltered, setStarRatingFiltered] = useState<StarRatingDataProps[]>([]);
+  const [ratingData, setRatingData] = useState<RatingData[]>([]);
   const searchParams = useSearchParams();
 
   const { openConnectModal } = useConnectModal();
   const { switchChain } = useSwitchChain();
   const { isConnected, address, chainId } = useAccount();
-
-  const enum IntervalMessage {
-    PER_DAY = "per day",
-    PER_WEEK = "per week",
-    PER_MONTH = "per month",
-    PER_YEAR = "per year",
-  }
-
-  interface StarRatingDataProps {
-    stars: number;
-    count: number;
-    percentage: number;
-  }
 
   // Grab all recent badges and save on state
   const handleStoryBadges = async () => {
@@ -132,7 +139,7 @@ export const CardReviewSummary = () => {
     }
   };
 
-  const getNumberOfReviewsPerRating = (allReviews: number[], targetedRating: number) => {
+  const getNumberOfReviewsByRating = (allReviews: number[], targetedRating: number) => {
     return allReviews.filter((rating) => rating === targetedRating).length;
   };
 
@@ -142,33 +149,33 @@ export const CardReviewSummary = () => {
    *
    * This function maps through the reviews, rounds their average scores, and filters them
    * by each star rating (1 to 5). It then calculates the percentage of each star rating
-   * relative to the total number of reviews and sets the ratings proportional selections.
-   *
+   * relative to the total number of reviews and sets the ratings proportional selections
    */
   const getScoreRatingFilteredReviews = () => {
     const scoresOfReviews = stories.map((story: GrantStory) =>
       Math.round(Number(story.averageScore) / 10 ** SCORER_DECIMALS),
     );
 
-    const reviewsFilteredByScore = {
-      1: getNumberOfReviewsPerRating(scoresOfReviews, 1),
-      2: getNumberOfReviewsPerRating(scoresOfReviews, 2),
-      3: getNumberOfReviewsPerRating(scoresOfReviews, 3),
-      4: getNumberOfReviewsPerRating(scoresOfReviews, 4),
-      5: getNumberOfReviewsPerRating(scoresOfReviews, 5),
-    };
+    let reviewsPerRating: Record<number, number> = {};
 
-    const reviewsWithPercentualRelevance: StarRatingDataProps[] = Object.entries(
-      reviewsFilteredByScore,
-    ).map(([stars, count]) => {
-      const percentage = (count / stories.length) * 100;
-      return {
-        stars: Number(stars),
-        count: count,
-        percentage: percentage,
+    Object.values(SupportedRatings).forEach((rating) => {
+      reviewsPerRating = {
+        ...reviewsPerRating,
+        [rating]: getNumberOfReviewsByRating(scoresOfReviews, rating),
       };
     });
-    setStarRatingFiltered(reviewsWithPercentualRelevance);
+
+    const reviewsWithPercentualRelevance: RatingData[] = Object.values(reviewsPerRating).map(
+      (numberOfReviews) => {
+        const percentage = (numberOfReviews / stories.length) * 100;
+        return {
+          countOfReviews: numberOfReviews,
+          percentageComparedToAllTheReviews: percentage,
+        };
+      },
+    );
+
+    setRatingData(reviewsWithPercentualRelevance);
   };
 
   return (
@@ -259,14 +266,14 @@ export const CardReviewSummary = () => {
         </div>
         <div className="flex lg:justify-end justify-center">
           <div className="flex gap-1.5 items-start justify-center flex-col-reverse">
-            {starRatingFiltered.map(({ stars, count, percentage }) => (
-              <div className="flex gap-2 items-center" key={stars}>
+            {ratingData.map(({ countOfReviews, percentageComparedToAllTheReviews }, index) => (
+              <div className="flex gap-2 items-center" key={index}>
                 <p className="text-white text-sm font-bold font-['Open Sans'] leading-tight">
-                  {stars}
+                  {index + 1}
                 </p>
-                <ProgressBar actualPercentage={percentage} />
+                <ProgressBar actualPercentage={percentageComparedToAllTheReviews} />
                 <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
-                  {count ? percentage : "0"}%
+                  {countOfReviews ? percentageComparedToAllTheReviews : "0"}%
                 </p>
               </div>
             ))}
