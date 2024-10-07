@@ -1,6 +1,5 @@
 /**
  * ProgressBar component displays a progress bar indicating the completion percentage.
- *
  */
 export const ProgressBar = ({ actualPercentage }: { actualPercentage: number }) => {
   const totalPercentage = 100;
