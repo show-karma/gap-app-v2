@@ -1,7 +1,7 @@
 import { readContract } from "viem/actions";
 import { createPublicClient, http } from "viem";
 import { arbitrum } from "viem/chains";
-import { RESOLVER_TRUSTFUL } from "./constants/constants";
+import { RESOLVER_TRUSTFUL } from "./constants";
 import { GrantStory } from "@/types/review";
 
 const publicClient = createPublicClient({

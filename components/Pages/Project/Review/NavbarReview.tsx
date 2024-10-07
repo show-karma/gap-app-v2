@@ -10,7 +10,7 @@ import { CardReview } from "@/components/Pages/Project/Review/CardReview";
 
 import { formatDate } from "@/utilities/formatDate";
 import { getGrantStories } from "@/utilities/review/getGrantStories";
-import { SCORER_DECIMALS } from "@/utilities/review/constants/constants";
+import { SCORER_DECIMALS } from "@/utilities/review/constants/";
 import { ClockIcon } from "@/components/Icons/ClockIcon";
 import { DynamicStarsReview } from "./DynamicStarsReview";
 

@@ -11,7 +11,7 @@ import toast from "react-hot-toast";
 import { arbitrum } from "viem/chains";
 import { useReviewStore } from "@/store/review";
 import { getBadgeIds } from "@/utilities/review/getBadgeIds";
-import { SCORER_DECIMALS, SCORER_ID } from "@/utilities/review/constants/constants";
+import { SCORER_DECIMALS, SCORER_ID } from "@/utilities/review/constants/";
 import { getBadge } from "@/utilities/review/getBadge";
 import { ProgressBar } from "./ProgressBar";
 import React, { useEffect, useState } from "react";

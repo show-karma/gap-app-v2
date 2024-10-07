@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @next/next/no-img-element */
 import toast from "react-hot-toast";
 import { useEffect } from "react";
@@ -14,7 +15,7 @@ import { Button } from "@/components/Utilities/Button";
 import { DynamicStarsReview } from "./DynamicStarsReview";
 
 import { AbiCoder } from "ethers";
-import { KARMA_EAS_SCHEMA_UID } from "@/utilities/review/constants/constants";
+import { KARMA_EAS_SCHEMA_UID } from "@/utilities/review/constants";
 import { addPrefixToIPFSLink } from "@/utilities/review/constants/utilitary";
 import { submitAttest } from "@/utilities/review/attest";
 import { Spinner } from "@/components/Utilities/Spinner";
