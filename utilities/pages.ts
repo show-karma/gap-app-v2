@@ -18,6 +18,7 @@ export const PAGES = {
     MILESTONES: (community: string) => `/${community}/admin/milestones-report`,
     COMMUNITIES: `/admin/communities`,
     COMMUNITY_STATS: `/admin/communities/stats`,
+    PROJECTS: `/admin/projects`,
   },
   PROJECT: {
     OVERVIEW: (project: string) => `/project/${project}`,
@@ -49,4 +50,5 @@ export const PAGES = {
     ADD_PROGRAM: `/funding-map/add-program`,
     MANAGE_PROGRAMS: `/funding-map/manage-programs`,
   },
+  STATS: `/stats`,
 };

@@ -70,7 +70,7 @@ const sortOptions: Record<SortByOptions, string> = {
   updatedAt: "Recently Updated",
   title: "Title",
   noOfGrants: "No. of Grants",
-  noOfProjectMilestones: "No. of Project Milestones",
+  noOfProjectMilestones: "No. of Roadmap items",
 };
 
 export const NewProjectsPage = () => {

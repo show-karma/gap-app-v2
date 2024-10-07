@@ -153,6 +153,17 @@ export default async function Page({ params }: Props) {
             Community Grants
           </p>
         </div>
+        <div className="w-full lg:hidden">
+          {communitiesToBulkSubscribe.includes(
+            (community as ICommunityResponse).details?.data?.slug as string
+          ) ? (
+            <ReceiveProjectUpdates
+              communityName={
+                (community as ICommunityResponse).details?.data?.name || ""
+              }
+            />
+          ) : null}
+        </div>
 
         <div className="flex gap-8 flex-row max-lg:flex-col-reverse w-full">
           <CommunityGrants
@@ -173,7 +184,6 @@ export default async function Page({ params }: Props) {
             }
           />
         ) : null}
-
         <CommunityFeed />
       </div>
     </div>
