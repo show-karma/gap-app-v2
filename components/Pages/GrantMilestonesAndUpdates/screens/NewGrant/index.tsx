@@ -254,7 +254,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { gap } = useGap();
   const { isConnected } = useAccount();
 
-  function premade<T extends GenericQuestion>(): T[] {
+  function premade<T extends GenericQuestion>(): T[] | undefined {
     const hasQuestions = grantToEdit?.details?.data?.questions?.filter(
       (item) => item?.type && item?.explanation && item?.query
     );
@@ -274,11 +274,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
       }
       return hasQuestions as T[];
     }
-    return grantToEdit?.details?.data?.questions?.map(() => ({
-      query: "",
-      explanation: "",
-      type: "",
-    })) as T[];
+    return undefined;
   }
 
   const form = useForm<GrantType>({
