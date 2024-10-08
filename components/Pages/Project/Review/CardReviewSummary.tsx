@@ -268,7 +268,7 @@ export const CardReviewSummary = () => {
           <div className="flex gap-1.5 items-start justify-center flex-col-reverse">
             {ratingData.map(({ countOfReviews, percentageComparedToAllTheReviews }, index) => (
               <div className="flex gap-2 items-center" key={index}>
-                <p className="text-white text-sm font-bold font-['Open Sans'] leading-tight">
+                <p className="dark:text-white text-sm font-bold font-['Open Sans'] leading-tight">
                   {index + 1}
                 </p>
                 <ProgressBar actualPercentage={percentageComparedToAllTheReviews} />
