@@ -3,16 +3,15 @@
 import { useEffect, useState } from "react";
 import { useReviewStore } from "@/store/review";
 import { useSearchParams } from "next/navigation";
-
 import { GrantStory, ReviewMode } from "@/types/review";
-
 import { CardReview } from "@/components/Pages/Project/Review/CardReview";
-
 import { formatDate } from "@/utilities/formatDate";
 import { getGrantStories } from "@/utilities/review/getGrantStories";
 import { SCORER_DECIMALS } from "@/utilities/review/constants/";
 import { ClockIcon } from "@/components/Icons/ClockIcon";
 import { DynamicStarsReview } from "./DynamicStarsReview";
+import { ArrowNavigationBar } from "./ArrowNavigationBar";
+import { Skeleton } from "./Skeleton";
 
 export const NavbarReview = () => {
   const isStarSelected = useReviewStore((state: any) => state.isStarSelected);
@@ -86,6 +85,57 @@ export const NavbarReview = () => {
     });
   };
 
+  const skeletonMarkup = <Skeleton />;
+
+  const barContentMarkup = (
+    <div className="w-full flex gap-3 ">
+      {stories && stories.length > 0 ? (
+        stories
+          .sort((a: any, b: any) => Number(b.timestamp) - Number(a.timestamp))
+          .map((storie: GrantStory, index: number) => (
+            <div
+              key={index}
+              className={`flex flex-col justify-center xl:justify-start items-center text-center relative py-3 px-4 gap-3 cursor-pointer ${
+                isStarSelected === index && "dark:bg-[#26252A] bg-[#b0c3ff]"
+              }`}
+              onClick={() => {
+                setBadges(null);
+                handleToggleReviewSelected(index);
+              }}
+            >
+              <div className="flex flex-col gap-2">
+                <p className="dark:text-[#b0c3ff] text-black text-2xl font-bold font-['Open Sans']">
+                  {(Number(storie.averageScore) / 10 ** SCORER_DECIMALS).toFixed(1)}
+                </p>
+                <DynamicStarsReview
+                  totalStars={5}
+                  rating={
+                    storie.averageScore
+                      ? Number(Number(storie.averageScore) / 10 ** SCORER_DECIMALS)
+                      : 0
+                  }
+                  setRating={() => {}}
+                  mode={ReviewMode.READ}
+                />
+              </div>
+              <div className="w-full flex flex-col items-center">
+                <p className="w-full text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
+                  {formatDate(new Date(Number(storie.timestamp) * 1000))}
+                </p>
+              </div>
+            </div>
+          ))
+      ) : (
+        <div>
+          <p>
+            Be the first to share your thoughts! Reach out to the grantee and encourage them to
+            leave a review.
+          </p>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="w-full flex flex-col gap-5">
       <div className="flex gap-3 items-center">
@@ -97,52 +147,7 @@ export const NavbarReview = () => {
           Reviews History
         </h1>
       </div>
-      <div className="w-full flex gap-3 overflow-x-auto relative scroller">
-        {stories && stories.length > 0 ? (
-          stories
-            .sort((a: any, b: any) => Number(b.timestamp) - Number(a.timestamp))
-            .map((storie: GrantStory, index: number) => (
-              <div
-                key={index}
-                className={`flex flex-col justify-center xl:justify-start items-center text-center relative py-3 px-4 gap-3 cursor-pointer ${
-                  isStarSelected === index && "dark:bg-[#26252A] bg-[#b0c3ff]"
-                }`}
-                onClick={() => {
-                  setBadges(null);
-                  handleToggleReviewSelected(index);
-                }}
-              >
-                <div className="flex flex-col gap-2">
-                  <p className="dark:text-[#b0c3ff] text-black text-2xl font-bold font-['Open Sans']">
-                    {(Number(storie.averageScore) / 10 ** SCORER_DECIMALS).toFixed(1)}
-                  </p>
-                  <DynamicStarsReview
-                    totalStars={5}
-                    rating={
-                      storie.averageScore
-                        ? Number(Number(storie.averageScore) / 10 ** SCORER_DECIMALS)
-                        : 0
-                    }
-                    setRating={() => {}}
-                    mode={ReviewMode.READ}
-                  />
-                </div>
-                <div className="w-full flex flex-col items-center">
-                  <p className="w-full text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
-                    {formatDate(new Date(Number(storie.timestamp) * 1000))}
-                  </p>
-                </div>
-              </div>
-            ))
-        ) : (
-          <div>
-            <p>
-              Be the first to share your thoughts! Reach out to the grantee and encourage them to
-              leave a review.
-            </p>
-          </div>
-        )}
-      </div>
+      <ArrowNavigationBar skeletonMarkup={skeletonMarkup} barContentMarkup={barContentMarkup} />
       <div className="w-full flex flex-col">
         {isStarSelected !== null && stories && <CardReview storie={stories[isStarSelected]} />}
       </div>
