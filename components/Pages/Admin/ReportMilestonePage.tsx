@@ -510,7 +510,14 @@ export const ReportMilestonePage = ({
                             {report.pendingMilestones}
                           </td>
                           <td className="px-4 py-2 max-w-[220px]">
-                            {report.completedMilestones}
+                            <Link
+                              href={`${PAGES.PROJECT.GRANT(report.projectUid, report.grantUid)}/milestones-and-updates`}
+                              className="text-blue-600 hover:text-blue-800 underline"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {report.completedMilestones}
+                            </Link>
                           </td>
                           <td className="px-4 py-2 max-w-[220px]">
                             <div className="flex text-primary  ">
@@ -535,7 +542,7 @@ export const ReportMilestonePage = ({
                                 (report?.evaluations?.find(
                                   (evaluation: Evaluation) =>
                                     evaluation._id === modelToUse
-                                )?.rating as number) >= 4
+                                )?.rating as number) >= 6
                                   ? "Include"
                                   : "Exclude"
                               }
