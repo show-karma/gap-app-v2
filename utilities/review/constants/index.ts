@@ -1,4 +1,4 @@
-import { Hex } from "viem";
+import { Address } from "viem";
 
 // EAS contracts
 export const ARB_ONE_EAS = "0xbD75f629A22Dc1ceD33dDA0b68c546A1c035c458";
