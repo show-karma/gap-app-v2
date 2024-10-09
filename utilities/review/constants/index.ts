@@ -28,7 +28,7 @@ export interface PreReviewAnswers {
 
 export interface CreatePreReviewRequest {
   preReviewAnswers: PreReviewAnswers;
-  connectedUserAddress: Hex;
+  connectedUserAddress: Address;
   programId: number;
 }
 
