@@ -78,17 +78,14 @@ export const CardNewReview = () => {
 
       if (whyDidYouApplyFor.length === 0 || didYouReceiveTheGrant.length === 0) {
         toast.error("Select a valid option in both forms.");
-
-        console.log("Você precisa selecionar uma opção em ambos os formulários.");
       } else {
         const newPreReview: CreatePreReviewRequest = {
           connectedUserAddress: address,
           preReviewAnswers: {
             category: whyDidYouApplyFor,
-            receivedGrantOptions: didYouReceiveTheGrant,
+            receivedGrant: didYouReceiveTheGrant,
           },
-          programId: 0x1dac0e2beeba6f3eec76117545f39f28e8ecc3d2c22731b6072b2d87e82fa35d,
-          // TODO: Get CategoryOptions/ReceivedGrantOptions/ProgramId dynamically
+          grantId: grantUID,
         };
 
         try {
@@ -142,6 +139,8 @@ export const CardNewReview = () => {
       [grantUID, activeBadgeIds, badgeScores],
     );
 
+    await handleSubmitAnswersReview();
+
     const response = await submitAttest(
       address,
       KARMA_EAS_SCHEMA_UID,
@@ -152,8 +151,6 @@ export const CardNewReview = () => {
       encodedData as Hex,
       walletClient,
     );
-
-    handleSubmitAnswersReview();
 
     if (response instanceof Error) {
       toast.error("Error submitting review. Try again.");

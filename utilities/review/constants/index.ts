@@ -23,13 +23,13 @@ export const RESOLVER_TRUSTFUL = "0x44b17f32Be8Dde88a43A0A39F3801343f2d5D446";
 export interface PreReviewAnswers {
   category: CategoryOptions;
   otherCategoryDescriptions?: string;
-  receivedGrantOptions: ReceivedGrantOptions;
+  receivedGrant: ReceivedGrantOptions;
 }
 
 export interface CreatePreReviewRequest {
   preReviewAnswers: PreReviewAnswers;
   connectedUserAddress: Address;
-  programId: number;
+  grantId: string;
 }
 
 export enum CategoryOptions {
