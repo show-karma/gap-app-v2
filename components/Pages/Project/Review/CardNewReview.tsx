@@ -184,23 +184,29 @@ export const CardNewReview = () => {
     setIsOpenReview(ReviewMode.READ);
   };
 
-  const optionsWhyDidYouApplyFor = [
-    { label: CategoryOptions.DevTooling, value: CategoryOptions.DevTooling },
-    { label: CategoryOptions.Education, value: CategoryOptions.Education },
-    { label: CategoryOptions.MarketingAndGrowth, value: CategoryOptions.MarketingAndGrowth },
-    { label: CategoryOptions.DeFi, value: CategoryOptions.DeFi },
-    { label: CategoryOptions.DAOsAndGovernance, value: CategoryOptions.DAOsAndGovernance },
-    { label: CategoryOptions.Community, value: CategoryOptions.Community },
-    { label: CategoryOptions.PublicGoods, value: CategoryOptions.PublicGoods },
-    { label: CategoryOptions.ZKAndPrivacy, value: CategoryOptions.ZKAndPrivacy },
-    { label: CategoryOptions.Other, value: CategoryOptions.Other },
-  ];
+  interface OptionsWhyDidYouApplyFor {
+    label: CategoryOptions;
+    value: CategoryOptions;
+  }
 
-  const optionsDidYouReceiveTheGrant = [
-    { label: ReceivedGrantOptions.Yes, value: ReceivedGrantOptions.Yes },
-    { label: ReceivedGrantOptions.No, value: ReceivedGrantOptions.No },
-    { label: ReceivedGrantOptions.Pending, value: ReceivedGrantOptions.Pending },
-  ];
+  interface OptionsDidYouReceiveTheGrant {
+    label: ReceivedGrantOptions;
+    value: ReceivedGrantOptions;
+  }
+
+  const optionsWhyDidYouApplyFor: OptionsWhyDidYouApplyFor[] = Object.values(CategoryOptions).map(
+    (category) => ({
+      label: category,
+      value: category,
+    }),
+  );
+
+  const optionsDidYouReceiveTheGrant: OptionsDidYouReceiveTheGrant[] = Object.values(
+    ReceivedGrantOptions,
+  ).map((option) => ({
+    label: option,
+    value: option,
+  }));
 
   const onSubmit = (data: any) => {
     console.log("data", data);
