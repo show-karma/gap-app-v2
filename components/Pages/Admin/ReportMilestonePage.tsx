@@ -504,14 +504,37 @@ export const ReportMilestonePage = ({
                             </ExternalLink>
                           </td>
                           <td className="px-4 py-2 max-w-[220px]">
-                            {report.totalMilestones}
-                          </td>
-                          <td className="px-4 py-2 max-w-[220px]">
-                            {report.pendingMilestones}
+                            <Link
+                              href={`${PAGES.PROJECT.GRANT(
+                                report.projectUid,
+                                report.grantUid
+                              )}/milestones-and-updates#all`}
+                              className="text-blue-600 hover:text-blue-800 underline"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {report.totalMilestones}
+                            </Link>
                           </td>
                           <td className="px-4 py-2 max-w-[220px]">
                             <Link
-                              href={`${PAGES.PROJECT.GRANT(report.projectUid, report.grantUid)}/milestones-and-updates`}
+                              href={`${PAGES.PROJECT.GRANT(
+                                report.projectUid,
+                                report.grantUid
+                              )}/milestones-and-updates#pending`}
+                              className="text-blue-600 hover:text-blue-800 underline"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {report.pendingMilestones}
+                            </Link>
+                          </td>
+                          <td className="px-4 py-2 max-w-[220px]">
+                            <Link
+                              href={`${PAGES.PROJECT.GRANT(
+                                report.projectUid,
+                                report.grantUid
+                              )}/milestones-and-updates#completed`}
                               className="text-blue-600 hover:text-blue-800 underline"
                               target="_blank"
                               rel="noopener noreferrer"
