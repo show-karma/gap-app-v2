@@ -27,7 +27,7 @@ export const ArrowNavigationBar = ({
   centerID,
   skeletonMarkup,
   barContentMarkup,
-}: ArrowNavigationBarProps) => {
+}: HorizontalNavigationBarProps) => {
   const navigationBarWrapper = useRef<HTMLDivElement | null>(null);
   const { theme } = useTheme();
 

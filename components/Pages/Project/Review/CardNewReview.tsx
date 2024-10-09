@@ -16,10 +16,10 @@ import { DynamicStarsReview } from "./DynamicStarsReview";
 
 import { AbiCoder } from "ethers";
 import {
-  Category,
+  CategoryOptions,
   CreatePreReviewRequest,
   KARMA_EAS_SCHEMA_UID,
-  ReceivedGrant,
+  ReceivedGrantOptions,
 } from "@/utilities/review/constants";
 import { addPrefixToIPFSLink } from "@/utilities/review/constants/utilitary";
 import { submitAttest } from "@/utilities/review/attest";
@@ -73,8 +73,8 @@ export const CardNewReview = () => {
 
     if (isValid && address) {
       const values = getValues();
-      const whyDidYouApplyFor: Category = values.WhyDidYouApplyFor;
-      const didYouReceiveTheGrant: ReceivedGrant = values.DidYouReceiveTheGrant;
+      const whyDidYouApplyFor: CategoryOptions = values.WhyDidYouApplyFor;
+      const didYouReceiveTheGrant: ReceivedGrantOptions = values.DidYouReceiveTheGrant;
 
       if (whyDidYouApplyFor.length === 0 || didYouReceiveTheGrant.length === 0) {
         console.log("Você precisa selecionar uma opção em ambos os formulários.");
@@ -101,10 +101,10 @@ export const CardNewReview = () => {
           connectedUserAddress: address,
           preReviewAnswers: {
             category: whyDidYouApplyFor,
-            receivedGrant: didYouReceiveTheGrant,
+            receivedGrantOptions: didYouReceiveTheGrant,
           },
           programId: 0x1dac0e2beeba6f3eec76117545f39f28e8ecc3d2c22731b6072b2d87e82fa35d,
-          // TODO: Get Category/ReceivedGrant/ProgramId dynamically
+          // TODO: Get CategoryOptions/ReceivedGrantOptions/ProgramId dynamically
         };
 
         try {
@@ -185,21 +185,21 @@ export const CardNewReview = () => {
   };
 
   const optionsWhyDidYouApplyFor = [
-    { label: Category.DevTooling, value: Category.DevTooling },
-    { label: Category.Education, value: Category.Education },
-    { label: Category.MarketingAndGrowth, value: Category.MarketingAndGrowth },
-    { label: Category.DeFi, value: Category.DeFi },
-    { label: Category.DAOsAndGovernance, value: Category.DAOsAndGovernance },
-    { label: Category.Community, value: Category.Community },
-    { label: Category.PublicGoods, value: Category.PublicGoods },
-    { label: Category.ZKAndPrivacy, value: Category.ZKAndPrivacy },
-    { label: Category.Other, value: Category.Other },
+    { label: CategoryOptions.DevTooling, value: CategoryOptions.DevTooling },
+    { label: CategoryOptions.Education, value: CategoryOptions.Education },
+    { label: CategoryOptions.MarketingAndGrowth, value: CategoryOptions.MarketingAndGrowth },
+    { label: CategoryOptions.DeFi, value: CategoryOptions.DeFi },
+    { label: CategoryOptions.DAOsAndGovernance, value: CategoryOptions.DAOsAndGovernance },
+    { label: CategoryOptions.Community, value: CategoryOptions.Community },
+    { label: CategoryOptions.PublicGoods, value: CategoryOptions.PublicGoods },
+    { label: CategoryOptions.ZKAndPrivacy, value: CategoryOptions.ZKAndPrivacy },
+    { label: CategoryOptions.Other, value: CategoryOptions.Other },
   ];
 
   const optionsDidYouReceiveTheGrant = [
-    { label: ReceivedGrant.Yes, value: ReceivedGrant.Yes },
-    { label: ReceivedGrant.No, value: ReceivedGrant.No },
-    { label: ReceivedGrant.Pending, value: ReceivedGrant.Pending },
+    { label: ReceivedGrantOptions.Yes, value: ReceivedGrantOptions.Yes },
+    { label: ReceivedGrantOptions.No, value: ReceivedGrantOptions.No },
+    { label: ReceivedGrantOptions.Pending, value: ReceivedGrantOptions.Pending },
   ];
 
   const onSubmit = (data: any) => {

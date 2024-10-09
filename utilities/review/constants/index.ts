@@ -21,9 +21,9 @@ export const RESOLVER_TRUSTFUL = "0x44b17f32Be8Dde88a43A0A39F3801343f2d5D446";
 
 /** Pre-review form interfaces to connect form to the API. */
 export interface PreReviewAnswers {
-  category: Category;
+  category: CategoryOptions;
   otherCategoryDescriptions?: string;
-  receivedGrant: ReceivedGrant;
+  receivedGrantOptions: ReceivedGrantOptions;
 }
 
 export interface CreatePreReviewRequest {
