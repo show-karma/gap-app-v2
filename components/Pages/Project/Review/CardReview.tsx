@@ -9,6 +9,7 @@ import { getBadge } from "@/utilities/review/getBadge";
 
 import { DynamicStarsReview } from "./DynamicStarsReview";
 import { Hex } from "viem";
+import { formatDate } from "@/utilities/formatDate";
 
 export const CardReview = ({ storie }: { storie: GrantStory }) => {
   const badges = useReviewStore((state: any) => state.badges);
@@ -41,7 +42,7 @@ export const CardReview = ({ storie }: { storie: GrantStory }) => {
             /
           </p>
           <p className="text-[#959fa8] text-xs font-bold font-['Open Sans'] uppercase leading-none">
-            September 9, 2024
+            {formatDate(new Date(Number(storie.timestamp) * 1000))}
           </p>
         </div>
         {storie &&
