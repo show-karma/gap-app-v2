@@ -104,7 +104,7 @@ export const CardNewReview = () => {
             receivedGrant: didYouReceiveTheGrant,
           },
           programId: 0x1dac0e2beeba6f3eec76117545f39f28e8ecc3d2c22731b6072b2d87e82fa35d,
-          // TODO: Get Category/ReceivedGrant/ProgramId dinamic
+          // TODO: Get Category/ReceivedGrant/ProgramId dynamically
         };
 
         try {
