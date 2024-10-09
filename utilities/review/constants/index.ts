@@ -32,7 +32,7 @@ export interface CreatePreReviewRequest {
   programId: number;
 }
 
-export enum Category {
+export enum CategoryOptions {
   DevTooling = "Dev tooling",
   Education = "Education",
   MarketingAndGrowth = "Marketing and Growth",
