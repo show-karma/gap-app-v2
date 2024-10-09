@@ -3,7 +3,8 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/solid";
 import { useEffect, useRef, useState } from "react";
 import lodash from "lodash";
 import { useTheme } from "next-themes";
-interface ArrowNavigationBarProps {
+
+interface HorizontalNavigationBarProps {
   centerID?: string | null;
   skeletonMarkup: JSX.Element;
   barContentMarkup: JSX.Element;
