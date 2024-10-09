@@ -45,7 +45,7 @@ export enum CategoryOptions {
   Other = "Other",
 }
 
-export enum ReceivedGrant {
+export enum ReceivedGrantOptions {
   Yes = "Yes, I got approved",
   No = "No",
   Pending = "I don't have the answer yet",
