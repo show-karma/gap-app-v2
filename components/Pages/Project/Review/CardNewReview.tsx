@@ -77,26 +77,10 @@ export const CardNewReview = () => {
       const didYouReceiveTheGrant: ReceivedGrantOptions = values.DidYouReceiveTheGrant;
 
       if (whyDidYouApplyFor.length === 0 || didYouReceiveTheGrant.length === 0) {
+        toast.error("Select a valid option in both forms.");
+
         console.log("Você precisa selecionar uma opção em ambos os formulários.");
       } else {
-        console.log("Valores do formulário:", values);
-
-        // const connectedUserAddressData = {
-        //   connectedUserAddress: address,
-        // };
-
-        // try {
-        //   const axiosPostBD = await axios.post(
-        //     "http://localhost:3001/api/v1/users",
-        //     connectedUserAddressData,
-        //   );
-        //   console.log("axiosPostBD", axiosPostBD);
-        // } catch (error) {
-        //   console.error("Error creating User:", error);
-        //   toast.error("Error creating User. Try again.");
-        //   return;
-        // }
-
         const newPreReview: CreatePreReviewRequest = {
           connectedUserAddress: address,
           preReviewAnswers: {
@@ -120,7 +104,7 @@ export const CardNewReview = () => {
         }
       }
     } else {
-      console.log("Validação falhou.");
+      toast.error("Validation failed.");
     }
   };
 
