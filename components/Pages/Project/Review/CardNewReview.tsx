@@ -97,7 +97,6 @@ export const CardNewReview = () => {
         //   return;
         // }
 
-        /** Creating Request to save label info into database */
         const newPreReview: CreatePreReviewRequest = {
           connectedUserAddress: address,
           preReviewAnswers: {
