@@ -128,8 +128,7 @@ export const NavbarReview = () => {
       ) : (
         <div>
           <p>
-            Be the first to share your thoughts! Reach out to the grantee and encourage them to
-            leave a review.
+            Be the first to share your thoughts! Sign-in and leave a review.
           </p>
         </div>
       )}
