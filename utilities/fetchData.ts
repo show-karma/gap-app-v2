@@ -10,7 +10,7 @@ export default async function fetchData(
   axiosData = {},
   params = {},
   headers = {},
-  isAuthorized = false,
+  isAuthorized = true,
   noCache: boolean | undefined = true
 ) {
   try {
