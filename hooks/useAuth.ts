@@ -11,9 +11,10 @@ import { checkExpirationStatus } from "@/utilities/checkExpirationStatus";
 import { Hex } from "viem";
 import { useOnboarding } from "@/store/modals/onboarding";
 import { PAGES } from "@/utilities/pages";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useMixpanel } from "./useMixpanel";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useQueryState } from "nuqs";
 
 export const authCookiePath = "gap_auth";
 export const authWalletTypeCookiePath = "gap_auth_wallet_type";
@@ -56,7 +57,7 @@ export const useAuth = () => {
   const cookies = new Cookies();
   const { mixpanel } = useMixpanel();
   const { signMessageAsync } = useSignMessage();
-  const searchParams = useSearchParams();
+  const [inviteCode] = useQueryState("invite-code");
 
   const pathname = usePathname();
 
@@ -167,7 +168,7 @@ export const useAuth = () => {
         router.push(PAGES.MY_PROJECTS);
       }
       if (!pathname.includes("funding-map")) {
-        if (searchParams?.get("invite-code")) return;
+        if (inviteCode) return;
         setIsOnboarding?.(true);
       }
       if (address) {

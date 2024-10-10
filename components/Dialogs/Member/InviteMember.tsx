@@ -111,9 +111,8 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
     }
   };
 
-  const urlToCode = `http://localhost:3000/project/${
-    project?.details?.data.slug || project?.uid
-  }/?invite-code=${code}`;
+  const urlToCode = `https://gap-app-v2-git-feat-team-member-karma-devs.vercel.app
+/project/${project?.details?.data.slug || project?.uid}/?invite-code=${code}`;
   // const urlToCode = `https://gap.karmahq.xyz/project/${
   //   project?.details?.data.slug || project?.uid
   // }/?invite-code=${code}`;
