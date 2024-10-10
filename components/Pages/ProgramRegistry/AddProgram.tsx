@@ -4,7 +4,7 @@ import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { MESSAGES } from "@/utilities/messages";
 import { CalendarIcon, ChevronLeftIcon } from "@heroicons/react/24/solid";
 import { Button } from "@/components/Utilities/Button";
@@ -15,7 +15,12 @@ import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { useAccount, useSwitchChain } from "wagmi";
 import { envVars } from "@/utilities/enviromentVars";
 import { useRouter } from "next/navigation";
-
+import { CommunitiesDropdown } from "@/components/CommunitiesDropdown";
+import {
+  ICommunityResponse
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { getGapClient, useGap } from "@/hooks";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { useAuthStore } from "@/store/auth";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { registryHelper } from "./helper";
@@ -149,6 +154,7 @@ const createProgramSchema = z.object({
   networks: z.array(z.string()),
   grantTypes: z.array(z.string()),
   platformsUsed: z.array(z.string()),
+  communityRef: z.string().optional(),
   status: z.string().optional().or(z.literal("Active")),
 });
 
@@ -176,6 +182,26 @@ export default function AddProgram({
         img: chainImgDictionary(chain.id),
       };
     });
+  const { gap } = useGap();
+  const [allCommunities, setAllCommunities] = useState<ICommunityResponse[]>(
+    []
+  );
+
+  useEffect(() => {
+    const fetchCommunities = async () => {
+      try {
+        if (!gap) throw new Error("Gap not initialized");
+        const result = await gapIndexerApi.communities();
+        setAllCommunities(result.data);
+        return result;
+      } catch (error: any) {
+        console.log(error);
+        setAllCommunities([]);
+        return undefined;
+      }
+    };
+    fetchCommunities();
+  }, []);
 
   const {
     register,
@@ -222,6 +248,7 @@ export default function AddProgram({
       networkToCreate: programToEdit?.chainID || 0,
       grantsSite: programToEdit?.metadata?.socialLinks?.grantsSite,
       platformsUsed: programToEdit?.metadata?.platformsUsed || [],
+      communityRef: programToEdit?.metadata?.communityRef || "",
       status: programToEdit?.metadata?.status || "Active",
     },
   });
@@ -309,6 +336,7 @@ export default function AddProgram({
         status: "Active",
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
+        communityRef: data.communityRef,
       };
 
       const [request, error] = await fetchData(
@@ -405,6 +433,7 @@ export default function AddProgram({
         type: "program",
         tags: ["karma-gap", "grant-program-registry"],
         status: data.status,
+        communityRef: data.communityRef,
       });
 
       const isSameAddress =
@@ -436,7 +465,7 @@ export default function AddProgram({
             while (retries > 0) {
               await fetchData(
                 INDEXER.REGISTRY.GET_ALL +
-                  `?programId=${programToEdit?.programId}`
+                `?programId=${programToEdit?.programId}`
               )
                 .then(async ([res]) => {
                   const hasUpdated =
@@ -500,6 +529,8 @@ export default function AddProgram({
     event?.stopPropagation();
 
     data.networkToCreate = registryHelper.supportedNetworks;
+
+    console.log(data);
 
     if (programToEdit) {
       await editProgram(data);
@@ -824,6 +855,25 @@ export default function AddProgram({
                   />
                   <p className="text-base text-red-400">
                     {errors.platformsUsed?.message}
+                  </p>
+                </div>
+                <div className="flex w-full flex-col">
+                  <label htmlFor="grant-title" className={`${labelStyle} mb-1`}>
+                    Community
+                  </label>
+                  <CommunitiesDropdown
+                    onSelectFunction={(value: string) => {
+                      setValue("communityRef", value, {
+                        shouldValidate: true,
+                      });
+                    }}
+                    previousValue={
+                      programToEdit ? programToEdit?.metadata?.communityRef : undefined
+                    }
+                    communities={allCommunities}
+                  />
+                  <p className="text-base text-red-400">
+                    {errors?.communityRef?.message}
                   </p>
                 </div>
                 {programToEdit && (
