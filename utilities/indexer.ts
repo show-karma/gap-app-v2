@@ -47,6 +47,8 @@ export const INDEXER = {
         `/projects/${projectIdOrSlug}/accept-invite-link`,
       GET_LINKS: (projectIdOrSlug: string) =>
         `/projects/${projectIdOrSlug}/get-invite-link`,
+      CHECK_CODE: (projectIdOrSlug: string, hash: string) =>
+        `/projects/${projectIdOrSlug}/validate-invite-link/${hash}`,
     },
   },
   QUESTIONS: {

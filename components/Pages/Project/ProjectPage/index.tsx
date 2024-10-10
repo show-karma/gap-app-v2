@@ -29,6 +29,9 @@ import { useAccount } from "wagmi";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { PencilIcon } from "@heroicons/react/24/outline";
 import { MemberDialog } from "@/components/Dialogs/Member";
+import { errorManager } from "@/components/Utilities/errorManager";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 const ContributorProfileDialog = dynamic(
   () =>
@@ -204,14 +207,33 @@ function ProjectPage() {
     ) : null;
   };
 
+  const checkCodeValidation = async () => {
+    if (!inviteCodeParam) return;
+    try {
+      const [data, error] = await fetchData(
+        INDEXER.PROJECT.INVITATION.CHECK_CODE(projectId, inviteCodeParam)
+      );
+      if (error) throw error;
+      if (data.message === "Valid") return true;
+      return false;
+    } catch (error) {
+      errorManager("Failed to check code validation", error, {
+        projectId,
+        code: inviteCodeParam,
+      });
+    }
+  };
+
   useEffect(() => {
     const isAlreadyMember = project?.members.some(
       (member) => member.recipient.toLowerCase() === address?.toLowerCase()
     );
     if (isAlreadyMember) return;
-    if (inviteCodeParam) {
-      openModal();
-    }
+    checkCodeValidation().then((isValid) => {
+      if (isValid) {
+        openModal(address);
+      }
+    });
   }, [project, address, inviteCodeParam]);
 
   return (
