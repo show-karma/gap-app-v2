@@ -13,7 +13,7 @@ import { useGrantStore } from "@/store/grant";
 import { Suspense } from "react";
 import { ProjectGrantsOverviewLoading } from "../Loading/Grants/Overview";
 import formatCurrency from "@/utilities/formatCurrency";
-
+import ExternalIds from "@/components/Pages/Grants/ExternalId/ExternalIds";
 const isValidAmount = (amount?: string | undefined) => {
   if (!amount) return undefined;
   let amountToFormat = amount;
@@ -216,6 +216,10 @@ export const GrantOverview = () => {
           ) : null}
         </div>
       </div>
+      <div className="mt-8">
+        <ExternalIds />
+      </div>
+
       {/* Grant Overview End */}
     </Suspense>
   );
