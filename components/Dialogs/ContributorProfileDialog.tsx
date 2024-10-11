@@ -294,7 +294,7 @@ export const ContributorProfileDialog: FC<
                         <label htmlFor="aboutMe" className={labelStyle}>
                           About me (optional)
                         </label>
-                        <input
+                        <textarea
                           id="aboutMe"
                           className={inputStyle}
                           placeholder="Ex: I am a web3 developer"
