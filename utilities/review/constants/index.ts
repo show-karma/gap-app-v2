@@ -32,6 +32,7 @@ export interface CreatePreReviewRequest {
   preReviewAnswers: PreReviewAnswers;
   connectedUserAddress: Address;
   grantId: string;
+  programId?: string;
 }
 
 export enum CategoryOptions {
