@@ -19,6 +19,7 @@ import {
   CategoryOptions,
   CreatePreReviewRequest,
   KARMA_EAS_SCHEMA_UID,
+  RAILWAY_BACKEND,
   ReceivedGrantOptions,
 } from "@/utilities/review/constants";
 import { addPrefixToIPFSLink } from "@/utilities/review/constants/utilitary";
@@ -82,18 +83,18 @@ export const CardNewReview = () => {
         const newPreReview: CreatePreReviewRequest = {
           connectedUserAddress: address,
           preReviewAnswers: {
-            category: whyDidYouApplyFor,
-            receivedGrant: didYouReceiveTheGrant,
+            category: whyDidYouApplyFor[0] as CategoryOptions,
+            receivedGrant: didYouReceiveTheGrant[0] as ReceivedGrantOptions,
           },
           grantId: grantUID,
         };
 
         try {
-          const axiosPostBD = await axios.post(
-            "http://localhost:3001/api/v1/reviews",
+          const createPreReview = await axios.post(
+            `${RAILWAY_BACKEND}/api/v1/reviews`,
             newPreReview,
           );
-          console.log("axiosPostBD", axiosPostBD);
+          console.log("createPreReview", createPreReview);
         } catch (error) {
           console.error("Error posting review:", error);
           toast.error("Error submitting review. Try again.");

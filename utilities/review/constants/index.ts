@@ -19,6 +19,8 @@ export const TRUSTFUL_SCORER = "0x3B0C859cD18B836Df11bB7c45E22993a5AbA0069";
 export const RESOLVER_EAS = "0x9533A8B883128412ed228e73292D5DE55fd7cAe9";
 export const RESOLVER_TRUSTFUL = "0x44b17f32Be8Dde88a43A0A39F3801343f2d5D446";
 
+export const RAILWAY_BACKEND = "https://trustful-karma-gap-backend-staging.up.railway.app";
+
 /** Pre-review form interfaces to connect form to the API. */
 export interface PreReviewAnswers {
   category: CategoryOptions;
