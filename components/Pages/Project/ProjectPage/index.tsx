@@ -47,8 +47,8 @@ function ProjectPage() {
   const project = useProjectStore((state) => state.project);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const { refreshMembers, teamProfiles } = useProjectStore((state) => state);
   const isAuthorized = isProjectOwner || isContractOwner;
+  const { teamProfiles } = useProjectStore((state) => state);
   const { address } = useAccount();
   const { openModal } = useContributorProfileModalStore();
   const inviteCodeParam = useSearchParams().get("invite-code");
@@ -62,11 +62,6 @@ function ProjectPage() {
       populateEns(project?.members?.map((v) => v.recipient));
     }
   }, [project?.members]);
-
-  useEffect(() => {
-    if (!project) return;
-    refreshMembers();
-  }, [project]);
 
   const [, copy] = useCopyToClipboard();
 
