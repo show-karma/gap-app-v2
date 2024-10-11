@@ -91,7 +91,7 @@ export const MemberDialog: FC<MemberDialogProps> = ({
                             href={
                               profile?.data.twitter.includes("http")
                                 ? profile?.data.twitter
-                                : `https://${profile?.data.twitter}`
+                                : `https://twitter.com/${profile?.data.twitter}`
                             }
                             className="w-max"
                           >
@@ -103,7 +103,7 @@ export const MemberDialog: FC<MemberDialogProps> = ({
                             href={
                               profile?.data.github.includes("http")
                                 ? profile?.data.github
-                                : `https://${profile?.data.github}`
+                                : `https://github.com/${profile?.data.github}`
                             }
                             className="w-max"
                           >
@@ -115,7 +115,7 @@ export const MemberDialog: FC<MemberDialogProps> = ({
                             href={
                               profile?.data.linkedin.includes("http")
                                 ? profile?.data.linkedin
-                                : `https://${profile?.data.linkedin}`
+                                : `https://linkedin.com/in/${profile?.data.linkedin}`
                             }
                             className="w-max"
                           >
