@@ -2,6 +2,7 @@
 
 import { useProjectStore } from "@/store";
 import { MemberCard } from "./MemberCard";
+import { ContributorProfileDialog } from "@/components/Dialogs/ContributorProfileDialog";
 
 export const Team = () => {
   const { project } = useProjectStore((state) => state);
@@ -15,6 +16,7 @@ export const Team = () => {
   );
   return (
     <div className="pt-5 pb-20 flex flex-col items-start gap-4">
+      <ContributorProfileDialog />
       <h3 className="font-semibold text-lg text-black dark:text-white">
         Built by
       </h3>
