@@ -135,8 +135,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
               {},
               {},
               {},
-              false,
-              true
+              false
             );
             if (!response || error) {
               throw new Error(`Error fetching admins for community ${UUID}`);

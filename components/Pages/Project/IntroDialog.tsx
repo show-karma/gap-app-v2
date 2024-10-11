@@ -80,8 +80,7 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
         },
         {},
         {},
-        false,
-        true
+        false
       );
       if (!response || error) {
         toast.error(`Error requesting intro: ${error}`);

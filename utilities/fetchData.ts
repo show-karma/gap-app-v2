@@ -10,8 +10,7 @@ export default async function fetchData(
   axiosData = {},
   params = {},
   headers = {},
-  isAuthorized = false,
-  noCache: boolean | undefined = true
+  isAuthorized = false
 ) {
   try {
     const cookies = new Cookies();
@@ -19,9 +18,7 @@ export default async function fetchData(
 
     const sanitizedData = sanitizeObject(axiosData);
     const res = await axios.request({
-      url:
-        `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${endpoint}` +
-        (noCache ? `${endpoint.includes("?") ? "&" : "?"}noCache=true` : ""),
+      url: `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${endpoint}`,
       method,
       headers: {
         Authorization: isAuthorized ? token || undefined : undefined,
