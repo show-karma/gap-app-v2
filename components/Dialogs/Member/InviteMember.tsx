@@ -53,7 +53,7 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
   const project = useProjectStore((state) => state.project);
   const { signMessageAsync } = useSignMessage();
   const [, copyToClipboard] = useCopyToClipboard();
-  const { data, refetch } = useQuery<InviteCode | null>({
+  const { data, isSuccess } = useQuery<InviteCode | null>({
     queryKey: ["invite-code"],
     queryFn: () => getCurrentCode(project?.uid as string),
     enabled: !!project,
@@ -113,9 +113,12 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
 
   const urlToCode = `https://gap-app-v2-git-feat-team-member-karma-devs.vercel.app
 /project/${project?.details?.data.slug || project?.uid}/?invite-code=${code}`;
-  // const urlToCode = `https://gap.karmahq.xyz/project/${
-  //   project?.details?.data.slug || project?.uid
-  // }/?invite-code=${code}`;
+
+  useEffect(() => {
+    if (isSuccess && !data && isOpen) {
+      generateCode();
+    }
+  }, [isSuccess, data, isOpen]);
 
   return (
     <>
@@ -162,35 +165,46 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
                   </Dialog.Title>
                   <div className="flex flex-col gap-2 mt-8">
                     {code ? (
-                      <div className=" items-center flex flex-row gap-0">
-                        <p className="text-zinc-800 dark:text-zinc-100 truncate w-full  bg-zinc-100 dark:bg-zinc-900 p-2 rounded-l-md">
-                          {urlToCode}
+                      <div className="flex flex-col gap-2">
+                        <p className="text-zinc-800 dark:text-zinc-100">
+                          Please share your invite link with a team member.
                         </p>
-                        <button
-                          className="text-zinc-600 p-2 hover:opacity-75 bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-100 h-full"
-                          onClick={() => {
-                            copyToClipboard(urlToCode);
-                            setIsCopied(true);
-                          }}
-                        >
-                          {isCopied ? (
-                            <CheckIcon className="w-6 h-6" />
-                          ) : (
-                            <ClipboardDocumentIcon className="w-6 h-6" />
-                          )}
-                        </button>
-                        <button
-                          className=" text-red-900 bg-red-200 dark:text-red-200 dark:bg-red-900 p-2 hover:opacity-75 rounded-r-md"
-                          onClick={() => {
-                            setIsCopied(false);
-                            revokeCode();
-                          }}
-                        >
-                          <TrashIcon className="w-6 h-6" />
-                        </button>
+                        <div className=" items-center flex flex-row gap-0">
+                          <p className="text-zinc-800 dark:text-zinc-100 truncate w-full  bg-zinc-100 dark:bg-zinc-900 p-2 rounded-l-md">
+                            {urlToCode}
+                          </p>
+                          <button
+                            className="text-zinc-600 p-2 hover:opacity-75 bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-100 h-full"
+                            onClick={() => {
+                              copyToClipboard(urlToCode);
+                              setIsCopied(true);
+                            }}
+                          >
+                            {isCopied ? (
+                              <CheckIcon className="w-6 h-6" />
+                            ) : (
+                              <ClipboardDocumentIcon className="w-6 h-6" />
+                            )}
+                          </button>
+                          <button
+                            className=" text-red-900 bg-red-200 dark:text-red-200 dark:bg-red-900 p-2 hover:opacity-75 rounded-r-md"
+                            onClick={() => {
+                              setIsCopied(false);
+                              revokeCode();
+                            }}
+                          >
+                            <TrashIcon className="w-6 h-6" />
+                          </button>
+                        </div>
                       </div>
+                    ) : isLoading ? (
+                      <p className="text-black dark:text-zinc-200 text-base">
+                        To generate the code, please sign the message.
+                      </p>
                     ) : (
-                      <p>Seems like you don&apos;t have a code yet.</p>
+                      <p className="text-black dark:text-zinc-200 text-base">
+                        Seems like you don&apos;t have a code yet.
+                      </p>
                     )}
                   </div>
                   <div className="flex flex-row gap-4 mt-10 justify-end">
