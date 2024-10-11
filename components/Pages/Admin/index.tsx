@@ -45,8 +45,7 @@ export const CommunitiesToAdmin = () => {
             {},
             {},
             {},
-            false,
-            true
+            false
           );
 
           if (error || !data) return { id: community.uid, admins: [] };
