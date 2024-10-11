@@ -192,21 +192,33 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
 
   const handleSelection = (text: Tab) => {
     setSelectedMilestoneType(text);
+    window.location.hash = text;
   };
 
-  useEffect(() => {
-    const { unsortedCompletedMilestones, unsortedPendingMilestones } =
-      getUnsortedMilestones();
+  // useEffect(() => {
+  //   const { unsortedCompletedMilestones, unsortedPendingMilestones } =
+  //     getUnsortedMilestones();
 
-    if (
-      unsortedPendingMilestones.length &&
-      !unsortedCompletedMilestones.length
-    ) {
-      handleSelection("pending");
+  //   if (
+  //     unsortedPendingMilestones.length &&
+  //     !unsortedCompletedMilestones.length
+  //   ) {
+  //     handleSelection("pending");
+  //   } else {
+  //     handleSelection("completed");
+  //   }
+  // }, [grant.uid, generalArray]);
+
+  const hash = window.location.hash.replace("#", "") as Tab;
+  useEffect(() => {
+    if (!hash) {
+      setSelectedMilestoneType("completed");
     } else {
-      handleSelection("completed");
+      if (["completed", "pending", "all"].includes(hash)) {
+        setSelectedMilestoneType(hash);
+      }
     }
-  }, [grant.uid, generalArray]);
+  }, [hash]);
 
   useMemo(() => {
     rearrangeArrayByType();
