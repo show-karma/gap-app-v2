@@ -209,12 +209,16 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
   //   }
   // }, [grant.uid, generalArray]);
 
+  const hash = window.location.hash.replace("#", "") as Tab;
   useEffect(() => {
-    const hash = window.location.hash.replace("#", "") as Tab;
-    if (["completed", "pending", "all"].includes(hash)) {
-      setSelectedMilestoneType(hash);
+    if (!hash) {
+      setSelectedMilestoneType("completed");
+    } else {
+      if (["completed", "pending", "all"].includes(hash)) {
+        setSelectedMilestoneType(hash);
+      }
     }
-  }, []);
+  }, [hash]);
 
   useMemo(() => {
     rearrangeArrayByType();
