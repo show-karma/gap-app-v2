@@ -41,6 +41,7 @@ interface Report {
   completedMilestones: number;
   proofOfWorkLinks: string[];
   evaluations: Evaluation[] | null | undefined;
+  projectSlug: string;
 }
 
 interface Evaluation {
@@ -487,7 +488,7 @@ export const ReportMilestonePage = ({
                           <td className="px-4 py-2 font-medium h-16 max-w-[220px]">
                             <ExternalLink
                               href={PAGES.PROJECT.GRANT(
-                                report.projectUid,
+                                report.projectSlug,
                                 report.grantUid
                               )}
                               className="max-w-max w-full line-clamp-2 underline"
@@ -497,7 +498,7 @@ export const ReportMilestonePage = ({
                           </td>
                           <td className="px-4 py-2 max-w-[220px]">
                             <ExternalLink
-                              href={PAGES.PROJECT.OVERVIEW(report.projectUid)}
+                              href={PAGES.PROJECT.OVERVIEW(report.projectSlug)}
                               className="max-w-full line-clamp-2 underline w-max"
                             >
                               {report.projectTitle}
@@ -532,7 +533,7 @@ export const ReportMilestonePage = ({
                           <td className="px-4 py-2 max-w-[220px]">
                             <Link
                               href={`${PAGES.PROJECT.GRANT(
-                                report.projectUid,
+                                report.projectSlug,
                                 report.grantUid
                               )}/milestones-and-updates#completed`}
                               className="text-blue-600 hover:text-blue-800 underline"
