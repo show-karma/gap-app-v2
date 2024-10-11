@@ -488,7 +488,7 @@ export const ReportMilestonePage = ({
                           <td className="px-4 py-2 font-medium h-16 max-w-[220px]">
                             <ExternalLink
                               href={PAGES.PROJECT.GRANT(
-                                report.projectUid,
+                                report.projectSlug,
                                 report.grantUid
                               )}
                               className="max-w-max w-full line-clamp-2 underline"
@@ -513,7 +513,7 @@ export const ReportMilestonePage = ({
                           <td className="px-4 py-2 max-w-[220px]">
                             <Link
                               href={`${PAGES.PROJECT.GRANT(
-                                report.projectUid,
+                                report.projectSlug,
                                 report.grantUid
                               )}/milestones-and-updates`}
                               className="text-blue-600 hover:text-blue-800 underline"
