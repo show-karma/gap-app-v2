@@ -21,6 +21,7 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
       <Spinner />
     </div>;
   }
+
   const isOpenReview = useReviewStore((state: any) => state.isOpenReview);
   const setIsOpenReview = useReviewStore((state: any) => state.setIsOpenReview);
 
@@ -41,13 +42,13 @@ export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
                   Write a new review
                 </h2>
               </div>
-              <CardNewReview />
+              <CardNewReview grant={grant} />
             </>
           ) : (
             isOpenReview === ReviewMode.READ && (
               <>
                 <CardReviewSummary />
-                <NavbarReview />
+                <NavbarReview grant={grant} />
               </>
             )
           )}

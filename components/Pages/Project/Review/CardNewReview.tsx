@@ -29,8 +29,13 @@ import { config } from "@/utilities/wagmi/config";
 import { useForm, Controller } from "react-hook-form";
 import { CheckIcon } from "@heroicons/react/24/solid";
 import axios from "axios";
+import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
-export const CardNewReview = () => {
+interface GrantAllReviewsProps {
+  grant: IGrantResponse | undefined;
+}
+
+export const CardNewReview = ({ grant }: GrantAllReviewsProps) => {
   const { control, handleSubmit, getValues, trigger } = useForm();
   const setIsOpenReview = useReviewStore((state: any) => state.setIsOpenReview);
   const setBadgeScores = useReviewStore((state: any) => state.setBadgeScores);
@@ -47,13 +52,16 @@ export const CardNewReview = () => {
   const searchParams = useSearchParams();
   const { data: walletClient } = useWalletClient({ config });
 
+  const programId = grant?.details?.data.programId;
   useEffect(() => {
     // Fill the starts with a score of 1 when the badges render
     if (activeBadges) {
       setBadgeScores(Array(activeBadges.length).fill(1));
     }
     const grantIdFromQueryParam = searchParams?.get("grantId");
-    if (grantIdFromQueryParam) {
+    if (grant?.refUID) {
+      setGrantUID(grant.refUID);
+    } else if (grantIdFromQueryParam) {
       setGrantUID(grantIdFromQueryParam);
     }
   }, [activeBadges]);
@@ -80,6 +88,11 @@ export const CardNewReview = () => {
       if (whyDidYouApplyFor.length === 0 || didYouReceiveTheGrant.length === 0) {
         toast.error("Select a valid option in both forms.");
       } else {
+        const programUID = programId ? programId.split("_").pop() : undefined;
+
+        console.log("programUID", programUID);
+        console.log("grantUID", grantUID);
+
         const newPreReview: CreatePreReviewRequest = {
           connectedUserAddress: address,
           preReviewAnswers: {
@@ -87,6 +100,7 @@ export const CardNewReview = () => {
             receivedGrant: didYouReceiveTheGrant[0] as ReceivedGrantOptions,
           },
           grantId: grantUID,
+          programId: programUID,
         };
 
         try {

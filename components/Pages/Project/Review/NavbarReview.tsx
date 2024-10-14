@@ -12,8 +12,13 @@ import { ClockIcon } from "@/components/Icons/ClockIcon";
 import { DynamicStarsReview } from "./DynamicStarsReview";
 import { ArrowNavigationBar } from "./ArrowNavigationBar";
 import { Skeleton } from "./Skeleton";
+import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
-export const NavbarReview = () => {
+interface GrantAllReviewsProps {
+  grant: IGrantResponse | undefined;
+}
+
+export const NavbarReview = ({ grant }: GrantAllReviewsProps) => {
   const isStarSelected = useReviewStore((state: any) => state.isStarSelected);
   const stories = useReviewStore((state: any) => state.stories);
   const grantUID = useReviewStore((state: any) => state.grantUID);
@@ -54,11 +59,16 @@ export const NavbarReview = () => {
 
   useEffect(() => {
     const grantIdFromQueryParam = searchParams?.get("grantId");
+
     if (grantIdFromQueryParam && grantUID !== grantIdFromQueryParam) {
       setBadges(null);
       setStories(null);
       setIsStarSelected(0);
-      setGrantUID(grantIdFromQueryParam);
+      if (grant?.refUID) {
+        setGrantUID(grant.refUID);
+      } else {
+        setGrantUID(grantIdFromQueryParam);
+      }
     }
 
     if (grantUID && !stories) {
@@ -127,9 +137,7 @@ export const NavbarReview = () => {
           ))
       ) : (
         <div>
-          <p>
-            Be the first to share your thoughts! Sign-in and leave a review.
-          </p>
+          <p>Be the first to share your thoughts! Sign-in and leave a review.</p>
         </div>
       )}
     </div>
