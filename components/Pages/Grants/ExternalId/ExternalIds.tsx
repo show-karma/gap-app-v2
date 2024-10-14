@@ -1,21 +1,13 @@
 "use client";
 import Link from "next/link";
 import { AddExternalId } from "./AddExternalIdDialog";
+import { useEffect } from "react";
 
 export default function ExternalIds() {
   // Mock data
   const externalIds = [
     {
       id: "0x706bc44d0c033d10c977ac4a6193e7838b8a795ea0d62cdb8eb0aedb5feaa70c",
-      gitcoinProfile: "https://explorer.gitcoin.co/#/round/42161/385/24",
-    },
-    {
-      id: "0x706bc44d0c033d10c977ac4a6193e7838b8a795ea0d62cdb8eb0aedb5feaa70c",
-      gitcoinProfile: "https://explorer.gitcoin.co/#/round/42161/385/24",
-    },
-    {
-      id: "0x706bc44d0c033d10c977ac4a6193e7838b8a795ea0d62cdb8eb0aedb5feaa70c",
-      gitcoinProfile: "https://explorer.gitcoin.co/#/round/42161/385/24",
     },
   ];
 
@@ -23,6 +15,45 @@ export default function ExternalIds() {
     console.log(`Remove external ID: ${id}`);
     // Implement removal logic here
   };
+
+  async function fetchApplicationsByProjectId(projectId: string) {
+    const url = "https://grants-stack-indexer-v2.gitcoin.co/graphql";
+
+    const payload = {
+      query: `
+      query MyQuery {
+        applications(condition: {projectId: "${projectId}"}) {
+          chainId
+          roundId
+          id
+        }
+      }
+    `,
+    };
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    const chainId = data.data.applications[0].chainId;
+    const roundId = data.data.applications[0].roundId;
+    const applicationId = data.data.applications[0].id;
+
+    // Convert it into URL
+    const gitcoinUrl = `https://explorer.gitcoin.co/#/round/${chainId}/${roundId}/${applicationId}`;
+    return gitcoinUrl;
+  }
+
+  useEffect(() => {
+    fetchApplicationsByProjectId(
+      "0x706bc44d0c033d10c977ac4a6193e7838b8a795ea0d62cdb8eb0aedb5feaa70c"
+    );
+  }, []);
 
   return (
     <div>
@@ -39,17 +70,17 @@ export default function ExternalIds() {
           </tr>
         </thead>
         <tbody className="divide-y divide-x">
-          {externalIds.map((externalId) => (
+          {externalIds.map(async (externalId) => (
             <tr key={externalId.id} className="divide-x">
               <td className="px-4 py-2 text-center">{externalId.id}</td>
               <td className="px-4 py-2 text-center">
                 <Link
-                  href={`https://gitcoin.co/${externalId.gitcoinProfile}`}
+                  href={await fetchApplicationsByProjectId(externalId.id)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-500 hover:underline"
                 >
-                  {externalId.gitcoinProfile}
+                  {await fetchApplicationsByProjectId(externalId.id)}
                 </Link>
               </td>
               <td className="px-4 py-2 text-center">

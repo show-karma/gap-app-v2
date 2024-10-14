@@ -38,10 +38,6 @@ const schema = z.object({
 });
 
 type SchemaType = z.infer<typeof schema>;
-interface CommunityAdmin {
-  id: string;
-  admins: { user: { id: string } }[];
-}
 
 type AddExternalIdDialogProps = {
   buttonElement?: {
@@ -83,6 +79,53 @@ export const AddExternalId: FC<AddExternalIdDialogProps> = ({
   const { switchChainAsync } = useSwitchChain();
 
   const { changeStepperStep, setIsStepper } = useStepper();
+
+  async function fetchApplicationData(
+    chainId: number,
+    applicationId: string,
+    roundId: string
+  ) {
+    const url = "https://grants-stack-indexer-v2.gitcoin.co/graphql";
+
+    const payload = {
+      operationName: "Application",
+      query: `
+      query Application($chainId: Int!, $applicationId: String!, $roundId: String!) {
+        applications(
+          first: 1
+          condition: {
+            status: APPROVED
+            chainId: $chainId
+            id: $applicationId
+            roundId: $roundId
+          }
+        ) {
+          projectId
+        }
+      }`,
+      variables: {
+        chainId,
+        applicationId,
+        roundId,
+      },
+    };
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = await response.json();
+    console.log(data.data.applications[0].projectId);
+    return data;
+  }
+
+  // useEffect(() => {
+  //   fetchApplicationData(42161, "24", "385");
+  // }, []);
 
   const onSubmit = async () => {
     //   setIsLoading(true); // Set loading state to true
