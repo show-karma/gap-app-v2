@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "postbuild": "next-sitemap",
-    "build-stats": "cross-env ANALYZE=true yarn build"
+    "build-stats": "cross-env ANALYZE=true yarn build",
+    "test": "jest"
   },
   "dependencies": {
     "@headlessui/react": "^2.1.2",
