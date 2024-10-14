@@ -70,7 +70,7 @@ export type GrantProgram = {
     amountDistributedToDate?: string;
     platformsUsed?: string[];
     status: string;
-    communityRef?: string;
+    communityRef?: string[];
   };
   tags?: string[];
   updatedAtBlock?: string;

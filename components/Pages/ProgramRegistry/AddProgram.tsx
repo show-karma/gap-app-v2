@@ -15,7 +15,7 @@ import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { useAccount, useSwitchChain } from "wagmi";
 import { envVars } from "@/utilities/enviromentVars";
 import { useRouter } from "next/navigation";
-import { CommunitiesDropdown } from "@/components/CommunitiesDropdown";
+import { CommunitiesSelect } from "@/components/CommunitiesSelect";
 import {
   ICommunityResponse
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
@@ -154,7 +154,7 @@ const createProgramSchema = z.object({
   networks: z.array(z.string()),
   grantTypes: z.array(z.string()),
   platformsUsed: z.array(z.string()),
-  communityRef: z.string().optional(),
+  communityRef: z.array(z.string()),
   status: z.string().optional().or(z.literal("Active")),
 });
 
@@ -183,6 +183,8 @@ export default function AddProgram({
       };
     });
   const { gap } = useGap();
+
+
   const [allCommunities, setAllCommunities] = useState<ICommunityResponse[]>(
     []
   );
@@ -190,7 +192,7 @@ export default function AddProgram({
   useEffect(() => {
     const fetchCommunities = async () => {
       try {
-        if (!gap) throw new Error("Gap not initialized");
+        if (!gap || !gapIndexerApi) throw new Error("Gap not initialized");
         const result = await gapIndexerApi.communities();
         setAllCommunities(result.data);
         return result;
@@ -200,8 +202,10 @@ export default function AddProgram({
         return undefined;
       }
     };
-    fetchCommunities();
-  }, []);
+
+    if (allCommunities.length === 0) fetchCommunities();
+
+  }, [allCommunities]);
 
   const {
     register,
@@ -248,7 +252,7 @@ export default function AddProgram({
       networkToCreate: programToEdit?.chainID || 0,
       grantsSite: programToEdit?.metadata?.socialLinks?.grantsSite,
       platformsUsed: programToEdit?.metadata?.platformsUsed || [],
-      communityRef: programToEdit?.metadata?.communityRef || "",
+      communityRef: programToEdit?.metadata?.communityRef || [],
       status: programToEdit?.metadata?.status || "Active",
     },
   });
@@ -262,6 +266,7 @@ export default function AddProgram({
       | "grantTypes"
       | "organizations"
       | "platformsUsed"
+      | "communityRef"
   ) => {
     const oldArray = watch(fieldName);
     let newArray = [...oldArray];
@@ -529,8 +534,6 @@ export default function AddProgram({
     event?.stopPropagation();
 
     data.networkToCreate = registryHelper.supportedNetworks;
-
-    console.log(data);
 
     if (programToEdit) {
       await editProgram(data);
@@ -859,18 +862,16 @@ export default function AddProgram({
                 </div>
                 <div className="flex w-full flex-col">
                   <label htmlFor="grant-title" className={`${labelStyle} mb-1`}>
-                    Community
+                    Communities related
                   </label>
-                  <CommunitiesDropdown
-                    onSelectFunction={(value: string) => {
-                      setValue("communityRef", value, {
-                        shouldValidate: true,
-                      });
+                  <CommunitiesSelect
+                    onSelectFunction={(community: ICommunityResponse) => {
+                      onChangeGeneric(community?.uid, "communityRef")
                     }}
-                    previousValue={
-                      programToEdit ? programToEdit?.metadata?.communityRef : undefined
-                    }
-                    communities={allCommunities}
+                    list={allCommunities}
+                    selected={watch("communityRef")}
+                    buttonClassname="w-full max-w-full"
+                    type="community"
                   />
                   <p className="text-base text-red-400">
                     {errors?.communityRef?.message}
