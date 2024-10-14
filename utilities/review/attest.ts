@@ -35,7 +35,7 @@ export async function submitAttest(
   recipient: Hex,
   expirationTime: bigint,
   revocable: boolean,
-  refUID: Hex,
+  refUID: Hex, // GrantUID
   data: Hex,
   walletClient: WalletClient,
 ): Promise<TransactionReceipt | Error> {

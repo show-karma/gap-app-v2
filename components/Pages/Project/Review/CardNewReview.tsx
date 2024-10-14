@@ -48,7 +48,10 @@ export const CardNewReview = ({ grant }: { grant: IGrantResponse | undefined }) 
   const searchParams = useSearchParams();
   const { data: walletClient } = useWalletClient({ config });
 
+  console.log("grant", grant);
   const programId = grant?.details?.data.programId;
+  const programUID = programId ? programId.split("_")[0] : undefined;
+
   useEffect(() => {
     // Fill the starts with a score of 1 when the badges render
     if (activeBadges) {
@@ -84,8 +87,6 @@ export const CardNewReview = ({ grant }: { grant: IGrantResponse | undefined }) 
       if (whyDidYouApplyFor.length === 0 || didYouReceiveTheGrant.length === 0) {
         toast.error("Select a valid option in both forms.");
       } else {
-        const programUID = programId ? programId.split("_").pop() : undefined;
-
         console.log("programUID", programUID);
         console.log("grantUID", grantUID);
 
@@ -146,8 +147,8 @@ export const CardNewReview = ({ grant }: { grant: IGrantResponse | undefined }) 
     // Encode the data
     const abiCoder = new AbiCoder();
     const encodedData = abiCoder.encode(
-      ["bytes32", "bytes32[]", "uint8[]"],
-      [grantUID, activeBadgeIds, badgeScores],
+      ["bytes32", "bytes32[]", "uint8[]", "uint8[]"],
+      [grantUID, activeBadgeIds, badgeScores, programUID],
     );
 
     await handleSubmitAnswersReview();
