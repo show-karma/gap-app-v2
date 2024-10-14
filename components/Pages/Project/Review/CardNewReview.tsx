@@ -31,11 +31,7 @@ import { CheckIcon } from "@heroicons/react/24/solid";
 import axios from "axios";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
-interface GrantAllReviewsProps {
-  grant: IGrantResponse | undefined;
-}
-
-export const CardNewReview = ({ grant }: GrantAllReviewsProps) => {
+export const CardNewReview = ({ grant }: { grant: IGrantResponse | undefined }) => {
   const { control, handleSubmit, getValues, trigger } = useForm();
   const setIsOpenReview = useReviewStore((state: any) => state.setIsOpenReview);
   const setBadgeScores = useReviewStore((state: any) => state.setBadgeScores);

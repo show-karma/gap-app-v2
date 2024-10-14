@@ -10,11 +10,7 @@ import { ChevronLeftIcon } from "@heroicons/react/24/solid";
 import { CardNewReview } from "./CardNewReview";
 import { CardReviewSummary } from "./CardReviewSummary";
 
-interface GrantAllReviewsProps {
-  grant: IGrantResponse | undefined;
-}
-
-export const ReviewSection = ({ grant }: GrantAllReviewsProps) => {
+export const ReviewSection = ({ grant }: { grant: IGrantResponse | undefined }) => {
   const isProjectLoading = useProjectStore((state: any) => state.loading);
   if (isProjectLoading || !grant) {
     <div className="space-y-5 flex w-full flex-row items-center justify-center">

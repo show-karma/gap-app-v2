@@ -14,11 +14,7 @@ import { ArrowNavigationBar } from "./ArrowNavigationBar";
 import { Skeleton } from "./Skeleton";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
-interface GrantAllReviewsProps {
-  grant: IGrantResponse | undefined;
-}
-
-export const NavbarReview = ({ grant }: GrantAllReviewsProps) => {
+export const NavbarReview = ({ grant }: { grant: IGrantResponse | undefined }) => {
   const isStarSelected = useReviewStore((state: any) => state.isStarSelected);
   const stories = useReviewStore((state: any) => state.stories);
   const grantUID = useReviewStore((state: any) => state.grantUID);
