@@ -23,55 +23,8 @@ import {
 import { cn } from "@/utilities/tailwind";
 import { CheckIcon } from "@heroicons/react/20/solid";
 import { queryClient } from "@/components/Utilities/WagmiProvider";
-
-type SortByOptions =
-  | "createdAt"
-  | "updatedAt"
-  | "title"
-  | "noOfGrants"
-  | "noOfProjectMilestones";
-
-type SortOrder = "asc" | "desc";
-
-const getNewProjects = async (
-  pageSize: number,
-  page: number = 0,
-  sortBy: SortByOptions = "createdAt",
-  sortOrder: SortOrder = "desc"
-): Promise<{
-  projects: ProjectFromList[];
-  pageInfo: PageInfo;
-  nextOffset: number;
-}> => {
-  try {
-    const [data, error, pageInfo] = await fetchData(
-      INDEXER.PROJECTS.GET_ALL(page * pageSize, pageSize, sortBy, sortOrder)
-    );
-    if (error) {
-      throw new Error("Something went wrong while fetching new projects");
-    }
-    return {
-      projects: data?.data as ProjectFromList[],
-      pageInfo: pageInfo,
-      nextOffset: page + 1,
-    };
-  } catch (e) {
-    errorManager("Something went wrong while fetching new projects", e);
-    return {
-      projects: [],
-      pageInfo: { totalItems: 0, page: 0, pageLimit: pageSize },
-      nextOffset: 0,
-    };
-  }
-};
-
-const sortOptions: Record<SortByOptions, string> = {
-  createdAt: "Recently Added",
-  updatedAt: "Recently Updated",
-  title: "Title",
-  noOfGrants: "No. of Grants",
-  noOfProjectMilestones: "No. of Roadmap items",
-};
+import { SortByOptions, sortOptions, SortOrder } from "@/types/newProjects";
+import { getNewProjects } from "@/utilities/indexer/getNewProjects";
 
 export const NewProjectsPage = () => {
   const [selectedSort, changeSortQuery] = useQueryState("sortBy", {
