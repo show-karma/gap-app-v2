@@ -9,8 +9,7 @@ export const getTotalProjects = async (communityId: string) => {
       {},
       {},
       {},
-      false,
-      true
+      false
     );
     if (error || !data.projects) return 0;
     return data.projects;

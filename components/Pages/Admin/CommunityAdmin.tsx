@@ -50,8 +50,7 @@ export default function CommunitiesToAdminPage() {
             {},
             {},
             {},
-            false,
-            true
+            false
           );
 
           if (!data) return { id: community.uid, admins: [] };
