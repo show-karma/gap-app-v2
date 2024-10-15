@@ -21,7 +21,7 @@ export const getExplorerProjects = async (
       undefined,
       undefined,
       undefined,
-      false
+      true
     );
     if (error) {
       throw new Error("Something went wrong while fetching new projects");
