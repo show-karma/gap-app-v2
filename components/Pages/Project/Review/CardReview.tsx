@@ -23,12 +23,14 @@ export const CardReview = ({ storie }: { storie: GrantStory }) => {
 
   const handleBadges = async () => {
     const badgesIds = storie.badgeIds;
-    const badges = await Promise.all(
+    const fetchedBadges = await Promise.all(
       badgesIds.map(async (badgeId: Hex): Promise<Badge | null> => {
         return await getBadge(badgeId);
       }),
     );
-    setBadges(badges);
+    // Filter out null values
+    const validBadges = fetchedBadges.filter((badge): badge is Badge => badge !== null);
+    setBadges(validBadges);
   };
 
   return (
