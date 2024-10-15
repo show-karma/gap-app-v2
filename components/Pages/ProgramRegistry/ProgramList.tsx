@@ -70,6 +70,7 @@ export type GrantProgram = {
     amountDistributedToDate?: string;
     platformsUsed?: string[];
     status: string;
+    communityRef?: string[];
   };
   tags?: string[];
   updatedAtBlock?: string;
@@ -512,8 +513,8 @@ export const ProgramList: FC<ProgramListProps> = ({
                     isDisabled()
                       ? ""
                       : grant.metadata?.socialLinks?.grantsSite.includes("http")
-                      ? grant.metadata?.socialLinks?.grantsSite
-                      : `https://${grant.metadata?.socialLinks?.grantsSite}`
+                        ? grant.metadata?.socialLinks?.grantsSite
+                        : `https://${grant.metadata?.socialLinks?.grantsSite}`
                   }
                 >
                   <div className={`relative group`}>
@@ -598,9 +599,7 @@ export const ProgramList: FC<ProgramListProps> = ({
                   key={row.id}
                   style={{
                     height: `${virtualRow.size}px`,
-                    transform: `translateY(${
-                      virtualRow.start - index * virtualRow.size
-                    }px)`,
+                    transform: `translateY(${virtualRow.start - index * virtualRow.size}px)`,
                   }}
                 >
                   {row.getVisibleCells().map((cell) => {
