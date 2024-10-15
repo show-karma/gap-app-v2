@@ -55,7 +55,9 @@ export const CardNewReview = ({ grant }: { grant: IGrantResponse | undefined }) 
   useEffect(() => {
     // Fill the starts with a score of 1 when the badges render
     if (activeBadges) {
-      setBadgeScores(Array(activeBadges.length).fill(1));
+      const initialScores = Array(activeBadges.length).fill(1);
+      console.log("Initializing badge scores:", initialScores);
+      setBadgeScores(initialScores);
     }
     const grantIdFromQueryParam = searchParams?.get("grantId");
     if (grant?.refUID) {
@@ -67,11 +69,14 @@ export const CardNewReview = ({ grant }: { grant: IGrantResponse | undefined }) 
 
   // Score of the new review
   const handleSetRating = (index: number, rating: number) => {
-    if (rating >= 1 || rating <= 5) {
-      const updatededBadges = [...badgeScores];
-      updatededBadges[index] = rating;
-      setBadgeScores(updatededBadges);
+    console.log(`Attempting to set rating ${rating} for index ${index}`);
+    if (rating >= 1 && rating <= 5) {
+      const updatedBadges = [...badgeScores];
+      updatedBadges[index] = Math.round(rating);
+      console.log("Updated badge scores:", updatedBadges);
+      setBadgeScores(updatedBadges);
     } else {
+      console.error(`Invalid rating: ${rating}. Must be between 1 and 5.`);
       toast.error("Invalid rating. Can only score between 1 and 5");
     }
   };
@@ -144,12 +149,18 @@ export const CardNewReview = ({ grant }: { grant: IGrantResponse | undefined }) 
       );
     }
 
+    console.log("grantUID:", grantUID);
+    console.log("activeBadgeIds:", activeBadgeIds);
+    console.log("badgeScores:", badgeScores);
+    console.log("programUID:", programUID);
     // Encode the data
     const abiCoder = new AbiCoder();
+    console.log("Badge scores being encoded:", badgeScores);
     const encodedData = abiCoder.encode(
       ["bytes32", "bytes32[]", "uint8[]", "uint32"],
       [grantUID, activeBadgeIds, badgeScores, programUID],
     );
+    console.log("Encoded data:", encodedData);
 
     await handleSubmitAnswersReview();
 
