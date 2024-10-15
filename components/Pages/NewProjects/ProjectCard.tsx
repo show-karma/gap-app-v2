@@ -34,7 +34,7 @@ export const ProjectCard = ({ project, index }: ProjectCardProps) => {
   return (
     <Link
       href={PAGES.PROJECT.OVERVIEW(project?.slug || project?.uid)}
-      className="flex h-full w-full max-w-full relative flex-col items-start justify-between gap-3 rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2 transition-all duration-300 ease-in-out hover:opacity-80"
+      className="flex h-full w-full max-w-full max-sm:w-[320px] relative flex-col items-start justify-between gap-3 rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2 transition-all duration-300 ease-in-out hover:opacity-80"
     >
       <div className="w-full flex flex-col gap-1 ">
         <div
@@ -61,11 +61,21 @@ export const ProjectCard = ({ project, index }: ProjectCardProps) => {
       </div>
 
       <div className="flex w-full flex-col justify-start gap-1">
-        <div className="flex h-max w-full items-center justify-start rounded-full bg-slate-50   dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
-          <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
-            {formatCurrency(project.noOfGrants)}{" "}
-            {pluralize("Grants", project.noOfGrants)} received
-          </p>
+        <div className="flex w-full flex-row justify-start items-center gap-1">
+          <div className="flex h-max w-full items-center justify-start rounded-full bg-slate-50   dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
+            <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
+              {formatCurrency(project.noOfGrants)}{" "}
+              {pluralize("Grants", project.noOfGrants)} received
+            </p>
+          </div>
+          {project.noOfGrantMilestones && project.noOfGrantMilestones > 0 ? (
+            <div className="flex h-max w-full items-center justify-start rounded-full bg-slate-50   dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
+              <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
+                Total {pluralize("Milestone", project.noOfGrantMilestones)}{" "}
+                {project.noOfGrantMilestones}
+              </p>
+            </div>
+          ) : null}
         </div>
 
         <div className="flex h-max w-full items-center justify-start rounded-full bg-slate-50 dark:bg-slate-600 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
