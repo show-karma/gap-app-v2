@@ -6,18 +6,18 @@ export const ARB_ONE_SCHEMA_REGISTRY = "0xA310da9c5B885E7fb3fbA9D66E9Ba6Df512b78
 
 // The schema UID for EAS
 export const KARMA_EAS_SCHEMA_UID =
-  "0x02dc5a92e5634ce3d8dd933067df1b53f661b1a53bcf8f17110c7d1ff884621f";
+  "0x7cf7c9d2dcff65ed9d3271c4b15efbe76a42bf36049f15ccf2b8153c89cc1366";
 // The Karma-Gap scorer ID constant
 export const SCORER_ID = 1;
 // The Karma-Gap scorer decimals amount
 export const SCORER_DECIMALS = 18;
 
 // The Trustful-Karma contracts
-export const GRANT_REGISTRY = "0x676FD4b8bC208460D9E438F7aAA5E95D580aBB8f";
-export const BADGE_REGISTRY = "0xF0d7f324521B6f93EA6b9B8DB934E1D01C0c75b0";
-export const TRUSTFUL_SCORER = "0x3B0C859cD18B836Df11bB7c45E22993a5AbA0069";
-export const RESOLVER_EAS = "0x9533A8B883128412ed228e73292D5DE55fd7cAe9";
-export const RESOLVER_TRUSTFUL = "0x44b17f32Be8Dde88a43A0A39F3801343f2d5D446";
+export const GRANT_REGISTRY = "0x2E6De0735b896dD248B08dcb9BA1f1f6Dd5bf1B7";
+export const BADGE_REGISTRY = "0x95d4123c5fA150B04dD56b0ab5141DEcB41725b0";
+export const TRUSTFUL_SCORER = "0xa402A493780AA7C40468336f6A5Afea5814891bF";
+export const RESOLVER_EAS = "0xbAc1B69837EB8d68294cBDF81acbfE57250264CF";
+export const RESOLVER_TRUSTFUL = "0x12Fe1E060B0B1c4Efc6d7A8dC9394ffC53842b78";
 
 export const RAILWAY_BACKEND = "https://trustful-karma-gap-backend-staging.up.railway.app";
 
