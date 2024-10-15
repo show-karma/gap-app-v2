@@ -152,7 +152,9 @@ export const NavbarReview = ({ grant }: { grant: IGrantResponse | undefined }) =
       </div>
       <ArrowNavigationBar skeletonMarkup={skeletonMarkup} barContentMarkup={barContentMarkup} />
       <div className="w-full flex flex-col">
-        {isStarSelected !== null && stories && <CardReview storie={stories[isStarSelected]} />}
+        {isStarSelected !== null && stories && stories[isStarSelected] && (
+          <CardReview storie={stories[isStarSelected]} />
+        )}
       </div>
     </div>
   );
