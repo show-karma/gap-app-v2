@@ -69,19 +69,14 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
   const generateCode = async () => {
     setIsLoading(true);
     try {
-      const messageToSign = `Sign this message to invite a member to the ${
-        project?.details?.data.title || project?.uid
-      } project - ${new Date().getTime()}`;
+      const messageToSign = new Date().getTime();
       const hexedMessage = keccak256(toHex(messageToSign));
-      const signedMessage = await signMessageAsync({
-        message: hexedMessage,
-      });
       const [data, error] = await fetchData(
         INDEXER.PROJECT.INVITATION.NEW_CODE(project?.uid as string),
         "POST",
         {
           hash: hexedMessage,
-          signature: signedMessage,
+          signature: hexedMessage,
         }
       );
       if (error) throw error;
@@ -170,7 +165,7 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
                           Please share your invite link with a team member.
                         </p>
                         <div className=" items-center flex flex-row gap-0">
-                          <p className="text-zinc-800 dark:text-zinc-100 truncate w-full  bg-zinc-100 dark:bg-zinc-900 p-2 rounded-l-md">
+                          <p className="text-zinc-800 dark:text-zinc-100  w-full  bg-zinc-100 dark:bg-zinc-900 p-2 rounded-l-md">
                             {urlToCode}
                           </p>
                           <button
