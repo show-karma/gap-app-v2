@@ -1,7 +1,9 @@
-import { useState } from "react";
+"use client";
+import { useEffect } from "react";
 import { EndorsementList } from "../ProgramRegistry/EndorsementList";
 import { ProjectFeed } from "@/components/ProjectFeed";
 import { useActivityTabStore } from "@/store/activityTab";
+import { useProjectStore } from "@/store";
 
 const SelectedButton = ({
   children,
@@ -38,6 +40,17 @@ const UnselectedButton = ({
 
 export const ProjectSubTabs = () => {
   const { activityTab, setActivityTab } = useActivityTabStore();
+  const { project } = useProjectStore();
+
+  useEffect(() => {
+    if (project) {
+      if (project.endorsements.length > 0) {
+        setActivityTab("endorsements");
+      } else {
+        setActivityTab("project-feed");
+      }
+    }
+  }, [project]);
 
   return (
     <div className="flex flex-col border border-zinc-300 rounded-xl w-full">
