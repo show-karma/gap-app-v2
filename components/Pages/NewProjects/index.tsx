@@ -10,16 +10,9 @@ import { ProjectCard } from "./ProjectCard";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { PageInfo } from "@/types/pagination";
 import { ProjectCardListSkeleton } from "./Loading";
-import { Spinner } from "@/components/Utilities/Spinner";
 import { Listbox, Transition } from "@headlessui/react";
 import { useQueryState } from "nuqs";
-import {
-  ArrowDownIcon,
-  ArrowUpIcon,
-  ChevronDownIcon,
-  ChevronUpDownIcon,
-  ChevronUpIcon,
-} from "@heroicons/react/24/solid";
+import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/solid";
 import { cn } from "@/utilities/tailwind";
 import { CheckIcon } from "@heroicons/react/20/solid";
 import { queryClient } from "@/components/Utilities/WagmiProvider";
@@ -29,7 +22,8 @@ type SortByOptions =
   | "updatedAt"
   | "title"
   | "noOfGrants"
-  | "noOfProjectMilestones";
+  | "noOfProjectMilestones"
+  | "noOfGrantMilestones";
 
 type SortOrder = "asc" | "desc";
 
@@ -71,6 +65,7 @@ const sortOptions: Record<SortByOptions, string> = {
   title: "Title",
   noOfGrants: "No. of Grants",
   noOfProjectMilestones: "No. of Roadmap items",
+  noOfGrantMilestones: "No. of Milestones",
 };
 
 export const NewProjectsPage = () => {
