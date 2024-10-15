@@ -147,7 +147,7 @@ export const CardNewReview = ({ grant }: { grant: IGrantResponse | undefined }) 
     // Encode the data
     const abiCoder = new AbiCoder();
     const encodedData = abiCoder.encode(
-      ["bytes32", "bytes32[]", "uint8[]", "uint8[]"],
+      ["bytes32", "bytes32[]", "uint8[]", "uint32"],
       [grantUID, activeBadgeIds, badgeScores, programUID],
     );
 
