@@ -44,7 +44,7 @@ export const ProjectSubTabs = () => {
 
   useEffect(() => {
     if (project) {
-      if (project.endorsements.length > 0) {
+      if (project.endorsements?.length > 0) {
         setActivityTab("endorsements");
       } else {
         setActivityTab("project-feed");
