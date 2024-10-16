@@ -46,7 +46,7 @@ const getCurrentCode = async (projectIdOrSlug: string) => {
 };
 
 export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(true);
   const [isCopied, setIsCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
@@ -76,7 +76,6 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
         "POST",
         {
           hash: hexedMessage,
-          signature: hexedMessage,
         }
       );
       if (error) throw error;
@@ -164,10 +163,17 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
                         <p className="text-zinc-800 dark:text-zinc-100">
                           Please share your invite link with a team member.
                         </p>
-                        <div className=" items-center flex flex-row gap-0">
-                          <p className="text-zinc-800 dark:text-zinc-100  w-full  bg-zinc-100 dark:bg-zinc-900 p-2 rounded-l-md">
-                            {urlToCode}
-                          </p>
+                        <div className=" items-center flex flex-row gap-0 h-16">
+                          <button
+                            className="text-zinc-800 dark:text-zinc-100 w-full h-max bg-zinc-100 dark:bg-zinc-900 p-2 rounded-l-md text-wrap break-all text-left"
+                            onClick={() => {
+                              copyToClipboard(urlToCode);
+                              setIsCopied(true);
+                            }}
+                          >
+                            {code}
+                          </button>
+
                           <button
                             className="text-zinc-600 p-2 hover:opacity-75 bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-100 h-full"
                             onClick={() => {
@@ -182,7 +188,7 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
                             )}
                           </button>
                           <button
-                            className=" text-red-900 bg-red-200 dark:text-red-200 dark:bg-red-900 p-2 hover:opacity-75 rounded-r-md"
+                            className=" text-red-900 bg-red-200 dark:text-red-200 dark:bg-red-900 p-2 hover:opacity-75 rounded-r-md h-full"
                             onClick={() => {
                               setIsCopied(false);
                               revokeCode();
