@@ -217,7 +217,11 @@ export const GrantOverview = () => {
         </div>
       </div>
       <div className="mt-8">
-        <ExternalIds />
+        <ExternalIds
+          projectUID={grant?.refUID as string}
+          communityUID={grant?.community.uid as string}
+          externalIds={(grant as any).externalIds}
+        />
       </div>
 
       {/* Grant Overview End */}

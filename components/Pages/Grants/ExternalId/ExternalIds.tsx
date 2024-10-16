@@ -1,26 +1,57 @@
 "use client";
 import Link from "next/link";
 import { AddExternalId } from "./AddExternalIdDialog";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import toast from "react-hot-toast";
+import { TrashIcon } from "@heroicons/react/24/outline";
 
-export default function ExternalIds() {
+export default function ExternalIds({
+  projectUID,
+  communityUID,
+  externalIds,
+}: {
+  projectUID: string;
+  communityUID: string;
+  externalIds: string[];
+}) {
   // Mock data
-  const externalIds = [
-    {
-      id: "0x706bc44d0c033d10c977ac4a6193e7838b8a795ea0d62cdb8eb0aedb5feaa70c",
-    },
-  ];
 
-  const handleRemove = (id: string) => {
-    console.log(`Remove external ID: ${id}`);
-    // Implement removal logic here
+  const [gitcoinUrls, setGitcoinUrls] = useState<{ [key: string]: string[] }>(
+    {}
+  );
+
+  const [removingId, setRemovingId] = useState<string | null>(null);
+
+  const handleRemove = async (id: string) => {
+    setRemovingId(id);
+    const [result, error] = await fetchData(
+      INDEXER.GRANTS.REMOVE_EXTERNAL_ID,
+      "POST",
+      {
+        projectUID: projectUID,
+        communityUID: communityUID,
+        externalId: id,
+      },
+      {},
+      {},
+      true
+    );
+    if (error) {
+      toast.error("Error removing external ID");
+    } else {
+      toast.success("External ID removed successfully");
+    }
+    setRemovingId(null);
   };
 
   async function fetchApplicationsByProjectId(projectId: string) {
-    const url = "https://grants-stack-indexer-v2.gitcoin.co/graphql";
+    try {
+      const url = "https://grants-stack-indexer-v2.gitcoin.co/graphql";
 
-    const payload = {
-      query: `
+      const payload = {
+        query: `
       query MyQuery {
         applications(condition: {projectId: "${projectId}"}) {
           chainId
@@ -29,66 +60,104 @@ export default function ExternalIds() {
         }
       }
     `,
-    };
+      };
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+      const response = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-    const data = await response.json();
-    const chainId = data.data.applications[0].chainId;
-    const roundId = data.data.applications[0].roundId;
-    const applicationId = data.data.applications[0].id;
+      const data = await response.json();
+      const applications = data.data.applications;
 
-    // Convert it into URL
-    const gitcoinUrl = `https://explorer.gitcoin.co/#/round/${chainId}/${roundId}/${applicationId}`;
-    return gitcoinUrl;
+      if (applications && applications.length > 0) {
+        return applications.map(
+          ({
+            chainId,
+            roundId,
+            id: applicationId,
+          }: {
+            chainId: string;
+            roundId: string;
+            id: string;
+          }) =>
+            `https://explorer.gitcoin.co/#/round/${chainId}/${roundId}/${applicationId}`
+        );
+      }
+      return [];
+    } catch (error) {
+      console.error("Error fetching applications:", error);
+      return [];
+    }
   }
 
   useEffect(() => {
-    fetchApplicationsByProjectId(
-      "0x706bc44d0c033d10c977ac4a6193e7838b8a795ea0d62cdb8eb0aedb5feaa70c"
-    );
-  }, []);
+    const fetchAllUrls = async () => {
+      const urls: { [key: string]: string[] } = {};
+      for (const externalId of externalIds) {
+        const applicationUrls = await fetchApplicationsByProjectId(externalId);
+        if (applicationUrls.length > 0) {
+          urls[externalId] = applicationUrls;
+        }
+      }
+      setGitcoinUrls(urls);
+    };
+
+    fetchAllUrls();
+  }, [externalIds]);
 
   return (
     <div>
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">External IDs</h1>
-        <AddExternalId />
+        <AddExternalId projectUID={projectUID} communityUID={communityUID} />
       </div>
-      <table className="border-x border-x-zinc-300 border-y border-y-zinc-300 w-full">
+      <table className="border-x border-x-zinc-300 border-y border-y-zinc-300 w-full table-fixed">
         <thead className="border-x border-x-zinc-300 border-y border-y-zinc-300">
           <tr className="divide-x">
-            <th className="px-4 py-2">External ID</th>
-            <th className="px-4 py-2">Gitcoin Profile</th>
-            <th className="px-4 py-2">Action</th>
+            <th className="px-4 py-2 w-5/12">External ID</th>
+            <th className="px-4 py-2 w-1/2">Gitcoin Profile</th>
+            <th className="px-4 py-2 w-1/12">Action</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-x">
-          {externalIds.map(async (externalId) => (
-            <tr key={externalId.id} className="divide-x">
-              <td className="px-4 py-2 text-center">{externalId.id}</td>
+          {externalIds.map((externalId) => (
+            <tr key={externalId} className="divide-x">
+              <td className="px-4 py-2 text-center break-all">{externalId}</td>
               <td className="px-4 py-2 text-center">
-                <Link
-                  href={await fetchApplicationsByProjectId(externalId.id)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500 hover:underline"
-                >
-                  {await fetchApplicationsByProjectId(externalId.id)}
-                </Link>
+                {gitcoinUrls[externalId]
+                  ? gitcoinUrls[externalId].map((url, index) => (
+                      <div key={index} className="truncate">
+                        <Link
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-500 hover:underline"
+                          title={url}
+                        >
+                          {url}
+                        </Link>
+                      </div>
+                    ))
+                  : "Loading..."}
               </td>
-              <td className="px-4 py-2 text-center">
+              <td className="px-4 py-2 text-center text-sm md:text-lg">
                 <button
-                  onClick={() => handleRemove(externalId.id)}
-                  className="text-red-500 hover:text-red-700"
+                  onClick={() => handleRemove(externalId)}
+                  className="text-red-500 hover:text-red-700 disabled:opacity-50"
+                  disabled={removingId === externalId}
                 >
-                  Remove
+                  {removingId === externalId ? (
+                    <div className="inline-block w-5 h-5 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <TrashIcon className="w-5 h-5" />
+                      <span className="hidden md:inline">Remove</span>
+                    </div>
+                  )}
                 </button>
               </td>
             </tr>

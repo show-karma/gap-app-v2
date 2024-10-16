@@ -1,28 +1,18 @@
 /* eslint-disable @next/next/no-img-element */
 import { FC, Fragment, ReactNode, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-import {
-  ChevronRightIcon,
-  PlusIcon,
-  TrashIcon,
-  XMarkIcon,
-} from "@heroicons/react/24/solid";
+import { PlusIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAccount, useSwitchChain } from "wagmi";
-import { GAP } from "@show-karma/karma-gap-sdk";
+
 import { Button } from "@/components/Utilities/Button";
 import { MESSAGES } from "@/utilities/messages";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { getWalletClient } from "@wagmi/core";
-import { useStepper } from "@/store/modals/txStepper";
+
 import toast from "react-hot-toast";
-import { config } from "@/utilities/wagmi/config";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
-import { errorManager } from "@/components/Utilities/errorManager";
 import { cn } from "@/utilities/tailwind";
 
 const inputStyle =
@@ -31,8 +21,12 @@ const labelStyle =
   "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
 const schema = z.object({
-  address: z
+  profile: z
     .string()
+    .regex(
+      /^https:\/\/explorer\.gitcoin\.co\/#\/round\/(\d+)\/(\d+)\/(\d+)$/,
+      MESSAGES.COMMUNITY_FORM.TITLE.MIN
+    )
     .min(3, { message: MESSAGES.COMMUNITY_FORM.TITLE.MIN })
     .max(50, { message: MESSAGES.COMMUNITY_FORM.TITLE.MAX }),
 });
@@ -46,7 +40,34 @@ type AddExternalIdDialogProps = {
     iconSide?: "left" | "right";
     styleClass: string;
   };
+  projectUID: string;
+  communityUID: string;
 };
+
+type GitcoinUrlParams = {
+  chainId: number;
+  roundId: string;
+  applicationId: string;
+};
+
+function parseGitcoinUrl(url: string): GitcoinUrlParams {
+  const regex =
+    /^https:\/\/explorer\.gitcoin\.co\/#\/round\/(\d+)\/(\d+)\/(\d+)$/;
+  const match = url.match(regex);
+
+  if (!match) {
+    throw new Error("Invalid Gitcoin Explorer URL format");
+  }
+
+  const [, chainIdStr, roundId, applicationId] = match;
+  const chainId = parseInt(chainIdStr, 10);
+
+  return {
+    chainId,
+    roundId,
+    applicationId,
+  };
+}
 
 export const AddExternalId: FC<AddExternalIdDialogProps> = ({
   buttonElement = {
@@ -55,7 +76,12 @@ export const AddExternalId: FC<AddExternalIdDialogProps> = ({
     text: "Add External ID",
     styleClass: "",
   },
+  projectUID,
+  communityUID,
 }) => {
+  const dataToUpdate = {
+    profile: "",
+  };
   const [isOpen, setIsOpen] = useState(false);
 
   function closeModal() {
@@ -67,19 +93,16 @@ export const AddExternalId: FC<AddExternalIdDialogProps> = ({
   }
 
   const {
+    register,
     handleSubmit,
     formState: { errors },
   } = useForm<SchemaType>({
     resolver: zodResolver(schema),
     mode: "onChange",
+    defaultValues: dataToUpdate,
   });
 
   const [isLoading, setIsLoading] = useState(false);
-  const { chain } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
-
-  const { changeStepperStep, setIsStepper } = useStepper();
-
   async function fetchApplicationData(
     chainId: number,
     applicationId: string,
@@ -119,83 +142,48 @@ export const AddExternalId: FC<AddExternalIdDialogProps> = ({
     });
 
     const data = await response.json();
-    console.log(data.data.applications[0].projectId);
-    return data;
+
+    return data.data.applications[0].projectId;
   }
 
-  // useEffect(() => {
-  //   fetchApplicationData(42161, "24", "385");
-  // }, []);
+  const onSubmit = async (data: SchemaType) => {
+    setIsLoading(true); // Set loading state to true
 
-  const onSubmit = async () => {
-    //   setIsLoading(true); // Set loading state to true
-    //   if (chain?.id != chainid) {
-    //     await switchChainAsync?.({ chainId: chainid });
-    //   }
-    //   const walletClient = await getWalletClient(config, {
-    //     chainId: chainid,
-    //   });
-    //   if (!walletClient) return;
-    //   const walletSigner = await walletClientToSigner(walletClient);
-    //   try {
-    //     const communityResolver = (await GAP.getCommunityResolver(
-    //       walletSigner
-    //     )) as any;
-    //     changeStepperStep("preparing");
-    //     const communityResponse = await communityResolver.delist(UUID, Admin);
-    //     changeStepperStep("pending");
-    //     const { hash } = communityResponse;
-    //     await communityResponse.wait().then(async () => {
-    //       if (hash) {
-    //         await fetchData(
-    //           INDEXER.ATTESTATION_LISTENER(hash, chainid),
-    //           "POST",
-    //           {}
-    //         );
-    //       }
-    //       changeStepperStep("indexing");
-    //       let retries = 1000;
-    //       let addressRemoved = false;
-    //       while (retries > 0) {
-    //         try {
-    //           const [response, error] = await fetchData(
-    //             INDEXER.COMMUNITY.ADMINS(UUID),
-    //             "GET",
-    //             {},
-    //             {},
-    //             {},
-    //             false,
-    //             true
-    //           );
-    //           if (!response || error) {
-    //             throw new Error(`Error fetching admins for community ${UUID}`);
-    //           }
-    //           addressRemoved = !response.admins.some(
-    //             (admin: any) =>
-    //               admin.user.id.toLowerCase() === Admin.toLowerCase()
-    //           );
-    //           if (addressRemoved) {
-    //             await fetchAdmins();
-    //             changeStepperStep("indexed");
-    //             toast.success("Admin removed successfully!");
-    //             closeModal(); // Close the dialog upon successful submission
-    //             break;
-    //           }
-    //         } catch (error: any) {
-    //           console.log("Retrying...");
-    //         }
-    //         retries -= 1;
-    //         // eslint-disable-next-line no-await-in-loop
-    //         await new Promise((resolve) => setTimeout(resolve, 1500));
-    //       }
-    //     });
-    //   } catch (error: any) {
-    //     errorManager(`Error removing admin of ${UUID}`, error);
-    //     console.log(error);
-    //   } finally {
-    //     setIsStepper(false);
-    //     setIsLoading(false);
-    //   }
+    try {
+      const { chainId, roundId, applicationId } = parseGitcoinUrl(data.profile);
+
+      const externalId = await fetchApplicationData(
+        chainId,
+        applicationId,
+        roundId
+      );
+      const [request, error] = await fetchData(
+        INDEXER.GRANTS.UPDATE_EXTERNAL_ID,
+        "PUT",
+        {
+          projectUID,
+          communityUID,
+          externalId: externalId,
+        },
+        {},
+        {},
+        true
+      );
+      if (!error) {
+        toast.success("External ID added successfully!");
+        closeModal();
+      } else {
+        toast.error("Error adding external ID");
+        closeModal();
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Error adding external ID");
+      closeModal();
+    } finally {
+      data.profile = "";
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -262,14 +250,19 @@ export const AddExternalId: FC<AddExternalIdDialogProps> = ({
                   <form onSubmit={handleSubmit(onSubmit)}>
                     <div className="w-full px-2 py-4 sm:px-0">
                       <div className="flex w-full flex-col gap-2">
-                        <label className={labelStyle}>Community UUID</label>
-                        {/* <div>{UUID}</div> */}
-                      </div>
-                    </div>
-                    <div className="w-full px-2 py-4 sm:px-0">
-                      <div className="flex w-full flex-col gap-2">
-                        <label className={labelStyle}>Admin</label>
-                        {/* <div>{Admin}</div> */}
+                        <label htmlFor="name-input" className={labelStyle}>
+                          Gitcoin Profile *
+                        </label>
+                        <input
+                          id="profile-input"
+                          type="text"
+                          className={inputStyle}
+                          placeholder='e.g. "https://explorer.gitcoin.co/#/round/42161/25/83"'
+                          {...register("profile")}
+                        />
+                        <p className="text-red-500 text-sm">
+                          {errors.profile?.message}
+                        </p>
                       </div>
                     </div>
 
@@ -284,13 +277,12 @@ export const AddExternalId: FC<AddExternalIdDialogProps> = ({
                       </button>
 
                       <Button
-                        // type={"submit"}
-                        className="flex flex-row gap-2 items-center justify-center rounded-md border border-transparent bg-red-500 px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
+                        type={"submit"}
+                        className="flex flex-row gap-2 items-center justify-center rounded-md border border-transparent bg-black px-6 py-2 text-md font-medium text-white hover:opacity-70 hover:bg-black focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2"
                         isLoading={isLoading}
-                        // onClick={onSubmit}
                       >
-                        Remove Admin
-                        <TrashIcon width={20} height={20} color="white" />
+                        Add ExternalId
+                        <PlusIcon width={20} height={20} color="white" />
                       </Button>
                     </div>
                   </form>
