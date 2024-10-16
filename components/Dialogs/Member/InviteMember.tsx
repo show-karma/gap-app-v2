@@ -46,7 +46,7 @@ const getCurrentCode = async (projectIdOrSlug: string) => {
 };
 
 export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
