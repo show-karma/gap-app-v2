@@ -95,7 +95,7 @@ export const CardReviewSummary = () => {
   const grantIdFromQueryParam = searchParams?.get("grantId");
 
   useEffect(() => {
-    if (stories) {
+    if (stories && stories.length) {
       getAverageReviewScore(score, stories.length);
       const timestamps = stories.map((story: GrantStory) => Number(story.timestamp));
       getScoreRatingFilteredReviews();
@@ -230,7 +230,7 @@ export const CardReviewSummary = () => {
               </h2>
             )}
             <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight text-center sm:text-start">
-              {intervalMessage ? intervalMessage : "No reviewed yet"}
+              {intervalMessage ?? "Not reviewed yet"}
             </p>
           </div>
         </div>

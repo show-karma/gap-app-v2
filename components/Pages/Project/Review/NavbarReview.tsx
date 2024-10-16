@@ -60,8 +60,8 @@ export const NavbarReview = ({ grant }: { grant: IGrantResponse | undefined }) =
       setBadges(null);
       setStories(null);
       setIsStarSelected(0);
-      if (grant?.refUID) {
-        setGrantUID(grant.refUID);
+      if (grant?.details?.refUID) {
+        setGrantUID(grant.details.refUID);
       } else {
         setGrantUID(grantIdFromQueryParam);
       }

@@ -48,8 +48,7 @@ export const CardNewReview = ({ grant }: { grant: IGrantResponse | undefined }) 
   const searchParams = useSearchParams();
   const { data: walletClient } = useWalletClient({ config });
 
-  console.log("grant", grant);
-  const programId = grant?.details?.data.programId;
+  const programId = grant?.refUID;
   const programUID = programId ? programId.split("_")[0] : undefined;
 
   useEffect(() => {
@@ -60,8 +59,8 @@ export const CardNewReview = ({ grant }: { grant: IGrantResponse | undefined }) 
       setBadgeScores(initialScores);
     }
     const grantIdFromQueryParam = searchParams?.get("grantId");
-    if (grant?.refUID) {
-      setGrantUID(grant.refUID);
+    if (grant?.details?.refUID) {
+      setGrantUID(grant?.details?.refUID);
     } else if (grantIdFromQueryParam) {
       setGrantUID(grantIdFromQueryParam);
     }
@@ -81,7 +80,7 @@ export const CardNewReview = ({ grant }: { grant: IGrantResponse | undefined }) 
     }
   };
 
-  const handleSubmitAnswersReview = async () => {
+  const handleSubmitAnswersReview = async (): Promise<boolean> => {
     const isValid = await trigger(["WhyDidYouApplyFor", "DidYouReceiveTheGrant"]);
 
     if (isValid && address) {
@@ -91,10 +90,9 @@ export const CardNewReview = ({ grant }: { grant: IGrantResponse | undefined }) 
 
       if (whyDidYouApplyFor.length === 0 || didYouReceiveTheGrant.length === 0) {
         toast.error("Select a valid option in both forms.");
-      } else {
-        console.log("programUID", programUID);
-        console.log("grantUID", grantUID);
 
+        return false;
+      } else {
         const newPreReview: CreatePreReviewRequest = {
           connectedUserAddress: address,
           preReviewAnswers: {
@@ -110,21 +108,23 @@ export const CardNewReview = ({ grant }: { grant: IGrantResponse | undefined }) 
             `${RAILWAY_BACKEND}/api/v1/reviews`,
             newPreReview,
           );
-          console.log("createPreReview", createPreReview);
+
+          return true;
         } catch (error) {
           console.error("Error posting review:", error);
           toast.error("Error submitting review. Try again.");
-          return;
+
+          return false;
         }
       }
     } else {
       toast.error("Validation failed.");
+      return false;
     }
   };
 
   /**
    * Handles the submission of a review to submitAttest.
-   *
    */
   const handleSubmitReview = async () => {
     if (!address) {
@@ -156,13 +156,27 @@ export const CardNewReview = ({ grant }: { grant: IGrantResponse | undefined }) 
     // Encode the data
     const abiCoder = new AbiCoder();
     console.log("Badge scores being encoded:", badgeScores);
-    const encodedData = abiCoder.encode(
-      ["bytes32", "bytes32[]", "uint8[]", "uint32"],
-      [grantUID, activeBadgeIds, badgeScores, programUID],
-    );
-    console.log("Encoded data:", encodedData);
 
-    await handleSubmitAnswersReview();
+    let encodedData;
+    const programUIDisNumber = Number.isNaN(Number(programUID));
+
+    if (programUIDisNumber) {
+      encodedData = abiCoder.encode(
+        ["bytes32", "bytes32[]", "uint8[]", "uint32"],
+        [grantUID, activeBadgeIds, badgeScores, programUID],
+      );
+    } else {
+      encodedData = abiCoder.encode(
+        ["bytes32", "bytes32[]", "uint8[]", "bytes32"],
+        [grantUID, activeBadgeIds, badgeScores, programUID],
+      );
+    }
+
+    const couldSubmitForms = await handleSubmitAnswersReview();
+
+    if (!couldSubmitForms) {
+      return;
+    }
 
     const response = await submitAttest(
       address,
