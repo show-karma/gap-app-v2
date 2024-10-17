@@ -30,6 +30,7 @@ import { useForm, Controller } from "react-hook-form";
 import { CheckIcon } from "@heroicons/react/24/solid";
 import axios from "axios";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { switchChain } from "@wagmi/core";
 
 export const CardNewReview = ({ grant }: { grant: IGrantResponse | undefined }) => {
   const { control, handleSubmit, getValues, trigger } = useForm();
@@ -102,7 +103,6 @@ export const CardNewReview = ({ grant }: { grant: IGrantResponse | undefined }) 
           grantId: grantUID,
           programId: programUID,
         };
-
         try {
           const createPreReview = await axios.post(
             `${RAILWAY_BACKEND}/api/v1/reviews`,
@@ -139,7 +139,7 @@ export const CardNewReview = ({ grant }: { grant: IGrantResponse | undefined }) 
 
     if (chainId != arbitrum.id) {
       toast.error("Must connect to Arbitrum to review");
-      await walletClient.switchChain({ id: arbitrum.id });
+      await switchChain(config, { chainId: arbitrum.id });
       return;
     }
 
