@@ -6,6 +6,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import toast from "react-hot-toast";
 import { TrashIcon } from "@heroicons/react/24/outline";
+import { useQueries } from "@tanstack/react-query";
 
 export default function ExternalIds({
   projectUID,
@@ -93,6 +94,13 @@ export default function ExternalIds({
       return [];
     }
   }
+  const externalIdQueries = useQueries({
+    queries: externalIds.map((externalId) => ({
+      queryKey: ["applicationUrls", externalId],
+      queryFn: () => fetchApplicationsByProjectId(externalId),
+      enabled: !!externalId,
+    })),
+  });
 
   useEffect(() => {
     const fetchAllUrls = async () => {
