@@ -266,17 +266,33 @@ export const CardReviewSummary = () => {
         </div>
         <div className="flex lg:justify-end justify-center">
           <div className="flex gap-1.5 items-start justify-center flex-col-reverse">
-            {ratingData.map(({ countOfReviews, percentageComparedToAllTheReviews }, index) => (
-              <div className="flex gap-2 items-center" key={index}>
-                <p className="dark:text-white text-sm font-bold font-['Open Sans'] leading-tight">
-                  {index + 1}
-                </p>
-                <ProgressBar actualPercentage={percentageComparedToAllTheReviews} />
-                <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
-                  {countOfReviews ? percentageComparedToAllTheReviews.toFixed(0) : "0"}%
-                </p>
+            {ratingData && ratingData.length ? (
+              ratingData.map(({ countOfReviews, percentageComparedToAllTheReviews }, index) => (
+                <div className="flex gap-2 items-center" key={index}>
+                  <p className="dark:text-white text-sm font-bold font-['Open Sans'] leading-tight">
+                    {index + 1}
+                  </p>
+                  <ProgressBar actualPercentage={percentageComparedToAllTheReviews} />
+                  <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
+                    {countOfReviews ? percentageComparedToAllTheReviews.toFixed(0) : "0"}%
+                  </p>
+                </div>
+              ))
+            ) : (
+              <div className="flex gap-1.5 items-start justify-center flex-col-reverse">
+                {Object.values(SupportedRatings).map((rating) => (
+                  <div className="flex gap-2 items-center" key={rating}>
+                    <p className="dark:text-white text-sm font-bold font-['Open Sans'] leading-tight">
+                      {rating}
+                    </p>
+                    <ProgressBar actualPercentage={0} />
+                    <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
+                      0%
+                    </p>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>
