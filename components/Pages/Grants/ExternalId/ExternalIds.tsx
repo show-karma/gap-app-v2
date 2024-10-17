@@ -111,59 +111,63 @@ export default function ExternalIds({
 
   return (
     <div>
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">External IDs</h1>
         <AddExternalId projectUID={projectUID} communityUID={communityUID} />
       </div>
-      <table className="border-x border-x-zinc-300 border-y border-y-zinc-300 w-full table-fixed">
-        <thead className="border-x border-x-zinc-300 border-y border-y-zinc-300">
-          <tr className="divide-x">
-            <th className="px-4 py-2 w-5/12">External ID</th>
-            <th className="px-4 py-2 w-1/2">Gitcoin Profile</th>
-            <th className="px-4 py-2 w-1/12">Action</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-x">
-          {externalIds.map((externalId) => (
-            <tr key={externalId} className="divide-x">
-              <td className="px-4 py-2 text-center break-all">{externalId}</td>
-              <td className="px-4 py-2 text-center">
-                {gitcoinUrls[externalId]
-                  ? gitcoinUrls[externalId].map((url, index) => (
-                      <div key={index} className="truncate">
-                        <Link
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-blue-500 hover:underline"
-                          title={url}
-                        >
-                          {url}
-                        </Link>
-                      </div>
-                    ))
-                  : "Loading..."}
-              </td>
-              <td className="px-4 py-2 text-center text-sm md:text-lg">
-                <button
-                  onClick={() => handleRemove(externalId)}
-                  className="text-red-500 hover:text-red-700 disabled:opacity-50"
-                  disabled={removingId === externalId}
-                >
-                  {removingId === externalId ? (
-                    <div className="inline-block w-5 h-5 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <TrashIcon className="w-5 h-5" />
-                      <span className="hidden md:inline">Remove</span>
-                    </div>
-                  )}
-                </button>
-              </td>
+      <div className="overflow-x-auto">
+        <table className="min-w-full border-x border-x-zinc-300 border-y border-y-zinc-300">
+          <thead className="border-x border-x-zinc-300 border-y border-y-zinc-300">
+            <tr className="divide-x">
+              <th className="px-4 py-2 whitespace-nowrap">External ID</th>
+              <th className="px-4 py-2 whitespace-nowrap">Gitcoin Profile</th>
+              <th className="px-4 py-2 whitespace-nowrap">Action</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-x">
+            {externalIds.map((externalId) => (
+              <tr key={externalId} className="divide-x">
+                <td className="px-4 py-2 text-center break-all">
+                  {externalId}
+                </td>
+                <td className="px-4 py-2 text-center">
+                  {gitcoinUrls[externalId]
+                    ? gitcoinUrls[externalId].map((url, index) => (
+                        <div key={index}>
+                          <Link
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-500 hover:underline"
+                            title={url}
+                          >
+                            {url}
+                          </Link>
+                        </div>
+                      ))
+                    : "Loading..."}
+                </td>
+                <td className="px-4 py-2 text-center whitespace-nowrap">
+                  <button
+                    onClick={() => handleRemove(externalId)}
+                    className="text-red-500 hover:text-red-700 disabled:opacity-50"
+                    disabled={removingId === externalId}
+                  >
+                    {removingId === externalId ? (
+                      <div className="inline-block w-5 h-5 border-2 border-red-500 border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <TrashIcon className="w-5 h-5" />
+                        <span>Remove</span>
+                      </div>
+                    )}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
