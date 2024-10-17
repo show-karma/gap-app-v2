@@ -98,7 +98,10 @@ export const NewProjectsPage = () => {
                     Sort by
                   </Listbox.Label>
                   <div className="relative flex-1 w-60">
-                    <Listbox.Button className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left  dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 text-gray-900   ring-1 ring-inset ring-gray-300 sm:text-sm sm:leading-6">
+                    <Listbox.Button
+                      id="sort-by-button"
+                      className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left  dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 text-gray-900   ring-1 ring-inset ring-gray-300 sm:text-sm sm:leading-6"
+                    >
                       <span className="block truncate">
                         {sortOptions[selectedSort as SortByOptions]}
                       </span>

@@ -18,10 +18,11 @@ const config: Config = {
 
   // Indicates which provider should be used to instrument code for coverage
   coverageProvider: "v8",
-
+  collectCoverageFrom: ["components/**/*.{ts,tsx}"],
+  moduleDirectories: ["node_modules", "<rootDir>"],
   // The test environment that will be used for testing
-  testEnvironment: "jsdom",
-
+  // testEnvironment: "jsdom",
+  testEnvironment: "jest-environment-jsdom",
   moduleNameMapper: {
     "^@/app/(.*)$": "<rootDir>/app/$1",
     "^@/components/(.*)$": "<rootDir>/components/$1",
@@ -32,6 +33,14 @@ const config: Config = {
     "^@/types/(.*)$": "<rootDir>/types/$1",
     "^@/utilities/(.*)$": "<rootDir>/utilities/$1",
   },
+  transformIgnorePatterns: [
+    "/node_modules/",
+    "!node_modules/",
+    "/node_modules/(?!@show-karma/karma-gap-sdk)",
+  ],
+  globalSetup: "./tests/global.js",
+  setupFilesAfterEnv: ["./tests/setup.js"],
+  testMatch: ["**/?(*.)+(spec|test).[jt]s?(x)"],
 };
 
 const createJestConfig = nextJest({

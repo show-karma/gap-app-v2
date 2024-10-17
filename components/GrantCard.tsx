@@ -59,6 +59,7 @@ export const GrantCard = ({ rawGrant, index }: GrantCardProps) => {
   const grant = rawGrant as unknown as GrantMongo;
   return (
     <a
+      id="grant-card"
       href={PAGES.PROJECT.GRANT(
         grant.project?.details?.data?.slug || grant.refUID || "",
         grant.uid

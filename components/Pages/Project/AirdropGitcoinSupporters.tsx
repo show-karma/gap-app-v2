@@ -433,7 +433,6 @@ type FormData = z.infer<typeof schema>;
 
 export const GitcoinAirdropsManager = () => {
   const itemsPerPage = 10;
-
   const [projectURL, setProjectURL] = useState("");
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
