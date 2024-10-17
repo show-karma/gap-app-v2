@@ -24,8 +24,6 @@ describe("Explore Projects Page", () => {
         .map((_, el) => Cypress.$(el).find("p").first().text())
         .get();
 
-      console.log(initialTitles);
-
       // Change the sort option
       cy.get("#sort-by-button").click({
         force: true,

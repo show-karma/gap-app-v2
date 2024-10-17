@@ -330,6 +330,7 @@ export const GrantsLayout = ({ children, project }: GrantsLayoutProps) => {
                 {navigation.map((item) => (
                   <li key={item.uid}>
                     <Link
+                      id="project-grant"
                       href={PAGES.PROJECT.GRANT(
                         project.details?.data.slug || project?.uid || "",
                         item.uid
@@ -436,6 +437,7 @@ export const GrantsLayout = ({ children, project }: GrantsLayoutProps) => {
                       grant?.uid as string,
                       tab.tabName === "overview" ? "" : tab.tabName
                     )}
+                    id={`tab-${tab.tabName}`}
                     className={cn(
                       screen === tab.tabName ||
                         (tab.tabName === "overview" && !screen)

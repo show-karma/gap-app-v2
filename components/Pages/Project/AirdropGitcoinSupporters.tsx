@@ -532,6 +532,7 @@ export const GitcoinAirdropsManager = () => {
           )}
           <button
             type="submit"
+            id="fetch-button"
             className={`w-fit border-2 border-blue-500 bg-blue-500 text-white hover:bg-blue-600 transition-colors duration-200 flex items-center gap-2 px-6 py-3 rounded-md mt-4 font-medium`}
             disabled={loading}
           >

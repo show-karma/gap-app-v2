@@ -75,10 +75,16 @@ export const GrantCard = ({ rawGrant, index }: GrantCardProps) => {
         />
 
         <div className="flex w-full flex-col px-3">
-          <p className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200  max-2xl:text-sm mr-1">
+          <p
+            id="grant-project-title"
+            className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200  max-2xl:text-sm mr-1"
+          >
             {grant.project?.details?.data?.title || grant.uid}
           </p>
-          <p className="line-clamp-1 break-all text-sm font-semibold text-gray-500 dark:text-zinc-300 max-2xl:text-[13px]">
+          <p
+            id="grant-title"
+            className="line-clamp-1 break-all text-sm font-semibold text-gray-500 dark:text-zinc-300 max-2xl:text-[13px]"
+          >
             {grant.details?.data.title}
           </p>
           <p className="mb-2 text-sm font-medium text-gray-400  dark:text-zinc-400  max-2xl:text-[13px]">

@@ -246,6 +246,7 @@ export const ProgramsExplorer = () => {
             <p className="text-black dark:text-white font-semibold">Status</p>
             <button
               onClick={() => setStatus("")}
+              id={`status-all`}
               key={"All"}
               className={`px-3 py-1 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${
                 status === ""
@@ -257,6 +258,7 @@ export const ProgramsExplorer = () => {
             </button>
             {statuses.map((type) => (
               <button
+                id={`status-${type.toLowerCase()}`}
                 onClick={() => setStatus(type)}
                 key={type}
                 className={`px-3 py-1 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${
@@ -286,7 +288,7 @@ export const ProgramsExplorer = () => {
                   />
                 </div>
                 <input
-                  id="search"
+                  id="search-programs"
                   name="search"
                   className="block w-full rounded-full border-0 bg-white dark:bg-zinc-600 py-1.5 pr-10 pl-3 text-black dark:text-white dark:placeholder:text-zinc-100  placeholder:text-zinc-900  sm:text-sm sm:leading-6"
                   placeholder="Search"
@@ -316,6 +318,7 @@ export const ProgramsExplorer = () => {
                 type={"Networks"}
                 selected={selectedNetworks}
                 imageDictionary={registryHelper.networkImages}
+                id="networks-dropdown"
               />
               <SearchDropdown
                 list={registryHelper.ecosystems}
@@ -328,6 +331,7 @@ export const ProgramsExplorer = () => {
                 type={"Ecosystems"}
                 selected={selectedEcosystems}
                 // imageDictionary={}
+                id="ecosystems-dropdown"
               />
               <SearchDropdown
                 list={registryHelper.grantTypes}
@@ -340,6 +344,7 @@ export const ProgramsExplorer = () => {
                 type={"Funding Mechanisms"}
                 selected={selectedGrantTypes}
                 // imageDictionary={}
+                id="funding-mechanisms-dropdown"
               />
             </div>
           </div>
