@@ -6,7 +6,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import toast from "react-hot-toast";
 import { TrashIcon } from "@heroicons/react/24/outline";
-import { useQueries } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 
 export default function ExternalIds({
   projectUID,
@@ -18,10 +18,6 @@ export default function ExternalIds({
   externalIds: string[];
 }) {
   // Mock data
-
-  const [gitcoinUrls, setGitcoinUrls] = useState<{ [key: string]: string[] }>(
-    {}
-  );
 
   const [removingId, setRemovingId] = useState<string | null>(null);
 
@@ -94,16 +90,10 @@ export default function ExternalIds({
       return [];
     }
   }
-  const externalIdQueries = useQueries({
-    queries: externalIds.map((externalId) => ({
-      queryKey: ["applicationUrls", externalId],
-      queryFn: () => fetchApplicationsByProjectId(externalId),
-      enabled: !!externalId,
-    })),
-  });
 
-  useEffect(() => {
-    const fetchAllUrls = async () => {
+  const { data: gitcoinUrls, isLoading } = useQuery({
+    queryKey: ["applicationUrls", externalIds],
+    queryFn: async () => {
       const urls: { [key: string]: string[] } = {};
       for (const externalId of externalIds) {
         const applicationUrls = await fetchApplicationsByProjectId(externalId);
@@ -111,11 +101,10 @@ export default function ExternalIds({
           urls[externalId] = applicationUrls;
         }
       }
-      setGitcoinUrls(urls);
-    };
-
-    fetchAllUrls();
-  }, [externalIds]);
+      return urls;
+    },
+    enabled: externalIds.length > 0,
+  });
 
   return (
     <div>
@@ -139,7 +128,9 @@ export default function ExternalIds({
                   {externalId}
                 </td>
                 <td className="px-4 py-2 text-center">
-                  {gitcoinUrls[externalId]
+                  {isLoading
+                    ? "Loading..."
+                    : gitcoinUrls && gitcoinUrls[externalId]
                     ? gitcoinUrls[externalId].map((url, index) => (
                         <div key={index}>
                           <Link
@@ -153,7 +144,7 @@ export default function ExternalIds({
                           </Link>
                         </div>
                       ))
-                    : "Loading..."}
+                    : "No data available"}
                 </td>
                 <td className="px-4 py-2 text-center whitespace-nowrap">
                   <button
