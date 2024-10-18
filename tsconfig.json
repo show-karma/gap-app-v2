@@ -35,5 +35,11 @@
     "components/Utilities/ChildrenBlur.jsx",
     ".next/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "./cypress.config.ts"]
+  "exclude": [
+    "node_modules",
+    "./cypress.config.ts",
+    "node_modules",
+    "**/*.cy.ts",
+    "**/*.cy.tsx"
+  ]
 }
