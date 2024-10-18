@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { FC, Fragment, ReactNode, useEffect, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-
+import * as Tooltip from "@radix-ui/react-tooltip";
 import { Button } from "@/components/Utilities/Button";
 import toast from "react-hot-toast";
 import { keccak256, toHex } from "viem";
@@ -14,12 +14,15 @@ import { INDEXER } from "@/utilities/indexer";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useQuery } from "@tanstack/react-query";
 import {
+  ArrowPathIcon,
   CheckIcon,
   ClipboardDocumentIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { queryClient } from "@/components/Utilities/WagmiProvider";
+import { envVars } from "@/utilities/enviromentVars";
+import { Spinner } from "@/components/Utilities/Spinner";
 
 type InviteMemberDialogProps = {};
 
@@ -79,7 +82,6 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
         }
       );
       if (error) throw error;
-      toast.success("Invite code generated successfully");
       queryClient.invalidateQueries({ queryKey: ["invite-code"] });
     } catch (e) {
       errorManager("Failed to generate code to invite members", e);
@@ -105,8 +107,13 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
     }
   };
 
-  const urlToCode = `https://gap-app-v2-git-feat-team-member-karma-devs.vercel.app
-/project/${project?.details?.data.slug || project?.uid}/?invite-code=${code}`;
+  const urlToCode = `https://${
+    envVars.isDev
+      ? "gap-app-v2-git-feat-team-member-karma-devs.vercel.app"
+      : "gap.karmahq.xyz"
+  }/project/${
+    project?.details?.data.slug || project?.uid
+  }/?invite-code=${code}`;
 
   useEffect(() => {
     if (isSuccess && !data && isOpen) {
@@ -123,7 +130,7 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
           "flex items-center gap-x-1 rounded-md bg-primary-500 dark:bg-primary-900/50 px-3 py-2 text-base font-semibold text-white dark:text-zinc-100  hover:bg-primary-600 dark:hover:bg-primary-900 text-center justify-center"
         }
       >
-        Add new member
+        Add Team Member
       </Button>
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeModal}>
@@ -157,72 +164,90 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
                   >
                     Invite team member to your project
                   </Dialog.Title>
-                  <div className="flex flex-col gap-2 mt-8">
+                  <div className="flex flex-col gap-2 mt-8 h-full">
                     {code ? (
-                      <div className="flex flex-col gap-2">
+                      <div className="flex flex-col gap-2 h-full">
                         <p className="text-zinc-800 dark:text-zinc-100">
-                          Please share your invite link with a team member.
+                          Share this invite link with your team mate to join
+                          your project.
                         </p>
-                        <div className=" items-center flex flex-row gap-0 h-16">
-                          <button
-                            className="text-zinc-800 dark:text-zinc-100 w-full h-max bg-zinc-100 dark:bg-zinc-900 p-2 rounded-l-md text-wrap break-all text-left"
+                        <div className=" items-center flex flex-row gap-2 h-max max-h-40">
+                          <Button
+                            className="text-zinc-800 font-normal hover:opacity-75 dark:text-zinc-100 w-full h-full bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 p-2 rounded-md text-wrap break-all text-left"
                             onClick={() => {
                               copyToClipboard(urlToCode);
                               setIsCopied(true);
                             }}
                           >
-                            {code}
-                          </button>
-
-                          <button
-                            className="text-zinc-600 p-2 hover:opacity-75 bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-100 h-full"
-                            onClick={() => {
-                              copyToClipboard(urlToCode);
-                              setIsCopied(true);
-                            }}
-                          >
-                            {isCopied ? (
-                              <CheckIcon className="w-6 h-6" />
-                            ) : (
-                              <ClipboardDocumentIcon className="w-6 h-6" />
-                            )}
-                          </button>
-                          <button
-                            className=" text-red-900 bg-red-200 dark:text-red-200 dark:bg-red-900 p-2 hover:opacity-75 rounded-r-md h-full"
-                            onClick={() => {
-                              setIsCopied(false);
-                              revokeCode();
-                            }}
-                          >
-                            <TrashIcon className="w-6 h-6" />
-                          </button>
+                            {urlToCode}
+                          </Button>
+                          <div className="flex flex-row gap-0 h-full">
+                            <Tooltip.Provider>
+                              <Tooltip.Root delayDuration={0}>
+                                <Tooltip.Trigger asChild>
+                                  <div className="flex w-max h-max">
+                                    <Button
+                                      className="text-zinc-600 p-2 hover:opacity-75 bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-100 hover:bg-zinc-300 dark:hover:bg-zinc-600 h-full rounded-l-md rounded-r-none"
+                                      onClick={() => {
+                                        copyToClipboard(urlToCode);
+                                        setIsCopied(true);
+                                      }}
+                                    >
+                                      {isCopied ? (
+                                        <CheckIcon className="w-6 h-6" />
+                                      ) : (
+                                        <ClipboardDocumentIcon className="w-6 h-6" />
+                                      )}
+                                    </Button>
+                                  </div>
+                                </Tooltip.Trigger>
+                                <Tooltip.Portal>
+                                  <Tooltip.Content
+                                    className="TooltipContent bg-brand-darkblue rounded-lg text-white p-3 max-w-[360px] z-[1000]"
+                                    sideOffset={5}
+                                    side="top"
+                                  >
+                                    <p>Copy to clipboard</p>
+                                  </Tooltip.Content>
+                                </Tooltip.Portal>
+                              </Tooltip.Root>
+                            </Tooltip.Provider>
+                            <Tooltip.Provider>
+                              <Tooltip.Root delayDuration={0}>
+                                <Tooltip.Trigger asChild>
+                                  <div className="flex w-max h-max">
+                                    <Button
+                                      className=" text-blue-900 bg-blue-200 dark:text-blue-200 dark:bg-blue-900 p-2 hover:opacity-75 hover:bg-blue-300 dark:hover:bg-blue-800 rounded-r-md rounded-l-none h-full"
+                                      onClick={() => {
+                                        setIsCopied(false);
+                                        revokeCode();
+                                      }}
+                                    >
+                                      <ArrowPathIcon className="w-6 h-6" />
+                                    </Button>
+                                  </div>
+                                </Tooltip.Trigger>
+                                <Tooltip.Portal>
+                                  <Tooltip.Content
+                                    className="TooltipContent bg-brand-darkblue rounded-lg text-white p-3 max-w-[360px] z-[1000]"
+                                    sideOffset={5}
+                                    side="top"
+                                  >
+                                    <p>Generate a new code</p>
+                                  </Tooltip.Content>
+                                </Tooltip.Portal>
+                              </Tooltip.Root>
+                            </Tooltip.Provider>
+                          </div>
                         </div>
                       </div>
                     ) : isLoading ? (
                       <p className="text-black dark:text-zinc-200 text-base">
-                        To generate the code, please sign the message.
+                        Generating code...
                       </p>
                     ) : (
-                      <p className="text-black dark:text-zinc-200 text-base">
-                        Seems like you don&apos;t have a code yet.
-                      </p>
+                      <Spinner />
                     )}
-                  </div>
-                  <div className="flex flex-row gap-4 mt-10 justify-end">
-                    <Button
-                      className="text-zinc-900 text-base bg-transparent border-black border dark:text-zinc-100  dark:border-zinc-100 hover:bg-white hover:text-black disabled:hover:bg-transparent disabled:hover:text-zinc-900"
-                      onClick={closeModal}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      className="justify-center items-center flex text-center text-base"
-                      onClick={generateCode}
-                      disabled={isLoading}
-                      isLoading={isLoading}
-                    >
-                      {code ? "Generate new code" : "Generate code"}
-                    </Button>
                   </div>
                 </Dialog.Panel>
               </Transition.Child>

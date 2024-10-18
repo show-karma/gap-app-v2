@@ -213,11 +213,11 @@ export const ContributorProfileDialog: FC<
       setValue("linkedin", profile?.data?.linkedin, {
         shouldValidate: true,
       });
-      setValue("name", profile?.data?.name || "", {
-        shouldValidate: true,
-      });
       setValue("twitter", profile?.data?.twitter, {
         shouldValidate: true,
+      });
+      setValue("name", profile?.data?.name || "", {
+        shouldValidate: !!profile?.data?.name,
       });
     };
     fetchProfile();
@@ -296,8 +296,8 @@ export const ContributorProfileDialog: FC<
                         </label>
                         <textarea
                           id="aboutMe"
-                          className={inputStyle}
-                          placeholder="Ex: I am a web3 developer"
+                          className={cn(inputStyle, "min-h-32")}
+                          placeholder="Ex: I'm a software developer with 8 years of experience. I have been building in blockchain space for 3 years. I am proficient in NodeJS, Typescript and React."
                           {...register("aboutMe")}
                         />
                         <p className="text-base text-red-400">
@@ -360,8 +360,8 @@ export const ContributorProfileDialog: FC<
                   <div className="flex flex-col gap-2 justify-center items-start mt-8">
                     <p className="text-base text-zinc-900 dark:text-zinc-100 text-left w-full">
                       {isEditing
-                        ? "To update your profile, you need to login first."
-                        : "To accept this invite, you need to login first."}
+                        ? "Login with your wallet to edit your profile."
+                        : `The owner of the project ${project?.details?.data.title} has requested you to join their team on Karma GAP.  Login with your wallet to complete your profile and join the team.`}
                     </p>
                     <Button
                       type="button"
