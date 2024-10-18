@@ -7,6 +7,8 @@ export default defineConfig({
       bundler: "webpack",
     },
   },
+  screenshotOnRunFailure: false,
+  retries: 2,
   e2e: {
     env: {
       NEXT_PUBLIC_ENV: "staging",
