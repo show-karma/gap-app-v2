@@ -167,13 +167,12 @@ export function SearchGrantProgram({
     (async () => {
       setIsLoading(true);
       const [result, error] = await fetchData(
-        INDEXER.REGISTRY.GET_ALL +
-          `?limit=1000&withTrackedProjects=false&withProgramAdmins=false`
+        INDEXER.COMMUNITY.PROGRAMS(communityUID)
       );
       if (error) {
         console.log(error);
       }
-      const sortedAlphabetically = result.programs.sort(
+      const sortedAlphabetically = result.sort(
         (a: GrantProgram, b: GrantProgram) => {
           const aTitle = a.metadata?.title || "";
           const bTitle = b.metadata?.title || "";
@@ -185,7 +184,7 @@ export function SearchGrantProgram({
       setAllPrograms(sortedAlphabetically);
       setIsLoading(false);
     })();
-  }, []);
+  }, [communityUID]);
 
   return (
     <div className="w-full max-w-[400px]">
@@ -563,10 +562,10 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     }[] =
       data?.questions && data?.questions?.length > 0
         ? data?.questions?.map((item) => ({
-            type: item.type,
-            query: item.query,
-            explanation: item.explanation || "",
-          }))
+          type: item.type,
+          query: item.query,
+          explanation: item.explanation || "",
+        }))
         : [];
 
     const milestonesData = milestones.map((item) => item.data);
@@ -719,14 +718,14 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             href={
               grantToEdit
                 ? PAGES.PROJECT.GRANT(
-                    (selectedProject?.details?.data?.slug ||
-                      selectedProject?.uid) as string,
-                    grantToEdit?.uid as string
-                  )
+                  (selectedProject?.details?.data?.slug ||
+                    selectedProject?.uid) as string,
+                  grantToEdit?.uid as string
+                )
                 : PAGES.PROJECT.GRANTS(
-                    (selectedProject?.details?.data?.slug ||
-                      selectedProject?.uid) as string
-                  )
+                  (selectedProject?.details?.data?.slug ||
+                    selectedProject?.uid) as string
+                )
             }
             className="bg-transparent px-1 hover:bg-transparent hover:opacity-75 text-black dark:text-zinc-100"
           >
@@ -753,7 +752,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           </div>
           <div className="flex w-full flex-col">
             <label htmlFor="grant-title" className={`${labelStyle} mb-1`}>
-              Grant title*
+              Choose Grant Program or Add New*
             </label>
             <SearchGrantProgram
               grantToEdit={grantToEdit}

@@ -7,7 +7,7 @@ import {
   CommandInput,
   CommandItem,
 } from "cmdk";
-import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid";
+import { CheckIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
 import { cn } from "@/utilities/tailwind";
 import { ChevronDown } from "@/components/Icons/ChevronDown";
@@ -57,11 +57,11 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
     {
       value: string;
       image:
-        | {
-            light: string;
-            dark: string;
-          }
-        | undefined;
+      | {
+        light: string;
+        dark: string;
+      }
+      | undefined;
     }[]
   >([]);
 
@@ -73,14 +73,14 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
 
     const sortedList = shouldSort
       ? parsedArray.sort((a, b) => {
-          if (a.value < b.value) {
-            return -1;
-          }
-          if (a.value > b.value) {
-            return 1;
-          }
-          return 0;
-        })
+        if (a.value < b.value) {
+          return -1;
+        }
+        if (a.value > b.value) {
+          return 1;
+        }
+        return 0;
+      })
       : parsedArray;
     setOrderedList(sortedList);
   }, []);
@@ -128,9 +128,9 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
           <p className="block w-max">
             {selected.length
               ? `${selected.length} ${pluralize(
-                  type,
-                  selected.length
-                ).toLowerCase()} selected`
+                type,
+                selected.length
+              ).toLowerCase()} selected`
               : `${prefixUnselected} ${type}`}
           </p>
           <span>

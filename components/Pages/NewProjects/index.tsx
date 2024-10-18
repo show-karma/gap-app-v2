@@ -1,44 +1,43 @@
 "use client";
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { AutoSizer, Grid } from "react-virtualized";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { ProjectFromList } from "@/types/project";
-import { Fragment, useState } from "react";
+import { FC, Fragment } from "react";
 import { ProjectCard } from "./ProjectCard";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { PageInfo } from "@/types/pagination";
 import { ProjectCardListSkeleton } from "./Loading";
-import { Spinner } from "@/components/Utilities/Spinner";
 import { Listbox, Transition } from "@headlessui/react";
 import { useQueryState } from "nuqs";
-import {
-  ArrowDownIcon,
-  ArrowUpIcon,
-  ChevronDownIcon,
-  ChevronUpDownIcon,
-  ChevronUpIcon,
-} from "@heroicons/react/24/solid";
+import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/solid";
 import { cn } from "@/utilities/tailwind";
 import { CheckIcon } from "@heroicons/react/20/solid";
 import { queryClient } from "@/components/Utilities/WagmiProvider";
-import { SortByOptions, sortOptions, SortOrder } from "@/types/newProjects";
-import { getNewProjects } from "@/utilities/indexer/getNewProjects";
+import { ExplorerSortByOptions, ExplorerSortOrder } from "@/types/explorer";
+import { getExplorerProjects } from "@/utilities/indexer/getExplorerProjects";
+
+const sortOptions: Record<ExplorerSortByOptions, string> = {
+  createdAt: "Recently Added",
+  updatedAt: "Recently Updated",
+  title: "Title",
+  noOfGrants: "No. of Grants",
+  noOfProjectMilestones: "No. of Roadmap items",
+  noOfGrantMilestones: "No. of Milestones",
+};
 
 export const NewProjectsPage = () => {
   const [selectedSort, changeSortQuery] = useQueryState("sortBy", {
     defaultValue: "updatedAt",
     serialize: (value) => value,
     parse: (value) =>
-      value ? (value as SortByOptions) : ("updatedAt" as SortByOptions),
+      value
+        ? (value as ExplorerSortByOptions)
+        : ("updatedAt" as ExplorerSortByOptions),
   });
   const [selectedSortOrder, changeSortOrderQuery] = useQueryState("sortOrder", {
     defaultValue: "desc",
     serialize: (value) => value,
-    parse: (value) => (value ? (value as SortOrder) : ("desc" as SortOrder)),
+    parse: (value) =>
+      value ? (value as ExplorerSortOrder) : ("desc" as ExplorerSortOrder),
   });
-
   const {
     data,
     isFetching,
@@ -49,21 +48,20 @@ export const NewProjectsPage = () => {
   } = useInfiniteQuery({
     queryKey: ["new-projects"],
     queryFn: (ctx) =>
-      getNewProjects(
+      getExplorerProjects(
         12,
         ctx.pageParam,
-        selectedSort as SortByOptions,
-        selectedSortOrder as SortOrder
+        selectedSort as ExplorerSortByOptions,
+        selectedSortOrder as ExplorerSortOrder
       ),
     getNextPageParam: (lastGroup) => lastGroup.nextOffset,
     initialPageParam: 0,
   });
-
   const projects = data?.pages.flatMap((page) => page.projects);
 
   const commonWidth = 359;
 
-  const changeSort = async (newValue: SortByOptions) => {
+  const changeSort = async (newValue: ExplorerSortByOptions) => {
     if (newValue === selectedSort) {
       changeSortOrderQuery(selectedSortOrder === "asc" ? "desc" : "asc");
     } else {
@@ -89,7 +87,7 @@ export const NewProjectsPage = () => {
             <Listbox
               value={selectedSort}
               onChange={(value) => {
-                changeSort(value as SortByOptions);
+                changeSort(value as ExplorerSortByOptions);
               }}
             >
               {({ open }) => (
@@ -103,7 +101,7 @@ export const NewProjectsPage = () => {
                       className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left  dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 text-gray-900   ring-1 ring-inset ring-gray-300 sm:text-sm sm:leading-6"
                     >
                       <span className="block truncate">
-                        {sortOptions[selectedSort as SortByOptions]}
+                        {sortOptions[selectedSort as ExplorerSortByOptions]}
                       </span>
                       <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                         {selectedSortOrder === "asc" ? (
@@ -143,7 +141,11 @@ export const NewProjectsPage = () => {
                                     "block truncate"
                                   )}
                                 >
-                                  {sortOptions[sortOption as SortByOptions]}
+                                  {
+                                    sortOptions[
+                                      sortOption as ExplorerSortByOptions
+                                    ]
+                                  }
                                 </span>
 
                                 {selected ? (
