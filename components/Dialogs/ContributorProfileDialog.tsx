@@ -25,15 +25,34 @@ import { useStepper } from "@/store/modals/txStepper";
 import { useAuthStore } from "@/store/auth";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
+import { urlRegex } from "@/utilities/regexs/urlRegex";
 
 type ContributorProfileDialogProps = {};
 
 const profileSchema = z.object({
   name: z.string().min(3, { message: "This name is too short" }),
   aboutMe: z.string().optional(),
-  github: z.string().optional(),
-  twitter: z.string().optional(),
-  linkedin: z.string().optional(),
+  github: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: "Please enter a valid URL",
+    })
+    .optional()
+    .or(z.literal("")),
+  twitter: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: "Please enter a valid URL",
+    })
+    .optional()
+    .or(z.literal("")),
+  linkedin: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: "Please enter a valid URL",
+    })
+    .optional()
+    .or(z.literal("")),
 });
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";

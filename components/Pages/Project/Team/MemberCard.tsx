@@ -73,9 +73,10 @@ export const MemberCard = ({ member }: { member: string }) => {
                 href={
                   profile?.data.twitter.includes("http")
                     ? profile?.data.twitter
-                    : profile?.data.twitter.includes("twitter.com")
+                    : profile?.data.twitter.includes("twitter.com") ||
+                      profile?.data.twitter.includes("x.com")
                     ? `https://${profile?.data.twitter}`
-                    : `https://twitter.com/${profile?.data.twitter}`
+                    : `https://x.com/${profile?.data.twitter}`
                 }
                 className="w-max "
               >

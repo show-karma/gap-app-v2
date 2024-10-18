@@ -18,9 +18,10 @@ interface MemberDialogProps {
 }
 
 const iconsClassnames = {
-  light: "text-black dark:text-white dark:hidden",
-  dark: "text-black dark:text-white hidden dark:block",
-  general: "w-6 h-6 text-black dark:text-white",
+  light: "text-black dark:text-white dark:hidden ",
+  dark: "text-black dark:text-white hidden dark:block ",
+  general:
+    "w-6 h-6 text-black dark:text-white  hover:text-zinc-400 dark:hover:text-zinc-400",
 };
 
 export const MemberDialog: FC<MemberDialogProps> = ({
@@ -91,7 +92,11 @@ export const MemberDialog: FC<MemberDialogProps> = ({
                             href={
                               profile?.data.twitter.includes("http")
                                 ? profile?.data.twitter
-                                : `https://twitter.com/${profile?.data.twitter}`
+                                : profile?.data.twitter.includes(
+                                    "twitter.com"
+                                  ) || profile?.data.twitter.includes("x.com")
+                                ? `https://${profile?.data.twitter}`
+                                : `https://x.com/${profile?.data.twitter}`
                             }
                             className="w-max"
                           >
@@ -103,6 +108,8 @@ export const MemberDialog: FC<MemberDialogProps> = ({
                             href={
                               profile?.data.github.includes("http")
                                 ? profile?.data.github
+                                : profile?.data.github.includes("github.com")
+                                ? `https://${profile?.data.github}`
                                 : `https://github.com/${profile?.data.github}`
                             }
                             className="w-max"
@@ -115,6 +122,10 @@ export const MemberDialog: FC<MemberDialogProps> = ({
                             href={
                               profile?.data.linkedin.includes("http")
                                 ? profile?.data.linkedin
+                                : profile?.data.linkedin.includes(
+                                    "linkedin.com"
+                                  )
+                                ? `https://${profile?.data.linkedin}`
                                 : `https://linkedin.com/in/${profile?.data.linkedin}`
                             }
                             className="w-max"
