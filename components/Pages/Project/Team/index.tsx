@@ -1,6 +1,6 @@
 "use client";
 
-import { useProjectStore } from "@/store";
+import { useOwnerStore, useProjectStore } from "@/store";
 import { MemberCard } from "./MemberCard";
 import { ContributorProfileDialog } from "@/components/Dialogs/ContributorProfileDialog";
 import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember";
@@ -18,6 +18,10 @@ export const Team = () => {
       )
     : [];
 
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
+  const isAuthorized = isProjectOwner || isContractOwner;
+
   return (
     <div className="pt-5 pb-20 flex flex-col items-start gap-4">
       <ContributorProfileDialog />
@@ -25,7 +29,7 @@ export const Team = () => {
         <h3 className="font-semibold text-lg text-black dark:text-white">
           Built by
         </h3>
-        <InviteMemberDialog />
+        {isAuthorized ? <InviteMemberDialog /> : null}
       </div>
       <div className="flex flex-col gap-4 max-w-3xl w-full">
         {members?.length
