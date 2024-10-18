@@ -229,7 +229,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
   const milestonesCounter = milestones.length;
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2" id="milestones-and-updates-list">
       <div className="flex flex-col gap-3">
         <div className=" flex flex-col items-start justify-start gap-0 ">
           <div className="flex w-full flex-row flex-wrap items-center justify-between gap-4 py-3">

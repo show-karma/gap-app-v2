@@ -127,14 +127,14 @@ export default async function Page({ params }: Props) {
           style={{
             backgroundColor:
               communityColors[
-                (community as ICommunityResponse).uid.toLowerCase() || "black"
+                (community as ICommunityResponse)?.uid?.toLowerCase() || "black"
               ] || "#000000",
           }}
         >
           <div className="flex justify-center border border-white rounded-full p-2">
             <img
               alt={
-                (community as ICommunityResponse).details?.data.name ||
+                (community as ICommunityResponse)?.details?.data.name ||
                 "Community name"
               }
               src={
@@ -147,7 +147,7 @@ export default async function Page({ params }: Props) {
           <p className="text-3xl font-semibold text-white max-2xl:text-2xl max-lg:text-xl">
             <span className={"font-body"}>
               {community
-                ? (community as ICommunityResponse).details?.data?.name
+                ? (community as ICommunityResponse)?.details?.data?.name
                 : ""}
             </span>{" "}
             Community Grants
@@ -155,11 +155,11 @@ export default async function Page({ params }: Props) {
         </div>
         <div className="w-full lg:hidden">
           {communitiesToBulkSubscribe.includes(
-            (community as ICommunityResponse).details?.data?.slug as string
+            (community as ICommunityResponse)?.details?.data?.slug as string
           ) ? (
             <ReceiveProjectUpdates
               communityName={
-                (community as ICommunityResponse).details?.data?.name || ""
+                (community as ICommunityResponse)?.details?.data?.name || ""
               }
             />
           ) : null}
@@ -176,11 +176,11 @@ export default async function Page({ params }: Props) {
       </div>
       <div className="flex flex-col gap-2 w-4/12 max-lg:w-full max-lg:hidden">
         {communitiesToBulkSubscribe.includes(
-          (community as ICommunityResponse).details?.data?.slug as string
+          (community as ICommunityResponse)?.details?.data?.slug as string
         ) ? (
           <ReceiveProjectUpdates
             communityName={
-              (community as ICommunityResponse).details?.data?.name || ""
+              (community as ICommunityResponse)?.details?.data?.name || ""
             }
           />
         ) : null}

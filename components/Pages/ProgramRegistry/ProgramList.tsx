@@ -110,6 +110,7 @@ export const ProgramList: FC<ProgramListProps> = ({
                   type="button"
                   onClick={() => selectProgram(grant)}
                   className="text-left font-semibold text-base text-gray-900 underline dark:text-zinc-100 w-full"
+                  id="grant-program-title"
                 >
                   {grant?.metadata?.title}
                 </button>
@@ -596,6 +597,7 @@ export const ProgramList: FC<ProgramListProps> = ({
               const row = rows[virtualRow.index] as Row<GrantProgram>;
               return (
                 <tr
+                  id="grant-program-row"
                   key={row.id}
                   style={{
                     height: `${virtualRow.size}px`,

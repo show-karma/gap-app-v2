@@ -212,8 +212,12 @@ export const CommunityGrants = ({
   return (
     <div className="w-full">
       <div className="flex items-center justify-between flex-row flex-wrap-reverse max-lg:flex-wrap max-lg:flex-col-reverse max-lg:justify-start max-lg:items-start gap-3 max-lg:gap-4">
-        <div className="text-2xl font-semibold text-gray-900 dark:text-zinc-100 max-2xl:text-xl">
-          Total Grants {totalGrants ? `(${totalGrants})` : null}{" "}
+        <div
+          id="total-grants"
+          className="text-2xl font-semibold text-gray-900 dark:text-zinc-100 max-2xl:text-xl"
+        >
+          Total Grants {totalGrants ? `(${totalGrants})` : null}
+          {` `}
           {!isLoading ? `across ${totalProjects || 0} projects` : null}
         </div>
         <div className="flex items-center gap-x-3 flex-wrap gap-y-2">
@@ -327,7 +331,10 @@ export const CommunityGrants = ({
                   Sort by
                 </Listbox.Label>
                 <div className="relative flex-1 w-32">
-                  <Listbox.Button className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left  dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 text-gray-900   ring-1 ring-inset ring-gray-300 sm:text-sm sm:leading-6">
+                  <Listbox.Button
+                    id="sort-by-button"
+                    className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left  dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 text-gray-900   ring-1 ring-inset ring-gray-300 sm:text-sm sm:leading-6"
+                  >
                     <span className="block truncate">
                       {sortOptions[selectedSort]}
                     </span>
@@ -412,7 +419,10 @@ export const CommunityGrants = ({
                   Status
                 </Listbox.Label>
                 <div className="relative flex-1 w-max">
-                  <Listbox.Button className="relative w-full cursor-default  dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900  ring-1 ring-inset ring-gray-300 sm:text-sm sm:leading-6">
+                  <Listbox.Button
+                    id="status-button"
+                    className="relative w-full cursor-default  dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900  ring-1 ring-inset ring-gray-300 sm:text-sm sm:leading-6"
+                  >
                     <span className="block truncate">
                       {statuses[selectedStatus]}
                     </span>
@@ -487,7 +497,10 @@ export const CommunityGrants = ({
       </div>
       <section className="flex flex-col gap-4 md:flex-row">
         <div>
-          <div className="text-base text-nowrap font-semibold text-gray-900 dark:text-zinc-100 max-2xl:text-sm mb-2 mt-5">
+          <div
+            id="filter-by-programs"
+            className="text-base text-nowrap font-semibold text-gray-900 dark:text-zinc-100 max-2xl:text-sm mb-2 mt-5"
+          >
             Filter by Programs
           </div>
           {programsLoading ? (
@@ -516,6 +529,7 @@ export const CommunityGrants = ({
                         : "text-gray-700 hover:text-primary-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700",
                       "flex items-center rounded-md text-sm leading-6 font-semibold w-full py-1 hover:cursor-pointer px-2"
                     )}
+                    id="filter-by-programs-all"
                   >
                     <Radio
                       value={null}
@@ -541,6 +555,7 @@ export const CommunityGrants = ({
                           : "text-gray-700 hover:text-primary-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700",
                         "flex items-center rounded-md text-sm leading-6 font-semibold w-full py-1 hover:cursor-pointer px-2"
                       )}
+                      id={`filter-by-program-${program.programId}`}
                     >
                       <Radio
                         value={program.programId}

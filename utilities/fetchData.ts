@@ -1,8 +1,8 @@
 import axios, { Method } from "axios";
 import { envVars } from "./enviromentVars";
 import Cookies from "universal-cookie";
-import { authCookiePath } from "@/hooks/useAuth";
 import { sanitizeObject } from "./sanitize";
+import { authCookiePath } from "./auth-keys";
 
 export default async function fetchData(
   endpoint: string,

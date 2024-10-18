@@ -33,6 +33,7 @@ const pickColor = (index: number) => {
 export const ProjectCard = ({ project, index }: ProjectCardProps) => {
   return (
     <Link
+      id="project-card"
       href={PAGES.PROJECT.OVERVIEW(project?.slug || project?.uid)}
       className="flex h-full w-full max-w-full max-sm:w-[320px] relative flex-col items-start justify-between gap-3 rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2 transition-all duration-300 ease-in-out hover:opacity-80"
     >
