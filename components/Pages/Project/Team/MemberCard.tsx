@@ -73,6 +73,8 @@ export const MemberCard = ({ member }: { member: string }) => {
                 href={
                   profile?.data.twitter.includes("http")
                     ? profile?.data.twitter
+                    : profile?.data.twitter.includes("twitter.com")
+                    ? `https://${profile?.data.twitter}`
                     : `https://twitter.com/${profile?.data.twitter}`
                 }
                 className="w-max "
@@ -85,6 +87,8 @@ export const MemberCard = ({ member }: { member: string }) => {
                 href={
                   profile?.data.github.includes("http")
                     ? profile?.data.github
+                    : profile?.data.github.includes("github.com")
+                    ? `https://${profile?.data.github}`
                     : `https://github.com/${profile?.data.github}`
                 }
                 className="w-max"
@@ -97,6 +101,8 @@ export const MemberCard = ({ member }: { member: string }) => {
                 href={
                   profile?.data.linkedin.includes("http")
                     ? profile?.data.linkedin
+                    : profile?.data.linkedin.includes("linkedin.com")
+                    ? `https://${profile?.data.linkedin}`
                     : `https://linkedin.com/in/${profile?.data.linkedin}`
                 }
                 className="w-max"
