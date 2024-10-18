@@ -9,7 +9,8 @@ import { PencilIcon } from "@heroicons/react/24/outline";
 import { useAccount } from "wagmi";
 
 const iconsClassnames = {
-  general: "w-6 h-6 text-zinc-400 dark:text-zinc-400",
+  general:
+    "w-6 h-6 text-zinc-400 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-300",
 };
 
 export const MemberCard = ({ member }: { member: string }) => {
@@ -74,7 +75,7 @@ export const MemberCard = ({ member }: { member: string }) => {
                     ? profile?.data.twitter
                     : `https://twitter.com/${profile?.data.twitter}`
                 }
-                className="w-max"
+                className="w-max "
               >
                 <Twitter2Icon className={iconsClassnames.general} />
               </ExternalLink>
