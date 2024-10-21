@@ -133,17 +133,22 @@ export const AddExternalId: FC<AddExternalIdDialogProps> = ({
       },
     };
 
-    const response = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
+    const [response, error] = await fetchData(
+      "",
+      "POST",
+      payload,
+      {},
+      { "Content-Type": "application/json" },
+      false,
+      false,
+      url
+    );
 
-    const data = await response.json();
+    if (error) {
+      throw new Error(error);
+    }
 
-    return data.data.applications[0].projectId;
+    return response.data.applications[0].projectId;
   }
 
   const onSubmit = async (data: SchemaType) => {

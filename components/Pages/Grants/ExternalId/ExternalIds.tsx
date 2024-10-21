@@ -59,16 +59,22 @@ export default function ExternalIds({
     `,
       };
 
-      const response = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      const [response, error] = await fetchData(
+        "",
+        "POST",
+        payload,
+        {},
+        { "Content-Type": "application/json" },
+        false,
+        false,
+        url
+      );
 
-      const data = await response.json();
-      const applications = data.data.applications;
+      if (error) {
+        throw new Error(error);
+      }
+
+      const applications = response.data.applications;
 
       if (applications && applications.length > 0) {
         return applications.map(

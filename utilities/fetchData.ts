@@ -11,26 +11,38 @@ export default async function fetchData(
   params = {},
   headers = {},
   isAuthorized = false,
-  noCache: boolean | undefined = true
+  noCache: boolean | undefined = true,
+  baseUrl: string = envVars.NEXT_PUBLIC_GAP_INDEXER_URL
 ) {
   try {
     const cookies = new Cookies();
     const token = cookies.get(authCookiePath);
 
     const sanitizedData = sanitizeObject(axiosData);
-    const res = await axios.request({
-      url:
-        `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${endpoint}` +
-        (noCache ? `${endpoint.includes("?") ? "&" : "?"}noCache=true` : ""),
+    const isIndexerUrl = baseUrl === envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
+
+    const requestConfig: any = {
+      url: isIndexerUrl
+        ? `${baseUrl}${endpoint}${
+            noCache ? `${endpoint.includes("?") ? "&" : "?"}noCache=true` : ""
+          }`
+        : `${baseUrl}${endpoint}`,
       method,
+      data: sanitizedData,
+      params,
       headers: {
-        Authorization: isAuthorized ? token || undefined : undefined,
         ...headers,
       },
-      data: sanitizedData,
-      timeout: 360000,
-      params,
-    });
+    };
+
+    if (isIndexerUrl) {
+      requestConfig.headers.Authorization = isAuthorized
+        ? token || undefined
+        : undefined;
+      requestConfig.timeout = 360000;
+    }
+
+    const res = await axios.request(requestConfig);
     let resData = res.data;
     let pageInfo = res.data.pageInfo || null;
     return [resData, null, pageInfo];
