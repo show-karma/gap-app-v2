@@ -90,6 +90,7 @@ describe("Community Page", () => {
   });
   it("should display feed", () => {
     cy.visit(`/${community}`);
+    cy.wait(5000);
     cy.get('[id^="feed-item"]').should("have.length.greaterThan", 0);
   });
 });

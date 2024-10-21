@@ -56,12 +56,12 @@ export const Presentation = () => {
               </h1>
             </div>
 
-            <div className="w-max flex flex-row gap-2">
+            <div className="w-full max-w-full flex flex-row gap-2 flex-wrap items-center">
               <ProjectDialog
                 buttonElement={{
                   icon: (
                     <img
-                      className="h-6 w-6 text-white"
+                      className="h-6 w-6 max-sm:h-4 max-sm:w-4 text-white"
                       alt="Contact"
                       src="/icons/arrow-right-2.svg"
                     />
@@ -69,11 +69,11 @@ export const Presentation = () => {
                   iconSide: "right",
                   text: "Add your project",
                   styleClass:
-                    "flex rounded-md hover:opacity-75 border-none transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-3 bg-brand-darkblue dark:bg-gray-700 px-7 py-4 text-lg font-semibold leading-7 text-white hover:bg-brand-darkblue max-2xl:px-5 max-2xl:text-base max-lg:text-sm",
+                    "max-sm:px-2 max-sm:py-2 flex rounded-md hover:opacity-75 border-none transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-3 bg-brand-darkblue dark:bg-gray-700 px-7 py-4 text-lg font-semibold leading-7 text-white hover:bg-brand-darkblue max-2xl:px-5 max-2xl:text-base max-lg:text-sm",
                 }}
               />
               <Link href={PAGES.PROJECTS_EXPLORER}>
-                <Button className="flex rounded-md hover:opacity-75 border-black dark:border-zinc-100 border transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-3 bg-transparent dark:bg-transparent px-7 py-4 text-lg font-semibold leading-7 text-black dark:text-zinc-100 hover:bg-transparent max-2xl:px-5 max-2xl:text-base max-lg:text-sm ">
+                <Button className="max-sm:px-2 max-sm:py-2 flex rounded-md hover:opacity-75 border-black dark:border-zinc-100 border transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-3 bg-transparent dark:bg-transparent px-7 py-4 text-lg font-semibold leading-7 text-black dark:text-zinc-100 hover:bg-transparent max-2xl:px-5 max-2xl:text-base max-lg:text-sm ">
                   Explore projects on GAP
                 </Button>
               </Link>
