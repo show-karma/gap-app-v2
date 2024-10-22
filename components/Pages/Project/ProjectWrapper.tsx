@@ -46,8 +46,6 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
     projectContactsInfo,
     setContactInfoLoading,
     setProject,
-    isProjectOwner,
-    setIsProjectOwner,
     isProjectAdmin,
     setIsProjectAdmin,
     setIsProjectAdminLoading,

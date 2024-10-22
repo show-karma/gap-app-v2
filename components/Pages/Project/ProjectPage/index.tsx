@@ -32,6 +32,7 @@ import { MemberDialog } from "@/components/Dialogs/Member";
 import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { PromoteMemberDialog } from "@/components/Dialogs/Member/PromoteMember";
 
 const ContributorProfileDialog = dynamic(
   () =>
@@ -177,12 +178,6 @@ function ProjectPage() {
                   </div>
                 </div>
                 <div className="flex flex-row gap-2 mr-2">
-                  {isAuthorized ? (
-                    member.recipient.toLowerCase() !==
-                    project?.recipient?.toLowerCase() ? (
-                      <DeleteMemberDialog memberAddress={member.recipient} />
-                    ) : null
-                  ) : null}
                   {member.recipient.toLowerCase() === address?.toLowerCase() ? (
                     <button
                       type="button"
@@ -191,6 +186,16 @@ function ProjectPage() {
                     >
                       <PencilIcon className="w-4 h-4 text-black dark:text-zinc-100" />
                     </button>
+                  ) : null}
+                  {member.recipient.toLowerCase() !==
+                    project?.recipient?.toLowerCase() && isAuthorized ? (
+                    <PromoteMemberDialog memberAddress={member.recipient} />
+                  ) : null}
+                  {isAuthorized ? (
+                    member.recipient.toLowerCase() !==
+                    project?.recipient?.toLowerCase() ? (
+                      <DeleteMemberDialog memberAddress={member.recipient} />
+                    ) : null
                   ) : null}
                 </div>
               </div>
