@@ -1,4 +1,4 @@
-import { authCookiePath } from "@/hooks/useAuth";
+import { authCookiePath } from "@/utilities/auth-keys";
 import Cookies from "universal-cookie";
 import { create } from "zustand";
 

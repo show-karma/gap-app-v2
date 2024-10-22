@@ -14,9 +14,10 @@ import { PAGES } from "@/utilities/pages";
 import { usePathname, useRouter } from "next/navigation";
 import { useMixpanel } from "./useMixpanel";
 import { errorManager } from "@/components/Utilities/errorManager";
-
-export const authCookiePath = "gap_auth";
-export const authWalletTypeCookiePath = "gap_auth_wallet_type";
+import {
+  authCookiePath,
+  authWalletTypeCookiePath,
+} from "@/utilities/auth-keys";
 
 const getNonce = async (publicAddress: string) => {
   try {

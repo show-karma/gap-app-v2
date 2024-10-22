@@ -1,12 +1,11 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useAccount } from "wagmi";
 import formatCurrency from "@/utilities/formatCurrency";
 import pluralize from "pluralize";
 import Link from "next/link";
 import Pagination from "@/components/Utilities/Pagination";
-import { Spinner } from "@/components/Utilities/Spinner";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
@@ -14,15 +13,13 @@ import { PAGES } from "@/utilities/pages";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
 import { useAuthStore } from "@/store/auth";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { Button } from "@/components/Utilities/Button";
 import { useOnboarding } from "@/store/modals/onboarding";
 import { useMixpanel } from "@/hooks/useMixpanel";
-
-import { errorManager } from "@/components/Utilities/errorManager";
 import { useQuery } from "@tanstack/react-query";
 import { LoadingCard } from "./LoadingCard";
+import { fetchMyProjects } from "@/utilities/sdk/projects/fetchMyProjects";
 
 const ProjectDialog = dynamic(
   () =>
@@ -73,16 +70,6 @@ const OnboardingButton = () => {
       GAP Platform Walkthrough
     </Button>
   );
-};
-
-const fetchMyProjects = async (address: `0x${string}` | undefined) => {
-  if (!address) return;
-  try {
-    const { data: projectsOf } = await gapIndexerApi.projectsOf(address);
-    return projectsOf;
-  } catch (error: any) {
-    errorManager(`Error fetching projects of ${address}`, error);
-  }
 };
 
 export default function MyProjects() {

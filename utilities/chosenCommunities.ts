@@ -4,25 +4,6 @@ export const chosenCommunities = () => {
   if (envVars.NEXT_PUBLIC_ENV === "staging") {
     return [
       {
-        name: "Arbitrum",
-        slug: "arb",
-        uid: "0xb1dfdf7dd4a2e2937a0e9edae29edeaa8bbf379d99237769b2e1cae5d3e33fb7",
-        imageURL: {
-          light:
-            "https://pbs.twimg.com/profile_images/1653532864309239810/ZjT_zBAS_400x400.png",
-          dark: "https://pbs.twimg.com/profile_images/1653532864309239810/ZjT_zBAS_400x400.png",
-        },
-      },
-      {
-        name: "Optimism",
-        uid: "0x347649d9dcc528d4bef44cb3ed584b91ab6c49e9b3e78d3523f54e9c8bfea60d",
-        imageURL: {
-          light:
-            "https://s3.amazonaws.com/showkarma.xyz/assets/optimism-icon.jpg",
-          dark: "https://s3.amazonaws.com/showkarma.xyz/assets/optimism-icon.jpg",
-        },
-      },
-      {
         name: "Gitcoin",
         slug: "gitcoin",
         uid: "0x70f6021f0e15111e7c914f9bdc007682d065982649c6078abb5ffbc09f2e3ff5",

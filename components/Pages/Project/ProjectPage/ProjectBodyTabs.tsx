@@ -39,7 +39,7 @@ const InformationTab: FC = () => {
   const { project } = useProjectStore();
   return (
     <>
-      <div className="flex flex-col gap-1">
+      <div id="information-tab" className="flex flex-col gap-1">
         <div className="text-base font-bold leading-normal text-black dark:text-zinc-100">
           Description
         </div>
@@ -364,12 +364,11 @@ const UpdatesTab: FC = () => {
       const dateB = new Date(b.createdAt).getTime();
       return dateB - dateA;
     });
-    console.log(sortedUpdates);
     setAllUpdates(sortedUpdates);
   }, [project?.grants, project?.updates, project?.impacts]);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div id="updates-tab" className="flex flex-col gap-6">
       <div className="flex flex-row gap-4 justify-between">
         <p className="font-bold text-black dark:text-zinc-200 text-base">
           Updates {allUpdates.length ? `(${allUpdates.length})` : ""}

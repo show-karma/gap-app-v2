@@ -46,4 +46,5 @@ export interface ProjectFromList {
   updatedAt: string;
   noOfGrants: number;
   noOfProjectMilestones: number;
+  noOfGrantMilestones: number;
 }

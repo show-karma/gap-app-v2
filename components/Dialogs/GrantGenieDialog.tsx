@@ -39,8 +39,7 @@ function GrantGenieRecommendations({ projectId }: { projectId: string }) {
       {},
       {},
       {},
-      undefined,
-      true
+      undefined
     ).then(([res, error]) => {
       setIsLoading(false);
       setError(error);

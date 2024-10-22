@@ -1,8 +1,8 @@
 import axios, { Method } from "axios";
 import { envVars } from "./enviromentVars";
 import Cookies from "universal-cookie";
-import { authCookiePath } from "@/hooks/useAuth";
 import { sanitizeObject } from "./sanitize";
+import { authCookiePath } from "./auth-keys";
 
 export default async function fetchData(
   endpoint: string,
@@ -11,7 +11,7 @@ export default async function fetchData(
   params = {},
   headers = {},
   isAuthorized = false,
-  noCache: boolean | undefined = true,
+  cache: boolean | undefined = false,
   baseUrl: string = envVars.NEXT_PUBLIC_GAP_INDEXER_URL
 ) {
   try {
@@ -24,7 +24,7 @@ export default async function fetchData(
     const requestConfig: any = {
       url: isIndexerUrl
         ? `${baseUrl}${endpoint}${
-            noCache ? `${endpoint.includes("?") ? "&" : "?"}noCache=true` : ""
+            cache ? `${endpoint.includes("?") ? "&" : "?"}cache=${cache}` : ""
           }`
         : `${baseUrl}${endpoint}`,
       method,
