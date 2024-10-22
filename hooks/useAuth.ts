@@ -18,6 +18,8 @@ import {
   authCookiePath,
   authWalletTypeCookiePath,
 } from "@/utilities/auth-keys";
+import { useQueryState } from "nuqs";
+
 
 const getNonce = async (publicAddress: string) => {
   try {
@@ -57,6 +59,7 @@ export const useAuth = () => {
   const cookies = new Cookies();
   const { mixpanel } = useMixpanel();
   const { signMessageAsync } = useSignMessage();
+  const [inviteCode] = useQueryState("invite-code");
 
   const pathname = usePathname();
 
@@ -167,6 +170,7 @@ export const useAuth = () => {
         router.push(PAGES.MY_PROJECTS);
       }
       if (!pathname.includes("funding-map")) {
+        if (inviteCode) return;
         setIsOnboarding?.(true);
       }
       if (address) {
@@ -210,5 +214,5 @@ export const useAuth = () => {
     authenticate(newAddress);
   };
 
-  return { authenticate, disconnect, softDisconnect };
+  return { authenticate, disconnect, softDisconnect, signMessage };
 };

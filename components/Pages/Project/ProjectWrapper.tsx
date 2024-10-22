@@ -40,22 +40,18 @@ interface ProjectWrapperProps {
   projectId: string;
 }
 export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
-  const setProject = useProjectStore((state) => state.setProject);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const setIsProjectAdmin = useProjectStore((state) => state.setIsProjectAdmin);
-  const setIsProjectAdminLoading = useProjectStore(
-    (state) => state.setIsProjectAdminLoading
-  );
-
-  const setProjectContactsInfo = useProjectStore(
-    (state) => state.setProjectContactsInfo
-  );
-  const projectContactsInfo = useProjectStore(
-    (state) => state.projectContactsInfo
-  );
-  const setContactInfoLoading = useProjectStore(
-    (state) => state.setContactInfoLoading
-  );
+  const {
+    refreshMembers,
+    setProjectContactsInfo,
+    projectContactsInfo,
+    setContactInfoLoading,
+    setProject,
+    isProjectOwner,
+    setIsProjectOwner,
+    isProjectAdmin,
+    setIsProjectAdmin,
+    setIsProjectAdminLoading,
+  } = useProjectStore((state) => state);
 
   const router = useRouter();
 
@@ -97,6 +93,11 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
     };
     getContactInfo();
   }, [projectId, isAuthorized]);
+
+  useEffect(() => {
+    if (!project) return;
+    refreshMembers();
+  }, [project]);
 
   const hasContactInfo = Boolean(projectContactsInfo?.length);
 

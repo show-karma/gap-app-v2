@@ -5,6 +5,8 @@ import { INDEXER } from "@/utilities/indexer";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { create } from "zustand";
 import { useGrantStore } from "./grant";
+import { ContributorProfile } from "@show-karma/karma-gap-sdk";
+import { getContributorProfiles } from "@/utilities/indexer/getContributorProfiles";
 
 interface ProjectStore {
   project: IProjectResponse | undefined;
@@ -15,12 +17,17 @@ interface ProjectStore {
   setLoading: (loading: boolean) => void;
   isProjectAdmin: boolean;
   setIsProjectAdmin: (isProjectAdmin: boolean) => void;
+  isProjectOwner: boolean;
+  setIsProjectOwner: (isProjectOwner: boolean) => void;
   isProjectOwnerLoading: boolean;
   setIsProjectAdminLoading: (loading: boolean) => void;
   projectContactsInfo: Contact[] | undefined;
   setProjectContactsInfo: (contacts: Contact[] | undefined) => void;
   contactInfoLoading: boolean;
   setContactInfoLoading: (value: boolean) => void;
+  teamProfiles: ContributorProfile[] | undefined;
+  setTeamProfiles: (profiles: ContributorProfile[] | undefined) => void;
+  refreshMembers: () => Promise<ContributorProfile[] | undefined>;
 }
 
 export const useProjectStore = create<ProjectStore>((set, get) => ({
@@ -67,12 +74,24 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       console.log(error);
     }
   },
+  teamProfiles: undefined,
+  setTeamProfiles: (profiles) => set({ teamProfiles: profiles }),
+  refreshMembers: async () => {
+    const { project } = get();
+    if (!project) return undefined;
+    const members = project.members.map((member) => member.recipient);
+    const profiles = await getContributorProfiles(members);
+    set({ teamProfiles: profiles });
+    return profiles;
+  },
   loading: false,
   setLoading: (loading: boolean) => set({ loading }),
   isProjectAdmin: false,
   setIsProjectAdmin: (isProjectAdmin: boolean) => set({ isProjectAdmin }),
   projectContactsInfo: undefined,
   setProjectContactsInfo: (contacts) => set({ projectContactsInfo: contacts }),
+  isProjectOwner: false,
+  setIsProjectOwner: (isProjectOwner: boolean) => set({ isProjectOwner }),
   contactInfoLoading: true,
   setContactInfoLoading: (value) => set({ contactInfoLoading: value }),
   isProjectOwnerLoading: true,

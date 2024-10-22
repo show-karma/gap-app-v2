@@ -1,9 +1,9 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useProjectStore } from "@/store";
+import { useOwnerStore, useProjectStore } from "@/store";
 import { useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 import { PAGES } from "@/utilities/pages";
 import Link from "next/link";
@@ -22,10 +22,36 @@ import { ProjectBodyTabs } from "./ProjectBodyTabs";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 
 import pluralize from "pluralize";
+import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember";
+import dynamic from "next/dynamic";
+import { DeleteMemberDialog } from "@/components/Dialogs/Member/DeleteMember";
+import { useAccount } from "wagmi";
+import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
+import { PencilIcon } from "@heroicons/react/24/outline";
+import { MemberDialog } from "@/components/Dialogs/Member";
+import { errorManager } from "@/components/Utilities/errorManager";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+
+const ContributorProfileDialog = dynamic(
+  () =>
+    import("@/components/Dialogs/ContributorProfileDialog").then(
+      (mod) => mod.ContributorProfileDialog
+    ),
+  {
+    ssr: false,
+  }
+);
 
 function ProjectPage() {
   const project = useProjectStore((state) => state.project);
-
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isContractOwner = useOwnerStore((state) => state.isOwner);
+  const isAuthorized = isProjectOwner || isContractOwner;
+  const { teamProfiles } = useProjectStore((state) => state);
+  const { address } = useAccount();
+  const { openModal } = useContributorProfileModalStore();
+  const inviteCodeParam = useSearchParams().get("invite-code");
   const params = useParams();
   const projectId = params.projectId as string;
 
@@ -92,49 +118,123 @@ function ProjectPage() {
           Team
         </div>
         <div className="flex flex-col divide-y divide-y-zinc-200 border border-zinc-200 rounded-xl">
-          {members?.map((member) => (
-            <div
-              key={member.uid}
-              className="flex items-center flex-row gap-3 p-3"
-            >
-              <EthereumAddressToENSAvatar
-                address={member.recipient}
-                className="h-8 w-8 rounded-full"
-              />
-              <div className="flex flex-col gap-1">
-                <p className="text-sm font-bold text-[#101828] dark:text-gray-400 line-clamp-1 text-wrap whitespace-nowrap w-full">
-                  {member.details?.name ||
-                    ensData[member.recipient as Hex]?.name ||
-                    shortAddress(member.recipient)}
-                </p>
-                {member.recipient?.toLowerCase() ===
-                project?.recipient?.toLowerCase() ? (
-                  <p className="text-sm text-brand-blue font-medium leading-none">
-                    Owner
-                  </p>
-                ) : null}
-                <div className="flex flex-row gap-2 justify-between items-center w-full max-w-max">
-                  <p className="text-sm font-medium text-[#475467] dark:text-gray-300 line-clamp-1 text-wrap whitespace-nowrap">
-                    {shortAddress(member.recipient)}
-                  </p>
-                  <button type="button" onClick={() => copy(member.recipient)}>
-                    <img
-                      src="/icons/copy-2.svg"
-                      alt="Copy"
-                      className="text-[#98A2B3] w-4 h-4"
-                    />
-                  </button>
+          {members?.map((member) => {
+            const profile = teamProfiles?.find(
+              (profile) =>
+                profile.recipient.toLowerCase() ===
+                member.recipient.toLowerCase()
+            );
+            return (
+              <div
+                key={member.uid}
+                className="flex items-center flex-row gap-3 justify-between"
+              >
+                <div className="flex items-center flex-row gap-3 p-3">
+                  <EthereumAddressToENSAvatar
+                    address={member.recipient}
+                    className="h-8 w-8 rounded-full"
+                  />
+                  <div className="flex flex-col gap-1">
+                    {profile ? (
+                      <MemberDialog
+                        profile={profile}
+                        buttonText={
+                          profile?.data.name ||
+                          member.details?.name ||
+                          ensData[member.recipient as Hex]?.name ||
+                          shortAddress(member.recipient)
+                        }
+                        buttonClassName="text-sm font-bold font-body text-[#101828] dark:text-gray-400 line-clamp-1 text-wrap whitespace-nowrap w-full min-w-full max-w-full text-left"
+                      />
+                    ) : (
+                      <p className="text-sm font-bold font-body text-[#101828] dark:text-gray-400 line-clamp-1 text-wrap whitespace-nowrap w-full min-w-full max-w-full text-left">
+                        {member.details?.name ||
+                          ensData[member.recipient as Hex]?.name ||
+                          shortAddress(member.recipient)}
+                      </p>
+                    )}
+                    {member.recipient?.toLowerCase() ===
+                    project?.recipient?.toLowerCase() ? (
+                      <p className="text-sm text-brand-blue font-medium leading-none">
+                        Owner
+                      </p>
+                    ) : null}
+                    <div className="flex flex-row gap-2 justify-between items-center w-full max-w-max">
+                      <p className="text-sm font-medium text-[#475467] dark:text-gray-300 line-clamp-1 text-wrap whitespace-nowrap">
+                        {shortAddress(member.recipient)}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => copy(member.recipient)}
+                      >
+                        <img
+                          src="/icons/copy-2.svg"
+                          alt="Copy"
+                          className="text-[#98A2B3] w-4 h-4"
+                        />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex flex-row gap-2 mr-2">
+                  {isAuthorized ? (
+                    member.recipient.toLowerCase() !==
+                    project?.recipient?.toLowerCase() ? (
+                      <DeleteMemberDialog memberAddress={member.recipient} />
+                    ) : null
+                  ) : null}
+                  {member.recipient.toLowerCase() === address?.toLowerCase() ? (
+                    <button
+                      type="button"
+                      className="p-2 rounded-lg hover:opacity-80 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                      onClick={() => openModal(member.recipient)}
+                    >
+                      <PencilIcon className="w-4 h-4 text-black dark:text-zinc-100" />
+                    </button>
+                  ) : null}
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
+        {isAuthorized ? <InviteMemberDialog /> : null}
       </div>
     ) : null;
   };
 
+  const checkCodeValidation = async () => {
+    if (!inviteCodeParam) return;
+    try {
+      const [data, error] = await fetchData(
+        INDEXER.PROJECT.INVITATION.CHECK_CODE(projectId, inviteCodeParam)
+      );
+      if (error) throw error;
+      if (data.message === "Valid") return true;
+      return false;
+    } catch (error) {
+      errorManager("Failed to check code validation", error, {
+        projectId,
+        code: inviteCodeParam,
+      });
+    }
+  };
+
+  useEffect(() => {
+    const isAlreadyMember = project?.members.some(
+      (member) => member.recipient.toLowerCase() === address?.toLowerCase()
+    );
+    if (isAlreadyMember) return;
+    checkCodeValidation().then((isValid) => {
+      if (isValid) {
+        openModal(address);
+      }
+    });
+  }, [project, address, inviteCodeParam]);
+
   return (
     <div className="flex flex-row max-lg:flex-col gap-6 max-md:gap-4 py-5 mb-20">
+      <ContributorProfileDialog />
+
       <div className="flex flex-[2.5] gap-6 flex-col w-full max-lg:hidden">
         <ProjectBlocks />
         <Team />

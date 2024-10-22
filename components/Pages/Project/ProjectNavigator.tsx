@@ -42,6 +42,10 @@ export const ProjectNavigator = ({
         project?.details?.data?.slug || projectId
       ),
     },
+    {
+      name: "Team",
+      href: PAGES.PROJECT.TEAM(project?.details?.data?.slug || projectId),
+    },
   ];
   const [tabs, setTabs] = useState<typeof publicTabs>(publicTabs);
 
