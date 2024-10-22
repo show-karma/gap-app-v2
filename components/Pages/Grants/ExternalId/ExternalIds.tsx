@@ -7,15 +7,18 @@ import { INDEXER } from "@/utilities/indexer";
 import toast from "react-hot-toast";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { useQuery } from "@tanstack/react-query";
+import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 export default function ExternalIds({
   projectUID,
   communityUID,
   externalIds,
+  refreshGrant,
 }: {
   projectUID: string;
   communityUID: string;
   externalIds: string[];
+  refreshGrant: () => Promise<IGrantResponse | undefined>;
 }) {
   // Mock data
 
@@ -38,6 +41,7 @@ export default function ExternalIds({
     if (error) {
       toast.error("Error removing external ID");
     } else {
+      await refreshGrant();
       toast.success("External ID removed successfully");
     }
     setRemovingId(null);
@@ -116,7 +120,11 @@ export default function ExternalIds({
     <div>
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">External IDs</h1>
-        <AddExternalId projectUID={projectUID} communityUID={communityUID} />
+        <AddExternalId
+          projectUID={projectUID}
+          communityUID={communityUID}
+          refreshGrant={refreshGrant}
+        />
       </div>
       <div className="overflow-x-auto">
         <table className="min-w-full border-x border-x-zinc-300 border-y border-y-zinc-300">

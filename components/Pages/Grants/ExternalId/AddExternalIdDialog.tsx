@@ -12,6 +12,7 @@ import { MESSAGES } from "@/utilities/messages";
 import toast from "react-hot-toast";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 import { cn } from "@/utilities/tailwind";
 
@@ -42,6 +43,7 @@ type AddExternalIdDialogProps = {
   };
   projectUID: string;
   communityUID: string;
+  refreshGrant: () => Promise<IGrantResponse | undefined>;
 };
 
 type GitcoinUrlParams = {
@@ -78,6 +80,7 @@ export const AddExternalId: FC<AddExternalIdDialogProps> = ({
   },
   projectUID,
   communityUID,
+  refreshGrant,
 }) => {
   const dataToUpdate = {
     profile: "",
@@ -175,6 +178,7 @@ export const AddExternalId: FC<AddExternalIdDialogProps> = ({
         true
       );
       if (!error) {
+        await refreshGrant();
         toast.success("External ID added successfully!");
         closeModal();
       } else {

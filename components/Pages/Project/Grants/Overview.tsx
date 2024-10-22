@@ -38,7 +38,7 @@ const isValidAmount = (amount?: string | undefined) => {
   return formatCurrency(+amountToFormat);
 };
 export const GrantOverview = () => {
-  const { grant, loading } = useGrantStore();
+  const { grant, loading, refreshGrant } = useGrantStore();
   const isOwner = useOwnerStore((state) => state.isOwner);
   if (loading) {
     return <ProjectGrantsOverviewLoading />;
@@ -224,6 +224,7 @@ export const GrantOverview = () => {
             projectUID={grant?.refUID as string}
             communityUID={grant?.community.uid as string}
             externalIds={(grant as any).externalIds}
+            refreshGrant={refreshGrant}
           />
         </div>
       ) : null}
