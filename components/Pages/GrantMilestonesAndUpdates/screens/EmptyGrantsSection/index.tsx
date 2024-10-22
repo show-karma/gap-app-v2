@@ -8,7 +8,7 @@ import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
 
 export const EmptyGrantsSection: FC = () => {
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isOwner = useOwnerStore((state) => state.isOwner);
   const project = useProjectStore((state) => state.project);
   const isCommunityAdmin = useCommunityAdminStore(
@@ -17,7 +17,7 @@ export const EmptyGrantsSection: FC = () => {
   const { communities } = useCommunitiesStore();
   const isCommunityAdminOfSome = communities.length !== 0;
   const isAuthorized =
-    isProjectOwner || isOwner || isCommunityAdmin || isCommunityAdminOfSome;
+    isProjectAdmin || isOwner || isCommunityAdmin || isCommunityAdminOfSome;
   if (!isAuthorized) {
     return (
       <div className="flex w-full items-center justify-center rounded border border-gray-200 px-6 py-10">

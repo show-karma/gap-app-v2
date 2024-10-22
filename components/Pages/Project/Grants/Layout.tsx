@@ -101,14 +101,14 @@ export const GrantsLayout = ({ children, project }: GrantsLayoutProps) => {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const router = useRouter();
 
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );
   const { communities } = useCommunitiesStore();
   const isCommunityAdminOfSome = communities.length !== 0;
-  const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
+  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
 
   const { address } = useAccount();
 

@@ -22,13 +22,13 @@ const EmptyMilestone = ({
   grant?: IGrantResponse;
   project?: IProjectResponse;
 }) => {
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );
 
-  const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
+  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
 
   if (!isAuthorized) {
     return (
@@ -145,12 +145,12 @@ export default function MilestonesAndUpdates() {
   const project = useProjectStore((state) => state.project);
   const hasMilestonesOrUpdates =
     grant?.milestones?.length || grant?.updates?.length;
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );
-  const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
+  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
 
   return (
     <div className="w-full">

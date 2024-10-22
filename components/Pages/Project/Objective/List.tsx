@@ -15,8 +15,8 @@ import { RoadmapListLoading } from "../Loading/Roadmap";
 
 export const ObjectiveList = () => {
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isAuthorized = isOwner || isProjectOwner;
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isAuthorized = isOwner || isProjectAdmin;
   const uidOrSlug = useParams().projectId as string;
 
   const [status] = useQueryState<StatusOptions>("status", {

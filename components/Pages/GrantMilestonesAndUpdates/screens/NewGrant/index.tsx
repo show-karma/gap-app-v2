@@ -562,10 +562,10 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     }[] =
       data?.questions && data?.questions?.length > 0
         ? data?.questions?.map((item) => ({
-          type: item.type,
-          query: item.query,
-          explanation: item.explanation || "",
-        }))
+            type: item.type,
+            query: item.query,
+            explanation: item.explanation || "",
+          }))
         : [];
 
     const milestonesData = milestones.map((item) => item.data);
@@ -673,7 +673,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     address,
   ]);
 
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
 
   const actionButtonDisable =
     isSubmitting ||
@@ -683,14 +683,14 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     !isValid ||
     (!isCommunityAllowed &&
       isCommunityAdminOfSome &&
-      !(isOwner || isProjectOwner));
+      !(isOwner || isProjectAdmin));
 
   const handleButtonDisableMessage = () => {
     if (!isValid) return "Please fill all required(*) fields.";
     if (
       !isCommunityAllowed &&
       isCommunityAdminOfSome &&
-      !(isOwner || isProjectOwner)
+      !(isOwner || isProjectAdmin)
     )
       return "You are not admin of this community.";
     if (isSubmitting || isLoading) return "Please wait...";
@@ -718,14 +718,14 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             href={
               grantToEdit
                 ? PAGES.PROJECT.GRANT(
-                  (selectedProject?.details?.data?.slug ||
-                    selectedProject?.uid) as string,
-                  grantToEdit?.uid as string
-                )
+                    (selectedProject?.details?.data?.slug ||
+                      selectedProject?.uid) as string,
+                    grantToEdit?.uid as string
+                  )
                 : PAGES.PROJECT.GRANTS(
-                  (selectedProject?.details?.data?.slug ||
-                    selectedProject?.uid) as string
-                )
+                    (selectedProject?.details?.data?.slug ||
+                      selectedProject?.uid) as string
+                  )
             }
             className="bg-transparent px-1 hover:bg-transparent hover:opacity-75 text-black dark:text-zinc-100"
           >

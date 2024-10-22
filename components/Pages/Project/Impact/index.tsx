@@ -41,8 +41,8 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
   );
 
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isAuthorized = isOwner || isProjectOwner;
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isAuthorized = isOwner || isProjectAdmin;
 
   useEffect(() => {
     if (!project || !project.impacts || !project.impacts.length) {

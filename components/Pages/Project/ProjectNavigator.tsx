@@ -46,9 +46,9 @@ export const ProjectNavigator = ({
   const [tabs, setTabs] = useState<typeof publicTabs>(publicTabs);
 
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
 
-  const isAuthorized = isOwner || isProjectOwner;
+  const isAuthorized = isOwner || isProjectAdmin;
   useEffect(() => {
     const mountTabs = () => {
       if (isAuthorized) {

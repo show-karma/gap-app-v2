@@ -43,9 +43,9 @@ export const ObjectiveCardComplete = ({
   isCompleting: boolean;
   handleCompleting: (isCompleting: boolean) => void;
 }) => {
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isAuthorized = isProjectOwner || isContractOwner;
+  const isAuthorized = isProjectAdmin || isContractOwner;
 
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();

@@ -154,13 +154,13 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
     }
   };
 
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );
 
-  const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
+  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
 
   const [verifiedUpdate, setVerifiedUpdate] = useState<IGrantUpdateStatus[]>(
     update?.verified || []

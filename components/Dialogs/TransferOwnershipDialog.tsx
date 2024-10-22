@@ -49,8 +49,8 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
   const { chain } = useAccount();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const setIsProjectOwner = useProjectStore((state) => state.setIsProjectOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const setIsProjectAdmin = useProjectStore((state) => state.setIsProjectAdmin);
   const { switchChainAsync } = useSwitchChain();
   const { changeStepperStep, setIsStepper } = useStepper();
 
@@ -97,7 +97,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
             );
 
             if (!stillProjectOwner) {
-              setIsProjectOwner(false);
+              setIsProjectAdmin(false);
               retries = 0;
               await refreshProject();
               changeStepperStep("indexed");
@@ -135,7 +135,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
     <>
       {buttonElement ? (
         <Button
-          disabled={!isProjectOwner}
+          disabled={!isProjectAdmin}
           onClick={openModal}
           className={buttonElement.styleClass}
         >

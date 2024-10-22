@@ -13,10 +13,10 @@ interface ProjectStore {
   refreshProject: () => Promise<IProjectResponse | undefined>;
   refreshContactInfo: () => Promise<Contact[] | undefined>;
   setLoading: (loading: boolean) => void;
-  isProjectOwner: boolean;
-  setIsProjectOwner: (isProjectOwner: boolean) => void;
+  isProjectAdmin: boolean;
+  setIsProjectAdmin: (isProjectAdmin: boolean) => void;
   isProjectOwnerLoading: boolean;
-  setIsProjectOwnerLoading: (loading: boolean) => void;
+  setIsProjectAdminLoading: (loading: boolean) => void;
   projectContactsInfo: Contact[] | undefined;
   setProjectContactsInfo: (contacts: Contact[] | undefined) => void;
   contactInfoLoading: boolean;
@@ -69,13 +69,13 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   },
   loading: false,
   setLoading: (loading: boolean) => set({ loading }),
-  isProjectOwner: false,
-  setIsProjectOwner: (isProjectOwner: boolean) => set({ isProjectOwner }),
+  isProjectAdmin: false,
+  setIsProjectAdmin: (isProjectAdmin: boolean) => set({ isProjectAdmin }),
   projectContactsInfo: undefined,
   setProjectContactsInfo: (contacts) => set({ projectContactsInfo: contacts }),
   contactInfoLoading: true,
   setContactInfoLoading: (value) => set({ contactInfoLoading: value }),
   isProjectOwnerLoading: true,
-  setIsProjectOwnerLoading: (loading: boolean) =>
+  setIsProjectAdminLoading: (loading: boolean) =>
     set({ isProjectOwnerLoading: loading }),
 }));

@@ -107,8 +107,8 @@ const UpdateBlock = ({
   index: number;
 }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isAuthorized = isOwner || isProjectOwner;
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isAuthorized = isOwner || isProjectAdmin;
   const [isDeletingUpdate, setIsDeletingUpdate] = useState(false);
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
@@ -337,8 +337,8 @@ const UpdatesTab: FC = () => {
   const { project } = useProjectStore();
 
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isAuthorized = isOwner || isProjectOwner;
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isAuthorized = isOwner || isProjectAdmin;
   const [activeTab, setActiveTab] = useQueryState("tab", {
     defaultValue: "info",
   });
@@ -489,8 +489,8 @@ export function ProjectBodyTabs() {
     defaultValue: "info",
   });
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isAuthorized = isOwner || isProjectOwner;
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isAuthorized = isOwner || isProjectAdmin;
 
   const getActiveTab = () => {
     if (protectedTabs.includes(activeTab) && !isAuthorized) {

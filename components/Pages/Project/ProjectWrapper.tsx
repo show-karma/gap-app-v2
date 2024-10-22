@@ -41,10 +41,10 @@ interface ProjectWrapperProps {
 }
 export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   const setProject = useProjectStore((state) => state.setProject);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const setIsProjectOwner = useProjectStore((state) => state.setIsProjectOwner);
-  const setIsProjectOwnerLoading = useProjectStore(
-    (state) => state.setIsProjectOwnerLoading
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const setIsProjectAdmin = useProjectStore((state) => state.setIsProjectAdmin);
+  const setIsProjectAdminLoading = useProjectStore(
+    (state) => state.setIsProjectAdminLoading
   );
 
   const setProjectContactsInfo = useProjectStore(
@@ -64,7 +64,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   }, [project]);
 
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const isAuthorized = isOwner || isProjectOwner;
+  const isAuthorized = isOwner || isProjectAdmin;
 
   useEffect(() => {
     if (!projectId || !isAuthorized) return;
@@ -107,14 +107,14 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
 
   useEffect(() => {
     if (!project || !project?.chainID || !isAuth || !isConnected || !chain) {
-      setIsProjectOwner(false);
-      setIsProjectOwnerLoading(false);
+      setIsProjectAdmin(false);
+      setIsProjectAdminLoading(false);
       return;
     }
 
     const setupProjectOwner = async () => {
       try {
-        setIsProjectOwnerLoading(true);
+        setIsProjectAdminLoading(true);
         const walletClient = await getWalletClient(config, {
           chainId: project.chainID,
         }).catch(() => undefined);
@@ -127,17 +127,17 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
         if (!fetchedProject) return;
         await getProjectOwner(walletSigner || signer, fetchedProject)
           .then((res) => {
-            setIsProjectOwner(res);
+            setIsProjectAdmin(res);
           })
-          .finally(() => setIsProjectOwnerLoading(false));
+          .finally(() => setIsProjectAdminLoading(false));
       } catch (error: any) {
-        setIsProjectOwner(false);
+        setIsProjectAdmin(false);
         errorManager(
           `Error checking if user ${address} is project owner from project ${projectId}`,
           error
         );
       } finally {
-        setIsProjectOwnerLoading(false);
+        setIsProjectAdminLoading(false);
       }
     };
     setupProjectOwner();
@@ -360,7 +360,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
               {project ? <ProjectSubscriptionDialog project={project} /> : null}
             </div> */}
               </div>
-              {isProjectOwner ? (
+              {isProjectAdmin ? (
                 <ExternalLink
                   href={"https://tally.so/r/w8e6GP"}
                   className="bg-black dark:bg-zinc-800 text-white justify-center items-center dark:text-zinc-400 flex flex-row gap-2.5 py-2 px-5 rounded-full w-max min-w-max"

@@ -122,12 +122,12 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
     }
   };
 
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
+  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
 
   const [verifiedMilestones, setVerifiedMilestones] = useState<
     IMilestoneCompleted[]

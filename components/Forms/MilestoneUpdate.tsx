@@ -68,12 +68,12 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   const [isSubmitLoading, setIsSubmitLoading] = useState(false);
   const { chain, address } = useAccount();
   const { switchChainAsync } = useSwitchChain();
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );
-  const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
+  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [noProofCheckbox, setNoProofCheckbox] = useState(false);
