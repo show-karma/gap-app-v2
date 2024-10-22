@@ -33,6 +33,7 @@ import { usePathname } from "next/navigation";
 import { useRegistryStore } from "@/store/registry";
 import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
 import { errorManager } from "./errorManager";
+import LoginWithPrivy from "./LoginWithPrivy";
 
 const ProjectDialog = dynamic(
   () =>
@@ -283,8 +284,8 @@ export default function Header() {
                               {isConnected && isAuth && <ProjectDialog />}
                             </>
                           )}
-
-                          <ConnectButton.Custom>
+                          <LoginWithPrivy />
+                          {/* <ConnectButton.Custom>
                             {({
                               account,
                               chain,
@@ -347,7 +348,7 @@ export default function Header() {
                                 </div>
                               );
                             }}
-                          </ConnectButton.Custom>
+                          </ConnectButton.Custom> */}
                         </>
                       ) : null}
                     </div>
@@ -407,7 +408,7 @@ export default function Header() {
                     </>
                   )}
 
-                  <ConnectButton.Custom>
+                  {/* <ConnectButton.Custom>
                     {({
                       account,
                       chain,
@@ -481,7 +482,7 @@ export default function Header() {
                         </div>
                       );
                     }}
-                  </ConnectButton.Custom>
+                  </ConnectButton.Custom> */}
                 </>
               ) : null}
               {/* Rainbowkit custom connect button end */}
