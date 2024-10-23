@@ -6,6 +6,7 @@ import { EmptyGrantsSection } from "../../GrantMilestonesAndUpdates/screens";
 import { GrantContext } from "../../GrantMilestonesAndUpdates/GrantContext";
 import { cn } from "@/utilities/tailwind";
 import { GrantCompleteButton } from "../../GrantMilestonesAndUpdates/GrantCompleteButton";
+import { GrantLinkExternalAddressButton } from "../../GrantMilestonesAndUpdates/GrantLinkExternalAddressButton";
 import { GrantDelete } from "../../GrantMilestonesAndUpdates/GrantDelete";
 import dynamic from "next/dynamic";
 import { PAGES } from "@/utilities/pages";
@@ -156,22 +157,22 @@ export const GrantsLayout = ({ children, project }: GrantsLayoutProps) => {
     tabName: GrantScreen;
     current: boolean;
   }[] = [
-    {
-      name: "Overview",
-      tabName: "overview",
-      current: true,
-    },
-    {
-      name: "Milestones and Updates",
-      tabName: "milestones-and-updates",
-      current: false,
-    },
-    {
-      name: "Impact Criteria",
-      tabName: "impact-criteria",
-      current: false,
-    },
-  ];
+      {
+        name: "Overview",
+        tabName: "overview",
+        current: true,
+      },
+      {
+        name: "Milestones and Updates",
+        tabName: "milestones-and-updates",
+        current: false,
+      },
+      {
+        name: "Impact Criteria",
+        tabName: "impact-criteria",
+        current: false,
+      },
+    ];
 
   useEffect(() => {
     const mountTabs = async () => {
@@ -402,6 +403,12 @@ export const GrantsLayout = ({ children, project }: GrantsLayoutProps) => {
               </div>
               {isAuthorized && grant ? (
                 <div className="flex flex-row gap-2">
+                  {project ? (
+                    <GrantLinkExternalAddressButton
+                      project={project}
+                      grant={grant}
+                    />
+                  ) : null}
                   {project ? (
                     <GrantCompleteButton project={project} grant={grant} />
                   ) : null}

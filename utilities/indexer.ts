@@ -122,6 +122,10 @@ export const INDEXER = {
       ALL: (idOrSlug: string) => `/communities/${idOrSlug}/categories`,
       UPDATE: (grantUID: string) => `/grants/${grantUID}/update/categories`,
     },
+    EXTERNAL_ADDRESS: {
+      UPDATE: (grantUID: string) =>
+        `/grants/${grantUID}/external-address/update`,
+    },
   },
   GAP: {
     STATS: `/attestations/stats`,
