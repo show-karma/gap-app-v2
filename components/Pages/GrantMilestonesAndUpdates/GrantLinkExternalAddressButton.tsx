@@ -13,6 +13,7 @@ import { Dialog, Transition } from "@headlessui/react";
 import { Button } from "@/components/Utilities/Button";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { envVars } from "@/utilities/enviromentVars";
 
 interface GrantLinkExternalAddressButtonProps {
     project: IProjectResponse;
@@ -36,7 +37,7 @@ export const GrantLinkExternalAddressButton: FC<GrantLinkExternalAddressButtonPr
     );
     const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
 
-    const isEnabledForCommunity = grant.community?.details?.data?.slug === "octant";
+    const isEnabledForCommunity = grant.community?.details?.data?.slug === (envVars.isDev ? "karma-base-sepolia" : "octant");
 
     useEffect(() => {
         if (grant.externalAddresses) {
@@ -86,11 +87,11 @@ export const GrantLinkExternalAddressButton: FC<GrantLinkExternalAddressButtonPr
         <>
             <Button
                 onClick={() => setIsOpen(true)}
-                className="hover:opacity-75 flex flex-row items-center justify-center gap-2 rounded-md  border border-primary-600 px-3.5 py-2 text-sm font-semibold text-white hover:bg-primary-600 "
+                className="flex flex-row items-center justify-center gap-2 rounded-md border border-primary-500 bg-white px-3.5 py-2 text-sm font-semibold text-primary-500 hover:bg-primary-100"
             >
                 Link Octant Address
                 <div className="h-5 w-5">
-                    <LinkIcon className="h-5 w-5" />
+                    <LinkIcon className="h-5 w-5 transition-none" />
                 </div>
             </Button>
             <Transition appear show={isOpen} as={Fragment}>
@@ -145,9 +146,9 @@ export const GrantLinkExternalAddressButton: FC<GrantLinkExternalAddressButtonPr
                                                 <Button
                                                     onClick={() => handleSave('octant', editedAddresses.octant)}
                                                     disabled={isLoading}
-                                                    className="transition-none ml-3 p-2 text-sm bg-white text-primary-600 border border-primary-600 hover:text-white rounded hover:bg-primary-500 disabled:bg-primary-300 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                                                    className="ml-3 p-2 flex flex-row items-center justify-center gap-2 rounded-md border border-primary-500 bg-primary-100 px-3.5 py-2 text-sm font-semibold text-primary-500 hover:bg-primary-100"
                                                 >
-                                                    {isLoading ? 'Saving...' : 'Save'} <CheckCircleIcon className="h-5 w-5 ml-2 transition-none" />
+                                                    {isLoading ? 'Saving...' : 'Save'} <CheckCircleIcon className="h-5 w-5 transition-none" />
                                                 </Button>
                                             </div>
                                         </div>
