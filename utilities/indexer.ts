@@ -124,6 +124,10 @@ export const INDEXER = {
     },
     UPDATE_EXTERNAL_ID: `/grants/external-id/update`,
     REMOVE_EXTERNAL_ID: `/grants/external-id/delete`,
+    EXTERNAL_ADDRESS: {
+      UPDATE: (grantUID: string) =>
+        `/grants/${grantUID}/external-address/update`,
+    },
   },
   GAP: {
     STATS: `/attestations/stats`,
