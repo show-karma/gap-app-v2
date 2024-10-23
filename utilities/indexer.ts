@@ -122,6 +122,8 @@ export const INDEXER = {
       ALL: (idOrSlug: string) => `/communities/${idOrSlug}/categories`,
       UPDATE: (grantUID: string) => `/grants/${grantUID}/update/categories`,
     },
+    UPDATE_EXTERNAL_ID: `/grants/external-id/update`,
+    REMOVE_EXTERNAL_ID: `/grants/external-id/delete`,
     EXTERNAL_ADDRESS: {
       UPDATE: (grantUID: string) =>
         `/grants/${grantUID}/external-address/update`,
