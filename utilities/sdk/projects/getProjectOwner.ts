@@ -7,14 +7,15 @@ import {
 
 export async function getProjectOwner(
   signer: SignerOrProvider,
-  project: Project
+  project: Project,
+  newOwner: `0x${string}`
 ): Promise<boolean> {
-  const publicAddress = signer.getAddress();
   try {
     const { uid, chainID } = project;
 
     const resolver = await GAP.getProjectResolver(signer as any, chainID);
-    const response = await resolver.isAdmin(uid, publicAddress);
+
+    const response = await resolver.isAdmin(uid, newOwner);
     const isowner = response;
     return isowner;
   } catch (error: any) {
