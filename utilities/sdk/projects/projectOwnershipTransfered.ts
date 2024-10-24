@@ -5,17 +5,17 @@ import {
   type SignerOrProvider,
 } from "@show-karma/karma-gap-sdk";
 
-export async function getProjectOwner(
+export async function isOwnershipTransfered(
   signer: SignerOrProvider,
-  project: Project
+  project: Project,
+  newOwner: `0x${string}`
 ): Promise<boolean> {
   try {
-    const publicAddress = signer.getAddress();
     const { uid, chainID } = project;
 
     const resolver = await GAP.getProjectResolver(signer as any, chainID);
 
-    const response = await resolver.isAdmin(uid, publicAddress);
+    const response = await resolver.isAdmin(uid, newOwner);
     const isowner = response;
     return isowner;
   } catch (error: any) {
