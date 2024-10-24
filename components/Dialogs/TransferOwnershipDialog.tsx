@@ -11,7 +11,11 @@ import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { getWalletClient } from "@wagmi/core";
 import { useStepper } from "@/store/modals/txStepper";
-import { getProjectById, getProjectOwner } from "@/utilities/sdk";
+import {
+  getProjectById,
+  getProjectOwner,
+  isOwnershipTransfered,
+} from "@/utilities/sdk";
 import { config } from "@/utilities/wagmi/config";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -91,7 +95,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
             );
           }
           while (retries > 0) {
-            const stillProjectOwner = await getProjectOwner(
+            const stillProjectOwner = await isOwnershipTransfered(
               walletSigner || signer,
               fetchedProject,
               newOwner
