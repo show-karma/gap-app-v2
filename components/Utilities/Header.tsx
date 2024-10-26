@@ -36,7 +36,6 @@ import { usePrivy, useWallets } from "@privy-io/react-auth";
 import LoginWithPrivy from "../LoginWithPrivy";
 import { appNetwork } from "@/utilities/network";
 
-
 const ProjectDialog = dynamic(
   () =>
     import("@/components/Dialogs/ProjectDialog/index").then(
@@ -301,7 +300,6 @@ export default function Header() {
                           )}
 
                           <LoginWithPrivy />
-
                         </>
                       ) : null}
                     </div>

@@ -6,7 +6,7 @@ import EthereumAddressToENSName from "./EthereumAddressToENSName";
 import { useWallets } from '@privy-io/react-auth';
 import { useSetActiveWallet } from '@privy-io/wagmi';
 import { useEffect } from 'react';
-
+import { UserPill } from '@privy-io/react-auth/ui';
 
 
 export default function LoginWithPrivy() {
@@ -51,16 +51,13 @@ export default function LoginWithPrivy() {
                         </button>
                     );
                 } else {
-                    return <Button
-                        onClick={logout}
-                        className="flex w-full py-1 justify-center items-center flex-row gap-2 rounded-full bg-gray-500 text-sm font-semibold text-white  hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-                    >
-                        <EthereumAddressToENSName address={user?.wallet?.address} />
+                    return <div className="flex flex-row gap-2 items-center">
+                        <UserPill expanded />
                         <EthereumAddressToENSAvatar
                             address={user?.wallet?.address}
                             className="h-8 w-8 rounded-full"
                         />
-                    </Button>
+                    </div>
                 }
 
             })()}

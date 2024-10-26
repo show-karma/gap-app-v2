@@ -38,4 +38,5 @@ export const envVars = {
     process.env.NEXT_PUBLIC_ENV === "production"
       ? `https://gap.karmahq.xyz`
       : "https://gapstag.karmahq.xyz",
+  ALCHEMY_POLICY_ID: process.env.NEXT_PUBLIC_ALCHEMY_POLICY_ID || "",
 };

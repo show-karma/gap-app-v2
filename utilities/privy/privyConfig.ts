@@ -20,7 +20,7 @@ export const privyConfig: PrivyClientConfig = {
     walletChainType: "ethereum-only",
     showWalletLoginFirst: true,
     theme: "light",
-    accentColor: "#E40536",
+    accentColor: "#4C6FFF",
     logo: "https://gap.karmahq.xyz/logo/karma-gap-logo2.png",
   },
   supportedChains: appNetwork,
