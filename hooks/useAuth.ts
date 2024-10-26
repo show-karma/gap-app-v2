@@ -2,9 +2,8 @@
 import { useAuthStore } from "@/store/auth";
 import { jwtDecode } from "jwt-decode";
 import fetchData from "@/utilities/fetchData";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
 import Cookies from "universal-cookie";
-import { useAccount, useDisconnect, useSignMessage, useChainId } from "wagmi";
+import { useSignMessage, useChainId } from "wagmi";
 import toast from "react-hot-toast";
 import { IExpirationStatus, ISession } from "@/types/auth";
 import { checkExpirationStatus } from "@/utilities/checkExpirationStatus";
@@ -18,6 +17,9 @@ import {
   authCookiePath,
   authWalletTypeCookiePath,
 } from "@/utilities/auth-keys";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { appNetwork } from "@/utilities/network";
+import { useEffect } from "react";
 
 const getNonce = async (publicAddress: string) => {
   try {
@@ -45,13 +47,16 @@ const isTokenValid = (tokenValue: string | null) => {
 };
 
 export const useAuth = () => {
-  const { isConnected, address } = useAccount();
-  const { openConnectModal } = useConnectModal();
+  const { user, ready, authenticated, logout, login, createWallet } =
+    usePrivy();
   const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && (wallets[0]?.address as `0x${string}`);
   const { setIsAuthenticating, setIsAuth, isAuthenticating, setWalletType } =
     useAuthStore();
   // const { signMessageAsync } = useSignMessage();
-  const { disconnectAsync } = useDisconnect();
   const { setIsOnboarding } = useOnboarding?.();
   const router = useRouter();
   const cookies = new Cookies();
@@ -66,12 +71,18 @@ export const useAuth = () => {
       return signedMessage;
     } catch (err) {
       // eslint-disable-next-line no-console
-      await disconnectAsync?.();
+      await logout?.();
       errorManager(`Error in signing message of user ${address}`, err);
       console.log(err);
       return null;
     }
   };
+
+  useEffect(() => {
+    if (!user?.wallet?.address && authenticated) {
+      createWallet();
+    }
+  }, [user]);
 
   const getAccountToken = async (
     publicAddress: string,
@@ -126,7 +137,7 @@ export const useAuth = () => {
       if (isAuthenticating) return;
       setIsAuthenticating(true);
       if (!isConnected || !newAddress) {
-        openConnectModal?.();
+        login?.();
         return false;
       }
       if (typeof window !== "undefined") {
@@ -198,7 +209,7 @@ export const useAuth = () => {
 
     setIsAuth(false);
     setWalletType(undefined);
-    await disconnectAsync?.();
+    await logout?.();
   };
 
   const softDisconnect = (newAddress: Hex) => {

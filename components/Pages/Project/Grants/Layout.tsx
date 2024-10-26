@@ -10,7 +10,7 @@ import { GrantLinkExternalAddressButton } from "../../GrantMilestonesAndUpdates/
 import { GrantDelete } from "../../GrantMilestonesAndUpdates/GrantDelete";
 import dynamic from "next/dynamic";
 import { PAGES } from "@/utilities/pages";
-import { useAccount } from "wagmi";
+import { useChainId } from "wagmi";
 import { useEffect, useState } from "react";
 import { GrantScreen } from "@/types";
 import { useParams, usePathname, useRouter } from "next/navigation";
@@ -34,6 +34,8 @@ import Link from "next/link";
 import { useGrantStore } from "@/store/grant";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { ProjectGrantsLayoutLoading } from "../Loading/Grants/Layout";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { appNetwork } from "@/utilities/network"
 
 interface GrantsLayoutProps {
   children: React.ReactNode;
@@ -111,7 +113,17 @@ export const GrantsLayout = ({ children, project }: GrantsLayoutProps) => {
   const isCommunityAdminOfSome = communities.length !== 0;
   const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
 
-  const { address } = useAccount();
+  const {
+    user,
+    ready,
+    authenticated,
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`;
+
 
   //   UseEffect to check if current URL changes
   useEffect(() => {
@@ -199,7 +211,6 @@ export const GrantsLayout = ({ children, project }: GrantsLayoutProps) => {
   );
 
   const signer = useSigner();
-  const { chain } = useAccount();
   const { gap } = useGap();
   const { isAuth } = useAuthStore();
 

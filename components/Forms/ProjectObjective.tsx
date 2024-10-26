@@ -6,7 +6,7 @@ import { z } from "zod";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 import { Button } from "../Utilities/Button";
 import { errorManager } from "../Utilities/errorManager";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useChainId, useSwitchChain } from "wagmi";
 import { useProjectStore } from "@/store";
 import { getGapClient, useGap } from "@/hooks";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
@@ -26,6 +26,8 @@ import { XMarkIcon } from "@heroicons/react/24/solid";
 import { cn } from "@/utilities/tailwind";
 import { useQuery } from "@tanstack/react-query";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { appNetwork } from "@/utilities/network";
 
 const objectiveSchema = z.object({
   title: z
@@ -50,8 +52,16 @@ export const ProjectObjectiveForm = ({
   previousObjective,
   stateHandler,
 }: ProjectObjectiveFormProps) => {
-  const { address, chain } = useAccount();
-  const { project } = useProjectStore();
+  const {
+    user,
+    ready,
+    authenticated,
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`; const { project } = useProjectStore();
   const { switchChainAsync } = useSwitchChain();
   const params = useParams();
   const projectId = params.projectId as string;

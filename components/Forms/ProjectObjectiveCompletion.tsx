@@ -19,7 +19,7 @@ import { getWalletClient } from "@wagmi/core";
 import { useParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useChainId, useSwitchChain } from "wagmi";
 import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
 import { useState } from "react";
@@ -27,6 +27,8 @@ import { Button } from "../Utilities/Button";
 import { cn } from "@/utilities/tailwind";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 import { sanitizeInput } from "@/utilities/sanitize";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { appNetwork } from "@/utilities/network";
 
 const schema = z.object({
   description: z.string().optional(),
@@ -57,7 +59,16 @@ export const ProjectObjectiveCompletionForm = ({
 }: ProjectObjectiveCompletionFormProps) => {
   const project = useProjectStore((state) => state.project);
   const [isCompleting, setIsCompleting] = useState(false);
-  const { chain, address } = useAccount();
+  const {
+    user,
+    ready,
+    authenticated,
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`;
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
   const { switchChainAsync } = useSwitchChain();

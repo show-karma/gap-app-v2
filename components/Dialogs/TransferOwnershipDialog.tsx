@@ -6,7 +6,7 @@ import { Button } from "../Utilities/Button";
 import toast from "react-hot-toast";
 import { isAddress } from "viem";
 import { useProjectStore } from "@/store";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useChainId, useSwitchChain } from "wagmi";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { getWalletClient } from "@wagmi/core";
@@ -15,10 +15,11 @@ import { getProjectById, getProjectOwner } from "@/utilities/sdk";
 import { config } from "@/utilities/wagmi/config";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-
+import { appNetwork } from "@/utilities/network";
 import { errorManager } from "../Utilities/errorManager";
 import { sanitizeInput } from "@/utilities/sanitize";
 import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
 
 type TransferOwnershipProps = {
   buttonElement?: {
@@ -44,9 +45,19 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
   const [newOwner, setNewOwner] = useState<string>();
   const [isLoading, setIsLoading] = useState(false);
   const [validAddress, setValidAddress] = useState(true);
+  const {
+    user,
+    ready,
+    authenticated,
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`;
 
   const signer = useSigner();
-  const { chain } = useAccount();
+
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);

@@ -13,11 +13,12 @@ import {
   ICommunityResponse,
   ISearchResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useAccount } from "wagmi";
+import { useChainId } from "wagmi";
 import { useAuthStore } from "@/store/auth";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useEffect, useState } from "react";
 import { useMobileStore } from "@/store/mobile";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { appNetwork } from "@/utilities/network";
 
 import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
 import { groupSimilarCommunities } from "@/utilities/communityHelpers"; // You'll need to create this utility function
@@ -35,14 +36,23 @@ export const SearchList: React.FC<Props> = ({
   isLoading = true,
   closeSearchList,
 }) => {
-  const { isConnected } = useAccount();
+  const {
+    user,
+    ready,
+    authenticated,
+    login
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`;
   const { isAuth } = useAuthStore();
-  const { openConnectModal } = useConnectModal();
   const [shouldOpen, setShouldOpen] = useState(false);
 
   const triggerCreateProjectModal = () => {
     if (!isConnected || !isAuth) {
-      openConnectModal?.();
+      login?.();
       setShouldOpen(true);
       return;
     }

@@ -4,7 +4,7 @@
 import dynamic from "next/dynamic";
 
 import { type FC, useEffect, useState, Suspense } from "react";
-import { useAccount } from "wagmi";
+import { useChainId } from "wagmi";
 
 import { ReviewForm } from "./ReviewForm";
 import { ReviewFormAnon } from "./ReviewFormAnon";
@@ -24,7 +24,8 @@ import { useSearchParams } from "next/navigation";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useGrantStore } from "@/store/grant";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { appNetwork } from "@/utilities/network";
 
 interface ReviewGrantProps {
   grant: IGrantResponse | undefined;
@@ -37,11 +38,19 @@ export const ReviewGrant: FC = () => {
 
   const [zkgroup, setZkGroup] = useState<any>(null);
 
-  const { isConnected } = useAccount();
   const { isAuth } = useAuthStore();
-  const { openConnectModal } = useConnectModal();
   const loading = useProjectStore((state) => state.loading);
-  const { address } = useAccount();
+  const {
+    user,
+    ready,
+    authenticated,
+    login
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`;
 
   const [isFetching, setIsFetching] = useState(true);
   const [isAnonReview, setIsAnonReview] = useState(false);
@@ -182,7 +191,7 @@ export const ReviewGrant: FC = () => {
     return (
       <div className="flex flex-1 flex-col items-center justify-center gap-3">
         <p>Please, connect your wallet.</p>
-        <Button onClick={openConnectModal}>Connect wallet</Button>
+        <Button onClick={login}>Connect wallet</Button>
       </div>
     );
     // Check if zkgroup is enabled for this grant

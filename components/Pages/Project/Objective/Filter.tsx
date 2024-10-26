@@ -13,7 +13,7 @@ import {
   StatusOptions,
 } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { useParams } from "next/navigation";
-import { queryClient } from "@/components/Utilities/WagmiProvider";
+import { queryClient } from "@/components/Utilities/Web3Provider";
 
 const statuses: Record<StatusOptions, string> = {
   all: "All",

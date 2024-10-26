@@ -22,7 +22,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { getWalletClient } from "@wagmi/core";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useChainId, useSwitchChain } from "wagmi";
 import { config } from "@/utilities/wagmi/config";
 import { Hex } from "viem";
 import fetchData from "@/utilities/fetchData";
@@ -34,6 +34,8 @@ import { ProjectUpdateForm } from "@/components/Forms/ProjectUpdate";
 import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { appNetwork } from "@/utilities/network";
 
 const InformationTab: FC = () => {
   const { project } = useProjectStore();
@@ -112,8 +114,16 @@ const UpdateBlock = ({
   const [isDeletingUpdate, setIsDeletingUpdate] = useState(false);
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
-  const { chain } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
+  const {
+    user,
+    ready,
+    authenticated,
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`; const { switchChainAsync } = useSwitchChain();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
@@ -259,7 +269,7 @@ const UpdateBlock = ({
             side="left"
             othersideButton={
               update.type != "ProjectUpdate" &&
-              update.type != "ProjectImpact" ? (
+                update.type != "ProjectImpact" ? (
                 <Link
                   href={PAGES.PROJECT.MILESTONES_AND_UPDATES(
                     project?.details?.data.slug || "",

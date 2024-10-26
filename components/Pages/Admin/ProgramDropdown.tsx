@@ -14,11 +14,12 @@ import { ChevronDown } from "@/components/Icons/ChevronDown";
 import pluralize from "pluralize";
 import Image from "next/image";
 import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import { useAccount } from "wagmi";
+import { useChainId } from "wagmi";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { appNetwork } from "@/utilities/network";
 
 
 const ProgramDropdown: FC<{
@@ -46,8 +47,16 @@ const ProgramDropdown: FC<{
 }) => {
         const [open, setOpen] = useState(false);
         const [adding, setAdding] = useState(false);
-        const { address: owner } = useAccount();
-
+        const {
+            user,
+            ready,
+            authenticated,
+        } = usePrivy();
+        const chainId = useChainId();
+        const { wallets } = useWallets();
+        const isConnected = ready && authenticated && wallets.length !== 0;
+        const chain = appNetwork.find((c) => c.id === chainId);
+        const address = user && wallets[0]?.address as `0x${string}`;
 
 
         return (

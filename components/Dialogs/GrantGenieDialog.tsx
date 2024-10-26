@@ -1,19 +1,14 @@
 /* eslint-disable @next/next/no-img-element */
 import { FC, Fragment, ReactNode, useEffect, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
-
-import { DocumentCheckIcon, LightBulbIcon } from "@heroicons/react/24/solid";
 import { Button } from "../Utilities/Button";
 import toast from "react-hot-toast";
 import { useProjectStore } from "@/store";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useSwitchChain } from "wagmi";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-
 import React from "react";
-
 import { Spinner } from "../Utilities/Spinner";
-import { cn } from "@/utilities/tailwind";
 import { useGrantGenieModalStore } from "@/store/modals/genie";
 
 type Props = {};

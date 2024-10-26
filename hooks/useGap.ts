@@ -6,7 +6,7 @@ import {
   IpfsStorage,
 } from "@show-karma/karma-gap-sdk/core/class";
 import { useEffect, useMemo, useState } from "react";
-import { useAccount } from "wagmi";
+import { useChainId } from "wagmi";
 
 import {
   appNetwork,
@@ -14,6 +14,7 @@ import {
   getChainNameById,
 } from "@/utilities/network";
 import { envVars } from "@/utilities/enviromentVars";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
 
 const ipfsClient = new IpfsStorage({
   token: envVars.IPFS_TOKEN,
@@ -50,8 +51,12 @@ export const getGapClient = (chainID: number): GAP => {
 
 export const useGap = () => {
   const [gap, setGapClient] = useState<GAP>();
-  const { chain } = useAccount();
-
+  const { user, ready, authenticated } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && (wallets[0]?.address as `0x${string}`);
   if (!gap) {
     const chainID =
       appNetwork.find((c) => c.id === chain?.id)?.id || appNetwork[0].id;

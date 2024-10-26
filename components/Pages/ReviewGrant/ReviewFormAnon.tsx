@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 import { Question } from "@/types";
 import { ReviewerInfo } from "@/types/reviewer";
-import { useAccount } from "wagmi";
+import { useChainId } from "wagmi";
 import { useProjectStore } from "@/store";
 import fetchData from "@/utilities/fetchData";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -28,6 +28,8 @@ import { createHash } from "crypto";
 import { envVars } from "@/utilities/enviromentVars";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { appNetwork } from "@/utilities/network";
 
 interface ReviewFormAnonProps {
   grant: IGrantResponse;
@@ -162,7 +164,16 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
   zkgroup,
 }) => {
   const searchParams = useSearchParams();
-  const { address } = useAccount();
+  const {
+    user,
+    ready,
+    authenticated,
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`;
   const project = useProjectStore((state) => state.project);
   const [hasSubmitted, setHasSubmitted] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -410,7 +421,7 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
                         }}
                       />
                       {+(form.getValues("questions")[index]?.rating || 0) >
-                      0 ? (
+                        0 ? (
                         <p className="text-xl font-semibold text-gray-600 dark:text-zinc-100">
                           {form.getValues("questions")[index]?.rating}
                         </p>

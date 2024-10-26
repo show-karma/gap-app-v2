@@ -10,9 +10,8 @@ import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
 import { useQueryState } from "nuqs";
 import AddProgram from "@/components/Pages/ProgramRegistry/AddProgram";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useChainId, useSwitchChain } from "wagmi";
 import { useAuthStore } from "@/store/auth";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
 import {
   ChevronLeftIcon,
   MagnifyingGlassIcon,
@@ -45,6 +44,8 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { LoadingProgramTable } from "./Loading/Programs";
 import { SearchDropdown } from "./SearchDropdown";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { appNetwork } from "@/utilities/network";
 
 export const ManagePrograms = () => {
   const searchParams = useSearchParams();
@@ -93,11 +94,19 @@ export const ManagePrograms = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [programToEdit, setProgramToEdit] = useState<GrantProgram | null>(null);
 
-  const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore();
 
-  const { chain } = useAccount();
-
+  const {
+    user,
+    ready,
+    authenticated,
+    login
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`;
   const signer = useSigner();
 
   const {
@@ -205,9 +214,8 @@ export const ManagePrograms = () => {
   const getGrantPrograms = async () => {
     try {
       const baseUrl = INDEXER.REGISTRY.GET_ALL;
-      const queryParams = `?isValid=${tab}&limit=${pageSize}&offset=${
-        (page - 1) * pageSize
-      }`;
+      const queryParams = `?isValid=${tab}&limit=${pageSize}&offset=${(page - 1) * pageSize
+        }`;
       const searchParam = searchInput ? `&name=${searchInput}` : "";
       const networkParam = selectedNetworks.length
         ? `&networks=${selectedNetworks.join(",")}`
@@ -324,7 +332,6 @@ export const ManagePrograms = () => {
     }
   };
 
-  const { openConnectModal } = useConnectModal();
 
   const onChangeGeneric = (
     value: string,
@@ -351,7 +358,7 @@ export const ManagePrograms = () => {
           <Button
             className="w-max"
             onClick={() => {
-              openConnectModal?.();
+              login?.();
             }}
           >
             Login
@@ -517,7 +524,7 @@ export const ManagePrograms = () => {
                       }}
                       type={"Ecosystems"}
                       selected={selectedEcosystems}
-                      // imageDictionary={}
+                    // imageDictionary={}
                     />
                     <SearchDropdown
                       list={registryHelper.grantTypes}
@@ -529,7 +536,7 @@ export const ManagePrograms = () => {
                       }}
                       type={"Funding Mechanisms"}
                       selected={selectedGrantTypes}
-                      // imageDictionary={}
+                    // imageDictionary={}
                     />
                   </div>
                 </div>

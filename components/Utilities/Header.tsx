@@ -5,9 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import * as Popover from "@radix-ui/react-popover";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { MoonIcon, SunIcon } from "@heroicons/react/24/solid";
-import { useAccount } from "wagmi";
 import { useOwnerStore } from "@/store/owner";
 import { useCommunitiesStore } from "@/store/communities";
 import { ExternalLink } from "./ExternalLink";
@@ -33,6 +31,11 @@ import { usePathname } from "next/navigation";
 import { useRegistryStore } from "@/store/registry";
 import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
 import { errorManager } from "./errorManager";
+import { useChainId } from "wagmi";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import LoginWithPrivy from "../LoginWithPrivy";
+import { appNetwork } from "@/utilities/network";
+
 
 const ProjectDialog = dynamic(
   () =>
@@ -46,10 +49,22 @@ const buttonStyle: HTMLButtonElement["className"] =
   "rounded-md bg-white w-max dark:bg-black px-0 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 hover:bg-transparent dark:hover:bg-opacity-75 dark:border-zinc-900";
 
 export default function Header() {
-  const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
-  const { isConnected, address } = useAccount();
-  const { isAuth, isAuthenticating } = useAuthStore();
   const { communities, setCommunities, setIsLoading } = useCommunitiesStore();
+  const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
+  const { isAuth, isAuthenticating } = useAuthStore();
+
+  const {
+    user,
+    ready,
+    authenticated,
+    logout
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = authenticated && user && wallets[0]?.address as `0x${string}`;
+
 
   const signer = useSigner();
 
@@ -82,9 +97,10 @@ export default function Header() {
   const setIsOwner = useOwnerStore((state) => state.setIsOwner);
   const setIsOwnerLoading = useOwnerStore((state) => state.setIsOwnerLoading);
 
-  const { chain } = useAccount();
+
 
   useEffect(() => {
+
     if (!signer || !address || !isAuth) {
       setIsOwnerLoading(false);
       setIsOwner(false);
@@ -92,7 +108,7 @@ export default function Header() {
     }
     const setupOwner = async () => {
       setIsOwnerLoading(true);
-      if (!chain) {
+      if (!chainId) {
         setIsOwner(false);
         return;
       }
@@ -284,70 +300,8 @@ export default function Header() {
                             </>
                           )}
 
-                          <ConnectButton.Custom>
-                            {({
-                              account,
-                              chain,
-                              openAccountModal,
-                              openConnectModal,
-                              authenticationStatus,
-                              mounted,
-                            }) => {
-                              // Note: If your app doesn't use authentication, you
-                              // can remove all 'authenticationStatus' checks
-                              const ready =
-                                mounted && authenticationStatus !== "loading";
-                              const connected =
-                                ready &&
-                                account &&
-                                chain &&
-                                (!authenticationStatus ||
-                                  authenticationStatus === "authenticated");
+                          <LoginWithPrivy />
 
-                              return (
-                                <div
-                                  {...(!ready && {
-                                    "aria-hidden": true,
-                                    style: {
-                                      opacity: 0,
-                                      pointerEvents: "none",
-                                      userSelect: "none",
-                                    },
-                                  })}
-                                >
-                                  {(() => {
-                                    if (!connected) {
-                                      return (
-                                        <button
-                                          onClick={openConnectModal}
-                                          type="button"
-                                          className="rounded-md border max-lg:w-full max-lg:justify-center border-brand-blue dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-brand-blue  hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-                                        >
-                                          Login / Register
-                                        </button>
-                                      );
-                                    }
-
-                                    return (
-                                      <Button
-                                        onClick={async () => {
-                                          disconnect();
-                                        }}
-                                        className="flex w-full py-1 justify-center items-center flex-row gap-2 rounded-full bg-gray-500 text-sm font-semibold text-white  hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-                                      >
-                                        {account.displayName}
-
-                                        <EthereumAddressToENSAvatar
-                                          address={account.address}
-                                          className="h-8 w-8 rounded-full"
-                                        />
-                                      </Button>
-                                    );
-                                  })()}
-                                </div>
-                              );
-                            }}
-                          </ConnectButton.Custom>
                         </>
                       ) : null}
                     </div>
@@ -407,84 +361,11 @@ export default function Header() {
                     </>
                   )}
 
-                  <ConnectButton.Custom>
-                    {({
-                      account,
-                      chain,
-                      openAccountModal,
-                      openConnectModal,
-                      authenticationStatus,
-                      mounted,
-                    }) => {
-                      // Note: If your app doesn't use authentication, you
-                      // can remove all 'authenticationStatus' checks
-                      const ready =
-                        mounted && authenticationStatus !== "loading";
-                      const connected =
-                        ready &&
-                        account &&
-                        chain &&
-                        (!authenticationStatus ||
-                          authenticationStatus === "authenticated");
+                  <LoginWithPrivy />
 
-                      return (
-                        <div
-                          {...(!ready && {
-                            "aria-hidden": true,
-                            style: {
-                              opacity: 0,
-                              pointerEvents: "none",
-                              userSelect: "none",
-                            },
-                          })}
-                        >
-                          {(() => {
-                            if (!connected || !isAuth) {
-                              return (
-                                <button
-                                  onClick={() => {
-                                    if (isAuthenticating) return;
-                                    if (
-                                      !isAuth &&
-                                      connected &&
-                                      !isAuthenticating
-                                    ) {
-                                      authenticate();
-                                      return;
-                                    }
-                                    openConnectModal?.();
-                                  }}
-                                  type="button"
-                                  className="rounded-md border border-brand-blue dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-brand-blue hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-                                >
-                                  Login / Register
-                                </button>
-                              );
-                            }
-
-                            return (
-                              <Button
-                                onClick={async () => {
-                                  disconnect();
-                                }}
-                                className="flex w-max items-center flex-row gap-2 rounded-full bg-gray-500 p-0 pl-3 text-sm font-semibold text-white hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-                              >
-                                {account.displayName}
-
-                                <EthereumAddressToENSAvatar
-                                  address={account.address}
-                                  className="h-10 w-10 rounded-full"
-                                />
-                              </Button>
-                            );
-                          })()}
-                        </div>
-                      );
-                    }}
-                  </ConnectButton.Custom>
                 </>
               ) : null}
-              {/* Rainbowkit custom connect button end */}
+
               {/* Color mode toggle start */}
               <button
                 className="px-3 py-2.5 rounded-md bg-white dark:bg-zinc-900 text-sm font-semibold text-gray-900 dark:text-white  ring-1 ring-inset ring-gray-300 dark:ring-zinc-800 hover:bg-gray-50 dark:hover:bg-zinc-800 focus:outline-primary-600"

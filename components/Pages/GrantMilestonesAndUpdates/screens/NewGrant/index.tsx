@@ -17,7 +17,7 @@ import type { FC } from "react";
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Hex, isAddress } from "viem";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useChainId, useSwitchChain } from "wagmi";
 import { z } from "zod";
 import { Milestone as MilestoneComponent } from "./Milestone";
 import { usePathname, useRouter } from "next/navigation";
@@ -30,7 +30,6 @@ import { getWalletClient } from "@wagmi/core";
 import { useGrantFormStore } from "./store";
 import { MESSAGES } from "@/utilities/messages";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { appNetwork } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
 import { Popover } from "@headlessui/react";
 import { DayPicker } from "react-day-picker";
@@ -55,6 +54,8 @@ import { urlRegex } from "@/utilities/regexs/urlRegex";
 import Link from "next/link";
 import { GrantScreen } from "@/types";
 import { GrantTitleDropdown } from "./GrantTitleDropdown";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { appNetwork } from "@/utilities/network";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -221,8 +222,16 @@ const defaultFundUsage = `| Budget Item    | % of Allocated funding |
 | Item 3 | Z%     |`;
 
 export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
-  const { address } = useAccount();
-  const isOwner = useOwnerStore((state) => state.isOwner);
+  const {
+    user,
+    ready,
+    authenticated,
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`; const isOwner = useOwnerStore((state) => state.isOwner);
   const pathname = usePathname();
   const grantScreen: GrantScreen = pathname.includes("edit-grant")
     ? "edit-grant"
@@ -248,10 +257,8 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const [isCommunityAllowed, setIsCommunityAllowed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const selectedProject = useProjectStore((state) => state.project);
-  const { chain } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const { gap } = useGap();
-  const { isConnected } = useAccount();
 
   function premade<T extends GenericQuestion>(): T[] | undefined {
     const hasQuestions = grantToEdit?.details?.data?.questions?.filter(
@@ -319,7 +326,6 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
 
   const router = useRouter();
 
-  const { connector } = useAccount();
   const { changeStepperStep, setIsStepper } = useStepper();
   const createNewGrant = async (
     data: NewGrantData,
@@ -331,7 +337,6 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     try {
       setIsLoading(true);
       if (!isConnected || !isAuth) return;
-      const chainId = await connector?.getChainId();
       if (!checkNetworkIsValid(chainId) || chainId !== communityNetworkId) {
         await switchChainAsync?.({ chainId: communityNetworkId });
         gapClient = getGapClient(communityNetworkId);

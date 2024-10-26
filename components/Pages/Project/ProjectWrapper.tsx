@@ -4,13 +4,12 @@ import { useAuthStore } from "@/store/auth";
 import { getWalletClient } from "@wagmi/core";
 import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
 import { Button } from "@/components/Utilities/Button";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { config } from "@/utilities/wagmi/config";
 import { INDEXER } from "@/utilities/indexer";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { useEffect, useMemo } from "react";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useAccount } from "wagmi";
+import { useChainId } from "wagmi";
 import {
   DiscordIcon,
   GithubIcon,
@@ -34,6 +33,8 @@ import { ProgressDialog } from "@/components/Dialogs/ProgressDialog";
 import { errorManager } from "@/components/Utilities/errorManager";
 
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import { usePrivy, useWallets } from "@privy-io/react-auth"
+import { appNetwork } from "@/utilities/network"
 
 interface ProjectWrapperProps {
   project: IProjectResponse;
@@ -101,8 +102,17 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   const hasContactInfo = Boolean(projectContactsInfo?.length);
 
   const signer = useSigner();
-  const { address, isConnected, isConnecting, chain } = useAccount();
-  const { isAuth } = useAuthStore();
+  const {
+    user,
+    ready,
+    authenticated,
+    login
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`; const { isAuth } = useAuthStore();
   const { gap } = useGap();
 
   useEffect(() => {
@@ -218,7 +228,6 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   const hasAlreadyEndorsed = project?.endorsements?.find(
     (item) => item.recipient?.toLowerCase() === address?.toLowerCase()
   );
-  const { openConnectModal } = useConnectModal();
   const { setIsEndorsementOpen: setIsOpen } = useEndorsementStore();
 
   const handleEndorse = () => {
@@ -227,8 +236,8 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
         <Button
           className="hover:bg-white dark:hover:bg-black border border-black bg-white text-black dark:bg-black dark:text-white px-4 rounded-md py-2 w-max"
           onClick={() => {
-            if (!isConnecting) {
-              openConnectModal?.();
+            if (ready) {
+              login?.();
             }
           }}
         >

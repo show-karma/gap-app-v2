@@ -16,13 +16,15 @@ import { getGapClient, useGap } from "@/hooks";
 import { useStepper } from "@/store/modals/txStepper";
 import { Hex } from "viem";
 import { config } from "@/utilities/wagmi/config";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useChainId, useSwitchChain } from "wagmi";
 import {
   IGrantUpdate,
   IGrantUpdateStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { appNetwork } from "@/utilities/network";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -75,8 +77,16 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
   date,
   update,
 }) => {
-  const { chain } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
+  const {
+    user,
+    ready,
+    authenticated,
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`; const { switchChainAsync } = useSwitchChain();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [isDeletingGrantUpdate, setIsDeletingGrantUpdate] = useState(false);
 
@@ -251,16 +261,14 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
                 className="flex flex-row w-max max-w-full gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent break-all line-clamp-3"
               >
                 {update?.data.proofOfWork.includes("http")
-                  ? `${update?.data.proofOfWork.slice(0, 80)}${
-                      update?.data.proofOfWork.slice(0, 80).length >= 80
-                        ? "..."
-                        : ""
-                    }`
-                  : `https://${update?.data.proofOfWork.slice(0, 80)}${
-                      update?.data.proofOfWork.slice(0, 80).length >= 80
-                        ? "..."
-                        : ""
-                    }`}
+                  ? `${update?.data.proofOfWork.slice(0, 80)}${update?.data.proofOfWork.slice(0, 80).length >= 80
+                    ? "..."
+                    : ""
+                  }`
+                  : `https://${update?.data.proofOfWork.slice(0, 80)}${update?.data.proofOfWork.slice(0, 80).length >= 80
+                    ? "..."
+                    : ""
+                  }`}
               </ExternalLink>
             ) : (
               <p className="text-sm font-medium text-gray-500 dark:text-zinc-300 max-sm:text-xs">
