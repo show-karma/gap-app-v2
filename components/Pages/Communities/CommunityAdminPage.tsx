@@ -1,13 +1,15 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
-import { useAccount } from "wagmi";
+import { useChainId } from "wagmi";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { PAGES } from "@/utilities/pages";
 import { MESSAGES } from "@/utilities/messages";
 import { useAuthStore } from "@/store/auth";
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { appNetwork } from "@/utilities/network";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 
@@ -18,7 +20,16 @@ export const CommunityAdminPage = ({
   communityId: string;
   community: ICommunityResponse;
 }) => {
-  const { address, isConnected } = useAccount();
+  const {
+    user,
+    ready,
+    authenticated,
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`;
   const { isAuth } = useAuthStore();
 
   const [isAdmin, setIsAdmin] = useState<boolean>(false); // Data returned from the API

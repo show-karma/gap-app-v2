@@ -7,7 +7,7 @@ import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useChainId, useSwitchChain } from "wagmi";
 import { getGapClient, useGap } from "@/hooks";
 import { Hex } from "viem";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
@@ -32,6 +32,8 @@ import { useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
 import { errorManager } from "../Utilities/errorManager";
 import { sanitizeObject } from "@/utilities/sanitize";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { appNetwork } from "@/utilities/network";
 
 const milestoneSchema = z.object({
   title: z
@@ -83,8 +85,17 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   });
   const isOwner = useOwnerStore((state) => state.isOwner);
   const [recipient, setRecipient] = useState("");
+  const {
+    user,
+    ready,
+    authenticated,
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`;
 
-  const { address } = useAccount();
   const {
     register,
     handleSubmit,
@@ -98,7 +109,6 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   });
   const [isLoading, setIsLoading] = useState(false);
   const { gap } = useGap();
-  const { chain } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const isCommunityAdmin = useCommunityAdminStore(

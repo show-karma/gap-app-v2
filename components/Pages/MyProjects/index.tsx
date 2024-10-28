@@ -1,7 +1,7 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 import React, { useState } from "react";
-import { useAccount } from "wagmi";
+import { useChainId } from "wagmi";
 import formatCurrency from "@/utilities/formatCurrency";
 import pluralize from "pluralize";
 import Link from "next/link";
@@ -20,6 +20,8 @@ import { useMixpanel } from "@/hooks/useMixpanel";
 import { useQuery } from "@tanstack/react-query";
 import { LoadingCard } from "./LoadingCard";
 import { fetchMyProjects } from "@/utilities/sdk/projects/fetchMyProjects";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { appNetwork } from "@/utilities/network";
 
 const ProjectDialog = dynamic(
   () =>
@@ -48,7 +50,16 @@ const pickColor = (index: number) => {
 const OnboardingButton = () => {
   const { setIsOnboarding } = useOnboarding();
   const { mixpanel } = useMixpanel();
-  const { address } = useAccount();
+  const {
+    user,
+    ready,
+    authenticated,
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`;
 
   return (
     <Button
@@ -73,11 +84,21 @@ const OnboardingButton = () => {
 };
 
 export default function MyProjects() {
-  const { isConnected, address } = useAccount();
+
   const { isAuth } = useAuthStore();
   const { theme: currentTheme } = useTheme();
   const itemsPerPage = 12;
   const [page, setPage] = useState<number>(1);
+  const {
+    user,
+    ready,
+    authenticated,
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`;
 
   const {
     data: projects,
@@ -85,7 +106,9 @@ export default function MyProjects() {
     refetch,
   } = useQuery({
     queryKey: ["totalProjects"],
-    queryFn: () => fetchMyProjects(address),
+    queryFn: () => {
+      if (address) return fetchMyProjects(address);
+    },
     enabled: Boolean(address),
   });
 

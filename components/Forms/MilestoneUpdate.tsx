@@ -11,7 +11,7 @@ import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import { getWalletClient } from "@wagmi/core";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useChainId, useSwitchChain } from "wagmi";
 import { useStepper } from "@/store/modals/txStepper";
 import { config } from "@/utilities/wagmi/config";
 import {
@@ -29,6 +29,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { cn } from "@/utilities/tailwind";
 import { useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { appNetwork } from "@/utilities/network";
 
 interface MilestoneUpdateFormProps {
   milestone: IMilestoneResponse;
@@ -65,8 +67,17 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
 }) => {
   const selectedProject = useProjectStore((state) => state.project);
   const [isUpdating, setIsUpdating] = useState(false);
+  const {
+    user,
+    ready,
+    authenticated,
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`;
   const [isSubmitLoading, setIsSubmitLoading] = useState(false);
-  const { chain, address } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);

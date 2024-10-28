@@ -7,7 +7,7 @@ import { UpdateMilestone } from "./UpdateMilestone";
 import { useOwnerStore, useProjectStore } from "@/store";
 import toast from "react-hot-toast";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { useSwitchChain, useAccount } from "wagmi";
+import { useSwitchChain, useChainId } from "wagmi";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { formatDate } from "@/utilities/formatDate";
@@ -28,6 +28,8 @@ import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { appNetwork } from "@/utilities/network";
 
 interface UpdatesProps {
   milestone: IMilestoneResponse;
@@ -39,7 +41,16 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const handleEditing = (value: boolean) => {
     setIsEditing(value);
   };
-  const { chain } = useAccount();
+  const {
+    user,
+    ready,
+    authenticated,
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`;
   const { switchChainAsync } = useSwitchChain();
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
@@ -185,7 +196,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
         </div>
 
         {milestone.completed?.data?.reason ||
-        milestone.completed?.data?.proofOfWork ? (
+          milestone.completed?.data?.proofOfWork ? (
           <div className="flex flex-col items-start " data-color-mode="light">
             <ReadMore
               readLessText="Read less"
@@ -212,23 +223,21 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
                     >
                       {milestone?.completed?.data.proofOfWork.includes("http")
                         ? `${milestone?.completed?.data.proofOfWork.slice(
-                            0,
-                            80
-                          )}${
-                            milestone?.completed?.data.proofOfWork.slice(0, 80)
-                              .length >= 80
-                              ? "..."
-                              : ""
-                          }`
+                          0,
+                          80
+                        )}${milestone?.completed?.data.proofOfWork.slice(0, 80)
+                          .length >= 80
+                          ? "..."
+                          : ""
+                        }`
                         : `https://${milestone?.completed?.data.proofOfWork.slice(
-                            0,
-                            80
-                          )}${
-                            milestone?.completed?.data.proofOfWork.slice(0, 80)
-                              .length >= 80
-                              ? "..."
-                              : ""
-                          }`}
+                          0,
+                          80
+                        )}${milestone?.completed?.data.proofOfWork.slice(0, 80)
+                          .length >= 80
+                          ? "..."
+                          : ""
+                        }`}
                     </ExternalLink>
                   ) : (
                     <p className="text-sm font-medium text-gray-500 dark:text-zinc-300 max-sm:text-xs">

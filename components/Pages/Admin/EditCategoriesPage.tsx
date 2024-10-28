@@ -3,7 +3,7 @@ import React, { Fragment, useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import type { Grant } from "@show-karma/karma-gap-sdk";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
-import { useAccount } from "wagmi";
+import { useChainId } from "wagmi";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { getGrants } from "@/utilities/sdk/communities/getGrants";
 import { Hex } from "viem";
@@ -29,6 +29,8 @@ import { useAuthStore } from "@/store/auth";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { appNetwork } from "@/utilities/network";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 
@@ -66,7 +68,16 @@ export const metadata = defaultMetadata;
 
 export default function EditCategoriesPage() {
   const router = useRouter();
-  const { address, isConnected } = useAccount();
+  const {
+    user,
+    ready,
+    authenticated,
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`;
   const { isAuth } = useAuthStore();
   const params = useParams();
   const communityId = params.communityId as string;
@@ -184,17 +195,17 @@ export default function EditCategoriesPage() {
             .slice(itemsPerPage * (currentPage - 1), itemsPerPage * currentPage)
             .map(
               (grant: any) =>
-                ({
-                  grant: grant.details?.data?.title || grant.uid || "",
-                  project: grant.project?.details?.data?.title || "",
-                  description: reduceText(
-                    grant.details?.data?.description || ""
-                  ),
-                  categories: grant.categories || [],
-                  uid: grant.uid,
-                  projectUid: grant.project?.uid || "",
-                  projectSlug: grant.project?.details?.data?.slug || "",
-                } as SimplifiedGrants)
+              ({
+                grant: grant.details?.data?.title || grant.uid || "",
+                project: grant.project?.details?.data?.title || "",
+                description: reduceText(
+                  grant.details?.data?.description || ""
+                ),
+                categories: grant.categories || [],
+                uid: grant.uid,
+                projectUid: grant.project?.uid || "",
+                projectSlug: grant.project?.details?.data?.slug || "",
+              } as SimplifiedGrants)
             );
           setGrants(mapSimplifiedGrants);
         }

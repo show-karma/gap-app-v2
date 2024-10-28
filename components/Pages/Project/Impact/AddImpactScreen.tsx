@@ -25,8 +25,10 @@ import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { Hex } from "viem";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useChainId, useSwitchChain } from "wagmi";
 import { z } from "zod";
+import { usePrivy, useWallets } from "@privy-io/react-auth"
+import { appNetwork } from "@/utilities/network";
 
 const updateSchema = z.object({
   startedAt: z.date({
@@ -43,15 +45,25 @@ const inputStyle =
 
 type UpdateType = z.infer<typeof updateSchema>;
 
-interface AddImpactScreenProps {}
+interface AddImpactScreenProps { }
 
 export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
   const [proof, setProof] = useState("");
   const [impact, setImpact] = useState("");
   const [work, setWork] = useState("");
 
-  const { address } = useAccount();
-  const { chain } = useAccount();
+  const {
+    user,
+    ready,
+    authenticated,
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`;
+
+
   const { switchChainAsync } = useSwitchChain();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);

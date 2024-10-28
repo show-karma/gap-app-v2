@@ -23,10 +23,12 @@ import {
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { GrantProgram } from "./ProgramList";
 import { shortAddress } from "@/utilities/shortAddress";
-import { useAccount } from "wagmi";
+import { useChainId } from "wagmi";
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
 import { useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { appNetwork } from "@/utilities/network";
 
 interface ManageProgramListProps {
   grantPrograms: GrantProgram[];
@@ -48,7 +50,16 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
   selectProgram,
   isAllowed,
 }) => {
-  const { address } = useAccount();
+  const {
+    user,
+    ready,
+    authenticated,
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`;
   const searchParams = useSearchParams();
   const [sorting, setSorting] = useState<SortingState>([]);
 
@@ -562,11 +573,10 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
               {program.admins?.map((admin, index) => (
                 <span
                   key={index}
-                  className={`mr-1 inline-flex items-center rounded-md  px-2 py-1 text-xs font-medium text-black ring-1 ring-inset ring-zinc-600/20 ${
-                    admin.toLowerCase() === address?.toLowerCase()
+                  className={`mr-1 inline-flex items-center rounded-md  px-2 py-1 text-xs font-medium text-black ring-1 ring-inset ring-zinc-600/20 ${admin.toLowerCase() === address?.toLowerCase()
                       ? "bg-blue-100"
                       : "bg-zinc-50"
-                  }`}
+                    }`}
                 >
                   {shortAddress(admin.toLowerCase())}
                 </span>
@@ -746,9 +756,8 @@ export const ManageProgramList: FC<ManageProgramListProps> = ({
                   key={row.id}
                   style={{
                     height: `${virtualRow.size}px`,
-                    transform: `translateY(${
-                      virtualRow.start - index * virtualRow.size
-                    }px)`,
+                    transform: `translateY(${virtualRow.start - index * virtualRow.size
+                      }px)`,
                   }}
                 >
                   {row.getVisibleCells().map((cell) => {

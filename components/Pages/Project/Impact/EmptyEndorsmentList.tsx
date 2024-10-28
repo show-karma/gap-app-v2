@@ -1,14 +1,24 @@
 import { useAuthStore } from "@/store/auth";
 import { FC, useState } from "react";
-import { useAccount } from "wagmi";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useChainId } from "wagmi";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { Button } from "@/components/Utilities/Button";
 import { cn } from "@/utilities/tailwind";
+import { usePrivy, useWallets } from "@privy-io/react-auth"
+import { appNetwork } from "@/utilities/network"
 
 export const EmptyEndorsmentList: FC = () => {
-  const { isConnected, isConnecting } = useAccount();
-  const { openConnectModal } = useConnectModal();
+  const {
+    user,
+    ready,
+    authenticated,
+    login
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`;
   const { isAuth } = useAuthStore();
 
   const { setIsEndorsementOpen: setIsOpen } = useEndorsementStore();
@@ -20,8 +30,8 @@ export const EmptyEndorsmentList: FC = () => {
         <button
           className="bg-brand-blue text-white px-4 rounded-md py-2 w-max"
           onClick={() => {
-            if (!isConnecting) {
-              openConnectModal?.();
+            if (ready) {
+              login?.();
             }
           }}
         >

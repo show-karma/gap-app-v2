@@ -5,7 +5,7 @@ import { PlusIcon } from "@heroicons/react/24/solid";
 import { Button } from "../Utilities/Button";
 import toast from "react-hot-toast";
 import { useProjectStore } from "@/store";
-import { useSwitchChain } from "wagmi";
+import { useSwitchChain, useChainId } from "wagmi";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { getWalletClient } from "@wagmi/core";
 import { useStepper } from "@/store/modals/txStepper";
@@ -19,7 +19,6 @@ import {
   IProjectResponse,
   ISearchResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useAccount } from "wagmi";
 import { MESSAGES } from "@/utilities/messages";
 import { z } from "zod";
 import { getGapClient, useGap } from "@/hooks";
@@ -31,6 +30,9 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { sanitizeInput } from "@/utilities/sanitize";
 import { useMergeModalStore } from "@/store/modals/merge";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { appNetwork } from "@/utilities/network";
+
 
 type MergeProjectProps = {
   buttonElement?: {
@@ -167,8 +169,16 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   const [validAddress, setValidAddress] = useState(true);
 
   const { gap } = useGap();
-  const { address } = useAccount();
-  const router = useRouter();
+  const {
+    user,
+    ready,
+    authenticated,
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = authenticated && user && wallets[0]?.address as `0x${string}`; const router = useRouter();
   function closeModal() {
     setIsOpen(false);
   }
@@ -176,7 +186,6 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
     setIsOpen(true);
   }
   const signer = useSigner();
-  const { chain } = useAccount();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);

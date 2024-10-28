@@ -15,7 +15,7 @@ import {
 import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 import { useQueryState } from "nuqs";
-import { useAccount } from "wagmi";
+import { useChainId } from "wagmi";
 import Pagination from "@/components/Utilities/Pagination";
 import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
 import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
@@ -28,6 +28,8 @@ import { useRegistryStore } from "@/store/registry";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { LoadingPrograms, LoadingProgramTable } from "./Loading/Programs";
 import { ProgramHeader } from "./ProgramHeader";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { appNetwork } from "@/utilities/network";
 
 const statuses = ["Active", "Inactive"];
 
@@ -44,10 +46,10 @@ export const ProgramsExplorer = () => {
     .filter((grantType) => grantType.trim());
   const defaultGrantSize = searchParams.get("grantSize")
     ? ((searchParams.get("grantSize") as string) || "")
-        .split(",")
-        .filter((grantType) => grantType.trim())
-        .map((item) => (isNaN(Number(item)) ? 0 : +item))
-        .slice(0, 2)
+      .split(",")
+      .filter((grantType) => grantType.trim())
+      .map((item) => (isNaN(Number(item)) ? 0 : +item))
+      .slice(0, 2)
     : registryHelper.grantSizes;
 
   const defaultCategories = ((searchParams.get("categories") as string) || "")
@@ -134,9 +136,16 @@ export const ProgramsExplorer = () => {
 
   const pageSize = 10;
 
-  const { address, isConnected } = useAccount();
-
-  const { chain } = useAccount();
+  const {
+    user,
+    ready,
+    authenticated,
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`;
   const { setIsRegistryAdmin, setIsPoolManager } = useRegistryStore();
   useEffect(() => {
     if (!address || !isConnected) {
@@ -176,23 +185,18 @@ export const ProgramsExplorer = () => {
     queryFn: async () => {
       const [res, error] = await fetchData(
         INDEXER.REGISTRY.GET_ALL +
-          `?limit=${pageSize}&offset=${(page - 1) * pageSize}${
-            searchInput ? `&name=${searchInput}` : ""
-          }${
-            selectedGrantTypes.length ? `&grantTypes=${selectedGrantTypes}` : ""
-          }${status ? `&status=${status}` : ""}${
-            selectedNetworks.length
-              ? `&networks=${selectedNetworks.join(",")}`
-              : ""
-          }${
-            selectedEcosystems.length
-              ? `&ecosystems=${selectedEcosystems.join(",")}`
-              : ""
-          }${
-            selectedCategory.length
-              ? `&categories=${selectedCategory.join(",")}`
-              : ""
-          }`
+        `?limit=${pageSize}&offset=${(page - 1) * pageSize}${searchInput ? `&name=${searchInput}` : ""
+        }${selectedGrantTypes.length ? `&grantTypes=${selectedGrantTypes}` : ""
+        }${status ? `&status=${status}` : ""}${selectedNetworks.length
+          ? `&networks=${selectedNetworks.join(",")}`
+          : ""
+        }${selectedEcosystems.length
+          ? `&ecosystems=${selectedEcosystems.join(",")}`
+          : ""
+        }${selectedCategory.length
+          ? `&categories=${selectedCategory.join(",")}`
+          : ""
+        }`
       );
       if (error) {
         throw new Error(error);
@@ -248,11 +252,10 @@ export const ProgramsExplorer = () => {
               onClick={() => setStatus("")}
               id={`status-all`}
               key={"All"}
-              className={`px-3 py-1 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${
-                status === ""
+              className={`px-3 py-1 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${status === ""
                   ? "bg-black text-white dark:bg-white dark:text-black"
                   : "border border-black text-black dark:border-white dark:text-white"
-              }`}
+                }`}
             >
               All
             </button>
@@ -261,11 +264,10 @@ export const ProgramsExplorer = () => {
                 id={`status-${type.toLowerCase()}`}
                 onClick={() => setStatus(type)}
                 key={type}
-                className={`px-3 py-1 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${
-                  status === type
+                className={`px-3 py-1 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${status === type
                     ? "bg-black text-white dark:bg-white dark:text-black"
                     : "border border-black text-black dark:border-white dark:text-white"
-                }`}
+                  }`}
               >
                 {type}
                 {status === type ? <CheckIcon className="w-4 h-4" /> : null}
@@ -356,7 +358,7 @@ export const ProgramsExplorer = () => {
                   <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
                     <div
                       className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8"
-                      // {...virtualizer.containerProps}
+                    // {...virtualizer.containerProps}
                     >
                       <ProgramList
                         grantPrograms={grantPrograms}

@@ -14,8 +14,7 @@ import { type Hex, isAddress, zeroHash } from "viem";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { useAccount, useSwitchChain } from "wagmi";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useChainId, useSwitchChain } from "wagmi";
 import {
   type ExternalLink,
   type IProjectDetails,
@@ -65,6 +64,7 @@ import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { ExternalLink as ExternalLinkComponent } from "@/components/Utilities/ExternalLink";
 import { SOCIALS } from "@/utilities/socials";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -203,12 +203,22 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [step, setStep] = useState(0);
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isConnected, address } = useAccount();
   const { isAuth } = useAuthStore();
-  const { chain } = useAccount();
+
+  const {
+    user,
+    ready,
+    authenticated,
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`;
+
   const { switchChainAsync } = useSwitchChain();
   const [isLoading, setIsLoading] = useState(false);
-  const { openConnectModal } = useConnectModal();
+  const { login } = usePrivy();
   const router = useRouter();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
@@ -347,7 +357,7 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
     try {
       setIsLoading(true);
       if (!isConnected || !isAuth) {
-        openConnectModal?.();
+        login();
         return;
       }
       if (!address) return;
@@ -538,7 +548,7 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
     try {
       setIsLoading(true);
       if (!isConnected || !isAuth) {
-        openConnectModal?.();
+        login();
         return;
       }
       if (!address || !projectToUpdate) return;
@@ -598,8 +608,7 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
     } catch (error: any) {
       console.log(error);
       errorManager(
-        `Error updating project ${
-          projectToUpdate?.details?.data?.slug || projectToUpdate?.uid
+        `Error updating project ${projectToUpdate?.details?.data?.slug || projectToUpdate?.uid
         }`,
         error,
         data
@@ -638,7 +647,7 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
     if (
       value.length < 3 ||
       value.toLowerCase() ===
-        projectToUpdate?.details?.data?.title?.toLowerCase()
+      projectToUpdate?.details?.data?.title?.toLowerCase()
     ) {
       return;
     }
@@ -702,7 +711,7 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
                 <p className="text-red-500">
                   {errors.title?.message}{" "}
                   {errors.title?.message &&
-                  errors.title?.message.includes("similar") ? (
+                    errors.title?.message.includes("similar") ? (
                     <>
                       <span>
                         If you need help getting access to your project, message
@@ -719,7 +728,7 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
                 </p>
               )}
               {errors.title?.message &&
-              errors.title?.message.includes("similar") ? (
+                errors.title?.message.includes("similar") ? (
                 <span
                   className="text-blue-500 underline cursor-pointer"
                   style={{

@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
-import { useAccount } from "wagmi";
+import { useChainId } from "wagmi";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Question } from "@/types";
 import toast from "react-hot-toast";
@@ -26,6 +26,8 @@ import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { QuestionCreationDialog } from "@/components/Pages/Admin/QuestionCreationDialog";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { appNetwork } from "@/utilities/network";
 
 const MarkdownPreview = dynamic(() => import("@uiw/react-markdown-preview"), {
   ssr: false,
@@ -43,7 +45,16 @@ export const metadata = defaultMetadata;
 
 export default function AssignQuestionsPage() {
   const router = useRouter();
-  const { address, isConnected } = useAccount();
+  const {
+    user,
+    ready,
+    authenticated,
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`;
   const { isAuth } = useAuthStore();
   const params = useParams();
   const communityId = params.communityId as string;

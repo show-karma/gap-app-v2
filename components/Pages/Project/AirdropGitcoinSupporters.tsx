@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 import React from "react";
 import { useState } from "react";
-import { useAccount, useChainId, useSwitchChain } from "wagmi";
+import { useChainId, useSwitchChain } from "wagmi";
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 import { TransactionLink } from "@/components/Utilities/TransactionLink";
 import axios from "axios";
@@ -22,6 +22,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useEffect } from "react";
 import { Dispatch, SetStateAction } from "react";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
 
 type ProjectApplicationData = {
   project: {
@@ -73,8 +74,15 @@ const PlatformFeeNote = ({
     functionName: "PLATFORM_FEE",
   });
 
-  const { address: walletAddress } = useAccount();
-
+  const {
+    user,
+    ready,
+    authenticated,
+  } = usePrivy();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const walletAddress = user && wallets[0]?.address as `0x${string}`;
   useEffect(() => {
     if (platformFee) {
       setPlatformFee(String(platformFee));
@@ -94,8 +102,8 @@ const PlatformFeeNote = ({
     <p className="text-sm text-slate-600 dark:text-slate-300">
       {walletAddress
         ? `Note: A platform fee of ${formatEther(
-            platformFee || String(8000000000000000)
-          )} ETH will be charged, excluding gas fees.`
+          platformFee || String(8000000000000000)
+        )} ETH will be charged, excluding gas fees.`
         : "Note: Connect your wallet to fetch the platform fee for the selected network."}
     </p>
   ) : (
@@ -233,8 +241,8 @@ function MintNFTs({
           mintError.message.includes("insufficient funds")
             ? "Insufficient funds for transaction"
             : mintError.message.includes("Project already exists")
-            ? "Project already minted"
-            : mintError.message
+              ? "Project already minted"
+              : mintError.message
         );
       }
     } catch (error) {
@@ -361,10 +369,10 @@ function MintNFTs({
           {isMinting
             ? "Minting..."
             : isSuccess
-            ? "NFTs minted successfully!"
-            : mintError
-            ? "Error minting NFTs"
-            : "Mint NFTs to Contributors"}
+              ? "NFTs minted successfully!"
+              : mintError
+                ? "Error minting NFTs"
+                : "Mint NFTs to Contributors"}
         </button>
         {isSuccess && (
           <p className="text-green-500 text-sm">
@@ -377,10 +385,10 @@ function MintNFTs({
             {mintError.message.includes("insufficient funds")
               ? "Insufficient funds for transaction"
               : mintError.message.includes("Project already exists")
-              ? "Project already minted"
-              : mintError.message.includes("User rejected")
-              ? "Transaction cancelled"
-              : mintError.message}
+                ? "Project already minted"
+                : mintError.message.includes("User rejected")
+                  ? "Transaction cancelled"
+                  : mintError.message}
           </p>
         )}
         <div className="text-sm text-slate-600 dark:text-slate-300">

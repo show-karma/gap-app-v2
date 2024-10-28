@@ -12,7 +12,7 @@ import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
 import { getWalletClient } from "@wagmi/core";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useChainId, useSwitchChain } from "wagmi";
 import { envVars } from "@/utilities/enviromentVars";
 import { useRouter } from "next/navigation";
 import { CommunitiesSelect } from "@/components/CommunitiesSelect";
@@ -22,10 +22,8 @@ import {
 import { getGapClient, useGap } from "@/hooks";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { useAuthStore } from "@/store/auth";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { registryHelper } from "./helper";
 import { SearchDropdown } from "./SearchDropdown";
-import { appNetwork } from "@/utilities/network";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { cn } from "@/utilities/tailwind";
 import { Telegram2Icon, WebsiteIcon } from "@/components/Icons";
@@ -48,7 +46,8 @@ import { DayPicker } from "react-day-picker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
-import { te } from "date-fns/locale";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { appNetwork } from "@/utilities/network";
 
 const labelStyle = "text-sm font-bold text-[#344054] dark:text-zinc-100";
 const inputStyle =
@@ -286,12 +285,22 @@ export default function AddProgram({
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore();
-  const { chain } = useAccount();
+
   const { switchChainAsync } = useSwitchChain();
-  const { openConnectModal } = useConnectModal();
   const { changeStepperStep, setIsStepper } = useStepper();
+
+  const {
+    user,
+    ready,
+    authenticated,
+    login
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`;
 
   const { isRegistryAdmin } = useRegistryStore();
 
@@ -299,7 +308,7 @@ export default function AddProgram({
     setIsLoading(true);
     try {
       if (!isConnected || !isAuth) {
-        openConnectModal?.();
+        login?.();
         return;
       }
       const chainSelected = data.networkToCreate;
@@ -387,7 +396,7 @@ export default function AddProgram({
     setIsLoading(true);
     try {
       if (!isConnected || !isAuth || !address) {
-        openConnectModal?.();
+        login?.();
         return;
       }
       const chainSelected = data.networkToCreate;

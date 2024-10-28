@@ -9,11 +9,16 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/solid";
 import { useMixpanel } from "@/hooks/useMixpanel";
-import { useAccount } from "wagmi";
+import { useChainId } from "wagmi";
 import { Hex } from "viem";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { appNetwork } from "@/utilities/network";
 
-const WelcomeStep = () => {
-  const { address } = useAccount();
+const WelcomeStep = ({
+  address
+}: {
+  address: `0x${string}`;
+}) => {
   const { changeOnboardingStep, isOnboardingOpen } = useOnboarding();
 
   return (
@@ -50,9 +55,12 @@ const WelcomeStep = () => {
     </div>
   );
 };
-const FirstStep = () => {
+const FirstStep = ({
+  address
+}: {
+  address: `0x${string}`;
+}) => {
   const { changeOnboardingStep } = useOnboarding();
-  const { address } = useAccount();
   return (
     <div className="flex flex-row gap-6 items-center">
       <img
@@ -93,9 +101,12 @@ You do this just once!`}</p>
     </div>
   );
 };
-const GrantStep = () => {
+const GrantStep = ({
+  address
+}: {
+  address: `0x${string}`;
+}) => {
   const { changeOnboardingStep } = useOnboarding();
-  const { address } = useAccount();
 
   return (
     <div className="flex flex-row gap-6 items-start pt-6">
@@ -138,10 +149,13 @@ const GrantStep = () => {
     </div>
   );
 };
-const UpdatesStep = () => {
+const UpdatesStep = ({
+  address
+}: {
+  address: `0x${string}`;
+}) => {
   const { changeOnboardingStep } = useOnboarding();
 
-  const { address } = useAccount();
 
   return (
     <div className="flex flex-col">
@@ -182,10 +196,12 @@ const UpdatesStep = () => {
     </div>
   );
 };
-const StructureStep = () => {
+const StructureStep = ({
+  address
+}: {
+  address: `0x${string}`;
+}) => {
   const { changeOnboardingStep, setIsOnboarding } = useOnboarding();
-
-  const { address } = useAccount();
 
   return (
     <div className="flex flex-col">
@@ -226,67 +242,78 @@ export const OnboardingDialog: FC = () => {
     setIsOnboarding,
     onboardingStep,
   } = useOnboarding();
+  const {
+    user,
+    ready,
+    authenticated,
+  } = usePrivy();
+  const { wallets } = useWallets();
+
+  const address = authenticated && user && wallets[0]?.address as `0x${string}`;
 
   const closeModal = () => {
     setIsOnboarding(false);
   };
 
   const handleRender = () => {
-    switch (onboardingStep) {
-      case "welcome":
-        return <WelcomeStep />;
-      case "project":
-        return <FirstStep />;
-      case "grants":
-        return <GrantStep />;
-      case "updates-milestones":
-        return <UpdatesStep />;
-      case "structure":
-        return <StructureStep />;
-      default:
-        return <WelcomeStep />;
+    if (address) {
+      switch (onboardingStep) {
+        case "welcome":
+          return <WelcomeStep address={address} />;
+        case "project":
+          return <FirstStep address={address} />;
+        case "grants":
+          return <GrantStep address={address} />;
+        case "updates-milestones":
+          return <UpdatesStep address={address} />;
+        case "structure":
+          return <StructureStep address={address} />;
+        default:
+          return <WelcomeStep address={address} />;
+      }
     }
   };
 
-  return (
-    <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-10" onClose={closeModal}>
-        <Transition.Child
-          as={Fragment}
-          enter="ease-out duration-300"
-          enterFrom="opacity-0"
-          enterTo="opacity-100"
-          leave="ease-in duration-200"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
-        >
-          <div className="fixed inset-0 bg-black/25" />
-        </Transition.Child>
+  if (address) {
+    return (
+      <Transition appear show={isOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-10" onClose={closeModal}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/25" />
+          </Transition.Child>
 
-        <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4 text-center">
-            <Transition.Child
-              as={Fragment}
-              enter="ease-out duration-300"
-              enterFrom="opacity-0 scale-95"
-              enterTo="opacity-100 scale-100"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-100 scale-100"
-              leaveTo="opacity-0 scale-95"
-            >
-              <Dialog.Panel className="w-full max-w-4xl h-max transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
-                <button
-                  className="p-2 text-black dark:text-white absolute top-4 right-4"
-                  onClick={() => closeModal()}
-                >
-                  <XMarkIcon className="w-6 h-6" />
-                </button>
-                {handleRender()}
-              </Dialog.Panel>
-            </Transition.Child>
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-4xl h-max transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
+                  <button
+                    className="p-2 text-black dark:text-white absolute top-4 right-4"
+                    onClick={() => closeModal()}
+                  >
+                    <XMarkIcon className="w-6 h-6" />
+                  </button>
+                  {handleRender()}
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
           </div>
-        </div>
-      </Dialog>
-    </Transition>
-  );
+        </Dialog>
+      </Transition>)
+  }
 };

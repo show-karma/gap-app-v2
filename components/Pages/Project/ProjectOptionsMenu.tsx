@@ -39,7 +39,9 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Fragment, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useChainId, useSwitchChain } from "wagmi";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { appNetwork } from "@/utilities/network";
 
 const ProjectDialog = dynamic(
   () =>
@@ -79,8 +81,16 @@ export const ProjectOptionsMenu = () => {
   const projectId = params.projectId as string;
   const contactsInfo = useProjectStore((state) => state.projectContactsInfo);
   const [isDeleting, setIsDeleting] = useState(false);
-  const { address } = useAccount();
-  const { chain } = useAccount();
+  const {
+    user,
+    ready,
+    authenticated,
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`;
   const { switchChainAsync } = useSwitchChain();
   const router = useRouter();
   const { gap } = useGap();

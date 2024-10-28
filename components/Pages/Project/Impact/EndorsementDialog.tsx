@@ -9,7 +9,7 @@ import { shortAddress } from "@/utilities/shortAddress";
 import { getWalletClient } from "@wagmi/core";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { Project, ProjectEndorsement } from "@show-karma/karma-gap-sdk";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useChainId, useSwitchChain } from "wagmi";
 import { getGapClient, useGap } from "@/hooks";
 import { useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
@@ -21,6 +21,8 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { sanitizeObject } from "@/utilities/sanitize";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { appNetwork } from "@/utilities/network";
 
 type EndorsementDialogProps = {};
 
@@ -33,8 +35,18 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
   const project = useProjectStore((state) => state.project);
   const { switchChainAsync } = useSwitchChain();
   const { gap } = useGap();
-  const { chain } = useAccount();
-  const { address } = useAccount();
+  const {
+    user,
+    ready,
+    authenticated,
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`;
+
+
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();
 

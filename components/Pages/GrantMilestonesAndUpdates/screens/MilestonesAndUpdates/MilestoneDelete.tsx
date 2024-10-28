@@ -14,7 +14,9 @@ import { getWalletClient } from "@wagmi/core";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";
 import { Hex } from "viem";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useChainId, useSwitchChain } from "wagmi";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { appNetwork } from "@/utilities/network";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 interface MilestoneDeleteProps {
@@ -25,7 +27,16 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
   const [isDeletingMilestone, setIsDeletingMilestone] = useState(false);
 
   const { switchChainAsync } = useSwitchChain();
-  const { chain } = useAccount();
+  const {
+    user,
+    ready,
+    authenticated,
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`;
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();

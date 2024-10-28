@@ -10,9 +10,10 @@ import {
 import { renderToHTML } from "@/utilities/markdown";
 import { Button } from "../Utilities/Button";
 import toast from "react-hot-toast";
+import { appNetwork } from "@/utilities/network";
 
 import { useProjectStore } from "@/store";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useChainId, useSwitchChain } from "wagmi";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { getWalletClient } from "@wagmi/core";
@@ -35,6 +36,7 @@ import {
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { envVars } from "@/utilities/enviromentVars";
 import { errorManager } from "../Utilities/errorManager";
+
 
 // Create styles
 const styles = StyleSheet.create({});
@@ -643,7 +645,8 @@ type Props = {
 };
 
 export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
-  const { chain } = useAccount();
+  const chainId = useChainId();
+  const chain = appNetwork.find((c) => c.id === chainId);
   const project = useProjectStore((state) => state.project);
   const { switchChainAsync } = useSwitchChain();
   let [isOpen, setIsOpen] = useState(false);
@@ -836,12 +839,11 @@ export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
                           impactBannerImageURL={impactBannerImageURL}
                         />
                       }
-                      fileName={`${
-                        project?.details?.data?.slug || "project"
-                      }-impact-report-${grant?.details?.data?.title?.replaceAll(
-                        " ",
-                        "-"
-                      )}.pdf`}
+                      fileName={`${project?.details?.data?.slug || "project"
+                        }-impact-report-${grant?.details?.data?.title?.replaceAll(
+                          " ",
+                          "-"
+                        )}.pdf`}
                     >
                       {({ blob, url, loading, error }) =>
                         loading ? "Loading document..." : "💾 Download"

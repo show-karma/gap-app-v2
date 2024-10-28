@@ -10,7 +10,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useSwitchChain, useChainId } from "wagmi";
 import { Community, nullRef } from "@show-karma/karma-gap-sdk";
 import { Button } from "../Utilities/Button";
 import { MESSAGES } from "@/utilities/messages";
@@ -27,6 +27,8 @@ import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "../Utilities/errorManager";
 import { sanitizeObject } from "@/utilities/sanitize";
+
+import { usePrivy, useWallets } from "@privy-io/react-auth";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -92,7 +94,16 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
     defaultValues: dataToUpdate,
   });
 
-  const { address, chain } = useAccount();
+  const {
+    user,
+    ready,
+    authenticated,
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = authenticated && user && wallets[0]?.address as `0x${string}`;
   const { switchChainAsync } = useSwitchChain();
   const [isLoading, setIsLoading] = useState(false);
 

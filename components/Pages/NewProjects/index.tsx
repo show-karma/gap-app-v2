@@ -10,7 +10,7 @@ import { useQueryState } from "nuqs";
 import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/solid";
 import { cn } from "@/utilities/tailwind";
 import { CheckIcon } from "@heroicons/react/20/solid";
-import { queryClient } from "@/components/Utilities/WagmiProvider";
+import { queryClient } from "@/components/Utilities/Web3Provider";
 import { ExplorerSortByOptions, ExplorerSortOrder } from "@/types/explorer";
 import { getExplorerProjects } from "@/utilities/indexer/getExplorerProjects";
 
@@ -143,7 +143,7 @@ export const NewProjectsPage = () => {
                                 >
                                   {
                                     sortOptions[
-                                      sortOption as ExplorerSortByOptions
+                                    sortOption as ExplorerSortByOptions
                                     ]
                                   }
                                 </span>
@@ -221,7 +221,7 @@ export const NewProjectsPage = () => {
                               left:
                                 +(style.left || 0) +
                                 (columnIndex * gutterSize) /
-                                  (columnCounter - 1),
+                                (columnCounter - 1),
                               width: +(style.width || 0) - gutterSize,
                               top:
                                 rowIndex === 0

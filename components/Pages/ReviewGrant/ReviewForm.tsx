@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 import { Question } from "@/types";
 import { ReviewerInfo } from "@/types/reviewer";
-import { useAccount } from "wagmi";
+import { useChainId } from "wagmi";
 import { useProjectStore } from "@/store";
 import fetchData from "@/utilities/fetchData";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -24,6 +24,8 @@ import { INDEXER } from "@/utilities/indexer";
 import { cn } from "@/utilities/tailwind";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
+import { appNetwork } from "@/utilities/network";
 
 interface ReviewFormProps {
   grant: IGrantResponse;
@@ -127,8 +129,16 @@ export const ReviewForm: FC<ReviewFormProps> = ({
   alreadyReviewed,
   reviewerInfo,
 }) => {
-  const { address } = useAccount();
-  const project = useProjectStore((state) => state.project);
+  const {
+    user,
+    ready,
+    authenticated,
+  } = usePrivy();
+  const chainId = useChainId();
+  const { wallets } = useWallets();
+  const isConnected = ready && authenticated && wallets.length !== 0;
+  const chain = appNetwork.find((c) => c.id === chainId);
+  const address = user && wallets[0]?.address as `0x${string}`; const project = useProjectStore((state) => state.project);
   const [hasSubmitted, setHasSubmitted] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState(false);
 

@@ -28,6 +28,7 @@ export const envVars = {
     SEI: process.env.NEXT_PUBLIC_RPC_SEI as string,
   },
   PROJECT_ID: process.env.NEXT_PUBLIC_PROJECT_ID || "",
+  PRIVY_APP_ID: process.env.NEXT_PUBLIC_PRIVY_APP_ID || "",
   IPFS_TOKEN: process.env.NEXT_PUBLIC_IPFS_TOKEN || "",
   ANON_KARMA_URL: "https://anon.karmahq.xyz",
   PROFILE_ID: isDev
@@ -37,4 +38,5 @@ export const envVars = {
     process.env.NEXT_PUBLIC_ENV === "production"
       ? `https://gap.karmahq.xyz`
       : "https://gapstag.karmahq.xyz",
+  ALCHEMY_POLICY_ID: process.env.NEXT_PUBLIC_ALCHEMY_POLICY_ID || "",
 };
