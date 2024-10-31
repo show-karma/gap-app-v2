@@ -100,6 +100,8 @@ export const CardNewReview = ({ grant }: { grant: IGrantResponse | undefined }) 
             category: whyDidYouApplyFor[0] as CategoryOptions,
             receivedGrant: didYouReceiveTheGrant[0] as ReceivedGrantOptions,
           },
+          badgesScores: badgeScores,
+          activeBadgeIds: activeBadgeIds,
           grantId: grantUID,
           programId: programUID,
         };
@@ -162,13 +164,13 @@ export const CardNewReview = ({ grant }: { grant: IGrantResponse | undefined }) 
 
     if (programUIDisNumber) {
       encodedData = abiCoder.encode(
-        ["bytes32", "bytes32[]", "uint8[]", "uint32"],
-        [grantUID, activeBadgeIds, badgeScores, programUID],
+        ["bytes32", "bytes32[]", "uint8[]", "string"],
+        [grantUID, activeBadgeIds, badgeScores, programUID?.toString()],
       );
     } else {
       encodedData = abiCoder.encode(
-        ["bytes32", "bytes32[]", "uint8[]", "bytes32"],
-        [grantUID, activeBadgeIds, badgeScores, programUID],
+        ["bytes32", "bytes32[]", "uint8[]", "string"],
+        [grantUID, activeBadgeIds, badgeScores, programUID?.toString()],
       );
     }
 
