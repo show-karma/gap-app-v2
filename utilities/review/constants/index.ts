@@ -4,7 +4,7 @@ import { Address } from "viem";
 export const ARB_ONE_EAS = "0xbD75f629A22Dc1ceD33dDA0b68c546A1c035c458";
 export const ARB_ONE_SCHEMA_REGISTRY = "0xA310da9c5B885E7fb3fbA9D66E9Ba6Df512b78eB";
 
-// The schema UID for EAS
+// The schema UID for EAS 
 export const KARMA_EAS_SCHEMA_UID =
   "0x5b3884b77ebe533e556d6ea74b462a21852e321b4146d3121546e9d17bd974e1";
 // The Karma-Gap scorer ID constant
