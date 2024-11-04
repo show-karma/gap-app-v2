@@ -1,54 +1,51 @@
 "use client";
-import { z } from "zod";
+import { CommunitiesSelect } from "@/components/CommunitiesSelect";
+import { Telegram2Icon, WebsiteIcon } from "@/components/Icons";
+import { BlogIcon } from "@/components/Icons/Blog";
+import { Discord2Icon } from "@/components/Icons/Discord2";
+import { DiscussionIcon } from "@/components/Icons/Discussion";
+import { OrganizationIcon } from "@/components/Icons/Organization";
+import { Twitter2Icon } from "@/components/Icons/Twitter2";
+import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { useGap } from "@/hooks";
+import { useAuthStore } from "@/store/auth";
+import { useStepper } from "@/store/modals/txStepper";
+import { useRegistryStore } from "@/store/registry";
+import { chainImgDictionary } from "@/utilities/chainImgDictionary";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { envVars } from "@/utilities/enviromentVars";
+import fetchData from "@/utilities/fetchData";
+import { formatDate } from "@/utilities/formatDate";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { appNetwork } from "@/utilities/network";
+import { PAGES } from "@/utilities/pages";
+import { urlRegex } from "@/utilities/regexs/urlRegex";
+import { sanitizeObject } from "@/utilities/sanitize";
+import { cn } from "@/utilities/tailwind";
+import { config } from "@/utilities/wagmi/config";
+import { Popover } from "@headlessui/react";
+import { CalendarIcon, ChevronLeftIcon } from "@heroicons/react/24/solid";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { AlloBase } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/Allo";
+import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { getWalletClient } from "@wagmi/core";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { DayPicker } from "react-day-picker";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useState, useEffect } from "react";
-import { MESSAGES } from "@/utilities/messages";
-import { CalendarIcon, ChevronLeftIcon } from "@heroicons/react/24/solid";
-import { Button } from "@/components/Utilities/Button";
-import Link from "next/link";
-import { PAGES } from "@/utilities/pages";
-import { getWalletClient } from "@wagmi/core";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { useAccount, useSwitchChain } from "wagmi";
-import { envVars } from "@/utilities/enviromentVars";
-import { useRouter } from "next/navigation";
-import { CommunitiesSelect } from "@/components/CommunitiesSelect";
-import {
-  ICommunityResponse
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getGapClient, useGap } from "@/hooks";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { useAuthStore } from "@/store/auth";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { z } from "zod";
 import { registryHelper } from "./helper";
-import { SearchDropdown } from "./SearchDropdown";
-import { appNetwork } from "@/utilities/network";
-import { chainImgDictionary } from "@/utilities/chainImgDictionary";
-import { cn } from "@/utilities/tailwind";
-import { Telegram2Icon, WebsiteIcon } from "@/components/Icons";
-import { BlogIcon } from "@/components/Icons/Blog";
-import { DiscussionIcon } from "@/components/Icons/Discussion";
-import { OrganizationIcon } from "@/components/Icons/Organization";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
 import { GrantProgram } from "./ProgramList";
-import { Twitter2Icon } from "@/components/Icons/Twitter2";
-import { Discord2Icon } from "@/components/Icons/Discord2";
-import { AlloBase } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/Allo";
+import { SearchDropdown } from "./SearchDropdown";
 import { StatusDropdown } from "./StatusDropdown";
-import { config } from "@/utilities/wagmi/config";
-import { useStepper } from "@/store/modals/txStepper";
-import { useRegistryStore } from "@/store/registry";
-import { Popover } from "@headlessui/react";
-import { formatDate } from "@/utilities/formatDate";
-import { DayPicker } from "react-day-picker";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { sanitizeObject } from "@/utilities/sanitize";
-import { urlRegex } from "@/utilities/regexs/urlRegex";
-import { te } from "date-fns/locale";
 
 const labelStyle = "text-sm font-bold text-[#344054] dark:text-zinc-100";
 const inputStyle =
@@ -184,7 +181,6 @@ export default function AddProgram({
     });
   const { gap } = useGap();
 
-
   const [allCommunities, setAllCommunities] = useState<ICommunityResponse[]>(
     []
   );
@@ -204,7 +200,6 @@ export default function AddProgram({
     };
 
     if (allCommunities.length === 0) fetchCommunities();
-
   }, [allCommunities]);
 
   const {
@@ -248,7 +243,11 @@ export default function AddProgram({
       ecosystems: programToEdit?.metadata?.ecosystems || [],
       organizations: programToEdit?.metadata?.organizations || [],
       networks: programToEdit?.metadata?.networks || [],
-      grantTypes: programToEdit?.metadata?.grantTypes || [],
+      grantTypes: Array.isArray(programToEdit?.metadata?.grantTypes)
+        ? programToEdit?.metadata?.grantTypes
+        : programToEdit?.metadata?.grantTypes
+        ? [programToEdit?.metadata?.grantTypes]
+        : [],
       networkToCreate: programToEdit?.chainID || 0,
       grantsSite: programToEdit?.metadata?.socialLinks?.grantsSite,
       platformsUsed: programToEdit?.metadata?.platformsUsed || [],
@@ -470,7 +469,7 @@ export default function AddProgram({
             while (retries > 0) {
               await fetchData(
                 INDEXER.REGISTRY.GET_ALL +
-                `?programId=${programToEdit?.programId}`
+                  `?programId=${programToEdit?.programId}`
               )
                 .then(async ([res]) => {
                   const hasUpdated =
@@ -822,7 +821,7 @@ export default function AddProgram({
                     {errors.networks?.message}
                   </p>
                 </div>
-                <div className="flex w-full flex-col  gap-1">
+                <div className="flex w-full flex-col gap-1">
                   <label htmlFor="program-types" className={labelStyle}>
                     Funding Mechanisms
                   </label>
@@ -866,7 +865,7 @@ export default function AddProgram({
                   </label>
                   <CommunitiesSelect
                     onSelectFunction={(community: ICommunityResponse) => {
-                      onChangeGeneric(community?.uid, "communityRef")
+                      onChangeGeneric(community?.uid, "communityRef");
                     }}
                     list={allCommunities}
                     selected={watch("communityRef")}
@@ -878,7 +877,7 @@ export default function AddProgram({
                   </p>
                 </div>
                 {programToEdit && (
-                  <div className="flex w-full flex-col justify-between gap-2">
+                  <div className="flex w-full flex-col gap-1">
                     <label htmlFor="program-status" className={labelStyle}>
                       Status
                     </label>
