@@ -1,48 +1,36 @@
 "use client";
-import React, { Dispatch, useMemo } from "react";
-import { useState, useEffect } from "react";
-import { Spinner } from "@/components/Utilities/Spinner";
+import AddProgram from "@/components/Pages/ProgramRegistry/AddProgram";
+import { ManageProgramList } from "@/components/Pages/ProgramRegistry/ManageProgramList";
+import { MyProgramList } from "@/components/Pages/ProgramRegistry/MyProgramList";
+import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
+import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
+import { Button } from "@/components/Utilities/Button";
+import Pagination from "@/components/Utilities/Pagination";
+import { useAuthStore } from "@/store/auth";
+import { useStepper } from "@/store/modals/txStepper";
+import { useRegistryStore } from "@/store/registry";
+import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import { ManageProgramList } from "@/components/Pages/ProgramRegistry/ManageProgramList";
-import toast from "react-hot-toast";
-import { Button } from "@/components/Utilities/Button";
-import { useQueryState } from "nuqs";
-import AddProgram from "@/components/Pages/ProgramRegistry/AddProgram";
-import { useAccount, useSwitchChain } from "wagmi";
-import { useAuthStore } from "@/store/auth";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { PAGES } from "@/utilities/pages";
+import { checkIsPoolManager } from "@/utilities/registry/checkIsPoolManager";
 import {
   ChevronLeftIcon,
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/solid";
-import Link from "next/link";
-import { PAGES } from "@/utilities/pages";
-import { envVars } from "@/utilities/enviromentVars";
-import { getWalletClient } from "@wagmi/core";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { AlloBase } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/Allo";
-import {
-  Address,
-  ApplicationMetadata,
-} from "@show-karma/karma-gap-sdk/core/class/types/allo";
-import { AlloContracts } from "@show-karma/karma-gap-sdk/core/consts";
-import Pagination from "@/components/Utilities/Pagination";
-import debounce from "lodash.debounce";
-import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
-import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
-import { config } from "@/utilities/wagmi/config";
-import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
-import { checkIsPoolManager } from "@/utilities/registry/checkIsPoolManager";
-import { MyProgramList } from "@/components/Pages/ProgramRegistry/MyProgramList";
-import { useStepper } from "@/store/modals/txStepper";
-import { useSearchParams } from "next/navigation";
-import { useRegistryStore } from "@/store/registry";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useQuery } from "@tanstack/react-query";
+import debounce from "lodash.debounce";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { useQueryState } from "nuqs";
+import React, { Dispatch, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount, useSwitchChain } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
-import { sanitizeObject } from "@/utilities/sanitize";
 import { LoadingProgramTable } from "./Loading/Programs";
 import { SearchDropdown } from "./SearchDropdown";
 
@@ -186,6 +174,11 @@ export const ManagePrograms = () => {
         );
         if (error) throw Error(error);
         if (data) {
+          data.forEach((program: GrantProgram) => {
+            if (typeof program.metadata?.grantTypes === "string") {
+              program.metadata.grantTypes = [program.metadata.grantTypes];
+            }
+          });
           setSelectedProgram(data);
         }
       } catch (error: any) {
@@ -231,6 +224,11 @@ export const ManagePrograms = () => {
 
       const [res, error] = await fetchData(url);
       if (!error && res) {
+        res.programs.forEach((program: GrantProgram) => {
+          if (typeof program.metadata?.grantTypes === "string") {
+            program.metadata.grantTypes = [program.metadata.grantTypes];
+          }
+        });
         return {
           programs: res.programs as GrantProgram[],
           count: res.count as number,

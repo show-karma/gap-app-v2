@@ -1,10 +1,5 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment } from "react";
-import { Dialog, Transition } from "@headlessui/react";
-import { GrantProgram } from "./ProgramList";
-import formatCurrency from "@/utilities/formatCurrency";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import {
   BlogIcon,
   Discord2Icon,
@@ -13,13 +8,16 @@ import {
   Telegram2Icon,
   Twitter2Icon,
 } from "@/components/Icons";
-import Image from "next/image";
-import { ReadMore } from "@/utilities/ReadMore";
-import { XMarkIcon } from "@heroicons/react/24/solid";
-import { registryHelper } from "./helper";
 import { Button } from "@/components/Utilities/Button";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import formatCurrency from "@/utilities/formatCurrency";
 import { cn } from "@/utilities/tailwind";
+import { Dialog, Transition } from "@headlessui/react";
+import { XMarkIcon } from "@heroicons/react/24/solid";
+import Image from "next/image";
+import { FC, Fragment } from "react";
+import { registryHelper } from "./helper";
+import { GrantProgram } from "./ProgramList";
 
 type ProgramDetailsDialogProps = {
   program: GrantProgram;

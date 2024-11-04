@@ -1,32 +1,29 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import React, { Dispatch, useMemo } from "react";
-import { useState, useEffect } from "react";
-import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
-import { CheckIcon } from "@heroicons/react/24/solid";
-import { Spinner } from "@/components/Utilities/Spinner";
-import debounce from "lodash.debounce";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
+import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
+import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
 import {
   GrantProgram,
   ProgramList,
 } from "@/components/Pages/ProgramRegistry/ProgramList";
-import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
-import { useQueryState } from "nuqs";
-import { useAccount } from "wagmi";
 import Pagination from "@/components/Utilities/Pagination";
-import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
-import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
-import { checkIsPoolManager } from "@/utilities/registry/checkIsPoolManager";
-import { useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useRegistryStore } from "@/store/registry";
+import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { checkIsPoolManager } from "@/utilities/registry/checkIsPoolManager";
+import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
+import { CheckIcon } from "@heroicons/react/24/solid";
+import { useQuery } from "@tanstack/react-query";
+import debounce from "lodash.debounce";
+import { useSearchParams } from "next/navigation";
+import { useQueryState } from "nuqs";
+import React, { Dispatch, useEffect, useState } from "react";
+import { useAccount } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
-import { LoadingPrograms, LoadingProgramTable } from "./Loading/Programs";
+import { LoadingProgramTable } from "./Loading/Programs";
 import { ProgramHeader } from "./ProgramHeader";
 
 const statuses = ["Active", "Inactive"];
@@ -197,6 +194,11 @@ export const ProgramsExplorer = () => {
       if (error) {
         throw new Error(error);
       }
+      res.programs.forEach((program: GrantProgram) => {
+        if (typeof program.metadata?.grantTypes === "string") {
+          program.metadata.grantTypes = [program.metadata.grantTypes];
+        }
+      });
       return res;
     },
   });
@@ -215,6 +217,9 @@ export const ProgramsExplorer = () => {
         );
         if (data) {
           setSelectedProgram(data);
+          if (typeof data.metadata?.grantTypes === "string") {
+            data.metadata.grantTypes = [data.metadata.grantTypes];
+          }
         }
       } catch (error: any) {
         errorManager(`Error while searching for program by id`, error);
