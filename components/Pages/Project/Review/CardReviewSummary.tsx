@@ -180,8 +180,8 @@ export const CardReviewSummary = () => {
 
   useEffect(() => {
     const getGapUser = async () => {
-      const response = fetch(`https://gapapi.karmahq.xyz/grantees/${address}/is-gap-user`)
-      const data = await (await response).text()
+      const response = await fetch(`https://gapapi.karmahq.xyz/grantees/${address}/is-gap-user`)
+      const data = await response.text()
       setIsGapUser(data)
     }
     getGapUser()
