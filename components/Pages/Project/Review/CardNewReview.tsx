@@ -159,20 +159,10 @@ export const CardNewReview = ({ grant }: { grant: IGrantResponse | undefined }) 
     const abiCoder = new AbiCoder();
     console.log("Badge scores being encoded:", badgeScores);
 
-    let encodedData;
-    const programUIDisNumber = Number.isNaN(Number(programUID));
-
-    if (programUIDisNumber) {
-      encodedData = abiCoder.encode(
+      const encodedData = abiCoder.encode(
         ["bytes32", "bytes32[]", "uint8[]", "string"],
         [grantUID, activeBadgeIds, badgeScores, programUID?.toString()],
       );
-    } else {
-      encodedData = abiCoder.encode(
-        ["bytes32", "bytes32[]", "uint8[]", "string"],
-        [grantUID, activeBadgeIds, badgeScores, programUID?.toString()],
-      );
-    }
 
     const couldSubmitForms = await handleSubmitAnswersReview();
 
