@@ -104,22 +104,6 @@ export const ArrowNavigationBar = ({
     }
   };
 
-  useEffect(() => {
-    if (centerID) {
-      const centerElement = document.querySelector(
-        '[data-navigation-item="' + centerID + '"]',
-      ) as HTMLElement;
-
-      if (centerElement && navigationBarWrapper.current) {
-        navigationBarWrapper.current.scrollTo({
-          behavior: "smooth",
-          left: centerElement.offsetLeft - 80,
-        });
-
-        setTimeout(setDisplayOfInfiniteShadowsAndNavigationButtons, DELAY_FOR_DOM_PROPERTY_UPDATE);
-      }
-    }
-  }, [centerID]);
 
   return (
     <div className={`relative flex ${showNavButtons !== null ? "space-x-1 z-20 " : ""}`}>
