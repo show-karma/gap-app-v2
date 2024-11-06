@@ -150,10 +150,6 @@ export const CardNewReview = ({ grant }: { grant: IGrantResponse | undefined }) 
       );
     }
 
-    console.log("grantUID:", grantUID);
-    console.log("activeBadgeIds:", activeBadgeIds);
-    console.log("badgeScores:", badgeScores);
-    console.log("programUID:", programUID);
     // Encode the data
     const abiCoder = new AbiCoder();
     console.log("Badge scores being encoded:", badgeScores);
