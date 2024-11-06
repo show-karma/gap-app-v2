@@ -5,7 +5,6 @@ import lodash from "lodash";
 import { useTheme } from "next-themes";
 
 interface HorizontalNavigationBarProps {
-  centerID?: string | null;
   skeletonMarkup: JSX.Element;
   barContentMarkup: JSX.Element;
 }
