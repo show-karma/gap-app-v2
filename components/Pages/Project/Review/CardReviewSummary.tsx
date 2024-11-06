@@ -207,7 +207,8 @@ export const CardReviewSummary = () => {
         project?.recipient &&
         address &&
         isGapUser &&
-        !isAddressEqual(project.recipient, address) ? ( // Check if the address is equal to the grant recipient address
+        // Below condition checks if the connected address is equal to the grant recipient address
+        !isAddressEqual(project.recipient, address) ? (
           <Button
             disabled={false}
             onClick={handleReviewButton}
