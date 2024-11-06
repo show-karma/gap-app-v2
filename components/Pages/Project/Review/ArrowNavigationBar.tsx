@@ -24,7 +24,6 @@ const VISIBLE_SCROLLER_WIDTH_AFTER_NAVIGATOR_CLICK = 75;
 const DELAY_FOR_DOM_PROPERTY_UPDATE = 2000;
 
 export const ArrowNavigationBar = ({
-  centerID,
   skeletonMarkup,
   barContentMarkup,
 }: HorizontalNavigationBarProps) => {
