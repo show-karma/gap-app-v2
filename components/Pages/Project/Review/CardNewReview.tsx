@@ -69,7 +69,6 @@ export const CardNewReview = ({ grant }: { grant: IGrantResponse | undefined }) 
 
   // Score of the new review
   const handleSetRating = (index: number, rating: number) => {
-    console.log(`Attempting to set rating ${rating} for index ${index}`);
     if (rating >= 1 && rating <= 5) {
       const updatedBadges = [...badgeScores];
       updatedBadges[index] = Math.round(rating);
