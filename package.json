@@ -23,7 +23,7 @@
     "@react-pdf/renderer": "^3.4.4",
     "@semaphore-protocol/core": "^4.0.0-beta.6",
     "@sentry/nextjs": "7.105.0",
-    "@show-karma/karma-gap-sdk": "https://github.com/show-karma/karma-gap-sdk.git#6dc087ec0376c3b36f52ed8276322a1ec7f067d0",
+    "@show-karma/karma-gap-sdk": "0.4.0",
     "@tailwindcss/typography": "^0.5.10",
     "@tanstack/react-query": "^5.48.0",
     "@tanstack/react-table": "^8.17.3",

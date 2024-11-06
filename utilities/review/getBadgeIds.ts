@@ -2,7 +2,7 @@ import { createPublicClient, http, Hex } from "viem";
 import { readContract } from "viem/actions";
 import { arbitrum } from "viem/chains";
 
-import { TRUSTFUL_SCORER } from "./constants/constants";
+import { TRUSTFUL_SCORER } from "./constants";
 
 const publicClient = createPublicClient({
   chain: arbitrum,

@@ -4,7 +4,7 @@ import { arbitrum } from "viem/chains";
 
 import { Badge } from "@/types/review";
 
-import { BADGE_REGISTRY } from "./constants/constants";
+import { BADGE_REGISTRY } from "./constants";
 
 const publicClient = createPublicClient({
   chain: arbitrum,

@@ -39,20 +39,13 @@ export const DynamicStarsReview = ({
                 mode === ReviewMode.WRITE
                   ? "transition-all ease-in-out duration-300 cursor-pointer"
                   : "transition-all ease-in-out duration-300",
-              onClick:
-                mode === ReviewMode.WRITE
-                  ? () => handleStarClick(currentRating)
-                  : undefined,
+              onClick: mode === ReviewMode.WRITE ? () => handleStarClick(currentRating) : undefined,
               style: {
-                fill: isHoveredOrRated ? "#004EEB" : "none",
-                stroke: isHoveredOrRated ? "#004EEB" : "#98A2B3",
+                fill: isHoveredOrRated ? "#1832ED" : "#959FA8",
+                stroke: isHoveredOrRated ? "#1832ED" : "#98A2B3",
               },
-              onMouseEnter:
-                mode === ReviewMode.WRITE
-                  ? () => setHover(currentRating)
-                  : undefined,
-              onMouseLeave:
-                mode === ReviewMode.WRITE ? () => setHover(null) : undefined,
+              onMouseEnter: mode === ReviewMode.WRITE ? () => setHover(currentRating) : undefined,
+              onMouseLeave: mode === ReviewMode.WRITE ? () => setHover(null) : undefined,
             }}
           />
         );

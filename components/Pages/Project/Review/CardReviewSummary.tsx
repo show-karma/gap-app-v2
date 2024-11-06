@@ -11,7 +11,7 @@ import toast from "react-hot-toast";
 import { arbitrum } from "viem/chains";
 import { useReviewStore } from "@/store/review";
 import { getBadgeIds } from "@/utilities/review/getBadgeIds";
-import { SCORER_DECIMALS, SCORER_ID } from "@/utilities/review/constants/constants";
+import { SCORER_DECIMALS, SCORER_ID } from "@/utilities/review/constants/";
 import { getBadge } from "@/utilities/review/getBadge";
 import { ProgressBar } from "./ProgressBar";
 import React, { useEffect, useState } from "react";
@@ -47,6 +47,7 @@ export const CardReviewSummary = () => {
   const [averageScoreReview, setAverageScoreReview] = useState<number | null>(null);
   const [intervalMessage, setIntervalMessage] = useState<string | undefined>(undefined);
   const [ratingData, setRatingData] = useState<RatingData[]>([]);
+  const [isGapUser, setIsGapUser] = useState<boolean | null>(null);
   const searchParams = useSearchParams();
 
   const { openConnectModal } = useConnectModal();
@@ -95,7 +96,7 @@ export const CardReviewSummary = () => {
   const grantIdFromQueryParam = searchParams?.get("grantId");
 
   useEffect(() => {
-    if (stories) {
+    if (stories && stories.length) {
       getAverageReviewScore(score, stories.length);
       const timestamps = stories.map((story: GrantStory) => Number(story.timestamp));
       getScoreRatingFilteredReviews();
@@ -178,6 +179,16 @@ export const CardReviewSummary = () => {
     setRatingData(reviewsWithPercentualRelevance);
   };
 
+  useEffect(() => {
+    const getGapUser = async () => {
+      const response = await fetch(`https://gapapi.karmahq.xyz/grantees/${address}/is-gap-user`);
+      const data = await response.json();
+
+      setIsGapUser(data);
+    };
+    getGapUser();
+  }, []);
+
   return (
     <div className="flex flex-col w-full gap-5">
       <div className="flex w-full justify-between items-center">
@@ -195,6 +206,7 @@ export const CardReviewSummary = () => {
         {isConnected &&
         project?.recipient &&
         address &&
+        isGapUser &&
         !isAddressEqual(project.recipient, address) ? ( // Check if the address is equal to the grant recipient address
           <Button
             disabled={false}
@@ -230,7 +242,7 @@ export const CardReviewSummary = () => {
               </h2>
             )}
             <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight text-center sm:text-start">
-              {intervalMessage ? intervalMessage : "No reviewed yet"}
+              {intervalMessage ?? "Not reviewed yet"}
             </p>
           </div>
         </div>
@@ -266,17 +278,33 @@ export const CardReviewSummary = () => {
         </div>
         <div className="flex lg:justify-end justify-center">
           <div className="flex gap-1.5 items-start justify-center flex-col-reverse">
-            {ratingData.map(({ countOfReviews, percentageComparedToAllTheReviews }, index) => (
-              <div className="flex gap-2 items-center" key={index}>
-                <p className="text-white text-sm font-bold font-['Open Sans'] leading-tight">
-                  {index + 1}
-                </p>
-                <ProgressBar actualPercentage={percentageComparedToAllTheReviews} />
-                <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
-                  {countOfReviews ? percentageComparedToAllTheReviews : "0"}%
-                </p>
+            {ratingData && ratingData.length ? (
+              ratingData.map(({ countOfReviews, percentageComparedToAllTheReviews }, index) => (
+                <div className="flex gap-2 items-center" key={index}>
+                  <p className="dark:text-white text-sm font-bold font-['Open Sans'] leading-tight">
+                    {index + 1}
+                  </p>
+                  <ProgressBar actualPercentage={percentageComparedToAllTheReviews} />
+                  <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
+                    {countOfReviews ? percentageComparedToAllTheReviews.toFixed(0) : "0"}%
+                  </p>
+                </div>
+              ))
+            ) : (
+              <div className="flex gap-1.5 items-start justify-center flex-col-reverse">
+                {Object.values(SupportedRatings).map((rating) => (
+                  <div className="flex gap-2 items-center" key={rating}>
+                    <p className="dark:text-white text-sm font-bold font-['Open Sans'] leading-tight">
+                      {rating}
+                    </p>
+                    <ProgressBar actualPercentage={0} />
+                    <p className="text-[#959fa8] text-sm font-normal font-['Open Sans'] leading-tight">
+                      0%
+                    </p>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         </div>
       </div>

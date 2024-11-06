@@ -1,5 +1,3 @@
-import { getWalletClient } from "@wagmi/core";
-import { config } from "@/utilities/wagmi/config";
 import {
   createPublicClient,
   encodeFunctionData,
@@ -10,8 +8,7 @@ import {
 } from "viem";
 import { sendTransaction, waitForTransactionReceipt } from "viem/actions";
 import { arbitrum } from "viem/chains";
-import { ARB_ONE_EAS } from "./constants/constants";
-import toast from "react-hot-toast";
+import { ARB_ONE_EAS } from "./constants";
 
 export interface AttestationRequestData {
   recipient: Hex;
@@ -38,7 +35,7 @@ export async function submitAttest(
   recipient: Hex,
   expirationTime: bigint,
   revocable: boolean,
-  refUID: Hex,
+  refUID: Hex, // GrantUID
   data: Hex,
   walletClient: WalletClient,
 ): Promise<TransactionReceipt | Error> {

@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @next/next/no-img-element */
 import toast from "react-hot-toast";
 import { useEffect } from "react";
@@ -14,16 +15,25 @@ import { Button } from "@/components/Utilities/Button";
 import { DynamicStarsReview } from "./DynamicStarsReview";
 
 import { AbiCoder } from "ethers";
-import { KARMA_EAS_SCHEMA_UID } from "@/utilities/review/constants/constants";
+import {
+  CategoryOptions,
+  CreatePreReviewRequest,
+  KARMA_EAS_SCHEMA_UID,
+  RAILWAY_BACKEND,
+  ReceivedGrantOptions,
+} from "@/utilities/review/constants";
 import { addPrefixToIPFSLink } from "@/utilities/review/constants/utilitary";
 import { submitAttest } from "@/utilities/review/attest";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { config } from "@/utilities/wagmi/config";
 import { useForm, Controller } from "react-hook-form";
 import { CheckIcon } from "@heroicons/react/24/solid";
+import axios from "axios";
+import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { switchChain } from "@wagmi/core";
 
-export const CardNewReview = () => {
-  const { control, handleSubmit } = useForm();
+export const CardNewReview = ({ grant }: { grant: IGrantResponse | undefined }) => {
+  const { control, handleSubmit, getValues, trigger } = useForm();
   const setIsOpenReview = useReviewStore((state: any) => state.setIsOpenReview);
   const setBadgeScores = useReviewStore((state: any) => state.setBadgeScores);
   const badgeScores = useReviewStore((state: any) => state.badgeScores);
@@ -39,31 +49,83 @@ export const CardNewReview = () => {
   const searchParams = useSearchParams();
   const { data: walletClient } = useWalletClient({ config });
 
+  const programId = grant?.refUID;
+  const programUID = programId ? programId.split("_")[0] : undefined;
+
   useEffect(() => {
     // Fill the starts with a score of 1 when the badges render
     if (activeBadges) {
-      setBadgeScores(Array(activeBadges.length).fill(1));
+      const initialScores = Array(activeBadges.length).fill(1);
+      console.log("Initializing badge scores:", initialScores);
+      setBadgeScores(initialScores);
     }
     const grantIdFromQueryParam = searchParams?.get("grantId");
-    if (grantIdFromQueryParam) {
+    if (grant?.details?.refUID) {
+      setGrantUID(grant?.details?.refUID);
+    } else if (grantIdFromQueryParam) {
       setGrantUID(grantIdFromQueryParam);
     }
   }, [activeBadges]);
 
   // Score of the new review
   const handleSetRating = (index: number, rating: number) => {
-    if (rating >= 1 || rating <= 5) {
-      const updatededBadges = [...badgeScores];
-      updatededBadges[index] = rating;
-      setBadgeScores(updatededBadges);
+    if (rating >= 1 && rating <= 5) {
+      const updatedBadges = [...badgeScores];
+      updatedBadges[index] = Math.round(rating);
+      console.log("Updated badge scores:", updatedBadges);
+      setBadgeScores(updatedBadges);
     } else {
+      console.error(`Invalid rating: ${rating}. Must be between 1 and 5.`);
       toast.error("Invalid rating. Can only score between 1 and 5");
+    }
+  };
+
+  const handleSubmitAnswersReview = async (): Promise<boolean> => {
+    const isValid = await trigger(["WhyDidYouApplyFor", "DidYouReceiveTheGrant"]);
+
+    if (isValid && address) {
+      const values = getValues();
+      const whyDidYouApplyFor: CategoryOptions = values.WhyDidYouApplyFor;
+      const didYouReceiveTheGrant: ReceivedGrantOptions = values.DidYouReceiveTheGrant;
+
+      if (whyDidYouApplyFor.length === 0 || didYouReceiveTheGrant.length === 0) {
+        toast.error("Select a valid option in both forms.");
+
+        return false;
+      } else {
+        const newPreReview: CreatePreReviewRequest = {
+          connectedUserAddress: address,
+          preReviewAnswers: {
+            category: whyDidYouApplyFor[0] as CategoryOptions,
+            receivedGrant: didYouReceiveTheGrant[0] as ReceivedGrantOptions,
+          },
+          badgesScores: badgeScores,
+          activeBadgeIds: activeBadgeIds,
+          grantId: grantUID,
+          programId: programUID,
+        };
+        try {
+          const createPreReview = await axios.post(
+            `${RAILWAY_BACKEND}/api/v1/reviews`,
+            newPreReview,
+          );
+
+          return true;
+        } catch (error) {
+          console.error("Error posting review:", error);
+          toast.error("Error submitting review. Try again.");
+
+          return false;
+        }
+      }
+    } else {
+      toast.error("Validation failed.");
+      return false;
     }
   };
 
   /**
    * Handles the submission of a review to submitAttest.
-   *
    */
   const handleSubmitReview = async () => {
     if (!address) {
@@ -78,7 +140,7 @@ export const CardNewReview = () => {
 
     if (chainId != arbitrum.id) {
       toast.error("Must connect to Arbitrum to review");
-      await walletClient.switchChain({ id: arbitrum.id });
+      await switchChain(config, { chainId: arbitrum.id });
       return;
     }
 
@@ -90,10 +152,18 @@ export const CardNewReview = () => {
 
     // Encode the data
     const abiCoder = new AbiCoder();
-    const encodedData = abiCoder.encode(
-      ["bytes32", "bytes32[]", "uint8[]"],
-      [grantUID, activeBadgeIds, badgeScores],
-    );
+    console.log("Badge scores being encoded:", badgeScores);
+
+      const encodedData = abiCoder.encode(
+        ["bytes32", "bytes32[]", "uint8[]", "string"],
+        [grantUID, activeBadgeIds, badgeScores, programUID?.toString()],
+      );
+
+    const couldSubmitForms = await handleSubmitAnswersReview();
+
+    if (!couldSubmitForms) {
+      return;
+    }
 
     const response = await submitAttest(
       address,
@@ -119,26 +189,32 @@ export const CardNewReview = () => {
     setIsOpenReview(ReviewMode.READ);
   };
 
-  const optionsWhyDidYouApplyFor = [
-    { label: "Dev tooling", value: "devTooling" },
-    { label: "Education", value: "education" },
-    { label: "Marketing and Growth", value: "marketingAndGrowth" },
-    { label: "DeFi", value: "deFi" },
-    { label: "DAOs and Governance", value: "dAOsAndGovernance" },
-    { label: "Community", value: "Community" },
-    { label: "Public Goods", value: "publicGoods" },
-    { label: "ZK and privacy", value: "zkAndPrivacy" },
-    { label: "Other", value: "other" },
-  ];
+  interface OptionsWhyDidYouApplyFor {
+    label: CategoryOptions;
+    value: CategoryOptions;
+  }
 
-  const optionsDidYouReceiveTheGrant = [
-    { label: "Yes, I got approved", value: "yesIGotApproved" },
-    { label: "No", value: "no" },
-    { label: "I don't have the answer yet", value: "iDontHaveTheAnswerYet" },
-  ];
+  interface OptionsDidYouReceiveTheGrant {
+    label: ReceivedGrantOptions;
+    value: ReceivedGrantOptions;
+  }
+
+  const optionsWhyDidYouApplyFor: OptionsWhyDidYouApplyFor[] = Object.values(CategoryOptions).map(
+    (category) => ({
+      label: category,
+      value: category,
+    }),
+  );
+
+  const optionsDidYouReceiveTheGrant: OptionsDidYouReceiveTheGrant[] = Object.values(
+    ReceivedGrantOptions,
+  ).map((option) => ({
+    label: option,
+    value: option,
+  }));
 
   const onSubmit = (data: any) => {
-    console.log(data);
+    console.log("data", data);
   };
 
   return (
@@ -150,7 +226,7 @@ export const CardNewReview = () => {
               Why did you apply for?
             </h1>
 
-            <form onSubmit={handleSubmit(onSubmit)}>
+            <form>
               <Controller
                 name="WhyDidYouApplyFor"
                 control={control}
@@ -170,7 +246,7 @@ export const CardNewReview = () => {
                             checked={value.includes(option.value)}
                             onChange={(e) => {
                               const newValue = e.target.checked
-                                ? [...value, option.value]
+                                ? [option.value]
                                 : value.filter((value: string) => value !== option.value);
                               onChange(newValue);
                             }}
@@ -192,7 +268,7 @@ export const CardNewReview = () => {
             <h1 className="text-base font-semibold font-['Open Sans'] leading-normal">
               Did you receive the grant?
             </h1>
-            <form onSubmit={handleSubmit(onSubmit)} className="justify-between md:w-full">
+            <form className="justify-between md:w-full">
               <Controller
                 name="DidYouReceiveTheGrant"
                 control={control}
@@ -212,7 +288,7 @@ export const CardNewReview = () => {
                             checked={value.includes(option.value)}
                             onChange={(e) => {
                               const newValue = e.target.checked
-                                ? [...value, option.value]
+                                ? [option.value]
                                 : value.filter((value: string) => value !== option.value);
                               onChange(newValue);
                             }}
@@ -263,7 +339,7 @@ export const CardNewReview = () => {
                 </div>
               </div>
             ))}
-            <div className="sm:flex-row sm:items-center justify-center flex sm:justify-end w-full mt-4 bg-[#18171C] py-4 md:px-6 ">
+            <div className="sm:flex-row sm:items-center justify-center flex sm:justify-end w-full mt-4 dark:bg-[#18171C] bg-[#959FA8] py-4 md:px-6 ">
               <Button onClick={handleSubmitReview} className="bg-[#0E104D] gap-2 px-3">
                 <CheckIcon className="w-3.5 h-3.5 text-white" /> Submit
               </Button>
