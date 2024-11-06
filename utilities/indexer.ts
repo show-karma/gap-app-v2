@@ -42,7 +42,10 @@ export const INDEXER = {
   CATEGORIES: {
     CREATE: (idOrSlug: string) => `/categories/create/${idOrSlug}`,
     QUESTIONS: {
-      UPDATE: (idOrSlug: string) => `/categories/${idOrSlug}/questions`,
+      UPDATE: (categoryId: string) => `/categories/${categoryId}/questions`,
+    },
+    OUTPUTS: {
+      UPDATE: (categoryId: string) => `/categories/${categoryId}/outputs`,
     },
   },
   COMMUNITY: {

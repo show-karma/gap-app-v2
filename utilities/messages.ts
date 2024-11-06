@@ -79,6 +79,15 @@ export const MESSAGES = {
           `${categoryName} can't be changed because already have answers to it.`,
       },
     },
+    OUTPUTS: {
+      EMPTY: `Please assign outputs to grants.`,
+      SUCCESS: (categoryName: string) =>
+        `Outputs assigned successfully to ${categoryName}.`,
+      ERROR: {
+        GENERIC: (categoryName: string) =>
+          `Outputs could not be assigned to ${categoryName}.`,
+      },
+    },
   },
   GRANT: {
     IMPACT_CRITERIA: {

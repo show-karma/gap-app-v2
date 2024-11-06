@@ -7,7 +7,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { Question } from "@/types";
 import toast from "react-hot-toast";
 import Link from "next/link";
-import { CheckIcon, ChevronLeftIcon } from "@heroicons/react/24/outline";
+import { CheckIcon, ChevronLeftIcon, TrashIcon } from "@heroicons/react/24/outline";
 
 import { NoSymbolIcon } from "@heroicons/react/24/solid";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -36,6 +36,12 @@ type QuestionsAssigned = Record<string, string[]>;
 interface Category {
   id: string;
   name: string;
+  category: string;
+  outputs: {
+    id: string
+    name: string
+    categoryId: string
+  }[];
   questions: Question[];
 }
 
@@ -275,6 +281,76 @@ export default function AssignQuestionsPage() {
     }
   };
 
+  const [newOutputs, setNewOutputs] = useState<Record<string, string>>({});
+  const [hasOutputChanges, setHasOutputChanges] = useState<Record<string, boolean>>({});
+  const [isSavingOutputs, setIsSavingOutputs] = useState<Record<string, boolean>>({});
+
+  const handleAddOutput = (categoryId: string) => {
+    if (!newOutputs[categoryId]?.trim()) return;
+
+    const categoryIndex = categories.findIndex(cat => cat.id === categoryId);
+    if (categoryIndex === -1) return;
+
+    const updatedCategories = [...categories];
+    updatedCategories[categoryIndex] = {
+      ...updatedCategories[categoryIndex],
+      outputs: [
+        ...updatedCategories[categoryIndex].outputs,
+        {
+          id: `temp-${Date.now()}`,
+          name: newOutputs[categoryId].trim(),
+          categoryId
+        }
+      ]
+    };
+
+    setCategories(updatedCategories);
+    setNewOutputs(prev => ({ ...prev, [categoryId]: '' }));
+    setHasOutputChanges(prev => ({ ...prev, [categoryId]: true }));
+  };
+
+  const handleRemoveOutput = (categoryId: string, outputId: string) => {
+    const categoryIndex = categories.findIndex(cat => cat.id === categoryId);
+    if (categoryIndex === -1) return;
+
+    const updatedCategories = [...categories];
+    updatedCategories[categoryIndex] = {
+      ...updatedCategories[categoryIndex],
+      outputs: updatedCategories[categoryIndex].outputs.filter(
+        output => output.id !== outputId
+      )
+    };
+
+    setCategories(updatedCategories);
+    setHasOutputChanges(prev => ({ ...prev, [categoryId]: true }));
+  };
+
+  const saveOutputs = async (category: Category) => {
+    setIsSavingOutputs({ ...isSavingOutputs, [category.id]: true });
+    try {
+      const [data, error] = await fetchData(
+        INDEXER.CATEGORIES.OUTPUTS.UPDATE(category.id),
+        "PUT",
+        {
+          idOrSlug: community?.uid,
+          outputs: category.outputs?.map((output) => output?.name),
+        }
+      );
+      if (error) throw new Error("Error saving outputs");
+      toast.success(MESSAGES.CATEGORIES.OUTPUTS.SUCCESS(category.name));
+      setHasOutputChanges(prev => ({ ...prev, [category.id]: false }));
+    } catch (error: any) {
+      toast.error(MESSAGES.CATEGORIES.ASSIGN_QUESTIONS.ERROR.GENERIC(category.name));
+      errorManager(`Error saving outputs of community ${communityId}`, error, {
+        community: communityId,
+        idOrSlug: community?.uid,
+        outputs: category.outputs?.map((output) => output?.name),
+      });
+    } finally {
+      setIsSavingOutputs({ ...isSavingOutputs, [category.id]: false });
+    }
+  };
+
   return (
     <div className="mt-12 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
       {loading ? (
@@ -310,7 +386,65 @@ export default function AssignQuestionsPage() {
                   <div className="flex w-full flex-1 flex-col items-start justify-start">
                     <h3 className="text-xl font-bold">{category.name}</h3>
                   </div>
+
+                  <div className="w-full border-b border-gray-200 dark:border-gray-700 pb-6 mb-6">
+                    <h5 className="text-md font-semibold mb-4">Modify outputs:</h5>
+                    <div className="flex flex-col gap-2">
+                      {category.outputs.map((output) => (
+                        <div key={output.id}
+                          className="flex items-center justify-between gap-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
+                          <span className="text-sm text-gray-700 dark:text-gray-300">
+                            {output.name}
+                          </span>
+                          <button
+                            onClick={() => handleRemoveOutput(category.id, output.id)}
+                            className="text-secondary-500 hover:text-secondary-700 transition-colors"
+                            aria-label="Remove output"
+                          >
+                            <TrashIcon className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ))}
+
+                      <div className="flex items-center gap-2 mt-4 mx-2">
+                        <input
+                          type="text"
+                          value={newOutputs[category.id] || ''}
+                          onChange={(e) => setNewOutputs(prev => ({
+                            ...prev,
+                            [category.id]: e.target.value
+                          }))}
+                          placeholder="Enter new output name"
+                          className="text-sm flex-1 p-2 border border-gray-200 dark:border-gray-700 rounded-md 
+                            focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
+                        />
+                        <Button
+                          onClick={() => handleAddOutput(category.id)}
+                          disabled={!newOutputs[category.id]?.trim()}
+                          className="px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 
+                            transition-colors disabled:opacity-50"
+                        >
+                          Add Output
+                        </Button>
+                      </div>
+
+                      {hasOutputChanges[category.id] && (
+                        <Button
+                          isLoading={isSavingOutputs[category.id]}
+                          disabled={isSavingOutputs[category.id]}
+                          onClick={() => saveOutputs(category)}
+                          className="mt-4 bg-blue-500 px-4 py-2 rounded-md text-white hover:bg-blue-600 
+                            dark:bg-blue-900 transition-colors"
+                        >
+                          Save outputs
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                   <div className="flex w-full flex-1 flex-col flex-wrap items-start justify-start gap-1 break-words pb-10">
+
+                    <h5 className="text-md font-semibold mb-4">Modify questions:</h5>
+
                     {questions.map((question) => {
                       const isSelected = questionsAssigned[
                         category.id
