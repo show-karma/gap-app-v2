@@ -47,7 +47,7 @@ export const CardReviewSummary = () => {
   const [averageScoreReview, setAverageScoreReview] = useState<number | null>(null);
   const [intervalMessage, setIntervalMessage] = useState<string | undefined>(undefined);
   const [ratingData, setRatingData] = useState<RatingData[]>([]);
-  const [isGapUser, setIsGapUser] = useState<string | null>(null);
+  const [isGapUser, setIsGapUser] = useState<boolean | null>(null);
   const searchParams = useSearchParams();
 
   const { openConnectModal } = useConnectModal();
@@ -126,8 +126,9 @@ export const CardReviewSummary = () => {
     const days = interval / (60 * 60 * 24);
 
     if (days <= 1) {
-      return `Typically reviewed ${stories.length} time${stories.length > 1 ? "s" : ""} ${IntervalMessage.PER_DAY
-        }`;
+      return `Typically reviewed ${stories.length} time${stories.length > 1 ? "s" : ""} ${
+        IntervalMessage.PER_DAY
+      }`;
     } else if (days <= 7) {
       return `Typically reviewed ${Math.round(7 / days)} times ${IntervalMessage.PER_WEEK}`;
     } else if (days <= 30) {
@@ -180,12 +181,13 @@ export const CardReviewSummary = () => {
 
   useEffect(() => {
     const getGapUser = async () => {
-      const response = await fetch(`https://gapapi.karmahq.xyz/grantees/${address}/is-gap-user`)
-      const data = await response.text()
-      setIsGapUser(data)
-    }
-    getGapUser()
-  }, [])
+      const response = await fetch(`https://gapapi.karmahq.xyz/grantees/${address}/is-gap-user`);
+      const data = await response.json();
+
+      setIsGapUser(data);
+    };
+    getGapUser();
+  }, []);
 
   return (
     <div className="flex flex-col w-full gap-5">
@@ -194,7 +196,7 @@ export const CardReviewSummary = () => {
           <DynamicStarsReview
             totalStars={1}
             rating={0}
-            setRating={() => { }}
+            setRating={() => {}}
             mode={ReviewMode.READ}
           />
           <h2 className="text-base font-semibold font-['Open Sans'] leading-normal">
@@ -202,10 +204,10 @@ export const CardReviewSummary = () => {
           </h2>
         </div>
         {isConnected &&
-          project?.recipient &&
-          address &&
-          isGapUser === 'true' &&
-          !isAddressEqual(project.recipient, address) ? ( // Check if the address is equal to the grant recipient address
+        project?.recipient &&
+        address &&
+        isGapUser &&
+        !isAddressEqual(project.recipient, address) ? ( // Check if the address is equal to the grant recipient address
           <Button
             disabled={false}
             onClick={handleReviewButton}
@@ -265,7 +267,7 @@ export const CardReviewSummary = () => {
             <DynamicStarsReview
               totalStars={5}
               rating={averageScoreReview ? Number(averageScoreReview.toFixed(0)) : 0}
-              setRating={() => { }}
+              setRating={() => {}}
               mode={ReviewMode.READ}
             />
           </div>
