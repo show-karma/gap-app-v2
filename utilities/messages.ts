@@ -93,6 +93,12 @@ export const MESSAGES = {
     IMPACT_CRITERIA: {
       EMPTY: "The grantee has not defined any impact criteria yet.",
     },
+    OUTPUTS: {
+      EMPTY: "The grantee has not defined any outputs yet.",
+      VALUE_REQUIRED: "Value is required",
+      SUCCESS: "Outputs sent successfully",
+      ERROR: "There was an error sending the outputs. Please try again",
+    },
     REVIEW: {
       NOT_AUTHORIZED: "You are not authorized to review this grant.",
       EMPTY_REVIEWS: "No reviews yet, be the first to review this grant!",

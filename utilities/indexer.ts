@@ -121,6 +121,10 @@ export const INDEXER = {
       ALL_ANON: (grantUID: string) =>
         `/grants/${grantUID}/questions/answer/feed-anon`,
     },
+    OUTPUTS: {
+      GET: (grantUID: string) => `/grants/${grantUID}/outputs`,
+      SEND: (grantUID: string) => `/grants/${grantUID}/outputs/answers`,
+    },
     CATEGORIES: {
       ALL: (idOrSlug: string) => `/communities/${idOrSlug}/categories`,
       UPDATE: (grantUID: string) => `/grants/${grantUID}/update/categories`,

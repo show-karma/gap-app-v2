@@ -61,6 +61,7 @@ const allViews: GrantScreen[] = [
   "edit-grant",
   "grant-update",
   "impact-criteria",
+  "outputs",
   "overview",
   "complete-grant",
   "grant-update",
@@ -165,6 +166,11 @@ export const GrantsLayout = ({ children, project }: GrantsLayoutProps) => {
       {
         name: "Milestones and Updates",
         tabName: "milestones-and-updates",
+        current: false,
+      },
+      {
+        name: "Outputs",
+        tabName: "outputs",
         current: false,
       },
       {
