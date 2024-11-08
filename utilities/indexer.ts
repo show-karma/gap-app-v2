@@ -61,6 +61,8 @@ export const INDEXER = {
       `/communities/${communityIdOrSlug}/grant-titles`,
     PROGRAMS: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/programs`,
+    PROGRAM_IMPACT: (communityIdOrSlug: string, programId: string) =>
+      `/communities/${communityIdOrSlug}/programs/${programId}/outputs`,
     GRANTS: (
       communityIdOrSlug: string,
       {

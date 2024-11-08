@@ -1,4 +1,6 @@
 "use client";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useCommunityAdminStore } from "@/store/community";
 import { useGrantStore } from "@/store/grant";
 import { useState, useEffect } from "react";
 import { MESSAGES } from "@/utilities/messages";
@@ -6,7 +8,6 @@ import { GrantsOutputsLoading } from "../../Project/Loading/Grants/Outputs";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import toast from "react-hot-toast";
-import { Loader } from "@/components/Utilities/Loader";
 
 type OutputForm = {
     outputId: string;
@@ -19,6 +20,14 @@ type OutputForm = {
 };
 
 export const GrantOutputs = () => {
+    const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+    const isContractOwner = useOwnerStore((state) => state.isOwner);
+    const isCommunityAdmin = useCommunityAdminStore(
+        (state) => state.isCommunityAdmin
+    );
+
+    const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
+
     const [outputAnswers, setOutputAnswers] = useState<{
         id: string;
         grantUID: string;
@@ -111,11 +120,12 @@ export const GrantOutputs = () => {
     useEffect(() => {
         async function getOutputAnswers(grantUid: string) {
             setIsLoading(true);
-            const [response] = await fetchData(INDEXER.GRANTS.OUTPUTS.GET(grantUid));
-            setOutputAnswers(response);
+            const [data] = await fetchData(INDEXER.GRANTS.OUTPUTS.GET(grantUid));
+            const outputDataWithAnswers = data;
+            setOutputAnswers(outputDataWithAnswers);
 
             // Initialize forms with existing values
-            setForms(response.map((item: any) => ({
+            setForms(outputDataWithAnswers.map((item: any) => ({
                 outputId: item.outputId,
                 categoryId: item.categoryId,
                 value: item.value || '',
@@ -151,9 +161,9 @@ export const GrantOutputs = () => {
 
     return (
         <div className="w-full max-w-[100rem]">
-            {outputAnswers && outputAnswers?.length > 0 ? (
+            {outputAnswers.filter((item: any) => item.value) && (outputAnswers?.filter((item: any) => item.value)?.length > 0 || isAuthorized) ? (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {outputAnswers.map((item) => {
+                    {outputAnswers.filter((item: any) => item.value || isAuthorized).map((item) => {
                         const form = forms.find(f => f.outputId === item.outputId);
                         return (
                             <div
@@ -165,13 +175,13 @@ export const GrantOutputs = () => {
                                         <h3 className="text-lg font-semibold text-zinc-800 dark:text-zinc-100">
                                             {item.name}
                                         </h3>
-                                        {/* <p className="text-sm text-gray-500 dark:text-zinc-400">
+                                        <p className="text-sm text-gray-500 dark:text-zinc-400">
                                             Category: {item.categoryName}
-                                        </p> */}
+                                        </p>
                                     </div>
                                     <div className="flex items-center gap-4">
 
-                                        {!form?.isEditing && (
+                                        {!form?.isEditing && isAuthorized && (
                                             <button
                                                 onClick={() => handleEditClick(item.outputId)}
                                                 className="px-3 py-1.5 text-sm font-medium text-primary-500 hover:text-primary-600 hover:bg-primary-50 dark:hover:bg-primary-900/20 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500/40 transition-colors"
@@ -190,10 +200,10 @@ export const GrantOutputs = () => {
                                         >
                                             Value
                                         </label>
-                                        {form?.isEditing ? (
+                                        {form?.isEditing && isAuthorized ? (
                                             <input
                                                 id={`value-${item.outputId}`}
-                                                type="text"
+                                                type="number"
                                                 value={form?.value || item.value || ''}
                                                 onChange={(e) => handleInputChange(item.outputId, item.categoryId, 'value', e.target.value)}
                                                 className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100 transition-colors"
@@ -213,7 +223,7 @@ export const GrantOutputs = () => {
                                         >
                                             Proof
                                         </label>
-                                        {form?.isEditing ? (
+                                        {form?.isEditing && isAuthorized ? (
                                             <textarea
                                                 id={`proof-${item.outputId}`}
                                                 value={form?.proof || item.proof || ''}
@@ -230,19 +240,18 @@ export const GrantOutputs = () => {
                                     </div>
 
                                     <span className="text-sm text-gray-500 dark:text-zinc-400">
-                                        Updated {new Date(item?.updatedAt || new Date()).toLocaleDateString()}
+                                        Last updated {new Date(item?.updatedAt || new Date()).toLocaleDateString()}
                                     </span>
 
-                                    {form?.isEditing && (
+                                    {form?.isEditing && isAuthorized && (
                                         <div className="flex gap-3 pt-2">
                                             <button
                                                 onClick={() => handleSubmit(item.outputId)}
                                                 disabled={form?.isSaving || !form?.isEdited}
-                                                className="flex items-center justify-center gap-2 px-5 py-2.5 bg-primary-500 text-white rounded-md hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-500"
+                                                className="flex text-sm items-center justify-center gap-2 px-3 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-500"
                                             >
                                                 {form?.isSaving ? (
                                                     <div className="flex items-center justify-center gap-2">
-                                                        <Loader />
                                                         <span>Saving...</span>
                                                     </div>
                                                 ) : (
@@ -252,7 +261,7 @@ export const GrantOutputs = () => {
                                             <button
                                                 onClick={() => handleCancel(item.outputId)}
                                                 disabled={form?.isSaving}
-                                                className="px-5 py-2.5 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
+                                                className="px-3 text-sm py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zinc-700 dark:text-zinc-100 dark:hover:bg-zinc-600"
                                             >
                                                 Cancel
                                             </button>

@@ -42,12 +42,12 @@ interface Category {
     name: string
     categoryId: string
   }[];
-  questions: Question[];
+
 }
 
 export const metadata = defaultMetadata;
 
-export default function AssignQuestionsPage() {
+export default function AssignOutputsPage() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore();
@@ -57,10 +57,7 @@ export default function AssignQuestionsPage() {
 
   // Call API
   const [categories, setCategories] = useState<Category[]>([]);
-  const [questionsAssigned, setQuestionsAssigned] = useState<QuestionsAssigned>(
-    {}
-  );
-  const [questions, setQuestions] = useState<Question[]>([]);
+
   const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
   const [community, setCommunity] = useState<ICommunityResponse | undefined>(
     undefined
@@ -145,16 +142,7 @@ export default function AssignQuestionsPage() {
           );
           if (data) {
             setCategories(data);
-            const previousQuestions = data.reduce(
-              (acc: QuestionsAssigned, category: Category) => {
-                acc[category.id] = category.questions.map(
-                  (question: Question) => question.id
-                );
-                return acc;
-              },
-              {}
-            );
-            setQuestionsAssigned(previousQuestions);
+
           }
         } catch (error: any) {
           errorManager(
@@ -171,115 +159,18 @@ export default function AssignQuestionsPage() {
         }
       };
 
-      const getQuestions = async () => {
-        setLoading(true);
-        try {
-          const [data] = await fetchData(
-            INDEXER.COMMUNITY.QUESTIONS(communityId)
-          );
-          if (data) {
-            setQuestions(data);
-          }
-        } catch (error: any) {
-          errorManager(
-            `Error fetching questions of community ${communityId}`,
-            error,
-            {
-              community: communityId,
-            }
-          );
-          setQuestions([]);
-          console.error(error);
-        } finally {
-          setLoading(false);
-        }
-      };
+
 
       getCategories();
-      getQuestions();
     }
   }, [community?.uid]);
 
-  const assign = (categoryID: string, question: string) => {
-    const newQuestions = { ...questionsAssigned };
-
-    const categoryQuestions = newQuestions[categoryID] || [];
-    if (categoryQuestions.includes(question)) {
-      newQuestions[categoryID] = categoryQuestions.filter(
-        (q) => q !== question
-      );
-    } else {
-      newQuestions[categoryID] = [...categoryQuestions, question];
-    }
-
-    setQuestionsAssigned(newQuestions);
-  };
 
   const [isSaving, setIsSaving] = useState<Record<string, boolean>>({});
 
-  const saveAssign = async (category: Category) => {
-    setIsSaving({ ...isSaving, [category.id]: true });
-    try {
-      const [data, error] = await fetchData(
-        INDEXER.CATEGORIES.QUESTIONS.UPDATE(category.id),
-        "PUT",
-        {
-          idOrSlug: community?.uid,
-          questions: questionsAssigned[category.id],
-        }
-      );
-      if (error) throw new Error("Error saving questions");
-      toast.success(
-        MESSAGES.CATEGORIES.ASSIGN_QUESTIONS.SUCCESS(category.name)
-      );
-    } catch (error: any) {
-      if (error?.response?.status === 409) {
-        toast.error(
-          MESSAGES.CATEGORIES.ASSIGN_QUESTIONS.ERROR.ALREADY_ANSWERED(
-            category.name
-          )
-        );
-      } else {
-        toast.error(
-          MESSAGES.CATEGORIES.ASSIGN_QUESTIONS.ERROR.GENERIC(category.name)
-        );
-        errorManager(
-          `Error saving questions of community ${communityId}`,
-          error,
-          {
-            community: communityId,
-            idOrSlug: community?.uid,
-            questions: questionsAssigned[category.id],
-          }
-        );
-      }
-      console.error(error);
-    } finally {
-      setIsSaving({ ...isSaving, [category.id]: false });
-    }
-  };
 
-  const refresh = async () => {
-    setLoading(true);
-    try {
-      const [data] = await fetchData(INDEXER.COMMUNITY.QUESTIONS(communityId));
-      if (data) {
-        setQuestions(data);
-      }
-    } catch (error: any) {
-      errorManager(
-        `Error refreshing questions of community ${communityId}`,
-        error,
-        {
-          community: communityId,
-        }
-      );
-      setQuestions([]);
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
-  };
+
+
 
   const [newOutputs, setNewOutputs] = useState<Record<string, string>>({});
   const [hasOutputChanges, setHasOutputChanges] = useState<Record<string, boolean>>({});
@@ -370,7 +261,6 @@ export default function AssignQuestionsPage() {
                 Return to admin page
               </Button>
             </Link>
-            <QuestionCreationDialog refreshQuestions={refresh} />
           </div>
           {categories.length ? (
             categories.map((category, index) => {
@@ -441,65 +331,7 @@ export default function AssignQuestionsPage() {
                       )}
                     </div>
                   </div>
-                  <div className="flex w-full flex-1 flex-col flex-wrap items-start justify-start gap-1 break-words pb-10">
 
-                    <h5 className="text-md font-semibold mb-4">Modify questions:</h5>
-
-                    {questions.map((question) => {
-                      const isSelected = questionsAssigned[
-                        category.id
-                      ]?.includes(question.id);
-                      return (
-                        <Button
-                          key={`${category.id}${question.id}`}
-                          className="flex h-max w-full max-w-2xl flex-row items-center justify-start gap-3 break-words bg-transparent px-0 py-1 text-left text-black dark:text-white transition-all duration-500 ease-in-out hover:bg-transparent"
-                          style={{
-                            opacity: isSelected ? 1 : 0.5,
-                          }}
-                          onClick={() => assign(category.id, question.id)}
-                        >
-                          <div className="flex h-4 w-4 flex-col items-center justify-start">
-                            {isSelected ? (
-                              <CheckIcon className="h-4 w-4" />
-                            ) : (
-                              <NoSymbolIcon className="h-4 w-4" />
-                            )}
-                          </div>
-                          <div data-color-mode="light">
-                            <MarkdownPreview
-                              components={{
-                                strong: ({ children, ...props }) => {
-                                  return (
-                                    <ExternalLink {...props}>
-                                      {children}
-                                    </ExternalLink>
-                                  );
-                                },
-                                a: ({ children, ...props }) => {
-                                  return (
-                                    <ExternalLink {...props}>
-                                      {children}
-                                    </ExternalLink>
-                                  );
-                                },
-                              }}
-                              source={question.query}
-                            />
-                          </div>
-                        </Button>
-                      );
-                    })}
-                    <div className="mt-4 flex w-max flex-row">
-                      <Button
-                        isLoading={isSaving[category.id]}
-                        disabled={isSaving[category.id]}
-                        onClick={() => saveAssign(category)}
-                        className="bg-blue-500 px-4 py-2 rounded-md text-white hover:bg-blue-500 dark:bg-blue-900"
-                      >
-                        Save questions
-                      </Button>
-                    </div>
-                  </div>
                 </div>
               );
             })
