@@ -94,7 +94,7 @@ export const MESSAGES = {
       EMPTY: "The grantee has not defined any impact criteria yet.",
     },
     OUTPUTS: {
-      EMPTY: "The grantee has not defined any outputs yet.",
+      EMPTY: "There are not output metrics available for this grant.",
       VALUE_REQUIRED: "Value is required",
       SUCCESS: "Outputs sent successfully",
       ERROR: "There was an error sending the outputs. Please try again",

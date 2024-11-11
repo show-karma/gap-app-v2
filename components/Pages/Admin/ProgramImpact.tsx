@@ -20,104 +20,14 @@ import { useAuthStore } from "@/store/auth";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { Card, Title, BarChart, LineChart, DonutChart } from "@tremor/react";
-
-const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return `${months[date.getMonth()]} ${date.getDate()}, ${date.getFullYear()}`;
-};
-
-interface Category {
-    id: string;
-    name: string;
-    category: string;
-    outputs: {
-        id: string
-        name: string
-        categoryId: string
-    }[];
-    questions: Question[];
-}
-
-export const metadata = defaultMetadata;
+import { ProgramAnalytics } from "./ProgramAnalytics";
+import { SearchGrantProgram } from "@/components/GrantProgramDropdown";
+import { formatDate } from "@/utilities/formatDate";
 
 
-export function SearchGrantProgram({
-    communityUID,
-    setSelectedProgram,
-}: {
-    communityUID: string;
-    setSelectedProgram: any;
-}) {
-    const [allPrograms, setAllPrograms] = useState<GrantProgram[]>([]);
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-
-    useEffect(() => {
-        (async () => {
-            setIsLoading(true);
-            const [result, error] = await fetchData(
-                INDEXER.COMMUNITY.PROGRAMS(communityUID)
-            );
-            if (error) {
-                console.log(error);
-            }
-            const sortedAlphabetically = result.sort(
-                (a: GrantProgram, b: GrantProgram) => {
-                    const aTitle = a.metadata?.title || "";
-                    const bTitle = b.metadata?.title || "";
-                    if (aTitle < bTitle) return -1;
-                    if (aTitle > bTitle) return 1;
-                    return 0;
-                }
-            );
-            setAllPrograms(sortedAlphabetically);
-            setIsLoading(false);
-        })();
-    }, [communityUID]);
-
-    return (
-        <div className="w-full max-w-[400px]">
-            {isLoading ? (
-                <div className="bg-zinc-100 p-3 text-sm ring-1 ring-zinc-200 rounded dark:bg-zinc-900">
-                    Loading Grants...
-                </div>
-            ) : !communityUID ? (
-                <div className="bg-zinc-100 p-3 text-sm ring-1 ring-zinc-200 rounded dark:bg-zinc-900">
-                    Select a community to proceed
-                </div>
-            ) : (
-                <div>
-                    <select
-                        className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100 transition-colors"
-                        onChange={(e) => {
-                            const selected = allPrograms.find(
-                                (program) => program.programId === e.target.value
-                            );
-                            setSelectedProgram(selected);
-                        }}
-                        defaultValue=""
-                    >
-                        <option value="" disabled>
-                            Select a grant program
-                        </option>
-                        {allPrograms.map((program) => (
-                            <option
-                                key={program.programId}
-                                value={program.programId}
-                            >
-                                {program.metadata?.title}
-                            </option>
-                        ))}
-                    </select>
-                </div>
-            )}
-        </div>
-    );
-}
 
 // Add new interface for the grouped response
-interface GroupedProgramImpact {
+export interface ProgramImpactDataResponse {
     categoryName: string;
     outputs: {
         chainID: number;
@@ -133,200 +43,11 @@ interface GroupedProgramImpact {
         categoryName: string;
         value: string;
         proof: string;
-        createdAt: string;
-        updatedAt: string;
+        lastUpdated: string;
     }[];
 }
 
-interface ChartData {
-    category: string;
-    value: number;
-}
 
-interface TimeSeriesData {
-    date: string;
-    value: number;
-    category: string;
-}
-
-const aggregateDataForCharts = (data: GroupedProgramImpact[]) => {
-    // Group data by output names across all categories
-    const outputNameGroups: { [key: string]: number[] } = {};
-    data.forEach(group => {
-        group.outputs.forEach(output => {
-            if (!outputNameGroups[output.name]) {
-                outputNameGroups[output.name] = [];
-            }
-            outputNameGroups[output.name].push(Number(output.value));
-        });
-    });
-
-    // Calculate metrics for each output name
-    const outputMetrics = Object.entries(outputNameGroups).map(([name, values]) => ({
-        name,
-        average: values.reduce((a, b) => a + b, 0) / values.length,
-        total: values.reduce((a, b) => a + b, 0),
-        count: values.length,
-        min: Math.min(...values),
-        max: Math.max(...values)
-    }));
-
-    // Time series by output name
-    const timeSeriesByOutput: { [key: string]: TimeSeriesData[] } = {};
-    data.forEach(group => {
-        group.outputs.forEach(output => {
-            if (!timeSeriesByOutput[output.name]) {
-                timeSeriesByOutput[output.name] = [];
-            }
-            timeSeriesByOutput[output.name].push({
-                date: output.createdAt.split('T')[0],
-                value: Number(output.value),
-                category: group.categoryName
-            });
-        });
-    });
-
-    // Distribution data for specific metrics (like "No. of members")
-    const membershipDistribution = data
-        .flatMap(group => group.outputs)
-        .filter(output => output.name.toLowerCase().includes('member'))
-        .map(output => ({
-            range: getRangeLabel(Number(output.value)),
-            count: 1
-        }))
-        .reduce((acc: { range: string; count: number }[], curr) => {
-            const existing = acc.find(item => item.range === curr.range);
-            if (existing) {
-                existing.count += 1;
-            } else {
-                acc.push(curr);
-            }
-            return acc;
-        }, [])
-        .sort((a, b) => {
-            const aNum = parseInt(a.range.split('-')[0]);
-            const bNum = parseInt(b.range.split('-')[0]);
-            return aNum - bNum;
-        });
-
-    return {
-        outputMetrics,
-        timeSeriesByOutput,
-        membershipDistribution
-    };
-};
-
-// Add utility function for creating range labels
-const getRangeLabel = (value: number): string => {
-    const ranges = [
-        { max: 10, label: '0-10' },
-        { max: 50, label: '11-50' },
-        { max: 100, label: '51-100' },
-        { max: 500, label: '101-500' },
-        { max: 1000, label: '501-1000' },
-        { max: Infinity, label: '1000+' }
-    ];
-
-    for (const range of ranges) {
-        if (value <= range.max) return range.label;
-    }
-    return '1000+';
-};
-
-const ProgramAnalytics = ({ data }: { data: GroupedProgramImpact[] }) => {
-    const chartData = aggregateDataForCharts(data);
-    const [selectedMetric, setSelectedMetric] = useState<string>('');
-
-    // Find all unique output names
-    const outputNames = Array.from(new Set(data.flatMap(group =>
-        group.outputs.map(output => output.name)
-    )));
-
-    return (
-        <div className="space-y-6 w-full max-w-4xl">
-            <div className="flex flex-col gap-4">
-                <select
-                    className="w-full max-w-xs px-4 py-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-zinc-900"
-                    value={selectedMetric}
-                    onChange={(e) => setSelectedMetric(e.target.value)}
-                >
-                    <option value="">Select an output metric</option>
-                    {outputNames.map(name => (
-                        <option key={name} value={name}>{name}</option>
-                    ))}
-                </select>
-            </div>
-
-            <Card className="p-6">
-                <Title className="text-lg font-semibold mb-4">Output Metrics Overview</Title>
-                <BarChart
-                    data={chartData.outputMetrics}
-                    index="name"
-                    categories={["average", "max"]}
-                    colors={["blue", "emerald"]}
-                    valueFormatter={(value) => value.toLocaleString()}
-                    yAxisWidth={48}
-                    className="h-72"
-                />
-            </Card>
-
-
-
-            {chartData.membershipDistribution.length > 0 && (
-                <Card className="p-6">
-                    <Title className="text-lg font-semibold mb-4">
-                        Membership Size Distribution
-                    </Title>
-                    <BarChart
-                        data={chartData.membershipDistribution}
-                        index="range"
-                        categories={["count"]}
-                        colors={["indigo"]}
-                        valueFormatter={(value) => value.toString()}
-                        yAxisWidth={48}
-                        className="h-64"
-                    />
-                </Card>
-            )}
-
-            <Card className="p-6">
-                <Title className="text-lg font-semibold mb-4">Output Metrics Summary</Title>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {chartData.outputMetrics.map((metric) => (
-                        <div
-                            key={metric.name}
-                            className="p-4 rounded-lg bg-gray-50 dark:bg-zinc-800"
-                        >
-                            <h3 className="font-medium text-gray-900 dark:text-gray-100">
-                                {metric.name}
-                            </h3>
-                            <dl className="mt-2 space-y-1">
-                                <div className="flex justify-between">
-                                    <dt className="text-sm text-gray-500 dark:text-gray-400">Average:</dt>
-                                    <dd className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                        {metric.average.toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                                    </dd>
-                                </div>
-                                <div className="flex justify-between">
-                                    <dt className="text-sm text-gray-500 dark:text-gray-400">Total:</dt>
-                                    <dd className="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                        {metric.total.toLocaleString()}
-                                    </dd>
-                                </div>
-
-                            </dl>
-                        </div>
-                    ))}
-                </div>
-            </Card>
-
-
-            <div className="w-full h-full">
-                <iframe className="w-full h-[400px]" src="https://dune.com/embeds/2355896/3859009/" />
-            </div>
-        </div>
-    );
-};
 
 export default function ProgramImpactPage() {
     const router = useRouter();
@@ -347,7 +68,7 @@ export default function ProgramImpactPage() {
     const signer = useSigner();
 
     // Update the state to handle grouped data
-    const [programImpactData, setProgramImpactData] = useState<GroupedProgramImpact[]>([]);
+    const [programImpactData, setProgramImpactData] = useState<ProgramImpactDataResponse[]>([]);
 
     useEffect(() => {
         const fetchDetails = async () => {
@@ -423,8 +144,19 @@ export default function ProgramImpactPage() {
 
     async function getProgramImpact() {
         if (!selectedProgram?.programId) return;
-        const [data] = await fetchData(INDEXER.COMMUNITY.PROGRAM_IMPACT(communityId, selectedProgram.programId));
-        setProgramImpactData(data);
+        const [data, error] = await fetchData(INDEXER.COMMUNITY.PROGRAM_IMPACT(communityId, selectedProgram.programId));
+        if (error) {
+            console.error(error);
+            return;
+        }
+
+        setProgramImpactData(data.map((item: any) => ({
+            categoryName: item.categoryName,
+            outputs: item.outputs.map((output: any) => ({
+                ...output,
+                lastUpdated: output.createdAt || output.updatedAt
+            }))
+        })));
     }
 
     useEffect(() => {
@@ -548,21 +280,23 @@ export default function ProgramImpactPage() {
                                                         Amount funded
                                                     </th>
                                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                                        Created
+                                                        Last Updated
                                                     </th>
-                                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                                        Updated
-                                                    </th>
+
                                                 </tr>
                                             </thead>
                                             <tbody className="bg-white dark:bg-zinc-900 divide-y divide-gray-200 dark:divide-gray-700">
                                                 {group.outputs.map((item) => (
-                                                    <tr key={`${item.outputId}-${item.createdAt}`} className="hover:bg-gray-50 dark:hover:bg-zinc-800">
+                                                    <tr key={`${item.outputId}-${item.lastUpdated}`} className="hover:bg-gray-50 dark:hover:bg-zinc-800">
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                                            {item.grantTitle}
+                                                            <Link className="underline font-bold" target="_blank" href={PAGES.PROJECT.GRANT(item.projectSlug, item.grantUID)}>
+                                                                {item.grantTitle}
+                                                            </Link>
                                                         </td>
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                                                            {reduceText(item.projectTitle, 20)}
+                                                            <Link className="underline font-bold" target="_blank" href={PAGES.PROJECT.OVERVIEW(item.projectSlug)}>
+                                                                {reduceText(item.projectTitle, 20)}
+                                                            </Link>
                                                         </td>
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                                                             {item.name}
@@ -574,10 +308,7 @@ export default function ProgramImpactPage() {
                                                             {item.amount}
                                                         </td>
                                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                            {formatDate(item.createdAt)}
-                                                        </td>
-                                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                                                            {formatDate(item.updatedAt)}
+                                                            {formatDate(item.lastUpdated)}
                                                         </td>
                                                     </tr>
                                                 ))}
@@ -612,3 +343,6 @@ export default function ProgramImpactPage() {
         </div>
     );
 }
+
+
+export const metadata = defaultMetadata;

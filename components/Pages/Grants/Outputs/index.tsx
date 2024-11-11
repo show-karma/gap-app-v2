@@ -8,6 +8,7 @@ import { GrantsOutputsLoading } from "../../Project/Loading/Grants/Outputs";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import toast from "react-hot-toast";
+import Link from "next/link";
 
 type OutputForm = {
     outputId: string;
@@ -159,11 +160,16 @@ export const GrantOutputs = () => {
 
     if (!grant || isLoading) return <GrantsOutputsLoading />;
 
+    // Filter outputs based on authorization
+    const filteredOutputs = isAuthorized
+        ? outputAnswers
+        : outputAnswers.filter(item => item.value);
+
     return (
         <div className="w-full max-w-[100rem]">
-            {outputAnswers.filter((item: any) => item.value) && (outputAnswers?.filter((item: any) => item.value)?.length > 0 || isAuthorized) ? (
+            {filteredOutputs.length > 0 ? (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {outputAnswers.filter((item: any) => item.value || isAuthorized).map((item) => {
+                    {filteredOutputs.map((item) => {
                         const form = forms.find(f => f.outputId === item.outputId);
                         return (
                             <div
@@ -226,16 +232,28 @@ export const GrantOutputs = () => {
                                         {form?.isEditing && isAuthorized ? (
                                             <textarea
                                                 id={`proof-${item.outputId}`}
-                                                value={form?.proof || item.proof || ''}
+                                                value={form?.proof ?? item.proof ?? ''}
                                                 onChange={(e) => handleInputChange(item.outputId, item.categoryId, 'proof', e.target.value)}
                                                 className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100 transition-colors"
                                                 placeholder="Enter proof (optional)"
                                                 rows={3}
                                             />
                                         ) : (
-                                            <p className="px-4 py-2.5 bg-gray-50 dark:bg-zinc-800 rounded-md text-zinc-800 dark:text-zinc-100 min-h-[4rem]">
-                                                {item.proof || 'No proof provided'}
-                                            </p>
+                                            item.proof?.startsWith('http') ? (
+                                                <Link
+                                                    href={item.proof}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                >
+                                                    <p className="px-4 py-2.5 bg-gray-50 dark:bg-zinc-800 rounded-md text-zinc-800 dark:text-zinc-100 overflow-hidden text-ellipsis break-words">
+                                                        {item.proof || 'No proof provided'}
+                                                    </p>
+                                                </Link>
+                                            ) : (
+                                                <p className="px-4 py-2.5 bg-gray-50 dark:bg-zinc-800 rounded-md text-zinc-800 dark:text-zinc-100 overflow-hidden text-ellipsis break-words">
+                                                    {item.proof || 'No proof provided'}
+                                                </p>
+                                            )
                                         )}
                                     </div>
 
