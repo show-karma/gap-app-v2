@@ -22,6 +22,11 @@ export default function SuperAdminPage() {
             Projects
           </button>
         </a>
+        <a href={PAGES.SUMUP_CONFIG}>
+          <button className="px-10 py-8 bg-blue-200 rounded-md  transition-all ease-in-out duration-200 dark:bg-blue-900">
+            Sumup Config
+          </button>
+        </a>
       </div>
     </div>
   ) : (

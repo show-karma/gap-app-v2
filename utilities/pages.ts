@@ -51,4 +51,5 @@ export const PAGES = {
     MANAGE_PROGRAMS: `/funding-map/manage-programs`,
   },
   STATS: `/stats`,
+  SUMUP_CONFIG: `/admin/sumup`,
 };
