@@ -15,9 +15,14 @@
     "cypress:open": "cypress open",
     "e2e": "start-server-and-test dev http://localhost:3000 \"yarn cypress open --e2e\"",
     "e2e:headless": "start-server-and-test dev http://localhost:3000 \"yarn cypress run --e2e\"",
+    "e2e:chrome": "start-server-and-test dev http://localhost:3000 \"yarn cypress run --headless --browser chrome\"",
     "component": "cypress open --component",
     "component:headless": "cypress run --component",
-    "prepare": "husky"
+    "prepare": "husky",
+    "test:cypress:headful": "cypress run --browser chrome --headed",
+    "build:cache": "synpress",
+    "build:cache:force": "synpress --force",
+    "build:cache:headless": "synpress --headless"
   },
   "dependencies": {
     "@headlessui/react": "^2.1.2",
@@ -94,10 +99,13 @@
     "zustand": "^4.5.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.48.2",
+    "@synthetixio/synpress": "^4.0.3",
     "@tailwindcss/forms": "^0.5.3",
     "@testing-library/dom": "^10.4.0",
     "@testing-library/jest-dom": "^6.5.0",
     "@testing-library/react": "^16.0.1",
+    "@types/cypress": "^1.1.3",
     "@types/dompurify": "^3.0.5",
     "@types/jest": "^29.5.13",
     "@types/lodash.debounce": "^4.0.9",

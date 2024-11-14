@@ -1,4 +1,4 @@
-import { EXAMPLE } from "@/cypress/support/e2e";
+import { EXAMPLE } from "../../support/e2e";
 
 describe("Funding Map Page", () => {
   it("should be able to see funding map page", () => {
