@@ -24,7 +24,7 @@ export const ReadMore = ({
   markdownComponents,
   othersideButton,
 }: Props) => {
-  const [isReadMore, setIsReadMore] = useState(false);
+  const [isReadMore, setIsReadMore] = useState(true);
   const toggleReadMore = () => {
     setIsReadMore(!isReadMore);
   };
@@ -46,11 +46,11 @@ export const ReadMore = ({
   };
 
   useEffect(() => {
-    if (text.length - 1 < getMinimumText()) {
+    if (text && text.length - 1 < getMinimumText()) {
       setIsReadMore(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [text]);
 
   return (
     <div className="text w-full">
