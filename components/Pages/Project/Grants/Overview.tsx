@@ -13,7 +13,8 @@ import { useGrantStore } from "@/store/grant";
 import { Suspense } from "react";
 import { ProjectGrantsOverviewLoading } from "../Loading/Grants/Overview";
 import formatCurrency from "@/utilities/formatCurrency";
-
+import ExternalIds from "@/components/Pages/Grants/ExternalId/ExternalIds";
+import { useOwnerStore } from "@/store/owner";
 const isValidAmount = (amount?: string | undefined) => {
   if (!amount) return undefined;
   let amountToFormat = amount;
@@ -37,7 +38,8 @@ const isValidAmount = (amount?: string | undefined) => {
   return formatCurrency(+amountToFormat);
 };
 export const GrantOverview = () => {
-  const { grant, loading } = useGrantStore();
+  const { grant, loading, refreshGrant } = useGrantStore();
+  const isOwner = useOwnerStore((state) => state.isOwner);
   if (loading) {
     return <ProjectGrantsOverviewLoading />;
   }
@@ -216,6 +218,17 @@ export const GrantOverview = () => {
           ) : null}
         </div>
       </div>
+      {isOwner ? (
+        <div className="mt-8">
+          <ExternalIds
+            projectUID={grant?.refUID as string}
+            communityUID={grant?.community.uid as string}
+            externalIds={(grant as any).externalIds}
+            refreshGrant={refreshGrant}
+          />
+        </div>
+      ) : null}
+
       {/* Grant Overview End */}
     </Suspense>
   );
