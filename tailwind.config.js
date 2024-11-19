@@ -1,6 +1,5 @@
 /** @type {import('tailwindcss').Config} */
 const defaultTheme = require("tailwindcss/defaultTheme");
-import colors from "tailwindcss/colors";
 
 // Custom color with css variable color in __theme_color.scss
 function customColors(cssVar) {
@@ -37,8 +36,10 @@ module.exports = {
       xs: "425px",
     },
     fontFamily: {
-      sans: ["Open Sans"],
-      body: ["Inter"],
+      // sans: ["Open Sans"],
+      // body: ["Inter"],
+      sans: ["var(--font-open-sans)"],
+      body: ["var(--font-inter)"],
     },
     fontSize: {
       xs: "0.75rem",

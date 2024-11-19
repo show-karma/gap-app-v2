@@ -1,21 +1,34 @@
-import { defaultMetadata } from "@/utilities/meta";
-import { SpeedInsights } from "@vercel/speed-insights/next";
-import "@/styles/globals.css";
-import "@/styles/index.scss";
-import "@/components/Utilities/DynamicStars/styles.css";
-import "@rainbow-me/rainbowkit/styles.css";
-import "rc-slider/assets/index.css";
-import "react-day-picker/dist/style.css";
-import "@uiw/react-markdown-preview/markdown.css";
-import Footer from "@/components/Utilities/Footer";
-import Header from "@/components/Utilities/Header";
-import { Toaster } from "react-hot-toast";
-import WagmiProvider from "@/components/Utilities/WagmiProvider";
 import { StepperDialog } from "@/components/Dialogs/StepperDialog";
 import { ProgressBarWrapper } from "@/components/ProgressBarWrapper";
-import { ThemeProvider } from "next-themes";
-import { Analytics } from "@vercel/analytics/react";
+import "@/components/Utilities/DynamicStars/styles.css";
+import Footer from "@/components/Utilities/Footer";
+import Header from "@/components/Utilities/Header";
+import WagmiProvider from "@/components/Utilities/WagmiProvider";
+import "@/styles/globals.css";
+import "@/styles/index.scss";
+import { defaultMetadata } from "@/utilities/meta";
 import { GoogleAnalytics } from "@next/third-parties/google";
+import "@rainbow-me/rainbowkit/styles.css";
+import "@uiw/react-markdown-preview/markdown.css";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { ThemeProvider } from "next-themes";
+import { Inter, Open_Sans } from "next/font/google";
+import "rc-slider/assets/index.css";
+import "react-day-picker/dist/style.css";
+import { Toaster } from "react-hot-toast";
+
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-inter",
+});
+
+const openSans = Open_Sans({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-open-sans",
+});
 
 export const metadata = defaultMetadata;
 
@@ -25,7 +38,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="h-full" style={{ scrollBehavior: "smooth" }}>
+    <html
+      lang="en"
+      className={`${inter.variable} ${openSans.variable} h-full`}
+      style={{ scrollBehavior: "smooth" }}
+    >
       {process.env.NEXT_PUBLIC_GA_TRACKING_ID &&
         process.env.NEXT_PUBLIC_ENV === "production" && (
           <GoogleAnalytics
