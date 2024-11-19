@@ -47,7 +47,7 @@ import Link from "next/link";
 const InformationTab: FC = () => {
   const { project } = useProjectStore();
   return (
-    <div id="information-tab" className="flex flex-col gap-6">
+    <div id="information-tab" className="flex flex-col gap-6 max-sm:gap-4">
       <div className="flex flex-row gap-2 items-start justify-start">
         <Bars4Icon className="w-6 h-6 max-w-6 max-h-[24px] min-w-6 min-h-[24px] text-black dark:text-zinc-100" />
         <div className="flex flex-col gap-1 justify-start items-start">
@@ -142,7 +142,10 @@ const InformationTab: FC = () => {
           </div>
         </div>
       )}
-      {project?.details?.data?.businessModel ? (
+      {project?.details?.data?.businessModel ||
+      project?.details?.data?.pathToTake ||
+      project?.details?.data?.stageIn ||
+      project?.details?.data?.raisedMoney ? (
         <div className="flex flex-col px-6 py-6 gap-6 border-[#DCDFEA] border rounded-xl">
           <div className="flex flex-row gap-2 items-start justify-start">
             <BusinessModelIcon className="w-6 h-6 max-w-6 max-h-[24px] min-w-6 min-h-[24px] text-black dark:text-zinc-100" />
@@ -162,45 +165,45 @@ const InformationTab: FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-row gap-10 items-center justify-start flex-wrap">
+          <div className="flex flex-row  max-sm:flex-col gap-10 max-sm:gap-4 items-center max-sm:items-start justify-start flex-wrap">
             {project?.details?.data?.pathToTake ? (
-              <div className="flex flex-row gap-2 items-start justify-start">
-                <PathIcon className="w-6 h-6 max-w-6 max-h-[24px] min-w-6 min-h-[24px] text-black dark:text-zinc-100" />
+              <div className="flex flex-row gap-2 max-sm:flex-col items-start justify-start">
                 <div className="flex flex-row gap-3 justify-start items-start">
+                  <PathIcon className="w-6 h-6 max-w-6 max-h-[24px] min-w-6 min-h-[24px] text-black dark:text-zinc-100" />
                   <p className="font-bold leading-normal text-black dark:text-zinc-100">
                     Path
                   </p>
-                  <p className="font-normal text-base leading-normal text-black dark:text-zinc-100">
-                    {project?.details?.data?.pathToTake}
-                  </p>
                 </div>
+                <p className="font-normal text-base leading-normal text-black dark:text-zinc-100">
+                  {project?.details?.data?.pathToTake}
+                </p>
               </div>
             ) : null}
             {project?.details?.data?.stageIn ? (
-              <div className="flex flex-row gap-2 items-start justify-start">
-                <StageIcon className="w-6 h-6 max-w-6 max-h-[24px] min-w-6 min-h-[24px] text-black dark:text-zinc-100" />
+              <div className="flex flex-row gap-2 max-sm:flex-col items-start justify-start">
                 <div className="flex flex-row gap-3 justify-start items-start">
+                  <StageIcon className="w-6 h-6 max-w-6 max-h-[24px] min-w-6 min-h-[24px] text-black dark:text-zinc-100" />
                   <p className="font-bold leading-normal text-black dark:text-zinc-100">
                     Stage
                   </p>
-                  <p className="font-normal text-base leading-normal text-black dark:text-zinc-100">
-                    {project?.details?.data?.stageIn}
-                  </p>
                 </div>
+                <p className="font-normal text-base leading-normal text-black dark:text-zinc-100">
+                  {project?.details?.data?.stageIn}
+                </p>
               </div>
             ) : null}
           </div>
           {project?.details?.data?.raisedMoney ? (
-            <div className="flex flex-row gap-2 items-start justify-start">
-              <FundsRaisedIcon className="w-6 h-6 max-w-6 max-h-[24px] min-w-6 min-h-[24px] text-black dark:text-zinc-100" />
+            <div className="flex flex-row gap-2 max-sm:flex-col items-start justify-start">
               <div className="flex flex-row gap-3 justify-start items-start">
+                <FundsRaisedIcon className="w-6 h-6 max-w-6 max-h-[24px] min-w-6 min-h-[24px] text-black dark:text-zinc-100" />
                 <p className="font-bold leading-normal text-black dark:text-zinc-100">
                   Total Funds Raised
                 </p>
-                <p className="font-normal text-base leading-normal text-black dark:text-zinc-100">
-                  {project?.details?.data?.raisedMoney}
-                </p>
               </div>
+              <p className="font-normal text-base leading-normal text-black dark:text-zinc-100">
+                {project?.details?.data?.raisedMoney}
+              </p>
             </div>
           ) : null}
         </div>
