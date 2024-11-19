@@ -5,7 +5,6 @@ import Footer from "@/components/Utilities/Footer";
 import Header from "@/components/Utilities/Header";
 import WagmiProvider from "@/components/Utilities/WagmiProvider";
 import "@/styles/globals.css";
-import "@/styles/index.scss";
 import { defaultMetadata } from "@/utilities/meta";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import "@rainbow-me/rainbowkit/styles.css";
