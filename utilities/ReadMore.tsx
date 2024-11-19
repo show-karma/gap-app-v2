@@ -1,7 +1,7 @@
 "use client";
-import React, { useEffect, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { MarkdownPreviewProps } from "@uiw/react-markdown-preview";
+import React, { useEffect, useState } from "react";
 
 interface Props {
   words?: any;
@@ -24,7 +24,7 @@ export const ReadMore = ({
   markdownComponents,
   othersideButton,
 }: Props) => {
-  const [isReadMore, setIsReadMore] = useState(true);
+  const [isReadMore, setIsReadMore] = useState(false);
   const toggleReadMore = () => {
     setIsReadMore(!isReadMore);
   };
