@@ -1,20 +1,21 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 import type { Feed } from "@/types";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { useState } from "react";
-import { Spinner } from "./Utilities/Spinner";
-import { ExternalLink } from "./Utilities/ExternalLink";
 import { feedIconDictionary, getFeedHref } from "@/utilities/feed";
+import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
-import EthereumAddressToENSName from "./EthereumAddressToENSName";
-import { MarkdownPreview } from "./Utilities/MarkdownPreview";
-import { useTheme } from "next-themes";
+import { INDEXER } from "@/utilities/indexer";
 import { cn } from "@/utilities/tailwind";
-import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { useTheme } from "next-themes";
+import Image from "next/image";
+import { useParams } from "next/navigation";
+import { useState } from "react";
 import EthereumAddressToENSAvatar from "./EthereumAddressToENSAvatar";
+import EthereumAddressToENSName from "./EthereumAddressToENSName";
+import { ExternalLink } from "./Utilities/ExternalLink";
+import { MarkdownPreview } from "./Utilities/MarkdownPreview";
+import { Spinner } from "./Utilities/Spinner";
 
 export const CommunityFeed = () => {
   const params = useParams<{ communityId: string }>();
@@ -60,12 +61,15 @@ export const CommunityFeed = () => {
                       "relative flex w-full flex-row items-center gap-3 py-4 max-2xl:px-3 max-sm:px-3  px-5"
                     )}
                   >
-                    <div className="relative rounded-full bg-gray-100 p-2 text-gray-500 dark:bg-zinc-800 dark:text-zinc-200">
-                      <img
-                        alt={item.event}
-                        src={feedIconDictionary(item.event, item.type)}
-                        className="h-[20px] w-[20px] min-h-[20px] min-w-[20px] text-gray-500 stroke-gray-500 fill-gray-500 dark:text-gray-200 dark:stroke-gray-200 dark:fill-gray-200 max-md:h-[12px] max-md:w-[12px] max-md:min-h-[12px] max-md:min-w-[12px]"
-                      />
+                    <div className="rounded-full bg-gray-100 p-2 text-gray-500 dark:bg-zinc-800 dark:text-zinc-200">
+                      <div className="relative rounded-full h-[20px] w-[20px] min-h-[20px] min-w-[20px]  max-md:h-[12px] max-md:w-[12px] max-md:min-h-[12px] max-md:min-w-[12px]">
+                        <Image
+                          alt={item.event}
+                          src={feedIconDictionary(item.event, item.type)}
+                          className=" text-gray-500 stroke-gray-500 fill-gray-500 dark:text-gray-200 dark:stroke-gray-200 dark:fill-gray-200"
+                          layout="fill"
+                        />
+                      </div>
                     </div>
                     <div className="feed remove-after flex w-full flex-col items-start gap-1">
                       <div

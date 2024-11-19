@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { useOwnerStore, useProjectStore } from "@/store";
 import { MESSAGES } from "@/utilities/messages";
+import Image from "next/image";
 import { useQueryState } from "nuqs";
 import { FC } from "react";
 
@@ -14,10 +15,12 @@ export const EmptyImpactScreen: FC = () => {
     return (
       <div className="flex h-max flex-1 items-center justify-center rounded border border-gray-200 px-6 py-10">
         <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
-          <img
+          <Image
             src="/images/comments.png"
             alt=""
-            className="h-[185px] w-[438px] object-cover"
+            className="object-cover"
+            width={438}
+            height={185}
           />
           <div className="flex w-full flex-col items-center justify-center gap-3">
             <p className="text-center text-lg font-semibold text-black dark:text-zinc-100 ">
@@ -48,16 +51,18 @@ export const EmptyImpactScreen: FC = () => {
             changeTab("add-impact");
           }}
         >
-          <img src="/icons/plus.svg" alt="Add" className="relative h-5 w-5" />
+          <Image width={20} height={20} src="/icons/plus.svg" alt="Add" />
           Add impact
         </button>
       </div>
       <div className="flex w-full items-center justify-center rounded border border-gray-200 px-6 py-10 dark:bg-zinc-900">
         <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
-          <img
+          <Image
             src="/images/comments.png"
             alt=""
-            className="h-[185px] w-[438px] object-cover"
+            className="object-cover"
+            height={185}
+            width={438}
           />
           <div className="flex w-full flex-col items-center justify-center gap-3">
             <p className="text-center text-lg font-semibold text-black dark:text-white">

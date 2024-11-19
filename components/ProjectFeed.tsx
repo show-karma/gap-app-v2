@@ -1,19 +1,20 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 import { Feed } from "@/types";
+import { feedIconDictionary, getFeedHref } from "@/utilities/feed";
 import fetchData from "@/utilities/fetchData";
+import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
+import { cn } from "@/utilities/tailwind";
+import { useTheme } from "next-themes";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Spinner } from "./Utilities/Spinner";
-import { ExternalLink } from "./Utilities/ExternalLink";
-import { feedIconDictionary, getFeedHref } from "@/utilities/feed";
-import { formatDate } from "@/utilities/formatDate";
 import EthereumAddressToENSName from "./EthereumAddressToENSName";
+import { ExternalLink } from "./Utilities/ExternalLink";
 import { MarkdownPreview } from "./Utilities/MarkdownPreview";
-import { useTheme } from "next-themes";
-import { cn } from "@/utilities/tailwind";
+import { Spinner } from "./Utilities/Spinner";
 
+import Image from "next/image";
 import EthereumAddressToENSAvatar from "./EthereumAddressToENSAvatar";
 import { errorManager } from "./Utilities/errorManager";
 
@@ -83,11 +84,13 @@ export const ProjectFeed = ({ initialFeed = [] }: ProjectFeedProps) => {
                       "relative  px-5 flex w-full flex-row items-center gap-3 py-4 max-2xl:px-3 max-sm:px-3"
                     )}
                   >
-                    <div className="relative rounded-full bg-gray-100 p-2 text-gray-500 dark:bg-zinc-800 dark:text-zinc-200">
-                      <img
+                    <div className="relative rounded-full bg-gray-100 p-2 text-gray-500 dark:bg-zinc-800 dark:text-zinc-200 h-[20px] w-[20px] min-h-[20px] min-w-[20px]  max-md:h-[12px] max-md:w-[12px] max-md:min-h-[12px] max-md:min-w-[12px]">
+                      <Image
                         alt={item.event}
                         src={feedIconDictionary(item.event, item.type)}
-                        className="h-[20px] w-[20px] min-h-[20px] min-w-[20px] text-gray-500 stroke-gray-500 fill-gray-500 dark:text-gray-200 dark:stroke-gray-200 dark:fill-gray-200 max-md:h-[12px] max-md:w-[12px] max-md:min-h-[12px] max-md:min-w-[12px]"
+                        className=" text-gray-500 stroke-gray-500 fill-gray-500 dark:text-gray-200 dark:stroke-gray-200 dark:fill-gray-200"
+                        width={20}
+                        height={20}
                       />
                     </div>
                     <div className="feed remove-after flex w-full flex-col items-start gap-1">

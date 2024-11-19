@@ -1,25 +1,25 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import React, { useEffect, useState } from "react";
-import Link from "next/link";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { useCommunitiesStore } from "@/store/communities";
-import { PAGES } from "@/utilities/pages";
-import { MESSAGES } from "@/utilities/messages";
-import { Community } from "@show-karma/karma-gap-sdk";
-import { INDEXER } from "@/utilities/indexer";
-import fetchData from "@/utilities/fetchData";
-import { useGap } from "@/hooks";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { AddAdmin } from "./AddAdminDialog";
-import { RemoveAdmin } from "./RemoveAdminDialog";
-import { formatDate } from "@/utilities/formatDate";
-import { blo } from "blo";
-import { CommunityDialog } from "@/components/Dialogs/CommunityDialog";
-import { LinkIcon } from "@heroicons/react/24/solid";
 import CommunityStats from "@/components/CommunityStats";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useGap } from "@/hooks";
+import { useCommunitiesStore } from "@/store/communities";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
+import fetchData from "@/utilities/fetchData";
+import { formatDate } from "@/utilities/formatDate";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
+import { LinkIcon } from "@heroicons/react/24/solid";
+import { Community } from "@show-karma/karma-gap-sdk";
+import { blo } from "blo";
+import Image from "next/image";
+import Link from "next/link";
+import React, { useEffect, useState } from "react";
+import { AddAdmin } from "./AddAdminDialog";
+import { RemoveAdmin } from "./RemoveAdminDialog";
 
 export const CommunitiesToAdmin = () => {
   const [allCommunities, setAllCommunities] = useState<Community[]>([]);
@@ -134,12 +134,14 @@ export const CommunitiesToAdmin = () => {
                         <React.Fragment key={community.uid}>
                           <tr className="divide-x">
                             <td className="min-w-[80px]">
-                              <img
+                              <Image
                                 src={
                                   community.details?.imageURL ||
                                   blo(community.uid)
                                 }
-                                className="h-[64px] w-[100px] object-cover"
+                                width={100}
+                                height={64}
+                                className="object-cover"
                                 alt={community.details?.name || community.uid}
                               />
                             </td>
@@ -179,10 +181,11 @@ export const CommunitiesToAdmin = () => {
                             </td>
                             <td className="px-4 min-w-[150px]">
                               <div className="flex flex-row gap-2 items-center">
-                                <img
+                                <Image
                                   src={chainImgDictionary(community.chainID)}
                                   alt={chainNameDictionary(community.chainID)}
-                                  className="w-5 h-5"
+                                  width={16}
+                                  height={16}
                                 />
                                 <p>{chainNameDictionary(community.chainID)}</p>
                               </div>

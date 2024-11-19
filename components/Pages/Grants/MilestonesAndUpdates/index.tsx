@@ -10,9 +10,9 @@ import {
   IGrantResponse,
   IProjectResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import Link from "next/link";
 import dynamic from "next/dynamic";
-import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
+import Image from "next/image";
+import Link from "next/link";
 import { ProjectGrantsMilestonesListLoading } from "../../Project/Loading/Grants/MilestonesAndUpdate";
 
 const EmptyMilestone = ({
@@ -34,10 +34,12 @@ const EmptyMilestone = ({
     return (
       <div className="flex w-full items-center justify-center rounded-md border border-gray-200 px-6 py-10">
         <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
-          <img
+          <Image
             src="/images/comments.png"
             alt=""
-            className="h-[185px] w-[438px] object-cover"
+            className="object-cover"
+            height={185}
+            width={438}
           />
           <div className="flex w-full flex-col items-center justify-center gap-3">
             <p className="text-center text-lg font-semibold text-black dark:text-zinc-100">
@@ -54,10 +56,12 @@ const EmptyMilestone = ({
   return (
     <div className="flex w-full items-center justify-center rounded-md border border-gray-200 px-6 py-10">
       <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
-        <img
+        <Image
           src="/images/comments.png"
           alt=""
-          className="h-[185px] w-[438px] object-cover"
+          className="object-cover"
+          height={185}
+          width={438}
         />
         <div className="flex w-full flex-col items-center justify-center gap-3">
           <p className="text-center text-lg font-semibold text-black dark:text-white">
@@ -72,10 +76,11 @@ const EmptyMilestone = ({
               )}
               className="items-center flex flex-row justify-center gap-2 rounded border border-blue-600 dark:bg-blue-800 bg-brand-blue px-4 py-2.5 text-base font-semibold text-white hover:bg-brand-blue"
             >
-              <img
+              <Image
                 src="/icons/plus.svg"
                 alt="Add"
-                className="relative h-5 w-5"
+                width={20}
+                height={20}
               />
               Add a new Milestone
             </Link>

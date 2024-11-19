@@ -1,14 +1,14 @@
 "use client";
-import { useEffect, useState } from "react";
-import { Community } from "@show-karma/karma-gap-sdk";
+import { Spinner } from "@/components/Utilities/Spinner";
 import { useGap } from "@/hooks";
 import { useOwnerStore } from "@/store/owner";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { MESSAGES } from "@/utilities/messages";
-import React from "react";
-import { blo } from "blo";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { Community } from "@show-karma/karma-gap-sdk";
+import { blo } from "blo";
+import Image from "next/image";
+import React, { useEffect, useState } from "react";
 
 interface CommunityStatsData {
   projects: number;
@@ -197,12 +197,14 @@ export default function CommunityStats() {
                         <React.Fragment key={community.uid}>
                           <tr className="divide-x">
                             <td className="px-2 py-2">
-                              <img
+                              <Image
                                 src={
                                   community.details?.imageURL ||
                                   blo(community.uid)
                                 }
-                                className="h-[64px] w-[100px] object-cover"
+                                width={100}
+                                height={64}
+                                className="object-cover"
                                 alt={community.details?.name || community.uid}
                               />
                             </td>

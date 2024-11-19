@@ -1,20 +1,20 @@
 "use client";
+import ExternalIds from "@/components/Pages/Grants/ExternalId/ExternalIds";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import { formatDate } from "@/utilities/formatDate";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useGrantStore } from "@/store/grant";
+import { useOwnerStore } from "@/store/owner";
 import markdownStyles from "@/styles/markdown.module.css";
-import { PAGES } from "@/utilities/pages";
-import { Hex } from "viem";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
-import { useGrantStore } from "@/store/grant";
-import { Suspense } from "react";
-import { ProjectGrantsOverviewLoading } from "../Loading/Grants/Overview";
 import formatCurrency from "@/utilities/formatCurrency";
-import ExternalIds from "@/components/Pages/Grants/ExternalId/ExternalIds";
-import { useOwnerStore } from "@/store/owner";
+import { formatDate } from "@/utilities/formatDate";
+import { PAGES } from "@/utilities/pages";
+import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
+import Image from "next/image";
+import { Suspense } from "react";
+import { Hex } from "viem";
+import { ProjectGrantsOverviewLoading } from "../Loading/Grants/Overview";
 const isValidAmount = (amount?: string | undefined) => {
   if (!amount) return undefined;
   let amountToFormat = amount;
@@ -122,11 +122,12 @@ export const GrantOverview = () => {
                   )}
                 >
                   <div className="w-full inline-flex items-center gap-x-2 rounded-3xl bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={grant?.community?.details?.data?.imageURL}
+                    <Image
+                      src={grant?.community?.details?.data?.imageURL || ""}
                       alt=""
-                      className="h-5 w-5 rounded-full"
+                      className="rounded-full"
+                      width={20}
+                      height={20}
                     />
                     <p className="max-w-xs truncate text-base font-semibold text-black dark:text-gray-100 max-md:text-sm w-full break-words whitespace-break-spaces">
                       {grant?.community?.details?.data?.name}
@@ -141,12 +142,14 @@ export const GrantOverview = () => {
 
                 <div className="inline-flex items-center gap-x-2 rounded-full bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <Image
                     src={chainImgDictionary(
                       grant?.community?.details?.chainID as number
                     )}
                     alt=""
-                    className="h-5 w-5 rounded-full"
+                    className="rounded-full"
+                    width={20}
+                    height={20}
                   />
                   <p className="max-w-xs truncate text-base font-semibold text-black dark:text-gray-100 max-md:text-sm  w-full break-words whitespace-break-spaces">
                     {chainNameDictionary(

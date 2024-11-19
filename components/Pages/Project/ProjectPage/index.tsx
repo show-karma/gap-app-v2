@@ -2,25 +2,26 @@
 "use client";
 
 import { useProjectStore } from "@/store";
+import { useParams } from "next/navigation";
 import { useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
 
 import { PAGES } from "@/utilities/pages";
 import Link from "next/link";
 
-import { shortAddress } from "@/utilities/shortAddress";
-import { useENS } from "@/store/ens";
-import { Hex } from "viem";
-import { ChevronRightIcon } from "@heroicons/react/24/solid";
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { ProjectSubTabs } from "../ProjectSubTabs";
 import { useActivityTabStore } from "@/store/activityTab";
-import { ProjectSubscription } from "../ProjectSubscription";
+import { useENS } from "@/store/ens";
 import formatCurrency from "@/utilities/formatCurrency";
+import { shortAddress } from "@/utilities/shortAddress";
+import { ChevronRightIcon } from "@heroicons/react/24/solid";
+import { Hex } from "viem";
+import { ProjectSubscription } from "../ProjectSubscription";
+import { ProjectSubTabs } from "../ProjectSubTabs";
 import { ProjectBlocks } from "./ProjectBlocks";
 import { ProjectBodyTabs } from "./ProjectBodyTabs";
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 
+import Image from "next/image";
 import pluralize from "pluralize";
 
 function ProjectPage() {
@@ -118,10 +119,12 @@ function ProjectPage() {
                     {shortAddress(member.recipient)}
                   </p>
                   <button type="button" onClick={() => copy(member.recipient)}>
-                    <img
+                    <Image
                       src="/icons/copy-2.svg"
                       alt="Copy"
-                      className="text-[#98A2B3] w-4 h-4"
+                      className="text-[#98A2B3]"
+                      height={16}
+                      width={16}
                     />
                   </button>
                 </div>
@@ -170,10 +173,11 @@ function ProjectPage() {
                   <p className="font-normal text-[#344054] text-sm dark:text-zinc-300">
                     {pluralize("Grant", project?.grants.length || 0)}
                   </p>
-                  <img
+                  <Image
                     src={"/icons/funding.png"}
                     alt="Grants"
-                    className="w-5 h-5"
+                    height={20}
+                    width={20}
                   />
                 </div>
               </div>
@@ -197,10 +201,11 @@ function ProjectPage() {
                       project?.endorsements.length || 0
                     )}
                   </p>
-                  <img
+                  <Image
                     src={"/icons/endorsements.png"}
                     alt="Endorsements"
-                    className="w-5 h-5"
+                    height={20}
+                    width={20}
                   />
                 </div>
               </div>

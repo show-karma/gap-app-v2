@@ -2,21 +2,21 @@
 /* eslint-disable @next/next/no-img-element */
 import { useOwnerStore, useProjectStore } from "@/store";
 // import { MilestonesList } from "./MilestonesList";
-import { useRouter } from "next/navigation";
-import { MESSAGES } from "@/utilities/messages";
-import { ReadMore } from "@/utilities/ReadMore";
-import { formatDate } from "@/utilities/formatDate";
 import { useCommunityAdminStore } from "@/store/community";
+import { formatDate } from "@/utilities/formatDate";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
+import { ReadMore } from "@/utilities/ReadMore";
 import {
   IGrantResponse,
   IProjectResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Link from "next/link";
-import { PAGES } from "@/utilities/pages";
 
-import dynamic from "next/dynamic";
 import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
 import { useGrantStore } from "@/store/grant";
+import dynamic from "next/dynamic";
+import Image from "next/image";
 
 const MilestonesList = dynamic(
   () =>
@@ -49,10 +49,12 @@ export const EmptyMilestone = ({
     return (
       <div className="flex w-full items-center justify-center rounded-md border border-gray-200 px-6 py-10">
         <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
-          <img
+          <Image
             src="/images/comments.png"
             alt=""
-            className="h-[185px] w-[438px] object-cover"
+            width={438}
+            height={185}
+            className="object-cover"
           />
           <div className="flex w-full flex-col items-center justify-center gap-3">
             <p className="text-center text-lg font-semibold text-black dark:text-zinc-100">
@@ -69,10 +71,12 @@ export const EmptyMilestone = ({
   return (
     <div className="flex w-full items-center justify-center rounded-md border border-gray-200 px-6 py-10">
       <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
-        <img
+        <Image
           src="/images/comments.png"
           alt=""
-          className="h-[185px] w-[438px] object-cover"
+          width={438}
+          height={185}
+          className="object-cover"
         />
         <div className="flex w-full flex-col items-center justify-center gap-3">
           <p className="text-center text-lg font-semibold text-black dark:text-white">
@@ -87,11 +91,7 @@ export const EmptyMilestone = ({
               )}
               className="items-center flex flex-row justify-center gap-2 rounded border border-blue-600 dark:bg-blue-800 bg-brand-blue px-4 py-2.5 text-base font-semibold text-white hover:bg-brand-blue"
             >
-              <img
-                src="/icons/plus.svg"
-                alt="Add"
-                className="relative h-5 w-5"
-              />
+              <Image src="/icons/plus.svg" alt="Add" width={20} height={20} />
               Add a new Milestone
             </Link>
             <Link

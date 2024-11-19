@@ -1,11 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import { CheckIcon } from "@heroicons/react/24/outline";
 import { TypedLoading } from "@/components/Pages/Home/ReactTypedWrap";
-import dynamic from "next/dynamic";
 import { Button } from "@/components/Utilities/Button";
-import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
+import { CheckIcon } from "@heroicons/react/24/outline";
+import dynamic from "next/dynamic";
+import Image from "next/image";
+import Link from "next/link";
 // import { ProjectDialog } from "@/components/Dialogs/ProjectDialog";
 
 const ReactTypedWrapper = dynamic(
@@ -26,9 +27,11 @@ const ProjectDialog = dynamic(
     loading: () => (
       <Button className="flex rounded-md hover:opacity-75 border-none transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-3 bg-brand-darkblue dark:bg-gray-700 px-7 py-4 text-lg font-semibold leading-7 text-white hover:bg-brand-darkblue max-2xl:px-5 max-2xl:text-base max-lg:text-sm">
         Add your project
-        <img
-          className="h-6 w-6 text-white"
+        <Image
           alt="Contact"
+          className="text-white"
+          width={24}
+          height={24}
           src="/icons/arrow-right-2.svg"
         />
       </Button>
@@ -60,11 +63,14 @@ export const Presentation = () => {
               <ProjectDialog
                 buttonElement={{
                   icon: (
-                    <img
-                      className="h-6 w-6 max-sm:h-4 max-sm:w-4 text-white"
-                      alt="Contact"
-                      src="/icons/arrow-right-2.svg"
-                    />
+                    <div className="relative h-6 w-6 max-sm:h-4 max-sm:w-4">
+                      <Image
+                        className=" text-white"
+                        alt="Contact"
+                        src="/icons/arrow-right-2.svg"
+                        layout="fill"
+                      />
+                    </div>
                   ),
                   iconSide: "right",
                   text: "Add your project",
@@ -83,10 +89,11 @@ export const Presentation = () => {
           <div className="flex w-full flex-1 flex-row flex-wrap gap-6 max-md:flex-col">
             <div className="flex  min-w-min max-w-[500px] flex-1 flex-col items-start gap-3 rounded-3xl  text-gray-900 dark:text-gray-900 bg-[#D7F8EF] px-8 py-6 max-2xl:px-6 max-lg:min-w-full">
               <div className="flex items-center justify-center rounded-lg border border-black p-2 ">
-                <img
+                <Image
                   src="/icons/coins-stacked.png"
                   alt="Grantee"
-                  className="h-7 w-7"
+                  width={28}
+                  height={28}
                 />
               </div>
               <h2 className="text-2xl text-black font-bold max-2xl:text-xl">
@@ -111,10 +118,11 @@ export const Presentation = () => {
             </div>
             <div className="flex  min-w-min max-w-[500px] flex-1 flex-col items-start gap-3 rounded-3xl text-gray-900 dark:text-gray-900 bg-[#D7F8EF] px-8 py-6 max-2xl:px-6 max-lg:min-w-full">
               <div className="flex items-center justify-center rounded-lg border border-black p-2">
-                <img
+                <Image
                   src="/icons/globe.png"
                   alt="For Community + Grant Admins"
-                  className="h-7 w-7"
+                  width={28}
+                  height={28}
                 />
               </div>
               <h2 className="w-full text-black break-words text-2xl font-bold  max-2xl:text-xl">
@@ -144,11 +152,14 @@ export const Presentation = () => {
             <div />
           </div>
         </div>
-        <div className="flex h-full w-full max-w-[720px] flex-col justify-end max-2xl:max-w-[500px] max-xl:max-w-[360px] max-lg:hidden">
-          <img
-            className="aspect-auto h-[auto] w-full max-w-[720px]"
+        <div className="relative flex h-full w-full max-w-[720px] flex-col justify-end max-2xl:max-w-[500px] max-xl:max-w-[360px] max-lg:hidden">
+          <Image
             src="/images/homepage-artwork.png"
             alt="Homepage artwork"
+            width={0}
+            height={0}
+            sizes="100vw"
+            style={{ width: "100%", height: "auto" }} // optional
           />
         </div>
       </div>

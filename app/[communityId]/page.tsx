@@ -1,21 +1,21 @@
 /* eslint-disable @next/next/no-img-element */
-import React from "react";
-import type { Metadata } from "next";
-import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { CommunityGrants } from "@/components/CommunityGrants";
 import { CommunityFeed } from "@/components/CommunityFeed";
+import { CommunityGrants } from "@/components/CommunityGrants";
+import { ReceiveProjectUpdates } from "@/components/Pages/ReceiveProjectUpdates";
+import type { SortByOptions, StatusOptions } from "@/types";
+import { zeroUID } from "@/utilities/commons";
 import { communityColors } from "@/utilities/communityColors";
+import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
 import { defaultMetadata } from "@/utilities/meta";
-import type { SortByOptions, StatusOptions } from "@/types";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
-import { notFound } from "next/navigation";
-import { ReceiveProjectUpdates } from "@/components/Pages/ReceiveProjectUpdates";
 import { communitiesToBulkSubscribe } from "@/utilities/subscribe";
-import { envVars } from "@/utilities/enviromentVars";
-import { zeroUID } from "@/utilities/commons";
+import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { Metadata } from "next";
+import Image from "next/image";
+import { notFound } from "next/navigation";
 
 type Props = {
   params: {
@@ -132,16 +132,24 @@ export default async function Page({ params }: Props) {
           }}
         >
           <div className="flex justify-center border border-white rounded-full p-2">
-            <img
-              alt={
-                (community as ICommunityResponse)?.details?.data.name ||
-                "Community name"
+            <div
+              className={
+                "relative h-14 w-14 rounded-full max-lg:h-8 max-lg:w-8"
               }
-              src={
-                (community as ICommunityResponse)?.details?.data?.imageURL || ""
-              }
-              className={"h-14 w-14 rounded-full max-lg:h-8 max-lg:w-8"}
-            />
+            >
+              <Image
+                alt={
+                  (community as ICommunityResponse)?.details?.data.name ||
+                  "Community name"
+                }
+                src={
+                  (community as ICommunityResponse)?.details?.data?.imageURL ||
+                  ""
+                }
+                className="rounded-full"
+                layout="fill"
+              />
+            </div>
           </div>
 
           <p className="text-3xl font-semibold text-white max-2xl:text-2xl max-lg:text-xl">

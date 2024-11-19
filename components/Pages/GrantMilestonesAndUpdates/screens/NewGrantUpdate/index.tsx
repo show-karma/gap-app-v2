@@ -1,11 +1,12 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { useProjectStore } from "@/store";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import type { FC } from "react";
-import { PAGES } from "@/utilities/pages";
-import Link from "next/link";
 import { GrantUpdateForm } from "@/components/Forms/GrantUpdate";
+import { useProjectStore } from "@/store";
+import { PAGES } from "@/utilities/pages";
+import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import Image from "next/image";
+import Link from "next/link";
+import type { FC } from "react";
 
 interface NewGrantUpdateProps {
   grant: IGrantResponse;
@@ -29,7 +30,7 @@ export const NewGrantUpdate: FC<NewGrantUpdateProps> = ({ grant }) => {
             )}
             className="bg-transparent p-4 hover:bg-transparent hover:opacity-75"
           >
-            <img src="/icons/close.svg" alt="Close" className="h-5 w-5 " />
+            <Image src="/icons/close.svg" alt="Close" width={20} height={20} />
           </Link>
         </div>
         <GrantUpdateForm grant={grant} />

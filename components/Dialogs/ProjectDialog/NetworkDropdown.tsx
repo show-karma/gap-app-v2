@@ -1,11 +1,12 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { FC, useState } from "react";
-import { Command, CommandGroup, CommandItem } from "cmdk";
+import { chainImgDictionary } from "@/utilities/chainImgDictionary";
+import { cn } from "@/utilities/tailwind";
 import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
-import { cn } from "@/utilities/tailwind";
-import { chainImgDictionary } from "@/utilities/chainImgDictionary";
+import { Command, CommandGroup, CommandItem } from "cmdk";
+import Image from "next/image";
+import { FC, useState } from "react";
 import { Chain } from "viem";
 
 interface NetworkDropdownProps {
@@ -27,7 +28,12 @@ export const NetworkDropdown: FC<NetworkDropdownProps> = ({
       <Popover.Trigger className="min-w-[240px] max-w-full w-max  justify-between text-black dark:text-white dark:bg-zinc-800 flex flex-row gap-2 px-4 py-2 items-center bg-gray-100 rounded-md">
         {value ? (
           <div className="flex flex-row gap-2 items-center">
-            <img src={chainImgDictionary(value)} alt={""} className="w-5 h-5" />
+            <Image
+              src={chainImgDictionary(value) || ""}
+              alt={""}
+              width={20}
+              height={20}
+            />
             <p>{networks.find((network) => network.id === value)?.name} </p>
           </div>
         ) : (
@@ -58,11 +64,12 @@ export const NetworkDropdown: FC<NetworkDropdownProps> = ({
                   )}
                 />
                 <div className="flex flex-row gap-2 items-center justify-start w-full">
-                  <div className="min-w-5 min-h-5 w-5 h-5 m-0">
-                    <img
-                      src={chainImgDictionary(network.id)}
+                  <div className="relative w-5 h-5 rounded-full">
+                    <Image
+                      src={chainImgDictionary(network.id) || ""}
                       alt={""}
-                      className="min-w-5 min-h-5 w-5 h-5 m-0 rounded-full"
+                      className="rounded-full"
+                      layout="fill"
                     />
                   </div>
                   <div className="flex flex-row gap-1  items-center justify-start  flex-1">
