@@ -1,18 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 const defaultTheme = require("tailwindcss/defaultTheme");
 
-function customColors(cssVar) {
-  return ({ opacityVariable, opacityValue }) => {
-    if (opacityValue !== undefined) {
-      return `rgba(var(${cssVar}), ${opacityValue})`;
-    }
-    if (opacityVariable !== undefined) {
-      return `rgba(var(${cssVar}), var(${opacityVariable}, 1))`;
-    }
-    return `rgb(var(${cssVar}))`;
-  };
-}
-
 module.exports = {
   darkMode: "class",
   content: [
@@ -91,18 +79,6 @@ module.exports = {
             strong: "#111827", // gray-900
             inverted: "#ffffff", // white
           },
-        },
-        primary: {
-          50: customColors("--c-primary-50"),
-          100: customColors("--c-primary-100"),
-          200: customColors("--c-primary-200"),
-          300: customColors("--c-primary-300"),
-          400: customColors("--c-primary-400"),
-          500: customColors("--c-primary-500"),
-          600: customColors("--c-primary-600"),
-          700: customColors("--c-primary-700"),
-          800: customColors("--c-primary-800"),
-          900: customColors("--c-primary-900"),
         },
         boxShadow: {
           "tremor-input": "0 1px 2px 0 rgb(0 0 0 / 0.05)",
