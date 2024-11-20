@@ -1,7 +1,7 @@
 "use client";
-import React, { useEffect, useState } from "react";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { MarkdownPreviewProps } from "@uiw/react-markdown-preview";
+import React, { useEffect, useState } from "react";
 
 interface Props {
   words?: any;
@@ -46,11 +46,11 @@ export const ReadMore = ({
   };
 
   useEffect(() => {
-    if (text.length - 1 < getMinimumText()) {
+    if (text && text.length - 1 < getMinimumText()) {
       setIsReadMore(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [text]);
 
   return (
     <div className="text w-full">
