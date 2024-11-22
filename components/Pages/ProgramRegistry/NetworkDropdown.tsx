@@ -1,5 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, useState } from "react";
+import { ChevronDown } from "@/components/Icons/ChevronDown";
+import { cn } from "@/utilities/tailwind";
+import { CheckIcon } from "@heroicons/react/24/solid";
+import * as Popover from "@radix-ui/react-popover";
 import {
   Command,
   CommandEmpty,
@@ -7,10 +10,8 @@ import {
   CommandInput,
   CommandItem,
 } from "cmdk";
-import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid";
-import * as Popover from "@radix-ui/react-popover";
-import { cn } from "@/utilities/tailwind";
-import { ChevronDown } from "@/components/Icons/ChevronDown";
+import Image from "next/image";
+import { FC, useState } from "react";
 
 interface Items {
   value: number;
@@ -45,10 +46,14 @@ export const NetworkDropdown: FC<NetworkDropdownProps> = ({
       <Popover.Trigger className="min-w-40 w-full max-w-full max-md:max-w-full justify-between flex flex-row cursor-default rounded-md bg-white dark:bg-zinc-800 dark:text-zinc-100 py-3 px-4 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
         {previousValue ? (
           <div className="flex flex-row gap-2 items-center">
-            <img
-              src={sortedList.find((item) => item.value === previousValue)?.img}
+            <Image
+              src={
+                sortedList.find((item) => item.value === previousValue)?.img ||
+                ""
+              }
               alt={""}
-              className="w-5 h-5"
+              width={20}
+              height={20}
             />
             <p>
               {sortedList.find((item) => item.value === previousValue)?.label}{" "}
@@ -83,13 +88,13 @@ export const NetworkDropdown: FC<NetworkDropdownProps> = ({
                   )}
                 />
                 <div className="flex flex-row gap-2 items-center justify-start w-full">
-                  <div className="min-w-5 min-h-5 w-5 h-5 m-0">
-                    <img
-                      src={item.img}
-                      alt={""}
-                      className="min-w-5 min-h-5 w-5 h-5 m-0 rounded-full"
-                    />
-                  </div>
+                  <Image
+                    src={item.img}
+                    alt={""}
+                    width={20}
+                    height={20}
+                    className=" m-0 rounded-full"
+                  />
                   <p className="line-clamp-2 text-sm max-w-full break-normal">
                     {item.label}
                   </p>

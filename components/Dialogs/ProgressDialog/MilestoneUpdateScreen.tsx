@@ -8,6 +8,7 @@ import {
   IGrantResponse,
   IMilestoneResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import Image from "next/image";
 import { useState } from "react";
 import { Dropdown } from "./Dropdown";
 import { NoGrant } from "./NoGrant";
@@ -98,10 +99,12 @@ export const MilestoneUpdateScreen = () => {
       <div className="flex flex-col gap-2">
         <GrantSelection />
         <div className="flex w-full flex-col items-center justify-center gap-4 rounded border border-gray-200 bg-blue-50 dark:bg-zinc-800 p-4">
-          <img
+          <Image
             src="/images/comments.png"
             alt="Milestone achievements"
-            className="h-[185px] w-[438px] object-cover"
+            className="object-cover"
+            width={438}
+            height={185}
           />
           <p className="text-base font-normal text-black max-sm:text-sm dark:text-white">
             Create a new milestone for forthcoming work

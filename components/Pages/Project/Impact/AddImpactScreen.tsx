@@ -5,7 +5,7 @@ import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
@@ -17,6 +17,7 @@ import { CalendarIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProjectImpact } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
 import { getWalletClient } from "@wagmi/core";
+import Image from "next/image";
 import { useQueryState } from "nuqs";
 import type { FC } from "react";
 import { useState } from "react";
@@ -166,7 +167,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
               changeTab(null);
             }}
           >
-            <img src="/icons/close.svg" alt="Close" className="h-5 w-5 " />
+            <Image src="/icons/close.svg" alt="Close" width={20} height={20} />
           </button>
         </div>
         <form

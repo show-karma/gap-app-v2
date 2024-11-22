@@ -1,4 +1,5 @@
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import Image from "next/image";
 const links = {
   funding_block: "https://tally.so/r/w2rJ8M",
   add_program: "/funding-map/add-program",
@@ -23,10 +24,12 @@ export const ProgramHeader = () => {
       </div>
       <div className="flex flex-row gap-4 flex-wrap">
         <div className="bg-[#DBFFC5] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full max-sm:max-w-full">
-          <img
+          <Image
             src="/icons/funding.png"
             alt="Funding"
-            className="w-6 h-6 mt-1"
+            className="mt-1"
+            height={24}
+            width={24}
           />
           <div className="flex flex-col gap-1">
             <p className="text-black text-sm font-semibold">
@@ -44,7 +47,13 @@ export const ProgramHeader = () => {
           </div>
         </div>
         <div className="bg-[#DDF9F2] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full max-sm:max-w-full">
-          <img src="/icons/reward.png" alt="Reward" className="w-6 h-6 mt-1" />
+          <Image
+            src="/icons/reward.png"
+            alt="Reward"
+            height={24}
+            width={24}
+            className="mt-1"
+          />
           <div className="flex flex-col gap-1">
             <p className="text-black text-sm font-semibold">
               Are we missing a grant program?
@@ -61,10 +70,12 @@ export const ProgramHeader = () => {
           </div>
         </div>
         <div className="bg-[#E0EAFF] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full max-sm:max-w-full">
-          <img
+          <Image
             src="/icons/karma-program-registry-syndicate.png"
             alt="Cartographer Syndicate"
-            className="w-6 h-6 mt-1"
+            height={24}
+            width={24}
+            className="mt-1"
           />
           <div className="flex flex-col gap-1">
             <p className="text-black text-sm font-semibold">
@@ -82,10 +93,12 @@ export const ProgramHeader = () => {
           </div>
         </div>
         <div className="bg-[#ECE9FE] flex flex-row gap-3 px-3 py-4 rounded-lg w-full max-w-[312px] h-[96px] max-md:h-full max-sm:max-w-full">
-          <img
+          <Image
             src="/icons/karma-logo-rounded.png"
             alt="Karma Logo"
-            className="w-6 h-6 mt-1"
+            height={24}
+            width={24}
+            className="mt-1"
           />
           <div className="flex flex-col gap-1">
             <p className="text-black text-sm font-semibold">

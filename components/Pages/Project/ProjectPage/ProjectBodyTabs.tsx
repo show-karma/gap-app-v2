@@ -42,6 +42,7 @@ import { StageIcon } from "@/components/Icons/StageIcon";
 import { TargetIcon } from "@/components/Icons/Target";
 import { PAGES } from "@/utilities/pages";
 import { Bars4Icon } from "@heroicons/react/24/solid";
+import Image from "next/image";
 import Link from "next/link";
 
 const InformationTab: FC = () => {
@@ -438,7 +439,7 @@ const ProjectUpdateFormBlock = () => {
             changeTab("updates");
           }}
         >
-          <img src="/icons/close.svg" alt="Close" className="h-5 w-5 " />
+          <Image src="/icons/close.svg" alt="Close" height={20} width={20} />
         </button>
       </div>
       <ProjectUpdateForm />
@@ -520,10 +521,11 @@ const UpdatesTab: FC = () => {
                     setActiveTab("post-update");
                   }}
                 >
-                  <img
+                  <Image
                     src="/icons/plus.svg"
                     alt="Add"
-                    className="relative h-5 w-5"
+                    height={20}
+                    width={20}
                   />
                   Post a Project Update
                 </button>
@@ -532,10 +534,12 @@ const UpdatesTab: FC = () => {
           ) : (
             <div className="flex w-full items-center justify-center rounded border border-gray-200 px-6 py-10">
               <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
-                <img
+                <Image
                   src="/images/comments.png"
                   alt=""
-                  className="h-[185px] w-[438px] object-cover"
+                  className="object-cover"
+                  height={185}
+                  width={438}
                 />
                 <div className="flex w-full flex-col items-center justify-center gap-3">
                   <p className="text-center text-lg font-semibold text-black dark:text-zinc-100 ">

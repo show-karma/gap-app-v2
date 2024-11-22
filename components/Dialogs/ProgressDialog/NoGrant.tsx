@@ -1,6 +1,7 @@
 import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
 import { PAGES } from "@/utilities/pages";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 export const NoGrant = () => {
@@ -33,7 +34,13 @@ export const NoGrant = () => {
           closeProgressModal();
         }}
       >
-        <img src="/icons/plus.svg" alt="Add" className="relative h-5 w-5" />
+        <Image
+          src="/icons/plus.svg"
+          alt="Add"
+          className="relative"
+          width={20}
+          height={20}
+        />
         Add a Grant
       </button>
     </div>

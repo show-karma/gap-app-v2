@@ -13,13 +13,14 @@ import {
 } from "@heroicons/react/24/outline";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type FC, useState, useEffect } from "react";
+import { IMilestone } from "@show-karma/karma-gap-sdk";
+import Image from "next/image";
+import { type FC, useEffect } from "react";
 import { DayPicker } from "react-day-picker";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
-import { MilestonesForms, useGrantFormStore } from "./store";
-import { IMilestone } from "@show-karma/karma-gap-sdk";
+import { useGrantFormStore } from "./store";
 
 interface MilestoneProps {
   currentMilestone: IMilestone;
@@ -150,7 +151,7 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
           }}
           className="bg-transparent p-4 hover:bg-transparent hover:opacity-75"
         >
-          <img src="/icons/close.svg" alt="Close" className="h-4 w-4 " />
+          <Image src="/icons/close.svg" alt="Close" width={16} height={16} />
         </Button>
       </div>
       <form

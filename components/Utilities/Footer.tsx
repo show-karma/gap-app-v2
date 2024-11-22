@@ -1,10 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
+import { karmaLinks } from "@/utilities/karma";
+import { SOCIALS } from "@/utilities/socials";
 import Image from "next/image";
 import Link from "next/link";
 import { DiscordIcon, MirrorIcon, TelegramIcon, TwitterIcon } from "../Icons";
 import { ExternalLink } from "./ExternalLink";
-import { SOCIALS } from "@/utilities/socials";
-import { karmaLinks } from "@/utilities/karma";
 
 const navigation = {
   social: [
@@ -37,10 +37,11 @@ export default function Footer() {
       <div className="flex w-full flex-row items-center justify-between gap-8 bg-[#181b2a] px-16 max-lg:px-8 py-12 max-md:flex-col max-md:gap-10 max-md:px-4 max-md:py-12">
         <div>
           <div className="flex items-center gap-x-2">
-            <img
+            <Image
               src="/images/karma-logo-dark.svg"
               alt="Karma logo"
-              className="h-16 w-[160px]"
+              width={160}
+              height={64}
             />
           </div>
           <div className="flex flex-row items-center gap-2">

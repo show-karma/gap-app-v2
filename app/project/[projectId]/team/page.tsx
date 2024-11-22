@@ -1,11 +1,10 @@
-import React from "react";
-import { Hex } from "viem";
-import { Metadata } from "next";
-import { getMetadata } from "@/utilities/sdk";
 import { zeroUID } from "@/utilities/commons";
-import { defaultMetadata } from "@/utilities/meta";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { envVars } from "@/utilities/enviromentVars";
+import { defaultMetadata } from "@/utilities/meta";
+import { getMetadata } from "@/utilities/sdk";
+import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { Metadata } from "next";
+import { Hex } from "viem";
 
 export async function generateMetadata({
   params,

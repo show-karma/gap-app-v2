@@ -1,11 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
-import type { FC } from "react";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { MESSAGES } from "@/utilities/messages";
-import { useCommunityAdminStore } from "@/store/community";
 import { useCommunitiesStore } from "@/store/communities";
-import Link from "next/link";
+import { useCommunityAdminStore } from "@/store/community";
+import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
+import Image from "next/image";
+import Link from "next/link";
+import type { FC } from "react";
 
 export const EmptyGrantsSection: FC = () => {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
@@ -22,10 +23,12 @@ export const EmptyGrantsSection: FC = () => {
     return (
       <div className="flex w-full items-center justify-center rounded border border-gray-200 px-6 py-10">
         <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
-          <img
+          <Image
             src="/images/comments.png"
             alt=""
-            className="h-[185px] w-[438px] object-cover"
+            width={438}
+            height={185}
+            className="object-cover"
           />
           <div className="flex w-full flex-col items-center justify-center gap-3">
             <p className="text-center text-lg font-semibold text-black dark:text-zinc-100 ">
@@ -56,16 +59,18 @@ export const EmptyGrantsSection: FC = () => {
           )}
           className="items-center flex flex-row justify-center gap-2 rounded border border-blue-600 bg-blue-600 px-4 py-2.5 text-base font-semibold text-white hover:bg-blue-600"
         >
-          <img src="/icons/plus.svg" alt="Add" className="relative h-5 w-5" />
+          <Image src="/icons/plus.svg" alt="Add" width={20} height={20} />
           Add a Grant
         </Link>
       </div>
       <div className="flex w-full items-center justify-center rounded border border-gray-200 px-6 py-10 dark:bg-zinc-900">
         <div className="flex max-w-[438px] flex-col items-center justify-center gap-6">
-          <img
+          <Image
             src="/images/comments.png"
             alt=""
-            className="h-[185px] w-[438px] object-cover"
+            width={438}
+            height={185}
+            className="object-cover"
           />
           <div className="flex w-full flex-col items-center justify-center gap-3">
             <p className="text-center text-lg font-semibold text-black dark:text-white">

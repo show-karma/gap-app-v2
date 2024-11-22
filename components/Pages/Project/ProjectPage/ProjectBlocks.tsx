@@ -6,6 +6,7 @@ import { useIntroModalStore } from "@/store/modals/intro";
 import { envVars } from "@/utilities/enviromentVars";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 
 export function ProjectBlocks() {
@@ -83,7 +84,7 @@ export function ProjectBlocks() {
           item.bg
         )}
       >
-        <img src={item.iconSrc} alt={item.title} className="w-6 h-6" />
+        <Image src={item.iconSrc} alt={item.title} height={24} width={24} />
         <p className="text-sm font-bold text-black text-left">{item.title}</p>
       </div>
     );

@@ -1,27 +1,24 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import React from "react";
-import { useState } from "react";
-import { useAccount, useChainId, useSwitchChain } from "wagmi";
-import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
-import { TransactionLink } from "@/components/Utilities/TransactionLink";
-import axios from "axios";
-import { formatEther } from "viem";
-import { envVars } from "@/utilities/enviromentVars";
-import { useWriteContract, useReadContract } from "wagmi";
 import { NetworkDropdown } from "@/components/Dialogs/ProjectDialog/NetworkDropdown";
-import { appNetwork, getChainNameById } from "@/utilities/network";
-import AirdropNFTABI from "@show-karma/karma-gap-sdk/core/abi/AirdropNFT.json";
-import { Networks } from "@show-karma/karma-gap-sdk";
-import toast from "react-hot-toast";
+import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { TransactionLink } from "@/components/Utilities/TransactionLink";
 import { getGitcoinDonations } from "@/utilities/allo/getGitcoinDonations";
 import { getProjectDetails } from "@/utilities/allo/getProjectDetails";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { useForm } from "react-hook-form";
+import { envVars } from "@/utilities/enviromentVars";
+import { appNetwork, getChainNameById } from "@/utilities/network";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Networks } from "@show-karma/karma-gap-sdk";
+import AirdropNFTABI from "@show-karma/karma-gap-sdk/core/abi/AirdropNFT.json";
+import axios from "axios";
+import Image from "next/image";
+import React, { Dispatch, SetStateAction, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { formatEther } from "viem";
+import { useAccount, useChainId, useReadContract, useSwitchChain, useWriteContract } from "wagmi";
 import { z } from "zod";
-import { useEffect } from "react";
-import { Dispatch, SetStateAction } from "react";
 
 type ProjectApplicationData = {
   project: {
@@ -396,10 +393,14 @@ function MintNFTs({
             <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500"></div>
           </div>
         ) : imageIPFSHash ? (
-          <img
+          <Image
             src={`/api/img-proxy?url=https://gateway.pinata.cloud/ipfs/${imageIPFSHash}`}
             alt="NFT Image"
-            className="w-full h-auto rounded-xl bg-slate-300"
+            className="rounded-xl bg-slate-300"
+            width={0}
+            height={0}
+            sizes="100vw"
+            style={{ width: "100%", height: "auto" }}
           />
         ) : (
           <div className="w-full  min-h-80   flex items-center justify-center bg-slate-200 dark:bg-slate-700 rounded-xl">
@@ -562,7 +563,7 @@ export const GitcoinAirdropsManager = () => {
               </span>
             ) : (
               <>
-                <img
+                <Image
                   src="/logos/gitcoin.png"
                   alt="Gitcoin Logo"
                   className="w-6 h-6"
@@ -587,10 +588,12 @@ export const GitcoinAirdropsManager = () => {
                 Selected Project Details
               </h2>
               <div className="flex flex-col sm:flex-row justify-start gap-6 items-center bg-slate-100 dark:bg-slate-700 p-6 rounded-xl max-w-max w-full">
-                <img
+                <Image
                   src={`/api/img-proxy?url=https://gateway.pinata.cloud/ipfs/${projectData?.details?.project?.metadata?.logoImg}`}
                   alt="Project Logo"
-                  className="w-24 h-24 rounded-full object-cover shadow-md"
+                  className="rounded-full object-cover shadow-md"
+                  width={96}
+                  height={96}
                 />
                 <div className="text-center sm:text-left">
                   <p className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white mb-2">

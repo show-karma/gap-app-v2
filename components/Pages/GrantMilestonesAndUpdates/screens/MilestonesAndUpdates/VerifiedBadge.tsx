@@ -1,18 +1,18 @@
 /* eslint-disable @next/next/no-img-element */
 
-import { blo } from "blo";
-import { FC, useEffect, useMemo, useState } from "react";
-import * as Tooltip from "@radix-ui/react-tooltip";
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import { useENS } from "@/store/ens";
 import { formatDate } from "@/utilities/formatDate";
-import { VerificationsDialog } from "./VerificationsDialog";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import {
+  IGrantUpdateStatus,
   IMilestoneCompleted,
   IProjectImpactStatus,
-  IGrantUpdateStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import Image from "next/image";
+import { FC, useEffect, useState } from "react";
 import { Hex } from "viem";
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import { VerificationsDialog } from "./VerificationsDialog";
 
 interface VerifiedBadgeProps {
   verifications:
@@ -128,10 +128,11 @@ export const VerifiedBadge: FC<VerifiedBadgeProps> = ({
 
   return (
     <div className="flex flex-row items-center gap-2 flex-1">
-      <img
+      <Image
         alt="Verified Badge"
         src={"/icons/milestone-verified-badge.svg"}
-        className="w-6 h-6"
+        width={24}
+        height={24}
       />
       <span className="text-sm font-semibold text-[#0E9384]">Verified</span>
       <VerificationsDialog

@@ -1,6 +1,13 @@
 "use client";
+import { chainImgDictionary } from "@/utilities/chainImgDictionary";
+import { chainNameDictionary } from "@/utilities/chainNameDictionary";
+import { urlRegex } from "@/utilities/regexs/urlRegex";
 /* eslint-disable @next/next/no-img-element */
-import { FC, useState } from "react";
+import { shortAddress } from "@/utilities/shortAddress";
+import { cn } from "@/utilities/tailwind";
+import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid";
+import * as Popover from "@radix-ui/react-popover";
+import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import {
   Command,
   CommandEmpty,
@@ -8,13 +15,8 @@ import {
   CommandInput,
   CommandItem,
 } from "cmdk";
-import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid";
-import * as Popover from "@radix-ui/react-popover";
-import { shortAddress } from "@/utilities/shortAddress";
-import { cn } from "@/utilities/tailwind";
-import { chainImgDictionary } from "@/utilities/chainImgDictionary";
-import { chainNameDictionary } from "@/utilities/chainNameDictionary";
-import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import Image from "next/image";
+import { FC, useState } from "react";
 
 interface CommunitiesDropdownProps {
   onSelectFunction: (value: string, networkId: number) => void;
@@ -51,16 +53,21 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
-      <Popover.Trigger className="min-w-40 w-full max-w-max max-md:max-w-full justify-between flex flex-row cursor-default rounded-md bg-white dark:bg-zinc-800 dark:text-zinc-100 py-3 px-4 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
+      <Popover.Trigger className="min-w-40 w-full max-w-max max-md:max-w-full justify-between flex flex-row cursor-default items-center rounded-md bg-white dark:bg-zinc-800 dark:text-zinc-100 py-3 px-4 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
         {value ? (
           <div className="flex flex-row gap-2 items-center">
-            <img
+            <Image
               src={
                 communitiesArray.find((community) => community.value === value)
-                  ?.logo
+                  ?.logo || ""
               }
-              alt={""}
-              className="w-5 h-5"
+              alt={
+                communitiesArray.find((community) => community.value === value)
+                  ?.value || ""
+              }
+              width={20}
+              height={20}
+              className="rounded-full"
             />
             <div className="flex flex-row gap-1  items-center justify-start  flex-1">
               <p>
@@ -72,7 +79,7 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
               </p>
               <div className="flex flex-row gap-1 items-center">
                 <p className="w-max text-[7px]">on</p>
-                <img
+                <Image
                   src={chainImgDictionary(
                     communitiesArray.find(
                       (community) => community.value === value
@@ -83,7 +90,9 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
                       (community) => community.value === value
                     )?.networkId as number
                   )}
-                  className="min-w-2.5 min-h-2.5 w-2.5 h-2.5 m-0 rounded-full"
+                  className="rounded-full"
+                  width={10}
+                  height={10}
                 />
                 <p className="w-max text-[7px]">Network</p>
               </div>
@@ -102,47 +111,55 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
           />
           <CommandEmpty className="px-4 py-2">No community found.</CommandEmpty>
           <CommandGroup>
-            {sortedCommunities.map((community) => (
-              <CommandItem
-                key={community.value}
-                onSelect={() => {
-                  setValue(community.value);
-                  setOpen(false);
-                  onSelectFunction(community.value, community.networkId);
-                }}
-                className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
-              >
-                <CheckIcon
-                  className={cn(
-                    "mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white",
-                    value === community.value ? "opacity-100" : "opacity-0"
-                  )}
-                />
-                <div className="flex flex-row gap-2 items-center justify-start w-full">
-                  <div className="min-w-5 min-h-5 w-5 h-5 m-0">
-                    <img
-                      src={community.logo}
-                      alt={""}
-                      className="min-w-5 min-h-5 w-5 h-5 m-0 rounded-full"
-                    />
-                  </div>
-                  <div className="flex flex-row gap-1  items-center justify-start  flex-1">
-                    <p className="line-clamp-2 text-sm max-w-full break-normal">
-                      {community.label}
-                    </p>
-                    <div className="flex flex-row gap-1 items-center">
-                      <p className="w-max text-[7px]">on</p>
-                      <img
-                        src={chainImgDictionary(community.networkId)}
-                        alt={chainNameDictionary(community.networkId)}
-                        className="min-w-2.5 min-h-2.5 w-2.5 h-2.5 m-0 rounded-full"
+            {sortedCommunities.map((community) => {
+              const isUrl = urlRegex.test(community.logo || "");
+              return (
+                <CommandItem
+                  key={community.value}
+                  onSelect={() => {
+                    setValue(community.value);
+                    setOpen(false);
+                    onSelectFunction(community.value, community.networkId);
+                  }}
+                  className="my-1 cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900"
+                >
+                  <CheckIcon
+                    className={cn(
+                      "mr-2 h-4 w-4 min-w-4 min-h-4 text-black dark:text-white",
+                      value === community.value ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  <div className="flex flex-row gap-2 items-center justify-start w-full">
+                    {isUrl && (
+                      <Image
+                        src={community.logo || ""}
+                        alt={community.logo || ""}
+                        className="m-0 rounded-full"
+                        width={20}
+                        height={20}
                       />
-                      <p className="w-max text-[7px]">Network</p>
+                    )}
+
+                    <div className="flex flex-row gap-1  items-center justify-start  flex-1">
+                      <p className="line-clamp-2 text-sm max-w-full break-normal">
+                        {community.label}
+                      </p>
+                      <div className="flex flex-row gap-1 items-center">
+                        <p className="w-max text-[7px]">on</p>
+                        <Image
+                          src={chainImgDictionary(community.networkId)}
+                          alt={chainNameDictionary(community.networkId)}
+                          className="m-0 rounded-full"
+                          width={10}
+                          height={10}
+                        />
+                        <p className="w-max text-[7px]">Network</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CommandItem>
-            ))}
+                </CommandItem>
+              );
+            })}
           </CommandGroup>
         </Command>
       </Popover.Content>

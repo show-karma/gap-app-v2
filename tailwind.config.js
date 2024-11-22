@@ -1,8 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 const defaultTheme = require("tailwindcss/defaultTheme");
-import colors from "tailwindcss/colors";
 
-// Custom color with css variable color in __theme_color.scss
 function customColors(cssVar) {
   return ({ opacityVariable, opacityValue }) => {
     if (opacityValue !== undefined) {
@@ -37,8 +35,10 @@ module.exports = {
       xs: "425px",
     },
     fontFamily: {
-      sans: ["Open Sans"],
-      body: ["Inter"],
+      // sans: ["Open Sans"],
+      // body: ["Inter"],
+      sans: ["var(--font-open-sans)"],
+      body: ["var(--font-inter)"],
     },
     fontSize: {
       xs: "0.75rem",
@@ -93,16 +93,17 @@ module.exports = {
           },
         },
         primary: {
-          50: customColors("--c-primary-50"),
-          100: customColors("--c-primary-100"),
-          200: customColors("--c-primary-200"),
-          300: customColors("--c-primary-300"),
-          400: customColors("--c-primary-400"),
-          500: customColors("--c-primary-500"),
-          600: customColors("--c-primary-600"),
-          700: customColors("--c-primary-700"),
-          800: customColors("--c-primary-800"),
-          900: customColors("--c-primary-900"),
+          50: "#eef3ff",
+          100: "#d9e3ff",
+          200: "#bccfff",
+          300: "#8eb1ff",
+          400: "#5987ff",
+          500: "#3e65ff",
+          600: "#1b38f5",
+          700: "#1426e1",
+          800: "#1720b6",
+          900: "#19228f",
+          950: "#141757",
         },
         boxShadow: {
           "tremor-input": "0 1px 2px 0 rgb(0 0 0 / 0.05)",

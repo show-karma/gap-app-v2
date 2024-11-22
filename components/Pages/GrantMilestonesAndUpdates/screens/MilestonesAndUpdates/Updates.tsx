@@ -1,33 +1,34 @@
 /* eslint-disable @next/next/no-img-element */
-import { type FC, useState, useEffect } from "react";
+import { type FC, useEffect, useState } from "react";
 
 import { Button } from "@/components/Utilities/Button";
-import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { UpdateMilestone } from "./UpdateMilestone";
+import { getGapClient, useGap } from "@/hooks";
 import { useOwnerStore, useProjectStore } from "@/store";
-import toast from "react-hot-toast";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { useSwitchChain, useAccount } from "wagmi";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { MESSAGES } from "@/utilities/messages";
-import { formatDate } from "@/utilities/formatDate";
-import { ReadMore } from "@/utilities/ReadMore";
-import { getWalletClient } from "@wagmi/core";
-import { VerifyMilestoneUpdateDialog } from "./VerifyMilestoneUpdateDialog";
-import { VerifiedBadge } from "./VerifiedBadge";
 import { useCommunityAdminStore } from "@/store/community";
 import { useStepper } from "@/store/modals/txStepper";
+import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import fetchData from "@/utilities/fetchData";
+import { formatDate } from "@/utilities/formatDate";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { ReadMore } from "@/utilities/ReadMore";
 import { config } from "@/utilities/wagmi/config";
+import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import {
   IMilestoneCompleted,
   IMilestoneResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getGapClient, useGap } from "@/hooks";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
+import { getWalletClient } from "@wagmi/core";
+import toast from "react-hot-toast";
+import { useAccount, useSwitchChain } from "wagmi";
+import { UpdateMilestone } from "./UpdateMilestone";
+import { VerifiedBadge } from "./VerifiedBadge";
+import { VerifyMilestoneUpdateDialog } from "./VerifyMilestoneUpdateDialog";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import Image from "next/image";
 
 interface UpdatesProps {
   milestone: IMilestoneResponse;
@@ -161,8 +162,9 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
         <div className="flex w-full flex-row flex-wrap items-center justify-between gap-2">
           <div className="flex flex-row gap-4 items-center flex-wrap">
             <div className="flex items-center h-max w-max flex-row gap-2 rounded-full bg-[#5720B7] dark:bg-purple-900 px-3 py-1  flex-wrap">
-              <img
-                className="h-4 w-4"
+              <Image
+                height={16}
+                width={16}
                 alt="Update"
                 src="/icons/alert-message-white.svg"
               />

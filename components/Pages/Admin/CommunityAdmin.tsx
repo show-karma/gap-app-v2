@@ -1,26 +1,27 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import React, { useEffect, useState } from "react";
-import Link from "next/link";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { PAGES } from "@/utilities/pages";
-import { MESSAGES } from "@/utilities/messages";
-import { Community } from "@show-karma/karma-gap-sdk";
-import { useGap } from "@/hooks";
-import { blo } from "blo";
-import { LinkIcon } from "@heroicons/react/24/solid";
-import { chainImgDictionary } from "@/utilities/chainImgDictionary";
-import { chainNameDictionary } from "@/utilities/chainNameDictionary";
+import CommunityStats from "@/components/CommunityStats";
 import { CommunityDialog } from "@/components/Dialogs/CommunityDialog";
-import { formatDate } from "@/utilities/formatDate";
 import { AddAdmin } from "@/components/Pages/Admin/AddAdminDialog";
 import { RemoveAdmin } from "@/components/Pages/Admin/RemoveAdminDialog";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useGap } from "@/hooks";
 import { useOwnerStore } from "@/store";
-import CommunityStats from "@/components/CommunityStats";
+import { chainImgDictionary } from "@/utilities/chainImgDictionary";
+import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import fetchData from "@/utilities/fetchData";
+import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
+import { LinkIcon } from "@heroicons/react/24/solid";
+import { Community } from "@show-karma/karma-gap-sdk";
+import { blo } from "blo";
+import Link from "next/link";
+import React, { useEffect, useState } from "react";
 
 import { errorManager } from "@/components/Utilities/errorManager";
+import Image from "next/image";
 
 interface CommunityAdmin {
   id: string;
@@ -130,13 +131,15 @@ export default function CommunitiesToAdminPage() {
                       <React.Fragment key={community.uid}>
                         <tr className="divide-x">
                           <td>
-                            <img
+                            <Image
                               src={
                                 community.details?.imageURL ||
                                 blo(community.uid)
                               }
-                              className="h-[64px] w-[100px] object-cover"
+                              className="object-cover"
                               alt={community.details?.name || community.uid}
+                              width={100}
+                              height={64}
                             />
                           </td>
                           <td className="max-w-40 px-4">
@@ -175,10 +178,11 @@ export default function CommunitiesToAdminPage() {
                           </td>
                           <td className="px-4">
                             <div className="flex flex-row gap-2 items-center">
-                              <img
+                              <Image
                                 src={chainImgDictionary(community.chainID)}
                                 alt={chainNameDictionary(community.chainID)}
-                                className="w-5 h-5"
+                                width={20}
+                                height={20}
                               />
                               <p>{chainNameDictionary(community.chainID)}</p>
                             </div>

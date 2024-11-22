@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import React from "react";
+import Image from "next/image";
 
 function HeroBlock() {
   return (
@@ -22,11 +22,11 @@ function HeroBlock() {
           ecosystem.
         </p>
       </div>
-      <div className="p-4 max-md:hidden md:w-1/2">
-        <img
+      <div className="relative h-full min-h-[500px] flex flex-[1] max-md:hidden md:w-1/2">
+        <Image
           src="/images/karma-grant-reviews.png"
           alt="Community Reviews"
-          className="w-full"
+          layout="fill"
         />
       </div>
     </div>
@@ -91,10 +91,11 @@ const WhyIsItImportant = () => (
     <div className="grid w-full grid-cols-4 gap-2 max-md:grid-cols-2 max-sm:grid-cols-1">
       <div className="flex  flex-1 flex-col items-start gap-3 rounded-3xl bg-[#D7F8EF] px-8 py-6 max-2xl:px-6">
         <div className="flex items-center justify-center rounded-lg border border-black p-2 ">
-          <img
+          <Image
             src="/icons/coins-stacked.png"
             alt="Grantee"
-            className="h-7 w-7"
+            width={28}
+            height={28}
           />
         </div>
         <h3 className="text-2xl font-bold text-black  max-2xl:text-xl">
@@ -108,10 +109,11 @@ const WhyIsItImportant = () => (
       </div>
       <div className="flex flex-1 flex-col items-start gap-3 rounded-3xl bg-[#E0EAFF] px-8 py-6 max-2xl:px-6">
         <div className="flex items-center justify-center rounded-lg border border-black p-2 ">
-          <img
+          <Image
             src="/icons/coins-stacked.png"
             alt="Grantee"
-            className="h-7 w-7"
+            width={28}
+            height={28}
           />
         </div>
         <h3 className=" text-2xl font-bold text-black  max-2xl:text-xl">
@@ -124,10 +126,11 @@ const WhyIsItImportant = () => (
       </div>
       <div className="flex flex-1 flex-col items-start gap-3 rounded-3xl bg-[#D7F8EF] px-8 py-6 max-2xl:px-6">
         <div className="flex items-center justify-center rounded-lg border border-black p-2 ">
-          <img
+          <Image
             src="/icons/coins-stacked.png"
             alt="Grantee"
-            className="h-7 w-7"
+            width={28}
+            height={28}
           />
         </div>
         <h3 className="text-2xl font-bold text-black  max-2xl:text-xl">
@@ -140,10 +143,11 @@ const WhyIsItImportant = () => (
       </div>
       <div className="flex flex-1 flex-col items-start gap-3 rounded-3xl bg-[#E0EAFF] px-8 py-6 max-2xl:px-6">
         <div className="flex items-center justify-center rounded-lg border border-black p-2 ">
-          <img
+          <Image
             src="/icons/coins-stacked.png"
             alt="Grantee"
-            className="h-7 w-7"
+            width={28}
+            height={28}
           />
         </div>
         <h3 className=" text-2xl font-bold text-black  max-2xl:text-xl">
@@ -165,10 +169,11 @@ const GuideForReviewers = () => (
     <div className="grid w-full grid-cols-4 gap-2 max-md:grid-cols-2 max-sm:grid-cols-1">
       <div className="flex flex-1 flex-col items-start gap-3 rounded-3xl bg-[#D7F8EF] px-8 py-6 max-2xl:px-6">
         <div className="flex items-center justify-center rounded-lg border border-black p-2 ">
-          <img
+          <Image
             src="/icons/coins-stacked.png"
             alt="Grantee"
-            className="h-7 w-7"
+            width={28}
+            height={28}
           />
         </div>
         <h3 className="text-2xl font-bold text-black  max-2xl:text-xl">
@@ -183,10 +188,11 @@ const GuideForReviewers = () => (
       </div>
       <div className="flex flex-1 flex-col items-start gap-3 rounded-3xl bg-[#E0EAFF] px-8 py-6 max-2xl:px-6">
         <div className="flex items-center justify-center rounded-lg border border-black p-2 ">
-          <img
+          <Image
             src="/icons/coins-stacked.png"
             alt="Grantee"
-            className="h-7 w-7"
+            width={28}
+            height={28}
           />
         </div>
         <h3 className=" text-2xl font-bold text-black  max-2xl:text-xl">
@@ -200,10 +206,11 @@ const GuideForReviewers = () => (
       </div>
       <div className="flex flex-1 flex-col items-start gap-3 rounded-3xl bg-[#D7F8EF] px-8 py-6 max-2xl:px-6">
         <div className="flex items-center justify-center rounded-lg border border-black p-2 ">
-          <img
+          <Image
             src="/icons/coins-stacked.png"
             alt="Grantee"
-            className="h-7 w-7"
+            width={28}
+            height={28}
           />
         </div>
         <h3 className="text-2xl font-bold text-black  max-2xl:text-xl">
@@ -217,10 +224,11 @@ const GuideForReviewers = () => (
       </div>
       <div className="flex flex-1 flex-col items-start gap-3 rounded-3xl bg-[#E0EAFF] px-8 py-6 max-2xl:px-6">
         <div className="flex items-center justify-center rounded-lg border border-black p-2 ">
-          <img
+          <Image
             src="/icons/coins-stacked.png"
             alt="Grantee"
-            className="h-7 w-7"
+            width={28}
+            height={28}
           />
         </div>
         <h3 className=" text-2xl font-bold text-black  max-2xl:text-xl">

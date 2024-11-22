@@ -1,16 +1,16 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, useEffect, useMemo } from "react";
-import { Dialog, Transition } from "@headlessui/react";
-import { Button } from "../Utilities/Button";
 import { useOnboarding } from "@/store/modals/onboarding";
+import { Dialog, Transition } from "@headlessui/react";
 import {
   ChevronLeftIcon,
   ChevronRightIcon,
   XMarkIcon,
 } from "@heroicons/react/24/solid";
-import { useMixpanel } from "@/hooks/useMixpanel";
-import { useAccount } from "wagmi";
+import Image from "next/image";
+import { FC, Fragment } from "react";
 import { Hex } from "viem";
+import { useAccount } from "wagmi";
+import { Button } from "../Utilities/Button";
 
 const WelcomeStep = () => {
   const { address } = useAccount();
@@ -18,16 +18,19 @@ const WelcomeStep = () => {
 
   return (
     <div className="flex flex-row gap-6 items-center">
-      <img
+      <Image
         src="/images/karma-gap-onboarding-welcome.png"
         alt="logo"
-        className="h-[320px] w-[320px] max-sm:hidden"
+        className="max-sm:hidden"
+        width={320}
+        height={320}
       />
       <div className="flex flex-col gap-6">
-        <img
+        <Image
           alt="Karma GAP"
-          className="h-8 w-52"
           src="/logo/karma-gap-logo2.png"
+          width={32}
+          height={208}
         />
         <div className="flex flex-col gap-0">
           <h1 className="text-3xl font-bold max-sm:text-2xl">
@@ -55,10 +58,12 @@ const FirstStep = () => {
   const { address } = useAccount();
   return (
     <div className="flex flex-row gap-6 items-center">
-      <img
+      <Image
         src="/images/karma-gap-onboarding-welcome.png"
         alt="logo"
-        className="h-[320px] w-[320px] max-sm:hidden"
+        className="max-sm:hidden"
+        width={320}
+        height={320}
       />
       <div className="flex flex-col gap-6">
         <div className="mt-4 flex flex-col gap-0">
@@ -99,10 +104,12 @@ const GrantStep = () => {
 
   return (
     <div className="flex flex-row gap-6 items-start pt-6">
-      <img
+      <Image
         src="/images/karma-gap-onboarding-adding-grants.png"
         alt="logo"
-        className="h-[320px] w-[320px] max-sm:hidden"
+        className="max-sm:hidden"
+        width={320}
+        height={320}
       />
       <div className="flex flex-col gap-6">
         <div className="mt-4 flex flex-col gap-0">
@@ -146,10 +153,12 @@ const UpdatesStep = () => {
   return (
     <div className="flex flex-col">
       <div className="flex flex-row gap-6 items-start pt-6">
-        <img
+        <Image
           src="/images/karma-gap-onboarding-updates.png"
           alt="logo"
-          className="h-[320px] w-[320px] max-sm:hidden"
+          className="max-sm:hidden"
+          width={320}
+          height={320}
         />
         <div className="flex flex-col gap-6 mt-6 max-sm:mt-0">
           <div className="mt-4 flex flex-col gap-0">
@@ -193,11 +202,14 @@ const StructureStep = () => {
         <h3 className="text-black font-bold text-xl dark:text-white">
           Components of the Karma GAP Platform
         </h3>
-        <img
-          src="/images/karma-gap-onboarding-structure.png"
-          alt="logo"
-          className="max-h-[480px] max-w-[480px] max-sm:max-h-[280px] max-sm:max-w-[320px] w-auto h-auto my-8"
-        />
+        <div className="relative max-h-[480px] max-w-[480px] max-sm:max-h-[280px] max-sm:max-w-[320px] h-[380px] w-[480px]  max-sm:h-[280px] max-sm:w-[320px] my-8">
+          <Image
+            src="/images/karma-gap-onboarding-structure.png"
+            alt="logo"
+            layout="fill"
+            quality={100}
+          />
+        </div>
       </div>
       <div className="flex flex-row gap-4 justify-end max-sm:flex-col">
         <Button
