@@ -9,15 +9,34 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import toast from "react-hot-toast";
 import Link from "next/link";
+import { Card, Title, AreaChart } from "@tremor/react";
 
 type OutputForm = {
     outputId: string;
     categoryId: string;
-    value: string;
-    proof: string;
+    value: string[];
+    proof: string[];
+    outputTimestamp: string[];
     isEditing?: boolean;
     isSaving?: boolean;
     isEdited?: boolean;
+};
+
+type ChartDataPoint = {
+    date: string;
+    value: number;
+};
+
+const prepareChartData = (
+    values: string[],
+    timestamps: string[]
+): ChartDataPoint[] => {
+    return timestamps
+        .map((timestamp, index) => ({
+            date: new Date(timestamp).toLocaleDateString(),
+            value: Number(values[index]) || 0
+        }))
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 };
 
 export const GrantOutputs = () => {
@@ -37,8 +56,9 @@ export const GrantOutputs = () => {
         chainID: number;
         outputId: string;
         name: string;
-        value: string;
-        proof: string | null;
+        value: string[];
+        proof: string[];
+        outputTimestamp: string[];
         createdAt: Date;
         updatedAt: Date;
     }[]>([]);
@@ -48,19 +68,28 @@ export const GrantOutputs = () => {
 
     const handleSubmit = async (outputId: string) => {
         const form = forms.find(f => f.outputId === outputId);
-        if (!form?.value) {
+        if (!form?.value?.length) {
             toast.error("Please enter a value");
             return;
         }
 
-        // Set saving state for this specific form
+        if (!form.outputTimestamp?.length) {
+            toast.error("Please select a date");
+            return;
+        }
+
         setForms(prev => prev.map(f =>
             f.outputId === outputId ? { ...f, isSaving: true } : f
         ));
 
-        await sendOutputAnswer(outputId, form.categoryId, form.value, form.proof);
+        await sendOutputAnswer(
+            outputId,
+            form.categoryId,
+            form.value[form.value.length - 1],
+            form.proof[form.proof.length - 1],
+            form.outputTimestamp[form.outputTimestamp.length - 1]
+        );
 
-        // Reset form states after successful submission
         setForms(prev => prev.map(f =>
             f.outputId === outputId ? {
                 ...f,
@@ -69,45 +98,70 @@ export const GrantOutputs = () => {
             } : f
         ));
 
-        // Refresh outputs
         if (grant) {
             const [response] = await fetchData(INDEXER.GRANTS.OUTPUTS.GET(grant.uid));
             setOutputAnswers(response);
         }
     };
 
-    const handleInputChange = (outputId: string, categoryId: string, field: 'value' | 'proof', value: string) => {
+    const handleInputChange = (outputId: string, categoryId: string, field: 'value' | 'proof' | 'outputTimestamp', value: string) => {
         setForms(prev => {
             const existingForm = prev.find(f => f.outputId === outputId);
             const currentOutput = outputAnswers.find(o => o.outputId === outputId);
-            const isValueChanged = field === 'value' ?
-                value !== currentOutput?.value :
-                value !== currentOutput?.proof;
+
+            const currentValues = currentOutput?.value || [];
+            const currentProofs = currentOutput?.proof || [];
+            const currentTimestamps = currentOutput?.outputTimestamp || [];
+
+            const isValueChanged = field === 'value'
+                ? !currentValues.includes(value)
+                : field === 'proof'
+                    ? !currentProofs.includes(value)
+                    : !currentTimestamps.includes(value);
 
             if (existingForm) {
-                return prev.map(f =>
-                    f.outputId === outputId ? {
-                        ...f,
-                        [field]: value,
-                        isEdited: isValueChanged
-                    } : f
-                );
+                return prev.map(f => {
+                    if (f.outputId === outputId) {
+                        const updatedForm = { ...f };
+                        if (field === 'value') {
+                            updatedForm.value = [...currentValues, value];
+                        } else if (field === 'proof') {
+                            updatedForm.proof = [...currentProofs, value];
+                        } else {
+                            updatedForm.outputTimestamp = [...currentTimestamps, value];
+                        }
+                        updatedForm.isEdited = isValueChanged;
+                        return updatedForm;
+                    }
+                    return f;
+                });
             }
-            return [...prev, {
+
+            const newForm: OutputForm = {
                 outputId,
                 categoryId,
-                value: field === 'value' ? value : currentOutput?.value || '',
-                proof: field === 'proof' ? value : currentOutput?.proof || '',
+                value: field === 'value' ? [value] : currentValues,
+                proof: field === 'proof' ? [value] : currentProofs,
+                outputTimestamp: field === 'outputTimestamp' ? [value] : currentTimestamps,
                 isEdited: isValueChanged
-            }];
+            };
+            return [...prev, newForm];
         });
     };
 
-    async function sendOutputAnswer(outputId: string, categoryId: string, value: string, proof: string) {
+    async function sendOutputAnswer(outputId: string, categoryId: string, value: string, proof: string, outputTimestamp: string) {
+        const formattedTimestamp = outputTimestamp || new Date().toISOString().split('T')[0];
+
         const [response] = await fetchData(
             INDEXER.GRANTS.OUTPUTS.SEND(grant?.uid as string),
             "POST",
-            { outputs: [{ outputId, categoryId, value, proof }] },
+            {
+                outputId,
+                categoryId,
+                value,
+                proof,
+                outputTimestamp: formattedTimestamp
+            }
         );
 
         if (response.success) {
@@ -129,8 +183,9 @@ export const GrantOutputs = () => {
             setForms(outputDataWithAnswers.map((item: any) => ({
                 outputId: item.outputId,
                 categoryId: item.categoryId,
-                value: item.value || '',
-                proof: item.proof || '',
+                value: item.value || [],
+                proof: item.proof || [],
+                outputTimestamp: item.outputTimestamp || [new Date().toISOString()],
                 isEdited: false
             })));
 
@@ -147,15 +202,20 @@ export const GrantOutputs = () => {
     };
 
     const handleCancel = (outputId: string) => {
-        setForms(prev => prev.map(f =>
-            f.outputId === outputId ? {
-                ...f,
-                isEditing: false,
-                isEdited: false,
-                value: outputAnswers.find(o => o.outputId === outputId)?.value || '',
-                proof: outputAnswers.find(o => o.outputId === outputId)?.proof || ''
-            } : f
-        ));
+        setForms(prev => prev.map(f => {
+            if (f.outputId === outputId) {
+                const currentOutput = outputAnswers.find(o => o.outputId === outputId);
+                return {
+                    ...f,
+                    isEditing: false,
+                    isEdited: false,
+                    value: currentOutput?.value || [],
+                    proof: currentOutput?.proof || [],
+                    outputTimestamp: currentOutput?.outputTimestamp || []
+                };
+            }
+            return f;
+        }));
     };
 
     if (!grant || isLoading) return <GrantsOutputsLoading />;
@@ -199,6 +259,23 @@ export const GrantOutputs = () => {
                                 </div>
 
                                 <div className="flex flex-col gap-5">
+                                    {item.value?.length > 1 && (
+                                        <Card className="mt-4">
+                                            <Title className="text-sm font-medium text-gray-700 dark:text-zinc-300 mb-4">
+                                                Historical Values
+                                            </Title>
+                                            <AreaChart
+                                                className="h-48 mt-4"
+                                                data={prepareChartData(item.value, item.outputTimestamp)}
+                                                index="date"
+                                                categories={["value"]}
+                                                colors={["primary"]}
+                                                valueFormatter={(value) => `${value}`}
+                                                showLegend={false}
+                                            />
+                                        </Card>
+                                    )}
+
                                     <div className="space-y-2">
                                         <label
                                             htmlFor={`value-${item.outputId}`}
@@ -210,14 +287,36 @@ export const GrantOutputs = () => {
                                             <input
                                                 id={`value-${item.outputId}`}
                                                 type="number"
-                                                value={form?.value || item.value || ''}
+                                                value={form?.value?.[form?.value?.length - 1] || ''}
                                                 onChange={(e) => handleInputChange(item.outputId, item.categoryId, 'value', e.target.value)}
                                                 className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100 transition-colors"
                                                 placeholder="Enter output value"
                                             />
                                         ) : (
                                             <p className="px-4 py-2.5 bg-gray-50 dark:bg-zinc-800 rounded-md text-zinc-800 dark:text-zinc-100">
-                                                {item.value || 'No value set'}
+                                                {item.value?.[item.value.length - 1] || 'No value set'}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <label
+                                            htmlFor={`timestamp-${item.outputId}`}
+                                            className="block text-sm font-medium text-gray-700 dark:text-zinc-300"
+                                        >
+                                            Timestamp
+                                        </label>
+                                        {form?.isEditing && isAuthorized ? (
+                                            <input
+                                                id={`timestamp-${item.outputId}`}
+                                                type="date"
+                                                value={form?.outputTimestamp?.[form?.outputTimestamp?.length - 1]?.split('T')[0] || new Date().toISOString().split('T')[0]}
+                                                onChange={(e) => handleInputChange(item.outputId, item.categoryId, 'outputTimestamp', new Date(e.target.value).toISOString())}
+                                                className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100 transition-colors"
+                                                placeholder="Enter timestamp"
+                                            />
+                                        ) : (
+                                            <p className="px-4 py-2.5 bg-gray-50 dark:bg-zinc-800 rounded-md text-zinc-800 dark:text-zinc-100">
+                                                {new Date(item.outputTimestamp?.[item.outputTimestamp.length - 1] || new Date()).toLocaleDateString()}
                                             </p>
                                         )}
                                     </div>
@@ -232,26 +331,26 @@ export const GrantOutputs = () => {
                                         {form?.isEditing && isAuthorized ? (
                                             <textarea
                                                 id={`proof-${item.outputId}`}
-                                                value={form?.proof ?? item.proof ?? ''}
+                                                value={form?.proof?.[form?.proof?.length - 1] || ''}
                                                 onChange={(e) => handleInputChange(item.outputId, item.categoryId, 'proof', e.target.value)}
                                                 className="w-full px-4 py-2.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100 transition-colors"
                                                 placeholder="Enter proof (optional)"
                                                 rows={3}
                                             />
                                         ) : (
-                                            item.proof?.startsWith('http') ? (
+                                            item.proof?.[item.proof.length - 1]?.startsWith('http') ? (
                                                 <Link
-                                                    href={item.proof}
+                                                    href={item.proof[item.proof.length - 1]}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
                                                 >
                                                     <p className="px-4 py-2.5 bg-gray-50 dark:bg-zinc-800 rounded-md text-zinc-800 dark:text-zinc-100 overflow-hidden text-ellipsis break-words">
-                                                        {item.proof || 'No proof provided'}
+                                                        {item.proof[item.proof.length - 1] || 'No proof provided'}
                                                     </p>
                                                 </Link>
                                             ) : (
                                                 <p className="px-4 py-2.5 bg-gray-50 dark:bg-zinc-800 rounded-md text-zinc-800 dark:text-zinc-100 overflow-hidden text-ellipsis break-words">
-                                                    {item.proof || 'No proof provided'}
+                                                    {item.proof?.[item.proof.length - 1] || 'No proof provided'}
                                                 </p>
                                             )
                                         )}

@@ -125,7 +125,7 @@ export const INDEXER = {
     },
     OUTPUTS: {
       GET: (grantUID: string) => `/grants/${grantUID}/outputs`,
-      SEND: (grantUID: string) => `/grants/${grantUID}/outputs/answers`,
+      SEND: (grantUID: string) => `/grants/${grantUID}/outputs/answer`,
     },
     CATEGORIES: {
       ALL: (idOrSlug: string) => `/communities/${idOrSlug}/categories`,

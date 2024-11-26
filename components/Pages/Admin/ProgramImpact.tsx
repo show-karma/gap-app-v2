@@ -177,7 +177,7 @@ export default function ProgramImpactPage() {
                 <div className="flex w-full items-center justify-center">
                     <Spinner />
                 </div>
-            ) : isAdmin ? (
+            ) : !isAdmin ? (
                 <div className="flex w-full flex-1 flex-col items-center gap-8">
                     <div className="w-full flex flex-row items-center justify-between  max-w-4xl">
                         <Link

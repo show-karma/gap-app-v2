@@ -1,6 +1,8 @@
-import { useState } from "react";
-import { Card, Title, BarChart, Select, SelectItem } from "@tremor/react";
+import { useEffect, useState } from "react";
+import { Card, Title, BarChart, Select, SelectItem, AreaChart } from "@tremor/react";
 import { ProgramImpactDataResponse } from "./ProgramImpact";
+import axios from "axios";
+import { envVars } from "@/utilities/enviromentVars";
 
 const aggregateDataByCategory = (data: ProgramImpactDataResponse[]) => {
     // Group data by categories first
@@ -42,6 +44,50 @@ const aggregateDataByCategory = (data: ProgramImpactDataResponse[]) => {
 
     return { categoryGroups, categoryAmounts, outputMetrics };
 };
+
+function OSOCharts({ metric }: { metric: string }) {
+    const [osoData, setOSOData] = useState<{
+        project_name: string;
+        project_id: string;
+        project_namespace: string;
+        display_name: string;
+        event_source: string;
+        bucket_day: string;
+        metric: string;
+        amount: number;
+    }[]>([]);
+
+    async function getOSOData(metric: string) {
+        const response = await axios.get(`${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/projects/funding-the-commons/oso/${metric}?cache=true`);
+        return response.data;
+    }
+
+    useEffect(() => {
+        getOSOData(metric).then(data => {
+            setOSOData(data);
+        });
+    }, [metric]);
+
+    // Format data for chart
+    const chartData = osoData.map(item => ({
+        date: new Date(item.bucket_day).toLocaleDateString(),
+        amount: item.amount
+    }));
+
+    return (
+        <Card>
+            <Title>OSO Metrics - {metric}</Title>
+            <AreaChart
+                className="mt-4 h-72"
+                data={chartData}
+                index="date"
+                categories={["amount"]}
+                colors={["blue"]}
+                valueFormatter={(value) => value.toLocaleString()}
+            />
+        </Card>
+    );
+}
 
 export const ProgramAnalytics = ({ data }: { data: ProgramImpactDataResponse[] }) => {
     const { categoryGroups, categoryAmounts, outputMetrics } = aggregateDataByCategory(data);
@@ -191,6 +237,10 @@ export const ProgramAnalytics = ({ data }: { data: ProgramImpactDataResponse[] }
                     </div>
                 </Card>
             )}
+
+            <div className="w-full h-full">
+                <OSOCharts metric="fulltime_developers" />
+            </div>
 
             {/* Keep the existing Dune iframe */}
             <div className="w-full h-full">
