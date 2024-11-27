@@ -24,14 +24,14 @@ const aggregateDataByCategory = (data: ProgramImpactDataResponse[]) => {
             }
 
             // Sum up grant amounts for each category
-            categoryAmounts[output.categoryName] += Number(output.amount || 0);
+            categoryAmounts[output.categoryName] += Number(output?.amount?.replace(/[^0-9]/g, '') || 0);
 
             // Create project-specific entry
             categoryGroups[output.categoryName].push({
                 projectName: output.projectTitle,
                 name: output.name,
                 value: Number(output.value),
-                grantAmount: Number(output.amount || 0),
+                grantAmount: Number(output?.amount || 0),
             });
 
             outputMetrics[output.name] = {
@@ -237,15 +237,6 @@ export const ProgramAnalytics = ({ data }: { data: ProgramImpactDataResponse[] }
                     </div>
                 </Card>
             )}
-
-            <div className="w-full h-full">
-                <OSOCharts metric="fulltime_developers" />
-            </div>
-
-            {/* Keep the existing Dune iframe */}
-            <div className="w-full h-full">
-                <iframe className="w-full h-[400px]" src="https://dune.com/embeds/2355896/3859009/" />
-            </div>
         </div>
     );
 };

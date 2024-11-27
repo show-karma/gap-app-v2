@@ -73,11 +73,6 @@ export const GrantOutputs = () => {
             return;
         }
 
-        if (!form.outputTimestamp?.length) {
-            toast.error("Please select a date");
-            return;
-        }
-
         setForms(prev => prev.map(f =>
             f.outputId === outputId ? { ...f, isSaving: true } : f
         ));
@@ -85,9 +80,9 @@ export const GrantOutputs = () => {
         await sendOutputAnswer(
             outputId,
             form.categoryId,
-            form.value[form.value.length - 1],
-            form.proof[form.proof.length - 1],
-            form.outputTimestamp[form.outputTimestamp.length - 1]
+            form.value?.[form.value?.length - 1],
+            form.proof?.[form.proof?.length - 1],
+            form.outputTimestamp?.[form.outputTimestamp?.length - 1] || new Date().toISOString().split('T')[0]
         );
 
         setForms(prev => prev.map(f =>
@@ -223,7 +218,7 @@ export const GrantOutputs = () => {
     // Filter outputs based on authorization
     const filteredOutputs = isAuthorized
         ? outputAnswers
-        : outputAnswers.filter(item => item.value);
+        : outputAnswers.filter(item => item.value?.length);
 
     return (
         <div className="w-full max-w-[100rem]">
