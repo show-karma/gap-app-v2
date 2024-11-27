@@ -42,7 +42,10 @@ export const INDEXER = {
   CATEGORIES: {
     CREATE: (idOrSlug: string) => `/categories/create/${idOrSlug}`,
     QUESTIONS: {
-      UPDATE: (idOrSlug: string) => `/categories/${idOrSlug}/questions`,
+      UPDATE: (categoryId: string) => `/categories/${categoryId}/questions`,
+    },
+    OUTPUTS: {
+      UPDATE: (categoryId: string) => `/categories/${categoryId}/outputs`,
     },
   },
   COMMUNITY: {
@@ -58,6 +61,8 @@ export const INDEXER = {
       `/communities/${communityIdOrSlug}/grant-titles`,
     PROGRAMS: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/programs`,
+    PROGRAM_IMPACT: (communityIdOrSlug: string, programId: string) =>
+      `/communities/${communityIdOrSlug}/programs/${programId}/outputs`,
     GRANTS: (
       communityIdOrSlug: string,
       {
@@ -117,6 +122,10 @@ export const INDEXER = {
       ALL: (grantUID: string) => `/grants/${grantUID}/questions/answer/feed`,
       ALL_ANON: (grantUID: string) =>
         `/grants/${grantUID}/questions/answer/feed-anon`,
+    },
+    OUTPUTS: {
+      GET: (grantUID: string) => `/grants/${grantUID}/outputs`,
+      SEND: (grantUID: string) => `/grants/${grantUID}/outputs/answer`,
     },
     CATEGORIES: {
       ALL: (idOrSlug: string) => `/communities/${idOrSlug}/categories`,

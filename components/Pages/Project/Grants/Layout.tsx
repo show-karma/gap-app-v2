@@ -61,6 +61,7 @@ const allViews: GrantScreen[] = [
   "edit-grant",
   "grant-update",
   "impact-criteria",
+  "outputs",
   "overview",
   "complete-grant",
   "grant-update",
@@ -165,6 +166,11 @@ export const GrantsLayout = ({ children, project }: GrantsLayoutProps) => {
       {
         name: "Milestones and Updates",
         tabName: "milestones-and-updates",
+        current: false,
+      },
+      {
+        name: "Outputs",
+        tabName: "outputs",
         current: false,
       },
       {
@@ -436,7 +442,7 @@ export const GrantsLayout = ({ children, project }: GrantsLayoutProps) => {
                 className="isolate flex flex-row max-lg:w-full flex-wrap gap-4 divide-x divide-gray-200 rounded-lg py-1 px-1  bg-[#F2F4F7] dark:bg-zinc-900 w-max transition-all duration-300 ease-in-out"
                 aria-label="Tabs"
               >
-                {tabs.map((tab) => (
+                {tabs.filter(tab => tab.name !== "Outputs").map((tab) => (
                   <Link
                     key={tab.name}
                     href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
