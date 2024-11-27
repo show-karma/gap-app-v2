@@ -4,9 +4,8 @@ import { useParams, useRouter } from "next/navigation";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
 import { useAccount } from "wagmi";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { Question } from "@/types";
 import Link from "next/link";
-import { CheckIcon, ChevronLeftIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import fetchData from "@/utilities/fetchData";
 import { Button } from "@/components/Utilities/Button";
@@ -23,7 +22,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { ProgramAnalytics } from "./ProgramAnalytics";
 import { SearchGrantProgram } from "@/components/GrantProgramDropdown";
 import { formatDate } from "@/utilities/formatDate";
-
+import { OutputMetrics } from "./OutputMetrics";
 
 
 // Add new interface for the grouped response
@@ -177,7 +176,7 @@ export default function ProgramImpactPage() {
                 <div className="flex w-full items-center justify-center">
                     <Spinner />
                 </div>
-            ) : !isAdmin ? (
+            ) : isAdmin ? (
                 <div className="flex w-full flex-1 flex-col items-center gap-8">
                     <div className="w-full flex flex-row items-center justify-between  max-w-4xl">
                         <Link
@@ -192,9 +191,18 @@ export default function ProgramImpactPage() {
                         </Link>
                     </div>
                     <div className="w-full max-w-4xl">
+                        <div className="space-y-6">
+                            <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
+                                Community Output Metrics
+                            </h2>
+                            <OutputMetrics communitySlug={community?.details?.data?.slug || ""} />
+                        </div>
+
+
+
                         <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
                             <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
-                                Select a grant program to view impact outputs
+                                Select a grant program to view program impact
                             </h2>
                             <SearchGrantProgram
                                 communityUID={community?.uid || ""}
