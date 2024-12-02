@@ -26,11 +26,13 @@ const aggregateDataByCategory = (data: ProgramImpactDataResponse[]) => {
             // Sum up grant amounts for each category
             categoryAmounts[output.categoryName] += Number(output?.amount?.replace(/[^0-9]/g, '') || 0);
 
+
+            const currentValue = Number(output.value.length > 0 ? output.value[output.value.length - 1] : 0)
             // Create project-specific entry
             categoryGroups[output.categoryName].push({
                 projectName: output.projectTitle,
                 name: output.name,
-                value: Number(output.value),
+                value: currentValue,
                 grantAmount: Number(output?.amount || 0),
             });
 
@@ -45,49 +47,6 @@ const aggregateDataByCategory = (data: ProgramImpactDataResponse[]) => {
     return { categoryGroups, categoryAmounts, outputMetrics };
 };
 
-function OSOCharts({ metric }: { metric: string }) {
-    const [osoData, setOSOData] = useState<{
-        project_name: string;
-        project_id: string;
-        project_namespace: string;
-        display_name: string;
-        event_source: string;
-        bucket_day: string;
-        metric: string;
-        amount: number;
-    }[]>([]);
-
-    async function getOSOData(metric: string) {
-        const response = await axios.get(`${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/projects/funding-the-commons/oso/${metric}?cache=true`);
-        return response.data;
-    }
-
-    useEffect(() => {
-        getOSOData(metric).then(data => {
-            setOSOData(data);
-        });
-    }, [metric]);
-
-    // Format data for chart
-    const chartData = osoData.map(item => ({
-        date: new Date(item.bucket_day).toLocaleDateString(),
-        amount: item.amount
-    }));
-
-    return (
-        <Card>
-            <Title>OSO Metrics - {metric}</Title>
-            <AreaChart
-                className="mt-4 h-72"
-                data={chartData}
-                index="date"
-                categories={["amount"]}
-                colors={["blue"]}
-                valueFormatter={(value) => value.toLocaleString()}
-            />
-        </Card>
-    );
-}
 
 export const ProgramAnalytics = ({ data }: { data: ProgramImpactDataResponse[] }) => {
     const { categoryGroups, categoryAmounts, outputMetrics } = aggregateDataByCategory(data);
@@ -118,36 +77,49 @@ export const ProgramAnalytics = ({ data }: { data: ProgramImpactDataResponse[] }
             }))
         : [];
 
+
+
     return (
         <div className="space-y-6 w-full max-w-4xl">
-            <div className="flex gap-4 items-center">
-                <Select
-                    className="max-w-xs"
-                    value={selectedCategory}
-                    onValueChange={setSelectedCategory}
-                    placeholder="Select category"
-                >
-                    {categories.map((category) => (
-                        <SelectItem key={category} value={category}>
-                            {category}
-                        </SelectItem>
-                    ))}
-                </Select>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+                <div className="flex flex-col gap-2 w-full">
+                    <label htmlFor="category-select" className="text-sm font-medium text-gray-700 dark:text-zinc-300">
+                        Category
+                    </label>
+                    <Select
+                        id="category-select"
+                        className="w-full"
+                        value={selectedCategory}
+                        onValueChange={setSelectedCategory}
+                        placeholder="Select category"
+                    >
+                        {categories.map((category) => (
+                            <SelectItem key={category} value={category}>
+                                {category}
+                            </SelectItem>
+                        ))}
+                    </Select>
+                </div>
 
-                <Select
-                    className="max-w-xs"
-                    value={selectedOutput}
-                    onValueChange={setSelectedOutput}
-                    placeholder="Select output metric"
-                >
-                    {outputNames.map((name) => (
-                        <SelectItem key={name} value={name}>
-                            {name}
-                        </SelectItem>
-                    ))}
-                </Select>
+                <div className="flex flex-col gap-2 w-full">
+                    <label htmlFor="output-select" className="text-sm font-medium text-gray-700 dark:text-zinc-300">
+                        Output Metric
+                    </label>
+                    <Select
+                        id="output-select"
+                        className="w-full"
+                        value={selectedOutput}
+                        onValueChange={setSelectedOutput}
+                        placeholder="Select output metric"
+                    >
+                        {outputNames.map((name) => (
+                            <SelectItem key={name} value={name}>
+                                {name}
+                            </SelectItem>
+                        ))}
+                    </Select>
+                </div>
             </div>
-
 
 
             <div className="grid grid-cols-1 gap-6">
@@ -179,7 +151,7 @@ export const ProgramAnalytics = ({ data }: { data: ProgramImpactDataResponse[] }
                                 </h3>
                                 <div className="mt-2">
                                     <p className="text-sm text-gray-900 dark:text-gray-100">
-                                        {selectedOutput}: {metric.value.toLocaleString()} {metric.unit}
+                                        {selectedOutput}: {metric.value} {metric.unit}
                                     </p>
                                 </div>
                             </div>
