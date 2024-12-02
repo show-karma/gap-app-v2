@@ -4,16 +4,11 @@ import { useParams, useRouter } from "next/navigation";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
 import { useAccount } from "wagmi";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { Question } from "@/types";
 import toast from "react-hot-toast";
 import Link from "next/link";
 import { CheckIcon, ChevronLeftIcon, TrashIcon } from "@heroicons/react/24/outline";
-
-import { NoSymbolIcon } from "@heroicons/react/24/solid";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import fetchData from "@/utilities/fetchData";
 import { Button } from "@/components/Utilities/Button";
-import dynamic from "next/dynamic";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { zeroUID } from "@/utilities/commons";
 import { PAGES } from "@/utilities/pages";
@@ -24,25 +19,23 @@ import { defaultMetadata } from "@/utilities/meta";
 import { useAuthStore } from "@/store/auth";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { QuestionCreationDialog } from "@/components/Pages/Admin/QuestionCreationDialog";
 import { errorManager } from "@/components/Utilities/errorManager";
 
-const MarkdownPreview = dynamic(() => import("@uiw/react-markdown-preview"), {
-  ssr: false,
-});
+const OUTPUT_TYPES = ["output", "outcome", "impact"] as const;
+type OutputType = typeof OUTPUT_TYPES[number];
 
-type QuestionsAssigned = Record<string, string[]>;
+interface Output {
+  id: string;
+  name: string;
+  categoryId: string;
+  type: OutputType;
+}
 
 interface Category {
   id: string;
   name: string;
   category: string;
-  outputs: {
-    id: string
-    name: string
-    categoryId: string
-  }[];
-
+  outputs: Output[];
 }
 
 export const metadata = defaultMetadata;
@@ -53,8 +46,6 @@ export default function AssignOutputsPage() {
   const { isAuth } = useAuthStore();
   const params = useParams();
   const communityId = params.communityId as string;
-  // const { gap } = useGap();
-
   // Call API
   const [categories, setCategories] = useState<Category[]>([]);
 
@@ -142,7 +133,6 @@ export default function AssignOutputsPage() {
           );
           if (data) {
             setCategories(data);
-
           }
         } catch (error: any) {
           errorManager(
@@ -166,13 +156,10 @@ export default function AssignOutputsPage() {
   }, [community?.uid]);
 
 
-  const [isSaving, setIsSaving] = useState<Record<string, boolean>>({});
-
-
-
 
 
   const [newOutputs, setNewOutputs] = useState<Record<string, string>>({});
+  const [newOutputTypes, setNewOutputTypes] = useState<Record<string, OutputType>>({});
   const [hasOutputChanges, setHasOutputChanges] = useState<Record<string, boolean>>({});
   const [isSavingOutputs, setIsSavingOutputs] = useState<Record<string, boolean>>({});
 
@@ -190,13 +177,15 @@ export default function AssignOutputsPage() {
         {
           id: `temp-${Date.now()}`,
           name: newOutputs[categoryId].trim(),
-          categoryId
+          categoryId,
+          type: newOutputTypes[categoryId] || "output"
         }
       ]
     };
 
     setCategories(updatedCategories);
     setNewOutputs(prev => ({ ...prev, [categoryId]: '' }));
+    setNewOutputTypes(prev => ({ ...prev, [categoryId]: "output" }));
     setHasOutputChanges(prev => ({ ...prev, [categoryId]: true }));
   };
 
@@ -219,12 +208,18 @@ export default function AssignOutputsPage() {
   const saveOutputs = async (category: Category) => {
     setIsSavingOutputs({ ...isSavingOutputs, [category.id]: true });
     try {
-      const [data, error] = await fetchData(
+      const [, error] = await fetchData(
         INDEXER.CATEGORIES.OUTPUTS.UPDATE(category.id),
         "PUT",
         {
           idOrSlug: community?.uid,
-          outputs: category.outputs?.map((output) => output?.name),
+          outputs: category.outputs?.map((output) => ({
+            name: output.name,
+            type: output.type
+          })) as {
+            name: string,
+            type: string
+          }[],
         }
       );
       if (error) throw new Error("Error saving outputs");
@@ -282,10 +277,16 @@ export default function AssignOutputsPage() {
                     <div className="flex flex-col gap-2">
                       {category.outputs.map((output) => (
                         <div key={output.id}
-                          className="flex items-center justify-between gap-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg">
-                          <span className="text-sm text-gray-700 dark:text-gray-300">
-                            {output.name}
-                          </span>
+                          className="flex items-center justify-between gap-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-gray-700 dark:text-gray-300">
+                              {output.name}
+                            </span>
+                            <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full">
+                              {output.type}
+                            </span>
+                          </div>
                           <button
                             onClick={() => handleRemoveOutput(category.id, output.id)}
                             className="text-secondary-500 hover:text-secondary-700 transition-colors"
@@ -296,26 +297,43 @@ export default function AssignOutputsPage() {
                         </div>
                       ))}
 
-                      <div className="flex items-center gap-2 mt-4 mx-2">
-                        <input
-                          type="text"
-                          value={newOutputs[category.id] || ''}
-                          onChange={(e) => setNewOutputs(prev => ({
-                            ...prev,
-                            [category.id]: e.target.value
-                          }))}
-                          placeholder="Enter new output name"
-                          className="text-sm flex-1 p-2 border border-gray-200 dark:border-gray-700 rounded-md 
-                            focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
-                        />
-                        <Button
-                          onClick={() => handleAddOutput(category.id)}
-                          disabled={!newOutputs[category.id]?.trim()}
-                          className="px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 
-                            transition-colors disabled:opacity-50"
-                        >
-                          Add Output
-                        </Button>
+                      <div className="flex flex-col gap-2 mt-4 mx-2">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={newOutputs[category.id] || ''}
+                            onChange={(e) => setNewOutputs(prev => ({
+                              ...prev,
+                              [category.id]: e.target.value
+                            }))}
+                            placeholder="Enter new output name"
+                            className="text-sm flex-1 p-2 border border-gray-200 dark:border-gray-700 rounded-md 
+                              focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
+                          />
+                          <select
+                            value={newOutputTypes[category.id] || "output"}
+                            onChange={(e) => setNewOutputTypes(prev => ({
+                              ...prev,
+                              [category.id]: e.target.value as OutputType
+                            }))}
+                            className="w-32 text-sm p-2 border border-gray-200 dark:border-gray-700 rounded-md 
+                              focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
+                          >
+                            {OUTPUT_TYPES.map((type) => (
+                              <option key={type} value={type}>
+                                {type.charAt(0).toUpperCase() + type.slice(1)}
+                              </option>
+                            ))}
+                          </select>
+                          <Button
+                            onClick={() => handleAddOutput(category.id)}
+                            disabled={!newOutputs[category.id]?.trim()}
+                            className="px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 
+                              transition-colors disabled:opacity-50"
+                          >
+                            Add Output
+                          </Button>
+                        </div>
                       </div>
 
                       {hasOutputChanges[category.id] && (
@@ -323,10 +341,10 @@ export default function AssignOutputsPage() {
                           isLoading={isSavingOutputs[category.id]}
                           disabled={isSavingOutputs[category.id]}
                           onClick={() => saveOutputs(category)}
-                          className="mt-4 bg-blue-500 px-4 py-2 rounded-md text-white hover:bg-blue-600 
-                            dark:bg-blue-900 transition-colors"
+                          className="mt-4 text-center mx-auto bg-primary-500 px-4 py-2 rounded-md text-white hover:bg-primary-600 
+                            dark:bg-primary-900 transition-colors"
                         >
-                          Save outputs
+                          Save changes
                         </Button>
                       )}
                     </div>
