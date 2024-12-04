@@ -1,17 +1,14 @@
 "use client";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Spinner } from "@/components/Utilities/Spinner";
 import Link from "next/link";
 import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import fetchData from "@/utilities/fetchData";
-import { zeroUID } from "@/utilities/commons";
 import { PAGES } from "@/utilities/pages";
 import { defaultMetadata } from "@/utilities/meta";
 import { INDEXER } from "@/utilities/indexer";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { errorManager } from "@/components/Utilities/errorManager";
 import { ProgramAnalytics } from "./ProgramAnalytics";
 import { SearchGrantProgram } from "@/components/GrantProgramDropdown";
 import { Card, Title, AreaChart } from "@tremor/react";
@@ -52,8 +49,6 @@ const prepareChartData = (
 };
 
 export default function ProgramImpactPage() {
-    const router = useRouter();
-
     const params = useParams();
     const communityId = params.communityId as string;
     const [selectedProgram, setSelectedProgram] = useState<GrantProgram | undefined>(
@@ -61,70 +56,38 @@ export default function ProgramImpactPage() {
     );
 
 
-    const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
-    const [community, setCommunity] = useState<ICommunityResponse | undefined>(
-        undefined
-    );
+    const [loadingProgramImpact, setLoadingProgramImpact] = useState<boolean>(true); // Loading state of the API call
+
     // Update the state to handle grouped data
     const [programImpactData, setProgramImpactData] = useState<ProgramImpactDataResponse[]>([]);
 
-    useEffect(() => {
-        const fetchDetails = async () => {
-            if (!communityId) return;
-            setLoading(true);
-            try {
-                const { data: result } = await gapIndexerApi.communityBySlug(
-                    communityId
-                );
-                if (!result || result.uid === zeroUID)
-                    throw new Error("Community not found");
-                setCommunity(result);
-            } catch (error: any) {
-                errorManager(`Error fetching community ${communityId}`, error, {
-                    community: communityId,
-                });
-                console.error("Error fetching data:", error);
-                if (
-                    error.message === "Community not found" ||
-                    error.message.includes("422")
-                ) {
-                    router.push(PAGES.NOT_FOUND);
-                }
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchDetails();
-    }, [communityId]);
-
-    useEffect(() => {
-        console.log(programImpactData);
-    }, [programImpactData]);
-
-
-    useMemo(() => {
-        if (community?.uid) {
-            setLoading(true);
-        }
-    }, [community?.uid]);
 
     async function getProgramImpact() {
-        if (!selectedProgram?.programId) return;
-        const [data, error] = await fetchData(INDEXER.COMMUNITY.PROGRAM_IMPACT(communityId, selectedProgram.programId));
-        if (error) {
-            console.error(error);
-            return;
-        }
+        setLoadingProgramImpact(true);
+        try {
+            if (!selectedProgram?.programId) return;
+            const [data, error] = await fetchData(INDEXER.COMMUNITY.PROGRAM_IMPACT(communityId, selectedProgram.programId));
+            if (error) {
+                console.error(error);
+                return;
+            }
+            setProgramImpactData(data.map((item: any) => ({
+                categoryName: item.categoryName,
+                outputs: item.outputs.map((output: any) => ({
+                    ...output,
+                    lastUpdated: output.createdAt || output.updatedAt
+                }))
+            })));
 
-        setProgramImpactData(data.map((item: any) => ({
-            categoryName: item.categoryName,
-            outputs: item.outputs.map((output: any) => ({
-                ...output,
-                lastUpdated: output.createdAt || output.updatedAt
-            }))
-        })));
+        } catch (error) {
+
+            console.error("Error fetching program impact", error);
+        } finally {
+            setLoadingProgramImpact(false);
+        }
     }
+
+
 
     useEffect(() => {
         if (selectedProgram?.programId) {
@@ -136,26 +99,24 @@ export default function ProgramImpactPage() {
         return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
     }
 
-
     return (
-        <section className="flex flex-row max-lg:flex-col-reverse w-full">
-            {loading ? (
-                <div className="flex w-full items-center justify-center">
+        <section className="flex flex-col w-full">
+            <div className="w-full max-w-4xl">
+                <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
+                        Select a grant program to view program impact
+                    </h2>
+                    <SearchGrantProgram
+                        communityUID={communityId || ""}
+                        setSelectedProgram={setSelectedProgram}
+                    />
+                </div>
+            </div>
+            {loadingProgramImpact && selectedProgram ? (
+                <div className="mt-5 flex w-full items-center justify-center">
                     <Spinner />
                 </div>
             ) : <div className="flex w-full flex-1 flex-col items-center gap-8">
-                <div className="w-full max-w-4xl">
-                    <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
-                        <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-gray-100">
-                            Select a grant program to view program impact
-                        </h2>
-                        <SearchGrantProgram
-                            communityUID={community?.uid || ""}
-                            setSelectedProgram={setSelectedProgram}
-                        />
-                    </div>
-                </div>
-
                 {programImpactData.length > 0 ? (
                     <div className="w-full max-w-4xl space-y-6">
                         <div className="bg-white dark:bg-zinc-900 p-6 rounded-lg border border-gray-200 dark:border-gray-700">
