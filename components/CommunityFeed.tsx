@@ -51,6 +51,7 @@ export const CommunityFeed = () => {
             feed.map((item, index) => {
               return (
                 <div
+                  id="feed-item"
                   className="flex w-full flex-col"
                   key={item.uid + item.message + item.timestamp + item.type}
                 >

@@ -78,6 +78,12 @@ export default function Footer() {
           >
             Sitemap
           </ExternalLink>
+          <ExternalLink
+            href={karmaLinks.apiDocs}
+            className="text-[#A5A7C0] transition-all ease-in-out hover:text-gray-300"
+          >
+            API Docs
+          </ExternalLink>
         </div>
       </div>
     </footer>

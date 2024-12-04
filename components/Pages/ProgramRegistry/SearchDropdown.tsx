@@ -7,7 +7,7 @@ import {
   CommandInput,
   CommandItem,
 } from "cmdk";
-import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid";
+import { CheckIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
 import { cn } from "@/utilities/tailwind";
 import { ChevronDown } from "@/components/Icons/ChevronDown";
@@ -32,6 +32,7 @@ interface SearchDropdownProps {
   canAdd?: boolean;
   shouldSort?: boolean;
   canSearch?: boolean;
+  id?: string;
 }
 export const SearchDropdown: FC<SearchDropdownProps> = ({
   onSelectFunction,
@@ -45,6 +46,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
   canAdd = false,
   shouldSort = true,
   canSearch = true,
+  id,
 }) => {
   const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -55,11 +57,11 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
     {
       value: string;
       image:
-        | {
-            light: string;
-            dark: string;
-          }
-        | undefined;
+      | {
+        light: string;
+        dark: string;
+      }
+      | undefined;
     }[]
   >([]);
 
@@ -71,14 +73,14 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
 
     const sortedList = shouldSort
       ? parsedArray.sort((a, b) => {
-          if (a.value < b.value) {
-            return -1;
-          }
-          if (a.value > b.value) {
-            return 1;
-          }
-          return 0;
-        })
+        if (a.value < b.value) {
+          return -1;
+        }
+        if (a.value > b.value) {
+          return 1;
+        }
+        return 0;
+      })
       : parsedArray;
     setOrderedList(sortedList);
   }, []);
@@ -120,14 +122,15 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
           "min-w-40 w-full max-w-max max-md:max-w-full justify-between flex flex-row cursor-default rounded-md bg-white dark:bg-zinc-800 dark:text-zinc-100 py-3 px-4 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6",
           buttonClassname
         )}
+        id={id}
       >
         <div className="flex flex-row gap-4 w-full justify-between">
           <p className="block w-max">
             {selected.length
               ? `${selected.length} ${pluralize(
-                  type,
-                  selected.length
-                ).toLowerCase()} selected`
+                type,
+                selected.length
+              ).toLowerCase()} selected`
               : `${prefixUnselected} ${type}`}
           </p>
           <span>
@@ -140,6 +143,8 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
           {canSearch ? (
             <div className="w-full px-2">
               <CommandInput
+                id={`${id}-search`}
+                name={`${id}-search`}
                 className="rounded-md px-2 w-full dark:text-white dark:bg-zinc-800"
                 placeholder={`Search ${type}...`}
                 value={search}
@@ -181,6 +186,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
             {orderedList.map((item) => (
               <CommandItem key={item.value}>
                 <div
+                  id={`${item.value}-item`}
                   onClick={() => {
                     onSelectFunction(item.value);
                   }}

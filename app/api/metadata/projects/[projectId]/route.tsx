@@ -32,6 +32,12 @@ export async function GET(
       ? project?.details?.data.description.substring(0, 200) + "..."
       : project?.details?.data.description;
 
+  const milestonesCompleted = project.grants.reduce((acc, grant) => {
+    return (
+      acc + grant.milestones.filter((milestone) => milestone.completed).length
+    );
+  }, 0);
+
   const stats = [
     {
       title: pluralize("Grant", project?.grants.length || 0),
@@ -39,8 +45,8 @@ export async function GET(
       icon: "https://gap.karmahq.xyz/icons/funding-lg.png",
     },
     {
-      title: pluralize("Impact", project?.impacts.length || 0),
-      value: project?.impacts.length || 0,
+      title: `${pluralize("Milestone", milestonesCompleted || 0)} completed`,
+      value: milestonesCompleted || 0,
       icon: "https://gap.karmahq.xyz/icons/impact.png",
     },
     {

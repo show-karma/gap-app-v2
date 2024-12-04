@@ -248,7 +248,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
                     ? update?.data.proofOfWork
                     : `https://${update?.data.proofOfWork}`
                 }
-                className="flex flex-row w-max max-w-full gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent"
+                className="flex flex-row w-max max-w-full gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent break-all line-clamp-3"
               >
                 {update?.data.proofOfWork.includes("http")
                   ? `${update?.data.proofOfWork.slice(0, 80)}${

@@ -74,6 +74,7 @@ export const ProjectFeed = ({ initialFeed = [] }: ProjectFeedProps) => {
             feed.map((item, index) => {
               return (
                 <div
+                  id="project-feed"
                   className="w-full flex flex-col"
                   key={item.uid + item.message + item.timestamp + item.type}
                 >

@@ -171,7 +171,7 @@ export default function Header() {
   return (
     <>
       <>
-        <div className="px-4 sm:px-6 lg:px-12  border-b border-b-[#DFE1E6]">
+        <header className="px-4 sm:px-6 lg:px-12  border-b border-b-[#DFE1E6]">
           <div className="relative flex lg:gap-8 justify-between items-center flex-row">
             <div className="flex flex-row gap-16 items-center justify-between">
               <div className="flex py-4 lg:inset-y-0 lg:left-0 lg:static">
@@ -518,7 +518,7 @@ export default function Header() {
               </div>
             </div>
           </div>
-        </div>
+        </header>
       </>
       <OnboardingDialog />
     </>

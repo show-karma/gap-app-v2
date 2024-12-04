@@ -1,32 +1,29 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import React, { Dispatch, useMemo } from "react";
-import { useState, useEffect } from "react";
-import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
-import { CheckIcon } from "@heroicons/react/24/solid";
-import { Spinner } from "@/components/Utilities/Spinner";
-import debounce from "lodash.debounce";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
+import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
+import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
 import {
   GrantProgram,
   ProgramList,
 } from "@/components/Pages/ProgramRegistry/ProgramList";
-import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
-import { useQueryState } from "nuqs";
-import { useAccount } from "wagmi";
 import Pagination from "@/components/Utilities/Pagination";
-import { ProgramDetailsDialog } from "@/components/Pages/ProgramRegistry/ProgramDetailsDialog";
-import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
-import { checkIsPoolManager } from "@/utilities/registry/checkIsPoolManager";
-import { useSearchParams } from "next/navigation";
-import { useQuery } from "@tanstack/react-query";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useRegistryStore } from "@/store/registry";
+import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { checkIsPoolManager } from "@/utilities/registry/checkIsPoolManager";
+import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
+import { CheckIcon } from "@heroicons/react/24/solid";
+import { useQuery } from "@tanstack/react-query";
+import debounce from "lodash.debounce";
+import { useSearchParams } from "next/navigation";
+import { useQueryState } from "nuqs";
+import React, { Dispatch, useEffect, useState } from "react";
+import { useAccount } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
-import { LoadingPrograms, LoadingProgramTable } from "./Loading/Programs";
+import { LoadingProgramTable } from "./Loading/Programs";
 import { ProgramHeader } from "./ProgramHeader";
 
 const statuses = ["Active", "Inactive"];
@@ -197,6 +194,11 @@ export const ProgramsExplorer = () => {
       if (error) {
         throw new Error(error);
       }
+      res.programs.forEach((program: GrantProgram) => {
+        if (typeof program.metadata?.grantTypes === "string") {
+          program.metadata.grantTypes = [program.metadata.grantTypes];
+        }
+      });
       return res;
     },
   });
@@ -215,6 +217,9 @@ export const ProgramsExplorer = () => {
         );
         if (data) {
           setSelectedProgram(data);
+          if (typeof data.metadata?.grantTypes === "string") {
+            data.metadata.grantTypes = [data.metadata.grantTypes];
+          }
         }
       } catch (error: any) {
         errorManager(`Error while searching for program by id`, error);
@@ -246,6 +251,7 @@ export const ProgramsExplorer = () => {
             <p className="text-black dark:text-white font-semibold">Status</p>
             <button
               onClick={() => setStatus("")}
+              id={`status-all`}
               key={"All"}
               className={`px-3 py-1 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${
                 status === ""
@@ -257,6 +263,7 @@ export const ProgramsExplorer = () => {
             </button>
             {statuses.map((type) => (
               <button
+                id={`status-${type.toLowerCase()}`}
                 onClick={() => setStatus(type)}
                 key={type}
                 className={`px-3 py-1 min-w-max flex flex-row items-center gap-1 text-sm font-semibold rounded-full cursor-pointer ${
@@ -286,7 +293,7 @@ export const ProgramsExplorer = () => {
                   />
                 </div>
                 <input
-                  id="search"
+                  id="search-programs"
                   name="search"
                   className="block w-full rounded-full border-0 bg-white dark:bg-zinc-600 py-1.5 pr-10 pl-3 text-black dark:text-white dark:placeholder:text-zinc-100  placeholder:text-zinc-900  sm:text-sm sm:leading-6"
                   placeholder="Search"
@@ -316,6 +323,7 @@ export const ProgramsExplorer = () => {
                 type={"Networks"}
                 selected={selectedNetworks}
                 imageDictionary={registryHelper.networkImages}
+                id="networks-dropdown"
               />
               <SearchDropdown
                 list={registryHelper.ecosystems}
@@ -328,6 +336,7 @@ export const ProgramsExplorer = () => {
                 type={"Ecosystems"}
                 selected={selectedEcosystems}
                 // imageDictionary={}
+                id="ecosystems-dropdown"
               />
               <SearchDropdown
                 list={registryHelper.grantTypes}
@@ -340,6 +349,7 @@ export const ProgramsExplorer = () => {
                 type={"Funding Mechanisms"}
                 selected={selectedGrantTypes}
                 // imageDictionary={}
+                id="funding-mechanisms-dropdown"
               />
             </div>
           </div>

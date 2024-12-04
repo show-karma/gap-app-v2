@@ -192,21 +192,33 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
 
   const handleSelection = (text: Tab) => {
     setSelectedMilestoneType(text);
+    window.location.hash = text;
   };
 
-  useEffect(() => {
-    const { unsortedCompletedMilestones, unsortedPendingMilestones } =
-      getUnsortedMilestones();
+  // useEffect(() => {
+  //   const { unsortedCompletedMilestones, unsortedPendingMilestones } =
+  //     getUnsortedMilestones();
 
-    if (
-      unsortedPendingMilestones.length &&
-      !unsortedCompletedMilestones.length
-    ) {
-      handleSelection("pending");
+  //   if (
+  //     unsortedPendingMilestones.length &&
+  //     !unsortedCompletedMilestones.length
+  //   ) {
+  //     handleSelection("pending");
+  //   } else {
+  //     handleSelection("completed");
+  //   }
+  // }, [grant.uid, generalArray]);
+
+  const hash = window.location.hash.replace("#", "") as Tab;
+  useEffect(() => {
+    if (!hash) {
+      setSelectedMilestoneType("completed");
     } else {
-      handleSelection("completed");
+      if (["completed", "pending", "all"].includes(hash)) {
+        setSelectedMilestoneType(hash);
+      }
     }
-  }, [grant.uid, generalArray]);
+  }, [hash]);
 
   useMemo(() => {
     rearrangeArrayByType();
@@ -217,7 +229,7 @@ export const MilestonesList: FC<MilestonesListProps> = ({ grant }) => {
   const milestonesCounter = milestones.length;
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2" id="milestones-and-updates-list">
       <div className="flex flex-col gap-3">
         <div className=" flex flex-col items-start justify-start gap-0 ">
           <div className="flex w-full flex-row flex-wrap items-center justify-between gap-4 py-3">
