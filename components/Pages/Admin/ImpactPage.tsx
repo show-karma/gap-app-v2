@@ -61,7 +61,7 @@ export default function ProgramImpactPage() {
                 if (!result || result.uid === zeroUID)
                     throw new Error("Community not found");
                 setCommunity(result);
-                console.log("Community data fetched", result);
+
                 setLoading(false);
             } catch (error: any) {
                 setLoading(false);
