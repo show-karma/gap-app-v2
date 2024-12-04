@@ -53,6 +53,7 @@ export default function ProgramImpactPage() {
         const fetchDetails = async () => {
             if (!communityId) return;
             setLoading(true);
+            console.log("Fetching community data");
             try {
                 const { data: result } = await gapIndexerApi.communityBySlug(
                     communityId
@@ -60,7 +61,10 @@ export default function ProgramImpactPage() {
                 if (!result || result.uid === zeroUID)
                     throw new Error("Community not found");
                 setCommunity(result);
+                console.log("Community data fetched", result);
+                setLoading(false);
             } catch (error: any) {
+                setLoading(false);
                 errorManager(`Error fetching community ${communityId}`, error, {
                     community: communityId,
                 });
@@ -71,6 +75,7 @@ export default function ProgramImpactPage() {
                 ) {
                     router.push(PAGES.NOT_FOUND);
                 }
+
             } finally {
                 setLoading(false);
             }
@@ -79,13 +84,6 @@ export default function ProgramImpactPage() {
         fetchDetails();
     }, [communityId]);
 
-
-
-    useMemo(() => {
-        if (community?.uid) {
-            setLoading(true);
-        }
-    }, [community?.uid]);
 
 
     const tabs = [
