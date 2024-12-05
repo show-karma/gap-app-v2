@@ -9,11 +9,12 @@ export async function getProjectOwner(
   signer: SignerOrProvider,
   project: Project
 ): Promise<boolean> {
-  const publicAddress = signer.getAddress();
   try {
+    const publicAddress = signer.getAddress();
     const { uid, chainID } = project;
 
     const resolver = await GAP.getProjectResolver(signer as any, chainID);
+
     const response = await resolver.isAdmin(uid, publicAddress);
     const isowner = response;
     return isowner;

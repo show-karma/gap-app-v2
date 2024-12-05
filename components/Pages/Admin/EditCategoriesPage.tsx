@@ -184,17 +184,17 @@ export default function EditCategoriesPage() {
             .slice(itemsPerPage * (currentPage - 1), itemsPerPage * currentPage)
             .map(
               (grant: any) =>
-                ({
-                  grant: grant.details?.data?.title || grant.uid || "",
-                  project: grant.project?.details?.data?.title || "",
-                  description: reduceText(
-                    grant.details?.data?.description || ""
-                  ),
-                  categories: grant.categories || [],
-                  uid: grant.uid,
-                  projectUid: grant.project?.uid || "",
-                  projectSlug: grant.project?.details?.data?.slug || "",
-                } as SimplifiedGrants)
+              ({
+                grant: grant.details?.data?.title || grant.uid || "",
+                project: grant.project?.details?.data?.title || "",
+                description: reduceText(
+                  grant.details?.data?.description || ""
+                ),
+                categories: grant.categories || [],
+                uid: grant.uid,
+                projectUid: grant.project?.uid || "",
+                projectSlug: grant.project?.details?.data?.slug || "",
+              } as SimplifiedGrants)
             );
           setGrants(mapSimplifiedGrants);
         }

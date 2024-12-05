@@ -208,7 +208,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
                           ? milestone?.completed?.data.proofOfWork
                           : `https://${milestone?.completed?.data.proofOfWork}`
                       }
-                      className="flex flex-row w-max max-w-full break-all gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent"
+                      className="flex flex-row w-max max-w-full break-all gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent line-clamp-3"
                     >
                       {milestone?.completed?.data.proofOfWork.includes("http")
                         ? `${milestone?.completed?.data.proofOfWork.slice(

@@ -21,6 +21,8 @@ import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
 import { sanitizeObject } from "@/utilities/sanitize";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 const updateSchema = z.object({
   title: z
@@ -93,9 +95,17 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
       await projectUpdate
         .attest(walletSigner as any, changeStepperStep)
-        .then(async () => {
+        .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, projectUpdate.chainID),
+              "POST",
+              {}
+            );
+          }
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {

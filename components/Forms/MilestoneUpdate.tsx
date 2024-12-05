@@ -29,6 +29,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { cn } from "@/utilities/tailwind";
 import { useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 interface MilestoneUpdateFormProps {
   milestone: IMilestoneResponse;
@@ -143,9 +145,20 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           }),
           changeStepperStep
         )
-        .then(async () => {
+        .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(
+                txHash,
+                milestoneInstance?.chainID as number
+              ),
+              "POST",
+              {}
+            );
+          }
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {
@@ -238,9 +251,20 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           }),
           changeStepperStep
         )
-        .then(async () => {
+        .then(async (res) => {
           let retries = 1000;
           changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(
+                txHash,
+                milestoneInstance?.chainID as number
+              ),
+              "POST",
+              {}
+            );
+          }
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {

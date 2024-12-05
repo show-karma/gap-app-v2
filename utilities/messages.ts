@@ -79,10 +79,25 @@ export const MESSAGES = {
           `${categoryName} can't be changed because already have answers to it.`,
       },
     },
+    OUTPUTS: {
+      EMPTY: `Please assign outputs to grants.`,
+      SUCCESS: (categoryName: string) =>
+        `Outputs assigned successfully to ${categoryName}.`,
+      ERROR: {
+        GENERIC: (categoryName: string) =>
+          `Outputs could not be assigned to ${categoryName}.`,
+      },
+    },
   },
   GRANT: {
     IMPACT_CRITERIA: {
       EMPTY: "The grantee has not defined any impact criteria yet.",
+    },
+    OUTPUTS: {
+      EMPTY: "There are not output metrics available for this grant.",
+      VALUE_REQUIRED: "Value is required",
+      SUCCESS: "Outputs sent successfully",
+      ERROR: "There was an error sending the outputs. Please try again",
     },
     REVIEW: {
       NOT_AUTHORIZED: "You are not authorized to review this grant.",

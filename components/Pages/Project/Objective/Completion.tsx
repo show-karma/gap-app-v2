@@ -158,7 +158,7 @@ export const ObjectiveCardComplete = ({
                       ? objective?.completed?.data.proofOfWork
                       : `https://${objective?.completed?.data.proofOfWork}`
                   }
-                  className="flex flex-row w-max max-w-full gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent"
+                  className="flex flex-row w-max max-w-full gap-2 bg-transparent text-sm font-semibold text-blue-600 underline dark:text-blue-100 hover:bg-transparent break-all line-clamp-3"
                 >
                   {objective?.completed?.data.proofOfWork.includes("http")
                     ? `${objective?.completed?.data.proofOfWork.slice(0, 80)}${

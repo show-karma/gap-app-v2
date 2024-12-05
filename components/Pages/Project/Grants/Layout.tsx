@@ -6,6 +6,7 @@ import { EmptyGrantsSection } from "../../GrantMilestonesAndUpdates/screens";
 import { GrantContext } from "../../GrantMilestonesAndUpdates/GrantContext";
 import { cn } from "@/utilities/tailwind";
 import { GrantCompleteButton } from "../../GrantMilestonesAndUpdates/GrantCompleteButton";
+import { GrantLinkExternalAddressButton } from "../../GrantMilestonesAndUpdates/GrantLinkExternalAddressButton";
 import { GrantDelete } from "../../GrantMilestonesAndUpdates/GrantDelete";
 import dynamic from "next/dynamic";
 import { PAGES } from "@/utilities/pages";
@@ -60,6 +61,7 @@ const allViews: GrantScreen[] = [
   "edit-grant",
   "grant-update",
   "impact-criteria",
+  "outputs",
   "overview",
   "complete-grant",
   "grant-update",
@@ -156,22 +158,27 @@ export const GrantsLayout = ({ children, project }: GrantsLayoutProps) => {
     tabName: GrantScreen;
     current: boolean;
   }[] = [
-    {
-      name: "Overview",
-      tabName: "overview",
-      current: true,
-    },
-    {
-      name: "Milestones and Updates",
-      tabName: "milestones-and-updates",
-      current: false,
-    },
-    {
-      name: "Impact Criteria",
-      tabName: "impact-criteria",
-      current: false,
-    },
-  ];
+      {
+        name: "Overview",
+        tabName: "overview",
+        current: true,
+      },
+      {
+        name: "Milestones and Updates",
+        tabName: "milestones-and-updates",
+        current: false,
+      },
+      {
+        name: "Outputs",
+        tabName: "outputs",
+        current: false,
+      },
+      {
+        name: "Impact Criteria",
+        tabName: "impact-criteria",
+        current: false,
+      },
+    ];
 
   useEffect(() => {
     const mountTabs = async () => {
@@ -403,6 +410,12 @@ export const GrantsLayout = ({ children, project }: GrantsLayoutProps) => {
               {isAuthorized && grant ? (
                 <div className="flex flex-row gap-2">
                   {project ? (
+                    <GrantLinkExternalAddressButton
+                      project={project}
+                      grant={grant}
+                    />
+                  ) : null}
+                  {project ? (
                     <GrantCompleteButton project={project} grant={grant} />
                   ) : null}
                   {project ? (
@@ -429,7 +442,7 @@ export const GrantsLayout = ({ children, project }: GrantsLayoutProps) => {
                 className="isolate flex flex-row max-lg:w-full flex-wrap gap-4 divide-x divide-gray-200 rounded-lg py-1 px-1  bg-[#F2F4F7] dark:bg-zinc-900 w-max transition-all duration-300 ease-in-out"
                 aria-label="Tabs"
               >
-                {tabs.map((tab) => (
+                {tabs.filter(tab => tab.name !== "Outputs").map((tab) => (
                   <Link
                     key={tab.name}
                     href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(

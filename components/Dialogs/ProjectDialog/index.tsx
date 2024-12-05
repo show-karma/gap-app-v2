@@ -1,27 +1,28 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 import {
-  type FC,
-  Fragment,
-  type ReactNode,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+  DiscordIcon,
+  GithubIcon,
+  LinkedInIcon,
+  TwitterIcon,
+  WebsiteIcon,
+} from "@/components/Icons";
+import { Button } from "@/components/Utilities/Button";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { getGapClient, useGap } from "@/hooks";
+import { useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store/owner";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { MESSAGES } from "@/utilities/messages";
 import { Dialog, Transition } from "@headlessui/react";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import {
   ChevronRightIcon,
   PlusIcon,
   XMarkIcon,
 } from "@heroicons/react/24/solid";
-import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import * as Tooltip from "@radix-ui/react-tooltip";
-import { z } from "zod";
-import { type Hex, isAddress, zeroHash } from "viem";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { useAccount, useSwitchChain } from "wagmi";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import {
   ExternalLink,
@@ -31,47 +32,46 @@ import {
   ProjectDetails,
   nullRef,
 } from "@show-karma/karma-gap-sdk";
-import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { getGapClient, useGap } from "@/hooks";
-import { Button } from "@/components/Utilities/Button";
 import {
-  GithubIcon,
-  LinkedInIcon,
-  TwitterIcon,
-  DiscordIcon,
-  WebsiteIcon,
-} from "@/components/Icons";
-import { useProjectStore } from "@/store";
-import { useOwnerStore } from "@/store/owner";
-import { MESSAGES } from "@/utilities/messages";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+  type FC,
+  Fragment,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { type Hex, isAddress, zeroHash } from "viem";
+import { useAccount, useSwitchChain } from "wagmi";
+import { z } from "zod";
 
-import { appNetwork } from "@/utilities/network";
-import { PAGES } from "@/utilities/pages";
-import { cn } from "@/utilities/tailwind";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { ExternalLink as ExternalLinkComponent } from "@/components/Utilities/ExternalLink";
+import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useAuthStore } from "@/store/auth";
-import { getWalletClient } from "@wagmi/core";
+import { useProjectEditModalStore } from "@/store/modals/projectEdit";
+import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
 import { useStepper } from "@/store/modals/txStepper";
-import { updateProject } from "@/utilities/sdk/projects/editProject";
-import { ContactInfoSection } from "./ContactInfoSection";
 import type { Contact } from "@/types/project";
 import fetchData from "@/utilities/fetchData";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
+import { appNetwork } from "@/utilities/network";
+import { PAGES } from "@/utilities/pages";
+import { sanitizeObject } from "@/utilities/sanitize";
+import { getProjectById } from "@/utilities/sdk";
+import { updateProject } from "@/utilities/sdk/projects/editProject";
+import { SOCIALS } from "@/utilities/socials";
+import { cn } from "@/utilities/tailwind";
 import { config } from "@/utilities/wagmi/config";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getProjectById } from "@/utilities/sdk";
-import { NetworkDropdown } from "./NetworkDropdown";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { sanitizeObject } from "@/utilities/sanitize";
-import { useProjectEditModalStore } from "@/store/modals/projectEdit";
+import { getWalletClient } from "@wagmi/core";
 import debounce from "lodash.debounce";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { Skeleton } from "@/components/Utilities/Skeleton";
-import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
 import { SimilarProjectsDialog } from "../SimilarProjectsDialog";
-import { ExternalLink as ExternalLinkComponent } from "@/components/Utilities/ExternalLink";
-import { SOCIALS } from "@/utilities/socials";
+import { ContactInfoSection } from "./ContactInfoSection";
+import { NetworkDropdown } from "./NetworkDropdown";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";

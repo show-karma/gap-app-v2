@@ -1,24 +1,25 @@
 "use client";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuthStore } from "@/store/auth";
-import { jwtDecode } from "jwt-decode";
-import fetchData from "@/utilities/fetchData";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
-import Cookies from "universal-cookie";
-import { useAccount, useDisconnect, useSignMessage, useChainId } from "wagmi";
-import toast from "react-hot-toast";
+import { useOnboarding } from "@/store/modals/onboarding";
 import { IExpirationStatus, ISession } from "@/types/auth";
 import { checkExpirationStatus } from "@/utilities/checkExpirationStatus";
-import { Hex } from "viem";
-import { useOnboarding } from "@/store/modals/onboarding";
+import fetchData from "@/utilities/fetchData";
 import { PAGES } from "@/utilities/pages";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { jwtDecode } from "jwt-decode";
 import { usePathname, useRouter } from "next/navigation";
+import { useQueryState } from "nuqs";
+import toast from "react-hot-toast";
+import Cookies from "universal-cookie";
+import { Hex } from "viem";
+import { useAccount, useChainId, useDisconnect, useSignMessage } from "wagmi";
 import { useMixpanel } from "./useMixpanel";
-import { errorManager } from "@/components/Utilities/errorManager";
+
 import {
   authCookiePath,
   authWalletTypeCookiePath,
 } from "@/utilities/auth-keys";
-import { useQueryState } from "nuqs";
 
 
 const getNonce = async (publicAddress: string) => {

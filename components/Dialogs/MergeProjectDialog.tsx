@@ -31,6 +31,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { sanitizeInput } from "@/utilities/sanitize";
 import { useMergeModalStore } from "@/store/modals/merge";
+import EthereumAddressToENSName from "../EthereumAddressToENSName";
 
 type MergeProjectProps = {
   buttonElement?: {
@@ -45,6 +46,7 @@ function SearchProject({
 }: {
   setPrimaryProject: (value: IProjectResponse) => void;
 }) {
+  const { project: currentProject } = useProjectStore();
   const [results, setResults] = useState<ISearchResponse>({
     communities: [],
     projects: [],
@@ -68,7 +70,17 @@ function SearchProject({
     setIsLoading(true);
     setIsSearchListOpen(true);
     const result = await gapIndexerApi.search(sanitizedValue);
-    setResults(result.data);
+    const projectsData = result.data.projects.filter(
+      (project) =>
+        project?.uid?.toLowerCase() !== currentProject?.uid?.toLowerCase()
+    );
+
+    const finalData = {
+      communities: [],
+      projects: projectsData,
+    };
+
+    setResults(finalData);
     return setIsLoading(false);
   }, 500);
 
@@ -94,6 +106,7 @@ function SearchProject({
                   address={item.recipient}
                   className="w-4 h-4  rounded-full border-1 border-gray-100 dark:border-zinc-900"
                 />
+                <EthereumAddressToENSName address={item.recipient} />
               </div>
             </div>
           </div>
