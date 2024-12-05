@@ -1,13 +1,14 @@
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks";
-import { useProjectStore } from "@/store";
+import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
+import { retryUntilConditionMet } from "@/utilities/retries";
 import { shortAddress } from "@/utilities/shortAddress";
 import { config } from "@/utilities/wagmi/config";
 import { TrashIcon } from "@heroicons/react/24/outline";
@@ -33,8 +34,11 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
 
   const { changeStepperStep, setIsStepper } = useStepper();
 
+  const { project, isProjectOwner } = useProjectStore();
+  const { isOwner: isContractOwner } = useOwnerStore();
+  const isOnChainAuthorized = isProjectOwner || isContractOwner;
+
   const { gap } = useGap();
-  const project = useProjectStore((state) => state.project);
   const deleteFn = async () => {
     if (!address) return;
     setIsDeletingGrant(true);
@@ -55,42 +59,68 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
         (item) => item.uid.toLowerCase() === grantUID.toLowerCase()
       );
       if (!grantInstance) return;
-      await grantInstance
-        .revoke(walletSigner, changeStepperStep)
-        .then(async (res) => {
-          let retries = 1000;
-          changeStepperStep("indexing");
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, grant.chainID),
-              "POST",
-              {}
+      const checkIfAttestationExists = async (callbackFn?: () => void) => {
+        await retryUntilConditionMet(
+          async () => {
+            const fetchedProject = await refreshProject();
+            const stillExist = fetchedProject?.grants.find(
+              (g) => g.uid?.toLowerCase() === grantUID?.toLowerCase()
             );
+            const ableToFinish = !stillExist && !!fetchedProject?.grants;
+            if (ableToFinish) {
+              if (fetchedProject?.grants.length > 0) {
+                setGrantTab(fetchedProject.grants[0].uid);
+              }
+            }
+            return ableToFinish;
+          },
+          () => {
+            callbackFn?.();
           }
-          while (retries > 0) {
-            await refreshProject()
-              .then(async (res) => {
-                const stillExist = res?.grants.find((g) => g.uid === grantUID);
-                if (!stillExist && res?.grants) {
-                  retries = 0;
-                  changeStepperStep("indexed");
-                  toast.success(MESSAGES.GRANT.DELETE.SUCCESS);
-                  if (res.grants.length > 0) {
-                    setGrantTab(res.grants[0].uid);
-                  }
-                }
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
+        );
+      };
+      if (!isOnChainAuthorized) {
+        const toastLoading = toast.loading(MESSAGES.GRANT.DELETE.LOADING);
+        await fetchData(
+          INDEXER.PROJECT.REVOKE_ATTESTATION(
+            grantUID as `0x${string}`,
+            grantInstance.chainID
+          ),
+          "POST",
+          {}
+        )
+          .then(async () => {
+            checkIfAttestationExists()
+              .then(() => {
+                toast.success(MESSAGES.GRANT.DELETE.SUCCESS, {
+                  id: toastLoading,
+                });
               })
-              .catch(async () => {
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
+              .catch(() => {
+                toast.dismiss(toastLoading);
               });
-          }
-        });
+          })
+          .catch(() => {
+            toast.dismiss(toastLoading);
+          });
+      } else {
+        await grantInstance
+          .revoke(walletSigner, changeStepperStep)
+          .then(async (res) => {
+            changeStepperStep("indexing");
+            const txHash = res?.tx[0]?.hash;
+            if (txHash) {
+              await fetchData(
+                INDEXER.ATTESTATION_LISTENER(txHash, grant.chainID),
+                "POST",
+                {}
+              );
+            }
+            checkIfAttestationExists(() => {
+              changeStepperStep("indexed");
+            });
+          });
+      }
     } catch (error: any) {
       toast.error(
         MESSAGES.GRANT.DELETE.ERROR(

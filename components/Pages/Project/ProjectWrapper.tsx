@@ -1,16 +1,5 @@
 "use client";
-import { cn } from "@/utilities/tailwind";
-import { useAuthStore } from "@/store/auth";
-import { getWalletClient } from "@wagmi/core";
-import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
-import { Button } from "@/components/Utilities/Button";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { config } from "@/utilities/wagmi/config";
-import { INDEXER } from "@/utilities/indexer";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { useEffect, useMemo } from "react";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useAccount } from "wagmi";
+import { ProgressDialog } from "@/components/Dialogs/ProgressDialog";
 import {
   DiscordIcon,
   GithubIcon,
@@ -18,20 +7,31 @@ import {
   TwitterIcon,
   WebsiteIcon,
 } from "@/components/Icons";
-import fetchData from "@/utilities/fetchData";
-import { getProjectById, getProjectOwner } from "@/utilities/sdk";
+import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
 import { ProjectNavigator } from "@/components/Pages/Project/ProjectNavigator";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useEndorsementStore } from "@/store/modals/endorsement";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import Image from "next/image";
-import { IntroDialog } from "./IntroDialog";
-import { useIntroModalStore } from "@/store/modals/intro";
-import { useRouter } from "next/navigation";
-import { useGap } from "@/hooks";
-import { useProgressModalStore } from "@/store/modals/progress";
-import { ProgressDialog } from "@/components/Dialogs/ProgressDialog";
+import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { useGap } from "@/hooks";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useAuthStore } from "@/store/auth";
+import { useEndorsementStore } from "@/store/modals/endorsement";
+import { useIntroModalStore } from "@/store/modals/intro";
+import { useProgressModalStore } from "@/store/modals/progress";
+import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { getProjectById } from "@/utilities/sdk";
+import { cn } from "@/utilities/tailwind";
+import { config } from "@/utilities/wagmi/config";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { getWalletClient } from "@wagmi/core";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo } from "react";
+import { useAccount } from "wagmi";
+import { IntroDialog } from "./IntroDialog";
 
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 
@@ -49,6 +49,9 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
     isProjectAdmin,
     setIsProjectAdmin,
     setIsProjectAdminLoading,
+    isProjectOwner,
+    setIsProjectOwner,
+    setIsProjectOwnerLoading,
   } = useProjectStore((state) => state);
 
   const router = useRouter();
@@ -58,7 +61,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   }, [project]);
 
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const isAuthorized = isOwner || isProjectAdmin;
+  const isAuthorized = isOwner || isProjectAdmin || isProjectOwner;
 
   useEffect(() => {
     if (!projectId || !isAuthorized) return;
@@ -108,10 +111,42 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
     if (!project || !project?.chainID || !isAuth || !isConnected || !chain) {
       setIsProjectAdmin(false);
       setIsProjectAdminLoading(false);
+      setIsProjectOwner(false);
+      setIsProjectOwnerLoading(false);
       return;
     }
 
     const setupProjectOwner = async () => {
+      try {
+        setIsProjectOwnerLoading(true);
+        const walletClient = await getWalletClient(config, {
+          chainId: project.chainID,
+        }).catch(() => undefined);
+
+        if (!walletClient) return;
+        const walletSigner = await walletClientToSigner(walletClient).catch(
+          () => undefined
+        );
+        const fetchedProject = await getProjectById(projectId);
+        if (!fetchedProject) return;
+        await fetchedProject
+          .isOwner(walletSigner || signer)
+          .then((res) => {
+            setIsProjectOwner(res);
+          })
+          .finally(() => setIsProjectOwnerLoading(false));
+      } catch (error: any) {
+        setIsProjectOwner(false);
+        errorManager(
+          `Error checking if user ${address} is project owner from project ${projectId}`,
+          error
+        );
+      } finally {
+        setIsProjectOwnerLoading(false);
+      }
+    };
+    setupProjectOwner();
+    const setupProjectAdmin = async () => {
       try {
         setIsProjectAdminLoading(true);
         const walletClient = await getWalletClient(config, {
@@ -124,7 +159,8 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
         );
         const fetchedProject = await getProjectById(projectId);
         if (!fetchedProject) return;
-        await getProjectOwner(walletSigner || signer, fetchedProject)
+        await fetchedProject
+          .isAdmin(walletSigner || signer)
           .then((res) => {
             setIsProjectAdmin(res);
           })
@@ -132,14 +168,14 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
       } catch (error: any) {
         setIsProjectAdmin(false);
         errorManager(
-          `Error checking if user ${address} is project owner from project ${projectId}`,
+          `Error checking if user ${address} is project admin from project ${projectId}`,
           error
         );
       } finally {
         setIsProjectAdminLoading(false);
       }
     };
-    setupProjectOwner();
+    setupProjectAdmin();
   }, [project?.uid, address, isAuth, isConnected, signer, chain]);
 
   const socials = useMemo(() => {

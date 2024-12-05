@@ -1,33 +1,34 @@
 /* eslint-disable @next/next/no-img-element */
-import { type FC, useState, useEffect } from "react";
+import { type FC, useEffect, useState } from "react";
 
 import { Button } from "@/components/Utilities/Button";
-import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
-import { UpdateMilestone } from "./UpdateMilestone";
+import { getGapClient, useGap } from "@/hooks";
 import { useOwnerStore, useProjectStore } from "@/store";
-import toast from "react-hot-toast";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { useSwitchChain, useAccount } from "wagmi";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { MESSAGES } from "@/utilities/messages";
-import { formatDate } from "@/utilities/formatDate";
-import { ReadMore } from "@/utilities/ReadMore";
-import { getWalletClient } from "@wagmi/core";
-import { VerifyMilestoneUpdateDialog } from "./VerifyMilestoneUpdateDialog";
-import { VerifiedBadge } from "./VerifiedBadge";
 import { useCommunityAdminStore } from "@/store/community";
 import { useStepper } from "@/store/modals/txStepper";
+import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import fetchData from "@/utilities/fetchData";
+import { formatDate } from "@/utilities/formatDate";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { ReadMore } from "@/utilities/ReadMore";
 import { config } from "@/utilities/wagmi/config";
+import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import {
   IMilestoneCompleted,
   IMilestoneResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getGapClient, useGap } from "@/hooks";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
+import { getWalletClient } from "@wagmi/core";
+import toast from "react-hot-toast";
+import { useAccount, useSwitchChain } from "wagmi";
+import { UpdateMilestone } from "./UpdateMilestone";
+import { VerifiedBadge } from "./VerifiedBadge";
+import { VerifyMilestoneUpdateDialog } from "./VerifyMilestoneUpdateDialog";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { retryUntilConditionMet } from "@/utilities/retries";
 
 interface UpdatesProps {
   milestone: IMilestoneResponse;
@@ -45,7 +46,9 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
 
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
-  const project = useProjectStore((state) => state.project);
+  const { project, isProjectOwner } = useProjectStore();
+  const { isOwner: isContractOwner } = useOwnerStore();
+  const isOnChainAuthorized = isProjectOwner || isContractOwner;
 
   const undoMilestoneCompletion = async (milestone: IMilestoneResponse) => {
     let gapClient = gap;
@@ -71,45 +74,71 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
         (item) => item.uid.toLowerCase() === milestone.uid.toLowerCase()
       );
       if (!instanceMilestone) return;
-      await instanceMilestone
-        .revokeCompletion(walletSigner as any, changeStepperStep)
-        .then(async (res) => {
-          let retries = 1000;
-          changeStepperStep("indexing");
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, instanceMilestone.chainID),
-              "POST",
-              {}
+
+      const checkIfAttestationExists = async (callbackFn?: () => void) => {
+        await retryUntilConditionMet(
+          async () => {
+            const fetchedProject = await refreshProject();
+            const foundGrant = fetchedProject?.grants.find(
+              (g) => g.uid === milestone.refUID
             );
+            const fetchedMilestone = foundGrant?.milestones.find(
+              (u: any) => u.uid === milestone.uid
+            );
+            return !fetchedMilestone?.completed;
+          },
+          () => {
+            callbackFn?.();
           }
-          while (retries > 0) {
-            await refreshProject()
-              .then(async (fetchedProject) => {
-                const foundGrant = fetchedProject?.grants.find(
-                  (g) => g.uid === milestone.refUID
-                );
-                const fetchedMilestone = foundGrant?.milestones.find(
-                  (u: any) => u.uid === milestone.uid
-                );
-                const isCompleted = fetchedMilestone?.completed;
-                if (!isCompleted) {
-                  retries = 0;
-                  changeStepperStep("indexed");
-                  toast.success(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS);
-                }
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
+        );
+      };
+
+      if (!isOnChainAuthorized) {
+        const toastLoading = toast.loading(
+          MESSAGES.MILESTONES.COMPLETE.UNDO.LOADING
+        );
+        await fetchData(
+          INDEXER.PROJECT.REVOKE_ATTESTATION(
+            milestone.completed?.uid as `0x${string}`,
+            instanceMilestone.chainID
+          ),
+          "POST",
+          {}
+        )
+          .then(async () => {
+            checkIfAttestationExists()
+              .then(() => {
+                toast.success(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS, {
+                  id: toastLoading,
+                });
               })
-              .catch(async () => {
-                retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-                await new Promise((resolve) => setTimeout(resolve, 1500));
+              .catch(() => {
+                toast.dismiss(toastLoading);
               });
-          }
-        });
+          })
+          .catch(() => {
+            toast.dismiss(toastLoading);
+          });
+      } else {
+        await instanceMilestone
+          .revokeCompletion(walletSigner as any, changeStepperStep)
+          .then(async (res) => {
+            changeStepperStep("indexing");
+            const txHash = res?.tx[0]?.hash;
+            if (txHash) {
+              await fetchData(
+                INDEXER.ATTESTATION_LISTENER(txHash, instanceMilestone.chainID),
+                "POST",
+                {}
+              );
+            }
+            await checkIfAttestationExists(() => {
+              changeStepperStep("indexed");
+            }).then(() => {
+              toast.success(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS);
+            });
+          });
+      }
     } catch (error: any) {
       console.log(error);
       toast.error(MESSAGES.MILESTONES.COMPLETE.UNDO.ERROR);
@@ -126,7 +155,6 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );
-  const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
 
   const [verifiedMilestones, setVerifiedMilestones] = useState<

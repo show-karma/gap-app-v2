@@ -10,9 +10,8 @@ import {
   IGrantResponse,
   IProjectResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import Link from "next/link";
 import dynamic from "next/dynamic";
-import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
+import Link from "next/link";
 import { ProjectGrantsMilestonesListLoading } from "../../Project/Loading/Grants/MilestonesAndUpdate";
 
 const EmptyMilestone = ({
@@ -141,7 +140,6 @@ const MilestonesList = dynamic(
 
 export default function MilestonesAndUpdates() {
   const { grant } = useGrantStore();
-  console.log("GRANT", grant);
   const project = useProjectStore((state) => state.project);
   const hasMilestonesOrUpdates =
     grant?.milestones?.length || grant?.updates?.length;

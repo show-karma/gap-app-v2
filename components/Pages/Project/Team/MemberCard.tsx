@@ -1,11 +1,19 @@
 /* eslint-disable @next/next/no-img-element */
 import { DeleteMemberDialog } from "@/components/Dialogs/Member/DeleteMember";
+import { DemoteMemberDialog } from "@/components/Dialogs/Member/DemoteMember";
+import { PromoteMemberDialog } from "@/components/Dialogs/Member/PromoteMember";
 import { GithubIcon, LinkedInIcon, Twitter2Icon } from "@/components/Icons";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
+import {
+  getProjectMemberRoles,
+  Member,
+} from "@/utilities/getProjectMemberRoles";
 import { PencilIcon } from "@heroicons/react/24/outline";
+import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
 
 const iconsClassnames = {
@@ -20,23 +28,50 @@ export const MemberCard = ({ member }: { member: string }) => {
   );
   const [, copy] = useCopyToClipboard();
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const { address } = useAccount();
   const isAuthorized = isProjectOwner || isContractOwner;
+  const isAdminOrAbove = isProjectOwner || isContractOwner || isProjectAdmin;
   const project = useProjectStore((state) => state.project);
   const { openModal } = useContributorProfileModalStore();
+
+  const {
+    data: memberRoles,
+    isLoading: isLoadingRoles,
+    isFetching: isFetchingRoles,
+  } = useQuery<Record<string, Member["role"]>>({
+    queryKey: ["memberRoles", project?.uid],
+    queryFn: () => (project ? getProjectMemberRoles(project) : {}),
+    enabled: !!project,
+    staleTime: 1000 * 60 * 5,
+  });
+
   return (
     <div className="flex w-full flex-col gap-4 items-start shadow-sm rounded-lg p-4 bg-white dark:bg-zinc-800 border border-zinc-300 dark:border-zinc-700">
       <div className="flex flex-col gap-0 w-full">
         <div className="flex flex-row justify-between w-full gap-4">
-          <p className="text-lg font-bold text-black dark:text-zinc-100">
-            {profile?.data.name || profile?.recipient || member}
-          </p>
+          <div className="flex flex-col gap-1 mb-4">
+            <p className="text-lg font-bold text-black dark:text-zinc-100">
+              {profile?.data.name || profile?.recipient || member}
+            </p>
+            {isLoadingRoles || isFetchingRoles ? (
+              <Skeleton className="w-full h-4" />
+            ) : memberRoles && memberRoles[member] !== "Member" ? (
+              <p className="text-sm text-brand-blue font-medium leading-none">
+                {memberRoles[member]}
+              </p>
+            ) : null}
+          </div>
           <div className="flex flex-row gap-2 mr-2">
+            {isAuthorized && memberRoles && memberRoles[member] === "Member" ? (
+              <PromoteMemberDialog memberAddress={member} />
+            ) : null}
+            {isAuthorized && memberRoles && memberRoles[member] === "Admin" ? (
+              <DemoteMemberDialog memberAddress={member} />
+            ) : null}
             {isAuthorized ? (
-              member.toLowerCase() !== project?.recipient?.toLowerCase() ? (
-                <DeleteMemberDialog memberAddress={member} />
-              ) : null
+              <DeleteMemberDialog memberAddress={member} />
             ) : null}
             {member.toLowerCase() === address?.toLowerCase() ? (
               <button

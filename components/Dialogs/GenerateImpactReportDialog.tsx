@@ -1,39 +1,40 @@
+/* eslint-disable jsx-a11y/alt-text */
 /* eslint-disable @next/next/no-img-element */
-import React, { FC, Fragment, ReactNode, useEffect, useState } from "react";
-import { Dialog, Transition } from "@headlessui/react";
-import Html from "react-pdf-html";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { renderToHTML } from "@/utilities/markdown";
+import { Dialog, Transition } from "@headlessui/react";
 import {
   DocumentCheckIcon,
   ExclamationCircleIcon,
 } from "@heroicons/react/24/solid";
-import { renderToHTML } from "@/utilities/markdown";
-import { Button } from "../Utilities/Button";
+import { FC, Fragment, ReactNode, useState } from "react";
 import toast from "react-hot-toast";
+import Html from "react-pdf-html";
+import { Button } from "../Utilities/Button";
 
 import { useProjectStore } from "@/store";
-import { useAccount, useSwitchChain } from "wagmi";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { getWalletClient } from "@wagmi/core";
-import { getProjectById, getProjectOwner } from "@/utilities/sdk";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { envVars } from "@/utilities/enviromentVars";
+import { getProjectById } from "@/utilities/sdk";
 import { config } from "@/utilities/wagmi/config";
 import {
+  Document,
+  Font,
+  Image,
   Page,
+  PDFDownloadLink,
+  PDFViewer,
+  StyleSheet,
   Text,
   View,
-  Document,
-  StyleSheet,
-  Image,
-  Font,
-  PDFViewer,
-  PDFDownloadLink,
 } from "@react-pdf/renderer";
 import {
   IGrantResponse,
   IProjectResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { envVars } from "@/utilities/enviromentVars";
+import { getWalletClient } from "@wagmi/core";
+import { useAccount, useSwitchChain } from "wagmi";
 import { errorManager } from "../Utilities/errorManager";
 
 // Create styles

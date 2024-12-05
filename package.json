@@ -34,7 +34,7 @@
     "@react-pdf/renderer": "^3.4.4",
     "@semaphore-protocol/core": "^4.0.0-beta.6",
     "@sentry/nextjs": "7.105.0",
-    "@show-karma/karma-gap-sdk": "git+https://github.com/show-karma/karma-gap-sdk.git#36e4a88279c907a222ab6ad26864e48e48e80276",
+    "@show-karma/karma-gap-sdk": "git+https://github.com/show-karma/karma-gap-sdk.git#38e8347",
     "@tailwindcss/typography": "^0.5.10",
     "@tanstack/react-query": "^5.48.0",
     "@tanstack/react-table": "^8.17.3",
@@ -123,6 +123,5 @@
     "start-server-and-test": "^2.0.8",
     "tailwindcss": "^3.3.2",
     "ts-node": "^10.9.2"
-  },
-  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+  }
 }

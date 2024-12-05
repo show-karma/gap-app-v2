@@ -2,37 +2,44 @@
 "use client";
 
 import { useOwnerStore, useProjectStore } from "@/store";
+import { useParams, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
 
 import { PAGES } from "@/utilities/pages";
 import Link from "next/link";
 
-import { shortAddress } from "@/utilities/shortAddress";
-import { useENS } from "@/store/ens";
-import { Hex } from "viem";
-import { ChevronRightIcon } from "@heroicons/react/24/solid";
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { ProjectSubTabs } from "../ProjectSubTabs";
 import { useActivityTabStore } from "@/store/activityTab";
-import { ProjectSubscription } from "../ProjectSubscription";
+import { useENS } from "@/store/ens";
 import formatCurrency from "@/utilities/formatCurrency";
+import { shortAddress } from "@/utilities/shortAddress";
+import { ChevronRightIcon } from "@heroicons/react/24/solid";
+import { Hex } from "viem";
+import { ProjectSubscription } from "../ProjectSubscription";
+import { ProjectSubTabs } from "../ProjectSubTabs";
 import { ProjectBlocks } from "./ProjectBlocks";
 import { ProjectBodyTabs } from "./ProjectBodyTabs";
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 
-import pluralize from "pluralize";
-import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember";
-import dynamic from "next/dynamic";
-import { DeleteMemberDialog } from "@/components/Dialogs/Member/DeleteMember";
-import { useAccount } from "wagmi";
-import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
-import { PencilIcon } from "@heroicons/react/24/outline";
 import { MemberDialog } from "@/components/Dialogs/Member";
-import { errorManager } from "@/components/Utilities/errorManager";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
+import { DeleteMemberDialog } from "@/components/Dialogs/Member/DeleteMember";
+import { DemoteMemberDialog } from "@/components/Dialogs/Member/DemoteMember";
+import { InviteMemberDialog } from "@/components/Dialogs/Member/InviteMember";
 import { PromoteMemberDialog } from "@/components/Dialogs/Member/PromoteMember";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { Skeleton } from "@/components/Utilities/Skeleton";
+import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
+import fetchData from "@/utilities/fetchData";
+import {
+  getProjectMemberRoles,
+  Member,
+} from "@/utilities/getProjectMemberRoles";
+import { INDEXER } from "@/utilities/indexer";
+import { PencilIcon } from "@heroicons/react/24/outline";
+import { useQuery } from "@tanstack/react-query";
+import dynamic from "next/dynamic";
+import pluralize from "pluralize";
+import { useAccount } from "wagmi";
 
 const ContributorProfileDialog = dynamic(
   () =>
@@ -47,16 +54,28 @@ const ContributorProfileDialog = dynamic(
 function ProjectPage() {
   const project = useProjectStore((state) => state.project);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isProjectOwner || isContractOwner;
+  const isAdminOrAbove = isProjectOwner || isContractOwner || isProjectAdmin;
   const { teamProfiles } = useProjectStore((state) => state);
   const { address } = useAccount();
   const { openModal } = useContributorProfileModalStore();
   const inviteCodeParam = useSearchParams().get("invite-code");
   const params = useParams();
   const projectId = params.projectId as string;
-
   const { populateEns, ensData } = useENS();
+
+  const {
+    data: memberRoles,
+    isLoading: isLoadingRoles,
+    isFetching: isFetchingRoles,
+  } = useQuery<Record<string, Member["role"]>>({
+    queryKey: ["memberRoles", project?.uid],
+    queryFn: () => (project ? getProjectMemberRoles(project) : {}),
+    enabled: !!project,
+    staleTime: 1000 * 60 * 5,
+  });
 
   useEffect(() => {
     if (project?.members) {
@@ -65,14 +84,6 @@ function ProjectPage() {
   }, [project?.members]);
 
   const [, copy] = useCopyToClipboard();
-
-  interface Member {
-    uid: string;
-    recipient: string;
-    details?: {
-      name?: string;
-    };
-  }
 
   const mountMembers = () => {
     const members: Member[] = [];
@@ -108,7 +119,18 @@ function ProjectPage() {
     return members;
   };
 
-  const members = mountMembers();
+  const members = mountMembers().sort((a, b) => {
+    const roleA = memberRoles?.[a.recipient] || "Member";
+    const roleB = memberRoles?.[b.recipient] || "Member";
+
+    const roleOrder = {
+      Owner: 0,
+      Admin: 1,
+      Member: 2,
+    };
+
+    return roleOrder[roleA] - roleOrder[roleB];
+  });
 
   const { setActivityTab } = useActivityTabStore();
 
@@ -154,10 +176,12 @@ function ProjectPage() {
                           shortAddress(member.recipient)}
                       </p>
                     )}
-                    {member.recipient?.toLowerCase() ===
-                    project?.recipient?.toLowerCase() ? (
+                    {isLoadingRoles || isFetchingRoles ? (
+                      <Skeleton className="w-full h-4" />
+                    ) : memberRoles &&
+                      memberRoles[member.recipient] !== "Member" ? (
                       <p className="text-sm text-brand-blue font-medium leading-none">
-                        Owner
+                        {memberRoles[member.recipient]}
                       </p>
                     ) : null}
                     <div className="flex flex-row gap-2 justify-between items-center w-full max-w-max">
@@ -187,15 +211,18 @@ function ProjectPage() {
                       <PencilIcon className="w-4 h-4 text-black dark:text-zinc-100" />
                     </button>
                   ) : null}
-                  {member.recipient.toLowerCase() !==
-                    project?.recipient?.toLowerCase() && isAuthorized ? (
+                  {isAuthorized &&
+                  memberRoles &&
+                  memberRoles[member.recipient] === "Member" ? (
                     <PromoteMemberDialog memberAddress={member.recipient} />
                   ) : null}
+                  {isAuthorized &&
+                  memberRoles &&
+                  memberRoles[member.recipient] === "Admin" ? (
+                    <DemoteMemberDialog memberAddress={member.recipient} />
+                  ) : null}
                   {isAuthorized ? (
-                    member.recipient.toLowerCase() !==
-                    project?.recipient?.toLowerCase() ? (
-                      <DeleteMemberDialog memberAddress={member.recipient} />
-                    ) : null
+                    <DeleteMemberDialog memberAddress={member.recipient} />
                   ) : null}
                 </div>
               </div>

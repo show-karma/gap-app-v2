@@ -1,28 +1,27 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, ReactNode, useEffect, useState } from "react";
-import { Dialog, Transition } from "@headlessui/react";
-import * as Tooltip from "@radix-ui/react-tooltip";
 import { Button } from "@/components/Utilities/Button";
-import toast from "react-hot-toast";
-import { keccak256, toHex } from "viem";
 import { useProjectStore } from "@/store";
-import { useSignMessage } from "wagmi";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { Dialog, Transition } from "@headlessui/react";
+import * as Tooltip from "@radix-ui/react-tooltip";
+import { FC, Fragment, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { keccak256, toHex } from "viem";
+import { useSignMessage } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
-import { useQuery } from "@tanstack/react-query";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { queryClient } from "@/components/Utilities/WagmiProvider";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { envVars } from "@/utilities/enviromentVars";
 import {
   ArrowPathIcon,
   CheckIcon,
   ClipboardDocumentIcon,
-  TrashIcon,
 } from "@heroicons/react/24/outline";
-import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { queryClient } from "@/components/Utilities/WagmiProvider";
-import { envVars } from "@/utilities/enviromentVars";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { useQuery } from "@tanstack/react-query";
 
 type InviteMemberDialogProps = {};
 

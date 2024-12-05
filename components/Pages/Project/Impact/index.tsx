@@ -1,31 +1,31 @@
 "use client";
-import { cn } from "@/utilities/tailwind";
-import { FC, useEffect, useState } from "react";
-import { formatDate } from "@/utilities/formatDate";
-import { useSearchParams } from "next/navigation";
-import { AddImpactScreen } from "./AddImpactScreen";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { EmptyImpactScreen } from "./EmptyImpactScreen";
-import { TrashIcon } from "@heroicons/react/24/outline";
-import toast from "react-hot-toast";
-import { MESSAGES } from "@/utilities/messages";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { getWalletClient } from "@wagmi/core";
-import { useAccount, useSwitchChain } from "wagmi";
 import { Button } from "@/components/Utilities/Button";
-import { useQueryState } from "nuqs";
-import { ReadMore } from "@/utilities/ReadMore";
-import { ImpactVerifications } from "./ImpactVerifications";
-import { useStepper } from "@/store/modals/txStepper";
-import { getGapClient, useGap } from "@/hooks";
-import { Hex } from "viem";
-import { config } from "@/utilities/wagmi/config";
-import { IProjectImpact } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getProjectById } from "@/utilities/sdk";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { getGapClient, useGap } from "@/hooks";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useStepper } from "@/store/modals/txStepper";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
+import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { ReadMore } from "@/utilities/ReadMore";
+import { retryUntilConditionMet } from "@/utilities/retries";
+import { getProjectById } from "@/utilities/sdk";
+import { cn } from "@/utilities/tailwind";
+import { config } from "@/utilities/wagmi/config";
+import { TrashIcon } from "@heroicons/react/24/outline";
+import { IProjectImpact } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { getWalletClient } from "@wagmi/core";
+import { useSearchParams } from "next/navigation";
+import { useQueryState } from "nuqs";
+import { FC, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount, useSwitchChain } from "wagmi";
+import { AddImpactScreen } from "./AddImpactScreen";
+import { EmptyImpactScreen } from "./EmptyImpactScreen";
+import { ImpactVerifications } from "./ImpactVerifications";
 
 const headClasses =
   "text-black dark:text-white text-xs font-medium uppercase text-left px-6 py-3 font-body";
@@ -35,7 +35,7 @@ const cellClasses =
 interface ImpactComponentProps {}
 
 export const ImpactComponent: FC<ImpactComponentProps> = () => {
-  const project = useProjectStore((state) => state.project);
+  const { project, isProjectOwner } = useProjectStore();
   const [orderedImpacts, setOrderedImpacts] = useState<IProjectImpact[]>(
     project?.impacts || []
   );
@@ -66,6 +66,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
   const refreshProject = useProjectStore((state) => state.refreshProject);
+  const isOnChainAuthorized = isProjectOwner || isOwner;
 
   const revokeImpact = async (impact: IProjectImpact) => {
     if (!address || !project || !impact) return;
@@ -87,37 +88,68 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
         (imp) => imp.uid === impact.uid
       );
       if (!instanceImpact) return;
-      await instanceImpact
-        .revoke(walletSigner as any, changeStepperStep)
-        .then(async (res) => {
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, instanceImpact.chainID),
-              "POST",
-              {}
+
+      const checkIfAttestationExists = async (callbackFn?: () => void) => {
+        await retryUntilConditionMet(
+          async () => {
+            const fetchedProject = await refreshProject();
+            const stillExists = !!fetchedProject?.impacts?.find(
+              (imp) => imp.uid === impact.uid
             );
+            return !stillExists;
+          },
+          () => {
+            callbackFn?.();
           }
-          let retries = 1000;
-          changeStepperStep("indexing");
-          let fetchedProject = null;
-          while (retries > 0) {
-            fetchedProject = await gapClient!.fetch
-              .projectById(project.uid as Hex)
-              .catch(() => null);
-            if (
-              fetchedProject?.impacts?.find((imp) => imp.uid === impact.uid)
-            ) {
-              retries = 0;
-              changeStepperStep("indexed");
-              await refreshProject();
+        );
+      };
+
+      if (!isOnChainAuthorized) {
+        const toastLoading = toast.loading(
+          MESSAGES.PROJECT.IMPACT.REMOVE.LOADING
+        );
+        await fetchData(
+          INDEXER.PROJECT.REVOKE_ATTESTATION(
+            instanceImpact?.uid as `0x${string}`,
+            instanceImpact.chainID
+          ),
+          "POST",
+          {}
+        )
+          .then(async () => {
+            checkIfAttestationExists()
+              .then(() => {
+                toast.success(MESSAGES.PROJECT.IMPACT.REMOVE.SUCCESS, {
+                  id: toastLoading,
+                });
+              })
+              .catch(() => {
+                toast.dismiss(toastLoading);
+              });
+          })
+          .catch(() => {
+            toast.dismiss(toastLoading);
+          });
+      } else {
+        await instanceImpact
+          .revoke(walletSigner as any, changeStepperStep)
+          .then(async (res) => {
+            const txHash = res?.tx[0]?.hash;
+            if (txHash) {
+              await fetchData(
+                INDEXER.ATTESTATION_LISTENER(txHash, instanceImpact.chainID),
+                "POST",
+                {}
+              );
             }
-            retries -= 1;
-            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-            await new Promise((resolve) => setTimeout(resolve, 1500));
-          }
-        });
-      toast.success(MESSAGES.PROJECT.IMPACT.REMOVE.SUCCESS);
+
+            await checkIfAttestationExists(() => {
+              changeStepperStep("indexed");
+            }).then(() => {
+              toast.success(MESSAGES.PROJECT.IMPACT.REMOVE.SUCCESS);
+            });
+          });
+      }
     } catch (error: any) {
       console.log(error);
       errorManager(

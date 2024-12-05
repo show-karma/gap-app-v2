@@ -1,60 +1,60 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+import { CommunitiesDropdown } from "@/components/CommunitiesDropdown";
 import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  GrantDetails,
-  nullRef,
-  Grant,
-  Milestone,
-  IMilestone,
-} from "@show-karma/karma-gap-sdk";
-import type { FC } from "react";
-import { useEffect, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
-import { Hex, isAddress } from "viem";
-import { useAccount, useSwitchChain } from "wagmi";
-import { z } from "zod";
-import { Milestone as MilestoneComponent } from "./Milestone";
-import { usePathname, useRouter } from "next/navigation";
-import { CommunitiesDropdown } from "@/components/CommunitiesDropdown";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { getGapClient, useGap } from "@/hooks";
-import toast from "react-hot-toast";
-import { CalendarIcon, XMarkIcon } from "@heroicons/react/24/outline";
-import { getWalletClient } from "@wagmi/core";
-import { useGrantFormStore } from "./store";
-import { MESSAGES } from "@/utilities/messages";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useAuthStore } from "@/store/auth";
+import { useCommunitiesStore } from "@/store/communities";
+import { useStepper } from "@/store/modals/txStepper";
+import { GrantScreen } from "@/types";
+import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import fetchData from "@/utilities/fetchData";
+import { formatDate } from "@/utilities/formatDate";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
 import { appNetwork } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
-import { Popover } from "@headlessui/react";
-import { DayPicker } from "react-day-picker";
-import { useAuthStore } from "@/store/auth";
-import { formatDate } from "@/utilities/formatDate";
+import { urlRegex } from "@/utilities/regexs/urlRegex";
+import { sanitizeObject } from "@/utilities/sanitize";
 import { getProjectById, isCommunityAdminOf } from "@/utilities/sdk";
-import * as Tooltip from "@radix-ui/react-tooltip";
-import { useCommunitiesStore } from "@/store/communities";
 import { cn } from "@/utilities/tailwind";
-import { useStepper } from "@/store/modals/txStepper";
 import { config } from "@/utilities/wagmi/config";
+import { Popover } from "@headlessui/react";
+import { CalendarIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as Tooltip from "@radix-ui/react-tooltip";
+import {
+  Grant,
+  GrantDetails,
+  IMilestone,
+  Milestone,
+  nullRef,
+} from "@show-karma/karma-gap-sdk";
 import {
   ICommunityResponse,
   IGrantResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { sanitizeObject } from "@/utilities/sanitize";
-import { urlRegex } from "@/utilities/regexs/urlRegex";
+import { getWalletClient } from "@wagmi/core";
 import Link from "next/link";
-import { GrantScreen } from "@/types";
+import { usePathname, useRouter } from "next/navigation";
+import type { FC } from "react";
+import { useEffect, useState } from "react";
+import { DayPicker } from "react-day-picker";
+import { Controller, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { Hex, isAddress } from "viem";
+import { useAccount, useSwitchChain } from "wagmi";
+import { z } from "zod";
 import { GrantTitleDropdown } from "./GrantTitleDropdown";
+import { Milestone as MilestoneComponent } from "./Milestone";
+import { useGrantFormStore } from "./store";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -553,7 +553,6 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   };
 
   const onSubmit = async (data: GrantType) => {
-    console.log("ProgramId: ", data.programId);
     saveAllMilestones();
     let questions: {
       type: string;

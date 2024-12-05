@@ -2,11 +2,11 @@ import { Contact } from "@/types/project";
 import fetchData from "@/utilities/fetchData";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
+import { getContributorProfiles } from "@/utilities/indexer/getContributorProfiles";
+import { ContributorProfile } from "@show-karma/karma-gap-sdk";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { create } from "zustand";
 import { useGrantStore } from "./grant";
-import { ContributorProfile } from "@show-karma/karma-gap-sdk";
-import { getContributorProfiles } from "@/utilities/indexer/getContributorProfiles";
 
 interface ProjectStore {
   project: IProjectResponse | undefined;
@@ -20,6 +20,8 @@ interface ProjectStore {
   isProjectOwner: boolean;
   setIsProjectOwner: (isProjectOwner: boolean) => void;
   isProjectOwnerLoading: boolean;
+  setIsProjectOwnerLoading: (loading: boolean) => void;
+  isProjectAdminLoading: boolean;
   setIsProjectAdminLoading: (loading: boolean) => void;
   projectContactsInfo: Contact[] | undefined;
   setProjectContactsInfo: (contacts: Contact[] | undefined) => void;
@@ -94,7 +96,10 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   setIsProjectOwner: (isProjectOwner: boolean) => set({ isProjectOwner }),
   contactInfoLoading: true,
   setContactInfoLoading: (value) => set({ contactInfoLoading: value }),
-  isProjectOwnerLoading: true,
+  isProjectAdminLoading: true,
   setIsProjectAdminLoading: (loading: boolean) =>
+    set({ isProjectAdminLoading: loading }),
+  isProjectOwnerLoading: true,
+  setIsProjectOwnerLoading: (loading: boolean) =>
     set({ isProjectOwnerLoading: loading }),
 }));

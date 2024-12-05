@@ -29,7 +29,6 @@ import { getWalletClient } from "@wagmi/core";
 import { useQueryState } from "nuqs";
 import { ButtonHTMLAttributes, FC, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { Hex } from "viem";
 import { useAccount, useSwitchChain } from "wagmi";
 
 import { ProjectUpdateForm } from "@/components/Forms/ProjectUpdate";
@@ -41,6 +40,7 @@ import { PathIcon } from "@/components/Icons/PathIcon";
 import { StageIcon } from "@/components/Icons/StageIcon";
 import { TargetIcon } from "@/components/Icons/Target";
 import { PAGES } from "@/utilities/pages";
+import { retryUntilConditionMet } from "@/utilities/retries";
 import { Bars4Icon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 
@@ -227,8 +227,9 @@ const UpdateBlock = ({
   const { gap } = useGap();
   const { chain } = useAccount();
   const { switchChainAsync } = useSwitchChain();
-  const project = useProjectStore((state) => state.project);
+  const { project, isProjectOwner } = useProjectStore();
   const refreshProject = useProjectStore((state) => state.refreshProject);
+  const isOnChainAuthorized = isProjectOwner || isOwner;
 
   const deleteProjectUpdate = async () => {
     let gapClient = gap;
@@ -255,38 +256,68 @@ const UpdateBlock = ({
       if (!findUpdate) {
         throw new Error("Update not found");
       }
-      await findUpdate
-        .revoke(walletSigner as any, changeStepperStep)
-        .then(async (res) => {
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, findUpdate.chainID),
-              "POST",
-              {}
-            );
-          }
-          let retries = 1000;
-          changeStepperStep("indexing");
-          let fetchedProject = null;
-          while (retries > 0) {
-            fetchedProject = await gapClient!.fetch
-              .projectById(project?.uid as Hex)
-              .catch(() => null);
+
+      const checkIfAttestationExists = async (callbackFn?: () => void) => {
+        await retryUntilConditionMet(
+          async () => {
+            const fetchedProject = await refreshProject();
+
             const stillExists = fetchedProject?.updates?.find(
               (upd) => ((upd as any)?._uid || upd.uid) === update.uid
             );
-            if (!stillExists) {
-              retries = 0;
-              changeStepperStep("indexed");
-              toast.success(MESSAGES.PROJECT_UPDATE_FORM.DELETE.SUCCESS);
-              await refreshProject();
-            }
-            retries -= 1;
-            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+            return !stillExists;
+          },
+          () => {
+            callbackFn?.();
           }
-        });
+        );
+      };
+      if (!isOnChainAuthorized) {
+        const toastLoading = toast.loading(
+          MESSAGES.PROJECT_UPDATE_FORM.DELETE.LOADING
+        );
+        await fetchData(
+          INDEXER.PROJECT.REVOKE_ATTESTATION(
+            findUpdate?.uid as `0x${string}`,
+            findUpdate.chainID
+          ),
+          "POST",
+          {}
+        )
+          .then(async () => {
+            checkIfAttestationExists()
+              .then(() => {
+                toast.success(MESSAGES.PROJECT_UPDATE_FORM.DELETE.SUCCESS, {
+                  id: toastLoading,
+                });
+              })
+              .catch(() => {
+                toast.dismiss(toastLoading);
+              });
+          })
+          .catch(() => {
+            toast.dismiss(toastLoading);
+          });
+      } else {
+        await findUpdate
+          .revoke(walletSigner as any, changeStepperStep)
+          .then(async (res) => {
+            const txHash = res?.tx[0]?.hash;
+            if (txHash) {
+              await fetchData(
+                INDEXER.ATTESTATION_LISTENER(txHash, findUpdate.chainID),
+                "POST",
+                {}
+              );
+            }
+
+            await checkIfAttestationExists(() => {
+              changeStepperStep("indexed");
+            }).then(() => {
+              toast.success(MESSAGES.PROJECT_UPDATE_FORM.DELETE.SUCCESS);
+            });
+          });
+      }
     } catch (error: any) {
       console.log(error);
       toast.error(MESSAGES.PROJECT_UPDATE_FORM.DELETE.ERROR);
