@@ -165,7 +165,7 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
                     {code ? (
                       <div className="flex flex-col gap-2 h-full">
                         <p className="text-zinc-800 dark:text-zinc-100">
-                          Share this invite link with your team mate to join
+                          Share this invite link with your team member to join
                           your project.
                         </p>
                         <div className=" items-center flex flex-row gap-2 h-max max-h-40">

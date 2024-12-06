@@ -1,31 +1,31 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, useEffect, useState } from "react";
 import { Dialog, Transition } from "@headlessui/react";
+import { FC, Fragment, useEffect, useState } from "react";
 
 import { Button } from "@/components/Utilities/Button";
-import toast from "react-hot-toast";
 import { useProjectStore } from "@/store";
-import { useAccount, useSwitchChain } from "wagmi";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import toast from "react-hot-toast";
+import { useAccount, useSwitchChain } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
-import { useSearchParams } from "next/navigation";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { ContributorProfile } from "@show-karma/karma-gap-sdk";
 import { getGapClient, useGap } from "@/hooks";
-import { getWalletClient } from "@wagmi/core";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { config } from "@/utilities/wagmi/config";
-import { cn } from "@/utilities/tailwind";
-import { useStepper } from "@/store/modals/txStepper";
 import { useAuthStore } from "@/store/auth";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
+import { useStepper } from "@/store/modals/txStepper";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
+import { cn } from "@/utilities/tailwind";
+import { config } from "@/utilities/wagmi/config";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { ContributorProfile } from "@show-karma/karma-gap-sdk";
+import { getWalletClient } from "@wagmi/core";
+import { useSearchParams } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
 
 type ContributorProfileDialogProps = {};
 
@@ -171,7 +171,9 @@ export const ContributorProfileDialog: FC<
                 if (hasMember) {
                   retries = 0;
                   changeStepperStep("indexed");
-                  toast.success("Accepted invite successfully");
+                  toast.success(
+                    "Congrats! You have joined the team successfully"
+                  );
                   refreshMembers();
                   closeModal();
                 }

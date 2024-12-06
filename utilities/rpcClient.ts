@@ -9,6 +9,7 @@ import {
   sepolia,
 } from "viem/chains";
 import { envVars } from "./enviromentVars";
+import { getChainNameById } from "./network";
 
 const optimismClient = createPublicClient({
   chain: optimism,
@@ -55,4 +56,10 @@ export const rpcClient = {
   optimismSepolia: optimismSepoliaClient,
   sepolia: sepoliaClient,
   baseSepolia: baseSepoliaClient,
+};
+
+export const getRPCClient = async (chainId: number) => {
+  const chainName = getChainNameById(chainId);
+  const client = rpcClient[chainName as keyof typeof rpcClient];
+  return client;
 };
