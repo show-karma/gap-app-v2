@@ -21,8 +21,11 @@ export const getProjectMemberRoles = async (project: IProjectResponse) => {
     const client = rpcClient[chainName as keyof typeof rpcClient];
     await Promise.all(
       project.members.map(async (member) => {
-        const isProjectOwner =
-          member.recipient.toLowerCase() === project.recipient.toLowerCase();
+        const isProjectOwner = await projectInstance
+          .isOwner(client as any, member.recipient)
+          .catch((error) => {
+            return false;
+          });
         const isProjectAdmin = await projectInstance
           .isAdmin(client as any, member.recipient)
           .catch((error) => {

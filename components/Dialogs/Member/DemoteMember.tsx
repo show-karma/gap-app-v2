@@ -67,14 +67,14 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({
         changeStepperStep
       );
       await refreshProject();
-      toast.success("Member demoted successfully");
+      toast.success("Member removed as admin successfully");
       closeModal();
       queryClient.invalidateQueries({
         queryKey: ["memberRoles", project?.uid],
       });
     } catch (error) {
-      errorManager("Error demoting member", error);
-      toast.error("Failed to demote member");
+      errorManager("Error removing member as admin", error);
+      toast.error("Failed to remove member as admin");
       console.log(error);
     } finally {
       setIsDemoting(false);
@@ -126,12 +126,12 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({
                     as="h3"
                     className="text-lg font-medium leading-6 text-gray-900 dark:text-zinc-100"
                   >
-                    Demote member to admin
+                    Remove member as admin
                   </Dialog.Title>
                   <div className="mt-2">
                     <p className="text-sm text-gray-600 dark:text-zinc-400">
-                      Are you sure you want to demote{" "}
-                      {profile?.data.name || memberAddress} from admin?
+                      Are you sure you want to remove{" "}
+                      {profile?.data.name || memberAddress} as admin?
                     </p>
                   </div>
 
@@ -147,7 +147,7 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({
                       disabled={isDemoting}
                       className="text-zinc-100 text-base bg-brand-blue dark:text-zinc-100 dark:border-zinc-100 hover:bg-brand-blue/90 dark:hover:bg-brand-blue/90 dark:hover:text-white"
                     >
-                      {isDemoting ? "Demoting..." : "Confirm"}
+                      {isDemoting ? "Removing..." : "Confirm"}
                     </Button>
                   </div>
                 </Dialog.Panel>

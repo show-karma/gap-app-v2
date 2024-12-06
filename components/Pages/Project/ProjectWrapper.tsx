@@ -18,15 +18,13 @@ import { useAuthStore } from "@/store/auth";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { useProgressModalStore } from "@/store/modals/progress";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { getProjectById } from "@/utilities/sdk";
 import { cn } from "@/utilities/tailwind";
-import { config } from "@/utilities/wagmi/config";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getWalletClient } from "@wagmi/core";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
@@ -34,6 +32,7 @@ import { useAccount } from "wagmi";
 import { IntroDialog } from "./IntroDialog";
 
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import { getRPCClient } from "@/utilities/rpcClient";
 
 interface ProjectWrapperProps {
   project: IProjectResponse;
@@ -108,7 +107,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   const { gap } = useGap();
 
   useEffect(() => {
-    if (!project || !project?.chainID || !isAuth || !isConnected || !chain) {
+    if (!project || !project?.chainID || !isAuth || !isConnected || !address) {
       setIsProjectAdmin(false);
       setIsProjectAdminLoading(false);
       setIsProjectOwner(false);
@@ -119,19 +118,13 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
     const setupProjectOwner = async () => {
       try {
         setIsProjectOwnerLoading(true);
-        const walletClient = await getWalletClient(config, {
-          chainId: project.chainID,
-        }).catch(() => undefined);
-
-        if (!walletClient) return;
-        const walletSigner = await walletClientToSigner(walletClient).catch(
-          () => undefined
-        );
+        const rpcClient = await getRPCClient(project.chainID);
         const fetchedProject = await getProjectById(projectId);
         if (!fetchedProject) return;
         await fetchedProject
-          .isOwner(walletSigner || signer)
+          .isOwner(rpcClient as any, address)
           .then((res) => {
+            console.log("isOwner", res);
             setIsProjectOwner(res);
           })
           .finally(() => setIsProjectOwnerLoading(false));
@@ -149,18 +142,11 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
     const setupProjectAdmin = async () => {
       try {
         setIsProjectAdminLoading(true);
-        const walletClient = await getWalletClient(config, {
-          chainId: project.chainID,
-        }).catch(() => undefined);
-
-        if (!walletClient) return;
-        const walletSigner = await walletClientToSigner(walletClient).catch(
-          () => undefined
-        );
+        const rpcClient = await getRPCClient(project.chainID);
         const fetchedProject = await getProjectById(projectId);
         if (!fetchedProject) return;
         await fetchedProject
-          .isAdmin(walletSigner || signer)
+          .isAdmin(rpcClient as any, address)
           .then((res) => {
             setIsProjectAdmin(res);
           })
@@ -176,7 +162,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
       }
     };
     setupProjectAdmin();
-  }, [project?.uid, address, isAuth, isConnected, signer, chain]);
+  }, [project?.uid, address, isAuth, isConnected, signer]);
 
   const socials = useMemo(() => {
     const types = [
