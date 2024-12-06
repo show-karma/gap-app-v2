@@ -3,6 +3,9 @@ import { Hex } from "viem";
 export const INDEXER = {
   ATTESTATION_LISTENER: (hash: Hex | string, chainId: number) =>
     `/attestations/index-by-transaction/${hash}/${chainId}`,
+  PROFILE: {
+    GET: (address: string) => `/user/${address}`,
+  },
   REGISTRY: {
     GET_ALL: "/registry",
     FIND_BY_ID: (id: string, chainId: number) =>
@@ -35,6 +38,20 @@ export const INDEXER = {
       `/projects/requestintro/${projectIdOrSlug}`,
     ALL_REPORT: (offset: number, limit: number) =>
       `/projects/report?offset=${offset}&limit=${limit}`,
+    REVOKE_ATTESTATION: (attestationUID: string | `0x${string}`, chainId: number) =>
+      `/attestations/revoke/${attestationUID}/${chainId}`,
+    INVITATION: {
+      NEW_CODE: (projectIdOrSlug: string) =>
+        `/projects/${projectIdOrSlug}/add-invite-link`,
+      REVOKE_CODE: (projectIdOrSlug: string, code: string) =>
+        `/projects/${projectIdOrSlug}/revoke-invite-link/${code}`,
+      ACCEPT_LINK: (projectIdOrSlug: string) =>
+        `/projects/${projectIdOrSlug}/accept-invite-link`,
+      GET_LINKS: (projectIdOrSlug: string) =>
+        `/projects/${projectIdOrSlug}/get-invite-link`,
+      CHECK_CODE: (projectIdOrSlug: string, hash: string) =>
+        `/projects/${projectIdOrSlug}/validate-invite-link/${hash}`,
+    },
   },
   QUESTIONS: {
     CREATE: (idOrSlug: string) => `/questions/create/${idOrSlug}`,

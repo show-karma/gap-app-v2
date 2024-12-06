@@ -1,28 +1,24 @@
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, ReactNode, useEffect, useState } from "react";
-import { Dialog, Transition } from "@headlessui/react";
-import { PlusIcon } from "@heroicons/react/24/solid";
-import { Button } from "../Utilities/Button";
-import toast from "react-hot-toast";
-import { isAddress } from "viem";
 import { useProjectStore } from "@/store";
-import { useAccount, useSwitchChain } from "wagmi";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { getWalletClient } from "@wagmi/core";
 import { useStepper } from "@/store/modals/txStepper";
-import {
-  getProjectById,
-  getProjectOwner,
-  isOwnershipTransfered,
-} from "@/utilities/sdk";
-import { config } from "@/utilities/wagmi/config";
+import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
+import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { getProjectById, isOwnershipTransfered } from "@/utilities/sdk";
+import { config } from "@/utilities/wagmi/config";
+import { Dialog, Transition } from "@headlessui/react";
+import { PlusIcon } from "@heroicons/react/24/solid";
+import { getWalletClient } from "@wagmi/core";
+import { FC, Fragment, ReactNode, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { isAddress } from "viem";
+import { useAccount, useSwitchChain } from "wagmi";
+import { Button } from "../Utilities/Button";
 
-import { errorManager } from "../Utilities/errorManager";
-import { sanitizeInput } from "@/utilities/sanitize";
 import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership";
+import { sanitizeInput } from "@/utilities/sanitize";
+import { errorManager } from "../Utilities/errorManager";
 
 type TransferOwnershipProps = {
   buttonElement?: {
@@ -53,7 +49,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
   const { chain } = useAccount();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const setIsProjectOwner = useProjectStore((state) => state.setIsProjectOwner);
   const { switchChainAsync } = useSwitchChain();
   const { changeStepperStep, setIsStepper } = useStepper();
@@ -101,7 +97,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
               newOwner
             );
 
-            if (stillProjectOwner) {
+            if (!stillProjectOwner) {
               setIsProjectOwner(false);
               retries = 0;
               await refreshProject();
@@ -140,7 +136,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
     <>
       {buttonElement ? (
         <Button
-          disabled={!isProjectOwner}
+          disabled={!isProjectAdmin}
           onClick={openModal}
           className={buttonElement.styleClass}
         >

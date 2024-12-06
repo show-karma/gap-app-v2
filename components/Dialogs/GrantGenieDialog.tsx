@@ -93,8 +93,8 @@ export const GrantsGenieDialog: FC<Props> = () => {
     openGrantGenieModal: openModal,
   } = useGrantGenieModalStore();
   const project = useProjectStore((state) => state.project);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const setIsProjectOwner = useProjectStore((state) => state.setIsProjectOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const setIsProjectAdmin = useProjectStore((state) => state.setIsProjectAdmin);
   const { switchChainAsync } = useSwitchChain();
   const [isLoading, setIsLoading] = useState(false);
 

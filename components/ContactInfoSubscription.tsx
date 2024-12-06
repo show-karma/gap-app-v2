@@ -123,11 +123,11 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
   const project = useProjectStore((state) => state.project);
 
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
 
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
-  const isAuthorized = isOwner || isProjectOwner;
+  const isAuthorized = isOwner || isProjectAdmin;
 
   const dataToUpdate = {
     id: contactInfo?.id || "0",

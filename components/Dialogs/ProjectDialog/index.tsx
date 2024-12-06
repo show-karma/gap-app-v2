@@ -1,20 +1,28 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { type FC, Fragment, type ReactNode, useMemo, useState } from "react";
+import {
+  DiscordIcon,
+  GithubIcon,
+  LinkedInIcon,
+  TwitterIcon,
+  WebsiteIcon,
+} from "@/components/Icons";
+import { Button } from "@/components/Utilities/Button";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { getGapClient, useGap } from "@/hooks";
+import { useProjectStore } from "@/store";
+import { useOwnerStore } from "@/store/owner";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { MESSAGES } from "@/utilities/messages";
 import { Dialog, Transition } from "@headlessui/react";
+import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import {
   ChevronRightIcon,
   PlusIcon,
   XMarkIcon,
 } from "@heroicons/react/24/solid";
-import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
-import * as Tooltip from "@radix-ui/react-tooltip";
-import { z } from "zod";
-import { type Hex, isAddress, zeroHash } from "viem";
-import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { useAccount, useSwitchChain } from "wagmi";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import {
   ExternalLink,
@@ -24,47 +32,46 @@ import {
   ProjectDetails,
   nullRef,
 } from "@show-karma/karma-gap-sdk";
-import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import { getGapClient, useGap } from "@/hooks";
-import { Button } from "@/components/Utilities/Button";
 import {
-  GithubIcon,
-  LinkedInIcon,
-  TwitterIcon,
-  DiscordIcon,
-  WebsiteIcon,
-} from "@/components/Icons";
-import { useProjectStore } from "@/store";
-import { useOwnerStore } from "@/store/owner";
-import { MESSAGES } from "@/utilities/messages";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+  type FC,
+  Fragment,
+  type ReactNode,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { type Hex, isAddress, zeroHash } from "viem";
+import { useAccount, useSwitchChain } from "wagmi";
+import { z } from "zod";
 
-import { appNetwork } from "@/utilities/network";
-import { PAGES } from "@/utilities/pages";
-import { cn } from "@/utilities/tailwind";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { ExternalLink as ExternalLinkComponent } from "@/components/Utilities/ExternalLink";
+import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useAuthStore } from "@/store/auth";
-import { getWalletClient } from "@wagmi/core";
+import { useProjectEditModalStore } from "@/store/modals/projectEdit";
+import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
 import { useStepper } from "@/store/modals/txStepper";
-import { updateProject } from "@/utilities/sdk/projects/editProject";
-import { ContactInfoSection } from "./ContactInfoSection";
 import type { Contact } from "@/types/project";
 import fetchData from "@/utilities/fetchData";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
+import { appNetwork } from "@/utilities/network";
+import { PAGES } from "@/utilities/pages";
+import { sanitizeObject } from "@/utilities/sanitize";
+import { getProjectById } from "@/utilities/sdk";
+import { updateProject } from "@/utilities/sdk/projects/editProject";
+import { SOCIALS } from "@/utilities/socials";
+import { cn } from "@/utilities/tailwind";
 import { config } from "@/utilities/wagmi/config";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getProjectById } from "@/utilities/sdk";
-import { NetworkDropdown } from "./NetworkDropdown";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { sanitizeObject } from "@/utilities/sanitize";
-import { useProjectEditModalStore } from "@/store/modals/projectEdit";
+import { getWalletClient } from "@wagmi/core";
 import debounce from "lodash.debounce";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { Skeleton } from "@/components/Utilities/Skeleton";
-import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
 import { SimilarProjectsDialog } from "../SimilarProjectsDialog";
-import { ExternalLink as ExternalLinkComponent } from "@/components/Utilities/ExternalLink";
-import { SOCIALS } from "@/utilities/socials";
+import { ContactInfoSection } from "./ContactInfoSection";
+import { NetworkDropdown } from "./NetworkDropdown";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -241,40 +248,40 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     setIsOpen(true);
   }
 
-  // const addMemberToArray = () => {
-  //   event?.preventDefault();
-  //   event?.stopPropagation();
-  //   const splittedMembers = new Set(
-  //     teamInput.split(",").map((m) => m.trim().toLowerCase())
-  //   );
-  //   const uniqueMembers = Array.from(splittedMembers).filter(
-  //     (m) => !team.includes(m)
-  //   );
-  //   setTeamInput("");
-  //   setTeam((prev) => [...prev, ...uniqueMembers]);
-  // };
+  const addMemberToArray = () => {
+    event?.preventDefault();
+    event?.stopPropagation();
+    const splittedMembers = new Set(
+      teamInput.split(",").map((m) => m.trim().toLowerCase())
+    );
+    const uniqueMembers = Array.from(splittedMembers).filter(
+      (m) => !team.includes(m)
+    );
+    setTeamInput("");
+    setTeam((prev) => [...prev, ...uniqueMembers]);
+  };
 
-  // const checkTeamError = () => {
-  //   if (isAddress(teamInput) || teamInput.length === 0) {
-  //     setTeamInputError(undefined);
-  //     return;
-  //   }
-  //   const splittedMembers = teamInput
-  //     .split(",")
-  //     .map((m) => m.trim().toLowerCase());
-  //   const checkArray = splittedMembers.every((address) => {
-  //     return isAddress(address);
-  //   });
-  //   if (checkArray) {
-  //     setTeamInputError(undefined);
-  //     return;
-  //   }
-  //   setTeamInputError(MESSAGES.PROJECT_FORM.MEMBERS);
-  // };
+  const checkTeamError = () => {
+    if (isAddress(teamInput) || teamInput.length === 0) {
+      setTeamInputError(undefined);
+      return;
+    }
+    const splittedMembers = teamInput
+      .split(",")
+      .map((m) => m.trim().toLowerCase());
+    const checkArray = splittedMembers.every((address) => {
+      return isAddress(address);
+    });
+    if (checkArray) {
+      setTeamInputError(undefined);
+      return;
+    }
+    setTeamInputError(MESSAGES.PROJECT_FORM.MEMBERS);
+  };
 
-  // useEffect(() => {
-  //   checkTeamError();
-  // }, [teamInput]);
+  useEffect(() => {
+    checkTeamError();
+  }, [teamInput]);
 
   const hasErrors = () => {
     if (step === 0) {
@@ -305,11 +312,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     if (step === 3) {
       return !contacts.length || !!errors?.chainID || !watch("chainID");
     }
-    // if (step === 2) {
-    //   return (
-    //     !!teamInputError || !team.length || !isValid || !isDescriptionValid
-    //   );
-    // }
+    if (step === 4) {
+      return !!teamInputError || !team.length;
+    }
 
     return false;
   };
@@ -377,8 +382,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       const { chainID, ...rest } = data;
       const newProjectInfo: NewProjectData = {
         ...rest,
-        // members: team.map((item) => item as Hex),
-        members: [(data.recipient || address) as Hex],
+        members: [
+          (data.recipient || address) as Hex,
+          ...team.map((item) => item as Hex),
+        ],
         links: [
           {
             type: "twitter",
@@ -1052,65 +1059,65 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         </div>
       ),
     },
-    // {
-    //   id: "teamMembers",
-    //   title: "Team members",
-    //   desc: "The wonderful people who built it",
-    //   fields: (
-    //     <div className="flex w-full flex-col gap-8">
-    //       <div className="flex w-full flex-col gap-2">
-    //         <label htmlFor="members-input" className={labelStyle}>
-    //           Invite team members *
-    //         </label>
-    //         <div className="flex w-full flex-row items-center gap-2 max-sm:flex-col">
-    //           <input
-    //             id="members-input"
-    //             type="text"
-    //             className="flex flex-1 rounded-lg border border-gray-400 bg-transparent p-2 px-4 focus-visible:outline-none max-sm:w-full"
-    //             placeholder="ETH address, comma separated"
-    //             value={teamInput}
-    //             onChange={(e) => setTeamInput(e.target.value)}
-    //           />
-    //           <button
-    //             type="button"
-    //             onClick={addMemberToArray}
-    //             className="bg-black px-12 py-2 rounded-lg text-white transition-all duration-300 ease-in-out disabled:opacity-40 max-sm:w-full"
-    //             disabled={!!teamInputError || !teamInput.length}
-    //           >
-    //             Add
-    //           </button>
-    //         </div>
-    //         <p className="text-red-500">{teamInputError}</p>
-    //         <div className="flex w-full flex-col items-center gap-4">
-    //           {team.length ? (
-    //             <div className="mt-2 h-1 w-20 rounded-full bg-gray-400" />
-    //           ) : null}
-    //           <div className="flex w-full flex-col gap-2">
-    //             {team.map((member) => (
-    //               <div
-    //                 key={member}
-    //                 className="flex w-full flex-row items-center justify-between truncate rounded border border-gray-400 p-2 max-sm:max-w-[330px]"
-    //               >
-    //                 <p className="w-min truncate font-sans font-normal text-slate-700 dark:text-zinc-100">
-    //                   {member}
-    //                 </p>
-    //                 <button
-    //                   type="button"
-    //                   className="border border-black bg-white px-8 py-2 text-black transition-all duration-300 ease-in-out disabled:opacity-40"
-    //                   onClick={() =>
-    //                     setTeam((prev) => prev.filter((m) => m !== member))
-    //                   }
-    //                 >
-    //                   Remove
-    //                 </button>
-    //               </div>
-    //             ))}
-    //           </div>
-    //         </div>
-    //       </div>
-    //     </div>
-    //   ),
-    // },
+    {
+      id: "teamMembers",
+      title: "Team members",
+      desc: "The wonderful people who built it",
+      fields: (
+        <div className="flex w-full flex-col gap-8">
+          <div className="flex w-full flex-col gap-2">
+            <label htmlFor="members-input" className={labelStyle}>
+              Invite team members *
+            </label>
+            <div className="flex w-full flex-row items-center gap-2 max-sm:flex-col">
+              <input
+                id="members-input"
+                type="text"
+                className="flex flex-1 rounded-lg border border-gray-400 bg-transparent p-2 px-4 focus-visible:outline-none max-sm:w-full"
+                placeholder="ETH address, comma separated"
+                value={teamInput}
+                onChange={(e) => setTeamInput(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={addMemberToArray}
+                className="bg-black px-12 py-2 rounded-lg text-white transition-all duration-300 ease-in-out disabled:opacity-40 max-sm:w-full"
+                disabled={!!teamInputError || !teamInput.length}
+              >
+                Add
+              </button>
+            </div>
+            <p className="text-red-500">{teamInputError}</p>
+            <div className="flex w-full flex-col items-center gap-4">
+              {team.length ? (
+                <div className="mt-2 h-1 w-20 rounded-full bg-gray-400" />
+              ) : null}
+              <div className="flex w-full flex-col gap-2">
+                {team.map((member) => (
+                  <div
+                    key={member}
+                    className="flex w-full flex-row items-center justify-between truncate rounded border border-gray-400 p-2 max-sm:max-w-[330px]"
+                  >
+                    <p className="w-min truncate font-sans font-normal text-slate-700 dark:text-zinc-100">
+                      {member}
+                    </p>
+                    <button
+                      type="button"
+                      className="border border-black bg-white px-8 py-2 text-black transition-all duration-300 ease-in-out disabled:opacity-40"
+                      onClick={() =>
+                        setTeam((prev) => prev.filter((m) => m !== member))
+                      }
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      ),
+    },
   ];
 
   return (

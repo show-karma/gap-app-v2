@@ -13,13 +13,13 @@ import {
 } from "@heroicons/react/24/outline";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { type FC, useState, useEffect } from "react";
+import { IMilestone } from "@show-karma/karma-gap-sdk";
+import { type FC, useEffect } from "react";
 import { DayPicker } from "react-day-picker";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
-import { MilestonesForms, useGrantFormStore } from "./store";
-import { IMilestone } from "@show-karma/karma-gap-sdk";
+import { useGrantFormStore } from "./store";
 
 interface MilestoneProps {
   currentMilestone: IMilestone;
@@ -134,8 +134,6 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
   }, [isValid]);
 
   const priorities = Array.from({ length: 5 }, (_, index) => index + 1);
-
-  console.log("formPriorities", formPriorities);
 
   return milestonesForms[index].isEditing ? (
     <div className="flex w-full flex-col gap-6 rounded-md bg-gray-200 dark:bg-zinc-700 px-4 py-6">

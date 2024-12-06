@@ -42,13 +42,17 @@ export const ProjectNavigator = ({
         project?.details?.data?.slug || projectId
       ),
     },
+    {
+      name: "Team",
+      href: PAGES.PROJECT.TEAM(project?.details?.data?.slug || projectId),
+    },
   ];
   const [tabs, setTabs] = useState<typeof publicTabs>(publicTabs);
 
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
 
-  const isAuthorized = isOwner || isProjectOwner;
+  const isAuthorized = isOwner || isProjectAdmin;
   useEffect(() => {
     const mountTabs = () => {
       if (isAuthorized) {

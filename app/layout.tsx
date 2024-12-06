@@ -16,6 +16,7 @@ import { ProgressBarWrapper } from "@/components/ProgressBarWrapper";
 import { ThemeProvider } from "next-themes";
 import { Analytics } from "@vercel/analytics/react";
 import { GoogleAnalytics } from "@next/third-parties/google";
+import { Suspense } from "react";
 
 export const metadata = defaultMetadata;
 
@@ -41,7 +42,9 @@ export default function RootLayout({
             <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">
               <div>
                 <div className="fixed w-full bg-white dark:bg-black z-10">
-                  <Header />
+                  <Suspense>
+                    <Header />
+                  </Suspense>
                 </div>
                 <div className="h-[72px] w-full" />
                 {children}

@@ -192,8 +192,8 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   const { chain } = useAccount();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const setIsProjectOwner = useProjectStore((state) => state.setIsProjectOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const setIsProjectAdmin = useProjectStore((state) => state.setIsProjectAdmin);
   const { switchChainAsync } = useSwitchChain();
   const { changeStepperStep, setIsStepper } = useStepper();
 
@@ -285,7 +285,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
     <>
       {buttonElement ? (
         <Button
-          disabled={!isProjectOwner}
+          disabled={!isProjectAdmin}
           onClick={openModal}
           className={buttonElement.styleClass}
         >

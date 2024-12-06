@@ -1,8 +1,7 @@
 "use client";
-import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useGap } from "@/hooks";
-import { useProjectStore } from "@/store";
+import { useOwnerStore, useProjectStore } from "@/store";
 import { useGrantGenieModalStore } from "@/store/modals/genie";
 import { useMergeModalStore } from "@/store/modals/merge";
 import { useProjectEditModalStore } from "@/store/modals/projectEdit";
@@ -12,15 +11,8 @@ import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { deleteProject, getProjectById } from "@/utilities/sdk";
-import { cn } from "@/utilities/tailwind";
 import { config } from "@/utilities/wagmi/config";
-import {
-  Menu,
-  MenuButton,
-  MenuItem,
-  MenuItems,
-  Transition,
-} from "@headlessui/react";
+import { Menu, Transition } from "@headlessui/react";
 import {
   ArrowDownOnSquareIcon,
   ArrowsRightLeftIcon,
@@ -28,11 +20,7 @@ import {
   PencilSquareIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
-import {
-  ChevronDownIcon,
-  EllipsisVerticalIcon,
-  PlusIcon,
-} from "@heroicons/react/24/solid";
+import { EllipsisVerticalIcon, PlusIcon } from "@heroicons/react/24/solid";
 import { getWalletClient } from "@wagmi/core";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -92,6 +80,9 @@ export const ProjectOptionsMenu = () => {
     useGrantGenieModalStore();
   const { isTransferOwnershipModalOpen, openTransferOwnershipModal } =
     useTransferOwnershipModalStore();
+  const { isProjectOwner } = useProjectStore();
+  const { isOwner: isContractOwner } = useOwnerStore();
+  const isAuthorized = isProjectOwner || isContractOwner;
 
   const deleteFn = async () => {
     if (!address || !project) return;
@@ -175,33 +166,36 @@ export const ProjectOptionsMenu = () => {
                   Edit project
                 </button>
               </Menu.Item>
-              <Menu.Item>
-                <button
-                  type="button"
-                  onClick={openMergeModal}
-                  className={buttonClassName}
-                >
-                  <ArrowDownOnSquareIcon
-                    className={"mr-2 h-5 w-5"}
-                    aria-hidden="true"
-                  />
-                  Merge
-                </button>
-              </Menu.Item>
-
-              <Menu.Item>
-                <button
-                  type="button"
-                  onClick={openTransferOwnershipModal}
-                  className={buttonClassName}
-                >
-                  <ArrowsRightLeftIcon
-                    className={"mr-2 h-5 w-5"}
-                    aria-hidden="true"
-                  />
-                  Transfer ownership
-                </button>
-              </Menu.Item>
+              {isAuthorized ? (
+                <Menu.Item>
+                  <button
+                    type="button"
+                    onClick={openMergeModal}
+                    className={buttonClassName}
+                  >
+                    <ArrowDownOnSquareIcon
+                      className={"mr-2 h-5 w-5"}
+                      aria-hidden="true"
+                    />
+                    Merge
+                  </button>
+                </Menu.Item>
+              ) : null}
+              {isAuthorized ? (
+                <Menu.Item>
+                  <button
+                    type="button"
+                    onClick={openTransferOwnershipModal}
+                    className={buttonClassName}
+                  >
+                    <ArrowsRightLeftIcon
+                      className={"mr-2 h-5 w-5"}
+                      aria-hidden="true"
+                    />
+                    Transfer ownership
+                  </button>
+                </Menu.Item>
+              ) : null}
               <Menu.Item>
                 <Link
                   href={PAGES.PROJECT.IMPACT.ADD_IMPACT(
@@ -223,23 +217,25 @@ export const ProjectOptionsMenu = () => {
                   Grant genie
                 </button>
               </Menu.Item>
-              <Menu.Item>
-                <DeleteDialog
-                  title="Are you sure you want to delete this project?"
-                  deleteFunction={deleteFn}
-                  isLoading={isDeleting}
-                  buttonElement={{
-                    icon: (
-                      <TrashIcon
-                        className={"mr-2 h-5 w-5"}
-                        aria-hidden="true"
-                      />
-                    ),
-                    text: "Delete project",
-                    styleClass: buttonClassName,
-                  }}
-                />
-              </Menu.Item>
+              {isAuthorized ? (
+                <Menu.Item>
+                  <DeleteDialog
+                    title="Are you sure you want to delete this project?"
+                    deleteFunction={deleteFn}
+                    isLoading={isDeleting}
+                    buttonElement={{
+                      icon: (
+                        <TrashIcon
+                          className={"mr-2 h-5 w-5"}
+                          aria-hidden="true"
+                        />
+                      ),
+                      text: "Delete project",
+                      styleClass: buttonClassName,
+                    }}
+                  />
+                </Menu.Item>
+              ) : null}
             </div>
           </Menu.Items>
         </Transition>
