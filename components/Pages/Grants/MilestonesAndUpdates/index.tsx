@@ -10,9 +10,8 @@ import {
   IGrantResponse,
   IProjectResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import Link from "next/link";
 import dynamic from "next/dynamic";
-import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
+import Link from "next/link";
 import { ProjectGrantsMilestonesListLoading } from "../../Project/Loading/Grants/MilestonesAndUpdate";
 
 const EmptyMilestone = ({
@@ -22,13 +21,13 @@ const EmptyMilestone = ({
   grant?: IGrantResponse;
   project?: IProjectResponse;
 }) => {
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );
 
-  const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
+  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
 
   if (!isAuthorized) {
     return (
@@ -141,16 +140,15 @@ const MilestonesList = dynamic(
 
 export default function MilestonesAndUpdates() {
   const { grant } = useGrantStore();
-  console.log("GRANT", grant);
   const project = useProjectStore((state) => state.project);
   const hasMilestonesOrUpdates =
     grant?.milestones?.length || grant?.updates?.length;
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );
-  const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
+  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
 
   return (
     <div className="w-full">

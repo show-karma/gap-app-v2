@@ -1,33 +1,32 @@
 "use client";
 /* eslint-disable react/no-unstable-nested-components */
-import { zodResolver } from "@hookform/resolvers/zod";
-import { type FC, useState, Fragment, useEffect } from "react";
-import { Controller, useForm } from "react-hook-form";
-import toast from "react-hot-toast";
-import { z } from "zod";
+import { Button } from "@/components/Utilities/Button";
+import { DynamicStars } from "@/components/Utilities/DynamicStars";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { useProjectStore } from "@/store";
 import { Question } from "@/types";
 import { ReviewerInfo } from "@/types/reviewer";
-import { useAccount } from "wagmi";
-import { useProjectStore } from "@/store";
+import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { DynamicStars } from "@/components/Utilities/DynamicStars";
-import { Button } from "@/components/Utilities/Button";
-import { CheckIcon } from "@heroicons/react/20/solid";
-import { Listbox, Transition } from "@headlessui/react";
-import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
-import pluralize from "pluralize";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { additionalQuestion } from "@/utilities/tabs";
-import { INDEXER } from "@/utilities/indexer";
 import { cn } from "@/utilities/tailwind";
-import { useSearchParams } from "next/navigation";
-import { ExclamationTriangleIcon } from "@heroicons/react/20/solid";
-import { createHash } from "crypto";
-import { envVars } from "@/utilities/enviromentVars";
+import { Listbox, Transition } from "@headlessui/react";
+import { CheckIcon, ExclamationTriangleIcon } from "@heroicons/react/20/solid";
+import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { errorManager } from "@/components/Utilities/errorManager";
+import { createHash } from "crypto";
+import { useSearchParams } from "next/navigation";
+import pluralize from "pluralize";
+import { type FC, Fragment, useEffect, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { z } from "zod";
 
 interface ReviewFormAnonProps {
   grant: IGrantResponse;
@@ -253,7 +252,6 @@ export const ReviewFormAnon: FC<ReviewFormAnonProps> = ({
         .update(JSON.stringify(mountAnswers))
         .digest("hex")
         .slice(0, 12);
-      console.log("messageHash", messageHash);
       const groupId = zkgroup.groupId;
       const callbackUrl = window.location.href;
       const anonKarmaUrl = `${envVars.ANON_KARMA_URL}?proofData=${btoa(

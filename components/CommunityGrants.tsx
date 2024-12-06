@@ -1,34 +1,36 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import React, { useEffect, useMemo } from "react";
-import { Fragment, useState } from "react";
-import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
-import { Listbox, Transition } from "@headlessui/react";
-import { useParams, useSearchParams } from "next/navigation";
-import { Hex } from "viem";
-import { getGrants } from "@/utilities/sdk/communities/getGrants";
-import type { Grant } from "@show-karma/karma-gap-sdk";
-import { Spinner } from "./Utilities/Spinner";
-import { GrantCard } from "./GrantCard";
-import { useQueryState } from "nuqs";
+import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { SortByOptions, StatusOptions } from "@/types";
+import { zeroUID } from "@/utilities/commons";
+import { getTotalProjects } from "@/utilities/karma/totalProjects";
+import { getGrants } from "@/utilities/sdk/communities/getGrants";
+import { getPrograms } from "@/utilities/sdk/communities/getPrograms";
+import { cn } from "@/utilities/tailwind";
+import {
+  Field,
+  Label,
+  Listbox,
+  Radio,
+  RadioGroup,
+  Transition,
+} from "@headlessui/react";
+import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
+import type { Grant } from "@show-karma/karma-gap-sdk";
+import { useQuery } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
+import { useQueryState } from "nuqs";
 import pluralize from "pluralize";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { AutoSizer, Grid } from "react-virtualized";
-import { cn } from "@/utilities/tailwind";
-import { zeroUID } from "@/utilities/commons";
-import { useQuery } from "@tanstack/react-query";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { errorManager } from "./Utilities/errorManager";
-import { getTotalProjects } from "@/utilities/karma/totalProjects";
-import { getPrograms } from "@/utilities/sdk/communities/getPrograms";
-import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import { Field, Label, Radio, RadioGroup } from "@headlessui/react";
+import { Hex } from "viem";
+import { GrantCard } from "./GrantCard";
 import {
   CardListSkeleton,
   FilterByProgramsSkeleton,
 } from "./Pages/Communities/Loading";
+import { errorManager } from "./Utilities/errorManager";
 
 const sortOptions: Record<SortByOptions, string> = {
   recent: "Recent",

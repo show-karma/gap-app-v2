@@ -2,39 +2,26 @@
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks";
-import { useProjectStore } from "@/store";
+import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
-import { gapIndexerClient } from "@/utilities/gapIndexerClient";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
-import { PAGES } from "@/utilities/pages";
-import { deleteProject, getProjectById } from "@/utilities/sdk";
+import { retryUntilConditionMet } from "@/utilities/retries";
+import { getProjectById } from "@/utilities/sdk";
 import { cn } from "@/utilities/tailwind";
 import { config } from "@/utilities/wagmi/config";
 import { Menu, Transition } from "@headlessui/react";
-import {
-  ArrowDownOnSquareIcon,
-  ArrowsRightLeftIcon,
-  CheckCircleIcon,
-  LightBulbIcon,
-  PencilSquareIcon,
-  TrashIcon,
-} from "@heroicons/react/24/outline";
-import {
-  ChevronDownIcon,
-  EllipsisVerticalIcon,
-  PlusIcon,
-} from "@heroicons/react/24/solid";
+import { CheckCircleIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useQuery } from "@tanstack/react-query";
 import { getWalletClient } from "@wagmi/core";
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Fragment, useState } from "react";
 import toast from "react-hot-toast";
@@ -82,7 +69,6 @@ export const ObjectiveOptionsMenu = ({
   completeFn,
   alreadyCompleted,
 }: ObjectiveOptionsMenuProps) => {
-  const { project } = useProjectStore();
   const params = useParams();
   const projectId = params.projectId as string;
   const [isDeleting, setIsDeleting] = useState(false);
@@ -92,6 +78,9 @@ export const ObjectiveOptionsMenu = ({
   const router = useRouter();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
+  const { project, isProjectOwner } = useProjectStore();
+  const { isOwner: isContractOwner } = useOwnerStore();
+  const isOnChainAuthorized = isProjectOwner || isContractOwner;
 
   const { refetch } = useQuery<IProjectMilestoneResponse[]>({
     queryKey: ["projectMilestones"],
@@ -126,37 +115,70 @@ export const ObjectiveOptionsMenu = ({
         (item) => item.uid.toLowerCase() === objectiveId.toLowerCase()
       );
       if (!objectiveInstance) return;
-      await objectiveInstance
-        .revoke(walletSigner, changeStepperStep)
-        .then(async (res) => {
-          let retries = 1000;
-          changeStepperStep("indexing");
-          let fetchedObjectives = null;
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, objectiveInstance.chainID),
-              "POST",
-              {}
-            );
-          }
-          while (retries > 0) {
-            fetchedObjectives = await getProjectObjectives(projectId);
+
+      const checkIfAttestationExists = async (callbackFn?: () => void) => {
+        await retryUntilConditionMet(
+          async () => {
+            const fetchedObjectives = await getProjectObjectives(projectId);
             const stillExists = fetchedObjectives.find(
               (item) => item.uid.toLowerCase() === objectiveId.toLowerCase()
             );
 
-            if (!stillExists) {
-              retries = 0;
-              changeStepperStep("indexed");
-              toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.SUCCESS);
-              await refetch();
-            }
-            retries -= 1;
-            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+            return !stillExists;
+          },
+          async () => {
+            callbackFn?.();
+            await refetch();
           }
-        });
+        );
+      };
+
+      if (!isOnChainAuthorized) {
+        const toastLoading = toast.loading(
+          MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.LOADING
+        );
+        await fetchData(
+          INDEXER.PROJECT.REVOKE_ATTESTATION(
+            objectiveInstance?.uid as `0x${string}`,
+            objectiveInstance.chainID
+          ),
+          "POST",
+          {}
+        )
+          .then(async () => {
+            checkIfAttestationExists()
+              .then(() => {
+                toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.SUCCESS, {
+                  id: toastLoading,
+                });
+              })
+              .catch(() => {
+                toast.dismiss(toastLoading);
+              });
+          })
+          .catch(() => {
+            toast.dismiss(toastLoading);
+          });
+      } else {
+        await objectiveInstance
+          .revoke(walletSigner, changeStepperStep)
+          .then(async (res) => {
+            changeStepperStep("indexing");
+            const txHash = res?.tx[0]?.hash;
+            if (txHash) {
+              await fetchData(
+                INDEXER.ATTESTATION_LISTENER(txHash, objectiveInstance.chainID),
+                "POST",
+                {}
+              );
+            }
+            await checkIfAttestationExists(() => {
+              changeStepperStep("indexed");
+            }).then(() => {
+              toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.SUCCESS);
+            });
+          });
+      }
     } catch (error: any) {
       console.log(error);
       toast.error(MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.ERROR);

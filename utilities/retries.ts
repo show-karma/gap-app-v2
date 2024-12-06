@@ -40,3 +40,25 @@ export async function retry<T>(
 
   throw new Error("Unexpected end of retry loop");
 }
+
+export const retryUntilConditionMet = async (
+  conditionFn: () => Promise<boolean>,
+  callbackFn?: () => void,
+  maxRetries: number = 1000,
+  delay: number = 1500
+) => {
+  let retries = maxRetries;
+  while (retries > 0) {
+    try {
+      const conditionMet = await conditionFn().catch(() => false);
+      if (conditionMet) {
+        callbackFn?.();
+        return;
+      }
+    } catch (error) {
+      console.error("Error checking condition:", error);
+    }
+    retries -= 1;
+    await new Promise((resolve) => setTimeout(resolve, delay));
+  }
+};

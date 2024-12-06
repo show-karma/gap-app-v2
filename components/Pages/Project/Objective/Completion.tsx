@@ -12,6 +12,7 @@ import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObject
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { ReadMore } from "@/utilities/ReadMore";
+import { retryUntilConditionMet } from "@/utilities/retries";
 import { getProjectById } from "@/utilities/sdk";
 import { config } from "@/utilities/wagmi/config";
 import { TrashIcon } from "@heroicons/react/24/outline";
@@ -43,9 +44,11 @@ export const ObjectiveCardComplete = ({
   isCompleting: boolean;
   handleCompleting: (isCompleting: boolean) => void;
 }) => {
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isAuthorized = isProjectOwner || isContractOwner;
+  const isAuthorized = isProjectAdmin || isContractOwner;
+  const { isProjectOwner } = useProjectStore();
+  const isOnChainAuthorized = isProjectOwner || isContractOwner;
 
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
@@ -86,39 +89,75 @@ export const ObjectiveCardComplete = ({
         (item) => item.uid.toLowerCase() === objective.uid.toLowerCase()
       );
       if (!objectiveInstance) return;
-      await objectiveInstance
-        .revokeCompletion(walletSigner as any, changeStepperStep)
-        .then(async (res) => {
-          let retries = 1000;
-          changeStepperStep("indexing");
-          const txHash = res?.tx[0]?.hash;
-          let fetchedObjectives = null;
-          if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, objectiveInstance.chainID),
-              "POST",
-              {}
-            );
-          }
-          while (retries > 0) {
-            fetchedObjectives = await getProjectObjectives(projectId);
+
+      const checkIfAttestationExists = async (callbackFn?: () => void) => {
+        await retryUntilConditionMet(
+          async () => {
+            const fetchedObjectives = await getProjectObjectives(projectId);
             const stillExists = fetchedObjectives.find(
               (item) => item.uid.toLowerCase() === objective.uid.toLowerCase()
             )?.completed;
 
-            if (!stillExists) {
-              retries = 0;
+            return !stillExists;
+          },
+          async () => {
+            callbackFn?.();
+            await refetch();
+          }
+        );
+      };
+
+      if (!isOnChainAuthorized) {
+        const toastLoading = toast.loading(
+          MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.LOADING
+        );
+        await fetchData(
+          INDEXER.PROJECT.REVOKE_ATTESTATION(
+            objectiveInstance.completed?.uid as `0x${string}`,
+            objectiveInstance.completed.chainID
+          ),
+          "POST",
+          {}
+        )
+          .then(async () => {
+            checkIfAttestationExists()
+              .then(() => {
+                toast.success(
+                  MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.SUCCESS,
+                  {
+                    id: toastLoading,
+                  }
+                );
+              })
+              .catch(() => {
+                toast.dismiss(toastLoading);
+              });
+          })
+          .catch(() => {
+            toast.dismiss(toastLoading);
+          });
+      } else {
+        await objectiveInstance
+          .revokeCompletion(walletSigner as any, changeStepperStep)
+          .then(async (res) => {
+            changeStepperStep("indexing");
+            const txHash = res?.tx[0]?.hash;
+            if (txHash) {
+              await fetchData(
+                INDEXER.ATTESTATION_LISTENER(txHash, objectiveInstance.chainID),
+                "POST",
+                {}
+              );
+            }
+            await checkIfAttestationExists(() => {
               changeStepperStep("indexed");
+            }).then(() => {
               toast.success(
                 MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.SUCCESS
               );
-              await refetch();
-            }
-            retries -= 1;
-            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-            await new Promise((resolve) => setTimeout(resolve, 1500));
-          }
-        });
+            });
+          });
+      }
     } catch (error: any) {
       console.log(error);
       toast.error(MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.ERROR);

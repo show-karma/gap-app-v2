@@ -169,11 +169,11 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
     }
   };
   const isAuthorized = useAuthStore((state) => state.isAuth);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const verifyPermission = () => {
     if (!isAuthorized || !isConnected) return false;
-    return isContractOwner || !isProjectOwner;
+    return isContractOwner || !isProjectAdmin;
   };
   const ableToVerify = verifyPermission();
   const { openConnectModal } = useConnectModal();

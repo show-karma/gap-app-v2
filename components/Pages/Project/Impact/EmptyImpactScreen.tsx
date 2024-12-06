@@ -5,10 +5,10 @@ import { useQueryState } from "nuqs";
 import { FC } from "react";
 
 export const EmptyImpactScreen: FC = () => {
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isOwner = useOwnerStore((state) => state.isOwner);
 
-  const isAuthorized = isProjectOwner || isOwner;
+  const isAuthorized = isProjectAdmin || isOwner;
   const [, changeTab] = useQueryState("tab");
   if (!isAuthorized) {
     return (

@@ -1,31 +1,31 @@
 import { DeleteDialog } from "@/components/DeleteDialog";
+import { getGapClient, useGap } from "@/hooks";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/community";
-import { ReadMore } from "@/utilities/ReadMore";
+import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
+import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
-import { TrashIcon } from "@heroicons/react/24/outline";
-import { getWalletClient } from "@wagmi/core";
-import { useEffect, useState, type FC } from "react";
-import toast from "react-hot-toast";
-import { VerifyGrantUpdateDialog } from "./VerifyGrantUpdateDialog";
-import { VerifiedBadge } from "./VerifiedBadge";
-import { getGapClient, useGap } from "@/hooks";
-import { useStepper } from "@/store/modals/txStepper";
-import { Hex } from "viem";
+import { ReadMore } from "@/utilities/ReadMore";
 import { config } from "@/utilities/wagmi/config";
-import { useAccount, useSwitchChain } from "wagmi";
+import { TrashIcon } from "@heroicons/react/24/outline";
 import {
   IGrantUpdate,
   IGrantUpdateStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
+import { getWalletClient } from "@wagmi/core";
+import { useEffect, useState, type FC } from "react";
+import toast from "react-hot-toast";
+import { useAccount, useSwitchChain } from "wagmi";
+import { VerifiedBadge } from "./VerifiedBadge";
+import { VerifyGrantUpdateDialog } from "./VerifyGrantUpdateDialog";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { retryUntilConditionMet } from "@/utilities/retries";
 
 interface UpdateTagProps {
   index: number;
@@ -83,8 +83,9 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
   const selectedProject = useProjectStore((state) => state.project);
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
-
-  const project = useProjectStore((state) => state.project);
+  const { project, isProjectOwner } = useProjectStore();
+  const { isOwner: isContractOwner } = useOwnerStore();
+  const isOnChainAuthorized = isProjectOwner || isContractOwner;
 
   const undoGrantUpdate = async () => {
     let gapClient = gap;
@@ -109,24 +110,11 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
         (item) => item.uid.toLowerCase() === update.uid.toLowerCase()
       );
       if (!grantUpdateInstance) return;
-      await grantUpdateInstance
-        .revoke(walletSigner as any, changeStepperStep)
-        .then(async (res) => {
-          let retries = 1000;
-          changeStepperStep("indexing");
-          let fetchedProject = null;
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, grantUpdateInstance.chainID),
-              "POST",
-              {}
-            );
-          }
-          while (retries > 0) {
-            fetchedProject = await gapClient!.fetch
-              .projectById(selectedProject?.uid as Hex)
-              .catch(() => null);
+
+      const checkIfAttestationExists = async (callbackFn?: () => void) => {
+        await retryUntilConditionMet(
+          async () => {
+            const fetchedProject = await refreshProject();
             const grant = fetchedProject?.grants?.find(
               (item) => item.uid.toLowerCase() === update.refUID.toLowerCase()
             );
@@ -134,17 +122,64 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
               (grantUpdate) =>
                 grantUpdate.uid.toLowerCase() === update.uid.toLowerCase()
             );
-            if (!stillExists) {
-              retries = 0;
-              changeStepperStep("indexed");
-              toast.success(MESSAGES.GRANT.GRANT_UPDATE.UNDO.SUCCESS);
-              await refreshProject();
-            }
-            retries -= 1;
-            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+            return !stillExists;
+          },
+          () => {
+            callbackFn?.();
           }
-        });
+        );
+      };
+
+      if (!isOnChainAuthorized) {
+        const toastLoading = toast.loading(
+          MESSAGES.GRANT.GRANT_UPDATE.UNDO.LOADING
+        );
+        await fetchData(
+          INDEXER.PROJECT.REVOKE_ATTESTATION(
+            grantUpdateInstance.uid as `0x${string}`,
+            grantUpdateInstance.chainID
+          ),
+          "POST",
+          {}
+        )
+          .then(async () => {
+            checkIfAttestationExists()
+              .then(() => {
+                toast.success(MESSAGES.GRANT.GRANT_UPDATE.UNDO.SUCCESS, {
+                  id: toastLoading,
+                });
+              })
+              .catch(() => {
+                toast.dismiss(toastLoading);
+              });
+          })
+          .catch(() => {
+            toast.dismiss(toastLoading);
+          });
+      } else {
+        await grantUpdateInstance
+          .revoke(walletSigner as any, changeStepperStep)
+          .then(async (res) => {
+            changeStepperStep("indexing");
+            const txHash = res?.tx[0]?.hash;
+            if (txHash) {
+              await fetchData(
+                INDEXER.ATTESTATION_LISTENER(
+                  txHash,
+                  grantUpdateInstance.chainID
+                ),
+                "POST",
+                {}
+              );
+            }
+
+            await checkIfAttestationExists(() => {
+              changeStepperStep("indexed");
+            }).then(() => {
+              toast.success(MESSAGES.GRANT.GRANT_UPDATE.UNDO.SUCCESS);
+            });
+          });
+      }
     } catch (error: any) {
       toast.error(MESSAGES.GRANT.GRANT_UPDATE.UNDO.ERROR);
       errorManager(`Error deleting grant update ${update.uid}`, error);
@@ -154,13 +189,12 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
     }
   };
 
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isContractOwner = useOwnerStore((state) => state.isOwner);
+  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );
 
-  const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
+  const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
 
   const [verifiedUpdate, setVerifiedUpdate] = useState<IGrantUpdateStatus[]>(
     update?.verified || []

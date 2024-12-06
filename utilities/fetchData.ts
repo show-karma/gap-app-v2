@@ -1,8 +1,8 @@
 import axios, { Method } from "axios";
-import { envVars } from "./enviromentVars";
 import Cookies from "universal-cookie";
-import { sanitizeObject } from "./sanitize";
 import { authCookiePath } from "./auth-keys";
+import { envVars } from "./enviromentVars";
+import { sanitizeObject } from "./sanitize";
 
 export default async function fetchData(
   endpoint: string,
@@ -10,7 +10,7 @@ export default async function fetchData(
   axiosData = {},
   params = {},
   headers = {},
-  isAuthorized = false,
+  isAuthorized = true,
   cache: boolean | undefined = false,
   baseUrl: string = envVars.NEXT_PUBLIC_GAP_INDEXER_URL
 ) {

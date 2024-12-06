@@ -28,6 +28,7 @@ export const MESSAGES = {
     SUCCESS: "Update was successfully added to the project.",
     ERROR: "There was an error creating the update. Please try again.",
     DELETE: {
+      LOADING: "Deleting update...",
       SUCCESS: "Update deleted successfully",
       ERROR: "There was an error deleting the update. Please try again",
     },
@@ -44,6 +45,7 @@ export const MESSAGES = {
       SUCCESS: "Objective completed successfully",
       ERROR: "There was an error completing the objective. Please try again",
       DELETE: {
+        LOADING: "Deleting objective completion...",
         SUCCESS: "Objective completion deleted successfully",
         ERROR:
           "There was an error deleting the objective completion. Please try again",
@@ -54,6 +56,7 @@ export const MESSAGES = {
       ERROR: "There was an error editing the objective. Please try again",
     },
     DELETE: {
+      LOADING: "Deleting objective...",
       SUCCESS: "Objective deleted successfully",
       ERROR: "There was an error deleting the objective. Please try again",
     },
@@ -139,6 +142,7 @@ export const MESSAGES = {
       SUCCESS: "Update was successfully added to the grant.",
       ERROR: "There was an error creating the update. Please try again.",
       UNDO: {
+        LOADING: "Undoing grant update...",
         SUCCESS: "Grant Update successfully removed",
         ERROR: "There was an error undoing the grant update. Please try again",
       },
@@ -160,6 +164,7 @@ export const MESSAGES = {
       },
     },
     DELETE: {
+      LOADING: "Deleting grant...",
       SUCCESS: "Grant deleted successfully",
       ERROR: (title: string) =>
         `There was an error deleting ${title}. Please try again.`,
@@ -174,6 +179,7 @@ export const MESSAGES = {
       DATE: "Date is required",
     },
     DELETE: {
+      LOADING: "Deleting milestone...",
       SUCCESS: "Milestone deleted successfully",
       ERROR: (title: string) =>
         `There was an error deleting ${title}. Please try again.`,
@@ -192,10 +198,12 @@ export const MESSAGES = {
         "There was an error updating the milestone completion. Please try again.",
     },
     COMPLETE: {
+      LOADING: "Marking milestone as complete...",
       SUCCESS: "The milestone has been marked as complete!",
       ERROR:
         "There was an error marking the milestone as completed. Please try again.",
       UNDO: {
+        LOADING: "Undoing milestone completion...",
         SUCCESS: "Completion successfully removed",
         ERROR:
           "There was an error undoing the milestone completion. Please try again",
@@ -261,6 +269,7 @@ export const MESSAGES = {
       SUCCESS: "Impact added successfully",
       ERROR: "There was an error adding impact. Please try again",
       REMOVE: {
+        LOADING: "Removing impact...",
         SUCCESS: "Impact removed successfully",
         ERROR: "There was an error removing impact. Please try again",
       },
