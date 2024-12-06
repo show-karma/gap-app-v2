@@ -74,7 +74,6 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
               }
             }
 
-            console.log("stillExist", stillExist);
             return !stillExist;
           },
           () => {
