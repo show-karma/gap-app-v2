@@ -1,43 +1,38 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useOwnerStore, useProjectStore } from "@/store";
-import { EmptyGrantsSection } from "../../GrantMilestonesAndUpdates/screens";
-import { GrantContext } from "../../GrantMilestonesAndUpdates/GrantContext";
-import { cn } from "@/utilities/tailwind";
-import { GrantCompleteButton } from "../../GrantMilestonesAndUpdates/GrantCompleteButton";
-import { GrantLinkExternalAddressButton } from "../../GrantMilestonesAndUpdates/GrantLinkExternalAddressButton";
-import { GrantDelete } from "../../GrantMilestonesAndUpdates/GrantDelete";
-import dynamic from "next/dynamic";
-import { PAGES } from "@/utilities/pages";
-import { useAccount } from "wagmi";
-import { useEffect, useState } from "react";
-import { GrantScreen } from "@/types";
-import { useParams, usePathname, useRouter } from "next/navigation";
-import { useCommunityAdminStore } from "@/store/community";
-import { useCommunitiesStore } from "@/store/communities";
-import {
-  getQuestionsOf,
-  getReviewsOf,
-  isCommunityAdminOf,
-} from "@/utilities/sdk";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
-import { useGap } from "@/hooks";
-import { useAuthStore } from "@/store/auth";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { errorManager } from "@/components/Utilities/errorManager";
 import { GrantsAccordion } from "@/components/GrantsAccordion";
-import { CheckCircleIcon, PlusIcon } from "@heroicons/react/20/solid";
 import { Button } from "@/components/Utilities/Button";
-import { PencilSquareIcon } from "@heroicons/react/24/outline";
-import Link from "next/link";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { useGap } from "@/hooks";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useAuthStore } from "@/store/auth";
+import { useCommunitiesStore } from "@/store/communities";
+import { useCommunityAdminStore } from "@/store/community";
 import { useGrantStore } from "@/store/grant";
+import { GrantScreen } from "@/types";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { PAGES } from "@/utilities/pages";
+import { isCommunityAdminOf } from "@/utilities/sdk";
+import { cn } from "@/utilities/tailwind";
+import { CheckCircleIcon, PlusIcon } from "@heroicons/react/20/solid";
+import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import Link from "next/link";
+import { useParams, usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useAccount } from "wagmi";
+import { GrantCompleteButton } from "../../GrantMilestonesAndUpdates/GrantCompleteButton";
+import { GrantContext } from "../../GrantMilestonesAndUpdates/GrantContext";
+import { GrantDelete } from "../../GrantMilestonesAndUpdates/GrantDelete";
+import { GrantLinkExternalAddressButton } from "../../GrantMilestonesAndUpdates/GrantLinkExternalAddressButton";
+import { EmptyGrantsSection } from "../../GrantMilestonesAndUpdates/screens";
 import { ProjectGrantsLayoutLoading } from "../Loading/Grants/Layout";
 
 interface GrantsLayoutProps {
   children: React.ReactNode;
-  project: IProjectResponse;
+  fetchedProject: IProjectResponse;
 }
 
 interface Tab {
@@ -81,12 +76,18 @@ const getScreen = (pathname: string): GrantScreen | undefined => {
   return "overview";
 };
 
-export const GrantsLayout = ({ children, project }: GrantsLayoutProps) => {
+export const GrantsLayout = ({
+  children,
+  fetchedProject,
+}: GrantsLayoutProps) => {
   const pathname = usePathname();
   const screen = getScreen(pathname);
   const grantIdFromQueryParam = useParams().grantUid as string;
   const [currentTab, setCurrentTab] = useState("overview");
   const { grant, setGrant, loading, setLoading } = useGrantStore();
+  const { project: storedProject } = useProjectStore();
+
+  const project = storedProject || fetchedProject;
 
   const navigation =
     project?.grants?.map((item) => ({
@@ -158,27 +159,27 @@ export const GrantsLayout = ({ children, project }: GrantsLayoutProps) => {
     tabName: GrantScreen;
     current: boolean;
   }[] = [
-      {
-        name: "Overview",
-        tabName: "overview",
-        current: true,
-      },
-      {
-        name: "Milestones and Updates",
-        tabName: "milestones-and-updates",
-        current: false,
-      },
-      {
-        name: "Outputs",
-        tabName: "outputs",
-        current: false,
-      },
-      {
-        name: "Impact Criteria",
-        tabName: "impact-criteria",
-        current: false,
-      },
-    ];
+    {
+      name: "Overview",
+      tabName: "overview",
+      current: true,
+    },
+    {
+      name: "Milestones and Updates",
+      tabName: "milestones-and-updates",
+      current: false,
+    },
+    {
+      name: "Outputs",
+      tabName: "outputs",
+      current: false,
+    },
+    {
+      name: "Impact Criteria",
+      tabName: "impact-criteria",
+      current: false,
+    },
+  ];
 
   useEffect(() => {
     const mountTabs = async () => {
@@ -442,26 +443,28 @@ export const GrantsLayout = ({ children, project }: GrantsLayoutProps) => {
                 className="isolate flex flex-row max-lg:w-full flex-wrap gap-4 divide-x divide-gray-200 rounded-lg py-1 px-1  bg-[#F2F4F7] dark:bg-zinc-900 w-max transition-all duration-300 ease-in-out"
                 aria-label="Tabs"
               >
-                {tabs.filter(tab => tab.name !== "Outputs").map((tab) => (
-                  <Link
-                    key={tab.name}
-                    href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                      project.details?.data.slug || project?.uid || "",
-                      grant?.uid as string,
-                      tab.tabName === "overview" ? "" : tab.tabName
-                    )}
-                    id={`tab-${tab.tabName}`}
-                    className={cn(
-                      screen === tab.tabName ||
-                        (tab.tabName === "overview" && !screen)
-                        ? "text-gray-900 bg-white dark:bg-zinc-700 dark:text-zinc-100"
-                        : "text-gray-500 hover:text-gray-700 dark:text-zinc-400",
-                      "group relative min-w-0 w-max border-none overflow-hidden rounded-lg py-2 px-3 text-center text-sm font-semibold hover:bg-gray-50 dark:hover:bg-zinc-800 dark:hover:text-white focus:z-10 transition-all duration-300 ease-in-out"
-                    )}
-                  >
-                    <span>{tab.name}</span>
-                  </Link>
-                ))}
+                {tabs
+                  .filter((tab) => tab.name !== "Outputs")
+                  .map((tab) => (
+                    <Link
+                      key={tab.name}
+                      href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
+                        project.details?.data.slug || project?.uid || "",
+                        grant?.uid as string,
+                        tab.tabName === "overview" ? "" : tab.tabName
+                      )}
+                      id={`tab-${tab.tabName}`}
+                      className={cn(
+                        screen === tab.tabName ||
+                          (tab.tabName === "overview" && !screen)
+                          ? "text-gray-900 bg-white dark:bg-zinc-700 dark:text-zinc-100"
+                          : "text-gray-500 hover:text-gray-700 dark:text-zinc-400",
+                        "group relative min-w-0 w-max border-none overflow-hidden rounded-lg py-2 px-3 text-center text-sm font-semibold hover:bg-gray-50 dark:hover:bg-zinc-800 dark:hover:text-white focus:z-10 transition-all duration-300 ease-in-out"
+                      )}
+                    >
+                      <span>{tab.name}</span>
+                    </Link>
+                  ))}
               </nav>
             </div>
           ) : null}

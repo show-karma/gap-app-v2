@@ -37,7 +37,6 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
   const { project, isProjectOwner } = useProjectStore();
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
-
   const { gap } = useGap();
   const deleteFn = async () => {
     if (!address) return;
@@ -66,13 +65,17 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
             const stillExist = fetchedProject?.grants.find(
               (g) => g.uid?.toLowerCase() === grantUID?.toLowerCase()
             );
-            const ableToFinish = !stillExist && !!fetchedProject?.grants;
-            if (ableToFinish) {
-              if (fetchedProject?.grants.length > 0) {
-                setGrantTab(fetchedProject.grants[0].uid);
+            if (!stillExist) {
+              if (
+                fetchedProject?.grants &&
+                fetchedProject?.grants?.length > 0
+              ) {
+                setGrantTab(fetchedProject?.grants[0].uid);
               }
             }
-            return ableToFinish;
+
+            console.log("stillExist", stillExist);
+            return !stillExist;
           },
           () => {
             callbackFn?.();
@@ -116,8 +119,10 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
                 {}
               );
             }
-            checkIfAttestationExists(() => {
+            await checkIfAttestationExists(() => {
               changeStepperStep("indexed");
+            }).then(() => {
+              toast.success(MESSAGES.GRANT.DELETE.SUCCESS);
             });
           });
       }

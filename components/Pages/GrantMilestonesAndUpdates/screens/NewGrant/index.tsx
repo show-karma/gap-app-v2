@@ -355,8 +355,6 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         // season: data.season,
       });
 
-      console.log(sanitizedDetails, data?.fundUsage);
-
       grant.details = new GrantDetails({
         data: sanitizedDetails,
         refUID: grant.uid,

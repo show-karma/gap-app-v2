@@ -1,16 +1,15 @@
 import { GrantsLayout } from "@/components/Pages/Project/Grants/Layout";
-import { Spinner } from "@/components/Utilities/Spinner";
 import { Suspense } from "react";
 /* eslint-disable @next/next/no-img-element */
 import { notFound } from "next/navigation";
 
 import { Metadata } from "next";
 
-import { zeroUID } from "@/utilities/commons";
-import { defaultMetadata } from "@/utilities/meta";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { envVars } from "@/utilities/enviromentVars";
 import { ProjectGrantsLayoutLoading } from "@/components/Pages/Project/Loading/Grants/Layout";
+import { zeroUID } from "@/utilities/commons";
+import { envVars } from "@/utilities/enviromentVars";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { defaultMetadata } from "@/utilities/meta";
 
 export async function generateMetadata({
   params,
@@ -96,7 +95,7 @@ export default async function RootLayout({
           <ProjectGrantsLayoutLoading>{children}</ProjectGrantsLayoutLoading>
         }
       >
-        <GrantsLayout project={project}>{children}</GrantsLayout>
+        <GrantsLayout fetchedProject={project}>{children}</GrantsLayout>
       </Suspense>
     </div>
   );
