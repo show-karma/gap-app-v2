@@ -107,9 +107,7 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
   };
 
   const urlToCode = `https://${
-    envVars.isDev
-      ? "gap-app-v2-git-feat-team-member-karma-devs.vercel.app"
-      : "gap.karmahq.xyz"
+    envVars.isDev ? "gapstag.karmahq.app" : "gap.karmahq.xyz"
   }/project/${
     project?.details?.data.slug || project?.uid
   }/?invite-code=${code}`;

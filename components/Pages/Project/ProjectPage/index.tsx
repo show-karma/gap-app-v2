@@ -179,9 +179,10 @@ function ProjectPage() {
                     {isLoadingRoles || isFetchingRoles ? (
                       <Skeleton className="w-full h-4" />
                     ) : memberRoles &&
-                      memberRoles[member.recipient] !== "Member" ? (
+                      memberRoles[member.recipient.toLowerCase()] !==
+                        "Member" ? (
                       <p className="text-sm text-brand-blue font-medium leading-none">
-                        {memberRoles[member.recipient]}
+                        {memberRoles[member.recipient.toLowerCase()]}
                       </p>
                     ) : null}
                     <div className="flex flex-row gap-2 justify-between items-center w-full max-w-max">
@@ -213,12 +214,12 @@ function ProjectPage() {
                   ) : null}
                   {isAuthorized &&
                   memberRoles &&
-                  memberRoles[member.recipient] === "Member" ? (
+                  memberRoles[member.recipient.toLowerCase()] === "Member" ? (
                     <PromoteMemberDialog memberAddress={member.recipient} />
                   ) : null}
                   {isAuthorized &&
                   memberRoles &&
-                  memberRoles[member.recipient] === "Admin" ? (
+                  memberRoles[member.recipient.toLowerCase()] === "Admin" ? (
                     <DemoteMemberDialog memberAddress={member.recipient} />
                   ) : null}
                   {isAuthorized ? (

@@ -57,17 +57,22 @@ export const MemberCard = ({ member }: { member: string }) => {
             </p>
             {isLoadingRoles || isFetchingRoles ? (
               <Skeleton className="w-full h-4" />
-            ) : memberRoles && memberRoles[member] !== "Member" ? (
+            ) : memberRoles &&
+              memberRoles[member.toLowerCase()] !== "Member" ? (
               <p className="text-sm text-brand-blue font-medium leading-none">
-                {memberRoles[member]}
+                {memberRoles[member.toLowerCase()]}
               </p>
             ) : null}
           </div>
           <div className="flex flex-row gap-2 mr-2">
-            {isAuthorized && memberRoles && memberRoles[member] === "Member" ? (
+            {isAuthorized &&
+            memberRoles &&
+            memberRoles[member.toLowerCase()] === "Member" ? (
               <PromoteMemberDialog memberAddress={member} />
             ) : null}
-            {isAuthorized && memberRoles && memberRoles[member] === "Admin" ? (
+            {isAuthorized &&
+            memberRoles &&
+            memberRoles[member.toLowerCase()] === "Admin" ? (
               <DemoteMemberDialog memberAddress={member} />
             ) : null}
             {isAuthorized ? (
