@@ -15,7 +15,7 @@ export async function isOwnershipTransfered(
 
     const resolver = await GAP.getProjectResolver(signer as any, chainID);
 
-    const response = await resolver.isAdmin(uid, newOwner);
+    const response = await resolver.isOwner(uid, newOwner);
     const isowner = response;
     return isowner;
   } catch (error: any) {
