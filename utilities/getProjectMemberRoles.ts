@@ -11,7 +11,6 @@ export interface Member {
   };
   role?: "Owner" | "Admin" | "Member";
 }
-
 export const getProjectMemberRoles = async (project: IProjectResponse) => {
   const roles: Record<string, Member["role"]> = {};
   if (project?.members) {
