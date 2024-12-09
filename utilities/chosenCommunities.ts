@@ -133,5 +133,14 @@ export const chosenCommunities = () => {
         dark: "/logos/karma-fractal-visions.jpg",
       },
     },
+    {
+      name: "Greenpill",
+      slug: "greenpill-network",
+      uid: "0xca43f36c16dd11d92857e90e504db221de4a15b2fd59f08556055490c1baafaa",
+      imageURL: {
+        light: "/logos/karma-greenpill.svg",
+        dark: "/logos/karma-greenpill.svg",
+      },
+    },
   ];
 };
