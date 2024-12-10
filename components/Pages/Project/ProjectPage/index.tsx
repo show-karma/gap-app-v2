@@ -36,6 +36,7 @@ import {
 } from "@/utilities/getProjectMemberRoles";
 import { INDEXER } from "@/utilities/indexer";
 import { PencilIcon } from "@heroicons/react/24/outline";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import pluralize from "pluralize";
@@ -204,13 +205,30 @@ function ProjectPage() {
                 </div>
                 <div className="flex flex-row gap-2 mr-2">
                   {member.recipient.toLowerCase() === address?.toLowerCase() ? (
-                    <button
-                      type="button"
-                      className="p-2 rounded-lg hover:opacity-80 hover:bg-zinc-200 dark:hover:bg-zinc-700"
-                      onClick={() => openModal(member.recipient)}
-                    >
-                      <PencilIcon className="w-4 h-4 text-black dark:text-zinc-100" />
-                    </button>
+                    <Tooltip.Provider>
+                      <Tooltip.Root delayDuration={0}>
+                        <Tooltip.Trigger asChild>
+                          <div>
+                            <button
+                              type="button"
+                              className="p-2 rounded-lg hover:opacity-80 hover:bg-zinc-200 dark:hover:bg-zinc-700"
+                              onClick={() => openModal(member.recipient)}
+                            >
+                              <PencilIcon className="w-4 h-4 text-black dark:text-zinc-100" />
+                            </button>
+                          </div>
+                        </Tooltip.Trigger>
+                        <Tooltip.Portal>
+                          <Tooltip.Content
+                            className="TooltipContent bg-brand-darkblue rounded-lg text-white p-3 max-w-[360px] z-[1000]"
+                            sideOffset={5}
+                            side="top"
+                          >
+                            <p>Edit your profile</p>
+                          </Tooltip.Content>
+                        </Tooltip.Portal>
+                      </Tooltip.Root>
+                    </Tooltip.Provider>
                   ) : null}
                   {isAuthorized &&
                   memberRoles &&
