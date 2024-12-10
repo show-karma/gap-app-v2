@@ -4,9 +4,12 @@ import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
+import { sanitizeObject } from "@/utilities/sanitize";
 import { config } from "@/utilities/wagmi/config";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProjectUpdate } from "@show-karma/karma-gap-sdk";
@@ -20,9 +23,6 @@ import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
-import { sanitizeObject } from "@/utilities/sanitize";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
 
 const updateSchema = z.object({
   title: z
@@ -186,7 +186,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         </label>
         <div className="w-full bg-transparent" data-color-mode="light">
           <MarkdownEditor
-            className="bg-transparent"
+            className="bg-white"
             value={watch("text")}
             onChange={(newValue: string) =>
               setValue("text", newValue, {
