@@ -107,7 +107,7 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
   };
 
   const urlToCode = `https://${
-    envVars.isDev ? "gapstag.karmahq.app" : "gap.karmahq.xyz"
+    envVars.isDev ? "gapstag.karmahq.xyz" : "gap.karmahq.xyz"
   }/project/${
     project?.details?.data.slug || project?.uid
   }/?invite-code=${code}`;
