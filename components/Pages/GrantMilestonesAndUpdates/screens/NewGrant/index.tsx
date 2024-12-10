@@ -62,6 +62,17 @@ const inputStyle =
 const textAreaStyle =
   "mt-2 w-full rounded-lg border border-gray-200 bg-transparent px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:text-zinc-100 dark:border-gray-600";
 
+const SUCCESS_QUESTIONS = ["How should the success of your grant be measured?"];
+const IMPACT_QUESTIONS = [
+  "What is the intended direct impact your project will have on the ecosystem?",
+  "What is the long-term impact of your grant?",
+];
+const INNOVATION_QUESTIONS = [
+  "How will receiving a grant enable you to foster growth or innovation within the ecosystem?",
+];
+const FUND_QUESTIONS = ["How will the grant funds be used?"];
+const TIMEFRAME_QUESTIONS = ["What is the timeframe for the work funded?"];
+
 const grantSchema = z.object({
   title: z.string().min(1, { message: MESSAGES.GRANT.FORM.TITLE.MIN }),
   programId: z.string().optional(),
@@ -116,12 +127,44 @@ interface Question {
   type: string;
 }
 
+interface SuccessQuestion {
+  query: string;
+  explanation: string;
+  type: "SUCCESS_MEASURE";
+}
+interface ImpactQuestion {
+  query: string;
+  explanation: string;
+  type: "IMPACT_MEASUREMENT";
+}
+interface FundQuestion {
+  query: string;
+  explanation: string;
+  type: "FUND_USAGE";
+}
+interface TimeframeQuestion {
+  query: string;
+  explanation: string;
+  type: "TIMEFRAME";
+}
+interface InnovationQuestion {
+  query: string;
+  explanation: string;
+  type: "INNOVATION";
+}
+
+type QuestionType =
+  | "SUCCESS_MEASURE"
+  | "IMPACT_MEASUREMENT"
+  | "INNOVATION"
+  | "TIMEFRAME"
+  | "FUND_USAGE";
+
 interface GenericQuestion {
   query: string;
   explanation: string;
-  type: string;
+  type: QuestionType;
 }
-
 interface NewGrantData {
   title: string;
   description: string;
@@ -253,28 +296,66 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { gap } = useGap();
   const { isConnected } = useAccount();
 
-  function premade<T extends GenericQuestion>(): T[] | undefined {
+  function premade<T extends GenericQuestion>(
+    type: QuestionType,
+    questions: string[]
+  ): T[] {
     const hasQuestions = grantToEdit?.details?.data?.questions?.filter(
-      (item) => item?.type && item?.explanation && item?.query
+      (item) => item.type === type
     );
     if (grantScreen === "edit-grant" && hasQuestions?.length) {
-      if (
-        hasQuestions.length !== grantToEdit?.details?.data?.questions.length
-      ) {
-        const fillQuestions = grantToEdit?.details?.data?.questions.map(
-          (item: GenericQuestion) => ({
-            query: item?.query,
-            explanation: item?.explanation,
-            type: item?.type,
-          })
-        ) as T[];
-
+      if (hasQuestions.length !== questions.length) {
+        const fillQuestions = questions.map((item) => ({
+          query: item,
+          explanation: "",
+          type,
+        })) as T[];
+        fillQuestions.forEach((_, i) => {
+          const match = hasQuestions.find((item) => {
+            return item.query === fillQuestions[i]?.query;
+          });
+          if (match) {
+            fillQuestions[i] = match as T;
+          }
+        });
         return fillQuestions;
       }
       return hasQuestions as T[];
     }
-    return undefined;
+    return questions.map((item) => ({
+      query: item,
+      explanation: "",
+      type,
+    })) as T[];
   }
+
+  const premadeQuestions = () => {
+    const successQuestions = premade<SuccessQuestion>(
+      "SUCCESS_MEASURE",
+      SUCCESS_QUESTIONS
+    );
+    const impactQuestions = premade<ImpactQuestion>(
+      "IMPACT_MEASUREMENT",
+      IMPACT_QUESTIONS
+    );
+    const innovationQuestions = premade<InnovationQuestion>(
+      "INNOVATION",
+      INNOVATION_QUESTIONS
+    );
+    const timeframeQuestions = premade<TimeframeQuestion>(
+      "TIMEFRAME",
+      TIMEFRAME_QUESTIONS
+    );
+    const fundQuestions = premade<FundQuestion>("FUND_USAGE", FUND_QUESTIONS);
+
+    return [
+      ...successQuestions,
+      ...impactQuestions,
+      ...innovationQuestions,
+      ...timeframeQuestions,
+      ...fundQuestions,
+    ];
+  };
 
   const form = useForm<GrantType>({
     resolver: zodResolver(grantSchema),
@@ -302,7 +383,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         grantScreen === "edit-grant" && grantToEdit?.details?.data?.startDate
           ? new Date(grantToEdit?.details?.data?.startDate * 1000)
           : undefined,
-      questions: premade<Question>(),
+      questions: premadeQuestions(),
     },
   });
 
@@ -353,6 +434,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         payoutAddress: address,
         // cycle: data.cycle,
         // season: data.season,
+        questions: data.questions,
       });
 
       grant.details = new GrantDetails({
