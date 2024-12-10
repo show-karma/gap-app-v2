@@ -1,21 +1,21 @@
-import { TrashIcon } from "@heroicons/react/24/outline";
-import dynamic from "next/dynamic";
-import { FC, Fragment, ReactNode, useState } from "react";
-import { Dialog, Transition } from "@headlessui/react";
-import { PlusIcon } from "@heroicons/react/24/solid";
 import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks";
-import { useAccount, useSwitchChain } from "wagmi";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
-import { getWalletClient } from "@wagmi/core";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { config } from "@/utilities/wagmi/config";
-import { getProjectById } from "@/utilities/sdk";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { getProjectById } from "@/utilities/sdk";
+import { config } from "@/utilities/wagmi/config";
+import { Dialog, Transition } from "@headlessui/react";
+import { TrashIcon } from "@heroicons/react/24/outline";
+import * as Tooltip from "@radix-ui/react-tooltip";
+import { getWalletClient } from "@wagmi/core";
+import dynamic from "next/dynamic";
+import { FC, Fragment, useState } from "react";
 import toast from "react-hot-toast";
-import { errorManager } from "@/components/Utilities/errorManager";
+import { useAccount, useSwitchChain } from "wagmi";
 
 const DeleteDialog = dynamic(() =>
   import("@/components/DeleteDialog").then((mod) => mod.DeleteDialog)
@@ -113,14 +113,31 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({
 
   return (
     <>
-      <Button
-        onClick={openModal}
-        className={
-          "flex justify-center items-center gap-x-1 rounded-md bg-transparent p-2 text-sm font-semibold text-red-600 dark:text-red-300  hover:bg-red-100 dark:hover:bg-red-900 dark:hover:text-white"
-        }
-      >
-        <TrashIcon className="h-4 w-4" />
-      </Button>
+      <Tooltip.Provider>
+        <Tooltip.Root delayDuration={0}>
+          <Tooltip.Trigger asChild>
+            <div>
+              <Button
+                onClick={openModal}
+                className={
+                  "flex justify-center items-center gap-x-1 rounded-md bg-transparent p-2 text-sm font-semibold text-red-600 dark:text-red-300  hover:bg-red-100 dark:hover:bg-red-900 dark:hover:text-white"
+                }
+              >
+                <TrashIcon className="h-4 w-4" />
+              </Button>
+            </div>
+          </Tooltip.Trigger>
+          <Tooltip.Portal>
+            <Tooltip.Content
+              className="TooltipContent bg-brand-darkblue rounded-lg text-white p-3 max-w-[360px] z-[1000]"
+              sideOffset={5}
+              side="top"
+            >
+              <p>Remove member from team</p>
+            </Tooltip.Content>
+          </Tooltip.Portal>
+        </Tooltip.Root>
+      </Tooltip.Provider>
       {isOpen ? (
         <Transition appear show={isOpen} as={Fragment}>
           <Dialog as="div" className="relative z-10" onClose={closeModal}>

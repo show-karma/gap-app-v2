@@ -36,10 +36,7 @@ export const ObjectivesSub = () => {
         {`${totalObjectives} ${pluralize(
           "Objective",
           totalObjectives
-        )}, ${completedObjectives} ${pluralize(
-          "Completed",
-          completedObjectives
-        )}`}
+        )}, ${completedObjectives} Completed`}
       </p>
       {lastUpdated ? (
         <>

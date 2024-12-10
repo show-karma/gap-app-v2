@@ -9,6 +9,7 @@ import { getProjectById } from "@/utilities/sdk";
 import { config } from "@/utilities/wagmi/config";
 import { Dialog, Transition } from "@headlessui/react";
 import { ArrowUpIcon } from "@heroicons/react/24/solid";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import { getWalletClient } from "@wagmi/core";
 import { FC, Fragment, useState } from "react";
 import toast from "react-hot-toast";
@@ -69,7 +70,9 @@ export const PromoteMemberDialog: FC<PromoteMemberDialogProps> = ({
       await refreshProject();
       toast.success("Member promoted successfully");
       closeModal();
-      queryClient.invalidateQueries({ queryKey: ["memberRoles", project?.uid] });
+      queryClient.invalidateQueries({
+        queryKey: ["memberRoles", project?.uid],
+      });
     } catch (error) {
       errorManager("Error promoting member", error);
       toast.error("Failed to promote member");
@@ -86,14 +89,31 @@ export const PromoteMemberDialog: FC<PromoteMemberDialogProps> = ({
 
   return (
     <>
-      <Button
-        onClick={openModal}
-        className={
-          "flex items-center gap-x-1 rounded-md bg-transparent dark:bg-transparent p-2 text-base font-semibold text-white dark:text-zinc-100  hover:bg-transparent dark:hover:bg-transparent hover:opacity-80 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-center justify-center"
-        }
-      >
-        <ArrowUpIcon className="w-4 h-4 text-black dark:text-zinc-100" />
-      </Button>
+      <Tooltip.Provider>
+        <Tooltip.Root delayDuration={0}>
+          <Tooltip.Trigger asChild>
+            <div>
+              <Button
+                onClick={openModal}
+                className={
+                  "flex items-center gap-x-1 rounded-md bg-transparent dark:bg-transparent p-2 text-base font-semibold text-white dark:text-zinc-100  hover:bg-transparent dark:hover:bg-transparent hover:opacity-80 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-center justify-center"
+                }
+              >
+                <ArrowUpIcon className="w-4 h-4 text-black dark:text-zinc-100" />
+              </Button>
+            </div>
+          </Tooltip.Trigger>
+          <Tooltip.Portal>
+            <Tooltip.Content
+              className="TooltipContent bg-brand-darkblue rounded-lg text-white p-3 max-w-[360px] z-[1000]"
+              sideOffset={5}
+              side="top"
+            >
+              <p>Promote member to admin</p>
+            </Tooltip.Content>
+          </Tooltip.Portal>
+        </Tooltip.Root>
+      </Tooltip.Provider>
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeModal}>
           <Transition.Child
