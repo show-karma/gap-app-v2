@@ -240,7 +240,9 @@ function ProjectPage() {
                   memberRoles[member.recipient.toLowerCase()] === "Admin" ? (
                     <DemoteMemberDialog memberAddress={member.recipient} />
                   ) : null}
-                  {isAuthorized ? (
+                  {isAuthorized &&
+                  memberRoles &&
+                  memberRoles[member.recipient.toLowerCase()] !== "Owner" ? (
                     <DeleteMemberDialog memberAddress={member.recipient} />
                   ) : null}
                 </div>

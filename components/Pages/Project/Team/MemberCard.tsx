@@ -75,7 +75,9 @@ export const MemberCard = ({ member }: { member: string }) => {
             memberRoles[member.toLowerCase()] === "Admin" ? (
               <DemoteMemberDialog memberAddress={member} />
             ) : null}
-            {isAuthorized ? (
+            {isAuthorized &&
+            memberRoles &&
+            memberRoles[member.toLowerCase()] !== "Owner" ? (
               <DeleteMemberDialog memberAddress={member} />
             ) : null}
             {member.toLowerCase() === address?.toLowerCase() ? (
