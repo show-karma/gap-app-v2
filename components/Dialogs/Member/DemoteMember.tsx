@@ -5,6 +5,10 @@ import { getGapClient, useGap } from "@/hooks";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import fetchData from "@/utilities/fetchData";
+import { getProjectMemberRoles } from "@/utilities/getProjectMemberRoles";
+import { INDEXER } from "@/utilities/indexer";
+import { retryUntilConditionMet } from "@/utilities/retries";
 import { getProjectById } from "@/utilities/sdk";
 import { config } from "@/utilities/wagmi/config";
 import { Dialog, Transition } from "@headlessui/react";
@@ -62,17 +66,48 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({
 
       const projectInstance = await gapClient.fetch.projectById(project.uid);
 
-      await projectInstance.removeAdmin(
-        walletSigner as any,
-        memberAddress.toLowerCase(),
-        changeStepperStep
-      );
-      await refreshProject();
-      toast.success("Member removed as admin successfully");
-      closeModal();
-      queryClient.invalidateQueries({
-        queryKey: ["memberRoles", project?.uid],
-      });
+      const checkIfAttestationExists = async (callbackFn?: () => void) => {
+        await retryUntilConditionMet(
+          async () => {
+            const memberRoles = await getProjectMemberRoles(project);
+            const isAdmin =
+              memberRoles[memberAddress.toLowerCase()] !== "Admin";
+
+            return isAdmin;
+          },
+          async () => {
+            callbackFn?.();
+          }
+        );
+      };
+
+      await projectInstance
+        .removeAdmin(
+          walletSigner as any,
+          memberAddress.toLowerCase(),
+          changeStepperStep
+        )
+        .then(async (res) => {
+          changeStepperStep("indexing");
+          const txHash = res?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, projectInstance.chainID),
+              "POST",
+              {}
+            );
+          }
+          await checkIfAttestationExists(() => {
+            changeStepperStep("indexed");
+          }).then(async () => {
+            toast.success("Member removed as admin successfully");
+            closeModal();
+            await refreshProject();
+            queryClient.invalidateQueries({
+              queryKey: ["memberRoles", project?.uid],
+            });
+          });
+        });
     } catch (error) {
       errorManager("Error removing member as admin", error);
       toast.error("Failed to remove member as admin");
