@@ -1,38 +1,37 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useAuthStore } from "@/store/auth";
+import { useCommunitiesStore } from "@/store/communities";
+import { useMobileStore } from "@/store/mobile";
+import { useOwnerStore } from "@/store/owner";
+import { useRegistryStore } from "@/store/registry";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { PAGES } from "@/utilities/pages";
+import { getContractOwner } from "@/utilities/sdk/getContractOwner";
+import { SOCIALS } from "@/utilities/socials";
+import { config } from "@/utilities/wagmi/config";
+import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import { MoonIcon, SunIcon } from "@heroicons/react/24/solid";
+import * as Popover from "@radix-ui/react-popover";
+import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { watchAccount } from "@wagmi/core";
+import { useTheme } from "next-themes";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
-import * as Popover from "@radix-ui/react-popover";
-import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { MoonIcon, SunIcon } from "@heroicons/react/24/solid";
-import { useAccount } from "wagmi";
-import { useOwnerStore } from "@/store/owner";
-import { useCommunitiesStore } from "@/store/communities";
-import { ExternalLink } from "./ExternalLink";
-import { SOCIALS } from "@/utilities/socials";
-import { DiscordIcon, MirrorIcon, TelegramIcon, TwitterIcon } from "../Icons";
-import { blo } from "blo";
-import { Chain, Hex } from "viem";
-import { Button } from "./Button";
-import { useTheme } from "next-themes";
-import { Searchbar } from "../Searchbar";
-import dynamic from "next/dynamic";
-import { useAuth } from "@/hooks/useAuth";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
-import { PAGES } from "@/utilities/pages";
-import { useAuthStore } from "@/store/auth";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { getContractOwner } from "@/utilities/sdk/getContractOwner";
-import { OnboardingDialog } from "../Dialogs/OnboardingDialog";
-import { useMobileStore } from "@/store/mobile";
-import { config } from "@/utilities/wagmi/config";
-import { watchAccount } from "@wagmi/core";
 import { usePathname } from "next/navigation";
-import { useRegistryStore } from "@/store/registry";
+import { useEffect, useState } from "react";
+import { Chain } from "viem";
+import { useAccount } from "wagmi";
+import { OnboardingDialog } from "../Dialogs/OnboardingDialog";
 import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
+import { DiscordIcon, MirrorIcon, TelegramIcon, TwitterIcon } from "../Icons";
+import { Searchbar } from "../Searchbar";
+import { Button } from "./Button";
 import { errorManager } from "./errorManager";
+import { ExternalLink } from "./ExternalLink";
 
 const ProjectDialog = dynamic(
   () =>
@@ -339,7 +338,7 @@ export default function Header() {
 
                                         <EthereumAddressToENSAvatar
                                           address={account.address}
-                                          className="h-8 w-8 rounded-full"
+                                          className="h-8 w-8 min-h-8 min-w-8 rounded-full"
                                         />
                                       </Button>
                                     );

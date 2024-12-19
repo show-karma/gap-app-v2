@@ -156,7 +156,7 @@ function ProjectPage() {
                 <div className="flex items-center flex-row gap-3 p-3">
                   <EthereumAddressToENSAvatar
                     address={member.recipient}
-                    className="h-8 w-8 rounded-full"
+                    className="h-8 w-8 min-h-8 min-w-8 rounded-full"
                   />
                   <div className="flex flex-col gap-1">
                     {profile ? (
