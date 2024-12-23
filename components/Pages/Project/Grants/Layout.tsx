@@ -159,27 +159,27 @@ export const GrantsLayout = ({
     tabName: GrantScreen;
     current: boolean;
   }[] = [
-    {
-      name: "Overview",
-      tabName: "overview",
-      current: true,
-    },
-    {
-      name: "Milestones and Updates",
-      tabName: "milestones-and-updates",
-      current: false,
-    },
-    {
-      name: "Outputs",
-      tabName: "outputs",
-      current: false,
-    },
-    {
-      name: "Impact Criteria",
-      tabName: "impact-criteria",
-      current: false,
-    },
-  ];
+      {
+        name: "Overview",
+        tabName: "overview",
+        current: true,
+      },
+      {
+        name: "Milestones and Updates",
+        tabName: "milestones-and-updates",
+        current: false,
+      },
+      {
+        name: "Outputs",
+        tabName: "outputs",
+        current: false,
+      },
+      {
+        name: "Impact Criteria",
+        tabName: "impact-criteria",
+        current: false,
+      },
+    ];
 
   useEffect(() => {
     const mountTabs = async () => {
@@ -412,8 +412,7 @@ export const GrantsLayout = ({
                 <div className="flex flex-row gap-2">
                   {project ? (
                     <GrantLinkExternalAddressButton
-                      project={project}
-                      grant={grant}
+                      grant={grant as any}
                     />
                   ) : null}
                   {project ? (

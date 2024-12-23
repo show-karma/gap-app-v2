@@ -5,7 +5,6 @@ import { useCommunityAdminStore } from "@/store/community";
 import { CheckCircleIcon, LinkIcon } from "@heroicons/react/24/outline";
 import {
     IGrantResponse,
-    IProjectResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { FC } from "react";
 import { Fragment, useEffect, useState } from "react";
@@ -16,72 +15,62 @@ import { INDEXER } from "@/utilities/indexer";
 import { envVars } from "@/utilities/enviromentVars";
 
 interface GrantLinkExternalAddressButtonProps {
-    project: IProjectResponse;
-    grant: IGrantResponse;
-
+    grant: IGrantResponse & { external: Record<string, string[]> };
 }
 
 export const GrantLinkExternalAddressButton: FC<GrantLinkExternalAddressButtonProps> = ({
     grant,
-    project,
-
 }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const [editedAddresses, setEditedAddresses] = useState<Record<string, string>>({});
-    const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
     const isOwner = useOwnerStore((state) => state.isOwner);
     const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
     const isCommunityAdmin = useCommunityAdminStore(
         (state) => state.isCommunityAdmin
     );
     const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
+    const isEnabledForCommunity = grant.community?.details?.data?.slug === (envVars.isDev ? "karma-base" : "octant");
 
-    const isEnabledForCommunity = grant.community?.details?.data?.slug === (envVars.isDev ? "karma-base-sepolia" : "octant");
+    const [isOpen, setIsOpen] = useState(false);
+    const [editedAddress, setEditedAddress] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        if (grant.externalAddresses) {
-            setEditedAddresses({ ...grant.externalAddresses });
+        if (grant?.external?.octant?.[0]) {
+            setEditedAddress(grant?.external?.octant?.[0]);
         }
-    }, [grant.externalAddresses]);
+    }, [grant?.external?.octant]);
 
-    if (!isAuthorized || !project || !isEnabledForCommunity) {
-        return null;
-    };
-
-
-    const handleAddressChange = (platform: string, newAddress: string) => {
-        setEditedAddresses(prev => ({ ...prev, [platform]: newAddress }));
-    };
-
-    const handleSave = async (platform: string, address: string) => {
+    const handleSave = async (address: string) => {
         setIsLoading(true);
         setError(null);
         try {
             const [data, error] = await fetchData(INDEXER.GRANTS.EXTERNAL_ADDRESS.UPDATE(grant.uid),
                 "PUT",
                 {
-                    target: platform,
+                    target: "octant",
                     address: address
                 });
 
             if (data) {
                 // Update the local state to reflect the change
-                setEditedAddresses(prev => ({ ...prev, [platform]: address }));
+                setEditedAddress(address);
             }
 
             if (error) {
-                setError(`Failed to update ${platform} address. Please try again.`);
+                setError(`Failed to update Octant address. Please try again.`);
             }
         } catch (err) {
-            setError(`Failed to update ${platform} address. Please try again.`);
+            setError(`Failed to update Octant address. Please try again.`);
             console.error(err);
         } finally {
             setIsLoading(false);
         }
     };
 
-    if (!isEnabledForCommunity) { return null };
+    if (!isAuthorized || !isEnabledForCommunity) {
+        return null;
+    };
+
 
     return (
         <>
@@ -138,13 +127,13 @@ export const GrantLinkExternalAddressButton: FC<GrantLinkExternalAddressButtonPr
                                                     <span className="text-md font-bold capitalize">Octant</span>
                                                     <input
                                                         type="text"
-                                                        value={editedAddresses.octant || grant?.externalAddresses?.octant}
-                                                        onChange={(e) => handleAddressChange('octant', e.target.value)}
+                                                        value={editedAddress || grant?.external?.octant?.[0]}
+                                                        onChange={(e) => setEditedAddress(e.target.value)}
                                                         className="text-sm rounded-md w-full text-gray-600 dark:text-gray-300 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-blue-500"
                                                     />
                                                 </div>
                                                 <Button
-                                                    onClick={() => handleSave('octant', editedAddresses.octant)}
+                                                    onClick={() => handleSave(editedAddress)}
                                                     disabled={isLoading}
                                                     className="ml-3 p-2 flex flex-row items-center justify-center gap-2 rounded-md border border-primary-500 bg-primary-100 px-3.5 py-2 text-sm font-semibold text-primary-500 hover:bg-primary-100"
                                                 >
