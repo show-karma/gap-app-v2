@@ -38,8 +38,10 @@ export const INDEXER = {
       `/projects/requestintro/${projectIdOrSlug}`,
     ALL_REPORT: (offset: number, limit: number) =>
       `/projects/report?offset=${offset}&limit=${limit}`,
-    REVOKE_ATTESTATION: (attestationUID: string | `0x${string}`, chainId: number) =>
-      `/attestations/revoke/${attestationUID}/${chainId}`,
+    REVOKE_ATTESTATION: (
+      attestationUID: string | `0x${string}`,
+      chainId: number
+    ) => `/attestations/revoke/${attestationUID}/${chainId}`,
     INVITATION: {
       NEW_CODE: (projectIdOrSlug: string) =>
         `/projects/${projectIdOrSlug}/add-invite-link`,
@@ -151,8 +153,7 @@ export const INDEXER = {
     UPDATE_EXTERNAL_ID: `/grants/external-id/update`,
     REMOVE_EXTERNAL_ID: `/grants/external-id/delete`,
     EXTERNAL_ADDRESS: {
-      UPDATE: (grantUID: string) =>
-        `/grants/${grantUID}/external-address/update`,
+      UPDATE: (grantUID: string) => `/grants/${grantUID}/external/update`,
     },
   },
   GAP: {
