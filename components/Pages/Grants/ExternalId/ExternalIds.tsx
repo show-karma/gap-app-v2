@@ -1,13 +1,13 @@
 "use client";
-import Link from "next/link";
-import { AddExternalId } from "./AddExternalIdDialog";
-import { useState, useEffect } from "react";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import toast from "react-hot-toast";
 import { TrashIcon } from "@heroicons/react/24/outline";
-import { useQuery } from "@tanstack/react-query";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { AddExternalId } from "./AddExternalIdDialog";
 
 export default function ExternalIds({
   projectUID,
@@ -113,7 +113,7 @@ export default function ExternalIds({
       }
       return urls;
     },
-    enabled: externalIds.length > 0,
+    enabled: externalIds?.length > 0,
   });
 
   return (
@@ -136,7 +136,7 @@ export default function ExternalIds({
             </tr>
           </thead>
           <tbody className="divide-y divide-x">
-            {externalIds.map((externalId) => (
+            {externalIds?.map((externalId) => (
               <tr key={externalId} className="divide-x">
                 <td className="px-4 py-2 text-center break-all">
                   {externalId}
