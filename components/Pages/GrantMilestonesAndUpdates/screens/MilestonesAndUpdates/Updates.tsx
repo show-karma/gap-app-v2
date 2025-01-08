@@ -4,7 +4,7 @@ import { type FC, useEffect, useState } from "react";
 import { Button } from "@/components/Utilities/Button";
 import { getGapClient, useGap } from "@/hooks";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/community";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";

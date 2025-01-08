@@ -1,23 +1,16 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import { useCommunityStore } from "@/store/community";
 import { SortByOptions, StatusOptions } from "@/types";
 import { zeroUID } from "@/utilities/commons";
-import { getTotalProjects } from "@/utilities/karma/totalProjects";
 import { getGrants } from "@/utilities/sdk/communities/getGrants";
 import { getPrograms } from "@/utilities/sdk/communities/getPrograms";
 import { cn } from "@/utilities/tailwind";
-import {
-  Field,
-  Label,
-  Listbox,
-  Radio,
-  RadioGroup,
-  Transition,
-} from "@headlessui/react";
-import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/20/solid";
+import { Listbox, Transition } from "@headlessui/react";
+import { CheckIcon } from "@heroicons/react/20/solid";
+import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import type { Grant } from "@show-karma/karma-gap-sdk";
-import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import pluralize from "pluralize";
@@ -26,10 +19,8 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import { AutoSizer, Grid } from "react-virtualized";
 import { Hex } from "viem";
 import { GrantCard } from "./GrantCard";
-import {
-  CardListSkeleton,
-  FilterByProgramsSkeleton,
-} from "./Pages/Communities/Loading";
+import { ProgramFilter } from "./Pages/Communities/Impact/ProgramFilter";
+import { CardListSkeleton } from "./Pages/Communities/Loading";
 import { errorManager } from "./Utilities/errorManager";
 
 const sortOptions: Record<SortByOptions, string> = {
@@ -101,7 +92,7 @@ export const CommunityGrants = ({
   const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
   const [grants, setGrants] = useState<Grant[]>([]); // Data returned from the API
   const itemsPerPage = 12; // Set the total number of items you want returned from the API
-  const [totalGrants, setTotalGrants] = useState(0); // Total number of grants
+  const { totalGrants, setTotalGrants } = useCommunityStore();
   const [haveMore, setHaveMore] = useState(true); // Boolean to check if there are more grants to load
 
   const selectedCategoriesIds = useMemo(
@@ -153,7 +144,7 @@ export const CommunityGrants = ({
           setGrants((prev) =>
             currentPage === 0 ? fetchedGrants : [...prev, ...fetchedGrants]
           );
-          setTotalGrants((prev) => pageInfo?.totalItems || prev);
+          setTotalGrants(pageInfo?.totalItems || totalGrants);
         } else {
           if (currentPage === 0) {
             setHaveMore(false);
@@ -206,54 +197,134 @@ export const CommunityGrants = ({
     }
   };
 
-  const { data: totalProjects, isLoading } = useQuery({
-    queryKey: ["totalProjects", communityId],
-    queryFn: () => getTotalProjects(communityId),
-  });
-
   return (
     <div className="w-full">
       <div className="flex items-center justify-between flex-row flex-wrap-reverse max-lg:flex-wrap max-lg:flex-col-reverse max-lg:justify-start max-lg:items-start gap-3 max-lg:gap-4">
-        <div
-          id="total-grants"
-          className="text-2xl font-semibold text-gray-900 dark:text-zinc-100 max-2xl:text-xl"
-        >
-          Total Grants {totalGrants ? `(${totalGrants})` : null}
-          {` `}
-          {!isLoading ? `across ${totalProjects || 0} projects` : null}
-        </div>
-        <div className="flex items-center gap-x-3 flex-wrap gap-y-2">
-          {/* Filter by category start */}
-          {categoriesOptions.length ? (
+        <div className="flex items-center gap-x-3 flex-wrap gap-y-2 w-full">
+          <ProgramFilter
+            onChange={(programId) => {
+              changeSelectedProgramIdQuery(programId);
+              setCurrentPage(0);
+              setGrants([]);
+            }}
+          />
+          <div className="flex flex-1 flex-row gap-8 justify-end flex-wrap">
+            {/* Filter by category start */}
+            {categoriesOptions.length ? (
+              <Listbox
+                value={selectedCategories}
+                // onChange={setSelectedCategories}
+                onChange={(values) => {
+                  changeCategories(values);
+                }}
+                multiple
+              >
+                {({ open }) => (
+                  <div className="flex items-center gap-x-2 max-sm:w-full max-sm:justify-between">
+                    <div className="relative flex-1 w-max">
+                      <Listbox.Button className="cursor-pointer items-center relative w-full  rounded-md pr-8 text-left  sm:text-sm sm:leading-6 text-black dark:text-white text-base font-normal">
+                        {selectedCategories.length > 0 ? (
+                          <p className="flex flex-row gap-1">
+                            {selectedCategories.length}
+                            <span>
+                              {pluralize("category", selectedCategories.length)}{" "}
+                              selected
+                            </span>
+                          </p>
+                        ) : (
+                          <p>All Categories</p>
+                        )}
+                        <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                          <ChevronDownIcon
+                            className="h-4 w-4 text-gray-400"
+                            aria-hidden="true"
+                          />
+                        </span>
+                      </Listbox.Button>
+
+                      <Transition
+                        show={open}
+                        as={Fragment}
+                        leave="transition ease-in duration-100"
+                        leaveFrom="opacity-100"
+                        leaveTo="opacity-0"
+                      >
+                        <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-max overflow-auto rounded-md bg-white py-1 text-base  dark:bg-zinc-800 dark:text-zinc-200 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                          {categoriesOptions.map((category) => (
+                            <Listbox.Option
+                              key={category}
+                              className={({ active }) =>
+                                cn(
+                                  active
+                                    ? "bg-gray-100 text-black dark:text-gray-300 dark:bg-zinc-900"
+                                    : "text-gray-900 dark:text-gray-200 ",
+                                  "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
+                                )
+                              }
+                              value={category}
+                              onClick={() => {
+                                setCurrentPage(1);
+                              }}
+                            >
+                              {({ selected, active }) => (
+                                <>
+                                  <span
+                                    className={cn(
+                                      selected
+                                        ? "font-semibold"
+                                        : "font-normal",
+                                      "block truncate"
+                                    )}
+                                  >
+                                    {category}
+                                  </span>
+
+                                  {selected ? (
+                                    <span
+                                      className={cn(
+                                        "text-blue-600 dark:text-blue-400",
+                                        "absolute inset-y-0 right-0 flex items-center pr-4"
+                                      )}
+                                    >
+                                      <CheckIcon
+                                        className="h-5 w-5"
+                                        aria-hidden="true"
+                                      />
+                                    </span>
+                                  ) : null}
+                                </>
+                              )}
+                            </Listbox.Option>
+                          ))}
+                        </Listbox.Options>
+                      </Transition>
+                    </div>
+                  </div>
+                )}
+              </Listbox>
+            ) : null}
+            {/* Filter by category end */}
+
+            {/* Sort start */}
             <Listbox
-              value={selectedCategories}
-              // onChange={setSelectedCategories}
-              onChange={(values) => {
-                changeCategories(values);
+              value={selectedSort}
+              onChange={(value) => {
+                changeSort(value);
               }}
-              multiple
             >
               {({ open }) => (
                 <div className="flex items-center gap-x-2 max-sm:w-full max-sm:justify-between">
-                  <Listbox.Label className="text-base font-semibold text-gray-900 dark:text-zinc-100 max-2xl:text-sm">
-                    Filter by category
-                  </Listbox.Label>
                   <div className="relative flex-1 w-max">
-                    <Listbox.Button className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left  dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 text-gray-900   ring-1 ring-inset ring-gray-300 sm:text-sm sm:leading-6">
-                      {selectedCategories.length > 0 ? (
-                        <p className="flex flex-row gap-1">
-                          {selectedCategories.length}
-                          <span>
-                            {pluralize("category", selectedCategories.length)}{" "}
-                            selected
-                          </span>
-                        </p>
-                      ) : (
-                        <p>Categories</p>
-                      )}
+                    <Listbox.Button
+                      id="sort-by-button"
+                      className="cursor-pointer items-center relative w-full cursor-default rounded-md pr-8 text-left  sm:text-sm sm:leading-6 text-black dark:text-white text-base font-normal"
+                    >
+                      <span className="flex flex-row gap-1">
+                        Sort by {sortOptions[selectedSort]}
+                      </span>
                       <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                        <ChevronUpDownIcon
-                          className="h-5 w-5 text-gray-400"
+                        <ChevronDownIcon
+                          className="h-4 w-4 text-gray-400"
                           aria-hidden="true"
                         />
                       </span>
@@ -266,10 +337,10 @@ export const CommunityGrants = ({
                       leaveFrom="opacity-100"
                       leaveTo="opacity-0"
                     >
-                      <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-max overflow-auto rounded-md bg-white py-1 text-base  dark:bg-zinc-800 dark:text-zinc-200 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                        {categoriesOptions.map((category) => (
+                      <Listbox.Options className="absolute  z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base  dark:bg-zinc-800 dark:text-zinc-200 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                        {Object.keys(sortOptions).map((sortOption) => (
                           <Listbox.Option
-                            key={category}
+                            key={sortOption}
                             className={({ active }) =>
                               cn(
                                 active
@@ -278,7 +349,7 @@ export const CommunityGrants = ({
                                 "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
                               )
                             }
-                            value={category}
+                            value={sortOption}
                             onClick={() => {
                               setCurrentPage(1);
                             }}
@@ -291,7 +362,7 @@ export const CommunityGrants = ({
                                     "block truncate"
                                   )}
                                 >
-                                  {category}
+                                  {sortOptions[sortOption as SortByOptions]}
                                 </span>
 
                                 {selected ? (
@@ -317,265 +388,96 @@ export const CommunityGrants = ({
                 </div>
               )}
             </Listbox>
-          ) : null}
-          {/* Filter by category end */}
+            {/* Sort end */}
 
-          {/* Sort start */}
-          <Listbox
-            value={selectedSort}
-            onChange={(value) => {
-              changeSort(value);
-            }}
-          >
-            {({ open }) => (
-              <div className="flex items-center gap-x-2  max-sm:w-full max-sm:justify-between">
-                <Listbox.Label className="text-base font-semibold text-gray-900 dark:text-zinc-100 max-2xl:text-sm">
-                  Sort by
-                </Listbox.Label>
-                <div className="relative flex-1 w-32">
-                  <Listbox.Button
-                    id="sort-by-button"
-                    className="relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left  dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 text-gray-900   ring-1 ring-inset ring-gray-300 sm:text-sm sm:leading-6"
-                  >
-                    <span className="block truncate">
-                      {sortOptions[selectedSort]}
-                    </span>
-                    <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                      <ChevronUpDownIcon
-                        className="h-5 w-5 text-gray-400"
-                        aria-hidden="true"
-                      />
-                    </span>
-                  </Listbox.Button>
+            {/* Status start */}
+            <Listbox
+              value={selectedStatus}
+              onChange={(value) => {
+                changeStatus(value);
+              }}
+            >
+              {({ open }) => (
+                <div className="flex items-center gap-x-2  max-sm:w-full max-sm:justify-between">
+                  <div className="relative flex-1 w-max">
+                    <Listbox.Button
+                      id="status-button"
+                      className="cursor-pointer items-center relative w-full rounded-md pr-8 text-left  sm:text-sm sm:leading-6 text-black dark:text-white text-base font-normal"
+                    >
+                      <span className="flex flex-row gap-1">
+                        {statuses[selectedStatus]}
+                      </span>
+                      <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                        <ChevronDownIcon
+                          className="h-4 w-4 text-gray-400"
+                          aria-hidden="true"
+                        />
+                      </span>
+                    </Listbox.Button>
 
-                  <Transition
-                    show={open}
-                    as={Fragment}
-                    leave="transition ease-in duration-100"
-                    leaveFrom="opacity-100"
-                    leaveTo="opacity-0"
-                  >
-                    <Listbox.Options className="absolute  z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base  dark:bg-zinc-800 dark:text-zinc-200 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                      {Object.keys(sortOptions).map((sortOption) => (
-                        <Listbox.Option
-                          key={sortOption}
-                          className={({ active }) =>
-                            cn(
-                              active
-                                ? "bg-gray-100 text-black dark:text-gray-300 dark:bg-zinc-900"
-                                : "text-gray-900 dark:text-gray-200 ",
-                              "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
-                            )
-                          }
-                          value={sortOption}
-                          onClick={() => {
-                            setCurrentPage(1);
-                          }}
-                        >
-                          {({ selected, active }) => (
-                            <>
-                              <span
-                                className={cn(
-                                  selected ? "font-semibold" : "font-normal",
-                                  "block truncate"
-                                )}
-                              >
-                                {sortOptions[sortOption as SortByOptions]}
-                              </span>
-
-                              {selected ? (
+                    <Transition
+                      show={open}
+                      as={Fragment}
+                      leave="transition ease-in duration-100"
+                      leaveFrom="opacity-100"
+                      leaveTo="opacity-0"
+                    >
+                      <Listbox.Options className="absolute z-10 dark:bg-zinc-800 dark:text-zinc-200 mt-1 max-h-60 w-max overflow-auto rounded-md bg-white py-1 text-base  ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                        {Object.keys(statuses).map((statusOption) => (
+                          <Listbox.Option
+                            key={statusOption}
+                            className={({ active }) =>
+                              cn(
+                                active
+                                  ? "bg-gray-100 text-black dark:text-gray-300 dark:bg-zinc-900"
+                                  : "text-gray-900 dark:text-gray-200 ",
+                                "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
+                              )
+                            }
+                            value={statusOption}
+                            onClick={() => {
+                              setCurrentPage(1);
+                            }}
+                          >
+                            {({ selected, active }) => (
+                              <>
                                 <span
                                   className={cn(
-                                    "text-blue-600 dark:text-blue-400",
-                                    "absolute inset-y-0 right-0 flex items-center pr-4"
+                                    selected ? "font-semibold" : "font-normal",
+                                    "block truncate"
                                   )}
                                 >
-                                  <CheckIcon
-                                    className="h-5 w-5"
-                                    aria-hidden="true"
-                                  />
+                                  {statuses[statusOption as StatusOptions]}
                                 </span>
-                              ) : null}
-                            </>
-                          )}
-                        </Listbox.Option>
-                      ))}
-                    </Listbox.Options>
-                  </Transition>
+
+                                {selected ? (
+                                  <span
+                                    className={cn(
+                                      "text-blue-600 dark:text-blue-400",
+                                      "absolute inset-y-0 right-0 flex items-center pr-4"
+                                    )}
+                                  >
+                                    <CheckIcon
+                                      className="h-5 w-5"
+                                      aria-hidden="true"
+                                    />
+                                  </span>
+                                ) : null}
+                              </>
+                            )}
+                          </Listbox.Option>
+                        ))}
+                      </Listbox.Options>
+                    </Transition>
+                  </div>
                 </div>
-              </div>
-            )}
-          </Listbox>
-          {/* Sort end */}
-
-          {/* Status start */}
-          <Listbox
-            value={selectedStatus}
-            onChange={(value) => {
-              changeStatus(value);
-            }}
-          >
-            {({ open }) => (
-              <div className="flex items-center gap-x-2  max-sm:w-full max-sm:justify-between">
-                <Listbox.Label className="text-base font-semibold text-gray-900 dark:text-zinc-100 max-2xl:text-sm">
-                  Status
-                </Listbox.Label>
-                <div className="relative flex-1 w-max">
-                  <Listbox.Button
-                    id="status-button"
-                    className="relative w-full cursor-default  dark:bg-zinc-800 dark:text-zinc-200 dark:ring-zinc-700 rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900  ring-1 ring-inset ring-gray-300 sm:text-sm sm:leading-6"
-                  >
-                    <span className="block truncate">
-                      {statuses[selectedStatus]}
-                    </span>
-                    <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                      <ChevronUpDownIcon
-                        className="h-5 w-5 text-gray-400"
-                        aria-hidden="true"
-                      />
-                    </span>
-                  </Listbox.Button>
-
-                  <Transition
-                    show={open}
-                    as={Fragment}
-                    leave="transition ease-in duration-100"
-                    leaveFrom="opacity-100"
-                    leaveTo="opacity-0"
-                  >
-                    <Listbox.Options className="absolute z-10 dark:bg-zinc-800 dark:text-zinc-200 mt-1 max-h-60 w-max overflow-auto rounded-md bg-white py-1 text-base  ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                      {Object.keys(statuses).map((statusOption) => (
-                        <Listbox.Option
-                          key={statusOption}
-                          className={({ active }) =>
-                            cn(
-                              active
-                                ? "bg-gray-100 text-black dark:text-gray-300 dark:bg-zinc-900"
-                                : "text-gray-900 dark:text-gray-200 ",
-                              "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
-                            )
-                          }
-                          value={statusOption}
-                          onClick={() => {
-                            setCurrentPage(1);
-                          }}
-                        >
-                          {({ selected, active }) => (
-                            <>
-                              <span
-                                className={cn(
-                                  selected ? "font-semibold" : "font-normal",
-                                  "block truncate"
-                                )}
-                              >
-                                {statuses[statusOption as StatusOptions]}
-                              </span>
-
-                              {selected ? (
-                                <span
-                                  className={cn(
-                                    "text-blue-600 dark:text-blue-400",
-                                    "absolute inset-y-0 right-0 flex items-center pr-4"
-                                  )}
-                                >
-                                  <CheckIcon
-                                    className="h-5 w-5"
-                                    aria-hidden="true"
-                                  />
-                                </span>
-                              ) : null}
-                            </>
-                          )}
-                        </Listbox.Option>
-                      ))}
-                    </Listbox.Options>
-                  </Transition>
-                </div>
-              </div>
-            )}
-          </Listbox>
-          {/* Status end */}
+              )}
+            </Listbox>
+            {/* Status end */}
+          </div>
         </div>
       </div>
       <section className="flex flex-col gap-4 md:flex-row">
-        <div>
-          <div
-            id="filter-by-programs"
-            className="text-base text-nowrap font-semibold text-gray-900 dark:text-zinc-100 max-2xl:text-sm mb-2 mt-5"
-          >
-            Filter by Programs
-          </div>
-          {programsLoading ? (
-            <FilterByProgramsSkeleton />
-          ) : (
-            <div>
-              <RadioGroup
-                value={selectedProgramId}
-                onChange={(programId) => {
-                  changeSelectedProgramIdQuery(programId);
-                  setCurrentPage(0);
-                  setGrants([]);
-                }}
-                aria-label="Server size"
-              >
-                <div className="space-y-2">
-                  <Field
-                    onClick={() => {
-                      changeSelectedProgramIdQuery(null);
-                      setCurrentPage(0);
-                      setGrants([]);
-                    }}
-                    className={cn(
-                      selectedProgramId === null
-                        ? "bg-[#eef4ff] dark:bg-zinc-800 dark:text-primary-300  text-[#155eef]"
-                        : "text-gray-700 hover:text-primary-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700",
-                      "flex items-center rounded-md text-sm leading-6 font-semibold w-full py-1 hover:cursor-pointer px-2"
-                    )}
-                    id="filter-by-programs-all"
-                  >
-                    <Radio
-                      value={null}
-                      className="group flex size-4 items-center justify-center rounded-full border bg-white data-[checked]:bg-blue-400"
-                    >
-                      <span className="invisible size-2 rounded-full bg-white group-data-[checked]:visible" />
-                    </Radio>
-                    <Label className="ml-2 hover:cursor-pointer">All</Label>
-                  </Field>
-                  {programs.map((program: GrantProgram) => (
-                    <Field
-                      key={program.programId}
-                      onClick={() => {
-                        changeSelectedProgramIdQuery(
-                          program.programId as string
-                        );
-                        setCurrentPage(0);
-                        setGrants([]);
-                      }}
-                      className={cn(
-                        selectedProgramId === program.programId
-                          ? "bg-[#eef4ff] dark:bg-zinc-800 dark:text-primary-300  text-[#155eef]"
-                          : "text-gray-700 hover:text-primary-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700",
-                        "flex items-center rounded-md text-sm leading-6 font-semibold w-full py-1 hover:cursor-pointer px-2"
-                      )}
-                      id={`filter-by-program-${program.programId}`}
-                    >
-                      <Radio
-                        value={program.programId}
-                        className="group flex size-4 items-center justify-center rounded-full border bg-white data-[checked]:bg-blue-400"
-                      >
-                        <span className="invisible size-2 rounded-full bg-white group-data-[checked]:visible" />
-                      </Radio>
-                      <Label className="ml-2 hover:cursor-pointer">
-                        {program.metadata?.title}
-                      </Label>
-                    </Field>
-                  ))}
-                </div>
-              </RadioGroup>
-            </div>
-          )}
-        </div>
-
         <div className="h-full w-full my-8">
           {grants.length > 0 ? (
             // <div className="grid grid-cols-4 justify-items-center gap-3 pb-20 max-2xl:grid-cols-4 max-xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1">

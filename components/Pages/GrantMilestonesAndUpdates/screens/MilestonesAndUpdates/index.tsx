@@ -2,21 +2,20 @@
 /* eslint-disable @next/next/no-img-element */
 import { useOwnerStore, useProjectStore } from "@/store";
 // import { MilestonesList } from "./MilestonesList";
-import { useRouter } from "next/navigation";
-import { MESSAGES } from "@/utilities/messages";
-import { ReadMore } from "@/utilities/ReadMore";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { formatDate } from "@/utilities/formatDate";
-import { useCommunityAdminStore } from "@/store/community";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
+import { ReadMore } from "@/utilities/ReadMore";
 import {
   IGrantResponse,
   IProjectResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Link from "next/link";
-import { PAGES } from "@/utilities/pages";
 
-import dynamic from "next/dynamic";
 import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
 import { useGrantStore } from "@/store/grant";
+import dynamic from "next/dynamic";
 
 const MilestonesList = dynamic(
   () =>

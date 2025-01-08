@@ -1,6 +1,6 @@
 "use client";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/community";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useGrantStore } from "@/store/grant";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";

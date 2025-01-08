@@ -1,34 +1,34 @@
 "use client";
-import React, { Fragment, useEffect, useState } from "react";
-import { useRouter, useParams } from "next/navigation";
-import type { Grant } from "@show-karma/karma-gap-sdk";
-import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
-import { useAccount } from "wagmi";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { getGrants } from "@/utilities/sdk/communities/getGrants";
-import { Hex } from "viem";
-import fetchData from "@/utilities/fetchData";
-import TablePagination from "@/components/Utilities/TablePagination";
-import { CheckIcon, ChevronLeftIcon } from "@heroicons/react/20/solid";
-import { Listbox, Transition } from "@headlessui/react";
-import { ChevronUpDownIcon } from "@heroicons/react/24/solid";
-import toast from "react-hot-toast";
-import pluralize from "pluralize";
-import { Button } from "@/components/Utilities/Button";
-import Link from "next/link";
 import { CategoryCreationDialog } from "@/components/Pages/Admin/CategoryCreationDialog";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
-import { zeroUID } from "@/utilities/commons";
-import { PAGES } from "@/utilities/pages";
-import { INDEXER } from "@/utilities/indexer";
-import { reduceText } from "@/utilities/reduceText";
-import { defaultMetadata } from "@/utilities/meta";
-import { cn } from "@/utilities/tailwind";
-import { MESSAGES } from "@/utilities/messages";
-import { useAuthStore } from "@/store/auth";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { Spinner } from "@/components/Utilities/Spinner";
+import TablePagination from "@/components/Utilities/TablePagination";
+import { useAuthStore } from "@/store/auth";
+import { zeroUID } from "@/utilities/commons";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import fetchData from "@/utilities/fetchData";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { defaultMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
+import { reduceText } from "@/utilities/reduceText";
+import { getGrants } from "@/utilities/sdk/communities/getGrants";
+import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
+import { cn } from "@/utilities/tailwind";
+import { Listbox, Transition } from "@headlessui/react";
+import { CheckIcon, ChevronLeftIcon } from "@heroicons/react/20/solid";
+import { ChevronUpDownIcon } from "@heroicons/react/24/solid";
+import type { Grant } from "@show-karma/karma-gap-sdk";
+import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import pluralize from "pluralize";
+import { Fragment, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { Hex } from "viem";
+import { useAccount } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 
@@ -37,7 +37,7 @@ interface GrantEdited {
   categories: string[];
 }
 
-interface CategoriesOptions {
+export interface CategoriesOptions {
   id: number;
   name: string;
 }
@@ -184,17 +184,17 @@ export default function EditCategoriesPage() {
             .slice(itemsPerPage * (currentPage - 1), itemsPerPage * currentPage)
             .map(
               (grant: any) =>
-              ({
-                grant: grant.details?.data?.title || grant.uid || "",
-                project: grant.project?.details?.data?.title || "",
-                description: reduceText(
-                  grant.details?.data?.description || ""
-                ),
-                categories: grant.categories || [],
-                uid: grant.uid,
-                projectUid: grant.project?.uid || "",
-                projectSlug: grant.project?.details?.data?.slug || "",
-              } as SimplifiedGrants)
+                ({
+                  grant: grant.details?.data?.title || grant.uid || "",
+                  project: grant.project?.details?.data?.title || "",
+                  description: reduceText(
+                    grant.details?.data?.description || ""
+                  ),
+                  categories: grant.categories || [],
+                  uid: grant.uid,
+                  projectUid: grant.project?.uid || "",
+                  projectSlug: grant.project?.details?.data?.slug || "",
+                } as SimplifiedGrants)
             );
           setGrants(mapSimplifiedGrants);
         }

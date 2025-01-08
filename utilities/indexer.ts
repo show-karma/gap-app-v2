@@ -82,6 +82,9 @@ export const INDEXER = {
       `/communities/${communityIdOrSlug}/programs`,
     PROGRAM_IMPACT: (communityIdOrSlug: string, programId: string) =>
       `/communities/${communityIdOrSlug}/programs/${programId}/outputs`,
+    ALL_PROGRAMS_IMPACT: (communityIdOrSlug: string) =>
+      `/communities/${communityIdOrSlug}/programs/outputs`,
+
     GRANTS: (
       communityIdOrSlug: string,
       {

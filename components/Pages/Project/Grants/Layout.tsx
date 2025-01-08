@@ -8,7 +8,7 @@ import { useGap } from "@/hooks";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useAuthStore } from "@/store/auth";
 import { useCommunitiesStore } from "@/store/communities";
-import { useCommunityAdminStore } from "@/store/community";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useGrantStore } from "@/store/grant";
 import { GrantScreen } from "@/types";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
@@ -159,27 +159,32 @@ export const GrantsLayout = ({
     tabName: GrantScreen;
     current: boolean;
   }[] = [
-      {
-        name: "Overview",
-        tabName: "overview",
-        current: true,
-      },
-      {
-        name: "Milestones and Updates",
-        tabName: "milestones-and-updates",
-        current: false,
-      },
-      {
-        name: "Outputs",
-        tabName: "outputs",
-        current: false,
-      },
-      {
-        name: "Impact Criteria",
-        tabName: "impact-criteria",
-        current: false,
-      },
-    ];
+    {
+      name: "Overview",
+      tabName: "overview",
+      current: true,
+    },
+    {
+      name: "Milestones and Updates",
+      tabName: "milestones-and-updates",
+      current: false,
+    },
+    {
+      name: "Outputs",
+      tabName: "outputs",
+      current: false,
+    },
+    {
+      name: "Impact Criteria",
+      tabName: "impact-criteria",
+      current: false,
+    },
+    {
+      name: "Outputs + Outcomes",
+      tabName: "outputs",
+      current: false,
+    },
+  ];
 
   useEffect(() => {
     const mountTabs = async () => {
@@ -411,9 +416,7 @@ export const GrantsLayout = ({
               {isAuthorized && grant ? (
                 <div className="flex flex-row gap-2">
                   {project ? (
-                    <GrantLinkExternalAddressButton
-                      grant={grant as any}
-                    />
+                    <GrantLinkExternalAddressButton grant={grant as any} />
                   ) : null}
                   {project ? (
                     <GrantCompleteButton project={project} grant={grant} />

@@ -4,6 +4,7 @@ export const PAGES = {
   PROJECTS_EXPLORER: `/projects`,
   COMMUNITY: {
     ALL_GRANTS: (community: string) => `/${community}`,
+    IMPACT: (community: string) => `/${community}/impact`,
     RECEIVEPROJECTUPDATES: (community: string) =>
       `/${community}/receive-project-updates`,
   },
