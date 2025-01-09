@@ -19,3 +19,12 @@ export interface ProgramImpactDataResponse {
     type?: "output" | "outcome";
   }[];
 }
+
+export interface ProgramImpactData {
+  stats: {
+    totalCategories: number;
+    totalProjects: number;
+    totalFundingAllocated: string;
+  };
+  data: ProgramImpactDataResponse[];
+}

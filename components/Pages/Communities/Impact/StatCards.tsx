@@ -1,6 +1,7 @@
 "use client";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
+import formatCurrency from "@/utilities/formatCurrency";
 import { useParams, useSearchParams } from "next/navigation";
 
 export const CommunityImpactStatCards = () => {
@@ -10,48 +11,28 @@ export const CommunityImpactStatCards = () => {
   const defaultProgramSelected = searchParams.get("programId");
 
   const { data, isLoading } = useImpactMeasurement();
-  const uniqueProjects = data?.reduce((acc, curr) => {
-    curr.outputs.forEach((output) => {
-      acc.add(output.projectUID);
-    });
-    return acc;
-  }, new Set<string>());
-  const uniqueCategories = data?.reduce((acc, curr) => {
-    curr.outputs.forEach((output) => {
-      acc.add(output.categoryId);
-    });
-    return acc;
-  }, new Set<string>());
+  const outputs = data?.data;
 
-  const totalProjects = uniqueProjects?.size || 0;
-  const totalCategories = uniqueCategories?.size || 0;
-  const totalFundingAllocated = data
-    ?.reduce(
-      (acc, curr) =>
-        acc +
-        curr.outputs.reduce((acc2, curr2) => {
-          const amount = curr2.amount || "0";
-          const numericAmount = Number(amount.split(" ")[0]);
-          return acc2 + (numericAmount || 0);
-        }, 0),
-      0
-    )
-    .toLocaleString();
+  const parsedFundingAllocated = parseFloat(
+    data?.stats?.totalFundingAllocated?.replace(/,/g, "") || "0"
+  );
 
   const stats = [
     {
       title: "Total Projects",
-      value: totalProjects,
+      value: data?.stats.totalProjects,
       color: "#84ADFF",
     },
     {
       title: "Total Categories",
-      value: totalCategories,
+      value: data?.stats.totalCategories,
       color: "#67E3F9",
     },
     {
       title: "Total Funding Allocated (with available data)",
-      value: totalFundingAllocated,
+      value:
+        formatCurrency(parsedFundingAllocated) ||
+        data?.stats.totalFundingAllocated,
       color: "#A6EF67",
     },
   ];

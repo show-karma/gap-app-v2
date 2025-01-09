@@ -1,12 +1,13 @@
 import { CategoriesOptions } from "@/components/Pages/Admin/EditCategoriesPage";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { ProgramImpactDataResponse } from "@/types/programs";
+import { ProgramImpactData, ProgramImpactDataResponse } from "@/types/programs";
 import fetchData from "../fetchData";
 import { INDEXER } from "../indexer";
 
 export async function getAllProgramsImpact(
   communityId: string,
-  allCategories: CategoriesOptions[]
+  allCategories: CategoriesOptions[],
+  projectSelected?: string | null
 ) {
   try {
     const [data, error] = await fetchData(
@@ -16,13 +17,25 @@ export async function getAllProgramsImpact(
       throw error;
     }
 
-    const existingCategories = data.map((item: any) => ({
-      categoryName: item.categoryName,
-      outputs: item.outputs.map((output: any) => ({
-        ...output,
-        lastUpdated: output.createdAt || output.updatedAt,
-      })),
-    })) as ProgramImpactDataResponse[];
+    let existingCategories = (data as ProgramImpactData).data.map(
+      (item: any) => ({
+        categoryName: item.categoryName,
+        outputs: item.outputs.map((output: any) => ({
+          ...output,
+          lastUpdated: output.createdAt || output.updatedAt,
+        })),
+      })
+    ) as ProgramImpactDataResponse[];
+
+    if (projectSelected) {
+      existingCategories = existingCategories.map((category) => ({
+        ...category,
+        outputs: category.outputs.filter(
+          (output) =>
+            output.projectUID.toLowerCase() === projectSelected?.toLowerCase()
+        ),
+      }));
+    }
 
     const missingCategories = allCategories.filter(
       (category) =>
@@ -34,9 +47,20 @@ export async function getAllProgramsImpact(
       outputs: [],
     }));
 
-    return [...existingCategories, ...missingCategoriesData];
+    const allCategoriesData = [...existingCategories, ...missingCategoriesData];
+    return {
+      data: allCategoriesData,
+      stats: (data as ProgramImpactData).stats,
+    };
   } catch (error) {
     errorManager("Error fetching program impact", error);
-    return [];
+    return {
+      data: [],
+      stats: {
+        totalCategories: 0,
+        totalProjects: 0,
+        totalFundingAllocated: "0",
+      },
+    };
   }
 }

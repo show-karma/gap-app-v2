@@ -1,12 +1,17 @@
 "use client";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
+import { useSearchParams } from "next/navigation";
 import { CategoryRow } from "./CategoryRow";
 
 export const CommunityImpactCharts = () => {
-  const { data, isLoading } = useImpactMeasurement();
+  const searchParams = useSearchParams();
+  const projectSelected = searchParams.get("projectId");
+  const { data, isLoading } = useImpactMeasurement(projectSelected);
 
-  const orderedData = data?.sort((a, b) =>
+  const outputs = data?.data;
+
+  const orderedData = outputs?.sort((a, b) =>
     a.categoryName.localeCompare(b.categoryName)
   );
 

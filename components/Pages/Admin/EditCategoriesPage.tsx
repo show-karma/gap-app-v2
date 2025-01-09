@@ -266,7 +266,7 @@ export default function EditCategoriesPage() {
   };
 
   return (
-    <div className="mt-12 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
+    <div className="mt-4 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
       {loading ? (
         <div className="flex w-full items-center justify-center">
           <Spinner />

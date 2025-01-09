@@ -5,26 +5,32 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams, useSearchParams } from "next/navigation";
 import { useCommunityCategory } from "./useCommunityCategory";
 
-export function useImpactMeasurement() {
+export function useImpactMeasurement(projectSelected?: string | null) {
   const { communityId } = useParams();
   const searchParams = useSearchParams();
-  const defaultProgramSelected = searchParams.get("programId");
+  const programSelected = searchParams.get("programId");
   const { data: allCategories } = useCommunityCategory();
 
-  const queryKey = defaultProgramSelected
-    ? ["impact-measurement-project", defaultProgramSelected]
-    : ["impact-measurement-projects"];
+  const queryKey =
+    programSelected || projectSelected
+      ? ["impact-measurement-project", programSelected, projectSelected]
+      : ["impact-measurement-projects"];
 
   const queryFn = () => {
     if (!allCategories) return;
-    if (defaultProgramSelected) {
+    if (programSelected) {
       return getProgramImpact(
         communityId as string,
-        defaultProgramSelected,
-        allCategories
+        programSelected,
+        allCategories,
+        projectSelected
       );
     }
-    return getAllProgramsImpact(communityId as string, allCategories);
+    return getAllProgramsImpact(
+      communityId as string,
+      allCategories,
+      projectSelected
+    );
   };
 
   return useQuery({

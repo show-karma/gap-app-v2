@@ -317,7 +317,7 @@ export const CommunityGrants = ({
                   <div className="relative flex-1 w-max">
                     <Listbox.Button
                       id="sort-by-button"
-                      className="cursor-pointer items-center relative w-full cursor-default rounded-md pr-8 text-left  sm:text-sm sm:leading-6 text-black dark:text-white text-base font-normal"
+                      className="cursor-pointer items-center relative w-full rounded-md pr-8 text-left  sm:text-sm sm:leading-6 text-black dark:text-white text-base font-normal"
                     >
                       <span className="flex flex-row gap-1">
                         Sort by {sortOptions[selectedSort]}

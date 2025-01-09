@@ -38,7 +38,7 @@ export const ProgramFilter = ({
   );
 
   return (
-    <div className="flex flex-row gap-4 items-center flex-1">
+    <div className="flex flex-row gap-4 items-center flex-1 max-w-[450px]">
       <Image src={"/icons/program.svg"} alt="program" width={24} height={24} />
       <p className="text-gray-800 dark:text-zinc-100 text-base font-semibold leading-normal">
         Program

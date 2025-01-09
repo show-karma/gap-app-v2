@@ -1,33 +1,33 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
-import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
-import { useAccount } from "wagmi";
-import fetchData from "@/utilities/fetchData";
+import { ReasonsModal } from "@/components/Dialogs/ReasonsModal";
+import { Button } from "@/components/Utilities/Button";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { Skeleton } from "@/components/Utilities/Skeleton";
 import TablePagination from "@/components/Utilities/TablePagination";
+import { useOwnerStore } from "@/store";
+import { useAuthStore } from "@/store/auth";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { defaultMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
+import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
 import { ChevronLeftIcon } from "@heroicons/react/20/solid";
 import {
   ChevronDownIcon,
   ChevronUpDownIcon,
   ChevronUpIcon,
 } from "@heroicons/react/24/solid";
-import { Button } from "@/components/Utilities/Button";
-import Link from "next/link";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
-import { PAGES } from "@/utilities/pages";
-import { INDEXER } from "@/utilities/indexer";
-import { defaultMetadata } from "@/utilities/meta";
-import { MESSAGES } from "@/utilities/messages";
-import { useAuthStore } from "@/store/auth";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useQuery } from "@tanstack/react-query";
-import { Skeleton } from "@/components/Utilities/Skeleton";
-import { useOwnerStore } from "@/store";
-import { SearchDropdown } from "../ProgramRegistry/SearchDropdown";
+import Link from "next/link";
+import { useParams } from "next/navigation";
 import { useQueryState } from "nuqs";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { ReasonsModal } from "@/components/Dialogs/ReasonsModal";
+import { useEffect, useState } from "react";
+import { useAccount } from "wagmi";
+import { SearchDropdown } from "../ProgramRegistry/SearchDropdown";
 interface Report {
   _id: {
     $oid: string;
@@ -207,7 +207,7 @@ export const ReportMilestonePage = ({
   }
 
   return (
-    <div className="mt-12 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
+    <div className="mt-4 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
       {isAuthorized ? (
         <div className="w-full flex flex-col gap-6">
           <div className="w-full flex flex-row items-center justify-between">

@@ -17,6 +17,7 @@ export const PAGES = {
     EDIT_CATEGORIES: (community: string) =>
       `/${community}/admin/edit-categories`,
     MILESTONES: (community: string) => `/${community}/admin/milestones-report`,
+    ASSIGN_OUTPUTS: (community: string) => `/${community}/admin/assign-outputs`,
     COMMUNITIES: `/admin/communities`,
     COMMUNITY_STATS: `/admin/communities/stats`,
     PROJECTS: `/admin/projects`,

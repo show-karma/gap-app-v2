@@ -21,6 +21,10 @@ export const CommunityPageNavigator = () => {
     queryKey: ["community", communityId],
     queryFn: () => getCommunityBySlug(communityId),
   });
+  const isAdminPage = pathname.includes("/admin");
+  if (isAdminPage) {
+    return null;
+  }
   return (
     <div className="flex-row max-lg:flex-col px-1.5 py-2 rounded-lg bg-gray-100 dark:bg-zinc-900 justify-start items-center gap-4 flex h-max">
       <Link

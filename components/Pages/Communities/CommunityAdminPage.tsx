@@ -1,13 +1,13 @@
 "use client";
-import React, { useEffect, useState } from "react";
-import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
-import { useAccount } from "wagmi";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
-import { PAGES } from "@/utilities/pages";
-import { MESSAGES } from "@/utilities/messages";
 import { useAuthStore } from "@/store/auth";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
+import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useEffect, useState } from "react";
+import { useAccount } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 
@@ -53,7 +53,7 @@ export const CommunityAdminPage = ({
   }, [address, isConnected, isAuth, community?.uid, signer]);
 
   return (
-    <div className="mt-12 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
+    <div className="mt-4 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
       {loading ? (
         <div className="flex w-full items-center justify-center">
           <Spinner />
@@ -76,6 +76,15 @@ export const CommunityAdminPage = ({
           >
             <button className="px-10 py-8 bg-yellow-200 rounded-md  transition-all ease-in-out duration-200 dark:bg-yellow-900">
               Milestones
+            </button>
+          </a>
+          <a
+            href={PAGES.ADMIN.ASSIGN_OUTPUTS(
+              community?.details?.data?.slug || communityId
+            )}
+          >
+            <button className="px-10 py-8 bg-red-200 rounded-md  transition-all ease-in-out duration-200 dark:bg-yellow-900">
+              Assign outputs
             </button>
           </a>
         </div>

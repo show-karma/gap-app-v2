@@ -4,6 +4,7 @@ import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { ProgramImpactDataResponse } from "@/types/programs";
 import fetchData from "@/utilities/fetchData";
+import formatCurrency from "@/utilities/formatCurrency";
 import { INDEXER } from "@/utilities/indexer";
 import { defaultMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
@@ -15,12 +16,13 @@ import { ProgramAnalytics } from "./ProgramAnalytics";
 
 export const prepareChartData = (
   values: string[],
-  timestamps: string[]
-): { date: string; value: number }[] => {
+  timestamps: string[],
+  name: string
+): { date: string; [key: string]: number | string }[] => {
   return timestamps
     .map((timestamp, index) => ({
       date: new Date(timestamp).toLocaleDateString(),
-      value: Number(values[index]) || 0,
+      [name]: Number(values[index]) || 0,
     }))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 };
@@ -206,7 +208,9 @@ export default function ProgramImpactPage() {
                                 Funded Amount
                               </span>
                               <span className="font-bold text-md">
-                                {item.amount}
+                                {item.amount
+                                  ? formatCurrency(Number(item.amount))
+                                  : null}
                               </span>
                             </div>
                           </div>
@@ -216,10 +220,11 @@ export default function ProgramImpactPage() {
                         <AreaChart
                           data={prepareChartData(
                             item.value,
-                            item.outputTimestamp
+                            item.outputTimestamp,
+                            item.name
                           )}
                           index={"date"}
-                          categories={["value"]}
+                          categories={[item.name]}
                           colors={["blue"]}
                           valueFormatter={(value) => `${value}`}
                           yAxisWidth={40}

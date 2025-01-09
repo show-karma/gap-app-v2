@@ -20,5 +20,5 @@ export default async function AdminLayout({ children, params }: Props) {
   if (!community || community?.uid === zeroUID) {
     notFound();
   }
-  return <div className="px-4 sm:px-6 lg:px-12 py-5">{children}</div>;
+  return <div className="py-1">{children}</div>;
 }

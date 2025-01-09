@@ -26,7 +26,9 @@ export const ProjectFilter = ({
 
   const { data, isLoading } = useImpactMeasurement();
 
-  const projects = data
+  const outputs = data?.data;
+
+  const projects = outputs
     ?.map((program) => program.outputs.map((output) => output))
     .flat()
     .map((project) => ({
@@ -51,7 +53,7 @@ export const ProjectFilter = ({
   );
 
   return (
-    <div className="flex flex-row gap-4 items-center flex-1">
+    <div className="flex flex-row gap-4 items-center flex-1 max-w-[450px]">
       <Image src={"/icons/project.png"} alt="Project" width={24} height={24} />
       <p className="text-gray-800 dark:text-zinc-100 text-base font-semibold leading-normal">
         Project
