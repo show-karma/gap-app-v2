@@ -7,6 +7,7 @@ import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
+import { TrashIcon } from "@heroicons/react/24/outline";
 import { AreaChart, Card, Title } from "@tremor/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -36,6 +37,21 @@ const prepareChartData = (
     }))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 };
+interface OutputAnswers {
+  id: string;
+  grantUID: string;
+  categoryId: string;
+  categoryName: string;
+  chainID: number;
+  outputId: string;
+  name: string;
+  value: string[];
+  proof: string[];
+  outputTimestamp: string[];
+  type: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 export const GrantOutputs = () => {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
@@ -46,23 +62,7 @@ export const GrantOutputs = () => {
 
   const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
 
-  const [outputAnswers, setOutputAnswers] = useState<
-    {
-      id: string;
-      grantUID: string;
-      categoryId: string;
-      categoryName: string;
-      chainID: number;
-      outputId: string;
-      name: string;
-      value: string[];
-      proof: string[];
-      outputTimestamp: string[];
-      type: string;
-      createdAt: Date;
-      updatedAt: Date;
-    }[]
-  >([]);
+  const [outputAnswers, setOutputAnswers] = useState<OutputAnswers[]>([]);
   const [forms, setForms] = useState<OutputForm[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { grant } = useGrantStore();
@@ -190,13 +190,13 @@ export const GrantOutputs = () => {
       {
         outputId,
         categoryId,
-        values,
-        proofs,
+        value: values,
+        proof: proofs,
         outputTimestamp: formattedTimestamp,
       }
     );
 
-    if (response.success) {
+    if (response?.success) {
       toast.success(MESSAGES.GRANT.OUTPUTS.SUCCESS);
       handleCancel(outputId);
     } else {
@@ -204,28 +204,31 @@ export const GrantOutputs = () => {
     }
   }
 
+  async function getOutputAnswers(grantUid: string, silent = false) {
+    if (!silent) setIsLoading(true);
+    const [data] = await fetchData(INDEXER.GRANTS.OUTPUTS.GET(grantUid));
+    const outputDataWithAnswers = data;
+    setOutputAnswers(outputDataWithAnswers);
+
+    // Initialize forms with existing values
+    setForms(
+      outputDataWithAnswers.map((item: any) => ({
+        outputId: item.outputId,
+        categoryId: item.categoryId,
+        value: item.value || [],
+        proof:
+          item.proof.length !== item.value.length
+            ? Array(item.value.length).fill("")
+            : item.proof || [],
+        outputTimestamp: item.outputTimestamp || [new Date().toISOString()],
+        isEdited: false,
+        isEditing: false,
+      }))
+    );
+
+    if (!silent) setIsLoading(false);
+  }
   useEffect(() => {
-    async function getOutputAnswers(grantUid: string) {
-      setIsLoading(true);
-      const [data] = await fetchData(INDEXER.GRANTS.OUTPUTS.GET(grantUid));
-      const outputDataWithAnswers = data;
-      setOutputAnswers(outputDataWithAnswers);
-
-      // Initialize forms with existing values
-      setForms(
-        outputDataWithAnswers.map((item: any) => ({
-          outputId: item.outputId,
-          categoryId: item.categoryId,
-          value: item.value || [],
-          proof: item.proof || [],
-          outputTimestamp: item.outputTimestamp || [new Date().toISOString()],
-          isEdited: false,
-        }))
-      );
-
-      setIsLoading(false);
-    }
-
     if (grant) getOutputAnswers(grant.uid);
   }, [grant]);
 
@@ -235,25 +238,8 @@ export const GrantOutputs = () => {
     );
   };
 
-  const handleCancel = (outputId: string) => {
-    setForms((prev) =>
-      prev.map((f) => {
-        if (f.outputId === outputId) {
-          const currentOutput = outputAnswers.find(
-            (o) => o.outputId === outputId
-          );
-          return {
-            ...f,
-            isEditing: false,
-            isEdited: false,
-            value: currentOutput?.value || [],
-            proof: currentOutput?.proof || [],
-            outputTimestamp: currentOutput?.outputTimestamp || [],
-          };
-        }
-        return f;
-      })
-    );
+  const handleCancel = async (outputId: string) => {
+    await getOutputAnswers(grant?.uid as string);
   };
 
   // Filter outputs based on authorization
@@ -276,6 +262,29 @@ export const GrantOutputs = () => {
               value: [...f.value, ""],
               proof: [...f.proof, ""],
               outputTimestamp: [...f.outputTimestamp, new Date().toISOString()],
+            }
+          : f
+      )
+    );
+  };
+
+  const handleDeleteEntry = (outputId: string, index: number) => {
+    const output = outputAnswers.find((o) => o.outputId === outputId);
+    output?.value.splice(index, 1);
+    output?.proof.splice(index, 1);
+    output?.outputTimestamp.splice(index, 1);
+
+    setForms((prev) =>
+      prev.map((f) =>
+        f.outputId === outputId
+          ? {
+              ...f,
+              value: [...f.value].filter((_, i) => i !== index),
+              proof: [...f.proof].filter((_, i) => i !== index),
+              outputTimestamp: [...f.outputTimestamp].filter(
+                (_, i) => i !== index
+              ),
+              isEdited: true,
             }
           : f
       )
@@ -377,6 +386,7 @@ export const GrantOutputs = () => {
                                 <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
                                   Proof
                                 </th>
+                                <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300" />
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-zinc-700">
@@ -427,10 +437,14 @@ export const GrantOutputs = () => {
                                       />
                                     ) : (
                                       <span className="text-gray-900 dark:text-zinc-100">
-                                        {formatDate(
-                                          new Date(item.outputTimestamp[index]),
-                                          true
-                                        )}
+                                        {item.outputTimestamp[index]
+                                          ? formatDate(
+                                              new Date(
+                                                item.outputTimestamp[index]
+                                              ),
+                                              true
+                                            )
+                                          : "N/A"}
                                       </span>
                                     )}
                                   </td>
@@ -438,7 +452,7 @@ export const GrantOutputs = () => {
                                     {form?.isEditing && isAuthorized ? (
                                       <input
                                         type="text"
-                                        value={item.proof[index] || ""}
+                                        value={form.proof[index] || ""}
                                         onChange={(e) =>
                                           handleInputChange(
                                             item.outputId,
@@ -456,6 +470,20 @@ export const GrantOutputs = () => {
                                           "No proof provided"}
                                       </span>
                                     )}
+                                  </td>
+                                  <td className="px-4 py-2">
+                                    {form?.isEditing && isAuthorized ? (
+                                      <button
+                                        onClick={() =>
+                                          handleDeleteEntry(
+                                            item.outputId,
+                                            index
+                                          )
+                                        }
+                                      >
+                                        <TrashIcon className="w-4 h-4 text-red-500" />
+                                      </button>
+                                    ) : null}
                                   </td>
                                 </tr>
                               ))}
@@ -519,10 +547,10 @@ export const GrantOutputs = () => {
                       >
                         Cancel
                       </button>
-                      <button
+                      <Button
                         onClick={() => handleSubmit(item.outputId)}
                         disabled={form?.isSaving || !form?.isEdited}
-                        className="rounded-sm px-6 py-2 text-sm font-medium text-white bg-black dark:bg-zinc-700 hover:bg-zinc-700 dark:hover:bg-zinc-900/20  focus:outline-none focus:ring-2 focus:ring-zinc-500/40 transition-colors"
+                        className="rounded-sm px-6 py-2 text-sm cursor-pointer font-medium text-white bg-black dark:bg-zinc-700 hover:bg-zinc-700 dark:hover:bg-zinc-900/20  focus:outline-none focus:ring-2 focus:ring-zinc-500/40 transition-colors"
                       >
                         {form?.isSaving ? (
                           <div className="flex items-center justify-center gap-2">
@@ -531,7 +559,7 @@ export const GrantOutputs = () => {
                         ) : (
                           "Save Changes"
                         )}
-                      </button>
+                      </Button>
                     </div>
                   )}
                 </div>
