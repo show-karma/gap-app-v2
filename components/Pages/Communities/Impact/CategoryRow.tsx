@@ -63,7 +63,13 @@ export const CategoryRow = ({
                             </span>
                             <span className="text-[#079455] dark:text-[#079455] font-bold text-base">
                               {item.amount
-                                ? formatCurrency(Number(item.amount))
+                                ? formatCurrency(
+                                    Number(
+                                      item.amount.includes(" ")
+                                        ? item.amount.split(" ")[0]
+                                        : item.amount
+                                    )
+                                  )
                                 : null}
                             </span>
                           </div>
@@ -131,7 +137,13 @@ export const CategoryRow = ({
                           </span>
                           <span className="text-[#079455] dark:text-[#079455] font-bold text-base">
                             {item.amount
-                              ? formatCurrency(Number(item.amount))
+                              ? formatCurrency(
+                                  Number(
+                                    item.amount.includes(" ")
+                                      ? item.amount.split(" ")[0]
+                                      : item.amount
+                                  )
+                                )
                               : null}
                           </span>
                         </div>

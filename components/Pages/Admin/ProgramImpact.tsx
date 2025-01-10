@@ -210,7 +210,13 @@ export default function ProgramImpactPage() {
                               </span>
                               <span className="font-bold text-md">
                                 {item.amount
-                                  ? formatCurrency(Number(item.amount))
+                                  ? formatCurrency(
+                                      Number(
+                                        item.amount.includes(" ")
+                                          ? item.amount.split(" ")[0]
+                                          : item.amount
+                                      )
+                                    )
                                   : null}
                               </span>
                             </div>
