@@ -26,7 +26,6 @@ type OutputForm = {
   isEdited?: boolean;
 };
 
-
 interface OutputAnswers {
   id: string;
   grantUID: string;
@@ -385,9 +384,8 @@ export const GrantOutputs = () => {
                                           ?.outputTimestamp
                                           ? formatDate(
                                               new Date(
-                                                form?.datapoints?.[
-                                                  index
-                                                ]?.outputTimestamp
+                                                form.datapoints?.[index]
+                                                  .outputTimestamp as string
                                               ),
                                               true
                                             )
