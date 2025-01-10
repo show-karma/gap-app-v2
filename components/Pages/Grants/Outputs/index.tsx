@@ -9,6 +9,7 @@ import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
+import { cn } from "@/utilities/tailwind";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { AreaChart, Card, Title } from "@tremor/react";
 import Link from "next/link";
@@ -226,6 +227,21 @@ export const GrantOutputs = () => {
 
   if (!grant || isLoading) return <GrantsOutputsLoading />;
 
+  const isInvalidValue = (value: string) =>
+    isNaN(Number(value)) || value === "";
+
+  const isInvalidTimestamp = (outputId: string, timestamp: string) => {
+    const form = forms.find((f) => f.outputId === outputId);
+    const timestamps = form?.datapoints.map((dp) => dp.outputTimestamp) || [];
+    return (
+      timestamps.filter(
+        (t) =>
+          formatDate(new Date(t as string)) ===
+          formatDate(new Date(timestamp as string))
+      ).length > 1
+    );
+  };
+
   return (
     <div className="w-full max-w-[100rem]">
       {filteredOutputs.length > 0 ? (
@@ -260,6 +276,29 @@ export const GrantOutputs = () => {
                 new Date(b.timestamp).getTime() -
                 new Date(a.timestamp).getTime()
             )[0];
+
+            const hasInvalidValues = form?.datapoints?.some((datapoint) => {
+              if (!datapoint.value) return true;
+              if (datapoint.value === "") return true;
+              if (isNaN(Number(datapoint.value))) return true;
+              return false;
+            });
+
+            const hasInvalidTimestamps = form?.datapoints?.some((datapoint) => {
+              if (!datapoint.outputTimestamp) return true;
+
+              const matchingTimestamps = form.datapoints.filter((dp) => {
+                const dpDate = formatDate(
+                  new Date(dp.outputTimestamp as string)
+                );
+                const datapointDate = formatDate(
+                  new Date(datapoint.outputTimestamp as string)
+                );
+                return dpDate === datapointDate;
+              });
+
+              return matchingTimestamps.length > 1;
+            });
 
             return (
               <div
@@ -349,7 +388,15 @@ export const GrantOutputs = () => {
                                             index
                                           )
                                         }
-                                        className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100"
+                                        className={cn(
+                                          "w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100",
+                                          isInvalidValue(
+                                            form?.datapoints?.[index]?.value ||
+                                              ""
+                                          )
+                                            ? "border-2 border-red-500"
+                                            : " border-gray-300"
+                                        )}
                                       />
                                     ) : (
                                       <span className="text-gray-900 dark:text-zinc-100">
@@ -376,7 +423,16 @@ export const GrantOutputs = () => {
                                             index
                                           )
                                         }
-                                        className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100"
+                                        className={cn(
+                                          "w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100",
+                                          isInvalidTimestamp(
+                                            item.outputId,
+                                            form?.datapoints?.[index]
+                                              ?.outputTimestamp || ""
+                                          )
+                                            ? "border-2 border-red-500"
+                                            : " border-gray-300"
+                                        )}
                                       />
                                     ) : (
                                       <span className="text-gray-900 dark:text-zinc-100">
@@ -512,7 +568,12 @@ export const GrantOutputs = () => {
                       </button>
                       <Button
                         onClick={() => handleSubmit(item.outputId)}
-                        disabled={form?.isSaving || !form?.isEdited}
+                        disabled={
+                          form?.isSaving ||
+                          !form?.isEdited ||
+                          hasInvalidValues ||
+                          hasInvalidTimestamps
+                        }
                         className="rounded-sm px-6 py-2 text-sm cursor-pointer font-medium text-white bg-black dark:bg-zinc-700 hover:bg-zinc-700 dark:hover:bg-zinc-900/20  focus:outline-none focus:ring-2 focus:ring-zinc-500/40 transition-colors"
                       >
                         {form?.isSaving ? (
