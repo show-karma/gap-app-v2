@@ -5,6 +5,7 @@ import { Spinner } from "@/components/Utilities/Spinner";
 import { ProgramImpactDataResponse } from "@/types/programs";
 import fetchData from "@/utilities/fetchData";
 import formatCurrency from "@/utilities/formatCurrency";
+import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { defaultMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
@@ -21,7 +22,7 @@ export const prepareChartData = (
 ): { date: string; [key: string]: number | string }[] => {
   return timestamps
     .map((timestamp, index) => ({
-      date: new Date(timestamp).toLocaleDateString(),
+      date: formatDate(new Date(timestamp), true),
       [name]: Number(values[index]) || 0,
     }))
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -219,8 +220,12 @@ export default function ProgramImpactPage() {
                         </Title>
                         <AreaChart
                           data={prepareChartData(
-                            item.value,
-                            item.outputTimestamp,
+                            item.datapoints.map((datapoint) => datapoint.value),
+                            item.datapoints.map(
+                              (datapoint) =>
+                                datapoint.outputTimestamp ||
+                                new Date().toISOString()
+                            ),
                             item.name
                           )}
                           index={"date"}

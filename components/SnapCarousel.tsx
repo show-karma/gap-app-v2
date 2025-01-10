@@ -57,8 +57,8 @@ interface CarouselProps<T> {
 }
 
 interface CarouselRenderItemProps<T> {
-  readonly item: T;
-  readonly isSnapPoint: boolean;
+  item: T;
+  isSnapPoint: boolean;
 }
 
 export const Carousel = <T extends any>({

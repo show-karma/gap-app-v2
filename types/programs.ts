@@ -1,3 +1,8 @@
+export interface ProgramImpactDatapoint {
+  value: string;
+  proof: string;
+  outputTimestamp: string | null;
+}
 export interface ProgramImpactDataResponse {
   categoryName: string;
   outputs: {
@@ -12,9 +17,7 @@ export interface ProgramImpactDataResponse {
     name: string;
     categoryId: string;
     categoryName: string;
-    value: string[];
-    proof: string[];
-    outputTimestamp: string[];
+    datapoints: ProgramImpactDatapoint[];
     lastUpdated: string;
     type?: "output" | "outcome";
   }[];

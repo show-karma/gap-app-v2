@@ -3,40 +3,30 @@ import { Button } from "@/components/Utilities/Button";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useGrantStore } from "@/store/grant";
+import { ProgramImpactDatapoint } from "@/types/programs";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
+import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { AreaChart, Card, Title } from "@tremor/react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { prepareChartData } from "../../Admin/ProgramImpact";
 import { GrantsOutputsLoading } from "../../Project/Loading/Grants/Outputs";
 
 type OutputForm = {
   outputId: string;
   categoryId: string;
-  value: string[];
-  proof: string[];
-  outputTimestamp: string[];
+  datapoints: ProgramImpactDatapoint[];
   isEditing?: boolean;
   isSaving?: boolean;
   isEdited?: boolean;
 };
 
-const prepareChartData = (
-  values: string[],
-  timestamps: string[],
-  name: string
-) => {
-  return timestamps
-    .map((timestamp, index) => ({
-      date: formatDate(new Date(timestamp), true),
-      [name]: Number(values[index]) || 0,
-    }))
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-};
+
 interface OutputAnswers {
   id: string;
   grantUID: string;
@@ -45,9 +35,7 @@ interface OutputAnswers {
   chainID: number;
   outputId: string;
   name: string;
-  value: string[];
-  proof: string[];
-  outputTimestamp: string[];
+  datapoints: ProgramImpactDatapoint[];
   type: string;
   createdAt: Date;
   updatedAt: Date;
@@ -69,7 +57,7 @@ export const GrantOutputs = () => {
 
   const handleSubmit = async (outputId: string) => {
     const form = forms.find((f) => f.outputId === outputId);
-    if (!form?.value?.length) {
+    if (!form?.datapoints?.length) {
       toast.error("Please enter a value");
       return;
     }
@@ -78,13 +66,7 @@ export const GrantOutputs = () => {
       prev.map((f) => (f.outputId === outputId ? { ...f, isSaving: true } : f))
     );
 
-    await sendOutputAnswer(
-      outputId,
-      form.categoryId,
-      form.value,
-      form.proof,
-      form.outputTimestamp
-    );
+    await sendOutputAnswers(outputId, form.categoryId, form.datapoints);
 
     setForms((prev) =>
       prev.map((f) =>
@@ -111,88 +93,38 @@ export const GrantOutputs = () => {
     value: string,
     index: number
   ) => {
-    setForms((prev) => {
-      const existingForm = prev.find((f) => f.outputId === outputId);
-      const currentOutput = outputAnswers.find((o) => o.outputId === outputId);
-
-      const currentValues = currentOutput?.value || [];
-      const currentProofs = currentOutput?.proof || [];
-      const currentTimestamps = currentOutput?.outputTimestamp || [];
-
-      const isValueChanged =
-        field === "value"
-          ? currentValues[index] !== value
-          : field === "proof"
-          ? currentProofs[index] !== value
-          : currentTimestamps[index] !== value;
-
-      if (existingForm) {
-        return prev.map((f) => {
-          if (f.outputId === outputId) {
-            const updatedForm = { ...f };
-            if (field === "value") {
-              const newValues = [...(f.value || currentValues)];
-              newValues[index] = value;
-              updatedForm.value = newValues;
-            } else if (field === "proof") {
-              const newProofs = [...(f.proof || currentProofs)];
-              newProofs[index] = value;
-              updatedForm.proof = newProofs;
-            } else {
-              const newTimestamps = [
-                ...(f.outputTimestamp || currentTimestamps),
-              ];
-              newTimestamps[index] = value;
-              updatedForm.outputTimestamp = newTimestamps;
+    setForms((prev) =>
+      prev.map((f) =>
+        f.outputId === outputId
+          ? {
+              ...f,
+              isEdited: true,
+              datapoints: f.datapoints.map((datapoint, i) =>
+                i === index
+                  ? {
+                      ...datapoint,
+                      [field]: value,
+                    }
+                  : datapoint
+              ),
             }
-            updatedForm.isEdited = isValueChanged;
-            return updatedForm;
-          }
-          return f;
-        });
-      }
-
-      const newForm: OutputForm = {
-        outputId,
-        categoryId,
-        value:
-          field === "value"
-            ? [...currentValues].map((v, i) => (i === index ? value : v))
-            : currentValues,
-        proof:
-          field === "proof"
-            ? [...currentProofs].map((p, i) => (i === index ? value : p))
-            : currentProofs,
-        outputTimestamp:
-          field === "outputTimestamp"
-            ? [...currentTimestamps].map((t, i) => (i === index ? value : t))
-            : currentTimestamps,
-        isEdited: isValueChanged,
-      };
-      return [...prev, newForm];
-    });
+          : f
+      )
+    );
   };
 
-  async function sendOutputAnswer(
+  async function sendOutputAnswers(
     outputId: string,
     categoryId: string,
-    values: string[],
-    proofs: string[],
-    outputTimestamps: string[]
+    datapoints: ProgramImpactDatapoint[]
   ) {
-    const formattedTimestamp = outputTimestamps.map(
-      (item) => item || new Date().toISOString().split("T")[0]
-    );
-
     const [response] = await fetchData(
       INDEXER.GRANTS.OUTPUTS.SEND(grant?.uid as string),
       "POST",
       {
         outputId,
         categoryId,
-        value: values,
-        proof: proofs,
-        outputTimestamp: formattedTimestamp,
+        outputs: datapoints,
       }
     );
 
@@ -215,12 +147,13 @@ export const GrantOutputs = () => {
       outputDataWithAnswers.map((item: any) => ({
         outputId: item.outputId,
         categoryId: item.categoryId,
-        value: item.value || [],
-        proof:
-          item.proof.length !== item.value.length
-            ? Array(item.value.length).fill("")
-            : item.proof || [],
-        outputTimestamp: item.outputTimestamp || [new Date().toISOString()],
+        datapoints:
+          item.datapoints.map((datapoint: any) => ({
+            value: datapoint.value,
+            proof: datapoint.proof || "",
+            outputTimestamp:
+              datapoint.outputTimestamp || new Date().toISOString(),
+          })) || [],
         isEdited: false,
         isEditing: false,
       }))
@@ -245,23 +178,30 @@ export const GrantOutputs = () => {
   // Filter outputs based on authorization
   const filteredOutputs = isAuthorized
     ? outputAnswers
-    : outputAnswers.filter((item) => item.value?.length);
+    : outputAnswers.filter((item) => item.datapoints?.length);
 
   const handleAddEntry = (outputId: string) => {
     const output = outputAnswers.find((o) => o.outputId === outputId);
     const categoryId = output?.categoryId;
-    output?.value.push("");
-    output?.proof.push("");
-    output?.outputTimestamp.push(new Date().toISOString());
+    output?.datapoints.push({
+      value: "",
+      proof: "",
+      outputTimestamp: new Date().toISOString(),
+    });
 
     setForms((prev) =>
       prev.map((f) =>
         f.outputId === outputId
           ? {
               ...f,
-              value: [...f.value, ""],
-              proof: [...f.proof, ""],
-              outputTimestamp: [...f.outputTimestamp, new Date().toISOString()],
+              datapoints: [
+                ...f.datapoints,
+                {
+                  value: "",
+                  proof: "",
+                  outputTimestamp: new Date().toISOString(),
+                },
+              ],
             }
           : f
       )
@@ -270,20 +210,14 @@ export const GrantOutputs = () => {
 
   const handleDeleteEntry = (outputId: string, index: number) => {
     const output = outputAnswers.find((o) => o.outputId === outputId);
-    output?.value.splice(index, 1);
-    output?.proof.splice(index, 1);
-    output?.outputTimestamp.splice(index, 1);
+    output?.datapoints.splice(index, 1);
 
     setForms((prev) =>
       prev.map((f) =>
         f.outputId === outputId
           ? {
               ...f,
-              value: [...f.value].filter((_, i) => i !== index),
-              proof: [...f.proof].filter((_, i) => i !== index),
-              outputTimestamp: [...f.outputTimestamp].filter(
-                (_, i) => i !== index
-              ),
+              datapoints: [...f.datapoints].filter((_, i) => i !== index),
               isEdited: true,
             }
           : f
@@ -301,20 +235,27 @@ export const GrantOutputs = () => {
             const form = forms.find((f) => f.outputId === item.outputId);
             const lastUpdated = filteredOutputs
               .find((subItem) => item.outputId === subItem.outputId)
-              ?.outputTimestamp?.sort(
-                (a, b) => new Date(b).getTime() - new Date(a).getTime()
-              )[0];
+              ?.datapoints?.sort(
+                (a, b) =>
+                  new Date(
+                    b.outputTimestamp || new Date().toISOString()
+                  ).getTime() -
+                  new Date(
+                    a.outputTimestamp || new Date().toISOString()
+                  ).getTime()
+              )[0]?.outputTimestamp;
             const allOutputs = filteredOutputs.find(
               (subItem) => subItem.outputId === item.outputId
             );
-            const outputs = allOutputs?.value.map((value, index) => ({
-              value,
-              proof: allOutputs?.proof[index] || "",
-              timestamp:
-                allOutputs?.outputTimestamp[index] || new Date().toISOString(),
+            const outputs = allOutputs?.datapoints.map((datapoint, index) => ({
+              value: datapoint.value,
+              proof: datapoint.proof,
+              timestamp: datapoint.outputTimestamp || new Date().toISOString(),
             }));
 
-            const outputsWithProof = outputs?.filter((output) => output.proof);
+            const outputsWithProof = outputs?.filter(
+              (output) => output.proof && urlRegex.test(output.proof)
+            );
             const lastWithProof = outputsWithProof?.sort(
               (a, b) =>
                 new Date(b.timestamp).getTime() -
@@ -332,7 +273,8 @@ export const GrantOutputs = () => {
                       {item.name}
                     </h3>
                     <div className="flex flex-row gap-2 items-center">
-                      {lastWithProof?.proof ? (
+                      {lastWithProof?.proof &&
+                      urlRegex.test(lastWithProof?.proof) ? (
                         <>
                           <Link
                             href={lastWithProof?.proof}
@@ -390,13 +332,15 @@ export const GrantOutputs = () => {
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-zinc-700">
-                              {item.value.map((value, index) => (
+                              {item.datapoints.map((datapoint, index) => (
                                 <tr key={index}>
                                   <td className="px-4 py-2">
                                     {form?.isEditing && isAuthorized ? (
                                       <input
                                         type="number"
-                                        value={form?.value?.[index] || ""}
+                                        value={
+                                          form?.datapoints?.[index]?.value || ""
+                                        }
                                         onChange={(e) =>
                                           handleInputChange(
                                             item.outputId,
@@ -410,7 +354,7 @@ export const GrantOutputs = () => {
                                       />
                                     ) : (
                                       <span className="text-gray-900 dark:text-zinc-100">
-                                        {value}
+                                        {form?.datapoints?.[index]?.value || ""}
                                       </span>
                                     )}
                                   </td>
@@ -419,9 +363,9 @@ export const GrantOutputs = () => {
                                       <input
                                         type="date"
                                         value={
-                                          form?.outputTimestamp?.[index]?.split(
-                                            "T"
-                                          )[0] ||
+                                          form?.datapoints?.[
+                                            index
+                                          ]?.outputTimestamp?.split("T")[0] ||
                                           new Date().toISOString().split("T")[0]
                                         }
                                         onChange={(e) =>
@@ -437,10 +381,13 @@ export const GrantOutputs = () => {
                                       />
                                     ) : (
                                       <span className="text-gray-900 dark:text-zinc-100">
-                                        {item.outputTimestamp[index]
+                                        {form?.datapoints?.[index]
+                                          ?.outputTimestamp
                                           ? formatDate(
                                               new Date(
-                                                item.outputTimestamp[index]
+                                                form?.datapoints?.[
+                                                  index
+                                                ]?.outputTimestamp
                                               ),
                                               true
                                             )
@@ -452,7 +399,9 @@ export const GrantOutputs = () => {
                                     {form?.isEditing && isAuthorized ? (
                                       <input
                                         type="text"
-                                        value={form.proof[index] || ""}
+                                        value={
+                                          form?.datapoints?.[index]?.proof || ""
+                                        }
                                         onChange={(e) =>
                                           handleInputChange(
                                             item.outputId,
@@ -464,9 +413,21 @@ export const GrantOutputs = () => {
                                         }
                                         className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100"
                                       />
+                                    ) : form?.datapoints?.[index]?.proof &&
+                                      urlRegex.test(
+                                        form?.datapoints?.[index]?.proof
+                                      ) ? (
+                                      <a
+                                        href={form?.datapoints?.[index]?.proof}
+                                        target="_blank"
+                                        className="text-blue-500 underline dark:text-blue-400"
+                                      >
+                                        {form?.datapoints?.[index]?.proof ||
+                                          "No proof provided"}
+                                      </a>
                                     ) : (
                                       <span className="text-gray-900 dark:text-zinc-100">
-                                        {item.proof[index] ||
+                                        {form?.datapoints?.[index]?.proof ||
                                           "No proof provided"}
                                       </span>
                                     )}
@@ -507,7 +468,7 @@ export const GrantOutputs = () => {
                     </div>
                   </div>
                   <div className="flex flex-1 flex-col gap-5">
-                    {item.value?.length > 1 && (
+                    {item.datapoints?.length > 1 && (
                       <Card className="bg-white dark:bg-zinc-800 rounded">
                         <Title className="text-sm font-medium text-gray-700 dark:text-zinc-300 mb-4">
                           Historical Values
@@ -515,8 +476,12 @@ export const GrantOutputs = () => {
                         <AreaChart
                           className="h-48 mt-4"
                           data={prepareChartData(
-                            item.value,
-                            item.outputTimestamp,
+                            item.datapoints.map((datapoint) => datapoint.value),
+                            item.datapoints.map(
+                              (datapoint) =>
+                                datapoint.outputTimestamp ||
+                                new Date().toISOString()
+                            ),
                             item.name
                           )}
                           index="date"

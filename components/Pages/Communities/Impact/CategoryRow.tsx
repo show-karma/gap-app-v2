@@ -89,8 +89,12 @@ export const CategoryRow = ({
                     </div>
                     <AreaChart
                       data={prepareChartData(
-                        item.value,
-                        item.outputTimestamp,
+                        item.datapoints.map((datapoint) => datapoint.value),
+                        item.datapoints.map(
+                          (datapoint) =>
+                            datapoint.outputTimestamp ||
+                            new Date().toISOString()
+                        ),
                         item.name
                       )}
                       index={"date"}
@@ -153,8 +157,11 @@ export const CategoryRow = ({
                   </Title>
                   <AreaChart
                     data={prepareChartData(
-                      item.value,
-                      item.outputTimestamp,
+                      item.datapoints.map((datapoint) => datapoint.value),
+                      item.datapoints.map(
+                        (datapoint) =>
+                          datapoint.outputTimestamp || new Date().toISOString()
+                      ),
                       item.name
                     )}
                     index={"date"}

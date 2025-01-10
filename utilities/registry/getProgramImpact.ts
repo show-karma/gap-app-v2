@@ -19,15 +19,19 @@ export async function getProgramImpact(
       throw error;
     }
 
-    let existingCategories = (data as ProgramImpactData).data.map(
-      (item: any) => ({
+    let existingCategories = (data as ProgramImpactData).data.map((item) => {
+      const onlyWithData = item.outputs.filter(
+        (output) => output.datapoints.length > 0
+      );
+      return {
         categoryName: item.categoryName,
-        outputs: item.outputs.map((output: any) => ({
-          ...output,
-          lastUpdated: output.createdAt || output.updatedAt,
-        })),
-      })
-    ) as ProgramImpactDataResponse[];
+        outputs:
+          onlyWithData.map((output: any) => ({
+            ...output,
+            lastUpdated: output.createdAt || output.updatedAt,
+          })) || [],
+      };
+    }) as ProgramImpactDataResponse[];
 
     if (projectSelected) {
       existingCategories = existingCategories.map((category) => ({
