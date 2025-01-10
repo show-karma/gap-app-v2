@@ -352,7 +352,7 @@ export const ProjectDiscovery = () => {
                         </div>
                     </div>
                 ) : (
-                    <div className="flex flex-col items-center justify-center h-[400px] text-gray-500">
+                    <div className="flex flex-col items-end justify-center h-[400px] text-gray-500">
                         <p className="text-lg">No projects discovered yet</p>
                         <p className="text-sm">Use the filters on the left to discover projects</p>
                     </div>
