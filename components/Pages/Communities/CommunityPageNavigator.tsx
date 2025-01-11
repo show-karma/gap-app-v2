@@ -16,7 +16,6 @@ export const CommunityPageNavigator = () => {
   const params = useParams();
   const communityId = params.communityId as string;
   const pathname = usePathname();
-  const isImpactPage = pathname.includes("/impact");
   const { data: community } = useQuery({
     queryKey: ["community", communityId],
     queryFn: () => getCommunityBySlug(communityId),
@@ -25,13 +24,18 @@ export const CommunityPageNavigator = () => {
   if (isAdminPage) {
     return null;
   }
+  const isImpactPage = pathname.includes("/impact");
+  const isProjectDiscover = pathname.includes("/project-discovery");
+
   return (
     <div className="flex-row max-lg:flex-col px-1.5 py-2 rounded-lg bg-gray-100 dark:bg-zinc-900 justify-start items-center gap-4 flex h-max">
       <Link
         href={PAGES.COMMUNITY.ALL_GRANTS(communityId)}
         className={cn(
           baseLinkStyle,
-          isImpactPage ? inactiveLinkStyle : activeLinkStyle
+          !(isImpactPage || isProjectDiscover)
+            ? activeLinkStyle
+            : inactiveLinkStyle
         )}
       >
         View all {community?.details?.data.name} Community Projects
@@ -44,6 +48,15 @@ export const CommunityPageNavigator = () => {
         )}
       >
         Learn about their impact
+      </Link>
+      <Link
+        href={PAGES.COMMUNITY.PROJECT_DISCOVERY(communityId)}
+        className={cn(
+          baseLinkStyle,
+          isProjectDiscover ? activeLinkStyle : inactiveLinkStyle
+        )}
+      >
+        Project Discovery
       </Link>
     </div>
   );
