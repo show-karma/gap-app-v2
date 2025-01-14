@@ -20,19 +20,12 @@ export const CategoryRow = ({
     (output, index, self) =>
       self.findIndex((t) => t.projectUID === output.projectUID) === index
   );
-  const outputs = program.outputs.filter((output) => output.type === "output");
-  const outcomes = program.outputs.filter(
-    (output) => output.type === "outcome"
-  );
-
-  const outputsWithData = outputs.filter(
-    (output) => output.datapoints.length > 0
-  );
-  const outcomesWithData = outcomes.filter(
-    (output) => output.datapoints.length > 0
-  );
-  const hasAnyDatapoint =
-    outputsWithData.length > 0 || outcomesWithData.length > 0;
+  const outputs = program.outputs
+    .filter((output) => output.type === "output")
+    .sort((a, b) => b.datapoints.length - a.datapoints.length);
+  const outcomes = program.outputs
+    .filter((output) => output.type === "outcome")
+    .sort((a, b) => b.datapoints.length - a.datapoints.length);
 
   return (
     <div className="flex flex-col gap-4">
@@ -47,7 +40,7 @@ export const CategoryRow = ({
           </p>
         ) : null}
       </div>
-      {true ? (
+      {program.outputs.length ? (
         <div className="grid grid-cols-2 gap-6 max-md:flex max-md:flex-col">
           {outputs.length > 0 && (
             <Carousel
