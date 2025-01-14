@@ -239,6 +239,7 @@ export default function ProgramImpactPage() {
                           colors={["blue"]}
                           valueFormatter={(value) => `${value}`}
                           yAxisWidth={40}
+                          noDataText="Awaiting grantees to submit values"
                         />
                       </Card>
                     ))}

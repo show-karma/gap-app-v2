@@ -2,6 +2,7 @@
 import { Carousel, CarouselItem } from "@/components/SnapCarousel";
 import { ProgramImpactDataResponse } from "@/types/programs";
 import formatCurrency from "@/utilities/formatCurrency";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import { AreaChart, Card, Title } from "@tremor/react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
@@ -33,8 +34,6 @@ export const CategoryRow = ({
   const hasAnyDatapoint =
     outputsWithData.length > 0 || outcomesWithData.length > 0;
 
-  const hasOutputs = program.outputs.length > 0;
-
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-row gap-3 items-center">
@@ -48,7 +47,7 @@ export const CategoryRow = ({
           </p>
         ) : null}
       </div>
-      {hasAnyDatapoint ? (
+      {true ? (
         <div className="grid grid-cols-2 gap-6 max-md:flex max-md:flex-col">
           {outputs.length > 0 && (
             <Carousel
@@ -89,9 +88,27 @@ export const CategoryRow = ({
                           <p className="text-sm text-[#404968] font-semibold dark:text-gray-400 bg-[#F8F9FC] dark:bg-zinc-700 rounded-2xl py-1 px-3">
                             {item.grantTitle}
                           </p>
-                          <p className="text-sm text-[#404968] font-semibold dark:text-gray-400 bg-[#F8F9FC] dark:bg-zinc-700 rounded-2xl py-1 px-3">
-                            {item.projectTitle}
-                          </p>
+
+                          <Tooltip.Provider>
+                            <Tooltip.Root delayDuration={0}>
+                              <Tooltip.Trigger asChild>
+                                <p className="text-sm text-[#404968] font-semibold dark:text-gray-400 bg-[#F8F9FC] dark:bg-zinc-700 rounded-2xl py-1 px-3 truncate max-w-[200px]">
+                                  {item.projectTitle}
+                                </p>
+                              </Tooltip.Trigger>
+                              <Tooltip.Portal>
+                                <Tooltip.Content
+                                  className="text-sm z-50 text-[#404968] font-semibold dark:text-gray-400 bg-[#F8F9FC] dark:bg-zinc-700 rounded-2xl py-1 px-3 truncate"
+                                  sideOffset={5}
+                                  side="top"
+                                >
+                                  <p className="text-sm text-[#404968] font-semibold dark:text-gray-400 bg-[#F8F9FC] dark:bg-zinc-700 rounded-2xl py-1 px-3 truncate">
+                                    {item.projectTitle}
+                                  </p>
+                                </Tooltip.Content>
+                              </Tooltip.Portal>
+                            </Tooltip.Root>
+                          </Tooltip.Provider>
                           {item.type === "outcome" ? (
                             <p className="text-sm text-[#F79009] font-semibold dark:text-orange-400 bg-[#FFFAEB] dark:bg-yellow-950  rounded-2xl py-1 px-3">
                               Outcome
@@ -119,6 +136,7 @@ export const CategoryRow = ({
                       colors={["blue"]}
                       valueFormatter={(value) => `${value}`}
                       yAxisWidth={40}
+                      noDataText="Awaiting grantees to submit values"
                     />
                   </Card>
                 </CarouselItem>
@@ -163,9 +181,26 @@ export const CategoryRow = ({
                         <p className="text-sm text-[#404968] font-semibold dark:text-gray-400 bg-[#F8F9FC] dark:bg-zinc-700 rounded-2xl py-1 px-3">
                           {item.grantTitle}
                         </p>
-                        <p className="text-sm text-[#404968] font-semibold dark:text-gray-400 bg-[#F8F9FC] dark:bg-zinc-700 rounded-2xl py-1 px-3">
-                          {item.projectTitle}
-                        </p>
+                        <Tooltip.Provider>
+                          <Tooltip.Root delayDuration={0}>
+                            <Tooltip.Trigger asChild>
+                              <p className="text-sm text-[#404968] font-semibold dark:text-gray-400 bg-[#F8F9FC] dark:bg-zinc-700 rounded-2xl py-1 px-3 truncate max-w-[200px]">
+                                {item.projectTitle}
+                              </p>
+                            </Tooltip.Trigger>
+                            <Tooltip.Portal>
+                              <Tooltip.Content
+                                className="text-sm z-50 text-[#404968] font-semibold dark:text-gray-400 bg-[#F8F9FC] dark:bg-zinc-700 rounded-2xl py-1 px-3 truncate"
+                                sideOffset={5}
+                                side="top"
+                              >
+                                <p className="text-sm text-[#404968] font-semibold dark:text-gray-400 bg-[#F8F9FC] dark:bg-zinc-700 rounded-2xl py-1 px-3 truncate">
+                                  {item.projectTitle}
+                                </p>
+                              </Tooltip.Content>
+                            </Tooltip.Portal>
+                          </Tooltip.Root>
+                        </Tooltip.Provider>
                         {item.type === "outcome" ? (
                           <p className="text-sm text-[#F79009] font-semibold dark:text-orange-400 bg-[#FFFAEB] dark:bg-yellow-950  rounded-2xl py-1 px-3">
                             Outcome
@@ -192,6 +227,7 @@ export const CategoryRow = ({
                     colors={["blue"]}
                     valueFormatter={(value) => `${value}`}
                     yAxisWidth={40}
+                    noDataText="Awaiting grantees to submit values"
                   />
                 </Card>
               </CarouselItem>
@@ -213,9 +249,7 @@ export const CategoryRow = ({
             height={40}
           />
           <p className="text-center text-gray-900 dark:text-zinc-100 text-base font-bold leading-normal">
-            {hasOutputs
-              ? "We are waiting for project to submit values for this metric"
-              : "There are no outcomes being tracked for this category of applications"}
+            We are waiting for project to submit values for this metric
           </p>
         </div>
       )}

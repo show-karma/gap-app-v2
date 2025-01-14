@@ -543,6 +543,7 @@ export const GrantOutputs = () => {
                           colors={["blue"]}
                           valueFormatter={(value) => `${value}`}
                           showLegend={false}
+                          noDataText="Awaiting grantees to submit values"
                         />
                       </Card>
                     )}
