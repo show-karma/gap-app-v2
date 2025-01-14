@@ -18,8 +18,12 @@ import { getGrants } from "@/utilities/sdk/communities/getGrants";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
 import { cn } from "@/utilities/tailwind";
 import { Listbox, Transition } from "@headlessui/react";
-import { CheckIcon, ChevronLeftIcon } from "@heroicons/react/20/solid";
-import { ChevronUpDownIcon } from "@heroicons/react/24/solid";
+import {
+  CheckIcon,
+  ChevronLeftIcon,
+  ChevronUpDownIcon,
+  XMarkIcon,
+} from "@heroicons/react/20/solid";
 import type { Grant } from "@show-karma/karma-gap-sdk";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Link from "next/link";
@@ -71,6 +75,7 @@ export default function EditCategoriesPage() {
   const params = useParams();
   const communityId = params.communityId as string;
   const [grants, setGrants] = useState<SimplifiedGrants[]>([]);
+  const [allGrants, setAllGrants] = useState<SimplifiedGrants[]>([]);
   const [categoriesOptions, setCategoriesOptions] = useState<
     CategoriesOptions[]
   >([]);
@@ -90,6 +95,76 @@ export default function EditCategoriesPage() {
   ); // Data returned from the API
   const [isAdmin, setIsAdmin] = useState<boolean>(false); // Data returned from the API
   const signer = useSigner();
+
+  const [selectedGrantProgram, setSelectedGrantProgram] = useState<
+    string | null
+  >(null);
+
+  // Add sort state
+  const [sort, setSort] = useState<{
+    field?: "project" | "grant" | "description" | "categories";
+    direction?: "asc" | "desc";
+  }>({
+    field: undefined,
+    direction: undefined,
+  });
+
+  const getUniqueGrantPrograms = () => {
+    const uniquePrograms = Array.from(
+      new Set(allGrants.map((grant) => grant.grant))
+    );
+    return uniquePrograms.sort((a, b) => a.localeCompare(b));
+  };
+
+  const getSortedAndFilteredGrants = () => {
+    // First filter
+    let processedGrants = [...allGrants];
+
+    if (selectedGrantProgram) {
+      processedGrants = processedGrants.filter(
+        (grant) => grant.grant === selectedGrantProgram
+      );
+    }
+
+    // Then sort
+    if (sort.field && sort.direction) {
+      processedGrants.sort((a, b) => {
+        let aValue =
+          sort.field === "categories"
+            ? a[sort.field]?.join(", ")
+            : a[sort.field || "grant"];
+        let bValue =
+          sort.field === "categories"
+            ? b[sort.field]?.join(", ")
+            : b[sort.field || "grant"];
+
+        if (sort.direction === "asc") {
+          return aValue.localeCompare(bValue);
+        }
+        return bValue.localeCompare(aValue);
+      });
+    }
+
+    // Update total count for pagination
+    setTotalGrants(processedGrants.length);
+
+    // Finally paginate
+    return processedGrants.slice(
+      itemsPerPage * (currentPage - 1),
+      itemsPerPage * currentPage
+    );
+  };
+
+  useEffect(() => {
+    const processedGrants = getSortedAndFilteredGrants();
+    setGrants(processedGrants);
+  }, [
+    currentPage,
+    sort.field,
+    sort.direction,
+    selectedGrantProgram,
+    allGrants,
+  ]);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -179,29 +254,26 @@ export default function EditCategoriesPage() {
       try {
         const { grants: fetchedGrants } = await getGrants(communityId as Hex);
         if (fetchedGrants) {
-          setTotalGrants(fetchedGrants.length);
-          const mapSimplifiedGrants: SimplifiedGrants[] = fetchedGrants
-            .slice(itemsPerPage * (currentPage - 1), itemsPerPage * currentPage)
-            .map(
-              (grant: any) =>
-                ({
-                  grant: grant.details?.data?.title || grant.uid || "",
-                  project: grant.project?.details?.data?.title || "",
-                  description: reduceText(
-                    grant.details?.data?.description || ""
-                  ),
-                  categories: grant.categories || [],
-                  uid: grant.uid,
-                  projectUid: grant.project?.uid || "",
-                  projectSlug: grant.project?.details?.data?.slug || "",
-                } as SimplifiedGrants)
-            );
-          setGrants(mapSimplifiedGrants);
+          const mapSimplifiedGrants: SimplifiedGrants[] = fetchedGrants.map(
+            (grant: any) => ({
+              grant: grant.details?.data?.title || grant.uid || "",
+              project: grant.project?.details?.data?.title || "",
+              description: reduceText(grant.details?.data?.description || ""),
+              categories: grant.categories || [],
+              uid: grant.uid,
+              projectUid: grant.project?.uid || "",
+              projectSlug: grant.project?.details?.data?.slug || "",
+              createdOn: grant.createdOn || "",
+            })
+          );
+          setAllGrants(mapSimplifiedGrants);
+          setTotalGrants(mapSimplifiedGrants.length);
         }
       } catch (error: any) {
         errorManager(`Error fetching grants of ${communityId}`, error);
         console.log("error", error);
         setGrants([]);
+        setAllGrants([]);
       } finally {
         setLoading(false);
       }
@@ -209,7 +281,7 @@ export default function EditCategoriesPage() {
 
     fetchGrants();
     getCategories();
-  }, [communityId, currentPage]);
+  }, [communityId]);
 
   const editGrant = (uid: string, newCategories: string[]) => {
     const newGrantsEdited = grantsEdited.filter(
@@ -265,6 +337,10 @@ export default function EditCategoriesPage() {
     }
   };
 
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+  };
+
   return (
     <div className="mt-4 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
       {loading ? (
@@ -284,7 +360,97 @@ export default function EditCategoriesPage() {
                 Return to admin page
               </Button>
             </Link>
-            <div className="flex">
+            <div className="flex items-center gap-4">
+              <div className="relative w-64">
+                <Listbox
+                  value={selectedGrantProgram}
+                  onChange={(value) => {
+                    if (value === selectedGrantProgram) {
+                      setSelectedGrantProgram(null);
+                      setCurrentPage(1);
+                      return;
+                    } else {
+                      setSelectedGrantProgram(value);
+                      setCurrentPage(1);
+                    }
+                  }}
+                >
+                  <div className="relative">
+                    <Listbox.Button className="dark:bg-zinc-800 dark:text-white relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
+                      <span className="block truncate">
+                        {selectedGrantProgram || "Filter by Grant Program"}
+                      </span>
+                      <span className="absolute inset-y-0 right-0 flex items-center pr-2">
+                        {selectedGrantProgram ? (
+                          <XMarkIcon
+                            className="h-5 w-5 text-gray-400 hover:text-gray-700 cursor-pointer"
+                            aria-hidden="true"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedGrantProgram(null);
+                              setCurrentPage(1);
+                            }}
+                          />
+                        ) : (
+                          <ChevronUpDownIcon
+                            className="h-5 w-5 text-gray-400 pointer-events-none"
+                            aria-hidden="true"
+                          />
+                        )}
+                      </span>
+                    </Listbox.Button>
+                    <Transition
+                      as={Fragment}
+                      leave="transition ease-in duration-100"
+                      leaveFrom="opacity-100"
+                      leaveTo="opacity-0"
+                    >
+                      <Listbox.Options className="dark:bg-zinc-800 dark:text-white absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                        {getUniqueGrantPrograms().map((program) => (
+                          <Listbox.Option
+                            key={program}
+                            value={program}
+                            className={({ active }) =>
+                              cn(
+                                active
+                                  ? "bg-gray-100 text-black dark:text-gray-300 dark:bg-zinc-900"
+                                  : "text-gray-900 dark:text-gray-200",
+                                "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
+                              )
+                            }
+                          >
+                            {({ selected, active }) => (
+                              <>
+                                <span
+                                  className={cn(
+                                    selected ? "font-semibold" : "font-normal",
+                                    "block truncate"
+                                  )}
+                                >
+                                  {program}
+                                </span>
+                                {selected && (
+                                  <span
+                                    className={cn(
+                                      "absolute inset-y-0 right-0 flex items-center pr-4",
+                                      active ? "text-black" : "text-primary-600"
+                                    )}
+                                  >
+                                    <CheckIcon
+                                      className="h-5 w-5"
+                                      aria-hidden="true"
+                                    />
+                                  </span>
+                                )}
+                              </>
+                            )}
+                          </Listbox.Option>
+                        ))}
+                      </Listbox.Options>
+                    </Transition>
+                  </div>
+                </Listbox>
+              </div>
               <CategoryCreationDialog refreshCategories={getCategories} />
             </div>
           </div>
@@ -302,7 +468,7 @@ export default function EditCategoriesPage() {
                     scope="col"
                     className="h-12 px-4 text-left align-middle font-medium"
                   >
-                    Grant Title
+                    Grant Program
                   </th>
                   <th
                     scope="col"
@@ -456,7 +622,7 @@ export default function EditCategoriesPage() {
               <div className="w-full">
                 <TablePagination
                   currentPage={currentPage}
-                  setCurrentPage={setCurrentPage}
+                  setCurrentPage={handlePageChange}
                   postsPerPage={itemsPerPage}
                   totalPosts={totalGrants}
                 />
