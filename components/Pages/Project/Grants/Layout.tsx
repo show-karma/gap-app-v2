@@ -101,7 +101,6 @@ export const GrantsLayout = ({
       current: item.uid === grantIdFromQueryParam || item.uid === grant?.uid,
       completed: item.completed,
     })) || [];
-  const [tabs, setTabs] = useState<Tab[]>([]);
   const router = useRouter();
 
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
@@ -186,22 +185,25 @@ export const GrantsLayout = ({
     },
   ];
 
-  useEffect(() => {
-    const mountTabs = async () => {
-      const firstTabs: Tab[] = [...defaultTabs];
+  // const [tabs, setTabs] = useState<Tab[]>(defaultTabs);
+  const tabs: Tab[] = defaultTabs;
 
-      if (
-        !grant ||
-        !grant.categories?.length ||
-        grant.categories?.length <= 0
-      ) {
-        setTabs(firstTabs);
-        return;
-      }
-    };
+  // useEffect(() => {
+  //   const mountTabs = async () => {
+  //     const firstTabs: Tab[] = [...defaultTabs];
 
-    mountTabs();
-  }, [grant?.uid]);
+  //     if (
+  //       !grant ||
+  //       !grant.categories?.length ||
+  //       grant.categories?.length <= 0
+  //     ) {
+  //       setTabs(firstTabs);
+  //       return;
+  //     }
+  //   };
+
+  //   mountTabs();
+  // }, [grant?.uid]);
 
   const setIsCommunityAdmin = useCommunityAdminStore(
     (state) => state.setIsCommunityAdmin
