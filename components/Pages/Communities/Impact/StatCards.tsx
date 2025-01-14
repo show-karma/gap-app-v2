@@ -17,6 +17,9 @@ export const CommunityImpactStatCards = () => {
     data?.stats?.totalFundingAllocated?.replace(/,/g, "") || "0"
   );
 
+  const totalFundingAllocated =
+    formatCurrency(parsedFundingAllocated) || data?.stats.totalFundingAllocated;
+
   const stats = [
     {
       title: "Total Projects",
@@ -31,8 +34,9 @@ export const CommunityImpactStatCards = () => {
     {
       title: "Total Funding Allocated (with available data)",
       value:
-        formatCurrency(parsedFundingAllocated) ||
-        data?.stats.totalFundingAllocated,
+        totalFundingAllocated && !isNaN(Number(totalFundingAllocated))
+          ? totalFundingAllocated
+          : "-",
       color: "#A6EF67",
     },
   ];

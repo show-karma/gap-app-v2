@@ -24,6 +24,17 @@ export const CategoryRow = ({
     (output) => output.type === "outcome"
   );
 
+  const outputsWithData = outputs.filter(
+    (output) => output.datapoints.length > 0
+  );
+  const outcomesWithData = outcomes.filter(
+    (output) => output.datapoints.length > 0
+  );
+  const hasAnyDatapoint =
+    outputsWithData.length > 0 || outcomesWithData.length > 0;
+
+  const hasOutputs = program.outputs.length > 0;
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-row gap-3 items-center">
@@ -37,7 +48,7 @@ export const CategoryRow = ({
           </p>
         ) : null}
       </div>
-      {program.outputs.length ? (
+      {hasAnyDatapoint ? (
         <div className="grid grid-cols-2 gap-6 max-md:flex max-md:flex-col">
           {outputs.length > 0 && (
             <Carousel
@@ -202,7 +213,9 @@ export const CategoryRow = ({
             height={40}
           />
           <p className="text-center text-gray-900 dark:text-zinc-100 text-base font-bold leading-normal">
-            There are no outputs being tracked for this category of applications
+            {hasOutputs
+              ? "We are waiting for project to submit values for this metric"
+              : "There are no outcomes being tracked for this category of applications"}
           </p>
         </div>
       )}
