@@ -2,35 +2,35 @@
 
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { getGapClient, useGap } from "@/hooks";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/community";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
+import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
-import { PencilSquareIcon } from "@heroicons/react/24/outline";
-import { getWalletClient } from "@wagmi/core";
-import { type FC, useState } from "react";
-import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
-import { useStepper } from "@/store/modals/txStepper";
+import { PAGES } from "@/utilities/pages";
+import { urlRegex } from "@/utilities/regexs/urlRegex";
+import { sanitizeObject } from "@/utilities/sanitize";
+import { cn } from "@/utilities/tailwind";
 import { config } from "@/utilities/wagmi/config";
+import { PencilSquareIcon } from "@heroicons/react/24/outline";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   IMilestoneCompleted,
   IMilestoneResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getGapClient, useGap } from "@/hooks";
+import { getWalletClient } from "@wagmi/core";
+import { useRouter } from "next/navigation";
+import { type FC, useState } from "react";
+import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useAccount, useSwitchChain } from "wagmi";
+import { z } from "zod";
 import { ShareDialog } from "../Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/ShareDialog";
 import { errorManager } from "../Utilities/errorManager";
-import { sanitizeObject } from "@/utilities/sanitize";
-import { z } from "zod";
-import { urlRegex } from "@/utilities/regexs/urlRegex";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { cn } from "@/utilities/tailwind";
-import { useRouter } from "next/navigation";
-import { PAGES } from "@/utilities/pages";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
 
 interface MilestoneUpdateFormProps {
   milestone: IMilestoneResponse;

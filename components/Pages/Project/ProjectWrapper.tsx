@@ -124,7 +124,6 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
         await fetchedProject
           .isOwner(rpcClient as any, address)
           .then((res) => {
-            console.log("isOwner", res);
             setIsProjectOwner(res);
           })
           .finally(() => setIsProjectOwnerLoading(false));

@@ -94,10 +94,7 @@ export const CommunitiesLoading = () => {
           </div>
 
           <div className="flex flex-row gap-2 max-2xl:text-2xl max-lg:text-xl">
-            <Skeleton className={"h-10 w-40"} />{" "}
-            <p className="text-3xl font-semibold text-white max-2xl:text-2xl max-lg:text-xl">
-              Community Grants
-            </p>
+            <Skeleton className={"h-10 w-40"} />
           </div>
         </div>
 

@@ -1,19 +1,11 @@
 import { create } from "zustand";
 
-interface CommunityAdminStore {
-  isCommunityAdmin: boolean;
-  setIsCommunityAdmin: (isOwner: boolean) => void;
-  isCommunityAdminLoading: boolean;
-  setIsCommunityAdminLoading: (loading: boolean) => void;
+interface CommunityStore {
+  totalGrants: number;
+  setTotalGrants: (totalGrants: number) => void;
 }
 
-export const useCommunityAdminStore = create<CommunityAdminStore>(
-  (set, get) => ({
-    isCommunityAdmin: false,
-    setIsCommunityAdmin: (isCommunityAdmin: boolean) =>
-      set({ isCommunityAdmin }),
-    isCommunityAdminLoading: true,
-    setIsCommunityAdminLoading: (isCommunityAdminLoading: boolean) =>
-      set({ isCommunityAdminLoading }),
-  })
-);
+export const useCommunityStore = create<CommunityStore>((set, get) => ({
+  totalGrants: 0,
+  setTotalGrants: (totalGrants?: number) => set({ totalGrants }),
+}));

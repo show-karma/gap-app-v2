@@ -1,7 +1,7 @@
 "use client";
 
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/community";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { PAGES } from "@/utilities/pages";
 import { CheckCircleIcon } from "@heroicons/react/24/outline";
 import {
