@@ -1,13 +1,13 @@
 "use client";
 
-import { type FC } from "react";
-import { Updates } from "./Updates";
-import { MilestoneDelete } from "./MilestoneDelete";
 import { useOwnerStore, useProjectStore } from "@/store";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { formatDate } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
-import { useCommunityAdminStore } from "@/store/community";
 import { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { type FC } from "react";
+import { MilestoneDelete } from "./MilestoneDelete";
+import { Updates } from "./Updates";
 
 interface MilestoneDateStatusProps {
   milestone: IMilestoneResponse;

@@ -1,39 +1,39 @@
 /* eslint-disable @next/next/no-img-element */
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Milestone } from "@show-karma/karma-gap-sdk";
-import type { FC } from "react";
-import { useState } from "react";
-import type { SubmitHandler } from "react-hook-form";
-import { Controller, useForm } from "react-hook-form";
-import { z } from "zod";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useAccount, useSwitchChain } from "wagmi";
-import { getGapClient, useGap } from "@/hooks";
-import { Hex } from "viem";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { Popover } from "@headlessui/react";
-import { DayPicker } from "react-day-picker";
-import { CalendarIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
-import { MESSAGES } from "@/utilities/messages";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { formatDate } from "@/utilities/formatDate";
-import { getWalletClient } from "@wagmi/core";
-import { useCommunityAdminStore } from "@/store/community";
+import { getGapClient, useGap } from "@/hooks";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useStepper } from "@/store/modals/txStepper";
+import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import fetchData from "@/utilities/fetchData";
+import { formatDate } from "@/utilities/formatDate";
+import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
+import { sanitizeObject } from "@/utilities/sanitize";
 import { config } from "@/utilities/wagmi/config";
+import { Popover } from "@headlessui/react";
+import { CalendarIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Milestone } from "@show-karma/karma-gap-sdk";
 import {
   IGrantResponse,
   IMilestoneResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { getWalletClient } from "@wagmi/core";
 import { useRouter } from "next/navigation";
-import { PAGES } from "@/utilities/pages";
+import type { FC } from "react";
+import { useState } from "react";
+import { DayPicker } from "react-day-picker";
+import type { SubmitHandler } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { Hex } from "viem";
+import { useAccount, useSwitchChain } from "wagmi";
+import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
-import { sanitizeObject } from "@/utilities/sanitize";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
 
 const milestoneSchema = z.object({
   title: z

@@ -1,16 +1,16 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
+import { MilestoneUpdateForm } from "@/components/Forms/MilestoneUpdate";
 import { Button } from "@/components/Utilities/Button";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useCommunityAdminStore } from "@/store/community";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
-import { type FC, useState } from "react";
 import {
   IMilestoneCompleted,
   IMilestoneResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { MilestoneUpdateForm } from "@/components/Forms/MilestoneUpdate";
+import { type FC, useState } from "react";
 
 interface NotUpdatingCaseProps {
   milestone: IMilestoneResponse;

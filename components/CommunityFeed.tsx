@@ -1,20 +1,20 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 import type { Feed } from "@/types";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { useState } from "react";
-import { Spinner } from "./Utilities/Spinner";
-import { ExternalLink } from "./Utilities/ExternalLink";
 import { feedIconDictionary, getFeedHref } from "@/utilities/feed";
+import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
-import EthereumAddressToENSName from "./EthereumAddressToENSName";
-import { MarkdownPreview } from "./Utilities/MarkdownPreview";
-import { useTheme } from "next-themes";
+import { INDEXER } from "@/utilities/indexer";
 import { cn } from "@/utilities/tailwind";
-import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
+import { useTheme } from "next-themes";
+import { useParams } from "next/navigation";
+import { useState } from "react";
 import EthereumAddressToENSAvatar from "./EthereumAddressToENSAvatar";
+import EthereumAddressToENSName from "./EthereumAddressToENSName";
+import { ExternalLink } from "./Utilities/ExternalLink";
+import { MarkdownPreview } from "./Utilities/MarkdownPreview";
+import { Spinner } from "./Utilities/Spinner";
 
 export const CommunityFeed = () => {
   const params = useParams<{ communityId: string }>();
@@ -41,9 +41,9 @@ export const CommunityFeed = () => {
 
   return (
     <div className="max-lg:hidden w-full flex flex-col gap-3">
-      <div className="w-full text-lg font-bold text-brand-darkblue dark:text-gray-200 max-2xl:text-base">
+      {/* <div className="w-full text-lg font-bold text-brand-darkblue dark:text-gray-200 max-2xl:text-base">
         Community Feed
-      </div>
+      </div> */}
       {/* Feed start */}
       <div className="w-full  flow-root bg-white dark:bg-zinc-900 dark:border-gray-700 border border-gray-200 py-2 rounded-xl  max-h-96 max-lg:max-h-64 max-lg:mt-4 overflow-y-auto">
         <ul>

@@ -1,28 +1,28 @@
 "use client";
-import React, { useEffect, useMemo, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
-import { useAccount } from "wagmi";
-import { Spinner } from "@/components/Utilities/Spinner";
-import toast from "react-hot-toast";
-import Link from "next/link";
-import { CheckIcon, ChevronLeftIcon, TrashIcon } from "@heroicons/react/24/outline";
-import fetchData from "@/utilities/fetchData";
 import { Button } from "@/components/Utilities/Button";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
+import { Spinner } from "@/components/Utilities/Spinner";
 import { zeroUID } from "@/utilities/commons";
-import { PAGES } from "@/utilities/pages";
+import { useSigner } from "@/utilities/eas-wagmi-utils";
+import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { defaultMetadata } from "@/utilities/meta";
+import { PAGES } from "@/utilities/pages";
+import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
+import { ChevronLeftIcon, TrashIcon } from "@heroicons/react/24/outline";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
 
+import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuthStore } from "@/store/auth";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { errorManager } from "@/components/Utilities/errorManager";
 
 const OUTPUT_TYPES = ["output", "outcome", "impact"] as const;
-type OutputType = typeof OUTPUT_TYPES[number];
+type OutputType = (typeof OUTPUT_TYPES)[number];
 
 interface Output {
   id: string;
@@ -149,24 +149,25 @@ export default function AssignOutputsPage() {
         }
       };
 
-
-
       getCategories();
     }
   }, [community?.uid]);
 
-
-
-
   const [newOutputs, setNewOutputs] = useState<Record<string, string>>({});
-  const [newOutputTypes, setNewOutputTypes] = useState<Record<string, OutputType>>({});
-  const [hasOutputChanges, setHasOutputChanges] = useState<Record<string, boolean>>({});
-  const [isSavingOutputs, setIsSavingOutputs] = useState<Record<string, boolean>>({});
+  const [newOutputTypes, setNewOutputTypes] = useState<
+    Record<string, OutputType>
+  >({});
+  const [hasOutputChanges, setHasOutputChanges] = useState<
+    Record<string, boolean>
+  >({});
+  const [isSavingOutputs, setIsSavingOutputs] = useState<
+    Record<string, boolean>
+  >({});
 
   const handleAddOutput = (categoryId: string) => {
     if (!newOutputs[categoryId]?.trim()) return;
 
-    const categoryIndex = categories.findIndex(cat => cat.id === categoryId);
+    const categoryIndex = categories.findIndex((cat) => cat.id === categoryId);
     if (categoryIndex === -1) return;
 
     const updatedCategories = [...categories];
@@ -178,31 +179,31 @@ export default function AssignOutputsPage() {
           id: `temp-${Date.now()}`,
           name: newOutputs[categoryId].trim(),
           categoryId,
-          type: newOutputTypes[categoryId] || "output"
-        }
-      ]
+          type: newOutputTypes[categoryId] || "output",
+        },
+      ],
     };
 
     setCategories(updatedCategories);
-    setNewOutputs(prev => ({ ...prev, [categoryId]: '' }));
-    setNewOutputTypes(prev => ({ ...prev, [categoryId]: "output" }));
-    setHasOutputChanges(prev => ({ ...prev, [categoryId]: true }));
+    setNewOutputs((prev) => ({ ...prev, [categoryId]: "" }));
+    setNewOutputTypes((prev) => ({ ...prev, [categoryId]: "output" }));
+    setHasOutputChanges((prev) => ({ ...prev, [categoryId]: true }));
   };
 
   const handleRemoveOutput = (categoryId: string, outputId: string) => {
-    const categoryIndex = categories.findIndex(cat => cat.id === categoryId);
+    const categoryIndex = categories.findIndex((cat) => cat.id === categoryId);
     if (categoryIndex === -1) return;
 
     const updatedCategories = [...categories];
     updatedCategories[categoryIndex] = {
       ...updatedCategories[categoryIndex],
       outputs: updatedCategories[categoryIndex].outputs.filter(
-        output => output.id !== outputId
-      )
+        (output) => output.id !== outputId
+      ),
     };
 
     setCategories(updatedCategories);
-    setHasOutputChanges(prev => ({ ...prev, [categoryId]: true }));
+    setHasOutputChanges((prev) => ({ ...prev, [categoryId]: true }));
   };
 
   const saveOutputs = async (category: Category) => {
@@ -215,18 +216,20 @@ export default function AssignOutputsPage() {
           idOrSlug: community?.uid,
           outputs: category.outputs?.map((output) => ({
             name: output.name,
-            type: output.type
+            type: output.type,
           })) as {
-            name: string,
-            type: string
+            name: string;
+            type: string;
           }[],
         }
       );
       if (error) throw new Error("Error saving outputs");
       toast.success(MESSAGES.CATEGORIES.OUTPUTS.SUCCESS(category.name));
-      setHasOutputChanges(prev => ({ ...prev, [category.id]: false }));
+      setHasOutputChanges((prev) => ({ ...prev, [category.id]: false }));
     } catch (error: any) {
-      toast.error(MESSAGES.CATEGORIES.ASSIGN_QUESTIONS.ERROR.GENERIC(category.name));
+      toast.error(
+        MESSAGES.CATEGORIES.ASSIGN_QUESTIONS.ERROR.GENERIC(category.name)
+      );
       errorManager(`Error saving outputs of community ${communityId}`, error, {
         community: communityId,
         idOrSlug: community?.uid,
@@ -238,7 +241,7 @@ export default function AssignOutputsPage() {
   };
 
   return (
-    <div className="mt-12 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
+    <div className="mt-4 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
       {loading ? (
         <div className="flex w-full items-center justify-center">
           <Spinner />
@@ -273,10 +276,13 @@ export default function AssignOutputsPage() {
                   </div>
 
                   <div className="w-full border-b border-gray-200 dark:border-gray-700 pb-6 mb-6">
-                    <h5 className="text-md font-semibold mb-4">Modify outputs:</h5>
+                    <h5 className="text-md font-semibold mb-4">
+                      Modify outputs:
+                    </h5>
                     <div className="flex flex-col gap-2">
                       {category.outputs.map((output) => (
-                        <div key={output.id}
+                        <div
+                          key={output.id}
                           className="flex items-center justify-between gap-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg"
                         >
                           <div className="flex items-center gap-2">
@@ -288,7 +294,9 @@ export default function AssignOutputsPage() {
                             </span>
                           </div>
                           <button
-                            onClick={() => handleRemoveOutput(category.id, output.id)}
+                            onClick={() =>
+                              handleRemoveOutput(category.id, output.id)
+                            }
                             className="text-secondary-500 hover:text-secondary-700 transition-colors"
                             aria-label="Remove output"
                           >
@@ -301,21 +309,25 @@ export default function AssignOutputsPage() {
                         <div className="flex items-center gap-2">
                           <input
                             type="text"
-                            value={newOutputs[category.id] || ''}
-                            onChange={(e) => setNewOutputs(prev => ({
-                              ...prev,
-                              [category.id]: e.target.value
-                            }))}
+                            value={newOutputs[category.id] || ""}
+                            onChange={(e) =>
+                              setNewOutputs((prev) => ({
+                                ...prev,
+                                [category.id]: e.target.value,
+                              }))
+                            }
                             placeholder="Enter new output name"
                             className="text-sm flex-1 p-2 border border-gray-200 dark:border-gray-700 rounded-md 
                               focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
                           />
                           <select
                             value={newOutputTypes[category.id] || "output"}
-                            onChange={(e) => setNewOutputTypes(prev => ({
-                              ...prev,
-                              [category.id]: e.target.value as OutputType
-                            }))}
+                            onChange={(e) =>
+                              setNewOutputTypes((prev) => ({
+                                ...prev,
+                                [category.id]: e.target.value as OutputType,
+                              }))
+                            }
                             className="w-32 text-sm p-2 border border-gray-200 dark:border-gray-700 rounded-md 
                               focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
                           >
@@ -349,7 +361,6 @@ export default function AssignOutputsPage() {
                       )}
                     </div>
                   </div>
-
                 </div>
               );
             })

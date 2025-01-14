@@ -81,6 +81,7 @@
     "react-infinite-scroll-component": "^6.1.0",
     "react-markdown": "^9.0.0",
     "react-pdf-html": "^2.0.4",
+    "react-snap-carousel": "^0.5.1",
     "react-typed": "^2.0.12",
     "react-virtualized": "^9.22.5",
     "rehype-sanitize": "^6.0.0",

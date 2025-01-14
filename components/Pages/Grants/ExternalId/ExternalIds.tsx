@@ -20,8 +20,6 @@ export default function ExternalIds({
   externalIds: string[];
   refreshGrant: () => Promise<IGrantResponse | undefined>;
 }) {
-  // Mock data
-
   const [removingId, setRemovingId] = useState<string | null>(null);
 
   const handleRemove = async (id: string) => {

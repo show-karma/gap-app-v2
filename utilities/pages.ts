@@ -4,6 +4,9 @@ export const PAGES = {
   PROJECTS_EXPLORER: `/projects`,
   COMMUNITY: {
     ALL_GRANTS: (community: string) => `/${community}`,
+    IMPACT: (community: string) => `/${community}/impact`,
+    PROJECT_DISCOVERY: (community: string) =>
+      `/${community}/project-discovery`,
     RECEIVEPROJECTUPDATES: (community: string) =>
       `/${community}/receive-project-updates`,
   },
@@ -16,6 +19,7 @@ export const PAGES = {
     EDIT_CATEGORIES: (community: string) =>
       `/${community}/admin/edit-categories`,
     MILESTONES: (community: string) => `/${community}/admin/milestones-report`,
+    ASSIGN_OUTPUTS: (community: string) => `/${community}/admin/assign-outputs`,
     COMMUNITIES: `/admin/communities`,
     COMMUNITY_STATS: `/admin/communities/stats`,
     PROJECTS: `/admin/projects`,
