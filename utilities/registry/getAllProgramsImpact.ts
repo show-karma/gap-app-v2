@@ -18,13 +18,11 @@ export async function getAllProgramsImpact(
     }
 
     let existingCategories = (data as ProgramImpactData).data.map((item) => {
-      const onlyWithData = item.outputs.filter(
-        (output) => output.datapoints.length > 0
-      );
+  
       return {
         categoryName: item.categoryName,
         outputs:
-          onlyWithData.map((output: any) => ({
+        item.outputs.map((output: any) => ({
             ...output,
             lastUpdated: output.createdAt || output.updatedAt,
           })) || [],
