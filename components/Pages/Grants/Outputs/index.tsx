@@ -12,7 +12,6 @@ import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { cn } from "@/utilities/tailwind";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { AreaChart, Card, Title } from "@tremor/react";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { prepareChartData } from "../../Admin/ProgramImpact";
@@ -271,11 +270,6 @@ export const GrantOutputs = () => {
             const outputsWithProof = outputs?.filter(
               (output) => output.proof && urlRegex.test(output.proof)
             );
-            const lastWithProof = outputsWithProof?.sort(
-              (a, b) =>
-                new Date(b.timestamp).getTime() -
-                new Date(a.timestamp).getTime()
-            )[0];
 
             const hasInvalidValues = form?.datapoints?.some((datapoint) => {
               if (!datapoint.value) return true;
@@ -311,19 +305,6 @@ export const GrantOutputs = () => {
                       {item.name}
                     </h3>
                     <div className="flex flex-row gap-2 items-center">
-                      {lastWithProof?.proof &&
-                      urlRegex.test(lastWithProof?.proof) ? (
-                        <>
-                          <Link
-                            href={lastWithProof?.proof}
-                            target="_blank"
-                            className="underline text-sm text-brand-blue font-medium"
-                          >
-                            View Proof
-                          </Link>
-                          <div className="h-1 w-1 bg-gray-500 rounded-full" />
-                        </>
-                      ) : null}
                       {lastUpdated ? (
                         <span className="text-sm text-gray-500 dark:text-zinc-400">
                           Last updated {formatDate(new Date(lastUpdated), true)}
