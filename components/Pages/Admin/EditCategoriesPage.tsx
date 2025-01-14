@@ -18,7 +18,12 @@ import { getGrants } from "@/utilities/sdk/communities/getGrants";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
 import { cn } from "@/utilities/tailwind";
 import { Listbox, Transition } from "@headlessui/react";
-import { CheckIcon, ChevronLeftIcon, ChevronUpDownIcon, XMarkIcon } from "@heroicons/react/20/solid";
+import {
+  CheckIcon,
+  ChevronLeftIcon,
+  ChevronUpDownIcon,
+  XMarkIcon,
+} from "@heroicons/react/20/solid";
 import type { Grant } from "@show-karma/karma-gap-sdk";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Link from "next/link";
@@ -91,37 +96,49 @@ export default function EditCategoriesPage() {
   const [isAdmin, setIsAdmin] = useState<boolean>(false); // Data returned from the API
   const signer = useSigner();
 
-  const [selectedGrantProgram, setSelectedGrantProgram] = useState<string | null>(null);
+  const [selectedGrantProgram, setSelectedGrantProgram] = useState<
+    string | null
+  >(null);
 
   // Add sort state
   const [sort, setSort] = useState<{
-    field: 'project' | 'grant' | 'description' | 'categories' | null;
-    direction: 'asc' | 'desc' | null;
+    field?: "project" | "grant" | "description" | "categories";
+    direction?: "asc" | "desc";
   }>({
-    field: null,
-    direction: null
+    field: undefined,
+    direction: undefined,
   });
 
   const getUniqueGrantPrograms = () => {
-    const uniquePrograms = Array.from(new Set(allGrants.map(grant => grant.grant)));
+    const uniquePrograms = Array.from(
+      new Set(allGrants.map((grant) => grant.grant))
+    );
     return uniquePrograms.sort((a, b) => a.localeCompare(b));
   };
 
   const getSortedAndFilteredGrants = () => {
     // First filter
     let processedGrants = [...allGrants];
-    
+
     if (selectedGrantProgram) {
-      processedGrants = processedGrants.filter(grant => grant.grant === selectedGrantProgram);
+      processedGrants = processedGrants.filter(
+        (grant) => grant.grant === selectedGrantProgram
+      );
     }
-    
+
     // Then sort
     if (sort.field && sort.direction) {
       processedGrants.sort((a, b) => {
-        let aValue = sort.field === 'categories' ? a[sort.field].join(', ') : a[sort.field];
-        let bValue = sort.field === 'categories' ? b[sort.field].join(', ') : b[sort.field];
-        
-        if (sort.direction === 'asc') {
+        let aValue =
+          sort.field === "categories"
+            ? a[sort.field]?.join(", ")
+            : a[sort.field || "grant"];
+        let bValue =
+          sort.field === "categories"
+            ? b[sort.field]?.join(", ")
+            : b[sort.field || "grant"];
+
+        if (sort.direction === "asc") {
           return aValue.localeCompare(bValue);
         }
         return bValue.localeCompare(aValue);
@@ -130,7 +147,7 @@ export default function EditCategoriesPage() {
 
     // Update total count for pagination
     setTotalGrants(processedGrants.length);
-    
+
     // Finally paginate
     return processedGrants.slice(
       itemsPerPage * (currentPage - 1),
@@ -141,7 +158,13 @@ export default function EditCategoriesPage() {
   useEffect(() => {
     const processedGrants = getSortedAndFilteredGrants();
     setGrants(processedGrants);
-  }, [currentPage, sort.field, sort.direction, selectedGrantProgram, allGrants]);
+  }, [
+    currentPage,
+    sort.field,
+    sort.direction,
+    selectedGrantProgram,
+    allGrants,
+  ]);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -235,13 +258,12 @@ export default function EditCategoriesPage() {
             (grant: any) => ({
               grant: grant.details?.data?.title || grant.uid || "",
               project: grant.project?.details?.data?.title || "",
-              description: reduceText(
-                grant.details?.data?.description || ""
-              ),
+              description: reduceText(grant.details?.data?.description || ""),
               categories: grant.categories || [],
               uid: grant.uid,
               projectUid: grant.project?.uid || "",
               projectSlug: grant.project?.details?.data?.slug || "",
+              createdOn: grant.createdOn || "",
             })
           );
           setAllGrants(mapSimplifiedGrants);
@@ -340,7 +362,19 @@ export default function EditCategoriesPage() {
             </Link>
             <div className="flex items-center gap-4">
               <div className="relative w-64">
-                <Listbox value={selectedGrantProgram} onChange={setSelectedGrantProgram}>
+                <Listbox
+                  value={selectedGrantProgram}
+                  onChange={(value) => {
+                    if (value === selectedGrantProgram) {
+                      setSelectedGrantProgram(null);
+                      setCurrentPage(1);
+                      return;
+                    } else {
+                      setSelectedGrantProgram(value);
+                      setCurrentPage(1);
+                    }
+                  }}
+                >
                   <div className="relative">
                     <Listbox.Button className="dark:bg-zinc-800 dark:text-white relative w-full cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
                       <span className="block truncate">
@@ -348,8 +382,8 @@ export default function EditCategoriesPage() {
                       </span>
                       <span className="absolute inset-y-0 right-0 flex items-center pr-2">
                         {selectedGrantProgram ? (
-                          <XMarkIcon 
-                            className="h-5 w-5 text-gray-400 hover:text-gray-700 cursor-pointer" 
+                          <XMarkIcon
+                            className="h-5 w-5 text-gray-400 hover:text-gray-700 cursor-pointer"
                             aria-hidden="true"
                             onClick={(e) => {
                               e.stopPropagation();
@@ -358,9 +392,9 @@ export default function EditCategoriesPage() {
                             }}
                           />
                         ) : (
-                          <ChevronUpDownIcon 
-                            className="h-5 w-5 text-gray-400 pointer-events-none" 
-                            aria-hidden="true" 
+                          <ChevronUpDownIcon
+                            className="h-5 w-5 text-gray-400 pointer-events-none"
+                            aria-hidden="true"
                           />
                         )}
                       </span>
@@ -387,18 +421,25 @@ export default function EditCategoriesPage() {
                           >
                             {({ selected, active }) => (
                               <>
-                                <span className={cn(
-                                  selected ? "font-semibold" : "font-normal",
-                                  "block truncate"
-                                )}>
+                                <span
+                                  className={cn(
+                                    selected ? "font-semibold" : "font-normal",
+                                    "block truncate"
+                                  )}
+                                >
                                   {program}
                                 </span>
                                 {selected && (
-                                  <span className={cn(
-                                    "absolute inset-y-0 right-0 flex items-center pr-4",
-                                    active ? "text-black" : "text-primary-600"
-                                  )}>
-                                    <CheckIcon className="h-5 w-5" aria-hidden="true" />
+                                  <span
+                                    className={cn(
+                                      "absolute inset-y-0 right-0 flex items-center pr-4",
+                                      active ? "text-black" : "text-primary-600"
+                                    )}
+                                  >
+                                    <CheckIcon
+                                      className="h-5 w-5"
+                                      aria-hidden="true"
+                                    />
                                   </span>
                                 )}
                               </>
