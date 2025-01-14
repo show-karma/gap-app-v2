@@ -56,7 +56,7 @@ export const ProjectFilter = ({
     <div className="flex flex-row gap-4 items-center flex-1 max-w-[450px]">
       <Image src={"/icons/project.png"} alt="Project" width={24} height={24} />
       <p className="text-gray-800 dark:text-zinc-100 text-base font-semibold leading-normal">
-        Project {uniqueProjects?.length}
+        Project
       </p>
 
       <SearchWithValueDropdown
