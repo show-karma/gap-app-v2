@@ -2,20 +2,19 @@
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Spinner } from "@/components/Utilities/Spinner";
+import { useCategories } from "@/hooks/useCategories";
+import { useCommunityDetails } from "@/hooks/useCommunityDetails";
 import { useGrants } from "@/hooks/useGrants";
 import { useGrantsTable } from "@/hooks/useGrantsTable";
 import { useAuthStore } from "@/store/auth";
-import { zeroUID } from "@/utilities/commons";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { defaultMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
 import { ChevronLeftIcon } from "@heroicons/react/20/solid";
-import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -38,17 +37,28 @@ export default function EditCategoriesPage() {
   const { isAuth } = useAuthStore();
   const params = useParams();
   const communityId = params.communityId as string;
-  const [categoriesOptions, setCategoriesOptions] = useState<
-    CategoriesOptions[]
-  >([]);
   const [selectedCategories, setSelectedCategories] = useState<
     Record<string, string[]>
   >({});
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
-  const [community, setCommunity] = useState<ICommunityResponse | undefined>();
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const signer = useSigner();
+
+  const {
+    data: community,
+    isLoading: isLoadingCommunity,
+    error: communityError,
+  } = useCommunityDetails(communityId);
+
+  useEffect(() => {
+    if (
+      communityError?.message === "Community not found" ||
+      communityError?.message?.includes("422")
+    ) {
+      router.push(PAGES.NOT_FOUND);
+    }
+  }, [communityError]);
 
   // Fetch grants data
   const { data: grants = [], isLoading: isLoadingGrants } =
@@ -69,41 +79,6 @@ export default function EditCategoriesPage() {
     grants,
     itemsPerPage: 12,
   });
-
-  // Fetch community details and check admin status
-  useEffect(() => {
-    const fetchDetails = async () => {
-      if (!communityId) return;
-      setLoading(true);
-      try {
-        const { data: result } = await gapIndexerApi.communityBySlug(
-          communityId
-        );
-        if (!result || result.uid === zeroUID)
-          throw new Error("Community not found");
-        setCommunity(result);
-      } catch (error: any) {
-        console.error("Error fetching data:", error);
-        errorManager(
-          `Error fetching community details of ${communityId}`,
-          error,
-          {
-            community: communityId,
-          }
-        );
-        if (
-          error.message === "Community not found" ||
-          error.message.includes("422")
-        ) {
-          router.push(PAGES.NOT_FOUND);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDetails();
-  }, [communityId]);
 
   useEffect(() => {
     if (!community) return;
@@ -133,29 +108,8 @@ export default function EditCategoriesPage() {
     checkIfAdmin();
   }, [address, isConnected, isAuth, community?.uid, signer]);
 
-  // Fetch categories
-  const getCategories = async () => {
-    try {
-      const [data] = await fetchData(
-        INDEXER.GRANTS.CATEGORIES.ALL(communityId)
-      );
-      const orderedCategories = data.sort(
-        (a: CategoriesOptions, b: CategoriesOptions) => {
-          return a.name.localeCompare(b.name, "en");
-        }
-      );
-      setCategoriesOptions(orderedCategories);
-    } catch (error: any) {
-      errorManager(`Error fetching categories of ${communityId}`, error);
-      setCategoriesOptions([]);
-      console.error(error);
-    }
-  };
-
-  useEffect(() => {
-    if (!communityId || communityId === zeroUID) return;
-    getCategories();
-  }, [communityId]);
+  const { data: categoriesOptions = [], refetch: refreshCategories } =
+    useCategories(communityId);
 
   const handleCategoryChange = (uid: string, newCategories: string[]) => {
     setSelectedCategories((prev) => ({
@@ -238,7 +192,11 @@ export default function EditCategoriesPage() {
               selectedProgram={selectedProgram}
               onChange={handleProgramChange}
             />
-            <CategoryCreationDialog refreshCategories={getCategories} />
+            <CategoryCreationDialog
+              refreshCategories={async () => {
+                refreshCategories();
+              }}
+            />
           </div>
         </div>
         <GrantsTable
