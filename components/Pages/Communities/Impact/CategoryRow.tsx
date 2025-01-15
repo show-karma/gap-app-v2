@@ -128,6 +128,29 @@ export const CategoryRow = ({
       return acc;
     }, {} as Record<string, typeof program.outputs>);
 
+  // Sort function to get the most recent datapoint timestamp
+  const getLatestDatapointTimestamp = (item: ProgramImpactOutput) => {
+    if (!item.datapoints.length) return 0;
+    return Math.max(
+      ...item.datapoints.map((dp) =>
+        dp.outputTimestamp ? new Date(dp.outputTimestamp).getTime() : 0
+      )
+    );
+  };
+
+  // Sort the items in each group by their latest datapoint
+  Object.keys(outputsById).forEach((key) => {
+    outputsById[key].sort(
+      (a, b) => getLatestDatapointTimestamp(b) - getLatestDatapointTimestamp(a)
+    );
+  });
+
+  Object.keys(outcomesById).forEach((key) => {
+    outcomesById[key].sort(
+      (a, b) => getLatestDatapointTimestamp(b) - getLatestDatapointTimestamp(a)
+    );
+  });
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-row gap-3 items-center">
