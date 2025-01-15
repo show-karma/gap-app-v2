@@ -18,11 +18,10 @@ export async function getAllProgramsImpact(
     }
 
     let existingCategories = (data as ProgramImpactData).data.map((item) => {
-  
       return {
         categoryName: item.categoryName,
         outputs:
-        item.outputs.map((output: any) => ({
+          item.outputs.map((output: any) => ({
             ...output,
             lastUpdated: output.createdAt || output.updatedAt,
           })) || [],
@@ -30,28 +29,19 @@ export async function getAllProgramsImpact(
     }) as ProgramImpactDataResponse[];
 
     if (projectSelected) {
-      existingCategories = existingCategories.map((category) => ({
-        ...category,
-        outputs: category.outputs.filter(
-          (output) =>
-            output.projectUID.toLowerCase() === projectSelected?.toLowerCase()
-        ),
-      }));
+      existingCategories = existingCategories
+        .map((category) => ({
+          ...category,
+          outputs: category.outputs.filter(
+            (output) =>
+              output.projectUID.toLowerCase() === projectSelected?.toLowerCase()
+          ),
+        }))
+        .filter((item) => item.outputs.length);
     }
 
-    const missingCategories = allCategories.filter(
-      (category) =>
-        !existingCategories.some((c) => c.categoryName === category.name)
-    );
-
-    const missingCategoriesData = missingCategories.map((category) => ({
-      categoryName: category.name,
-      outputs: [],
-    }));
-
-    const allCategoriesData = [...existingCategories, ...missingCategoriesData];
     return {
-      data: allCategoriesData,
+      data: existingCategories,
       stats: (data as ProgramImpactData).stats,
     };
   } catch (error) {
