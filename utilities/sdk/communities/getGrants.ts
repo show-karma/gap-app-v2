@@ -1,8 +1,8 @@
-import type { Grant, Hex } from "@show-karma/karma-gap-sdk";
+import { errorManager } from "@/components/Utilities/errorManager";
 import type { SortByOptions, StatusOptions } from "@/types/filters";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { errorManager } from "@/components/Utilities/errorManager";
+import type { Grant, Hex } from "@show-karma/karma-gap-sdk";
 
 export interface GrantsResponse {
   grants: Grant[];
@@ -13,14 +13,16 @@ export interface GrantsResponse {
   };
 }
 
+export interface GrantsFilter {
+  categories?: string[];
+  sortBy?: SortByOptions;
+  status?: StatusOptions;
+  selectedProgramId?: string;
+}
+
 export const getGrants = async (
   uid: Hex,
-  filter?: {
-    categories?: string[];
-    sortBy?: SortByOptions;
-    status?: StatusOptions;
-    selectedProgramId?: string;
-  },
+  filter?: GrantsFilter,
   paginationOps?: {
     page: number;
     pageLimit: number;
