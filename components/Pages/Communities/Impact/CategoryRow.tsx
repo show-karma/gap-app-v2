@@ -106,25 +106,25 @@ export const CategoryRow = ({
   );
 
   // Group outputs and outcomes by their names
-  const outputsByName = program.outputs
+  const outputsById = program.outputs
     .filter((output) => output.type === "output")
     .reduce((acc, curr) => {
-      const name = curr.name;
-      if (!acc[name]) {
-        acc[name] = [];
+      const output = curr.outputId;
+      if (!acc[output]) {
+        acc[output] = [];
       }
-      acc[name].push(curr);
+      acc[output].push(curr);
       return acc;
     }, {} as Record<string, typeof program.outputs>);
 
-  const outcomesByName = program.outputs
+  const outcomesById = program.outputs
     .filter((output) => output.type === "outcome")
     .reduce((acc, curr) => {
-      const name = curr.name;
-      if (!acc[name]) {
-        acc[name] = [];
+      const output = curr.outputId;
+      if (!acc[output]) {
+        acc[output] = [];
       }
-      acc[name].push(curr);
+      acc[output].push(curr);
       return acc;
     }, {} as Record<string, typeof program.outputs>);
 
@@ -145,7 +145,7 @@ export const CategoryRow = ({
         <div className="grid grid-cols-2 gap-6 max-md:flex max-md:flex-col">
           {/* Outputs Column */}
           <div className="flex flex-col gap-6">
-            {Object.entries(outputsByName).map(([name, items]) => (
+            {Object.entries(outputsById).map(([name, items]) => (
               <Carousel
                 key={`output-${name}`}
                 items={items}
@@ -163,7 +163,7 @@ export const CategoryRow = ({
 
           {/* Outcomes Column */}
           <div className="flex flex-col gap-6">
-            {Object.entries(outcomesByName).map(([name, items]) => (
+            {Object.entries(outcomesById).map(([name, items]) => (
               <Carousel
                 key={`outcome-${name}`}
                 items={items}
