@@ -4,7 +4,6 @@ import {
   ProgramImpactDataResponse,
   ProgramImpactOutput,
 } from "@/types/programs";
-import formatCurrency from "@/utilities/formatCurrency";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { AreaChart, Card } from "@tremor/react";
 import Image from "next/image";
@@ -26,15 +25,7 @@ const MetricCard = ({ item }: { item: ProgramImpactOutput }) => (
               Funded Amount
             </span>
             <span className="text-[#079455] dark:text-[#079455] font-bold text-base">
-              {item.amount
-                ? formatCurrency(
-                    Number(
-                      item.amount.includes(" ")
-                        ? item.amount.split(" ")[0]
-                        : item.amount
-                    )
-                  )
-                : null}
+              {item.amount ? item.amount : null}
             </span>
           </div>
         </div>
@@ -88,6 +79,7 @@ const MetricCard = ({ item }: { item: ProgramImpactOutput }) => (
       colors={["blue"]}
       valueFormatter={(value) => `${value}`}
       yAxisWidth={40}
+      enableLegendSlider
       noDataText="Awaiting grantees to submit values"
     />
   </Card>
