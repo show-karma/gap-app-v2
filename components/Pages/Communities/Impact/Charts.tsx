@@ -22,8 +22,13 @@ export const CommunityImpactCharts = () => {
           <Spinner />
         </div>
       ) : (
-        orderedData?.map((program) => (
-          <CategoryRow key={program.categoryName} program={program} />
+        orderedData?.map((program, index) => (
+          <>
+            <CategoryRow key={program.categoryName} program={program} />
+            {index !== orderedData.length - 1 && (
+              <div className="w-full my-8 h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-700 to-transparent" />
+            )}
+          </>
         ))
       )}
     </div>
