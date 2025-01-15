@@ -35,6 +35,7 @@ import { Hex } from "viem";
 import { useAccount } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useQuery } from "@tanstack/react-query";
 
 interface GrantEdited {
   uid: string;
@@ -68,6 +69,30 @@ const milestonesPercentage = (grantToCalculate: Grant) => {
 
 export const metadata = defaultMetadata;
 
+const fetchGrants = async (communityId: Hex) => {
+  try {
+    const { grants: fetchedGrants } = await getGrants(communityId as Hex);
+    if (fetchedGrants) {
+      const mapSimplifiedGrants: SimplifiedGrants[] = fetchedGrants.map(
+        (grant: any) => ({
+          grant: grant.details?.data?.title || grant.uid || "",
+          project: grant.project?.details?.data?.title || "",
+          description: reduceText(grant.details?.data?.description || ""),
+          categories: grant.categories || [],
+          uid: grant.uid,
+          projectUid: grant.project?.uid || "",
+          projectSlug: grant.project?.details?.data?.slug || "",
+          createdOn: grant.createdOn || "",
+        })
+      );
+      return mapSimplifiedGrants;
+    }
+  } catch (error: any) {
+    errorManager(`Error fetching grants of ${communityId}`, error);
+    return [];
+  }
+};
+
 export default function EditCategoriesPage() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
@@ -75,7 +100,6 @@ export default function EditCategoriesPage() {
   const params = useParams();
   const communityId = params.communityId as string;
   const [grants, setGrants] = useState<SimplifiedGrants[]>([]);
-  const [allGrants, setAllGrants] = useState<SimplifiedGrants[]>([]);
   const [categoriesOptions, setCategoriesOptions] = useState<
     CategoriesOptions[]
   >([]);
@@ -86,7 +110,6 @@ export default function EditCategoriesPage() {
   // Pagination infos
   const itemsPerPage = 12; // Set the total number of items you want returned from the API
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalGrants, setTotalGrants] = useState(0);
 
   // Call API
   const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
@@ -100,6 +123,19 @@ export default function EditCategoriesPage() {
     string | null
   >(null);
 
+  const [totalGrants, setTotalGrants] = useState(0);
+
+  const { data: allGrants = [], isLoading: isLoadingAllGrants } = useQuery<
+    SimplifiedGrants[]
+  >({
+    queryKey: ["all-grants"],
+    queryFn: async () => {
+      const grants = await fetchGrants(communityId as Hex);
+      setTotalGrants(grants?.length || 0);
+      return grants ?? [];
+    },
+    enabled: !!communityId && communityId !== zeroUID,
+  });
   // Add sort state
   const [sort, setSort] = useState<{
     field?: "project" | "grant" | "description" | "categories";
@@ -249,37 +285,6 @@ export default function EditCategoriesPage() {
   useEffect(() => {
     if (!communityId || communityId === zeroUID) return;
 
-    const fetchGrants = async () => {
-      setLoading(true);
-      try {
-        const { grants: fetchedGrants } = await getGrants(communityId as Hex);
-        if (fetchedGrants) {
-          const mapSimplifiedGrants: SimplifiedGrants[] = fetchedGrants.map(
-            (grant: any) => ({
-              grant: grant.details?.data?.title || grant.uid || "",
-              project: grant.project?.details?.data?.title || "",
-              description: reduceText(grant.details?.data?.description || ""),
-              categories: grant.categories || [],
-              uid: grant.uid,
-              projectUid: grant.project?.uid || "",
-              projectSlug: grant.project?.details?.data?.slug || "",
-              createdOn: grant.createdOn || "",
-            })
-          );
-          setAllGrants(mapSimplifiedGrants);
-          setTotalGrants(mapSimplifiedGrants.length);
-        }
-      } catch (error: any) {
-        errorManager(`Error fetching grants of ${communityId}`, error);
-        console.log("error", error);
-        setGrants([]);
-        setAllGrants([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchGrants();
     getCategories();
   }, [communityId]);
 
@@ -343,7 +348,7 @@ export default function EditCategoriesPage() {
 
   return (
     <div className="mt-4 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
-      {loading ? (
+      {loading || isLoadingAllGrants ? (
         <div className="flex w-full items-center justify-center">
           <Spinner />
         </div>
