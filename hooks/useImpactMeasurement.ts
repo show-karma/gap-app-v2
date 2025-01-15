@@ -22,7 +22,6 @@ export function useImpactMeasurement(projectSelected?: string | null) {
       return getProgramImpact(
         communityId as string,
         programSelected,
-        allCategories,
         projectSelected
       );
     }
