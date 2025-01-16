@@ -2,7 +2,7 @@
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuthStore } from "@/store/auth";
 import { useOnboarding } from "@/store/modals/onboarding";
-import { IExpirationStatus, ISession } from "@/types/auth";
+import { ISession } from "@/types/auth";
 import { checkExpirationStatus } from "@/utilities/checkExpirationStatus";
 import fetchData from "@/utilities/fetchData";
 import { PAGES } from "@/utilities/pages";
@@ -21,39 +21,76 @@ import {
   authWalletTypeCookiePath,
 } from "@/utilities/auth-keys";
 
+// Types
+interface AuthResponse {
+  token: string;
+  walletType: "eoa" | "safe";
+}
 
-const getNonce = async (publicAddress: string) => {
+interface UseAuthReturn {
+  authenticate: (
+    newAddress?: Hex | undefined,
+    shouldToast?: boolean
+  ) => Promise<boolean | void>;
+  disconnect: () => Promise<void>;
+  softDisconnect: (newAddress: Hex) => void;
+  signMessage: (messageToSign: string) => Promise<string | null>;
+}
+
+// Utility functions
+const getNonce = async (publicAddress: string): Promise<string | null> => {
   try {
     const [data] = await fetchData(`/auth/login`, "POST", {
       publicAddress,
     });
-    const { nonceMessage } = data;
-    return nonceMessage;
+    return data.nonceMessage;
   } catch (error: any) {
-    // eslint-disable-next-line no-console
-    console.error("Error in login:", error);
     errorManager(`Error in login of user ${publicAddress}`, error);
     return null;
   }
 };
 
-const isTokenValid = (tokenValue: string | null) => {
-  if (!tokenValue) return false;
-  const decoded = jwtDecode(tokenValue) as ISession;
-  const expiredStatus: IExpirationStatus = checkExpirationStatus(decoded);
-  if (expiredStatus === "expired") {
-    return false;
+const getAccountToken = async (
+  publicAddress: string,
+  signedMessage: string,
+  chainId?: number
+): Promise<AuthResponse | undefined> => {
+  try {
+    const [response] = chainId
+      ? await fetchData("/auth/authentication", "POST", {
+          publicAddress,
+          signedMessage,
+          chainId,
+        })
+      : await fetchData("/auth/authentication", "POST", {
+          publicAddress,
+          signedMessage,
+        });
+
+    if (!response) {
+      throw new Error("No response from authentication");
+    }
+
+    const { token, walletType } = response;
+    return { token, walletType };
+  } catch (error: any) {
+    errorManager(`Error in get account token of user ${publicAddress}`, error);
+    return undefined;
   }
-  return true;
 };
 
-export const useAuth = () => {
+const isTokenValid = (tokenValue: string | null): boolean => {
+  if (!tokenValue) return false;
+  const decoded = jwtDecode(tokenValue) as ISession;
+  return checkExpirationStatus(decoded) !== "expired";
+};
+
+export const useAuth = (): UseAuthReturn => {
   const { isConnected, address } = useAccount();
   const { openConnectModal } = useConnectModal();
   const chainId = useChainId();
   const { setIsAuthenticating, setIsAuth, isAuthenticating, setWalletType } =
     useAuthStore();
-  // const { signMessageAsync } = useSignMessage();
   const { disconnectAsync } = useDisconnect();
   const { setIsOnboarding } = useOnboarding?.();
   const router = useRouter();
@@ -61,119 +98,88 @@ export const useAuth = () => {
   const { mixpanel } = useMixpanel();
   const { signMessageAsync } = useSignMessage();
   const [inviteCode] = useQueryState("invite-code");
-
   const pathname = usePathname();
 
-  const signMessage = async (messageToSign: string) => {
+  const signMessage = async (messageToSign: string): Promise<string | null> => {
     try {
-      const signedMessage = await signMessageAsync({ message: messageToSign });
-      return signedMessage;
+      return await signMessageAsync({ message: messageToSign });
     } catch (err) {
-      // eslint-disable-next-line no-console
       await disconnectAsync?.();
       errorManager(`Error in signing message of user ${address}`, err);
-      console.log(err);
       return null;
-    }
-  };
-
-  const getAccountToken = async (
-    publicAddress: string,
-    signedMessage: string
-  ) => {
-    try {
-      const [response] = chainId
-        ? await fetchData("/auth/authentication", "POST", {
-            publicAddress,
-            signedMessage,
-            chainId,
-          })
-        : await fetchData("/auth/authentication", "POST", {
-            publicAddress,
-            signedMessage,
-          });
-      if (!response) {
-        throw new Error("No response from authentication");
-      }
-      const { token, walletType } = response;
-      return { token, walletType };
-    } catch (error: any) {
-      // eslint-disable-next-line no-console
-      errorManager(
-        `Error in get account token of user ${publicAddress}`,
-        error
-      );
-      console.log("Error in get account token", error);
-      return { token: undefined, walletType: undefined };
     }
   };
 
   const saveToken = (
     token: string | undefined,
     walletType: "eoa" | "safe" = "eoa"
-  ) => {
-    if (token) {
-      cookies.set(authCookiePath, token, {
-        path: "/",
-      });
-      cookies.set(authWalletTypeCookiePath, walletType, {
-        path: "/",
-      });
-    }
+  ): void => {
+    if (!token) return;
 
+    cookies.set(authCookiePath, token, { path: "/" });
+    cookies.set(authWalletTypeCookiePath, walletType, { path: "/" });
     setWalletType(walletType);
     setIsAuth(true);
   };
 
-  const authenticate = async (newAddress = address, shouldToast = true) => {
+  const authenticate = async (
+    newAddress = address,
+    shouldToast = true
+  ): Promise<boolean | void> => {
+    if (isAuthenticating) return;
+    setIsAuthenticating(true);
+
     try {
-      if (isAuthenticating) return;
-      setIsAuthenticating(true);
       if (!isConnected || !newAddress) {
         openConnectModal?.();
         return false;
       }
+
+      // Check existing token
       if (typeof window !== "undefined") {
         const savedToken = cookies.get(authCookiePath);
         const savedWalletType = cookies.get(authWalletTypeCookiePath);
-        if (savedToken && savedWalletType) {
-          const isValid = isTokenValid(savedToken);
-          if (isValid) {
-            saveToken(savedToken, savedWalletType);
-            return;
-          }
+        if (savedToken && savedWalletType && isTokenValid(savedToken)) {
+          saveToken(savedToken, savedWalletType);
+          return true;
         }
       }
+
       if (!shouldToast) {
         toast.success("Wallet connected");
         toast.loading("Authenticating...");
       }
+
       const nonceMessage = await getNonce(newAddress);
+      if (!nonceMessage) return false;
 
       const signedMessage = await signMessage(nonceMessage);
-      if (!signedMessage) return;
-      const { token, walletType } = await getAccountToken(
-        newAddress,
-        signedMessage
-      );
+      if (!signedMessage) return false;
 
-      if (token) {
-        saveToken(token, walletType);
-        if (walletType === "safe") {
-          toast.success("Logged in with safe wallet");
-        }
-        // toast.dismiss();
-      } else {
+      const authResponse = await getAccountToken(
+        newAddress,
+        signedMessage,
+        chainId
+      );
+      if (!authResponse?.token) {
         toast.error("Login failed");
-        return;
+        return false;
       }
+
+      saveToken(authResponse.token, authResponse.walletType);
+
+      if (authResponse.walletType === "safe") {
+        toast.success("Logged in with safe wallet");
+      }
+
       if (pathname === "/") {
         router.push(PAGES.MY_PROJECTS);
       }
-      if (!pathname.includes("funding-map")) {
-        if (inviteCode) return;
+
+      if (!pathname.includes("funding-map") && !inviteCode) {
         setIsOnboarding?.(true);
       }
+
       if (address) {
         mixpanel.reportEvent({
           event: "onboarding:popup",
@@ -184,32 +190,26 @@ export const useAuth = () => {
           properties: { address, id: "welcome" },
         });
       }
+
       return true;
     } catch (error: any) {
       errorManager(`Error in authenticate user ${newAddress}`, error);
-      // eslint-disable-next-line no-console
-      console.log(error);
-      return;
+      return false;
     } finally {
       setIsAuthenticating(false);
     }
   };
 
-  const disconnect = async () => {
-    cookies.remove(authCookiePath, {
-      path: "/",
-    });
+  const disconnect = async (): Promise<void> => {
+    cookies.remove(authCookiePath, { path: "/" });
     localStorage?.clear();
-
     setIsAuth(false);
     setWalletType(undefined);
     await disconnectAsync?.();
   };
 
-  const softDisconnect = (newAddress: Hex) => {
-    cookies.remove(authCookiePath, {
-      path: "/",
-    });
+  const softDisconnect = (newAddress: Hex): void => {
+    cookies.remove(authCookiePath, { path: "/" });
     setIsAuth(false);
     setWalletType(undefined);
     authenticate(newAddress);
