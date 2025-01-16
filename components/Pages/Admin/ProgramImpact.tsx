@@ -36,7 +36,6 @@ export const prepareChartData = (
       };
     })
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  console.log(abacaxi);
   return abacaxi;
 };
 
