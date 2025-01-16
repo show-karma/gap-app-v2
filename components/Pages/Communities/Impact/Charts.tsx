@@ -21,8 +21,8 @@ export const CommunityImpactCharts = () => {
         <div className="flex justify-center items-center h-full">
           <Spinner />
         </div>
-      ) : (
-        orderedData?.map((program, index) => (
+      ) : orderedData?.length ? (
+        orderedData.map((program, index) => (
           <>
             <CategoryRow key={program.categoryName} program={program} />
             {index !== orderedData.length - 1 && (
@@ -30,6 +30,12 @@ export const CommunityImpactCharts = () => {
             )}
           </>
         ))
+      ) : (
+        <div className="flex flex-col items-center justify-center py-10 text-center">
+          <p className="text-lg text-gray-600 dark:text-gray-400">
+            This community has not reported any impact outputs yet.
+          </p>
+        </div>
       )}
     </div>
   );

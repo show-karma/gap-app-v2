@@ -6,7 +6,7 @@ export const PAGES = {
     ALL_GRANTS: (community: string) => `/${community}`,
     IMPACT: (community: string) => `/${community}/impact`,
     PROJECT_DISCOVERY: (community: string) =>
-      `/${community}/project-discovery`,
+      `/${community}/impact/project-discovery`,
     RECEIVEPROJECTUPDATES: (community: string) =>
       `/${community}/receive-project-updates`,
   },

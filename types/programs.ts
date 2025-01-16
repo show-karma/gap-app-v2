@@ -1,7 +1,8 @@
 export interface ProgramImpactDatapoint {
-  value: string;
+  value: number;
   proof: string;
   outputTimestamp: string | null;
+  running: number;
 }
 export interface ProgramImpactOutput {
   chainID: number;

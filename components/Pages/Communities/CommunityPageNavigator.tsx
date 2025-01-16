@@ -49,15 +49,6 @@ export const CommunityPageNavigator = () => {
       >
         Learn about their impact
       </Link>
-      <Link
-        href={PAGES.COMMUNITY.PROJECT_DISCOVERY(communityId)}
-        className={cn(
-          baseLinkStyle,
-          isProjectDiscover ? activeLinkStyle : inactiveLinkStyle
-        )}
-      >
-        Project Discovery
-      </Link>
     </div>
   );
 };
