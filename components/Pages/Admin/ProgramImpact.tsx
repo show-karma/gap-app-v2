@@ -16,16 +16,28 @@ import { useEffect, useState } from "react";
 import { ProgramAnalytics } from "./ProgramAnalytics";
 
 export const prepareChartData = (
-  values: string[],
+  values: number[],
   timestamps: string[],
-  name: string
+  name: string,
+  runningValues?: number[]
 ): { date: string; [key: string]: number | string }[] => {
-  return timestamps
-    .map((timestamp, index) => ({
-      date: formatDate(new Date(timestamp), true),
-      [name]: Number(values[index]) || 0,
-    }))
+  const abacaxi = timestamps
+    .map((timestamp, index) => {
+      if (runningValues?.length) {
+        return {
+          date: formatDate(new Date(timestamp), true),
+          [name]: Number(values[index]) || 0,
+          Running: Number(runningValues[index]) || 0,
+        };
+      }
+      return {
+        date: formatDate(new Date(timestamp), true),
+        [name]: Number(values[index]) || 0,
+      };
+    })
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  console.log(abacaxi);
+  return abacaxi;
 };
 
 export default function ProgramImpactPage() {
@@ -232,11 +244,14 @@ export default function ProgramImpactPage() {
                                 datapoint.outputTimestamp ||
                                 new Date().toISOString()
                             ),
-                            item.name
+                            item.name,
+                            item.datapoints.map(
+                              (datapoint) => datapoint.running
+                            )
                           )}
                           index={"date"}
-                          categories={[item.name]}
-                          colors={["blue"]}
+                          categories={[item.name, "Running"]}
+                          colors={["blue", "green"]}
                           valueFormatter={(value) => `${value}`}
                           yAxisWidth={40}
                           noDataText="Awaiting grantees to submit values"

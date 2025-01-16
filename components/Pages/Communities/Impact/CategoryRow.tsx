@@ -72,11 +72,12 @@ const MetricCard = ({ item }: { item: ProgramImpactOutput }) => (
         item.datapoints.map(
           (datapoint) => datapoint.outputTimestamp || new Date().toISOString()
         ),
-        item.name
+        item.name,
+        item.datapoints.map((datapoint) => datapoint.running)
       )}
       index={"date"}
-      categories={[item.name]}
-      colors={["blue"]}
+      categories={[item.name, "Running"]}
+      colors={["blue", "green"]}
       valueFormatter={(value) => `${value}`}
       yAxisWidth={40}
       enableLegendSlider
@@ -101,7 +102,7 @@ export const CategoryRow = ({
   const outputsById = program.outputs
     .filter((output) => output.type === "output")
     .reduce((acc, curr) => {
-      const output = curr.outputId;
+      const output = curr.outputId + curr.categoryId;
       if (!acc[output]) {
         acc[output] = [];
       }
@@ -112,7 +113,7 @@ export const CategoryRow = ({
   const outcomesById = program.outputs
     .filter((output) => output.type === "outcome")
     .reduce((acc, curr) => {
-      const output = curr.outputId;
+      const output = curr.outputId + curr.categoryId;
       if (!acc[output]) {
         acc[output] = [];
       }
@@ -160,13 +161,13 @@ export const CategoryRow = ({
         <div className="grid grid-cols-2 gap-6 max-md:flex max-md:flex-col">
           {/* Outputs Column */}
           <div className="flex flex-col gap-6">
-            {Object.entries(outputsById).map(([name, items]) => (
+            {Object.entries(outputsById).map(([name, items], index) => (
               <Carousel
-                key={`output-${name}`}
+                key={`output-${name}-${index}`}
                 items={items}
                 renderItem={({ item, isSnapPoint }) => (
                   <CarouselItem
-                    key={`${item.outputId}-${item.lastUpdated}-${item.projectUID}`}
+                    key={`${item.outputId}-${item.lastUpdated}-${item.projectUID}-${item.grantUID}`}
                     isSnapPoint={isSnapPoint}
                   >
                     <MetricCard item={item} />
@@ -178,13 +179,13 @@ export const CategoryRow = ({
 
           {/* Outcomes Column */}
           <div className="flex flex-col gap-6">
-            {Object.entries(outcomesById).map(([name, items]) => (
+            {Object.entries(outcomesById).map(([name, items], index) => (
               <Carousel
-                key={`outcome-${name}`}
+                key={`outcome-${name}-${index}`}
                 items={items}
                 renderItem={({ item, isSnapPoint }) => (
                   <CarouselItem
-                    key={`${item.outputId}-${item.lastUpdated}-${item.projectUID}`}
+                    key={`${item.outputId}-${item.lastUpdated}-${item.projectUID}-${item.grantUID}`}
                     isSnapPoint={isSnapPoint}
                   >
                     <MetricCard item={item} />
