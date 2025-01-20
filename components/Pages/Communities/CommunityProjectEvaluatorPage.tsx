@@ -5,13 +5,11 @@ import { useState, useEffect } from "react";
 import { Listbox } from "@headlessui/react";
 import { Button } from "@/components/Utilities/Button";
 import { ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/react";
-import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
+import { ChevronUpDownIcon, PaperAirplaneIcon } from "@heroicons/react/24/outline";
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
 import { useChat } from 'ai/react';
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-
-
 
 interface Program {
     programId: string;
@@ -19,54 +17,108 @@ interface Program {
     chainID: string
 }
 
+function MessageSkeleton() {
+    return (
+        <div className="flex justify-start">
+            <div className="max-w-[80%] rounded-lg p-3 bg-zinc-100">
+                <div className="text-sm font-medium mb-1 text-gray-900">Karma Co-pilot</div>
+                <div className="flex items-center space-x-2">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100" />
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200" />
+                </div>
+            </div>
+        </div>
+    );
+}
 
 function ChatWithKarmaCoPilot({ programId }: { programId: string }) {
-    const { messages, input, handleInputChange, handleSubmit } = useChat({
+    const { messages, input, handleInputChange, handleSubmit, isLoading, setMessages } = useChat({
         maxSteps: 3,
         body: {
             programId
         }
     });
-    return <div className="flex flex-col justify-start items-center gap-4">
-        <div className="flex flex-col w-full stretch">
-            <form onSubmit={handleSubmit}>
-                <input
-                    className="w-full mb-3 border border-gray-300 rounded shadow-md"
-                    value={input}
-                    placeholder="Say something..."
-                    onChange={handleInputChange}
-                />
-            </form>
 
-            <div className="h-[400px] overflow-y-auto rounded-lg border shadow-inner p-4 space-y-4 mb-6">
+
+
+    const hasMessages = messages.length > 0;
+
+    const renderChatInput = () => (
+        <form onSubmit={handleSubmit} className={`relative w-full ${hasMessages ? '' : 'max-w-3xl'}`}>
+            <input
+                className="w-full p-4 pr-12 rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
+                value={input}
+                placeholder="Ask about the program or projects..."
+                onChange={handleInputChange}
+                disabled={isLoading}
+            />
+            <button
+                type="submit"
+                disabled={isLoading || !input.trim()}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+                <PaperAirplaneIcon className="h-5 w-5" />
+            </button>
+        </form>
+    );
+
+    if (!hasMessages) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[580px] max-w-3xl mx-auto px-4 mb-8">
+                <div className="text-center mb-12">
+                    <h1 className="mb-3 text-5xl font-bold text-gray-900">
+                        Karma Co-pilot
+                    </h1>
+                    <p className="text-xl text-gray-600">The only AI assistant you&apos;ll need to evaluate projects</p>
+                </div>
+                <div className="text-left bg-gray-50 rounded-xl p-6 mb-8 w-full max-w-2xl">
+                    <p className="text-xl text-gray-700 font-medium mb-2">I can help you with:</p>
+                    <p className="text-lg text-gray-700">✅  Analyzing project metrics, updates, outcomes and impact</p>
+                    <p className="text-lg text-gray-700">✅ Comparing projects within the program</p>
+                    <p className="text-lg text-gray-700">🚫 Order you a pizza</p>
+                </div>
+                {renderChatInput()}
+            </div>
+        );
+    }
+
+    return (
+        <div className="relative flex flex-col h-[500px] bg-white rounded-lg border shadow-sm mb-8">
+            {/* Messages Container */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {messages.map(m => (
                     <div
                         key={m.id}
                         className={`flex ${m.role === 'assistant' ? 'justify-start' : 'justify-end'}`}
                     >
-                        <div className={`max-w-[80%] rounded-lg p-3 ${m.role === 'assistant'
-                            ? 'bg-zinc-100 text-gray-900'
-                            : 'border border-gray-300 text-primary-500'
+                        <div className={`max-w-[80%] rounded-xl p-3 ${m.role === 'assistant'
+                            ? 'bg-gray-100 text-gray-900'
+                            : 'border border-primary-500 text-white'
                             }`}>
-                            <div className={`text-sm font-medium mb-1 ${m.role === 'assistant' ? 'text-gray-900' : 'text-gray-900'}`}>
-                                {m.role === 'assistant' ? 'Karma Co-pilot' : 'You'}
-                            </div>
+                            {m.role === 'assistant' && <div className={`text-sm font-medium mb-1 text-primary-600`}>
+                                Karma Co-pilot
+                            </div>}
                             {m.content.length > 0 ? (
                                 <MarkdownPreview source={m.content} />
                             ) : (
-                                <p className="whitespace-pre-wrap text-md italic font-light">
-                                    {'calling tool: ' + m?.toolInvocations?.[0].toolName}
+                                <p className="whitespace-pre-wrap text-md font-light">
+                                    {`Analyzing projects and gathering insights...`}
                                 </p>
                             )}
                         </div>
                     </div>
                 ))}
+                {isLoading && <MessageSkeleton />}
+            </div>
+
+            {/* Input Container - Fixed at Bottom */}
+            <div className="border-t p-4">
+                {renderChatInput()}
             </div>
         </div>
-    </div>
+    );
 }
-
-
 
 export const CommunityProjectEvaluatorPage = () => {
     const params = useParams();
@@ -99,26 +151,25 @@ export const CommunityProjectEvaluatorPage = () => {
     if (isLoading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px]">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700"></div>
                 <p className="mt-4 text-gray-600">Loading...</p>
             </div>
         );
     }
 
     return (
-        <div className="flex p-4 max-w-[1920px] mx-auto">
-            {/* Left Side - Form */}
-            <div className="w-full lg:w-[600px] flex-shrink-0">
-                <div className="flex flex-col gap-8">
+        <div className="w-full flex-shrink-0">
+            <div className="flex flex-col gap-8">
+                <div className="flex justify-between items-center">
                     <h2 className="text-2xl font-bold text-gray-900">
-                        Ask questions about this program and let <span className="text-primary-500">Karma Co-pilot</span> help you evaluate projects.
+                        Ask questions about this program and let <span className="text-primary-500">Karma Co-pilot</span> <br /> help you evaluate projects in this community.
                     </h2>
 
                     <div className="flex justify-between items-center gap-4">
                         <label className="block text-lg font-medium text-gray-700">Select a program</label>
                         <Listbox value={selectedProgram} onChange={setSelectedProgram}>
                             <div className="relative mt-1">
-                                <ListboxButton className="relative w-full cursor-default rounded-lg bg-white py-3 pl-4 pr-10 text-left border border-gray-200 shadow-sm hover:border-primary/50 transition-colors focus:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20">
+                                <ListboxButton className="relative w-full cursor-default rounded-lg bg-white py-3 pl-4 pr-10 text-left border border-gray-200 shadow-sm hover:border-gray-400 transition-colors focus:outline-none focus-visible:border-gray-700 focus-visible:ring-2 focus-visible:ring-gray-400">
                                     <span className="block truncate text-gray-900">
                                         {selectedProgram?.name || "No program selected"}
                                     </span>
@@ -132,8 +183,7 @@ export const CommunityProjectEvaluatorPage = () => {
                                             key={program.programId}
                                             value={program}
                                             className={({ active }) =>
-                                                `relative cursor-pointer select-none py-3 pl-4 pr-9 ${active ? 'bg-primary/5 text-primary' : 'text-gray-900'
-                                                }`
+                                                `relative cursor-pointer select-none py-3 pl-4 pr-9 ${active ? 'bg-gray-100 text-gray-900' : 'text-gray-900'}`
                                             }
                                         >
                                             {program.name}
@@ -143,14 +193,13 @@ export const CommunityProjectEvaluatorPage = () => {
                             </div>
                         </Listbox>
                     </div>
-
-
-                    {selectedProgram &&
-                        <ChatWithKarmaCoPilot programId={`${selectedProgram.programId}_${selectedProgram.chainID}`} />
-                    }
                 </div>
+
+                {selectedProgram &&
+                    <ChatWithKarmaCoPilot programId={`${selectedProgram.programId}_${selectedProgram.chainID}`} />
+                }
             </div>
         </div>
     );
-};
+}
 
