@@ -123,7 +123,11 @@ export const GrantOutputs = () => {
       {
         outputId,
         categoryId,
-        outputs: datapoints,
+        outputs: datapoints.map((item) => ({
+          value: String(item.value),
+          proof: item.proof,
+          outputTimestamp: item.outputTimestamp,
+        })),
       }
     );
 
@@ -183,7 +187,7 @@ export const GrantOutputs = () => {
     const output = outputAnswers.find((o) => o.outputId === outputId);
     const categoryId = output?.categoryId;
     output?.datapoints.push({
-      value: "",
+      value: 0,
       proof: "",
       outputTimestamp: new Date().toISOString(),
     });
@@ -196,7 +200,7 @@ export const GrantOutputs = () => {
               datapoints: [
                 ...f.datapoints,
                 {
-                  value: "",
+                  value: 0,
                   proof: "",
                   outputTimestamp: new Date().toISOString(),
                 },
@@ -226,8 +230,7 @@ export const GrantOutputs = () => {
 
   if (!grant || isLoading) return <GrantsOutputsLoading />;
 
-  const isInvalidValue = (value: string) =>
-    isNaN(Number(value)) || value === "";
+  const isInvalidValue = (value: number) => isNaN(value) || value === 0;
 
   const isInvalidTimestamp = (outputId: string, timestamp: string) => {
     const form = forms.find((f) => f.outputId === outputId);
@@ -273,7 +276,7 @@ export const GrantOutputs = () => {
 
             const hasInvalidValues = form?.datapoints?.some((datapoint) => {
               if (!datapoint.value) return true;
-              if (datapoint.value === "") return true;
+              if (!datapoint.value) return true;
               if (isNaN(Number(datapoint.value))) return true;
               return false;
             });
@@ -373,7 +376,7 @@ export const GrantOutputs = () => {
                                           "w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100",
                                           isInvalidValue(
                                             form?.datapoints?.[index]?.value ||
-                                              ""
+                                              0
                                           )
                                             ? "border-2 border-red-500"
                                             : " border-gray-300"

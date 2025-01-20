@@ -244,9 +244,9 @@ export default function ProgramImpactPage() {
                                 new Date().toISOString()
                             ),
                             item.name,
-                            item.datapoints.map(
-                              (datapoint) => datapoint.running
-                            )
+                            item.datapoints
+                              ?.map((datapoint) => datapoint.running)
+                              .filter((val): val is number => val !== undefined)
                           )}
                           index={"date"}
                           categories={[item.name, "Running"]}
