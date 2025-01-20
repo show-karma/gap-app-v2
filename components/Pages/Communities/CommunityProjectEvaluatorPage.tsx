@@ -65,18 +65,18 @@ function ChatWithKarmaCoPilot({ programId }: { programId: string }) {
 
     if (!hasMessages) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[580px] max-w-3xl mx-auto px-4 mb-8">
-                <div className="text-center mb-12">
+            <div className="flex flex-col items-center justify-center min-h-[580px] mx-auto px-4 mb-8 animate-fade-in">
+                <div className="text-center mb-3">
                     <h1 className="mb-3 text-5xl font-bold text-gray-900">
                         Karma Co-pilot
                     </h1>
                     <p className="text-xl text-gray-600">The only AI assistant you&apos;ll need to evaluate projects</p>
+                    <div className="text-xl text-gray-700 font-medium mt-4">Use Karma Co-pilot to:</div>
                 </div>
-                <div className="text-left bg-gray-50 rounded-xl p-6 mb-8 w-full max-w-2xl">
-                    <p className="text-xl text-gray-700 font-medium mb-2">I can help you with:</p>
-                    <p className="text-lg text-gray-700">✅  Analyzing project metrics, updates, outcomes and impact</p>
-                    <p className="text-lg text-gray-700">✅ Comparing projects within the program</p>
-                    <p className="text-lg text-gray-700">🚫 Order you a pizza</p>
+                <div className="flex justify-between items-center mb-8 w-full gap-4">
+                    <div className="bg-zinc-100 rounded-3xl p-2 text-lg text-gray-700">✅ Compare projects within the program</div>
+                    <div className="bg-zinc-100 rounded-3xl p-2 text-lg text-gray-700">✅ Analyze project metrics, updates, outcomes and impact</div>
+                    <div className="bg-zinc-100 rounded-3xl p-2 text-lg text-gray-700">🚫 Order a pizza</div>
                 </div>
                 {renderChatInput()}
             </div>
