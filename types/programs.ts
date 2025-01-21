@@ -34,3 +34,25 @@ export interface ProgramImpactData {
   };
   data: ProgramImpactDataResponse[];
 }
+
+export interface ImpactAggregateDatapoint {
+  outputTimestamp: string;
+  avg_value: number;
+  total_value: number;
+  min_value: number;
+  max_value: number;
+}
+
+export interface ImpactAggregateOutput {
+  outputId: string;
+  name: string;
+  type: "output" | "outcome";
+  categoryId: string;
+  categoryName: string;
+  datapoints: ImpactAggregateDatapoint[];
+}
+
+export interface ImpactAggregateData {
+  categoryName: string;
+  outputs: ImpactAggregateOutput[];
+}
