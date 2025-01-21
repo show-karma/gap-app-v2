@@ -160,9 +160,17 @@ export const CategoryRow = ({
         ) : null}
       </div>
       {program.outputs.length ? (
-        <div className="grid grid-cols-2 gap-6 max-md:flex max-md:flex-col">
+        <div className={`${Object.entries(outputsById).length == 0 ||
+          Object.entries(outcomesById).length == 0
+          ? "flex justify-between items-center"
+          : "grid grid-cols-2 gap-6"} max-md:flex max-md:flex-col`}>
           {/* Outputs Column */}
-          <div className="flex flex-col gap-6">
+          <div
+            className={`${Object.entries(outcomesById).length == 0
+                ? "grid grid-cols-2 gap-6 w-full"
+                : "flex-col"
+              }`}
+          >
             {Object.entries(outputsById).map(([name, items], index) => (
               <Carousel
                 key={`output-${name}-${index}`}
@@ -180,7 +188,10 @@ export const CategoryRow = ({
           </div>
 
           {/* Outcomes Column */}
-          <div className="flex flex-col gap-6">
+          <div className={`${Object.entries(outputsById).length == 0
+              ? "grid grid-cols-2 gap-6 w-full"
+              : "flex-col"
+            }`}>
             {Object.entries(outcomesById).map(([name, items], index) => (
               <Carousel
                 key={`outcome-${name}-${index}`}
