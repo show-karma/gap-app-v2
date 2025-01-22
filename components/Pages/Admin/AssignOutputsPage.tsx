@@ -228,7 +228,7 @@ export default function AssignOutputsPage() {
       setHasOutputChanges((prev) => ({ ...prev, [category.id]: false }));
     } catch (error: any) {
       toast.error(
-        MESSAGES.CATEGORIES.ASSIGN_QUESTIONS.ERROR.GENERIC(category.name)
+        MESSAGES.CATEGORIES.OUTPUTS.ERROR.GENERIC(category.name)
       );
       errorManager(`Error saving outputs of community ${communityId}`, error, {
         community: communityId,
@@ -366,10 +366,10 @@ export default function AssignOutputsPage() {
             })
           ) : (
             <div className="flex w-full flex-1 flex-col items-center justify-center gap-3">
-              <p>{MESSAGES.CATEGORIES.ASSIGN_QUESTIONS.EMPTY}</p>
+              <p>{MESSAGES.CATEGORIES.OUTPUTS.EMPTY}</p>
               <div className="flex flex-row gap-10 items-center">
                 <Link
-                  href={PAGES.ADMIN.ASSIGN_QUESTIONS(
+                  href={PAGES.ADMIN.ASSIGN_OUTPUTS(
                     community?.details?.data?.slug || (community?.uid as string)
                   )}
                 >
