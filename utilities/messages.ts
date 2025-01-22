@@ -71,17 +71,6 @@ export const MESSAGES = {
     SLUG: "Slug  must be at least 3 characters",
   },
   CATEGORIES: {
-    ASSIGN_QUESTIONS: {
-      EMPTY: `Please assign categories to grants before assigning review questions.`,
-      SUCCESS: (categoryName: string) =>
-        `Questions assigned successfully to ${categoryName}.`,
-      ERROR: {
-        GENERIC: (categoryName: string) =>
-          `Questions could not be assigned to ${categoryName}.`,
-        ALREADY_ANSWERED: (categoryName: string) =>
-          `${categoryName} can't be changed because already have answers to it.`,
-      },
-    },
     OUTPUTS: {
       EMPTY: `Please assign outputs to grants.`,
       SUCCESS: (categoryName: string) =>

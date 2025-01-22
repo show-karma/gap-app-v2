@@ -124,7 +124,7 @@ export default function EditCategoriesPage() {
       let hasError = false;
       const promises = Object.entries(selectedCategories).map(
         ([uid, categories]) => {
-          return fetchData(INDEXER.GRANTS.CATEGORIES.UPDATE(uid), "PUT", {
+          return fetchData(INDEXER.PROJECT.CATEGORIES.UPDATE(uid), "PUT", {
             categories,
           })
             .then(() => {
