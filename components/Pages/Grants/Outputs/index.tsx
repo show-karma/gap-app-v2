@@ -71,16 +71,16 @@ export const GrantOutputs = () => {
       prev.map((f) =>
         f.outputId === outputId
           ? {
-              ...f,
-              isSaving: false,
-              isEdited: false,
-            }
+            ...f,
+            isSaving: false,
+            isEdited: false,
+          }
           : f
       )
     );
 
     if (grant) {
-      const [response] = await fetchData(INDEXER.GRANTS.OUTPUTS.GET(grant.uid));
+      const [response] = await fetchData(INDEXER.PROJECT.OUTPUTS.GET(grant.project?.uid as string));
       setOutputAnswers(response);
     }
   };
@@ -96,17 +96,17 @@ export const GrantOutputs = () => {
       prev.map((f) =>
         f.outputId === outputId
           ? {
-              ...f,
-              isEdited: true,
-              datapoints: f.datapoints.map((datapoint, i) =>
-                i === index
-                  ? {
-                      ...datapoint,
-                      [field]: value,
-                    }
-                  : datapoint
-              ),
-            }
+            ...f,
+            isEdited: true,
+            datapoints: f.datapoints.map((datapoint, i) =>
+              i === index
+                ? {
+                  ...datapoint,
+                  [field]: value,
+                }
+                : datapoint
+            ),
+          }
           : f
       )
     );
@@ -118,7 +118,7 @@ export const GrantOutputs = () => {
     datapoints: ProgramImpactDatapoint[]
   ) {
     const [response] = await fetchData(
-      INDEXER.GRANTS.OUTPUTS.SEND(grant?.uid as string),
+      INDEXER.PROJECT.OUTPUTS.SEND(grant?.project?.uid as string),
       "POST",
       {
         outputId,
@@ -139,9 +139,9 @@ export const GrantOutputs = () => {
     }
   }
 
-  async function getOutputAnswers(grantUid: string, silent = false) {
+  async function getOutputAnswers(projectUid: string, silent = false) {
     if (!silent) setIsLoading(true);
-    const [data] = await fetchData(INDEXER.GRANTS.OUTPUTS.GET(grantUid));
+    const [data] = await fetchData(INDEXER.PROJECT.OUTPUTS.GET(projectUid));
     const outputDataWithAnswers = data;
     setOutputAnswers(outputDataWithAnswers);
 
@@ -165,7 +165,7 @@ export const GrantOutputs = () => {
     if (!silent) setIsLoading(false);
   }
   useEffect(() => {
-    if (grant) getOutputAnswers(grant.uid);
+    if (grant) getOutputAnswers(grant.project?.uid as string);
   }, [grant]);
 
   const handleEditClick = (outputId: string) => {
@@ -175,7 +175,7 @@ export const GrantOutputs = () => {
   };
 
   const handleCancel = async (outputId: string) => {
-    await getOutputAnswers(grant?.uid as string);
+    await getOutputAnswers(grant?.project?.uid as string);
   };
 
   // Filter outputs based on authorization
@@ -196,16 +196,16 @@ export const GrantOutputs = () => {
       prev.map((f) =>
         f.outputId === outputId
           ? {
-              ...f,
-              datapoints: [
-                ...f.datapoints,
-                {
-                  value: 0,
-                  proof: "",
-                  outputTimestamp: new Date().toISOString(),
-                },
-              ],
-            }
+            ...f,
+            datapoints: [
+              ...f.datapoints,
+              {
+                value: 0,
+                proof: "",
+                outputTimestamp: new Date().toISOString(),
+              },
+            ],
+          }
           : f
       )
     );
@@ -219,10 +219,10 @@ export const GrantOutputs = () => {
       prev.map((f) =>
         f.outputId === outputId
           ? {
-              ...f,
-              datapoints: [...f.datapoints].filter((_, i) => i !== index),
-              isEdited: true,
-            }
+            ...f,
+            datapoints: [...f.datapoints].filter((_, i) => i !== index),
+            isEdited: true,
+          }
           : f
       )
     );
@@ -376,7 +376,7 @@ export const GrantOutputs = () => {
                                           "w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100",
                                           isInvalidValue(
                                             form?.datapoints?.[index]?.value ||
-                                              0
+                                            0
                                           )
                                             ? "border-2 border-red-500"
                                             : " border-gray-300"
@@ -423,12 +423,12 @@ export const GrantOutputs = () => {
                                         {form?.datapoints?.[index]
                                           ?.outputTimestamp
                                           ? formatDate(
-                                              new Date(
-                                                form.datapoints?.[index]
-                                                  .outputTimestamp as string
-                                              ),
-                                              true
-                                            )
+                                            new Date(
+                                              form.datapoints?.[index]
+                                                .outputTimestamp as string
+                                            ),
+                                            true
+                                          )
                                           : "N/A"}
                                       </span>
                                     )}

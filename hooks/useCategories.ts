@@ -10,12 +10,14 @@ const fetchCategories = async (communityId: string) => {
     throw new Error("Invalid community ID");
   }
 
-  const [data, error] = await fetchData(INDEXER.GRANTS.CATEGORIES.ALL(communityId));
+  const [data, error] = await fetchData(
+    INDEXER.COMMUNITY.CATEGORIES(communityId)
+  );
 
-  if(!data){
+  if (!data) {
     errorManager(`Error fetching categories of ${communityId}`, error);
   }
-  
+
   return data.sort((a: CategoriesOptions, b: CategoriesOptions) =>
     a.name.localeCompare(b.name, "en")
   );
