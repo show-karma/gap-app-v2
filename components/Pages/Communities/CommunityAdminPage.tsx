@@ -79,12 +79,12 @@ export const CommunityAdminPage = ({
             </button>
           </a>
           <a
-            href={PAGES.ADMIN.ASSIGN_OUTPUTS(
+            href={PAGES.ADMIN.MANAGE_INDICATORS(
               community?.details?.data?.slug || communityId
             )}
           >
             <button className="px-10 py-8 bg-red-200 rounded-md  transition-all ease-in-out duration-200 dark:bg-yellow-900">
-              Assign outputs
+              Manage Indicators
             </button>
           </a>
         </div>

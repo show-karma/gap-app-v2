@@ -1,8 +1,8 @@
 "use client";
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import { ProgramFilter } from "./ProgramFilter";
 import { ProjectFilter } from "./ProjectFilter";
-import { useState, useEffect } from "react";
 
 export const CommunityImpactFilterRow = () => {
   const pathname = usePathname();
@@ -27,7 +27,11 @@ export const CommunityImpactFilterRow = () => {
 
   return (
     <div className="px-3 py-4 bg-gray-100 dark:bg-zinc-900 rounded-lg flex flex-row justify-between items-center w-full gap-16 max-md:flex-col max-md:gap-4 max-md:justify-start max-md:items-start">
-      <div className={`flex flex-row gap-8 items-center ${aggregateView ? "opacity-50 pointer-events-none" : ""}`}>
+      <div
+        className={`flex flex-row gap-8 items-center ${
+          aggregateView ? "opacity-50 pointer-events-none" : ""
+        }`}
+      >
         <h3 className="text-slate-800 dark:text-zinc-100 text-xl font-semibold font-['Inter'] leading-normal">
           Filter by
         </h3>
@@ -39,22 +43,26 @@ export const CommunityImpactFilterRow = () => {
         </div>
       </div>
       <div className="flex flex-row w-max max-w-full">
-        <div className="text-xl flex flex-row items-center gap-2 font-medium">
+        <div className="text-lg flex flex-row items-center gap-2 font-medium">
           View aggregate impact
           <div className="flex items-center ml-2 mr-3">
             <button
               type="button"
               role="switch"
               aria-checked={aggregateView}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${aggregateView ? 'bg-primary-500 dark:bg-primary-400' : 'bg-gray-300 dark:bg-zinc-700'
-                }`}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
+                aggregateView
+                  ? "bg-primary-500 dark:bg-primary-400"
+                  : "bg-gray-300 dark:bg-zinc-700"
+              }`}
               tabIndex={0}
               onClick={handleToggleAggregateView}
             >
               <span className="sr-only">Enable aggregate view</span>
               <span
-                className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-zinc-200 transition-transform duration-200 ease-in-out hover:shadow-sm ${aggregateView ? 'translate-x-6' : 'translate-x-1'
-                  }`}
+                className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-zinc-200 transition-transform duration-200 ease-in-out hover:shadow-sm ${
+                  aggregateView ? "translate-x-6" : "translate-x-1"
+                }`}
               />
             </button>
           </div>

@@ -227,9 +227,7 @@ export default function AssignOutputsPage() {
       toast.success(MESSAGES.CATEGORIES.OUTPUTS.SUCCESS(category.name));
       setHasOutputChanges((prev) => ({ ...prev, [category.id]: false }));
     } catch (error: any) {
-      toast.error(
-        MESSAGES.CATEGORIES.OUTPUTS.ERROR.GENERIC(category.name)
-      );
+      toast.error(MESSAGES.CATEGORIES.OUTPUTS.ERROR.GENERIC(category.name));
       errorManager(`Error saving outputs of community ${communityId}`, error, {
         community: communityId,
         idOrSlug: community?.uid,
@@ -369,7 +367,7 @@ export default function AssignOutputsPage() {
               <p>{MESSAGES.CATEGORIES.OUTPUTS.EMPTY}</p>
               <div className="flex flex-row gap-10 items-center">
                 <Link
-                  href={PAGES.ADMIN.ASSIGN_OUTPUTS(
+                  href={PAGES.ADMIN.MANAGE_INDICATORS(
                     community?.details?.data?.slug || (community?.uid as string)
                   )}
                 >

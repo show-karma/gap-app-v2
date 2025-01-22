@@ -1,5 +1,4 @@
 import { CommunityPageNavigator } from "@/components/Pages/Communities/CommunityPageNavigator";
-import { TotalGrantsCounter } from "@/components/TotalGrantsCounter";
 import { zeroUID } from "@/utilities/commons";
 import { communityColors } from "@/utilities/communityColors";
 import { envVars } from "@/utilities/enviromentVars";
@@ -9,6 +8,8 @@ import { pagesOnRoot } from "@/utilities/pagesOnRoot";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { ConditionalTotalGrantsCounter } from "./components/ConditionalTotalGrantsCounter";
+
 type Props = {
   params: {
     communityId: string;
@@ -132,7 +133,7 @@ export default async function Layout({
                 ? (community as ICommunityResponse)?.details?.data?.name
                 : ""}
             </p>
-            <TotalGrantsCounter />
+            <ConditionalTotalGrantsCounter position="header" />
           </div>
         </div>
         <CommunityPageNavigator />

@@ -1,5 +1,6 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
+import { ConditionalTotalGrantsCounter } from "@/app/[communityId]/components/ConditionalTotalGrantsCounter";
 import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { useCommunityStore } from "@/store/community";
 import { SortByOptions, StatusOptions } from "@/types";
@@ -94,7 +95,10 @@ export const CommunityGrants = ({
   const itemsPerPage = 12; // Set the total number of items you want returned from the API
   const { totalGrants, setTotalGrants } = useCommunityStore();
   const [haveMore, setHaveMore] = useState(true); // Boolean to check if there are more grants to load
-
+  const [paginationInfo, setPaginationInfo] = useState<{
+    grantsNo?: number;
+    projectsNo?: number;
+  } | null>(null);
   const selectedCategoriesIds = useMemo(
     () => selectedCategories.join("_"),
     [selectedCategories]
@@ -126,7 +130,11 @@ export const CommunityGrants = ({
     const fetchNewGrants = async () => {
       setLoading(true);
       try {
-        const { grants: fetchedGrants, pageInfo } = await getGrants(
+        const {
+          grants: fetchedGrants,
+          pageInfo,
+          uniqueProjectCount,
+        } = await getGrants(
           communityId as Hex,
           {
             sortBy: selectedSort,
@@ -139,6 +147,10 @@ export const CommunityGrants = ({
             pageLimit: itemsPerPage,
           }
         );
+        setPaginationInfo({
+          grantsNo: pageInfo.totalItems,
+          projectsNo: uniqueProjectCount,
+        });
         if (fetchedGrants && fetchedGrants.length) {
           setHaveMore(fetchedGrants.length === itemsPerPage);
           setGrants((prev) =>
@@ -150,6 +162,10 @@ export const CommunityGrants = ({
             setHaveMore(false);
             setGrants([]);
             setTotalGrants(0);
+            setPaginationInfo({
+              grantsNo: 0,
+              projectsNo: 0,
+            });
           }
         }
       } catch (error: any) {
@@ -197,8 +213,10 @@ export const CommunityGrants = ({
     }
   };
 
+  console.log(paginationInfo);
+
   return (
-    <div className="w-full">
+    <div className="flex flex-col gap-4 w-full">
       <div className="flex items-center justify-between flex-row flex-wrap-reverse max-lg:flex-wrap max-lg:flex-col-reverse max-lg:justify-start max-lg:items-start gap-3 max-lg:gap-4">
         <div className="flex items-center gap-x-3 flex-wrap gap-y-2 w-full">
           <ProgramFilter
@@ -477,8 +495,14 @@ export const CommunityGrants = ({
           </div>
         </div>
       </div>
+      <ConditionalTotalGrantsCounter
+        position="content"
+        overrideGrantsNo={paginationInfo?.grantsNo?.toString()}
+        overrideProjectsNo={paginationInfo?.projectsNo?.toString()}
+      />
+
       <section className="flex flex-col gap-4 md:flex-row">
-        <div className="h-full w-full my-8">
+        <div className="h-full w-full mb-8">
           {grants.length > 0 ? (
             // <div className="grid grid-cols-4 justify-items-center gap-3 pb-20 max-2xl:grid-cols-4 max-xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1">
             //   {grants.map((grant, index) => {

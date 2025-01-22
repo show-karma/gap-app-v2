@@ -11,6 +11,7 @@ export interface GrantsResponse {
     pageLimit?: string;
     totalItems?: number;
   };
+  uniqueProjectCount?: number;
 }
 
 export interface GrantsFilter {
@@ -39,11 +40,11 @@ export const getGrants = async (
         selectedProgramId: filter?.selectedProgramId,
       })
     );
-    if (!response) return { grants: [], pageInfo: {} };
-    const { data: grants, pageInfo } = response;
+    if (!response) return { grants: [], pageInfo: {}, uniqueProjectCount: 0 };
+    const { data: grants, pageInfo, uniqueProjectCount } = response;
     if (!grants || grants.length === 0) return { grants: [], pageInfo: {} };
 
-    return { grants, pageInfo };
+    return { grants, pageInfo, uniqueProjectCount };
   } catch (error: any) {
     errorManager(`Error getting grants of community: ${uid}`, error);
     console.log(error);
