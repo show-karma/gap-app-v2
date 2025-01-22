@@ -111,7 +111,7 @@ export const GrantsTable = ({
         <tbody className="px-4 divide-y divide-gray-200 dark:divide-zinc-800">
           {grants.map((grant) => {
             const grantCategories =
-              selectedCategories[grant.uid] || grant.categories;
+              selectedCategories[grant.projectUid] || grant.categories;
             return (
               <tr
                 key={grant.uid}
@@ -149,7 +149,7 @@ export const GrantsTable = ({
                 <td className="w-max">
                   <Listbox
                     value={grantCategories}
-                    onChange={(value) => onCategoryChange(grant.uid, value)}
+                    onChange={(value) => onCategoryChange(grant.projectUid, value)}
                     multiple
                   >
                     {({ open }) => (
@@ -159,9 +159,9 @@ export const GrantsTable = ({
                             <p className="block truncate">
                               {grantCategories.length > 0
                                 ? `${grantCategories.length} ${pluralize(
-                                    "category",
-                                    grantCategories.length
-                                  )} selected`
+                                  "category",
+                                  grantCategories.length
+                                )} selected`
                                 : "Categories"}
                             </p>
                             <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">

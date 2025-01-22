@@ -54,21 +54,24 @@ export const INDEXER = {
       CHECK_CODE: (projectIdOrSlug: string, hash: string) =>
         `/projects/${projectIdOrSlug}/validate-invite-link/${hash}`,
     },
-  },
-  QUESTIONS: {
-    CREATE: (idOrSlug: string) => `/questions/create/${idOrSlug}`,
+    CATEGORIES: {
+      UPDATE: (projectUID: string) =>
+        `/projects/${projectUID}/update/categories`,
+    },
+    OUTPUTS: {
+      GET: (projectUID: string) => `/projects/${projectUID}/outputs`,
+      SEND: (projectUID: string) => `/projects/${projectUID}/outputs/answer`,
+    },
   },
   CATEGORIES: {
     CREATE: (idOrSlug: string) => `/categories/create/${idOrSlug}`,
-    QUESTIONS: {
-      UPDATE: (categoryId: string) => `/categories/${categoryId}/questions`,
-    },
     OUTPUTS: {
       UPDATE: (categoryId: string) => `/categories/${categoryId}/outputs`,
     },
   },
   COMMUNITY: {
     GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}`,
+    CATEGORIES: (idOrSlug: string) => `/communities/${idOrSlug}/categories`,
     SUBSCRIBE: {
       BULK: `/bulk-subscription/subscribe`,
     },
@@ -88,7 +91,6 @@ export const INDEXER = {
       `/communities/${communityIdOrSlug}/programs/outputs-aggregate`,
     PROJECT_DISCOVERY: (communityIdOrSlug: string, programId: string) =>
       `/communities/${communityIdOrSlug}/programs/${programId}/project-impact-discovery`,
-
     GRANTS: (
       communityIdOrSlug: string,
       {
@@ -116,10 +118,6 @@ export const INDEXER = {
       }${selectedProgramId ? `&selectedProgramIds=${selectedProgramId}` : ""}`,
     FEED: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/feed`,
-    CATEGORIES: (communityIdOrSlug: string) =>
-      `/communities/${communityIdOrSlug}/categories`,
-    QUESTIONS: (communityIdOrSlug: string) =>
-      `/communities/${communityIdOrSlug}/questions`,
     STATS: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/stats`,
     ADMINS: (communityIdOrSlug: string) =>
@@ -134,29 +132,6 @@ export const INDEXER = {
     ) =>
       `/semaphores/groups/check?chainID=${chainID}&communityUID=${communityUID}&grantUID=${grantUID}&scope=${scope}`,
     BY_UID: (grantUID: string) => `/grants/${grantUID}`,
-    REVIEWS: {
-      REVIEWER: {
-        GET_INFOS: (publicAddress: string) => `/reviewer/${publicAddress}`,
-        SAVE: (publicAddress: string) => `/reviewer/${publicAddress}/infos`,
-      },
-      SEND: (grantUID: string) => `/grants/${grantUID}/questions/answer`,
-      SEND_ANON: (grantUID: string) =>
-        `/grants/${grantUID}/questions/answer-anon`,
-      QUESTIONS: (grantUID: string) => `/grants/${grantUID}/questions`,
-      USER_ANSWERED: (grantUID: string, publicAddress: string) =>
-        `/grants/${grantUID}/questions/answer/${publicAddress}`,
-      ALL: (grantUID: string) => `/grants/${grantUID}/questions/answer/feed`,
-      ALL_ANON: (grantUID: string) =>
-        `/grants/${grantUID}/questions/answer/feed-anon`,
-    },
-    OUTPUTS: {
-      GET: (grantUID: string) => `/grants/${grantUID}/outputs`,
-      SEND: (grantUID: string) => `/grants/${grantUID}/outputs/answer`,
-    },
-    CATEGORIES: {
-      ALL: (idOrSlug: string) => `/communities/${idOrSlug}/categories`,
-      UPDATE: (grantUID: string) => `/grants/${grantUID}/update/categories`,
-    },
     UPDATE_EXTERNAL_ID: `/grants/external-id/update`,
     REMOVE_EXTERNAL_ID: `/grants/external-id/delete`,
     EXTERNAL_ADDRESS: {

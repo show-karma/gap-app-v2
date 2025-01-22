@@ -6,7 +6,7 @@ import { INDEXER } from "../indexer";
 export const getCommunityCategory = async (communityId: string) => {
   try {
     const [data, error] = await fetchData(
-      INDEXER.GRANTS.CATEGORIES.ALL(communityId)
+      INDEXER.COMMUNITY.CATEGORIES(communityId)
     );
     if (error) {
       throw error;
