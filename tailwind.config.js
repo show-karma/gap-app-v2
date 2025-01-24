@@ -58,6 +58,15 @@ module.exports = {
       "tremor-metric": ["1.875rem", { lineHeight: "2.25rem" }],
     },
     extend: {
+      keyframes: {
+        marquee: {
+          "0%": { transform: "translateX(0%)" },
+          "100%": { transform: "translateX(-50%)" },
+        },
+      },
+      animation: {
+        marquee: "marquee 30s linear infinite",
+      },
       colors: {
         brand: {
           blue: "#4C6FFF",
