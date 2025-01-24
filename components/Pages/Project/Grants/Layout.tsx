@@ -158,52 +158,31 @@ export const GrantsLayout = ({
     tabName: GrantScreen;
     current: boolean;
   }[] = [
-    {
-      name: "Overview",
-      tabName: "overview",
-      current: true,
-    },
-    {
-      name: "Milestones and Updates",
-      tabName: "milestones-and-updates",
-      current: false,
-    },
-    {
-      name: "Outputs",
-      tabName: "outputs",
-      current: false,
-    },
-    {
-      name: "Impact Criteria",
-      tabName: "impact-criteria",
-      current: false,
-    },
-    {
-      name: "Outputs + Outcomes",
-      tabName: "outputs",
-      current: false,
-    },
-  ];
+      {
+        name: "Overview",
+        tabName: "overview",
+        current: true,
+      },
+      {
+        name: "Milestones and Updates",
+        tabName: "milestones-and-updates",
+        current: false,
+      },
+      {
+        name: "Outputs",
+        tabName: "outputs",
+        current: false,
+      },
+      {
+        name: "Impact Criteria",
+        tabName: "impact-criteria",
+        current: false,
+      },
+    ];
 
   // const [tabs, setTabs] = useState<Tab[]>(defaultTabs);
   const tabs: Tab[] = defaultTabs;
 
-  // useEffect(() => {
-  //   const mountTabs = async () => {
-  //     const firstTabs: Tab[] = [...defaultTabs];
-
-  //     if (
-  //       !grant ||
-  //       !grant.categories?.length ||
-  //       grant.categories?.length <= 0
-  //     ) {
-  //       setTabs(firstTabs);
-  //       return;
-  //     }
-  //   };
-
-  //   mountTabs();
-  // }, [grant?.uid]);
 
   const setIsCommunityAdmin = useCommunityAdminStore(
     (state) => state.setIsCommunityAdmin

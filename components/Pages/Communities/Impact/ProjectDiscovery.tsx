@@ -8,6 +8,7 @@ import * as Slider from "@radix-ui/react-slider";
 import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
+import Link from "next/link";
 
 
 interface Category {
@@ -162,7 +163,7 @@ export const ProjectDiscovery = () => {
     }
 
     return (
-        <div className="flex gap-8 p-8 max-w-[1920px] mx-auto min-h-screen">
+        <div className="flex justify-between gap-8 p-8 w-full mx-auto min-h-screen">
             {/* Left Side - Form */}
             <div className="w-full lg:w-[600px] flex-shrink-0">
                 <div className="flex flex-col gap-8 sticky top-8">
@@ -334,11 +335,11 @@ export const ProjectDiscovery = () => {
                                     className="rounded-xl flex justify-between items-center gap-4 border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow"
                                 >
                                     <div className="flex flex-col gap-2">
-                                        <h4 className="text-2xl font-bold text-gray-900 line-clamp-2">{result.project.projectTitle}</h4>
+                                        <Link href={`/project/${result.project.projectSlug}`} className="text-2xl font-bold text-gray-900 line-clamp-2">{result.project.projectTitle}</Link>
                                         <div className="space-y-2 flex justify-between items-center">
-                                            <div className="text-md text-gray-600">
+                                            <Link href={`/project/${result.project.projectSlug}/grants/${result.project.grantUID}`} className="text-md text-gray-600">
                                                 {result.project.grantTitle}
-                                            </div>
+                                            </Link>
                                         </div>
                                     </div>
                                     <div className="flex flex-col items-end justify-center">
@@ -352,7 +353,7 @@ export const ProjectDiscovery = () => {
                         </div>
                     </div>
                 ) : (
-                    <div className="flex flex-col items-end justify-center h-[400px] text-gray-500">
+                    <div className="flex w-full flex-col items-start justify-center h-[400px] text-gray-500 pl-12 border-l border-l-zinc-400 ml-10">
                         <p className="text-lg">No projects discovered yet</p>
                         <p className="text-sm">Use the filters on the left to discover projects</p>
                     </div>

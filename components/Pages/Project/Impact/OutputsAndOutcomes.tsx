@@ -1,8 +1,8 @@
 "use client";
+
 import { Button } from "@/components/Utilities/Button";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { useGrantStore } from "@/store/grant";
 import { ProgramImpactDatapoint } from "@/types/programs";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
@@ -15,7 +15,7 @@ import { AreaChart, Card, Title } from "@tremor/react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { prepareChartData } from "../../Admin/ProgramImpact";
-import { GrantsOutputsLoading } from "../../Project/Loading/Grants/Outputs";
+import { GrantsOutputsLoading } from "../Loading/Grants/Outputs";
 
 type OutputForm = {
   outputId: string;
@@ -40,8 +40,9 @@ interface OutputAnswers {
   updatedAt: Date;
 }
 
-export const GrantOutputs = () => {
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+export const OutputsAndOutcomes = () => {
+  const { project, isProjectOwner } = useProjectStore();
+
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
@@ -52,7 +53,7 @@ export const GrantOutputs = () => {
   const [outputAnswers, setOutputAnswers] = useState<OutputAnswers[]>([]);
   const [forms, setForms] = useState<OutputForm[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { grant } = useGrantStore();
+
 
   const handleSubmit = async (outputId: string) => {
     const form = forms.find((f) => f.outputId === outputId);
@@ -79,8 +80,8 @@ export const GrantOutputs = () => {
       )
     );
 
-    if (grant) {
-      const [response] = await fetchData(INDEXER.PROJECT.OUTPUTS.GET(grant.project?.uid as string));
+    if (project) {
+      const [response] = await fetchData(INDEXER.PROJECT.OUTPUTS.GET(project?.uid as string));
       setOutputAnswers(response);
     }
   };
@@ -118,7 +119,7 @@ export const GrantOutputs = () => {
     datapoints: ProgramImpactDatapoint[]
   ) {
     const [response] = await fetchData(
-      INDEXER.PROJECT.OUTPUTS.SEND(grant?.project?.uid as string),
+      INDEXER.PROJECT.OUTPUTS.SEND(project?.uid as string),
       "POST",
       {
         outputId,
@@ -133,7 +134,7 @@ export const GrantOutputs = () => {
 
     if (response?.success) {
       toast.success(MESSAGES.GRANT.OUTPUTS.SUCCESS);
-      handleCancel(outputId);
+      handleCancel();
     } else {
       toast.error(MESSAGES.GRANT.OUTPUTS.ERROR);
     }
@@ -165,8 +166,8 @@ export const GrantOutputs = () => {
     if (!silent) setIsLoading(false);
   }
   useEffect(() => {
-    if (grant) getOutputAnswers(grant.project?.uid as string);
-  }, [grant]);
+    if (project) getOutputAnswers(project.uid as string);
+  }, [project]);
 
   const handleEditClick = (outputId: string) => {
     setForms((prev) =>
@@ -174,8 +175,8 @@ export const GrantOutputs = () => {
     );
   };
 
-  const handleCancel = async (outputId: string) => {
-    await getOutputAnswers(grant?.project?.uid as string);
+  const handleCancel = async () => {
+    await getOutputAnswers(project?.uid as string);
   };
 
   // Filter outputs based on authorization
@@ -228,7 +229,7 @@ export const GrantOutputs = () => {
     );
   };
 
-  if (!grant || isLoading) return <GrantsOutputsLoading />;
+  if (!project || isLoading) return <GrantsOutputsLoading />;
 
   const isInvalidValue = (value: number) => isNaN(value) || value === 0;
 
@@ -545,7 +546,7 @@ export const GrantOutputs = () => {
                   {form?.isEditing && isAuthorized && (
                     <div className="flex gap-3 pt-2 flex-row">
                       <button
-                        onClick={() => handleCancel(item.outputId)}
+                        onClick={() => handleCancel()}
                         disabled={form?.isSaving}
                         className="rounded-sm border border-black dark:border-zinc-100 px-6 py-2 text-sm font-medium text-black bg-white dark:bg-zinc-100 hover:bg-zinc-200 dark:hover:bg-zinc-100/20  focus:outline-none focus:ring-2 focus:ring-zinc-500/40 transition-colors"
                       >

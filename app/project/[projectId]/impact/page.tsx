@@ -9,7 +9,6 @@ import { notFound } from "next/navigation";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { envVars } from "@/utilities/enviromentVars";
 import ImpactWrapper from "@/components/Pages/Project/Impact/ImpactWrapper";
-import { ProjectImpactLoading } from "@/components/Pages/Project/Loading/Impact";
 
 export async function generateMetadata({
   params,
