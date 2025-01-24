@@ -313,7 +313,10 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
         ?.projectById(project.pointers[0].data?.ogProjectUID)
         .then((_project) => {
           if (_project) {
-            const newPath = pathname.replace(`/project/${project.uid}`, `/project/${_project?.details?.data?.slug}`);
+            const isUsingUid = pathname.includes(`/project/${project.uid}`);
+            const newPath = isUsingUid
+              ? pathname.replace(`/project/${project.uid}`, `/project/${_project?.details?.data?.slug}`)
+              : pathname.replace(`/project/${project.details?.data?.slug}`, `/project/${_project?.details?.data?.slug}`);
             router.push(newPath);
           }
         });
