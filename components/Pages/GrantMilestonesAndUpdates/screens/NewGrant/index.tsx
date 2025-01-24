@@ -583,9 +583,10 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
               (item) => item.uid.toLowerCase() === oldGrant.uid.toLowerCase()
             );
 
+
             if (
               new Date(fetchedGrant?.details?.updatedAt) >
-              new Date(oldGrantData?.updatedAt)
+              new Date(oldGrantData?.details?.updatedAt)
             ) {
               clearMilestonesForms();
               retries = 0;

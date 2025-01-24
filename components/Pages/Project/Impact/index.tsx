@@ -26,13 +26,17 @@ import { useAccount, useSwitchChain } from "wagmi";
 import { AddImpactScreen } from "./AddImpactScreen";
 import { EmptyImpactScreen } from "./EmptyImpactScreen";
 import { ImpactVerifications } from "./ImpactVerifications";
+import { OutputsAndOutcomes } from "@/components/Pages/Project/Impact/OutputsAndOutcomes";
+import { Tabs } from "@/components/Utilities/Tabs";
+import { TabTrigger } from "@/components/Utilities/Tabs";
+import { TabContent } from "@/components/Utilities/Tabs";
 
 const headClasses =
   "text-black dark:text-white text-xs font-medium uppercase text-left px-6 py-3 font-body";
 const cellClasses =
   "py-4 border-t border-t-black dark:border-t-white pr-6 px-6 max-w-[420px] max-sm:min-w-[200px]";
 
-interface ImpactComponentProps {}
+interface ImpactComponentProps { }
 
 export const ImpactComponent: FC<ImpactComponentProps> = () => {
   const { project, isProjectOwner } = useProjectStore();
@@ -170,157 +174,170 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
   }
 
   return (
-    <div className="flex-row gap-4 flex">
-      {orderedImpacts.length ? (
-        <div className="flex w-full flex-col overflow-x-auto">
-          {isAuthorized ? (
-            <div className="flex flex-row-reverse max-sm:flex-row">
-              <Button
-                onClick={() => changeTab("add-impact")}
-                className="bg-black text-white hover:bg-black dark:bg-zinc-800 w-max"
-              >
-                Add impact
-              </Button>
-            </div>
-          ) : null}
-          <table className="overflow-x-auto w-full">
-            <thead>
-              <tr>
-                <th className={cn(headClasses, "pr-8 w-36")}></th>
-                <th className={cn(headClasses, "w-20")}></th>
-                <th className={cn("", headClasses)}>Work</th>
-                <th className={cn("", headClasses)}>Impact</th>
-                <th className={cn("", headClasses)}>Proof</th>
-                <th className={cn("", headClasses)}>Verifications</th>
-                {isAuthorized ? (
-                  <th className={cn(headClasses, "w-20")}></th>
-                ) : null}
-              </tr>
-            </thead>
-            <tbody className="">
-              {orderedImpacts.length
-                ? orderedImpacts.map((item) => (
-                    <tr className="" key={item.uid}>
-                      <td className="pr-2">
-                        <p className="w-36 max-w-max text-gray-500 text-sm font-medium ">
-                          {item.data?.startedAt
-                            ? formatDate(item.data?.startedAt * 1000)
-                            : "N/A"}
-                          {" → "}
-                          {formatDate(item.data?.completedAt * 1000)}
-                        </p>
-                      </td>
-                      <td className="pr-2 max-sm:pr-2 border-l border-l-zinc-400" />
-                      <td
-                        className={cn(
-                          cellClasses,
-                          "text-black dark:text-white text-lg font-semibold align-top"
-                        )}
-                      >
-                        <div data-color-mode="light">
-                          {/* <MarkdownPreview
+    <section>
+      <Tabs defaultTab="outputs">
+        <div className="flex flex-row gap-2 bg-zinc-100 dark:bg-zinc-900 p-1 rounded-md mb-6">
+          <TabTrigger value="outputs">Outputs and Outcomes</TabTrigger>
+          <TabTrigger value="impact">Project Impact</TabTrigger>
+        </div>
 
-                          source={item.work}
-                        /> */}
-                          <ReadMore
-                            readLessText="View less"
-                            readMoreText="View more"
-                            side="left"
-                            words={200}
-                            markdownComponents={{
-                              a: ({ children, ...props }) => {
-                                return (
-                                  <ExternalLink
-                                    className="text-blue-500"
-                                    {...props}
-                                  >
-                                    {children}
-                                  </ExternalLink>
-                                );
-                              },
-                            }}
-                            markdownClass="text-black dark:text-white text-lg font-semibold "
-                          >
-                            {item.data?.work}
-                          </ReadMore>
-                        </div>
-                      </td>
-                      <td className={cn(cellClasses, "align-top")}>
-                        <div data-color-mode="light">
-                          <ReadMore
-                            readLessText="View less"
-                            readMoreText="View more"
-                            side="left"
-                            words={200}
-                            markdownClass="text-base font-normal"
-                            markdownComponents={{
-                              a: ({ children, ...props }) => {
-                                return (
-                                  <ExternalLink
-                                    className="text-blue-500"
-                                    {...props}
-                                  >
-                                    {children}
-                                  </ExternalLink>
-                                );
-                              },
-                            }}
-                          >
-                            {item.data?.impact}
-                          </ReadMore>
-                        </div>
-                      </td>
-                      <td className={cn(cellClasses, "align-top")}>
-                        <div data-color-mode="light">
-                          <ReadMore
-                            readLessText="View less"
-                            readMoreText="View more"
-                            side="left"
-                            words={200}
-                            markdownClass="text-base font-normal"
-                            markdownComponents={{
-                              a: ({ children, ...props }) => {
-                                return (
-                                  <ExternalLink
-                                    className="text-blue-500"
-                                    {...props}
-                                  >
-                                    {children}
-                                  </ExternalLink>
-                                );
-                              },
-                            }}
-                          >
-                            {item.data?.proof}
-                          </ReadMore>
-                        </div>
-                      </td>
-                      <td className={cn(cellClasses, "px-3 align-top")}>
-                        <ImpactVerifications impact={item} />
-                      </td>
+        <TabContent value="outputs">
+          <div className="flex flex-col gap-4">
+            <OutputsAndOutcomes />
+          </div>
+        </TabContent>
+
+        <TabContent value="impact">
+          <div className="flex flex-col gap-4">
+            {orderedImpacts.length ? (
+              <div className="flex w-full flex-col overflow-x-auto">
+                {isAuthorized ? (
+                  <div className="flex flex-row-reverse max-sm:flex-row">
+                    <Button
+                      onClick={() => changeTab("add-impact")}
+                      className="bg-black text-white hover:bg-black dark:bg-zinc-800 w-max"
+                    >
+                      Add impact
+                    </Button>
+                  </div>
+                ) : null}
+                <table className="overflow-x-auto w-full">
+                  <thead>
+                    <tr>
+                      <th className={cn(headClasses, "pr-8 w-36")}></th>
+                      <th className={cn(headClasses, "w-20")}></th>
+                      <th className={cn("", headClasses)}>Work</th>
+                      <th className={cn("", headClasses)}>Impact</th>
+                      <th className={cn("", headClasses)}>Proof</th>
+                      <th className={cn("", headClasses)}>Verifications</th>
                       {isAuthorized ? (
-                        <td className={cn(cellClasses, "px-3 align-top")}>
-                          <Button
-                            type="button"
-                            className="bg-transparent hover:bg-transparent hover:opacity-75"
-                            disabled={
-                              loading[item.uid.toLowerCase()] || !isAuthorized
-                            }
-                            onClick={() => revokeImpact(item)}
-                          >
-                            <TrashIcon className="text-red-500 w-6 h-6" />
-                          </Button>
-                        </td>
+                        <th className={cn(headClasses, "w-20")}></th>
                       ) : null}
                     </tr>
-                  ))
-                : null}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <EmptyImpactScreen />
-      )}
-    </div>
+                  </thead>
+                  <tbody className="">
+                    {orderedImpacts.length
+                      ? orderedImpacts.map((item) => (
+                        <tr className="" key={item.uid}>
+                          <td className="pr-2">
+                            <p className="w-36 max-w-max text-gray-500 text-sm font-medium ">
+                              {item.data?.startedAt
+                                ? formatDate(item.data?.startedAt * 1000)
+                                : "N/A"}
+                              {" → "}
+                              {formatDate(item.data?.completedAt * 1000)}
+                            </p>
+                          </td>
+                          <td className="pr-2 max-sm:pr-2 border-l border-l-zinc-400" />
+                          <td
+                            className={cn(
+                              cellClasses,
+                              "text-black dark:text-white text-lg font-semibold align-top"
+                            )}
+                          >
+                            <div data-color-mode="light">
+                              <ReadMore
+                                readLessText="View less"
+                                readMoreText="View more"
+                                side="left"
+                                words={200}
+                                markdownComponents={{
+                                  a: ({ children, ...props }) => {
+                                    return (
+                                      <ExternalLink
+                                        className="text-blue-500"
+                                        {...props}
+                                      >
+                                        {children}
+                                      </ExternalLink>
+                                    );
+                                  },
+                                }}
+                                markdownClass="text-black dark:text-white text-lg font-semibold "
+                              >
+                                {item.data?.work}
+                              </ReadMore>
+                            </div>
+                          </td>
+                          <td className={cn(cellClasses, "align-top")}>
+                            <div data-color-mode="light">
+                              <ReadMore
+                                readLessText="View less"
+                                readMoreText="View more"
+                                side="left"
+                                words={200}
+                                markdownClass="text-base font-normal"
+                                markdownComponents={{
+                                  a: ({ children, ...props }) => {
+                                    return (
+                                      <ExternalLink
+                                        className="text-blue-500"
+                                        {...props}
+                                      >
+                                        {children}
+                                      </ExternalLink>
+                                    );
+                                  },
+                                }}
+                              >
+                                {item.data?.impact}
+                              </ReadMore>
+                            </div>
+                          </td>
+                          <td className={cn(cellClasses, "align-top")}>
+                            <div data-color-mode="light">
+                              <ReadMore
+                                readLessText="View less"
+                                readMoreText="View more"
+                                side="left"
+                                words={200}
+                                markdownClass="text-base font-normal"
+                                markdownComponents={{
+                                  a: ({ children, ...props }) => {
+                                    return (
+                                      <ExternalLink
+                                        className="text-blue-500"
+                                        {...props}
+                                      >
+                                        {children}
+                                      </ExternalLink>
+                                    );
+                                  },
+                                }}
+                              >
+                                {item.data?.proof}
+                              </ReadMore>
+                            </div>
+                          </td>
+                          <td className={cn(cellClasses, "px-3 align-top")}>
+                            <ImpactVerifications impact={item} />
+                          </td>
+                          {isAuthorized ? (
+                            <td className={cn(cellClasses, "px-3 align-top")}>
+                              <Button
+                                type="button"
+                                className="bg-transparent hover:bg-transparent hover:opacity-75"
+                                disabled={
+                                  loading[item.uid.toLowerCase()] || !isAuthorized
+                                }
+                                onClick={() => revokeImpact(item)}
+                              >
+                                <TrashIcon className="text-red-500 w-6 h-6" />
+                              </Button>
+                            </td>
+                          ) : null}
+                        </tr>
+                      ))
+                      : null}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <EmptyImpactScreen />
+            )}
+          </div>
+        </TabContent>
+      </Tabs>
+    </section>
   );
 };
