@@ -73,7 +73,7 @@ export const INDEXER = {
     GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}`,
     CATEGORIES: (idOrSlug: string) => `/communities/${idOrSlug}/categories`,
     SUBSCRIBE: {
-      BULK: `/bulk-subscription/subscribe`,
+      BULK: `/communities/subscribe/bulk`,
     },
     REPORT: {
       GET: (communityIdOrSlug: string) =>
@@ -81,6 +81,14 @@ export const INDEXER = {
     },
     GRANT_TITLES: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/grant-titles`,
+    GRANT_CATEGORIES: (communityIdOrSlug: string) =>
+      `/communities/${communityIdOrSlug}/grant-categories`,
+    GRANT_PROGRAMS: (communityIdOrSlug: string) =>
+      `/communities/${communityIdOrSlug}/grant-programs`,
+    GRANT_PROGRAMS_STATS: (communityIdOrSlug: string) =>
+      `/communities/${communityIdOrSlug}/grant-programs/stats`,
+    GRANT_PROGRAMS_STATS_TOTAL: (communityIdOrSlug: string) =>
+      `/communities/${communityIdOrSlug}/grant-programs/stats/total`,
     PROGRAMS: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/programs`,
     PROGRAM_IMPACT: (communityIdOrSlug: string, programId: string) =>
@@ -122,6 +130,12 @@ export const INDEXER = {
       `/communities/${communityIdOrSlug}/stats`,
     ADMINS: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/admins`,
+    INDICATORS: {
+      CREATE: (communityId: string) => `/communities/${communityId}/indicators`,
+      DELETE: (communityId: string, indicatorId: string) =>
+        `/communities/${communityId}/indicators/${indicatorId}`,
+      LIST: (communityId: string) => `/communities/${communityId}/indicators`,
+    },
   },
   GRANTS: {
     GET_ZK_GROUP: (

@@ -16,6 +16,7 @@ import { useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 
+import { IndicatorsHub } from "@/components/Pages/Admin/IndicatorsHub";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuthStore } from "@/store/auth";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
@@ -246,7 +247,7 @@ export default function AssignOutputsPage() {
         </div>
       ) : isAdmin ? (
         <div className="flex w-full flex-1 flex-col items-center gap-8">
-          <div className="w-full flex flex-row items-center justify-between  max-w-4xl">
+          <div className="w-full flex flex-row items-center justify-between max-w-4xl">
             <Link
               href={PAGES.ADMIN.ROOT(
                 community?.details?.data?.slug || (community?.uid as string)
@@ -258,126 +259,142 @@ export default function AssignOutputsPage() {
               </Button>
             </Link>
           </div>
-          {categories.length ? (
-            categories.map((category, index) => {
-              return (
-                <div
-                  key={category.id}
-                  className="flex w-full max-w-4xl flex-col items-start justify-start  gap-4 "
-                  style={{
-                    borderBottomWidth: index === categories.length - 1 ? 0 : 1,
-                    borderBottomColor: "#E4E7EB",
-                  }}
-                >
-                  <div className="flex w-full flex-1 flex-col items-start justify-start">
-                    <h3 className="text-xl font-bold">{category.name}</h3>
-                  </div>
 
-                  <div className="w-full border-b border-gray-200 dark:border-gray-700 pb-6 mb-6">
-                    <h5 className="text-md font-semibold mb-4">
-                      Modify outputs:
-                    </h5>
-                    <div className="flex flex-col gap-2">
-                      {category.outputs.map((output) => (
-                        <div
-                          key={output.id}
-                          className="flex items-center justify-between gap-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg"
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-gray-700 dark:text-gray-300">
-                              {output.name}
-                            </span>
-                            <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full">
-                              {output.type}
-                            </span>
-                          </div>
-                          <button
-                            onClick={() =>
-                              handleRemoveOutput(category.id, output.id)
-                            }
-                            className="text-secondary-500 hover:text-secondary-700 transition-colors"
-                            aria-label="Remove output"
-                          >
-                            <TrashIcon className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ))}
+          <div className="w-full max-w-4xl space-y-8">
+            <div className="bg-gray-50 dark:bg-zinc-900 rounded-lg p-8">
+              <h2 className="text-2xl font-bold mb-6">Manage Indicators</h2>
+              <IndicatorsHub communityId={community?.uid as string} />
+            </div>
 
-                      <div className="flex flex-col gap-2 mt-4 mx-2">
-                        <div className="flex items-center gap-2">
-                          <input
-                            type="text"
-                            value={newOutputs[category.id] || ""}
-                            onChange={(e) =>
-                              setNewOutputs((prev) => ({
-                                ...prev,
-                                [category.id]: e.target.value,
-                              }))
-                            }
-                            placeholder="Enter new output name"
-                            className="text-sm flex-1 p-2 border border-gray-200 dark:border-gray-700 rounded-md 
-                              focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
-                          />
-                          <select
-                            value={newOutputTypes[category.id] || "output"}
-                            onChange={(e) =>
-                              setNewOutputTypes((prev) => ({
-                                ...prev,
-                                [category.id]: e.target.value as OutputType,
-                              }))
-                            }
-                            className="w-32 text-sm p-2 border border-gray-200 dark:border-gray-700 rounded-md 
-                              focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
-                          >
-                            {OUTPUT_TYPES.map((type) => (
-                              <option key={type} value={type}>
-                                {type.charAt(0).toUpperCase() + type.slice(1)}
-                              </option>
-                            ))}
-                          </select>
-                          <Button
-                            onClick={() => handleAddOutput(category.id)}
-                            disabled={!newOutputs[category.id]?.trim()}
-                            className="px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 
-                              transition-colors disabled:opacity-50"
-                          >
-                            Add Output
-                          </Button>
-                        </div>
+            <div className="bg-white dark:bg-zinc-800 rounded-lg p-8 border border-gray-100 dark:border-zinc-700">
+              <h2 className="text-2xl font-bold mb-6">
+                Manage Categories & Outputs
+              </h2>
+              {categories.length ? (
+                categories.map((category, index) => {
+                  return (
+                    <div
+                      key={category.id}
+                      className="flex w-full flex-col items-start justify-start gap-4"
+                      style={{
+                        borderBottomWidth:
+                          index === categories.length - 1 ? 0 : 1,
+                        borderBottomColor: "#E4E7EB",
+                      }}
+                    >
+                      <div className="flex w-full flex-1 flex-col items-start justify-start">
+                        <h3 className="text-xl font-bold">{category.name}</h3>
                       </div>
 
-                      {hasOutputChanges[category.id] && (
-                        <Button
-                          isLoading={isSavingOutputs[category.id]}
-                          disabled={isSavingOutputs[category.id]}
-                          onClick={() => saveOutputs(category)}
-                          className="mt-4 text-center mx-auto bg-primary-500 px-4 py-2 rounded-md text-white hover:bg-primary-600 
-                            dark:bg-primary-900 transition-colors"
-                        >
-                          Save changes
-                        </Button>
-                      )}
+                      <div className="w-full border-b border-gray-200 dark:border-gray-700 pb-6 mb-6">
+                        <h5 className="text-md font-semibold mb-4">
+                          Modify outputs:
+                        </h5>
+                        <div className="flex flex-col gap-2">
+                          {category.outputs.map((output) => (
+                            <div
+                              key={output.id}
+                              className="flex items-center justify-between gap-2 p-3 border border-gray-200 dark:border-gray-700 rounded-lg"
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-gray-700 dark:text-gray-300">
+                                  {output.name}
+                                </span>
+                                <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full">
+                                  {output.type}
+                                </span>
+                              </div>
+                              <button
+                                onClick={() =>
+                                  handleRemoveOutput(category.id, output.id)
+                                }
+                                className="text-secondary-500 hover:text-secondary-700 transition-colors"
+                                aria-label="Remove output"
+                              >
+                                <TrashIcon className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ))}
+
+                          <div className="flex flex-col gap-2 mt-4 mx-2">
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={newOutputs[category.id] || ""}
+                                onChange={(e) =>
+                                  setNewOutputs((prev) => ({
+                                    ...prev,
+                                    [category.id]: e.target.value,
+                                  }))
+                                }
+                                placeholder="Enter new output name"
+                                className="text-sm flex-1 p-2 border border-gray-200 dark:border-gray-700 rounded-md 
+                                  focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
+                              />
+                              <select
+                                value={newOutputTypes[category.id] || "output"}
+                                onChange={(e) =>
+                                  setNewOutputTypes((prev) => ({
+                                    ...prev,
+                                    [category.id]: e.target.value as OutputType,
+                                  }))
+                                }
+                                className="w-32 text-sm p-2 border border-gray-200 dark:border-gray-700 rounded-md 
+                                  focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
+                              >
+                                {OUTPUT_TYPES.map((type) => (
+                                  <option key={type} value={type}>
+                                    {type.charAt(0).toUpperCase() +
+                                      type.slice(1)}
+                                  </option>
+                                ))}
+                              </select>
+                              <Button
+                                onClick={() => handleAddOutput(category.id)}
+                                disabled={!newOutputs[category.id]?.trim()}
+                                className="px-4 py-2 bg-primary-500 text-white rounded-md hover:bg-primary-600 
+                                  transition-colors disabled:opacity-50"
+                              >
+                                Add Output
+                              </Button>
+                            </div>
+                          </div>
+
+                          {hasOutputChanges[category.id] && (
+                            <Button
+                              isLoading={isSavingOutputs[category.id]}
+                              disabled={isSavingOutputs[category.id]}
+                              onClick={() => saveOutputs(category)}
+                              className="mt-4 text-center mx-auto bg-primary-500 px-4 py-2 rounded-md text-white hover:bg-primary-600 
+                                dark:bg-primary-900 transition-colors"
+                            >
+                              Save changes
+                            </Button>
+                          )}
+                        </div>
+                      </div>
                     </div>
+                  );
+                })
+              ) : (
+                <div className="flex w-full flex-1 flex-col items-center justify-center gap-3">
+                  <p>{MESSAGES.CATEGORIES.OUTPUTS.EMPTY}</p>
+                  <div className="flex flex-row gap-10 items-center">
+                    <Link
+                      href={PAGES.ADMIN.MANAGE_INDICATORS(
+                        community?.details?.data?.slug ||
+                          (community?.uid as string)
+                      )}
+                    >
+                      <Button className="px-10 py-8 bg-brand-blue hover:bg-brand-blue rounded-md transition-all ease-in-out duration-200">
+                        Edit categories
+                      </Button>
+                    </Link>
                   </div>
                 </div>
-              );
-            })
-          ) : (
-            <div className="flex w-full flex-1 flex-col items-center justify-center gap-3">
-              <p>{MESSAGES.CATEGORIES.OUTPUTS.EMPTY}</p>
-              <div className="flex flex-row gap-10 items-center">
-                <Link
-                  href={PAGES.ADMIN.MANAGE_INDICATORS(
-                    community?.details?.data?.slug || (community?.uid as string)
-                  )}
-                >
-                  <Button className="px-10 py-8 bg-brand-blue hover:bg-brand-blue rounded-md transition-all ease-in-out duration-200">
-                    Edit categories
-                  </Button>
-                </Link>
-              </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       ) : (
         <div className="flex w-full items-center justify-center">
