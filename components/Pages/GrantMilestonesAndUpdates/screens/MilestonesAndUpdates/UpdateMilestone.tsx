@@ -28,7 +28,7 @@ const NotUpdatingCase: FC<NotUpdatingCaseProps> = ({
   }
   return (
     <div className="flex flex-row items-center justify-end ">
-      {!milestone.completed && !milestone.approved && milestone ? (
+      {!milestone.completed && milestone ? (
         <Button
           className="flex items-center justify-center gap-2 rounded border border-blue-600 bg-brand-blue dark:bg-primary-700 dark:text-zinc-200 px-4 py-2.5 hover:bg-brand-blue"
           onClick={() => setIsUpdating(true)}
@@ -61,7 +61,6 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
     (state) => state.isCommunityAdmin
   );
   const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
-
   return isUpdating || isEditing ? (
     <MilestoneUpdateForm
       milestone={milestone}

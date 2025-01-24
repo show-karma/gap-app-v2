@@ -14,16 +14,12 @@ interface MilestoneDateStatusProps {
 }
 
 const statusDictionary = {
-  approved: "Approved",
   completed: "Completed",
-  rejected: "Rejected",
   pending: "Pending",
   "past due": "Past Due",
 };
 
 const statusBg = {
-  approved: "bg-green-600",
-  rejected: "bg-red-600",
   completed: "bg-blue-600",
   pending: "bg-gray-500",
   "past due": "bg-red-600",
@@ -53,8 +49,6 @@ export const MilestoneDateStatus: FC<MilestoneDateStatusProps> = ({
   milestone,
 }) => {
   const getMilestoneStatus = () => {
-    if (milestone.approved) return "approved";
-    if (milestone.rejected) return "rejected";
     if (milestone.completed) return "completed";
     if (milestone.data.endsAt < Date.now() / 1000) return "past due";
     return "pending";
