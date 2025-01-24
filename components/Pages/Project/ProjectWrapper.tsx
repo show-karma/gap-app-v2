@@ -26,7 +26,7 @@ import { cn } from "@/utilities/tailwind";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import { useAccount } from "wagmi";
 import { IntroDialog } from "./IntroDialog";
@@ -54,6 +54,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   } = useProjectStore((state) => state);
 
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     setProject(project);
@@ -312,7 +313,11 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
         ?.projectById(project.pointers[0].data?.ogProjectUID)
         .then((_project) => {
           if (_project) {
-            router.push(`/project/${_project?.details?.data?.slug}`);
+            const isUsingUid = pathname.includes(`/project/${project.uid}`);
+            const newPath = isUsingUid
+              ? pathname.replace(`/project/${project.uid}`, `/project/${_project?.details?.data?.slug}`)
+              : pathname.replace(`/project/${project.details?.data?.slug}`, `/project/${_project?.details?.data?.slug}`);
+            router.push(newPath);
           }
         });
     }
