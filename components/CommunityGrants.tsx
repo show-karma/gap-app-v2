@@ -1,6 +1,6 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { ConditionalTotalGrantsCounter } from "@/app/[communityId]/components/ConditionalTotalGrantsCounter";
+import { ConditionalTotalGrantsCounter } from "@/app/community/[communityId]/components/ConditionalTotalGrantsCounter";
 import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { useCommunityStore } from "@/store/community";
 import { SortByOptions, StatusOptions } from "@/types";

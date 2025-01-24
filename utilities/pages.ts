@@ -3,12 +3,12 @@ export const PAGES = {
   NOT_FOUND: `/not-found`,
   PROJECTS_EXPLORER: `/projects`,
   COMMUNITY: {
-    ALL_GRANTS: (community: string) => `/${community}`,
-    IMPACT: (community: string) => `/${community}/impact`,
+    ALL_GRANTS: (community: string) => `/community/${community}`,
+    IMPACT: (community: string) => `/community/${community}/impact`,
     PROJECT_DISCOVERY: (community: string) =>
-      `/${community}/impact/project-discovery`,
+      `/community/${community}/impact/project-discovery`,
     RECEIVEPROJECTUPDATES: (community: string) =>
-      `/${community}/receive-project-updates`,
+      `/community/${community}/receive-project-updates`,
   },
   MY_PROJECTS: `/my-projects`,
   ADMIN: {

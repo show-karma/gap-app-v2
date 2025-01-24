@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
+import { render, screen } from "@testing-library/react";
 import { notFound } from "next/navigation";
 
 jest.mock("next/navigation", () => ({
@@ -50,7 +50,9 @@ describe("Community Page", () => {
     const fetchData = require("@/utilities/fetchData").default;
     fetchData.mockResolvedValue([[]]);
 
-    const { default: PageComponent } = await import("@/app/[communityId]/page");
+    const { default: PageComponent } = await import(
+      "@/app/community/[communityId]/page"
+    );
     render(await PageComponent({ params: { communityId: "test-community" } }));
 
     expect(screen.getByText("Test Community")).toBeInTheDocument();
@@ -62,7 +64,9 @@ describe("Community Page", () => {
     const { gapIndexerApi } = require("@/utilities/gapIndexerApi");
     gapIndexerApi.communityBySlug.mockResolvedValue({ data: null });
 
-    const { default: PageComponent } = await import("@/app/[communityId]/page");
+    const { default: PageComponent } = await import(
+      "@/app/community/[communityId]/page"
+    );
     render(
       await PageComponent({
         params: { communityId: "non-existent-community" },
