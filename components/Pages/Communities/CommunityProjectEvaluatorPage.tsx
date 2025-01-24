@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { Listbox } from "@headlessui/react";
 import { Button } from "@/components/Utilities/Button";
 import { ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/react";
@@ -10,6 +10,7 @@ import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
 import { useChat } from 'ai/react';
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import React from "react";
 
 interface Program {
     programId: string;
@@ -22,12 +23,21 @@ interface Project {
     chainID: number;
     createdBy: string;
     createdAt: string;
-    details: any;
+    details: {
+        title: string;
+        description: string;
+        [key: string]: any;
+    };
     categories: string[];
     impacts: any[];
     updates: any[];
     milestones: any[];
 }
+
+const cardColors = [
+    "#5FE9D0", "#875BF7", "#F97066", "#FDB022", "#A6EF67",
+    "#84ADFF", "#EF6820", "#EE46BC", "#EEAAFD", "#67E3F9",
+] as const;
 
 function MessageSkeleton() {
     return (
@@ -57,20 +67,29 @@ function ChatWithKarmaCoPilot({ projects }: { projects: any[] }) {
     const hasMessages = messages.length > 0;
 
     const renderChatInput = () => (
-        <form onSubmit={handleSubmit} className={`relative w-full ${hasMessages ? '' : 'max-w-3xl'} ${projects.length > 0 ? '' : 'bg-zinc-300 opacity-50 cursor-not-allowed pointer-events-none'}`}>
+        <form
+            onSubmit={handleSubmit}
+            className={`relative w-full ${hasMessages ? '' : 'max-w-3xl'} ${projects.length > 0 ? '' : 'bg-zinc-300 opacity-50 cursor-not-allowed pointer-events-none'}`}
+            role="search"
+            aria-label="Chat with Karma Co-pilot"
+        >
             <input
                 className="w-full p-4 pr-12 rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
                 value={input}
                 placeholder="Ask about the program or projects..."
                 onChange={handleInputChange}
                 disabled={isLoadingChat}
+                aria-label="Chat input"
+                role="searchbox"
+                aria-disabled={isLoadingChat}
             />
             <button
                 type="submit"
                 disabled={isLoadingChat || !input.trim()}
                 className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-gray-500 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Send message"
             >
-                <PaperAirplaneIcon className="h-5 w-5" />
+                <PaperAirplaneIcon className="h-5 w-5" aria-hidden="true" />
             </button>
         </form>
     );
@@ -156,20 +175,18 @@ function ProjectCardSkeleton() {
 }
 
 function ProjectCard({ project, index }: { project: Project, index: number }) {
-    const pickColor = (index: number) => {
-        const cardColors = [
-            "#5FE9D0", "#875BF7", "#F97066", "#FDB022", "#A6EF67",
-            "#84ADFF", "#EF6820", "#EE46BC", "#EEAAFD", "#67E3F9",
-        ];
+    const pickColor = useCallback((index: number) => {
         return cardColors[index % cardColors.length];
-    };
+    }, []);
+
+    const cardColor = useMemo(() => pickColor(index), [pickColor, index]);
 
     return (
         <div className="flex-shrink-0 w-[320px] rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2">
             <div className="w-full flex flex-col gap-1">
                 <div
                     className="h-[4px] w-full rounded-full mb-2.5"
-                    style={{ background: pickColor(index) }}
+                    style={{ background: cardColor }}
                 />
                 <div className="flex w-full flex-col px-3">
                     <p className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200 max-2xl:text-sm mr-1">
@@ -216,6 +233,8 @@ function ProjectCard({ project, index }: { project: Project, index: number }) {
     );
 }
 
+const MemoizedProjectCard = React.memo(ProjectCard);
+
 function ProjectsMarquee({ projects, isLoading }: { projects: Project[], isLoading: boolean }) {
     if (isLoading || !projects.length) {
         return (
@@ -233,11 +252,10 @@ function ProjectsMarquee({ projects, isLoading }: { projects: Project[], isLoadi
         <div className="w-full overflow-hidden">
             <div className="flex gap-4 animate-marquee">
                 {projects.map((project, index) => (
-                    <ProjectCard key={project.uid} project={project} index={index} />
+                    <MemoizedProjectCard key={project.uid} project={project} index={index} />
                 ))}
-                {/* Duplicate projects for seamless loop */}
                 {projects.map((project, index) => (
-                    <ProjectCard key={`${project.uid}-dup`} project={project} index={index + projects.length} />
+                    <MemoizedProjectCard key={`${project.uid}-dup`} project={project} index={index + projects.length} />
                 ))}
             </div>
         </div>
@@ -274,13 +292,27 @@ export const CommunityProjectEvaluatorPage = () => {
     }, [communityId]);
 
     async function getProjectsByProgram(programId: string, chainId: number) {
-        const [projects] = await fetchData(INDEXER.PROJECTS.BY_PROGRAM(programId, chainId));
-        setProjects(projects);
+        try {
+            setIsLoading(true);
+            const [projects, error] = await fetchData(INDEXER.PROJECTS.BY_PROGRAM(programId, chainId));
+            if (error) {
+                console.error("Error fetching projects:", error);
+                return;
+            }
+            setProjects(projects);
+        } catch (error) {
+            console.error("Error fetching projects:", error);
+        } finally {
+            setIsLoading(false);
+        }
     }
 
     useEffect(() => {
         if (selectedProgram) {
+            setProjects([]);
+            setIsLoading(true);
             getProjectsByProgram(selectedProgram.programId, Number(selectedProgram.chainID));
+            setIsLoading(false);
         }
     }, [selectedProgram]);
 
@@ -305,7 +337,7 @@ export const CommunityProjectEvaluatorPage = () => {
                         <label className="block text-lg font-medium text-gray-700">Select a program</label>
                         <Listbox value={selectedProgram} onChange={(program) => {
                             setSelectedProgram(program);
-                            setProjects([]);
+
                         }}>
                             <div className="relative mt-1">
                                 <ListboxButton className="relative w-full cursor-default rounded-lg bg-white py-3 pl-4 pr-10 text-left border border-gray-200 shadow-sm hover:border-gray-400 transition-colors focus:outline-none focus-visible:border-gray-700 focus-visible:ring-2 focus-visible:ring-gray-400">
