@@ -26,7 +26,7 @@ import { cn } from "@/utilities/tailwind";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Image from "next/image";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import { useAccount } from "wagmi";
 import { IntroDialog } from "./IntroDialog";
@@ -57,7 +57,25 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   const pathname = usePathname();
 
   useEffect(() => {
-    setProject(project);
+    // TODO: This is a temporary fix to normalize the milestones for the project
+    const parsedProject = project;
+    const grantsWithMilestones: any[] = [];
+    project.grants.forEach((grant) => {
+      if (grant.milestones && grant.milestones.length > 0) {
+        const grantWithNormalizedMilestones = {
+          ...grant,
+          milestones: grant.milestones.map((milestone) => ({
+            ...milestone,
+            completed: Array.isArray(milestone.completed)
+              ? milestone.completed[0] || null
+              : milestone.completed,
+          })),
+        };
+        grantsWithMilestones.push(grantWithNormalizedMilestones);
+      }
+    });
+    parsedProject.grants = grantsWithMilestones;
+    setProject(parsedProject);
   }, [project]);
 
   const isOwner = useOwnerStore((state) => state.isOwner);
@@ -315,8 +333,14 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
           if (_project) {
             const isUsingUid = pathname.includes(`/project/${project.uid}`);
             const newPath = isUsingUid
-              ? pathname.replace(`/project/${project.uid}`, `/project/${_project?.details?.data?.slug}`)
-              : pathname.replace(`/project/${project.details?.data?.slug}`, `/project/${_project?.details?.data?.slug}`);
+              ? pathname.replace(
+                  `/project/${project.uid}`,
+                  `/project/${_project?.details?.data?.slug}`
+                )
+              : pathname.replace(
+                  `/project/${project.details?.data?.slug}`,
+                  `/project/${_project?.details?.data?.slug}`
+                );
             router.push(newPath);
           }
         });
