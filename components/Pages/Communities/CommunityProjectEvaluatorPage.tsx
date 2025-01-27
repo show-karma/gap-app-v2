@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Listbox } from "@headlessui/react";
 import { Button } from "@/components/Utilities/Button";
 import { ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/react";
@@ -55,19 +55,27 @@ function MessageSkeleton() {
 }
 
 function ChatWithKarmaCoPilot({ projects }: { projects: any[] }) {
-    const { messages, input, handleInputChange, handleSubmit, isLoading: isLoadingChat, } = useChat({
-        maxSteps: 3,
+    const { messages, input, handleInputChange, handleSubmit, isLoading: isLoadingChat, setMessages } = useChat({
         body: {
-            projectsFilter: projects.map((project) => ({ uid: project.uid, chainId: project.chainID }))
-        }
+            projectsInProgram: projects.map((project) => ({ uid: project.uid, chainId: project.chainID, projectTitle: project.details.title, projectCategories: project.categories }))
+        },
     });
+
+    const ChatFormRef = useRef<HTMLFormElement>(null);
 
 
 
     const hasMessages = messages.length > 0;
 
+    useEffect(() => {
+        console.log("Messages", messages);
+    }, [messages]);
+
+
+
     const renderChatInput = () => (
         <form
+            ref={ChatFormRef}
             onSubmit={handleSubmit}
             className={`relative w-full ${hasMessages ? '' : 'max-w-3xl'} ${projects.length > 0 ? '' : 'bg-zinc-300 opacity-50 cursor-not-allowed pointer-events-none'}`}
             role="search"
@@ -133,9 +141,12 @@ function ChatWithKarmaCoPilot({ projects }: { projects: any[] }) {
                             {m.content.length > 0 ? (
                                 <MarkdownPreview source={m.content} />
                             ) : (
-                                <p className="whitespace-pre-wrap text-md font-light">
-                                    {`Analyzing projects and gathering insights...`} <br />{m?.toolInvocations?.[0]?.toolName}
-                                </p>
+                                <div className="whitespace-pre-wrap text-md font-light">
+                                    {`Analyzing projects and gathering insights...`} <br />
+                                    {m?.toolInvocations?.map((tool) => (
+                                        <p className="text-sm text-zinc-500" key={tool.toolName}>{JSON.stringify(tool?.toolName)}</p>
+                                    ))}
+                                </div>
                             )}
                         </div>
                     </div>
@@ -214,17 +225,17 @@ function ProjectCard({ project, index }: { project: Project, index: number }) {
                 </div>}
                 {project.impacts.length > 0 && <div className="flex h-max w-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
                     <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
-                        {project.impacts.length || 0} Impacts
+                        Impacts: {project.impacts.length || 0}
                     </p>
                 </div>}
                 {project.milestones.length > 0 && <div className="flex h-max w-max items-center justify-start rounded-full bg-teal-50 dark:bg-teal-700 text-teal-600 dark:text-teal-200 px-3 py-1 max-2xl:px-2">
                     <p className="text-center text-sm font-medium text-teal-600 dark:text-teal-100 max-2xl:text-[13px]">
-                        {project.milestones.length || 0} Milestones
+                        Milestones: {project.milestones.length || 0}
                     </p>
                 </div>}
                 {project.updates.length > 0 && <div className="flex h-max w-max items-center justify-start rounded-full bg-teal-50 dark:bg-teal-700 text-teal-600 dark:text-teal-200 px-3 py-1 max-2xl:px-2">
                     <p className="text-center text-sm font-medium text-teal-600 dark:text-teal-100 max-2xl:text-[13px]">
-                        {project.updates.length || 0} Updates
+                        Updates: {project.updates.length || 0}
                     </p>
                 </div>}
 
@@ -337,7 +348,6 @@ export const CommunityProjectEvaluatorPage = () => {
                         <label className="block text-lg font-medium text-gray-700">Select a program</label>
                         <Listbox value={selectedProgram} onChange={(program) => {
                             setSelectedProgram(program);
-
                         }}>
                             <div className="relative mt-1">
                                 <ListboxButton className="relative w-full cursor-default rounded-lg bg-white py-3 pl-4 pr-10 text-left border border-gray-200 shadow-sm hover:border-gray-400 transition-colors focus:outline-none focus-visible:border-gray-700 focus-visible:ring-2 focus-visible:ring-gray-400">

@@ -47,7 +47,7 @@
     "@vercel/speed-insights": "^1.0.10",
     "@wagmi/core": "^2.11.5",
     "@walletconnect/ethereum-provider": "^2.10.5",
-    "ai": "^4.1.0",
+    "ai": "4.1.7",
     "axios": "^1.4.0",
     "blo": "^1.1.1",
     "clsx": "^2.1.0",
