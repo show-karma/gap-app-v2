@@ -131,10 +131,18 @@ export const INDEXER = {
     ADMINS: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/admins`,
     INDICATORS: {
-      CREATE: (communityId: string) => `/communities/${communityId}/indicators`,
-      DELETE: (communityId: string, indicatorId: string) =>
-        `/communities/${communityId}/indicators/${indicatorId}`,
-      LIST: (communityId: string) => `/communities/${communityId}/indicators`,
+      COMMUNITY: {
+        CREATE: (communityId: string) =>
+          `/communities/${communityId}/impact-indicators`,
+        DELETE: (communityId: string) =>
+          `/communities/${communityId}/impact-indicators`,
+        LIST: (communityId: string) =>
+          `/communities/${communityId}/impact-indicators`,
+      },
+      CATEGORY: {
+        LIST: (categoryId: string) =>
+          `/category/${categoryId}/impact-indicators`,
+      },
     },
   },
   GRANTS: {
