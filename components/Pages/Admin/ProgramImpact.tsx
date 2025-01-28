@@ -21,7 +21,7 @@ export const prepareChartData = (
   name: string,
   runningValues?: number[]
 ): { date: string; [key: string]: number | string }[] => {
-  const abacaxi = timestamps
+  const chartData = timestamps
     .map((timestamp, index) => {
       if (runningValues?.length) {
         return {
@@ -36,7 +36,7 @@ export const prepareChartData = (
       };
     })
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  return abacaxi;
+  return chartData;
 };
 
 export default function ProgramImpactPage() {

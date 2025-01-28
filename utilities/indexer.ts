@@ -60,15 +60,17 @@ export const INDEXER = {
       UPDATE: (projectUID: string) =>
         `/projects/${projectUID}/update/categories`,
     },
-    OUTPUTS: {
-      GET: (projectUID: string) => `/projects/${projectUID}/outputs`,
-      SEND: (projectUID: string) => `/projects/${projectUID}/outputs/answer`,
+    IMPACT_INDICATORS: {
+      GET: (projectUID: string) => `/projects/${projectUID}/indicators/data`,
+      SEND: (projectUID: string) => `/projects/${projectUID}/indicators/data`,
     },
   },
   CATEGORIES: {
     CREATE: (idOrSlug: string) => `/categories/create/${idOrSlug}`,
-    OUTPUTS: {
-      UPDATE: (categoryId: string) =>
+    IMPACT_SEGMENTS: {
+      CREATE_OR_UPDATE: (categoryId: string) =>
+        `/categories/${categoryId}/impact-segments`,
+      DELETE: (categoryId: string) =>
         `/categories/${categoryId}/impact-segments`,
     },
   },

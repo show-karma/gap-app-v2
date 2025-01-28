@@ -19,20 +19,9 @@ import { IndicatorsHub } from "@/components/Pages/Admin/IndicatorsHub";
 import { ManageCategoriesOutputs } from "@/components/Pages/Admin/ManageCategoriesOutputs";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useAuthStore } from "@/store/auth";
+import { Category } from "@/types/impactMeasurement";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-
-interface Category {
-  id: string;
-  name: string;
-  category: string;
-  outputs: {
-    id: string;
-    name: string;
-    categoryId: string;
-    type: "output" | "outcome" | "impact";
-  }[];
-}
 
 export const metadata = defaultMetadata;
 
@@ -128,7 +117,31 @@ export default function AssignOutputsPage() {
             )
           );
           if (data) {
-            setCategories(data);
+            const categoriesWithoutOutputs = data.map((category: Category) => {
+              const outputsNotDuplicated = category.outputs?.filter(
+                (output) =>
+                  !category.impact_segments?.some(
+                    (segment) =>
+                      segment.id === output.id || segment.name === output.name
+                  )
+              );
+              return {
+                ...category,
+                impact_segments: [
+                  ...(category.impact_segments || []),
+                  ...(outputsNotDuplicated || []).map((output: any) => {
+                    return {
+                      id: output.id,
+                      name: output.name,
+                      description: output.description,
+                      impact_indicators: [],
+                      type: output.type,
+                    };
+                  }),
+                ],
+              };
+            });
+            setCategories(categoriesWithoutOutputs);
           }
         } catch (error: any) {
           errorManager(

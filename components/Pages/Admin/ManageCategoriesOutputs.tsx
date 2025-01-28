@@ -2,6 +2,11 @@ import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/S
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useIndicators } from "@/hooks/useIndicators";
+import {
+  Category,
+  ImpactIndicator,
+  ImpactSegment,
+} from "@/types/impactMeasurement";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -30,17 +35,10 @@ const impactSegmentSchema = z.object({
     .min(10, "Description must be at least 10 characters")
     .max(500, "Description must be less than 500 characters"),
   type: z.enum(OUTPUT_TYPES),
-  indicators: z.array(z.string()).optional(),
+  impact_indicators: z.array(z.string()).optional(),
 });
 
 type ImpactSegmentFormData = z.infer<typeof impactSegmentSchema>;
-
-interface Indicator {
-  id: string;
-  name: string;
-  description: string;
-  unitOfMeasure: string;
-}
 
 interface Output {
   id: string;
@@ -48,14 +46,7 @@ interface Output {
   categoryId: string;
   type: OutputType;
   description?: string;
-  indicators?: string[]; // Array of indicator IDs
-}
-
-interface Category {
-  id: string;
-  name: string;
-  category: string;
-  outputs: Output[];
+  impact_indicators?: string[]; // Array of indicator IDs
 }
 
 interface ManageCategoriesOutputsProps {
@@ -65,19 +56,19 @@ interface ManageCategoriesOutputsProps {
 }
 
 interface EditFormProps {
-  output: Output;
+  segment: ImpactSegment;
   categoryId: string;
   onSave: (data: ImpactSegmentFormData) => void;
   isLoading: boolean;
-  indicators: Indicator[];
+  impact_indicators: ImpactIndicator[];
 }
 
 const EditForm = ({
-  output,
+  segment,
   categoryId,
   onSave,
   isLoading,
-  indicators,
+  impact_indicators,
 }: EditFormProps) => {
   const {
     register,
@@ -88,22 +79,23 @@ const EditForm = ({
   } = useForm<ImpactSegmentFormData>({
     resolver: zodResolver(impactSegmentSchema),
     defaultValues: {
-      name: output.name,
-      description: output.description || "",
-      type: output.type,
-      indicators: output.indicators || [],
+      name: segment.name,
+      description: segment.description || "",
+      type: segment.type,
+      impact_indicators:
+        segment.impact_indicators?.map((item) => item.id) || [],
     },
     mode: "onChange",
   });
 
-  const selectedIndicators = watch("indicators") || [];
+  const selectedIndicators = watch("impact_indicators") || [];
 
   const handleIndicatorChange = (value: string) => {
     const current = selectedIndicators;
     const updated = current.includes(value)
       ? current.filter((id) => id !== value)
       : [...current, value];
-    setValue("indicators", updated, { shouldValidate: true });
+    setValue("impact_indicators", updated, { shouldValidate: true });
   };
 
   return (
@@ -138,13 +130,29 @@ const EditForm = ({
             <p className="text-sm text-red-500">{errors.description.message}</p>
           )}
         </div>
+        <div className="flex flex-col gap-2">
+          <label className="text-sm text-gray-600 dark:text-gray-400">
+            Type
+          </label>
+          <select
+            {...register("type")}
+            className="text-sm p-2 border border-gray-200 dark:border-gray-700 rounded-md 
+              focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full"
+          >
+            {OUTPUT_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {type.charAt(0).toUpperCase() + type.slice(1)}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
       <div className="space-y-2">
         <h6 className="text-sm font-medium">Assigned Indicators</h6>
         <SearchWithValueDropdown
           onSelectFunction={handleIndicatorChange}
           selected={selectedIndicators}
-          list={indicators.map((indicator) => ({
+          list={impact_indicators.map((indicator) => ({
             value: indicator.id,
             title: `${indicator.name} (${indicator.unitOfMeasure})`,
           }))}
@@ -173,19 +181,10 @@ export const ManageCategoriesOutputs = ({
   setCategories,
   community,
 }: ManageCategoriesOutputsProps) => {
-  const [newOutputs, setNewOutputs] = useState<Record<string, string>>({});
-  const [newOutputDescriptions, setNewOutputDescriptions] = useState<
-    Record<string, string>
-  >({});
-  const [newOutputTypes, setNewOutputTypes] = useState<
-    Record<string, OutputType>
-  >({});
-  const [newOutputIndicators, setNewOutputIndicators] = useState<
-    Record<string, string[]>
-  >({});
   const [isSavingOutput, setIsSavingOutput] = useState<string>("");
+  const [isDeletingOutput, setIsDeletingOutput] = useState<string>("");
 
-  const { data: indicators = [] } = useIndicators({
+  const { data: impact_indicators = [] } = useIndicators({
     communityId: community?.uid || "",
   });
 
@@ -200,11 +199,11 @@ export const ManageCategoriesOutputs = ({
     resolver: zodResolver(impactSegmentSchema),
     defaultValues: {
       type: "output",
-      indicators: [],
+      impact_indicators: [],
     },
   });
 
-  const selectedIndicators = watch("indicators") || [];
+  const selectedIndicators = watch("impact_indicators") || [];
 
   const handleAddOutput = async (
     data: ImpactSegmentFormData,
@@ -213,16 +212,13 @@ export const ManageCategoriesOutputs = ({
     try {
       setIsSavingOutput("new");
       const [, error] = await fetchData(
-        INDEXER.CATEGORIES.OUTPUTS.UPDATE(categoryId),
-        "PUT",
+        INDEXER.CATEGORIES.IMPACT_SEGMENTS.CREATE_OR_UPDATE(categoryId),
+        "POST",
         {
-          idOrSlug: community?.uid,
-          output: {
-            name: data.name,
-            type: data.type,
-            description: data.description,
-            indicators: data.indicators,
-          },
+          name: data.name,
+          type: data.type,
+          description: data.description,
+          impactIndicators: data.impact_indicators,
         }
       );
       if (error) throw error;
@@ -232,19 +228,22 @@ export const ManageCategoriesOutputs = ({
       );
       if (categoryIndex === -1) return;
 
-      const newOutput = {
+      const newSegment = {
         id: `temp-${Date.now()}`,
         name: data.name,
         description: data.description,
         categoryId,
         type: data.type,
-        indicators: data.indicators,
+        impact_indicators: [],
       };
 
       const updatedCategories = [...categories];
       updatedCategories[categoryIndex] = {
         ...updatedCategories[categoryIndex],
-        outputs: [...updatedCategories[categoryIndex].outputs, newOutput],
+        impact_segments: [
+          ...(updatedCategories[categoryIndex].impact_segments || []),
+          newSegment,
+        ],
       };
 
       setCategories(updatedCategories);
@@ -258,45 +257,39 @@ export const ManageCategoriesOutputs = ({
     }
   };
 
-  const handleRemoveOutput = (categoryId: string, outputId: string) => {
-    const categoryIndex = categories.findIndex((cat) => cat.id === categoryId);
-    if (categoryIndex === -1) return;
+  const handleRemoveOutput = async (categoryId: string, segmentId: string) => {
+    try {
+      setIsDeletingOutput(segmentId);
+      const [, error] = await fetchData(
+        INDEXER.CATEGORIES.IMPACT_SEGMENTS.DELETE(categoryId),
+        "DELETE",
+        {
+          segmentId,
+        }
+      );
+      if (error) throw error;
 
-    const updatedCategories = [...categories];
-    updatedCategories[categoryIndex] = {
-      ...updatedCategories[categoryIndex],
-      outputs: updatedCategories[categoryIndex].outputs.filter(
-        (output) => output.id !== outputId
-      ),
-    };
+      const categoryIndex = categories.findIndex(
+        (cat) => cat.id === categoryId
+      );
+      if (categoryIndex === -1) return;
 
-    setCategories(updatedCategories);
-  };
+      const updatedCategories = [...categories];
+      updatedCategories[categoryIndex] = {
+        ...updatedCategories[categoryIndex],
+        impact_segments: (
+          updatedCategories[categoryIndex].impact_segments || []
+        ).filter((segment) => segment.id !== segmentId),
+      };
 
-  const handleIndicatorChange = (
-    categoryId: string,
-    outputId: string,
-    indicatorId: string
-  ) => {
-    const categoryIndex = categories.findIndex((cat) => cat.id === categoryId);
-    if (categoryIndex === -1) return;
-
-    const outputIndex = categories[categoryIndex].outputs.findIndex(
-      (output) => output.id === outputId
-    );
-    if (outputIndex === -1) return;
-
-    const updatedCategories = [...categories];
-    const output = updatedCategories[categoryIndex].outputs[outputIndex];
-    const currentIndicators = output.indicators || [];
-
-    if (currentIndicators.includes(indicatorId)) {
-      output.indicators = currentIndicators.filter((id) => id !== indicatorId);
-    } else {
-      output.indicators = [...currentIndicators, indicatorId];
+      setCategories(updatedCategories);
+      toast.success("Impact segment deleted successfully");
+    } catch (error) {
+      toast.error("Failed to delete impact segment");
+      errorManager("Failed to delete impact segment", error);
+    } finally {
+      setIsDeletingOutput("");
     }
-
-    setCategories(updatedCategories);
   };
 
   const handleNewIndicatorChange = (value: string) => {
@@ -304,30 +297,7 @@ export const ManageCategoriesOutputs = ({
     const updated = current.includes(value)
       ? current.filter((id) => id !== value)
       : [...current, value];
-    setValue("indicators", updated);
-  };
-
-  const handleOutputFieldChange = (
-    categoryId: string,
-    outputId: string,
-    field: keyof Output,
-    value: string
-  ) => {
-    const categoryIndex = categories.findIndex((cat) => cat.id === categoryId);
-    if (categoryIndex === -1) return;
-
-    const outputIndex = categories[categoryIndex].outputs.findIndex(
-      (output) => output.id === outputId
-    );
-    if (outputIndex === -1) return;
-
-    const updatedCategories = [...categories];
-    updatedCategories[categoryIndex].outputs[outputIndex] = {
-      ...updatedCategories[categoryIndex].outputs[outputIndex],
-      [field]: value,
-    };
-
-    setCategories(updatedCategories);
+    setValue("impact_indicators", updated);
   };
 
   const saveOutput = async (
@@ -338,16 +308,41 @@ export const ManageCategoriesOutputs = ({
     try {
       setIsSavingOutput(outputId);
       const [, error] = await fetchData(
-        INDEXER.CATEGORIES.OUTPUTS.UPDATE(categoryId),
+        INDEXER.CATEGORIES.IMPACT_SEGMENTS.CREATE_OR_UPDATE(categoryId),
         "POST",
         {
           name: data.name,
           type: data.type,
           description: data.description,
-          impactIndicators: data.indicators,
+          impactIndicators: data.impact_indicators,
         }
       );
       if (error) throw error;
+
+      // Update the local state to reflect changes immediately
+      const updatedCategories = categories.map((category) => {
+        if (category.id === categoryId) {
+          return {
+            ...category,
+            impact_segments: category.impact_segments?.map((segment) =>
+              segment.id === outputId
+                ? {
+                    ...segment,
+                    name: data.name,
+                    description: data.description,
+                    type: data.type,
+                    impact_indicators: impact_indicators.filter((indicator) =>
+                      data.impact_indicators?.includes(indicator.id)
+                    ),
+                  }
+                : segment
+            ),
+          };
+        }
+        return category;
+      });
+      setCategories(updatedCategories);
+
       toast.success("Impact segment updated successfully");
     } catch (error) {
       toast.error("Failed to update impact segment");
@@ -380,27 +375,27 @@ export const ManageCategoriesOutputs = ({
               <div className="w-full pb-6 mb-6">
                 <h5 className="text-md font-semibold mb-4">Impact Segments</h5>
                 <Accordion.Root type="multiple" className="space-y-2 w-full">
-                  {category.outputs.map((output) => (
+                  {category.impact_segments?.map((segment) => (
                     <Accordion.Item
-                      key={output.id}
-                      value={output.id}
+                      key={segment.id}
+                      value={segment.id}
                       className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
                     >
                       <Accordion.Trigger className="w-full flex items-center justify-between p-3 text-left hover:bg-gray-50 dark:hover:bg-zinc-700 transition-colors">
                         <div className="flex items-center gap-2">
                           <span className="text-sm text-gray-700 dark:text-gray-300">
-                            {output.name}
+                            {segment.name}
                           </span>
                           <span
                             className={cn(
                               "text-xs px-2 py-1 rounded-full",
-                              output.type === "output"
+                              segment.type === "output"
                                 ? "bg-blue-100 dark:bg-blue-700 text-blue-800 dark:text-blue-300"
                                 : "bg-green-100 dark:bg-green-700 text-green-800 dark:text-green-300"
                             )}
                           >
-                            {output.type.charAt(0).toUpperCase() +
-                              output.type.slice(1)}
+                            {segment.type.charAt(0).toUpperCase() +
+                              segment.type.slice(1)}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -408,31 +403,38 @@ export const ManageCategoriesOutputs = ({
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleRemoveOutput(category.id, output.id);
+                              handleRemoveOutput(category.id, segment.id);
                             }}
-                            className="text-red-500 hover:text-red-700 transition-colors"
+                            className="text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
                             aria-label="Remove output"
+                            disabled={isDeletingOutput === segment.id}
                           >
-                            <TrashIcon className="h-4 w-4" />
+                            <TrashIcon
+                              className={cn(
+                                "h-4 w-4",
+                                isDeletingOutput === segment.id &&
+                                  "animate-pulse opacity-50"
+                              )}
+                            />
                           </button>
                         </div>
                       </Accordion.Trigger>
                       <Accordion.Content className="p-4 bg-gray-50 dark:bg-zinc-900">
                         <EditForm
-                          output={output}
+                          segment={segment}
                           categoryId={category.id}
                           onSave={(data) =>
-                            saveOutput(data, category.id, output.id)
+                            saveOutput(data, category.id, segment.id)
                           }
-                          isLoading={isSavingOutput === output.id}
-                          indicators={indicators}
+                          isLoading={isSavingOutput === segment.id}
+                          impact_indicators={impact_indicators}
                         />
                       </Accordion.Content>
                     </Accordion.Item>
                   ))}
                 </Accordion.Root>
 
-                <Accordion.Root type="single" className="mt-6">
+                <Accordion.Root type="multiple" className="mt-6">
                   <Accordion.Item
                     value="create-new"
                     className="border-2 border-blue-100 dark:border-blue-900 bg-blue-50/30 dark:bg-blue-900/10 rounded-lg overflow-hidden shadow-sm"
@@ -508,7 +510,7 @@ export const ManageCategoriesOutputs = ({
                           <SearchWithValueDropdown
                             onSelectFunction={handleNewIndicatorChange}
                             selected={selectedIndicators}
-                            list={indicators.map((indicator) => ({
+                            list={impact_indicators.map((indicator) => ({
                               value: indicator.id,
                               title: `${indicator.name} (${indicator.unitOfMeasure})`,
                             }))}
