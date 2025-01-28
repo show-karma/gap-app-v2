@@ -57,27 +57,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   const pathname = usePathname();
 
   useEffect(() => {
-    // TODO: This is a temporary fix to normalize the milestones for the project
-    const parsedProject = project;
-    const grantsWithMilestones: any[] = [];
-    project.grants.forEach((grant) => {
-      if (grant.milestones && grant.milestones.length > 0) {
-        const grantWithNormalizedMilestones = {
-          ...grant,
-          milestones: grant.milestones.map((milestone) => ({
-            ...milestone,
-            completed: Array.isArray(milestone.completed)
-              ? milestone.completed[0] || null
-              : milestone.completed,
-          })),
-        };
-        grantsWithMilestones.push(grantWithNormalizedMilestones);
-      } else {
-        grantsWithMilestones.push(grant);
-      }
-    });
-    parsedProject.grants = grantsWithMilestones;
-    setProject(parsedProject);
+    setProject(project);
   }, [project]);
 
   const isOwner = useOwnerStore((state) => state.isOwner);
