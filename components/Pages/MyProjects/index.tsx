@@ -1,25 +1,25 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import React, { useState } from "react";
-import { useAccount } from "wagmi";
-import formatCurrency from "@/utilities/formatCurrency";
-import pluralize from "pluralize";
-import Link from "next/link";
-import Pagination from "@/components/Utilities/Pagination";
+import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import dynamic from "next/dynamic";
-import { useTheme } from "next-themes";
-import { PAGES } from "@/utilities/pages";
+import Pagination from "@/components/Utilities/Pagination";
+import { useMixpanel } from "@/hooks/useMixpanel";
+import { useAuthStore } from "@/store/auth";
+import { useOnboarding } from "@/store/modals/onboarding";
+import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { MESSAGES } from "@/utilities/messages";
-import { useAuthStore } from "@/store/auth";
-import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { Button } from "@/components/Utilities/Button";
-import { useOnboarding } from "@/store/modals/onboarding";
-import { useMixpanel } from "@/hooks/useMixpanel";
-import { useQuery } from "@tanstack/react-query";
-import { LoadingCard } from "./LoadingCard";
+import { PAGES } from "@/utilities/pages";
 import { fetchMyProjects } from "@/utilities/sdk/projects/fetchMyProjects";
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useQuery } from "@tanstack/react-query";
+import { useTheme } from "next-themes";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import pluralize from "pluralize";
+import { useState } from "react";
+import { useAccount } from "wagmi";
+import { LoadingCard } from "./LoadingCard";
 
 const ProjectDialog = dynamic(
   () =>
@@ -118,9 +118,7 @@ export default function MyProjects() {
                     card.grants?.forEach((grant) => {
                       if (grant.completed) return;
                       const hasActive = grant.milestones.find(
-                        (milestone: any) =>
-                          (milestone.completed && !milestone.approved) ||
-                          !milestone.completed
+                        (milestone: any) => !milestone.completed
                       );
                       if (hasActive) active += 1;
                     });

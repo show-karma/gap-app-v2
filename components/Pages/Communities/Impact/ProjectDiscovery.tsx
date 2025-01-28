@@ -9,6 +9,7 @@ import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
 import Link from "next/link";
+import formatCurrency from "@/utilities/formatCurrency";
 
 
 interface Category {
@@ -40,6 +41,11 @@ interface ProjectResult {
         projectEndorsers: string[];
     };
     impactScore: number;
+    outputs: {
+        outputId: string;
+        outputName: string;
+        avgValue: number;
+    }[];
 }
 
 interface OutputDistribution {
@@ -61,6 +67,7 @@ export const ProjectDiscovery = () => {
     const [outputDistribution, setOutputDistribution] = useState<OutputDistribution>({});
     const [projectResults, setProjectResults] = useState<ProjectResult[]>([]);
     const [selectedCategoryOutputs, setSelectedCategoryOutputs] = useState<Output[]>([]);
+    const [activeCalculation, setActiveCalculation] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchInitialData = async () => {
@@ -151,6 +158,10 @@ export const ProjectDiscovery = () => {
         } finally {
             setIsSearching(false);
         }
+    };
+
+    const handleScoreClick = (projectUID: string) => {
+        setActiveCalculation(activeCalculation === projectUID ? null : projectUID);
     };
 
     if (isLoading) {
@@ -332,22 +343,59 @@ export const ProjectDiscovery = () => {
                             {projectResults.map(result => (
                                 <div
                                     key={result.project.projectUID}
-                                    className="rounded-xl flex justify-between items-center gap-4 border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow"
+                                    className="rounded-xl flex flex-col gap-4 border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow relative"
                                 >
-                                    <div className="flex flex-col gap-2">
-                                        <Link href={`/project/${result.project.projectSlug}`} className="text-2xl font-bold text-gray-900 line-clamp-2">{result.project.projectTitle}</Link>
-                                        <div className="space-y-2 flex justify-between items-center">
-                                            <Link href={`/project/${result.project.projectSlug}/grants/${result.project.grantUID}`} className="text-md text-gray-600">
-                                                {result.project.grantTitle}
-                                            </Link>
+                                    <div className="flex justify-between items-start gap-4">
+                                        <div className="flex flex-col gap-2">
+                                            <Link href={`/project/${result.project.projectSlug}`} className="text-2xl font-bold text-gray-900 line-clamp-2">{result.project.projectTitle}</Link>
+                                            <div className="space-y-2">
+                                                <Link href={`/project/${result.project.projectSlug}/grants/${result.project.grantUID}`} className="text-md text-gray-600">
+                                                    {result.project.grantTitle}
+                                                </Link>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col items-end justify-center">
+                                            <button
+                                                onClick={() => handleScoreClick(result.project.projectUID)}
+                                                className="text-2xl text-primary font-bold hover:opacity-80 transition-opacity underline decoration-dotted cursor-pointer"
+                                                aria-label="Show impact score calculation"
+                                            >
+                                                {formatCurrency(result.impactScore)}
+                                            </button>
+                                            <span className="text-sm font-medium text-gray-600">Impact Score</span>
                                         </div>
                                     </div>
-                                    <div className="flex flex-col items-end justify-center">
-                                        <span className="text-2xl text-primary font-bold text-primary-500">
-                                            {Number(result.impactScore).toFixed(2)}
-                                        </span>
-                                        <span className="text-sm font-medium text-gray-600">Impact Score</span>
-                                    </div>
+
+                                    {activeCalculation === result.project.projectUID && (
+                                        <div className="absolute right-0 top-16 z-10 w-80 bg-white rounded-lg shadow-lg border border-gray-200 p-4">
+                                            <div className="flex justify-between items-center mb-3">
+                                                <h4 className="text-sm font-medium text-gray-700">Impact Score Calculation</h4>
+                                                <button
+                                                    onClick={() => setActiveCalculation(null)}
+                                                    className="text-gray-400 hover:text-gray-600"
+                                                    aria-label="Close calculation"
+                                                >
+                                                    ×
+                                                </button>
+                                            </div>
+                                            <div className="space-y-2">
+                                                {result.outputs.map(output => (
+                                                    <div key={output.outputId} className="flex justify-between items-center text-sm">
+                                                        <span className="text-gray-600">{output.outputName}</span>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-gray-500">{formatCurrency(output.avgValue)}</span>
+                                                            <span className="text-gray-400">×</span>
+                                                            <span className="text-primary">{Math.round(outputDistribution[output.outputId] * 100)}%</span>
+                                                            <span className="text-gray-400">=</span>
+                                                            <span className="font-medium text-gray-900">
+                                                                {formatCurrency(output.avgValue * outputDistribution[output.outputId])}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             ))}
                         </div>

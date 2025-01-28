@@ -6,8 +6,7 @@ export const filterGrantsByStarting = (grants: Grant[]) => {
   return newGrants.filter((grant) => {
     const { milestones } = grant;
     const completedMilestones = milestones.filter(
-      (milestone) =>
-        milestone.completed || milestone.approved || milestone.rejected
+      (milestone) => milestone.completed
     );
     return completedMilestones.length === 0;
   });
