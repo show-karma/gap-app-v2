@@ -72,6 +72,8 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
           })),
         };
         grantsWithMilestones.push(grantWithNormalizedMilestones);
+      } else {
+        grantsWithMilestones.push(grant);
       }
     });
     parsedProject.grants = grantsWithMilestones;
