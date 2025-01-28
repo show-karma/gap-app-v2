@@ -68,7 +68,8 @@ export const INDEXER = {
   CATEGORIES: {
     CREATE: (idOrSlug: string) => `/categories/create/${idOrSlug}`,
     OUTPUTS: {
-      UPDATE: (categoryId: string) => `/categories/${categoryId}/outputs`,
+      UPDATE: (categoryId: string) =>
+        `/categories/${categoryId}/impact-segments`,
     },
   },
   COMMUNITY: {

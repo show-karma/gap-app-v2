@@ -8,14 +8,32 @@ import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { ChevronDownIcon, TrashIcon } from "@heroicons/react/24/outline";
+import { zodResolver } from "@hookform/resolvers/zod";
 import * as Accordion from "@radix-ui/react-accordion";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Link from "next/link";
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
+import { z } from "zod";
 
 const OUTPUT_TYPES = ["output", "outcome"] as const;
 type OutputType = (typeof OUTPUT_TYPES)[number];
+
+const impactSegmentSchema = z.object({
+  name: z
+    .string()
+    .min(3, "Name must be at least 3 characters")
+    .max(100, "Name must be less than 100 characters"),
+  description: z
+    .string()
+    .min(10, "Description must be at least 10 characters")
+    .max(500, "Description must be less than 500 characters"),
+  type: z.enum(OUTPUT_TYPES),
+  indicators: z.array(z.string()).optional(),
+});
+
+type ImpactSegmentFormData = z.infer<typeof impactSegmentSchema>;
 
 interface Indicator {
   id: string;
@@ -46,6 +64,110 @@ interface ManageCategoriesOutputsProps {
   community: ICommunityResponse | undefined;
 }
 
+interface EditFormProps {
+  output: Output;
+  categoryId: string;
+  onSave: (data: ImpactSegmentFormData) => void;
+  isLoading: boolean;
+  indicators: Indicator[];
+}
+
+const EditForm = ({
+  output,
+  categoryId,
+  onSave,
+  isLoading,
+  indicators,
+}: EditFormProps) => {
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isValid, isDirty },
+    setValue,
+    watch,
+  } = useForm<ImpactSegmentFormData>({
+    resolver: zodResolver(impactSegmentSchema),
+    defaultValues: {
+      name: output.name,
+      description: output.description || "",
+      type: output.type,
+      indicators: output.indicators || [],
+    },
+    mode: "onChange",
+  });
+
+  const selectedIndicators = watch("indicators") || [];
+
+  const handleIndicatorChange = (value: string) => {
+    const current = selectedIndicators;
+    const updated = current.includes(value)
+      ? current.filter((id) => id !== value)
+      : [...current, value];
+    setValue("indicators", updated, { shouldValidate: true });
+  };
+
+  return (
+    <form onSubmit={handleSubmit(onSave)} className="space-y-4">
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-2">
+          <label className="text-sm text-gray-600 dark:text-gray-400">
+            Name
+          </label>
+          <input
+            {...register("name")}
+            placeholder="Enter name"
+            className="text-sm p-2 border border-gray-200 dark:border-gray-700 rounded-md 
+              focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full"
+          />
+          {errors.name && (
+            <p className="text-sm text-red-500">{errors.name.message}</p>
+          )}
+        </div>
+        <div className="flex flex-col gap-2">
+          <label className="text-sm text-gray-600 dark:text-gray-400">
+            Description
+          </label>
+          <textarea
+            {...register("description")}
+            placeholder="Enter description"
+            rows={3}
+            className="text-sm p-2 border border-gray-200 dark:border-gray-700 rounded-md 
+              focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full"
+          />
+          {errors.description && (
+            <p className="text-sm text-red-500">{errors.description.message}</p>
+          )}
+        </div>
+      </div>
+      <div className="space-y-2">
+        <h6 className="text-sm font-medium">Assigned Indicators</h6>
+        <SearchWithValueDropdown
+          onSelectFunction={handleIndicatorChange}
+          selected={selectedIndicators}
+          list={indicators.map((indicator) => ({
+            value: indicator.id,
+            title: `${indicator.name} (${indicator.unitOfMeasure})`,
+          }))}
+          type="indicator"
+          prefixUnselected="Select"
+          isMultiple={true}
+        />
+      </div>
+      <div className="flex justify-end">
+        <Button
+          type="submit"
+          isLoading={isLoading}
+          disabled={isLoading || !isValid || !isDirty}
+          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 
+            transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Save Changes
+        </Button>
+      </div>
+    </form>
+  );
+};
+
 export const ManageCategoriesOutputs = ({
   categories,
   setCategories,
@@ -61,45 +183,79 @@ export const ManageCategoriesOutputs = ({
   const [newOutputIndicators, setNewOutputIndicators] = useState<
     Record<string, string[]>
   >({});
-  const [hasOutputChanges, setHasOutputChanges] = useState<
-    Record<string, boolean>
-  >({});
-  const [isSavingOutputs, setIsSavingOutputs] = useState<
-    Record<string, boolean>
-  >({});
+  const [isSavingOutput, setIsSavingOutput] = useState<string>("");
 
   const { data: indicators = [] } = useIndicators({
     communityId: community?.uid || "",
   });
 
-  const handleAddOutput = (categoryId: string) => {
-    if (!newOutputs[categoryId]?.trim()) return;
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+    setValue,
+    watch,
+  } = useForm<ImpactSegmentFormData>({
+    resolver: zodResolver(impactSegmentSchema),
+    defaultValues: {
+      type: "output",
+      indicators: [],
+    },
+  });
 
-    const categoryIndex = categories.findIndex((cat) => cat.id === categoryId);
-    if (categoryIndex === -1) return;
+  const selectedIndicators = watch("indicators") || [];
 
-    const updatedCategories = [...categories];
-    updatedCategories[categoryIndex] = {
-      ...updatedCategories[categoryIndex],
-      outputs: [
-        ...updatedCategories[categoryIndex].outputs,
+  const handleAddOutput = async (
+    data: ImpactSegmentFormData,
+    categoryId: string
+  ) => {
+    try {
+      setIsSavingOutput("new");
+      const [, error] = await fetchData(
+        INDEXER.CATEGORIES.OUTPUTS.UPDATE(categoryId),
+        "PUT",
         {
-          id: `temp-${Date.now()}`,
-          name: newOutputs[categoryId].trim(),
-          description: newOutputDescriptions[categoryId]?.trim(),
-          categoryId,
-          type: newOutputTypes[categoryId] || "output",
-          indicators: newOutputIndicators[categoryId] || [],
-        },
-      ],
-    };
+          idOrSlug: community?.uid,
+          output: {
+            name: data.name,
+            type: data.type,
+            description: data.description,
+            indicators: data.indicators,
+          },
+        }
+      );
+      if (error) throw error;
 
-    setCategories(updatedCategories);
-    setNewOutputs((prev) => ({ ...prev, [categoryId]: "" }));
-    setNewOutputDescriptions((prev) => ({ ...prev, [categoryId]: "" }));
-    setNewOutputTypes((prev) => ({ ...prev, [categoryId]: "output" }));
-    setNewOutputIndicators((prev) => ({ ...prev, [categoryId]: [] }));
-    setHasOutputChanges((prev) => ({ ...prev, [categoryId]: true }));
+      const categoryIndex = categories.findIndex(
+        (cat) => cat.id === categoryId
+      );
+      if (categoryIndex === -1) return;
+
+      const newOutput = {
+        id: `temp-${Date.now()}`,
+        name: data.name,
+        description: data.description,
+        categoryId,
+        type: data.type,
+        indicators: data.indicators,
+      };
+
+      const updatedCategories = [...categories];
+      updatedCategories[categoryIndex] = {
+        ...updatedCategories[categoryIndex],
+        outputs: [...updatedCategories[categoryIndex].outputs, newOutput],
+      };
+
+      setCategories(updatedCategories);
+      reset();
+      toast.success("Impact segment created successfully");
+    } catch (error) {
+      toast.error("Failed to create impact segment");
+      errorManager("Failed to create impact segment", error);
+    } finally {
+      setIsSavingOutput("");
+    }
   };
 
   const handleRemoveOutput = (categoryId: string, outputId: string) => {
@@ -115,7 +271,6 @@ export const ManageCategoriesOutputs = ({
     };
 
     setCategories(updatedCategories);
-    setHasOutputChanges((prev) => ({ ...prev, [categoryId]: true }));
   };
 
   const handleIndicatorChange = (
@@ -142,65 +297,63 @@ export const ManageCategoriesOutputs = ({
     }
 
     setCategories(updatedCategories);
-    setHasOutputChanges((prev) => ({ ...prev, [categoryId]: true }));
   };
 
-  const handleNewIndicatorChange = (
+  const handleNewIndicatorChange = (value: string) => {
+    const current = selectedIndicators;
+    const updated = current.includes(value)
+      ? current.filter((id) => id !== value)
+      : [...current, value];
+    setValue("indicators", updated);
+  };
+
+  const handleOutputFieldChange = (
     categoryId: string,
-    indicatorId: string
+    outputId: string,
+    field: keyof Output,
+    value: string
   ) => {
-    setNewOutputIndicators((prev) => {
-      const currentIndicators = prev[categoryId] || [];
-      if (currentIndicators.includes(indicatorId)) {
-        return {
-          ...prev,
-          [categoryId]: currentIndicators.filter((id) => id !== indicatorId),
-        };
-      } else {
-        return {
-          ...prev,
-          [categoryId]: [...currentIndicators, indicatorId],
-        };
-      }
-    });
+    const categoryIndex = categories.findIndex((cat) => cat.id === categoryId);
+    if (categoryIndex === -1) return;
+
+    const outputIndex = categories[categoryIndex].outputs.findIndex(
+      (output) => output.id === outputId
+    );
+    if (outputIndex === -1) return;
+
+    const updatedCategories = [...categories];
+    updatedCategories[categoryIndex].outputs[outputIndex] = {
+      ...updatedCategories[categoryIndex].outputs[outputIndex],
+      [field]: value,
+    };
+
+    setCategories(updatedCategories);
   };
 
-  const saveOutputs = async (category: Category) => {
-    setIsSavingOutputs({ ...isSavingOutputs, [category.id]: true });
+  const saveOutput = async (
+    data: ImpactSegmentFormData,
+    categoryId: string,
+    outputId: string
+  ) => {
     try {
+      setIsSavingOutput(outputId);
       const [, error] = await fetchData(
-        INDEXER.CATEGORIES.OUTPUTS.UPDATE(category.id),
-        "PUT",
+        INDEXER.CATEGORIES.OUTPUTS.UPDATE(categoryId),
+        "POST",
         {
-          idOrSlug: community?.uid,
-          categoryId: category.id,
-          outputs: category.outputs?.map((output) => ({
-            name: output.name,
-            type: output.type,
-            indicators: output.indicators,
-          })) as {
-            name: string;
-            type: string;
-            indicators?: string[];
-          }[],
+          name: data.name,
+          type: data.type,
+          description: data.description,
+          impactIndicators: data.indicators,
         }
       );
-      if (error) throw new Error("Error saving outputs");
-      toast.success(MESSAGES.CATEGORIES.OUTPUTS.SUCCESS(category.name));
-      setHasOutputChanges((prev) => ({ ...prev, [category.id]: false }));
-    } catch (error: any) {
-      toast.error(MESSAGES.CATEGORIES.OUTPUTS.ERROR.GENERIC(category.name));
-      errorManager(
-        `Error saving outputs of community ${community?.uid}`,
-        error,
-        {
-          community: community?.uid,
-          idOrSlug: community?.uid,
-          outputs: category.outputs?.map((output) => output?.name),
-        }
-      );
+      if (error) throw error;
+      toast.success("Impact segment updated successfully");
+    } catch (error) {
+      toast.error("Failed to update impact segment");
+      errorManager("Failed to update impact segment", error);
     } finally {
-      setIsSavingOutputs({ ...isSavingOutputs, [category.id]: false });
+      setIsSavingOutput("");
     }
   };
 
@@ -225,7 +378,7 @@ export const ManageCategoriesOutputs = ({
               </div>
 
               <div className="w-full pb-6 mb-6">
-                <h5 className="text-md font-semibold mb-4">Modify outputs</h5>
+                <h5 className="text-md font-semibold mb-4">Impact Segments</h5>
                 <Accordion.Root type="multiple" className="space-y-2 w-full">
                   {category.outputs.map((output) => (
                     <Accordion.Item
@@ -265,39 +418,21 @@ export const ManageCategoriesOutputs = ({
                         </div>
                       </Accordion.Trigger>
                       <Accordion.Content className="p-4 bg-gray-50 dark:bg-zinc-900">
-                        <div className="space-y-4">
-                          <div className="text-sm text-gray-600 dark:text-gray-400">
-                            <p>{output.description}</p>
-                          </div>
-                          <div className="space-y-2">
-                            <h6 className="text-sm font-medium">
-                              Assigned Indicators
-                            </h6>
-                            <SearchWithValueDropdown
-                              onSelectFunction={(value) =>
-                                handleIndicatorChange(
-                                  category.id,
-                                  output.id,
-                                  value
-                                )
-                              }
-                              selected={output.indicators || []}
-                              list={indicators.map((indicator) => ({
-                                value: indicator.id,
-                                title: `${indicator.name} (${indicator.unitOfMeasure})`,
-                              }))}
-                              type="indicator"
-                              prefixUnselected="Select"
-                              isMultiple={true}
-                            />
-                          </div>
-                        </div>
+                        <EditForm
+                          output={output}
+                          categoryId={category.id}
+                          onSave={(data) =>
+                            saveOutput(data, category.id, output.id)
+                          }
+                          isLoading={isSavingOutput === output.id}
+                          indicators={indicators}
+                        />
                       </Accordion.Content>
                     </Accordion.Item>
                   ))}
                 </Accordion.Root>
 
-                <Accordion.Root type="multiple" className="mt-6">
+                <Accordion.Root type="single" className="mt-6">
                   <Accordion.Item
                     value="create-new"
                     className="border-2 border-blue-100 dark:border-blue-900 bg-blue-50/30 dark:bg-blue-900/10 rounded-lg overflow-hidden shadow-sm"
@@ -311,55 +446,51 @@ export const ManageCategoriesOutputs = ({
                       <ChevronDownIcon className="h-5 w-5 text-blue-500 transform transition-transform duration-200 ease-in-out ui-open:rotate-180" />
                     </Accordion.Trigger>
                     <Accordion.Content className="p-4 space-y-4 bg-white dark:bg-zinc-900 border-t border-blue-100 dark:border-blue-900">
-                      <div className="flex flex-col gap-4">
+                      <form
+                        onSubmit={handleSubmit((data) =>
+                          handleAddOutput(data, category.id)
+                        )}
+                        className="flex flex-col gap-4"
+                      >
                         <div className="flex flex-col gap-2">
                           <label className="text-sm text-gray-600 dark:text-gray-400">
                             Name
                           </label>
                           <input
-                            type="text"
-                            value={newOutputs[category.id] || ""}
-                            onChange={(e) =>
-                              setNewOutputs((prev) => ({
-                                ...prev,
-                                [category.id]: e.target.value,
-                              }))
-                            }
+                            {...register("name")}
                             placeholder="Enter name"
                             className="text-sm p-2 border border-gray-200 dark:border-gray-700 rounded-md 
                               focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full"
                           />
+                          {errors.name && (
+                            <p className="text-sm text-red-500">
+                              {errors.name.message}
+                            </p>
+                          )}
                         </div>
                         <div className="flex flex-col gap-2">
                           <label className="text-sm text-gray-600 dark:text-gray-400">
                             Description
                           </label>
                           <textarea
-                            value={newOutputDescriptions[category.id] || ""}
-                            onChange={(e) =>
-                              setNewOutputDescriptions((prev) => ({
-                                ...prev,
-                                [category.id]: e.target.value,
-                              }))
-                            }
+                            {...register("description")}
                             placeholder="Enter description"
                             rows={3}
                             className="text-sm p-2 border border-gray-200 dark:border-gray-700 rounded-md 
                               focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full"
                           />
+                          {errors.description && (
+                            <p className="text-sm text-red-500">
+                              {errors.description.message}
+                            </p>
+                          )}
                         </div>
                         <div className="flex flex-col gap-2">
                           <label className="text-sm text-gray-600 dark:text-gray-400">
                             Type
                           </label>
                           <select
-                            value={newOutputTypes[category.id] || "output"}
-                            onChange={(e) =>
-                              setNewOutputTypes((prev) => ({
-                                ...prev,
-                                [category.id]: e.target.value as OutputType,
-                              }))
-                            }
+                            {...register("type")}
                             className="text-sm p-2 border border-gray-200 dark:border-gray-700 rounded-md 
                               focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full"
                           >
@@ -375,10 +506,8 @@ export const ManageCategoriesOutputs = ({
                             Assign Indicators
                           </label>
                           <SearchWithValueDropdown
-                            onSelectFunction={(value) =>
-                              handleNewIndicatorChange(category.id, value)
-                            }
-                            selected={newOutputIndicators[category.id] || []}
+                            onSelectFunction={handleNewIndicatorChange}
+                            selected={selectedIndicators}
                             list={indicators.map((indicator) => ({
                               value: indicator.id,
                               title: `${indicator.name} (${indicator.unitOfMeasure})`,
@@ -389,29 +518,18 @@ export const ManageCategoriesOutputs = ({
                           />
                         </div>
                         <Button
-                          onClick={() => handleAddOutput(category.id)}
-                          disabled={!newOutputs[category.id]?.trim()}
+                          type="submit"
+                          isLoading={isSavingOutput === "new"}
+                          disabled={isSavingOutput === "new"}
                           className="w-full px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 
                             transition-colors disabled:opacity-50 mt-2"
                         >
-                          Add {newOutputTypes[category.id] || "output"}
+                          Add Impact Segment
                         </Button>
-                      </div>
+                      </form>
                     </Accordion.Content>
                   </Accordion.Item>
                 </Accordion.Root>
-
-                {hasOutputChanges[category.id] && (
-                  <Button
-                    isLoading={isSavingOutputs[category.id]}
-                    disabled={isSavingOutputs[category.id]}
-                    onClick={() => saveOutputs(category)}
-                    className="mt-4 text-center mx-auto bg-primary-500 px-4 py-2 rounded-md text-white hover:bg-primary-600 
-                      dark:bg-primary-900 transition-colors"
-                  >
-                    Save changes
-                  </Button>
-                )}
               </div>
             </div>
           ))}
