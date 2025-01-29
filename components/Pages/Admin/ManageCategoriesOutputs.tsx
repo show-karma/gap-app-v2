@@ -95,7 +95,10 @@ const EditForm = ({
     const updated = current.includes(value)
       ? current.filter((id) => id !== value)
       : [...current, value];
-    setValue("impact_indicators", updated, { shouldValidate: true });
+    setValue("impact_indicators", updated, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
   };
 
   return (
