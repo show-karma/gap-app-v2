@@ -216,7 +216,7 @@ export async function POST(req: Request) {
       model: openai("gpt-4o"),
       experimental_transform: smoothStream(),
       messages: messages,
-      system: `You are Karma Co-pilot, an AI assistant for the Karma Grantee Accountability Protocol (GAP) - a web3 platform that helps track and evaluate grant-funded projects.
+      system: `You are Karma Beacon, an AI assistant for the Karma Grantee Accountability Protocol (GAP) - a web3 platform that helps track and evaluate grant-funded projects.
 
 ROLE AND CONTEXT:
 - You assist evaluators in assessing projects in a grant program/round

@@ -43,7 +43,7 @@ function MessageSkeleton() {
     return (
         <div className="flex justify-start">
             <div className="max-w-[80%] rounded-lg p-3 bg-zinc-100">
-                <div className="text-sm font-medium mb-1 text-gray-900">Karma Co-pilot</div>
+                <div className="text-sm font-medium mb-1 text-gray-900">Karma Beacon</div>
                 <div className="flex items-center space-x-2">
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100" />
@@ -79,12 +79,12 @@ function ChatWithKarmaCoPilot({ projects }: { projects: any[] }) {
             onSubmit={handleSubmit}
             className={`relative w-full ${hasMessages ? '' : 'max-w-3xl'} ${projects.length > 0 ? '' : 'bg-zinc-300 opacity-50 cursor-not-allowed pointer-events-none'}`}
             role="search"
-            aria-label="Chat with Karma Co-pilot"
+            aria-label="Chat with Karma Beacon"
         >
             <input
                 className="w-full p-4 pr-12 rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
                 value={input}
-                placeholder="Ask about the program or projects..."
+                placeholder="Ask anything about the participating projects"
                 onChange={handleInputChange}
                 disabled={isLoadingChat}
                 aria-label="Chat input"
@@ -102,26 +102,6 @@ function ChatWithKarmaCoPilot({ projects }: { projects: any[] }) {
         </form>
     );
 
-    if (!hasMessages) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[580px] mx-auto px-4 mb-8 animate-fade-in">
-                <div className="text-center mb-3">
-                    <h1 className="mb-3 text-5xl font-bold text-gray-900">
-                        Karma Co-pilot
-                    </h1>
-                    <p className="text-xl text-gray-600">The only AI assistant you&apos;ll need to evaluate projects</p>
-                    <div className="text-xl text-gray-700 font-medium mt-4">Use Karma Co-pilot to:</div>
-                </div>
-                <div className="flex justify-between items-center mb-8 w-full gap-4">
-                    <div className="bg-zinc-100 rounded-3xl p-2 text-lg text-gray-700">✅ Compare projects within the program</div>
-                    <div className="bg-zinc-100 rounded-3xl p-2 text-lg text-gray-700">✅ Analyze project metrics, updates, outcomes and impact</div>
-                    <div className="bg-zinc-100 rounded-3xl p-2 text-lg text-gray-700">🚫 Order a pizza</div>
-                </div>
-                {renderChatInput()}
-            </div>
-        );
-    }
-
     return (
         <div className="relative flex flex-col h-[500px] bg-white rounded-lg border shadow-sm mb-8">
             {/* Messages Container */}
@@ -136,7 +116,7 @@ function ChatWithKarmaCoPilot({ projects }: { projects: any[] }) {
                             : 'border border-primary-500 text-white'
                             }`}>
                             {m.role === 'assistant' && <div className={`text-sm font-medium mb-1 text-primary-600`}>
-                                Karma Co-pilot
+                                Karma Beacon
                             </div>}
                             {m.content.length > 0 ? (
                                 <MarkdownPreview source={m.content} />
@@ -210,19 +190,31 @@ function ProjectCard({ project, index }: { project: Project, index: number }) {
                         <div className="text-sm text-gray-900 dark:text-gray-400 text-ellipsis line-clamp-2">
                             {project.details.description}
                         </div>
-                    </div> <div className="flex flex-row flex-wrap gap-1 mt-4">
-
                     </div>
                 </div>
             </div>
-            <div className="flex w-full flex-row flex-wrap justify-start gap-1 mt-4">
-                {Array.from(new Set(project?.categories || [])).length > 0 && <div className="flex h-max w-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
-                    {Array.from(new Set(project?.categories || [])).map((category, i) => (
-                        <p key={i} className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
-                            {category}
-                        </p>
-                    ))}
-                </div>}
+            <div className="flex w-full flex-col gap-2">
+                <div className="flex items-center justify-start gap-4 mt-2">
+                    {Array.from(new Set(project?.categories || [])).length > 0 && (
+                        <div className="flex flex-wrap gap-2">
+                            {Array.from(new Set(project?.categories || [])).map((category, i) => (
+                                <div key={i} className="flex h-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
+                                    <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
+                                        {category}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {project.updates.length > 0 && (
+                        <div className="flex h-max items-center justify-start rounded-full bg-teal-50 dark:bg-teal-700 text-teal-600 dark:text-teal-200 px-3 py-1 max-2xl:px-2">
+                            <p className="text-center text-sm font-medium text-teal-600 dark:text-teal-100 max-2xl:text-[13px]">
+                                Updates: {project.updates.length || 0}
+                            </p>
+                        </div>
+                    )}
+                </div>
                 {project.impacts.length > 0 && <div className="flex h-max w-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
                     <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
                         Impacts: {project.impacts.length || 0}
@@ -233,12 +225,6 @@ function ProjectCard({ project, index }: { project: Project, index: number }) {
                         Milestones: {project.milestones.length || 0}
                     </p>
                 </div>}
-                {project.updates.length > 0 && <div className="flex h-max w-max items-center justify-start rounded-full bg-teal-50 dark:bg-teal-700 text-teal-600 dark:text-teal-200 px-3 py-1 max-2xl:px-2">
-                    <p className="text-center text-sm font-medium text-teal-600 dark:text-teal-100 max-2xl:text-[13px]">
-                        Updates: {project.updates.length || 0}
-                    </p>
-                </div>}
-
             </div>
         </div >
     );
@@ -278,6 +264,7 @@ export const CommunityProjectEvaluatorPage = () => {
     const communityId = params.communityId as string;
 
     const [isLoading, setIsLoading] = useState(true);
+    const [isLoadingProjects, setIsLoadingProjects] = useState(false);
     const [programs, setPrograms] = useState<Program[]>([]);
     const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
     const [projects, setProjects] = useState<Project[]>([]);
@@ -304,7 +291,7 @@ export const CommunityProjectEvaluatorPage = () => {
 
     async function getProjectsByProgram(programId: string, chainId: number) {
         try {
-            setIsLoading(true);
+            setIsLoadingProjects(true);
             const [projects, error] = await fetchData(INDEXER.PROJECTS.BY_PROGRAM(programId, chainId));
             if (error) {
                 console.error("Error fetching projects:", error);
@@ -314,7 +301,7 @@ export const CommunityProjectEvaluatorPage = () => {
         } catch (error) {
             console.error("Error fetching projects:", error);
         } finally {
-            setIsLoading(false);
+            setIsLoadingProjects(false);
         }
     }
 
@@ -327,62 +314,77 @@ export const CommunityProjectEvaluatorPage = () => {
         }
     }, [selectedProgram]);
 
-    if (isLoading) {
-        return (
-            <div className="flex flex-col items-center justify-center min-h-[400px]">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700"></div>
-                <p className="mt-4 text-gray-600">Loading...</p>
-            </div>
-        );
-    }
+    // Function to handle program selection
+    const handleProgramSelect = (program: Program) => {
+        setSelectedProgram(program);
+        setProjects([]); // Clear previous projects
+        getProjectsByProgram(program.programId, Number(program.chainID)); // Fetch projects for the selected program
+    };
 
     return (
-        <div className="w-full flex-shrink-0">
-            <div className="flex flex-col gap-8">
-                <div className="flex justify-between items-center">
-                    <h2 className="text-2xl font-bold text-gray-900">
-                        Ask questions about this program and let <span className="text-primary-500">Karma Co-pilot</span> <br /> help you evaluate projects in this community.
-                    </h2>
-
-                    <div className="flex justify-between items-center gap-4">
-                        <label className="block text-lg font-medium text-gray-700">Select a program</label>
-                        <Listbox value={selectedProgram} onChange={(program) => {
-                            setSelectedProgram(program);
-                        }}>
-                            <div className="relative mt-1">
-                                <ListboxButton className="relative w-full cursor-default rounded-lg bg-white py-3 pl-4 pr-10 text-left border border-gray-200 shadow-sm hover:border-gray-400 transition-colors focus:outline-none focus-visible:border-gray-700 focus-visible:ring-2 focus-visible:ring-gray-400">
-                                    <span className="block truncate text-gray-900">
-                                        {selectedProgram?.name || "No program selected"}
-                                    </span>
-                                    <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-                                        <ChevronUpDownIcon className="h-5 w-5 text-gray-400" aria-hidden="true" />
-                                    </span>
-                                </ListboxButton>
-                                <ListboxOptions className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none">
-                                    {programs.map((program) => (
-                                        <ListboxOption
-                                            key={program.programId}
-                                            value={program}
-                                            className={({ active }) =>
-                                                `relative cursor-pointer select-none py-3 pl-4 pr-9 ${active ? 'bg-gray-100 text-gray-900' : 'text-gray-900'}`
-                                            }
-                                        >
-                                            {program.name}
-                                        </ListboxOption>
-                                    ))}
-                                </ListboxOptions>
+        <div className="flex flex-col w-full h-screen">
+            {/* Display heading when no program is selected */}
+            {!selectedProgram ? (
+                <div className="flex flex-col items-center justify-center h-full bg-gray-50 p-4">
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2 text-center">Karma Beacon</h1>
+                    <p className="text-lg text-gray-600 text-center mb-4">
+                        The only AI assistant you&apos;ll need to evaluate projects
+                    </p>
+                    <div className="flex flex-wrap justify-center items-center gap-4 mb-8 w-full">
+                        <div className="bg-zinc-100 rounded-3xl p-4 text-lg text-gray-700 shadow-md">✅ Compare projects within the program</div>
+                        <div className="bg-zinc-100 rounded-3xl p-4 text-lg text-gray-700 shadow-md">✅ Analyze project metrics, updates, outcomes and impact</div>
+                    </div>
+                    {/* Program Selection Dropdown */}
+                    <div className="w-1/2 mt-4">
+                        {isLoading ? (
+                            <div className="flex items-center justify-center">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-700"></div>
                             </div>
-                        </Listbox>
+                        ) : (
+                            <Listbox value={selectedProgram} onChange={handleProgramSelect}>
+                                <div className="relative">
+                                    <Listbox.Button className="relative w-full cursor-default rounded-lg border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:outline-none focus:ring-1 focus:ring-gray-400">
+                                        {selectedProgram ? selectedProgram : "Select a program"}
+                                    </Listbox.Button>
+                                    <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+                                        {programs.map((program) => (
+                                            <Listbox.Option key={program.programId} value={program} className={({ active }) => `relative cursor-default select-none py-2 pl-10 pr-4 ${active ? 'bg-indigo-600 text-white' : 'text-gray-900'}`}>
+                                                {program.name}
+                                            </Listbox.Option>
+                                        ))}
+                                    </Listbox.Options>
+                                </div>
+                            </Listbox>
+                        )}
                     </div>
                 </div>
+            ) : (
+                <>
+                    {/* Projects List and Chat Interface */}
+                    <div className="flex w-full h-full">
+                        {/* Projects List */}
+                        <div className="w-1/4 overflow-y-auto p-4 bg-gray-50 border-r border-gray-200">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4">Projects</h2>
+                            {isLoadingProjects ? (
+                                <div className="flex items-center justify-center h-full">
+                                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700"></div>
+                                </div>
+                            ) : (
+                                projects.map((project, index) => (
+                                    <MemoizedProjectCard key={project.uid} project={project} index={index} />
+                                ))
+                            )}
+                        </div>
 
-                {selectedProgram && (
-                    <div className="flex flex-col gap-6">
-                        <ProjectsMarquee projects={projects} isLoading={isLoading} />
-                        <ChatWithKarmaCoPilot projects={projects} />
+                        {selectedProgram && (
+                        <div className="w-3/4 p-4 bg-white">
+                            <h2 className="text-2xl font-bold text-gray-900 mb-4">Chat with Karma Beacon</h2>
+                            <ChatWithKarmaCoPilot projects={projects} />
+                        </div>
+                        )}
                     </div>
-                )}
-            </div>
+                </>
+            )}
         </div>
     );
 }
