@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { ProjectImpactLoading } from "../Loading/Impact";
+import { OutputsAndOutcomesLoading } from "../Loading/OutputsAndOutcomes";
 
 const ImpactComponent = dynamic(
   () =>
@@ -9,7 +9,7 @@ const ImpactComponent = dynamic(
       (mod) => mod.ImpactComponent
     ),
   {
-    loading: () => <ProjectImpactLoading />,
+    loading: () => <OutputsAndOutcomesLoading />,
   }
 );
 const ImpactWrapper = () => {

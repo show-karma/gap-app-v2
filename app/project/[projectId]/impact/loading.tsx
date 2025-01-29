@@ -1,5 +1,5 @@
-import { ProjectImpactLoading } from "@/components/Pages/Project/Loading/Impact";
+import { OutputsAndOutcomesLoading } from "@/components/Pages/Project/Loading/OutputsAndOutcomes";
 
 export default function Loading() {
-  return <ProjectImpactLoading />;
+  return <OutputsAndOutcomesLoading />;
 }

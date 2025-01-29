@@ -9,9 +9,11 @@ export const CommunityImpactCharts = () => {
   const projectSelected = searchParams.get("projectId");
   const { data, isLoading } = useImpactMeasurement(projectSelected);
 
-  const outputs = data?.data;
+  const categories = data?.data;
 
-  const orderedData = outputs?.sort((a, b) =>
+  console.log(categories);
+
+  const orderedData = categories?.sort((a, b) =>
     a.categoryName.localeCompare(b.categoryName)
   );
 
@@ -22,9 +24,9 @@ export const CommunityImpactCharts = () => {
           <Spinner />
         </div>
       ) : orderedData?.length ? (
-        orderedData.map((program, index) => (
+        orderedData.map((category, index) => (
           <>
-            <CategoryRow key={program.categoryName} program={program} />
+            <CategoryRow key={category.categoryName} category={category} />
             {index !== orderedData.length - 1 && (
               <div className="w-full my-8 h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-700 to-transparent" />
             )}
@@ -33,7 +35,7 @@ export const CommunityImpactCharts = () => {
       ) : (
         <div className="flex flex-col items-center justify-center py-10 text-center">
           <p className="text-lg text-gray-600 dark:text-gray-400">
-            This community has not reported any impact outputs yet.
+            This community has not reported any impact segments yet.
           </p>
         </div>
       )}

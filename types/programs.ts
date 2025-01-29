@@ -4,26 +4,40 @@ export interface ProgramImpactDatapoint {
   outputTimestamp: string | null;
   running?: number;
 }
-export interface ProgramImpactOutput {
-  chainID: number;
+
+export interface ImpactIndicator {
+  programId: string;
   grantUID: string;
   grantTitle: string;
+  amount: string;
   projectUID: string;
   projectTitle: string;
   projectSlug: string;
-  amount: string;
-  outputId: string;
-  name: string;
+  impactIndicatorId: string;
+  impactSegmentId: string;
+  indicatorName: string;
+  indicatorDescription: string;
+  indicatorUnitOfMeasure: string;
+  impactSegmentName: string;
+  impactSegmentDescription: string;
+  impactSegmentType: "output" | "outcome";
   categoryId: string;
   categoryName: string;
   datapoints: ProgramImpactDatapoint[];
-  lastUpdated: string;
-  type?: "output" | "outcome";
+}
+export interface ProgramImpactSegment {
+  categoryName: string;
+  impactSegmentName: string;
+  impactSegmentId: string;
+  impactSegmentDescription: string;
+  impactSegmentType: "output" | "outcome";
+  indicators: ImpactIndicator[];
 }
 
 export interface ProgramImpactDataResponse {
   categoryName: string;
-  outputs: ProgramImpactOutput[];
+  // outputs: ProgramImpactOutput[];
+  impacts: ProgramImpactSegment[];
 }
 
 export interface ProgramImpactData {

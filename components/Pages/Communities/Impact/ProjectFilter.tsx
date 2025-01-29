@@ -26,14 +26,14 @@ export const ProjectFilter = ({
 
   const { data, isLoading } = useImpactMeasurement();
 
-  const outputs = data?.data;
+  const impacts = data?.data;
 
-  const projects = outputs
-    ?.map((program) => program.outputs.map((output) => output))
-    .flat()
-    .map((project) => ({
-      title: project.projectTitle,
-      value: project.projectUID,
+  const projects = impacts
+    ?.flatMap((impact) => impact.impacts)
+    .flatMap((item) => item.indicators)
+    .map((item) => ({
+      title: item.projectTitle || item.projectSlug || item.projectUID,
+      value: item.projectUID,
     }));
   const uniqueProjects: {
     title: string;
