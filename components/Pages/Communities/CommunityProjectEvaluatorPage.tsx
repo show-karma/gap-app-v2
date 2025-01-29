@@ -344,7 +344,7 @@ export const CommunityProjectEvaluatorPage = () => {
                             <Listbox value={selectedProgram} onChange={handleProgramSelect}>
                                 <div className="relative">
                                     <Listbox.Button className="relative w-full cursor-default rounded-lg border border-gray-300 bg-white py-2 pl-3 pr-10 text-left shadow-sm focus:outline-none focus:ring-1 focus:ring-gray-400">
-                                        {selectedProgram ? selectedProgram.name : "Select a program"}
+                                        {selectedProgram ? selectedProgram : "Select a program"}
                                     </Listbox.Button>
                                     <Listbox.Options className="absolute z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
                                         {programs.map((program) => (
