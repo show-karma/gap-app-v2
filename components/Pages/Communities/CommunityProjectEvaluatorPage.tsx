@@ -43,7 +43,7 @@ function MessageSkeleton() {
     return (
         <div className="flex justify-start">
             <div className="max-w-[80%] rounded-lg p-3 bg-zinc-100">
-                <div className="text-sm font-medium mb-1 text-gray-900">Karma Co-pilot</div>
+                <div className="text-sm font-medium mb-1 text-gray-900">Karma Beacon</div>
                 <div className="flex items-center space-x-2">
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100" />
@@ -79,7 +79,7 @@ function ChatWithKarmaCoPilot({ projects }: { projects: any[] }) {
             onSubmit={handleSubmit}
             className={`relative w-full ${hasMessages ? '' : 'max-w-3xl'} ${projects.length > 0 ? '' : 'bg-zinc-300 opacity-50 cursor-not-allowed pointer-events-none'}`}
             role="search"
-            aria-label="Chat with Karma Co-pilot"
+            aria-label="Chat with Karma Beacon"
         >
             <input
                 className="w-full p-4 pr-12 rounded-lg border border-gray-300 shadow-sm focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
@@ -107,10 +107,10 @@ function ChatWithKarmaCoPilot({ projects }: { projects: any[] }) {
             <div className="flex flex-col items-center justify-center min-h-[580px] mx-auto px-4 mb-8 animate-fade-in">
                 <div className="text-center mb-3">
                     <h1 className="mb-3 text-5xl font-bold text-gray-900">
-                        Karma Co-pilot
+                        Karma Beacon
                     </h1>
                     <p className="text-xl text-gray-600">The only AI assistant you&apos;ll need to evaluate projects</p>
-                    <div className="text-xl text-gray-700 font-medium mt-4">Use Karma Co-pilot to:</div>
+                    <div className="text-xl text-gray-700 font-medium mt-4">Use Karma Beacon to:</div>
                 </div>
                 <div className="flex justify-between items-center mb-8 w-full gap-4">
                     <div className="bg-zinc-100 rounded-3xl p-2 text-lg text-gray-700">✅ Compare projects within the program</div>
@@ -136,7 +136,7 @@ function ChatWithKarmaCoPilot({ projects }: { projects: any[] }) {
                             : 'border border-primary-500 text-white'
                             }`}>
                             {m.role === 'assistant' && <div className={`text-sm font-medium mb-1 text-primary-600`}>
-                                Karma Co-pilot
+                                Karma Beacon
                             </div>}
                             {m.content.length > 0 ? (
                                 <MarkdownPreview source={m.content} />
@@ -341,7 +341,7 @@ export const CommunityProjectEvaluatorPage = () => {
             <div className="flex flex-col gap-8">
                 <div className="flex justify-between items-center">
                     <h2 className="text-2xl font-bold text-gray-900">
-                        Ask questions about this program and let <span className="text-primary-500">Karma Co-pilot</span> <br /> help you evaluate projects in this community.
+                        Ask questions about this program and let <span className="text-primary-500">Karma Beacon</span> <br /> help you evaluate projects in this community.
                     </h2>
 
                     <div className="flex justify-between items-center gap-4">
