@@ -20,9 +20,31 @@ export async function getProgramsImpact(
       throw error;
     }
 
+    const impactData = data as ProgramImpactData;
+
+    // If allCategories is provided, ensure all categories are included
+    if (allCategories?.length) {
+      const existingCategoryNames = new Set(
+        impactData.data.map((item) => item.categoryName)
+      );
+
+      // Add missing categories with empty impacts array
+      const missingCategories = allCategories
+        .filter((category) => !existingCategoryNames.has(category.name))
+        .map((category) => ({
+          categoryName: category.name,
+          impacts: [],
+        }));
+
+      return {
+        data: [...impactData.data, ...missingCategories],
+        stats: impactData.stats,
+      };
+    }
+
     return {
-      data: (data as ProgramImpactData).data,
-      stats: (data as ProgramImpactData).stats,
+      data: impactData.data,
+      stats: impactData.stats,
     };
   } catch (error) {
     errorManager("Error fetching program impact", error);

@@ -11,11 +11,18 @@ export const CommunityImpactCharts = () => {
 
   const categories = data?.data;
 
-  console.log(categories);
+  const orderedData = categories?.sort((a, b) => {
+    // First, compare by whether they have impacts
+    const aHasImpacts = a.impacts?.length > 0;
+    const bHasImpacts = b.impacts?.length > 0;
 
-  const orderedData = categories?.sort((a, b) =>
-    a.categoryName.localeCompare(b.categoryName)
-  );
+    if (aHasImpacts !== bHasImpacts) {
+      return aHasImpacts ? -1 : 1; // Categories with impacts come first
+    }
+
+    // If both have or don't have impacts, sort alphabetically
+    return a.categoryName.localeCompare(b.categoryName);
+  });
 
   return (
     <div className="flex flex-col gap-4 flex-1 mb-10">

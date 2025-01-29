@@ -6,7 +6,7 @@ export interface ImpactIndicatorWithData {
   createdAt?: string;
   updatedAt?: string;
   datapoints: {
-    value: number;
+    value: number | string;
     proof: string;
     startDate: string;
     endDate: string;

@@ -20,8 +20,9 @@ import { GrantsOutputsLoading } from "../Loading/Grants/Outputs";
 type OutputForm = {
   id: string;
   categoryId: string;
+  unitOfMeasure: "int" | "float";
   datapoints: {
-    value: number;
+    value: number | string;
     proof: string;
     startDate: string;
     endDate: string;
@@ -59,7 +60,6 @@ export const OutputsAndOutcomes = () => {
       prev.map((f) => (f.id === id ? { ...f, isSaving: true } : f))
     );
 
-    console.log(id, form.datapoints);
     await sendImpactAnswers(id, form.datapoints);
 
     setForms((prev) =>
@@ -140,7 +140,7 @@ export const OutputsAndOutcomes = () => {
   async function sendImpactAnswers(
     indicatorId: string,
     datapoints: {
-      value: number;
+      value: number | string;
       proof: string;
       startDate: string;
       endDate: string;
@@ -191,6 +191,7 @@ export const OutputsAndOutcomes = () => {
             endDate: datapoint.endDate || datapoint.outputTimestamp || "",
             outputTimestamp: datapoint.outputTimestamp || "",
           })) || [],
+        unitOfMeasure: item.unitOfMeasure,
         isEdited: false,
         isEditing: false,
       }))
@@ -265,8 +266,11 @@ export const OutputsAndOutcomes = () => {
 
   if (!project || isLoading) return <GrantsOutputsLoading />;
 
-  const isInvalidValue = (value: number) => {
+  const isInvalidValue = (value: number, unitOfMeasure: "int" | "float") => {
     if (value === undefined || value === null) return true;
+    if (unitOfMeasure === "int") {
+      return !Number.isInteger(Number(value));
+    }
     return isNaN(value) || value === 0;
   };
 
@@ -291,10 +295,7 @@ export const OutputsAndOutcomes = () => {
 
   const hasInvalidValues = (form: OutputForm) =>
     form.datapoints.some((datapoint) => {
-      if (!datapoint.value && datapoint.value !== 0) return true;
-      if (isNaN(Number(datapoint.value))) return true;
-      if (Number(datapoint.value) === 0) return true;
-      return false;
+      return isInvalidValue(Number(datapoint.value), form.unitOfMeasure);
     });
 
   const hasInvalidTimestamps = (form: OutputForm) =>
@@ -400,29 +401,53 @@ export const OutputsAndOutcomes = () => {
                                 <tr key={index}>
                                   <td className="px-4 py-2">
                                     {form?.isEditing && isAuthorized ? (
-                                      <input
-                                        type="number"
-                                        value={
-                                          form?.datapoints?.[index]?.value || ""
-                                        }
-                                        onChange={(e) =>
-                                          handleInputChange(
-                                            item.id,
-                                            "value",
-                                            e.target.value,
-                                            index
-                                          )
-                                        }
-                                        className={cn(
-                                          "w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100",
-                                          isInvalidValue(
-                                            form?.datapoints?.[index]?.value ||
-                                              0
-                                          )
-                                            ? "border-2 border-red-500"
-                                            : " border-gray-300"
-                                        )}
-                                      />
+                                      <div className="flex flex-col gap-1">
+                                        <div className="flex items-center gap-2">
+                                          <input
+                                            type={"number"}
+                                            value={
+                                              form?.datapoints?.[index]
+                                                ?.value || ""
+                                            }
+                                            onChange={(e) =>
+                                              handleInputChange(
+                                                item.id,
+                                                "value",
+                                                e.target.value,
+                                                index
+                                              )
+                                            }
+                                            className={cn(
+                                              "w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100",
+                                              isInvalidValue(
+                                                Number(
+                                                  form?.datapoints?.[index]
+                                                    ?.value
+                                                ),
+                                                form.unitOfMeasure
+                                              )
+                                                ? "border-2 border-red-500"
+                                                : " border-gray-300"
+                                            )}
+                                          />
+                                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-zinc-700 text-gray-600 dark:text-zinc-300">
+                                            {form.unitOfMeasure}
+                                          </span>
+                                        </div>
+                                        {form?.datapoints?.[index]?.value &&
+                                        isInvalidValue(
+                                          Number(
+                                            form?.datapoints?.[index]?.value
+                                          ),
+                                          form.unitOfMeasure
+                                        ) ? (
+                                          <span className="text-xs text-red-500">
+                                            {form.unitOfMeasure === "int"
+                                              ? "Please enter an integer number"
+                                              : "Please enter a valid number"}
+                                          </span>
+                                        ) : null}
+                                      </div>
                                     ) : (
                                       <span className="text-gray-900 dark:text-zinc-100">
                                         {form?.datapoints?.[index]?.value ||
@@ -587,33 +612,32 @@ export const OutputsAndOutcomes = () => {
                     </div>
                   </div>
                   <div className="flex flex-1 flex-col gap-5">
-                    {item.datapoints?.length > 1 &&
-                      item.unitOfMeasure !== "string" && (
-                        <Card className="bg-white dark:bg-zinc-800 rounded">
-                          <Title className="text-sm font-medium text-gray-700 dark:text-zinc-300 mb-4">
-                            Historical Values
-                          </Title>
-                          <AreaChart
-                            className="h-48 mt-4"
-                            data={prepareChartData(
-                              item.datapoints.map(
-                                (datapoint) => datapoint.value
-                              ),
-                              item.datapoints.map(
-                                (datapoint) =>
-                                  datapoint.endDate || new Date().toISOString()
-                              ),
-                              item.name
-                            )}
-                            index="date"
-                            categories={[item.name]}
-                            colors={["blue"]}
-                            valueFormatter={(value) => `${value}`}
-                            showLegend={false}
-                            noDataText="Awaiting grantees to submit values"
-                          />
-                        </Card>
-                      )}
+                    {item.datapoints?.length > 1 && (
+                      <Card className="bg-white dark:bg-zinc-800 rounded">
+                        <Title className="text-sm font-medium text-gray-700 dark:text-zinc-300 mb-4">
+                          Historical Values
+                        </Title>
+                        <AreaChart
+                          className="h-48 mt-4"
+                          data={prepareChartData(
+                            item.datapoints.map((datapoint) =>
+                              Number(datapoint.value)
+                            ),
+                            item.datapoints.map(
+                              (datapoint) =>
+                                datapoint.endDate || new Date().toISOString()
+                            ),
+                            item.name
+                          )}
+                          index="date"
+                          categories={[item.name]}
+                          colors={["blue"]}
+                          valueFormatter={(value) => `${value}`}
+                          showLegend={false}
+                          noDataText="Awaiting grantees to submit values"
+                        />
+                      </Card>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-4 w-full justify-end">

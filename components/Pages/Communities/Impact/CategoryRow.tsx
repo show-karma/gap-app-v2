@@ -102,13 +102,7 @@ const SegmentCard = ({
     return a.impactSegmentName.localeCompare(b.impactSegmentName);
   });
   return (
-    <div
-      className={`${
-        Object.entries(segmentsByType).length == 0
-          ? "grid grid-cols-2 gap-6 w-full"
-          : "flex-col"
-      }`}
-    >
+    <div className={"flex flex-col w-full"}>
       <div className="flex flex-row gap-2 flex-wrap">
         {orderedSegments.map((item, index) => (
           <Button
@@ -118,7 +112,7 @@ const SegmentCard = ({
                 ? "bg-zinc-800 dark:bg-zinc-600 text-white dark:text-white border border-zinc-800 dark:border-zinc-600"
                 : ""
             )}
-            key={`output-${item.impactSegmentName}-${index}`}
+            key={`${item.impactSegmentType}-${item.impactSegmentName}-${index}`}
             onClick={() => setSelectedSegment(item)}
           >
             {item.impactSegmentName}
@@ -134,7 +128,7 @@ const SegmentCard = ({
           items={selectedSegment.indicators}
           renderItem={({ item, isSnapPoint }) => (
             <CarouselItem
-              key={`${item.impactSegmentId}-${item.impactSegmentName}-${item.categoryName}`}
+              key={`${item.categoryId}-${item.impactSegmentId}-${item.impactSegmentType}-${item.impactIndicatorId}-${item.indicatorName}-${item.projectUID}`}
               isSnapPoint={isSnapPoint}
             >
               <MetricCard item={item} />
@@ -162,19 +156,30 @@ const CategoryBlocks = ({
       impact?.indicators?.[0]?.impactSegmentType === "outcome"
   );
   return (
-    <div
-      className={`${
-        Object.entries(outputsById).length == 0 ||
-        Object.entries(outcomesById).length == 0
-          ? "flex justify-between items-center"
-          : "grid grid-cols-2 gap-6"
-      } max-md:flex max-md:flex-col`}
-    >
+    <div className={`grid grid-cols-2 gap-6 max-md:flex max-md:flex-col`}>
       {/* Outputs Column */}
-      <SegmentCard segmentsByType={outputsById} />
+      <div
+        className={
+          Object.entries(outputsById).length === 0
+            ? "hidden"
+            : "flex flex-col w-full"
+        }
+      >
+        <SegmentCard segmentsByType={outputsById} />
+      </div>
 
       {/* Outcomes Column */}
-      <SegmentCard segmentsByType={outcomesById} />
+      <div
+        className={
+          Object.entries(outcomesById).length === 0
+            ? "hidden"
+            : "flex flex-col w-full"
+        }
+      >
+        {outcomesById.length ? (
+          <SegmentCard segmentsByType={outcomesById} />
+        ) : null}
+      </div>
     </div>
   );
 };
@@ -187,7 +192,7 @@ export const CategoryRow = ({
   const searchParams = useSearchParams();
   const projectSelected = searchParams.get("projectId");
   const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(
-    category.impacts[0].impactSegmentId
+    category.impacts?.[0]?.impactSegmentId || null
   );
   const selectedSegment = category.impacts.find(
     (impact) => impact.impactSegmentId === selectedSegmentId
@@ -259,13 +264,7 @@ export const CategoryRow = ({
       {category.impacts.length ? (
         <CategoryBlocks category={category} />
       ) : (
-        <div
-          className="flex flex-col justify-center items-center gap-8 rounded-xl px-12 py-6 min-h-[280px]"
-          style={{
-            border: "1px dashed #667085",
-            background: "#F9FAFB",
-          }}
-        >
+        <div className="flex flex-col justify-center items-center gap-8 rounded-xl px-12 py-6 min-h-[280px] border border-dashed border-gray-400 dark:border-gray-600 bg-gray-50 dark:bg-zinc-900">
           <Image
             src={"/icons/poker-face.png"}
             alt="no data"

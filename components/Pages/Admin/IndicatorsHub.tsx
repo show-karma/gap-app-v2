@@ -12,7 +12,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 
-const UNIT_TYPES = ["string", "float", "int"] as const;
+const UNIT_TYPES = ["float", "int"] as const;
 type UnitType = (typeof UNIT_TYPES)[number];
 
 interface Indicator {
