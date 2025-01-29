@@ -27,7 +27,7 @@ export async function generateMetadata({
   }
 
   return {
-    title: `View Impact for ${projectInfo.details?.data?.title} | Karma GAP`,
+    title: `Impact of ${projectInfo.details?.data?.title} | Karma GAP`,
     description: projectInfo.details?.data?.description?.substring(0, 80) || "",
     twitter: {
       creator: defaultMetadata.twitter.creator,
@@ -36,19 +36,19 @@ export async function generateMetadata({
       images: [
         {
           url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
-          alt: `View Impact for ${projectInfo.details?.data?.title} | Karma GAP`,
+          alt: `Impact of ${projectInfo.details?.data?.title} | Karma GAP`,
         },
       ],
     },
     openGraph: {
       url: defaultMetadata.openGraph.url,
-      title: `View Impact for ${projectInfo.details?.data?.title} | Karma GAP`,
+      title: `Impact of ${projectInfo.details?.data?.title} | Karma GAP`,
       description:
         projectInfo.details?.data?.description?.substring(0, 80) || "",
       images: [
         {
           url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
-          alt: `View Impact for ${projectInfo.details?.data?.title} | Karma GAP`,
+          alt: `Impact of ${projectInfo.details?.data?.title} | Karma GAP`,
         },
       ],
     },
