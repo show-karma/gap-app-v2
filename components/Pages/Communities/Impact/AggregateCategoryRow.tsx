@@ -8,7 +8,6 @@ import {
 } from "@/types/programs";
 import { formatDate } from "@/utilities/formatDate";
 import { cn } from "@/utilities/tailwind";
-import * as Tooltip from "@radix-ui/react-tooltip";
 import { AreaChart, Card } from "@tremor/react";
 import Image from "next/image";
 import { useState } from "react";
@@ -55,30 +54,6 @@ const AggregateMetricCard = ({ item }: { item: ImpactAggregateIndicator }) => (
           ) : null}
         </div>
         <div className="flex flex-row gap-2 flex-wrap items-center">
-          <p className="text-sm text-[#404968] font-semibold dark:text-gray-400 bg-[#F8F9FC] dark:bg-zinc-700 rounded-2xl py-1 px-3">
-            {item.impactSegmentName}
-          </p>
-
-          <Tooltip.Provider>
-            <Tooltip.Root delayDuration={0}>
-              <Tooltip.Trigger asChild>
-                <p className="text-sm text-[#404968] font-semibold dark:text-gray-400 bg-[#F8F9FC] dark:bg-zinc-700 rounded-2xl py-1 px-3 truncate max-w-[200px]">
-                  {item.indicatorName}
-                </p>
-              </Tooltip.Trigger>
-              <Tooltip.Portal>
-                <Tooltip.Content
-                  className="text-sm z-50 text-[#404968] font-semibold dark:text-gray-400 bg-[#F8F9FC] dark:bg-zinc-700 rounded-2xl py-1 px-3 truncate"
-                  sideOffset={5}
-                  side="top"
-                >
-                  <p className="text-sm text-[#404968] font-semibold dark:text-gray-400 bg-[#F8F9FC] dark:bg-zinc-700 rounded-2xl py-1 px-3 truncate">
-                    {item.indicatorName}
-                  </p>
-                </Tooltip.Content>
-              </Tooltip.Portal>
-            </Tooltip.Root>
-          </Tooltip.Provider>
           {item.impactSegmentType === "outcome" ? (
             <p className="text-sm text-[#F79009] font-semibold dark:text-orange-400 bg-[#FFFAEB] dark:bg-yellow-950  rounded-2xl py-1 px-3">
               Outcome
