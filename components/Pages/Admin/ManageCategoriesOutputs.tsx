@@ -53,6 +53,7 @@ interface ManageCategoriesOutputsProps {
   categories: Category[];
   setCategories: (categories: Category[]) => void;
   community: ICommunityResponse | undefined;
+  refreshCategories: (isSilent?: boolean) => Promise<any>;
 }
 
 interface EditFormProps {
@@ -183,6 +184,7 @@ export const ManageCategoriesOutputs = ({
   categories,
   setCategories,
   community,
+  refreshCategories,
 }: ManageCategoriesOutputsProps) => {
   const [isSavingOutput, setIsSavingOutput] = useState<string>("");
   const [isDeletingOutput, setIsDeletingOutput] = useState<string>("");
@@ -226,30 +228,9 @@ export const ManageCategoriesOutputs = ({
       );
       if (error) throw error;
 
-      const categoryIndex = categories.findIndex(
-        (cat) => cat.id === categoryId
-      );
-      if (categoryIndex === -1) return;
-
-      const newSegment = {
-        id: `temp-${Date.now()}`,
-        name: data.name,
-        description: data.description,
-        categoryId,
-        type: data.type,
-        impact_indicators: [],
-      };
-
-      const updatedCategories = [...categories];
-      updatedCategories[categoryIndex] = {
-        ...updatedCategories[categoryIndex],
-        impact_segments: [
-          ...(updatedCategories[categoryIndex].impact_segments || []),
-          newSegment,
-        ],
-      };
-
-      setCategories(updatedCategories);
+      refreshCategories(true).then((refreshedCategories) => {
+        setCategories(refreshedCategories);
+      });
       reset();
       toast.success("Impact segment created successfully");
     } catch (error) {
@@ -272,20 +253,9 @@ export const ManageCategoriesOutputs = ({
       );
       if (error) throw error;
 
-      const categoryIndex = categories.findIndex(
-        (cat) => cat.id === categoryId
-      );
-      if (categoryIndex === -1) return;
-
-      const updatedCategories = [...categories];
-      updatedCategories[categoryIndex] = {
-        ...updatedCategories[categoryIndex],
-        impact_segments: (
-          updatedCategories[categoryIndex].impact_segments || []
-        ).filter((segment) => segment.id !== segmentId),
-      };
-
-      setCategories(updatedCategories);
+      refreshCategories(true).then((refreshedCategories) => {
+        setCategories(refreshedCategories);
+      });
       toast.success("Impact segment deleted successfully");
     } catch (error) {
       toast.error("Failed to delete impact segment");
@@ -322,29 +292,9 @@ export const ManageCategoriesOutputs = ({
       );
       if (error) throw error;
 
-      // Update the local state to reflect changes immediately
-      const updatedCategories = categories.map((category) => {
-        if (category.id === categoryId) {
-          return {
-            ...category,
-            impact_segments: category.impact_segments?.map((segment) =>
-              segment.id === outputId
-                ? {
-                    ...segment,
-                    name: data.name,
-                    description: data.description,
-                    type: data.type,
-                    impact_indicators: impact_indicators.filter((indicator) =>
-                      data.impact_indicators?.includes(indicator.id)
-                    ),
-                  }
-                : segment
-            ),
-          };
-        }
-        return category;
+      refreshCategories(true).then((refreshedCategories) => {
+        setCategories(refreshedCategories);
       });
-      setCategories(updatedCategories);
 
       toast.success("Impact segment updated successfully");
     } catch (error) {

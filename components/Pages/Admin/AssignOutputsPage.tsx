@@ -103,62 +103,71 @@ export default function AssignOutputsPage() {
     checkIfAdmin();
   }, [address, isConnected, isAuth, community?.uid, signer]);
 
+  const getCategories = async (isSilent: boolean = false) => {
+    if (!isSilent) {
+      setLoading(true);
+    }
+
+    try {
+      const [data] = await fetchData(
+        INDEXER.COMMUNITY.CATEGORIES(
+          (community?.details?.data?.slug || community?.uid) as string
+        )
+      );
+      if (data) {
+        const categoriesWithoutOutputs = data.map((category: Category) => {
+          const outputsNotDuplicated = category.outputs?.filter(
+            (output) =>
+              !category.impact_segments?.some(
+                (segment) =>
+                  segment.id === output.id || segment.name === output.name
+              )
+          );
+          return {
+            ...category,
+            impact_segments: [
+              ...(category.impact_segments || []),
+              ...(outputsNotDuplicated || []).map((output: any) => {
+                return {
+                  id: output.id,
+                  name: output.name,
+                  description: output.description,
+                  impact_indicators: [],
+                  type: output.type,
+                };
+              }),
+            ],
+          };
+        });
+        return categoriesWithoutOutputs;
+      }
+    } catch (error: any) {
+      errorManager(
+        `Error fetching categories of community ${communityId}`,
+        error,
+        {
+          community: communityId,
+        }
+      );
+      console.error(error);
+      return [];
+    } finally {
+      if (!isSilent) {
+        setLoading(false);
+      }
+    }
+  };
+
   useMemo(() => {
     if (community?.uid) {
       setLoading(true);
-
-      const getCategories = async () => {
-        setLoading(true);
-
-        try {
-          const [data] = await fetchData(
-            INDEXER.COMMUNITY.CATEGORIES(
-              (community?.details?.data?.slug || community?.uid) as string
-            )
-          );
-          if (data) {
-            const categoriesWithoutOutputs = data.map((category: Category) => {
-              const outputsNotDuplicated = category.outputs?.filter(
-                (output) =>
-                  !category.impact_segments?.some(
-                    (segment) =>
-                      segment.id === output.id || segment.name === output.name
-                  )
-              );
-              return {
-                ...category,
-                impact_segments: [
-                  ...(category.impact_segments || []),
-                  ...(outputsNotDuplicated || []).map((output: any) => {
-                    return {
-                      id: output.id,
-                      name: output.name,
-                      description: output.description,
-                      impact_indicators: [],
-                      type: output.type,
-                    };
-                  }),
-                ],
-              };
-            });
-            setCategories(categoriesWithoutOutputs);
-          }
-        } catch (error: any) {
-          errorManager(
-            `Error fetching categories of community ${communityId}`,
-            error,
-            {
-              community: communityId,
-            }
-          );
+      getCategories()
+        .then((res) => {
+          setCategories(res);
+        })
+        .catch(() => {
           setCategories([]);
-          console.error(error);
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      getCategories();
+        });
     }
   }, [community?.uid]);
 
@@ -196,6 +205,7 @@ export default function AssignOutputsPage() {
                 categories={categories}
                 setCategories={setCategories}
                 community={community}
+                refreshCategories={getCategories}
               />
             </div>
           </div>

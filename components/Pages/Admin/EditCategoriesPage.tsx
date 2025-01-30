@@ -61,8 +61,11 @@ export default function EditCategoriesPage() {
   }, [communityError]);
 
   // Fetch grants data
-  const { data: grants = [], isLoading: isLoadingGrants } =
-    useGrants(communityId);
+  const {
+    data: grants = [],
+    isLoading: isLoadingGrants,
+    refetch: refreshGrants,
+  } = useGrants(communityId);
 
   // Table state management
   const {
@@ -128,11 +131,7 @@ export default function EditCategoriesPage() {
             categories,
           })
             .then(() => {
-              // Clear the edited categories after successful save
-              setSelectedCategories((prev) => {
-                const { [uid]: _, ...rest } = prev;
-                return rest;
-              });
+              refreshGrants();
             })
             .catch((error) => {
               console.error(error);
