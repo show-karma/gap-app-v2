@@ -201,27 +201,6 @@ export const CategoryRow = ({
     );
 
   // // Group outputs and outcomes by their names
-  // const outputsById = program.impacts
-  //   // .filter((output) => output.type === "output")
-  //   .reduce((acc, curr) => {
-  //     const output = curr.impactSegmentId + curr.categoryName;
-  //     if (!acc[output]) {
-  //       acc[output] = [];
-  //     }
-  //     acc[output].push(curr);
-  //     return acc;
-  //   }, {} as Record<string, typeof program.impacts>);
-
-  // const outcomesById = program.impacts
-  //   // .filter((output) => output.impactSegmentType === "outcome")
-  //   .reduce((acc, curr) => {
-  //     const output = curr.impactSegmentId + curr.categoryName;
-  //     if (!acc[output]) {
-  //       acc[output] = [];
-  //     }
-  //     acc[output].push(curr);
-  //     return acc;
-  //   }, {} as Record<string, typeof program.impacts>);
 
   // // Sort function to get the most recent datapoint timestamp
   // const getLatestDatapointTimestamp = (item: ProgramImpactSegment) => {
