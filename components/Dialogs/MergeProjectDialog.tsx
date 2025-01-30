@@ -94,10 +94,10 @@ function SearchProject({
         }}
       >
         <div className=":last:border-b-0 cursor-pointer select-none border-b border-slate-100 px-4 py-2 transition hover:bg-slate-200 dark:hover:bg-zinc-700">
-          <b className="max-w-full text-ellipsis font-bold text-black dark:text-zinc-100">
-            {item?.details?.data.title}
-          </b>
-          <br />
+          <div className="flex justify-between max-w-full text-ellipsis text-black dark:text-zinc-100">
+            <span className="font-bold">{item?.details?.data.title}</span>
+            <span>{item?.details?.data.slug}</span>
+          </div>
           <div className="text-gray-500 dark:text-gray-200">
             <div className="mt-3 flex items-center">
               <small className="mr-2">By</small>
