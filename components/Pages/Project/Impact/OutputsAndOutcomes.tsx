@@ -14,6 +14,7 @@ import { TrashIcon } from "@heroicons/react/24/outline";
 import { AreaChart, Card, Title } from "@tremor/react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
 import { prepareChartData } from "../../Admin/ProgramImpact";
 import { GrantsOutputsLoading } from "../Loading/Grants/Outputs";
 
@@ -41,7 +42,10 @@ export const OutputsAndOutcomes = () => {
     (state) => state.isCommunityAdmin
   );
 
-  const isAuthorized = isProjectOwner || isContractOwner || isCommunityAdmin;
+  const { isConnected } = useAccount();
+
+  const isAuthorized =
+    isConnected && (isProjectOwner || isContractOwner || isCommunityAdmin);
 
   const [impactAnswers, setImpactAnswers] = useState<ImpactIndicatorWithData[]>(
     []
