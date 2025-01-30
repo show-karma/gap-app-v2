@@ -102,8 +102,8 @@ export const INDEXER = {
       `/communities/${communityIdOrSlug}/programs/impact`,
     ALL_PROGRAMS_IMPACT_AGGREGATE: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/programs/impact-aggregate`,
-    PROJECT_DISCOVERY: (communityIdOrSlug: string, programId: string) =>
-      `/communities/${communityIdOrSlug}/programs/${programId}/project-impact-discovery`,
+    PROJECT_DISCOVERY: (communityIdOrSlug: string) =>
+      `/communities/${communityIdOrSlug}/impact-discovery`,
     GRANTS: (
       communityIdOrSlug: string,
       {
