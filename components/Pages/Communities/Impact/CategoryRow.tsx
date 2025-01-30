@@ -108,9 +108,9 @@ const SegmentCard = ({
         {orderedSegments.map((item, index) => (
           <Button
             className={cn(
-              "px-2 py-2 rounded hover:bg-gray-100 dark:hover:bg-zinc-700 font-normal bg-white dark:bg-zinc-800 text-sm text-black border border-gray-300 dark:border-zinc-700 dark:text-white",
+              "px-2 py-2 rounded hover:opacity-80 hover:bg-white dark:hover:opacity-80 dark:hover:bg-zinc-800 font-normal bg-white dark:bg-zinc-800 text-sm text-black border border-gray-300 dark:border-zinc-700 dark:text-white",
               selectedSegment?.impactSegmentId === item.impactSegmentId
-                ? "bg-zinc-800 dark:bg-zinc-600 text-white dark:text-white border border-zinc-800 dark:border-zinc-600"
+                ? "bg-zinc-800 dark:bg-zinc-600 text-white dark:text-white border border-zinc-800 dark:border-zinc-600 hover:bg-zinc-800 dark:hover:bg-zinc-600"
                 : ""
             )}
             key={`${item.impactSegmentType}-${item.impactSegmentName}-${index}`}
