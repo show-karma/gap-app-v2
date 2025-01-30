@@ -4,7 +4,6 @@ import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { ProgramImpactDataResponse } from "@/types/programs";
 import fetchData from "@/utilities/fetchData";
-import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { defaultMetadata } from "@/utilities/meta";
@@ -47,9 +46,8 @@ export default function ProgramImpactPage() {
   >(undefined);
 
   const [loadingProgramImpact, setLoadingProgramImpact] =
-    useState<boolean>(true); // Loading state of the API call
+    useState<boolean>(true);
 
-  // Update the state to handle grouped data
   const [programImpactData, setProgramImpactData] = useState<
     ProgramImpactDataResponse[]
   >([]);
@@ -65,15 +63,7 @@ export default function ProgramImpactPage() {
         console.error(error);
         return;
       }
-      setProgramImpactData(
-        data.map((item: any) => ({
-          categoryName: item.categoryName,
-          outputs: item.outputs.map((output: any) => ({
-            ...output,
-            lastUpdated: output.createdAt || output.updatedAt,
-          })),
-        }))
-      );
+      setProgramImpactData(data.data);
     } catch (error) {
       console.error("Error fetching program impact", error);
     } finally {
@@ -92,6 +82,34 @@ export default function ProgramImpactPage() {
       ? text.substring(0, maxLength) + "..."
       : text;
   }
+
+  // Calculate total projects
+  const totalProjects = new Set(
+    programImpactData.flatMap((category) =>
+      category.impacts.flatMap((impact) =>
+        impact.indicators.map((indicator) => indicator.projectUID)
+      )
+    )
+  ).size;
+
+  // Calculate total funding allocated
+  const totalFunding = programImpactData
+    .reduce(
+      (acc, category) =>
+        acc +
+        category.impacts.reduce(
+          (impactAcc, impact) =>
+            impactAcc +
+            impact.indicators.reduce((indicatorAcc, indicator) => {
+              const amount = indicator.amount || "0";
+              const numericAmount = Number(amount.split(" ")[0]);
+              return indicatorAcc + (numericAmount || 0);
+            }, 0),
+          0
+        ),
+      0
+    )
+    .toLocaleString();
 
   return (
     <section className="flex flex-col w-full">
@@ -121,8 +139,8 @@ export default function ProgramImpactPage() {
                       Grant Program
                     </h3>
                     <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">
-                      {programImpactData[0]?.outputs[0]?.grantTitle ||
-                        selectedProgram?.metadata?.title}
+                      {programImpactData[0]?.impacts[0]?.indicators[0]
+                        ?.grantTitle || selectedProgram?.metadata?.title}
                     </p>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
@@ -131,13 +149,7 @@ export default function ProgramImpactPage() {
                         Total Projects
                       </h4>
                       <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">
-                        {
-                          new Set(
-                            programImpactData.flatMap((group) =>
-                              group.outputs.map((output) => output.projectUID)
-                            )
-                          ).size
-                        }
+                        {totalProjects}
                       </p>
                     </div>
                     <div>
@@ -153,110 +165,116 @@ export default function ProgramImpactPage() {
                         Total Funding Allocated (with available data)
                       </h4>
                       <p className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">
-                        {programImpactData
-                          .reduce(
-                            (acc, curr) =>
-                              acc +
-                              curr.outputs.reduce((acc2, curr2) => {
-                                const amount = curr2.amount || "0";
-                                const numericAmount = Number(
-                                  amount.split(" ")[0]
-                                );
-                                return acc2 + (numericAmount || 0);
-                              }, 0),
-                            0
-                          )
-                          .toLocaleString()}
+                        {totalFunding}
                       </p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {programImpactData.map((group) => (
-                <div key={group.categoryName} className="space-y-4">
+              {programImpactData.map((category) => (
+                <div key={category.categoryName} className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                      Category: {group.categoryName}
+                      Category: {category.categoryName}
                     </h3>
                     <span className="px-3 py-1 text-sm rounded-full bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-gray-300">
-                      {group.outputs.length} projects
+                      {
+                        new Set(
+                          category.impacts.flatMap((impact) =>
+                            impact.indicators.map(
+                              (indicator) => indicator.projectUID
+                            )
+                          )
+                        ).size
+                      }{" "}
+                      projects
                     </span>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {group.outputs.map((item) => (
-                      <Card key={`${item.outputId}-${item.lastUpdated}`}>
-                        <Title className="flex justify-between items-start">
-                          <div>
-                            <div className="flex gap-2 text-sm">
-                              <span className="text-gray-500 dark:text-gray-400">
-                                Grant:
-                              </span>
-                              <Link
-                                className="underline font-bold"
-                                target="_blank"
-                                href={PAGES.PROJECT.GRANT(
-                                  item.projectSlug,
-                                  item.grantUID
-                                )}
-                              >
-                                {item.grantTitle}
-                              </Link>
+                    {category.impacts.map((impact) =>
+                      impact.indicators.map((indicator) => (
+                        <Card
+                          key={`${indicator.impactIndicatorId}-${indicator.projectUID}`}
+                        >
+                          <Title className="flex justify-between items-start">
+                            <div>
+                              <div className="flex gap-2 text-sm">
+                                <span className="text-gray-500 dark:text-gray-400">
+                                  Grant:
+                                </span>
+                                <Link
+                                  className="underline font-bold"
+                                  target="_blank"
+                                  href={PAGES.PROJECT.GRANT(
+                                    indicator.projectSlug,
+                                    indicator.grantUID
+                                  )}
+                                >
+                                  {indicator.grantTitle}
+                                </Link>
+                              </div>
+                              <div className="flex gap-2 text-sm">
+                                <span className="text-gray-500 dark:text-gray-400">
+                                  Project:
+                                </span>
+                                <Link
+                                  className="underline font-bold"
+                                  target="_blank"
+                                  href={PAGES.PROJECT.OVERVIEW(
+                                    indicator.projectSlug
+                                  )}
+                                >
+                                  {reduceText(indicator.projectTitle, 20)}
+                                </Link>
+                              </div>
+                              <div className="flex gap-2 text-sm">
+                                <span className="text-gray-500 dark:text-gray-400">
+                                  Funded Amount
+                                </span>
+                                <span className="font-bold text-md">
+                                  {indicator.amount
+                                    ? Number(
+                                        indicator.amount.includes(" ")
+                                          ? indicator.amount.split(" ")[0]
+                                          : indicator.amount
+                                      ).toLocaleString()
+                                    : null}
+                                </span>
+                              </div>
                             </div>
-                            <div className="flex gap-2 text-sm">
-                              <span className="text-gray-500 dark:text-gray-400">
-                                Project:
-                              </span>
-                              <Link
-                                className="underline font-bold"
-                                target="_blank"
-                                href={PAGES.PROJECT.OVERVIEW(item.projectSlug)}
-                              >
-                                {reduceText(item.projectTitle, 20)}
-                              </Link>
-                            </div>
-                            <div className="flex gap-2 text-sm">
-                              <span className="text-gray-500 dark:text-gray-400">
-                                Funded Amount
-                              </span>
-                              <span className="font-bold text-md">
-                                {item.amount
-                                  ? formatCurrency(
-                                      Number(
-                                        item.amount.includes(" ")
-                                          ? item.amount.split(" ")[0]
-                                          : item.amount
-                                      )
-                                    )
-                                  : null}
-                              </span>
-                            </div>
-                          </div>
 
-                          <div className="font-bold text-lg">{item.name}</div>
-                        </Title>
-                        <AreaChart
-                          data={prepareChartData(
-                            item.datapoints.map((datapoint) => datapoint.value),
-                            item.datapoints.map(
-                              (datapoint) =>
-                                datapoint.outputTimestamp ||
-                                new Date().toISOString()
-                            ),
-                            item.name,
-                            item.datapoints
-                              ?.map((datapoint) => datapoint.running)
-                              .filter((val): val is number => val !== undefined)
-                          )}
-                          index={"date"}
-                          categories={[item.name, "Running"]}
-                          colors={["blue", "green"]}
-                          valueFormatter={(value) => `${value}`}
-                          yAxisWidth={40}
-                          noDataText="Awaiting grantees to submit values"
-                        />
-                      </Card>
-                    ))}
+                            <div className="font-bold text-lg">
+                              {indicator.indicatorName}
+                            </div>
+                          </Title>
+                          <AreaChart
+                            data={prepareChartData(
+                              indicator.datapoints.map(
+                                (datapoint) => datapoint.value
+                              ),
+                              indicator.datapoints.map(
+                                (datapoint) =>
+                                  datapoint.outputTimestamp ||
+                                  new Date().toISOString()
+                              ),
+                              indicator.indicatorName,
+                              indicator.datapoints
+                                ?.map((datapoint) => datapoint.running)
+                                .filter(
+                                  (val): val is number => val !== undefined
+                                )
+                            )}
+                            index={"date"}
+                            categories={[indicator.indicatorName, "Running"]}
+                            colors={["blue", "green"]}
+                            valueFormatter={(value) => `${value}`}
+                            yAxisWidth={40}
+                            noDataText="Awaiting grantees to submit values"
+                          />
+                        </Card>
+                      ))
+                    )}
                   </div>
                 </div>
               ))}
