@@ -11,6 +11,7 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 import { AreaChart, Card } from "@tremor/react";
 import Image from "next/image";
 import { useSearchParams } from "next/navigation";
+import pluralize from "pluralize";
 import { useState } from "react";
 import { prepareChartData } from "../../Admin/ProgramImpact";
 
@@ -191,16 +192,13 @@ export const CategoryRow = ({
 }) => {
   const searchParams = useSearchParams();
   const projectSelected = searchParams.get("projectId");
-  const [selectedSegmentId, setSelectedSegmentId] = useState<string | null>(
-    category.impacts?.[0]?.impactSegmentId || null
-  );
-  const selectedSegment = category.impacts.find(
-    (impact) => impact.impactSegmentId === selectedSegmentId
-  );
-  // const uniqueProjects = program.impacts.filter(
-  //   (output, index, self) =>
-  //     self.findIndex((t) => t.projectUID === output.projectUID) === index
-  // );
+
+  const uniqueProjects = category.impacts
+    .flatMap((item) => item.indicators)
+    .filter(
+      (output, index, self) =>
+        self.findIndex((t) => t.projectUID === output.projectUID) === index
+    );
 
   // // Group outputs and outcomes by their names
   // const outputsById = program.impacts
@@ -254,12 +252,12 @@ export const CategoryRow = ({
         <h2 className="text-2xl leading-6 font-bold text-black dark:text-white">
           {category.categoryName}
         </h2>
-        {/* {!projectSelected ? (
+        {!projectSelected ? (
           <p className="text-lg leading-6 text-gray-500 dark:text-zinc-200 font-medium">
             {uniqueProjects.length}{" "}
             {pluralize("project", uniqueProjects.length)}
           </p>
-        ) : null} */}
+        ) : null}
       </div>
       {category.impacts.length ? (
         <CategoryBlocks category={category} />

@@ -1,7 +1,6 @@
 "use client";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
-import formatCurrency from "@/utilities/formatCurrency";
 import { useParams, useSearchParams } from "next/navigation";
 
 export const CommunityImpactStatCards = () => {
@@ -12,13 +11,6 @@ export const CommunityImpactStatCards = () => {
 
   const { data, isLoading } = useImpactMeasurement();
   const outputs = data?.data;
-
-  const parsedFundingAllocated = parseFloat(
-    data?.stats?.totalFundingAllocated?.replace(/,/g, "") || "0"
-  );
-
-  const totalFundingAllocated =
-    formatCurrency(parsedFundingAllocated) || data?.stats.totalFundingAllocated;
 
   const stats = [
     {
@@ -34,8 +26,9 @@ export const CommunityImpactStatCards = () => {
     {
       title: "Total Funding Allocated (with available data)",
       value:
-        totalFundingAllocated && !isNaN(Number(totalFundingAllocated))
-          ? totalFundingAllocated
+        data?.stats.totalFundingAllocated &&
+        data?.stats.totalFundingAllocated !== "NaN"
+          ? data?.stats.totalFundingAllocated
           : "-",
       color: "#A6EF67",
     },

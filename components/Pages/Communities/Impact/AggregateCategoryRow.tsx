@@ -1,10 +1,17 @@
 "use client";
 import { Carousel, CarouselItem } from "@/components/SnapCarousel";
-import { ImpactAggregateData, ImpactAggregateOutput } from "@/types/programs";
+import { Button } from "@/components/Utilities/Button";
+import {
+  ImpactAggregateData,
+  ImpactAggregateIndicator,
+  ImpactAggregateSegment,
+} from "@/types/programs";
 import { formatDate } from "@/utilities/formatDate";
+import { cn } from "@/utilities/tailwind";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import { AreaChart, Card } from "@tremor/react";
 import Image from "next/image";
-import pluralize from "pluralize";
+import { useState } from "react";
 
 export const prepareChartData = (
   timestamps: string[],
@@ -13,7 +20,7 @@ export const prepareChartData = (
   min_values: number[],
   max_values: number[]
 ): { date: string; [key: string]: number | string }[] => {
-  const abacaxi = timestamps
+  const timestampsData = timestamps
     .map((timestamp, index) => {
       return {
         date: formatDate(new Date(timestamp), true),
@@ -24,21 +31,55 @@ export const prepareChartData = (
       };
     })
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  return abacaxi;
+  return timestampsData;
 };
 
 // Create a reusable card component to reduce duplication
-const MetricCard = ({ item }: { item: ImpactAggregateOutput }) => (
+const AggregateMetricCard = ({ item }: { item: ImpactAggregateIndicator }) => (
   <Card className="rounded-lg bg-white dark:bg-zinc-800 flex-1">
     <div className="flex justify-between items-start w-full">
       <div className="flex flex-row gap-2 justify-between w-full max-md:flex-wrap max-md:gap-1">
         <div className="flex flex-col gap-0">
           <div className="font-bold text-lg text-black dark:text-white">
-            {item.name}
+            {item.indicatorName}
           </div>
+          {item?.amount ? (
+            <div className="flex flex-row gap-2 text-sm">
+              <span className="text-[#079455] dark:text-[#079455] text-base">
+                Funded Amount
+              </span>
+              <span className="text-[#079455] dark:text-[#079455] font-bold text-base">
+                {item?.amount ? item.amount : null}
+              </span>
+            </div>
+          ) : null}
         </div>
         <div className="flex flex-row gap-2 flex-wrap items-center">
-          {item.type === "outcome" ? (
+          <p className="text-sm text-[#404968] font-semibold dark:text-gray-400 bg-[#F8F9FC] dark:bg-zinc-700 rounded-2xl py-1 px-3">
+            {item.impactSegmentName}
+          </p>
+
+          <Tooltip.Provider>
+            <Tooltip.Root delayDuration={0}>
+              <Tooltip.Trigger asChild>
+                <p className="text-sm text-[#404968] font-semibold dark:text-gray-400 bg-[#F8F9FC] dark:bg-zinc-700 rounded-2xl py-1 px-3 truncate max-w-[200px]">
+                  {item.indicatorName}
+                </p>
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content
+                  className="text-sm z-50 text-[#404968] font-semibold dark:text-gray-400 bg-[#F8F9FC] dark:bg-zinc-700 rounded-2xl py-1 px-3 truncate"
+                  sideOffset={5}
+                  side="top"
+                >
+                  <p className="text-sm text-[#404968] font-semibold dark:text-gray-400 bg-[#F8F9FC] dark:bg-zinc-700 rounded-2xl py-1 px-3 truncate">
+                    {item.indicatorName}
+                  </p>
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+          </Tooltip.Provider>
+          {item.impactSegmentType === "outcome" ? (
             <p className="text-sm text-[#F79009] font-semibold dark:text-orange-400 bg-[#FFFAEB] dark:bg-yellow-950  rounded-2xl py-1 px-3">
               Outcome
             </p>
@@ -79,125 +120,117 @@ const MetricCard = ({ item }: { item: ImpactAggregateOutput }) => (
   </Card>
 );
 
+const AggregateSegmentCard = ({
+  segmentsByType,
+}: {
+  segmentsByType: ImpactAggregateSegment[];
+}) => {
+  const [selectedSegment, setSelectedSegment] =
+    useState<ImpactAggregateSegment | null>(segmentsByType[0]);
+  const orderedSegments = segmentsByType.sort((a, b) => {
+    return a.impactSegmentName.localeCompare(b.impactSegmentName);
+  });
+  return (
+    <div className={"flex flex-col w-full"}>
+      <div className="flex flex-row gap-2 flex-wrap">
+        {orderedSegments.map((item, index) => (
+          <Button
+            className={cn(
+              "px-2 py-2 rounded hover:bg-gray-100 dark:hover:bg-zinc-700 font-normal bg-white dark:bg-zinc-800 text-sm text-black border border-gray-300 dark:border-zinc-700 dark:text-white",
+              selectedSegment?.impactSegmentId === item.impactSegmentId
+                ? "bg-zinc-800 dark:bg-zinc-600 text-white dark:text-white border border-zinc-800 dark:border-zinc-600"
+                : ""
+            )}
+            key={`${item.impactSegmentType}-${item.impactSegmentName}-${index}`}
+            onClick={() => setSelectedSegment(item)}
+          >
+            {item.impactSegmentName}
+          </Button>
+        ))}
+      </div>
+      <p className="my-1 text-base text-gray-500 dark:text-zinc-400">
+        {selectedSegment?.impactSegmentDescription}
+      </p>
+      {selectedSegment ? (
+        <Carousel
+          key={`${selectedSegment.impactSegmentType}-${selectedSegment.impactSegmentName}-${selectedSegment.impactSegmentId}`}
+          items={selectedSegment.indicators}
+          renderItem={({ item, isSnapPoint }) => (
+            <CarouselItem
+              key={`${item.categoryId}-${item.impactSegmentId}-${item.impactSegmentType}-${item.impactIndicatorId}-${item.indicatorName}`}
+              isSnapPoint={isSnapPoint}
+            >
+              <AggregateMetricCard item={item} />
+            </CarouselItem>
+          )}
+        />
+      ) : null}
+    </div>
+  );
+};
+
+const AggregateCategoryBlocks = ({
+  category,
+}: {
+  category: ImpactAggregateData;
+}) => {
+  const outputsById = category.impacts.filter(
+    (impact) =>
+      impact?.impactSegmentType === "output" ||
+      impact?.indicators?.[0]?.impactSegmentType === "output"
+  );
+  const outcomesById = category.impacts.filter(
+    (impact) =>
+      impact?.impactSegmentType === "outcome" ||
+      impact?.indicators?.[0]?.impactSegmentType === "outcome"
+  );
+  return (
+    <div className={`grid grid-cols-2 gap-6 max-md:flex max-md:flex-col`}>
+      {/* Outputs Column */}
+      <div
+        className={
+          Object.entries(outputsById).length === 0
+            ? "hidden"
+            : "flex flex-col w-full"
+        }
+      >
+        <AggregateSegmentCard segmentsByType={outputsById} />
+      </div>
+
+      {/* Outcomes Column */}
+      <div
+        className={
+          Object.entries(outcomesById).length === 0
+            ? "hidden"
+            : "flex flex-col w-full"
+        }
+      >
+        {outcomesById.length ? (
+          <AggregateSegmentCard segmentsByType={outcomesById} />
+        ) : null}
+      </div>
+    </div>
+  );
+};
+
 export const AggregateCategoryRow = ({
   program,
 }: {
   program: ImpactAggregateData;
 }) => {
-  // Group outputs and outcomes by their names
-  const outputsById = program.outputs
-    .filter((output) => output.type === "output")
-    .reduce((acc, curr) => {
-      const output = curr.outputId + curr.categoryId;
-      if (!acc[output]) {
-        acc[output] = [];
-      }
-      acc[output].push(curr);
-      return acc;
-    }, {} as Record<string, typeof program.outputs>);
-
-  const outcomesById = program.outputs
-    .filter((output) => output.type === "outcome")
-    .reduce((acc, curr) => {
-      const output = curr.outputId + curr.categoryId;
-      if (!acc[output]) {
-        acc[output] = [];
-      }
-      acc[output].push(curr);
-      return acc;
-    }, {} as Record<string, typeof program.outputs>);
-
-  // Sort function to get the most recent datapoint timestamp
-  const getLatestDatapointTimestamp = (item: ImpactAggregateOutput) => {
-    if (!item.datapoints.length) return 0;
-    return Math.max(
-      ...item.datapoints.map((dp) =>
-        dp.outputTimestamp ? new Date(dp.outputTimestamp).getTime() : 0
-      )
-    );
-  };
-
-  // Sort the items in each group by their latest datapoint
-  Object.keys(outputsById).forEach((key) => {
-    outputsById[key].sort(
-      (a, b) => getLatestDatapointTimestamp(b) - getLatestDatapointTimestamp(a)
-    );
-  });
-
-  Object.keys(outcomesById).forEach((key) => {
-    outcomesById[key].sort(
-      (a, b) => getLatestDatapointTimestamp(b) - getLatestDatapointTimestamp(a)
-    );
-  });
-
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-row gap-3 items-center">
         <h2 className="text-2xl leading-6 font-bold text-black dark:text-white">
           {program.categoryName}
         </h2>
-        <p className="text-lg leading-6 text-gray-500 dark:text-zinc-200 font-medium">
+        {/* <p className="text-lg leading-6 text-gray-500 dark:text-zinc-200 font-medium">
           {program.outputs.length}{" "}
           {pluralize("project", program.outputs.length)}
-        </p>
+        </p> */}
       </div>
-      {program.outputs.length ? (
-        <div
-          className={`${
-            Object.entries(outputsById).length == 0 ||
-            Object.entries(outcomesById).length == 0
-              ? "flex justify-between items-center"
-              : "grid grid-cols-2 gap-6 w-full"
-          } max-md:flex max-md:flex-col`}
-        >
-          {/* Outputs Column */}
-          <div
-            className={`${
-              Object.entries(outcomesById).length == 0
-                ? "grid grid-cols-2 gap-6 w-full"
-                : "flex flex-col"
-            }`}
-          >
-            {Object.entries(outputsById).map(([name, items], index) => (
-              <Carousel
-                key={`output-${name}-${index}`}
-                items={items}
-                renderItem={({ item, isSnapPoint }) => (
-                  <CarouselItem
-                    key={`${item.outputId}-${item.categoryId}`}
-                    isSnapPoint={isSnapPoint}
-                  >
-                    <MetricCard item={item} />
-                  </CarouselItem>
-                )}
-              />
-            ))}
-          </div>
-
-          {/* Outcomes Column */}
-          <div
-            className={`${
-              Object.entries(outputsById).length == 0
-                ? "grid grid-cols-2 gap-6 w-full"
-                : "flex flex-col"
-            }`}
-          >
-            {Object.entries(outcomesById).map(([name, items], index) => (
-              <Carousel
-                key={`outcome-${name}-${index}`}
-                items={items}
-                renderItem={({ item, isSnapPoint }) => (
-                  <CarouselItem
-                    key={`${item.outputId}-${item.categoryId}`}
-                    isSnapPoint={isSnapPoint}
-                  >
-                    <MetricCard item={item} />
-                  </CarouselItem>
-                )}
-              />
-            ))}
-          </div>
-        </div>
+      {program.impacts.length ? (
+        <AggregateCategoryBlocks category={program} />
       ) : (
         <div className="flex flex-col justify-center items-center gap-8 rounded-xl px-12 py-6 min-h-[280px] border border-dashed border-gray-400 dark:border-gray-600 bg-gray-50 dark:bg-zinc-900">
           <Image

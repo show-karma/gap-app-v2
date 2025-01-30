@@ -57,16 +57,31 @@ export interface ImpactAggregateDatapoint {
   max_value: number;
 }
 
-export interface ImpactAggregateOutput {
-  outputId: string;
-  name: string;
-  type: "output" | "outcome";
+export interface ImpactAggregateIndicator {
+  impactIndicatorId: string;
+  indicatorName: string;
+  indicatorDescription: string;
+  indicatorUnitOfMeasure: string;
+  impactSegmentName: string;
+  impactSegmentDescription: string;
+  impactSegmentType: "outcome" | "output";
+  impactSegmentId: string;
   categoryId: string;
   categoryName: string;
+  amount?: string;
   datapoints: ImpactAggregateDatapoint[];
+}
+
+export interface ImpactAggregateSegment {
+  categoryName: string;
+  impactSegmentName: string;
+  impactSegmentId: string;
+  impactSegmentDescription: string;
+  impactSegmentType: "output" | "outcome";
+  indicators: ImpactAggregateIndicator[];
 }
 
 export interface ImpactAggregateData {
   categoryName: string;
-  outputs: ImpactAggregateOutput[];
+  impacts: ImpactAggregateSegment[];
 }
