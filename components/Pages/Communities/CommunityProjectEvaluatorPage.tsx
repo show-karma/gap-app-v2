@@ -104,7 +104,7 @@ function ChatWithKarmaCoPilot({ projects }: { projects: any[] }) {
     return (
         <div className="relative flex flex-col h-[500px] bg-white rounded-lg border shadow-sm mb-8">
             <div ref={messageContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
-                {messages.map(m => (
+                {messages.filter(m => (m.role == "user" || m.role == "assistant") && m.content).map(m => (
                     <div
                         key={m.id}
                         className={`flex ${m.role === 'assistant' ? 'justify-start' : 'justify-end'}`}
@@ -114,6 +114,9 @@ function ChatWithKarmaCoPilot({ projects }: { projects: any[] }) {
                                 ? 'bg-gray-100 text-gray-900'
                                 : 'border border-primary-500 text-white'
                         }`}>
+                            {m.role === 'assistant' && <div className={`text-sm font-medium mb-1 text-primary-600`}>
+                                Karma Beacon
+                            </div>}
                             {m.content ? (
                                 <MarkdownPreview source={m.content} />
                             ) : (

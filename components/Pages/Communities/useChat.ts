@@ -26,9 +26,10 @@ interface UseChatOptions {
 }
 
 export function useChat(options: UseChatOptions) {
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [allMessages, setAllMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [currentMessage, setCurrentMessage] = useState('');
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
@@ -38,51 +39,135 @@ export function useChat(options: UseChatOptions) {
     e.preventDefault();
     if (!input.trim()) return;
 
+    // Set loading only for input state
+    setInput('');
+    setIsLoading(true);
+
     const userMessage: Message = {
       role: 'user',
       content: input,
       id: crypto.randomUUID()
     };
 
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    setIsLoading(true);
+    // Filter out tool-related messages
+    const messagesToSend = allMessages
+      .filter(msg => (msg.role === 'user' || msg.role === 'assistant') && !msg.tool_calls)
+      .map(({ role, content }) => ({ role, content }));
+
+    setAllMessages(prev => [...prev, userMessage]);
 
     try {
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: [...messages, userMessage],
+          messages: [...messagesToSend, { role: userMessage.role, content: userMessage.content }],
           projectsInProgram: options.body.projectsInProgram
         })
       });
 
-      const data = await response.json();
-      
-      // Filter out tool messages and only keep user/assistant messages
-      const newMessages = data.history
-        .filter((msg: Message) => msg.role === 'user' || msg.role === 'assistant')
-        .map((msg: Omit<Message, 'id'>) => ({
-          ...msg,
-          id: crypto.randomUUID()
-        }));
+      if (!response.ok) throw new Error('Stream response not ok');
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No reader available');
 
-      // Keep all previous messages and add new ones
-      setMessages(prev => [...prev, ...newMessages.slice(-1)]);
+      const decoder = new TextDecoder();
+      let currentLoopMessages = new Map<string, Partial<Message>>();
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        const messages = chunk.match(/data: [^\n]*/g) || [];
+        
+        for (const message of messages) {
+          if (message.trim().startsWith('data: ')) {
+            const data = message.slice(5).trim();
+            if (data === '[DONE]') {
+              console.log('Stream completed');
+              continue;
+            }
+
+            try {
+              const parsed = JSON.parse(data);
+              const loopId = parsed.loopId;
+              
+              if (!currentLoopMessages.has(loopId)) {
+                const newMessage = {
+                  role: 'assistant' as const,
+                  content: '',
+                  id: crypto.randomUUID(),
+                };
+                currentLoopMessages.set(loopId, newMessage);
+                setAllMessages(prev => [...prev, newMessage as Message]);
+              }
+
+              const currentLoopMessage = currentLoopMessages.get(loopId)!;
+              
+              switch (parsed.type) {
+                case 'content':
+                  if (parsed.content.trim()) {
+                    currentLoopMessage.content = (currentLoopMessage.content || '') + parsed.content;
+                    setAllMessages(prev => 
+                      prev.map(msg => 
+                        msg.id === currentLoopMessage.id 
+                          ? { ...msg, content: currentLoopMessage.content || '' }
+                          : msg
+                      )
+                    );
+                    setCurrentMessage(prev => prev + parsed.content);
+                  }
+                  break;
+
+                case 'tool':
+                  if (parsed.content && parsed.tool_call_id) {
+                    const toolMessage: Message = {
+                      role: 'tool',
+                      content: parsed.content,
+                      id: crypto.randomUUID(),
+                      tool_call_id: parsed.tool_call_id,
+                    };
+                    setAllMessages(prev => [...prev, toolMessage]);
+                  }
+                  break;
+
+                case 'tool_call':
+                  if (parsed.tool_calls?.length > 0) {
+                    currentLoopMessage.tool_calls = parsed.tool_calls;
+                    setAllMessages(prev =>
+                      prev.map(msg =>
+                        msg.id === currentLoopMessage.id
+                          ? { ...msg, tool_calls: parsed.tool_calls }
+                          : msg
+                      )
+                    );
+                  }
+                  break;
+              }
+            } catch (e) {
+              console.error('Error parsing chunk:', e, 'Data:', data);
+            }
+          }
+        }
+      }
+
+      setCurrentMessage('');
+
     } catch (error) {
       console.error('Chat error:', error);
     } finally {
+      // Only affects input state, not message display
       setIsLoading(false);
     }
   };
 
   return {
-    messages,
+    messages: allMessages,
     input,
     handleInputChange,
     handleSubmit,
     isLoading,
-    setMessages
+    setMessages: setAllMessages,
+    currentMessage,
   };
 }

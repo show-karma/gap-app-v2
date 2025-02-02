@@ -1,15 +1,6 @@
 // import { openai } from "@ai-sdk/openai";
 import { OpenAI } from "openai";
 import { z } from "zod";
-import {
-  InvalidToolArgumentsError,
-  ToolExecutionError,
-  NoSuchToolError,
-  streamText,
-  smoothStream,
-  tool,
-  StepResult,
-} from "ai";
 import { AxiosError } from "axios";
 import {
   getCategoriesWithCache,
@@ -23,16 +14,13 @@ import {
   setPopulated,
 } from "./cache-util";
 import { getImpactsWithCache } from "./cache-util";
-import {
-  getCategoriesInProgram,
-  getGrantsOfProject,
-  getProjectsUsingEmbeddings,
-  getUpdatesOfProject,
-} from "./util";
+import { getCategoriesInProgram, getProjectsUsingEmbeddings } from "./util";
 import {
   ChatCompletionMessageParam,
   ChatCompletionTool,
 } from "openai/resources/chat/completions.mjs";
+import { executeToolCall, tools } from "./tools";
+import { getSystemMessage } from "./prompt";
 
 // Allow streaming responses up to 60 seconds, can set to max 360 seconds
 export const maxDuration = 60;
@@ -41,7 +29,19 @@ const chatRequestSchema = z.object({
   messages: z.array(
     z.object({
       content: z.string(),
-      role: z.enum(["user", "assistant", "system"]),
+      role: z.enum(["user", "assistant", "system", "tool"]),
+      tool_call_id: z.string().optional(),
+      tool_calls: z
+        .array(
+          z.object({
+            id: z.string(),
+            function: z.object({
+              name: z.string(),
+              arguments: z.string(),
+            }),
+          })
+        )
+        .optional(),
     })
   ),
   projectsInProgram: z.array(
@@ -54,201 +54,9 @@ const chatRequestSchema = z.object({
   ),
 });
 
-const tools = [
-  {
-    type: "function",
-    function: {
-      name: "fetchCategoriesInProgram",
-      description: "Get all categories in the program/round",
-      parameters: {
-        type: "object",
-        properties: {},
-        required: [],
-        additionalProperties: false,
-      },
-      strict: true,
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "fetchProjectsBySemanticSearch",
-      description:
-        "Use only when user wants to search for projects by name or description",
-      parameters: {
-        type: "object",
-        properties: {
-          query: {
-            type: "string",
-            description: "the query",
-          },
-        },
-        additionalProperties: false,
-        required: ["query"],
-        strict: true,
-      },
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "fetchGrantsOfProject",
-      description: "Retrieves all grants of a project",
-      parameters: {
-        type: "object",
-        properties: {
-          projectUid: {
-            type: "string",
-            description: "the project id (e.g., project-1)",
-          },
-        },
-        required: ["projectUid"],
-        additionalProperties: false,
-      },
-      strict: true,
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "fetchImpactsOfProject",
-      description: "Retrieves all impacts of a project",
-      parameters: {
-        type: "object",
-        properties: {
-          projectUid: {
-            type: "string",
-            description: "the project id (e.g., project-1)",
-          },
-        },
-        additionalProperties: false,
-        required: ["projectUid"],
-      },
-      strict: true,
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "fetchMilestonesOfProject",
-      description: "Retrieves all milestones of a project",
-      parameters: {
-        type: "object",
-        properties: {
-          projectUid: {
-            type: "string",
-            description: "the project id (e.g., project-1)",
-          },
-        },
-        additionalProperties: false,
-        required: ["projectUid"],
-      },
-      strict: true,
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "fetchMembersOfProject",
-      description: "Retrieves all members of a project",
-      parameters: {
-        type: "object",
-        properties: {
-          projectUid: {
-            type: "string",
-            description: "the project id (e.g., project-1)",
-          },
-        },
-        additionalProperties: false,
-        required: ["projectUid"],
-      },
-      strict: true,
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "fetchUpdatesOfProject",
-      description: "Retrieves all updates of a project",
-      parameters: {
-        type: "object",
-        properties: {
-          projectUid: {
-            type: "string",
-            description: "the project id (e.g., project-1)",
-          },
-        },
-        required: ["projectUid"],
-        additionalProperties: false,
-      },
-      strict: true,
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "fetchCategoriesOfProject",
-      description: "Retrieves all categories of a project",
-      parameters: {
-        type: "object",
-        properties: {
-          projectUid: {
-            type: "string",
-            description: "the project id (e.g., project-1)",
-          },
-        },
-        required: ["projectUid"],
-        additionalProperties: false,
-      },
-      strict: true,
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "fetchProject",
-      description: "Retrieves all available data about a project at once",
-      parameters: {
-        type: "object",
-        properties: {
-          projectUid: {
-            type: "string",
-            description: "the project id (e.g., project-1)",
-          },
-        },
-        required: ["projectUid"],
-        additionalProperties: false,
-      },
-      strict: true,
-    },
-  },
-  {
-    type: "function",
-    function: {
-      name: "fetchDataAcrossProjects",
-      description: "Get data across multiple projects",
-      parameters: {
-        type: "object",
-        properties: {
-          projectUids: {
-            type: "array",
-            items: {
-              type: "string",
-            },
-            description:
-              "the project ids (e.g., project-1, project-2) or mention ALL for all projects",
-          },
-        },
-        required: ["projectUids"],
-        additionalProperties: false,
-      },
-      strict: true,
-    },
-  },
-];
-
 export async function POST(req: Request) {
   try {
+    console.log("[Chat API] Starting new chat request");
     const body = await req.json();
     const validatedData = chatRequestSchema.parse(body);
     const { messages, projectsInProgram } = validatedData;
@@ -294,10 +102,12 @@ export async function POST(req: Request) {
         `[Cache Population] Starting for ${unpopulatedProjects.length} new projects`
       );
 
-      for (const project of unpopulatedProjects) {
-        await populateProjectData(project);
-        setPopulated(project.uid);
-      }
+      await Promise.all(
+        unpopulatedProjects.map(async (project) => {
+          await populateProjectData(project);
+          setPopulated(project.uid);
+        })
+      );
 
       const cacheEndTime = performance.now();
       console.log(
@@ -307,286 +117,177 @@ export async function POST(req: Request) {
       );
     }
     const openai = new OpenAI();
-
-    const systemMessage = `You are Karma Beacon, an AI assistant for the Karma Grantee Accountability Protocol (GAP) - a web3 platform that helps track and evaluate grant-funded projects.
-
-Core Responsibilities:
-- Answer user queries using the tools provided and provide the best possible response.
-- If user asks for a project by name, search for the project in the program and confirm with user if it is the correct project based on the title of the project.
-
-- If projects semantic search is used - only use projects returned on the tool call. Never talk abt projects that are not part of the projectsInProgram
-- If project not found, suggest similar projects based on name and description matches
-
-3. Response Guidelines
-   - Structure responses with clear headings and sections
-   - Use numbered lists for better readability
-   - Include specific metrics and data points when available
-   - Format responses in markdown for better presentation
-   - If no data is found, respond with "Sorry, I don't know"
-
-   Example Output formats:
-
-   ## 1. Project Overview
-   **Project:** [Project Name](https://project-link)  
-   **Categories:** [Category 1], [Category 2], ...  
-   **Description:** [Project Description]  
-   **Status:** [Active/Completed/On Hold]  
-   **Chain:** [Chain Name]  
-   **Website:** [Website URL](https://website-url)  
-   **Repository:** [Repository URL](https://repository-url)  
-
-   ## 2. Milestones
-   ### [Date/Quarter]: [Milestone Title]
-   - **Status:** [Not Started/In Progress/Completed/Delayed]
-   - **Due Date:** [Target Date]
-   - **Description:** [Detailed Description]
-   - **Deliverables:** [Expected Outcomes]
-   - **Progress:** [Progress Details]
-   - **Dependencies:** [Any Dependencies]
-   - **Links:** [Relevant Links](https://link-url)
-
-   ## 3. Grants
-   ### Grant [ID/Name]
-   - **Amount:** [Amount] [Token Symbol]
-   - **Status:** [Pending/Approved/Disbursed/Completed]
-   - **Application Date:** [Date]
-   - **Approval Date:** [Date]
-   - **Disbursement Date:** [Date]
-   - **Purpose:** [Grant Purpose]
-   - **Milestones:** [Associated Milestones]
-   - **Contract Address:** [Address]
-   - **Transaction:** [Transaction Hash](https://explorer-url)
-
-   ## 4. Team Members
-   ### [Name] - [Primary Role]
-   - **Roles:** [All Roles]
-   - **Bio:** [Brief Biography]
-   - **Experience:** [Relevant Experience]
-   - **Contact:** 
-     - **Email:** [Email](mailto:email@example.com)
-     - **Discord:** [Discord Handle]
-     - **Telegram:** [Telegram Handle]
-   - **Social:** 
-     - [Twitter](https://twitter.com/handle)
-     - [GitHub](https://github.com/handle)
-     - [LinkedIn](https://linkedin.com/in/handle)
-   - **Wallet Address:** [Address]
-
-   ## 5. Project Updates
-   ### [Date]: [Update Title]
-   - **Type:** [Regular Update/Milestone Update/Grant Report]
-   - **Status:** [On Track/Delayed/Completed/Blocked]
-   - **Summary:** [Brief Summary]
-   - **Details:** [Detailed Update Content]
-   - **Achievements:** [Key Achievements]
-   - **Challenges:** [Challenges Faced]
-   - **Next Steps:** [Planned Actions]
-   - **Resources:** 
-     - [Documentation](https://docs-url)
-     - [Demo](https://demo-url)
-     - [Code](https://code-url)
-   - **Media:** 
-     - [Images](https://image-url)
-     - [Videos](https://video-url)
-
-   ## 6. Impact Metrics
-   ### [Metric Category]
-   - **Metric Name:** [Name]
-   - **Value:** [Current Value] [Unit]
-   - **Previous Value:** [Previous Value] [Unit]
-   - **Change:** [Percentage/Absolute Change]
-   - **Time Period:** [Measurement Period]
-   - **Description:** [Metric Description]
-   - **Methodology:** [How it's Measured]
-   - **Source:** [Data Source](https://source-url)
-   - **Verification:** [Verification Method]
-   - **Impact Area:** [Area of Impact]
-
-   ## 7. Categories in Program
-   ### [Category Name]
-   - **Description:** [Category Description]
-   - **Projects Count:** [Number of Projects]
-   - **Total Grants:** [Total Grant Amount] [Token]
-   - **Focus Areas:** [Key Focus Points]
-   - **Requirements:** [Category Requirements]
-   - **Success Metrics:** [Expected Outcomes]
-   - **Related Categories:** [Similar/Related Categories]
-   - **Projects:** 
-     - [Project 1](https://project1-url)
-     - [Project 2](https://project2-url)
-
-TOOL USAGE:
-- To get complete data about a project, use fetchProject tool
-- Use specific tools (fetchGrants, fetchImpacts, etc.) for targeted data
-- Always verify project existence in program before proceeding
-- If project is not in program, inform user: "This project is not in the current program"
-- Call the tools you have in parallel when required to get the data faster.
-  
-
-<project-list>
-${
-  projectsInProgram
-    ? `PROJECTS IN THIS PROGRAM/ROUND: ${JSON.stringify(simplifiedProjects)}`
-    : "NO PROJECT FILTER ACTIVE"
-}
-</project-list>
-
-Think step by step before you generate a response. Do parallel tool calls when required to get the data faster.
-
-`;
+    console.log("[Chat API] Created OpenAI instance");
 
     let currentMessages = [
-      { role: "system", content: systemMessage },
+      {
+        role: "system",
+        content: getSystemMessage(projectsInProgram, simplifiedProjects),
+      },
       ...messages,
     ] as ChatCompletionMessageParam[];
 
-    let finalResponse = null;
-    let continueLoop = true;
-    let allMessages: ChatCompletionMessageParam[] = [];
+    const encoder = new TextEncoder();
+    const stream = new TransformStream();
+    const writer = stream.writable.getWriter();
 
-    while (continueLoop) {
-      const completion = await openai.chat.completions.create({
-        model: "gpt-4o",
-        messages: currentMessages,
-        tools: tools as ChatCompletionTool[],
-        tool_choice: "auto",
-      });
+    const streamResponse = new Response(stream.readable, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
+    });
 
-      console.log("---------------------");
-      console.log(JSON.stringify(completion.choices, null, 2));
+    (async () => {
+      let step = 0;
+      try {
+        console.log("[Chat API] Starting chat completion stream");
+        while (true) {
+          const loopId = crypto.randomUUID(); // Generate unique ID for this loop
 
-      const responseMessage = completion.choices[0].message;
+          const completion = await openai.chat.completions.create({
+            model: "gpt-4o",
+            messages: currentMessages,
+            tools: tools as ChatCompletionTool[],
+            stream: true,
+          });
 
-      // Add assistant's message to allMessages
-      allMessages.push(responseMessage);
+          let hasToolCalls = false;
+          const finalToolCalls: Record<number, any> = {};
+          let currentContent = "";
 
-      if (!responseMessage.tool_calls) {
-        // If no tool calls, we have our final response
-        finalResponse = responseMessage;
-        continueLoop = false;
-        continue;
-      }
+          // Create assistant message without tool_calls initially
+          const assistantMessage: ChatCompletionMessageParam = {
+            role: "assistant",
+            content: "",
+          };
 
-      // Handle tool calls
-      const toolResults = await Promise.all(
-        responseMessage.tool_calls.map(async (toolCall) => {
-          const functionName = toolCall.function.name;
-          const args = JSON.parse(toolCall.function.arguments);
+          for await (const chunk of completion) {
+            const delta = chunk.choices[0].delta;
 
-          try {
-            let result;
-            switch (functionName) {
-              case "fetchCategoriesInProgram":
-                result = await getCategoriesInProgram(projectsInProgram);
-                break;
-              case "fetchProjectsBySemanticSearch":
-                result = await getProjectsUsingEmbeddings(
-                  args.query,
+            if (delta.tool_calls) {
+              // Add tool_calls array only when we have tool calls
+              if (!assistantMessage.tool_calls) {
+                assistantMessage.tool_calls = [];
+              }
+              for (const toolCall of delta.tool_calls) {
+                const { index } = toolCall;
+                if (!finalToolCalls[index]) {
+                  finalToolCalls[index] = {
+                    id: toolCall.id,
+                    type: toolCall.type,
+                    index: toolCall.index,
+                    function: {
+                      name: toolCall.function?.name || "",
+                      arguments: toolCall.function?.arguments || "",
+                    },
+                  };
+                } else {
+                  if (toolCall.function?.name) {
+                    finalToolCalls[index].function.name =
+                      toolCall.function.name;
+                  }
+                  if (toolCall.function?.arguments) {
+                    finalToolCalls[index].function.arguments +=
+                      toolCall.function.arguments;
+                  }
+                }
+              }
+            }
+
+            if (delta.content) {
+              currentContent += delta.content;
+              assistantMessage.content = currentContent;
+              if (delta.content.trim()) {
+                await writer.write(
+                  encoder.encode(
+                    `data: ${JSON.stringify({
+                      type: "content",
+                      content: delta.content,
+                      loopId,
+                    })}\n\n`
+                  )
+                );
+              }
+            }
+          }
+
+          console.log("[Chat API] Final tool calls:", finalToolCalls);
+
+          // Process tool calls after the streaming is complete
+          const completeTools = Object.values(finalToolCalls).filter((t) => {
+            try {
+              return (
+                t.function?.name &&
+                t.function?.arguments &&
+                JSON.parse(t.function.arguments)
+              );
+            } catch {
+              return false;
+            }
+          });
+
+          console.log("[Chat API] Complete tools:", completeTools);
+
+          if (completeTools.length > 0) {
+            hasToolCalls = true;
+            assistantMessage.tool_calls = completeTools;
+            currentMessages.push(assistantMessage);
+            const toolResults = await Promise.all(
+              completeTools.map(async (toolCall) => {
+                const result = await executeToolCall(
+                  toolCall,
+                  getProjectUid,
                   projectsInProgram
                 );
-                break;
-              case "fetchGrantsOfProject":
-                result = await getGrantsWithCache(
-                  getProjectUid(args.projectUid)
-                );
-                break;
-              case "fetchImpactsOfProject":
-                result = await getImpactsWithCache(
-                  getProjectUid(args.projectUid)
-                );
-                break;
-              case "fetchMilestonesOfProject":
-                result = await getMilestonesWithCache(
-                  getProjectUid(args.projectUid)
-                );
-                break;
-              case "fetchMembersOfProject":
-                result = await getMembersWithCache(
-                  getProjectUid(args.projectUid)
-                );
-                break;
-              case "fetchUpdatesOfProject":
-                result = await getUpdatesWithCache(
-                  getProjectUid(args.projectUid)
-                );
-                break;
-              case "fetchCategoriesOfProject":
-                result = await getCategoriesWithCache(
-                  getProjectUid(args.projectUid)
-                );
-                break;
-              case "fetchProject":
-                result = await getProjectWithCache(
-                  getProjectUid(args.projectUid)
-                );
-                break;
-              case "fetchDataAcrossProjects":
-                if (args.projectUids.includes("ALL")) {
-                  result = await Promise.all(
-                    projectsInProgram.map(async (project) => {
-                      return await getProjectWithCache(project.uid);
-                    })
-                  );
-                } else {
-                  result = await Promise.all(
-                    args.projectUids.map(async (projectUid: string) => {
-                      return await getProjectWithCache(
-                        getProjectUid(projectUid)
-                      );
-                    })
+                const toolResponse = {
+                  tool_call_id: toolCall.id,
+                  role: "tool" as const,
+                  content: JSON.stringify(result),
+                };
+                if (result) {
+                  await writer.write(
+                    encoder.encode(
+                      `data: ${JSON.stringify({
+                        type: "tool",
+                        loopId, // Include the loop ID
+                        ...toolResponse,
+                      })}\n\n`
+                    )
                   );
                 }
-
-                break;
-              default:
-                throw new Error(`Unknown function: ${functionName}`);
-            }
-            return {
-              tool_call_id: toolCall.id,
-              result,
-            };
-          } catch (error) {
-            console.error(`Error executing ${functionName}:`, error);
-            throw new ToolExecutionError({
-              message: `Error executing ${functionName}: ${
-                error instanceof Error ? error.message : String(error)
-              }`,
-              toolName: functionName,
-              toolArgs: args,
-              toolCallId: toolCall.id,
-              cause: error,
-            });
+                return toolResponse;
+              })
+            );
+            currentMessages = [...currentMessages, ...toolResults];
           }
-        })
-      );
+          if (currentContent.length > 0) {
+            console.log("[Chat API] Current content:", currentContent);
+          }
+          console.log(
+            "---------------------------------step-------------",
+            step
+          );
+          step++;
+          if (!hasToolCalls) {
+            break;
+          }
+        }
 
-      // Add the assistant's message and tool results to the conversation
-      currentMessages.push(responseMessage);
-
-      // Add tool results to both currentMessages and allMessages
-      toolResults.forEach((toolResult) => {
-        const toolMessage = {
-          role: "tool",
-          tool_call_id: toolResult.tool_call_id,
-          content: JSON.stringify(toolResult.result),
-        } as ChatCompletionMessageParam;
-        
-        currentMessages.push(toolMessage);
-        allMessages.push(toolMessage);
-      });
-    }
-
-    // Return the final response along with the complete message history
-    return new Response(
-      JSON.stringify({ 
-        message: finalResponse,
-        history: allMessages 
-      }), {
-        headers: { "Content-Type": "application/json" },
+        console.log("[Chat API] Stream completed");
+        await writer.write(encoder.encode("data: [DONE]\n\n"));
+        await writer.close();
+      } catch (error) {
+        console.error("[Chat API] Streaming error:", error);
+        await writer.abort(error);
       }
-    );
+    })();
+
+    console.log("[Chat API] Returning stream response");
+    return streamResponse;
   } catch (error) {
-    console.error("Chat API Error:", error);
+    console.error("[Chat API] Request error:", error);
 
     if (error instanceof z.ZodError) {
       return new Response(

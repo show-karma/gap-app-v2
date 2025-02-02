@@ -87,6 +87,7 @@
     "react-snap-carousel": "^0.5.1",
     "react-typed": "^2.0.12",
     "react-virtualized": "^9.22.5",
+    "rehype-external-links": "^3.0.0",
     "rehype-sanitize": "^6.0.0",
     "sass": "^1.71.0",
     "tailwind-merge": "^2.2.1",
