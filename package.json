@@ -72,6 +72,7 @@
     "next-sitemap": "^4.2.3",
     "next-themes": "^0.3.0",
     "nuqs": "^1.17.0",
+    "openai": "^4.82.0",
     "pluralize": "^8.0.0",
     "postcss-nesting": "^12.0.2",
     "rc-slider": "^10.6.2",

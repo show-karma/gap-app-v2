@@ -8,7 +8,7 @@ import { ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/react"
 import { ChevronUpDownIcon, PaperAirplaneIcon } from "@heroicons/react/24/outline";
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
-import { useChat } from './useChat';
+import { useChat } from 'ai/react';
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import React from "react";
 
@@ -109,16 +109,21 @@ function ChatWithKarmaCoPilot({ projects }: { projects: any[] }) {
                         key={m.id}
                         className={`flex ${m.role === 'assistant' ? 'justify-start' : 'justify-end'}`}
                     >
-                        <div className={`max-w-[80%] rounded-xl p-3 ${
-                            m.role === 'assistant'
-                                ? 'bg-gray-100 text-gray-900'
-                                : 'border border-primary-500 text-white'
-                        }`}>
-                            {m.content ? (
+                        <div className={`max-w-[80%] rounded-xl p-3 ${m.role === 'assistant'
+                            ? 'bg-gray-100 text-gray-900'
+                            : 'border border-primary-500 text-white'
+                            }`}>
+                            {m.role === 'assistant' && <div className={`text-sm font-medium mb-1 text-primary-600`}>
+                                Karma Beacon
+                            </div>}
+                            {m.content.length > 0 ? (
                                 <MarkdownPreview source={m.content} />
                             ) : (
                                 <div className="whitespace-pre-wrap text-md font-light">
-                                    {`Analyzing projects and gathering insights...`}
+                                    {`Analyzing projects and gathering insights...`} <br />
+                                    {m?.toolInvocations?.map((tool) => (
+                                        <p className="text-sm text-zinc-500" key={tool.toolName}>{JSON.stringify(tool?.toolName)}</p>
+                                    ))}
                                 </div>
                             )}
                         </div>
