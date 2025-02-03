@@ -1,8 +1,10 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { chosenCommunities } from "./utilities/chosenCommunities";
+import type { Community } from "@show-karma/karma-gap-sdk";
+import { envVars } from "./utilities/enviromentVars";
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const communityMatch = path.match(/^\/([^\/]+)(?:\/.*)?$/);
 
@@ -14,10 +16,30 @@ export function middleware(request: NextRequest) {
         community.slug === communityId ||
         community.uid.toLowerCase() === communityId.toLowerCase()
     );
+    if (!path.startsWith("/community/")) {
+      if (isChosenCommunity) {
+        const newPath = path.replace(/^\/([^\/]+)/, "/community/$1");
+        return NextResponse.redirect(new URL(newPath, request.url));
+      }
+      const communitiesFetched = await fetch(
+        `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/communities`
+      );
+      const communitiesJson: Community[] = await communitiesFetched.json();
+      const communitiesArray = communitiesJson.map((community) => ({
+        uid: community.uid,
+        slug: community.details?.data?.slug,
+      }));
 
-    if (isChosenCommunity && !path.startsWith("/community/")) {
-      const newPath = path.replace(/^\/([^\/]+)/, "/community/$1");
-      return NextResponse.redirect(new URL(newPath, request.url));
+      const findCommunity = communitiesArray.find(
+        (community) =>
+          community.uid.toLowerCase() === communityId.toLowerCase() ||
+          community.slug === communityId
+      );
+
+      if (findCommunity) {
+        const newPath = path.replace(/^\/([^\/]+)/, "/community/$1");
+        return NextResponse.redirect(new URL(newPath, request.url));
+      }
     }
   }
 
