@@ -213,8 +213,6 @@ export const CommunityGrants = ({
     }
   };
 
-  console.log(paginationInfo);
-
   return (
     <div className="flex flex-col gap-4 w-full">
       <div className="flex items-center justify-between flex-row flex-wrap-reverse max-lg:flex-wrap max-lg:flex-col-reverse max-lg:justify-start max-lg:items-start gap-3 max-lg:gap-4">
