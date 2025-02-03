@@ -11,6 +11,7 @@ import fetchData from "@/utilities/fetchData";
 import { useChat } from './useChat';
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import React from "react";
+import { envVars } from "@/utilities/enviromentVars";
 
 interface Program {
     programId: string;
@@ -109,11 +110,10 @@ function ChatWithKarmaCoPilot({ projects }: { projects: any[] }) {
                         key={m.id}
                         className={`flex ${m.role === 'assistant' ? 'justify-start' : 'justify-end'}`}
                     >
-                        <div className={`max-w-[80%] rounded-xl p-3 ${
-                            m.role === 'assistant'
-                                ? 'bg-gray-100 text-gray-900'
-                                : 'border border-primary-500 text-white'
-                        }`}>
+                        <div className={`max-w-[80%] rounded-xl p-3 ${m.role === 'assistant'
+                            ? 'bg-gray-100 text-gray-900'
+                            : 'border border-primary-500 text-white'
+                            }`}>
                             {m.role === 'assistant' && <div className={`text-sm font-medium mb-1 text-primary-600`}>
                                 Karma Beacon
                             </div>}
@@ -292,10 +292,10 @@ export const CommunityProjectEvaluatorPage = () => {
                 console.error("Error fetching projects:", error);
                 return;
             }
-            
-            await fetchData("/api/chat", "GET", {}, {
+
+            await fetchData(`${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/karma-beacon`, "GET", {}, {
                 projectUids: projects.map((project: Project) => project.uid).join(","),
-            }, {}, false, true, "http://localhost:3000");
+            }, {}, false, true);
 
             setProjects(projects);
 
@@ -375,10 +375,10 @@ export const CommunityProjectEvaluatorPage = () => {
                         </div>
 
                         {selectedProgram && (
-                        <div className="w-3/4 p-4 bg-white">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-4">Chat with Karma Beacon</h2>
-                            <ChatWithKarmaCoPilot projects={projects} />
-                        </div>
+                            <div className="w-3/4 p-4 bg-white">
+                                <h2 className="text-2xl font-bold text-gray-900 mb-4">Chat with Karma Beacon</h2>
+                                <ChatWithKarmaCoPilot projects={projects} />
+                            </div>
                         )}
                     </div>
                 </>
