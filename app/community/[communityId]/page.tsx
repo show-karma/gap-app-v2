@@ -32,8 +32,8 @@ export default async function Page({ params }: Props) {
         try {
           const { data } = await gapIndexerApi.communityBySlug(communityId);
           community = data as ICommunityResponse;
-        } catch {
-          console.log("Not found community", communityId);
+        } catch (error) {
+          console.log("Not found community", communityId, error );
           community = null;
         }
       },

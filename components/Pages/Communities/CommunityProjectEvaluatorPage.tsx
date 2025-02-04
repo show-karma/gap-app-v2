@@ -8,9 +8,10 @@ import { ListboxButton, ListboxOption, ListboxOptions } from "@headlessui/react"
 import { ChevronUpDownIcon, PaperAirplaneIcon } from "@heroicons/react/24/outline";
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
-import { useChat } from 'ai/react';
+import { useChat } from './useChat';
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import React from "react";
+import { envVars } from "@/utilities/enviromentVars";
 
 interface Program {
     programId: string;
@@ -55,23 +56,23 @@ function MessageSkeleton() {
 }
 
 function ChatWithKarmaCoPilot({ projects }: { projects: any[] }) {
-    const { messages, input, handleInputChange, handleSubmit, isLoading: isLoadingChat, setMessages } = useChat({
+    const { messages, input, handleInputChange, handleSubmit, isLoading: isLoadingChat, setMessages, isStreaming } = useChat({
         body: {
             projectsInProgram: projects.map((project) => ({ uid: project.uid, chainId: project.chainID, projectTitle: project.details.title, projectCategories: project.categories }))
         },
     });
 
     const ChatFormRef = useRef<HTMLFormElement>(null);
-
-
+    const messageContainerRef = useRef<HTMLDivElement>(null);
 
     const hasMessages = messages.length > 0;
 
     useEffect(() => {
-        console.log("Messages", messages);
-    }, [messages]);
-
-
+        // Only scroll when streaming is complete and there are messages
+        if (!isStreaming && messages.length > 0 && messageContainerRef.current) {
+            messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
+        }
+    }, [messages, isStreaming]);
 
     const renderChatInput = () => (
         <form
@@ -104,9 +105,8 @@ function ChatWithKarmaCoPilot({ projects }: { projects: any[] }) {
 
     return (
         <div className="relative flex flex-col h-[500px] bg-white rounded-lg border shadow-sm mb-8">
-            {/* Messages Container */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {messages.map(m => (
+            <div ref={messageContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
+                {messages.filter(m => (m.role == "user" || m.role == "assistant") && m.content).map(m => (
                     <div
                         key={m.id}
                         className={`flex ${m.role === 'assistant' ? 'justify-start' : 'justify-end'}`}
@@ -118,14 +118,11 @@ function ChatWithKarmaCoPilot({ projects }: { projects: any[] }) {
                             {m.role === 'assistant' && <div className={`text-sm font-medium mb-1 text-primary-600`}>
                                 Karma Beacon
                             </div>}
-                            {m.content.length > 0 ? (
+                            {m.content ? (
                                 <MarkdownPreview source={m.content} />
                             ) : (
                                 <div className="whitespace-pre-wrap text-md font-light">
-                                    {`Analyzing projects and gathering insights...`} <br />
-                                    {m?.toolInvocations?.map((tool) => (
-                                        <p className="text-sm text-zinc-500" key={tool.toolName}>{JSON.stringify(tool?.toolName)}</p>
-                                    ))}
+                                    {`Analyzing projects and gathering insights...`}
                                 </div>
                             )}
                         </div>
@@ -134,7 +131,6 @@ function ChatWithKarmaCoPilot({ projects }: { projects: any[] }) {
                 {isLoadingChat && <MessageSkeleton />}
             </div>
 
-            {/* Input Container - Fixed at Bottom */}
             <div className="border-t p-4">
                 {renderChatInput()}
             </div>
@@ -297,7 +293,14 @@ export const CommunityProjectEvaluatorPage = () => {
                 console.error("Error fetching projects:", error);
                 return;
             }
-            setProjects(projects);
+
+            // await fetchData(`/karma-beacon`, "GET", {}, {
+            //     projectUids: projects.map((project: Project) => project.uid).join(","),
+            // }, {}, false, true, envVars.NEXT_PUBLIC_GAP_INDEXER_URL);
+
+            setProjects(projects.projectsInProgram);
+
+
         } catch (error) {
             console.error("Error fetching projects:", error);
         } finally {
@@ -323,7 +326,6 @@ export const CommunityProjectEvaluatorPage = () => {
 
     return (
         <div className="flex flex-col w-full h-screen">
-            {/* Display heading when no program is selected */}
             {!selectedProgram ? (
                 <div className="flex flex-col items-center justify-center h-full bg-gray-50 p-4">
                     <h1 className="text-3xl font-bold text-gray-900 mb-2 text-center">Karma Beacon</h1>
@@ -334,7 +336,6 @@ export const CommunityProjectEvaluatorPage = () => {
                         <div className="bg-zinc-100 rounded-3xl p-4 text-lg text-gray-700 shadow-md">✅ Compare projects within the program</div>
                         <div className="bg-zinc-100 rounded-3xl p-4 text-lg text-gray-700 shadow-md">✅ Analyze project metrics, updates, outcomes and impact</div>
                     </div>
-                    {/* Program Selection Dropdown */}
                     <div className="w-1/2 mt-4">
                         {isLoading ? (
                             <div className="flex items-center justify-center">
@@ -360,9 +361,7 @@ export const CommunityProjectEvaluatorPage = () => {
                 </div>
             ) : (
                 <>
-                    {/* Projects List and Chat Interface */}
                     <div className="flex w-full h-full">
-                        {/* Projects List */}
                         <div className="w-1/4 overflow-y-auto p-4 bg-gray-50 border-r border-gray-200">
                             <h2 className="text-2xl font-bold text-gray-900 mb-4">Projects</h2>
                             {isLoadingProjects ? (
@@ -377,10 +376,10 @@ export const CommunityProjectEvaluatorPage = () => {
                         </div>
 
                         {selectedProgram && (
-                        <div className="w-3/4 p-4 bg-white">
-                            <h2 className="text-2xl font-bold text-gray-900 mb-4">Chat with Karma Beacon</h2>
-                            <ChatWithKarmaCoPilot projects={projects} />
-                        </div>
+                            <div className="w-3/4 p-4 bg-white">
+                                <h2 className="text-2xl font-bold text-gray-900 mb-4">Chat with Karma Beacon</h2>
+                                <ChatWithKarmaCoPilot projects={projects} />
+                            </div>
                         )}
                     </div>
                 </>
