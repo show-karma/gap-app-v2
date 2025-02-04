@@ -13,6 +13,7 @@ export type SimplifiedGrant = {
   uid: string;
   projectUid: string;
   projectSlug: string;
+  programId: string;
 };
 
 export const useGrants = (communityId: string) => {
@@ -31,6 +32,7 @@ export const useGrants = (communityId: string) => {
             projectUid: grant.project?.uid || "",
             projectSlug: grant.project?.details?.data?.slug || "",
             createdOn: grant.createdOn || "",
+            programId: grant.details?.data?.programId || "",
           }));
         }
         return [];

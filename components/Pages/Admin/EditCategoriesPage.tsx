@@ -70,7 +70,7 @@ export default function EditCategoriesPage() {
     totalItems,
     paginatedGrants,
     uniquePrograms,
-    selectedProgram,
+    selectedProgramId,
     sort,
     handlePageChange,
     handleProgramChange,
@@ -189,10 +189,11 @@ export default function EditCategoriesPage() {
           <div className="flex items-center gap-4">
             <ProgramFilter
               programs={uniquePrograms}
-              selectedProgram={selectedProgram}
+              selectedProgramId={selectedProgramId}
               onChange={handleProgramChange}
             />
             <CategoryCreationDialog
+
               refreshCategories={async () => {
                 refreshCategories();
               }}
