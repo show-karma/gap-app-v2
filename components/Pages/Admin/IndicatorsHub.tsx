@@ -11,6 +11,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
+import { DeleteDialog } from "@/components/DeleteDialog";
 
 const UNIT_TYPES = ["float", "int"] as const;
 type UnitType = (typeof UNIT_TYPES)[number];
@@ -42,6 +43,7 @@ interface IndicatorsHubProps {
 
 export const IndicatorsHub = ({ communityId }: IndicatorsHubProps) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const { data: indicators = [], refetch } = useIndicators({
     communityId,
@@ -79,6 +81,7 @@ export const IndicatorsHub = ({ communityId }: IndicatorsHubProps) => {
 
   const handleDelete = async (id: string) => {
     try {
+      setDeletingId(id);
       const [, error] = await fetchData(
         INDEXER.COMMUNITY.INDICATORS.COMMUNITY.DELETE(communityId),
         "DELETE",
@@ -91,6 +94,8 @@ export const IndicatorsHub = ({ communityId }: IndicatorsHubProps) => {
     } catch (error) {
       errorManager("Failed to delete indicator", error);
       toast.error("Failed to delete indicator");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -176,13 +181,17 @@ export const IndicatorsHub = ({ communityId }: IndicatorsHubProps) => {
                     {indicator.unitOfMeasure}
                   </span>
                 </div>
-                <button
-                  onClick={() => handleDelete(indicator.id)}
-                  className="text-red-500 hover:text-red-700 transition-colors p-1.5 ml-2"
-                  aria-label="Delete indicator"
-                >
-                  <TrashIcon className="h-4 w-4" />
-                </button>
+                <DeleteDialog
+                  title={`Are you sure you want to delete ${indicator.name}?`}
+                  deleteFunction={() => handleDelete(indicator.id)}
+                  isLoading={deletingId === indicator.id}
+                  buttonElement={{
+                    icon: <TrashIcon className="h-4 w-4" />,
+                    text: "",
+                    styleClass:
+                      "text-red-500 hover:text-red-700 transition-colors p-1.5 ml-2 bg-transparent hover:bg-transparent hover:opacity-75",
+                  }}
+                />
               </div>
             ))
           ) : (

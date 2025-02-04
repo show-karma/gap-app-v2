@@ -21,13 +21,14 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
+import { DeleteDialog } from "@/components/DeleteDialog";
 
 const OUTPUT_TYPES = ["output", "outcome"] as const;
 type OutputType = (typeof OUTPUT_TYPES)[number];
 
 const OUTPUT_TYPE_DISPLAY = {
   output: "Activity",
-  outcome: "Outcome"
+  outcome: "Outcome",
 } as const;
 
 const impactSegmentSchema = z.object({
@@ -194,7 +195,9 @@ export const ManageCategoriesOutputs = ({
   const [isSavingOutput, setIsSavingOutput] = useState<string>("");
   const [isDeletingOutput, setIsDeletingOutput] = useState<string>("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
-  const selectedCategory = categories.find((cat) => cat.id === selectedCategoryId);
+  const selectedCategory = categories.find(
+    (cat) => cat.id === selectedCategoryId
+  );
 
   const { data: impact_indicators = [] } = useIndicators({
     communityId: community?.uid || "",
@@ -314,9 +317,7 @@ export const ManageCategoriesOutputs = ({
 
   return (
     <div className="bg-white dark:bg-zinc-800 rounded-lg p-8 border border-gray-100 dark:border-zinc-700 w-full">
-      <h2 className="text-2xl font-bold mb-6">
-        Manage Activities & Outcomes
-      </h2>
+      <h2 className="text-2xl font-bold mb-6">Manage Activities & Outcomes</h2>
       {categories.length ? (
         <div className="space-y-8">
           <div className="flex flex-col gap-4">
@@ -326,8 +327,8 @@ export const ManageCategoriesOutputs = ({
             <select
               value={selectedCategoryId}
               onChange={(e) => setSelectedCategoryId(e.target.value)}
-              className="w-full p-2 text-sm border border-gray-200 dark:border-gray-700 rounded-md 
-                focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
+              className="w-full p-2 text-sm border bg-gray-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700 rounded-md 
+                focus:ring-2 focus:ring-blue-500 dark:text-white"
             >
               <option value="">Select a category</option>
               {categories.map((category) => (
@@ -370,23 +371,32 @@ export const ManageCategoriesOutputs = ({
                         </div>
                         <div className="flex items-center gap-2">
                           <ChevronDownIcon className="h-5 w-5 transform transition-transform duration-200 ease-in-out ui-open:rotate-180" />
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleRemoveOutput(selectedCategory.id, segment.id);
-                            }}
-                            className="text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
-                            aria-label="Remove output"
-                            disabled={isDeletingOutput === segment.id}
-                          >
-                            <TrashIcon
-                              className={cn(
-                                "h-4 w-4",
-                                isDeletingOutput === segment.id &&
-                                  "animate-pulse opacity-50"
-                              )}
+                          <div onClick={(e) => e.stopPropagation()}>
+                            <DeleteDialog
+                              title={`Are you sure you want to delete ${segment.name}?`}
+                              deleteFunction={() =>
+                                handleRemoveOutput(
+                                  selectedCategory.id,
+                                  segment.id
+                                )
+                              }
+                              isLoading={isDeletingOutput === segment.id}
+                              buttonElement={{
+                                icon: (
+                                  <TrashIcon
+                                    className={cn(
+                                      "h-4 w-4",
+                                      isDeletingOutput === segment.id &&
+                                        "animate-pulse opacity-50"
+                                    )}
+                                  />
+                                ),
+                                text: "",
+                                styleClass:
+                                  "text-red-500 hover:text-red-700 transition-colors disabled:opacity-50 bg-transparent hover:bg-transparent hover:opacity-75",
+                              }}
                             />
-                          </button>
+                          </div>
                         </div>
                       </Accordion.Trigger>
                       <Accordion.Content className="p-4 bg-gray-50 dark:bg-zinc-900">
