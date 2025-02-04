@@ -31,6 +31,7 @@ export function useChat(options: UseChatOptions) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [currentMessage, setCurrentMessage] = useState("");
+  const [isStreaming, setIsStreaming] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
@@ -40,9 +41,9 @@ export function useChat(options: UseChatOptions) {
     e.preventDefault();
     if (!input.trim()) return;
 
-    // Set loading only for input state
     setInput("");
     setIsLoading(true);
+    setIsStreaming(true);
 
     const userMessage: Message = {
       role: "user",
@@ -169,8 +170,8 @@ export function useChat(options: UseChatOptions) {
     } catch (error) {
       console.error("Chat error:", error);
     } finally {
-      // Only affects input state, not message display
       setIsLoading(false);
+      setIsStreaming(false);
     }
   };
 
@@ -182,5 +183,6 @@ export function useChat(options: UseChatOptions) {
     isLoading,
     setMessages: setAllMessages,
     currentMessage,
+    isStreaming,
   };
 }

@@ -56,7 +56,7 @@ function MessageSkeleton() {
 }
 
 function ChatWithKarmaCoPilot({ projects }: { projects: any[] }) {
-    const { messages, input, handleInputChange, handleSubmit, isLoading: isLoadingChat, setMessages } = useChat({
+    const { messages, input, handleInputChange, handleSubmit, isLoading: isLoadingChat, setMessages, isStreaming } = useChat({
         body: {
             projectsInProgram: projects.map((project) => ({ uid: project.uid, chainId: project.chainID, projectTitle: project.details.title, projectCategories: project.categories }))
         },
@@ -68,10 +68,11 @@ function ChatWithKarmaCoPilot({ projects }: { projects: any[] }) {
     const hasMessages = messages.length > 0;
 
     useEffect(() => {
-        if (messageContainerRef.current) {
+        // Only scroll when streaming is complete and there are messages
+        if (!isStreaming && messages.length > 0 && messageContainerRef.current) {
             messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
         }
-    }, [messages]);
+    }, [messages, isStreaming]);
 
     const renderChatInput = () => (
         <form
@@ -293,11 +294,11 @@ export const CommunityProjectEvaluatorPage = () => {
                 return;
             }
 
-            await fetchData(`${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}/karma-beacon`, "GET", {}, {
-                projectUids: projects.map((project: Project) => project.uid).join(","),
-            }, {}, false, true);
+            // await fetchData(`/karma-beacon`, "GET", {}, {
+            //     projectUids: projects.map((project: Project) => project.uid).join(","),
+            // }, {}, false, true, envVars.NEXT_PUBLIC_GAP_INDEXER_URL);
 
-            setProjects(projects);
+            setProjects(projects.projectsInProgram);
 
 
         } catch (error) {
