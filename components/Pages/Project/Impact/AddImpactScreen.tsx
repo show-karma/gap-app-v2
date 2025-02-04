@@ -43,7 +43,7 @@ const inputStyle =
 
 type UpdateType = z.infer<typeof updateSchema>;
 
-interface AddImpactScreenProps {}
+interface AddImpactScreenProps { }
 
 export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
   const [proof, setProof] = useState("");
@@ -96,8 +96,8 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
         work,
         impact,
         proof,
-        startedAt: startedAt.getTime() / 1000,
-        completedAt: completedAt.getTime() / 1000,
+        startedAt: Math.floor(startedAt.getTime() / 1000),
+        completedAt: Math.floor(completedAt.getTime() / 1000),
         verified: [],
       });
       const newImpact = new ProjectImpact({
