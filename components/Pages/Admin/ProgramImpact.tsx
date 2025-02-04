@@ -26,7 +26,7 @@ export const prepareChartData = (
         return {
           date: formatDate(new Date(timestamp), true),
           [name]: Number(values[index]) || 0,
-          Running: Number(runningValues[index]) || 0,
+          Cumulative: Number(runningValues[index]) || 0,
         };
       }
       return {
@@ -266,7 +266,7 @@ export default function ProgramImpactPage() {
                                 )
                             )}
                             index={"date"}
-                            categories={[indicator.indicatorName, "Running"]}
+                            categories={[indicator.indicatorName, "Cumulative"]}
                             colors={["blue", "green"]}
                             valueFormatter={(value) => `${value}`}
                             yAxisWidth={40}

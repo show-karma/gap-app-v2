@@ -11,6 +11,8 @@ import { cn } from "@/utilities/tailwind";
 import { AreaChart, Card } from "@tremor/react";
 import Image from "next/image";
 import { useState } from "react";
+import { InformationCircleIcon } from "@heroicons/react/24/outline";
+import * as Tooltip from "@radix-ui/react-tooltip";
 
 export const prepareChartData = (
   timestamps: string[],
@@ -52,17 +54,6 @@ const AggregateMetricCard = ({ item }: { item: ImpactAggregateIndicator }) => (
               </span>
             </div>
           ) : null}
-        </div>
-        <div className="flex flex-row gap-2 flex-wrap items-center">
-          {item.impactSegmentType === "outcome" ? (
-            <p className="text-sm text-[#F79009] font-semibold dark:text-orange-400 bg-[#FFFAEB] dark:bg-yellow-950  rounded-2xl py-1 px-3">
-              Outcome
-            </p>
-          ) : (
-            <p className="text-sm text-[#5925DC] font-semibold dark:text-purple-400 bg-[#F4F3FF] dark:bg-purple-950 rounded-2xl py-1 px-3">
-              Output
-            </p>
-          )}
         </div>
       </div>
     </div>
@@ -109,23 +100,52 @@ const AggregateSegmentCard = ({
     <div className={"flex flex-col w-full"}>
       <div className="flex flex-row gap-2 flex-wrap">
         {orderedSegments.map((item, index) => (
-          <Button
+          <div
+            key={`${item.impactSegmentType}-${item.impactSegmentName}-${index}`}
             className={cn(
-              "px-2 py-2 rounded hover:bg-gray-100 dark:hover:bg-zinc-700 font-normal bg-white dark:bg-zinc-800 text-sm text-black border border-gray-300 dark:border-zinc-700 dark:text-white",
+              "px-2 py-2 rounded flex items-center gap-2",
               selectedSegment?.impactSegmentId === item.impactSegmentId
-                ? "bg-zinc-800 dark:bg-zinc-600 text-white dark:text-white border border-zinc-800 dark:border-zinc-600"
+                ? "bg-gray-100 dark:bg-zinc-700"
                 : ""
             )}
-            key={`${item.impactSegmentType}-${item.impactSegmentName}-${index}`}
             onClick={() => setSelectedSegment(item)}
           >
-            {item.impactSegmentName}
-          </Button>
+            <span className={cn(
+              "text-xs px-2 py-1 rounded-full",
+              item.impactSegmentType === "output"
+                ? "bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300"
+                : "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300"
+            )}>
+              {item.impactSegmentType === "output" ? "Activity" : "Outcome"}
+            </span>
+
+            <span className="text-sm text-black dark:text-white">
+              - {item.impactSegmentName}
+            </span>
+            
+            <Tooltip.Provider>
+              <Tooltip.Root delayDuration={0}>
+                <Tooltip.Trigger asChild>
+                  <button
+                    className="p-1 hover:bg-gray-200 dark:hover:bg-zinc-600 rounded"
+                    aria-label="View description"
+                  >
+                    <InformationCircleIcon className="h-4 w-4 text-gray-500 dark:text-gray-400" />
+                  </button>
+                </Tooltip.Trigger>
+                <Tooltip.Portal>
+                  <Tooltip.Content
+                    className="max-w-xs p-2 text-sm bg-white dark:bg-zinc-800 text-gray-700 dark:text-gray-300 rounded-md shadow-lg border border-gray-200 dark:border-zinc-700"
+                    sideOffset={5}
+                  >
+                    {item.impactSegmentDescription}
+                  </Tooltip.Content>
+                </Tooltip.Portal>
+              </Tooltip.Root>
+            </Tooltip.Provider>
+          </div>
         ))}
       </div>
-      <p className="my-1 text-base text-gray-500 dark:text-zinc-400">
-        {selectedSegment?.impactSegmentDescription}
-      </p>
       {selectedSegment ? (
         <Carousel
           key={`${selectedSegment.impactSegmentType}-${selectedSegment.impactSegmentName}-${selectedSegment.impactSegmentId}`}

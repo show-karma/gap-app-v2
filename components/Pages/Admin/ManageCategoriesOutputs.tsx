@@ -25,6 +25,11 @@ import { z } from "zod";
 const OUTPUT_TYPES = ["output", "outcome"] as const;
 type OutputType = (typeof OUTPUT_TYPES)[number];
 
+const OUTPUT_TYPE_DISPLAY = {
+  output: "Activity",
+  outcome: "Outcome"
+} as const;
+
 const impactSegmentSchema = z.object({
   name: z
     .string()
@@ -145,7 +150,7 @@ const EditForm = ({
           >
             {OUTPUT_TYPES.map((type) => (
               <option key={type} value={type}>
-                {type.charAt(0).toUpperCase() + type.slice(1)}
+                {OUTPUT_TYPE_DISPLAY[type]}
               </option>
             ))}
           </select>
@@ -188,6 +193,8 @@ export const ManageCategoriesOutputs = ({
 }: ManageCategoriesOutputsProps) => {
   const [isSavingOutput, setIsSavingOutput] = useState<string>("");
   const [isDeletingOutput, setIsDeletingOutput] = useState<string>("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
+  const selectedCategory = categories.find((cat) => cat.id === selectedCategoryId);
 
   const { data: impact_indicators = [] } = useIndicators({
     communityId: community?.uid || "",
@@ -308,27 +315,38 @@ export const ManageCategoriesOutputs = ({
   return (
     <div className="bg-white dark:bg-zinc-800 rounded-lg p-8 border border-gray-100 dark:border-zinc-700 w-full">
       <h2 className="text-2xl font-bold mb-6">
-        Manage Categories & Impact Segments
+        Manage Activities & Outcomes
       </h2>
       {categories.length ? (
         <div className="space-y-8">
-          {categories.map((category, index) => (
-            <div
-              key={category.id}
-              className="flex w-full flex-col items-start justify-start gap-4"
-              style={{
-                borderBottomWidth: index === categories.length - 1 ? 0 : 1,
-                borderBottomColor: "#E4E7EB",
-              }}
+          <div className="flex flex-col gap-4">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Choose a category to define it&apos;s activities and outcomes
+            </label>
+            <select
+              value={selectedCategoryId}
+              onChange={(e) => setSelectedCategoryId(e.target.value)}
+              className="w-full p-2 text-sm border border-gray-200 dark:border-gray-700 rounded-md 
+                focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white"
             >
-              <div className="flex w-full flex-1 flex-col items-start justify-start">
-                <h3 className="text-xl font-bold">{category.name}</h3>
+              <option value="">Select a category</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {selectedCategory && (
+            <div className="w-full">
+              <div className="flex w-full flex-1 flex-col items-start justify-start mb-6">
+                <h3 className="text-xl font-bold">{selectedCategory.name}</h3>
               </div>
 
-              <div className="w-full pb-6 mb-6">
-                <h5 className="text-md font-semibold mb-4">Impact Segments</h5>
+              <div className="w-full">
                 <Accordion.Root type="multiple" className="space-y-2 w-full">
-                  {category.impact_segments?.map((segment) => (
+                  {selectedCategory.impact_segments?.map((segment) => (
                     <Accordion.Item
                       key={segment.id}
                       value={segment.id}
@@ -347,8 +365,7 @@ export const ManageCategoriesOutputs = ({
                                 : "bg-green-100 dark:bg-green-700 text-green-800 dark:text-green-300"
                             )}
                           >
-                            {segment.type.charAt(0).toUpperCase() +
-                              segment.type.slice(1)}
+                            {OUTPUT_TYPE_DISPLAY[segment.type]}
                           </span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -356,7 +373,7 @@ export const ManageCategoriesOutputs = ({
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleRemoveOutput(category.id, segment.id);
+                              handleRemoveOutput(selectedCategory.id, segment.id);
                             }}
                             className="text-red-500 hover:text-red-700 transition-colors disabled:opacity-50"
                             aria-label="Remove output"
@@ -375,9 +392,9 @@ export const ManageCategoriesOutputs = ({
                       <Accordion.Content className="p-4 bg-gray-50 dark:bg-zinc-900">
                         <EditForm
                           segment={segment}
-                          categoryId={category.id}
+                          categoryId={selectedCategory.id}
                           onSave={(data) =>
-                            saveOutput(data, category.id, segment.id)
+                            saveOutput(data, selectedCategory.id, segment.id)
                           }
                           isLoading={isSavingOutput === segment.id}
                           impact_indicators={impact_indicators}
@@ -395,7 +412,7 @@ export const ManageCategoriesOutputs = ({
                     <Accordion.Trigger className="w-full flex items-center justify-between p-4 text-left hover:bg-blue-50/50 dark:hover:bg-blue-900/20 transition-colors">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
-                          Create new Impact Segment
+                          Create Activity/Outcome
                         </span>
                       </div>
                       <ChevronDownIcon className="h-5 w-5 text-blue-500 transform transition-transform duration-200 ease-in-out ui-open:rotate-180" />
@@ -403,7 +420,7 @@ export const ManageCategoriesOutputs = ({
                     <Accordion.Content className="p-4 space-y-4 bg-white dark:bg-zinc-900 border-t border-blue-100 dark:border-blue-900">
                       <form
                         onSubmit={handleSubmit((data) =>
-                          handleAddOutput(data, category.id)
+                          handleAddOutput(data, selectedCategory.id)
                         )}
                         className="flex flex-col gap-4"
                       >
@@ -413,7 +430,7 @@ export const ManageCategoriesOutputs = ({
                           </label>
                           <input
                             {...register("name")}
-                            placeholder="Enter name"
+                            placeholder="Enter Activity/Outcome name"
                             className="text-sm p-2 border border-gray-200 dark:border-gray-700 rounded-md 
                               focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white w-full"
                           />
@@ -451,7 +468,7 @@ export const ManageCategoriesOutputs = ({
                           >
                             {OUTPUT_TYPES.map((type) => (
                               <option key={type} value={type}>
-                                {type.charAt(0).toUpperCase() + type.slice(1)}
+                                {OUTPUT_TYPE_DISPLAY[type]}
                               </option>
                             ))}
                           </select>
@@ -479,7 +496,7 @@ export const ManageCategoriesOutputs = ({
                           className="w-full px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 
                             transition-colors disabled:opacity-50 mt-2"
                         >
-                          Add Impact Segment
+                          Add Activity/Outcome
                         </Button>
                       </form>
                     </Accordion.Content>
@@ -487,7 +504,7 @@ export const ManageCategoriesOutputs = ({
                 </Accordion.Root>
               </div>
             </div>
-          ))}
+          )}
         </div>
       ) : (
         <div className="flex w-full flex-1 flex-col items-center justify-center gap-3">

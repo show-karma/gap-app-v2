@@ -66,7 +66,7 @@ export const CommunityAdminPage = ({
             )}
           >
             <button className="px-10 py-8 bg-blue-200 rounded-md  transition-all ease-in-out duration-200 dark:bg-blue-900">
-              Edit categories
+              Categories
             </button>
           </a>
           <a
@@ -84,7 +84,7 @@ export const CommunityAdminPage = ({
             )}
           >
             <button className="px-10 py-8 bg-red-200 rounded-md  transition-all ease-in-out duration-200 dark:bg-yellow-900">
-              Manage Indicators
+              Impact Measurement
             </button>
           </a>
         </div>
