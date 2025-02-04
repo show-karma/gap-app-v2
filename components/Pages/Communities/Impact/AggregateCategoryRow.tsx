@@ -13,6 +13,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
 import * as Tooltip from "@radix-ui/react-tooltip";
+import { fundedAmountFormatter } from "./CategoryRow";
 
 export const prepareChartData = (
   timestamps: string[],
@@ -50,7 +51,7 @@ const AggregateMetricCard = ({ item }: { item: ImpactAggregateIndicator }) => (
                 Funded Amount
               </span>
               <span className="text-[#079455] dark:text-[#079455] font-bold text-base">
-                {item?.amount ? item.amount : null}
+                {item?.amount ? fundedAmountFormatter(item.amount) : null}
               </span>
             </div>
           ) : null}
@@ -100,29 +101,32 @@ const AggregateSegmentCard = ({
     <div className={"flex flex-col w-full"}>
       <div className="flex flex-row gap-2 flex-wrap">
         {orderedSegments.map((item, index) => (
-          <div
+          <button
             key={`${item.impactSegmentType}-${item.impactSegmentName}-${index}`}
             className={cn(
-              "px-2 py-2 rounded flex items-center gap-2",
+              "px-2 py-2 rounded flex items-center gap-2 cursor-pointer border border-gray-100",
               selectedSegment?.impactSegmentId === item.impactSegmentId
                 ? "bg-gray-100 dark:bg-zinc-700"
-                : ""
+                : "bg-transparent dark:bg-zinc-900"
             )}
+            type="button"
             onClick={() => setSelectedSegment(item)}
           >
-            <span className={cn(
-              "text-xs px-2 py-1 rounded-full",
-              item.impactSegmentType === "output"
-                ? "bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300"
-                : "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300"
-            )}>
+            <span
+              className={cn(
+                "text-xs px-2 py-1 rounded-full",
+                item.impactSegmentType === "output"
+                  ? "bg-blue-200 dark:bg-blue-900 text-blue-800 dark:text-blue-300"
+                  : "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300"
+              )}
+            >
               {item.impactSegmentType === "output" ? "Activity" : "Outcome"}
             </span>
 
             <span className="text-sm text-black dark:text-white">
-              - {item.impactSegmentName}
+              {item.impactSegmentName}
             </span>
-            
+
             <Tooltip.Provider>
               <Tooltip.Root delayDuration={0}>
                 <Tooltip.Trigger asChild>
@@ -143,7 +147,7 @@ const AggregateSegmentCard = ({
                 </Tooltip.Portal>
               </Tooltip.Root>
             </Tooltip.Provider>
-          </div>
+          </button>
         ))}
       </div>
       {selectedSegment ? (

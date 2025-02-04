@@ -16,7 +16,17 @@ import { useState } from "react";
 import { prepareChartData } from "../../Admin/ProgramImpact";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
 
+export const fundedAmountFormatter = (value: string) => {
+  const amount = Number(value.includes(" ") ? value.split(" ")[0] : value);
+  const formattedAmount = Number(amount.toFixed(2));
+  if (isNaN(formattedAmount)) {
+    return value;
+  }
+  return formattedAmount;
+};
+
 // Create a reusable card component to reduce duplication
+
 const MetricCard = ({ item }: { item: ImpactIndicator }) => (
   <Card className="rounded-lg bg-white dark:bg-zinc-800 flex-1">
     <div className="flex justify-between items-start w-full">
@@ -30,10 +40,11 @@ const MetricCard = ({ item }: { item: ImpactIndicator }) => (
               Funded Amount
             </span>
             <span className="text-[#079455] dark:text-[#079455] font-bold text-base">
-              {item.amount ? item.amount : null}
+              {item.amount ? fundedAmountFormatter(item.amount) : null}
             </span>
           </div>
         </div>
+
         <div className="flex flex-row gap-2 flex-wrap items-center">
           <p className="text-sm text-[#404968] font-semibold dark:text-gray-400 bg-[#F8F9FC] dark:bg-zinc-700 rounded-2xl py-1 px-3">
             {item.grantTitle}
@@ -98,29 +109,32 @@ const SegmentCard = ({
     <div className={"flex flex-col w-full"}>
       <div className="flex flex-row gap-2 flex-wrap">
         {orderedSegments.map((item, index) => (
-          <div
+          <button
             key={`${item.impactSegmentType}-${item.impactSegmentName}-${index}`}
             className={cn(
-              "px-2 py-2 rounded flex items-center gap-2",
+              "px-2 py-2 rounded flex items-center gap-2 cursor-pointer border border-gray-100",
               selectedSegment?.impactSegmentId === item.impactSegmentId
                 ? "bg-gray-100 dark:bg-zinc-700"
-                : ""
+                : "bg-transparent dark:bg-zinc-900"
             )}
+            type="button"
             onClick={() => setSelectedSegment(item)}
           >
-            <span className={cn(
-              "text-xs px-2 py-1 rounded-full",
-              item.impactSegmentType === "output"
-                ? "bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-300"
-                : "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300"
-            )}>
+            <span
+              className={cn(
+                "text-xs px-2 py-1 rounded-full",
+                item.impactSegmentType === "output"
+                  ? "bg-blue-200 dark:bg-blue-900 text-blue-800 dark:text-blue-300"
+                  : "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-300"
+              )}
+            >
               {item.impactSegmentType === "output" ? "Activity" : "Outcome"}
             </span>
 
             <span className="text-sm text-black dark:text-white">
-              - {item.impactSegmentName}
+              {item.impactSegmentName}
             </span>
-            
+
             <Tooltip.Provider>
               <Tooltip.Root delayDuration={0}>
                 <Tooltip.Trigger asChild>
@@ -141,7 +155,7 @@ const SegmentCard = ({
                 </Tooltip.Portal>
               </Tooltip.Root>
             </Tooltip.Provider>
-          </div>
+          </button>
         ))}
       </div>
       {selectedSegment ? (
