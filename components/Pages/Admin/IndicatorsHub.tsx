@@ -91,10 +91,9 @@ export const IndicatorsHub = ({ communityId }: IndicatorsHubProps) => {
 
       refetch();
       toast.success("Indicator deleted successfully");
-    } catch (error: any) {
-      console.log(error);
+    } catch (error) {
       errorManager("Failed to delete indicator", error);
-      toast.error(error || "Failed to delete indicator");
+      toast.error("Failed to delete indicator");
     } finally {
       setDeletingId(null);
     }
