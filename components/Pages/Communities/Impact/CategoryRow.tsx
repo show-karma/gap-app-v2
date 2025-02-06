@@ -1,6 +1,5 @@
 "use client";
 import { Carousel, CarouselItem } from "@/components/SnapCarousel";
-import { Button } from "@/components/Utilities/Button";
 import {
   ImpactIndicator,
   ProgramImpactDataResponse,
@@ -13,7 +12,7 @@ import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import pluralize from "pluralize";
 import { useState } from "react";
-import { prepareChartData } from "../../Admin/ProgramImpact";
+import { prepareChartData } from "./ImpactCharts";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
 
 export const fundedAmountFormatter = (value: string) => {
@@ -25,8 +24,7 @@ export const fundedAmountFormatter = (value: string) => {
   return formattedAmount;
 };
 
-// Create a reusable card component to reduce duplication
-
+// Create a reusable card component to reduce duplication 
 const MetricCard = ({ item }: { item: ImpactIndicator }) => (
   <Card className="rounded-lg bg-white dark:bg-zinc-800 flex-1">
     <div className="flex justify-between items-start w-full">
