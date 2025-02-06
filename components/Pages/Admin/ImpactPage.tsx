@@ -13,7 +13,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { OutputMetrics } from "./OutputMetrics";
-import ProgramImpact from "./ProgramImpact";
+import { CommunityImpactCharts } from "@/components/Pages/Communities/Impact/ImpactCharts";
 
 type Tab = "metrics" | "impact";
 
@@ -120,7 +120,7 @@ export default function ProgramImpactPage() {
                   communitySlug={community?.details?.data?.slug || ""}
                 />
               )}
-              {activeTab === "impact" && <ProgramImpact />}
+              {activeTab === "impact" && <CommunityImpactCharts />}
             </div>
           </div>
         </div>
