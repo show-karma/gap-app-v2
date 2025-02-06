@@ -13,12 +13,13 @@ export const PAGES = {
   MY_PROJECTS: `/my-projects`,
   ADMIN: {
     LIST: `/admin`,
-    ROOT: (community: string) => `/${community}/admin`,
+    ROOT: (community: string) => `/community/${community}/admin`,
     EDIT_CATEGORIES: (community: string) =>
-      `/${community}/admin/edit-categories`,
-    MILESTONES: (community: string) => `/${community}/admin/milestones-report`,
+      `/community/${community}/admin/edit-categories`,
+    MILESTONES: (community: string) =>
+      `/community/${community}/admin/milestones-report`,
     MANAGE_INDICATORS: (community: string) =>
-      `/${community}/admin/manage-indicators`,
+      `/community/${community}/admin/manage-indicators`,
     COMMUNITIES: `/admin/communities`,
     COMMUNITY_STATS: `/admin/communities/stats`,
     PROJECTS: `/admin/projects`,

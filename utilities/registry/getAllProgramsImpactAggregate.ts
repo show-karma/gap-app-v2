@@ -15,7 +15,7 @@ export async function getAllProgramsImpactAggregate(communityId: string) {
     let existingCategories = (data as ImpactAggregateData[]).map((item) => {
       return {
         categoryName: item.categoryName,
-        outputs: item.outputs || [],
+        impacts: item.impacts || [],
       };
     }) as ImpactAggregateData[];
 

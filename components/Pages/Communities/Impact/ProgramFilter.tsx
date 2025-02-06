@@ -24,6 +24,7 @@ export const ProgramFilter = ({
   const programs = data?.map((program) => ({
     title: program.metadata?.title || "",
     value: program.programId || "",
+    // id: program.programId || "",
   }));
 
   const [selectedProgramId, changeSelectedProgramIdQuery] = useQueryState<

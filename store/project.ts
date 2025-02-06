@@ -69,7 +69,6 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
       );
       if (data) {
         set({ projectContactsInfo: data });
-        console.log(data);
       }
       return data;
     } catch (error) {
