@@ -16,11 +16,31 @@ interface Category {
     id: string;
     name: string;
     outputs: Output[];
+    impact_segments: ImpactSegment[];
 }
 
 interface Output {
     id: string;
     name: string;
+}
+
+interface ImpactSegment {
+    id: string;
+    createdAt: string;
+    updatedAt: string;
+    name: string;
+    description: string;
+    type: string;
+    impact_indicators: ImpactIndicator[];
+}
+
+interface ImpactIndicator {
+    id: string;
+    name: string;
+    description: string;
+    unitOfMeasure: string;
+    createdAt: string;
+    updatedAt: string;
 }
 
 interface Program {
@@ -41,10 +61,18 @@ interface ProjectResult {
         projectEndorsers: string[];
     };
     impactScore: number;
-    outputs: {
-        outputId: string;
-        outputName: string;
+    impact: {
+        impactIndicatorId: string;
+        indicatorName: string;
+        indicatorDescription: string;
+        indicatorUnitOfMeasure: string;
+        categoryId: string;
+        categoryName: string;
         avgValue: number;
+        minValue: number;
+        maxValue: number;
+        lastValue: number;
+        lastTimestamp: string;
     }[];
 }
 
@@ -64,9 +92,9 @@ export const ProjectDiscovery = () => {
     const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
     const [endorserInput, setEndorserInput] = useState<string>("");
     const [endorsers, setEndorsers] = useState<string[]>([]);
-    const [outputDistribution, setOutputDistribution] = useState<OutputDistribution>({});
+    const [indicatorDistribution, setIndicatorDistribution] = useState<OutputDistribution>({});
     const [projectResults, setProjectResults] = useState<ProjectResult[]>([]);
-    const [selectedCategoryOutputs, setSelectedCategoryOutputs] = useState<Output[]>([]);
+    const [selectedCategoryIndicators, setSelectedCategoryIndicators] = useState<ImpactIndicator[]>([]);
     const [activeCalculation, setActiveCalculation] = useState<string | null>(null);
 
     useEffect(() => {
@@ -96,13 +124,19 @@ export const ProjectDiscovery = () => {
 
     useEffect(() => {
         if (selectedCategory) {
-            setSelectedCategoryOutputs(selectedCategory.outputs);
-            // Initialize output distribution evenly
-            const initialDistribution = selectedCategory.outputs.reduce((acc, output) => {
-                acc[output.id] = 1 / selectedCategory.outputs.length;
+            // Deduplicate indicators by ID
+            const allIndicators = selectedCategory.impact_segments.map(segment => segment.impact_indicators).flat();
+            const uniqueIndicators = Array.from(
+                new Map(allIndicators.map(indicator => [indicator.id, indicator])).values()
+            );
+            setSelectedCategoryIndicators(uniqueIndicators);
+
+            // Initialize output distribution evenly for unique indicators
+            const initialDistribution = uniqueIndicators.reduce((acc, indicator) => {
+                acc[indicator.id] = 1 / uniqueIndicators.length;
                 return acc;
             }, {} as OutputDistribution);
-            setOutputDistribution(initialDistribution);
+            setIndicatorDistribution(initialDistribution);
         }
     }, [selectedCategory]);
 
@@ -117,22 +151,22 @@ export const ProjectDiscovery = () => {
         setEndorsers(endorsers.filter(e => e !== endorser));
     };
 
-    const handleOutputDistributionChange = (outputId: string, newValue: number) => {
+    const handleIndicatorDistributionChange = (indicatorId: string, newValue: number) => {
         const remainingValue = 1 - newValue;
-        const otherOutputs = Object.keys(outputDistribution).filter(id => id !== outputId);
-        const newDistribution = { ...outputDistribution };
+        const otherIndicators = Object.keys(indicatorDistribution).filter(id => id !== indicatorId);
+        const newDistribution = { ...indicatorDistribution };
 
-        newDistribution[outputId] = newValue;
+        newDistribution[indicatorId] = newValue;
 
         // Distribute remaining value proportionally among other outputs
-        const totalOtherOutputs = otherOutputs.reduce((sum, id) => sum + outputDistribution[id], 0);
-        otherOutputs.forEach(id => {
-            newDistribution[id] = totalOtherOutputs === 0
-                ? remainingValue / otherOutputs.length
-                : (outputDistribution[id] / totalOtherOutputs) * remainingValue;
+        const totalOtherIndicators = otherIndicators.reduce((sum, id) => sum + indicatorDistribution[id], 0);
+        otherIndicators.forEach(id => {
+            newDistribution[id] = totalOtherIndicators === 0
+                ? remainingValue / otherIndicators.length
+                : (indicatorDistribution[id] / totalOtherIndicators) * remainingValue;
         });
 
-        setOutputDistribution(newDistribution);
+        setIndicatorDistribution(newDistribution);
     };
 
     const handleSearch = async () => {
@@ -141,18 +175,19 @@ export const ProjectDiscovery = () => {
         setIsSearching(true);
         try {
             const [response, error] = await fetchData(
-                INDEXER.COMMUNITY.PROJECT_DISCOVERY(communityId, selectedProgram.programId),
+                INDEXER.COMMUNITY.PROJECT_DISCOVERY(communityId),
                 "POST",
                 {
+                    programId: selectedProgram.programId,
                     categoryId: selectedCategory.id,
                     endorsers: endorsers,
-                    outputDistribution
+                    indicatorDistribution
                 }
             );
             if (error) {
                 console.error("Error fetching project discovery results:", error);
             }
-            setProjectResults(response);
+            setProjectResults(response.data);
         } catch (error) {
             console.error("Error fetching project discovery results:", error);
         } finally {
@@ -279,23 +314,23 @@ export const ProjectDiscovery = () => {
                         </div>
                     </div>
 
-                    {selectedCategoryOutputs.length > 0 && (
+                    {selectedCategoryIndicators.length > 0 && (
                         <div className="space-y-3 bg-white rounded-xl p-6 border border-gray-200 shadow-sm">
                             <div className="space-y-1">
-                                <h3 className="text-lg font-semibold text-gray-900">Output Distribution</h3>
-                                <p className="text-sm text-gray-600">Adjust the sliders to set the impact weight for each output.</p>
+                                <h3 className="text-lg font-semibold text-gray-900">Impact Distribution</h3>
+                                <p className="text-sm text-gray-600">Adjust the sliders to set the weight for each indicators.</p>
                             </div>
                             <div className="space-y-8">
-                                {selectedCategoryOutputs.map(output => (
-                                    <div key={output.id} className="space-y-3">
+                                {selectedCategoryIndicators.map(indicator => (
+                                    <div key={indicator.id} className="space-y-3">
                                         <div className="flex justify-between text-sm">
-                                            <span className="font-medium text-gray-900">{output.name}</span>
-                                            <span className="font-medium text-primary">{Math.round(outputDistribution[output.id] * 100)}%</span>
+                                            <span className="font-medium text-gray-900">{indicator.name}</span>
+                                            <span className="font-medium text-primary">{Math.round(indicatorDistribution[indicator.id] * 100)}%</span>
                                         </div>
                                         <Slider.Root
                                             className="relative flex w-full touch-none select-none items-center py-2"
-                                            value={[outputDistribution[output.id] * 100]}
-                                            onValueChange={(values) => handleOutputDistributionChange(output.id, values[0] / 100)}
+                                            value={[indicatorDistribution[indicator.id] * 100]}
+                                            onValueChange={(values) => handleIndicatorDistributionChange(indicator.id, values[0] / 100)}
                                             max={100}
                                             step={1}
                                         >
@@ -379,16 +414,16 @@ export const ProjectDiscovery = () => {
                                                 </button>
                                             </div>
                                             <div className="space-y-2">
-                                                {result.outputs.map(output => (
-                                                    <div key={output.outputId} className="flex justify-between items-center text-sm">
-                                                        <span className="text-gray-600">{output.outputName}</span>
+                                                {result.impact.map(impact => (
+                                                    <div key={impact.impactIndicatorId} className="flex justify-between items-center text-sm">
+                                                        <span className="text-gray-600">{impact.indicatorName}</span>
                                                         <div className="flex items-center gap-2">
-                                                            <span className="text-gray-500">{formatCurrency(output.avgValue)}</span>
+                                                            <span className="text-gray-500">{formatCurrency(impact.avgValue)}</span>
                                                             <span className="text-gray-400">×</span>
-                                                            <span className="text-primary">{Math.round(outputDistribution[output.outputId] * 100)}%</span>
+                                                            <span className="text-primary">{Math.round(indicatorDistribution[impact.impactIndicatorId] * 100)}%</span>
                                                             <span className="text-gray-400">=</span>
                                                             <span className="font-medium text-gray-900">
-                                                                {formatCurrency(output.avgValue * outputDistribution[output.outputId])}
+                                                                {formatCurrency(impact.avgValue * indicatorDistribution[impact.impactIndicatorId])}
                                                             </span>
                                                         </div>
                                                     </div>

@@ -20,8 +20,9 @@ export const useGrantsTable = ({
 
   // Get values from URL or use defaults
   const currentPage = Number(searchParams.get("page")) || 1;
-  const selectedProgram = searchParams.get("program");
+  const selectedProgramId = searchParams.get("programId");
   const sortField = searchParams.get("sortField") as SortField | null;
+
   const sortDirection = searchParams.get(
     "sortDirection"
   ) as SortDirection | null;
@@ -44,18 +45,31 @@ export const useGrantsTable = ({
     },
     [searchParams]
   );
-
   const uniquePrograms = useMemo(() => {
-    const programs = Array.from(new Set(grants.map((grant) => grant.grant)));
-    return programs.sort((a, b) => a.localeCompare(b));
+    const programsSet = new Set();
+    const programs = grants.reduce((acc, grant) => {
+      const key = grant.programId;
+      if (!programsSet.has(key)) {
+        programsSet.add(key);
+        acc.push({
+          programId: grant.programId,
+          grant: grant.grant,
+        });
+      }
+      return acc;
+    }, [] as Array<{ programId: string; grant: string }>);
+
+    return programs.sort((a, b) => a.grant.localeCompare(b.grant));
   }, [grants]);
 
   const filteredAndSortedGrants = useMemo(() => {
     let processed = [...grants];
 
     // Apply program filter
-    if (selectedProgram) {
-      processed = processed.filter((grant) => grant.grant === selectedProgram);
+    if (selectedProgramId) {
+      processed = processed.filter(
+        (grant) => grant.programId === selectedProgramId
+      );
     }
 
     // Apply sorting
@@ -77,7 +91,7 @@ export const useGrantsTable = ({
     }
 
     return processed;
-  }, [grants, selectedProgram, sortField, sortDirection]);
+  }, [grants, selectedProgramId, sortField, sortDirection]);
 
   const paginatedGrants = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -90,9 +104,9 @@ export const useGrantsTable = ({
     router.push(`${pathname}?${query}`);
   };
 
-  const handleProgramChange = (program: string | null) => {
+  const handleProgramChange = (programId: string | null) => {
     const query = createQueryString({
-      program: program,
+      programId: programId,
       page: "1", // Reset to first page when changing program
     });
     router.push(`${pathname}?${query}`);
@@ -115,11 +129,12 @@ export const useGrantsTable = ({
     totalItems: filteredAndSortedGrants.length,
     paginatedGrants,
     uniquePrograms,
-    selectedProgram,
+    selectedProgramId,
     sort: {
       field: sortField || undefined,
       direction: sortDirection || undefined,
     },
+
     handlePageChange,
     handleProgramChange,
     handleSortChange,

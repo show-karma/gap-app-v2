@@ -61,8 +61,11 @@ export default function EditCategoriesPage() {
   }, [communityError]);
 
   // Fetch grants data
-  const { data: grants = [], isLoading: isLoadingGrants } =
-    useGrants(communityId);
+  const {
+    data: grants = [],
+    isLoading: isLoadingGrants,
+    refetch: refreshGrants,
+  } = useGrants(communityId);
 
   // Table state management
   const {
@@ -70,7 +73,7 @@ export default function EditCategoriesPage() {
     totalItems,
     paginatedGrants,
     uniquePrograms,
-    selectedProgram,
+    selectedProgramId,
     sort,
     handlePageChange,
     handleProgramChange,
@@ -128,11 +131,7 @@ export default function EditCategoriesPage() {
             categories,
           })
             .then(() => {
-              // Clear the edited categories after successful save
-              setSelectedCategories((prev) => {
-                const { [uid]: _, ...rest } = prev;
-                return rest;
-              });
+              refreshGrants();
             })
             .catch((error) => {
               console.error(error);
@@ -189,10 +188,11 @@ export default function EditCategoriesPage() {
           <div className="flex items-center gap-4">
             <ProgramFilter
               programs={uniquePrograms}
-              selectedProgram={selectedProgram}
+              selectedProgramId={selectedProgramId}
               onChange={handleProgramChange}
             />
             <CategoryCreationDialog
+
               refreshCategories={async () => {
                 refreshCategories();
               }}
