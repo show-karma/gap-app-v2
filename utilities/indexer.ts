@@ -96,9 +96,7 @@ export const INDEXER = {
       `/communities/${communityIdOrSlug}/grant-programs/stats/total`,
     PROGRAMS: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/programs`,
-    PROGRAM_IMPACT: (communityIdOrSlug: string, programId: string) =>
-      `/communities/${communityIdOrSlug}/programs/${programId}/outputs`,
-    ALL_PROGRAMS_IMPACT: (communityIdOrSlug: string) =>
+    PROGRAMS_IMPACT: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/programs/impact`,
     ALL_PROGRAMS_IMPACT_AGGREGATE: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/programs/impact-aggregate`,
