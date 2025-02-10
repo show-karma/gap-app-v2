@@ -9,7 +9,6 @@ export default function ImpactLayout({
 }) {
   return (
     <div className="flex flex-col gap-5">
-      <CommunityImpactStatCards />
       <ImpactTabNavigator />
       <CommunityImpactFilterRow />
       {children}

@@ -1,4 +1,6 @@
 "use client";
+import { FolderIcon } from "@/components/Icons/Folder";
+import { Target2Icon } from "@/components/Icons/Target2";
 import { getCommunityBySlug } from "@/utilities/gapIndexerApi/getCommunityBySlug";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -7,10 +9,19 @@ import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 
 const activeLinkStyle =
-  "text-slate-700 dark:text-zinc-200 bg-white rounded-md dark:bg-zinc-600";
-const inactiveLinkStyle = "text-slate-500 dark:text-zinc-400 bg-transparent";
+  "text-brand-darkblue font-bold dark:text-zinc-200 dark:bg-zinc-600 border-b border-b-4 border-b-brand-blue";
+const inactiveLinkStyle =
+  "text-gray-600 font-normal dark:text-zinc-400 border-b border-b-4 border-b-transparent";
 const baseLinkStyle =
-  "px-3 py-2 max-lg:w-full rounded-md text-base font-semibold font-['Inter'] leading-normal w-max";
+  "flex flex-row items-center gap-2 px-3 py-2 max-lg:w-full rounded-none text-base font-semibold font-['Inter'] leading-normal w-max";
+
+const NewTag = () => {
+  return (
+    <div className="rounded-2xl py-1 px-3 bg-brand-blue text-white text-xs font-bold">
+      New!
+    </div>
+  );
+};
 
 export const CommunityPageNavigator = () => {
   const params = useParams();
@@ -28,7 +39,7 @@ export const CommunityPageNavigator = () => {
   const isProjectDiscover = pathname.includes("/project-discovery");
 
   return (
-    <div className="flex-row max-lg:flex-col px-1.5 py-2 rounded-lg bg-gray-100 dark:bg-zinc-900 justify-start items-center gap-4 flex h-max">
+    <div className="flex-row max-md:flex-col flex-wrap px-1.5 py-2 rounded-lg justify-start items-center gap-4 flex h-max">
       <Link
         href={PAGES.COMMUNITY.ALL_GRANTS(communityId)}
         className={cn(
@@ -38,6 +49,14 @@ export const CommunityPageNavigator = () => {
             : inactiveLinkStyle
         )}
       >
+        <FolderIcon
+          className={cn(
+            "w-6 h-6",
+            !(isImpactPage || isProjectDiscover)
+              ? "text-brand-blue"
+              : "text-brand-darkblue"
+          )}
+        />
         View all {community?.details?.data.name} Community Projects
       </Link>
       <Link
@@ -47,7 +66,13 @@ export const CommunityPageNavigator = () => {
           isImpactPage ? activeLinkStyle : inactiveLinkStyle
         )}
       >
-        Learn about their impact
+        <Target2Icon
+          className={cn(
+            "w-6 h-6",
+            isImpactPage ? "text-brand-blue" : "text-brand-darkblue"
+          )}
+        />
+        Learn about their impact <NewTag />
       </Link>
     </div>
   );
