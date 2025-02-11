@@ -3,26 +3,16 @@ import { envVars } from "@/utilities/enviromentVars";
 
 export interface Message {
   id: string;
-  role: "user" | "assistant" | "tool" | "system";
+  role: "user" | "assistant" | "system";
   content: string;
-  tool_call_id?: string;
-  tool_calls?: {
-    id: string;
-    function: {
-      name: string;
-      arguments: string;
-    };
-  }[];
 }
 
 interface UseChatOptions {
   body: {
-    projectsInProgram: Array<{
+    projectsInProgram: {
       uid: string;
-      chainId: number;
       projectTitle: string;
-      projectCategories: string[];
-    }>;
+    }[];
   };
 }
 
@@ -51,15 +41,28 @@ export function useChat(options: UseChatOptions) {
       id: crypto.randomUUID(),
     };
 
-    // Filter out tool-related messages
-    const messagesToSend = allMessages
-      .filter(
-        (msg) =>
-          (msg.role === "user" || msg.role === "assistant") && !msg.tool_calls
-      )
-      .map(({ role, content }) => ({ role, content }));
+    // Scroll helper function
+    const scrollToBottom = () => {
+      const chatContainer = document.querySelector("[data-chat-container]");
+      chatContainer?.scrollTo({
+        top: chatContainer.scrollHeight,
+        behavior: "smooth",
+      });
+    };
 
-    setAllMessages((prev) => [...prev, userMessage]);
+    // Add user message and scroll
+    setAllMessages((prev) => {
+      setTimeout(scrollToBottom, 0);
+      return [...prev, userMessage];
+    });
+
+    // Set up interval for scrolling during streaming
+    const scrollInterval = setInterval(scrollToBottom, 1000);
+
+    // Filter out system messages
+    const messagesToSend = allMessages
+      .filter((msg) => msg.role === "user" || msg.role === "assistant")
+      .map(({ role, content }) => ({ role, content }));
 
     try {
       const response = await fetch(
@@ -82,7 +85,8 @@ export function useChat(options: UseChatOptions) {
       if (!reader) throw new Error("No reader available");
 
       const decoder = new TextDecoder();
-      let currentLoopMessages = new Map<string, Partial<Message>>();
+      let currentLoopMessages = new Map<string, Message>();
+      let accumulatedContent = new Map<string, string>();
 
       while (true) {
         const { done, value } = await reader.read();
@@ -103,6 +107,15 @@ export function useChat(options: UseChatOptions) {
               const parsed = JSON.parse(data);
               const loopId = parsed.loopId;
 
+              if (!loopId) {
+                console.warn("Received message without loopId:", data);
+                continue;
+              }
+
+              if (!accumulatedContent.has(loopId)) {
+                accumulatedContent.set(loopId, "");
+              }
+
               if (!currentLoopMessages.has(loopId)) {
                 const newMessage = {
                   role: "assistant" as const,
@@ -115,52 +128,24 @@ export function useChat(options: UseChatOptions) {
 
               const currentLoopMessage = currentLoopMessages.get(loopId)!;
 
-              switch (parsed.type) {
-                case "content":
-                  if (parsed.content.trim()) {
-                    currentLoopMessage.content =
-                      (currentLoopMessage.content || "") + parsed.content;
-                    setAllMessages((prev) =>
-                      prev.map((msg) =>
-                        msg.id === currentLoopMessage.id
-                          ? {
-                              ...msg,
-                              content: currentLoopMessage.content || "",
-                            }
-                          : msg
-                      )
-                    );
-                    setCurrentMessage((prev) => prev + parsed.content);
-                  }
-                  break;
+              if (parsed.type === "content" && parsed.content?.trim()) {
+                accumulatedContent.set(
+                  loopId,
+                  accumulatedContent.get(loopId)! + parsed.content
+                );
 
-                case "tool":
-                  if (parsed.content && parsed.tool_call_id) {
-                    const toolMessage: Message = {
-                      role: "tool",
-                      content: parsed.content,
-                      id: crypto.randomUUID(),
-                      tool_call_id: parsed.tool_call_id,
-                    };
-                    setAllMessages((prev) => [...prev, toolMessage]);
-                  }
-                  break;
+                currentLoopMessage.content = accumulatedContent.get(loopId)!;
 
-                case "tool_call":
-                  if (parsed.tool_calls?.length > 0) {
-                    currentLoopMessage.tool_calls = parsed.tool_calls;
-                    setAllMessages((prev) =>
-                      prev.map((msg) =>
-                        msg.id === currentLoopMessage.id
-                          ? { ...msg, tool_calls: parsed.tool_calls }
-                          : msg
-                      )
-                    );
-                  }
-                  break;
+                setAllMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === currentLoopMessage.id
+                      ? { ...msg, content: accumulatedContent.get(loopId)! }
+                      : msg
+                  )
+                );
               }
             } catch (e) {
-              console.error("Error parsing chunk:", e, "Data:", data);
+              console.error("Error parsing message:", e);
             }
           }
         }
@@ -168,10 +153,12 @@ export function useChat(options: UseChatOptions) {
 
       setCurrentMessage("");
     } catch (error) {
-      console.error("Chat error:", error);
+      console.error("Error in stream processing:", error);
     } finally {
       setIsLoading(false);
       setIsStreaming(false);
+      clearInterval(scrollInterval); // Clean up interval
+      setTimeout(scrollToBottom, 100); // Final scroll after streaming ends
     }
   };
 
