@@ -2,11 +2,10 @@
 
 import { useParams } from "next/navigation";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { PaperAirplaneIcon } from "@heroicons/react/24/solid";
+import { ChevronRightIcon, PaperAirplaneIcon } from "@heroicons/react/24/solid";
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
 import { useChat } from "./useChat";
-import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import React from "react";
 import { envVars } from "@/utilities/enviromentVars";
 import Image from "next/image";
@@ -15,6 +14,41 @@ import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import { cn } from "@/utilities/tailwind";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import { formatDate } from "@/utilities/formatDate";
+import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { PAGES } from "@/utilities/pages";
+import pluralize from "pluralize";
+
+const sanitizeMarkdown = (text: string) => {
+  return (
+    text
+      // Remove headers
+      .replace(/#{1,6}\s/g, "")
+      // Remove bold/italic
+      .replace(/[*_]{1,3}(.*?)[*_]{1,3}/g, "$1")
+      // Remove links
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1")
+      // Remove code blocks
+      .replace(/```[\s\S]*?```/g, "")
+      // Remove inline code
+      .replace(/`([^`]+)`/g, "$1")
+      // Remove blockquotes
+      .replace(/^\s*>\s+/gm, "")
+      // Remove lists
+      .replace(/^[\s-]*[-+*]\s+/gm, "")
+      // Remove numbered lists
+      .replace(/^\s*\d+\.\s+/gm, "")
+      // Remove horizontal rules
+      .replace(/^[\s-]*[-*_]{3,}[\s-]*$/gm, "")
+      // Remove images
+      .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, "$1")
+      // Remove HTML tags
+      .replace(/<[^>]*>/g, "")
+      // Remove extra whitespace
+      .replace(/\s+/g, " ")
+      .trim()
+  );
+};
 
 interface Program {
   programId: string;
@@ -36,6 +70,7 @@ interface Project {
   impacts: any[];
   updates: any[];
   milestones: any[];
+  slug: string;
 }
 
 const cardColors = [
@@ -53,15 +88,26 @@ const cardColors = [
 
 function MessageSkeleton() {
   return (
-    <div className="flex justify-start">
-      <div className="max-w-[80%] rounded-lg p-3 bg-zinc-100">
-        <div className="text-sm font-medium mb-1 text-gray-900">
-          Karma Beacon
-        </div>
-        <div className="flex items-center space-x-2">
+    <div className="flex flex-col justify-start">
+      <div className="w-52 justify-center items-center rounded-lg p-3 py-5 bg-[#EEF4FF]">
+        <div className="flex justify-center items-center space-x-2">
           <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
           <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-100" />
           <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce delay-200" />
+        </div>
+      </div>
+      <div className="flex flex-row justify-between w-full mt-2 gap-4">
+        <div className="flex flex-row justify-center items-center gap-3">
+          <Image
+            src="/logo/karma-gap-logo.png"
+            width={20}
+            height={20}
+            alt="Karma Beacon Logo"
+            quality={50}
+          />
+          <p className="text-zinc-600 dark:text-zinc-300 text-[13px] font-medium">
+            Beacon Assistant
+          </p>
         </div>
       </div>
     </div>
@@ -512,75 +558,102 @@ function ProjectCardSkeleton() {
   );
 }
 
-function ProjectCard({ project, index }: { project: Project; index: number }) {
+function ProjectCard({
+  project,
+  index,
+  onProjectClick,
+}: {
+  project: Project;
+  index: number;
+  onProjectClick: (title: string) => void;
+}) {
   const pickColor = useCallback((index: number) => {
     return cardColors[index % cardColors.length];
   }, []);
 
   const cardColor = useMemo(() => pickColor(index), [pickColor, index]);
 
+  const handleClick = useCallback(() => {
+    onProjectClick(project.details.title);
+  }, [project.details.title, onProjectClick]);
+
   return (
-    <div className="flex-shrink-0 w-[320px] rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2">
-      <div className="w-full flex flex-col gap-1">
-        <div
-          className="h-[4px] w-full rounded-full mb-2.5"
-          style={{ background: cardColor }}
-        />
-        <div className="flex w-full flex-col px-3">
-          <p className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200 max-2xl:text-sm mr-1">
-            {project.details.title}
-          </p>
-          <p className="mb-2 text-sm font-medium text-gray-400 dark:text-zinc-400 max-2xl:text-[13px]">
-            Created on {new Date(project.createdAt).toLocaleDateString()}
-          </p>
-          <div className="flex flex-col gap-1 flex-1 h-[64px]">
-            <div className="text-sm text-gray-900 dark:text-gray-400 text-ellipsis line-clamp-2">
-              {project.details.description}
+    <div className="flex-shrink-0 w-full flex flex-row items-center gap-3 max-w-full bg-white dark:bg-zinc-900 p-3 relative">
+      <div
+        className="absolute left-3 top-3 bottom-3 w-1 rounded-full"
+        style={{ background: cardColor }}
+      />
+      <div className="flex flex-col flex-1 gap-3 pl-4">
+        <div className="w-full flex flex-col gap-1">
+          <div className="flex w-full flex-col px-3">
+            <ExternalLink
+              href={PAGES.PROJECT.OVERVIEW(project?.uid)}
+              className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200 max-2xl:text-sm mr-1"
+            >
+              {project.details.title}
+            </ExternalLink>
+
+            <div className="flex flex-col gap-1 flex-1 h-[64px] w-full max-w-full">
+              <div className="line-clamp-2 w-full break-normal text-sm font-normal text-black dark:text-zinc-100 max-2xl:text-sm">
+                {sanitizeMarkdown(project.details.description)}
+              </div>
             </div>
+          </div>
+        </div>
+        <div className="flex w-full flex-col gap-2">
+          <div className="flex items-center justify-start gap-4 mt-2 flex-wrap">
+            {Array.from(new Set(project?.categories || [])).length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {Array.from(new Set(project?.categories || [])).map(
+                  (category, i) => (
+                    <div
+                      key={i}
+                      className="flex h-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2"
+                    >
+                      <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
+                        {category}
+                      </p>
+                    </div>
+                  )
+                )}
+              </div>
+            )}
+
+            {project.updates.length > 0 && (
+              <div className="flex h-max items-center justify-start rounded-full bg-teal-50 dark:bg-teal-700 text-teal-600 dark:text-teal-200 px-3 py-1 max-2xl:px-2">
+                <p className="text-center text-sm font-medium text-teal-600 dark:text-teal-100 max-2xl:text-[13px]">
+                  {project.updates.length || 0}{" "}
+                  {pluralize("Updates", project.updates.length || 0)}
+                </p>
+              </div>
+            )}
+            {project.impacts.length > 0 && (
+              <div className="flex h-max w-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
+                <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
+                  {project.impacts.length || 0}{" "}
+                  {pluralize("Impacts", project.impacts.length || 0)}
+                </p>
+              </div>
+            )}
+            {project.milestones.length > 0 && (
+              <div className="flex h-max items-center justify-start rounded-full bg-blue-50 dark:bg-blue-700 text-blue-600 dark:text-blue-200 px-3 py-1 max-2xl:px-2">
+                <p className="text-center text-sm font-medium text-blue-600 dark:text-blue-100 max-2xl:text-[13px]">
+                  {project.milestones.length || 0}{" "}
+                  {pluralize("Milestones", project.milestones.length || 0)}
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
-      <div className="flex w-full flex-col gap-2">
-        <div className="flex items-center justify-start gap-4 mt-2">
-          {Array.from(new Set(project?.categories || [])).length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {Array.from(new Set(project?.categories || [])).map(
-                (category, i) => (
-                  <div
-                    key={i}
-                    className="flex h-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2"
-                  >
-                    <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
-                      {category}
-                    </p>
-                  </div>
-                )
-              )}
-            </div>
-          )}
-
-          {project.updates.length > 0 && (
-            <div className="flex h-max items-center justify-start rounded-full bg-teal-50 dark:bg-teal-700 text-teal-600 dark:text-teal-200 px-3 py-1 max-2xl:px-2">
-              <p className="text-center text-sm font-medium text-teal-600 dark:text-teal-100 max-2xl:text-[13px]">
-                Updates: {project.updates.length || 0}
-              </p>
-            </div>
-          )}
-        </div>
-        {project.impacts.length > 0 && (
-          <div className="flex h-max w-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
-            <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
-              Impacts: {project.impacts.length || 0}
-            </p>
-          </div>
-        )}
-        {project.milestones.length > 0 && (
-          <div className="flex h-max w-max items-center justify-start rounded-full bg-teal-50 dark:bg-teal-700 text-teal-600 dark:text-teal-200 px-3 py-1 max-2xl:px-2">
-            <p className="text-center text-sm font-medium text-teal-600 dark:text-teal-100 max-2xl:text-[13px]">
-              Milestones: {project.milestones.length || 0}
-            </p>
-          </div>
-        )}
+      <div className="px-2">
+        <button
+          onClick={handleClick}
+          className="hover:text-gray-300 dark:hover:text-zinc-300 rounded-full transition-colors"
+          aria-label={`Ask about ${project.details.title}`}
+        >
+          <ChevronRightIcon className="w-6 h-6 min-h-6 min-w-6 text-gray-500 dark:text-zinc-400" />
+        </button>
       </div>
     </div>
   );
@@ -614,10 +687,21 @@ function ChatScreen({
     messages,
     input,
     handleInputChange,
+    setInput,
     handleSubmit,
     isLoading: isLoadingChat,
     isStreaming,
   } = chatHook;
+
+  const handleProjectClick = useCallback(
+    (title: string) => {
+      setInput((currentInput) => {
+        if (!currentInput) return title;
+        return `${currentInput.trim()} ${title}`;
+      });
+    },
+    [setInput]
+  );
 
   if (messages.length === 0) {
     return (
@@ -635,8 +719,8 @@ function ChatScreen({
   return (
     <>
       <div className="flex w-full h-full">
-        <div className="w-1/4 overflow-y-auto p-4 bg-gray-50 dark:bg-zinc-900 border-r border-gray-200 dark:border-zinc-600">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+        <div className="w-1/4 overflow-y-auto bg-gray-50 dark:bg-zinc-900 border-r divide-y divide-y-black border-gray-200 dark:border-zinc-600">
+          <h2 className="text-zinc-800 text-sm font-bold dark:text-white px-3 py-4">
             Projects
           </h2>
           {isLoadingProjects ? (
@@ -649,6 +733,7 @@ function ChatScreen({
                 key={project.uid}
                 project={project}
                 index={index}
+                onProjectClick={handleProjectClick}
               />
             ))
           )}

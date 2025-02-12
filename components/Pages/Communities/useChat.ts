@@ -197,5 +197,6 @@ export function useChat(options: UseChatOptions) {
     setMessages: setAllMessages,
     currentMessage,
     isStreaming,
+    setInput,
   };
 }
