@@ -8,7 +8,7 @@ export default function ImpactLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 sm:px-3 md:px-4 px-6  py-2">
       <ImpactTabNavigator />
       <CommunityImpactFilterRow />
       {children}

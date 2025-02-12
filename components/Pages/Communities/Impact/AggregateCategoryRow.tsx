@@ -25,7 +25,7 @@ export const prepareChartData = (
   const timestampsData = timestamps
     .map((timestamp, index) => {
       return {
-        date: formatDate(new Date(timestamp), true),
+        date: formatDate(new Date(timestamp), "UTC"),
         Avg: Number(avg_values[index]) || 0,
         Total: Number(total_values[index]) || 0,
         Min: Number(min_values[index]) || 0,

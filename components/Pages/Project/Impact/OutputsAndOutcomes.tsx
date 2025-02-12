@@ -70,10 +70,10 @@ export const OutputsAndOutcomes = () => {
       prev.map((f) =>
         f.id === id
           ? {
-            ...f,
-            isSaving: false,
-            isEdited: false,
-          }
+              ...f,
+              isSaving: false,
+              isEdited: false,
+            }
           : f
       )
     );
@@ -96,46 +96,46 @@ export const OutputsAndOutcomes = () => {
       prev.map((f) =>
         f.id === id
           ? {
-            ...f,
-            isEdited: true,
-            datapoints: f.datapoints.map((datapoint, i) => {
-              if (i !== index) return datapoint;
+              ...f,
+              isEdited: true,
+              datapoints: f.datapoints.map((datapoint, i) => {
+                if (i !== index) return datapoint;
 
-              if (field === "startDate") {
-                // Prevent start date from being after end date
-                const endDate =
-                  datapoint.endDate || datapoint.outputTimestamp;
-                if (endDate && value && new Date(value) > new Date(endDate)) {
-                  return datapoint; // Don't update if start date would be after end date
+                if (field === "startDate") {
+                  // Prevent start date from being after end date
+                  const endDate =
+                    datapoint.endDate || datapoint.outputTimestamp;
+                  if (endDate && value && new Date(value) > new Date(endDate)) {
+                    return datapoint; // Don't update if start date would be after end date
+                  }
                 }
-              }
 
-              if (field === "endDate") {
-                // Check if the new end date already exists in other datapoints
-                const newEndDate = new Date(value);
-                newEndDate.setHours(0, 0, 0, 0);
+                if (field === "endDate") {
+                  // Check if the new end date already exists in other datapoints
+                  const newEndDate = new Date(value);
+                  newEndDate.setHours(0, 0, 0, 0);
 
-                const existingDates = f.datapoints
-                  .filter((_, dpIndex) => dpIndex !== index)
-                  .map((dp) => {
-                    const date = new Date(
-                      dp.endDate || dp.outputTimestamp || ""
-                    );
-                    date.setHours(0, 0, 0, 0);
-                    return date.getTime();
-                  });
+                  const existingDates = f.datapoints
+                    .filter((_, dpIndex) => dpIndex !== index)
+                    .map((dp) => {
+                      const date = new Date(
+                        dp.endDate || dp.outputTimestamp || ""
+                      );
+                      date.setHours(0, 0, 0, 0);
+                      return date.getTime();
+                    });
 
-                if (existingDates.includes(newEndDate.getTime())) {
-                  return datapoint; // Don't update if date already exists
+                  if (existingDates.includes(newEndDate.getTime())) {
+                    return datapoint; // Don't update if date already exists
+                  }
                 }
-              }
 
-              return {
-                ...datapoint,
-                [field]: value,
-              };
-            }),
-          }
+                return {
+                  ...datapoint,
+                  [field]: value,
+                };
+              }),
+            }
           : f
       )
     );
@@ -235,17 +235,17 @@ export const OutputsAndOutcomes = () => {
       prev.map((f) =>
         f.id === id
           ? {
-            ...f,
-            datapoints: [
-              ...f.datapoints,
-              {
-                value: 0,
-                proof: "",
-                startDate: new Date().toISOString(),
-                endDate: new Date().toISOString(),
-              },
-            ],
-          }
+              ...f,
+              datapoints: [
+                ...f.datapoints,
+                {
+                  value: 0,
+                  proof: "",
+                  startDate: new Date().toISOString(),
+                  endDate: new Date().toISOString(),
+                },
+              ],
+            }
           : f
       )
     );
@@ -259,10 +259,10 @@ export const OutputsAndOutcomes = () => {
       prev.map((f) =>
         f.id === id
           ? {
-            ...f,
-            datapoints: [...f.datapoints].filter((_, i) => i !== index),
-            isEdited: true,
-          }
+              ...f,
+              datapoints: [...f.datapoints].filter((_, i) => i !== index),
+              isEdited: true,
+            }
           : f
       )
     );
@@ -371,7 +371,8 @@ export const OutputsAndOutcomes = () => {
                     <div className="flex flex-row gap-2 items-center">
                       {lastUpdated ? (
                         <span className="text-sm text-gray-500 dark:text-zinc-400">
-                          Last updated {formatDate(new Date(lastUpdated), true)}
+                          Last updated{" "}
+                          {formatDate(new Date(lastUpdated), "UTC")}
                         </span>
                       ) : null}
                     </div>
@@ -439,12 +440,12 @@ export const OutputsAndOutcomes = () => {
                                           </span>
                                         </div>
                                         {form?.datapoints?.[index]?.value &&
-                                          isInvalidValue(
-                                            Number(
-                                              form?.datapoints?.[index]?.value
-                                            ),
-                                            form.unitOfMeasure
-                                          ) ? (
+                                        isInvalidValue(
+                                          Number(
+                                            form?.datapoints?.[index]?.value
+                                          ),
+                                          form.unitOfMeasure
+                                        ) ? (
                                           <span className="text-xs text-red-500">
                                             {form.unitOfMeasure === "int"
                                               ? "Please enter an integer number"
@@ -485,13 +486,13 @@ export const OutputsAndOutcomes = () => {
                                       <span className="text-gray-900 dark:text-zinc-100">
                                         {form?.datapoints?.[index]?.startDate
                                           ? formatDate(
-                                            new Date(
-                                              form.datapoints?.[
-                                                index
-                                              ].startDate
-                                            ),
-                                            true
-                                          )
+                                              new Date(
+                                                form.datapoints?.[
+                                                  index
+                                                ].startDate
+                                              ),
+                                              "UTC"
+                                            )
                                           : "-"}
                                       </span>
                                     )}
@@ -523,9 +524,9 @@ export const OutputsAndOutcomes = () => {
                                             item.id,
                                             form?.datapoints?.[index]
                                               ?.endDate ||
-                                            form?.datapoints?.[index]
-                                              ?.outputTimestamp ||
-                                            ""
+                                              form?.datapoints?.[index]
+                                                ?.outputTimestamp ||
+                                              ""
                                           ) && "border-2 border-red-500"
                                         )}
                                       />
@@ -533,19 +534,19 @@ export const OutputsAndOutcomes = () => {
                                       <span className="text-gray-900 dark:text-zinc-100">
                                         {form?.datapoints?.[index]?.endDate
                                           ? formatDate(
-                                            new Date(
-                                              form.datapoints?.[index].endDate
-                                            ),
-                                            true
-                                          )
+                                              new Date(
+                                                form.datapoints?.[index].endDate
+                                              ),
+                                              "UTC"
+                                            )
                                           : datapoint.outputTimestamp
-                                            ? formatDate(
+                                          ? formatDate(
                                               new Date(
                                                 datapoint.outputTimestamp
                                               ),
-                                              true
+                                              "UTC"
                                             )
-                                            : "-"}
+                                          : "-"}
                                       </span>
                                     )}
                                   </td>
