@@ -24,16 +24,17 @@ const NewTag = () => {
   );
 };
 
-const NAVIGATION_ITEMS: {
-  path: (communityId: string) => string;
-  title: (communityName: string) => string;
-  Icon: React.ElementType;
-  isActive: (pathname: string) => boolean;
-  showNewTag?: boolean;
-}[] = [
+type NavigationItem = {
+  readonly path: (communityId: string) => string;
+  readonly title: (communityName: string) => string;
+  readonly Icon: React.ElementType;
+  readonly isActive: (pathname: string) => boolean;
+  readonly showNewTag?: boolean;
+};
+
+const NAVIGATION_ITEMS: readonly NavigationItem[] = [
   {
     path: (communityId: string) => PAGES.COMMUNITY.ALL_GRANTS(communityId),
-
     title: (communityName: string) =>
       `View all ${communityName} Community Projects`,
     Icon: FolderIcon,

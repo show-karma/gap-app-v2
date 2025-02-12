@@ -304,7 +304,7 @@ const ChatMessage = React.memo(
       >
         <div
           className={cn(
-            "flex w-full max-w-[80%] flex-col",
+            "flex w-full max-w-[80%] max-lg:max-w-[95%] flex-col",
             m.role === "assistant" ? "items-start" : "items-end"
           )}
         >
@@ -718,8 +718,8 @@ function ChatScreen({
 
   return (
     <>
-      <div className="flex w-full h-full">
-        <div className="w-1/4 overflow-y-auto bg-gray-50 dark:bg-zinc-900 border-r divide-y divide-y-black border-gray-200 dark:border-zinc-600">
+      <div className="flex w-full h-full max-md:flex-col flex-row">
+        <div className="w-1/4 max-md:w-full max-md:h-1/2 overflow-y-auto bg-gray-50 dark:bg-zinc-900 border-r divide-y divide-y-black border-gray-200 dark:border-zinc-600">
           <h2 className="text-zinc-800 text-sm font-bold dark:text-white px-3 py-4">
             Projects
           </h2>
@@ -740,7 +740,7 @@ function ChatScreen({
         </div>
 
         {selectedProgram && (
-          <div className="w-3/4 bg-white dark:bg-zinc-900 flex flex-col items-center h-full">
+          <div className="w-3/4 max-lg:w-full bg-white dark:bg-zinc-900 flex flex-col items-center h-full">
             <div className="flex flex-row gap-4 justify-between w-full px-3 py-4 border-b border-gray-200 dark:border-zinc-600">
               <div className="flex flex-row gap-3 items-center">
                 <Image
