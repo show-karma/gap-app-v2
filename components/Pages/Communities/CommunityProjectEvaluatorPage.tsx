@@ -18,6 +18,8 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { PAGES } from "@/utilities/pages";
 import pluralize from "pluralize";
+import { ShareIcon } from "@heroicons/react/24/outline";
+import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
 
 const sanitizeMarkdown = (text: string) => {
   return (
@@ -672,6 +674,7 @@ function ChatScreen({
   selectedProgram: Program;
   setSelectedProgram: (program: Program | null) => void;
 }) {
+  const [, copy] = useCopyToClipboard();
   const chatHook = useChat({
     body: {
       projectsInProgram: projects.map((project) => ({
@@ -703,6 +706,10 @@ function ChatScreen({
     [setInput]
   );
 
+  const handleShare = () => {
+    copy(window.location.href, "Link copied to clipboard!");
+  };
+
   if (messages.length === 0) {
     return (
       <div className="flex items-center justify-center h-full bg-gray-50 dark:bg-zinc-900">
@@ -719,7 +726,7 @@ function ChatScreen({
   return (
     <>
       <div className="flex w-full h-full max-md:flex-col flex-row">
-        <div className="w-1/4 max-md:w-full max-md:h-1/2 overflow-y-auto bg-gray-50 dark:bg-zinc-900 border-r divide-y divide-y-black border-gray-200 dark:border-zinc-600">
+        <div className="w-1/4 max-md:w-full max-md:h-1/2 overflow-y-auto bg-gray-50 dark:bg-zinc-900 divide-y divide-zinc-600">
           <h2 className="text-zinc-800 text-sm font-bold dark:text-white px-3 py-4">
             Projects
           </h2>
@@ -741,7 +748,7 @@ function ChatScreen({
 
         {selectedProgram && (
           <div className="w-3/4 max-lg:w-full bg-white dark:bg-zinc-900 flex flex-col items-center h-full">
-            <div className="flex flex-row gap-4 justify-between w-full px-3 py-4 border-b border-gray-200 dark:border-zinc-600">
+            <div className="flex flex-row gap-4 items-center justify-between w-full px-3 py-4 border-b border-gray-200 dark:border-zinc-600">
               <div className="flex flex-row gap-3 items-center">
                 <Image
                   src="/logo/karma-gap-logo.png"
@@ -765,6 +772,14 @@ function ChatScreen({
                   </p>
                 </div>
               </div>
+              <button
+                onClick={handleShare}
+                className="flex flex-row rounded items-center h-max hover:opacity-80 justify-center gap-2 px-3 py-2 border border-brand-blue text-brand-blue bg-transparent"
+                aria-label="Share current page"
+              >
+                Share{" "}
+                <ShareIcon className="w-5 h-5 min-h-5 min-w-5  max-h-5 max-w-5" />
+              </button>
             </div>
             <div className="w-full flex-1">
               <ChatWithKarmaCoPilot projects={projects} chatHook={chatHook} />
