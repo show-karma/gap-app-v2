@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { ChevronRightIcon, PaperAirplaneIcon } from "@heroicons/react/24/solid";
 import { INDEXER } from "@/utilities/indexer";
@@ -793,7 +793,10 @@ function ChatScreen({
 
 export const CommunityProjectEvaluatorPage = () => {
   const params = useParams();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const communityId = params.communityId as string;
+  const programId = searchParams.get("programId");
 
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingProjects, setIsLoadingProjects] = useState(false);
@@ -812,6 +815,16 @@ export const CommunityProjectEvaluatorPage = () => {
           console.error("Error fetching programs:", programsError);
         }
         setPrograms(programsRes);
+
+        // If we have a programId in the URL, find and select that program
+        if (programId && programsRes) {
+          const program = programsRes.find(
+            (p: Program) => p.programId === programId
+          );
+          if (program) {
+            setSelectedProgram(program);
+          }
+        }
       } catch (error) {
         console.error("Error fetching initial data:", error);
       } finally {
@@ -819,7 +832,7 @@ export const CommunityProjectEvaluatorPage = () => {
       }
     };
     fetchInitialData();
-  }, [communityId]);
+  }, [communityId, programId]);
 
   async function getProjectsByProgram(programId: string, chainId: number) {
     try {
@@ -860,7 +873,13 @@ export const CommunityProjectEvaluatorPage = () => {
   const handleProgramSelect = (program: Program) => {
     setSelectedProgram(program);
     setProjects([]); // Clear previous projects
-    getProjectsByProgram(program.programId, Number(program.chainID)); // Fetch projects for the selected program
+
+    // Update URL with the selected program ID
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.set("programId", program.programId);
+    router.push(`${window.location.pathname}?${newSearchParams.toString()}`);
+
+    getProjectsByProgram(program.programId, Number(program.chainID));
   };
 
   return (
