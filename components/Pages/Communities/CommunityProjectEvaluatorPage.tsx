@@ -675,6 +675,7 @@ function ChatScreen({
   setSelectedProgram: (program: Program | null) => void;
 }) {
   const [, copy] = useCopyToClipboard();
+  const chatScreenRef = useRef<HTMLDivElement>(null);
   const chatHook = useChat({
     body: {
       projectsInProgram: projects.map((project) => ({
@@ -710,6 +711,12 @@ function ChatScreen({
     copy(window.location.href, "Link copied to clipboard!");
   };
 
+  useEffect(() => {
+    if (messages.length === 1) {
+      chatScreenRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages.length]);
+
   if (messages.length === 0) {
     return (
       <div className="flex items-center justify-center h-full bg-gray-50 dark:bg-zinc-900">
@@ -725,7 +732,10 @@ function ChatScreen({
 
   return (
     <>
-      <div className="flex w-full h-full max-md:flex-col flex-row">
+      <div
+        ref={chatScreenRef}
+        className="flex w-full h-full max-md:flex-col flex-row"
+      >
         <div className="w-1/4 max-md:w-full max-md:h-1/2 overflow-y-auto bg-gray-50 dark:bg-zinc-900 divide-y divide-gray-200 dark:divide-zinc-600 border-r border-r-gray-200 dark:border-r-zinc-600">
           <h2 className="text-zinc-800 text-sm font-bold dark:text-white px-3 py-4">
             Projects
