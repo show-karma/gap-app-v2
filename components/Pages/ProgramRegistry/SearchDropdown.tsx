@@ -148,8 +148,9 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
         </div>
       </Popover.Trigger>
       <Popover.Content
+        align="start"
         className={cn(
-          "mt-4 w-max max-w-[320px] z-10 bg-white border border-zinc-200 dark:border-zinc-700 rounded-md dark:text-white dark:bg-zinc-800  max-h-60 overflow-y-auto overflow-x-hidden py-2",
+          "mt-4 w-[var(--radix-popover-trigger-width)] z-10 bg-white border border-zinc-200 dark:border-zinc-700 rounded-md dark:text-white dark:bg-zinc-800 max-h-60 overflow-y-auto overflow-x-hidden py-2",
           listClassname
         )}
       >
