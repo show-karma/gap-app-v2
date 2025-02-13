@@ -11,6 +11,7 @@ import { useParams, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ProjectOptionsMenu } from "./ProjectOptionsMenu";
 
+
 export const ProjectNavigator = ({
   hasContactInfo,
   grantsLength,
