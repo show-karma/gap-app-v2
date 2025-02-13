@@ -26,7 +26,7 @@ const groupByPeriod = (
   const groupedData = _groupBy(data, (item: any) => {
     const date = new Date(item.Date);
     if (periodToGroup === "Weeks") {
-      return formatDate(endOfWeek(date), true);
+      return formatDate(endOfWeek(date), "UTC");
     }
     if (periodToGroup === "Months") {
       return format(startOfMonth(date), "MMM yyyy");

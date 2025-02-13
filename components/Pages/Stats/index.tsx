@@ -88,7 +88,7 @@ export const Stats = () => {
         const dataMap = item.data
           .map((dataItem) => {
             return {
-              Date: formatDate(dataItem.date, true),
+              Date: formatDate(dataItem.date, "UTC"),
               [dataNameDictionary[item.name].hint]: dataItem.value,
             };
           })

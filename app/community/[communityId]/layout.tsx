@@ -101,8 +101,8 @@ export default async function Layout({
   }
 
   return (
-    <div className="flex w-full max-w-full flex-col justify-start gap-6 max-lg:flex-col">
-      <div className="flex flex-col gap-4 justify-between items-start py-4  sm:px-3 md:px-4 px-6 border-b border-gray-200 dark:border-gray-800">
+    <div className="flex w-full max-w-full flex-col justify-start max-lg:flex-col">
+      <div className="flex flex-col gap-4 justify-between items-start mt-4 sm:px-3 md:px-4 px-6 border-b border-gray-200 dark:border-gray-800">
         <div className="flex flex-row gap-4 flex-wrap max-lg:flex-col justify-between items-center w-full">
           <div className="flex h-max flex-1 flex-row items-center justify-start gap-3 ">
             <div
@@ -144,7 +144,7 @@ export default async function Layout({
         </div>
         <CommunityPageNavigator />
       </div>
-      <div className=" sm:px-3 md:px-4 px-6">{children}</div>
+      <div>{children}</div>
     </div>
   );
 }
