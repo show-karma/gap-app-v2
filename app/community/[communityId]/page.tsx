@@ -33,7 +33,7 @@ export default async function Page({ params }: Props) {
           const { data } = await gapIndexerApi.communityBySlug(communityId);
           community = data as ICommunityResponse;
         } catch (error) {
-          console.log("Not found community", communityId, error );
+          console.log("Not found community", communityId, error);
           community = null;
         }
       },
@@ -62,7 +62,7 @@ export default async function Page({ params }: Props) {
   const defaultSelectedStatus = "all" as StatusOptions;
 
   return (
-    <div className="flex flex-row gap-6 w-full max-w-full">
+    <div className="flex flex-row gap-6 w-full max-w-full sm:px-3 md:px-4 px-6 py-2">
       <div className="flex w-full max-w-full flex-col justify-start items-center gap-6">
         <div className="w-full lg:hidden">
           {communitiesToBulkSubscribe.includes(

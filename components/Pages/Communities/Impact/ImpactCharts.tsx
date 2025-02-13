@@ -10,18 +10,18 @@ export const prepareChartData = (
   timestamps: string[],
   name: string,
   runningValues?: number[]
-): { date: string;[key: string]: number | string }[] => {
+): { date: string; [key: string]: number | string }[] => {
   const chartData = timestamps
     .map((timestamp, index) => {
       if (runningValues?.length) {
         return {
-          date: formatDate(new Date(timestamp), true),
+          date: formatDate(new Date(timestamp), "UTC"),
           [name]: Number(values[index]) || 0,
           Cumulative: Number(runningValues[index]) || 0,
         };
       }
       return {
-        date: formatDate(new Date(timestamp), true),
+        date: formatDate(new Date(timestamp), "UTC"),
         [name]: Number(values[index]) || 0,
       };
     })

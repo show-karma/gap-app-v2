@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { envVars } from "@/utilities/enviromentVars";
+import { useAccount } from "wagmi";
 
 export interface Message {
   id: string;
@@ -13,6 +14,8 @@ export interface Message {
       arguments: string;
     };
   }[];
+  sender?: string;
+  timestamp?: string;
 }
 
 interface UseChatOptions {
@@ -32,6 +35,7 @@ export function useChat(options: UseChatOptions) {
   const [isLoading, setIsLoading] = useState(false);
   const [currentMessage, setCurrentMessage] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
+  const { address } = useAccount();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
@@ -49,6 +53,8 @@ export function useChat(options: UseChatOptions) {
       role: "user",
       content: input,
       id: crypto.randomUUID(),
+      sender: address,
+      timestamp: new Date().toISOString(),
     };
 
     // Filter out tool-related messages
@@ -108,6 +114,7 @@ export function useChat(options: UseChatOptions) {
                   role: "assistant" as const,
                   content: "",
                   id: crypto.randomUUID(),
+                  timestamp: new Date().toISOString(),
                 };
                 currentLoopMessages.set(loopId, newMessage);
                 setAllMessages((prev) => [...prev, newMessage as Message]);
@@ -126,6 +133,7 @@ export function useChat(options: UseChatOptions) {
                           ? {
                               ...msg,
                               content: currentLoopMessage.content || "",
+                              timestamp: new Date().toISOString(),
                             }
                           : msg
                       )
@@ -141,6 +149,7 @@ export function useChat(options: UseChatOptions) {
                       content: parsed.content,
                       id: crypto.randomUUID(),
                       tool_call_id: parsed.tool_call_id,
+                      timestamp: new Date().toISOString(),
                     };
                     setAllMessages((prev) => [...prev, toolMessage]);
                   }
@@ -152,7 +161,11 @@ export function useChat(options: UseChatOptions) {
                     setAllMessages((prev) =>
                       prev.map((msg) =>
                         msg.id === currentLoopMessage.id
-                          ? { ...msg, tool_calls: parsed.tool_calls }
+                          ? {
+                              ...msg,
+                              tool_calls: parsed.tool_calls,
+                              timestamp: new Date().toISOString(),
+                            }
                           : msg
                       )
                     );
@@ -184,5 +197,6 @@ export function useChat(options: UseChatOptions) {
     setMessages: setAllMessages,
     currentMessage,
     isStreaming,
+    setInput,
   };
 }

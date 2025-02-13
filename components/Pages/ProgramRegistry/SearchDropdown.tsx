@@ -29,10 +29,14 @@ interface SearchDropdownProps {
   cleanFunction?: () => void;
   prefixUnselected?: string;
   buttonClassname?: string;
+  listClassname?: string;
   canAdd?: boolean;
   shouldSort?: boolean;
   canSearch?: boolean;
   id?: string;
+  leftIcon?: React.ReactNode;
+  paragraphClassname?: string;
+  rightIcon?: React.ReactNode;
 }
 export const SearchDropdown: FC<SearchDropdownProps> = ({
   onSelectFunction,
@@ -43,10 +47,14 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
   cleanFunction,
   prefixUnselected = "Any",
   buttonClassname,
+  listClassname,
   canAdd = false,
   shouldSort = true,
   canSearch = true,
   id,
+  leftIcon,
+  paragraphClassname,
+  rightIcon = <ChevronDown className="h-5 w-5 text-black dark:text-white" />,
 }) => {
   const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -57,11 +65,11 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
     {
       value: string;
       image:
-      | {
-        light: string;
-        dark: string;
-      }
-      | undefined;
+        | {
+            light: string;
+            dark: string;
+          }
+        | undefined;
     }[]
   >([]);
 
@@ -73,14 +81,14 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
 
     const sortedList = shouldSort
       ? parsedArray.sort((a, b) => {
-        if (a.value < b.value) {
-          return -1;
-        }
-        if (a.value > b.value) {
-          return 1;
-        }
-        return 0;
-      })
+          if (a.value < b.value) {
+            return -1;
+          }
+          if (a.value > b.value) {
+            return 1;
+          }
+          return 0;
+        })
       : parsedArray;
     setOrderedList(sortedList);
   }, []);
@@ -125,21 +133,28 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
         id={id}
       >
         <div className="flex flex-row gap-4 w-full justify-between">
-          <p className="block w-max">
-            {selected.length
-              ? `${selected.length} ${pluralize(
-                type,
-                selected.length
-              ).toLowerCase()} selected`
-              : `${prefixUnselected} ${type}`}
-          </p>
-          <span>
-            <ChevronDown className="h-5 w-5 text-black dark:text-white" />
-          </span>
+          <div className="flex flex-row gap-4 items-center justify-start w-full">
+            {leftIcon ? leftIcon : null}
+            <p className={cn("block w-max", paragraphClassname)}>
+              {selected.length
+                ? `${selected.length} ${pluralize(
+                    type,
+                    selected.length
+                  ).toLowerCase()} selected`
+                : `${prefixUnselected} ${type}`}
+            </p>
+          </div>
+          <span>{rightIcon ? rightIcon : null}</span>
         </div>
       </Popover.Trigger>
-      <Popover.Content className="mt-4 w-max max-w-[320px] z-10 bg-white border border-zinc-200 dark:border-zinc-700 rounded-md dark:text-white dark:bg-zinc-800  max-h-60 overflow-y-auto overflow-x-hidden py-2">
-        <Command>
+      <Popover.Content
+        align="start"
+        className={cn(
+          "mt-4 w-[var(--radix-popover-trigger-width)] z-10 bg-white border border-zinc-200 dark:border-zinc-700 rounded-md dark:text-white dark:bg-zinc-800 max-h-60 overflow-y-auto overflow-x-hidden py-2",
+          listClassname
+        )}
+      >
+        <Command className={cn(listClassname)}>
           {canSearch ? (
             <div className="w-full px-2">
               <CommandInput
@@ -156,7 +171,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
           ) : null}
           <CommandEmpty className="px-4 py-2">No {type} found.</CommandEmpty>
 
-          <CommandGroup>
+          <CommandGroup className={cn(listClassname)}>
             {cleanFunction ? (
               <CommandItem>
                 <div

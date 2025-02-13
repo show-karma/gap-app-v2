@@ -11,7 +11,10 @@ import { ISearchResponse } from "@show-karma/karma-gap-sdk/core/class/karma-inde
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 
 export const Searchbar: FC = () => {
-  const [results, setResults] = useState<ISearchResponse>({ communities: [], projects: [] });
+  const [results, setResults] = useState<ISearchResponse>({
+    communities: [],
+    projects: [],
+  });
   const [isSearchListOpen, setIsSearchListOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
@@ -45,7 +48,10 @@ export const Searchbar: FC = () => {
         placeholder="Search projects and communities"
         className="w-full min-w-[160px] bg-transparent placeholder:text-gray-400 px-1 py-2 text-gray-600 dark:text-gray-200 border-none border-b-zinc-800 outline-none focus:ring-0"
         onChange={(e) => debouncedSearch(e.target.value)}
-        onFocus={() => [...results.projects, ...results.communities].length > 0 && setIsSearchListOpen(true)}
+        onFocus={() =>
+          [...results.projects, ...results.communities].length > 0 &&
+          setIsSearchListOpen(true)
+        }
       />
       <SearchList
         data={results}
