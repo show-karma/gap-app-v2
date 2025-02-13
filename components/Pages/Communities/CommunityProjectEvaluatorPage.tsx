@@ -123,6 +123,7 @@ function ChatInput({
   isLoadingChat,
   placeholder = "Ask anything about the projects in this program",
   className = "",
+  isLoadingProjects = false,
 }: {
   input: string;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -130,6 +131,7 @@ function ChatInput({
   isLoadingChat: boolean;
   placeholder?: string;
   className?: string;
+  isLoadingProjects?: boolean;
 }) {
   return (
     <form
@@ -139,18 +141,18 @@ function ChatInput({
       aria-label="Chat with Karma Beacon"
     >
       <input
-        className="w-full p-4 pr-12 text-black dark:text-zinc-200 bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-600 shadow-sm focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400"
+        className="w-full p-4 pr-12 text-black dark:text-zinc-200 bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-600 shadow-sm focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
         value={input}
-        placeholder={placeholder}
+        placeholder={isLoadingProjects ? "Loading projects..." : placeholder}
         onChange={handleInputChange}
-        disabled={isLoadingChat}
+        disabled={isLoadingChat || isLoadingProjects}
         aria-label="Chat input"
         role="searchbox"
-        aria-disabled={isLoadingChat}
+        aria-disabled={isLoadingChat || isLoadingProjects}
       />
       <button
         type="submit"
-        disabled={isLoadingChat || !input.trim()}
+        disabled={isLoadingChat || isLoadingProjects || !input.trim()}
         className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-brand-blue disabled:text-gray-500 disabled:hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
         aria-label="Send message"
       >
@@ -165,11 +167,13 @@ function SuggestionsBlock({
   selectedProgram,
   onClose,
   chatHook,
+  isLoadingProjects,
 }: {
   projects: Project[];
   selectedProgram: Program;
   onClose: () => void;
   chatHook: ReturnType<typeof useChat>;
+  isLoadingProjects: boolean;
 }) {
   const {
     input,
@@ -177,8 +181,25 @@ function SuggestionsBlock({
     handleSubmit,
     isLoading: isLoadingChat,
   } = chatHook;
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const handleClose = () => {
+    // Remove programId from URL
+    const newSearchParams = new URLSearchParams(searchParams);
+    newSearchParams.delete("programId");
+    router.push(
+      `${window.location.pathname}${
+        newSearchParams.toString() ? `?${newSearchParams.toString()}` : ""
+      }`
+    );
+
+    onClose();
+  };
 
   const handleSuggestionClick = (suggestion: string) => {
+    if (isLoadingProjects) return;
+
     const fakeEvent = {
       target: { value: suggestion },
       preventDefault: () => {},
@@ -231,7 +252,7 @@ function SuggestionsBlock({
           </span>
         </div>
         <button
-          onClick={onClose}
+          onClick={handleClose}
           className="p-2 text-gray-500 hover:text-gray-700 dark:text-zinc-400 dark:hover:text-zinc-200 dark:bg-transparent rounded-full hover:bg-gray-100 transition-colors"
           aria-label="Close"
         >
@@ -246,13 +267,21 @@ function SuggestionsBlock({
             <div
               key={index}
               onClick={() => handleSuggestionClick(suggestion.query)}
-              className={`bg-[#EEF4FF] dark:bg-gray-700 rounded-lg p-4 transition-colors cursor-pointer`}
+              className={cn(
+                "bg-[#EEF4FF] dark:bg-gray-700 rounded-lg p-4 transition-colors",
+                isLoadingProjects
+                  ? "opacity-50 cursor-not-allowed"
+                  : "cursor-pointer hover:opacity-90"
+              )}
               role="button"
-              tabIndex={0}
+              tabIndex={isLoadingProjects ? -1 : 0}
               onKeyDown={(e) =>
-                e.key === "Enter" && handleSuggestionClick(suggestion.query)
+                !isLoadingProjects &&
+                e.key === "Enter" &&
+                handleSuggestionClick(suggestion.query)
               }
               aria-label={suggestion.title}
+              aria-disabled={isLoadingProjects}
             >
               <h3 className="font-semibold text-gray-900 dark:text-white mb-2">
                 {suggestion.title}
@@ -272,8 +301,16 @@ function SuggestionsBlock({
           handleInputChange={handleInputChange}
           handleSubmit={handleSubmit}
           isLoadingChat={isLoadingChat}
+          isLoadingProjects={isLoadingProjects}
         />
       </div>
+      {isLoadingProjects && (
+        <div className="px-4 pb-4">
+          <p className="text-sm text-center text-gray-600 dark:text-zinc-400">
+            Loading projects... Please wait.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
@@ -407,9 +444,11 @@ const DateSeparator = ({ firstMessageDate }: { firstMessageDate: Date }) => {
 function ChatWithKarmaCoPilot({
   projects,
   chatHook,
+  isLoadingProjects,
 }: {
   projects: any[];
   chatHook: ReturnType<typeof useChat>;
+  isLoadingProjects: boolean;
 }) {
   const {
     messages,
@@ -525,6 +564,7 @@ function ChatWithKarmaCoPilot({
           handleInputChange={handleInputChange}
           handleSubmit={handleSubmit}
           isLoadingChat={isLoadingChat}
+          isLoadingProjects={isLoadingProjects}
           placeholder="Ask anything about the participating projects"
           className={`${hasMessages ? "" : "max-w-3xl"} ${
             projects.length > 0
@@ -560,27 +600,18 @@ function ProjectCardSkeleton() {
   );
 }
 
-function ProjectCard({
-  project,
-  index,
-  onProjectClick,
-}: {
-  project: Project;
-  index: number;
-  onProjectClick: (title: string) => void;
-}) {
+function ProjectCard({ project, index }: { project: Project; index: number }) {
   const pickColor = useCallback((index: number) => {
     return cardColors[index % cardColors.length];
   }, []);
 
   const cardColor = useMemo(() => pickColor(index), [pickColor, index]);
 
-  const handleClick = useCallback(() => {
-    onProjectClick(project.details.title);
-  }, [project.details.title, onProjectClick]);
-
   return (
-    <div className="flex-shrink-0 w-full flex flex-row items-center gap-3 max-w-full bg-white dark:bg-zinc-900 p-3 relative">
+    <ExternalLink
+      href={PAGES.PROJECT.OVERVIEW(project?.uid)}
+      className="flex-shrink-0 w-full flex flex-row items-center gap-3 max-w-full bg-white dark:bg-zinc-900 p-3 relative"
+    >
       <div
         className="absolute left-3 top-3 bottom-3 w-1 rounded-full"
         style={{ background: cardColor }}
@@ -588,12 +619,9 @@ function ProjectCard({
       <div className="flex flex-col flex-1 gap-3 pl-4">
         <div className="w-full flex flex-col gap-1">
           <div className="flex w-full flex-col px-3">
-            <ExternalLink
-              href={PAGES.PROJECT.OVERVIEW(project?.uid)}
-              className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200 max-2xl:text-sm mr-1"
-            >
+            <p className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200 max-2xl:text-sm mr-1">
               {project.details.title}
-            </ExternalLink>
+            </p>
 
             <div className="flex flex-col gap-1 flex-1 h-[64px] w-full max-w-full">
               <div className="line-clamp-2 w-full break-normal text-sm font-normal text-black dark:text-zinc-100 max-2xl:text-sm">
@@ -650,14 +678,13 @@ function ProjectCard({
       </div>
       <div className="px-2">
         <button
-          onClick={handleClick}
           className="hover:text-gray-300 dark:hover:text-zinc-300 rounded-full transition-colors"
           aria-label={`Ask about ${project.details.title}`}
         >
           <ChevronRightIcon className="w-6 h-6 min-h-6 min-w-6 text-gray-500 dark:text-zinc-400" />
         </button>
       </div>
-    </div>
+    </ExternalLink>
   );
 }
 
@@ -725,6 +752,7 @@ function ChatScreen({
           selectedProgram={selectedProgram}
           onClose={() => setSelectedProgram(null)}
           chatHook={chatHook}
+          isLoadingProjects={isLoadingProjects}
         />
       </div>
     );
@@ -736,7 +764,7 @@ function ChatScreen({
         ref={chatScreenRef}
         className="flex w-full h-full max-md:flex-col flex-row"
       >
-        <div className="w-1/4 max-md:w-full max-md:h-1/2 overflow-y-auto bg-gray-50 dark:bg-zinc-900 divide-y divide-gray-200 dark:divide-zinc-600 border-r border-r-gray-200 dark:border-r-zinc-600">
+        <div className="w-1/4 max-md:w-full max-md:h-1/2 overflow-y-auto bg-gray-50 dark:bg-zinc-900 divide-y divide-gray-200 dark:divide-zinc-600">
           <h2 className="text-zinc-800 text-sm font-bold dark:text-white px-3 py-4">
             Projects
           </h2>
@@ -750,7 +778,6 @@ function ChatScreen({
                 key={project.uid}
                 project={project}
                 index={index}
-                onProjectClick={handleProjectClick}
               />
             ))
           )}
@@ -792,7 +819,11 @@ function ChatScreen({
               </button>
             </div>
             <div className="w-full flex-1">
-              <ChatWithKarmaCoPilot projects={projects} chatHook={chatHook} />
+              <ChatWithKarmaCoPilot
+                projects={projects}
+                chatHook={chatHook}
+                isLoadingProjects={isLoadingProjects}
+              />
             </div>
           </div>
         )}
