@@ -25,7 +25,7 @@ import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-i
 
 export const metadata = defaultMetadata;
 
-export default function AssignOutputsPage() {
+export default function ManageIndicatorsPage() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore();
