@@ -1,6 +1,5 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { ConditionalTotalGrantsCounter } from "@/app/community/[communityId]/components/ConditionalTotalGrantsCounter";
 import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { useCommunityStore } from "@/store/community";
 import { SortByOptions, StatusOptions } from "@/types";
@@ -493,11 +492,6 @@ export const CommunityGrants = ({
           </div>
         </div>
       </div>
-      <ConditionalTotalGrantsCounter
-        position="content"
-        overrideGrantsNo={paginationInfo?.grantsNo?.toString()}
-        overrideProjectsNo={paginationInfo?.projectsNo?.toString()}
-      />
 
       <section className="flex flex-col gap-4 md:flex-row">
         <div className="h-full w-full mb-8">

@@ -8,7 +8,6 @@ import { pagesOnRoot } from "@/utilities/pagesOnRoot";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ConditionalTotalGrantsCounter } from "./components/ConditionalTotalGrantsCounter";
 import { CommunityImpactStatCards } from "@/components/Pages/Communities/Impact/StatCards";
 
 type Props = {
@@ -137,7 +136,6 @@ export default async function Layout({
                   ? (community as ICommunityResponse)?.details?.data?.name
                   : ""}
               </p>
-              <ConditionalTotalGrantsCounter position="header" />
             </div>
           </div>
           <CommunityImpactStatCards />
