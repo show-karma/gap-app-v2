@@ -15,10 +15,13 @@ export const MarkdownPreview: typeof Preview = (props) => {
   return (
     <div className="preview w-full max-w-full" data-color-mode={currentTheme}>
       <Preview
-        className={cn("wmdeMarkdown", styles.wmdeMarkdown)}
+        className={cn("wmdeMarkdown", styles.wmdeMarkdown, props.className)}
         rehypePlugins={[
           rehypeSanitize,
-          [rehypeExternalLinks, { target: "_blank", rel: ["nofollow", "noopener", "noreferrer"] }]
+          [
+            rehypeExternalLinks,
+            { target: "_blank", rel: ["nofollow", "noopener", "noreferrer"] },
+          ],
         ]}
         style={{
           backgroundColor: "transparent",
