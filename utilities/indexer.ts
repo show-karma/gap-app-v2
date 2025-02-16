@@ -27,8 +27,8 @@ export const INDEXER = {
       `/projects/list?offset=${offset}&limit=${limit}${
         sortField ? `&sortField=${sortField}` : ""
       }${sortOrder ? `&sortOrder=${sortOrder}` : ""}`,
-    BY_PROGRAM: (programId: string, chainId: number) =>
-      `/projects/by-program?programId=${programId}&chainId=${chainId}`,
+    BY_PROGRAM: (programId: string, communityId: string) =>
+      `/projects/by-program?programId=${programId}&communityId=${communityId}`,
   },
   PROJECT: {
     SUBSCRIBE: (projectId: Hex) => `/projects/${projectId}/subscribe`,

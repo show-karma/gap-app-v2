@@ -150,3 +150,8 @@ option {
     @apply list-disc list-inside;
   }
 }
+
+
+.community-evaluator-chat-container .wmde-markdown .preview li {
+  list-style-position: inherit;
+}
