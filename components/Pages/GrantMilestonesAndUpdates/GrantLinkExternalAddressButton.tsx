@@ -26,9 +26,7 @@ export const GrantLinkExternalAddressButton: FC<
   );
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
   const isEnabledForCommunity =
-    grant.community?.details?.data?.slug ===
-    (envVars.isDev ? "karma-base" : "octant");
-
+    grant.community?.details?.data?.slug === "octant";
   const [isOpen, setIsOpen] = useState(false);
   const [editedAddress, setEditedAddress] = useState("");
   const [isLoading, setIsLoading] = useState(false);

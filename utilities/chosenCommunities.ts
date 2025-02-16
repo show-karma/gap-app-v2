@@ -142,5 +142,14 @@ export const chosenCommunities = () => {
         dark: "/logos/karma-greenpill.svg",
       },
     },
+    {
+      name: "TEC",
+      slug: "tec",
+      uid: "0x455325a0317900a8bb6ba5bf973b3ec209e03317f22985385a532bca4328a930",
+      imageURL: {
+        light: "/logos/tec.png",
+        dark: "/logos/tec.png",
+      },
+    },
   ];
 };

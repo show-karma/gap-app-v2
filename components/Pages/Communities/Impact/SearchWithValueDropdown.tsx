@@ -141,7 +141,7 @@ export const SearchWithValueDropdown: FC<SearchWithValueDropdownProps> = ({
               </CommandItem>
             ) : null}
             {orderedList.map((item) => (
-              <CommandItem key={item.value}>
+              <CommandItem key={item.title + item.value}>
                 <div
                   id={`${item.value}-item`}
                   onClick={() => {

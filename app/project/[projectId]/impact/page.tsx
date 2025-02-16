@@ -1,14 +1,13 @@
 /* eslint-disable @next/next/no-img-element */
-import React from "react";
-import { Metadata } from "next";
-import { Hex } from "viem";
-import { getMetadata } from "@/utilities/sdk";
-import { zeroUID } from "@/utilities/commons";
-import { defaultMetadata } from "@/utilities/meta";
-import { notFound } from "next/navigation";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { envVars } from "@/utilities/enviromentVars";
 import ImpactWrapper from "@/components/Pages/Project/Impact/ImpactWrapper";
+import { zeroUID } from "@/utilities/commons";
+import { envVars } from "@/utilities/enviromentVars";
+import { defaultMetadata } from "@/utilities/meta";
+import { getMetadata } from "@/utilities/sdk";
+import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { Hex } from "viem";
 
 export async function generateMetadata({
   params,

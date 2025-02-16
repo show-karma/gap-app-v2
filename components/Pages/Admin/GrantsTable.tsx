@@ -104,7 +104,7 @@ export const GrantsTable = ({
               scope="col"
               className="h-12 px-4 text-left align-middle font-medium"
             >
-              Edit categories
+              Manage categories
             </th>
           </tr>
         </thead>
