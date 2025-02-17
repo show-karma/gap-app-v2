@@ -31,6 +31,9 @@ export const INDEXER = {
       `/projects/by-program?programId=${programId}&chainId=${chainId}`,
   },
   PROJECT: {
+    EXTERNAL: {
+      UPDATE: (projectUID: string) => `/projects/${projectUID}/external/update`,
+    },
     SUBSCRIBE: (projectId: Hex) => `/projects/${projectId}/subscribe`,
     GET: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}`,
     FEED: (projectIdOrSlug: string) => `/projects/${projectIdOrSlug}/feed`,

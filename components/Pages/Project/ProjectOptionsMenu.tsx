@@ -28,6 +28,9 @@ import { useParams, useRouter } from "next/navigation";
 import { Fragment, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
+import { LinkContractAddressButton } from "./LinkContractAddressButton";
+import { LinkOSOProfileButton } from "./LinkOSOProfileButton";
+import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 const ProjectDialog = dynamic(
   () =>
@@ -194,6 +197,16 @@ export const ProjectOptionsMenu = () => {
                     />
                     Transfer ownership
                   </button>
+                </Menu.Item>
+              ) : null}
+              {isAuthorized ? (
+                <Menu.Item>
+                  <LinkContractAddressButton buttonClassName={buttonClassName} project={project as IProjectResponse & { external: Record<string, string[]> }} />
+                </Menu.Item>
+              ) : null}
+              {isAuthorized ? (
+                <Menu.Item>
+                  <LinkOSOProfileButton buttonClassName={buttonClassName} project={project as IProjectResponse & { external: Record<string, string[]> }} />
                 </Menu.Item>
               ) : null}
               <Menu.Item>
