@@ -32,6 +32,12 @@ const indicatorSchema = z.object({
 
 export const autosyncedIndicators: Indicator[] = [
   {
+    name: 'no_of_txs',
+    id: "",
+    description: "No. of transactions",
+    unitOfMeasure: "int"
+  },
+  {
     name: 'parttime_developers',
     id: "",
     description: "No. of part time developers",
