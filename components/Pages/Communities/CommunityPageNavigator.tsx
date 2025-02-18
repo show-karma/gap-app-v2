@@ -50,12 +50,12 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
     isActive: (pathname: string) => pathname.includes("/impact"),
     showNewTag: true,
   },
-  // {
-  //   path: (communityId: string) => `/community/${communityId}/beacon`,
-  //   title: () => "Ask Karma Beacon",
-  //   Icon: SparklesIcon,
-  //   isActive: (pathname: string) => pathname.includes("/beacon"),
-  // },
+  {
+    path: (communityId: string) => `/community/${communityId}/beacon`,
+    title: () => "Ask Karma Beacon",
+    Icon: SparklesIcon,
+    isActive: (pathname: string) => pathname.includes("/beacon"),
+  },
 ] as const;
 
 export const CommunityPageNavigator = () => {
