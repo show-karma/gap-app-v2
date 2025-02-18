@@ -90,8 +90,9 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
           return 0;
         })
       : parsedArray;
+    console.log(list, parsedArray, sortedList);
     setOrderedList(sortedList);
-  }, []);
+  }, [list]);
 
   const addCustomNetwork = (customNetwork: string) => {
     setAdding(false);

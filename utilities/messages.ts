@@ -280,7 +280,7 @@ export const MESSAGES = {
     },
     EMPTY: {
       UPDATES: {
-        NOT_CREATED: `Project owner is working on adding project updates. Check back in a few days :)`,
+        NOT_CREATED: `Project owner is working on adding project activities. Check back in a few days :)`,
       },
       IMPACTS: {
         NOT_CREATED: `Project owner is working on adding impact attestations. Check back in a few days :)`,

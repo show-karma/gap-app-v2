@@ -322,7 +322,7 @@ const UpdateBlock = ({
       console.log(error);
       toast.error(MESSAGES.PROJECT_UPDATE_FORM.DELETE.ERROR);
       errorManager(
-        `Error deleting project update ${update.uid} from project ${project?.uid}`,
+        `Error deleting project activity ${update.uid} from project ${project?.uid}`,
         error
       );
     } finally {
@@ -461,7 +461,7 @@ const ProjectUpdateFormBlock = () => {
     <div className="flex w-full flex-col gap-6 rounded-md bg-gray-200 dark:bg-zinc-900  px-4 py-6 max-lg:max-w-full">
       <div className="flex w-full flex-row justify-between">
         <h4 className="text-2xl font-bold text-black dark:text-zinc-100">
-          Post a project update
+          Post a project activity
         </h4>
         <button
           className="bg-transparent p-4 hover:bg-transparent hover:opacity-75"
@@ -522,7 +522,7 @@ const UpdatesTab: FC = () => {
             onClick={() => setActiveTab("post-update")}
             className="flex h-max w-max dark:bg-zinc-900 dark:text-white text-zinc-900 flex-row items-center justify-center gap-3 rounded border border-black bg-transparent px-3 py-1 text-sm font-semibold hover:bg-transparent hover:opacity-75"
           >
-            Post a Project Update
+            Post a Project Activity
           </Button>
         ) : null}
       </div>
@@ -543,7 +543,7 @@ const UpdatesTab: FC = () => {
                 }}
               >
                 <p className="w-full text-center text-lg break-words h-max font-semibold text-black dark:text-zinc-200">
-                  Go ahead and create your first project update
+                  Go ahead and create your first project activity
                 </p>
                 <button
                   className="items-center flex flex-row justify-center gap-2 rounded border border-blue-600 bg-blue-600 px-4 py-2.5 text-base font-semibold text-white hover:bg-blue-600"
@@ -556,7 +556,7 @@ const UpdatesTab: FC = () => {
                     alt="Add"
                     className="relative h-5 w-5"
                   />
-                  Post a Project Update
+                  Post a Project Activity
                 </button>
               </div>
             </div>
@@ -570,7 +570,7 @@ const UpdatesTab: FC = () => {
                 />
                 <div className="flex w-full flex-col items-center justify-center gap-3">
                   <p className="text-center text-lg font-semibold text-black dark:text-zinc-100 ">
-                    Welcome to the Project Updates section!
+                    Welcome to the Project Activities section!
                   </p>
                   <p className="text-center text-base font-normal text-black dark:text-zinc-100 ">
                     {MESSAGES.PROJECT.EMPTY.UPDATES.NOT_CREATED}
