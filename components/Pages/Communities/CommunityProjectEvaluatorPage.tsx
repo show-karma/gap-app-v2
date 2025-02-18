@@ -304,7 +304,7 @@ function SuggestionsBlock({
 
       {/* Suggestions */}
       <div className="p-6">
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 max-md:grid-cols-1 gap-4">
           {suggestions.map((suggestion, index) => (
             <div
               key={index}
@@ -733,6 +733,39 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 
 const MemoizedProjectCard = React.memo(ProjectCard);
 
+interface ProjectsSidebarProps {
+  projects: Project[];
+  isLoadingProjects: boolean;
+  programName: string;
+}
+
+function ProjectsSidebar({
+  projects,
+  isLoadingProjects,
+  programName,
+}: ProjectsSidebarProps) {
+  return (
+    <div className="w-1/4 max-md:w-full max-md:h-1/2 overflow-y-auto bg-gray-50 dark:bg-zinc-900 divide-y divide-gray-200 dark:divide-zinc-600">
+      <h2 className="text-zinc-800 text-sm font-bold dark:text-white px-3 py-4">
+        Projects in {programName}
+      </h2>
+      {isLoadingProjects ? (
+        <div className="flex items-center justify-center h-full">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700"></div>
+        </div>
+      ) : (
+        projects.map((project, index) => (
+          <MemoizedProjectCard
+            key={project.projectUID}
+            project={project}
+            index={index}
+          />
+        ))
+      )}
+    </div>
+  );
+}
+
 function ChatScreen({
   projects,
   isLoadingProjects,
@@ -787,14 +820,25 @@ function ChatScreen({
 
   if (messages.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full bg-gray-50 dark:bg-zinc-900">
-        <SuggestionsBlock
+      <div
+        ref={chatScreenRef}
+        className="flex w-full h-full max-md:flex-col flex-row"
+      >
+        <ProjectsSidebar
           projects={projects}
-          selectedProgram={selectedProgram}
-          onClose={() => setSelectedProgram(null)}
-          chatHook={chatHook}
           isLoadingProjects={isLoadingProjects}
+          programName={selectedProgram.name}
         />
+
+        <div className="flex flex-1 items-center justify-center h-full bg-gray-50 dark:bg-zinc-900">
+          <SuggestionsBlock
+            projects={projects}
+            selectedProgram={selectedProgram}
+            onClose={() => setSelectedProgram(null)}
+            chatHook={chatHook}
+            isLoadingProjects={isLoadingProjects}
+          />
+        </div>
       </div>
     );
   }
@@ -805,24 +849,11 @@ function ChatScreen({
         ref={chatScreenRef}
         className="flex w-full h-full max-md:flex-col flex-row"
       >
-        <div className="w-1/4 max-md:w-full max-md:h-1/2 overflow-y-auto bg-gray-50 dark:bg-zinc-900 divide-y divide-gray-200 dark:divide-zinc-600">
-          <h2 className="text-zinc-800 text-sm font-bold dark:text-white px-3 py-4">
-            Projects
-          </h2>
-          {isLoadingProjects ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700"></div>
-            </div>
-          ) : (
-            projects.map((project, index) => (
-              <MemoizedProjectCard
-                key={project.projectUID}
-                project={project}
-                index={index}
-              />
-            ))
-          )}
-        </div>
+        <ProjectsSidebar
+          projects={projects}
+          isLoadingProjects={isLoadingProjects}
+          programName={selectedProgram.name}
+        />
 
         {selectedProgram && (
           <div className="w-3/4 max-lg:w-full bg-white dark:bg-zinc-900 flex flex-col items-center h-full">
@@ -1016,10 +1047,11 @@ export const CommunityProjectEvaluatorPage = () => {
                       : []
                   }
                   type="program"
-                  prefixUnselected="Search"
+                  prefixUnselected="Select a "
                   buttonClassname="w-full max-w-[684px]"
                   canSearch={true}
                   shouldSort={true}
+                  placeholderText="Search and select a program"
                   leftIcon={
                     <Image
                       src="/logo/karma-gap-logo-purple.svg"
