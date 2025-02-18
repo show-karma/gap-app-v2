@@ -22,9 +22,6 @@ interface UseChatOptions {
   body: {
     projectsInProgram: Array<{
       uid: string;
-      chainId: number;
-      projectTitle: string;
-      projectCategories: string[];
     }>;
   };
 }
@@ -139,6 +136,24 @@ export function useChat(options: UseChatOptions) {
                       )
                     );
                     setCurrentMessage((prev) => prev + parsed.content);
+                  }
+                  break;
+
+                case "final":
+                  if (parsed.content.trim()) {
+                    currentLoopMessage.content = parsed.content;
+                    setAllMessages((prev) =>
+                      prev.map((msg) =>
+                        msg.id === currentLoopMessage.id
+                          ? {
+                              ...msg,
+                              content: parsed.content,
+                              timestamp: new Date().toISOString(),
+                            }
+                          : msg
+                      )
+                    );
+                    setCurrentMessage(parsed.content);
                   }
                   break;
 

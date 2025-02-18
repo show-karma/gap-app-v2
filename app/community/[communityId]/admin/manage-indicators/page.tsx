@@ -1,5 +1,5 @@
-import AssignOutputsPage from "@/components/Pages/Admin/AssignOutputsPage";
+import ManageIndicatorsPage from "@/components/Pages/Admin/ManageIndicatorsPage";
 
 export default function Page() {
-  return <AssignOutputsPage />;
+  return <ManageIndicatorsPage />;
 }
