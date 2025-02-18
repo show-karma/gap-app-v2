@@ -37,6 +37,7 @@ interface SearchDropdownProps {
   leftIcon?: React.ReactNode;
   paragraphClassname?: string;
   rightIcon?: React.ReactNode;
+  placeholderText?: string;
 }
 export const SearchDropdown: FC<SearchDropdownProps> = ({
   onSelectFunction,
@@ -55,6 +56,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
   leftIcon,
   paragraphClassname,
   rightIcon = <ChevronDown className="h-5 w-5 text-black dark:text-white" />,
+  placeholderText = `Search ${type}...`,
 }) => {
   const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -161,7 +163,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
                 id={`${id}-search`}
                 name={`${id}-search`}
                 className="rounded-md px-2 w-full dark:text-white dark:bg-zinc-800"
-                placeholder={`Search ${type}...`}
+                placeholder={placeholderText}
                 value={search}
                 onValueChange={(value) => {
                   setSearch(value);
