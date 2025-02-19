@@ -28,6 +28,9 @@ export const MarkdownPreview: typeof Preview = (props) => {
           color: currentTheme === "dark" ? "white" : "rgb(36, 41, 47)",
           width: "100%",
         }}
+        components={{
+          p: ({ children }) => <span>{children}</span>,
+        }}
         {...props}
       />
     </div>

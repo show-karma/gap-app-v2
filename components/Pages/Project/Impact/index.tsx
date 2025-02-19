@@ -30,6 +30,7 @@ import { OutputsAndOutcomes } from "@/components/Pages/Project/Impact/OutputsAnd
 import { Tabs } from "@/components/Utilities/Tabs";
 import { TabTrigger } from "@/components/Utilities/Tabs";
 import { TabContent } from "@/components/Utilities/Tabs";
+import { OSOMetrics } from "./OSOMetrics";
 
 const headClasses =
   "text-black dark:text-white text-xs font-medium uppercase text-left px-6 py-3 font-body";
@@ -179,6 +180,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
         <div className="flex flex-row gap-2 bg-zinc-100 dark:bg-zinc-900 p-1 rounded-md mb-6">
           <TabTrigger value="outputs">Outputs and Outcomes</TabTrigger>
           <TabTrigger value="impact">Project Impact</TabTrigger>
+          <TabTrigger value="oso">OSO Metrics</TabTrigger>
         </div>
 
         <TabContent value="outputs">
@@ -335,6 +337,16 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
             ) : (
               <EmptyImpactScreen />
             )}
+          </div>
+        </TabContent>
+
+        <TabContent value="oso">
+          <div className="flex flex-col gap-8">
+            {
+              (project as any)?.external?.oso?.length ? (
+                <OSOMetrics osoSlugs={(project as any)?.external?.oso} />
+              ) : null
+            }
           </div>
         </TabContent>
       </Tabs>

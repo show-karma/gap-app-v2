@@ -4,15 +4,14 @@ import TablePagination from "@/components/Utilities/TablePagination";
 import { SimplifiedGrant } from "@/hooks/useGrants";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
-import { Listbox, Transition } from "@headlessui/react";
 import {
-  CheckIcon,
   ChevronDownIcon,
   ChevronUpDownIcon,
   ChevronUpIcon,
 } from "@heroicons/react/20/solid";
 import pluralize from "pluralize";
 import { Fragment } from "react";
+import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
 
 type SortField = "project" | "grant" | "description" | "categories";
 type SortDirection = "asc" | "desc";
@@ -144,90 +143,27 @@ export const GrantsTable = ({
                   </div>
                 </td>
                 <td className="px-4 py-2 max-w-[200px]">
-                  {grant.categories.join(", ")}
+                  {grant.categories.sort().join(", ")}
                 </td>
                 <td className="w-max">
-                  <Listbox
-                    value={grantCategories}
-                    onChange={(value) => onCategoryChange(grant.projectUid, value)}
-                    multiple
-                  >
-                    {({ open }) => (
-                      <div className="flex items-center gap-x-2">
-                        <div className="relative flex-1 w-56">
-                          <Listbox.Button className="dark:bg-zinc-800 dark:text-white relative w-full max-w-[200px] cursor-default rounded-md bg-white py-1.5 pl-3 pr-10 text-left text-gray-900 ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-primary-600 sm:text-sm sm:leading-6">
-                            <p className="block truncate">
-                              {grantCategories.length > 0
-                                ? `${grantCategories.length} ${pluralize(
-                                  "category",
-                                  grantCategories.length
-                                )} selected`
-                                : "Categories"}
-                            </p>
-                            <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                              <ChevronUpDownIcon
-                                className="h-5 w-5 text-gray-400"
-                                aria-hidden="true"
-                              />
-                            </span>
-                          </Listbox.Button>
-
-                          <Transition
-                            show={open}
-                            as={Fragment}
-                            leave="transition ease-in duration-100"
-                            leaveFrom="opacity-100"
-                            leaveTo="opacity-0"
-                          >
-                            <Listbox.Options className="dark:bg-zinc-800 dark:text-white absolute z-10 mt-1 max-h-60 w-full max-w-max min-w-[200px] overflow-auto rounded-md bg-white py-1 text-base ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                              {categories.map((category) => (
-                                <Listbox.Option
-                                  key={category.id}
-                                  className={({ active }) =>
-                                    cn(
-                                      active
-                                        ? "bg-gray-100 text-black dark:text-gray-300 dark:bg-zinc-900"
-                                        : "text-gray-900 dark:text-gray-200",
-                                      "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
-                                    )
-                                  }
-                                  value={category.name}
-                                >
-                                  {({ selected, active }) => (
-                                    <>
-                                      <span
-                                        className={cn(
-                                          selected
-                                            ? "font-semibold"
-                                            : "font-normal",
-                                          "block truncate"
-                                        )}
-                                      >
-                                        {category.name}
-                                      </span>
-                                      {selected && (
-                                        <span
-                                          className={cn(
-                                            "text-primary-600 dark:text-primary-400",
-                                            "absolute inset-y-0 right-0 flex items-center pr-4"
-                                          )}
-                                        >
-                                          <CheckIcon
-                                            className="h-5 w-5"
-                                            aria-hidden="true"
-                                          />
-                                        </span>
-                                      )}
-                                    </>
-                                  )}
-                                </Listbox.Option>
-                              ))}
-                            </Listbox.Options>
-                          </Transition>
-                        </div>
-                      </div>
-                    )}
-                  </Listbox>
+                  <SearchWithValueDropdown
+                    list={categories.map((cat) => ({
+                      value: cat.name,
+                      title: cat.name,
+                    }))}
+                    onSelectFunction={(value) =>
+                      onCategoryChange(
+                        grant.projectUid,
+                        grantCategories.includes(value)
+                          ? grantCategories.filter((cat) => cat !== value)
+                          : [...grantCategories, value]
+                      )
+                    }
+                    selected={grantCategories}
+                    type="Categories"
+                    id={`categories-${grant.uid}`}
+                    buttonClassname="min-w-[200px] max-w-[200px]"
+                  />
                 </td>
               </tr>
             );

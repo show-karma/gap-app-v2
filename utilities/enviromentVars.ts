@@ -37,4 +37,5 @@ export const envVars = {
     process.env.NEXT_PUBLIC_ENV === "production"
       ? `https://gap.karmahq.xyz`
       : "https://gapstag.karmahq.xyz",
+  OSO_API_KEY: process.env.NEXT_PUBLIC_OSO_API_KEY || "",
 };

@@ -17,6 +17,8 @@ import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { prepareChartData } from "../../Communities/Impact/ImpactCharts";
 import { GrantsOutputsLoading } from "../Loading/Grants/Outputs";
+import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
+
 
 type OutputForm = {
   id: string;
@@ -70,10 +72,10 @@ export const OutputsAndOutcomes = () => {
       prev.map((f) =>
         f.id === id
           ? {
-              ...f,
-              isSaving: false,
-              isEdited: false,
-            }
+            ...f,
+            isSaving: false,
+            isEdited: false,
+          }
           : f
       )
     );
@@ -96,46 +98,46 @@ export const OutputsAndOutcomes = () => {
       prev.map((f) =>
         f.id === id
           ? {
-              ...f,
-              isEdited: true,
-              datapoints: f.datapoints.map((datapoint, i) => {
-                if (i !== index) return datapoint;
+            ...f,
+            isEdited: true,
+            datapoints: f.datapoints.map((datapoint, i) => {
+              if (i !== index) return datapoint;
 
-                if (field === "startDate") {
-                  // Prevent start date from being after end date
-                  const endDate =
-                    datapoint.endDate || datapoint.outputTimestamp;
-                  if (endDate && value && new Date(value) > new Date(endDate)) {
-                    return datapoint; // Don't update if start date would be after end date
-                  }
+              if (field === "startDate") {
+                // Prevent start date from being after end date
+                const endDate =
+                  datapoint.endDate || datapoint.outputTimestamp;
+                if (endDate && value && new Date(value) > new Date(endDate)) {
+                  return datapoint; // Don't update if start date would be after end date
                 }
+              }
 
-                if (field === "endDate") {
-                  // Check if the new end date already exists in other datapoints
-                  const newEndDate = new Date(value);
-                  newEndDate.setHours(0, 0, 0, 0);
+              if (field === "endDate") {
+                // Check if the new end date already exists in other datapoints
+                const newEndDate = new Date(value);
+                newEndDate.setHours(0, 0, 0, 0);
 
-                  const existingDates = f.datapoints
-                    .filter((_, dpIndex) => dpIndex !== index)
-                    .map((dp) => {
-                      const date = new Date(
-                        dp.endDate || dp.outputTimestamp || ""
-                      );
-                      date.setHours(0, 0, 0, 0);
-                      return date.getTime();
-                    });
+                const existingDates = f.datapoints
+                  .filter((_, dpIndex) => dpIndex !== index)
+                  .map((dp) => {
+                    const date = new Date(
+                      dp.endDate || dp.outputTimestamp || ""
+                    );
+                    date.setHours(0, 0, 0, 0);
+                    return date.getTime();
+                  });
 
-                  if (existingDates.includes(newEndDate.getTime())) {
-                    return datapoint; // Don't update if date already exists
-                  }
+                if (existingDates.includes(newEndDate.getTime())) {
+                  return datapoint; // Don't update if date already exists
                 }
+              }
 
-                return {
-                  ...datapoint,
-                  [field]: value,
-                };
-              }),
-            }
+              return {
+                ...datapoint,
+                [field]: value,
+              };
+            }),
+          }
           : f
       )
     );
@@ -235,17 +237,17 @@ export const OutputsAndOutcomes = () => {
       prev.map((f) =>
         f.id === id
           ? {
-              ...f,
-              datapoints: [
-                ...f.datapoints,
-                {
-                  value: 0,
-                  proof: "",
-                  startDate: new Date().toISOString(),
-                  endDate: new Date().toISOString(),
-                },
-              ],
-            }
+            ...f,
+            datapoints: [
+              ...f.datapoints,
+              {
+                value: 0,
+                proof: "",
+                startDate: new Date().toISOString(),
+                endDate: new Date().toISOString(),
+              },
+            ],
+          }
           : f
       )
     );
@@ -259,10 +261,10 @@ export const OutputsAndOutcomes = () => {
       prev.map((f) =>
         f.id === id
           ? {
-              ...f,
-              datapoints: [...f.datapoints].filter((_, i) => i !== index),
-              isEdited: true,
-            }
+            ...f,
+            datapoints: [...f.datapoints].filter((_, i) => i !== index),
+            isEdited: true,
+          }
           : f
       )
     );
@@ -375,6 +377,11 @@ export const OutputsAndOutcomes = () => {
                           {formatDate(new Date(lastUpdated), "UTC")}
                         </span>
                       ) : null}
+                      {autosyncedIndicators.find(i => i.name === item.name) && (
+                        <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 rounded-full">
+                          Auto-synced
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -382,110 +389,111 @@ export const OutputsAndOutcomes = () => {
                   <div className="flex flex-1">
                     <div className="w-full">
                       <div className="flex flex-col">
-                        <div className="overflow-y-auto overflow-x-auto rounded">
-                          <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700 rounded border border-gray-200 dark:border-zinc-700">
-                            <thead className="">
-                              <tr className="">
-                                <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
-                                  {item.name}
-                                </th>
-                                <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
-                                  Start Date
-                                </th>
-                                <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
-                                  End Date
-                                </th>
-                                <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
-                                  Proof
-                                </th>
-                                <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300" />
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-gray-200 dark:divide-zinc-700">
-                              {item.datapoints.map((datapoint, index) => (
-                                <tr key={index}>
-                                  <td className="px-4 py-2">
-                                    {form?.isEditing && isAuthorized ? (
-                                      <div className="flex flex-col gap-1">
-                                        <div className="flex items-center gap-2">
-                                          <input
-                                            type={"number"}
-                                            value={
-                                              form?.datapoints?.[index]
-                                                ?.value || ""
-                                            }
-                                            onChange={(e) =>
-                                              handleInputChange(
-                                                item.id,
-                                                "value",
-                                                e.target.value,
-                                                index
-                                              )
-                                            }
-                                            className={cn(
-                                              "w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100",
-                                              isInvalidValue(
-                                                Number(
-                                                  form?.datapoints?.[index]
-                                                    ?.value
-                                                ),
-                                                form.unitOfMeasure
-                                              )
-                                                ? "border-2 border-red-500"
-                                                : " border-gray-300"
-                                            )}
-                                          />
-                                          <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-zinc-700 text-gray-600 dark:text-zinc-300">
-                                            {form.unitOfMeasure}
-                                          </span>
+                        {(!autosyncedIndicators.find(i => i.name === item.name) || form?.isEditing) && (
+                          <div className="overflow-y-auto overflow-x-auto rounded">
+                            <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700 rounded border border-gray-200 dark:border-zinc-700">
+                              <thead className="">
+                                <tr className="">
+                                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
+                                    {item.name}
+                                  </th>
+                                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
+                                    Start Date
+                                  </th>
+                                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
+                                    End Date
+                                  </th>
+                                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
+                                    Proof
+                                  </th>
+                                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300" />
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-gray-200 dark:divide-zinc-700">
+                                {item.datapoints.map((datapoint, index) => (
+                                  <tr key={index}>
+                                    <td className="px-4 py-2">
+                                      {form?.isEditing && isAuthorized ? (
+                                        <div className="flex flex-col gap-1">
+                                          <div className="flex items-center gap-2">
+                                            <input
+                                              type={"number"}
+                                              value={
+                                                form?.datapoints?.[index]
+                                                  ?.value || ""
+                                              }
+                                              onChange={(e) =>
+                                                handleInputChange(
+                                                  item.id,
+                                                  "value",
+                                                  e.target.value,
+                                                  index
+                                                )
+                                              }
+                                              className={cn(
+                                                "w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100",
+                                                isInvalidValue(
+                                                  Number(
+                                                    form?.datapoints?.[index]
+                                                      ?.value
+                                                  ),
+                                                  form.unitOfMeasure
+                                                )
+                                                  ? "border-2 border-red-500"
+                                                  : " border-gray-300"
+                                              )}
+                                            />
+                                            <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-zinc-700 text-gray-600 dark:text-zinc-300">
+                                              {form.unitOfMeasure}
+                                            </span>
+                                          </div>
+                                          {form?.datapoints?.[index]?.value &&
+                                            isInvalidValue(
+                                              Number(
+                                                form?.datapoints?.[index]?.value
+                                              ),
+                                              form.unitOfMeasure
+                                            ) ? (
+                                            <span className="text-xs text-red-500">
+                                              {form.unitOfMeasure === "int"
+                                                ? "Please enter an integer number"
+                                                : "Please enter a valid number"}
+                                            </span>
+                                          ) : null}
                                         </div>
-                                        {form?.datapoints?.[index]?.value &&
-                                        isInvalidValue(
-                                          Number(
-                                            form?.datapoints?.[index]?.value
-                                          ),
-                                          form.unitOfMeasure
-                                        ) ? (
-                                          <span className="text-xs text-red-500">
-                                            {form.unitOfMeasure === "int"
-                                              ? "Please enter an integer number"
-                                              : "Please enter a valid number"}
-                                          </span>
-                                        ) : null}
-                                      </div>
-                                    ) : (
-                                      <span className="text-gray-900 dark:text-zinc-100">
-                                        {form?.datapoints?.[index]?.value ||
-                                          "-"}
-                                      </span>
-                                    )}
-                                  </td>
-                                  <td className="px-4 py-2">
-                                    {form?.isEditing && isAuthorized ? (
-                                      <input
-                                        type="date"
-                                        value={
-                                          form?.datapoints?.[
-                                            index
-                                          ]?.startDate?.split("T")[0] ||
-                                          new Date().toISOString().split("T")[0]
-                                        }
-                                        onChange={(e) =>
-                                          handleInputChange(
-                                            item.id,
-                                            "startDate",
-                                            e.target.value,
-                                            index
-                                          )
-                                        }
-                                        className={cn(
-                                          "w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100"
-                                        )}
-                                      />
-                                    ) : (
-                                      <span className="text-gray-900 dark:text-zinc-100">
-                                        {form?.datapoints?.[index]?.startDate
-                                          ? formatDate(
+                                      ) : (
+                                        <span className="text-gray-900 dark:text-zinc-100">
+                                          {form?.datapoints?.[index]?.value ||
+                                            "-"}
+                                        </span>
+                                      )}
+                                    </td>
+                                    <td className="px-4 py-2">
+                                      {form?.isEditing && isAuthorized ? (
+                                        <input
+                                          type="date"
+                                          value={
+                                            form?.datapoints?.[
+                                              index
+                                            ]?.startDate?.split("T")[0] ||
+                                            new Date().toISOString().split("T")[0]
+                                          }
+                                          onChange={(e) =>
+                                            handleInputChange(
+                                              item.id,
+                                              "startDate",
+                                              e.target.value,
+                                              index
+                                            )
+                                          }
+                                          className={cn(
+                                            "w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100"
+                                          )}
+                                        />
+                                      ) : (
+                                        <span className="text-gray-900 dark:text-zinc-100">
+                                          {form?.datapoints?.[index]?.startDate
+                                            ? formatDate(
                                               new Date(
                                                 form.datapoints?.[
                                                   index
@@ -493,126 +501,127 @@ export const OutputsAndOutcomes = () => {
                                               ),
                                               "UTC"
                                             )
-                                          : "-"}
-                                      </span>
-                                    )}
-                                  </td>
-                                  <td className="px-4 py-2">
-                                    {form?.isEditing && isAuthorized ? (
-                                      <input
-                                        type="date"
-                                        value={
-                                          form?.datapoints?.[
-                                            index
-                                          ]?.endDate?.split("T")[0] ||
-                                          form?.datapoints?.[
-                                            index
-                                          ]?.outputTimestamp?.split("T")[0] ||
-                                          new Date().toISOString().split("T")[0]
-                                        }
-                                        onChange={(e) =>
-                                          handleInputChange(
-                                            item.id,
-                                            "endDate",
-                                            e.target.value,
-                                            index
-                                          )
-                                        }
-                                        className={cn(
-                                          "w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100",
-                                          isInvalidTimestamp(
-                                            item.id,
-                                            form?.datapoints?.[index]
-                                              ?.endDate ||
+                                            : "-"}
+                                        </span>
+                                      )}
+                                    </td>
+                                    <td className="px-4 py-2">
+                                      {form?.isEditing && isAuthorized ? (
+                                        <input
+                                          type="date"
+                                          value={
+                                            form?.datapoints?.[
+                                              index
+                                            ]?.endDate?.split("T")[0] ||
+                                            form?.datapoints?.[
+                                              index
+                                            ]?.outputTimestamp?.split("T")[0] ||
+                                            new Date().toISOString().split("T")[0]
+                                          }
+                                          onChange={(e) =>
+                                            handleInputChange(
+                                              item.id,
+                                              "endDate",
+                                              e.target.value,
+                                              index
+                                            )
+                                          }
+                                          className={cn(
+                                            "w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100",
+                                            isInvalidTimestamp(
+                                              item.id,
+                                              form?.datapoints?.[index]
+                                                ?.endDate ||
                                               form?.datapoints?.[index]
                                                 ?.outputTimestamp ||
                                               ""
-                                          ) && "border-2 border-red-500"
-                                        )}
-                                      />
-                                    ) : (
-                                      <span className="text-gray-900 dark:text-zinc-100">
-                                        {form?.datapoints?.[index]?.endDate
-                                          ? formatDate(
+                                            ) && "border-2 border-red-500"
+                                          )}
+                                        />
+                                      ) : (
+                                        <span className="text-gray-900 dark:text-zinc-100">
+                                          {form?.datapoints?.[index]?.endDate
+                                            ? formatDate(
                                               new Date(
                                                 form.datapoints?.[index].endDate
                                               ),
                                               "UTC"
                                             )
-                                          : datapoint.outputTimestamp
-                                          ? formatDate(
-                                              new Date(
-                                                datapoint.outputTimestamp
-                                              ),
-                                              "UTC"
+                                            : datapoint.outputTimestamp
+                                              ? formatDate(
+                                                new Date(
+                                                  datapoint.outputTimestamp
+                                                ),
+                                                "UTC"
+                                              )
+                                              : "-"}
+                                        </span>
+                                      )}
+                                    </td>
+                                    <td className="px-4 py-2">
+                                      {form?.isEditing && isAuthorized ? (
+                                        <input
+                                          type="text"
+                                          value={
+                                            form?.datapoints?.[index]?.proof || ""
+                                          }
+                                          onChange={(e) =>
+                                            handleInputChange(
+                                              item.id,
+                                              "proof",
+                                              e.target.value,
+                                              index
                                             )
-                                          : "-"}
-                                      </span>
-                                    )}
-                                  </td>
-                                  <td className="px-4 py-2">
-                                    {form?.isEditing && isAuthorized ? (
-                                      <input
-                                        type="text"
-                                        value={
-                                          form?.datapoints?.[index]?.proof || ""
-                                        }
-                                        onChange={(e) =>
-                                          handleInputChange(
-                                            item.id,
-                                            "proof",
-                                            e.target.value,
-                                            index
-                                          )
-                                        }
-                                        className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100"
-                                      />
-                                    ) : form?.datapoints?.[index]?.proof &&
-                                      urlRegex.test(
-                                        form?.datapoints?.[index]?.proof
-                                      ) ? (
-                                      <a
-                                        href={form?.datapoints?.[index]?.proof}
-                                        target="_blank"
-                                        className="text-blue-500 underline dark:text-blue-400"
+                                          }
+                                          className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100"
+                                        />
+                                      ) : form?.datapoints?.[index]?.proof &&
+                                        urlRegex.test(
+                                          form?.datapoints?.[index]?.proof
+                                        ) ? (
+                                        <a
+                                          href={form?.datapoints?.[index]?.proof}
+                                          target="_blank"
+                                          className="text-blue-500 underline dark:text-blue-400"
+                                        >
+                                          {form?.datapoints?.[index]?.proof ||
+                                            "No proof provided"}
+                                        </a>
+                                      ) : (
+                                        <span className="text-gray-900 dark:text-zinc-100">
+                                          {form?.datapoints?.[index]?.proof ||
+                                            "No proof provided"}
+                                        </span>
+                                      )}
+                                    </td>
+                                    <td className="px-4 py-2">
+                                      {form?.isEditing && isAuthorized ? (
+                                        <button
+                                          onClick={() =>
+                                            handleDeleteEntry(item.id, index)
+                                          }
+                                        >
+                                          <TrashIcon className="w-4 h-4 text-red-500" />
+                                        </button>
+                                      ) : null}
+                                    </td>
+                                  </tr>
+                                ))}
+                                {form?.isEditing && isAuthorized && (
+                                  <tr>
+                                    <td className="px-4 py-2">
+                                      <Button
+                                        onClick={() => handleAddEntry(item.id)}
                                       >
-                                        {form?.datapoints?.[index]?.proof ||
-                                          "No proof provided"}
-                                      </a>
-                                    ) : (
-                                      <span className="text-gray-900 dark:text-zinc-100">
-                                        {form?.datapoints?.[index]?.proof ||
-                                          "No proof provided"}
-                                      </span>
-                                    )}
-                                  </td>
-                                  <td className="px-4 py-2">
-                                    {form?.isEditing && isAuthorized ? (
-                                      <button
-                                        onClick={() =>
-                                          handleDeleteEntry(item.id, index)
-                                        }
-                                      >
-                                        <TrashIcon className="w-4 h-4 text-red-500" />
-                                      </button>
-                                    ) : null}
-                                  </td>
-                                </tr>
-                              ))}
-                              {form?.isEditing && isAuthorized && (
-                                <tr>
-                                  <td className="px-4 py-2">
-                                    <Button
-                                      onClick={() => handleAddEntry(item.id)}
-                                    >
-                                      Add new entry
-                                    </Button>
-                                  </td>
-                                </tr>
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
+                                        Add new entry
+                                      </Button>
+                                    </td>
+                                  </tr>
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

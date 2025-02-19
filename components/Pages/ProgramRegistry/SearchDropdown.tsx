@@ -38,6 +38,7 @@ interface SearchDropdownProps {
   paragraphClassname?: string;
   rightIcon?: React.ReactNode;
   customAddButton?: React.ReactNode;
+  placeholderText?: string;
 }
 export const SearchDropdown: FC<SearchDropdownProps> = ({
   onSelectFunction,
@@ -57,6 +58,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
   paragraphClassname,
   rightIcon = <ChevronDown className="h-5 w-5 text-black dark:text-white" />,
   customAddButton,
+  placeholderText = `Search ${type}...`,
 }) => {
   const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -138,16 +140,21 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
         <div className="flex flex-row gap-4 w-full justify-between">
           <div className="flex flex-row gap-4 items-center justify-start w-full">
             {leftIcon ? leftIcon : null}
-            <p className={cn("block w-max", paragraphClassname)}>
+            <p className={cn("block w-full truncate", paragraphClassname)}>
               {selected.length
-                ? `${selected.length} ${pluralize(
-                    type,
-                    selected.length
-                  ).toLowerCase()} selected`
+                ? selected
+                    .map(
+                      (item) =>
+                        orderedList.find(
+                          (orderedItem) => orderedItem.value === item
+                        )?.value
+                    )
+                    .sort()
+                    .join(", ")
                 : `${prefixUnselected} ${type}`}
             </p>
+            <span>{rightIcon ? rightIcon : null}</span>
           </div>
-          <span>{rightIcon ? rightIcon : null}</span>
         </div>
       </Popover.Trigger>
       <Popover.Content
@@ -164,7 +171,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
                 id={`${id}-search`}
                 name={`${id}-search`}
                 className="rounded-md px-2 w-full dark:text-white dark:bg-zinc-800"
-                placeholder={`Search ${type}...`}
+                placeholder={placeholderText}
                 value={search}
                 onValueChange={(value) => {
                   setSearch(value);

@@ -58,22 +58,64 @@ interface Program {
   chainID: string;
 }
 
-interface Project {
+interface ProjectMilestone {
+  description: string;
+  title: string;
+  endsAt: string;
+  startsAt: string;
+  status: {
+    approved: boolean;
+    completed: boolean;
+    rejected: boolean;
+  };
+}
+
+interface ProjectProgram {
+  programId: string;
+  name: string;
+  description: string;
+}
+
+interface ProjectUpdate {
+  title: string;
+  text: string;
+  type: string;
+}
+
+interface ProjectDetails {
   uid: string;
-  chainID: number;
-  createdBy: string;
-  createdAt: string;
-  details: {
+  data: {
     title: string;
     description: string;
-    [key: string]: any;
+    problem: string;
+    missionSummary: string;
+    locationOfImpact: string;
+    imageURL: string;
+    links: any; // Define specific type if known
+    slug: string;
+    tags: string[];
+    businessModel: string;
+    stageInLife: string;
+    raisedMoney: string;
+    createdAt: string;
   };
-  categories: string[];
-  impacts: any[];
-  updates: any[];
-  milestones: any[];
-  slug: string;
 }
+
+interface ProjectInProgram {
+  projectUID: string;
+  grantUID: string;
+  milestone_count: number;
+  milestones: ProjectMilestone[];
+  program: ProjectProgram[];
+  updates: ProjectUpdate[];
+  projectDetails: ProjectDetails;
+  project_categories: string[];
+  impacts: any; // Define specific type if known
+  external: any; // Define specific type if known
+}
+
+// Update the Project interface to use the new type
+type Project = ProjectInProgram;
 
 const cardColors = [
   "#5FE9D0",
@@ -262,7 +304,7 @@ function SuggestionsBlock({
 
       {/* Suggestions */}
       <div className="p-6">
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 max-md:grid-cols-1 gap-4">
           {suggestions.map((suggestion, index) => (
             <div
               key={index}
@@ -609,7 +651,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 
   return (
     <ExternalLink
-      href={PAGES.PROJECT.OVERVIEW(project?.uid)}
+      href={PAGES.PROJECT.OVERVIEW(project?.projectUID)}
       className="flex-shrink-0 w-full flex flex-row items-center gap-3 max-w-full bg-white dark:bg-zinc-900 p-3 relative"
     >
       <div
@@ -620,21 +662,22 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
         <div className="w-full flex flex-col gap-1">
           <div className="flex w-full flex-col px-3">
             <p className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200 max-2xl:text-sm mr-1">
-              {project.details.title}
+              {project.projectDetails.data.title}
             </p>
 
             <div className="flex flex-col gap-1 flex-1 h-[64px] w-full max-w-full">
               <div className="line-clamp-2 w-full break-normal text-sm font-normal text-black dark:text-zinc-100 max-2xl:text-sm">
-                {sanitizeMarkdown(project.details.description)}
+                {sanitizeMarkdown(project.projectDetails.data.description)}
               </div>
             </div>
           </div>
         </div>
         <div className="flex w-full flex-col gap-2">
           <div className="flex items-center justify-start gap-4 mt-2 flex-wrap">
-            {Array.from(new Set(project?.categories || [])).length > 0 && (
+            {Array.from(new Set(project?.project_categories || [])).length >
+              0 && (
               <div className="flex flex-wrap gap-2">
-                {Array.from(new Set(project?.categories || [])).map(
+                {Array.from(new Set(project?.project_categories || [])).map(
                   (category, i) => (
                     <div
                       key={i}
@@ -657,7 +700,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
                 </p>
               </div>
             )}
-            {project.impacts.length > 0 && (
+            {project.impacts?.length > 0 && (
               <div className="flex h-max w-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
                 <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
                   {project.impacts.length || 0}{" "}
@@ -679,7 +722,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
       <div className="px-2">
         <button
           className="hover:text-gray-300 dark:hover:text-zinc-300 rounded-full transition-colors"
-          aria-label={`Ask about ${project.details.title}`}
+          aria-label={`Ask about ${project.projectDetails.data.title}`}
         >
           <ChevronRightIcon className="w-6 h-6 min-h-6 min-w-6 text-gray-500 dark:text-zinc-400" />
         </button>
@@ -689,6 +732,39 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 }
 
 const MemoizedProjectCard = React.memo(ProjectCard);
+
+interface ProjectsSidebarProps {
+  projects: Project[];
+  isLoadingProjects: boolean;
+  programName: string;
+}
+
+function ProjectsSidebar({
+  projects,
+  isLoadingProjects,
+  programName,
+}: ProjectsSidebarProps) {
+  return (
+    <div className="w-1/4 max-md:w-full max-md:h-1/2 overflow-y-auto bg-gray-50 dark:bg-zinc-900 divide-y divide-gray-200 dark:divide-zinc-600">
+      <h2 className="text-zinc-800 text-sm font-bold dark:text-white px-3 py-4">
+        Projects in {programName}
+      </h2>
+      {isLoadingProjects ? (
+        <div className="flex items-center justify-center h-full">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700"></div>
+        </div>
+      ) : (
+        projects.map((project, index) => (
+          <MemoizedProjectCard
+            key={project.projectUID}
+            project={project}
+            index={index}
+          />
+        ))
+      )}
+    </div>
+  );
+}
 
 function ChatScreen({
   projects,
@@ -706,10 +782,8 @@ function ChatScreen({
   const chatHook = useChat({
     body: {
       projectsInProgram: projects.map((project) => ({
-        uid: project.uid,
-        chainId: project.chainID,
-        projectTitle: project.details.title,
-        projectCategories: project.categories,
+        uid: project.projectUID,
+        projectTitle: project.projectDetails.data.title,
       })),
     },
   });
@@ -746,14 +820,25 @@ function ChatScreen({
 
   if (messages.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full bg-gray-50 dark:bg-zinc-900">
-        <SuggestionsBlock
+      <div
+        ref={chatScreenRef}
+        className="flex w-full h-full max-md:flex-col flex-row"
+      >
+        <ProjectsSidebar
           projects={projects}
-          selectedProgram={selectedProgram}
-          onClose={() => setSelectedProgram(null)}
-          chatHook={chatHook}
           isLoadingProjects={isLoadingProjects}
+          programName={selectedProgram.name}
         />
+
+        <div className="flex flex-1 items-center justify-center h-full bg-gray-50 dark:bg-zinc-900">
+          <SuggestionsBlock
+            projects={projects}
+            selectedProgram={selectedProgram}
+            onClose={() => setSelectedProgram(null)}
+            chatHook={chatHook}
+            isLoadingProjects={isLoadingProjects}
+          />
+        </div>
       </div>
     );
   }
@@ -764,24 +849,11 @@ function ChatScreen({
         ref={chatScreenRef}
         className="flex w-full h-full max-md:flex-col flex-row"
       >
-        <div className="w-1/4 max-md:w-full max-md:h-1/2 overflow-y-auto bg-gray-50 dark:bg-zinc-900 divide-y divide-gray-200 dark:divide-zinc-600">
-          <h2 className="text-zinc-800 text-sm font-bold dark:text-white px-3 py-4">
-            Projects
-          </h2>
-          {isLoadingProjects ? (
-            <div className="flex items-center justify-center h-full">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-700"></div>
-            </div>
-          ) : (
-            projects.map((project, index) => (
-              <MemoizedProjectCard
-                key={project.uid}
-                project={project}
-                index={index}
-              />
-            ))
-          )}
-        </div>
+        <ProjectsSidebar
+          projects={projects}
+          isLoadingProjects={isLoadingProjects}
+          programName={selectedProgram.name}
+        />
 
         {selectedProgram && (
           <div className="w-3/4 max-lg:w-full bg-white dark:bg-zinc-900 flex flex-col items-center h-full">
@@ -875,22 +947,22 @@ export const CommunityProjectEvaluatorPage = () => {
     fetchInitialData();
   }, [communityId, programId]);
 
-  async function getProjectsByProgram(programId: string, chainId: number) {
+  async function getProjectsByProgram(
+    programId: string,
+    chainId: number,
+    communityId: string
+  ) {
     try {
       setIsLoadingProjects(true);
-      const [projects, error] = await fetchData(
-        INDEXER.PROJECTS.BY_PROGRAM(programId, chainId)
-      );
+      const [projects, error] = (await fetchData(
+        INDEXER.PROJECTS.BY_PROGRAM(programId, chainId, communityId)
+      )) as [Project[], Error | null];
       if (error) {
         console.error("Error fetching projects:", error);
         return;
       }
 
-      // await fetchData(`/karma-beacon`, "GET", {}, {
-      //     projectUids: projects.map((project: Project) => project.uid).join(","),
-      // }, {}, false, true, envVars.NEXT_PUBLIC_GAP_INDEXER_URL);
-
-      setProjects(projects.projectsInProgram);
+      setProjects(projects);
     } catch (error) {
       console.error("Error fetching projects:", error);
     } finally {
@@ -904,11 +976,12 @@ export const CommunityProjectEvaluatorPage = () => {
       setIsLoading(true);
       getProjectsByProgram(
         selectedProgram.programId,
-        Number(selectedProgram.chainID)
+        Number(selectedProgram.chainID),
+        communityId
       );
       setIsLoading(false);
     }
-  }, [selectedProgram]);
+  }, [selectedProgram, communityId]);
 
   // Function to handle program selection
   const handleProgramSelect = (program: Program) => {
@@ -920,7 +993,11 @@ export const CommunityProjectEvaluatorPage = () => {
     newSearchParams.set("programId", program.programId);
     router.push(`${window.location.pathname}?${newSearchParams.toString()}`);
 
-    getProjectsByProgram(program.programId, Number(program.chainID));
+    getProjectsByProgram(
+      program.programId,
+      Number(program.chainID),
+      communityId
+    );
   };
 
   return (
@@ -970,10 +1047,11 @@ export const CommunityProjectEvaluatorPage = () => {
                       : []
                   }
                   type="program"
-                  prefixUnselected="Search"
+                  prefixUnselected="Select a "
                   buttonClassname="w-full max-w-[684px]"
                   canSearch={true}
                   shouldSort={true}
+                  placeholderText="Search and select a program"
                   leftIcon={
                     <Image
                       src="/logo/karma-gap-logo-purple.svg"
