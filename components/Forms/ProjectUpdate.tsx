@@ -38,6 +38,8 @@ import { cn } from "@/utilities/tailwind";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { AreaChart, Card, Title } from "@tremor/react";
 import { prepareChartData } from "@/components/Pages/Communities/Impact/ImpactCharts";
+import * as Dialog from "@radix-ui/react-dialog";
+import { XMarkIcon } from "@heroicons/react/24/solid";
 
 interface GrantOption {
   title: string;
@@ -48,8 +50,6 @@ interface GrantOption {
 interface OutputData {
   value: string;
   proof: string;
-  startDate: string;
-  endDate: string;
 }
 
 interface Output {
@@ -138,170 +138,190 @@ const GrantSearchDropdown: FC<{
 const OutputCard: FC<{
   output: Output;
   onDelete: (title: string) => void;
-  onAddEntry: () => void;
   onUpdateData: (data: OutputData[]) => void;
-}> = ({ output, onDelete, onAddEntry, onUpdateData }) => {
-  const [showChart, setShowChart] = useState(false);
-
+}> = ({ output, onDelete, onUpdateData }) => {
   return (
     <div className="w-full flex flex-col gap-4 p-6 bg-white border border-gray-200 dark:bg-zinc-800/50 dark:border-zinc-700 rounded-md shadow-sm">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
           {output.title}
         </h3>
-        <div className="flex items-center gap-2">
-          {output.data.length > 1 && (
-            <button
-              onClick={() => setShowChart(!showChart)}
-              className={cn(
-                "p-2 rounded-md transition-colors",
-                showChart
-                  ? "bg-blue-50 text-blue-600 dark:bg-blue-900/50 dark:text-blue-400"
-                  : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-              )}
-              type="button"
-            >
-              <ChartBarIcon className="h-5 w-5" />
-            </button>
-          )}
-          <button
-            onClick={() => onDelete(output.title)}
-            className="text-red-500 hover:text-red-700"
-          >
-            <TrashIcon className="h-5 w-5" />
-          </button>
+        <button
+          onClick={() => onDelete(output.title)}
+          className="text-red-500 hover:text-red-700"
+        >
+          <TrashIcon className="h-5 w-5" />
+        </button>
+      </div>
+
+      <div className="w-full">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
+            <thead>
+              <tr>
+                <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
+                  Value
+                </th>
+                <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
+                  Proof
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-200 dark:divide-zinc-700">
+              <tr>
+                <td className="px-4 py-2">
+                  <input
+                    type="text"
+                    value={output.data[0]?.value || ""}
+                    onChange={(e) => {
+                      const newData = [...output.data];
+                      if (!newData[0]) newData[0] = { value: "", proof: "" };
+                      newData[0].value = e.target.value;
+                      onUpdateData(newData);
+                    }}
+                    placeholder="Enter value"
+                    className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md"
+                  />
+                </td>
+                <td className="px-4 py-2">
+                  <input
+                    type="text"
+                    value={output.data[0]?.proof || ""}
+                    onChange={(e) => {
+                      const newData = [...output.data];
+                      if (!newData[0]) newData[0] = { value: "", proof: "" };
+                      newData[0].proof = e.target.value;
+                      onUpdateData(newData);
+                    }}
+                    placeholder="Enter proof URL or description"
+                    className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
-
-      <div
-        className={cn("grid gap-4", showChart ? "grid-cols-1" : "grid-cols-1")}
-      >
-        {!showChart && (
-          <div className="w-full">
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
-                <thead>
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
-                      Value
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
-                      Start Date
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
-                      End Date
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
-                      Proof
-                    </th>
-                    <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-zinc-700">
-                  {output.data.map((entry, entryIndex) => (
-                    <tr key={entryIndex}>
-                      <td className="px-4 py-2">
-                        <input
-                          type="text"
-                          value={entry.value}
-                          onChange={(e) => {
-                            const newData = [...output.data];
-                            newData[entryIndex].value = e.target.value;
-                            onUpdateData(newData);
-                          }}
-                          className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md"
-                        />
-                      </td>
-                      <td className="px-4 py-2">
-                        <input
-                          type="date"
-                          value={entry.startDate}
-                          onChange={(e) => {
-                            const newData = [...output.data];
-                            newData[entryIndex].startDate = e.target.value;
-                            onUpdateData(newData);
-                          }}
-                          className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md"
-                        />
-                      </td>
-                      <td className="px-4 py-2">
-                        <input
-                          type="date"
-                          value={entry.endDate}
-                          onChange={(e) => {
-                            const newData = [...output.data];
-                            newData[entryIndex].endDate = e.target.value;
-                            onUpdateData(newData);
-                          }}
-                          className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md"
-                        />
-                      </td>
-                      <td className="px-4 py-2">
-                        <input
-                          type="text"
-                          value={entry.proof}
-                          onChange={(e) => {
-                            const newData = [...output.data];
-                            newData[entryIndex].proof = e.target.value;
-                            onUpdateData(newData);
-                          }}
-                          className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md"
-                        />
-                      </td>
-                      <td className="px-4 py-2">
-                        <button
-                          onClick={() => {
-                            const newData = output.data.filter(
-                              (_, i) => i !== entryIndex
-                            );
-                            onUpdateData(newData);
-                          }}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <TrashIcon className="h-4 w-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {showChart && output.data.length > 1 && (
-          <div className="w-full">
-            <Card className="bg-white dark:bg-zinc-800 rounded">
-              <Title className="text-sm font-medium text-gray-700 dark:text-zinc-300 mb-4">
-                {output.title}
-              </Title>
-              <AreaChart
-                className="h-72 mt-4"
-                data={prepareChartData(
-                  output.data.map((datapoint) => Number(datapoint.value)),
-                  output.data.map(
-                    (datapoint) => datapoint.endDate || new Date().toISOString()
-                  ),
-                  output.title
-                )}
-                index="date"
-                categories={[output.title]}
-                colors={["blue"]}
-                valueFormatter={(value) => `${value}`}
-                showLegend={false}
-                noDataText="Awaiting values to be added"
-              />
-            </Card>
-          </div>
-        )}
-      </div>
-
-      {!showChart && (
-        <Button onClick={onAddEntry} className="mt-2 w-max">
-          Add new entry
-        </Button>
-      )}
     </div>
+  );
+};
+
+const OUTPUT_TYPES = ["float", "int"] as const;
+type OutputType = (typeof OUTPUT_TYPES)[number];
+
+const outputSchema = z.object({
+  name: z
+    .string()
+    .min(3, { message: "Name must be at least 3 characters long" })
+    .max(50, { message: "Name must be less than 50 characters" }),
+  description: z
+    .string()
+    .min(1, { message: "Description is required" })
+    .max(500, { message: "Description must be less than 500 characters" }),
+  type: z.enum(OUTPUT_TYPES),
+});
+
+type OutputFormData = z.infer<typeof outputSchema>;
+
+const OutputDialog: FC<{
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (data: OutputFormData) => void;
+}> = ({ open, onOpenChange, onSubmit }) => {
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<OutputFormData>({
+    resolver: zodResolver(outputSchema),
+  });
+
+  const handleFormSubmit = (data: OutputFormData) => {
+    onSubmit(data);
+    reset();
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+        <Dialog.Content className="fixed left-1/2 top-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white p-6 shadow-lg dark:bg-zinc-800">
+          <div className="flex items-center justify-between mb-4">
+            <Dialog.Title className="text-lg font-semibold">
+              Create New Output
+            </Dialog.Title>
+            <Dialog.Close className="text-gray-400 hover:text-gray-500">
+              <XMarkIcon className="h-5 w-5" />
+            </Dialog.Close>
+          </div>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleSubmit(handleFormSubmit)(e);
+            }}
+            className="space-y-4"
+          >
+            <div>
+              <label className="block text-sm font-medium mb-1">Name</label>
+              <input
+                {...register("name")}
+                className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"
+                placeholder="Enter output name"
+              />
+              {errors.name && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.name.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Description
+              </label>
+              <textarea
+                {...register("description")}
+                className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"
+                placeholder="Enter output description"
+                rows={2}
+              />
+              {errors.description && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.description.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-1">Type</label>
+              <select
+                {...register("type")}
+                className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"
+              >
+                {OUTPUT_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </option>
+                ))}
+              </select>
+              {errors.type && (
+                <p className="text-red-500 text-sm mt-1">
+                  {errors.type.message}
+                </p>
+              )}
+            </div>
+
+            <Button type="submit" className="w-full">
+              Create Output
+            </Button>
+          </form>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 };
 
@@ -327,8 +347,9 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   });
   const [isLoading, setIsLoading] = useState(false);
   const [grants, setGrants] = useState<GrantOption[]>([]);
-  const [outputs] = useState<string[]>(["Output 1", "Output 2"]);
+  const [outputs, setOutputs] = useState<string[]>(["Output 1", "Output 2"]);
   const [selectedOutputs, setSelectedOutputs] = useState<Output[]>([]);
+  const [isOutputDialogOpen, setIsOutputDialogOpen] = useState(false);
 
   useEffect(() => {
     if (project?.grants) {
@@ -454,6 +475,27 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     event?.stopPropagation();
     setIsLoading(true);
     await createProjectUpdate(data);
+  };
+
+  const handleOutputSubmit = (data: OutputFormData) => {
+    const newOutputName = data.name;
+
+    // Add to outputs list for dropdown
+    setOutputs((prev) => [...prev, newOutputName]);
+
+    // Automatically select the new output
+    const currentOutputs = watch("outputs") || [];
+    setValue("outputs", [...currentOutputs, newOutputName], {
+      shouldValidate: true,
+    });
+
+    setSelectedOutputs((prev) => [
+      ...prev,
+      {
+        title: newOutputName,
+        data: [{ value: "", proof: "" }],
+      },
+    ]);
   };
 
   console.log("grants", grants);
@@ -707,35 +749,36 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       </div>
 
       <div className="flex w-full flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <label className={labelStyle}>
-            Add key outputs from the activity
-          </label>
-          <Tooltip.Provider>
-            <Tooltip.Root>
-              <Tooltip.Trigger asChild>
-                <button
-                  type="button"
-                  className="rounded-full p-1 hover:bg-gray-100 dark:hover:bg-zinc-800"
-                >
-                  <InformationCircleIcon className="h-4 w-4 text-gray-500" />
-                </button>
-              </Tooltip.Trigger>
-              <Tooltip.Portal>
-                <Tooltip.Content
-                  className="max-w-xs rounded-lg bg-white p-2 text-sm text-gray-700 shadow-lg dark:bg-zinc-800 dark:text-gray-300"
-                  sideOffset={5}
-                >
-                  Represent any tangible deliverables (e.g. product launched,
-                  service delivered, key documentation, reports or design files)
-                  or metrics (training sessions delivered, user signups, etc…)
-                  resulting from activities.
-                  <Tooltip.Arrow className="fill-white dark:fill-zinc-800" />
-                </Tooltip.Content>
-              </Tooltip.Portal>
-            </Tooltip.Root>
-          </Tooltip.Provider>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <label className={labelStyle}>
+              Add key outputs from the activity
+            </label>
+            <Tooltip.Provider>
+              <Tooltip.Root>
+                <Tooltip.Trigger asChild>
+                  <button
+                    type="button"
+                    className="rounded-full p-1 hover:bg-gray-100 dark:hover:bg-zinc-800"
+                  >
+                    <InformationCircleIcon className="h-4 w-4 text-gray-500" />
+                  </button>
+                </Tooltip.Trigger>
+                <Tooltip.Portal>
+                  <Tooltip.Content
+                    className="max-w-xs rounded-lg bg-white p-2 text-sm text-gray-700 shadow-lg dark:bg-zinc-800 dark:text-gray-300"
+                    sideOffset={5}
+                  >
+                    Represent any tangible deliverables or metrics resulting
+                    from activities.
+                    <Tooltip.Arrow className="fill-white dark:fill-zinc-800" />
+                  </Tooltip.Content>
+                </Tooltip.Portal>
+              </Tooltip.Root>
+            </Tooltip.Provider>
+          </div>
         </div>
+
         <SearchDropdown
           onSelectFunction={(value) => {
             const currentOutputs = watch("outputs") || [];
@@ -760,7 +803,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                 ...prev,
                 {
                   title: value,
-                  data: [{ value: "", proof: "", startDate: "", endDate: "" }],
+                  data: [{ value: "", proof: "" }],
                 },
               ]);
             }
@@ -772,6 +815,18 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
           buttonClassname="w-full"
           canSearch
           canAdd
+          customAddButton={
+            <Button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsOutputDialogOpen(true);
+              }}
+              className="text-sm w-full bg-zinc-700 text-white"
+            >
+              Add new output
+            </Button>
+          }
         />
 
         {/* Output Cards */}
@@ -791,16 +846,6 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                   prev.filter((o) => o.title !== title)
                 );
               }}
-              onAddEntry={() => {
-                const newOutputs = [...selectedOutputs];
-                newOutputs[outputIndex].data.push({
-                  value: "",
-                  proof: "",
-                  startDate: "",
-                  endDate: "",
-                });
-                setSelectedOutputs(newOutputs);
-              }}
               onUpdateData={(newData) => {
                 const newOutputs = [...selectedOutputs];
                 newOutputs[outputIndex].data = newData;
@@ -810,6 +855,12 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
           ))}
         </div>
       </div>
+
+      <OutputDialog
+        open={isOutputDialogOpen}
+        onOpenChange={setIsOutputDialogOpen}
+        onSubmit={handleOutputSubmit}
+      />
 
       <div className="flex w-full flex-row-reverse">
         <Button

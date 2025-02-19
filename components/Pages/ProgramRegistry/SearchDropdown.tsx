@@ -37,6 +37,7 @@ interface SearchDropdownProps {
   leftIcon?: React.ReactNode;
   paragraphClassname?: string;
   rightIcon?: React.ReactNode;
+  customAddButton?: React.ReactNode;
 }
 export const SearchDropdown: FC<SearchDropdownProps> = ({
   onSelectFunction,
@@ -55,6 +56,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
   leftIcon,
   paragraphClassname,
   rightIcon = <ChevronDown className="h-5 w-5 text-black dark:text-white" />,
+  customAddButton,
 }) => {
   const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);
@@ -263,6 +265,8 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
                   }}
                 />
               </div>
+            ) : customAddButton ? (
+              <div className="my-2 px-2">{customAddButton}</div>
             ) : (
               <div className="my-2 px-2">
                 <button
