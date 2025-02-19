@@ -469,7 +469,7 @@ const ProjectUpdateFormBlock = () => {
             changeTab("updates");
           }}
         >
-          <img src="/icons/close.svg" alt="Close" className="h-5 w-5 " />
+          <img src="/icons/close.svg" alt="Close" className="h-5 w-5" />
         </button>
       </div>
       <ProjectUpdateForm />

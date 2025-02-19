@@ -29,6 +29,7 @@ import {
   CalendarIcon,
   TrashIcon,
   ChartBarIcon,
+  PlusIcon,
 } from "@heroicons/react/24/solid";
 import { DayPicker } from "react-day-picker";
 import * as Popover from "@radix-ui/react-popover";
@@ -40,6 +41,7 @@ import { AreaChart, Card, Title } from "@tremor/react";
 import { prepareChartData } from "@/components/Pages/Communities/Impact/ImpactCharts";
 import * as Dialog from "@radix-ui/react-dialog";
 import { XMarkIcon } from "@heroicons/react/24/solid";
+import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 
 interface GrantOption {
   title: string;
@@ -57,6 +59,12 @@ interface Output {
   data: OutputData[];
 }
 
+interface Deliverable {
+  name: string;
+  proof: string;
+  description: string;
+}
+
 const updateSchema = z.object({
   title: z
     .string()
@@ -65,8 +73,17 @@ const updateSchema = z.object({
   text: z.string().min(3, { message: MESSAGES.PROJECT_UPDATE_FORM.TEXT }),
   startDate: z.date().optional(),
   endDate: z.date().optional(),
-  grants: z.array(z.string()).optional(),
   outputs: z.array(z.string()).optional(),
+  grants: z.array(z.string()).optional(),
+  deliverables: z
+    .array(
+      z.object({
+        name: z.string().min(1, "Name is required"),
+        proof: z.string(),
+        description: z.string(),
+      })
+    )
+    .optional(),
 });
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
@@ -350,6 +367,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const [outputs, setOutputs] = useState<string[]>(["Output 1", "Output 2"]);
   const [selectedOutputs, setSelectedOutputs] = useState<Output[]>([]);
   const [isOutputDialogOpen, setIsOutputDialogOpen] = useState(false);
+  const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
+  const router = useRouter();
 
   useEffect(() => {
     if (project?.grants) {
@@ -370,28 +389,51 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const { changeStepperStep, setIsStepper } = useStepper();
 
   const { gap } = useGap();
-  const router = useRouter();
 
   const createProjectUpdate = async ({
     title,
     text,
     startDate,
     endDate,
-    grants,
     outputs,
+    deliverables,
+    grants: selectedGrants,
   }: UpdateType) => {
     let gapClient = gap;
     if (!address || !project) return;
+    // Transform selectedOutputs into the correct format
+    const formattedOutputs = selectedOutputs.map((output) => ({
+      name: output.title,
+      value: output.data[0]?.value || "",
+      proof: output.data[0]?.proof || "",
+    }));
     try {
-      if (chain?.id !== project.chainID) {
-        await switchChainAsync?.({ chainId: project.chainID });
-        gapClient = getGapClient(project.chainID);
+      if (!project?.chainID || !project.recipient || !project.uid) {
+        throw new Error("Required project data is missing");
       }
-      const walletClient = await getWalletClient(config, {
-        chainId: project.chainID,
-      });
-      if (!walletClient || !gapClient) return;
+
+      const chainId = project.chainID;
+      const recipient = project.recipient;
+      const projectUid = project.uid;
+      const projectSlug = project.details?.data?.slug;
+
+      if (chain?.id !== chainId) {
+        await switchChainAsync?.({ chainId });
+        gapClient = getGapClient(chainId);
+      }
+
+      const walletClient = await getWalletClient(config, { chainId });
+
+      if (!walletClient || !gapClient) {
+        throw new Error("Wallet client or GAP client is not available");
+      }
+
       const walletSigner = await walletClientToSigner(walletClient);
+      const schema = gapClient.findSchema("ProjectUpdate");
+
+      if (!schema) {
+        throw new Error("ProjectUpdate schema not found");
+      }
 
       const projectUpdate = new ProjectUpdate({
         data: sanitizeObject({
@@ -399,13 +441,14 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
           title,
           startDate,
           endDate,
-          grants,
-          outputs,
+          grants: selectedGrants,
+          outputs: formattedOutputs,
+          deliverables,
           type: "project-activity",
         }),
-        recipient: project.recipient,
-        refUID: project.uid,
-        schema: gapClient.findSchema("ProjectUpdate"),
+        recipient,
+        refUID: projectUid,
+        schema,
       });
 
       await projectUpdate
@@ -434,20 +477,14 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                   changeStepperStep("indexed");
                   toast.success(MESSAGES.PROJECT_UPDATE_FORM.SUCCESS);
                   afterSubmit?.();
-                  router.push(
-                    PAGES.PROJECT.UPDATES(
-                      project?.details?.data.slug || project.uid
-                    )
-                  );
+                  router.push(PAGES.PROJECT.UPDATES(projectSlug || projectUid));
                   router.refresh();
                 }
                 retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
                 await new Promise((resolve) => setTimeout(resolve, 1500));
               })
               .catch(async () => {
                 retries -= 1;
-                // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
                 await new Promise((resolve) => setTimeout(resolve, 1500));
               });
           }
@@ -459,7 +496,15 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         {
           projectUID: project?.uid,
           address: address,
-          data: { title, text, startDate, endDate, grants, outputs },
+          data: {
+            title,
+            text,
+            startDate,
+            endDate,
+            grants: selectedGrants,
+            outputs: formattedOutputs,
+            deliverables,
+          },
         }
       );
       console.log(error);
@@ -474,7 +519,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     event?.preventDefault();
     event?.stopPropagation();
     setIsLoading(true);
-    await createProjectUpdate(data);
+    await createProjectUpdate({ ...data, deliverables });
   };
 
   const handleOutputSubmit = (data: OutputFormData) => {
@@ -498,8 +543,6 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     ]);
   };
 
-  console.log("grants", grants);
-
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
@@ -510,27 +553,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
           <label htmlFor="update-title" className={labelStyle}>
             Activity Name *
           </label>
-          <Tooltip.Provider>
-            <Tooltip.Root>
-              <Tooltip.Trigger asChild>
-                <button
-                  type="button"
-                  className="rounded-full p-1 hover:bg-gray-100 dark:hover:bg-zinc-800"
-                >
-                  <InformationCircleIcon className="h-4 w-4 text-gray-500" />
-                </button>
-              </Tooltip.Trigger>
-              <Tooltip.Portal>
-                <Tooltip.Content
-                  className="max-w-xs rounded-lg bg-white p-2 text-sm text-gray-700 shadow-lg dark:bg-zinc-800 dark:text-gray-300"
-                  sideOffset={5}
-                >
-                  Provide a name or title for the activity
-                  <Tooltip.Arrow className="fill-white dark:fill-zinc-800" />
-                </Tooltip.Content>
-              </Tooltip.Portal>
-            </Tooltip.Root>
-          </Tooltip.Provider>
+          <InfoTooltip content="Provide a name or title for the activity" />
         </div>
         <input
           id="update-title"
@@ -546,28 +569,10 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
           <label htmlFor="update-description" className={labelStyle}>
             Description *
           </label>
-          <Tooltip.Provider>
-            <Tooltip.Root>
-              <Tooltip.Trigger asChild>
-                <button
-                  type="button"
-                  className="rounded-full p-1 hover:bg-gray-100 dark:hover:bg-zinc-800"
-                >
-                  <InformationCircleIcon className="h-4 w-4 text-gray-500" />
-                </button>
-              </Tooltip.Trigger>
-              <Tooltip.Portal>
-                <Tooltip.Content
-                  className="max-w-xs rounded-lg bg-white p-2 text-sm text-gray-700 shadow-lg dark:bg-zinc-800 dark:text-gray-300"
-                  sideOffset={5}
-                >
-                  Describe what you did in more detail, the specific processes
-                  or sub-activities
-                  <Tooltip.Arrow className="fill-white dark:fill-zinc-800" />
-                </Tooltip.Content>
-              </Tooltip.Portal>
-            </Tooltip.Root>
-          </Tooltip.Provider>
+          <InfoTooltip
+            content="Describe what you did in more detail, the specific processes
+                  or sub-activities"
+          />
         </div>
         <div className="w-full bg-transparent" data-color-mode="light">
           <MarkdownEditor
@@ -683,177 +688,345 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         </div>
       </div>
 
-      <div className="flex w-full flex-col gap-2">
-        <label className={labelStyle}>
-          Tell us which grants helped you accomplish this activity?
-        </label>
-        <SearchDropdown
-          onSelectFunction={(displayTitle) => {
-            // Find grant by display title (which may include chain info)
-            const grant = grants.find((g) => {
-              const hasMultipleWithSameTitle =
-                grants.filter((otherGrant) => otherGrant.title === g.title)
-                  .length > 1;
-
-              return hasMultipleWithSameTitle
-                ? `${g.title} (Chain ${g.chain})` === displayTitle
-                : g.title === displayTitle;
-            });
-
-            if (grant) {
+      <div className="flex w-full flex-col gap-4">
+        <div className="flex flex-row items-center gap-2">
+          <label htmlFor="grants" className={labelStyle}>
+            Tell us which grants helped you accomplish this activity?
+          </label>
+          <InfoTooltip content="Select grants that helped you accomplish this activity." />
+        </div>
+        {grants.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-4 p-6 border-2 border-dashed border-[#155EEF] rounded-lg bg-[#EEF4FF] dark:bg-zinc-900">
+            <p className="text-center text-lg font-semibold text-black dark:text-zinc-200">
+              No grants available. Create your first grant to get started.
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                router.push(
+                  PAGES.PROJECT.SCREENS.NEW_GRANT(
+                    project?.details?.data?.slug || project?.uid || ""
+                  )
+                );
+                router.refresh();
+              }}
+              className="flex flex-row items-center justify-center gap-2 px-4 py-2.5 text-base font-semibold text-white bg-[#155EEF] rounded-lg hover:opacity-90"
+            >
+              <PlusIcon className="w-5 h-5" />
+              Create a Grant
+            </button>
+          </div>
+        ) : (
+          <GrantSearchDropdown
+            grants={grants}
+            onSelect={(grantId) => {
               const currentGrants = watch("grants") || [];
-              // Check if grant is already selected
-              const grantIndex = currentGrants.indexOf(grant.value);
-
-              if (grantIndex !== -1) {
-                // Remove grant if already selected
+              if (currentGrants.includes(grantId)) {
                 setValue(
                   "grants",
-                  currentGrants.filter((_, index) => index !== grantIndex),
+                  currentGrants.filter((g) => g !== grantId),
                   { shouldValidate: true }
                 );
               } else {
-                // Add grant if not selected
-                setValue("grants", [...currentGrants, grant.value], {
+                setValue("grants", [...currentGrants, grantId], {
                   shouldValidate: true,
                 });
               }
-            }
-          }}
-          selected={(watch("grants") || []).map((grantId) => {
-            const grant = grants.find((g) => g.value === grantId);
-            if (!grant) return grantId;
-
-            const hasMultipleWithSameTitle =
-              grants.filter((otherGrant) => otherGrant.title === grant.title)
-                .length > 1;
-
-            return hasMultipleWithSameTitle
-              ? `${grant.title} (Chain ${grant.chain})`
-              : grant.title;
-          })}
-          list={grants.map((grant) => {
-            const hasMultipleWithSameTitle =
-              grants.filter((otherGrant) => otherGrant.title === grant.title)
-                .length > 1;
-
-            return hasMultipleWithSameTitle
-              ? `${grant.title} (Chain ${chainNameDictionary(grant.chain)})`
-              : grant.title;
-          })}
-          type="grant"
-          prefixUnselected="Select"
-          buttonClassname="w-full max-w-[300px]"
-          canSearch
-        />
+            }}
+            selected={watch("grants") || []}
+            className="w-full"
+          />
+        )}
       </div>
 
-      <div className="flex w-full flex-col gap-2">
+      <div className="flex items-center flex-row gap-2">
+        <h2 className={cn(labelStyle, "text-xl")}>Outputs</h2>
+        <InfoTooltip content="Outputs are the direct result of the activity. Note: Outputs can evolve as the activity progresses, with new ones added or refined to reflect changes. It is up to you to define the key outputs that are worth mentioning to showcase." />
+      </div>
+
+      <div className="flex w-full flex-col gap-4 p-6 bg-white dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-md">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <label className={labelStyle}>
-              Add key outputs from the activity
-            </label>
-            <Tooltip.Provider>
-              <Tooltip.Root>
-                <Tooltip.Trigger asChild>
-                  <button
-                    type="button"
-                    className="rounded-full p-1 hover:bg-gray-100 dark:hover:bg-zinc-800"
-                  >
-                    <InformationCircleIcon className="h-4 w-4 text-gray-500" />
-                  </button>
-                </Tooltip.Trigger>
-                <Tooltip.Portal>
-                  <Tooltip.Content
-                    className="max-w-xs rounded-lg bg-white p-2 text-sm text-gray-700 shadow-lg dark:bg-zinc-800 dark:text-gray-300"
-                    sideOffset={5}
-                  >
-                    Represent any tangible deliverables or metrics resulting
-                    from activities.
-                    <Tooltip.Arrow className="fill-white dark:fill-zinc-800" />
-                  </Tooltip.Content>
-                </Tooltip.Portal>
-              </Tooltip.Root>
-            </Tooltip.Provider>
+            <h3 className={cn(labelStyle)}>Deliverables</h3>
+            <InfoTooltip content="Add specific deliverables with proof links and descriptions to showcase the tangible results of your activity." />
           </div>
-        </div>
-
-        <SearchDropdown
-          onSelectFunction={(value) => {
-            const currentOutputs = watch("outputs") || [];
-            const outputIndex = currentOutputs.indexOf(value);
-
-            if (outputIndex !== -1) {
-              // Remove output if already selected
-              setValue(
-                "outputs",
-                currentOutputs.filter((_, index) => index !== outputIndex),
-                { shouldValidate: true }
-              );
-              setSelectedOutputs((prev) =>
-                prev.filter((output) => output.title !== value)
-              );
-            } else {
-              // Add output if not selected
-              setValue("outputs", [...currentOutputs, value], {
-                shouldValidate: true,
-              });
-              setSelectedOutputs((prev) => [
-                ...prev,
-                {
-                  title: value,
-                  data: [{ value: "", proof: "" }],
-                },
-              ]);
-            }
-          }}
-          selected={watch("outputs") || []}
-          list={outputs}
-          type="output"
-          prefixUnselected="Select"
-          buttonClassname="w-full"
-          canSearch
-          canAdd
-          customAddButton={
+          {deliverables.length > 0 && (
             <Button
               type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsOutputDialogOpen(true);
-              }}
-              className="text-sm w-full bg-zinc-700 text-white"
+              onClick={() =>
+                setDeliverables([
+                  ...deliverables,
+                  { name: "", proof: "", description: "" },
+                ])
+              }
+              className="text-sm bg-zinc-700 text-white px-3 py-1.5"
             >
-              Add new output
+              Add Deliverable
             </Button>
-          }
-        />
-
-        {/* Output Cards */}
-        <div className="mt-4 space-y-4">
-          {selectedOutputs.map((output, outputIndex) => (
-            <OutputCard
-              key={output.title}
-              output={output}
-              onDelete={(title) => {
-                const currentOutputs = watch("outputs") || [];
-                setValue(
-                  "outputs",
-                  currentOutputs.filter((t) => t !== title),
-                  { shouldValidate: true }
-                );
-                setSelectedOutputs((prev) =>
-                  prev.filter((o) => o.title !== title)
-                );
-              }}
-              onUpdateData={(newData) => {
-                const newOutputs = [...selectedOutputs];
-                newOutputs[outputIndex].data = newData;
-                setSelectedOutputs(newOutputs);
-              }}
-            />
-          ))}
+          )}
         </div>
+
+        {deliverables.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8">
+            <p className="text-gray-500 dark:text-zinc-400 mb-4">
+              No deliverables added yet
+            </p>
+            <Button
+              type="button"
+              onClick={() =>
+                setDeliverables([{ name: "", proof: "", description: "" }])
+              }
+              className="text-sm bg-zinc-700 text-white px-3 py-1.5"
+            >
+              Add Deliverable
+            </Button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
+              <thead>
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
+                    Name
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
+                    Proof/Link
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
+                    Description/Comment
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300 w-16">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-zinc-700">
+                {deliverables.map((deliverable, index) => (
+                  <tr key={index}>
+                    <td className="px-4 py-2">
+                      <input
+                        type="text"
+                        value={deliverable.name}
+                        onChange={(e) => {
+                          const newDeliverables = [...deliverables];
+                          newDeliverables[index].name = e.target.value;
+                          setDeliverables(newDeliverables);
+                        }}
+                        placeholder="Enter name"
+                        className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md"
+                      />
+                    </td>
+                    <td className="px-4 py-2">
+                      <input
+                        type="text"
+                        value={deliverable.proof}
+                        onChange={(e) => {
+                          const newDeliverables = [...deliverables];
+                          newDeliverables[index].proof = e.target.value;
+                          setDeliverables(newDeliverables);
+                        }}
+                        placeholder="Enter proof URL"
+                        className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md"
+                      />
+                    </td>
+                    <td className="px-4 py-2">
+                      <input
+                        type="text"
+                        value={deliverable.description}
+                        onChange={(e) => {
+                          const newDeliverables = [...deliverables];
+                          newDeliverables[index].description = e.target.value;
+                          setDeliverables(newDeliverables);
+                        }}
+                        placeholder="Enter description"
+                        className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md"
+                      />
+                    </td>
+                    <td className="px-4 py-2">
+                      <button
+                        onClick={() => {
+                          const newDeliverables = deliverables.filter(
+                            (_, i) => i !== index
+                          );
+                          setDeliverables(newDeliverables);
+                        }}
+                        type="button"
+                        className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <div className="flex w-full flex-col gap-4 p-6 bg-white dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-md">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <h3 className={cn(labelStyle)}>Metrics</h3>
+            <InfoTooltip content="Represent any tangible deliverables (e.g. product launched, servisse delivered, key documentation, reports or design files) or metrics (training sessions delivered, user signups, etc...) resulting from activities." />
+          </div>
+          {selectedOutputs.length > 0 && (
+            <Button
+              type="button"
+              onClick={() =>
+                setSelectedOutputs([
+                  ...selectedOutputs,
+                  { title: "", data: [{ value: "", proof: "" }] },
+                ])
+              }
+              className="text-sm bg-zinc-700 text-white px-3 py-1.5"
+            >
+              Add metric
+            </Button>
+          )}
+        </div>
+
+        {selectedOutputs.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-8">
+            <p className="text-gray-500 dark:text-zinc-400 mb-4">
+              No metrics added yet
+            </p>
+            <Button
+              type="button"
+              onClick={() =>
+                setSelectedOutputs([
+                  { title: "", data: [{ value: "", proof: "" }] },
+                ])
+              }
+              className="text-sm bg-zinc-700 text-white px-3 py-1.5"
+            >
+              Add metric
+            </Button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
+              <thead>
+                <tr>
+                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
+                    Output
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
+                    Value
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
+                    Proof/Link
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300 w-16">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-zinc-700">
+                {selectedOutputs.map((output, index) => (
+                  <tr key={index}>
+                    <td className="px-4 py-2">
+                      <SearchDropdown
+                        onSelectFunction={(value) => {
+                          const newOutputs = [...selectedOutputs];
+                          newOutputs[index].title = value;
+                          setSelectedOutputs(newOutputs);
+
+                          // Update the form values
+                          const currentOutputs = watch("outputs") || [];
+                          if (!currentOutputs.includes(value)) {
+                            setValue("outputs", [...currentOutputs, value], {
+                              shouldValidate: true,
+                            });
+                          }
+                        }}
+                        selected={output.title ? [output.title] : []}
+                        list={outputs}
+                        type="output"
+                        prefixUnselected="Select"
+                        buttonClassname="w-full"
+                        canSearch
+                        canAdd
+                        customAddButton={
+                          <Button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setIsOutputDialogOpen(true);
+                            }}
+                            className="text-sm w-full bg-zinc-700 text-white"
+                          >
+                            Add new output
+                          </Button>
+                        }
+                      />
+                    </td>
+                    <td className="px-4 py-2">
+                      <input
+                        type="text"
+                        value={output.data[0]?.value || ""}
+                        onChange={(e) => {
+                          const newOutputs = [...selectedOutputs];
+                          if (!newOutputs[index].data[0]) {
+                            newOutputs[index].data[0] = {
+                              value: "",
+                              proof: "",
+                            };
+                          }
+                          newOutputs[index].data[0].value = e.target.value;
+                          setSelectedOutputs(newOutputs);
+                        }}
+                        placeholder="Enter value"
+                        className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md"
+                      />
+                    </td>
+                    <td className="px-4 py-2">
+                      <input
+                        type="text"
+                        value={output.data[0]?.proof || ""}
+                        onChange={(e) => {
+                          const newOutputs = [...selectedOutputs];
+                          if (!newOutputs[index].data[0]) {
+                            newOutputs[index].data[0] = {
+                              value: "",
+                              proof: "",
+                            };
+                          }
+                          newOutputs[index].data[0].proof = e.target.value;
+                          setSelectedOutputs(newOutputs);
+                        }}
+                        placeholder="Enter proof URL"
+                        className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md"
+                      />
+                    </td>
+                    <td className="px-4 py-2">
+                      <button
+                        onClick={() => {
+                          const newOutputs = selectedOutputs.filter(
+                            (_, i) => i !== index
+                          );
+                          setSelectedOutputs(newOutputs);
+
+                          // Update form values
+                          const currentOutputs = watch("outputs") || [];
+                          setValue(
+                            "outputs",
+                            currentOutputs.filter((t) => t !== output.title),
+                            { shouldValidate: true }
+                          );
+                        }}
+                        type="button"
+                        className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20"
+                      >
+                        <TrashIcon className="h-4 w-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       <OutputDialog
