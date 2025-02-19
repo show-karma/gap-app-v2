@@ -71,10 +71,14 @@ export const SearchWithValueDropdown: FC<SearchWithValueDropdownProps> = ({
   const renderSelected = () => {
     if (selected.length) {
       if (isMultiple) {
-        return `${selected.length} ${pluralize(
-          type,
-          selected.length
-        ).toLowerCase()} selected`;
+        return selected
+          .map(
+            (item) =>
+              orderedList.find((orderedItem) => orderedItem.value === item)
+                ?.title
+          )
+          .sort()
+          .join(", ");
       }
       return selected[0];
     }
@@ -85,13 +89,13 @@ export const SearchWithValueDropdown: FC<SearchWithValueDropdownProps> = ({
     <Popover.Root open={open} onOpenChange={setOpen}>
       <Popover.Trigger
         className={cn(
-          "min-w-40 w-full max-w-max max-md:max-w-full justify-between flex flex-row cursor-default rounded-md bg-white dark:bg-zinc-800 dark:text-zinc-100 py-3 px-4 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6",
+          "min-w-40 w-full max-w-[320px] max-md:max-w-full justify-between flex flex-row cursor-default rounded-md bg-white dark:bg-zinc-800 dark:text-zinc-100 py-3 px-4 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6",
           buttonClassname
         )}
         id={id}
       >
         <div className="flex flex-row gap-4 w-full items-center justify-between">
-          <p className="block w-max">{renderSelected()}</p>
+          <p className="block w-max truncate">{renderSelected()}</p>
           <span>
             <ChevronDownIcon className="h-4 w-5 text-[#98A2B3] dark:text-white" />
           </span>

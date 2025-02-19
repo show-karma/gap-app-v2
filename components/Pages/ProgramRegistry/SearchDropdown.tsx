@@ -137,16 +137,21 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
         <div className="flex flex-row gap-4 w-full justify-between">
           <div className="flex flex-row gap-4 items-center justify-start w-full">
             {leftIcon ? leftIcon : null}
-            <p className={cn("block w-max", paragraphClassname)}>
+            <p className={cn("block w-full truncate", paragraphClassname)}>
               {selected.length
-                ? `${selected.length} ${pluralize(
-                    type,
-                    selected.length
-                  ).toLowerCase()} selected`
+                ? selected
+                    .map(
+                      (item) =>
+                        orderedList.find(
+                          (orderedItem) => orderedItem.value === item
+                        )?.value
+                    )
+                    .sort()
+                    .join(", ")
                 : `${prefixUnselected} ${type}`}
             </p>
+            <span>{rightIcon ? rightIcon : null}</span>
           </div>
-          <span>{rightIcon ? rightIcon : null}</span>
         </div>
       </Popover.Trigger>
       <Popover.Content
