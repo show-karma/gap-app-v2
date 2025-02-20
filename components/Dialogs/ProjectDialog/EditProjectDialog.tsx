@@ -598,8 +598,7 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
     } catch (error: any) {
       console.log(error);
       errorManager(
-        `Error updating project ${
-          projectToUpdate?.details?.data?.slug || projectToUpdate?.uid
+        `Error updating project ${projectToUpdate?.details?.data?.slug || projectToUpdate?.uid
         }`,
         error,
         data
@@ -638,7 +637,7 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
     if (
       value.length < 3 ||
       value.toLowerCase() ===
-        projectToUpdate?.details?.data?.title?.toLowerCase()
+      projectToUpdate?.details?.data?.title?.toLowerCase()
     ) {
       return;
     }
@@ -702,7 +701,7 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
                 <p className="text-red-500">
                   {errors.title?.message}{" "}
                   {errors.title?.message &&
-                  errors.title?.message.includes("similar") ? (
+                    errors.title?.message.includes("similar") ? (
                     <>
                       <span>
                         If you need help getting access to your project, message
@@ -719,7 +718,7 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
                 </p>
               )}
               {errors.title?.message &&
-              errors.title?.message.includes("similar") ? (
+                errors.title?.message.includes("similar") ? (
                 <span
                   className="text-blue-500 underline cursor-pointer"
                   style={{
