@@ -136,7 +136,7 @@ export const ProjectOptionsMenu = () => {
       {isTransferOwnershipModalOpen ? (
         <TransferOwnershipDialog buttonElement={null} />
       ) : null}
-      <Menu as="div" className="relative inline-block text-left">
+      <Menu as="div" className="relative inline-block text-left z-100">
         <div>
           <Menu.Button className="w-max bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-100 hover:dark:bg-zinc-800 text-black dark:text-white p-2 rounded-lg">
             <EllipsisVerticalIcon className="h-5 w-5" aria-hidden="true" />
@@ -153,7 +153,7 @@ export const ProjectOptionsMenu = () => {
         >
           <Menu.Items
             modal
-            className="absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white dark:bg-zinc-800 shadow-lg ring-1 ring-black/5 focus:outline-none"
+            className="z-[10000] absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white dark:bg-zinc-800 shadow-lg ring-1 ring-black/5 focus:outline-none"
           >
             <div className="flex flex-col gap-1 px-1 py-1">
               <Menu.Item>
