@@ -137,6 +137,7 @@ export const INDEXER = {
     ADMINS: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/admins`,
     INDICATORS: {
+      CREATE: "/communities/impact-indicators",
       COMMUNITY: {
         CREATE: (communityId: string) =>
           `/communities/${communityId}/impact-indicators`,

@@ -13,130 +13,115 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { Indicator } from "@/utilities/queries/getIndicatorsByCommunity";
-
-const UNIT_TYPES = ["float", "int"] as const;
-type UnitType = (typeof UNIT_TYPES)[number];
-
-const indicatorSchema = z.object({
-  name: z
-    .string()
-    .min(3, { message: "Name must be at least 3 characters long" })
-    .max(50, { message: "Name must be less than 50 characters" }),
-  description: z
-    .string()
-    .min(1, { message: "Description is required" })
-    .max(500, { message: "Description must be less than 500 characters" }),
-  unitOfMeasure: z.enum(UNIT_TYPES),
-});
-
+import {
+  IndicatorForm,
+  IndicatorFormData,
+} from "@/components/Forms/IndicatorForm";
 
 export const autosyncedIndicators: Indicator[] = [
   {
-    name: 'no_of_txs',
+    name: "no_of_txs",
     id: "",
     description: "No. of transactions",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'parttime_developers',
+    name: "parttime_developers",
     id: "",
     description: "No. of part time developers",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'active_developers',
+    name: "active_developers",
     id: "",
     description: "No. of active developers",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'fulltime_developers',
+    name: "fulltime_developers",
     id: "",
     description: "No. of full time developers",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'grants_received_usd',
+    name: "grants_received_usd",
     id: "",
     description: "Total grants received in USD",
-    unitOfMeasure: "float"
+    unitOfMeasure: "float",
   },
   {
-    name: 'PULL_REQUEST_MERGED',
+    name: "PULL_REQUEST_MERGED",
     id: "",
     description: "Number of pull requests merged",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'ISSUE_OPENED',
+    name: "ISSUE_OPENED",
     id: "",
     description: "Number of issues opened",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'FORKED',
+    name: "FORKED",
     id: "",
     description: "Number of repository forks",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'ISSUE_CLOSED',
+    name: "ISSUE_CLOSED",
     id: "",
     description: "Number of issues closed",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'ISSUE_COMMENT',
+    name: "ISSUE_COMMENT",
     id: "",
     description: "Number of comments on issues",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'PULL_REQUEST_REVIEW_COMMENT',
+    name: "PULL_REQUEST_REVIEW_COMMENT",
     id: "",
     description: "Number of pull request review comments",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'STARRED',
+    name: "STARRED",
     id: "",
     description: "Number of repository stars",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'COMMIT_CODE',
+    name: "COMMIT_CODE",
     id: "",
     description: "Number of code commits",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'PULL_REQUEST_OPENED',
+    name: "PULL_REQUEST_OPENED",
     id: "",
     description: "Number of pull requests opened",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'PULL_REQUEST_CLOSED',
+    name: "PULL_REQUEST_CLOSED",
     id: "",
     description: "Number of pull requests closed",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'PULL_REQUEST_REOPENED',
+    name: "PULL_REQUEST_REOPENED",
     id: "",
     description: "Number of pull requests reopened",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'RELEASE_PUBLISHED',
+    name: "RELEASE_PUBLISHED",
     id: "",
     description: "Number of releases published",
-    unitOfMeasure: "int"
-  }
-]
-
-
-type IndicatorFormData = z.infer<typeof indicatorSchema>;
+    unitOfMeasure: "int",
+  },
+];
 
 interface IndicatorsHubProps {
   communityId: string;
@@ -146,34 +131,32 @@ export const IndicatorsHub = ({ communityId }: IndicatorsHubProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedAutosynced, setSelectedAutosynced] = useState<string>("");
+  const [formDefaultValues, setFormDefaultValues] = useState<
+    Partial<IndicatorFormData>
+  >({
+    name: "",
+    description: "",
+    unitOfMeasure: "int",
+  });
 
   const { data: indicators = [], refetch } = useIndicators({
     communityId,
   });
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<IndicatorFormData>({
-    resolver: zodResolver(indicatorSchema),
-  });
-
   const handleAutosyncedSelect = (name: string) => {
     if (!name) {
-      reset({
+      setFormDefaultValues({
         name: "",
         description: "",
-        unitOfMeasure: "int"
+        unitOfMeasure: "int",
       });
       setSelectedAutosynced("");
       return;
     }
 
-    const selectedIndicator = autosyncedIndicators.find(i => i.name === name);
+    const selectedIndicator = autosyncedIndicators.find((i) => i.name === name);
     if (selectedIndicator) {
-      reset({
+      setFormDefaultValues({
         name: selectedIndicator.name,
         description: selectedIndicator.description,
         unitOfMeasure: selectedIndicator.unitOfMeasure as "float" | "int",
@@ -182,28 +165,19 @@ export const IndicatorsHub = ({ communityId }: IndicatorsHubProps) => {
     }
   };
 
-  const onSubmit = async (data: IndicatorFormData) => {
-    setIsLoading(true);
-    try {
-      const [response, error] = await fetchData(
-        INDEXER.COMMUNITY.INDICATORS.COMMUNITY.CREATE(communityId),
-        "POST",
-        {
-          ...data,
-        }
-      );
-      if (error) throw error;
+  const handleSuccess = () => {
+    refetch();
+    toast.success("Indicator created successfully");
+    setFormDefaultValues({
+      name: "",
+      description: "",
+      unitOfMeasure: "int",
+    });
+    setSelectedAutosynced("");
+  };
 
-      refetch();
-      toast.success("Indicator created successfully");
-      reset();
-      setSelectedAutosynced("");
-    } catch (error) {
-      errorManager("Failed to create indicator", error);
-      toast.error("Failed to create indicator");
-    } finally {
-      setIsLoading(false);
-    }
+  const handleError = () => {
+    toast.error("Failed to create indicator");
   };
 
   const handleDelete = async (id: string) => {
@@ -230,9 +204,11 @@ export const IndicatorsHub = ({ communityId }: IndicatorsHubProps) => {
     <div className="w-full h-max max-h-full flex flex-col">
       <div className="bg-white dark:bg-zinc-800 rounded-lg p-6 mb-6">
         <h3 className="text-lg font-semibold mb-4">Create New Indicator</h3>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium mb-1">Select Autosynced Indicator (Optional)</label>
+            <label className="block text-sm font-medium mb-1">
+              Select Autosynced Indicator (Optional)
+            </label>
             <select
               value={selectedAutosynced}
               onChange={(e) => handleAutosyncedSelect(e.target.value)}
@@ -247,64 +223,19 @@ export const IndicatorsHub = ({ communityId }: IndicatorsHubProps) => {
             </select>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Name</label>
-            <input
-              {...register("name")}
-              className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"
-              placeholder="Enter indicator name"
-              readOnly={!!selectedAutosynced}
-            />
-            {errors.name && (
-              <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Description</label>
-            <textarea
-              {...register("description")}
-              className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"
-              placeholder="Enter indicator description"
-              rows={2}
-              readOnly={!!selectedAutosynced}
-            />
-            {errors.description && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.description.message}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Unit Type</label>
-            <select
-              {...register("unitOfMeasure")}
-              className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"
-              disabled={!!selectedAutosynced}
-            >
-              {UNIT_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
-                </option>
-              ))}
-            </select>
-            {errors.unitOfMeasure && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.unitOfMeasure.message}
-              </p>
-            )}
-          </div>
-
-          <Button
-            type="submit"
-            disabled={isLoading}
+          <IndicatorForm
+            communityId={communityId}
+            onSuccess={handleSuccess}
+            onError={handleError}
             isLoading={isLoading}
-            className="w-full"
-          >
-            Create Indicator
-          </Button>
-        </form>
+            defaultValues={formDefaultValues}
+            readOnlyFields={{
+              name: !!selectedAutosynced,
+              description: !!selectedAutosynced,
+              unitOfMeasure: !!selectedAutosynced,
+            }}
+          />
+        </div>
       </div>
 
       <div className="bg-white dark:bg-zinc-800 rounded-lg p-6 flex-1">
@@ -326,7 +257,9 @@ export const IndicatorsHub = ({ communityId }: IndicatorsHubProps) => {
                   <span className="text-xs bg-white dark:bg-zinc-800 px-2 py-0.5 rounded-full border border-gray-200 dark:border-zinc-700 mt-1 inline-block">
                     {indicator.unitOfMeasure}
                   </span>
-                  {autosyncedIndicators.find(i => i.name === indicator.name) && (
+                  {autosyncedIndicators.find(
+                    (i) => i.name === indicator.name
+                  ) && (
                     <span className="ml-1 px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 rounded-full">
                       Autosynced
                     </span>

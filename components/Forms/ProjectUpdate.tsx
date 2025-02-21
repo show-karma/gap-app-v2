@@ -12,7 +12,7 @@ import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { config } from "@/utilities/wagmi/config";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ProjectUpdate } from "@show-karma/karma-gap-sdk";
+import { IProjectUpdate, ProjectUpdate } from "@show-karma/karma-gap-sdk";
 import { getWalletClient } from "@wagmi/core";
 import { useRouter } from "next/navigation";
 import type { FC } from "react";
@@ -35,6 +35,7 @@ import { DayPicker } from "react-day-picker";
 import * as Popover from "@radix-ui/react-popover";
 import { formatDate } from "@/utilities/formatDate";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
+import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/SearchWithValueDropdown";
 import { cn } from "@/utilities/tailwind";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { AreaChart, Card, Title } from "@tremor/react";
@@ -42,11 +43,14 @@ import { prepareChartData } from "@/components/Pages/Communities/Impact/ImpactCh
 import * as Dialog from "@radix-ui/react-dialog";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
+import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
+import { IndicatorForm, IndicatorFormData } from "./IndicatorForm";
 
 interface GrantOption {
   title: string;
   value: string;
   chain: number;
+  communityUID: string;
 }
 
 interface OutputData {
@@ -56,6 +60,7 @@ interface OutputData {
 
 interface Output {
   title: string;
+  id: string;
   data: OutputData[];
 }
 
@@ -73,17 +78,15 @@ const updateSchema = z.object({
   text: z.string().min(3, { message: MESSAGES.PROJECT_UPDATE_FORM.TEXT }),
   startDate: z.date().optional(),
   endDate: z.date().optional(),
-  outputs: z.array(z.string()).optional(),
-  grants: z.array(z.string()).optional(),
-  deliverables: z
-    .array(
-      z.object({
-        name: z.string().min(1, "Name is required"),
-        proof: z.string(),
-        description: z.string(),
-      })
-    )
-    .optional(),
+  outputs: z.array(z.string()),
+  grants: z.array(z.string()),
+  deliverables: z.array(
+    z.object({
+      name: z.string().min(1, "Name is required"),
+      proof: z.string(),
+      description: z.string(),
+    })
+  ),
 });
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
@@ -102,52 +105,31 @@ const GrantSearchDropdown: FC<{
   selected: string[];
   className?: string;
 }> = ({ grants, onSelect, selected, className }) => {
-  // Create a map of grants by title to handle duplicates
-  const grantsByTitle = grants.reduce((acc, grant) => {
-    const key = grant.title;
-    if (!acc[key]) {
-      acc[key] = [];
-    }
-    acc[key].push(grant);
+  // Create a map to track duplicate titles
+  const titleCount = grants.reduce((acc, grant) => {
+    acc[grant.title] = (acc[grant.title] || 0) + 1;
     return acc;
-  }, {} as Record<string, GrantOption[]>);
-
-  // Create display titles for grants, adding chain info for duplicates
-  const displayTitles = grants.map((grant) => {
-    const grantsWithSameTitle = grantsByTitle[grant.title];
-    if (grantsWithSameTitle.length > 1) {
-      return `${grant.title} (Chain ${grant.chain})`;
-    }
-    return grant.title;
-  });
-
-  // Map between display titles and actual grants
-  const grantByDisplayTitle = Object.fromEntries(
-    grants.map((grant, index) => [displayTitles[index], grant])
-  );
+  }, {} as Record<string, number>);
 
   return (
-    <SearchDropdown
-      onSelectFunction={(displayTitle) => {
-        const grant = grantByDisplayTitle[displayTitle];
+    <SearchWithValueDropdown
+      onSelectFunction={(value) => {
+        const grant = grants.find((g) => g.value === value);
         if (grant) {
-          onSelect(grant.value);
+          onSelect(value);
         }
       }}
-      selected={selected.map((grantId) => {
-        const grant = grants.find((g) => g.value === grantId);
-        if (!grant) return grantId;
-        const grantsWithSameTitle = grantsByTitle[grant.title];
-        if (grantsWithSameTitle.length > 1) {
-          return `${grant.title} (Chain ${grant.chain})`;
-        }
-        return grant.title;
-      })}
-      list={displayTitles}
+      selected={selected}
+      list={grants.map((grant) => ({
+        value: grant.value,
+        title:
+          titleCount[grant.title] > 1
+            ? `${grant.title} (Chain ${grant.chain})`
+            : grant.title,
+      }))}
       type="grant"
       prefixUnselected="Select"
       buttonClassname={cn("w-full", className)}
-      canSearch
     />
   );
 };
@@ -223,124 +205,44 @@ const OutputCard: FC<{
   );
 };
 
-const OUTPUT_TYPES = ["float", "int"] as const;
-type OutputType = (typeof OUTPUT_TYPES)[number];
-
-const outputSchema = z.object({
-  name: z
-    .string()
-    .min(3, { message: "Name must be at least 3 characters long" })
-    .max(50, { message: "Name must be less than 50 characters" }),
-  description: z
-    .string()
-    .min(1, { message: "Description is required" })
-    .max(500, { message: "Description must be less than 500 characters" }),
-  type: z.enum(OUTPUT_TYPES),
-});
-
-type OutputFormData = z.infer<typeof outputSchema>;
-
 const OutputDialog: FC<{
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (data: OutputFormData) => void;
-}> = ({ open, onOpenChange, onSubmit }) => {
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<OutputFormData>({
-    resolver: zodResolver(outputSchema),
-  });
+  selectedPrograms: { id: string; title: string }[];
+  onSuccess: (indicator: ImpactIndicatorWithData) => void;
+  onError: () => void;
+}> = ({ open, onOpenChange, selectedPrograms, onSuccess, onError }) => (
+  <Dialog.Root open={open} onOpenChange={onOpenChange}>
+    <Dialog.Portal>
+      <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
+      <Dialog.Content
+        className="fixed left-1/2 top-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white p-6 shadow-lg dark:bg-zinc-800"
+        onSubmit={(e) => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.stopPropagation();
+          }
+        }}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <Dialog.Title className="text-lg font-semibold">
+            Create New Output
+          </Dialog.Title>
+          <Dialog.Close className="text-gray-400 hover:text-gray-500">
+            <XMarkIcon className="h-5 w-5" />
+          </Dialog.Close>
+        </div>
 
-  const handleFormSubmit = (data: OutputFormData) => {
-    onSubmit(data);
-    reset();
-    onOpenChange(false);
-  };
-
-  return (
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm" />
-        <Dialog.Content className="fixed left-1/2 top-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white p-6 shadow-lg dark:bg-zinc-800">
-          <div className="flex items-center justify-between mb-4">
-            <Dialog.Title className="text-lg font-semibold">
-              Create New Output
-            </Dialog.Title>
-            <Dialog.Close className="text-gray-400 hover:text-gray-500">
-              <XMarkIcon className="h-5 w-5" />
-            </Dialog.Close>
-          </div>
-
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              handleSubmit(handleFormSubmit)(e);
-            }}
-            className="space-y-4"
-          >
-            <div>
-              <label className="block text-sm font-medium mb-1">Name</label>
-              <input
-                {...register("name")}
-                className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"
-                placeholder="Enter output name"
-              />
-              {errors.name && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.name.message}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Description
-              </label>
-              <textarea
-                {...register("description")}
-                className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"
-                placeholder="Enter output description"
-                rows={2}
-              />
-              {errors.description && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.description.message}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">Type</label>
-              <select
-                {...register("type")}
-                className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"
-              >
-                {OUTPUT_TYPES.map((type) => (
-                  <option key={type} value={type}>
-                    {type.charAt(0).toUpperCase() + type.slice(1)}
-                  </option>
-                ))}
-              </select>
-              {errors.type && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.type.message}
-                </p>
-              )}
-            </div>
-
-            <Button type="submit" className="w-full">
-              Create Output
-            </Button>
-          </form>
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
-  );
-};
+        <IndicatorForm
+          preSelectedPrograms={selectedPrograms}
+          onSuccess={onSuccess}
+          onError={onError}
+        />
+      </Dialog.Content>
+    </Dialog.Portal>
+  </Dialog.Root>
+);
 
 export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   afterSubmit,
@@ -364,27 +266,55 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   });
   const [isLoading, setIsLoading] = useState(false);
   const [grants, setGrants] = useState<GrantOption[]>([]);
-  const [outputs, setOutputs] = useState<string[]>(["Output 1", "Output 2"]);
+  const [outputs, setOutputs] = useState<ImpactIndicatorWithData[]>([]);
   const [selectedOutputs, setSelectedOutputs] = useState<Output[]>([]);
   const [isOutputDialogOpen, setIsOutputDialogOpen] = useState(false);
   const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
   const router = useRouter();
 
+  // Fetch both grants and indicators data in a single effect
   useEffect(() => {
-    if (project?.grants) {
-      const grantOptions = project.grants
-        .filter((grant) => grant && typeof grant === "object")
-        .map((grant) => {
-          return {
+    const fetchProjectData = async () => {
+      if (!project) return;
+
+      try {
+        // Handle grants data
+        const grantOptions = project.grants
+          .filter((grant) => grant && typeof grant === "object")
+          .map((grant) => ({
             title: grant.details?.data?.title || grant.uid || "Untitled Grant",
             value: grant.uid || "",
             chain: grant.chainID || project.chainID,
-          };
-        });
+            communityUID: grant.community.uid || "",
+          }));
 
-      setGrants(grantOptions);
-    }
-  }, [project]);
+        setGrants(grantOptions);
+
+        // Handle indicators data
+        if (project.uid || project.details?.data?.slug) {
+          const projectIdentifier = project.details?.data?.slug || project.uid;
+          const [data, error] = await fetchData(
+            INDEXER.PROJECT.IMPACT_INDICATORS.GET(projectIdentifier),
+            "GET"
+          );
+
+          if (error) throw error;
+          if (data?.indicators) {
+            setOutputs(data.indicators);
+          }
+        }
+      } catch (error) {
+        errorManager(
+          `Error fetching project data for project ${project?.uid}`,
+          error,
+          { projectUID: project?.uid }
+        );
+        console.error("Failed to fetch project data:", error);
+      }
+    };
+
+    fetchProjectData();
+  }, [project?.uid, project?.grants?.length]);
 
   const { changeStepperStep, setIsStepper } = useStepper();
 
@@ -406,6 +336,10 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       name: output.title,
       value: output.data[0]?.value || "",
       proof: output.data[0]?.proof || "",
+    }));
+    const outputsWithIndicatorId = formattedOutputs.map((output) => ({
+      name: output.name,
+      indicatorId: output.name,
     }));
     try {
       if (!project?.chainID || !project.recipient || !project.uid) {
@@ -442,7 +376,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
           startDate,
           endDate,
           grants: selectedGrants,
-          outputs: formattedOutputs,
+          outputs: outputsWithIndicatorId,
           deliverables,
           type: "project-activity",
         }),
@@ -502,9 +436,9 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
             startDate,
             endDate,
             grants: selectedGrants,
-            outputs: formattedOutputs,
+            outputs: outputsWithIndicatorId,
             deliverables,
-          },
+          } as IProjectUpdate,
         }
       );
       console.log(error);
@@ -522,26 +456,40 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     await createProjectUpdate({ ...data, deliverables });
   };
 
-  const handleOutputSubmit = (data: OutputFormData) => {
-    const newOutputName = data.name;
-
-    // Add to outputs list for dropdown
-    setOutputs((prev) => [...prev, newOutputName]);
+  const handleOutputSuccess = (newIndicator: ImpactIndicatorWithData) => {
+    setOutputs((prev) => [...prev, newIndicator]);
 
     // Automatically select the new output
+    const newOutputs = [...selectedOutputs];
+    newOutputs[selectedOutputs.length - 1].title = newIndicator.name;
+    setSelectedOutputs(newOutputs);
+
     const currentOutputs = watch("outputs") || [];
-    setValue("outputs", [...currentOutputs, newOutputName], {
+    setValue("outputs", [...currentOutputs, newIndicator.id], {
       shouldValidate: true,
     });
 
-    setSelectedOutputs((prev) => [
-      ...prev,
-      {
-        title: newOutputName,
-        data: [{ value: "", proof: "" }],
-      },
-    ]);
+    setIsOutputDialogOpen(false);
   };
+
+  const handleOutputError = () => {
+    toast.error("Failed to create output");
+  };
+
+  const selectedGrantIds = watch("grants") || [];
+  const selectedPrograms = selectedGrantIds
+    .map((grantId) => {
+      const grant = grants.find((g) => g.value === grantId);
+      if (!grant) return null;
+      return {
+        id: grant.value,
+        title: grant.title,
+      };
+    })
+    .filter(
+      (program): program is { id: string; title: string } =>
+        program !== null && program.id !== ""
+    );
 
   return (
     <form
@@ -870,38 +818,60 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
             <h3 className={cn(labelStyle)}>Metrics</h3>
             <InfoTooltip content="Represent any tangible deliverables (e.g. product launched, servisse delivered, key documentation, reports or design files) or metrics (training sessions delivered, user signups, etc...) resulting from activities." />
           </div>
-          {selectedOutputs.length > 0 && (
-            <Button
-              type="button"
-              onClick={() =>
-                setSelectedOutputs([
-                  ...selectedOutputs,
-                  { title: "", data: [{ value: "", proof: "" }] },
-                ])
-              }
-              className="text-sm bg-zinc-700 text-white px-3 py-1.5"
-            >
-              Add metric
-            </Button>
-          )}
+          {selectedOutputs.length > 0 &&
+            [...(watch("grants") || [])].length > 0 && (
+              <Button
+                type="button"
+                onClick={() =>
+                  setSelectedOutputs([
+                    ...selectedOutputs,
+                    {
+                      title: "",
+                      id: crypto.randomUUID(),
+                      data: [{ value: "", proof: "" }],
+                    },
+                  ])
+                }
+                className="text-sm bg-zinc-700 text-white px-3 py-1.5"
+              >
+                Add metric
+              </Button>
+            )}
         </div>
 
         {selectedOutputs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8">
-            <p className="text-gray-500 dark:text-zinc-400 mb-4">
-              No metrics added yet
-            </p>
-            <Button
-              type="button"
-              onClick={() =>
-                setSelectedOutputs([
-                  { title: "", data: [{ value: "", proof: "" }] },
-                ])
-              }
-              className="text-sm bg-zinc-700 text-white px-3 py-1.5"
-            >
-              Add metric
-            </Button>
+            {!watch("grants")?.length ? (
+              <div className="text-center">
+                <p className="text-gray-500 dark:text-zinc-400 mb-2">
+                  Please select at least one grant before adding metrics
+                </p>
+                <p className="text-sm text-gray-400 dark:text-zinc-500">
+                  Metrics should be associated with specific grants
+                </p>
+              </div>
+            ) : (
+              <>
+                <p className="text-gray-500 dark:text-zinc-400 mb-4">
+                  No metrics added yet
+                </p>
+                <Button
+                  type="button"
+                  onClick={() =>
+                    setSelectedOutputs([
+                      {
+                        title: "",
+                        id: crypto.randomUUID(),
+                        data: [{ value: "", proof: "" }],
+                      },
+                    ])
+                  }
+                  className="text-sm bg-zinc-700 text-white px-3 py-1.5"
+                >
+                  Add metric
+                </Button>
+              </>
+            )}
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -926,10 +896,15 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                 {selectedOutputs.map((output, index) => (
                   <tr key={index}>
                     <td className="px-4 py-2">
-                      <SearchDropdown
+                      <SearchWithValueDropdown
                         onSelectFunction={(value) => {
+                          const indicator = outputs.find(
+                            (ind) => ind.id === value
+                          );
+                          if (!indicator) return;
+
                           const newOutputs = [...selectedOutputs];
-                          newOutputs[index].title = value;
+                          newOutputs[index].title = indicator.name;
                           setSelectedOutputs(newOutputs);
 
                           // Update the form values
@@ -940,13 +915,15 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                             });
                           }
                         }}
+                        isMultiple={false}
                         selected={output.title ? [output.title] : []}
-                        list={outputs}
+                        list={outputs.map((indicator) => ({
+                          value: indicator.id,
+                          title: indicator.name,
+                        }))}
                         type="output"
                         prefixUnselected="Select"
                         buttonClassname="w-full"
-                        canSearch
-                        canAdd
                         customAddButton={
                           <Button
                             type="button"
@@ -960,6 +937,15 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                           </Button>
                         }
                       />
+                      {selectedGrantIds.length > 0 && (
+                        <OutputDialog
+                          open={isOutputDialogOpen}
+                          onOpenChange={setIsOutputDialogOpen}
+                          selectedPrograms={selectedPrograms}
+                          onSuccess={handleOutputSuccess}
+                          onError={handleOutputError}
+                        />
+                      )}
                     </td>
                     <td className="px-4 py-2">
                       <input
@@ -1028,12 +1014,6 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
           </div>
         )}
       </div>
-
-      <OutputDialog
-        open={isOutputDialogOpen}
-        onOpenChange={setIsOutputDialogOpen}
-        onSubmit={handleOutputSubmit}
-      />
 
       <div className="flex w-full flex-row-reverse">
         <Button
