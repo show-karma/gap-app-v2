@@ -208,7 +208,7 @@ const OutputCard: FC<{
 const OutputDialog: FC<{
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  selectedPrograms: { id: string; title: string }[];
+  selectedPrograms: { programId: string; title: string; chainID: number }[];
   onSuccess: (indicator: ImpactIndicatorWithData) => void;
   onError: () => void;
 }> = ({ open, onOpenChange, selectedPrograms, onSuccess, onError }) => (
@@ -239,6 +239,7 @@ const OutputDialog: FC<{
           onSuccess={onSuccess}
           onError={onError}
         />
+
       </Dialog.Content>
     </Dialog.Portal>
   </Dialog.Root>
@@ -482,13 +483,14 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       const grant = grants.find((g) => g.value === grantId);
       if (!grant) return null;
       return {
-        id: grant.value,
+        programId: grant.value,
         title: grant.title,
+        chainID: grant.chain,
       };
     })
     .filter(
-      (program): program is { id: string; title: string } =>
-        program !== null && program.id !== ""
+      (program): program is { programId: string; title: string; chainID: number } =>
+        program !== null && program.programId !== ""
     );
 
   return (

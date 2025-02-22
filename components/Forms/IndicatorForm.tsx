@@ -24,17 +24,20 @@ const indicatorSchema = z.object({
     .min(1, { message: "Description is required" })
     .max(500, { message: "Description must be less than 500 characters" }),
   unitOfMeasure: z.enum(UNIT_TYPES),
-  programs: z.array(z.string()).optional(),
+  programs: z.array(z.object({
+    programId: z.string(),
+    chainID: z.number()
+  })).optional(),
 });
 
 export type IndicatorFormData = z.infer<typeof indicatorSchema>;
 
 interface IndicatorFormProps {
-  communityId?: string; // For IndicatorsHub scenario
+  communityId?: string;
   preSelectedPrograms?: {
-    // For ProjectUpdate scenario
-    id: string;
+    programId: string;
     title: string;
+    chainID?: number;
   }[];
   onSuccess?: (indicator: ImpactIndicatorWithData) => void;
   onError?: (error: unknown) => void;
@@ -44,7 +47,9 @@ interface IndicatorFormProps {
     name?: boolean;
     description?: boolean;
     unitOfMeasure?: boolean;
+    programs?: boolean;
   };
+  indicatorId?: string;
 }
 
 export const IndicatorForm: React.FC<IndicatorFormProps> = ({
@@ -55,6 +60,7 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
   isLoading: externalIsLoading = false,
   defaultValues,
   readOnlyFields = {},
+  indicatorId,
 }) => {
   const {
     register,
@@ -65,10 +71,7 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
     watch,
   } = useForm<IndicatorFormData>({
     resolver: zodResolver(indicatorSchema),
-    defaultValues: {
-      ...defaultValues,
-      programs: preSelectedPrograms?.map((p) => p.id) || [],
-    },
+    defaultValues,
   });
 
   const [isLoading, setIsLoading] = useState(false);
@@ -76,6 +79,13 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
     []
   );
   const finalIsLoading = isLoading || externalIsLoading;
+
+  // Reset form when defaultValues change
+  useEffect(() => {
+    if (defaultValues) {
+      reset(defaultValues);
+    }
+  }, [defaultValues, reset]);
 
   // Fetch programs when communityId changes (only for IndicatorsHub scenario)
   useEffect(() => {
@@ -110,28 +120,62 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
     event?.preventDefault();
     event?.stopPropagation();
 
+    if (!communityId) {
+      errorManager("Failed to create indicator", new Error("Community ID is required"));
+      onError?.(new Error("Community ID is required"));
+      return;
+    }
+
     setIsLoading(true);
     try {
+      console.log("Submitting indicator data:", {
+        ...data,
+        programs: data.programs || [],
+      });
+
       const [response, error] = await fetchData(
-        INDEXER.COMMUNITY.INDICATORS.CREATE,
+        INDEXER.INDICATORS.CREATE_OR_UPDATE(),
         "POST",
         {
+          indicatorId: indicatorId,
           name: data.name,
           description: data.description,
           unitOfMeasure: data.unitOfMeasure,
           programs: data.programs || [],
         }
       );
+
+      console.log("API Response:", response);
+      console.log("API Error:", error);
+
       if (error) throw error;
-      if (!response.length) throw new Error("No indicator returned");
 
-      const newIndicator = response?.[0] as ImpactIndicatorWithData;
-      if (!newIndicator.id) throw new Error("No indicator ID returned");
+      // Check if response exists and is an array
+      if (!response) {
+        throw new Error(`Invalid response format: ${JSON.stringify(response)}`);
+      }
 
-      reset();
-      onSuccess?.(newIndicator);
+
+      if (!response?.id) {
+        throw new Error(`Invalid indicator data: ${JSON.stringify(response)}`);
+      }
+
+      // Only reset form for new indicators, not during updates
+      if (!indicatorId) {
+        reset();
+      }
+
+      onSuccess?.(response);
     } catch (error) {
-      errorManager("Failed to create indicator", error);
+      console.error("Failed to create or update indicator:", {
+        error,
+        formData: data,
+        indicatorId,
+      });
+      errorManager(
+        `Failed to ${indicatorId ? "update" : "create"} indicator`,
+        error
+      );
       onError?.(error);
     } finally {
       setIsLoading(false);
@@ -151,7 +195,7 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
           <div className="space-y-1">
             {preSelectedPrograms.map((program) => (
               <div
-                key={program.id}
+                key={program.programId}
                 className="px-3 py-2 bg-gray-50 dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-md"
               >
                 {program.title}
@@ -169,21 +213,34 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
           <label className="block text-sm font-medium mb-1">Programs</label>
           <SearchWithValueDropdown
             onSelectFunction={(value) => {
+              const selectedProgram = availablePrograms.find(p => p.programId && p.programId === value);
+              if (!selectedProgram?.programId || !selectedProgram.chainID) return;
+
               const currentPrograms = watch("programs") || [];
-              if (currentPrograms.includes(value)) {
+              const programExists = currentPrograms.some(p => p.programId === selectedProgram.programId);
+
+              if (programExists) {
                 setValue(
                   "programs",
-                  currentPrograms.filter((p) => p !== value)
+                  currentPrograms.filter((p) => p.programId !== selectedProgram.programId)
                 );
               } else {
-                setValue("programs", [...currentPrograms, value]);
+                setValue("programs", [
+                  ...currentPrograms,
+                  {
+                    programId: selectedProgram.programId,
+                    chainID: selectedProgram.chainID
+                  }
+                ]);
               }
             }}
-            selected={selectedPrograms}
-            list={availablePrograms.map((program) => ({
-              value: program.id || program.programId || program._id?.$oid || "",
-              title: program.metadata?.title || "Untitled Program",
-            }))}
+            selected={selectedPrograms.map(p => p.programId)}
+            list={availablePrograms
+              .filter(program => program.programId && program.chainID)
+              .map((program) => ({
+                value: program.programId as string,
+                title: program.metadata?.title || "Untitled Program",
+              }))}
             type="programs"
             prefixUnselected="Select"
             isMultiple={true}
@@ -263,7 +320,7 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
         isLoading={finalIsLoading}
         className="w-full"
       >
-        Create Indicator
+        {indicatorId ? "Update Indicator" : "Create Indicator"}
       </Button>
     </form>
   );
