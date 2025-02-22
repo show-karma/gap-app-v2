@@ -54,13 +54,7 @@ export const autosyncedIndicators: IndicatorWithPrograms[] = [
     unitOfMeasure: "int",
   },
   {
-    name: "grants_received_usd",
-    id: "",
-    description: "Total grants received in USD",
-    unitOfMeasure: "float",
-  },
-  {
-    name: "PULL_REQUEST_MERGED",
+    name: 'PULL_REQUEST_MERGED',
     id: "",
     description: "Number of pull requests merged",
     unitOfMeasure: "int",

@@ -21,7 +21,6 @@ const metricNames = [
     'fulltime_developers',
     'parttime_developers',
     'active_developers',
-    'grants_received_usd',
     "ISSUE_OPENED",
     "RELEASE_PUBLISHED",
     "PULL_REQUEST_CLOSED",

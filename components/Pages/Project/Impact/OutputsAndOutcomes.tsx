@@ -655,7 +655,7 @@ export const OutputsAndOutcomes = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-4 w-full justify-end">
-                  {!form?.isEditing && isAuthorized && (
+                  {!autosyncedIndicators.find(i => i.name === item.name) && !form?.isEditing && isAuthorized && (
                     <button
                       onClick={() => handleEditClick(item.id)}
                       className="rounded-sm px-6 py-2 text-sm font-medium text-white bg-black dark:bg-zinc-700 hover:bg-zinc-700 dark:hover:bg-zinc-900/20  focus:outline-none focus:ring-2 focus:ring-zinc-500/40 transition-colors"

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { envVars } from "@/utilities/enviromentVars";
 import { useAccount } from "wagmi";
 
@@ -33,6 +33,7 @@ export function useChat(options: UseChatOptions) {
   const [currentMessage, setCurrentMessage] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const { address } = useAccount();
+  const sessionIdRef = useRef<string>(crypto.randomUUID());
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInput(e.target.value);
@@ -76,6 +77,7 @@ export function useChat(options: UseChatOptions) {
               { role: userMessage.role, content: userMessage.content },
             ],
             projectsInProgram: options.body.projectsInProgram,
+            sessionId: sessionIdRef.current,
           }),
         }
       );
