@@ -77,6 +77,10 @@ export const INDEXER = {
         `/categories/${categoryId}/impact-segments`,
     },
   },
+  INDICATORS: {
+    CREATE_OR_UPDATE: () => `/indicators`,
+    DELETE: (indicatorId: string) => `/indicators/${indicatorId}`,
+  },
   COMMUNITY: {
     GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}`,
     CATEGORIES: (idOrSlug: string) => `/communities/${idOrSlug}/categories`,
@@ -138,10 +142,6 @@ export const INDEXER = {
       `/communities/${communityIdOrSlug}/admins`,
     INDICATORS: {
       COMMUNITY: {
-        CREATE: (communityId: string) =>
-          `/communities/${communityId}/impact-indicators`,
-        DELETE: (communityId: string) =>
-          `/communities/${communityId}/impact-indicators`,
         LIST: (communityId: string) =>
           `/communities/${communityId}/impact-indicators`,
       },
