@@ -4,6 +4,8 @@ import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
 import { useSearchParams } from "next/navigation";
 import { CategoryRow } from "./CategoryRow";
 import { formatDate } from "@/utilities/formatDate";
+import pluralize from "pluralize";
+import { ProgramBanner } from "./ProgramBanner";
 
 export const prepareChartData = (
   values: number[],
@@ -51,6 +53,7 @@ export const CommunityImpactCharts = () => {
 
   return (
     <div className="flex flex-col gap-4 flex-1 mb-10">
+      <ProgramBanner />
       {isLoading ? (
         <div className="flex justify-center items-center h-full">
           <Spinner />
