@@ -212,7 +212,7 @@ const AggregateCategoryBlocks = ({
     <div className={`grid grid-cols-2 gap-6 max-md:flex max-md:flex-col`}>
       {/* Outputs Column */}
       {Object.entries(outputsById).length === 0 ? (
-        <EmptySegment type="output" />
+        <EmptySegment type="output" category={category.categoryName} />
       ) : (
         <div className={"flex flex-col w-full"}>
           <AggregateSegmentCard segmentsByType={outputsById} />
@@ -221,7 +221,7 @@ const AggregateCategoryBlocks = ({
 
       {/* Outcomes Column */}
       {Object.entries(outcomesById).length === 0 ? (
-        <EmptySegment type="outcome" />
+        <EmptySegment type="outcome" category={category.categoryName} />
       ) : (
         <div className={"flex flex-col w-full"}>
           {outcomesById.length ? (
