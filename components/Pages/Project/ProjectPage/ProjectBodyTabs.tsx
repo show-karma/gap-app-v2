@@ -43,6 +43,7 @@ import { PAGES } from "@/utilities/pages";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { Bars4Icon } from "@heroicons/react/24/solid";
 import Link from "next/link";
+import { ProjectActivityBlock } from "./ProjectActivityBlock";
 
 const InformationTab: FC = () => {
   const { project } = useProjectStore();
@@ -338,6 +339,10 @@ const UpdateBlock = ({
     ProjectImpact: "IMPACT",
   };
 
+  if (update.type === "ProjectUpdate") {
+    console.log(update);
+  }
+
   return (
     <div className="flex w-full flex-1 flex-col gap-4 rounded-lg  dark:bg-zinc-800 bg-[#F8F9FC] p-4 transition-all duration-200 ease-in-out  max-sm:px-2">
       <div className="flex flex-row items-center justify-between">
@@ -365,10 +370,19 @@ const UpdateBlock = ({
           </div>
         </div>
         <div className="flex flex-row gap-3 items-center">
-          <p className="text-sm font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
-            Posted on {formatDate(update.createdAt)}
-          </p>
-          {isAuthorized && update.type == "ProjectUpdate" ? (
+          {update.type === "ProjectUpdate" ? (
+            (update as any).data?.startDate || (update as any).data?.endDate ? (
+              <p className="text-sm font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
+                {formatDate((update as any).data?.startDate)} -{" "}
+                {formatDate((update as any).data?.endDate)}
+              </p>
+            ) : (
+              <p className="text-sm font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
+                Posted on {formatDate(update.createdAt)}
+              </p>
+            )
+          ) : null}
+          {isAuthorized && update.type === "ProjectUpdate" ? (
             <DeleteDialog
               deleteFunction={deleteProjectUpdate}
               isLoading={isDeletingUpdate}
@@ -451,6 +465,9 @@ const UpdateBlock = ({
           </ReadMore>
         </div>
       </div>
+      {update.type === "ProjectUpdate" ? (
+        <ProjectActivityBlock activity={update as IProjectUpdate} />
+      ) : null}
     </div>
   );
 };

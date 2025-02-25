@@ -64,7 +64,8 @@ export const INDEXER = {
         `/projects/${projectUID}/update/categories`,
     },
     IMPACT_INDICATORS: {
-      GET: (projectUID: string) => `/projects/${projectUID}/indicators/data`,
+      GET: (projectUID: string) =>
+        `/projects/${projectUID}/indicators/data/all`,
       SEND: (projectUID: string) => `/projects/${projectUID}/indicators/data`,
     },
   },

@@ -24,10 +24,14 @@ const indicatorSchema = z.object({
     .min(1, { message: "Description is required" })
     .max(500, { message: "Description must be less than 500 characters" }),
   unitOfMeasure: z.enum(UNIT_TYPES),
-  programs: z.array(z.object({
-    programId: z.string(),
-    chainID: z.number()
-  })).optional(),
+  programs: z
+    .array(
+      z.object({
+        programId: z.string(),
+        chainID: z.number(),
+      })
+    )
+    .optional(),
 });
 
 export type IndicatorFormData = z.infer<typeof indicatorSchema>;
@@ -120,17 +124,19 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
     event?.preventDefault();
     event?.stopPropagation();
 
-    if (!communityId) {
-      errorManager("Failed to create indicator", new Error("Community ID is required"));
-      onError?.(new Error("Community ID is required"));
-      return;
-    }
-
     setIsLoading(true);
     try {
       console.log("Submitting indicator data:", {
         ...data,
-        programs: data.programs || [],
+        programs:
+          preSelectedPrograms?.map((item) => {
+            return {
+              programId: item.programId,
+              chainID: item.chainID,
+            };
+          }) ||
+          data.programs ||
+          [],
       });
 
       const [response, error] = await fetchData(
@@ -141,7 +147,15 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
           name: data.name,
           description: data.description,
           unitOfMeasure: data.unitOfMeasure,
-          programs: data.programs || [],
+          programs:
+            preSelectedPrograms?.map((item) => {
+              return {
+                programId: item.programId,
+                chainID: item.chainID,
+              };
+            }) ||
+            data.programs ||
+            [],
         }
       );
 
@@ -154,7 +168,6 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
       if (!response) {
         throw new Error(`Invalid response format: ${JSON.stringify(response)}`);
       }
-
 
       if (!response?.id) {
         throw new Error(`Invalid indicator data: ${JSON.stringify(response)}`);
@@ -213,30 +226,37 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
           <label className="block text-sm font-medium mb-1">Programs</label>
           <SearchWithValueDropdown
             onSelectFunction={(value) => {
-              const selectedProgram = availablePrograms.find(p => p.programId && p.programId === value);
-              if (!selectedProgram?.programId || !selectedProgram.chainID) return;
+              const selectedProgram = availablePrograms.find(
+                (p) => p.programId && p.programId === value
+              );
+              if (!selectedProgram?.programId || !selectedProgram.chainID)
+                return;
 
               const currentPrograms = watch("programs") || [];
-              const programExists = currentPrograms.some(p => p.programId === selectedProgram.programId);
+              const programExists = currentPrograms.some(
+                (p) => p.programId === selectedProgram.programId
+              );
 
               if (programExists) {
                 setValue(
                   "programs",
-                  currentPrograms.filter((p) => p.programId !== selectedProgram.programId)
+                  currentPrograms.filter(
+                    (p) => p.programId !== selectedProgram.programId
+                  )
                 );
               } else {
                 setValue("programs", [
                   ...currentPrograms,
                   {
                     programId: selectedProgram.programId,
-                    chainID: selectedProgram.chainID
-                  }
+                    chainID: selectedProgram.chainID,
+                  },
                 ]);
               }
             }}
-            selected={selectedPrograms.map(p => p.programId)}
+            selected={selectedPrograms.map((p) => p.programId)}
             list={availablePrograms
-              .filter(program => program.programId && program.chainID)
+              .filter((program) => program.programId && program.chainID)
               .map((program) => ({
                 value: program.programId as string,
                 title: program.metadata?.title || "Untitled Program",

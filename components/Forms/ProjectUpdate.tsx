@@ -18,7 +18,7 @@ import { useRouter } from "next/navigation";
 import type { FC } from "react";
 import { useState, useEffect } from "react";
 import type { SubmitHandler } from "react-hook-form";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useFieldArray } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
@@ -45,6 +45,8 @@ import { XMarkIcon } from "@heroicons/react/24/solid";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import { IndicatorForm, IndicatorFormData } from "./IndicatorForm";
+import { getImpactAnswers, sendImpactAnswers } from "@/utilities/impact";
+import { autosyncedIndicators } from "../Pages/Admin/IndicatorsHub";
 
 interface GrantOption {
   title: string;
@@ -70,6 +72,21 @@ interface Deliverable {
   description: string;
 }
 
+// Add this interface to extend IProjectUpdate
+interface ExtendedProjectUpdate extends IProjectUpdate {
+  outputs: {
+    outputId: string;
+    value: number;
+    proof?: string;
+  }[];
+}
+
+interface OutputValue {
+  outputId: string;
+  value: number | string;
+  proof?: string;
+}
+
 const updateSchema = z.object({
   title: z
     .string()
@@ -78,15 +95,25 @@ const updateSchema = z.object({
   text: z.string().min(3, { message: MESSAGES.PROJECT_UPDATE_FORM.TEXT }),
   startDate: z.date().optional(),
   endDate: z.date().optional(),
-  outputs: z.array(z.string()),
   grants: z.array(z.string()),
-  deliverables: z.array(
-    z.object({
-      name: z.string().min(1, "Name is required"),
-      proof: z.string(),
-      description: z.string(),
-    })
-  ),
+  outputs: z
+    .array(
+      z.object({
+        outputId: z.string().min(1, "Output is required"),
+        value: z.union([z.number(), z.string()]),
+        proof: z.string().optional(),
+      })
+    )
+    .min(1, { message: "At least one output is required" }),
+  deliverables: z
+    .array(
+      z.object({
+        name: z.string().min(1, "Name is required"),
+        proof: z.string().min(1, "Proof is required"),
+        description: z.string().optional(),
+      })
+    )
+    .min(1, { message: "At least one deliverable is required" }),
 });
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
@@ -134,77 +161,6 @@ const GrantSearchDropdown: FC<{
   );
 };
 
-const OutputCard: FC<{
-  output: Output;
-  onDelete: (title: string) => void;
-  onUpdateData: (data: OutputData[]) => void;
-}> = ({ output, onDelete, onUpdateData }) => {
-  return (
-    <div className="w-full flex flex-col gap-4 p-6 bg-white border border-gray-200 dark:bg-zinc-800/50 dark:border-zinc-700 rounded-md shadow-sm">
-      <div className="flex items-center justify-between">
-        <h3 className="text-lg font-bold text-gray-900 dark:text-zinc-100">
-          {output.title}
-        </h3>
-        <button
-          onClick={() => onDelete(output.title)}
-          className="text-red-500 hover:text-red-700"
-        >
-          <TrashIcon className="h-5 w-5" />
-        </button>
-      </div>
-
-      <div className="w-full">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700">
-            <thead>
-              <tr>
-                <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
-                  Value
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-bold text-gray-700 dark:text-zinc-300">
-                  Proof
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-zinc-700">
-              <tr>
-                <td className="px-4 py-2">
-                  <input
-                    type="text"
-                    value={output.data[0]?.value || ""}
-                    onChange={(e) => {
-                      const newData = [...output.data];
-                      if (!newData[0]) newData[0] = { value: "", proof: "" };
-                      newData[0].value = e.target.value;
-                      onUpdateData(newData);
-                    }}
-                    placeholder="Enter value"
-                    className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md"
-                  />
-                </td>
-                <td className="px-4 py-2">
-                  <input
-                    type="text"
-                    value={output.data[0]?.proof || ""}
-                    onChange={(e) => {
-                      const newData = [...output.data];
-                      if (!newData[0]) newData[0] = { value: "", proof: "" };
-                      newData[0].proof = e.target.value;
-                      onUpdateData(newData);
-                    }}
-                    placeholder="Enter proof URL or description"
-                    className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md"
-                  />
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const OutputDialog: FC<{
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -239,11 +195,21 @@ const OutputDialog: FC<{
           onSuccess={onSuccess}
           onError={onError}
         />
-
       </Dialog.Content>
     </Dialog.Portal>
   </Dialog.Root>
 );
+
+const EmptyDiv: FC = () => <div className="h-5 w-1" />;
+
+const isInvalidValue = (value: number | string, unitOfMeasure: string) => {
+  if (value === "") return true;
+  const numValue = Number(value);
+  if (unitOfMeasure === "int") {
+    return !Number.isInteger(numValue);
+  }
+  return isNaN(numValue);
+};
 
 export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   afterSubmit,
@@ -253,25 +219,44 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const { switchChainAsync } = useSwitchChain();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const {
-    register,
-    handleSubmit,
-    watch,
-    control,
-    setValue,
-    formState: { errors, isSubmitting, isValid },
-  } = useForm<UpdateType>({
-    resolver: zodResolver(updateSchema),
-    reValidateMode: "onChange",
-    mode: "onChange",
-  });
+  const { register, handleSubmit, watch, control, setValue, formState } =
+    useForm<UpdateType>({
+      resolver: zodResolver(updateSchema),
+      reValidateMode: "onChange",
+      mode: "onChange",
+      defaultValues: {
+        deliverables: [],
+        outputs: [],
+      },
+    });
+  const { errors, isSubmitting, isValid } = formState;
+
   const [isLoading, setIsLoading] = useState(false);
   const [grants, setGrants] = useState<GrantOption[]>([]);
   const [outputs, setOutputs] = useState<ImpactIndicatorWithData[]>([]);
-  const [selectedOutputs, setSelectedOutputs] = useState<Output[]>([]);
   const [isOutputDialogOpen, setIsOutputDialogOpen] = useState(false);
-  const [deliverables, setDeliverables] = useState<Deliverable[]>([]);
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "deliverables",
+  });
   const router = useRouter();
+
+  // Custom handlers for deliverables
+  const handleAddDeliverable = () => {
+    append({ name: "", proof: "", description: "" });
+    // Ensure form validation is triggered after state update
+    setTimeout(() => {
+      setValue("deliverables", watch("deliverables"), { shouldValidate: true });
+    }, 0);
+  };
+
+  const handleRemoveDeliverable = (index: number) => {
+    remove(index);
+    // Ensure form validation is triggered after state update
+    setTimeout(() => {
+      setValue("deliverables", watch("deliverables"), { shouldValidate: true });
+    }, 0);
+  };
 
   // Fetch both grants and indicators data in a single effect
   useEffect(() => {
@@ -294,15 +279,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         // Handle indicators data
         if (project.uid || project.details?.data?.slug) {
           const projectIdentifier = project.details?.data?.slug || project.uid;
-          const [data, error] = await fetchData(
-            INDEXER.PROJECT.IMPACT_INDICATORS.GET(projectIdentifier),
-            "GET"
-          );
-
-          if (error) throw error;
-          if (data?.indicators) {
-            setOutputs(data.indicators);
-          }
+          const indicators = await getImpactAnswers(projectIdentifier);
+          setOutputs(indicators);
         }
       } catch (error) {
         errorManager(
@@ -321,27 +299,15 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
   const { gap } = useGap();
 
-  const createProjectUpdate = async ({
-    title,
-    text,
-    startDate,
-    endDate,
-    outputs,
-    deliverables,
-    grants: selectedGrants,
-  }: UpdateType) => {
+  const indicatorsList = outputs.map((output) => ({
+    indicatorId: output.id,
+    name: output.name,
+  }));
+
+  const createProjectUpdate = async (data: UpdateType) => {
     let gapClient = gap;
     if (!address || !project) return;
-    // Transform selectedOutputs into the correct format
-    const formattedOutputs = selectedOutputs.map((output) => ({
-      name: output.title,
-      value: output.data[0]?.value || "",
-      proof: output.data[0]?.proof || "",
-    }));
-    const outputsWithIndicatorId = formattedOutputs.map((output) => ({
-      name: output.name,
-      indicatorId: output.name,
-    }));
+
     try {
       if (!project?.chainID || !project.recipient || !project.uid) {
         throw new Error("Required project data is missing");
@@ -370,17 +336,66 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         throw new Error("ProjectUpdate schema not found");
       }
 
+      const outputsData = data.outputs
+        .filter(
+          (output) =>
+            !autosyncedIndicators.find(
+              (indicator) =>
+                indicator.name ===
+                indicatorsList.find((i) => i.indicatorId === output.outputId)
+                  ?.name
+            )
+        )
+        .map((output) => ({
+          value: output.value,
+          proof: output.proof,
+          startDate: data.startDate,
+          endDate: data.endDate,
+          id: output.outputId,
+        }));
+
+      if (outputsData.length > 0) {
+        await Promise.all(
+          outputsData.map((indicator) =>
+            sendImpactAnswers(
+              projectUid,
+              indicator.id,
+              [
+                {
+                  value: indicator.value,
+                  proof: indicator.proof || "",
+                  startDate:
+                    indicator.startDate?.toISOString() ||
+                    new Date().toISOString(),
+                  endDate:
+                    indicator.endDate?.toISOString() ||
+                    new Date().toISOString(),
+                },
+              ],
+              () => {}
+            )
+          )
+        );
+      }
+
       const projectUpdate = new ProjectUpdate({
-        data: sanitizeObject({
-          text,
-          title,
-          startDate,
-          endDate,
-          grants: selectedGrants,
-          outputs: outputsWithIndicatorId,
-          deliverables,
-          type: "project-activity",
-        }),
+        data: {
+          title: data.title,
+          text: data.text,
+          startDate: data.startDate ? data.startDate : undefined,
+          endDate: data.endDate ? data.endDate : undefined,
+          grants: data.grants,
+          indicators: data.outputs.map((indicator) => ({
+            indicatorId: indicator.outputId,
+            name: outputs.find((o) => o.id === indicator.outputId)?.name || "",
+          })),
+          deliverables: data.deliverables.map((deliverable) => ({
+            name: deliverable.name,
+            proof: deliverable.proof,
+            description: deliverable.description || "",
+          })),
+          type: "project-update",
+        },
         recipient,
         refUID: projectUid,
         schema,
@@ -432,13 +447,16 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
           projectUID: project?.uid,
           address: address,
           data: {
-            title,
-            text,
-            startDate,
-            endDate,
-            grants: selectedGrants,
-            outputs: outputsWithIndicatorId,
-            deliverables,
+            title: data.title,
+            text: data.text,
+            startDate: data.startDate,
+            endDate: data.endDate,
+            grants: data.grants,
+            indicators: indicatorsList.map((indicator) => ({
+              indicatorId: indicator.indicatorId,
+              name: indicator.name,
+            })),
+            deliverables: data.deliverables,
           } as IProjectUpdate,
         }
       );
@@ -453,22 +471,55 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const onSubmit: SubmitHandler<UpdateType> = async (data, event) => {
     event?.preventDefault();
     event?.stopPropagation();
+
+    // Check if outputs and deliverables have at least one element
+    if (data.outputs.length === 0) {
+      toast.error("At least one output is required");
+      return;
+    }
+
+    if (data.deliverables.length === 0) {
+      toast.error("At least one deliverable is required");
+      return;
+    }
+
+    // Validate that all deliverables have required fields
+    const invalidDeliverables = data.deliverables.filter(
+      (deliverable) => !deliverable.name || !deliverable.proof
+    );
+
+    if (invalidDeliverables.length > 0) {
+      toast.error("All deliverables must have a name and proof link");
+      return;
+    }
+
     setIsLoading(true);
-    await createProjectUpdate({ ...data, deliverables });
+    await createProjectUpdate(data);
   };
 
   const handleOutputSuccess = (newIndicator: ImpactIndicatorWithData) => {
     setOutputs((prev) => [...prev, newIndicator]);
 
     // Automatically select the new output
-    const newOutputs = [...selectedOutputs];
-    newOutputs[selectedOutputs.length - 1].title = newIndicator.name;
-    setSelectedOutputs(newOutputs);
+    // const newOutputs = [...selectedOutputs];
+    // newOutputs[selectedOutputs.length - 1].title = newIndicator.name;
+    // setSelectedOutputs(newOutputs);
 
     const currentOutputs = watch("outputs") || [];
-    setValue("outputs", [...currentOutputs, newIndicator.id], {
-      shouldValidate: true,
-    });
+    setValue(
+      "outputs",
+      [
+        ...currentOutputs,
+        {
+          outputId: newIndicator.id,
+          value: 0,
+          proof: "",
+        },
+      ],
+      {
+        shouldValidate: true,
+      }
+    );
 
     setIsOutputDialogOpen(false);
   };
@@ -489,9 +540,13 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       };
     })
     .filter(
-      (program): program is { programId: string; title: string; chainID: number } =>
+      (
+        program
+      ): program is { programId: string; title: string; chainID: number } =>
         program !== null && program.programId !== ""
     );
+
+  const selectedOutputs = [...(watch("outputs") || [])];
 
   return (
     <form
@@ -694,21 +749,23 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         <InfoTooltip content="Outputs are the direct result of the activity. Note: Outputs can evolve as the activity progresses, with new ones added or refined to reflect changes. It is up to you to define the key outputs that are worth mentioning to showcase." />
       </div>
 
-      <div className="flex w-full flex-col gap-4 p-6 bg-white dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-md">
+      <div
+        className={cn(
+          "flex w-full flex-col gap-4 p-6 bg-white dark:bg-zinc-800/50 border rounded-md",
+          fields.length === 0
+            ? "border-red-400 dark:border-red-600"
+            : "border-gray-200 dark:border-zinc-700"
+        )}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h3 className={cn(labelStyle)}>Deliverables</h3>
             <InfoTooltip content="Add specific deliverables with proof links and descriptions to showcase the tangible results of your activity." />
           </div>
-          {deliverables.length > 0 && (
+          {fields.length > 0 && (
             <Button
               type="button"
-              onClick={() =>
-                setDeliverables([
-                  ...deliverables,
-                  { name: "", proof: "", description: "" },
-                ])
-              }
+              onClick={handleAddDeliverable}
               className="text-sm bg-zinc-700 text-white px-3 py-1.5"
             >
               Add Deliverable
@@ -716,16 +773,14 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
           )}
         </div>
 
-        {deliverables.length === 0 ? (
+        {fields.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8">
             <p className="text-gray-500 dark:text-zinc-400 mb-4">
               No deliverables added yet
             </p>
             <Button
               type="button"
-              onClick={() =>
-                setDeliverables([{ name: "", proof: "", description: "" }])
-              }
+              onClick={handleAddDeliverable}
               className="text-sm bg-zinc-700 text-white px-3 py-1.5"
             >
               Add Deliverable
@@ -751,54 +806,55 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-zinc-700">
-                {deliverables.map((deliverable, index) => (
-                  <tr key={index}>
+                {fields.map((field, index) => (
+                  <tr key={field.id}>
                     <td className="px-4 py-2">
                       <input
                         type="text"
-                        value={deliverable.name}
-                        onChange={(e) => {
-                          const newDeliverables = [...deliverables];
-                          newDeliverables[index].name = e.target.value;
-                          setDeliverables(newDeliverables);
-                        }}
+                        {...register(`deliverables.${index}.name`, {
+                          required: "Name is required",
+                        })}
                         placeholder="Enter name"
                         className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md"
                       />
+                      {errors.deliverables?.[index]?.name ? (
+                        <p className="text-xs text-red-500 h-5">
+                          {errors.deliverables[index]?.name?.message}
+                        </p>
+                      ) : (
+                        <EmptyDiv />
+                      )}
                     </td>
                     <td className="px-4 py-2">
                       <input
                         type="text"
-                        value={deliverable.proof}
-                        onChange={(e) => {
-                          const newDeliverables = [...deliverables];
-                          newDeliverables[index].proof = e.target.value;
-                          setDeliverables(newDeliverables);
-                        }}
+                        {...register(`deliverables.${index}.proof`, {
+                          required: "Proof link is required",
+                        })}
                         placeholder="Enter proof URL"
                         className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md"
                       />
+                      {errors.deliverables?.[index]?.proof ? (
+                        <p className="text-xs text-red-500 h-5">
+                          {errors.deliverables[index]?.proof?.message}
+                        </p>
+                      ) : (
+                        <EmptyDiv />
+                      )}
                     </td>
                     <td className="px-4 py-2">
                       <input
                         type="text"
-                        value={deliverable.description}
-                        onChange={(e) => {
-                          const newDeliverables = [...deliverables];
-                          newDeliverables[index].description = e.target.value;
-                          setDeliverables(newDeliverables);
-                        }}
+                        {...register(`deliverables.${index}.description`)}
                         placeholder="Enter description"
                         className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md"
                       />
+                      <EmptyDiv />
                     </td>
                     <td className="px-4 py-2">
                       <button
                         onClick={() => {
-                          const newDeliverables = deliverables.filter(
-                            (_, i) => i !== index
-                          );
-                          setDeliverables(newDeliverables);
+                          handleRemoveDeliverable(index);
                         }}
                         type="button"
                         className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20"
@@ -814,7 +870,14 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         )}
       </div>
 
-      <div className="flex w-full flex-col gap-4 p-6 bg-white dark:bg-zinc-800/50 border border-gray-200 dark:border-zinc-700 rounded-md">
+      <div
+        className={cn(
+          "flex w-full flex-col gap-4 p-6 bg-white dark:bg-zinc-800/50 border rounded-md",
+          selectedOutputs.length === 0
+            ? "border-red-400 dark:border-red-600"
+            : "border-gray-200 dark:border-zinc-700"
+        )}
+      >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h3 className={cn(labelStyle)}>Metrics</h3>
@@ -824,16 +887,16 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
             [...(watch("grants") || [])].length > 0 && (
               <Button
                 type="button"
-                onClick={() =>
-                  setSelectedOutputs([
+                onClick={() => {
+                  setValue("outputs", [
                     ...selectedOutputs,
                     {
-                      title: "",
-                      id: crypto.randomUUID(),
-                      data: [{ value: "", proof: "" }],
+                      outputId: "",
+                      value: 0,
+                      proof: "",
                     },
-                  ])
-                }
+                  ]);
+                }}
                 className="text-sm bg-zinc-700 text-white px-3 py-1.5"
               >
                 Add metric
@@ -859,15 +922,16 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                 </p>
                 <Button
                   type="button"
-                  onClick={() =>
-                    setSelectedOutputs([
+                  onClick={() => {
+                    setValue("outputs", [
+                      ...selectedOutputs,
                       {
-                        title: "",
-                        id: crypto.randomUUID(),
-                        data: [{ value: "", proof: "" }],
+                        outputId: "",
+                        value: 0,
+                        proof: "",
                       },
-                    ])
-                  }
+                    ]);
+                  }}
                   className="text-sm bg-zinc-700 text-white px-3 py-1.5"
                 >
                   Add metric
@@ -905,20 +969,34 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                           );
                           if (!indicator) return;
 
-                          const newOutputs = [...selectedOutputs];
-                          newOutputs[index].title = indicator.name;
-                          setSelectedOutputs(newOutputs);
-
                           // Update the form values
-                          const currentOutputs = watch("outputs") || [];
-                          if (!currentOutputs.includes(value)) {
-                            setValue("outputs", [...currentOutputs, value], {
+                          const newOutputs = [...selectedOutputs];
+                          if (
+                            !selectedOutputs.find(
+                              (o) => o.outputId === indicator.id
+                            )
+                          ) {
+                            newOutputs[index].outputId = indicator.id;
+                            setValue("outputs", newOutputs, {
+                              shouldValidate: true,
+                            });
+                            setIsOutputDialogOpen(false);
+                          } else {
+                            newOutputs[index].outputId = "";
+                            setValue("outputs", newOutputs, {
                               shouldValidate: true,
                             });
                           }
                         }}
                         isMultiple={false}
-                        selected={output.title ? [output.title] : []}
+                        selected={
+                          output.outputId
+                            ? [
+                                outputs.find((o) => o.id === output.outputId)
+                                  ?.name || "",
+                              ]
+                            : []
+                        }
                         list={outputs.map((indicator) => ({
                           value: indicator.id,
                           title: indicator.name,
@@ -948,44 +1026,106 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                           onError={handleOutputError}
                         />
                       )}
+                      <EmptyDiv />
                     </td>
                     <td className="px-4 py-2">
                       <input
                         type="text"
-                        value={output.data[0]?.value || ""}
+                        value={output.value === 0 ? "" : output.value}
                         onChange={(e) => {
                           const newOutputs = [...selectedOutputs];
-                          if (!newOutputs[index].data[0]) {
-                            newOutputs[index].data[0] = {
-                              value: "",
-                              proof: "",
+                          const indicator = outputs.find(
+                            (o) => o.id === output.outputId
+                          );
+                          const unitType = indicator?.unitOfMeasure || "int";
+
+                          // Allow decimal point and numbers
+                          const isValidInput =
+                            unitType === "float"
+                              ? /^-?\d*\.?\d*$/.test(e.target.value) // Allow decimals for float
+                              : /^-?\d*$/.test(e.target.value); // Only integers for int
+
+                          if (isValidInput) {
+                            newOutputs[index] = {
+                              ...newOutputs[index],
+                              value:
+                                e.target.value === "" ? "" : e.target.value,
                             };
+                            setValue("outputs", newOutputs, {
+                              shouldValidate: true,
+                            });
                           }
-                          newOutputs[index].data[0].value = e.target.value;
-                          setSelectedOutputs(newOutputs);
                         }}
-                        placeholder="Enter value"
-                        className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md"
+                        placeholder={`Enter ${
+                          outputs.find((o) => o.id === output.outputId)
+                            ?.unitOfMeasure === "float"
+                            ? "decimal"
+                            : "whole"
+                        } number`}
+                        disabled={
+                          !!autosyncedIndicators.find(
+                            (indicator) =>
+                              indicator.name ===
+                              indicatorsList.find(
+                                (i) => i.indicatorId === output.outputId
+                              )?.name
+                          )
+                        }
+                        className={cn(
+                          "w-full px-3 py-1.5 bg-white disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zinc-900 border rounded-md",
+                          output.outputId &&
+                            isInvalidValue(
+                              output.value,
+                              outputs.find((o) => o.id === output.outputId)
+                                ?.unitOfMeasure || "int"
+                            )
+                            ? "border-red-500 dark:border-red-500"
+                            : "border-gray-300 dark:border-zinc-700"
+                        )}
                       />
+                      {output.outputId &&
+                      isInvalidValue(
+                        output.value,
+                        outputs.find((o) => o.id === output.outputId)
+                          ?.unitOfMeasure || "int"
+                      ) ? (
+                        <p className="text-xs text-red-500 mt-1">
+                          {typeof output.value === "string" &&
+                          output.value === ""
+                            ? "This field is required"
+                            : outputs.find((o) => o.id === output.outputId)
+                                ?.unitOfMeasure === "int"
+                            ? "Please enter a whole number"
+                            : "Please enter a valid decimal number"}
+                        </p>
+                      ) : (
+                        <EmptyDiv />
+                      )}
                     </td>
                     <td className="px-4 py-2">
                       <input
                         type="text"
-                        value={output.data[0]?.proof || ""}
+                        value={output.proof || ""}
                         onChange={(e) => {
                           const newOutputs = [...selectedOutputs];
-                          if (!newOutputs[index].data[0]) {
-                            newOutputs[index].data[0] = {
-                              value: "",
-                              proof: "",
-                            };
-                          }
-                          newOutputs[index].data[0].proof = e.target.value;
-                          setSelectedOutputs(newOutputs);
+                          newOutputs[index].proof = e.target.value;
+                          setValue("outputs", newOutputs, {
+                            shouldValidate: true,
+                          });
                         }}
                         placeholder="Enter proof URL"
-                        className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md"
+                        disabled={
+                          !!autosyncedIndicators.find(
+                            (indicator) =>
+                              indicator.name ===
+                              indicatorsList.find(
+                                (i) => i.indicatorId === output.outputId
+                              )?.name
+                          )
+                        }
+                        className="w-full px-3 py-1.5 bg-white disabled:opacity-50 disabled:cursor-not-allowed dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md"
                       />
+                      <EmptyDiv />
                     </td>
                     <td className="px-4 py-2">
                       <button
@@ -993,15 +1133,9 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                           const newOutputs = selectedOutputs.filter(
                             (_, i) => i !== index
                           );
-                          setSelectedOutputs(newOutputs);
-
-                          // Update form values
-                          const currentOutputs = watch("outputs") || [];
-                          setValue(
-                            "outputs",
-                            currentOutputs.filter((t) => t !== output.title),
-                            { shouldValidate: true }
-                          );
+                          setValue("outputs", newOutputs, {
+                            shouldValidate: true,
+                          });
                         }}
                         type="button"
                         className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20"
@@ -1021,7 +1155,12 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         <Button
           type="submit"
           className="flex w-max flex-row bg-slate-600 text-slate-200 hover:bg-slate-800 hover:text-slate-200"
-          disabled={isSubmitting || !isValid}
+          disabled={
+            isSubmitting ||
+            !isValid ||
+            selectedOutputs.length === 0 ||
+            fields.length === 0
+          }
           isLoading={isSubmitting || isLoading}
         >
           Post activity
