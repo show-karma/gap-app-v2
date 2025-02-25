@@ -11,7 +11,7 @@ import { SearchWithValueDropdown } from "@/components/Pages/Communities/Impact/S
 import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import type { SubmitHandler } from "react-hook-form";
 
-const UNIT_TYPES = ["float", "int"] as const;
+const UNIT_TYPES = ["int", "float"] as const;
 type UnitType = (typeof UNIT_TYPES)[number];
 
 const indicatorSchema = z.object({
@@ -340,7 +340,7 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
         isLoading={finalIsLoading}
         className="w-full"
       >
-        {indicatorId ? "Update Indicator" : "Create Indicator"}
+        {indicatorId ? "Update Output Metric" : "Create Output Metric"}
       </Button>
     </form>
   );
