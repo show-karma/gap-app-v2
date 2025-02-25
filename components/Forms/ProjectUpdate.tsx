@@ -741,7 +741,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
               onClick={handleAddDeliverable}
               className="text-sm bg-zinc-700 text-white px-3 py-1.5"
             >
-              Add Deliverable
+              Add more deliverables
             </Button>
           )}
         </div>
@@ -749,7 +749,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         {fields.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8">
             <p className="text-gray-500 dark:text-zinc-400 mb-4">
-              No deliverables added yet
+              Add your deliverables
             </p>
             <Button
               type="button"
@@ -870,7 +870,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                 }}
                 className="text-sm bg-zinc-700 text-white px-3 py-1.5"
               >
-                Add metric
+                Add more metrics
               </Button>
             )}
         </div>
@@ -889,7 +889,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
             ) : (
               <>
                 <p className="text-gray-500 dark:text-zinc-400 mb-4">
-                  No metrics added yet
+                  Add metrics to your activity
                 </p>
                 <Button
                   type="button"
