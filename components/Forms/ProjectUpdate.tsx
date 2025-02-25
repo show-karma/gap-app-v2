@@ -96,24 +96,20 @@ const updateSchema = z.object({
   startDate: z.date().optional(),
   endDate: z.date().optional(),
   grants: z.array(z.string()),
-  outputs: z
-    .array(
-      z.object({
-        outputId: z.string().min(1, "Output is required"),
-        value: z.union([z.number(), z.string()]),
-        proof: z.string().optional(),
-      })
-    )
-    .min(1, { message: "At least one output is required" }),
-  deliverables: z
-    .array(
-      z.object({
-        name: z.string().min(1, "Name is required"),
-        proof: z.string().min(1, "Proof is required"),
-        description: z.string().optional(),
-      })
-    )
-    .min(1, { message: "At least one deliverable is required" }),
+  outputs: z.array(
+    z.object({
+      outputId: z.string().min(1, "Output is required"),
+      value: z.union([z.number(), z.string()]),
+      proof: z.string().optional(),
+    })
+  ),
+  deliverables: z.array(
+    z.object({
+      name: z.string().min(1, "Name is required"),
+      proof: z.string().min(1, "Proof is required"),
+      description: z.string().optional(),
+    })
+  ),
 });
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
@@ -472,27 +468,6 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     event?.preventDefault();
     event?.stopPropagation();
 
-    // Check if outputs and deliverables have at least one element
-    if (data.outputs.length === 0) {
-      toast.error("At least one output is required");
-      return;
-    }
-
-    if (data.deliverables.length === 0) {
-      toast.error("At least one deliverable is required");
-      return;
-    }
-
-    // Validate that all deliverables have required fields
-    const invalidDeliverables = data.deliverables.filter(
-      (deliverable) => !deliverable.name || !deliverable.proof
-    );
-
-    if (invalidDeliverables.length > 0) {
-      toast.error("All deliverables must have a name and proof link");
-      return;
-    }
-
     setIsLoading(true);
     await createProjectUpdate(data);
   };
@@ -752,9 +727,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       <div
         className={cn(
           "flex w-full flex-col gap-4 p-6 bg-white dark:bg-zinc-800/50 border rounded-md",
-          fields.length === 0
-            ? "border-red-400 dark:border-red-600"
-            : "border-gray-200 dark:border-zinc-700"
+          "border-gray-200 dark:border-zinc-700"
         )}
       >
         <div className="flex items-center justify-between">
@@ -873,9 +846,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       <div
         className={cn(
           "flex w-full flex-col gap-4 p-6 bg-white dark:bg-zinc-800/50 border rounded-md",
-          selectedOutputs.length === 0
-            ? "border-red-400 dark:border-red-600"
-            : "border-gray-200 dark:border-zinc-700"
+          "border-gray-200 dark:border-zinc-700"
         )}
       >
         <div className="flex items-center justify-between">
@@ -1155,12 +1126,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         <Button
           type="submit"
           className="flex w-max flex-row bg-slate-600 text-slate-200 hover:bg-slate-800 hover:text-slate-200"
-          disabled={
-            isSubmitting ||
-            !isValid ||
-            selectedOutputs.length === 0 ||
-            fields.length === 0
-          }
+          disabled={isSubmitting || !isValid}
           isLoading={isSubmitting || isLoading}
         >
           Post activity
