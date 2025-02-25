@@ -13,16 +13,20 @@ export const ProjectActivityBlock = ({
   const { project } = useProjectStore();
 
   const relatedGrants = useMemo(() => {
-    if (!project || !activity.data.grants || activity.data.grants.length === 0)
+    if (
+      !project ||
+      !activity?.data?.grants ||
+      activity?.data?.grants?.length === 0
+    )
       return [];
 
     // Find grants that match the activity's grants
     return project.grants.filter((grant) =>
-      activity.data.grants?.some(
+      activity?.data?.grants?.some(
         (grantId) => grantId.toLowerCase() === grant.uid.toLowerCase()
       )
     );
-  }, [project, activity.data.grants]);
+  }, [project, activity?.data?.grants]);
 
   return (
     <div className="flex flex-col gap-6 max-sm:gap-4">
@@ -34,8 +38,8 @@ export const ProjectActivityBlock = ({
           Deliverables
         </p>
         <div className="w-full">
-          {activity.data.deliverables &&
-          activity.data.deliverables.length > 0 ? (
+          {activity.data?.deliverables &&
+          activity.data?.deliverables?.length > 0 ? (
             <div className="grid grid-cols-1 gap-4">
               {activity.data.deliverables.map((deliverable, index) => (
                 <div
@@ -103,16 +107,16 @@ export const ProjectActivityBlock = ({
           Metrics
         </p>
         <FilteredOutputsAndOutcomes
-          indicatorIds={activity.data.indicators?.map(
+          indicatorIds={activity.data?.indicators?.map(
             (indicator) => indicator.indicatorId
           )}
-          indicatorNames={activity.data.indicators?.map(
+          indicatorNames={activity.data?.indicators?.map(
             (indicator) => indicator.name
           )}
         />
 
         {/* Grants Section */}
-        {activity.data.grants && activity.data.grants.length > 0 && (
+        {activity.data?.grants && activity.data?.grants?.length > 0 && (
           <div className="mt-4 pt-4 border-t border-gray-200 dark:border-zinc-700">
             <p className="text-sm font-bold text-black dark:text-zinc-100 mb-3">
               Related Grants
