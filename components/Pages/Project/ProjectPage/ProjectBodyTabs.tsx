@@ -339,10 +339,6 @@ const UpdateBlock = ({
     ProjectImpact: "IMPACT",
   };
 
-  if (update.type === "ProjectUpdate") {
-    console.log(update);
-  }
-
   return (
     <div className="flex w-full flex-1 flex-col gap-4 rounded-lg  dark:bg-zinc-800 bg-[#F8F9FC] p-4 transition-all duration-200 ease-in-out  max-sm:px-2">
       <div className="flex flex-row items-center justify-between">

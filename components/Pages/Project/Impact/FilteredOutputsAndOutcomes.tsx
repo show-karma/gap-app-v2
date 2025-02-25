@@ -91,7 +91,8 @@ export const FilteredOutputsAndOutcomes = ({
       const data = await getImpactAnswers(project.uid as string);
       return filterIndicators(data, indicatorIds, indicatorNames);
     },
-    enabled: !!project?.uid,
+    enabled:
+      !!project?.uid && !!indicatorIds?.length && !!indicatorNames?.length,
   });
 
   // Initialize forms when impact answers are loaded
