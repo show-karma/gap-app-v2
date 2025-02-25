@@ -565,7 +565,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                 shouldTouch: true,
               })
             }
-            placeholderText="To share updates on the progress of this project, please add the details here."
+            placeholderText="Conducted user research and published a report, worked with our developers, added new features, etc."
           />
         </div>
       </div>
@@ -577,7 +577,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
             control={control}
             render={({ field, formState }) => (
               <div className="flex w-full flex-col gap-2">
-                <label className={labelStyle}>Start date (Optional)</label>
+                <label className={labelStyle}>Activity Start date (Optional)</label>
                 <div>
                   <Popover.Root>
                     <Popover.Trigger asChild>
@@ -623,7 +623,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
             control={control}
             render={({ field, formState }) => (
               <div className="flex w-full flex-col gap-2">
-                <label className={labelStyle}>End date (Optional)</label>
+                <label className={labelStyle}>Activity End date (Optional)</label>
                 <div>
                   <Popover.Root>
                     <Popover.Trigger asChild>
@@ -852,7 +852,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h3 className={cn(labelStyle)}>Metrics</h3>
-            <InfoTooltip content="Represent any tangible deliverables (e.g. product launched, servisse delivered, key documentation, reports or design files) or metrics (training sessions delivered, user signups, etc...) resulting from activities." />
+            <InfoTooltip content="Represent any tangible deliverables (e.g. product launched, services delivered, key documentation, reports or design files) or metrics (training sessions delivered, user signups, etc...) resulting from activities." />
           </div>
           {selectedOutputs.length > 0 &&
             [...(watch("grants") || [])].length > 0 && (
