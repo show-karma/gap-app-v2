@@ -199,7 +199,13 @@ const SegmentCard = ({
   );
 };
 
-export const EmptySegment = ({ type }: { type: "output" | "outcome" }) => {
+export const EmptySegment = ({
+  type,
+  category,
+}: {
+  type: "output" | "outcome";
+  category: string;
+}) => {
   return (
     <div className="p-6 bg-[#f8f9fb] dark:bg-zinc-800 flex flex-col justify-center items-center w-full h-full">
       <div className="flex flex-col justify-center items-center gap-8 h-full w-full border border-dashed border-gray-400 dark:border-gray-600 rounded-xl px-12 py-6">
@@ -216,8 +222,8 @@ export const EmptySegment = ({ type }: { type: "output" | "outcome" }) => {
             No {type}s have been defined yet
           </p>
           <p className="text-center text-gray-900 dark:text-zinc-200 text-base font-normal">
-            No {type}s have been defined for projects funded within the
-            Community Category
+            No {type}s have been defined for projects funded within the{" "}
+            {category}
           </p>
         </div>
       </div>
@@ -244,7 +250,7 @@ const CategoryBlocks = ({
     <div className={`grid grid-cols-2 gap-6 max-md:flex max-md:flex-col`}>
       {/* Outputs Column */}
       {Object.entries(outputsById).length === 0 ? (
-        <EmptySegment type="output" />
+        <EmptySegment type="output" category={category.categoryName} />
       ) : (
         <div
           className={
@@ -259,7 +265,7 @@ const CategoryBlocks = ({
 
       {/* Outcomes Column */}
       {Object.entries(outcomesById).length === 0 ? (
-        <EmptySegment type="outcome" />
+        <EmptySegment type="outcome" category={category.categoryName} />
       ) : (
         <div className="flex flex-col w-full">
           {outcomesById.length ? (
@@ -324,7 +330,8 @@ export const CategoryRow = ({
           </p>
         ) : null}
       </div>
-      {category.impacts.length ? (
+      <CategoryBlocks category={category} />
+      {/* {category.impacts.length ? (
         <CategoryBlocks category={category} />
       ) : (
         <div className="flex flex-col justify-center items-center gap-8 rounded-xl px-12 py-6 min-h-[280px] border border-dashed border-gray-400 dark:border-gray-600 bg-gray-50 dark:bg-zinc-900">
@@ -338,7 +345,7 @@ export const CategoryRow = ({
             We are waiting for project to submit values for this metric
           </p>
         </div>
-      )}
+      )} */}
     </div>
   );
 };
