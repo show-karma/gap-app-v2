@@ -129,6 +129,7 @@ export default function EditCategoriesPage() {
         ([uid, categories]) => {
           return fetchData(INDEXER.PROJECT.CATEGORIES.UPDATE(uid), "PUT", {
             categories,
+            communityUID: community?.uid,
           })
             .then(() => {
               refreshGrants();
@@ -192,7 +193,6 @@ export default function EditCategoriesPage() {
               onChange={handleProgramChange}
             />
             <CategoryCreationDialog
-
               refreshCategories={async () => {
                 refreshCategories();
               }}

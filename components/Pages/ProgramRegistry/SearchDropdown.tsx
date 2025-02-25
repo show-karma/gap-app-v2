@@ -37,6 +37,7 @@ interface SearchDropdownProps {
   leftIcon?: React.ReactNode;
   paragraphClassname?: string;
   rightIcon?: React.ReactNode;
+  customAddButton?: React.ReactNode;
   placeholderText?: string;
 }
 export const SearchDropdown: FC<SearchDropdownProps> = ({
@@ -56,6 +57,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
   leftIcon,
   paragraphClassname,
   rightIcon = <ChevronDown className="h-5 w-5 text-black dark:text-white" />,
+  customAddButton,
   placeholderText = `Search ${type}...`,
 }) => {
   const [open, setOpen] = useState(false);
@@ -93,7 +95,7 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
         })
       : parsedArray;
     setOrderedList(sortedList);
-  }, []);
+  }, [list]);
 
   const addCustomNetwork = (customNetwork: string) => {
     setAdding(false);
@@ -269,6 +271,8 @@ export const SearchDropdown: FC<SearchDropdownProps> = ({
                   }}
                 />
               </div>
+            ) : customAddButton ? (
+              <div className="my-2 px-2">{customAddButton}</div>
             ) : (
               <div className="my-2 px-2">
                 <button

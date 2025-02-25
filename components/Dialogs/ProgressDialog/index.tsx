@@ -141,7 +141,7 @@ const Menu = () => {
         <div className="flex flex-row gap-5">
           <Box
             icon="/icons/project-update.png"
-            title="Project Update"
+            title="Project Activity"
             description="Provide overall project progress, beyond grant specifics."
             onClick={() => select("project_update")}
             isSelected={selectedScreen === "project_update"}
@@ -197,7 +197,7 @@ export const ProgressDialog = () => {
       description: "Report completion of a milestone for tracking.",
     },
     project_update: {
-      title: `Craft your Project Update`,
+      title: `Craft your Project Activity`,
       description: "Provide overall project progress, beyond grant specifics.",
     },
     grant_update: {

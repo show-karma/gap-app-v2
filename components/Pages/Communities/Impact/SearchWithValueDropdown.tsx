@@ -9,7 +9,6 @@ import {
   CommandInput,
   CommandItem,
 } from "cmdk";
-import pluralize from "pluralize";
 import { FC, useEffect, useState } from "react";
 
 interface Item {
@@ -28,7 +27,9 @@ interface SearchWithValueDropdownProps {
   shouldSort?: boolean;
   id?: string;
   isMultiple?: boolean;
+  customAddButton?: React.ReactNode;
 }
+
 export const SearchWithValueDropdown: FC<SearchWithValueDropdownProps> = ({
   onSelectFunction,
   selected,
@@ -40,18 +41,12 @@ export const SearchWithValueDropdown: FC<SearchWithValueDropdownProps> = ({
   shouldSort = true,
   id,
   isMultiple = true,
+  customAddButton,
 }) => {
   const [open, setOpen] = useState(false);
-  const [adding, setAdding] = useState(false);
-  const [title, setTitle] = useState("");
   const [search, setSearch] = useState("");
 
-  const [orderedList, setOrderedList] = useState<
-    {
-      value: string;
-      title: string;
-    }[]
-  >([]);
+  const [orderedList, setOrderedList] = useState<Item[]>([]);
 
   useEffect(() => {
     const sortedList = shouldSort
@@ -80,7 +75,7 @@ export const SearchWithValueDropdown: FC<SearchWithValueDropdownProps> = ({
           .sort()
           .join(", ");
       }
-      return selected[0];
+      return selected;
     }
     return `${prefixUnselected} ${type}`;
   };
@@ -101,7 +96,7 @@ export const SearchWithValueDropdown: FC<SearchWithValueDropdownProps> = ({
           </span>
         </div>
       </Popover.Trigger>
-      <Popover.Content className="mt-4 w-max max-w-[320px] z-10 bg-white border border-zinc-200 dark:border-zinc-700 rounded-md dark:text-white dark:bg-zinc-800  max-h-60 overflow-y-auto overflow-x-hidden py-2">
+      <Popover.Content className="mt-4 w-max max-w-[320px] z-10 bg-white border border-zinc-200 dark:border-zinc-700 rounded-md dark:text-white dark:bg-zinc-800 max-h-60 overflow-y-auto overflow-x-hidden py-2">
         <Command>
           <div className="w-full px-2">
             <CommandInput
@@ -115,7 +110,9 @@ export const SearchWithValueDropdown: FC<SearchWithValueDropdownProps> = ({
               }}
             />
           </div>
-          <CommandEmpty className="px-4 py-2">No {type} found.</CommandEmpty>
+          <CommandEmpty className="px-4 py-2">
+            <p>No {type} found.</p>
+          </CommandEmpty>
 
           <CommandGroup>
             {cleanFunction ? (
@@ -175,6 +172,11 @@ export const SearchWithValueDropdown: FC<SearchWithValueDropdownProps> = ({
                 </div>
               </CommandItem>
             ))}
+            {customAddButton && (
+              <div className="px-4 py-2 border-t border-gray-200 dark:border-zinc-700">
+                {customAddButton}
+              </div>
+            )}
           </CommandGroup>
         </Command>
       </Popover.Content>
