@@ -205,35 +205,6 @@ export const FilteredOutputsAndOutcomes = ({
               datapoints: f.datapoints.map((datapoint, i) => {
                 if (i !== index) return datapoint;
 
-                if (field === "startDate") {
-                  // Prevent start date from being after end date
-                  const endDate =
-                    datapoint.endDate || datapoint.outputTimestamp;
-                  if (endDate && value && new Date(value) > new Date(endDate)) {
-                    return datapoint; // Don't update if start date would be after end date
-                  }
-                }
-
-                if (field === "endDate") {
-                  // Check if the new end date already exists in other datapoints
-                  const newEndDate = new Date(value);
-                  newEndDate.setHours(0, 0, 0, 0);
-
-                  const existingDates = f.datapoints
-                    .filter((_, dpIndex) => dpIndex !== index)
-                    .map((dp) => {
-                      const date = new Date(
-                        dp.endDate || dp.outputTimestamp || ""
-                      );
-                      date.setHours(0, 0, 0, 0);
-                      return date.getTime();
-                    });
-
-                  if (existingDates.includes(newEndDate.getTime())) {
-                    return datapoint; // Don't update if date already exists
-                  }
-                }
-
                 return {
                   ...datapoint,
                   [field]: value,
@@ -364,6 +335,16 @@ export const FilteredOutputsAndOutcomes = ({
       }
       return false;
     });
+
+  const hasInvalidDatesSameRow = (
+    id: string,
+    startDate: string,
+    endDate: string
+  ) => {
+    const form = forms.find((f) => f.id === id);
+    if (!form) return false;
+    return new Date(startDate) > new Date(endDate);
+  };
 
   return (
     <div className="w-full max-w-[100rem]">
@@ -531,7 +512,13 @@ export const FilteredOutputsAndOutcomes = ({
                                             )
                                           }
                                           className={cn(
-                                            "w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100"
+                                            "w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100",
+                                            hasInvalidDatesSameRow(
+                                              item.id,
+                                              form?.datapoints?.[index]
+                                                ?.startDate,
+                                              form?.datapoints?.[index]?.endDate
+                                            ) && "border-2 border-red-500"
                                           )}
                                         />
                                       ) : (
@@ -581,7 +568,15 @@ export const FilteredOutputsAndOutcomes = ({
                                                 form?.datapoints?.[index]
                                                   ?.outputTimestamp ||
                                                 ""
-                                            ) && "border-2 border-red-500"
+                                            ) ||
+                                              (hasInvalidDatesSameRow(
+                                                item.id,
+                                                form?.datapoints?.[index]
+                                                  ?.startDate,
+                                                form?.datapoints?.[index]
+                                                  ?.endDate
+                                              ) &&
+                                                "border-2 border-red-500")
                                           )}
                                         />
                                       ) : (
