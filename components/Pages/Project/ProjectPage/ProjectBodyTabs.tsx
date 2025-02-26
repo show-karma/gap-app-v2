@@ -462,7 +462,10 @@ const UpdateBlock = ({
         </div>
       </div>
       {update.type === "ProjectUpdate" ? (
-        <ProjectActivityBlock activity={update as IProjectUpdate} />
+        (update as IProjectUpdate).data?.indicators?.length ||
+        (update as IProjectUpdate).data?.deliverables?.length ? (
+          <ProjectActivityBlock activity={update as IProjectUpdate} />
+        ) : null
       ) : null}
     </div>
   );

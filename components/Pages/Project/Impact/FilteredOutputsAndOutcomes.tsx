@@ -44,7 +44,7 @@ interface FilteredOutputsAndOutcomesProps {
 }
 
 // Helper function to filter indicators
-const filterIndicators = (
+export const filterIndicators = (
   indicators: ImpactIndicatorWithData[],
   indicatorIds?: string[],
   indicatorNames?: string[]
