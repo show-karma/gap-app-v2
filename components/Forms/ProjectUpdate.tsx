@@ -47,6 +47,9 @@ import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import { IndicatorForm, IndicatorFormData } from "./IndicatorForm";
 import { getImpactAnswers, sendImpactAnswers } from "@/utilities/impact";
 import { autosyncedIndicators } from "../Pages/Admin/IndicatorsHub";
+import Link from "next/link";
+import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { ExternalLink } from "../Utilities/ExternalLink";
 
 interface GrantOption {
   title: string;
@@ -127,7 +130,8 @@ const GrantSearchDropdown: FC<{
   onSelect: (grantId: string) => void;
   selected: string[];
   className?: string;
-}> = ({ grants, onSelect, selected, className }) => {
+  project?: IProjectResponse;
+}> = ({ grants, onSelect, selected, className, project }) => {
   // Create a map to track duplicate titles
   const titleCount = grants.reduce((acc, grant) => {
     acc[grant.title] = (acc[grant.title] || 0) + 1;
@@ -153,6 +157,18 @@ const GrantSearchDropdown: FC<{
       type="grant"
       prefixUnselected="Select"
       buttonClassname={cn("w-full", className)}
+      customAddButton={
+        <div className="flex w-full h-full">
+          <ExternalLink
+            href={PAGES.PROJECT.SCREENS.NEW_GRANT(
+              project?.details?.data?.slug || project?.uid || ""
+            )}
+            className="text-sm h-full w-full px-2 py-2 rounded bg-zinc-700 text-white"
+          >
+            Add Grant
+          </ExternalLink>
+        </div>
+      }
     />
   );
 };
@@ -577,7 +593,9 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
             control={control}
             render={({ field, formState }) => (
               <div className="flex w-full flex-col gap-2">
-                <label className={labelStyle}>Activity Start date (Optional)</label>
+                <label className={labelStyle}>
+                  Activity Start date (Optional)
+                </label>
                 <div>
                   <Popover.Root>
                     <Popover.Trigger asChild>
@@ -623,7 +641,9 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
             control={control}
             render={({ field, formState }) => (
               <div className="flex w-full flex-col gap-2">
-                <label className={labelStyle}>Activity End date (Optional)</label>
+                <label className={labelStyle}>
+                  Activity End date (Optional)
+                </label>
                 <div>
                   <Popover.Root>
                     <Popover.Trigger asChild>
@@ -715,6 +735,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
             }}
             selected={watch("grants") || []}
             className="w-full"
+            project={project}
           />
         )}
       </div>
