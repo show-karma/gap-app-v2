@@ -34,97 +34,109 @@ export const autosyncedIndicators: Indicator[] = [
   {
     name: 'no_of_txs',
     id: "",
-    description: "No. of transactions",
+    description: "No. of transactions (*dune)",
     unitOfMeasure: "int"
   },
   {
     name: 'parttime_developers',
     id: "",
-    description: "No. of part time developers",
+    description: "No. of part time developers (*oso)",
     unitOfMeasure: "int"
   },
   {
     name: 'active_developers',
     id: "",
-    description: "No. of active developers",
+    description: "No. of active developers (*oso)",
     unitOfMeasure: "int"
   },
   {
     name: 'fulltime_developers',
     id: "",
-    description: "No. of full time developers",
+    description: "No. of full time developers (*oso)",
     unitOfMeasure: "int"
   },
   {
     name: 'PULL_REQUEST_MERGED',
     id: "",
-    description: "Number of pull requests merged",
+    description: "Number of pull requests merged (*oso)",
     unitOfMeasure: "int"
   },
   {
     name: 'ISSUE_OPENED',
     id: "",
-    description: "Number of issues opened",
+    description: "Number of issues opened (*oso)",
     unitOfMeasure: "int"
   },
   {
     name: 'FORKED',
     id: "",
-    description: "Number of repository forks",
+    description: "Number of repository forks (*oso)",
     unitOfMeasure: "int"
   },
   {
     name: 'ISSUE_CLOSED',
     id: "",
-    description: "Number of issues closed",
+    description: "Number of issues closed (*oso)",
     unitOfMeasure: "int"
   },
   {
     name: 'ISSUE_COMMENT',
     id: "",
-    description: "Number of comments on issues",
+    description: "Number of comments on issues (*oso)",
     unitOfMeasure: "int"
   },
   {
     name: 'PULL_REQUEST_REVIEW_COMMENT',
     id: "",
-    description: "Number of pull request review comments",
+    description: "Number of pull request review comments (*oso)",
     unitOfMeasure: "int"
   },
   {
     name: 'STARRED',
     id: "",
-    description: "Number of repository stars",
+    description: "Number of repository stars (*oso)",
     unitOfMeasure: "int"
   },
   {
     name: 'COMMIT_CODE',
     id: "",
-    description: "Number of code commits",
+    description: "Number of code commits (*oso)",
+    unitOfMeasure: "int"
+  },
+  {
+    name: 'GitHub Commits',
+    id: "",
+    description: "Number of code commits (*github)",
     unitOfMeasure: "int"
   },
   {
     name: 'PULL_REQUEST_OPENED',
     id: "",
-    description: "Number of pull requests opened",
+    description: "Number of pull requests opened (*oso)",
     unitOfMeasure: "int"
   },
   {
     name: 'PULL_REQUEST_CLOSED',
     id: "",
-    description: "Number of pull requests closed",
+    description: "Number of pull requests closed (*oso)",
+    unitOfMeasure: "int"
+  },
+  {
+    name: 'GitHub Merged PRs',
+    id: "",
+    description: "Number of pull requests merged (*github)",
     unitOfMeasure: "int"
   },
   {
     name: 'PULL_REQUEST_REOPENED',
     id: "",
-    description: "Number of pull requests reopened",
+    description: "Number of pull requests reopened (*oso)",
     unitOfMeasure: "int"
   },
   {
     name: 'RELEASE_PUBLISHED',
     id: "",
-    description: "Number of releases published",
+    description: "Number of releases published (*oso)",
     unitOfMeasure: "int"
   }
 ]
