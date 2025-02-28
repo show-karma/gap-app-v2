@@ -238,7 +238,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
                   shouldValidate: true,
                 });
               }}
-              placeholderText="To share updates on the progress of this grant, please add the details here."
+              placeholderText="Conducted user research and published a report, worked with our developers, added new features, etc."
             />
           </div>
         </div>

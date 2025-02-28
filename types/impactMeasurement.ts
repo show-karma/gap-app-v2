@@ -5,6 +5,10 @@ export interface ImpactIndicatorWithData {
   unitOfMeasure: string;
   createdAt?: string;
   updatedAt?: string;
+  programs: {
+    programId: string;
+    chainID: number;
+  }[];
   datapoints: {
     value: number | string;
     proof: string;
