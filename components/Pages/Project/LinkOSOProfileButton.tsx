@@ -10,6 +10,7 @@ import { LinkIcon, FingerPrintIcon, PlusIcon, TrashIcon } from "@heroicons/react
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { FC } from "react";
 import { Fragment, useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 interface LinkOSOProfileButtonProps {
     buttonClassName?: string;
@@ -76,14 +77,17 @@ export const LinkOSOProfileButton: FC<
 
             if (data) {
                 setIds(validIds);
+                toast.success("OSO profile IDs updated successfully");
             }
 
             if (error) {
                 setError(`Failed to update OSO profile IDs. Please try again.`);
+                toast.error("Failed to update OSO profile IDs. Please try again.");
             }
         } catch (err) {
             setError(`Failed to update OSO profile IDs. Please try again.`);
             console.error(err);
+            toast.error("Failed to update OSO profile IDs. Please try again.");
         } finally {
             setIsLoading(false);
         }

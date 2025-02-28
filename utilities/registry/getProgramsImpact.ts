@@ -13,7 +13,11 @@ export async function getProgramsImpact(
   try {
     const [data, error] = await fetchData(
       `${INDEXER.COMMUNITY.PROGRAMS_IMPACT(communityId)}?${
-        programSelected ? `programId=${programSelected}` : ""
+        programSelected
+          ? `programId=${programSelected.split("_")[0]}&programChainId=${
+              programSelected.split("_")[1]
+            }`
+          : ""
       }${projectSelected ? `&projectUID=${projectSelected}` : ""}`
     );
     if (error) {

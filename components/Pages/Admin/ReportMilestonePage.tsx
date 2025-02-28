@@ -86,8 +86,7 @@ const fetchReports = async (
   const [data]: any = await fetchData(
     `${INDEXER.COMMUNITY.REPORT.GET(
       communityId as string
-    )}?limit=${pageLimit}&page=${page}&sort=${sortBy}&sortOrder=${sortOrder}${
-      queryGrantTitles ? `&grantTitle=${encodedQueryGrantTitles}` : ""
+    )}?limit=${pageLimit}&page=${page}&sort=${sortBy}&sortOrder=${sortOrder}${queryGrantTitles ? `&grantTitle=${encodedQueryGrantTitles}` : ""
     }`
   );
   return data || [];
@@ -207,7 +206,7 @@ export const ReportMilestonePage = ({
   }
 
   return (
-    <div className="mt-4 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
+    <div className="container mx-auto mt-4 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
       {isAuthorized ? (
         <div className="w-full flex flex-col gap-6">
           <div className="w-full flex flex-row items-center justify-between">
@@ -246,7 +245,7 @@ export const ReportMilestonePage = ({
                 prefixUnselected="All"
                 type={"Grant Programs"}
                 selected={selectedGrantTitles}
-                // imageDictionary={}
+              // imageDictionary={}
               />
             </div>
             <div className="mb-2 grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 w-full">
@@ -274,11 +273,10 @@ export const ReportMilestonePage = ({
                   />
                   <StatCard
                     title="% of project who added Milestones"
-                    value={`${
-                      data?.stats?.percentageProjectsWithMilestones?.toFixed(
-                        2
-                      ) || 0
-                    }%`}
+                    value={`${data?.stats?.percentageProjectsWithMilestones?.toFixed(
+                      2
+                    ) || 0
+                      }%`}
                   />
                   <StatCard
                     title="Total Milestones"
@@ -294,16 +292,14 @@ export const ReportMilestonePage = ({
                   />
                   <StatCard
                     title="Milestones Completion %"
-                    value={`${
-                      data?.stats?.percentageCompletedMilestones?.toFixed(2) ||
+                    value={`${data?.stats?.percentageCompletedMilestones?.toFixed(2) ||
                       0
-                    }%`}
+                      }%`}
                   />
                   <StatCard
                     title="Milestones Pending %"
-                    value={`${
-                      data?.stats?.percentagePendingMilestones?.toFixed(2) || 0
-                    }%`}
+                    value={`${data?.stats?.percentagePendingMilestones?.toFixed(2) || 0
+                      }%`}
                   />
                 </>
               )}
@@ -455,159 +451,157 @@ export const ReportMilestonePage = ({
               <tbody className="px-4 divide-y divide-gray-200 dark:divide-zinc-800">
                 {isLoading
                   ? skeletonArray.map((index) => {
-                      return (
-                        <tr key={index}>
-                          <td className="px-4 py-2 font-medium h-16">
-                            <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4" />
-                          </td>
-                          <td className="px-4 py-2">
-                            <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4" />
-                          </td>
-                          <td className="px-4 py-2">
-                            {" "}
-                            <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-14" />
-                          </td>
-                          <td className="px-4 py-2">
-                            <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-14" />
-                          </td>
-                          <td className="px-4 py-2">
-                            <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-14" />
-                          </td>
-                        </tr>
-                      );
-                    })
+                    return (
+                      <tr key={index}>
+                        <td className="px-4 py-2 font-medium h-16">
+                          <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4" />
+                        </td>
+                        <td className="px-4 py-2">
+                          <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4" />
+                        </td>
+                        <td className="px-4 py-2">
+                          {" "}
+                          <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-14" />
+                        </td>
+                        <td className="px-4 py-2">
+                          <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-14" />
+                        </td>
+                        <td className="px-4 py-2">
+                          <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-14" />
+                        </td>
+                      </tr>
+                    );
+                  })
                   : reports?.map((report, index) => {
-                      const outputsFiltered = report?.proofOfWorkLinks?.filter(
-                        (item) => item.length > 0
-                      );
-                      return (
-                        <tr
-                          key={index}
-                          className="dark:text-zinc-300 text-gray-900 px-4 py-4"
-                        >
-                          <td className="px-4 py-2 font-medium h-16 max-w-[220px]">
-                            <ExternalLink
-                              href={PAGES.PROJECT.GRANT(
-                                report.projectSlug,
-                                report.grantUid
-                              )}
-                              className="max-w-max w-full line-clamp-2 underline"
-                            >
-                              {report.grantTitle}
-                            </ExternalLink>
-                          </td>
-                          <td className="px-4 py-2 max-w-[220px]">
-                            <ExternalLink
-                              href={PAGES.PROJECT.OVERVIEW(report.projectSlug)}
-                              className="max-w-full line-clamp-2 underline w-max"
-                            >
-                              {report.projectTitle}
-                            </ExternalLink>
-                          </td>
-                          <td className="px-4 py-2 max-w-[220px]">
-                            <Link
-                              href={`${PAGES.PROJECT.GRANT(
-                                report.projectUid,
-                                report.grantUid
-                              )}/milestones-and-updates#all`}
-                              className="text-blue-600 hover:text-blue-800 underline"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {report.totalMilestones}
-                            </Link>
-                          </td>
-                          <td className="px-4 py-2 max-w-[220px]">
-                            <Link
-                              href={`${PAGES.PROJECT.GRANT(
-                                report.projectUid,
-                                report.grantUid
-                              )}/milestones-and-updates#pending`}
-                              className="text-blue-600 hover:text-blue-800 underline"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {report.pendingMilestones}
-                            </Link>
-                          </td>
-                          <td className="px-4 py-2 max-w-[220px]">
-                            <Link
-                              href={`${PAGES.PROJECT.GRANT(
-                                report.projectSlug,
-                                report.grantUid
-                              )}/milestones-and-updates#completed`}
-                              className="text-blue-600 hover:text-blue-800 underline"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              {report.completedMilestones}
-                            </Link>
-                          </td>
-                          <td className="px-4 py-2 max-w-[220px]">
-                            <div className="flex text-primary  ">
-                              {[...Array(10)].map((_, index) => (
-                                <span key={index} className="text-sm">
-                                  {index + 1 <=
+                    const outputsFiltered = report?.proofOfWorkLinks?.filter(
+                      (item) => item.length > 0
+                    );
+                    return (
+                      <tr
+                        key={index}
+                        className="dark:text-zinc-300 text-gray-900 px-4 py-4"
+                      >
+                        <td className="px-4 py-2 font-medium h-16 max-w-[220px]">
+                          <ExternalLink
+                            href={PAGES.PROJECT.GRANT(
+                              report.projectSlug,
+                              report.grantUid
+                            )}
+                            className="max-w-max w-full line-clamp-2 underline"
+                          >
+                            {report.grantTitle}
+                          </ExternalLink>
+                        </td>
+                        <td className="px-4 py-2 max-w-[220px]">
+                          <ExternalLink
+                            href={PAGES.PROJECT.OVERVIEW(report.projectSlug)}
+                            className="max-w-full line-clamp-2 underline w-max"
+                          >
+                            {report.projectTitle}
+                          </ExternalLink>
+                        </td>
+                        <td className="px-4 py-2 max-w-[220px]">
+                          <Link
+                            href={`${PAGES.PROJECT.GRANT(
+                              report.projectUid,
+                              report.grantUid
+                            )}/milestones-and-updates#all`}
+                            className="text-blue-600 hover:text-blue-800 underline"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {report.totalMilestones}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-2 max-w-[220px]">
+                          <Link
+                            href={`${PAGES.PROJECT.GRANT(
+                              report.projectUid,
+                              report.grantUid
+                            )}/milestones-and-updates#pending`}
+                            className="text-blue-600 hover:text-blue-800 underline"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {report.pendingMilestones}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-2 max-w-[220px]">
+                          <Link
+                            href={`${PAGES.PROJECT.GRANT(
+                              report.projectSlug,
+                              report.grantUid
+                            )}/milestones-and-updates#completed`}
+                            className="text-blue-600 hover:text-blue-800 underline"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            {report.completedMilestones}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-2 max-w-[220px]">
+                          <div className="flex text-primary  ">
+                            {[...Array(10)].map((_, index) => (
+                              <span key={index} className="text-sm">
+                                {index + 1 <=
                                   Math.round(
                                     report?.evaluations?.find(
                                       (evaluation: Evaluation) =>
                                         evaluation._id === "gpt-4o-mini"
                                     )?.rating || 0
                                   )
-                                    ? "🟢"
-                                    : "🔴"}
-                                </span>
-                              ))}
-                            </div>
-                          </td>
-                          <td className="px-4 py-2 max-w-[220px]">
-                            <ReasonsModal
-                              text={
-                                (report?.evaluations?.find(
-                                  (evaluation: Evaluation) =>
-                                    evaluation._id === modelToUse
-                                )?.rating as number) >= 6
-                                  ? "Include"
-                                  : "Exclude"
-                              }
-                              reasons={
-                                report?.evaluations?.find(
-                                  (evaluation: Evaluation) =>
-                                    evaluation._id === modelToUse
-                                )?.reasons || []
-                              }
-                            />
-                          </td>
-                          <td className="px-4 py-2 max-w-[220px]">
-                            <div className="flex flex-col gap-1 overflow-x-auto max-w-[220px] w-max">
-                              {outputsFiltered.map((item, index) => (
-                                <ExternalLink
-                                  key={index}
-                                  href={
-                                    item.includes("http")
-                                      ? item
-                                      : `https://${item}`
-                                  }
-                                  className="underline text-blue-700 line-clamp-2"
-                                >
-                                  {item.includes("http")
-                                    ? `${item.slice(0, 80)}${
-                                        item.slice(0, 80).length >= 80
-                                          ? "..."
-                                          : ""
-                                      }`
-                                    : `https://${item.slice(0, 80)}${
-                                        item.slice(0, 80).length >= 80
-                                          ? "..."
-                                          : ""
-                                      }`}
-                                </ExternalLink>
-                              ))}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
+                                  ? "🟢"
+                                  : "🔴"}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="px-4 py-2 max-w-[220px]">
+                          <ReasonsModal
+                            text={
+                              (report?.evaluations?.find(
+                                (evaluation: Evaluation) =>
+                                  evaluation._id === modelToUse
+                              )?.rating as number) >= 6
+                                ? "Include"
+                                : "Exclude"
+                            }
+                            reasons={
+                              report?.evaluations?.find(
+                                (evaluation: Evaluation) =>
+                                  evaluation._id === modelToUse
+                              )?.reasons || []
+                            }
+                          />
+                        </td>
+                        <td className="px-4 py-2 max-w-[220px]">
+                          <div className="flex flex-col gap-1 overflow-x-auto max-w-[220px] w-max">
+                            {outputsFiltered.map((item, index) => (
+                              <ExternalLink
+                                key={index}
+                                href={
+                                  item.includes("http")
+                                    ? item
+                                    : `https://${item}`
+                                }
+                                className="underline text-blue-700 line-clamp-2"
+                              >
+                                {item.includes("http")
+                                  ? `${item.slice(0, 80)}${item.slice(0, 80).length >= 80
+                                    ? "..."
+                                    : ""
+                                  }`
+                                  : `https://${item.slice(0, 80)}${item.slice(0, 80).length >= 80
+                                    ? "..."
+                                    : ""
+                                  }`}
+                              </ExternalLink>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
             <div className="dark:bg-zinc-900 flex flex-col pb-4 items-end">

@@ -23,7 +23,7 @@ export const ProgramFilter = ({
   });
   const programs = data?.map((program) => ({
     title: program.metadata?.title || "",
-    value: program.programId || "",
+    value: `${program.programId}_${program.chainID}` || "",
     // id: program.programId || "",
   }));
 

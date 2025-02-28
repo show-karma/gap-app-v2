@@ -4,22 +4,23 @@ import { Button } from "@/components/Utilities/Button";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
-import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
-import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { cn } from "@/utilities/tailwind";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { AreaChart, Card, Title } from "@tremor/react";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { prepareChartData } from "../../Communities/Impact/ImpactCharts";
 import { GrantsOutputsLoading } from "../Loading/Grants/Outputs";
 import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
-mport { sendImpactAnswers, getImpactAnswers } from "@/utilities/impact";
-
+import {
+  sendImpactAnswers,
+  getImpactAnswers,
+} from "@/utilities/impact/impactAnswers";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 type OutputForm = {
   id: string;
@@ -37,8 +38,38 @@ type OutputForm = {
   isEdited?: boolean;
 };
 
-export const OutputsAndOutcomes = () => {
+interface FilteredOutputsAndOutcomesProps {
+  indicatorIds?: string[];
+  indicatorNames?: string[];
+}
+
+// Helper function to filter indicators
+export const filterIndicators = (
+  indicators: ImpactIndicatorWithData[],
+  indicatorIds?: string[],
+  indicatorNames?: string[]
+) => {
+  if (!indicatorIds?.length && !indicatorNames?.length) {
+    return indicators; // Return all if no filters provided
+  }
+
+  return indicators.filter((indicator) => {
+    if (indicatorIds?.length) {
+      return indicatorIds.includes(indicator.id);
+    }
+    if (indicatorNames?.length) {
+      return indicatorNames.includes(indicator.name);
+    }
+    return false;
+  });
+};
+
+export const FilteredOutputsAndOutcomes = ({
+  indicatorIds,
+  indicatorNames,
+}: FilteredOutputsAndOutcomesProps) => {
   const { project, isProjectOwner } = useProjectStore();
+  const queryClient = useQueryClient();
 
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
@@ -50,11 +81,96 @@ export const OutputsAndOutcomes = () => {
   const isAuthorized =
     isConnected && (isProjectOwner || isContractOwner || isCommunityAdmin);
 
-  const [impactAnswers, setImpactAnswers] = useState<ImpactIndicatorWithData[]>(
-    []
-  );
   const [forms, setForms] = useState<OutputForm[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+
+  // Use React Query for fetching impact answers
+  const { data: impactAnswers = [], isLoading } = useQuery({
+    queryKey: ["impactAnswers", project?.uid, indicatorIds, indicatorNames],
+    queryFn: async () => {
+      if (!project?.uid) return [];
+      const data = await getImpactAnswers(project.uid as string);
+      return filterIndicators(data, indicatorIds, indicatorNames);
+    },
+    enabled:
+      !!project?.uid && !!indicatorIds?.length && !!indicatorNames?.length,
+  });
+
+  // Initialize forms when impact answers are loaded
+  useEffect(() => {
+    if (impactAnswers.length > 0) {
+      // Preserve editing state for forms that already exist
+      const existingForms = forms.reduce((acc, form) => {
+        acc[form.id] = {
+          isEditing: form.isEditing || false,
+          isEdited: form.isEdited || false,
+        };
+        return acc;
+      }, {} as Record<string, { isEditing: boolean; isEdited: boolean }>);
+
+      setForms(
+        impactAnswers.map((item) => ({
+          id: item.id,
+          categoryId: "", // ImpactIndicatorWithData doesn't have categoryId
+          datapoints:
+            item.datapoints.map((datapoint) => ({
+              value: datapoint.value,
+              proof: datapoint.proof || "",
+              startDate: datapoint.startDate || "",
+              endDate: datapoint.endDate || datapoint.outputTimestamp || "",
+              outputTimestamp: datapoint.outputTimestamp || "",
+            })) || [],
+          unitOfMeasure:
+            item.unitOfMeasure === "int" || item.unitOfMeasure === "float"
+              ? item.unitOfMeasure
+              : ("int" as "int" | "float"),
+          isEdited: existingForms[item.id]?.isEdited || false,
+          isEditing: existingForms[item.id]?.isEditing || false,
+        }))
+      );
+    }
+  }, [impactAnswers]);
+
+  // Use mutation for sending impact answers
+  const mutation = useMutation({
+    mutationFn: async ({
+      projectId,
+      indicatorId,
+      datapoints,
+    }: {
+      projectId: string;
+      indicatorId: string;
+      datapoints: any[];
+    }) => {
+      return sendImpactAnswers(projectId, indicatorId, datapoints);
+    },
+    onSuccess: () => {
+      // Reset editing state for all forms
+      setForms((prev) =>
+        prev.map((form) => ({
+          ...form,
+          isEditing: false,
+          isSaving: false,
+          isEdited: false,
+        }))
+      );
+
+      // Invalidate and refetch
+      queryClient.invalidateQueries({
+        queryKey: ["impactAnswers", project?.uid],
+      });
+    },
+    onError: () => {
+      toast.error(MESSAGES.GRANT.OUTPUTS.ERROR);
+
+      // Reset saving state but keep edited state
+      setForms((prev) =>
+        prev.map((form) => ({
+          ...form,
+          isSaving: false,
+        }))
+      );
+    },
+  });
 
   const handleSubmit = async (id: string) => {
     const form = forms.find((f) => f.id === id);
@@ -67,35 +183,11 @@ export const OutputsAndOutcomes = () => {
       prev.map((f) => (f.id === id ? { ...f, isSaving: true } : f))
     );
 
-    const success = await sendImpactAnswers(
-      project?.details?.data?.slug || (project?.uid as string),
-      id,
-      form.datapoints,
-      () => {
-        toast.success(MESSAGES.GRANT.OUTPUTS.SUCCESS);
-        handleCancel();
-      },
-      (error) => {
-        toast.error(MESSAGES.GRANT.OUTPUTS.ERROR);
-      }
-    );
-
-    setForms((prev) =>
-      prev.map((f) =>
-        f.id === id
-          ? {
-              ...f,
-              isSaving: false,
-              isEdited: !success,
-           }
-          : f
-      )
-    );
-
-    if (project && success) {
-      const response = await getImpactAnswers(project?.uid as string);
-      setImpactAnswers(response);
-    }
+    mutation.mutate({
+      projectId: project?.details?.data?.slug || (project?.uid as string),
+      indicatorId: id,
+      datapoints: form.datapoints,
+    });
   };
 
   const handleInputChange = (
@@ -112,6 +204,7 @@ export const OutputsAndOutcomes = () => {
               isEdited: true,
               datapoints: f.datapoints.map((datapoint, i) => {
                 if (i !== index) return datapoint;
+
                 return {
                   ...datapoint,
                   [field]: value,
@@ -123,50 +216,21 @@ export const OutputsAndOutcomes = () => {
     );
   };
 
-  async function getImpactAnswersData(projectUid: string, silent = false) {
-    if (!silent) setIsLoading(true);
-    try {
-      const outputDataWithAnswers = await getImpactAnswers(projectUid);
-      setImpactAnswers(outputDataWithAnswers);
-
-      // Initialize forms with existing values
-      setForms(
-        outputDataWithAnswers.map((item: any) => ({
-          id: item.id,
-          categoryId: item.categoryId,
-          datapoints:
-            item.datapoints.map((datapoint: any) => ({
-              value: datapoint.value,
-              proof: datapoint.proof || "",
-              startDate: datapoint.startDate || "",
-              endDate: datapoint.endDate || datapoint.outputTimestamp || "",
-              outputTimestamp: datapoint.outputTimestamp || "",
-            })) || [],
-          unitOfMeasure: item.unitOfMeasure,
-          isEdited: false,
-          isEditing: false,
-        }))
-      );
-    } catch (error) {
-      console.error("Error fetching impact answers:", error);
-      toast.error("Failed to load impact data");
-    } finally {
-      if (!silent) setIsLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    if (project) getImpactAnswersData(project.uid as string);
-  }, [project]);
-
   const handleEditClick = (id: string) => {
     setForms((prev) =>
       prev.map((f) => (f.id === id ? { ...f, isEditing: true } : f))
     );
   };
 
-  const handleCancel = async () => {
-    await getImpactAnswersData(project?.uid as string, true);
+  const handleCancel = () => {
+    // Reset forms to match the current data and clear editing state
+    setForms((prev) =>
+      prev.map((form) => ({
+        ...form,
+        isEditing: false,
+        isEdited: false,
+      }))
+    );
   };
 
   // Filter outputs based on authorization
@@ -175,26 +239,20 @@ export const OutputsAndOutcomes = () => {
     : impactAnswers.filter((item) => item.datapoints?.length);
 
   const handleAddEntry = (id: string) => {
-    const output = impactAnswers.find((o) => o.id === id);
-    output?.datapoints.push({
-      value: 0,
-      proof: "",
-      startDate: "",
-      endDate: "",
-    });
-
     setForms((prev) =>
       prev.map((f) =>
         f.id === id
           ? {
               ...f,
+              isEdited: true,
+              isEditing: true,
               datapoints: [
                 ...f.datapoints,
                 {
                   value: 0,
                   proof: "",
-                  startDate: new Date().toISOString(),
-                  endDate: new Date().toISOString(),
+                  startDate: new Date().toISOString().split("T")[0],
+                  endDate: new Date().toISOString().split("T")[0],
                 },
               ],
             }
@@ -204,9 +262,6 @@ export const OutputsAndOutcomes = () => {
   };
 
   const handleDeleteEntry = (id: string, index: number) => {
-    const output = impactAnswers.find((o) => o.id === id);
-    output?.datapoints.splice(index, 1);
-
     setForms((prev) =>
       prev.map((f) =>
         f.id === id
@@ -271,16 +326,6 @@ export const OutputsAndOutcomes = () => {
       return matchingTimestamps.length > 1;
     });
 
-  const hasInvalidDatesSameRow = (
-    id: string,
-    startDate: string,
-    endDate: string
-  ) => {
-    const form = forms.find((f) => f.id === id);
-    if (!form) return false;
-    return new Date(startDate) > new Date(endDate);
-  };
-
   const hasInvalidDates = (form: OutputForm) =>
     form.datapoints.some((datapoint) => {
       // Check if start date is after end date
@@ -290,6 +335,16 @@ export const OutputsAndOutcomes = () => {
       }
       return false;
     });
+
+  const hasInvalidDatesSameRow = (
+    id: string,
+    startDate: string,
+    endDate: string
+  ) => {
+    const form = forms.find((f) => f.id === id);
+    if (!form) return false;
+    return new Date(startDate) > new Date(endDate);
+  };
 
   return (
     <div className="w-full max-w-[100rem]">
@@ -347,7 +402,7 @@ export const OutputsAndOutcomes = () => {
                     </div>
                   </div>
                 </div>
-                <div className="flex flex-row gap-4 max-md:flex-col-reverse">
+                <div className="flex flex-col-reverse gap-4">
                   <div className="flex flex-1">
                     <div className="w-full">
                       <div className="flex flex-col">
@@ -375,7 +430,10 @@ export const OutputsAndOutcomes = () => {
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-gray-200 dark:divide-zinc-700">
-                                {item.datapoints.map((datapoint, index) => (
+                                {(form?.isEditing
+                                  ? form.datapoints
+                                  : item.datapoints
+                                ).map((datapoint, index) => (
                                   <tr key={index}>
                                     <td className="px-4 py-2">
                                       {form?.isEditing && isAuthorized ? (
@@ -510,7 +568,7 @@ export const OutputsAndOutcomes = () => {
                                                 form?.datapoints?.[index]
                                                   ?.outputTimestamp ||
                                                 ""
-                                           ) ||
+                                            ) ||
                                               (hasInvalidDatesSameRow(
                                                 item.id,
                                                 form?.datapoints?.[index]
@@ -519,7 +577,7 @@ export const OutputsAndOutcomes = () => {
                                                   ?.endDate
                                               ) &&
                                                 "border-2 border-red-500")
-                                         )}
+                                          )}
                                         />
                                       ) : (
                                         <span className="text-gray-900 dark:text-zinc-100">
@@ -691,7 +749,7 @@ export const OutputsAndOutcomes = () => {
       ) : (
         <div className="w-full text-center py-12 bg-white dark:bg-zinc-800/50 rounded-md border border-gray-200 dark:border-zinc-700">
           <p className="text-gray-600 dark:text-zinc-300">
-            {MESSAGES.GRANT.OUTPUTS.EMPTY}
+            {MESSAGES.GRANT.OUTPUTS.EMPTY_ALL}
           </p>
         </div>
       )}

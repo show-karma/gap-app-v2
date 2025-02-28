@@ -43,7 +43,7 @@ export const CommunityImpactFilterRow = () => {
         </div>
       </div>
       <div className="flex flex-row w-max max-w-full">
-        <div className="text-lg flex flex-row items-center gap-2 font-medium">
+        <div className="text-base flex flex-row items-center gap-2 font-medium">
           View aggregate impact
           <div className="flex items-center ml-2 mr-3">
             <button

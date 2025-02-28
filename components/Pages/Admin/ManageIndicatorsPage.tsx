@@ -174,7 +174,7 @@ export default function ManageIndicatorsPage() {
   return (
     <div className="mt-4 flex gap-8 flex-row max-lg:flex-col-reverse w-full">
       {loading ? (
-        <div className="flex w-full items-center justify-center">
+        <div className="flex w-full min-h-screen h-full items-center justify-center">
           <Spinner />
         </div>
       ) : isAdmin ? (

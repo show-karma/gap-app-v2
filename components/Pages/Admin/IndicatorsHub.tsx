@@ -5,138 +5,127 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { useIndicators } from "@/hooks/useIndicators";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { TrashIcon } from "@heroicons/react/24/outline";
+import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { DeleteDialog } from "@/components/DeleteDialog";
+import {
+  IndicatorForm,
+  IndicatorFormData,
+} from "@/components/Forms/IndicatorForm";
 import { Indicator } from "@/utilities/queries/getIndicatorsByCommunity";
+import { ProgramCard } from "./ProgramCard";
 
-const UNIT_TYPES = ["float", "int"] as const;
-type UnitType = (typeof UNIT_TYPES)[number];
+interface Program {
+  programId: string;
+  chainID: number;
+}
 
-const indicatorSchema = z.object({
-  name: z
-    .string()
-    .min(3, { message: "Name must be at least 3 characters long" })
-    .max(50, { message: "Name must be less than 50 characters" }),
-  description: z
-    .string()
-    .min(1, { message: "Description is required" })
-    .max(500, { message: "Description must be less than 500 characters" }),
-  unitOfMeasure: z.enum(UNIT_TYPES),
-});
+type IndicatorWithPrograms = Indicator & {
+  programs?: Program[];
+}
 
-
-export const autosyncedIndicators: Indicator[] = [
+export const autosyncedIndicators: IndicatorWithPrograms[] = [
   {
-    name: 'no_of_txs',
+    name: "no_of_txs",
     id: "",
     description: "No. of transactions",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'parttime_developers',
+    name: "parttime_developers",
     id: "",
     description: "No. of part time developers",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'active_developers',
+    name: "active_developers",
     id: "",
     description: "No. of active developers",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'fulltime_developers',
+    name: "fulltime_developers",
     id: "",
     description: "No. of full time developers",
-    unitOfMeasure: "int"
-  },
-  {
-    name: 'grants_received_usd',
-    id: "",
-    description: "Total grants received in USD",
-    unitOfMeasure: "float"
+    unitOfMeasure: "int",
   },
   {
     name: 'PULL_REQUEST_MERGED',
     id: "",
     description: "Number of pull requests merged",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'ISSUE_OPENED',
+    name: "ISSUE_OPENED",
     id: "",
     description: "Number of issues opened",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'FORKED',
+    name: "FORKED",
     id: "",
     description: "Number of repository forks",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'ISSUE_CLOSED',
+    name: "ISSUE_CLOSED",
     id: "",
     description: "Number of issues closed",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'ISSUE_COMMENT',
+    name: "ISSUE_COMMENT",
     id: "",
     description: "Number of comments on issues",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'PULL_REQUEST_REVIEW_COMMENT',
+    name: "PULL_REQUEST_REVIEW_COMMENT",
     id: "",
     description: "Number of pull request review comments",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'STARRED',
+    name: "STARRED",
     id: "",
     description: "Number of repository stars",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'COMMIT_CODE',
+    name: "COMMIT_CODE",
     id: "",
     description: "Number of code commits",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'PULL_REQUEST_OPENED',
+    name: "PULL_REQUEST_OPENED",
     id: "",
     description: "Number of pull requests opened",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'PULL_REQUEST_CLOSED',
+    name: "PULL_REQUEST_CLOSED",
     id: "",
     description: "Number of pull requests closed",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'PULL_REQUEST_REOPENED',
+    name: "PULL_REQUEST_REOPENED",
     id: "",
     description: "Number of pull requests reopened",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'RELEASE_PUBLISHED',
+    name: "RELEASE_PUBLISHED",
     id: "",
     description: "Number of releases published",
-    unitOfMeasure: "int"
-  }
-]
-
-
-type IndicatorFormData = z.infer<typeof indicatorSchema>;
+    unitOfMeasure: "int",
+  },
+];
 
 interface IndicatorsHubProps {
   communityId: string;
@@ -145,74 +134,95 @@ interface IndicatorsHubProps {
 export const IndicatorsHub = ({ communityId }: IndicatorsHubProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [editingIndicator, setEditingIndicator] = useState<IndicatorWithPrograms | null>(null);
   const [selectedAutosynced, setSelectedAutosynced] = useState<string>("");
+  const [formDefaultValues, setFormDefaultValues] = useState<
+    Partial<IndicatorFormData>
+  >({
+    name: "",
+    description: "",
+    unitOfMeasure: "int",
+    programs: [],
+  });
 
-  const { data: indicators = [], refetch } = useIndicators({
+  const { data: rawIndicators = [], refetch } = useIndicators({
     communityId,
   });
 
-  const {
-    register,
-    handleSubmit,
-    reset,
-    formState: { errors },
-  } = useForm<IndicatorFormData>({
-    resolver: zodResolver(indicatorSchema),
-  });
+  const indicators = rawIndicators as IndicatorWithPrograms[];
 
   const handleAutosyncedSelect = (name: string) => {
     if (!name) {
-      reset({
+      setFormDefaultValues({
         name: "",
         description: "",
-        unitOfMeasure: "int"
+        unitOfMeasure: "int",
+        programs: [],
       });
       setSelectedAutosynced("");
       return;
     }
 
-    const selectedIndicator = autosyncedIndicators.find(i => i.name === name);
+    const selectedIndicator = autosyncedIndicators.find((i) => i.name === name);
     if (selectedIndicator) {
-      reset({
+      setFormDefaultValues({
         name: selectedIndicator.name,
         description: selectedIndicator.description,
         unitOfMeasure: selectedIndicator.unitOfMeasure as "float" | "int",
+        programs: [],
       });
       setSelectedAutosynced(name);
     }
   };
 
-  const onSubmit = async (data: IndicatorFormData) => {
-    setIsLoading(true);
-    try {
-      const [response, error] = await fetchData(
-        INDEXER.COMMUNITY.INDICATORS.COMMUNITY.CREATE(communityId),
-        "POST",
-        {
-          ...data,
-        }
-      );
-      if (error) throw error;
+  const handleSuccess = async () => {
+    await refetch();
+    toast.success("Indicator created successfully");
+    setFormDefaultValues({
+      name: "",
+      description: "",
+      unitOfMeasure: "int",
+      programs: [],
+    });
+    setSelectedAutosynced("");
+  };
 
-      refetch();
-      toast.success("Indicator created successfully");
-      reset();
-      setSelectedAutosynced("");
-    } catch (error) {
-      errorManager("Failed to create indicator", error);
-      toast.error("Failed to create indicator");
-    } finally {
-      setIsLoading(false);
-    }
+  const handleError = () => {
+    toast.error("Failed to create indicator");
+  };
+
+  const handleEditSuccess = async () => {
+    await refetch();
+    toast.success("Indicator updated successfully");
+    setEditingIndicator(null);
+    setFormDefaultValues({
+      name: "",
+      description: "",
+      unitOfMeasure: "int",
+      programs: [],
+    });
+  };
+
+  const handleEditError = () => {
+    toast.error("Failed to update indicator");
+  };
+
+  const handleEditClick = (indicator: IndicatorWithPrograms) => {
+    setEditingIndicator(indicator);
+    setFormDefaultValues({
+      name: indicator.name,
+      description: indicator.description,
+      unitOfMeasure: indicator.unitOfMeasure as "float" | "int",
+      programs: indicator.programs || [],
+    });
   };
 
   const handleDelete = async (id: string) => {
     try {
       setDeletingId(id);
       const [, error] = await fetchData(
-        INDEXER.COMMUNITY.INDICATORS.COMMUNITY.DELETE(communityId),
-        "DELETE",
-        { indicatorId: id }
+        INDEXER.INDICATORS.DELETE(id),
+        "DELETE"
       );
       if (error) throw error;
 
@@ -229,82 +239,63 @@ export const IndicatorsHub = ({ communityId }: IndicatorsHubProps) => {
   return (
     <div className="w-full h-max max-h-full flex flex-col">
       <div className="bg-white dark:bg-zinc-800 rounded-lg p-6 mb-6">
-        <h3 className="text-lg font-semibold mb-4">Create New Indicator</h3>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium mb-1">Select Autosynced Indicator (Optional)</label>
-            <select
-              value={selectedAutosynced}
-              onChange={(e) => handleAutosyncedSelect(e.target.value)}
-              className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"
-            >
-              <option value="">Create Custom Indicator</option>
-              {autosyncedIndicators.map((indicator) => (
-                <option key={indicator.name} value={indicator.name}>
-                  {indicator.description}
-                </option>
-              ))}
-            </select>
-          </div>
+        <h3 className="text-lg font-semibold mb-4">
+          {editingIndicator ? "Edit Indicator" : "Create New Indicator"}
+        </h3>
+        <div className="space-y-4">
+          {!editingIndicator && (
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Select Autosynced Indicator (Optional)
+              </label>
+              <select
+                value={selectedAutosynced}
+                onChange={(e) => handleAutosyncedSelect(e.target.value)}
+                className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"
+              >
+                <option value="">Create Custom Indicator</option>
+                {autosyncedIndicators.map((indicator) => (
+                  <option key={indicator.name} value={indicator.name}>
+                    {indicator.description}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
-          <div>
-            <label className="block text-sm font-medium mb-1">Name</label>
-            <input
-              {...register("name")}
-              className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"
-              placeholder="Enter indicator name"
-              readOnly={!!selectedAutosynced}
-            />
-            {errors.name && (
-              <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Description</label>
-            <textarea
-              {...register("description")}
-              className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"
-              placeholder="Enter indicator description"
-              rows={2}
-              readOnly={!!selectedAutosynced}
-            />
-            {errors.description && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.description.message}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Unit Type</label>
-            <select
-              {...register("unitOfMeasure")}
-              className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"
-              disabled={!!selectedAutosynced}
-            >
-              {UNIT_TYPES.map((type) => (
-                <option key={type} value={type}>
-                  {type.charAt(0).toUpperCase() + type.slice(1)}
-                </option>
-              ))}
-            </select>
-            {errors.unitOfMeasure && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.unitOfMeasure.message}
-              </p>
-            )}
-          </div>
-
-          <Button
-            type="submit"
-            disabled={isLoading}
+          <IndicatorForm
+            communityId={communityId}
+            onSuccess={editingIndicator ? handleEditSuccess : handleSuccess}
+            onError={editingIndicator ? handleEditError : handleError}
             isLoading={isLoading}
-            className="w-full"
-          >
-            Create Indicator
-          </Button>
-        </form>
+            defaultValues={formDefaultValues}
+            indicatorId={editingIndicator?.id}
+            readOnlyFields={{
+              name: !!selectedAutosynced || (!!editingIndicator && autosyncedIndicators.some(i => i.name === editingIndicator.name)),
+              description: !!selectedAutosynced || (!!editingIndicator && autosyncedIndicators.some(i => i.name === editingIndicator.name)),
+              unitOfMeasure: !!selectedAutosynced || (!!editingIndicator && autosyncedIndicators.some(i => i.name === editingIndicator.name)),
+            }}
+          />
+
+          {editingIndicator && (
+            <div className="flex justify-end mt-4">
+              <Button
+                onClick={() => {
+                  setEditingIndicator(null);
+                  setFormDefaultValues({
+                    name: "",
+                    description: "",
+                    unitOfMeasure: "int",
+                    programs: [],
+                  });
+                }}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-900 dark:bg-zinc-700 dark:hover:bg-zinc-600 dark:text-gray-100"
+              >
+                Cancel Edit
+              </Button>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="bg-white dark:bg-zinc-800 rounded-lg p-6 flex-1">
@@ -323,26 +314,55 @@ export const IndicatorsHub = ({ communityId }: IndicatorsHubProps) => {
                   <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
                     {indicator.description}
                   </p>
-                  <span className="text-xs bg-white dark:bg-zinc-800 px-2 py-0.5 rounded-full border border-gray-200 dark:border-zinc-700 mt-1 inline-block">
-                    {indicator.unitOfMeasure}
-                  </span>
-                  {autosyncedIndicators.find(i => i.name === indicator.name) && (
-                    <span className="ml-1 px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 rounded-full">
-                      Autosynced
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    <span className="text-xs bg-white dark:bg-zinc-800 px-2 py-0.5 rounded-full border border-gray-200 dark:border-zinc-700 inline-block">
+                      {indicator.unitOfMeasure}
                     </span>
+                    {autosyncedIndicators.find(
+                      (i) => i.name === indicator.name
+                    ) && (
+                        <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 rounded-full">
+                          Autosynced
+                        </span>
+                      )}
+                  </div>
+                  {indicator.programs && indicator.programs.length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                        Associated Programs:
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {indicator.programs.map((program: Program) => (
+                          <ProgramCard
+                            key={`${program.programId}-${program.chainID}`}
+                            programId={program.programId}
+                            chainID={program.chainID}
+                          />
+                        ))}
+                      </div>
+                    </div>
                   )}
                 </div>
-                <DeleteDialog
-                  title={`Are you sure you want to delete ${indicator.name}?`}
-                  deleteFunction={() => handleDelete(indicator.id)}
-                  isLoading={deletingId === indicator.id}
-                  buttonElement={{
-                    icon: <TrashIcon className="h-4 w-4" />,
-                    text: "",
-                    styleClass:
-                      "text-red-500 hover:text-red-700 transition-colors p-1.5 ml-2 bg-transparent hover:bg-transparent hover:opacity-75",
-                  }}
-                />
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => handleEditClick(indicator)}
+                    className="text-blue-500 hover:text-blue-700 transition-colors p-1.5 bg-transparent hover:bg-transparent hover:opacity-75 disabled:opacity-50 disabled:cursor-not-allowed"
+                    disabled={editingIndicator?.id === indicator.id}
+                  >
+                    <PencilSquareIcon className="h-4 w-4" />
+                  </button>
+                  <DeleteDialog
+                    title={`Are you sure you want to delete ${indicator.name}?`}
+                    deleteFunction={() => handleDelete(indicator.id)}
+                    isLoading={deletingId === indicator.id}
+                    buttonElement={{
+                      icon: <TrashIcon className="h-4 w-4" />,
+                      text: "",
+                      styleClass:
+                        "text-red-500 hover:text-red-700 transition-colors p-1.5 ml-2 bg-transparent hover:bg-transparent hover:opacity-75",
+                    }}
+                  />
+                </div>
               </div>
             ))
           ) : (

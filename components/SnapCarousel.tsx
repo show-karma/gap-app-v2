@@ -59,6 +59,7 @@ interface CarouselProps<T> {
 interface CarouselRenderItemProps<T> {
   item: T;
   isSnapPoint: boolean;
+  index: number;
 }
 
 export const Carousel = <T extends any>({
@@ -83,6 +84,7 @@ export const Carousel = <T extends any>({
           renderItem({
             item,
             isSnapPoint: snapPointIndexes.has(i),
+            index: i,
           })
         )}
       </ul>
