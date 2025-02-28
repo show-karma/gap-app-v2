@@ -18,8 +18,7 @@ import { useAccount } from "wagmi";
 import { prepareChartData } from "../../Communities/Impact/ImpactCharts";
 import { GrantsOutputsLoading } from "../Loading/Grants/Outputs";
 import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
-mport { sendImpactAnswers, getImpactAnswers } from "@/utilities/impact";
-
+import { sendImpactAnswers, getImpactAnswers } from "@/utilities/impact";
 
 type OutputForm = {
   id: string;
@@ -87,7 +86,7 @@ export const OutputsAndOutcomes = () => {
               ...f,
               isSaving: false,
               isEdited: !success,
-           }
+            }
           : f
       )
     );
@@ -510,7 +509,7 @@ export const OutputsAndOutcomes = () => {
                                                 form?.datapoints?.[index]
                                                   ?.outputTimestamp ||
                                                 ""
-                                           ) ||
+                                            ) ||
                                               (hasInvalidDatesSameRow(
                                                 item.id,
                                                 form?.datapoints?.[index]
@@ -519,7 +518,7 @@ export const OutputsAndOutcomes = () => {
                                                   ?.endDate
                                               ) &&
                                                 "border-2 border-red-500")
-                                         )}
+                                          )}
                                         />
                                       ) : (
                                         <span className="text-gray-900 dark:text-zinc-100">

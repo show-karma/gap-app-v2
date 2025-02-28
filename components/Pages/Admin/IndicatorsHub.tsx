@@ -26,7 +26,7 @@ interface Program {
 
 type IndicatorWithPrograms = Indicator & {
   programs?: Program[];
-}
+};
 
 export const autosyncedIndicators: IndicatorWithPrograms[] = [
   {
@@ -54,7 +54,7 @@ export const autosyncedIndicators: IndicatorWithPrograms[] = [
     unitOfMeasure: "int",
   },
   {
-    name: 'PULL_REQUEST_MERGED',
+    name: "PULL_REQUEST_MERGED",
     id: "",
     description: "Number of pull requests merged",
     unitOfMeasure: "int",
@@ -134,7 +134,8 @@ interface IndicatorsHubProps {
 export const IndicatorsHub = ({ communityId }: IndicatorsHubProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [editingIndicator, setEditingIndicator] = useState<IndicatorWithPrograms | null>(null);
+  const [editingIndicator, setEditingIndicator] =
+    useState<IndicatorWithPrograms | null>(null);
   const [selectedAutosynced, setSelectedAutosynced] = useState<string>("");
   const [formDefaultValues, setFormDefaultValues] = useState<
     Partial<IndicatorFormData>
@@ -271,9 +272,24 @@ export const IndicatorsHub = ({ communityId }: IndicatorsHubProps) => {
             defaultValues={formDefaultValues}
             indicatorId={editingIndicator?.id}
             readOnlyFields={{
-              name: !!selectedAutosynced || (!!editingIndicator && autosyncedIndicators.some(i => i.name === editingIndicator.name)),
-              description: !!selectedAutosynced || (!!editingIndicator && autosyncedIndicators.some(i => i.name === editingIndicator.name)),
-              unitOfMeasure: !!selectedAutosynced || (!!editingIndicator && autosyncedIndicators.some(i => i.name === editingIndicator.name)),
+              name:
+                !!selectedAutosynced ||
+                (!!editingIndicator &&
+                  autosyncedIndicators.some(
+                    (i) => i.name === editingIndicator.name
+                  )),
+              description:
+                !!selectedAutosynced ||
+                (!!editingIndicator &&
+                  autosyncedIndicators.some(
+                    (i) => i.name === editingIndicator.name
+                  )),
+              unitOfMeasure:
+                !!selectedAutosynced ||
+                (!!editingIndicator &&
+                  autosyncedIndicators.some(
+                    (i) => i.name === editingIndicator.name
+                  )),
             }}
           />
 
@@ -321,10 +337,10 @@ export const IndicatorsHub = ({ communityId }: IndicatorsHubProps) => {
                     {autosyncedIndicators.find(
                       (i) => i.name === indicator.name
                     ) && (
-                        <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 rounded-full">
-                          Autosynced
-                        </span>
-                      )}
+                      <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 rounded-full">
+                        Autosynced
+                      </span>
+                    )}
                   </div>
                   {indicator.programs && indicator.programs.length > 0 && (
                     <div className="mt-2">
