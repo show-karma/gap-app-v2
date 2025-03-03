@@ -105,7 +105,7 @@ export const LinkOSOProfileButton: FC<
             >
                 <FingerPrintIcon className={"mr-2 h-5 w-5"}
                     aria-hidden="true" />
-                Link OSO Profile
+                Link OSO Profiles
             </Button>
             <Transition appear show={isOpen} as={Fragment}>
                 <Dialog
@@ -142,7 +142,7 @@ export const LinkOSOProfileButton: FC<
                                         className="text-gray-900 dark:text-zinc-100"
                                     >
                                         <h2 className="text-2xl font-bold leading-6">
-                                            Link OSO Profile
+                                            Link OSO Profiles
                                         </h2>
                                         <p className="text-md text-gray-500 dark:text-gray-400 mt-2">
                                             Add one or more OSO profile IDs for the project. This will enable the project to retrieve its OSO profile metrics.

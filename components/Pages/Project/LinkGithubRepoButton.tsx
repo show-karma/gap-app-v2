@@ -315,7 +315,7 @@ export const LinkGithubRepoButton: FC<
                                                         </div>
                                                         <div className="flex items-center">
                                                             {validatingRepo === index ? (
-                                                                <span className="text-sm animate-pulse mx-1">Validating...</span>
+                                                                <span className="text-sm animate-pulse mx-2">Validating...</span>
                                                             ) : validatedRepos[index] ? (
                                                                 <div className="relative group">
                                                                     <CheckIcon className="h-9 w-10 text-green-500 p-2 mx-1 border border-green-500 rounded-md" aria-label="Validated" />
@@ -326,7 +326,7 @@ export const LinkGithubRepoButton: FC<
                                                             ) : (
                                                                 <Button
                                                                     onClick={() => validateGithubRepo(repo, index)}
-                                                                    className="p-2"
+                                                                    className="p-2 ml-2"
                                                                     aria-label="Validate repository"
                                                                     disabled={!repo.trim()}
                                                                 >
