@@ -575,8 +575,10 @@ const ecosystems = [
   "Zilliqa",
 ];
 const categories = [
+  "AI",
   "DEX",
   "DeFi",
+  "DeFAI",
   "GameFi",
   "NFT",
   "Lend/Borrow",

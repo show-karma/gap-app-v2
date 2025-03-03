@@ -136,7 +136,7 @@ export const LinkContractAddressButton: FC<
             >
                 <LinkIcon className={"mr-2 h-5 w-5"}
                     aria-hidden="true" />
-                Link Contract
+                Link Contracts
             </Button>
             <Transition appear show={isOpen} as={Fragment}>
                 <Dialog
