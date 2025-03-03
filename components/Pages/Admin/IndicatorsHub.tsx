@@ -6,11 +6,8 @@ import { useIndicators } from "@/hooks/useIndicators";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useState } from "react";
-import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { z } from "zod";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import {
   IndicatorForm,
@@ -24,6 +21,7 @@ interface Program {
   chainID: number;
 }
 
+
 type IndicatorWithPrograms = Indicator & {
   programs?: Program[];
 }
@@ -32,100 +30,112 @@ export const autosyncedIndicators: IndicatorWithPrograms[] = [
   {
     name: "no_of_txs",
     id: "",
-    description: "No. of transactions",
-    unitOfMeasure: "int",
+    description: "No. of transactions (*dune)",
+    unitOfMeasure: "int"
   },
   {
     name: "parttime_developers",
     id: "",
-    description: "No. of part time developers",
-    unitOfMeasure: "int",
+    description: "No. of part time developers (*oso)",
+    unitOfMeasure: "int"
   },
   {
     name: "active_developers",
     id: "",
-    description: "No. of active developers",
-    unitOfMeasure: "int",
+    description: "No. of active developers (*oso)",
+    unitOfMeasure: "int"
   },
   {
     name: "fulltime_developers",
     id: "",
-    description: "No. of full time developers",
-    unitOfMeasure: "int",
+    description: "No. of full time developers (*oso)",
+    unitOfMeasure: "int"
   },
   {
     name: 'PULL_REQUEST_MERGED',
     id: "",
-    description: "Number of pull requests merged",
-    unitOfMeasure: "int",
+    description: "Number of pull requests merged (*oso)",
+    unitOfMeasure: "int"
   },
   {
     name: "ISSUE_OPENED",
     id: "",
-    description: "Number of issues opened",
-    unitOfMeasure: "int",
+    description: "Number of issues opened (*oso)",
+    unitOfMeasure: "int"
   },
   {
     name: "FORKED",
     id: "",
-    description: "Number of repository forks",
-    unitOfMeasure: "int",
+    description: "Number of repository forks (*oso)",
+    unitOfMeasure: "int"
   },
   {
     name: "ISSUE_CLOSED",
     id: "",
-    description: "Number of issues closed",
-    unitOfMeasure: "int",
+    description: "Number of issues closed (*oso)",
+    unitOfMeasure: "int"
   },
   {
     name: "ISSUE_COMMENT",
     id: "",
-    description: "Number of comments on issues",
-    unitOfMeasure: "int",
+    description: "Number of comments on issues (*oso)",
+    unitOfMeasure: "int"
   },
   {
     name: "PULL_REQUEST_REVIEW_COMMENT",
     id: "",
-    description: "Number of pull request review comments",
-    unitOfMeasure: "int",
+    description: "Number of pull request review comments (*oso)",
+    unitOfMeasure: "int"
   },
   {
     name: "STARRED",
     id: "",
-    description: "Number of repository stars",
-    unitOfMeasure: "int",
+    description: "Number of repository stars (*oso)",
+    unitOfMeasure: "int"
   },
   {
     name: "COMMIT_CODE",
     id: "",
-    description: "Number of code commits",
-    unitOfMeasure: "int",
+    description: "Number of code commits (*oso)",
+    unitOfMeasure: "int"
+  },
+  {
+    name: 'GitHub Commits',
+    id: "",
+    description: "Number of code commits (*github)",
+    unitOfMeasure: "int"
   },
   {
     name: "PULL_REQUEST_OPENED",
     id: "",
-    description: "Number of pull requests opened",
-    unitOfMeasure: "int",
+    description: "Number of pull requests opened (*oso)",
+    unitOfMeasure: "int"
   },
   {
     name: "PULL_REQUEST_CLOSED",
     id: "",
-    description: "Number of pull requests closed",
-    unitOfMeasure: "int",
+    description: "Number of pull requests closed (*oso)",
+    unitOfMeasure: "int"
+  },
+  {
+    name: 'GitHub Merged PRs',
+    id: "",
+    description: "Number of pull requests merged (*github)",
+    unitOfMeasure: "int"
   },
   {
     name: "PULL_REQUEST_REOPENED",
     id: "",
-    description: "Number of pull requests reopened",
-    unitOfMeasure: "int",
+    description: "Number of pull requests reopened (*oso)",
+    unitOfMeasure: "int"
   },
   {
     name: "RELEASE_PUBLISHED",
     id: "",
-    description: "Number of releases published",
-    unitOfMeasure: "int",
-  },
-];
+    description: "Number of releases published (*oso)",
+    unitOfMeasure: "int"
+  }
+]
 
 interface IndicatorsHubProps {
   communityId: string;
@@ -144,7 +154,6 @@ export const IndicatorsHub = ({ communityId }: IndicatorsHubProps) => {
     unitOfMeasure: "int",
     programs: [],
   });
-
   const { data: rawIndicators = [], refetch } = useIndicators({
     communityId,
   });
@@ -237,7 +246,7 @@ export const IndicatorsHub = ({ communityId }: IndicatorsHubProps) => {
   };
 
   return (
-    <div className="w-full h-max max-h-full flex flex-col">
+    <div className="w-full h-max max-h-full flex flex-col" >
       <div className="bg-white dark:bg-zinc-800 rounded-lg p-6 mb-6">
         <h3 className="text-lg font-semibold mb-4">
           {editingIndicator ? "Edit Indicator" : "Create New Indicator"}
@@ -372,6 +381,6 @@ export const IndicatorsHub = ({ communityId }: IndicatorsHubProps) => {
           )}
         </div>
       </div>
-    </div>
+    </div >
   );
 };

@@ -29,6 +29,8 @@ import { Fragment, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
 import { LinkContractAddressButton } from "./LinkContractAddressButton";
+import { LinkGithubRepoButton } from "./LinkGithubRepoButton";
+
 import { LinkOSOProfileButton } from "./LinkOSOProfileButton";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
@@ -136,7 +138,7 @@ export const ProjectOptionsMenu = () => {
       {isTransferOwnershipModalOpen ? (
         <TransferOwnershipDialog buttonElement={null} />
       ) : null}
-      <Menu as="div" className="relative inline-block text-left z-100">
+      <Menu as="div" className={`relative inline-block text-left z-10`}>
         <div>
           <Menu.Button className="w-max bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-100 hover:dark:bg-zinc-800 text-black dark:text-white p-2 rounded-lg">
             <EllipsisVerticalIcon className="h-5 w-5" aria-hidden="true" />
@@ -202,6 +204,11 @@ export const ProjectOptionsMenu = () => {
               {isAuthorized ? (
                 <Menu.Item>
                   <LinkContractAddressButton buttonClassName={buttonClassName} project={project as IProjectResponse & { external: Record<string, string[]> }} />
+                </Menu.Item>
+              ) : null}
+              {isAuthorized ? (
+                <Menu.Item>
+                  <LinkGithubRepoButton buttonClassName={buttonClassName} project={project as IProjectResponse & { external: Record<string, string[]> }} />
                 </Menu.Item>
               ) : null}
               {isAuthorized ? (
