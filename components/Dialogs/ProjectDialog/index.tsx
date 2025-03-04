@@ -163,7 +163,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   buttonElement = {
     icon: <PlusIcon className="h-4 w-4 text-white" />,
     iconSide: "left",
-    text: "Add Project",
+    text: "Create Project",
     styleClass: "",
   },
   projectToUpdate,

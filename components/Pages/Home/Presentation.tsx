@@ -25,7 +25,7 @@ const ProjectDialog = dynamic(
     ssr: false,
     loading: () => (
       <Button className="flex rounded-md hover:opacity-75 border-none transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-3 bg-brand-darkblue dark:bg-gray-700 px-7 py-4 text-lg font-semibold leading-7 text-white hover:bg-brand-darkblue max-2xl:px-5 max-2xl:text-base max-lg:text-sm">
-        Add your project
+        Create your project
         <img
           className="h-6 w-6 text-white"
           alt="Contact"
@@ -67,7 +67,7 @@ export const Presentation = () => {
                     />
                   ),
                   iconSide: "right",
-                  text: "Add your project",
+                  text: "Create your project",
                   styleClass:
                     "max-sm:px-2 max-sm:py-2 flex rounded-md hover:opacity-75 border-none transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-3 bg-brand-darkblue dark:bg-gray-700 px-7 py-4 text-lg font-semibold leading-7 text-white hover:bg-brand-darkblue max-2xl:px-5 max-2xl:text-base max-lg:text-sm",
                 }}
