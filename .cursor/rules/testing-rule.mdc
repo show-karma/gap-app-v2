@@ -1,0 +1,12 @@
+---
+description: This rule is for writing tests
+globs: 
+alwaysApply: false
+---
+
+
+#### Testing
+- Write unit tests for critical functionality
+- Use Jest and React Testing Library for testing
+- Mock external dependencies in tests
+- Test both success and error cases

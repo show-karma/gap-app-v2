@@ -1,0 +1,15 @@
+---
+description: This rule is for components
+globs: 
+alwaysApply: false
+---
+
+#### Components
+- Use the "use client" directive for client components
+- Organize components by feature or functionality
+- Use TypeScript interfaces for component props
+- Export components as named exports
+- Use PascalCase for component names
+- Use descriptive prop names
+- Use destructuring for props
+- Use the `cn` utility for conditional class names

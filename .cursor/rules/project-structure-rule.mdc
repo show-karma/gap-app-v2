@@ -1,0 +1,16 @@
+---
+description: This rule is for the project structure
+globs: 
+alwaysApply: false
+---
+
+### Project Structure
+This is a Next.js application with the following structure:
+- `/app`: Next.js App Router pages and layouts
+- `/components`: React components organized by feature/functionality
+- `/hooks`: Custom React hooks
+- `/store`: Zustand state management
+- `/utilities`: Helper functions and utilities
+- `/types`: TypeScript type definitions
+- `/public`: Static assets
+- `/styles`: Global styles

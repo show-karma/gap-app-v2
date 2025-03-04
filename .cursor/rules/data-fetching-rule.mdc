@@ -1,0 +1,11 @@
+---
+description: This rule is for data fetching
+globs: 
+alwaysApply: false
+---
+
+#### Data Fetching
+- Use React Query for data fetching and caching
+- Use the fetchData utility for API calls
+- Handle loading and error states
+- Implement proper retry logic for failed requests

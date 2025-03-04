@@ -1,0 +1,11 @@
+---
+description: This rule is for web3 integrations
+globs: 
+alwaysApply: false
+---
+
+#### Web3 Integration
+- Use wagmi hooks for Web3 interactions
+- Handle wallet connection states properly
+- Provide clear feedback for Web3 actions
+- Support multiple wallet types (EOA and Safe)

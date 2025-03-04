@@ -1,0 +1,11 @@
+---
+description: This rule is for writing event handlers
+globs: 
+alwaysApply: false
+---
+
+#### Event Handlers
+- Event handler functions should be named with a "handle" prefix (e.g., "handleClick", "handleSubmit")
+- Use arrow functions for event handlers
+- Define event handlers as const functions (e.g., `const handleClick = () => {}`)
+- Specify proper TypeScript types for event handlers

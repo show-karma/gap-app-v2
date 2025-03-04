@@ -1,0 +1,12 @@
+---
+description: This rule is for error handling
+globs: 
+alwaysApply: false
+---
+
+#### Error Handling
+- Use try/catch blocks for error handling
+- Use the errorManager utility for consistent error reporting
+- Provide meaningful error messages
+- Handle loading and error states in UI components
+

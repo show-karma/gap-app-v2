@@ -1,0 +1,11 @@
+---
+description: This rule is for state management
+globs: 
+alwaysApply: false
+---
+
+#### State Management
+- Use Zustand for global state management
+- Use React Query for server state management
+- Use React hooks for local component state
+- Create custom hooks for reusable logic

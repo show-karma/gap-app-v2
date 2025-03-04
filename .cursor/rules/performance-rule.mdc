@@ -1,0 +1,11 @@
+---
+description: This rule is for performance
+globs: 
+alwaysApply: false
+---
+
+#### Performance
+- Use React.memo for expensive components
+- Implement virtualization for long lists
+- Optimize images and assets
+- Use proper key props for lists

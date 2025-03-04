@@ -1,0 +1,12 @@
+---
+description: This rule is for styling components
+globs: 
+alwaysApply: false
+---
+#### Styling
+- Always use Tailwind classes for styling HTML elements; avoid using CSS or inline styles
+- Use the `cn` utility from `@/utilities/tailwind` for conditional class names
+- Follow the project's color scheme and design system
+- Use responsive design with Tailwind's responsive modifiers
+- Use dark mode classes with `dark:` prefix for dark mode support
+
