@@ -8,14 +8,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/auth";
 import { useAccount, useSwitchChain } from "wagmi";
-import { getWalletClient } from "@wagmi/core";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { MESSAGES } from "@/utilities/messages";
 import { getGapClient, useGap } from "@/hooks";
 import { useStepper } from "@/store/modals/txStepper";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { config } from "@/utilities/wagmi/config";
 import {
   IGrantUpdate,
   IGrantUpdateStatus,
@@ -84,10 +83,14 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
         await switchChainAsync?.({ chainId: grantUpdate.chainID });
         gapClient = getGapClient(grantUpdate.chainID);
       }
-      const walletClient = await getWalletClient(config, {
-        chainId: grantUpdate.chainID,
-      });
-      if (!walletClient || !address || !gapClient) return;
+
+      const { walletClient, error } = await safeGetWalletClient(
+        grantUpdate.chainID
+      );
+
+      if (error || !walletClient || !gapClient) {
+        throw new Error("Failed to connect to wallet", { cause: error });
+      }
       const walletSigner = await walletClientToSigner(walletClient);
 
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);

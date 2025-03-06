@@ -10,8 +10,7 @@ import { useAccount, useSwitchChain } from "wagmi";
 import { useProjectStore } from "@/store";
 import { getGapClient, useGap } from "@/hooks";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
-import { getWalletClient } from "@wagmi/core";
-import { config } from "@/utilities/wagmi/config";
+
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { useStepper } from "@/store/modals/txStepper";
 import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
@@ -26,6 +25,7 @@ import { XMarkIcon } from "@heroicons/react/24/solid";
 import { cn } from "@/utilities/tailwind";
 import { useQuery } from "@tanstack/react-query";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 const objectiveSchema = z.object({
   title: z
@@ -103,9 +103,14 @@ export const ProjectObjectiveForm = ({
         refUID: project?.uid,
         recipient: address || "0x00",
       });
-      const walletClient = await getWalletClient(config, {
-        chainId: project?.chainID as number,
-      });
+
+      const { walletClient, error } = await safeGetWalletClient(
+        project?.chainID as number
+      );
+
+      if (error || !walletClient || !gapClient) {
+        throw new Error("Failed to connect to wallet", { cause: error });
+      }
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
       const sanitizedData = {
@@ -184,10 +189,13 @@ export const ProjectObjectiveForm = ({
         gapClient = getGapClient(project?.chainID as number);
       }
 
-      const walletClient = await getWalletClient(config, {
-        chainId: project?.chainID as number,
-      });
-      if (!walletClient) return;
+      const { walletClient, error } = await safeGetWalletClient(
+        project?.chainID as number
+      );
+
+      if (error || !walletClient || !gapClient) {
+        throw new Error("Failed to connect to wallet", { cause: error });
+      }
       const walletSigner = await walletClientToSigner(walletClient);
       const sanitizedData = {
         title: sanitizeInput(data.title),

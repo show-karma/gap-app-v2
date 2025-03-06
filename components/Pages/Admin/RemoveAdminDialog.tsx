@@ -15,7 +15,7 @@ import { GAP } from "@show-karma/karma-gap-sdk";
 import { Button } from "../../Utilities/Button";
 import { MESSAGES } from "@/utilities/messages";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { getWalletClient } from "@wagmi/core";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useStepper } from "@/store/modals/txStepper";
 import toast from "react-hot-toast";
 import { config } from "@/utilities/wagmi/config";
@@ -84,9 +84,12 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
     if (chain?.id != chainid) {
       await switchChainAsync?.({ chainId: chainid });
     }
-    const walletClient = await getWalletClient(config, {
-      chainId: chainid,
-    });
+
+    const { walletClient, error } = await safeGetWalletClient(chainid);
+
+    if (error || !walletClient) {
+      throw new Error("Failed to connect to wallet", { cause: error });
+    }
     if (!walletClient) return;
     const walletSigner = await walletClientToSigner(walletClient);
     try {

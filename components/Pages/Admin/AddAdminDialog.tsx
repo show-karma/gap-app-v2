@@ -15,7 +15,7 @@ import { Button } from "../../Utilities/Button";
 import { MESSAGES } from "@/utilities/messages";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { cn } from "@/utilities/tailwind";
-import { getWalletClient } from "@wagmi/core";
+
 import { useStepper } from "@/store/modals/txStepper";
 import toast from "react-hot-toast";
 import { config } from "@/utilities/wagmi/config";
@@ -25,6 +25,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { sanitizeInput } from "@/utilities/sanitize";
 import { isAddress } from "viem";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -104,10 +105,12 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
     if (chain?.id != chainid) {
       await switchChainAsync?.({ chainId: chainid });
     }
-    const walletClient = await getWalletClient(config, {
-      chainId: chainid,
-    });
-    if (!walletClient) return;
+
+    const { walletClient, error } = await safeGetWalletClient(chainid);
+
+    if (error || !walletClient) {
+      throw new Error("Failed to connect to wallet", { cause: error });
+    }
     const walletSigner = await walletClientToSigner(walletClient);
     try {
       const communityResolver = await GAP.getCommunityResolver(walletSigner);

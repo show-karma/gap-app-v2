@@ -22,7 +22,7 @@ import {
   IMilestoneCompleted,
   IMilestoneResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getWalletClient } from "@wagmi/core";
+
 import { useRouter } from "next/navigation";
 import { type FC, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -31,6 +31,7 @@ import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
 import { ShareDialog } from "../Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/ShareDialog";
 import { errorManager } from "../Utilities/errorManager";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 interface MilestoneUpdateFormProps {
   milestone: IMilestoneResponse;
@@ -121,10 +122,14 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== milestone.chainID) {
         await switchChainAsync?.({ chainId: milestone.chainID });
       }
-      const walletClient = await getWalletClient(config, {
-        chainId: milestone.chainID,
-      });
-      if (!walletClient || !gapClient) return;
+
+      const { walletClient, error } = await safeGetWalletClient(
+        milestone.chainID
+      );
+
+      if (error || !walletClient || !gapClient) {
+        throw new Error("Failed to connect to wallet", { cause: error });
+      }
       const walletSigner = await walletClientToSigner(walletClient);
 
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
@@ -228,9 +233,14 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         await switchChainAsync?.({ chainId: milestone.chainID });
         gapClient = getGapClient(milestone.chainID);
       }
-      const walletClient = await getWalletClient(config, {
-        chainId: milestone.chainID,
-      });
+
+      const { walletClient, error } = await safeGetWalletClient(
+        milestone.chainID
+      );
+
+      if (error || !walletClient || !gapClient) {
+        throw new Error("Failed to connect to wallet", { cause: error });
+      }
       if (!walletClient || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);

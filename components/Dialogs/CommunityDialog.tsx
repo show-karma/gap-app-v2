@@ -18,7 +18,7 @@ import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { appNetwork } from "@/utilities/network";
 import { cn } from "@/utilities/tailwind";
 import { getGapClient, useGap } from "@/hooks";
-import { getWalletClient } from "@wagmi/core";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import toast from "react-hot-toast";
 import { useStepper } from "@/store/modals/txStepper";
 import { config } from "@/utilities/wagmi/config";
@@ -122,10 +122,12 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
         data.slug = await gapClient.generateSlug(data.slug as string);
       }
 
-      const walletClient = await getWalletClient(config, {
-        chainId: selectedChain,
-      });
-      if (!walletClient) return;
+      // Replace direct getWalletClient call with safeGetWalletClient
+      const { walletClient, error } = await safeGetWalletClient(selectedChain);
+
+      if (error || !walletClient) {
+        throw new Error("Failed to connect to wallet", { cause: error });
+      }
       const walletSigner = await walletClientToSigner(walletClient);
       const sanitizedData = sanitizeObject({
         name: data.name,
