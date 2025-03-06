@@ -196,7 +196,7 @@ export default function ManageIndicatorsPage() {
             <div className="flex-1 flex gap-8">
               <div className="bg-gray-50 dark:bg-zinc-900 rounded-lg p-8  h-max max-h-full w-full">
                 <h2 className="text-2xl font-bold mb-6">Manage Indicators</h2>
-                <IndicatorsHub communityId={community?.uid as string} />
+                <IndicatorsHub communitySlug={community?.details?.data?.slug as string} communityId={community?.uid as string} />
               </div>
             </div>
 

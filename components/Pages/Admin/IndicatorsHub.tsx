@@ -138,10 +138,11 @@ export const autosyncedIndicators: IndicatorWithPrograms[] = [
 ]
 
 interface IndicatorsHubProps {
+  communitySlug: string;
   communityId: string;
 }
 
-export const IndicatorsHub = ({ communityId }: IndicatorsHubProps) => {
+export const IndicatorsHub = ({ communitySlug, communityId }: IndicatorsHubProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingIndicator, setEditingIndicator] = useState<IndicatorWithPrograms | null>(null);
@@ -273,7 +274,7 @@ export const IndicatorsHub = ({ communityId }: IndicatorsHubProps) => {
           )}
 
           <IndicatorForm
-            communityId={communityId}
+            communityId={communitySlug}
             onSuccess={editingIndicator ? handleEditSuccess : handleSuccess}
             onError={editingIndicator ? handleEditError : handleError}
             isLoading={isLoading}
