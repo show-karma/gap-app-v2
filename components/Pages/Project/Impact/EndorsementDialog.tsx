@@ -21,6 +21,8 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { sanitizeObject } from "@/utilities/sanitize";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { toast } from "react-hot-toast";
 
 type EndorsementDialogProps = {};
 
@@ -53,10 +55,15 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
         await switchChainAsync?.({ chainId: project.chainID });
         gapClient = getGapClient(project.chainID);
       }
-      const walletClient = await getWalletClient(config, {
-        chainId: project?.chainID,
-      });
-      if (!walletClient || !address || !gapClient) return;
+
+      const { walletClient, error } = await safeGetWalletClient(
+        project.chainID
+      );
+
+      if (error || !walletClient || !gapClient || !address) {
+        throw new Error("Failed to connect to wallet", { cause: error });
+      }
+
       const walletSigner = await walletClientToSigner(walletClient);
       const endorsement = new ProjectEndorsement({
         data: sanitizeObject({

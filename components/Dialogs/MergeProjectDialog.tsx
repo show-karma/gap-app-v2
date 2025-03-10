@@ -7,7 +7,7 @@ import toast from "react-hot-toast";
 import { useProjectStore } from "@/store";
 import { useSwitchChain } from "wagmi";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { getWalletClient } from "@wagmi/core";
+
 import { useStepper } from "@/store/modals/txStepper";
 import { config } from "@/utilities/wagmi/config";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
@@ -32,6 +32,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { sanitizeInput } from "@/utilities/sanitize";
 import { useMergeModalStore } from "@/store/modals/merge";
 import EthereumAddressToENSName from "../EthereumAddressToENSName";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 type MergeProjectProps = {
   buttonElement?: {
@@ -205,10 +206,15 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
         await switchChainAsync?.({ chainId: project.chainID });
         gapClient = getGapClient(project.chainID);
       }
-      const walletClient = await getWalletClient(config, {
-        chainId: project.chainID,
-      });
-      if (!walletClient || !gapClient) return;
+      // Replace direct getWalletClient call with safeGetWalletClient
+
+      const { walletClient, error } = await safeGetWalletClient(
+        project.chainID
+      );
+
+      if (error || !walletClient || !gapClient) {
+        throw new Error("Failed to connect to wallet", { cause: error });
+      }
       const walletSigner = await walletClientToSigner(walletClient);
 
       const projectPointer = new ProjectPointer({

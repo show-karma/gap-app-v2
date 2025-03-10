@@ -14,13 +14,14 @@ import { retryUntilConditionMet } from "@/utilities/retries";
 import { getProjectById } from "@/utilities/sdk";
 import { cn } from "@/utilities/tailwind";
 import { config } from "@/utilities/wagmi/config";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { Menu, Transition } from "@headlessui/react";
 import { CheckCircleIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useQuery } from "@tanstack/react-query";
-import { getWalletClient } from "@wagmi/core";
+
 import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { Fragment, useState } from "react";
@@ -96,10 +97,14 @@ export const ObjectiveOptionsMenu = ({
         await switchChainAsync?.({ chainId: project.chainID });
         gapClient = getGapClient(project.chainID);
       }
-      const walletClient = await getWalletClient(config, {
-        chainId: project.chainID,
-      });
-      if (!walletClient) return;
+
+      const { walletClient, error } = await safeGetWalletClient(
+        project.chainID as number
+      );
+
+      if (error || !walletClient || !gapClient) {
+        throw new Error("Failed to connect to wallet", { cause: error });
+      }
       const walletSigner = await walletClientToSigner(walletClient);
       const fetchedProject = await getProjectById(projectId);
       if (!fetchedProject) return;

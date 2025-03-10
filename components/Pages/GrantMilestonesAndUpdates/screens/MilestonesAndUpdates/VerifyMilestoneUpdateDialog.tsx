@@ -8,14 +8,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/auth";
 import { useAccount, useSwitchChain } from "wagmi";
-import { getWalletClient } from "@wagmi/core";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { MESSAGES } from "@/utilities/messages";
 import { getGapClient, useGap } from "@/hooks";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
-import { config } from "@/utilities/wagmi/config";
 import {
   IMilestoneCompleted,
   IMilestoneResponse,
@@ -80,10 +79,14 @@ export const VerifyMilestoneUpdateDialog: FC<
         await switchChainAsync?.({ chainId: milestone.chainID });
         gapClient = getGapClient(milestone.chainID);
       }
-      const walletClient = await getWalletClient(config, {
-        chainId: milestone.chainID,
-      });
-      if (!walletClient || !address || !gapClient) return;
+
+      const { walletClient, error } = await safeGetWalletClient(
+        milestone.chainID
+      );
+
+      if (error || !walletClient || !gapClient) {
+        throw new Error("Failed to connect to wallet", { cause: error });
+      }
       const walletSigner = await walletClientToSigner(walletClient);
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
       if (!fetchedProject) return;

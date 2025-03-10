@@ -10,10 +10,10 @@ import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { shortAddress } from "@/utilities/shortAddress";
-import { config } from "@/utilities/wagmi/config";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getWalletClient } from "@wagmi/core";
+
 import { useQueryState } from "nuqs";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";
@@ -47,9 +47,12 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
         await switchChainAsync?.({ chainId: grant.chainID });
         gapClient = getGapClient(grant.chainID);
       }
-      const walletClient = await getWalletClient(config, {
-        chainId: grant.chainID,
-      });
+
+      const { walletClient, error } = await safeGetWalletClient(grant.chainID);
+
+      if (error || !walletClient || !gapClient) {
+        throw new Error("Failed to connect to wallet", { cause: error });
+      }
       if (!walletClient || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
       const grantUID = grant.uid;

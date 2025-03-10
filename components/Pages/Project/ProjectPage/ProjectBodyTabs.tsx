@@ -25,7 +25,6 @@ import {
   IProjectImpact,
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getWalletClient } from "@wagmi/core";
 import { useQueryState } from "nuqs";
 import { ButtonHTMLAttributes, FC, useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -44,6 +43,7 @@ import { retryUntilConditionMet } from "@/utilities/retries";
 import { Bars4Icon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { ProjectActivityBlock } from "./ProjectActivityBlock";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 const InformationTab: FC = () => {
   const { project } = useProjectStore();
@@ -241,10 +241,12 @@ const UpdateBlock = ({
         await switchChainAsync?.({ chainId: update.chainID });
         gapClient = getGapClient(update.chainID);
       }
-      const walletClient = await getWalletClient(config, {
-        chainId: update.chainID,
-      });
-      if (!walletClient || !gapClient) return;
+
+      const { walletClient, error } = await safeGetWalletClient(update.chainID);
+
+      if (error || !walletClient || !gapClient) {
+        throw new Error("Failed to connect to wallet", { cause: error });
+      }
       const walletSigner = await walletClientToSigner(walletClient);
 
       const instanceProject = await gapClient.fetch.projectById(project?.uid);

@@ -41,7 +41,7 @@ import {
   ICommunityResponse,
   IGrantResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getWalletClient } from "@wagmi/core";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { FC } from "react";
@@ -465,10 +465,13 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         return created;
       });
 
-      const walletClient = await getWalletClient(config, {
-        chainId: communityNetworkId,
-      });
-      if (!walletClient) return;
+      const { walletClient, error } = await safeGetWalletClient(
+        communityNetworkId
+      );
+
+      if (error || !walletClient || !gapClient) {
+        throw new Error("Failed to connect to wallet", { cause: error });
+      }
       const walletSigner = await walletClientToSigner(walletClient);
       await grant
         .attest(walletSigner as any, selectedProject.chainID, changeStepperStep)
@@ -550,9 +553,14 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         // season: data.season,
       });
       oldGrantInstance.details?.setValues(grantData);
-      const walletClient = await getWalletClient(config, {
-        chainId: oldGrant.chainID,
-      });
+
+      const { walletClient, error } = await safeGetWalletClient(
+        oldGrant.chainID
+      );
+
+      if (error || !walletClient || !gapClient) {
+        throw new Error("Failed to connect to wallet", { cause: error });
+      }
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
       const oldProjectData = await gapIndexerApi
@@ -582,7 +590,6 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             const fetchedGrant = fetchedProject?.grants.find(
               (item) => item.uid.toLowerCase() === oldGrant.uid.toLowerCase()
             );
-
 
             if (
               new Date(fetchedGrant?.details?.updatedAt) >
@@ -642,10 +649,10 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     }[] =
       data?.questions && data?.questions?.length > 0
         ? data?.questions?.map((item) => ({
-          type: item.type,
-          query: item.query,
-          explanation: item.explanation || "",
-        }))
+            type: item.type,
+            query: item.query,
+            explanation: item.explanation || "",
+          }))
         : [];
 
     const milestonesData = milestones.map((item) => item.data);
@@ -798,14 +805,14 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
             href={
               grantToEdit
                 ? PAGES.PROJECT.GRANT(
-                  (selectedProject?.details?.data?.slug ||
-                    selectedProject?.uid) as string,
-                  grantToEdit?.uid as string
-                )
+                    (selectedProject?.details?.data?.slug ||
+                      selectedProject?.uid) as string,
+                    grantToEdit?.uid as string
+                  )
                 : PAGES.PROJECT.GRANTS(
-                  (selectedProject?.details?.data?.slug ||
-                    selectedProject?.uid) as string
-                )
+                    (selectedProject?.details?.data?.slug ||
+                      selectedProject?.uid) as string
+                  )
             }
             className="bg-transparent px-1 hover:bg-transparent hover:opacity-75 text-black dark:text-zinc-100"
           >

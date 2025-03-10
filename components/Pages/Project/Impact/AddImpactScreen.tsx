@@ -17,6 +17,7 @@ import { CalendarIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProjectImpact } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
 import { getWalletClient } from "@wagmi/core";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useQueryState } from "nuqs";
 import type { FC } from "react";
 import { useState } from "react";
@@ -43,7 +44,7 @@ const inputStyle =
 
 type UpdateType = z.infer<typeof updateSchema>;
 
-interface AddImpactScreenProps { }
+interface AddImpactScreenProps {}
 
 export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
   const [proof, setProof] = useState("");
@@ -87,10 +88,15 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
         await switchChainAsync?.({ chainId: project.chainID });
         gapClient = getGapClient(project.chainID);
       }
-      const walletClient = await getWalletClient(config, {
-        chainId: project.chainID,
-      });
-      if (!walletClient || !address || !gapClient) return;
+
+      const { walletClient, error } = await safeGetWalletClient(
+        project.chainID as number
+      );
+
+      if (error || !walletClient || !gapClient) {
+        throw new Error("Failed to connect to wallet", { cause: error });
+      }
+
       const walletSigner = await walletClientToSigner(walletClient);
       const dataToAttest = sanitizeObject({
         work,

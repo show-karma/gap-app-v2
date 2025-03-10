@@ -22,10 +22,10 @@ import { config } from "@/utilities/wagmi/config";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { ContributorProfile } from "@show-karma/karma-gap-sdk";
-import { getWalletClient } from "@wagmi/core";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 type ContributorProfileDialogProps = {};
 
@@ -119,10 +119,13 @@ export const ContributorProfileDialog: FC<
         gapClient = getGapClient(project.chainID);
       }
 
-      const walletClient = await getWalletClient(config, {
-        chainId: project.chainID,
-      });
-      if (!walletClient || !gapClient) return;
+      const { walletClient, error } = await safeGetWalletClient(
+        project.chainID
+      );
+
+      if (error || !walletClient || !gapClient) {
+        throw new Error("Failed to connect to wallet", { cause: error });
+      }
       const walletSigner = await walletClientToSigner(walletClient);
       const contributorProfile = new ContributorProfile({
         data: {

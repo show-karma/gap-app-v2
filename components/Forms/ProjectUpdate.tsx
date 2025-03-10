@@ -13,7 +13,7 @@ import { sanitizeObject } from "@/utilities/sanitize";
 import { config } from "@/utilities/wagmi/config";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IProjectUpdate, ProjectUpdate } from "@show-karma/karma-gap-sdk";
-import { getWalletClient } from "@wagmi/core";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useRouter } from "next/navigation";
 import type { FC } from "react";
 import { useState, useEffect } from "react";
@@ -335,10 +335,10 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         gapClient = getGapClient(chainId);
       }
 
-      const walletClient = await getWalletClient(config, { chainId });
+      const { walletClient, error } = await safeGetWalletClient(chainId);
 
-      if (!walletClient || !gapClient) {
-        throw new Error("Wallet client or GAP client is not available");
+      if (error || !walletClient || !gapClient) {
+        throw new Error("Failed to connect to wallet", { cause: error });
       }
 
       const walletSigner = await walletClientToSigner(walletClient);

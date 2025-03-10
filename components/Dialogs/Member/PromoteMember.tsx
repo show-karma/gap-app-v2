@@ -10,11 +10,10 @@ import { getProjectMemberRoles } from "@/utilities/getProjectMemberRoles";
 import { INDEXER } from "@/utilities/indexer";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { getProjectById } from "@/utilities/sdk";
-import { config } from "@/utilities/wagmi/config";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { Dialog, Transition } from "@headlessui/react";
 import { ArrowUpIcon } from "@heroicons/react/24/solid";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { getWalletClient } from "@wagmi/core";
 import { FC, Fragment, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
@@ -50,10 +49,13 @@ export const PromoteMemberDialog: FC<PromoteMemberDialogProps> = ({
         gapClient = getGapClient(project.chainID);
       }
 
-      const walletClient = await getWalletClient(config, {
-        chainId: project.chainID,
-      });
-      if (!walletClient || !gapClient) return;
+      const { walletClient, error } = await safeGetWalletClient(
+        project.chainID
+      );
+
+      if (error || !walletClient || !gapClient) {
+        throw new Error("Failed to connect to wallet", { cause: error });
+      }
 
       const walletSigner = await walletClientToSigner(walletClient);
       const fetchedProject = await getProjectById(project.uid);

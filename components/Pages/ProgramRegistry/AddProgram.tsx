@@ -32,7 +32,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { AlloBase } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/Allo";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getWalletClient } from "@wagmi/core";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -394,10 +394,13 @@ export default function AddProgram({
         await switchChainAsync?.({ chainId: chainSelected as number });
       }
 
-      const walletClient = await getWalletClient(config, {
-        chainId: chainSelected,
-      });
-      if (!walletClient) return;
+      const { walletClient, error } = await safeGetWalletClient(
+        chainSelected as number
+      );
+
+      if (error || !walletClient) {
+        throw new Error("Failed to connect to wallet", { cause: error });
+      }
       const walletSigner = await walletClientToSigner(walletClient);
 
       const metadata = sanitizeObject({

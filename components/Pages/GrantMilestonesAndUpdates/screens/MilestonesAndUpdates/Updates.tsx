@@ -13,13 +13,12 @@ import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { ReadMore } from "@/utilities/ReadMore";
-import { config } from "@/utilities/wagmi/config";
 import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
 import {
   IMilestoneCompleted,
   IMilestoneResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getWalletClient } from "@wagmi/core";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
 import { UpdateMilestone } from "./UpdateMilestone";
@@ -57,9 +56,14 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
         await switchChainAsync?.({ chainId: milestone.chainID });
         gapClient = getGapClient(milestone.chainID);
       }
-      const walletClient = await getWalletClient(config, {
-        chainId: milestone.chainID,
-      });
+
+      const { walletClient, error } = await safeGetWalletClient(
+        milestone.chainID
+      );
+
+      if (error || !walletClient || !gapClient) {
+        throw new Error("Failed to connect to wallet", { cause: error });
+      }
       if (!walletClient || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
       // const instanceMilestone = new Milestone({
