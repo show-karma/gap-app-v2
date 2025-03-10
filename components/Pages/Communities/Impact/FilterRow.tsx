@@ -26,9 +26,9 @@ export const CommunityImpactFilterRow = () => {
   };
 
   return (
-    <div className="px-3 py-4 bg-gray-100 dark:bg-zinc-900 rounded-lg flex flex-row justify-between items-center w-full gap-16 max-md:flex-col max-md:gap-4 max-md:justify-start max-md:items-start">
+    <div className="px-3 py-4 bg-gray-100 dark:bg-zinc-900 rounded-lg flex flex-row justify-between items-center w-full gap-16 max-lg:flex-col max-lg:gap-4 max-lg:justify-start max-lg:items-start">
       <div
-        className={`flex flex-row gap-8 items-center ${
+        className={`flex flex-row gap-8 max-lg:gap-2 items-center max-lg:flex-col  max-lg:items-start max-lg:justify-start ${
           aggregateView ? "opacity-50 pointer-events-none" : ""
         }`}
       >

@@ -40,7 +40,13 @@ export const ProgramFilter = ({
 
   return (
     <div className="flex flex-row gap-4 items-center flex-1 max-w-[450px]">
-      <Image src={"/icons/program.svg"} alt="program" width={24} height={24} />
+      <Image
+        src={"/icons/program.svg"}
+        alt="program"
+        width={24}
+        height={24}
+        className="w-6 h-6 min-w-6 max-w-6 min-h-6 max-h-6"
+      />
       <p className="text-gray-800 dark:text-zinc-100 text-base font-semibold leading-normal">
         Program
       </p>
