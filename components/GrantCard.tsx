@@ -1,12 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
-import { Grant, GrantDetails, ProjectDetails } from "@show-karma/karma-gap-sdk";
-import { Hex } from "viem";
-import pluralize from "pluralize";
 import formatCurrency from "@/utilities/formatCurrency";
-import { MarkdownPreview } from "./Utilities/MarkdownPreview";
-import { formatPercentage } from "@/utilities/formatNumber";
-import { PAGES } from "@/utilities/pages";
 import { formatDate } from "@/utilities/formatDate";
+import { PAGES } from "@/utilities/pages";
+import { Grant, GrantDetails, ProjectDetails } from "@show-karma/karma-gap-sdk";
+import pluralize from "pluralize";
+import { Hex } from "viem";
+import { GrantPercentage } from "./Pages/Project/Grants/components/GrantPercentage";
+import { MarkdownPreview } from "./Utilities/MarkdownPreview";
 
 interface GrantMongo extends Omit<Grant, "details" | "project"> {
   details: GrantDetails;
@@ -39,14 +39,6 @@ const pickColor = (index: number) => {
     "#67E3F9",
   ];
   return cardColors[index % cardColors.length];
-};
-
-const milestonesPercentage = (milestones: Grant["milestones"]) => {
-  const total = milestones?.length;
-  const completed = milestones?.filter(
-    (milestone) => milestone.completed
-  ).length;
-  return formatPercentage((completed / total) * 100) || 0;
 };
 
 const updatesLength = (
@@ -109,13 +101,15 @@ export const GrantCard = ({ rawGrant, index }: GrantCardProps) => {
             </>
           </p>
         </div>
-        {grant.milestones?.length ? (
+
+        {grant && (
           <div className="flex h-max w-max items-center justify-start rounded-full bg-teal-50 dark:bg-teal-700 text-teal-600 dark:text-teal-200 px-3 py-1 max-2xl:px-2">
-            <p className="text-center text-sm font-medium text-teal-600 dark:text-teal-100 max-2xl:text-[13px]">
-              {milestonesPercentage(grant.milestones)}% completed
-            </p>
+            <GrantPercentage
+              grant={rawGrant}
+              className="text-center text-sm font-medium text-teal-600 dark:text-teal-100 max-2xl:text-[13px]"
+            />
           </div>
-        ) : null}
+        )}
 
         <div className="flex h-max w-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-600 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
           <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
