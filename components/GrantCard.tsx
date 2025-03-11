@@ -7,16 +7,10 @@ import pluralize from "pluralize";
 import { Hex } from "viem";
 import { GrantPercentage } from "./Pages/Project/Grants/components/GrantPercentage";
 import { MarkdownPreview } from "./Utilities/MarkdownPreview";
-
-interface GrantMongo extends Omit<Grant, "details" | "project"> {
-  details: GrantDetails;
-  project: {
-    details: ProjectDetails;
-  };
-}
+import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 interface GrantCardProps {
-  rawGrant: Grant;
+  grant: IGrantResponse;
   index: number;
 }
 
@@ -42,13 +36,12 @@ const pickColor = (index: number) => {
 };
 
 const updatesLength = (
-  milestones: Grant["milestones"],
+  milestones: IGrantResponse["milestones"],
   updatesLength: number
 ) =>
   milestones.filter((milestone) => milestone.completed).length + updatesLength;
 
-export const GrantCard = ({ rawGrant, index }: GrantCardProps) => {
-  const grant = rawGrant as unknown as GrantMongo;
+export const GrantCard = ({ grant, index }: GrantCardProps) => {
   return (
     <a
       id="grant-card"
@@ -105,7 +98,7 @@ export const GrantCard = ({ rawGrant, index }: GrantCardProps) => {
         {grant && (
           <div className="flex h-max w-max items-center justify-start rounded-full bg-teal-50 dark:bg-teal-700 text-teal-600 dark:text-teal-200 px-3 py-1 max-2xl:px-2">
             <GrantPercentage
-              grant={rawGrant}
+              grant={grant}
               className="text-center text-sm font-medium text-teal-600 dark:text-teal-100 max-2xl:text-[13px]"
             />
           </div>
