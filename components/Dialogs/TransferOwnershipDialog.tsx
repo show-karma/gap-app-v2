@@ -91,13 +91,13 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
             );
           }
           while (retries > 0) {
-            const stillProjectOwner = await isOwnershipTransfered(
+            const isTransfered = await isOwnershipTransfered(
               walletSigner || signer,
               fetchedProject,
               newOwner
             );
 
-            if (!stillProjectOwner) {
+            if (isTransfered) {
               setIsProjectOwner(false);
               retries = 0;
               await refreshProject();
