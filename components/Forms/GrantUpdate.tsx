@@ -3,17 +3,21 @@ import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks";
 import { useProjectStore } from "@/store";
+import { useGrantStore } from "@/store/grant";
 import { useStepper } from "@/store/modals/txStepper";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
+import { urlRegex } from "@/utilities/regexs/urlRegex";
+import { sanitizeObject } from "@/utilities/sanitize";
 import { cn } from "@/utilities/tailwind";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { GrantUpdate } from "@show-karma/karma-gap-sdk";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 import { useRouter } from "next/navigation";
-import { useQueryState } from "nuqs";
 import type { FC } from "react";
 import { useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
@@ -44,6 +48,15 @@ const updateSchema = z.object({
     })
     .optional()
     .or(z.literal("")),
+  completionPercentage: z.string().refine(
+    (value) => {
+      const num = Number(value);
+      return !isNaN(num) && num >= 0 && num <= 100;
+    },
+    {
+      message: "Please enter a number between 0 and 100",
+    }
+  ),
 });
 
 const labelStyleDefault = "text-sm font-bold text-black dark:text-zinc-100";
@@ -130,6 +143,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
         text: data.description,
         title: data.title,
         proofOfWork: data.proofOfWork,
+        completionPercentage: data.completionPercentage,
         type: "grant-update",
       });
       const grantUpdate = new GrantUpdate({
@@ -281,6 +295,25 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
           <p className="text-base text-red-400">
             {errors.proofOfWork?.message}
           </p>
+        </div>
+        <div className="flex w-full flex-row items-center gap-4 py-2">
+          <label htmlFor="completion-percentage" className={labelStyle}>
+            What % of your grant is complete? *
+          </label>
+          <div className="flex flex-col">
+            <input
+              id="completion-percentage"
+              type="number"
+              min="0"
+              max="100"
+              placeholder="0-100"
+              className={cn(inputStyle, "w-24 mt-0")}
+              {...register("completionPercentage")}
+            />
+            <p className="text-xs text-red-400 mt-1">
+              {errors.completionPercentage?.message}
+            </p>
+          </div>
         </div>
         <div className="flex w-full flex-row-reverse">
           <Button

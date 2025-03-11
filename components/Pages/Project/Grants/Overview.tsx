@@ -1,20 +1,20 @@
 "use client";
+import ExternalIds from "@/components/Pages/Grants/ExternalId/ExternalIds";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
-import { formatDate } from "@/utilities/formatDate";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useGrantStore } from "@/store/grant";
+import { useOwnerStore } from "@/store/owner";
 import markdownStyles from "@/styles/markdown.module.css";
-import { PAGES } from "@/utilities/pages";
-import { Hex } from "viem";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
-import { useGrantStore } from "@/store/grant";
-import { Suspense } from "react";
-import { ProjectGrantsOverviewLoading } from "../Loading/Grants/Overview";
 import formatCurrency from "@/utilities/formatCurrency";
-import ExternalIds from "@/components/Pages/Grants/ExternalId/ExternalIds";
-import { useOwnerStore } from "@/store/owner";
+import { formatDate } from "@/utilities/formatDate";
+import { PAGES } from "@/utilities/pages";
+import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
+import { Suspense } from "react";
+import { Hex } from "viem";
+import { ProjectGrantsOverviewLoading } from "../Loading/Grants/Overview";
+import { GrantPercentage } from "./components/GrantPercentage";
 const isValidAmount = (amount?: string | undefined) => {
   if (!amount) return undefined;
   let amountToFormat = amount;
@@ -43,19 +43,6 @@ export const GrantOverview = () => {
   if (loading) {
     return <ProjectGrantsOverviewLoading />;
   }
-  const milestones = grant?.milestones;
-
-  const getPercentage = () => {
-    if (!milestones) return 0;
-
-    const total = milestones.length;
-    const completed = milestones.filter(
-      (milestone) => milestone.completed
-    ).length;
-
-    const percent = grant?.completed ? 100 : (completed / total) * 100;
-    return Number.isNaN(percent) ? 0 : +percent.toFixed(2);
-  };
 
   const grantData: { stat?: number | string; title: string }[] = [
     {
@@ -101,13 +88,12 @@ export const GrantOverview = () => {
               <div className="font-semibold text-black dark:text-white">
                 Grant Overview
               </div>
-              {/* <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10"> */}
-              <span
-                className={`h-max items-center justify-center rounded-2xl  px-2 py-1 text-center text-xs font-medium leading-none text-white ${+getPercentage() > 0 ? "bg-blue-600" : "bg-gray-500"
-                  }`}
-              >
-                {getPercentage()}% complete
-              </span>
+              {grant && (
+                <GrantPercentage
+                  grant={grant}
+                  className="h-max items-center justify-center rounded-2xl px-2 py-1 text-center text-xs font-medium leading-none text-white bg-blue-600"
+                />
+              )}
             </div>
             <div className="flex flex-col gap-4  px-5 pt-5 pb-5 border-t border-gray-200">
               <div className="flex items-center justify-between gap-2">
@@ -117,7 +103,7 @@ export const GrantOverview = () => {
                 <a
                   href={PAGES.COMMUNITY.ALL_GRANTS(
                     grant?.community?.details?.data?.slug ||
-                    (grant?.community?.uid as Hex)
+                      (grant?.community?.uid as Hex)
                   )}
                 >
                   <div className="w-full inline-flex items-center gap-x-2 rounded-3xl bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900">

@@ -56,6 +56,15 @@ const schema = z.object({
     })
     .optional()
     .or(z.literal("")),
+  completionPercentage: z.string().refine(
+    (value) => {
+      const num = Number(value);
+      return !isNaN(num) && num >= 0 && num <= 100;
+    },
+    {
+      message: "Please enter a number between 0 and 100",
+    }
+  ),
 });
 type SchemaType = z.infer<typeof schema>;
 
@@ -147,6 +156,8 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           sanitizeObject({
             reason: data.description,
             proofOfWork: data.proofOfWork,
+            completionPercentage: data.completionPercentage,
+            type: "completed",
           }),
           changeStepperStep
         )
@@ -258,6 +269,8 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           sanitizeObject({
             reason: data.description,
             proofOfWork: data.proofOfWork,
+            completionPercentage: data.completionPercentage,
+            type: "completed",
           }),
           changeStepperStep
         )
@@ -388,6 +401,26 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
             {...register("proofOfWork")}
           />
           <p className="text-red-500">{errors.proofOfWork?.message}</p>
+        </div>
+
+        <div className="flex w-full flex-row items-center gap-4 py-2">
+          <label htmlFor="completion-percentage" className={labelStyle}>
+            What % of your grant is complete? *
+          </label>
+          <div className="flex flex-col">
+            <input
+              id="completion-percentage"
+              type="number"
+              min="0"
+              max="100"
+              placeholder="0-100"
+              className={cn(inputStyle, "w-24")}
+              {...register("completionPercentage")}
+            />
+            <p className="text-red-500 text-xs mt-1">
+              {errors.completionPercentage?.message}
+            </p>
+          </div>
         </div>
       </div>
       <div className="mt-4 flex w-full flex-row justify-end gap-4">

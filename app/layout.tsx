@@ -17,14 +17,16 @@ import { ThemeProvider } from "next-themes";
 import { Analytics } from "@vercel/analytics/react";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { Suspense } from "react";
+import { headers } from "next/headers";
 
 export const metadata = defaultMetadata;
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const cookie = (await headers()).get("cookie") ?? "";
   return (
     <html lang="en" className="h-full" style={{ scrollBehavior: "smooth" }}>
       {process.env.NEXT_PUBLIC_GA_TRACKING_ID &&
@@ -35,7 +37,7 @@ export default function RootLayout({
         )}
       <body>
         <ThemeProvider defaultTheme="light" attribute="class">
-          <WagmiProvider>
+          <WagmiProvider cookie={cookie}>
             <Toaster />
             <StepperDialog />
             <ProgressBarWrapper />

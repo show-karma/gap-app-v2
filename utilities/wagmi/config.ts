@@ -1,4 +1,4 @@
-import { http, createConfig } from "@wagmi/core";
+import { http, createConfig, createStorage, cookieStorage } from "@wagmi/core";
 import {
   arbitrum,
   baseSepolia,
@@ -51,4 +51,12 @@ export const config = createConfig({
     [celo.id]: http(envVars.RPC.CELO),
     [sei.id]: http(envVars.RPC.SEI),
   },
+  ssr: true,
+  storage: createStorage({
+    storage: cookieStorage,
+  }),
 });
+
+export function getWagmiConfig() {
+  return config;
+}

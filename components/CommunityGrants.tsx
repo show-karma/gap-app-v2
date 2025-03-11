@@ -10,7 +10,6 @@ import { cn } from "@/utilities/tailwind";
 import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon } from "@heroicons/react/20/solid";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
-import type { Grant } from "@show-karma/karma-gap-sdk";
 import { useParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import pluralize from "pluralize";
@@ -22,6 +21,7 @@ import { GrantCard } from "./GrantCard";
 import { ProgramFilter } from "./Pages/Communities/Impact/ProgramFilter";
 import { CardListSkeleton } from "./Pages/Communities/Loading";
 import { errorManager } from "./Utilities/errorManager";
+import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 const sortOptions: Record<SortByOptions, string> = {
   recent: "Recent",
@@ -90,7 +90,7 @@ export const CommunityGrants = ({
   });
 
   const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
-  const [grants, setGrants] = useState<Grant[]>([]); // Data returned from the API
+  const [grants, setGrants] = useState<IGrantResponse[]>([]); // Data returned from the API
   const itemsPerPage = 12; // Set the total number of items you want returned from the API
   const { totalGrants, setTotalGrants } = useCommunityStore();
   const [haveMore, setHaveMore] = useState(true); // Boolean to check if there are more grants to load
@@ -564,7 +564,7 @@ export const CommunityGrants = ({
                                 <GrantCard
                                   index={rowIndex * 4 + columnIndex}
                                   key={grant.uid}
-                                  rawGrant={grant}
+                                  grant={grant}
                                 />
                               </div>
                             )}
