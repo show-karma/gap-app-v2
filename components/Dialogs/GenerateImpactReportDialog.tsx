@@ -33,9 +33,9 @@ import {
   IGrantResponse,
   IProjectResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getWalletClient } from "@wagmi/core";
 import { useAccount, useSwitchChain } from "wagmi";
 import { errorManager } from "../Utilities/errorManager";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 // Create styles
 const styles = StyleSheet.create({});
@@ -670,9 +670,15 @@ export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
         await switchChainAsync?.({ chainId: project.chainID });
       }
 
-      const walletClient = await getWalletClient(config, {
-        chainId: project.chainID,
-      });
+      // Replace direct getWalletClient call with safeGetWalletClient
+
+      const { walletClient, error } = await safeGetWalletClient(
+        project.chainID
+      );
+
+      if (error || !walletClient) {
+        throw new Error("Failed to connect to wallet", { cause: error });
+      }
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
       const fetchedProject = await getProjectById(project.uid);

@@ -9,7 +9,7 @@ import { getProjectById, isOwnershipTransfered } from "@/utilities/sdk";
 import { config } from "@/utilities/wagmi/config";
 import { Dialog, Transition } from "@headlessui/react";
 import { PlusIcon } from "@heroicons/react/24/solid";
-import { getWalletClient } from "@wagmi/core";
+
 import { FC, Fragment, ReactNode, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { isAddress } from "viem";
@@ -19,6 +19,7 @@ import { Button } from "../Utilities/Button";
 import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership";
 import { sanitizeInput } from "@/utilities/sanitize";
 import { errorManager } from "../Utilities/errorManager";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 type TransferOwnershipProps = {
   buttonElement?: {
@@ -66,9 +67,13 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
         await switchChainAsync?.({ chainId: project.chainID });
       }
 
-      const walletClient = await getWalletClient(config, {
-        chainId: project.chainID,
-      });
+      const { walletClient, error } = await safeGetWalletClient(
+        project.chainID
+      );
+
+      if (error || !walletClient) {
+        throw new Error("Failed to connect to wallet", { cause: error });
+      }
       if (!walletClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
       const fetchedProject = await getProjectById(project.uid);

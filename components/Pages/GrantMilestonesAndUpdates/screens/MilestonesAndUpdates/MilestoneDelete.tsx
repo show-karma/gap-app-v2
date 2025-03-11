@@ -10,7 +10,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { config } from "@/utilities/wagmi/config";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getWalletClient } from "@wagmi/core";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
@@ -44,9 +44,14 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
         gapClient = getGapClient(milestone.chainID);
       }
       const milestoneUID = milestone.uid;
-      const walletClient = await getWalletClient(config, {
-        chainId: milestone.chainID,
-      });
+
+      const { walletClient, error } = await safeGetWalletClient(
+        milestone.chainID
+      );
+
+      if (error || !walletClient || !gapClient) {
+        throw new Error("Failed to connect to wallet", { cause: error });
+      }
       if (!walletClient || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
       const instanceProject = await gapClient.fetch.projectById(project?.uid);

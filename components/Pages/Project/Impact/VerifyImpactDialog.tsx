@@ -29,6 +29,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { sanitizeObject } from "@/utilities/sanitize";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 type VerifyImpactDialogProps = {
   impact: IProjectImpact;
@@ -96,10 +97,22 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
         await switchChainAsync?.({ chainId: findImpact!.chainID });
         gapClient = getGapClient(findImpact!.chainID);
       }
-      const walletClient = await getWalletClient(config, {
-        chainId: findImpact!.chainID,
-      });
-      if (!walletClient || !address || !gapClient) return;
+
+      const { walletClient, error } = await safeGetWalletClient(
+        findImpact!.chainID
+      );
+
+      if (error) {
+        toast.error(error);
+        setIsLoading(false);
+        return;
+      }
+
+      if (!walletClient || !address || !gapClient) {
+        setIsLoading(false);
+        return;
+      }
+
       const walletSigner = await walletClientToSigner(walletClient);
       await findImpact
         .verify(
