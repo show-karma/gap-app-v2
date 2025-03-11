@@ -54,6 +54,10 @@ export const OutputsAndOutcomes = () => {
   );
   const [forms, setForms] = useState<OutputForm[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedPoint, setSelectedPoint] = useState<{
+    itemId: string;
+    data: any;
+  } | null>(null);
 
   const handleSubmit = async (id: string) => {
     const form = forms.find((f) => f.id === id);
@@ -622,25 +626,59 @@ export const OutputsAndOutcomes = () => {
                         <Title className="text-sm font-medium text-gray-700 dark:text-zinc-300 mb-4">
                           Historical Values
                         </Title>
-                        <AreaChart
-                          className="h-48 mt-4"
-                          data={prepareChartData(
-                            item.datapoints.map((datapoint) =>
-                              Number(datapoint.value)
-                            ),
-                            item.datapoints.map(
-                              (datapoint) =>
-                                datapoint.endDate || new Date().toISOString()
-                            ),
-                            item.name
-                          )}
-                          index="date"
-                          categories={[item.name]}
-                          colors={["blue"]}
-                          valueFormatter={(value) => `${value}`}
-                          showLegend={false}
-                          noDataText="Awaiting grantees to submit values"
-                        />
+                        <div className="relative">
+                          <AreaChart
+                            className="h-48 mt-4"
+                            data={prepareChartData(
+                              item.datapoints.map((datapoint) =>
+                                Number(datapoint.value)
+                              ),
+                              item.datapoints.map(
+                                (datapoint) =>
+                                  datapoint.endDate || new Date().toISOString()
+                              ),
+                              item.name,
+                              undefined,
+                              item.datapoints.map((datapoint) => datapoint.proof)
+                            )}
+                            index="date"
+                            categories={[item.name]}
+                            colors={["blue"]}
+                            valueFormatter={(value) => `${value}`}
+                            showLegend={false}
+                            noDataText="Awaiting grantees to submit values"
+                            onValueChange={(v) => {
+                              if (!v) {
+                                console.log('No value received from chart click');
+                                return;
+                              }
+                              console.log('Chart click data:', v);
+
+                              const selectedItem = filteredOutputs.find(i => i.id === item.id);
+                              if (!selectedItem) {
+                                console.log('Could not find matching item');
+                                return;
+                              }
+
+                              // Find the exact datapoint that matches this date and value
+                              const exactDatapoint = item.datapoints.find(dp => {
+                                const dpDate = formatDate(new Date(dp.endDate || new Date().toISOString()), "UTC");
+                                return dpDate === v.date && Number(dp.value) === Number(v[selectedItem.name]);
+                              });
+
+                              console.log('Found matching datapoint:', exactDatapoint);
+
+                              setSelectedPoint({
+                                itemId: item.id,
+                                data: {
+                                  value: v[selectedItem.name],
+                                  date: v.date,
+                                  proof: exactDatapoint?.proof || v.proof
+                                }
+                              });
+                            }}
+                          />
+                        </div>
                       </Card>
                     )}
                   </div>
@@ -696,6 +734,72 @@ export const OutputsAndOutcomes = () => {
           <p className="text-gray-600 dark:text-zinc-300">
             {MESSAGES.GRANT.OUTPUTS.EMPTY}
           </p>
+        </div>
+      )}
+
+      {/* Modal */}
+      {selectedPoint && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          {/* Modal backdrop */}
+          <div
+            className="fixed inset-0 bg-black/50 dark:bg-black/70"
+            onClick={() => setSelectedPoint(null)}
+          />
+
+          {/* Modal content */}
+          <div className="relative bg-white dark:bg-zinc-800 p-6 rounded-lg shadow-xl max-w-md w-full mx-4 z-50">
+            <div className="flex flex-col gap-4">
+              <div className="flex justify-between items-start">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-zinc-100">
+                  Data Point Details
+                </h3>
+                <button
+                  onClick={() => setSelectedPoint(null)}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  <span className="text-2xl">×</span>
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="text-sm font-medium text-gray-500 dark:text-zinc-400">
+                    Value
+                  </label>
+                  <p className="text-base text-gray-900 dark:text-zinc-100">
+                    {selectedPoint.data.value}
+                  </p>
+                </div>
+
+                <div>
+                  <label className="text-sm font-medium text-gray-500 dark:text-zinc-400">
+                    Date
+                  </label>
+                  <p className="text-base text-gray-900 dark:text-zinc-100">
+                    {selectedPoint.data.date}
+                  </p>
+                </div>
+
+                {selectedPoint.data.proof && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-500 dark:text-zinc-400">
+                      Proof
+                    </label>
+                    <div className="mt-1">
+                      <a
+                        href={selectedPoint.data.proof}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:hover:bg-blue-500 transition-colors"
+                      >
+                        View Proof
+                      </a>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

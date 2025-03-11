@@ -11,8 +11,9 @@ export const prepareChartData = (
   values: number[],
   timestamps: string[],
   name: string,
-  runningValues?: number[]
-): { date: string; [key: string]: number | string }[] => {
+  runningValues?: number[],
+  proofs?: string[]
+): { date: string;[key: string]: number | string }[] => {
   const chartData = timestamps
     .map((timestamp, index) => {
       if (runningValues?.length) {
@@ -20,11 +21,13 @@ export const prepareChartData = (
           date: formatDate(new Date(timestamp), "UTC"),
           [name]: Number(values[index]) || 0,
           Cumulative: Number(runningValues[index]) || 0,
+          proof: proofs?.[index] || "",
         };
       }
       return {
         date: formatDate(new Date(timestamp), "UTC"),
         [name]: Number(values[index]) || 0,
+        proof: proofs?.[index] || "",
       };
     })
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
