@@ -56,3 +56,7 @@ export const config = createConfig({
     storage: cookieStorage,
   }),
 });
+
+export function getWagmiConfig() {
+  return config;
+}
