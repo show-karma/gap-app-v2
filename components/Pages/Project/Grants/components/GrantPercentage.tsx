@@ -18,7 +18,6 @@ export const GrantPercentage: React.FC<TProps> = ({ grant, className }) => {
 
       for (const update of sortedUpdates) {
         if (update.data.completionPercentage) {
-          //   console.log(grant);
           const manualPercentage = Number(update.data.completionPercentage);
           if (!isNaN(manualPercentage)) {
             return formatPercentage(manualPercentage);
@@ -31,11 +30,11 @@ export const GrantPercentage: React.FC<TProps> = ({ grant, className }) => {
 
     if (milestones && milestones.length > 0) {
       const total = milestones.length;
-      const completed = milestones.filter(
+      const completedMilestones = milestones.filter(
         (milestone) => milestone.completed
       ).length;
 
-      return formatPercentage((completed / total) * 100) || 0;
+      return formatPercentage((completedMilestones / total) * 100) || 0;
     }
 
     return 0;
