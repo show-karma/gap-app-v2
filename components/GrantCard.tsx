@@ -1,22 +1,16 @@
 /* eslint-disable @next/next/no-img-element */
-import { Grant, GrantDetails, ProjectDetails } from "@show-karma/karma-gap-sdk";
-import { Hex } from "viem";
-import pluralize from "pluralize";
 import formatCurrency from "@/utilities/formatCurrency";
-import { MarkdownPreview } from "./Utilities/MarkdownPreview";
-import { formatPercentage } from "@/utilities/formatNumber";
-import { PAGES } from "@/utilities/pages";
 import { formatDate } from "@/utilities/formatDate";
-
-interface GrantMongo extends Omit<Grant, "details" | "project"> {
-  details: GrantDetails;
-  project: {
-    details: ProjectDetails;
-  };
-}
+import { PAGES } from "@/utilities/pages";
+import { Grant, GrantDetails, ProjectDetails } from "@show-karma/karma-gap-sdk";
+import pluralize from "pluralize";
+import { Hex } from "viem";
+import { GrantPercentage } from "./Pages/Project/Grants/components/GrantPercentage";
+import { MarkdownPreview } from "./Utilities/MarkdownPreview";
+import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 interface GrantCardProps {
-  rawGrant: Grant;
+  grant: IGrantResponse;
   index: number;
 }
 
@@ -41,22 +35,13 @@ const pickColor = (index: number) => {
   return cardColors[index % cardColors.length];
 };
 
-const milestonesPercentage = (milestones: Grant["milestones"]) => {
-  const total = milestones?.length;
-  const completed = milestones?.filter(
-    (milestone) => milestone.completed
-  ).length;
-  return formatPercentage((completed / total) * 100) || 0;
-};
-
 const updatesLength = (
-  milestones: Grant["milestones"],
+  milestones: IGrantResponse["milestones"],
   updatesLength: number
 ) =>
   milestones.filter((milestone) => milestone.completed).length + updatesLength;
 
-export const GrantCard = ({ rawGrant, index }: GrantCardProps) => {
-  const grant = rawGrant as unknown as GrantMongo;
+export const GrantCard = ({ grant, index }: GrantCardProps) => {
   return (
     <a
       id="grant-card"
@@ -109,13 +94,15 @@ export const GrantCard = ({ rawGrant, index }: GrantCardProps) => {
             </>
           </p>
         </div>
-        {grant.milestones?.length ? (
+
+        {grant && (
           <div className="flex h-max w-max items-center justify-start rounded-full bg-teal-50 dark:bg-teal-700 text-teal-600 dark:text-teal-200 px-3 py-1 max-2xl:px-2">
-            <p className="text-center text-sm font-medium text-teal-600 dark:text-teal-100 max-2xl:text-[13px]">
-              {milestonesPercentage(grant.milestones)}% completed
-            </p>
+            <GrantPercentage
+              grant={grant}
+              className="text-center text-sm font-medium text-teal-600 dark:text-teal-100 max-2xl:text-[13px]"
+            />
           </div>
-        ) : null}
+        )}
 
         <div className="flex h-max w-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-600 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">
           <p className="text-center text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">

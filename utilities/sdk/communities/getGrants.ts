@@ -2,10 +2,11 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import type { SortByOptions, StatusOptions } from "@/types/filters";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import type { Grant, Hex } from "@show-karma/karma-gap-sdk";
+import type { Hex } from "@show-karma/karma-gap-sdk";
+import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 export interface GrantsResponse {
-  grants: Grant[];
+  grants: IGrantResponse[];
   pageInfo: {
     page?: string;
     pageLimit?: string;
