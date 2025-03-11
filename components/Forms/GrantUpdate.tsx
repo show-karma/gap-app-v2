@@ -13,11 +13,10 @@ import { PAGES } from "@/utilities/pages";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { cn } from "@/utilities/tailwind";
-import { config } from "@/utilities/wagmi/config";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { GrantUpdate } from "@show-karma/karma-gap-sdk";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getWalletClient } from "@wagmi/core";
+
 import { useRouter } from "next/navigation";
 import type { FC } from "react";
 import { useState } from "react";
@@ -27,6 +26,12 @@ import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
+import { urlRegex } from "@/utilities/regexs/urlRegex";
+import { sanitizeObject } from "@/utilities/sanitize";
+import { useGrantStore } from "@/store/grant";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 const updateSchema = z.object({
   title: z
@@ -123,9 +128,14 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
         await switchChainAsync?.({ chainId: grantToUpdate.chainID });
         gapClient = getGapClient(grantToUpdate.chainID);
       }
-      const walletClient = await getWalletClient(config, {
-        chainId: grantToUpdate.chainID,
-      });
+
+      const { walletClient, error } = await safeGetWalletClient(
+        grantToUpdate.chainID
+      );
+
+      if (error || !walletClient || !gapClient) {
+        throw new Error("Failed to connect to wallet", { cause: error });
+      }
       if (!walletClient || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
 

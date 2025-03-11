@@ -15,11 +15,12 @@ import { ReadMore } from "@/utilities/ReadMore";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { getProjectById } from "@/utilities/sdk";
 import { config } from "@/utilities/wagmi/config";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useQuery } from "@tanstack/react-query";
-import { getWalletClient } from "@wagmi/core";
+
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import toast from "react-hot-toast";
@@ -70,9 +71,14 @@ export const ObjectiveCardComplete = ({
         await switchChainAsync?.({ chainId: objective.chainID });
         gapClient = getGapClient(objective.chainID);
       }
-      const walletClient = await getWalletClient(config, {
-        chainId: objective.chainID,
-      });
+
+      const { walletClient, error } = await safeGetWalletClient(
+        objective.chainID
+      );
+
+      if (error || !walletClient || !gapClient) {
+        throw new Error("Failed to connect to wallet", { cause: error });
+      }
       if (!walletClient || !gapClient) return;
       const walletSigner = await walletClientToSigner(walletClient);
       const fetchedProject = await getProjectById(projectId);

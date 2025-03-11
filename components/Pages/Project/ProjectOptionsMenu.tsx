@@ -11,7 +11,7 @@ import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { deleteProject, getProjectById } from "@/utilities/sdk";
-import { config } from "@/utilities/wagmi/config";
+
 import { Menu, Transition } from "@headlessui/react";
 import {
   ArrowDownOnSquareIcon,
@@ -21,7 +21,8 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import { EllipsisVerticalIcon, PlusIcon } from "@heroicons/react/24/solid";
-import { getWalletClient } from "@wagmi/core";
+
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -96,10 +97,17 @@ export const ProjectOptionsMenu = () => {
       if (chain?.id !== project.chainID) {
         await switchChainAsync?.({ chainId: project.chainID });
       }
-      const walletClient = await getWalletClient(config, {
-        chainId: project.chainID,
-      });
-      if (!walletClient) return;
+
+      const { walletClient, error } = await safeGetWalletClient(
+        project.chainID,
+        true,
+        setIsDeleting
+      );
+
+      if (error || !walletClient) {
+        return;
+      }
+
       const walletSigner = await walletClientToSigner(walletClient);
       const fetchedProject = await getProjectById(projectId);
       if (!fetchedProject) return;
@@ -203,17 +211,38 @@ export const ProjectOptionsMenu = () => {
               ) : null}
               {isAuthorized ? (
                 <Menu.Item>
-                  <LinkContractAddressButton buttonClassName={buttonClassName} project={project as IProjectResponse & { external: Record<string, string[]> }} />
+                  <LinkContractAddressButton
+                    buttonClassName={buttonClassName}
+                    project={
+                      project as IProjectResponse & {
+                        external: Record<string, string[]>;
+                      }
+                    }
+                  />
                 </Menu.Item>
               ) : null}
               {isAuthorized ? (
                 <Menu.Item>
-                  <LinkGithubRepoButton buttonClassName={buttonClassName} project={project as IProjectResponse & { external: Record<string, string[]> }} />
+                  <LinkGithubRepoButton
+                    buttonClassName={buttonClassName}
+                    project={
+                      project as IProjectResponse & {
+                        external: Record<string, string[]>;
+                      }
+                    }
+                  />
                 </Menu.Item>
               ) : null}
               {isAuthorized ? (
                 <Menu.Item>
-                  <LinkOSOProfileButton buttonClassName={buttonClassName} project={project as IProjectResponse & { external: Record<string, string[]> }} />
+                  <LinkOSOProfileButton
+                    buttonClassName={buttonClassName}
+                    project={
+                      project as IProjectResponse & {
+                        external: Record<string, string[]>;
+                      }
+                    }
+                  />
                 </Menu.Item>
               ) : null}
               <Menu.Item>

@@ -22,7 +22,7 @@ import {
   IGrantResponse,
   IMilestoneResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getWalletClient } from "@wagmi/core";
+
 import { useRouter } from "next/navigation";
 import type { FC } from "react";
 import { useState } from "react";
@@ -34,6 +34,7 @@ import { Hex } from "viem";
 import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 
 const milestoneSchema = z.object({
   title: z
@@ -142,10 +143,13 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         data: milestone,
       });
 
-      const walletClient = await getWalletClient(config, {
-        chainId: chainID,
-      });
-      if (!walletClient) return;
+      // Replace direct getWalletClient call with safeGetWalletClient
+
+      const { walletClient, error } = await safeGetWalletClient(chainID);
+
+      if (error || !walletClient || !gapClient) {
+        throw new Error("Failed to connect to wallet", { cause: error });
+      }
       const walletSigner = await walletClientToSigner(walletClient);
       await milestoneToAttest
         .attest(walletSigner as any, changeStepperStep)

@@ -13,10 +13,9 @@ import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { config } from "@/utilities/wagmi/config";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getWalletClient } from "@wagmi/core";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { FC } from "react";
@@ -59,10 +58,14 @@ export const GrantCompletion: FC = () => {
         await switchChainAsync?.({ chainId: grantToComplete.chainID });
         gapClient = getGapClient(grantToComplete.chainID);
       }
-      const walletClient = await getWalletClient(config, {
-        chainId: grantToComplete.chainID,
-      });
-      if (!walletClient || !gapClient) return;
+
+      const { walletClient, error } = await safeGetWalletClient(
+        grantToComplete.chainID
+      );
+
+      if (error || !walletClient || !gapClient) {
+        throw new Error("Failed to connect to wallet", { cause: error });
+      }
       const walletSigner = await walletClientToSigner(walletClient);
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
       if (!fetchedProject) return;
