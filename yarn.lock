@@ -14346,7 +14346,7 @@ viem@2.23.2:
     ox "0.6.7"
     ws "8.18.0"
 
-viem@2.x, viem@^2.1.1:
+viem@^2.1.1, viem@^2.23.9:
   version "2.23.9"
   resolved "https://registry.yarnpkg.com/viem/-/viem-2.23.9.tgz#b28a77aa0f0c7ab1db0cb82eed95e6dbf7a19397"
   integrity sha512-y8VLPfKukrstZKTerS9bm45ajZ22wUyStF+VquK3I2OovWLOyXSbQmJWei8syMFhp1uwhxh1tb0fAdx0WSRZWg==
