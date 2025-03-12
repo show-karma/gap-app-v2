@@ -20,6 +20,13 @@ import { GrantsOutputsLoading } from "../Loading/Grants/Outputs";
 import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
 import { sendImpactAnswers, getImpactAnswers } from "@/utilities/impact";
 
+// Helper function to handle comma-separated URLs
+const parseProofUrls = (proof: string): string[] => {
+  if (!proof) return [];
+  // Split by comma and trim whitespace
+  return proof.split(',').map(url => url.trim()).filter(url => url && urlRegex.test(url));
+};
+
 type OutputForm = {
   id: string;
   categoryId: string;
@@ -568,24 +575,28 @@ export const OutputsAndOutcomes = () => {
                                             }
                                             className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-md shadow-sm focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 dark:text-zinc-100"
                                           />
-                                        ) : form?.datapoints?.[index]?.proof &&
-                                          urlRegex.test(
-                                            form?.datapoints?.[index]?.proof
-                                          ) ? (
-                                          <a
-                                            href={
-                                              form?.datapoints?.[index]?.proof
-                                            }
-                                            target="_blank"
-                                            className="text-blue-500 underline dark:text-blue-400"
-                                          >
-                                            {form?.datapoints?.[index]?.proof ||
-                                              "No proof provided"}
-                                          </a>
+                                        ) : form?.datapoints?.[index]?.proof ? (
+                                          <div className="flex flex-col gap-1">
+                                            {parseProofUrls(form?.datapoints?.[index]?.proof).length > 0 ? (
+                                              parseProofUrls(form?.datapoints?.[index]?.proof).map((url, urlIndex) => (
+                                                <a
+                                                  key={urlIndex}
+                                                  href={url}
+                                                  target="_blank"
+                                                  className="text-blue-500 underline dark:text-blue-400 truncate max-w-xs"
+                                                >
+                                                  {url}
+                                                </a>
+                                              ))
+                                            ) : (
+                                              <span className="text-gray-900 dark:text-zinc-100">
+                                                {form?.datapoints?.[index]?.proof || "No proof provided"}
+                                              </span>
+                                            )}
+                                          </div>
                                         ) : (
                                           <span className="text-gray-900 dark:text-zinc-100">
-                                            {form?.datapoints?.[index]?.proof ||
-                                              "No proof provided"}
+                                            No proof provided
                                           </span>
                                         )}
                                       </td>
@@ -785,15 +796,24 @@ export const OutputsAndOutcomes = () => {
                     <label className="text-sm font-medium text-gray-500 dark:text-zinc-400">
                       Proof
                     </label>
-                    <div className="mt-1">
-                      <a
-                        href={selectedPoint.data.proof}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:hover:bg-blue-500 transition-colors"
-                      >
-                        View Proof
-                      </a>
+                    <div className="mt-1 flex flex-col gap-2">
+                      {parseProofUrls(selectedPoint.data.proof).length > 0 ? (
+                        parseProofUrls(selectedPoint.data.proof).map((url, index) => (
+                          <a
+                            key={index}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:hover:bg-blue-500 transition-colors"
+                          >
+                            View Proof {parseProofUrls(selectedPoint.data.proof).length > 1 ? `#${index + 1}` : ''}
+                          </a>
+                        ))
+                      ) : (
+                        <span className="text-gray-500 dark:text-zinc-400">
+                          {selectedPoint.data.proof}
+                        </span>
+                      )}
                     </div>
                   </div>
                 )}
