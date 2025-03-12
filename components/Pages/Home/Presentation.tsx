@@ -96,16 +96,16 @@ export const Presentation = () => {
                 <li className="flex w-full flex-row gap-4 break-words">
                   <CheckIcon className="h-6 min-h-[24px] w-6 min-w-[24px]" />
                   <p className="text-base font-normal">
-                    Self-Report on grant progress.
+                    Create and utilize a single onchain project resume for all your grants
                   </p>
                 </li>
                 <li className="flex w-full flex-row gap-4 break-words">
                   <CheckIcon className="h-6 min-h-[24px] w-6 min-w-[24px]" />
-                  <p className="text-base font-normal">Build Reputation.</p>
+                  <p className="text-base font-normal">Share project progress and build reputation onchain</p>
                 </li>
                 <li className="flex w-full flex-row gap-4 break-words">
                   <CheckIcon className="h-6 min-h-[24px] w-6 min-w-[24px]" />
-                  <p className="text-base font-normal">Receive more funding.</p>
+                  <p className="text-base font-normal">Receive rewards and funding for your work</p>
                 </li>
               </ul>
             </div>
@@ -124,19 +124,19 @@ export const Presentation = () => {
                 <li className="flex w-full flex-row gap-4 break-words">
                   <CheckIcon className="h-6 min-h-[24px] w-6 min-w-[24px]" />
                   <p className="text-base font-normal ">
-                    Stay up-to-date on projects progress.
+                    Stay up-to-date on projects progress
                   </p>
                 </li>
                 <li className="flex w-full flex-row gap-4 break-words">
                   <CheckIcon className="h-6 min-h-[24px] w-6 min-w-[24px]" />
                   <p className="text-base font-normal ">
-                    Trigger payments based on milestone completion.
+                    Measure impact using our custom impact measurement framework
                   </p>
                 </li>
                 <li className="flex w-full flex-row gap-4 break-words">
                   <CheckIcon className="h-6 max-h-[24px] min-h-[24px] w-6 min-w-[24px] max-w-[24px]" />
                   <p className="text-base font-normal ">
-                    Endorse projects, monitor fund usage and flag discrepancies.
+                    Use Karma AI to monitor project progress and improve capital allocation
                   </p>
                 </li>
               </ul>
