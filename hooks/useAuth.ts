@@ -210,7 +210,11 @@ export const useAuth = () => {
   };
 
   const softDisconnect = (newAddress: Hex) => {
-    console.log("softDisconnect", newAddress);
+    console.log("User soft disconnected", {
+      newAddress,
+      address,
+      isConnected,
+    });
     cookies.remove(authCookiePath, {
       path: "/",
     });
