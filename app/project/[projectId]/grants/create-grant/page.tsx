@@ -3,9 +3,9 @@ import dynamic from "next/dynamic";
 
 const NewGrant = dynamic(
   () =>
-    import("@/components/Pages/GrantMilestonesAndUpdates/screens").then(
-      (mod) => mod.NewGrant
-    ),
+    import(
+      "@/components/Pages/GrantMilestonesAndUpdates/screens/NewGrant"
+    ).then((mod) => mod.NewGrant),
   {
     loading: () => <DefaultLoading />,
   }
