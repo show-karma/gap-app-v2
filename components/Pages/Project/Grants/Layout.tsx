@@ -309,7 +309,7 @@ export const GrantsLayout = ({
                   </svg>
 
                   <p className="text-xs font-bold text-black dark:text-zinc-300 ">
-                    GRANTS
+                    FUNDING
                   </p>
                 </div>
                 {(isAuthorized || isCommunityAdminOfSome) && (

@@ -84,7 +84,7 @@ export function SearchGrantProgram({
           list={allPrograms}
           setValue={setValue}
           setSelectedProgram={setSelectedProgram}
-          type={"Grant"}
+          type={"Program"}
           grantToEdit={grantToEdit}
           selectedProgram={selectedProgram}
           prefixUnselected="Select"

@@ -28,7 +28,7 @@ export const StepBlock: React.FC<StepBlockProps> = ({
               <div className="flex flex-col items-center">
                 <div
                   className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium text-white",
+                    "w-8 h-8  max-md:w-6  max-md:h-6 rounded-full flex items-center justify-center text-sm font-medium text-white",
                     index + 1 <= currentStep
                       ? "bg-[#738DED]"
                       : "bg-gray-400 dark:bg-zinc-700"
@@ -38,7 +38,7 @@ export const StepBlock: React.FC<StepBlockProps> = ({
                 </div>
                 <span
                   className={cn(
-                    "text-xs mt-1 ",
+                    "text-xs mt-1  max-md:text-[10px]",
                     index + 1 <= currentStep
                       ? "text-zinc-800 dark:text-zinc-200"
                       : "text-gray-400 dark:text-zinc-400"
@@ -58,7 +58,7 @@ export const StepBlock: React.FC<StepBlockProps> = ({
               {index < totalSteps - 1 && (
                 <div
                   className={cn(
-                    "h-0.5 w-24 mx-2 mb-5",
+                    "h-0.5 w-24 max-md:w-5 mx-2 mb-5",
                     index + 1 < currentStep
                       ? "bg-[#738DED]"
                       : "bg-gray-400 dark:bg-zinc-700"

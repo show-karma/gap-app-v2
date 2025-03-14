@@ -168,7 +168,7 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
               placeholderText="Please provide a concise description of your objectives for this milestone"
             />
           </div>
-          <div className="flex w-full flex-row items-center justify-between gap-4 mt-8">
+          <div className="flex w-full flex-row items-center justify-between gap-4 mt-8 max-md:flex-wrap">
             <div className="flex w-full flex-row justify-between gap-4">
               <Controller
                 name="dates.startsAt"
@@ -178,8 +178,8 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
                     <label className={labelStyle}>Start date (optional)</label>
                     <div>
                       <Popover className="relative">
-                        <Popover.Button className="w-max text-sm flex-row flex gap-2 border border-gray-200 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        <Popover.Button className="w-max max-md:w-full max-md:px-2 max-md:items-center text-sm flex-row flex gap-2 border border-gray-200 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
+                          <CalendarIcon className="h-4 w-4 opacity-50" />
                           {field.value ? (
                             formatDate(field.value)
                           ) : (
@@ -221,8 +221,8 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
                     <label className={labelStyle}>End date *</label>
                     <div>
                       <Popover className="relative">
-                        <Popover.Button className="w-max text-sm flex-row flex gap-2  border border-gray-200 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        <Popover.Button className="w-max max-md:w-full max-md:px-2 max-md:items-center text-sm flex-row flex gap-2 border border-gray-200 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
+                          <CalendarIcon className=" h-4 w-4 opacity-50" />
                           {field.value ? (
                             formatDate(field.value)
                           ) : (

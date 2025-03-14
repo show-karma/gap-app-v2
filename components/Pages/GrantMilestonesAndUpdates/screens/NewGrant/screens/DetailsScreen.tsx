@@ -57,11 +57,12 @@ const baseSchema = z.object({
   startDate: z.date({
     required_error: MESSAGES.GRANT.FORM.DATE,
   }),
-  description: z.string().min(1, { message: "Description is required" }),
+  description: z.string().optional(),
 });
 
 // Define additional fields for grant flow
 const grantSchema = baseSchema.extend({
+  description: z.string().min(1, { message: "Description is required" }),
   amount: z.string().optional(),
   linkToProposal: z
     .string()
@@ -166,9 +167,7 @@ export const DetailsScreen: React.FC = () => {
         (item) => item?.uid?.toLowerCase() === oldGrant?.uid?.toLowerCase()
       );
       if (!oldGrantInstance) return;
-      console.log({
-        communityUID: data.community,
-      });
+
       oldGrantInstance.setValues({
         communityUID: data.community,
       });
@@ -181,7 +180,6 @@ export const DetailsScreen: React.FC = () => {
           ? new Date(data.startDate).getTime() / 1000
           : oldGrantInstance.details?.startDate,
       });
-      console.log(grantData);
       oldGrantInstance.details?.setValues(grantData);
 
       const { walletClient, error } = await safeGetWalletClient(
@@ -296,8 +294,7 @@ export const DetailsScreen: React.FC = () => {
     <StepBlock currentStep={3} totalSteps={4}>
       <div className="flex flex-col w-full mx-auto">
         <h3 className="text-xl font-semibold mb-6 text-center">
-          Tell us about your{" "}
-          {flowType === "grant" ? "grant" : "funding program"}
+          Add details to your {flowType === "grant" ? "grant" : "application"}
         </h3>
 
         <form
@@ -410,10 +407,10 @@ export const DetailsScreen: React.FC = () => {
             </>
           )}
 
-          {/* Description - Required for both flows */}
+          {/* Description - Required for grant flow, optional for program flow */}
           <div className="flex w-full flex-col">
             <label htmlFor="grant-description" className={labelStyle}>
-              Description *
+              Description {flowType === "grant" ? "*" : "(optional)"}
             </label>
             <div className="mt-2 w-full bg-transparent dark:border-gray-600">
               <MarkdownEditor
@@ -425,9 +422,11 @@ export const DetailsScreen: React.FC = () => {
                   });
                   trigger("description");
                 }}
-                placeholderText={`Add a brief description about this ${
-                  flowType === "grant" ? "grant" : "funding program"
-                }`}
+                placeholderText={
+                  flowType === "grant"
+                    ? `Add a brief description about this grant`
+                    : `Add optional details`
+                }
               />
             </div>
             {errors.description && (
@@ -455,9 +454,9 @@ export const DetailsScreen: React.FC = () => {
               onClick={handleSubmit(handleNext)}
               disabled={!isValid}
               text={
-                flowType === "grant" ? (isEditing ? "Update" : "Next") : "Apply"
+                flowType === "grant" ? (isEditing ? "Update" : "Next") : "Next"
               }
-            ></NextButton>
+            />
           </div>
         </div>
       </div>

@@ -30,6 +30,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { CancelButton } from "./buttons/CancelButton";
 import { NextButton } from "./buttons/NextButton";
+import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 
 export const MilestonesScreen: React.FC = () => {
   const {
@@ -140,6 +141,11 @@ export const MilestonesScreen: React.FC = () => {
         assetAndChainId: ["0x0", 1],
         payoutAddress: address,
         questions: newGrantData.questions,
+        description:
+          newGrantData.description ||
+          (flowType === "program"
+            ? `I am applying to participate in the ${newGrantData.title}`
+            : ""),
       });
 
       grant.details = new GrantDetails({
@@ -262,7 +268,7 @@ export const MilestonesScreen: React.FC = () => {
   return (
     <StepBlock currentStep={4} totalSteps={4}>
       <div className="flex flex-col w-full mx-auto">
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-6 max-md:flex-col max-md:gap-2">
           <h3 className="text-xl font-semibold">
             {flowType === "grant"
               ? "Create milestones for your grant"
@@ -273,7 +279,7 @@ export const MilestonesScreen: React.FC = () => {
             onClick={createMilestone}
             className="flex items-center gap-2 text-brand-blue bg-indigo-50 dark:bg-indigo-900 dark:text-indigo-50 hover:bg-indigo-50 hover:dark:bg-indigo-900 px-4 py-2 rounded-md hover:opacity-90"
           >
-            Add More Milestones
+            Add Milestones
             <PlusIcon className="h-4 w-4" />
           </Button>
         </div>
@@ -281,10 +287,10 @@ export const MilestonesScreen: React.FC = () => {
         <div className="w-full mb-10">
           {milestonesForms.length === 0 ? (
             <div className="text-center py-8 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
-              <p className="text-gray-500 dark:text-gray-400">
-                {flowType === "grant"
-                  ? 'No milestones yet. Milestones are optional. Click "Add milestone" to create one or proceed without milestones.'
-                  : 'No milestones yet. At least one milestone is required for funding programs. Click "Add milestone" to create one.'}
+              <p className="text-gray-500 dark:text-gray-400 text-center">
+                Set your goals by adding milestones you plan to accomplish.
+                There’s no limit—add as many as you need to track your progress
+                effectively!
               </p>
             </div>
           ) : (
@@ -300,13 +306,19 @@ export const MilestonesScreen: React.FC = () => {
           )}
         </div>
 
-        <div className="flex justify-between w-full">
-          <div>
-            <CancelButton onClick={handleCancel} text="Cancel" />
-          </div>
+        <div className="flex justify-between w-full max-md:flex-col max-md:gap-2">
+          <CancelButton
+            onClick={handleCancel}
+            text="Cancel"
+            className="max-md:px-5 max-md:items-center max-md:justify-center max-md:flex-col max-md:w-full"
+          />
 
-          <div className="flex gap-4">
-            <CancelButton onClick={handleBack} text="Back" />
+          <div className="flex gap-4 max-md:flex-col max-md:gap-2">
+            <CancelButton
+              onClick={handleBack}
+              text="Back"
+              className="max-md:px-5 max-md:items-center max-md:justify-center max-md:flex-col max-md:w-full"
+            />
             <NextButton
               onClick={createNewGrant}
               disabled={
@@ -320,6 +332,7 @@ export const MilestonesScreen: React.FC = () => {
                     : "Create grant"
                   : "Apply"
               }
+              className="max-md:px-5 max-md:items-center max-md:justify-center max-md:flex-col max-md:w-full"
             />
           </div>
         </div>

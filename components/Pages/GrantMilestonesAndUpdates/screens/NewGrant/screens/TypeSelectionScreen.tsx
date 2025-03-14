@@ -17,7 +17,8 @@ interface TypeOption {
 }
 
 export const TypeSelectionScreen: React.FC = () => {
-  const { setCurrentStep, setFlowType, flowType } = useGrantFormStore();
+  const { setCurrentStep, setFlowType, flowType, updateFormData } =
+    useGrantFormStore();
   const selectedProject = useProjectStore((state) => state.project);
   const router = useRouter();
 
@@ -44,6 +45,11 @@ export const TypeSelectionScreen: React.FC = () => {
 
   const handleNext = () => {
     setCurrentStep(2);
+    updateFormData({
+      community: undefined,
+      programId: undefined,
+      title: undefined,
+    });
   };
 
   const handleCancel = () => {

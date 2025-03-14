@@ -123,7 +123,7 @@ export const CommunitySelectionScreen: React.FC = () => {
                 formData[field as keyof typeof formData] || ""
               }
               searchForProgram="Proof of Ship"
-              canAdd={false}
+              canAdd={flowType === "grant" ? true : false}
             />
           )}
         </div>
