@@ -145,6 +145,12 @@ export default function Header() {
   useEffect(() => {
     const unwatch = watchAccount?.(config, {
       onChange: (account, prevAccount) => {
+        if (!account) {
+          errorManager("User changed to empty account instance", account, {
+            account,
+            prevAccount,
+          });
+        }
         if (account.address && account.address !== prevAccount.address) {
           softDisconnect(account.address);
         }
