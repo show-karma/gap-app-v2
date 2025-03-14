@@ -21,7 +21,6 @@ import {
   authWalletTypeCookiePath,
 } from "@/utilities/auth-keys";
 
-
 const getNonce = async (publicAddress: string) => {
   try {
     const [data] = await fetchData(`/auth/login`, "POST", {
@@ -196,6 +195,10 @@ export const useAuth = () => {
   };
 
   const disconnect = async () => {
+    console.log("User disconnected", {
+      address,
+      isConnected,
+    });
     cookies.remove(authCookiePath, {
       path: "/",
     });
@@ -207,6 +210,7 @@ export const useAuth = () => {
   };
 
   const softDisconnect = (newAddress: Hex) => {
+    console.log("softDisconnect", newAddress);
     cookies.remove(authCookiePath, {
       path: "/",
     });
