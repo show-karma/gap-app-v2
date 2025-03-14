@@ -17,6 +17,8 @@ interface SearchGrantProgramProps {
     }
   ) => void;
   watch: (field: string) => any;
+  searchForProgram?: string;
+  canAdd?: boolean;
 }
 
 export function SearchGrantProgram({
@@ -25,6 +27,8 @@ export function SearchGrantProgram({
   chainId,
   setValue,
   watch,
+  searchForProgram,
+  canAdd = true,
 }: SearchGrantProgramProps) {
   const [allPrograms, setAllPrograms] = useState<GrantProgram[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -41,16 +45,25 @@ export function SearchGrantProgram({
       if (error) {
         console.log(error);
       }
-      const sortedAlphabetically = result.sort(
-        (a: GrantProgram, b: GrantProgram) => {
-          const aTitle = a.metadata?.title || "";
-          const bTitle = b.metadata?.title || "";
-          if (aTitle < bTitle) return -1;
-          if (aTitle > bTitle) return 1;
-          return 0;
-        }
-      );
-      setAllPrograms(sortedAlphabetically);
+      if (searchForProgram) {
+        const filteredPrograms = result.filter((program: GrantProgram) =>
+          program.metadata?.title
+            ?.toLowerCase()
+            .includes(searchForProgram.toLowerCase())
+        );
+        setAllPrograms(filteredPrograms);
+      } else {
+        const sortedAlphabetically = result.sort(
+          (a: GrantProgram, b: GrantProgram) => {
+            const aTitle = a.metadata?.title || "";
+            const bTitle = b.metadata?.title || "";
+            if (aTitle < bTitle) return -1;
+            if (aTitle > bTitle) return 1;
+            return 0;
+          }
+        );
+        setAllPrograms(sortedAlphabetically);
+      }
       setIsLoading(false);
     })();
   }, [communityUID]);
@@ -76,7 +89,7 @@ export function SearchGrantProgram({
           selectedProgram={selectedProgram}
           prefixUnselected="Select"
           buttonClassname="w-full max-w-full"
-          canAdd
+          canAdd={canAdd}
         />
       )}
     </div>

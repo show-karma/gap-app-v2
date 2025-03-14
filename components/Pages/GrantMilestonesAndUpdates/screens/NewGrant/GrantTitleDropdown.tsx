@@ -154,7 +154,7 @@ export const GrantTitleDropdown: FC<{
               />
             </div>
           ) : null}
-          <div className="w-full justify-between items-center flex flex-row px-2">
+          <div className="w-full justify-between items-center flex flex-row px-2 mt-2">
             <p className="text-sm text-slate-700 font-bold">
               {`${pluralize(type, 1)} (${list.length})`}
             </p>

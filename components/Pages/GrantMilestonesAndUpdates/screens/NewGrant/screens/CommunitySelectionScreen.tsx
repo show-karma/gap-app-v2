@@ -44,6 +44,7 @@ export const CommunitySelectionScreen: React.FC = () => {
           const celoCommunity = result.data.find((community) =>
             community.details?.data?.name?.toLowerCase().includes("celo")
           );
+          console.log("celoCommunity", celoCommunity);
           setAllCommunities(celoCommunity ? [celoCommunity] : []);
         } else {
           setAllCommunities(result.data);
@@ -63,11 +64,6 @@ export const CommunitySelectionScreen: React.FC = () => {
   };
 
   const handleNext = () => {
-    // Ensure we have a title before proceeding
-    if (flowType === "grant" && !formData.title) {
-      // If no title is set for grant flow, set a default title
-      updateFormData({ title: "My Grant" });
-    }
     setCurrentStep(3);
   };
 
@@ -126,6 +122,8 @@ export const CommunitySelectionScreen: React.FC = () => {
               watch={(field: string) =>
                 formData[field as keyof typeof formData] || ""
               }
+              searchForProgram="Proof of Ship"
+              canAdd={false}
             />
           )}
         </div>
