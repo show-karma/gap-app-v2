@@ -13,17 +13,21 @@ import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { appNetwork } from "@/utilities/network";
 import { CancelButton } from "./buttons/CancelButton";
 import { NextButton } from "./buttons/NextButton";
+import { ChevronDownIcon } from "@heroicons/react/24/solid";
 
 export const CommunitySelectionScreen: React.FC = () => {
-  const { setCurrentStep, flowType, formData, updateFormData } =
-    useGrantFormStore();
+  const {
+    setCurrentStep,
+    flowType,
+    formData,
+    updateFormData,
+    communityNetworkId,
+    setCommunityNetworkId,
+  } = useGrantFormStore();
   const selectedProject = useProjectStore((state) => state.project);
   const router = useRouter();
   const [allCommunities, setAllCommunities] = useState<ICommunityResponse[]>(
     []
-  );
-  const [communityNetworkId, setCommunityNetworkId] = useState<number>(
-    appNetwork[0].id
   );
   const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(
     null
@@ -37,17 +41,10 @@ export const CommunitySelectionScreen: React.FC = () => {
 
         if (flowType === "program") {
           // Filter to only show Celo community for program flow
-          const celoCommunity = result.data.find(
-            (community) =>
-              community.uid.toLowerCase().includes("celo") ||
-              (community as any).name?.toLowerCase().includes("celo")
+          const celoCommunity = result.data.find((community) =>
+            community.details?.data?.name?.toLowerCase().includes("celo")
           );
           setAllCommunities(celoCommunity ? [celoCommunity] : []);
-
-          // Auto-select Celo community if it exists
-          if (celoCommunity) {
-            setCommunityValue(celoCommunity.uid, celoCommunity.chainID);
-          }
         } else {
           setAllCommunities(result.data);
         }
@@ -93,8 +90,8 @@ export const CommunitySelectionScreen: React.FC = () => {
     (flowType === "grant" || (flowType === "program" && !!formData.programId));
 
   return (
-    <StepBlock currentStep={2} totalSteps={4} flowType={flowType}>
-      <div className="flex flex-col items-center w-full max-w-3xl mx-auto">
+    <StepBlock currentStep={2} totalSteps={4}>
+      <div className="flex flex-col items-center w-full mx-auto">
         <h3 className="text-xl font-semibold mb-6 text-center">
           Select a community for your{" "}
           {flowType === "grant" ? "grant" : "funding program"}
@@ -105,36 +102,31 @@ export const CommunitySelectionScreen: React.FC = () => {
             onSelectFunction={setCommunityValue}
             previousValue={formData.community}
             communities={allCommunities}
-            // Note: If CommunitiesDropdown doesn't support disabled prop, we'll handle it differently
+            triggerClassName="w-full max-w-full"
+            RightIcon={ChevronDownIcon}
+            rightIconClassName="w-4 h-4 text-black dark:text-white opacity-100"
           />
 
           {formData.community && (
-            <div className="w-full mb-10">
-              <label className="text-sm font-bold text-black dark:text-zinc-100 mb-2 block">
-                {flowType === "grant"
-                  ? "Choose Grant Program or Add New *"
-                  : "Select Funding Program *"}
-              </label>
-              <SearchGrantProgram
-                grantToEdit={undefined}
-                communityUID={formData.community}
-                chainId={communityNetworkId}
-                setValue={(
-                  field: string,
-                  value?: string,
-                  options?: { shouldValidate: boolean }
-                ) => {
-                  if (field === "programId") {
-                    updateFormData({ programId: value });
-                  } else if (field === "title") {
-                    updateFormData({ title: value || "" });
-                  }
-                }}
-                watch={(field: string) =>
-                  formData[field as keyof typeof formData] || ""
+            <SearchGrantProgram
+              grantToEdit={undefined}
+              communityUID={formData.community}
+              chainId={communityNetworkId}
+              setValue={(
+                field: string,
+                value?: string,
+                options?: { shouldValidate: boolean }
+              ) => {
+                if (field === "programId") {
+                  updateFormData({ programId: value });
+                } else if (field === "title") {
+                  updateFormData({ title: value || "" });
                 }
-              />
-            </div>
+              }}
+              watch={(field: string) =>
+                formData[field as keyof typeof formData] || ""
+              }
+            />
           )}
         </div>
 

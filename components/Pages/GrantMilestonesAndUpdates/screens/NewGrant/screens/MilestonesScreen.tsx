@@ -1,14 +1,14 @@
-import React from "react";
+import { useEffect } from "react";
 import { StepBlock } from "../StepBlock";
 import { Button } from "@/components/Utilities/Button";
 import { useGrantFormStore } from "../store";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
 import { useProjectStore } from "@/store";
 import { Milestone } from "../Milestone";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { useAuthStore } from "@/store/auth";
-import { useAccount } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import { useStepper } from "@/store/modals/txStepper";
 import toast from "react-hot-toast";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -28,6 +28,8 @@ import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
 import { MESSAGES } from "@/utilities/messages";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { CancelButton } from "./buttons/CancelButton";
+import { NextButton } from "./buttons/NextButton";
 
 export const MilestonesScreen: React.FC = () => {
   const {
@@ -42,7 +44,9 @@ export const MilestonesScreen: React.FC = () => {
     updateFormData,
     resetFormData,
     setFlowType,
+    communityNetworkId,
   } = useGrantFormStore();
+  const { switchChainAsync } = useSwitchChain();
   const selectedProject = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();
@@ -50,6 +54,9 @@ export const MilestonesScreen: React.FC = () => {
   const { isAuth } = useAuthStore();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
+
+  const pathname = usePathname();
+  const isEditing = pathname.includes("edit");
 
   const handleBack = () => {
     setCurrentStep(3);
@@ -82,16 +89,14 @@ export const MilestonesScreen: React.FC = () => {
     if (!address || !selectedProject || !gap) return;
 
     try {
+      let gapClient = gap;
       if (!isConnected || !isAuth) return;
-
-      // Get community network ID
-      const communityNetworkId = chain?.id || 1; // Default to Ethereum mainnet
 
       // Check if we need to switch chains
       const chainId = await connector?.getChainId();
       if (!checkNetworkIsValid(chainId) || chainId !== communityNetworkId) {
-        toast.error("Please switch to the correct network");
-        return;
+        await switchChainAsync?.({ chainId: communityNetworkId });
+        gapClient = getGapClient(communityNetworkId);
       }
 
       // Save all milestones
@@ -105,7 +110,6 @@ export const MilestonesScreen: React.FC = () => {
         title: formData.title || "",
         description: formData.description || "",
         linkToProposal: formData.linkToProposal || "",
-        proofOfWorkGrantUpdate: formData.proofOfWorkGrantUpdate || "",
         amount: formData.amount || "",
         milestones: milestonesData,
         community: formData.community || "",
@@ -114,15 +118,8 @@ export const MilestonesScreen: React.FC = () => {
           ? formData.startDate.getTime() / 1000
           : undefined,
         programId: formData.programId,
-        fundUsage: formData.fundUsage,
         questions: formData.questions || [],
       };
-
-      console.log("Form data from store:", formData);
-      console.log("New grant data being sent:", newGrantData);
-
-      // Get GAP client
-      const gapClient = getGapClient(communityNetworkId);
 
       // Create grant instance
       const grant = new Grant({
@@ -263,20 +260,21 @@ export const MilestonesScreen: React.FC = () => {
   };
 
   return (
-    <StepBlock currentStep={4} totalSteps={4} flowType={flowType}>
-      <div className="flex flex-col w-full max-w-3xl mx-auto">
+    <StepBlock currentStep={4} totalSteps={4}>
+      <div className="flex flex-col w-full mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h3 className="text-xl font-semibold">
-            Create milestones for your{" "}
-            {flowType === "grant" ? "grant" : "funding program"}
+            {flowType === "grant"
+              ? "Create milestones for your grant"
+              : "Create milestones for your funding program"}
           </h3>
 
           <Button
             onClick={createMilestone}
-            className="flex items-center gap-2 bg-blue-500 dark:bg-blue-900 text-white px-4 py-2 rounded-md hover:opacity-90"
+            className="flex items-center gap-2 text-brand-blue bg-indigo-50 dark:bg-indigo-900 dark:text-indigo-50 hover:bg-indigo-50 hover:dark:bg-indigo-900 px-4 py-2 rounded-md hover:opacity-90"
           >
+            Add More Milestones
             <PlusIcon className="h-4 w-4" />
-            Add milestone
           </Button>
         </div>
 
@@ -284,8 +282,9 @@ export const MilestonesScreen: React.FC = () => {
           {milestonesForms.length === 0 ? (
             <div className="text-center py-8 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
               <p className="text-gray-500 dark:text-gray-400">
-                No milestones yet. Click &quot;Add milestone&quot; to create one
-                or proceed without milestones.
+                {flowType === "grant"
+                  ? 'No milestones yet. Milestones are optional. Click "Add milestone" to create one or proceed without milestones.'
+                  : 'No milestones yet. At least one milestone is required for funding programs. Click "Add milestone" to create one.'}
               </p>
             </div>
           ) : (
@@ -303,28 +302,25 @@ export const MilestonesScreen: React.FC = () => {
 
         <div className="flex justify-between w-full">
           <div>
-            <Button
-              onClick={handleCancel}
-              className="border dark:border-blue-300 dark:text-blue-400 border-blue-500 bg-transparent text-base px-6 font-bold text-blue-800 hover:bg-transparent hover:opacity-75"
-            >
-              Cancel
-            </Button>
+            <CancelButton onClick={handleCancel} text="Cancel" />
           </div>
 
           <div className="flex gap-4">
-            <Button
-              onClick={handleBack}
-              className="border dark:border-blue-300 dark:text-blue-400 border-blue-500 bg-transparent text-base px-6 font-bold text-blue-800 hover:bg-transparent hover:opacity-75"
-            >
-              Back
-            </Button>
-            <Button
+            <CancelButton onClick={handleBack} text="Back" />
+            <NextButton
               onClick={createNewGrant}
-              className="flex items-center justify-start gap-3 rounded bg-blue-500 dark:bg-blue-900 px-6 text-base font-bold text-white hover:bg-blue-500 hover:opacity-75"
-              disabled={!allMilestonesValidated}
-            >
-              {flowType === "grant" ? "Create grant" : "Apply"}
-            </Button>
+              disabled={
+                !allMilestonesValidated ||
+                (flowType === "program" && milestonesForms.length === 0)
+              }
+              text={
+                flowType === "grant"
+                  ? isEditing
+                    ? "Update grant"
+                    : "Create grant"
+                  : "Apply"
+              }
+            />
           </div>
         </div>
       </div>

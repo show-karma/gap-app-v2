@@ -1,3 +1,4 @@
+import { appNetwork } from "@/utilities/network";
 import { IMilestone } from "@show-karma/karma-gap-sdk";
 import { create } from "zustand";
 
@@ -13,10 +14,8 @@ export interface GrantFormData {
   title: string;
   programId?: string;
   amount?: string;
-  fundUsage?: string;
   community: string;
   startDate?: Date;
-  proofOfWorkGrantUpdate?: string;
   linkToProposal?: string;
   recipient?: string;
   description: string;
@@ -52,6 +51,9 @@ interface GrantFormStore {
   formData: GrantFormData;
   updateFormData: (data: Partial<GrantFormData>) => void;
   resetFormData: () => void;
+
+  communityNetworkId: number;
+  setCommunityNetworkId: (networkId: number) => void;
 }
 
 const initialFormData: GrantFormData = {
@@ -62,7 +64,6 @@ const initialFormData: GrantFormData = {
   amount: "",
   linkToProposal: "",
   recipient: "",
-  fundUsage: "",
   questions: [],
 };
 
@@ -128,4 +129,8 @@ export const useGrantFormStore = create<GrantFormStore>((set, get) => ({
   updateFormData: (data: Partial<GrantFormData>) =>
     set((state) => ({ formData: { ...state.formData, ...data } })),
   resetFormData: () => set({ formData: initialFormData }),
+
+  communityNetworkId: appNetwork[0].id,
+  setCommunityNetworkId: (networkId: number) =>
+    set({ communityNetworkId: networkId }),
 }));
