@@ -501,8 +501,25 @@ function ChatWithKarmaCoPilot({
     isStreaming,
   } = chatHook;
 
-  const ChatFormRef = useRef<HTMLFormElement>(null);
   const messageContainerRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to bottom whenever messages change or when streaming
+  useEffect(() => {
+    if (messageContainerRef.current) {
+      messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
+    }
+  }, [messages, isStreaming, input]); // Added input to dependencies
+
+  // Modified handleInputChange to include scrolling
+  const handleLocalInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleInputChange(e);
+    // Scroll after a short delay to ensure the DOM has updated
+    setTimeout(() => {
+      if (messageContainerRef.current) {
+        messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
+      }
+    }, 0);
+  };
 
   const hasMessages = messages.length > 0;
 
@@ -571,7 +588,7 @@ function ChatWithKarmaCoPilot({
       <div className="relative flex-1 overflow-hidden">
         <div
           ref={messageContainerRef}
-          className="absolute inset-0 overflow-y-auto p-4 space-y-4"
+          className="absolute inset-0 overflow-y-auto p-4 space-y-4 scroll-smooth"
         >
           {groupedMessages.map(([date, messagesInDay]) => (
             <div key={date}>
@@ -603,7 +620,7 @@ function ChatWithKarmaCoPilot({
       <div className="border-t dark:border-zinc-600 px-3 pt-4 pb-6">
         <ChatInput
           input={input}
-          handleInputChange={handleInputChange}
+          handleInputChange={handleLocalInputChange}
           handleSubmit={handleSubmit}
           isLoadingChat={isLoadingChat}
           isLoadingProjects={isLoadingProjects}

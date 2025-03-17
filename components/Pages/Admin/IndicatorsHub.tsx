@@ -93,12 +93,12 @@ export const autosyncedIndicators: IndicatorWithPrograms[] = [
     description: "Number of repository stars (*oso)",
     unitOfMeasure: "int"
   },
-  {
-    name: "COMMIT_CODE",
-    id: "",
-    description: "Number of code commits (*oso)",
-    unitOfMeasure: "int"
-  },
+  // {
+  //   name: "COMMIT_CODE",
+  //   id: "",
+  //   description: "Number of code commits (*oso)",
+  //   unitOfMeasure: "int"
+  // },
   {
     name: 'GitHub Commits',
     id: "",
