@@ -28,6 +28,9 @@ import { useQueryState } from "nuqs";
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { SearchDropdown } from "../ProgramRegistry/SearchDropdown";
+import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+import { envVars } from "@/utilities/enviromentVars";
+
 interface Report {
   _id: {
     $oid: string;
@@ -221,32 +224,55 @@ export const ReportMilestonePage = ({
           <section className="flex flex-col gap-4">
             <div className="flex flex-row justify-between items-center">
               <h1 className="text-2xl font-bold">Milestones Report</h1>
-              <SearchDropdown
-                list={grantTitles}
-                onSelectFunction={(value: string) =>
-                  // onChangeGeneric(value, setSelectedGrantTitles)
-                  setSelectedGrantTitles((oldArray) => {
-                    setCurrentPage(1);
-                    const newArray = [...oldArray];
-                    if (newArray.includes(value)) {
-                      const filteredArray = newArray.filter(
-                        (item) => item !== value
-                      );
-                      return filteredArray;
-                    } else {
-                      newArray.push(value);
+              <div className="flex items-center gap-4">
+                <Button
+                  onClick={() => {
+                    try {
+                      const path = INDEXER.COMMUNITY.GRANTS(communityId, {
+                        page: 0,
+                        pageLimit: 9999999,
+                        sort: sortBy,
+                        status: "all",
+                        grantTitle: selectedGrantTitles.length > 0 ? encodeURIComponent(selectedGrantTitles.join("_")) : undefined,
+                        download: true
+                      });
+                      const url = `${envVars.NEXT_PUBLIC_GAP_INDEXER_URL}${path}`;
+                      console.log({url})
+                      window.open(url, "_blank");
+                    } catch (error: any) {
+                      errorManager("Error downloading report", error);
                     }
-                    return newArray;
-                  })
-                }
-                cleanFunction={() => {
-                  setSelectedGrantTitles([]);
-                }}
-                prefixUnselected="All"
-                type={"Grant Programs"}
-                selected={selectedGrantTitles}
-              // imageDictionary={}
-              />
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <ArrowDownTrayIcon className="h-5 w-5" />
+                  Download Report
+                </Button>
+                <SearchDropdown
+                  list={grantTitles}
+                  onSelectFunction={(value: string) =>
+                    setSelectedGrantTitles((oldArray) => {
+                      setCurrentPage(1);
+                      const newArray = [...oldArray];
+                      if (newArray.includes(value)) {
+                        const filteredArray = newArray.filter(
+                          (item) => item !== value
+                        );
+                        return filteredArray;
+                      } else {
+                        newArray.push(value);
+                      }
+                      return newArray;
+                    })
+                  }
+                  cleanFunction={() => {
+                    setSelectedGrantTitles([]);
+                  }}
+                  prefixUnselected="All"
+                  type={"Grant Programs"}
+                  selected={selectedGrantTitles}
+                />
+              </div>
             </div>
             <div className="mb-2 grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 w-full">
               {isLoading ? (
