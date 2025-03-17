@@ -11,7 +11,6 @@ import { useParams, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ProjectOptionsMenu } from "./ProjectOptionsMenu";
 
-
 export const ProjectNavigator = ({
   hasContactInfo,
   grantsLength,
@@ -34,7 +33,7 @@ export const ProjectNavigator = ({
       ),
     },
     {
-      name: "Grants",
+      name: "Funding",
       href: PAGES.PROJECT.GRANTS(project?.details?.data?.slug || projectId),
     },
     {
@@ -92,7 +91,7 @@ export const ProjectNavigator = ({
             {tab.name === "Contact Info" && !hasContactInfo ? (
               <ExclamationTriangleIcon className="w-4 h-4 text-yellow-500" />
             ) : null}
-            {tab.name === "Grants" && grantsLength ? (
+            {tab.name === "Funding" && grantsLength ? (
               <p className="rounded-2xl bg-gray-200 px-2.5 py-[2px] text-center text-sm font-medium leading-tight text-slate-700 dark:bg-slate-700 dark:text-zinc-300">
                 {formatCurrency(grantsLength || 0)}
               </p>

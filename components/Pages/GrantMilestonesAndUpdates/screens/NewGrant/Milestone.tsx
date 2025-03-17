@@ -136,21 +136,7 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
   const priorities = Array.from({ length: 5 }, (_, index) => index + 1);
 
   return milestonesForms[index].isEditing ? (
-    <div className="flex w-full flex-col gap-6 rounded-md bg-gray-200 dark:bg-zinc-700 px-4 py-6">
-      <div className="flex w-full flex-row justify-between">
-        <h4 className="text-2xl font-bold">Add milestone {index + 1}</h4>
-        <Button
-          onClick={() => {
-            removeMilestone(index);
-            setFormPriorities(
-              formPriorities.filter((p) => p !== watch("priority"))
-            );
-          }}
-          className="bg-transparent p-4 hover:bg-transparent hover:opacity-75"
-        >
-          <img src="/icons/close.svg" alt="Close" className="h-4 w-4 " />
-        </Button>
-      </div>
+    <div className="flex w-full flex-col gap-6 rounded-md border border-gray-200 dark:border-zinc-700 p-6">
       <form
         onSubmit={handleSubmit(onSubmit)}
         className="flex w-full flex-col gap-4"
@@ -167,191 +153,9 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
           />
           <p className="text-base text-red-400">{errors.title?.message}</p>
         </div>
-        <div className="flex w-full flex-row items-center justify-between gap-4">
-          <div className="flex w-full flex-row justify-between gap-4">
-            <Controller
-              name="priority"
-              control={form.control}
-              render={({ field, formState, fieldState }) => (
-                <div className="flex w-full flex-col gap-2">
-                  <label className={labelStyle}>
-                    Milestone priority (optional)
-                  </label>
-                  <div>
-                    <Popover className="relative">
-                      <Popover.Button className="max-lg:w-full w-max text-sm flex-row flex gap-2 items-center text-black dark:text-white border border-gray-200 bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
-                        {field.value
-                          ? `Priority ${field.value}`
-                          : `Select priority`}
-                        <ChevronDownIcon className="ml-auto h-4 w-4 opacity-50 text-black dark:text-white" />
-                      </Popover.Button>
-                      <Popover.Panel className="absolute z-10 bg-white dark:bg-zinc-800 mt-4 rounded-md w-[160px] scroll-smooth overflow-y-auto overflow-x-hidden py-2">
-                        {({ close }) => (
-                          <>
-                            <button
-                              key={"none"}
-                              className="cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 w-full disabled:opacity-30 disabled:cursor-not-allowed disabled:bg-zinc-200 dark:disabled:bg-zinc-900"
-                              onClick={(event) => {
-                                event?.preventDefault();
-                                event?.stopPropagation();
-                                field.onChange(undefined);
-                                setValue("priority", undefined, {
-                                  shouldValidate: true,
-                                });
-
-                                close();
-                              }}
-                            >
-                              None
-                            </button>
-                            {priorities.map((priority) => (
-                              <button
-                                key={priority}
-                                className="cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 w-full disabled:opacity-30 disabled:cursor-not-allowed disabled:bg-zinc-200 dark:disabled:bg-zinc-900"
-                                disabled={
-                                  watch("priority") === priority
-                                    ? false
-                                    : formPriorities.includes(priority)
-                                }
-                                onClick={(event) => {
-                                  event?.preventDefault();
-                                  event?.stopPropagation();
-                                  if (watch("priority") === priority) {
-                                    field.onChange(undefined);
-                                    setValue("priority", undefined, {
-                                      shouldValidate: true,
-                                    });
-                                  } else {
-                                    field.onChange(priority);
-                                    setValue("priority", priority, {
-                                      shouldValidate: true,
-                                    });
-                                  }
-                                  const watchPriority = watch("priority");
-                                  if (formPriorities.includes(priority)) {
-                                    const newPriorities = formPriorities.filter(
-                                      (p) =>
-                                        p !== priority && p !== watchPriority
-                                    );
-                                    setFormPriorities(newPriorities);
-                                  } else {
-                                    setFormPriorities([
-                                      ...formPriorities,
-                                      priority,
-                                    ]);
-                                  }
-                                  close();
-                                }}
-                              >
-                                Priority {priority}
-                              </button>
-                            ))}
-                          </>
-                        )}
-                      </Popover.Panel>
-                    </Popover>
-                  </div>
-                  <p className="text-base text-red-400">
-                    {formState.errors.dates?.endsAt?.message}
-                  </p>
-                </div>
-              )}
-            />
-          </div>
-        </div>
-        <div className="flex w-full flex-row items-center justify-between gap-4">
-          <div className="flex w-full flex-row justify-between gap-4">
-            <Controller
-              name="dates.startsAt"
-              control={form.control}
-              render={({ field, formState, fieldState }) => (
-                <div className="flex w-full flex-col gap-2">
-                  <label className={labelStyle}>Start date (optional)</label>
-                  <div>
-                    <Popover className="relative">
-                      <Popover.Button className="w-max text-sm flex-row flex gap-2 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
-                        {field.value ? (
-                          formatDate(field.value)
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Popover.Button>
-                      <Popover.Panel className="absolute z-10 bg-white dark:bg-zinc-800 mt-4 rounded-md">
-                        <DayPicker
-                          mode="single"
-                          selected={field.value}
-                          onDayClick={(e) => {
-                            setValue("dates.startsAt", e, {
-                              shouldValidate: true,
-                            });
-                            field.onChange(e);
-                          }}
-                          disabled={(date) => {
-                            if (date < new Date("2000-01-01")) return true;
-                            return false;
-                          }}
-                          initialFocus
-                        />
-                      </Popover.Panel>
-                    </Popover>
-                  </div>
-                  <p className="text-base text-red-400">
-                    {formState.errors.dates?.startsAt?.message}
-                  </p>
-                </div>
-              )}
-            />
-          </div>
-          <div className="flex w-full flex-row justify-between gap-4">
-            <Controller
-              name="dates.endsAt"
-              control={form.control}
-              render={({ field, formState, fieldState }) => (
-                <div className="flex w-full flex-col gap-2">
-                  <label className={labelStyle}>End date *</label>
-                  <div>
-                    <Popover className="relative">
-                      <Popover.Button className="w-max text-sm flex-row flex gap-2 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
-                        {field.value ? (
-                          formatDate(field.value)
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Popover.Button>
-                      <Popover.Panel className="absolute z-10 bg-white dark:bg-zinc-800 mt-4 rounded-md">
-                        <DayPicker
-                          mode="single"
-                          selected={field.value}
-                          onDayClick={(e) => {
-                            setValue("dates.endsAt", e, {
-                              shouldValidate: true,
-                            });
-                            field.onChange(e);
-                          }}
-                          disabled={(date) => {
-                            if (date < new Date("2000-01-01")) return true;
-                            const startsAt = watch("dates.startsAt");
-                            if (startsAt && date < startsAt) return true;
-                            return false;
-                          }}
-                          initialFocus
-                        />
-                      </Popover.Panel>
-                    </Popover>
-                  </div>
-                  <p className="text-base text-red-400">
-                    {formState.errors.dates?.endsAt?.message}
-                  </p>
-                </div>
-              )}
-            />
-          </div>
-        </div>
         <div className="flex w-full flex-col">
           <label htmlFor="milestone-description" className={labelStyle}>
-            Milestone description (optional)
+            Description (optional)
           </label>
           <div className="mt-3 w-full bg-transparent" data-color-mode="light">
             <MarkdownEditor
@@ -364,9 +168,200 @@ export const Milestone: FC<MilestoneProps> = ({ currentMilestone, index }) => {
               placeholderText="Please provide a concise description of your objectives for this milestone"
             />
           </div>
+          <div className="flex w-full flex-row items-center justify-between gap-4 mt-8 max-md:flex-wrap">
+            <div className="flex w-full flex-row justify-between gap-4">
+              <Controller
+                name="dates.startsAt"
+                control={form.control}
+                render={({ field, formState, fieldState }) => (
+                  <div className="flex w-full flex-col gap-2">
+                    <label className={labelStyle}>Start date (optional)</label>
+                    <div>
+                      <Popover className="relative">
+                        <Popover.Button className="w-max max-md:w-full max-md:px-2 max-md:items-center text-sm flex-row flex gap-2 border border-gray-200 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
+                          <CalendarIcon className="h-4 w-4 opacity-50" />
+                          {field.value ? (
+                            formatDate(field.value)
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                        </Popover.Button>
+                        <Popover.Panel className="absolute z-10 bg-white  border border-gray-200 dark:bg-zinc-800 mt-4 rounded-md">
+                          <DayPicker
+                            mode="single"
+                            selected={field.value}
+                            onDayClick={(e) => {
+                              setValue("dates.startsAt", e, {
+                                shouldValidate: true,
+                              });
+                              field.onChange(e);
+                            }}
+                            disabled={(date) => {
+                              if (date < new Date("2000-01-01")) return true;
+                              return false;
+                            }}
+                            initialFocus
+                          />
+                        </Popover.Panel>
+                      </Popover>
+                    </div>
+                    <p className="text-base text-red-400">
+                      {formState.errors.dates?.startsAt?.message}
+                    </p>
+                  </div>
+                )}
+              />
+            </div>
+            <div className="flex w-full flex-row justify-between gap-4">
+              <Controller
+                name="dates.endsAt"
+                control={form.control}
+                render={({ field, formState, fieldState }) => (
+                  <div className="flex w-full flex-col gap-2">
+                    <label className={labelStyle}>End date *</label>
+                    <div>
+                      <Popover className="relative">
+                        <Popover.Button className="w-max max-md:w-full max-md:px-2 max-md:items-center text-sm flex-row flex gap-2 border border-gray-200 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
+                          <CalendarIcon className=" h-4 w-4 opacity-50" />
+                          {field.value ? (
+                            formatDate(field.value)
+                          ) : (
+                            <span>Pick a date</span>
+                          )}
+                        </Popover.Button>
+                        <Popover.Panel className="absolute z-10 bg-white  border border-gray-200 dark:bg-zinc-800 mt-4 rounded-md">
+                          <DayPicker
+                            mode="single"
+                            selected={field.value}
+                            onDayClick={(e) => {
+                              setValue("dates.endsAt", e, {
+                                shouldValidate: true,
+                              });
+                              field.onChange(e);
+                            }}
+                            disabled={(date) => {
+                              if (date < new Date("2000-01-01")) return true;
+                              const startsAt = watch("dates.startsAt");
+                              if (startsAt && date < startsAt) return true;
+                              return false;
+                            }}
+                            initialFocus
+                          />
+                        </Popover.Panel>
+                      </Popover>
+                    </div>
+                    <p className="text-base text-red-400">
+                      {formState.errors.dates?.endsAt?.message}
+                    </p>
+                  </div>
+                )}
+              />
+            </div>
+            <div className="flex w-full flex-row justify-between gap-4">
+              <Controller
+                name="priority"
+                control={form.control}
+                render={({ field, formState, fieldState }) => (
+                  <div className="flex w-full flex-col gap-2">
+                    <label className={labelStyle}>Priority (optional)</label>
+                    <div>
+                      <Popover className="relative">
+                        <Popover.Button className="max-lg:w-full w-max text-sm flex-row flex gap-2 items-center text-black dark:text-white border border-gray-200 bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
+                          {field.value
+                            ? `Priority ${field.value}`
+                            : `Select priority`}
+                          <ChevronDownIcon className="ml-auto h-4 w-4 opacity-50 text-black dark:text-white" />
+                        </Popover.Button>
+                        <Popover.Panel className="absolute z-10 bg-white border border-gray-200 dark:bg-zinc-800 mt-4 rounded-md w-[160px] scroll-smooth overflow-y-auto overflow-x-hidden py-2">
+                          {({ close }) => (
+                            <>
+                              <button
+                                key={"none"}
+                                className="cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 w-full disabled:opacity-30 disabled:cursor-not-allowed disabled:bg-zinc-200 dark:disabled:bg-zinc-900"
+                                onClick={(event) => {
+                                  event?.preventDefault();
+                                  event?.stopPropagation();
+                                  field.onChange(undefined);
+                                  setValue("priority", undefined, {
+                                    shouldValidate: true,
+                                  });
+
+                                  close();
+                                }}
+                              >
+                                None
+                              </button>
+                              {priorities.map((priority) => (
+                                <button
+                                  key={priority}
+                                  className="cursor-pointer hover:opacity-75 text-sm flex flex-row items-center justify-start py-2 px-4 hover:bg-zinc-200 dark:hover:bg-zinc-900 w-full disabled:opacity-30 disabled:cursor-not-allowed disabled:bg-zinc-200 dark:disabled:bg-zinc-900"
+                                  disabled={
+                                    watch("priority") === priority
+                                      ? false
+                                      : formPriorities.includes(priority)
+                                  }
+                                  onClick={(event) => {
+                                    event?.preventDefault();
+                                    event?.stopPropagation();
+                                    if (watch("priority") === priority) {
+                                      field.onChange(undefined);
+                                      setValue("priority", undefined, {
+                                        shouldValidate: true,
+                                      });
+                                    } else {
+                                      field.onChange(priority);
+                                      setValue("priority", priority, {
+                                        shouldValidate: true,
+                                      });
+                                    }
+                                    const watchPriority = watch("priority");
+                                    if (formPriorities.includes(priority)) {
+                                      const newPriorities =
+                                        formPriorities.filter(
+                                          (p) =>
+                                            p !== priority &&
+                                            p !== watchPriority
+                                        );
+                                      setFormPriorities(newPriorities);
+                                    } else {
+                                      setFormPriorities([
+                                        ...formPriorities,
+                                        priority,
+                                      ]);
+                                    }
+                                    close();
+                                  }}
+                                >
+                                  Priority {priority}
+                                </button>
+                              ))}
+                            </>
+                          )}
+                        </Popover.Panel>
+                      </Popover>
+                    </div>
+                    <p className="text-base text-red-400">
+                      {formState.errors.dates?.endsAt?.message}
+                    </p>
+                  </div>
+                )}
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="flex w-full flex-row-reverse">
+        <div className="flex w-full flex-row gap-4 justify-between">
+          <Button
+            variant="secondary"
+            onClick={() => {
+              removeMilestone(index);
+              setFormPriorities(
+                formPriorities.filter((p) => p !== watch("priority"))
+              );
+            }}
+          >
+            Delete
+          </Button>
           <Button
             type="submit"
             disabled={!isValid}

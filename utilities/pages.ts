@@ -27,24 +27,25 @@ export const PAGES = {
   PROJECT: {
     OVERVIEW: (project: string) => `/project/${project}`,
     UPDATES: (project: string) => `/project/${project}?tab=updates`,
-    GRANTS: (project: string) => `/project/${project}/grants`,
+    GRANTS: (project: string) => `/project/${project}/funding`,
     ROADMAP: {
       ROOT: (project: string) => `/project/${project}/roadmap`,
     },
     GRANT: (project: string, grant: string) =>
-      `/project/${project}/grants/${grant}`,
+      `/project/${project}/funding/${grant}`,
     CONTACT_INFO: (project: string) => `/project/${project}/contact-info`,
     MILESTONES_AND_UPDATES: (project: string, grant: string) =>
-      `/project/${project}/grants/${grant}/milestones-and-updates`,
+      `/project/${project}/funding/${grant}/milestones-and-updates`,
     IMPACT: {
       ROOT: (project: string) => `/project/${project}/impact`,
       ADD_IMPACT: (project: string) =>
         `/project/${project}/impact?tab=add-impact`,
     },
     SCREENS: {
-      NEW_GRANT: (project: string) => `/project/${project}/grants/create-grant`,
+      NEW_GRANT: (project: string) =>
+        `/project/${project}/funding/create-grant`,
       SELECTED_SCREEN: (project: string, grant: string, screen: string) =>
-        `/project/${project}/grants/${grant}/${screen}`,
+        `/project/${project}/funding/${grant}/${screen}`,
     },
     TEAM: (project: string) => `/project/${project}/team`,
   },
