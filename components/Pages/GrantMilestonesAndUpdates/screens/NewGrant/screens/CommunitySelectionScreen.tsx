@@ -29,9 +29,6 @@ export const CommunitySelectionScreen: React.FC = () => {
   const [allCommunities, setAllCommunities] = useState<ICommunityResponse[]>(
     []
   );
-  const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(
-    null
-  );
 
   // For funding program flow, we only show Celo community
   useEffect(() => {
@@ -44,7 +41,6 @@ export const CommunitySelectionScreen: React.FC = () => {
           const celoCommunity = result.data.find((community) =>
             community.details?.data?.name?.toLowerCase().includes("celo")
           );
-          console.log("celoCommunity", celoCommunity);
           setAllCommunities(celoCommunity ? [celoCommunity] : []);
         } else {
           setAllCommunities(result.data);
@@ -82,8 +78,7 @@ export const CommunitySelectionScreen: React.FC = () => {
 
   // Check if we can proceed to the next step
   const canProceed =
-    !!formData.community &&
-    (flowType === "grant" || (flowType === "program" && !!formData.programId));
+    !!formData.community && (!!formData.programId || !!formData.title);
 
   return (
     <StepBlock currentStep={2} totalSteps={4}>
@@ -122,7 +117,9 @@ export const CommunitySelectionScreen: React.FC = () => {
               watch={(field: string) =>
                 formData[field as keyof typeof formData] || ""
               }
-              searchForProgram="Proof of Ship"
+              searchForProgram={
+                flowType === "grant" ? undefined : "Proof of Ship"
+              }
               canAdd={flowType === "grant" ? true : false}
             />
           )}
