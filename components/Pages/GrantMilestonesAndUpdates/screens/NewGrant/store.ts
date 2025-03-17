@@ -1,3 +1,4 @@
+import { appNetwork } from "@/utilities/network";
 import { IMilestone } from "@show-karma/karma-gap-sdk";
 import { create } from "zustand";
 
@@ -7,7 +8,26 @@ export interface MilestonesForms {
   data: IMilestone;
 }
 
+export type FlowType = "grant" | "program";
+
+export interface GrantFormData {
+  title: string;
+  programId?: string;
+  amount?: string;
+  community: string;
+  startDate?: Date;
+  linkToProposal?: string;
+  recipient?: string;
+  description: string;
+  questions?: {
+    query: string;
+    explanation?: string;
+    type: string;
+  }[];
+}
+
 interface GrantFormStore {
+  // Milestone management
   milestonesForms: MilestonesForms[];
   setMilestonesForms: (milestonesForms: MilestonesForms[]) => void;
   isMilestonesFormsLoading: boolean;
@@ -20,9 +40,35 @@ interface GrantFormStore {
   clearMilestonesForms: () => void;
   formPriorities: number[];
   setFormPriorities: (priorities: number[]) => void;
+
+  // Multi-step flow management
+  currentStep: number;
+  setCurrentStep: (step: number) => void;
+  flowType: FlowType;
+  setFlowType: (type: FlowType) => void;
+
+  // Form data
+  formData: GrantFormData;
+  updateFormData: (data: Partial<GrantFormData>) => void;
+  resetFormData: () => void;
+
+  communityNetworkId: number;
+  setCommunityNetworkId: (networkId: number) => void;
 }
 
+const initialFormData: GrantFormData = {
+  title: "",
+  community: "",
+  description: "",
+  startDate: undefined,
+  amount: "",
+  linkToProposal: "",
+  recipient: "",
+  questions: [],
+};
+
 export const useGrantFormStore = create<GrantFormStore>((set, get) => ({
+  // Milestone management
   milestonesForms: [],
   createMilestone: () => {
     const { milestonesForms } = get();
@@ -71,4 +117,20 @@ export const useGrantFormStore = create<GrantFormStore>((set, get) => ({
   formPriorities: [],
   setFormPriorities: (priorities: number[]) =>
     set({ formPriorities: priorities }),
+
+  // Multi-step flow management
+  currentStep: 1,
+  setCurrentStep: (currentStep: number) => set({ currentStep }),
+  flowType: "grant",
+  setFlowType: (flowType: FlowType) => set({ flowType }),
+
+  // Form data
+  formData: initialFormData,
+  updateFormData: (data: Partial<GrantFormData>) =>
+    set((state) => ({ formData: { ...state.formData, ...data } })),
+  resetFormData: () => set({ formData: initialFormData }),
+
+  communityNetworkId: appNetwork[0].id,
+  setCommunityNetworkId: (networkId: number) =>
+    set({ communityNetworkId: networkId }),
 }));
