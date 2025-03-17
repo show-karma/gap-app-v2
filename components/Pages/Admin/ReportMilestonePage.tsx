@@ -28,6 +28,10 @@ import { useQueryState } from "nuqs";
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 import { SearchDropdown } from "../ProgramRegistry/SearchDropdown";
+import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
+import { envVars } from "@/utilities/enviromentVars";
+import { downloadCommunityReport } from "@/utilities/downloadReports";
+
 interface Report {
   _id: {
     $oid: string;
@@ -86,7 +90,8 @@ const fetchReports = async (
   const [data]: any = await fetchData(
     `${INDEXER.COMMUNITY.REPORT.GET(
       communityId as string
-    )}?limit=${pageLimit}&page=${page}&sort=${sortBy}&sortOrder=${sortOrder}${queryGrantTitles ? `&grantTitle=${encodedQueryGrantTitles}` : ""
+    )}?limit=${pageLimit}&page=${page}&sort=${sortBy}&sortOrder=${sortOrder}${
+      queryGrantTitles ? `&grantTitle=${encodedQueryGrantTitles}` : ""
     }`
   );
   return data || [];
@@ -221,32 +226,48 @@ export const ReportMilestonePage = ({
           <section className="flex flex-col gap-4">
             <div className="flex flex-row justify-between items-center">
               <h1 className="text-2xl font-bold">Milestones Report</h1>
-              <SearchDropdown
-                list={grantTitles}
-                onSelectFunction={(value: string) =>
-                  // onChangeGeneric(value, setSelectedGrantTitles)
-                  setSelectedGrantTitles((oldArray) => {
-                    setCurrentPage(1);
-                    const newArray = [...oldArray];
-                    if (newArray.includes(value)) {
-                      const filteredArray = newArray.filter(
-                        (item) => item !== value
-                      );
-                      return filteredArray;
-                    } else {
-                      newArray.push(value);
-                    }
-                    return newArray;
-                  })
-                }
-                cleanFunction={() => {
-                  setSelectedGrantTitles([]);
-                }}
-                prefixUnselected="All"
-                type={"Grant Programs"}
-                selected={selectedGrantTitles}
-              // imageDictionary={}
-              />
+              <div className="flex items-center gap-4">
+                <Button
+                  onClick={() => {
+                    downloadCommunityReport({
+                      communityId,
+                      sortBy,
+                      selectedGrantTitles:
+                        selectedGrantTitles.length > 0
+                          ? selectedGrantTitles
+                          : undefined,
+                    });
+                  }}
+                  className="flex items-center gap-2 py-3"
+                >
+                  <ArrowDownTrayIcon className="h-5 w-5" />
+                  Download Report
+                </Button>
+                <SearchDropdown
+                  list={grantTitles}
+                  onSelectFunction={(value: string) =>
+                    setSelectedGrantTitles((oldArray) => {
+                      setCurrentPage(1);
+                      const newArray = [...oldArray];
+                      if (newArray.includes(value)) {
+                        const filteredArray = newArray.filter(
+                          (item) => item !== value
+                        );
+                        return filteredArray;
+                      } else {
+                        newArray.push(value);
+                      }
+                      return newArray;
+                    })
+                  }
+                  cleanFunction={() => {
+                    setSelectedGrantTitles([]);
+                  }}
+                  prefixUnselected="All"
+                  type={"Grant Programs"}
+                  selected={selectedGrantTitles}
+                />
+              </div>
             </div>
             <div className="mb-2 grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 w-full">
               {isLoading ? (
@@ -273,10 +294,11 @@ export const ReportMilestonePage = ({
                   />
                   <StatCard
                     title="% of project who added Milestones"
-                    value={`${data?.stats?.percentageProjectsWithMilestones?.toFixed(
-                      2
-                    ) || 0
-                      }%`}
+                    value={`${
+                      data?.stats?.percentageProjectsWithMilestones?.toFixed(
+                        2
+                      ) || 0
+                    }%`}
                   />
                   <StatCard
                     title="Total Milestones"
@@ -292,14 +314,16 @@ export const ReportMilestonePage = ({
                   />
                   <StatCard
                     title="Milestones Completion %"
-                    value={`${data?.stats?.percentageCompletedMilestones?.toFixed(2) ||
+                    value={`${
+                      data?.stats?.percentageCompletedMilestones?.toFixed(2) ||
                       0
-                      }%`}
+                    }%`}
                   />
                   <StatCard
                     title="Milestones Pending %"
-                    value={`${data?.stats?.percentagePendingMilestones?.toFixed(2) || 0
-                      }%`}
+                    value={`${
+                      data?.stats?.percentagePendingMilestones?.toFixed(2) || 0
+                    }%`}
                   />
                 </>
               )}
@@ -451,157 +475,159 @@ export const ReportMilestonePage = ({
               <tbody className="px-4 divide-y divide-gray-200 dark:divide-zinc-800">
                 {isLoading
                   ? skeletonArray.map((index) => {
-                    return (
-                      <tr key={index}>
-                        <td className="px-4 py-2 font-medium h-16">
-                          <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4" />
-                        </td>
-                        <td className="px-4 py-2">
-                          <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4" />
-                        </td>
-                        <td className="px-4 py-2">
-                          {" "}
-                          <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-14" />
-                        </td>
-                        <td className="px-4 py-2">
-                          <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-14" />
-                        </td>
-                        <td className="px-4 py-2">
-                          <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-14" />
-                        </td>
-                      </tr>
-                    );
-                  })
+                      return (
+                        <tr key={index}>
+                          <td className="px-4 py-2 font-medium h-16">
+                            <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4" />
+                          </td>
+                          <td className="px-4 py-2">
+                            <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4" />
+                          </td>
+                          <td className="px-4 py-2">
+                            {" "}
+                            <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-14" />
+                          </td>
+                          <td className="px-4 py-2">
+                            <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-14" />
+                          </td>
+                          <td className="px-4 py-2">
+                            <Skeleton className="dark:text-zinc-300 text-gray-900 px-4 py-4 w-14" />
+                          </td>
+                        </tr>
+                      );
+                    })
                   : reports?.map((report, index) => {
-                    const outputsFiltered = report?.proofOfWorkLinks?.filter(
-                      (item) => item.length > 0
-                    );
-                    return (
-                      <tr
-                        key={index}
-                        className="dark:text-zinc-300 text-gray-900 px-4 py-4"
-                      >
-                        <td className="px-4 py-2 font-medium h-16 max-w-[220px]">
-                          <ExternalLink
-                            href={PAGES.PROJECT.GRANT(
-                              report.projectSlug,
-                              report.grantUid
-                            )}
-                            className="max-w-max w-full line-clamp-2 underline"
-                          >
-                            {report.grantTitle}
-                          </ExternalLink>
-                        </td>
-                        <td className="px-4 py-2 max-w-[220px]">
-                          <ExternalLink
-                            href={PAGES.PROJECT.OVERVIEW(report.projectSlug)}
-                            className="max-w-full line-clamp-2 underline w-max"
-                          >
-                            {report.projectTitle}
-                          </ExternalLink>
-                        </td>
-                        <td className="px-4 py-2 max-w-[220px]">
-                          <Link
-                            href={`${PAGES.PROJECT.GRANT(
-                              report.projectUid,
-                              report.grantUid
-                            )}/milestones-and-updates#all`}
-                            className="text-blue-600 hover:text-blue-800 underline"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {report.totalMilestones}
-                          </Link>
-                        </td>
-                        <td className="px-4 py-2 max-w-[220px]">
-                          <Link
-                            href={`${PAGES.PROJECT.GRANT(
-                              report.projectUid,
-                              report.grantUid
-                            )}/milestones-and-updates#pending`}
-                            className="text-blue-600 hover:text-blue-800 underline"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {report.pendingMilestones}
-                          </Link>
-                        </td>
-                        <td className="px-4 py-2 max-w-[220px]">
-                          <Link
-                            href={`${PAGES.PROJECT.GRANT(
-                              report.projectSlug,
-                              report.grantUid
-                            )}/milestones-and-updates#completed`}
-                            className="text-blue-600 hover:text-blue-800 underline"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            {report.completedMilestones}
-                          </Link>
-                        </td>
-                        <td className="px-4 py-2 max-w-[220px]">
-                          <div className="flex text-primary  ">
-                            {[...Array(10)].map((_, index) => (
-                              <span key={index} className="text-sm">
-                                {index + 1 <=
+                      const outputsFiltered = report?.proofOfWorkLinks?.filter(
+                        (item) => item.length > 0
+                      );
+                      return (
+                        <tr
+                          key={index}
+                          className="dark:text-zinc-300 text-gray-900 px-4 py-4"
+                        >
+                          <td className="px-4 py-2 font-medium h-16 max-w-[220px]">
+                            <ExternalLink
+                              href={PAGES.PROJECT.GRANT(
+                                report.projectSlug,
+                                report.grantUid
+                              )}
+                              className="max-w-max w-full line-clamp-2 underline"
+                            >
+                              {report.grantTitle}
+                            </ExternalLink>
+                          </td>
+                          <td className="px-4 py-2 max-w-[220px]">
+                            <ExternalLink
+                              href={PAGES.PROJECT.OVERVIEW(report.projectSlug)}
+                              className="max-w-full line-clamp-2 underline w-max"
+                            >
+                              {report.projectTitle}
+                            </ExternalLink>
+                          </td>
+                          <td className="px-4 py-2 max-w-[220px]">
+                            <Link
+                              href={`${PAGES.PROJECT.GRANT(
+                                report.projectUid,
+                                report.grantUid
+                              )}/milestones-and-updates#all`}
+                              className="text-blue-600 hover:text-blue-800 underline"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {report.totalMilestones}
+                            </Link>
+                          </td>
+                          <td className="px-4 py-2 max-w-[220px]">
+                            <Link
+                              href={`${PAGES.PROJECT.GRANT(
+                                report.projectUid,
+                                report.grantUid
+                              )}/milestones-and-updates#pending`}
+                              className="text-blue-600 hover:text-blue-800 underline"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {report.pendingMilestones}
+                            </Link>
+                          </td>
+                          <td className="px-4 py-2 max-w-[220px]">
+                            <Link
+                              href={`${PAGES.PROJECT.GRANT(
+                                report.projectSlug,
+                                report.grantUid
+                              )}/milestones-and-updates#completed`}
+                              className="text-blue-600 hover:text-blue-800 underline"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              {report.completedMilestones}
+                            </Link>
+                          </td>
+                          <td className="px-4 py-2 max-w-[220px]">
+                            <div className="flex text-primary  ">
+                              {[...Array(10)].map((_, index) => (
+                                <span key={index} className="text-sm">
+                                  {index + 1 <=
                                   Math.round(
                                     report?.evaluations?.find(
                                       (evaluation: Evaluation) =>
                                         evaluation._id === "gpt-4o-mini"
                                     )?.rating || 0
                                   )
-                                  ? "🟢"
-                                  : "🔴"}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="px-4 py-2 max-w-[220px]">
-                          <ReasonsModal
-                            text={
-                              (report?.evaluations?.find(
-                                (evaluation: Evaluation) =>
-                                  evaluation._id === modelToUse
-                              )?.rating as number) >= 6
-                                ? "Include"
-                                : "Exclude"
-                            }
-                            reasons={
-                              report?.evaluations?.find(
-                                (evaluation: Evaluation) =>
-                                  evaluation._id === modelToUse
-                              )?.reasons || []
-                            }
-                          />
-                        </td>
-                        <td className="px-4 py-2 max-w-[220px]">
-                          <div className="flex flex-col gap-1 overflow-x-auto max-w-[220px] w-max">
-                            {outputsFiltered.map((item, index) => (
-                              <ExternalLink
-                                key={index}
-                                href={
-                                  item.includes("http")
-                                    ? item
-                                    : `https://${item}`
-                                }
-                                className="underline text-blue-700 line-clamp-2"
-                              >
-                                {item.includes("http")
-                                  ? `${item.slice(0, 80)}${item.slice(0, 80).length >= 80
-                                    ? "..."
-                                    : ""
-                                  }`
-                                  : `https://${item.slice(0, 80)}${item.slice(0, 80).length >= 80
-                                    ? "..."
-                                    : ""
-                                  }`}
-                              </ExternalLink>
-                            ))}
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })}
+                                    ? "🟢"
+                                    : "🔴"}
+                                </span>
+                              ))}
+                            </div>
+                          </td>
+                          <td className="px-4 py-2 max-w-[220px]">
+                            <ReasonsModal
+                              text={
+                                (report?.evaluations?.find(
+                                  (evaluation: Evaluation) =>
+                                    evaluation._id === modelToUse
+                                )?.rating as number) >= 6
+                                  ? "Include"
+                                  : "Exclude"
+                              }
+                              reasons={
+                                report?.evaluations?.find(
+                                  (evaluation: Evaluation) =>
+                                    evaluation._id === modelToUse
+                                )?.reasons || []
+                              }
+                            />
+                          </td>
+                          <td className="px-4 py-2 max-w-[220px]">
+                            <div className="flex flex-col gap-1 overflow-x-auto max-w-[220px] w-max">
+                              {outputsFiltered.map((item, index) => (
+                                <ExternalLink
+                                  key={index}
+                                  href={
+                                    item.includes("http")
+                                      ? item
+                                      : `https://${item}`
+                                  }
+                                  className="underline text-blue-700 line-clamp-2"
+                                >
+                                  {item.includes("http")
+                                    ? `${item.slice(0, 80)}${
+                                        item.slice(0, 80).length >= 80
+                                          ? "..."
+                                          : ""
+                                      }`
+                                    : `https://${item.slice(0, 80)}${
+                                        item.slice(0, 80).length >= 80
+                                          ? "..."
+                                          : ""
+                                      }`}
+                                </ExternalLink>
+                              ))}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
               </tbody>
             </table>
             <div className="dark:bg-zinc-900 flex flex-col pb-4 items-end">
