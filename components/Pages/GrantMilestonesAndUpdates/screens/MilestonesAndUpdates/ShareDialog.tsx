@@ -42,7 +42,7 @@ export const ShareDialog: FC<ShareDialogProps> = ({
     grant?.details?.data?.title
   }!\nCheck out my progress on @karmahq_ GAP and and see how we’re advancing: https://gap.karmahq.xyz/project/${
     (project?.details?.data?.slug || project?.uid) as string
-  }/grants?grantId=${
+  }/funding?grantId=${
     grant?.uid
   }&tab=milestones-and-updates\nYour thoughts and feedback are invaluable—let me know what you think!`;
   const twitterURL = `https://twitter.com/intent/post?text=`;

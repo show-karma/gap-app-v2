@@ -1,6 +1,6 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { FC, useState } from "react";
+import { FC, useState, useRef, useEffect } from "react";
 import {
   Command,
   CommandEmpty,
@@ -15,19 +15,38 @@ import { cn } from "@/utilities/tailwind";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { createElement, ElementType } from "react";
 
 interface CommunitiesDropdownProps {
   onSelectFunction: (value: string, networkId: number) => void;
   previousValue?: string;
   communities: ICommunityResponse[];
+  triggerClassName?: string;
+  RightIcon?: ElementType;
+  rightIconClassName?: string;
+  LeftIcon?: ElementType;
+  leftIconClassName?: string;
 }
 export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
   onSelectFunction,
   previousValue,
   communities,
+  triggerClassName,
+  RightIcon = ChevronUpDownIcon,
+  LeftIcon,
+  rightIconClassName,
+  leftIconClassName,
 }) => {
   const [open, setOpen] = useState(false);
   const [value, setValue] = useState(previousValue || "");
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const [triggerWidth, setTriggerWidth] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (triggerRef.current) {
+      setTriggerWidth(triggerRef.current.offsetWidth);
+    }
+  }, [open]);
 
   const communitiesArray = communities
     .filter((community) => community.details?.data?.name) // Filter out communities without a name
@@ -51,7 +70,21 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>
-      <Popover.Trigger className="min-w-40 w-full max-w-max max-md:max-w-full justify-between flex flex-row cursor-default rounded-md bg-white dark:bg-zinc-800 dark:text-zinc-100 py-3 px-4 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6">
+      <Popover.Trigger
+        ref={triggerRef}
+        className={cn(
+          "min-w-40 w-full max-w-max max-md:max-w-full justify-between flex flex-row items-center cursor-default rounded-md bg-white dark:bg-zinc-800 dark:text-zinc-100 py-3 px-4 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6",
+          triggerClassName
+        )}
+      >
+        {LeftIcon
+          ? createElement(LeftIcon, {
+              className: cn(
+                "mr-2 h-4 w-4 shrink-0 opacity-50",
+                leftIconClassName
+              ),
+            })
+          : null}
         {value ? (
           <div className="flex flex-row gap-2 items-center">
             <img
@@ -92,12 +125,17 @@ export const CommunitiesDropdown: FC<CommunitiesDropdownProps> = ({
         ) : (
           "Select community"
         )}
-        <ChevronUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        {createElement(RightIcon, {
+          className: cn("ml-2 h-4 w-4 shrink-0 opacity-50", rightIconClassName),
+        })}
       </Popover.Trigger>
-      <Popover.Content className="mt-4 w-[360px] z-10 bg-white border border-zinc-200 dark:border-zinc-700 rounded-md dark:text-white dark:bg-zinc-800  max-h-60 overflow-y-auto overflow-x-hidden py-2">
+      <Popover.Content
+        className="mt-4 z-10 bg-white border border-zinc-200 dark:border-zinc-700 rounded-md dark:text-white dark:bg-zinc-800 max-h-60 overflow-y-auto overflow-x-hidden py-2"
+        style={{ width: triggerWidth ? `${triggerWidth}px` : "auto" }}
+      >
         <Command>
           <CommandInput
-            className="rounded-md ml-2 mr-4 w-[320px] dark:text-white dark:bg-zinc-800"
+            className="rounded-md ml-2 mr-4 w-full dark:text-white dark:bg-zinc-800"
             placeholder="Search community..."
           />
           <CommandEmpty className="px-4 py-2">No community found.</CommandEmpty>

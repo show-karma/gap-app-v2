@@ -8,11 +8,13 @@ import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { shortAddress } from "@/utilities/shortAddress";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useRouter } from "next/navigation";
 
 import { useQueryState } from "nuqs";
 import { type FC, useState } from "react";
@@ -30,7 +32,6 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
   const { switchChainAsync } = useSwitchChain();
 
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const [, setGrantTab] = useQueryState("grantId");
 
   const { changeStepperStep, setIsStepper } = useStepper();
 
@@ -38,6 +39,9 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
   const { gap } = useGap();
+
+  const router = useRouter();
+
   const deleteFn = async () => {
     if (!address) return;
     setIsDeletingGrant(true);
@@ -73,7 +77,11 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
                 fetchedProject?.grants &&
                 fetchedProject?.grants?.length > 0
               ) {
-                setGrantTab(fetchedProject?.grants[0].uid);
+                router.push(
+                  PAGES.PROJECT.GRANTS(
+                    project?.uid || project?.details?.data.slug || ""
+                  )
+                );
               }
             }
 
@@ -125,6 +133,11 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
               changeStepperStep("indexed");
             }).then(() => {
               toast.success(MESSAGES.GRANT.DELETE.SUCCESS);
+              router.push(
+                PAGES.PROJECT.GRANTS(
+                  project?.uid || project?.details?.data.slug || ""
+                )
+              );
             });
           });
       }

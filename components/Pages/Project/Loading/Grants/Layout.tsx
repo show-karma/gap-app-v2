@@ -45,7 +45,7 @@ export const ProjectGrantsLayoutLoading = ({
               </svg>
 
               <p className="text-xs font-bold text-black dark:text-zinc-300 ">
-                GRANTS
+                FUNDING
               </p>
             </div>
             <ul role="list" className="space-y-2 mt-8">
