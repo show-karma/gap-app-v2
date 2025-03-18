@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import toast from "react-hot-toast";
 import { useProjectStore } from "@/store";
-import { Contact } from "@/types/project";
+import { APIContact, Contact } from "@/types/project";
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
 import { Button } from "@/components/Utilities/Button";
@@ -14,6 +14,8 @@ import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import { generateRandomString } from "@/utilities/generateRandomString";
 
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useContactInfo } from "@/hooks/useContactInfo";
+import { useMutation } from "@tanstack/react-query";
 
 const labelStyle = "text-sm font-bold";
 const inputStyle =
@@ -195,9 +197,7 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
     defaultValues: dataToUpdate,
   });
 
-  const setProjectContactsInfo = useProjectStore(
-    (state) => state.setProjectContactsInfo
-  );
+  const { refetch: refreshList } = useContactInfo(project?.uid, true);
 
   const clear = () => {
     reset(
@@ -214,28 +214,6 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
         keepIsValid: false,
       }
     );
-  };
-
-  const refreshList = async (projectId: Hex) => {
-    const [data, error] = await fetchData(
-      INDEXER.SUBSCRIPTION.GET(projectId),
-      "GET",
-      {},
-      {},
-      {},
-      true
-    ).catch(() => []);
-    if (error) {
-      errorManager(`Error in refreshing contact section`, error, {
-        project: projectId,
-      });
-      setProjectContactsInfo([]);
-      return;
-    }
-
-    if (data) {
-      setProjectContactsInfo(data);
-    }
   };
 
   const createContact = async () => {
@@ -279,7 +257,8 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
           true
         ).then(([res, error]) => {
           if (!error) {
-            refreshList(project!.uid as Hex);
+            refreshList();
+            refreshProject();
             clear();
             toast.success("Contact info created successfully", {
               className: "z-[9999]",
@@ -305,7 +284,8 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
           if (!error) {
             toast.success("Contact info updated successfully");
             clear();
-            refreshList(project!.uid as Hex);
+            refreshList();
+            refreshProject();
           } else {
             throw Error(error);
           }
@@ -352,7 +332,7 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
           toast.success("Contact info deleted successfully", {
             className: "z-[9999]",
           });
-          refreshList(project!.uid as Hex);
+          refreshList();
         } else {
           throw Error(error);
         }

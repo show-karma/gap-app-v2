@@ -73,6 +73,7 @@ import { SimilarProjectsDialog } from "../SimilarProjectsDialog";
 import { ContactInfoSection } from "./ContactInfoSection";
 import { NetworkDropdown } from "./NetworkDropdown";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useContactInfo } from "@/hooks/useContactInfo";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -630,7 +631,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     }
   };
 
-  const contactsInfo = useProjectStore((state) => state.projectContactsInfo);
+  const { data: contactsInfo } = useContactInfo(projectToUpdate?.uid);
 
   useMemo(() => {
     if (projectToUpdate) {

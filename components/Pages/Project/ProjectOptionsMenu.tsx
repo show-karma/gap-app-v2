@@ -34,6 +34,7 @@ import { LinkGithubRepoButton } from "./LinkGithubRepoButton";
 
 import { LinkOSOProfileButton } from "./LinkOSOProfileButton";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useContactInfo } from "@/hooks/useContactInfo";
 
 const ProjectDialog = dynamic(
   () =>
@@ -71,7 +72,6 @@ export const ProjectOptionsMenu = () => {
   const { project } = useProjectStore();
   const params = useParams();
   const projectId = params.projectId as string;
-  const contactsInfo = useProjectStore((state) => state.projectContactsInfo);
   const [isDeleting, setIsDeleting] = useState(false);
   const { address } = useAccount();
   const { chain } = useAccount();
@@ -87,6 +87,7 @@ export const ProjectOptionsMenu = () => {
   const { isTransferOwnershipModalOpen, openTransferOwnershipModal } =
     useTransferOwnershipModalStore();
   const { isProjectOwner } = useProjectStore();
+  const { data: contactsInfo } = useContactInfo(projectId);
   const { isOwner: isContractOwner } = useOwnerStore();
   const isAuthorized = isProjectOwner || isContractOwner;
 

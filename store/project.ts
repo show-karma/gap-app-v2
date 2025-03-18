@@ -1,4 +1,4 @@
-import { Contact } from "@/types/project";
+import { APIContact, Contact } from "@/types/project";
 import fetchData from "@/utilities/fetchData";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
@@ -13,7 +13,6 @@ interface ProjectStore {
   setProject: (project: IProjectResponse | undefined) => void;
   loading: boolean;
   refreshProject: () => Promise<IProjectResponse | undefined>;
-  refreshContactInfo: () => Promise<Contact[] | undefined>;
   setLoading: (loading: boolean) => void;
   isProjectAdmin: boolean;
   setIsProjectAdmin: (isProjectAdmin: boolean) => void;
@@ -23,10 +22,6 @@ interface ProjectStore {
   setIsProjectOwnerLoading: (loading: boolean) => void;
   isProjectAdminLoading: boolean;
   setIsProjectAdminLoading: (loading: boolean) => void;
-  projectContactsInfo: Contact[] | undefined;
-  setProjectContactsInfo: (contacts: Contact[] | undefined) => void;
-  contactInfoLoading: boolean;
-  setContactInfoLoading: (value: boolean) => void;
   teamProfiles: ContributorProfile[] | undefined;
   setTeamProfiles: (profiles: ContributorProfile[] | undefined) => void;
   refreshMembers: () => Promise<ContributorProfile[] | undefined>;
@@ -55,26 +50,7 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
     return refreshedProject;
   },
-  refreshContactInfo: async () => {
-    const project = get();
-    if (!project.project?.id) return;
-    try {
-      const [data] = await fetchData(
-        INDEXER.SUBSCRIPTION.GET(project.project.uid),
-        "GET",
-        {},
-        {},
-        {},
-        true
-      );
-      if (data) {
-        set({ projectContactsInfo: data });
-      }
-      return data;
-    } catch (error) {
-      console.log(error);
-    }
-  },
+
   teamProfiles: undefined,
   setTeamProfiles: (profiles) => set({ teamProfiles: profiles }),
   refreshMembers: async () => {
@@ -89,12 +65,8 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   setLoading: (loading: boolean) => set({ loading }),
   isProjectAdmin: false,
   setIsProjectAdmin: (isProjectAdmin: boolean) => set({ isProjectAdmin }),
-  projectContactsInfo: undefined,
-  setProjectContactsInfo: (contacts) => set({ projectContactsInfo: contacts }),
   isProjectOwner: false,
   setIsProjectOwner: (isProjectOwner: boolean) => set({ isProjectOwner }),
-  contactInfoLoading: true,
-  setContactInfoLoading: (value) => set({ contactInfoLoading: value }),
   isProjectAdminLoading: true,
   setIsProjectAdminLoading: (loading: boolean) =>
     set({ isProjectAdminLoading: loading }),
