@@ -48,7 +48,7 @@ export const EmptyGrantsSection: FC = () => {
         }}
       >
         <p className="w-full text-center text-lg break-words h-max font-semibold text-black dark:text-zinc-200">
-          Go ahead and create your first grant
+          Go ahead and create your first funding
         </p>
         <Link
           href={PAGES.PROJECT.SCREENS.NEW_GRANT(
@@ -57,7 +57,7 @@ export const EmptyGrantsSection: FC = () => {
           className="items-center flex flex-row justify-center gap-2 rounded border border-blue-600 bg-blue-600 px-4 py-2.5 text-base font-semibold text-white hover:bg-blue-600"
         >
           <img src="/icons/plus.svg" alt="Add" className="relative h-5 w-5" />
-          Add a Grant
+          Add Funding
         </Link>
       </div>
       <div className="flex w-full items-center justify-center rounded border border-gray-200 px-6 py-10 dark:bg-zinc-900">
