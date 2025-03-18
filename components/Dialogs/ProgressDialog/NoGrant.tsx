@@ -18,7 +18,7 @@ export const NoGrant = () => {
       }}
     >
       <p className="w-full text-center text-lg break-words h-max font-semibold text-black dark:text-zinc-200">
-        Go ahead and create your first grant
+        Go ahead and add your first funding
       </p>
       <button
         type="button"
@@ -34,7 +34,7 @@ export const NoGrant = () => {
         }}
       >
         <img src="/icons/plus.svg" alt="Add" className="relative h-5 w-5" />
-        Add a Grant
+        Add Funding
       </button>
     </div>
   );

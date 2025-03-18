@@ -35,12 +35,12 @@ export const chosenCommunities = () => {
       },
     },
     {
-      name: "Sei",
-      slug: "sei",
-      uid: "0x0b3a59024f775a765553d48814cd513ca2a0a5b3f9853787fcdf41e3b9b1ab75",
+      name: "Celo",
+      slug: "celo",
+      uid: "0x67cce5e1bd0851f8c51b2baca9d556ed447efdfe5309e2b1668d92a48fbe1f2d",
       imageURL: {
-        light: "/logos/karma-sei.svg",
-        dark: "/logos/karma-sei.svg",
+        light: "/logos/karma-celo-logo.jpeg",
+        dark: "/logos/karma-celo-logo.jpeg",
       },
     },
     {
@@ -68,6 +68,15 @@ export const chosenCommunities = () => {
       imageURL: {
         light: "/logos/karma-celo-logo.jpeg",
         dark: "/logos/karma-celo-logo.jpeg",
+      },
+    },
+    {
+      name: "TEC",
+      slug: "tec",
+      uid: "0x455325a0317900a8bb6ba5bf973b3ec209e03317f22985385a532bca4328a930",
+      imageURL: {
+        light: "/logos/tec.png",
+        dark: "/logos/tec.png",
       },
     },
     {
@@ -125,12 +134,12 @@ export const chosenCommunities = () => {
       },
     },
     {
-      name: "Fractal Visions",
-      slug: "fractal-visions",
-      uid: "0xca43f36c16dd11d92857e90e504db221de4a15b2fd59f08556055490c1baafaa",
+      name: "Sei",
+      slug: "sei",
+      uid: "0x0b3a59024f775a765553d48814cd513ca2a0a5b3f9853787fcdf41e3b9b1ab75",
       imageURL: {
-        light: "/logos/karma-fractal-visions.jpg",
-        dark: "/logos/karma-fractal-visions.jpg",
+        light: "/logos/karma-sei.svg",
+        dark: "/logos/karma-sei.svg",
       },
     },
     {
@@ -140,15 +149,6 @@ export const chosenCommunities = () => {
       imageURL: {
         light: "/logos/karma-greenpill.svg",
         dark: "/logos/karma-greenpill.svg",
-      },
-    },
-    {
-      name: "TEC",
-      slug: "tec",
-      uid: "0x455325a0317900a8bb6ba5bf973b3ec209e03317f22985385a532bca4328a930",
-      imageURL: {
-        light: "/logos/tec.png",
-        dark: "/logos/tec.png",
       },
     },
   ];
