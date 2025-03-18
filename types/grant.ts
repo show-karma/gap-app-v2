@@ -1,8 +1,8 @@
 export type GrantScreen =
   | "milestones-and-updates"
   | "create-milestone"
-  | "create-grant"
-  | "edit-grant"
+  | "new"
+  | "edit"
   | "grant-update"
   | "impact-criteria"
   | "overview"

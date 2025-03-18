@@ -109,7 +109,7 @@ export const DetailsScreen: React.FC = () => {
   const params = useParams();
   const grant = params.grantUid as string;
   const pathname = usePathname();
-  const isEditing = pathname.includes("edit-grant");
+  const isEditing = pathname.includes("/edit");
 
   const { switchChainAsync } = useSwitchChain();
   // Initialize the appropriate form based on flow type

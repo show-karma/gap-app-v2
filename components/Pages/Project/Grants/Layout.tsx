@@ -43,17 +43,17 @@ interface Tab {
 
 const authorizedViews: GrantScreen[] = [
   "create-milestone",
-  "create-grant",
+  "new",
+  "edit",
   "grant-update",
-  "edit-grant",
   "complete-grant",
 ];
 
 const allViews: GrantScreen[] = [
   "milestones-and-updates",
   "create-milestone",
-  "create-grant",
-  "edit-grant",
+  "new",
+  "edit",
   "grant-update",
   "impact-criteria",
   "outputs",
@@ -378,7 +378,7 @@ export const GrantsLayout = ({
         ) : null}
         <div className="flex-1 pl-5 pt-5 pb-20 max-lg:px-0 max-lg:pt-0">
           {/* Grants tabs start */}
-          {project?.grants.length && currentTab !== "create-grant" ? (
+          {project?.grants.length && currentTab !== "new" ? (
             <>
               <div className="flex flex-row gap-4 justify-between max-md:flex-col border-b border-b-zinc-900 dark:border-b-zinc-200 pb-2 mb-4">
                 <div className="flex flex-row gap-2 items-center">
@@ -399,7 +399,7 @@ export const GrantsLayout = ({
                         href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
                           project.details?.data.slug || project?.uid || "",
                           grant?.uid as string,
-                          "edit-grant"
+                          "edit"
                         )}
                         className="rounded-md items-center text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-35 hover:opacity-75 transition-all ease-in-out duration-300 flex h-max w-max flex-row gap-2 bg-zinc-800 p-2 text-white hover:bg-zinc-800 hover:text-white"
                       >
@@ -443,7 +443,7 @@ export const GrantsLayout = ({
             </>
           ) : null}
           {/* Grants tabs end */}
-          {project?.grants.length || currentTab === "create-grant" ? (
+          {project?.grants.length || currentTab === "new" ? (
             <div className="flex flex-col py-5">
               <GrantContext.Provider value={grant}>
                 {children}

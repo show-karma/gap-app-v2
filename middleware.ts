@@ -49,6 +49,10 @@ export async function middleware(request: NextRequest) {
       const newPath = path.replace("/grants", "/funding");
       return NextResponse.redirect(new URL(newPath, request.url));
     }
+    if (path.includes("/funding/create-grant")) {
+      const newPath = path.replace("/funding/create-grant", "/funding/new");
+      return NextResponse.redirect(new URL(newPath, request.url));
+    }
   }
 
   return NextResponse.next();

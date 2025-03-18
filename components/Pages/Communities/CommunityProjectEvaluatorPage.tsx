@@ -146,11 +146,11 @@ function MessageSkeleton() {
             src="/logo/karma-gap-logo.png"
             width={20}
             height={20}
-            alt="Karma Beacon Logo"
+            alt="Karma AI Logo"
             quality={50}
           />
           <p className="text-zinc-600 dark:text-zinc-300 text-[13px] font-medium">
-            Beacon Assistant
+            Karma AI Assistant
           </p>
         </div>
       </div>
@@ -180,7 +180,7 @@ function ChatInput({
       onSubmit={handleSubmit}
       className={`relative w-full ${className}`}
       role="search"
-      aria-label="Chat with Karma Beacon"
+      aria-label="Chat with Karma AI"
     >
       <input
         className="w-full p-4 pr-12 text-black dark:text-zinc-200 bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-600 shadow-sm focus:outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -425,11 +425,11 @@ const ChatMessage = React.memo(
                         src="/logo/karma-gap-logo.png"
                         width={20}
                         height={20}
-                        alt="Karma Beacon Logo"
+                        alt="Karma AI Logo"
                         quality={50}
                       />
                       <p className="text-zinc-600 dark:text-zinc-300 text-[13px] font-medium">
-                        Beacon Assistant
+                        Karma AI Assistant
                       </p>
                     </>
                   )}
@@ -506,7 +506,8 @@ function ChatWithKarmaCoPilot({
   // Scroll to bottom whenever messages change or when streaming
   useEffect(() => {
     if (messageContainerRef.current) {
-      messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
+      messageContainerRef.current.scrollTop =
+        messageContainerRef.current.scrollHeight;
     }
   }, [messages, isStreaming, input]); // Added input to dependencies
 
@@ -516,7 +517,8 @@ function ChatWithKarmaCoPilot({
     // Scroll after a short delay to ensure the DOM has updated
     setTimeout(() => {
       if (messageContainerRef.current) {
-        messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
+        messageContainerRef.current.scrollTop =
+          messageContainerRef.current.scrollHeight;
       }
     }, 0);
   };
@@ -885,7 +887,7 @@ function ChatScreen({
                 />
                 <div className="flex flex-col gap-0">
                   <p className="text-zinc-800 dark:text-zinc-200 text-lg font-semibold">
-                    Ask Beacon
+                    Ask Karma AI
                   </p>
                   <p className="text-gray-600 dark:text-zinc-400 text-sm font-normal">
                     {messages.length > 0 && messages[0].timestamp
@@ -1026,13 +1028,13 @@ export const CommunityProjectEvaluatorPage = () => {
               src="/logo/karma-gap-logo.png"
               width={80}
               height={80}
-              alt="Karma Beacon Logo"
+              alt="Karma AI Logo"
               className={`text-sm font-medium mb-1 text-primary-600`}
               quality={100}
             />
             <div className="flex flex-col items-center justify-center gap-0">
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 text-center">
-                Karma Beacon
+                Karma Karma AI
               </h1>
               <p className="text-lg text-gray-600 dark:text-zinc-400 text-center mb-4">
                 Your AI companion for smarter project evaluation
@@ -1074,7 +1076,7 @@ export const CommunityProjectEvaluatorPage = () => {
                       src="/logo/karma-gap-logo-purple.svg"
                       width={24}
                       height={24}
-                      alt="Karma Beacon Logo"
+                      alt="Karma AI Logo"
                     />
                   }
                   paragraphClassname="text-[16px] text-gray-600 dark:text-zinc-400"
