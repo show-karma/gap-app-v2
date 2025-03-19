@@ -21,6 +21,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useIndicators } from "@/hooks/useIndicators";
+import { ProgramCard } from "./ProgramCard";
 
 // Custom Dropdown Menu Component - copied from CategoryView.tsx
 const DropdownMenu = ({
@@ -391,15 +392,15 @@ export const IndicatorsView = ({
         </div>
       )}
 
-      {/* Indicators List - Only show if there are filtered indicators */}
+      {/* Indicators List - Updated to show programs */}
       {hasFilteredIndicators && (
         <div className="grid grid-cols-1 gap-0 rounded border border-gray-300 dark:border-zinc-700 divide-y divide-gray-300 dark:divide-zinc-700">
           {filteredIndicators.map((indicator) => (
             <div
               key={indicator.id}
-              className="p-5 flex justify-between items-center"
+              className="p-5 flex justify-between items-start"
             >
-              <div>
+              <div className="flex-1">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   {indicator.name}
                 </h3>
@@ -408,15 +409,36 @@ export const IndicatorsView = ({
                     {indicator.description}
                   </p>
                 )}
-                <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">
-                  Unit: {indicator.unitOfMeasure || "N/A"}
-                </p>
-                {autosyncedIndicators.find(
-                  (i) => i.name === indicator.name
-                ) && (
-                  <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 rounded-full mt-2 inline-block">
-                    Autosynced
+                <div className="flex flex-wrap gap-2 mt-2">
+                  <span className="text-xs bg-white dark:bg-zinc-800 px-2 py-0.5 rounded-full border border-gray-200 dark:border-zinc-700 inline-block">
+                    {indicator.unitOfMeasure || "N/A"}
                   </span>
+                  {autosyncedIndicators.find(
+                    (i) => i.name === indicator.name
+                  ) && (
+                    <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 rounded-full inline-block">
+                      Autosynced
+                    </span>
+                  )}
+                </div>
+
+                {/* Add programs display */}
+                {indicator.programs && indicator.programs.length > 0 && (
+                  <div className="mt-3">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                      Associated Programs:
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {indicator.programs.map((program) => (
+                        <ProgramCard
+                          key={`${program.programId}-${program.chainID}`}
+                          programId={program.programId}
+                          chainID={program.chainID}
+                          minimal={true}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
               <DeleteDialog

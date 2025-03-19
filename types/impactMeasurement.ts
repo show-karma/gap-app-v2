@@ -22,6 +22,10 @@ export interface ImpactIndicator {
   id: string;
   name: string;
   description: string;
+  programs?: {
+    programId: string;
+    chainID: number;
+  }[];
   unitOfMeasure: string;
   createdAt?: string;
   updatedAt?: string;
