@@ -4,14 +4,19 @@ export type Contact = {
   email?: string;
   telegram?: string;
 };
+
 export type APIContact = {
-  attestationId: string;
+  attestationId: {
+    $oid: string;
+  };
+  _id: {
+    $oid: string;
+  };
   createdAt: string;
-  email?: string;
-  id: string;
-  telegram?: string;
-  name?: string;
   updatedAt: string;
+  name?: string;
+  email?: string;
+  telegram?: string;
 };
 
 export interface ProjectReport {

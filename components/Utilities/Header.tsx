@@ -92,6 +92,7 @@ export default function Header() {
     const setupOwner = async () => {
       setIsOwnerLoading(true);
       if (!chain) {
+        setIsOwnerLoading(false);
         setIsOwner(false);
         return;
       }

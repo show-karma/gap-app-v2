@@ -33,6 +33,8 @@ import { IntroDialog } from "./IntroDialog";
 
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import { getRPCClient } from "@/utilities/rpcClient";
+import { APIContact } from "@/types/project";
+import { useContactInfo } from "@/hooks/useContactInfo";
 
 interface ProjectWrapperProps {
   project: IProjectResponse;
@@ -41,9 +43,6 @@ interface ProjectWrapperProps {
 export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   const {
     refreshMembers,
-    setProjectContactsInfo,
-    projectContactsInfo,
-    setContactInfoLoading,
     setProject,
     isProjectAdmin,
     setIsProjectAdmin,
@@ -64,43 +63,13 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   const isAuthorized = isOwner || isProjectAdmin || isProjectOwner;
 
   useEffect(() => {
-    if (!projectId || !isAuthorized) return;
-    const getContactInfo = async () => {
-      setContactInfoLoading(true);
-      try {
-        const [data, error] = await fetchData(
-          INDEXER.SUBSCRIPTION.GET(projectId),
-          "GET",
-          {},
-          {},
-          {},
-          true
-        );
-        if (error) {
-          throw error;
-        }
-
-        setProjectContactsInfo(data);
-      } catch (error: any) {
-        console.error(error);
-        setProjectContactsInfo(undefined);
-        errorManager(
-          `Error fetching project contacts info from project ${projectId}`,
-          error
-        );
-      } finally {
-        setContactInfoLoading(false);
-      }
-    };
-    getContactInfo();
-  }, [projectId, isAuthorized]);
-
-  useEffect(() => {
     if (!project) return;
     refreshMembers();
   }, [project]);
 
-  const hasContactInfo = Boolean(projectContactsInfo?.length);
+  const { data: contactsInfo } = useContactInfo(projectId, isAuthorized);
+
+  const hasContactInfo = Boolean(contactsInfo?.length);
 
   const signer = useSigner();
   const { address, isConnected, isConnecting, chain } = useAccount();

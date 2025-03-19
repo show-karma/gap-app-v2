@@ -12,6 +12,8 @@ import fetchData from "@/utilities/fetchData";
 import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 
 import { errorManager } from "./Utilities/errorManager";
+import { generateRandomString } from "@/utilities/generateRandomString";
+import { useContactInfo } from "@/hooks/useContactInfo";
 
 const labelStyle = "text-sm font-bold";
 const inputStyle =
@@ -109,25 +111,23 @@ const ContactBlock: FC<ContactBlockProps> = ({
 };
 
 interface ContactInfoSubscriptionProps {
-  existingContacts?: Contact[];
   contactInfo?: Contact;
-  refreshContactInfo: () => void;
 }
 
 export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
   contactInfo,
-  existingContacts,
-  refreshContactInfo,
 }) => {
-  const [isLoading, setIsLoading] = useState(false);
   const project = useProjectStore((state) => state.project);
-
+  const projectId = project?.uid;
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const isAuthorized = isOwner || isProjectAdmin;
+  const { data: existingContacts, refetch: refreshContactInfo } =
+    useContactInfo(projectId, isAuthorized);
+
+  const [isLoading, setIsLoading] = useState(false);
 
   const refreshProject = useProjectStore((state) => state.refreshProject);
-
-  const isAuthorized = isOwner || isProjectAdmin;
 
   const dataToUpdate = {
     id: contactInfo?.id || "0",
@@ -140,6 +140,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
     handleSubmit,
     setValue,
     watch,
+    reset,
     formState: { errors, isValid },
   } = useForm<FormType>({
     resolver: zodResolver(subscriptionSchema),
@@ -147,6 +148,23 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
     mode: "onChange",
     defaultValues: dataToUpdate,
   });
+
+  const clear = () => {
+    reset(
+      {
+        id: generateRandomString(10),
+        name: "",
+        email: "",
+        telegram: "",
+      },
+      {
+        keepValues: false,
+        keepErrors: false,
+        keepTouched: false,
+        keepIsValid: false,
+      }
+    );
+  };
 
   const onSubmit: SubmitHandler<FormType> = async (data) => {
     setIsLoading(true);
@@ -170,6 +188,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
             toast.success("Contact info created successfully");
             refreshProject();
             refreshContactInfo();
+            clear();
           } else {
             toast.error("Something went wrong. Please try again later.");
             throw new Error("Something went wrong while creating contact info");
@@ -191,6 +210,7 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
             toast.success("Contact info updated successfully");
             refreshProject();
             refreshContactInfo();
+            clear();
           } else {
             throw Error(error);
           }
@@ -261,6 +281,8 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
       shouldValidate: contact ? true : false,
     });
   };
+
+  console.log(existingContacts);
 
   return isAuthorized ? (
     <div className="px-4 py-4 rounded-md border border-transparent dark:bg-zinc-800 dark:border flex flex-col gap-4 items-start">

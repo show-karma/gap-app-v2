@@ -23,11 +23,9 @@ interface NewGrantProps {
 
 export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const pathname = usePathname();
-  const grantScreen: "edit-grant" | "create-grant" = pathname.includes(
-    "edit-grant"
-  )
-    ? "edit-grant"
-    : "create-grant";
+  const grantScreen: "edit" | "new" = pathname.includes("/funding/new")
+    ? "new"
+    : "edit";
 
   const {
     currentStep,
@@ -43,7 +41,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
 
   // Initialize form data when editing a grant
   useEffect(() => {
-    if (grantScreen === "edit-grant" && grantToEdit) {
+    if (grantScreen === "edit" && grantToEdit) {
       // Set flow type to grant for edit mode
       setFlowType("grant");
 

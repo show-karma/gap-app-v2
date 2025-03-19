@@ -17,6 +17,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useContactInfo } from "@/hooks/useContactInfo";
 
 type IntroDialogProps = {};
 
@@ -45,7 +46,7 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
     useIntroModalStore();
 
   const project = useProjectStore((state) => state.project);
-  const contactsInfo = useProjectStore((state) => state.projectContactsInfo);
+  const { data: contactsInfo } = useContactInfo(project?.uid);
 
   const {
     register,

@@ -42,8 +42,7 @@ export const PAGES = {
         `/project/${project}/impact?tab=add-impact`,
     },
     SCREENS: {
-      NEW_GRANT: (project: string) =>
-        `/project/${project}/funding/create-grant`,
+      NEW_GRANT: (project: string) => `/project/${project}/funding/new`,
       SELECTED_SCREEN: (project: string, grant: string, screen: string) =>
         `/project/${project}/funding/${grant}/${screen}`,
     },

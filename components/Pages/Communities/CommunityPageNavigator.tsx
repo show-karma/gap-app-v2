@@ -41,7 +41,7 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
     isActive: (pathname: string) =>
       !pathname.includes("/impact") &&
       !pathname.includes("/project-discovery") &&
-      !pathname.includes("/beacon"),
+      !pathname.includes("/karma-ai"),
   },
   {
     path: (communityId: string) => PAGES.COMMUNITY.IMPACT(communityId),
@@ -51,10 +51,10 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
     showNewTag: true,
   },
   {
-    path: (communityId: string) => `/community/${communityId}/beacon`,
-    title: () => "Ask Karma Beacon",
+    path: (communityId: string) => `/community/${communityId}/karma-ai`,
+    title: () => "Ask Karma AI",
     Icon: SparklesIcon,
-    isActive: (pathname: string) => pathname.includes("/beacon"),
+    isActive: (pathname: string) => pathname.includes("/karma-ai"),
   },
 ] as const;
 
