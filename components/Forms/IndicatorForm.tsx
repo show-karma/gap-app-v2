@@ -54,6 +54,7 @@ interface IndicatorFormProps {
     programs?: boolean;
   };
   indicatorId?: string;
+  preventPropagation?: boolean;
 }
 
 export const IndicatorForm: React.FC<IndicatorFormProps> = ({
@@ -65,6 +66,7 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
   defaultValues,
   readOnlyFields = {},
   indicatorId,
+  preventPropagation = false,
 }) => {
   const {
     register,
@@ -121,8 +123,10 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
   }, [communityId]);
 
   const onSubmit: SubmitHandler<IndicatorFormData> = async (data, event) => {
-    event?.preventDefault();
-    event?.stopPropagation();
+    if (preventPropagation && event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
 
     setIsLoading(true);
     try {
@@ -274,11 +278,21 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
 
   return (
     <form
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={(e) => {
+        if (preventPropagation) {
+          e.preventDefault();
+          e.stopPropagation();
+          handleSubmit(onSubmit)(e);
+        } else {
+          handleSubmit(onSubmit)(e);
+        }
+      }}
       className="space-y-4"
-      onClick={(e) => e.stopPropagation()}
+      onClick={(e) => {
+        if (preventPropagation) e.stopPropagation();
+      }}
       onKeyDown={(e) => {
-        if (e.key === "Enter") {
+        if (e.key === "Enter" && preventPropagation) {
           e.stopPropagation();
         }
       }}
