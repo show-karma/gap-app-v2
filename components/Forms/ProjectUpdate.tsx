@@ -98,7 +98,7 @@ const updateSchema = z.object({
   text: z.string().min(3, { message: MESSAGES.PROJECT_UPDATE_FORM.TEXT }),
   startDate: z.date().optional(),
   endDate: z.date().optional(),
-  grants: z.array(z.string()),
+  grants: z.array(z.string()).optional(),
   outputs: z.array(
     z.object({
       outputId: z.string().min(1, "Output is required"),
@@ -239,6 +239,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       defaultValues: {
         deliverables: [],
         outputs: [],
+        grants: [],
       },
     });
   const { errors, isSubmitting, isValid } = formState;
@@ -384,7 +385,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                     new Date().toISOString(),
                 },
               ],
-              () => {}
+              () => { }
             )
           )
         );
@@ -396,7 +397,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
           text: data.text,
           startDate: data.startDate ? data.startDate : undefined,
           endDate: data.endDate ? data.endDate : undefined,
-          grants: data.grants,
+          grants: data.grants || [],
           indicators: data.outputs.map((indicator) => ({
             indicatorId: indicator.outputId,
             name: outputs.find((o) => o.id === indicator.outputId)?.name || "",
@@ -691,7 +692,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       <div className="flex w-full flex-col gap-4">
         <div className="flex flex-row items-center gap-2">
           <label htmlFor="grants" className={labelStyle}>
-            Tell us which grants helped you accomplish this activity?
+            Tell us which grants helped you accomplish this activity? (Optional)
           </label>
           <InfoTooltip content="Select grants that helped you accomplish this activity." />
         </div>
@@ -875,61 +876,47 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
             <h3 className={cn(labelStyle)}>Metrics</h3>
             <InfoTooltip content="Represent any tangible deliverables (e.g. product launched, services delivered, key documentation, reports or design files) or metrics (training sessions delivered, user signups, etc...) resulting from activities." />
           </div>
-          {selectedOutputs.length > 0 &&
-            [...(watch("grants") || [])].length > 0 && (
-              <Button
-                type="button"
-                onClick={() => {
-                  setValue("outputs", [
-                    ...selectedOutputs,
-                    {
-                      outputId: "",
-                      value: 0,
-                      proof: "",
-                    },
-                  ]);
-                }}
-                className="text-sm bg-zinc-700 text-white px-3 py-1.5"
-              >
-                Add more metrics
-              </Button>
-            )}
+          {selectedOutputs.length > 0 && (
+            <Button
+              type="button"
+              onClick={() => {
+                setValue("outputs", [
+                  ...selectedOutputs,
+                  {
+                    outputId: "",
+                    value: 0,
+                    proof: "",
+                  },
+                ]);
+              }}
+              className="text-sm bg-zinc-700 text-white px-3 py-1.5"
+            >
+              Add more metrics
+            </Button>
+          )}
         </div>
 
         {selectedOutputs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8">
-            {!watch("grants")?.length ? (
-              <div className="text-center">
-                <p className="text-gray-500 dark:text-zinc-400 mb-2">
-                  Please select at least one grant before adding metrics
-                </p>
-                <p className="text-sm text-gray-400 dark:text-zinc-500">
-                  Metrics should be associated with specific grants
-                </p>
-              </div>
-            ) : (
-              <>
-                <p className="text-gray-500 dark:text-zinc-400 mb-4">
-                  Add metrics to your activity
-                </p>
-                <Button
-                  type="button"
-                  onClick={() => {
-                    setValue("outputs", [
-                      ...selectedOutputs,
-                      {
-                        outputId: "",
-                        value: 0,
-                        proof: "",
-                      },
-                    ]);
-                  }}
-                  className="text-sm bg-zinc-700 text-white px-3 py-1.5"
-                >
-                  Add metric
-                </Button>
-              </>
-            )}
+            <p className="text-gray-500 dark:text-zinc-400 mb-4">
+              Add metrics to your activity
+            </p>
+            <Button
+              type="button"
+              onClick={() => {
+                setValue("outputs", [
+                  ...selectedOutputs,
+                  {
+                    outputId: "",
+                    value: 0,
+                    proof: "",
+                  },
+                ]);
+              }}
+              className="text-sm bg-zinc-700 text-white px-3 py-1.5"
+            >
+              Add metric
+            </Button>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -984,9 +971,9 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                         selected={
                           output.outputId
                             ? [
-                                outputs.find((o) => o.id === output.outputId)
-                                  ?.name || "",
-                              ]
+                              outputs.find((o) => o.id === output.outputId)
+                                ?.name || "",
+                            ]
                             : []
                         }
                         list={outputs.map((indicator) => ({
@@ -1048,12 +1035,11 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                             });
                           }
                         }}
-                        placeholder={`Enter ${
-                          outputs.find((o) => o.id === output.outputId)
+                        placeholder={`Enter ${outputs.find((o) => o.id === output.outputId)
                             ?.unitOfMeasure === "float"
                             ? "decimal"
                             : "whole"
-                        } number`}
+                          } number`}
                         disabled={
                           !!autosyncedIndicators.find(
                             (indicator) =>
@@ -1076,19 +1062,19 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                         )}
                       />
                       {output.outputId &&
-                      isInvalidValue(
-                        output.value,
-                        outputs.find((o) => o.id === output.outputId)
-                          ?.unitOfMeasure || "int"
-                      ) ? (
+                        isInvalidValue(
+                          output.value,
+                          outputs.find((o) => o.id === output.outputId)
+                            ?.unitOfMeasure || "int"
+                        ) ? (
                         <p className="text-xs text-red-500 mt-1">
                           {typeof output.value === "string" &&
-                          output.value === ""
+                            output.value === ""
                             ? "This field is required"
                             : outputs.find((o) => o.id === output.outputId)
-                                ?.unitOfMeasure === "int"
-                            ? "Please enter a whole number"
-                            : "Please enter a valid decimal number"}
+                              ?.unitOfMeasure === "int"
+                              ? "Please enter a whole number"
+                              : "Please enter a valid decimal number"}
                         </p>
                       ) : (
                         <EmptyDiv />
