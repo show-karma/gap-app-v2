@@ -16,6 +16,8 @@ export interface ImpactIndicatorWithData {
     endDate: string;
     outputTimestamp?: string;
   }[];
+  hasData: boolean;
+  isAssociatedWithPrograms: boolean;
 }
 
 export interface ImpactIndicator {

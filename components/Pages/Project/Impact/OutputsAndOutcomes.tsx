@@ -183,8 +183,8 @@ export const OutputsAndOutcomes = () => {
 
   // Filter outputs based on authorization
   const filteredOutputs = isAuthorized
-    ? impactAnswers
-    : impactAnswers.filter((item) => item.datapoints?.length);
+    ? impactAnswers.filter((item) => item.isAssociatedWithPrograms)
+    : impactAnswers.filter((item) => item.hasData && item.isAssociatedWithPrograms);
 
   const handleAddEntry = (id: string) => {
     const output = impactAnswers.find((o) => o.id === id);
