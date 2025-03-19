@@ -335,7 +335,7 @@ const UpdateBlock = ({
   };
 
   const labelDictionary = {
-    ProjectUpdate: "UPDATE",
+    ProjectUpdate: "ACTIVITY",
     GrantUpdate: "GRANT UPDATE",
     Milestone: "MILESTONE",
     ProjectImpact: "IMPACT",
