@@ -328,17 +328,45 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
 
       <div>
         <label className="block text-sm font-medium mb-1">Unit Type</label>
-        <select
-          {...register("unitOfMeasure")}
-          className="w-full p-2 border rounded-md bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-700"
-          disabled={readOnlyFields.unitOfMeasure}
-        >
-          {UNIT_TYPES.map((type) => (
-            <option key={type} value={type}>
-              {type.charAt(0).toUpperCase() + type.slice(1)}
-            </option>
-          ))}
-        </select>
+        <div className="grid grid-cols-2 gap-4">
+          {UNIT_TYPES.map((type) => {
+            const isSelected = watch("unitOfMeasure") === type;
+            return (
+              <label
+                key={type}
+                className={`relative flex flex-row items-center justify-center cursor-pointer rounded-lg p-3 transition-all ${
+                  isSelected
+                    ? "bg-blue-100 dark:bg-blue-900 shadow-md"
+                    : "bg-gray-50 dark:bg-zinc-800  shadow-md hover:bg-gray-100 dark:hover:bg-zinc-700 hover:shadow-sm"
+                }`}
+              >
+                <input
+                  type="radio"
+                  value={type}
+                  {...register("unitOfMeasure")}
+                  disabled={readOnlyFields.unitOfMeasure}
+                  className="sr-only" // Hide the actual radio but keep functionality
+                />
+                <div
+                  className={`w-4 h-4 rounded-full border ${
+                    isSelected
+                      ? "border-blue-500 bg-blue-500"
+                      : "border-gray-300 dark:border-gray-600"
+                  } flex items-center justify-center`}
+                >
+                  {isSelected && (
+                    <div className="w-2 h-2 rounded-full bg-white" />
+                  )}
+                </div>
+                <div className="flex flex-row gap-4 items-center justify-center flex-1">
+                  <div className="font-medium text-center">
+                    {type.charAt(0).toUpperCase() + type.slice(1)}
+                  </div>
+                </div>
+              </label>
+            );
+          })}
+        </div>
         {errors.unitOfMeasure && (
           <p className="text-red-500 text-sm mt-1">
             {errors.unitOfMeasure.message}

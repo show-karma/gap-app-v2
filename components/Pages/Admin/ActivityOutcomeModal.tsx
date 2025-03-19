@@ -241,8 +241,8 @@ export const ActivityOutcomeModal = ({
                             className={`relative flex flex-row items-center justify-center cursor-pointer rounded-lg p-3 transition-all ${
                               isSelected
                                 ? type === "output"
-                                  ? "bg-[#E0EAFF] shadow-md"
-                                  : "bg-[#DAF8D9] shadow-md"
+                                  ? "bg-[#E0EAFF] dark:bg-blue-900 shadow-md"
+                                  : "bg-[#DAF8D9] dark:bg-green-900 shadow-md"
                                 : "bg-gray-50 dark:bg-zinc-800 hover:bg-gray-100 dark:hover:bg-zinc-700 hover:shadow-sm"
                             }`}
                           >
