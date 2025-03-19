@@ -6,13 +6,18 @@ import type { FC } from "react";
 import { useEffect } from "react";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useGrantFormStore } from "./store";
-import { useProjectStore } from "@/store";
+import { useOwnerStore, useProjectStore } from "@/store";
 import {
   TypeSelectionScreen,
   CommunitySelectionScreen,
   DetailsScreen,
   MilestonesScreen,
 } from "./screens";
+import { MESSAGES } from "@/utilities/messages";
+import { useCommunityAdminStore } from "@/store/communityAdmin";
+import Link from "next/link";
+import { Button } from "@/components/Utilities/Button";
+import { PAGES } from "@/utilities/pages";
 
 // Export the SearchGrantProgram component from its own file
 export { SearchGrantProgram } from "./SearchGrantProgram";
@@ -38,6 +43,10 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   } = useGrantFormStore();
 
   const selectedProject = useProjectStore((state) => state.project);
+  const { isProjectAdmin } = useProjectStore();
+  const { isOwner } = useOwnerStore();
+  const { isCommunityAdmin } = useCommunityAdminStore();
+  const isAuthorized = isProjectAdmin || isOwner || isCommunityAdmin;
 
   // Initialize form data when editing a grant
   useEffect(() => {
@@ -98,6 +107,17 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     setMilestonesForms,
     updateFormData,
   ]);
+
+  if (!isAuthorized) {
+    return (
+      <div className="flex w-full flex-col gap-4 items-center justify-center">
+        <p>{MESSAGES.PROJECT.NOT_AUTHORIZED}</p>
+        <Link href={PAGES.PROJECT.GRANTS(selectedProject?.uid || "")}>
+          <Button variant="primary">Back to Project</Button>
+        </Link>
+      </div>
+    );
+  }
 
   // Render the appropriate screen based on current step
   const renderCurrentStep = () => {

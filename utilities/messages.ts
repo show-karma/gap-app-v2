@@ -227,6 +227,7 @@ export const MESSAGES = {
     NOT_CONNECTED: "Please login to view all your projects",
   },
   PROJECT: {
+    NOT_AUTHORIZED: "You are not authorized to see this page.",
     INTRO: {
       EMAIL: "E-mail must be a valid email address",
       TELEGRAM: "Telegram handle must be at least 3 characters",
