@@ -1034,7 +1034,7 @@ export const CommunityProjectEvaluatorPage = () => {
             />
             <div className="flex flex-col items-center justify-center gap-0">
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 text-center">
-                Karma Karma AI
+                Karma AI
               </h1>
               <p className="text-lg text-gray-600 dark:text-zinc-400 text-center mb-4">
                 Your AI companion for smarter project evaluation
