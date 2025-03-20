@@ -136,7 +136,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
 
   const getSocials = (links: IProjectDetails["data"]["links"]) => {
     const types = [
-      { name: "Twitter", prefix: "twitter.com/", icon: TwitterIcon },
+      { name: "Twitter", prefix: "x.com/", icon: TwitterIcon },
       { name: "Github", prefix: "github.com/", icon: GithubIcon },
       { name: "Discord", prefix: "discord.gg/", icon: DiscordIcon },
       { name: "Website", prefix: "https://", icon: WebsiteIcon },
