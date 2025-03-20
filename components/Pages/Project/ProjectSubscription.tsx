@@ -15,7 +15,7 @@ import { cn } from "@/utilities/tailwind";
 import { errorManager } from "@/components/Utilities/errorManager";
 
 const inputStyle =
-  "bg-transparent bg-white dark:bg-zinc-900  w-full text-black dark:text-zinc-200 placeholder:text-zinc-600  dark:placeholder:text-zinc-200";
+  "bg-transparent bg-white dark:bg-zinc-900  w-full text-black dark:text-zinc-200 placeholder:text-zinc-400  dark:placeholder:text-zinc-200";
 
 const labelStyle =
   "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
@@ -102,10 +102,10 @@ export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="p-5 flex flex-col gap-1 rounded-lg w-full h-max items-center justify-center text-left bg-[#EFF1F5] dark:bg-zinc-700"
+      className="flex flex-col gap-1 rounded-lg w-full h-max items-center justify-center text-left"
     >
       <p className="mb-1 font-semibold text-[#101828] text-sm dark:text-zinc-300 text-left w-full">
-        Get updates from this project
+        Be the first to learn of any updates
       </p>
       <div className="flex w-full flex-col gap-1">
         <input

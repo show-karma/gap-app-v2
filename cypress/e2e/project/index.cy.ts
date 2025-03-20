@@ -46,12 +46,6 @@ describe("Normal User - Project Page", () => {
       cy.get("h3").contains(`You are endorsing ${$h1.text()}`);
     });
   });
-  it("should be able to click and copy 'Farcaster Link'", () => {
-    cy.visit(`/project/${EXAMPLE.PROJECT}`);
-    cy.wait(1000);
-    // check if clipboard is have the link copied
-    cy.get("button").contains("Farcaster Link").click({ force: true });
-  });
   it("should be able to navigate between overview tabs", () => {
     cy.visit(`/project/${EXAMPLE.PROJECT}`);
     cy.wait(1000);

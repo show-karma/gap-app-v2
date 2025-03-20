@@ -30,6 +30,9 @@ export const updateProject = async (
     discord?: string;
     website?: string;
     linkedin?: string;
+    pitchDeck?: string;
+    demoVideo?: string;
+    farcaster?: string;
   },
   signer: any,
   gap: any,
@@ -95,11 +98,7 @@ export const updateProject = async (
           const fetchedProject = await gapIndexerApi
             .projectBySlug(project.uid)
             .then((res) => res.data);
-
-          if (
-            new Date(fetchedProject.details?.updatedAt) >
-            new Date(projectBefore.details?.updatedAt)
-          ) {
+          if (fetchedProject.details?.uid !== projectBefore.details?.uid) {
             retries = 0;
             changeStepperStep("indexed");
             closeModal();

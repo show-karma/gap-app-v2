@@ -2,12 +2,9 @@
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { useImpactMeasurement } from "@/hooks/useImpactMeasurement";
 import formatCurrency from "@/utilities/formatCurrency";
-import { getTotalProjects } from "@/utilities/karma/totalProjects";
-import { getAllProgramsOfCommunity } from "@/utilities/registry/getAllProgramsOfCommunity";
-import { getGrants } from "@/utilities/sdk";
+import { getHeaderStats } from "@/utilities/karma/getHeaderStats";
 import { useQuery } from "@tanstack/react-query";
-import { useParams, usePathname, useSearchParams } from "next/navigation";
-import { Hex } from "viem";
+import { useParams, usePathname } from "next/navigation";
 
 export const ImpactStatCards = () => {
   const { data, isLoading } = useImpactMeasurement();
@@ -71,39 +68,26 @@ export const ImpactStatCards = () => {
 export const CommunityStatCards = () => {
   const params = useParams();
   const communityId = params.communityId as string;
-  const { data: projects, isLoading: isLoadingProjects } = useQuery({
-    queryKey: ["totalProjects", communityId],
-    queryFn: () => getTotalProjects(communityId),
+  const { data, isLoading } = useQuery({
+    queryKey: ["headerStats", communityId],
+    queryFn: () => getHeaderStats(communityId),
     enabled: !!communityId,
   });
-  const { data: grants, isLoading: isLoadingGrants } = useQuery({
-    queryKey: ["total-grants", communityId],
-    queryFn: () =>
-      getGrants(communityId as Hex).then((res) => res.pageInfo.totalItems),
-    initialData: 0,
-    enabled: !!communityId,
-  });
-  const { data: programs, isLoading: isLoadingPrograms } = useQuery({
-    queryKey: ["programs"],
-    queryFn: () => getAllProgramsOfCommunity(communityId as string),
-  });
-
-  const isLoading = isLoadingProjects || isLoadingGrants;
 
   const stats = [
     {
       title: "Total Projects",
-      value: projects ? formatCurrency(projects) : "-",
+      value: data?.noOfProjects ? formatCurrency(data.noOfProjects) : "-",
       color: "#9b59b6",
     },
     {
       title: "Total Grants",
-      value: grants ? formatCurrency(grants) : "-",
+      value: data?.noOfGrants ? formatCurrency(data.noOfGrants) : "-",
       color: "#e67e22",
     },
     {
       title: "Total Programs",
-      value: programs ? formatCurrency(programs.length) : "-",
+      value: data?.noOfPrograms ? formatCurrency(data.noOfPrograms) : "-",
       color: "#3498db",
     },
   ];

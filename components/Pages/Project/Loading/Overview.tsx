@@ -40,11 +40,7 @@ export const ProjectOverviewLoading = () => {
   return (
     <div className="flex flex-row max-lg:flex-col gap-6 max-md:gap-4 py-5 mb-20">
       <div className="flex flex-[2.5] gap-6 flex-col w-full max-lg:hidden">
-        <ProjectBlocks />
         <Team />
-      </div>
-      <div className="flex w-full flex-col gap-2 lg:hidden">
-        <ProjectBlocks />
       </div>
       <div className="flex flex-col flex-[7.5] max-lg:w-full gap-4">
         <Skeleton className="h-10 w-full" />
