@@ -183,7 +183,7 @@ export const OutputsAndOutcomes = () => {
 
   // Filter outputs based on authorization
   const filteredOutputs = isAuthorized
-    ? impactAnswers.filter((item) => item.isAssociatedWithPrograms)
+    ? impactAnswers.filter((item) => item.isAssociatedWithPrograms || item.hasData)
     : impactAnswers.filter((item) => item.hasData && item.isAssociatedWithPrograms);
 
   const handleAddEntry = (id: string) => {
@@ -365,9 +365,9 @@ export const OutputsAndOutcomes = () => {
                   <div className="flex flex-1">
                     <div className="w-full">
                       <div className="flex flex-col">
-                        {(!autosyncedIndicators.find(
+                        {((!autosyncedIndicators.find(
                           (i) => i.name === item.name
-                        ) ||
+                        ) || item.hasData) ||
                           form?.isEditing) && (
                             <div className="overflow-y-auto overflow-x-auto rounded">
                               <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700 rounded border border-gray-200 dark:border-zinc-700">
