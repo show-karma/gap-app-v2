@@ -74,6 +74,9 @@ import { ContactInfoSection } from "./ContactInfoSection";
 import { NetworkDropdown } from "./NetworkDropdown";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useContactInfo } from "@/hooks/useContactInfo";
+import { FarcasterIcon } from "@/components/Icons/Farcaster";
+import { DeckIcon } from "@/components/Icons/Deck";
+import { VideoIcon } from "@/components/Icons/Video";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -82,7 +85,7 @@ const socialMediaInputStyle =
 const labelStyle =
   "text-slate-700 text-sm font-bold leading-tight dark:text-slate-200";
 
-const schema = z.object({
+export const projectSchema = z.object({
   title: z
     .string()
     .min(3, { message: MESSAGES.PROJECT_FORM.TITLE.MIN })
@@ -142,13 +145,16 @@ const schema = z.object({
   discord: z.string().optional(),
   website: z.string().optional(),
   linkedin: z.string().optional(),
+  pitchDeck: z.string().optional(),
+  demoVideo: z.string().optional(),
+  farcaster: z.string().optional(),
   businessModel: z.string().optional(),
   stageIn: z.string().optional(),
   raisedMoney: z.string().optional(),
   pathToTake: z.string().optional(),
 });
 
-type SchemaType = z.infer<typeof schema>;
+type SchemaType = z.infer<typeof projectSchema>;
 
 type ProjectDialogProps = {
   buttonElement?: {
@@ -232,7 +238,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     formState,
     setError,
   } = useForm<SchemaType>({
-    resolver: zodResolver(schema),
+    resolver: zodResolver(projectSchema),
     reValidateMode: "onChange",
     mode: "onChange",
     defaultValues: dataToUpdate,
@@ -308,7 +314,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         !!errors?.github ||
         !!errors?.discord ||
         !!errors?.website ||
-        !!errors?.linkedin
+        !!errors?.linkedin ||
+        !!errors?.pitchDeck ||
+        !!errors?.demoVideo ||
+        !!errors?.farcaster
       );
     }
     if (step === 3) {
@@ -332,7 +341,16 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         "solution",
         "missionSummary",
       ],
-      1: ["twitter", "github", "discord", "website", "linkedin"],
+      1: [
+        "twitter",
+        "github",
+        "discord",
+        "website",
+        "linkedin",
+        "pitchDeck",
+        "demoVideo",
+        "farcaster",
+      ],
       3: ["chainID"],
     };
 
@@ -408,6 +426,18 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           {
             type: "linkedin",
             url: data.linkedin || "",
+          },
+          {
+            type: "pitchDeck",
+            url: data.pitchDeck || "",
+          },
+          {
+            type: "demoVideo",
+            url: data.demoVideo || "",
+          },
+          {
+            type: "farcaster",
+            url: data.farcaster || "",
           },
         ],
         imageURL: "",
@@ -585,6 +615,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         linkedin: data.linkedin,
         twitter: data.twitter,
         website: data.website,
+        pitchDeck: data.pitchDeck,
+        demoVideo: data.demoVideo,
+        farcaster: data.farcaster,
       };
       await updateProject(
         fetchedProject,
@@ -942,6 +975,54 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               />
             </div>
             <p className="text-red-500">{errors.linkedin?.message}</p>
+          </div>
+          <div className="flex w-full flex-col gap-2">
+            <label htmlFor="pitch-deck-input" className={labelStyle}>
+              Pitch Deck (optional)
+            </label>
+            <div className="flex w-full flex-row items-center gap-2 rounded-lg border border-gray-400 px-4 py-2">
+              <DeckIcon className="h-5 w-5" />
+              <input
+                id="pitch-deck-input"
+                type="text"
+                className={socialMediaInputStyle}
+                placeholder="https://pitchdeck.com"
+                {...register("pitchDeck")}
+              />
+            </div>
+            <p className="text-red-500">{errors.pitchDeck?.message}</p>
+          </div>
+          <div className="flex w-full flex-col gap-2">
+            <label htmlFor="demo-input" className={labelStyle}>
+              Demo video (optional)
+            </label>
+            <div className="flex w-full flex-row items-center gap-2 rounded-lg border border-gray-400 px-4 py-2">
+              <VideoIcon className="h-5 w-5" />
+              <input
+                id="demo-input"
+                type="text"
+                className={socialMediaInputStyle}
+                placeholder="https://youtube.com/watch?v=demo"
+                {...register("demoVideo")}
+              />
+            </div>
+            <p className="text-red-500">{errors.demoVideo?.message}</p>
+          </div>
+          <div className="flex w-full flex-col gap-2">
+            <label htmlFor="farcaster-input" className={labelStyle}>
+              Farcaster (optional)
+            </label>
+            <div className="flex w-full flex-row items-center gap-2 rounded-lg border border-gray-400 px-4 py-2">
+              <FarcasterIcon className="h-5 w-5" />
+              <input
+                id="farcaster-input"
+                type="text"
+                className={socialMediaInputStyle}
+                placeholder="https://warpcast.com/my-project"
+                {...register("farcaster")}
+              />
+            </div>
+            <p className="text-red-500">{errors.farcaster?.message}</p>
           </div>
         </div>
       ),

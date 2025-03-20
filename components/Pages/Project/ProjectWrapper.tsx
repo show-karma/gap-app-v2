@@ -19,22 +19,22 @@ import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { useProgressModalStore } from "@/store/modals/progress";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
 import { getProjectById } from "@/utilities/sdk";
 import { cn } from "@/utilities/tailwind";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import {
+  IProjectDetails,
+  IProjectResponse,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import { useAccount } from "wagmi";
 import { IntroDialog } from "./IntroDialog";
 
-import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 import { getRPCClient } from "@/utilities/rpcClient";
-import { APIContact } from "@/types/project";
 import { useContactInfo } from "@/hooks/useContactInfo";
+import { FarcasterIcon } from "@/components/Icons/Farcaster";
 
 interface ProjectWrapperProps {
   project: IProjectResponse;
@@ -50,6 +50,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
     isProjectOwner,
     setIsProjectOwner,
     setIsProjectOwnerLoading,
+    project: storedProject,
   } = useProjectStore((state) => state);
 
   const router = useRouter();
@@ -133,13 +134,14 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
     setupProjectAdmin();
   }, [project?.uid, address, isAuth, isConnected, signer]);
 
-  const socials = useMemo(() => {
+  const getSocials = (links: IProjectDetails["data"]["links"]) => {
     const types = [
-      { name: "Twitter", prefix: "twitter.com/", icon: TwitterIcon },
+      { name: "Twitter", prefix: "x.com/", icon: TwitterIcon },
       { name: "Github", prefix: "github.com/", icon: GithubIcon },
       { name: "Discord", prefix: "discord.gg/", icon: DiscordIcon },
       { name: "Website", prefix: "https://", icon: WebsiteIcon },
       { name: "LinkedIn", prefix: "linkedin.com/", icon: LinkedInIcon },
+      { name: "Farcaster", prefix: "warpcast.com/", icon: FarcasterIcon },
     ];
 
     const hasHttpOrWWW = (link?: string) => {
@@ -176,7 +178,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
 
     return types
       .map(({ name, prefix, icon }) => {
-        const socialLink = project?.details?.data?.links?.find(
+        const socialLink = links?.find(
           (link) => link.type === name.toLowerCase()
         )?.url;
 
@@ -203,7 +205,11 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
         return undefined;
       })
       .filter((social) => social);
-  }, [project]);
+  };
+
+  const socials = getSocials(
+    storedProject?.details?.data.links || project?.details?.data.links
+  );
 
   const hasAlreadyEndorsed = project?.endorsements?.find(
     (item) => item.recipient?.toLowerCase() === address?.toLowerCase()
@@ -319,6 +325,26 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
             >
               {project?.details?.data?.title}
             </h1>
+            <div className="flex flex-row gap-10 max-lg:gap-4 flex-wrap max-lg:flex-col items-center max-lg:justify-center">
+              {socials.length > 0 && (
+                <div className="flex flex-row gap-4 items-center">
+                  {socials
+                    .filter((social) => social?.url)
+                    .map((social, index) => (
+                      <a
+                        key={social?.url || index}
+                        href={social?.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {social?.icon && (
+                          <social.icon className="h-5 w-5 fill-black text-black dark:text-white dark:fill-zinc-200" />
+                        )}
+                      </a>
+                    ))}
+                </div>
+              )}
+            </div>
             {project?.details?.data?.tags?.length ? (
               <div className="flex flex-col gap-2 max-md:hidden">
                 <div className="flex items-center gap-x-1">
@@ -336,30 +362,6 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
           </div>
           <div className="flex flex-col gap-3 items-end justify-end">
             <div className="flex flex-row gap-6 max-lg:flex-col  max-lg:gap-3">
-              <div className="flex flex-row gap-10 max-lg:gap-4 flex-wrap max-lg:flex-col items-center max-lg:justify-center">
-                {socials.length > 0 && (
-                  <div className="flex flex-row gap-4 items-center">
-                    {socials
-                      .filter((social) => social?.url)
-                      .map((social, index) => (
-                        <a
-                          key={social?.url || index}
-                          href={social?.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {social?.icon && (
-                            <social.icon className="h-5 w-5 fill-black text-black dark:text-white dark:fill-zinc-200" />
-                          )}
-                        </a>
-                      ))}
-                  </div>
-                )}
-                {/* <div className="flex flex-col gap-2 items-center">
-              {handleEndorse()}
-              {project ? <ProjectSubscriptionDialog project={project} /> : null}
-            </div> */}
-              </div>
               {isProjectAdmin ? (
                 <ExternalLink
                   href={"https://tally.so/r/w8e6GP"}
@@ -378,29 +380,6 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
                 </ExternalLink>
               ) : null}
             </div>
-            {members.length ? (
-              <div className="flex items-center justify-end w-full flex-wrap gap-4 max-lg:hidden">
-                <p className="text-base font-normal text-black dark:text-slate-200">
-                  Built by
-                </p>
-                <div className="flex flex-row gap-0 w-max">
-                  {Array.from(
-                    new Set(members.map((member) => member.recipient))
-                  ).map((member, index) => (
-                    <span
-                      key={index}
-                      className="-ml-1.5"
-                      style={{ zIndex: 1 + index }}
-                    >
-                      <EthereumAddressToENSAvatar
-                        address={member}
-                        className="h-5 w-5 rounded-full border border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5"
-                      />
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ) : null}
           </div>
         </div>
         <div className="mt-4 max-sm:px-4">

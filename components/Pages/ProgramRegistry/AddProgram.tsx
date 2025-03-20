@@ -1005,7 +1005,7 @@ export default function AddProgram({
                   <input
                     id="program-twitter"
                     className={cn(inputStyle, "pl-10 mt-0")}
-                    placeholder="Ex: https://twitter.com/program"
+                    placeholder="Ex: https://x.com/program"
                     {...register("twitter")}
                   />
                 </div>
