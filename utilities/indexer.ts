@@ -140,13 +140,13 @@ export const INDEXER = {
         categories ? `&categories=${categories}` : ""
       }${selectedProgramId ? `&selectedProgramIds=${selectedProgramId}` : ""}${
         download ? `&download=${download}` : ""
-      }${
-        grantTitle ? `&grantTitle=${grantTitle}` : ""
-      }`,
+      }${grantTitle ? `&grantTitle=${grantTitle}` : ""}`,
     FEED: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/feed`,
     STATS: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/stats`,
+    PAGE_HEADER_STATS: (communityIdOrSlug: string) =>
+      `/communities/${communityIdOrSlug}/page-header-stats`,
     ADMINS: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/admins`,
     INDICATORS: {
