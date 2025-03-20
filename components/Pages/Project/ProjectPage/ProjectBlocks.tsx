@@ -132,25 +132,27 @@ export function ProjectBlocks() {
 
   const blocksWithCondition = blocks.filter((item) => !item.disabled);
   return (
-    <div className="grid grid-cols-4 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-3">
+    <div className="flex flex-row gap-3 flex-wrap max-lg:gap-1 max-md:flex-col">
       {blocksWithCondition.map((item) =>
         item.action ? (
-          <button
-            type="button"
-            key={item.title}
-            onClick={() => item?.action?.()}
-            className="w-full h-full min-h-max max-h-full"
-          >
-            <Block key={item.title} item={item} />
-          </button>
+          <div className="flex flex-1" key={item.title}>
+            <button
+              type="button"
+              onClick={() => item?.action?.()}
+              className="w-full h-full min-h-max max-h-full"
+            >
+              <Block key={item.title} item={item} />
+            </button>
+          </div>
         ) : (
-          <ExternalLink
-            href={item.link}
-            key={item.title}
-            className="w-full h-full min-h-max max-h-full"
-          >
-            <Block key={item.title} item={item} />
-          </ExternalLink>
+          <div className="flex flex-1" key={item.title}>
+            <ExternalLink
+              href={item.link}
+              className="w-full h-full min-h-max max-h-full"
+            >
+              <Block key={item.title} item={item} />
+            </ExternalLink>
+          </div>
         )
       )}
     </div>
