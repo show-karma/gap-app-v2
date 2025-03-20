@@ -108,8 +108,8 @@ function GenerateDocument({
   };
 
   const getTwitterUserNameOnly = (text: string) => {
-    if (text.includes("twitter.com/")) {
-      const twitterUsername = text.split("twitter.com/")[1];
+    if (text.includes("twitter.com/") || text.includes("x.com/")) {
+      const twitterUsername = text.split("x.com/")[1];
       return twitterUsername;
     }
 

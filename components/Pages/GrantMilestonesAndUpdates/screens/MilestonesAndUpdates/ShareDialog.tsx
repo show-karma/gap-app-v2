@@ -45,7 +45,7 @@ export const ShareDialog: FC<ShareDialogProps> = ({
   }/funding?grantId=${
     grant?.uid
   }&tab=milestones-and-updates\nYour thoughts and feedback are invaluable—let me know what you think!`;
-  const twitterURL = `https://twitter.com/intent/post?text=`;
+  const twitterURL = `https://x.com/intent/post?text=`;
   const shareURI = twitterURL + encodeURIComponent(encoded);
 
   return (

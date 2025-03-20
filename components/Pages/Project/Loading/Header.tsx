@@ -13,14 +13,6 @@ export default function ProjectHeaderLoading() {
               <Skeleton className="h-8 w-40" />
             </div>
           </div>
-          <div className="flex items-center justify-end w-full gap-4 max-lg:hidden">
-            <p className="text-base font-normal text-black dark:text-slate-200">
-              Built by
-            </p>
-            <div className="flex flex-row gap-0 w-max">
-              <Skeleton className="h-4 w-24" />
-            </div>
-          </div>
         </div>
       </div>
       <div className="mt-4 max-sm:px-4">
