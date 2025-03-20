@@ -53,6 +53,13 @@ const profileSchema = z.object({
     })
     .optional()
     .or(z.literal("")),
+  farcaster: z
+    .string()
+    .refine((value) => urlRegex.test(value), {
+      message: "Please enter a valid URL",
+    })
+    .optional()
+    .or(z.literal("")),
 });
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
@@ -134,6 +141,7 @@ export const ContributorProfileDialog: FC<
           linkedin: data.linkedin,
           name: data.name,
           twitter: data.twitter,
+          farcaster: data.farcaster,
         },
         recipient: address as `0x${string}`,
         schema: gapClient.findSchema("ContributorProfile"),
@@ -190,6 +198,7 @@ export const ContributorProfileDialog: FC<
                     linkedin: profile?.data?.linkedin,
                     name: profile?.data?.name,
                     twitter: profile?.data?.twitter,
+                    farcaster: profile?.data?.farcaster,
                   } as SchemaType;
                 }
               );
@@ -242,6 +251,9 @@ export const ContributorProfileDialog: FC<
       });
       setValue("name", profile?.data?.name || "", {
         shouldValidate: !!profile?.data?.name,
+      });
+      setValue("farcaster", profile?.data?.farcaster, {
+        shouldValidate: !!profile?.data?.farcaster,
       });
     };
     fetchProfile();
@@ -368,6 +380,20 @@ export const ContributorProfileDialog: FC<
                         />
                         <p className="text-base text-red-400">
                           {errors.linkedin?.message}
+                        </p>
+                      </div>
+                      <div className="w-full flex flex-col gap-1">
+                        <label htmlFor="farcaster" className={labelStyle}>
+                          Farcaster (optional)
+                        </label>
+                        <input
+                          id="farcaster"
+                          className={inputStyle}
+                          placeholder="Ex: https://warpcast.com/johndoe"
+                          {...register("farcaster")}
+                        />
+                        <p className="text-base text-red-400">
+                          {errors.farcaster?.message}
                         </p>
                       </div>
                       <Button

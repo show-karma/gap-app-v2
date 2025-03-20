@@ -21,6 +21,7 @@ export function ProjectBlocks() {
     description: string;
     link?: string;
     action?: () => void;
+    disabled?: boolean;
     bg: string;
   }[] = [
     // {
@@ -38,34 +39,74 @@ export function ProjectBlocks() {
     //   bg: "bg-[#ECE9FE]",
     // },
     {
-      iconSrc: "/icons/intro.png",
+      iconSrc: "/icons/deck.svg",
+      title: "Read Pitch Deck",
+      description: "Read the pitch deck of the project",
+      bg: "bg-[#ECE9FE]",
+      link: project?.details?.data.links
+        ?.find((link) => link.type === "pitchDeck")
+        ?.url.includes("http")
+        ? project?.details?.data.links?.find(
+            (link) => link.type === "pitchDeck"
+          )?.url
+        : `https://${
+            project?.details?.data.links?.find(
+              (link) => link.type === "pitchDeck"
+            )?.url
+          }`,
+      disabled: !project?.details?.data.links?.find(
+        (link) => link.type === "pitchDeck"
+      )?.url,
+    },
+    {
+      iconSrc: "/icons/video.svg",
+      title: "Watch Demo Video",
+      description: "Watch the demo video of the project",
+      bg: "bg-[#FDE3FF]",
+      link: project?.details?.data.links
+        ?.find((link) => link.type === "demoVideo")
+        ?.url.includes("http")
+        ? project?.details?.data.links?.find(
+            (link) => link.type === "demoVideo"
+          )?.url
+        : `https://${
+            project?.details?.data.links?.find(
+              (link) => link.type === "demoVideo"
+            )?.url
+          }`,
+      disabled: !project?.details?.data.links?.find(
+        (link) => link.type === "demoVideo"
+      )?.url,
+    },
+    {
+      iconSrc: "/icons/wave.svg",
       title: "Request intro",
       description: "Get an introduction to connect",
       action: () => setIsIntroModalOpen(true),
       bg: "bg-[#DBFFC5]",
     },
     {
-      iconSrc: "/icons/endorsements.png",
+      iconSrc: "/icons/thumbs-up.svg",
       title: "Endorse the Project",
       description: "Publicly endorse our project",
       action: () => setIsEndorsementOpen(true),
       bg: "bg-[#FFF3D4]",
     },
-    {
-      iconSrc: "/icons/link.png",
-      title: "Farcaster Link",
-      description: "Share your project on Farcaster as a frame",
-      bg: "bg-[#FFE6D5]",
-      action: () => {
-        copy(
-          envVars.VERCEL_URL +
-            PAGES.PROJECT.OVERVIEW(
-              project?.details?.data.slug || (params.projectId as string)
-            ),
-          "Just post the link to Farcaster and it will be displayed as a frame!"
-        );
-      },
-    },
+    // {
+    //   iconSrc: "/icons/link.png",
+    //   title: "Farcaster Link",
+    //   description: "Share your project on Farcaster as a frame",
+    //   bg: "bg-[#FFE6D5]",
+    //   action: () => {
+    //     copy(
+    //       envVars.VERCEL_URL +
+    //         PAGES.PROJECT.OVERVIEW(
+    //           project?.details?.data.slug || (params.projectId as string)
+    //         ),
+    //       "Just post the link to Farcaster and it will be displayed as a frame!"
+    //     );
+    //   },
+    // },
     // {
     //   iconSrc: "/icons/support.png",
     //   title: "Support the Project",
@@ -79,7 +120,7 @@ export function ProjectBlocks() {
     return (
       <div
         className={cn(
-          `flex flex-row items-center gap-3 p-4 rounded-xl max-w-full w-full justify-start`,
+          `flex flex-col items-start gap-3 p-3 rounded-lg flex-1 max-w-full w-full justify-start h-full`,
           item.bg
         )}
       >
@@ -88,20 +129,26 @@ export function ProjectBlocks() {
       </div>
     );
   }
+
+  const blocksWithCondition = blocks.filter((item) => !item.disabled);
   return (
-    <div className="flex flex-row gap-3 flex-wrap max-lg:gap-1">
-      {blocks.map((item) =>
+    <div className="grid grid-cols-4 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-3">
+      {blocksWithCondition.map((item) =>
         item.action ? (
           <button
             type="button"
             key={item.title}
             onClick={() => item?.action?.()}
-            className="w-full"
+            className="w-full h-full min-h-max max-h-full"
           >
             <Block key={item.title} item={item} />
           </button>
         ) : (
-          <ExternalLink href={item.link} key={item.title} className="w-full">
+          <ExternalLink
+            href={item.link}
+            key={item.title}
+            className="w-full h-full min-h-max max-h-full"
+          >
             <Block key={item.title} item={item} />
           </ExternalLink>
         )
