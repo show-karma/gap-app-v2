@@ -44,9 +44,7 @@ export default async function RootLayout({
             <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">
               <div>
                 <div className="fixed w-full bg-white dark:bg-black z-10">
-                  <Suspense>
-                    <Header />
-                  </Suspense>
+                  <Header />
                 </div>
                 <div className="h-[72px] w-full" />
                 {children}

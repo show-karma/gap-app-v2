@@ -15,11 +15,24 @@ import Cookies from "universal-cookie";
 import { Hex } from "viem";
 import { useAccount, useChainId, useDisconnect, useSignMessage } from "wagmi";
 import { useMixpanel } from "./useMixpanel";
+import { config } from "@/utilities/wagmi/config";
+import { watchAccount } from "@wagmi/core";
+import { useEffect, useRef } from "react";
 
 import {
   authCookiePath,
   authWalletTypeCookiePath,
 } from "@/utilities/auth-keys";
+
+// Constants for cookie keys and BroadcastChannel
+const AUTH_IN_PROGRESS_COOKIE = "gap_auth_in_progress";
+const AUTH_CHANNEL_NAME = "gap_auth_channel";
+
+// Modified to include address-specific path
+export const getAddressSpecificAuthCookie = (address: string) =>
+  `${authCookiePath}_${address.toLowerCase()}`;
+export const getAddressSpecificWalletTypeCookie = (address: string) =>
+  `${authWalletTypeCookiePath}_${address.toLowerCase()}`;
 
 const getNonce = async (publicAddress: string) => {
   try {
@@ -46,13 +59,63 @@ const isTokenValid = (tokenValue: string | null) => {
   return true;
 };
 
+// Helper to check if another tab is authenticating
+const isAuthenticatingInAnotherTab = (
+  address: string,
+  cookies: Cookies
+): boolean => {
+  try {
+    const inProgressAuth = cookies.get(AUTH_IN_PROGRESS_COOKIE);
+    if (!inProgressAuth) return false;
+
+    // Check if the auth is for the same address and still valid (not expired)
+    if (inProgressAuth.address.toLowerCase() === address.toLowerCase()) {
+      // Check if the timestamp is recent (within last 30 seconds)
+      const isRecent = Date.now() - inProgressAuth.timestamp < 30000;
+      if (isRecent) return true;
+
+      // If not recent, clean up the stale entry
+      cookies.remove(AUTH_IN_PROGRESS_COOKIE, { path: "/" });
+    }
+    return false;
+  } catch (e) {
+    console.error("Error checking auth in progress:", e);
+    return false;
+  }
+};
+
+// Set authentication in progress flag
+const setAuthInProgress = (address: string, cookies: Cookies): void => {
+  try {
+    cookies.set(
+      AUTH_IN_PROGRESS_COOKIE,
+      {
+        address,
+        timestamp: Date.now(),
+        tabId: Math.random().toString(36).substring(2, 9), // Generate a random tab ID
+      },
+      { path: "/" }
+    );
+  } catch (e) {
+    console.error("Error setting auth in progress:", e);
+  }
+};
+
+// Clear authentication in progress flag
+const clearAuthInProgress = (cookies: Cookies): void => {
+  try {
+    cookies.remove(AUTH_IN_PROGRESS_COOKIE, { path: "/" });
+  } catch (e) {
+    console.error("Error clearing auth in progress:", e);
+  }
+};
+
 export const useAuth = () => {
   const { isConnected, address } = useAccount();
   const { openConnectModal } = useConnectModal();
   const chainId = useChainId();
   const { setIsAuthenticating, setIsAuth, isAuthenticating, setWalletType } =
     useAuthStore();
-  // const { signMessageAsync } = useSignMessage();
   const { disconnectAsync } = useDisconnect();
   const { setIsOnboarding } = useOnboarding?.();
   const router = useRouter();
@@ -61,7 +124,171 @@ export const useAuth = () => {
   const { signMessageAsync } = useSignMessage();
   const [inviteCode] = useQueryState("invite-code");
 
+  // Use a ref to track authentication requests in progress for specific addresses
+  const pendingAuthRequests = useRef<Set<string>>(new Set());
+  // Reference to the BroadcastChannel for cross-tab communication
+  const authChannelRef = useRef<BroadcastChannel | null>(null);
+
   const pathname = usePathname();
+
+  // Setup cookie change detection for cross-tab communication
+  useEffect(() => {
+    // Check for auth in progress cookie every second to detect changes from other tabs
+    const intervalId = setInterval(() => {
+      if (!address) return;
+
+      const inProgressAuth = cookies.get(AUTH_IN_PROGRESS_COOKIE);
+
+      // If there's an auth in progress for this address, add it to pending requests
+      if (
+        inProgressAuth &&
+        inProgressAuth.address &&
+        inProgressAuth.address.toLowerCase() === address.toLowerCase()
+      ) {
+        pendingAuthRequests.current.add(address.toLowerCase());
+      }
+
+      // Check if a token has appeared for a pending auth
+      Array.from(pendingAuthRequests.current).forEach((pendingAddress) => {
+        const addressSpecificCookie =
+          getAddressSpecificAuthCookie(pendingAddress);
+        const savedToken = cookies.get(addressSpecificCookie);
+
+        if (savedToken && isTokenValid(savedToken)) {
+          // Token found! If it's the current address, use it
+          if (
+            address &&
+            address.toLowerCase() === pendingAddress.toLowerCase()
+          ) {
+            const walletTypeCookie =
+              getAddressSpecificWalletTypeCookie(pendingAddress);
+            const savedWalletType = cookies.get(walletTypeCookie);
+
+            // Update our auth state with the token that appeared
+            cookies.set(authCookiePath, savedToken, { path: "/" });
+            cookies.set(authWalletTypeCookiePath, savedWalletType, {
+              path: "/",
+            });
+            setWalletType(savedWalletType);
+            setIsAuth(true);
+          }
+
+          // Remove from pending since auth is complete
+          pendingAuthRequests.current.delete(pendingAddress);
+        }
+      });
+    }, 1000);
+
+    return () => clearInterval(intervalId);
+  }, [address]);
+
+  // Initialize BroadcastChannel for cross-tab communication
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      // Check if BroadcastChannel is supported
+      if ("BroadcastChannel" in window) {
+        authChannelRef.current = new BroadcastChannel(AUTH_CHANNEL_NAME);
+
+        // Listen for auth events from other tabs
+        authChannelRef.current.onmessage = (event) => {
+          const { type, address, success } = event.data;
+
+          if (type === "auth_started" && address) {
+            // Another tab started authentication - add to pending
+            pendingAuthRequests.current.add(address.toLowerCase());
+          } else if (type === "auth_completed" && address) {
+            // Authentication completed in another tab
+            pendingAuthRequests.current.delete(address.toLowerCase());
+
+            // If successful, refresh our state
+            if (success) {
+              // Check for a token for this address
+              const addressSpecificCookie =
+                getAddressSpecificAuthCookie(address);
+              const savedToken = cookies.get(addressSpecificCookie);
+
+              if (savedToken && isTokenValid(savedToken)) {
+                const walletTypeCookie =
+                  getAddressSpecificWalletTypeCookie(address);
+                const savedWalletType = cookies.get(walletTypeCookie);
+
+                // Update our auth state with the token from the other tab
+                cookies.set(authCookiePath, savedToken, { path: "/" });
+                cookies.set(authWalletTypeCookiePath, savedWalletType, {
+                  path: "/",
+                });
+                setWalletType(savedWalletType);
+                setIsAuth(true);
+              }
+            }
+          }
+        };
+      }
+    } catch (e) {
+      console.error("Error setting up BroadcastChannel:", e);
+    }
+
+    // Clean up
+    return () => {
+      if (authChannelRef.current) {
+        authChannelRef.current.close();
+      }
+    };
+  }, []);
+
+  // Setup the account watcher - moved from Header.tsx
+  useEffect(() => {
+    const unwatch = watchAccount(config, {
+      onChange: (account, prevAccount) => {
+        if (!account) {
+          errorManager("User changed to empty account instance", account, {
+            account,
+            prevAccount,
+          });
+          return;
+        }
+
+        if (account.address && account.address !== prevAccount.address) {
+          // Address changed - try to authenticate with the new address
+          // Check if we already have a token for this address
+          const addressSpecificCookie = getAddressSpecificAuthCookie(
+            account.address
+          );
+          const savedToken = cookies.get(addressSpecificCookie);
+
+          if (savedToken) {
+            // We have a token for this address, check if it's valid
+            const isValid = isTokenValid(savedToken);
+            if (isValid) {
+              // Token is valid, set up auth state with it
+              const walletTypeCookie = getAddressSpecificWalletTypeCookie(
+                account.address
+              );
+              const savedWalletType = cookies.get(walletTypeCookie);
+
+              // Update the current address token in the regular auth cookie
+              cookies.set(authCookiePath, savedToken, { path: "/" });
+              cookies.set(authWalletTypeCookiePath, savedWalletType, {
+                path: "/",
+              });
+
+              setWalletType(savedWalletType);
+              setIsAuth(true);
+              return;
+            }
+          }
+
+          // No valid token found for this address, need to authenticate
+          setIsAuth(false);
+          setWalletType(undefined);
+          authenticate(account.address);
+        }
+      },
+    });
+    return () => unwatch();
+  }, []);
 
   const signMessage = async (messageToSign: string) => {
     try {
@@ -109,15 +336,21 @@ export const useAuth = () => {
 
   const saveToken = (
     token: string | undefined,
-    walletType: "eoa" | "safe" = "eoa"
+    walletType: "eoa" | "safe" = "eoa",
+    userAddress = address
   ) => {
-    if (token) {
-      cookies.set(authCookiePath, token, {
-        path: "/",
-      });
-      cookies.set(authWalletTypeCookiePath, walletType, {
-        path: "/",
-      });
+    if (token && userAddress) {
+      // Save to address-specific cookie
+      const addressSpecificCookie = getAddressSpecificAuthCookie(userAddress);
+      const addressSpecificWalletType =
+        getAddressSpecificWalletTypeCookie(userAddress);
+
+      cookies.set(addressSpecificCookie, token, { path: "/" });
+      cookies.set(addressSpecificWalletType, walletType, { path: "/" });
+
+      // Also save to regular auth cookie (current active address)
+      cookies.set(authCookiePath, token, { path: "/" });
+      cookies.set(authWalletTypeCookiePath, walletType, { path: "/" });
     }
 
     setWalletType(walletType);
@@ -126,23 +359,129 @@ export const useAuth = () => {
 
   const authenticate = async (newAddress = address, shouldToast = true) => {
     try {
-      if (isAuthenticating) return;
-      setIsAuthenticating(true);
-      if (!isConnected || !newAddress) {
-        openConnectModal?.();
+      // Prevent duplicate authentication requests for the same address
+      if (!newAddress) {
         return false;
       }
+
+      const addressStr = newAddress.toString().toLowerCase();
+
+      // Check if authentication is already in progress in this tab
+      if (pendingAuthRequests.current.has(addressStr) || isAuthenticating) {
+        console.log(
+          "Authentication already in progress for",
+          addressStr,
+          "in this tab"
+        );
+        return false;
+      }
+
+      // Check if authentication is in progress in another tab
+      if (isAuthenticatingInAnotherTab(addressStr, cookies)) {
+        console.log(
+          "Authentication already in progress for",
+          addressStr,
+          "in another tab"
+        );
+        // Wait for a token to become available
+        toast.loading("Authenticating in another tab...");
+
+        // Add to pending requests to prevent additional attempts
+        pendingAuthRequests.current.add(addressStr);
+        setIsAuthenticating(true);
+
+        // Wait up to 30 seconds for the other tab to complete authentication
+        for (let i = 0; i < 30; i++) {
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          // Check if a token has appeared
+          const addressSpecificCookie =
+            getAddressSpecificAuthCookie(newAddress);
+          const savedToken = cookies.get(addressSpecificCookie);
+
+          if (savedToken && isTokenValid(savedToken)) {
+            // Token found! Use it to authenticate
+            const walletTypeCookie =
+              getAddressSpecificWalletTypeCookie(newAddress);
+            const savedWalletType = cookies.get(walletTypeCookie);
+
+            toast.dismiss();
+            toast.success("Authentication completed");
+            saveToken(savedToken, savedWalletType, newAddress);
+
+            // Clean up
+            pendingAuthRequests.current.delete(addressStr);
+            setIsAuthenticating(false);
+            return true;
+          }
+        }
+
+        // If we get here, the other tab's authentication timed out or failed
+        toast.dismiss();
+        toast.error("Authentication in other tab timed out");
+        pendingAuthRequests.current.delete(addressStr);
+        setIsAuthenticating(false);
+        return false;
+      }
+
+      // Mark this address as having an auth request in progress
+      pendingAuthRequests.current.add(addressStr);
+      setIsAuthenticating(true);
+
+      // Set authentication in progress flag for cross-tab awareness
+      setAuthInProgress(addressStr, cookies);
+
+      // Notify other tabs that we're starting authentication
+      if (authChannelRef.current) {
+        authChannelRef.current.postMessage({
+          type: "auth_started",
+          address: addressStr,
+        });
+      }
+
+      if (!isConnected) {
+        openConnectModal?.();
+
+        // Clean up if the connect modal is closed without connecting
+        clearAuthInProgress(cookies);
+        if (authChannelRef.current) {
+          authChannelRef.current.postMessage({
+            type: "auth_completed",
+            address: addressStr,
+            success: false,
+          });
+        }
+        return false;
+      }
+
+      // Check for address-specific token first
       if (typeof window !== "undefined") {
-        const savedToken = cookies.get(authCookiePath);
-        const savedWalletType = cookies.get(authWalletTypeCookiePath);
+        const addressSpecificCookie = getAddressSpecificAuthCookie(newAddress);
+        const addressSpecificWalletType =
+          getAddressSpecificWalletTypeCookie(newAddress);
+
+        const savedToken = cookies.get(addressSpecificCookie);
+        const savedWalletType = cookies.get(addressSpecificWalletType);
+
         if (savedToken && savedWalletType) {
           const isValid = isTokenValid(savedToken);
           if (isValid) {
-            saveToken(savedToken, savedWalletType);
-            return;
+            saveToken(savedToken, savedWalletType, newAddress);
+
+            // Clear in-progress flag and notify other tabs
+            clearAuthInProgress(cookies);
+            if (authChannelRef.current) {
+              authChannelRef.current.postMessage({
+                type: "auth_completed",
+                address: addressStr,
+                success: true,
+              });
+            }
+            return true;
           }
         }
       }
+
       if (!shouldToast) {
         toast.success("Wallet connected");
         toast.loading("Authenticating...");
@@ -150,27 +489,52 @@ export const useAuth = () => {
       const nonceMessage = await getNonce(newAddress);
 
       const signedMessage = await signMessage(nonceMessage);
-      if (!signedMessage) return;
+      if (!signedMessage) {
+        // Clean up if signature fails
+        clearAuthInProgress(cookies);
+        if (authChannelRef.current) {
+          authChannelRef.current.postMessage({
+            type: "auth_completed",
+            address: addressStr,
+            success: false,
+          });
+        }
+        return false;
+      }
+
       const { token, walletType } = await getAccountToken(
         newAddress,
         signedMessage
       );
 
+      let success = false;
       if (token) {
-        saveToken(token, walletType);
+        saveToken(token, walletType, newAddress);
+        success = true;
         if (walletType === "safe") {
           toast.success("Logged in with safe wallet");
         }
-        // toast.dismiss();
       } else {
         toast.error("Login failed");
-        return;
       }
+
+      // Clear in-progress flag and notify other tabs
+      clearAuthInProgress(cookies);
+      if (authChannelRef.current) {
+        authChannelRef.current.postMessage({
+          type: "auth_completed",
+          address: addressStr,
+          success,
+        });
+      }
+
+      if (!success) return false;
+
       if (pathname === "/") {
         router.push(PAGES.MY_PROJECTS);
       }
       if (!pathname.includes("funding-map")) {
-        if (inviteCode) return;
+        if (inviteCode) return true;
         setIsOnboarding?.(true);
       }
       if (address) {
@@ -188,8 +552,25 @@ export const useAuth = () => {
       errorManager(`Error in authenticate user ${newAddress}`, error);
       // eslint-disable-next-line no-console
       console.log(error);
-      return;
+
+      // Clean up on error
+      if (newAddress) {
+        const addressStr = newAddress.toString().toLowerCase();
+        clearAuthInProgress(cookies);
+        if (authChannelRef.current) {
+          authChannelRef.current.postMessage({
+            type: "auth_completed",
+            address: addressStr,
+            success: false,
+          });
+        }
+      }
+      return false;
     } finally {
+      // Remove the address from pending auth requests
+      if (newAddress) {
+        pendingAuthRequests.current.delete(newAddress.toString().toLowerCase());
+      }
       setIsAuthenticating(false);
     }
   };
@@ -199,27 +580,39 @@ export const useAuth = () => {
       address,
       isConnected,
     });
-    cookies.remove(authCookiePath, {
-      path: "/",
-    });
-    localStorage?.clear();
+
+    // Remove both the address-specific cookies and the general ones
+    if (address) {
+      const addressSpecificCookie = getAddressSpecificAuthCookie(address);
+      const addressSpecificWalletType =
+        getAddressSpecificWalletTypeCookie(address);
+
+      cookies.remove(addressSpecificCookie, { path: "/" });
+      cookies.remove(addressSpecificWalletType, { path: "/" });
+    }
+
+    cookies.remove(authCookiePath, { path: "/" });
+    cookies.remove(authWalletTypeCookiePath, { path: "/" });
 
     setIsAuth(false);
     setWalletType(undefined);
+
+    // Clear all pending auth requests
+    pendingAuthRequests.current.clear();
+
+    // Clear any in-progress authentication
+    clearAuthInProgress(cookies);
+
     await disconnectAsync?.();
   };
 
+  // No need for softDisconnect anymore as we handle account switching differently
   const softDisconnect = (newAddress: Hex) => {
-    console.log("User soft disconnected", {
+    console.log("Account changed", {
       newAddress,
       address,
-      isConnected,
     });
-    cookies.remove(authCookiePath, {
-      path: "/",
-    });
-    setIsAuth(false);
-    setWalletType(undefined);
+    // We don't need to disconnect now, just make sure we have a valid token
     authenticate(newAddress);
   };
 

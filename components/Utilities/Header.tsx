@@ -16,7 +16,6 @@ import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { MoonIcon, SunIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { watchAccount } from "@wagmi/core";
 import { useTheme } from "next-themes";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -144,27 +143,10 @@ export default function Header() {
   const { authenticate, disconnect, softDisconnect } = useAuth();
 
   useEffect(() => {
-    const unwatch = watchAccount?.(config, {
-      onChange: (account, prevAccount) => {
-        if (!account) {
-          errorManager("User changed to empty account instance", account, {
-            account,
-            prevAccount,
-          });
-        }
-        if (account.address && account.address !== prevAccount.address) {
-          softDisconnect(account.address);
-        }
-      },
-    });
-    return () => unwatch();
-  }, []);
-
-  useEffect(() => {
-    if (isConnected && isReady && !isAuth) {
+    if (isConnected && isReady && !isAuth && !isAuthenticating) {
       authenticate();
     }
-  }, [isConnected, isReady, isAuth]);
+  }, [isConnected, isReady, isAuth, isAuthenticating]);
 
   const { isMobileMenuOpen, setIsMobileMenuOpen } = useMobileStore();
 
