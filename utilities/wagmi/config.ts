@@ -53,7 +53,7 @@ export const config = createConfig({
     [sei.id]: http(envVars.RPC.SEI),
     [sepolia.id]: http(envVars.RPC.SEPOLIA),
   },
-  ssr: true,
+  ssr: false,
   storage: createStorage({
     storage: cookieStorage,
   }),

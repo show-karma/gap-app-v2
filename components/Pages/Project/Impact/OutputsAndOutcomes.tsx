@@ -365,10 +365,11 @@ export const OutputsAndOutcomes = () => {
                   <div className="flex flex-1">
                     <div className="w-full">
                       <div className="flex flex-col">
-                        {((!autosyncedIndicators.find(
-                          (i) => i.name === item.name
-                        ) || item.hasData) ||
-                          form?.isEditing) && (
+                        {(() => {
+                          const isAutosynced = autosyncedIndicators.find(i => i.name === item.name);
+                          const displayTable = (isAutosynced && item.datapoints.length < 5) || (!isAutosynced && item.hasData) || (!isAutosynced && form?.isEditing);
+                          return displayTable;
+                        })() && (
                             <div className="overflow-y-auto overflow-x-auto rounded">
                               <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700 rounded border border-gray-200 dark:border-zinc-700">
                                 <thead className="">
@@ -392,7 +393,7 @@ export const OutputsAndOutcomes = () => {
                                   {item.datapoints.map((datapoint, index) => (
                                     <tr key={index}>
                                       <td className="px-4 py-2">
-                                        {form?.isEditing && isAuthorized ? (
+                                        {(!autosyncedIndicators.find(i => i.name === item.name) && form?.isEditing) || isAuthorized ? (
                                           <div className="flex flex-col gap-1">
                                             <div className="flex items-center gap-2">
                                               <input
@@ -416,14 +417,14 @@ export const OutputsAndOutcomes = () => {
                                                       form?.datapoints?.[index]
                                                         ?.value
                                                     ),
-                                                    form.unitOfMeasure
+                                                    form?.unitOfMeasure || "int"
                                                   )
                                                     ? "border-2 border-red-500"
                                                     : " border-gray-300"
                                                 )}
                                               />
                                               <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-zinc-700 text-gray-600 dark:text-zinc-300">
-                                                {form.unitOfMeasure}
+                                                {form?.unitOfMeasure || ""}
                                               </span>
                                             </div>
                                             {form?.datapoints?.[index]?.value &&
@@ -431,10 +432,10 @@ export const OutputsAndOutcomes = () => {
                                                 Number(
                                                   form?.datapoints?.[index]?.value
                                                 ),
-                                                form.unitOfMeasure
+                                                form?.unitOfMeasure || "int"
                                               ) ? (
                                               <span className="text-xs text-red-500">
-                                                {form.unitOfMeasure === "int"
+                                                {form?.unitOfMeasure === "int"
                                                   ? "Please enter an integer number"
                                                   : "Please enter a valid number"}
                                               </span>
