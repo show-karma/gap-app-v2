@@ -181,7 +181,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   const [validAddress, setValidAddress] = useState(true);
 
   const { gap } = useGap();
-  const { address } = useAccount();
+  const { address, chain } = useAccount();
   const router = useRouter();
   function closeModal() {
     setIsOpen(false);
@@ -190,7 +190,6 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
     setIsOpen(true);
   }
   const signer = useSigner();
-  const { chain } = useAccount();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
