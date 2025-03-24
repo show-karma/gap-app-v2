@@ -252,6 +252,10 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     control,
     name: "deliverables",
   });
+  const [selectedToCreate, setSelectedToCreate] = useState<number | undefined>(
+    undefined
+  );
+
   const router = useRouter();
 
   // Custom handlers for deliverables
@@ -385,7 +389,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                     new Date().toISOString(),
                 },
               ],
-              () => { }
+              () => {}
             )
           )
         );
@@ -498,20 +502,35 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     // setSelectedOutputs(newOutputs);
 
     const currentOutputs = watch("outputs") || [];
-    setValue(
-      "outputs",
-      [
-        ...currentOutputs,
-        {
-          outputId: newIndicator.id,
-          value: 0,
-          proof: "",
-        },
-      ],
-      {
+    if (selectedToCreate !== undefined) {
+      // Update the existing output at the selected index
+      const newOutputs = [...currentOutputs];
+      newOutputs[selectedToCreate] = {
+        ...newOutputs[selectedToCreate],
+        outputId: newIndicator.id,
+        value: newOutputs[selectedToCreate]?.value || 0,
+        proof: newOutputs[selectedToCreate]?.proof || "",
+      };
+      setValue("outputs", newOutputs, {
         shouldValidate: true,
-      }
-    );
+      });
+    } else {
+      // Add a new output if no index was selected
+      setValue(
+        "outputs",
+        [
+          ...currentOutputs,
+          {
+            outputId: newIndicator.id,
+            value: 0,
+            proof: "",
+          },
+        ],
+        {
+          shouldValidate: true,
+        }
+      );
+    }
 
     setIsOutputDialogOpen(false);
   };
@@ -971,9 +990,9 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                         selected={
                           output.outputId
                             ? [
-                              outputs.find((o) => o.id === output.outputId)
-                                ?.name || "",
-                            ]
+                                outputs.find((o) => o.id === output.outputId)
+                                  ?.name || "",
+                              ]
                             : []
                         }
                         list={outputs.map((indicator) => ({
@@ -989,6 +1008,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                             onClick={(e) => {
                               e.stopPropagation();
                               setIsOutputDialogOpen(true);
+                              setSelectedToCreate(index);
                             }}
                             className="text-sm w-full bg-zinc-700 text-white"
                           >
@@ -996,15 +1016,18 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                           </Button>
                         }
                       />
-                      {selectedGrantIds.length > 0 && (
-                        <OutputDialog
-                          open={isOutputDialogOpen}
-                          onOpenChange={setIsOutputDialogOpen}
-                          selectedPrograms={selectedPrograms}
-                          onSuccess={handleOutputSuccess}
-                          onError={handleOutputError}
-                        />
-                      )}
+                      <OutputDialog
+                        open={isOutputDialogOpen}
+                        onOpenChange={(open) => {
+                          setIsOutputDialogOpen(open);
+                          if (!open) {
+                            setSelectedToCreate(undefined);
+                          }
+                        }}
+                        selectedPrograms={selectedPrograms}
+                        onSuccess={handleOutputSuccess}
+                        onError={handleOutputError}
+                      />
                       <EmptyDiv />
                     </td>
                     <td className="px-4 py-2">
@@ -1035,11 +1058,12 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                             });
                           }
                         }}
-                        placeholder={`Enter ${outputs.find((o) => o.id === output.outputId)
+                        placeholder={`Enter ${
+                          outputs.find((o) => o.id === output.outputId)
                             ?.unitOfMeasure === "float"
                             ? "decimal"
                             : "whole"
-                          } number`}
+                        } number`}
                         disabled={
                           !!autosyncedIndicators.find(
                             (indicator) =>
@@ -1062,19 +1086,19 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                         )}
                       />
                       {output.outputId &&
-                        isInvalidValue(
-                          output.value,
-                          outputs.find((o) => o.id === output.outputId)
-                            ?.unitOfMeasure || "int"
-                        ) ? (
+                      isInvalidValue(
+                        output.value,
+                        outputs.find((o) => o.id === output.outputId)
+                          ?.unitOfMeasure || "int"
+                      ) ? (
                         <p className="text-xs text-red-500 mt-1">
                           {typeof output.value === "string" &&
-                            output.value === ""
+                          output.value === ""
                             ? "This field is required"
                             : outputs.find((o) => o.id === output.outputId)
-                              ?.unitOfMeasure === "int"
-                              ? "Please enter a whole number"
-                              : "Please enter a valid decimal number"}
+                                ?.unitOfMeasure === "int"
+                            ? "Please enter a whole number"
+                            : "Please enter a valid decimal number"}
                         </p>
                       ) : (
                         <EmptyDiv />
