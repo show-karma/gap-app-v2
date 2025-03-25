@@ -14,7 +14,7 @@ import { config } from "@/utilities/wagmi/config";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IProjectUpdate, ProjectUpdate } from "@show-karma/karma-gap-sdk";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { FC } from "react";
 import { useState, useEffect } from "react";
 import type { SubmitHandler } from "react-hook-form";
@@ -63,33 +63,6 @@ interface OutputData {
   proof: string;
 }
 
-interface Output {
-  title: string;
-  id: string;
-  data: OutputData[];
-}
-
-interface Deliverable {
-  name: string;
-  proof: string;
-  description: string;
-}
-
-// Add this interface to extend IProjectUpdate
-interface ExtendedProjectUpdate extends IProjectUpdate {
-  outputs: {
-    outputId: string;
-    value: number;
-    proof?: string;
-  }[];
-}
-
-interface OutputValue {
-  outputId: string;
-  value: number | string;
-  proof?: string;
-}
-
 const updateSchema = z.object({
   title: z
     .string()
@@ -104,6 +77,8 @@ const updateSchema = z.object({
       outputId: z.string().min(1, "Output is required"),
       value: z.union([z.number(), z.string()]),
       proof: z.string().optional(),
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
     })
   ),
   deliverables: z.array(
@@ -231,17 +206,30 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const { switchChainAsync } = useSwitchChain();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const { register, handleSubmit, watch, control, setValue, formState } =
-    useForm<UpdateType>({
-      resolver: zodResolver(updateSchema),
-      reValidateMode: "onChange",
-      mode: "onChange",
-      defaultValues: {
-        deliverables: [],
-        outputs: [],
-        grants: [],
-      },
-    });
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("editId");
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    control,
+    setValue,
+    formState,
+    reset,
+    setError,
+  } = useForm<UpdateType>({
+    resolver: zodResolver(updateSchema),
+    reValidateMode: "onChange",
+    mode: "onChange",
+    defaultValues: {
+      deliverables: [],
+      outputs: [],
+      grants: [],
+    },
+  });
   const { errors, isSubmitting, isValid } = formState;
 
   const [isLoading, setIsLoading] = useState(false);
@@ -255,8 +243,6 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const [selectedToCreate, setSelectedToCreate] = useState<number | undefined>(
     undefined
   );
-
-  const router = useRouter();
 
   // Custom handlers for deliverables
   const handleAddDeliverable = () => {
@@ -312,6 +298,86 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     fetchProjectData();
   }, [project?.uid, project?.grants?.length]);
 
+  const updateToEdit = project?.updates.find((update) => update.uid === editId);
+  // Effect to load edit data
+  useEffect(() => {
+    if (!editId || !project) return;
+
+    if (!updateToEdit) return;
+
+    setIsEditMode(true);
+
+    // Set form values from the update
+    setValue("title", updateToEdit.data.title || "");
+    setValue("text", updateToEdit.data.text || "");
+
+    if (updateToEdit.data.startDate) {
+      setValue("startDate", new Date(updateToEdit.data.startDate));
+    }
+
+    if (updateToEdit.data.endDate) {
+      setValue("endDate", new Date(updateToEdit.data.endDate));
+    }
+
+    // Set grants if they exist
+    if (updateToEdit.data.grants && updateToEdit.data.grants.length > 0) {
+      setValue("grants", updateToEdit.data.grants);
+    }
+
+    // Set deliverables if they exist
+    if (
+      updateToEdit.data.deliverables &&
+      updateToEdit.data.deliverables.length > 0
+    ) {
+      setValue(
+        "deliverables",
+        updateToEdit.data.deliverables.map((deliverable) => ({
+          name: deliverable.name || "",
+          proof: deliverable.proof || "",
+          description: deliverable.description || "",
+        }))
+      );
+    }
+
+    // Set outputs if they exist and outputs are loaded
+    if (
+      updateToEdit.data.indicators &&
+      updateToEdit.data.indicators.length > 0 &&
+      outputs.length > 0
+    ) {
+      // Access outputs safely
+      const assignOutputsValues = async () => {
+        const indicators = await getImpactAnswers(project?.uid as string);
+
+        setValue(
+          "outputs",
+          updateToEdit.data.indicators!.map((indicator) => {
+            const matchingOutput = indicators.find(
+              (out: any) => out.id === indicator.indicatorId
+            );
+            const orderedDatapoints = matchingOutput?.datapoints.sort(
+              (a: any, b: any) =>
+                new Date(a.endDate).getTime() - new Date(b.endDate).getTime()
+            );
+            const firstDatapoint = orderedDatapoints?.[0];
+            return {
+              outputId: indicator.indicatorId,
+              value: firstDatapoint?.value || 0,
+              proof: firstDatapoint?.proof || "",
+              startDate: firstDatapoint?.startDate
+                ? new Date(firstDatapoint.startDate).toISOString()
+                : undefined,
+              endDate: firstDatapoint?.endDate
+                ? new Date(firstDatapoint.endDate).toISOString()
+                : undefined,
+            };
+          })
+        );
+      };
+      assignOutputsValues();
+    }
+  }, [editId, project, setValue, outputs.length]);
+
   const { changeStepperStep, setIsStepper } = useStepper();
 
   const { gap } = useGap();
@@ -353,6 +419,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         throw new Error("ProjectUpdate schema not found");
       }
 
+      // Filter out autosynced indicators and prepare impact data for submission
       const outputsData = data.outputs
         .filter(
           (output) =>
@@ -366,11 +433,12 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         .map((output) => ({
           value: output.value,
           proof: output.proof,
-          startDate: data.startDate,
-          endDate: data.endDate,
+          startDate: output.startDate || data.startDate?.toISOString(),
+          endDate: output.endDate || data.endDate?.toISOString(),
           id: output.outputId,
         }));
 
+      // Update impact data through the API
       if (outputsData.length > 0) {
         await Promise.all(
           outputsData.map((indicator) =>
@@ -381,12 +449,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                 {
                   value: indicator.value,
                   proof: indicator.proof || "",
-                  startDate:
-                    indicator.startDate?.toISOString() ||
-                    new Date().toISOString(),
-                  endDate:
-                    indicator.endDate?.toISOString() ||
-                    new Date().toISOString(),
+                  startDate: indicator.startDate || new Date().toISOString(),
+                  endDate: indicator.endDate || new Date().toISOString(),
                 },
               ],
               () => {}
@@ -395,7 +459,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         );
       }
 
-      const projectUpdate = new ProjectUpdate({
+      // Create the base project update object
+      const projectUpdateData = {
         data: {
           title: data.title,
           text: data.text,
@@ -416,7 +481,14 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         recipient,
         refUID: projectUid,
         schema,
-      });
+      };
+
+      // If in edit mode, add the existing UID
+      if (isEditMode && editId) {
+        Object.assign(projectUpdateData, { uid: editId });
+      }
+
+      const projectUpdate = new ProjectUpdate(projectUpdateData);
 
       await projectUpdate
         .attest(walletSigner as any, changeStepperStep)
@@ -559,26 +631,52 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
   const selectedOutputs = [...(watch("outputs") || [])];
 
+  const activityWithSameTitle = Boolean(
+    project?.updates.find((u) => u.data.title === watch("title"))
+  );
+
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
       className="flex w-full flex-col gap-4"
     >
-      <div className="flex w-full flex-col">
-        <div className="flex items-center gap-2">
-          <label htmlFor="update-title" className={labelStyle}>
-            Activity Name *
-          </label>
-          <InfoTooltip content="Provide a name or title for the activity" />
+      {!isEditMode ? (
+        <div className="flex w-full flex-col">
+          <div className="flex items-center gap-2">
+            <label htmlFor="update-title" className={labelStyle}>
+              Activity Name *
+            </label>
+            <InfoTooltip content="Provide a name or title for the activity" />
+          </div>
+          <input
+            id="update-title"
+            className={cn(
+              inputStyle,
+              isEditMode ? "bg-gray-100 dark:bg-zinc-700" : ""
+            )}
+            placeholder="Ex: Launched a feature to onboard users"
+            {...register("title")}
+            disabled={isEditMode}
+            onChange={(e) => {
+              if (
+                !!project?.updates.find((u) => u.data.title === e.target.value)
+              ) {
+                setError("title", {
+                  message: "You already have an activity with this title.",
+                  type: "required",
+                });
+              } else {
+                setValue("title", e.target.value, {
+                  shouldValidate: true,
+                  shouldDirty: true,
+                  shouldTouch: true,
+                });
+              }
+            }}
+          />
+          <p className="text-base text-red-400">{errors.title?.message}</p>
         </div>
-        <input
-          id="update-title"
-          className={inputStyle}
-          placeholder="Ex: Launched a feature to onboard users"
-          {...register("title")}
-        />
-        <p className="text-base text-red-400">{errors.title?.message}</p>
-      </div>
+      ) : null}
 
       <div className="flex w-full gap-2 flex-col">
         <div className="flex items-center gap-2">
@@ -867,9 +965,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                     </td>
                     <td className="px-4 py-2">
                       <button
-                        onClick={() => {
-                          handleRemoveDeliverable(index);
-                        }}
+                        onClick={() => handleRemoveDeliverable(index)}
                         type="button"
                         className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20"
                       >
@@ -1157,10 +1253,10 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         <Button
           type="submit"
           className="flex w-max flex-row bg-slate-600 text-slate-200 hover:bg-slate-800 hover:text-slate-200"
-          disabled={isSubmitting || !isValid}
+          disabled={isSubmitting || !isValid || activityWithSameTitle}
           isLoading={isSubmitting || isLoading}
         >
-          Post activity
+          {isEditMode ? "Update activity" : "Post activity"}
         </Button>
       </div>
     </form>

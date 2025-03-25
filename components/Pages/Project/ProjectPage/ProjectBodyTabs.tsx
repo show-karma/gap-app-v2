@@ -17,8 +17,11 @@ import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
   MapPinIcon,
+  PencilIcon,
+  PencilSquareIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
+import { Bars4Icon } from "@heroicons/react/24/solid";
 import {
   IGrantUpdate,
   IMilestoneResponse,
@@ -29,6 +32,8 @@ import { useQueryState } from "nuqs";
 import { ButtonHTMLAttributes, FC, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
+import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 
 import { ProjectUpdateForm } from "@/components/Forms/ProjectUpdate";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -40,8 +45,6 @@ import { StageIcon } from "@/components/Icons/StageIcon";
 import { TargetIcon } from "@/components/Icons/Target";
 import { PAGES } from "@/utilities/pages";
 import { retryUntilConditionMet } from "@/utilities/retries";
-import { Bars4Icon } from "@heroicons/react/24/solid";
-import Link from "next/link";
 import { ProjectActivityBlock } from "./ProjectActivityBlock";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { ProjectBlocks } from "./ProjectBlocks";
@@ -234,6 +237,7 @@ const UpdateBlock = ({
   const { project, isProjectOwner } = useProjectStore();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const isOnChainAuthorized = isProjectOwner || isOwner;
+  const router = useRouter();
 
   const deleteProjectUpdate = async () => {
     let gapClient = gap;
@@ -384,22 +388,40 @@ const UpdateBlock = ({
             )
           ) : null}
           {isAuthorized && update.type === "ProjectUpdate" ? (
-            <DeleteDialog
-              deleteFunction={deleteProjectUpdate}
-              isLoading={isDeletingUpdate}
-              title={
-                <p className="font-normal">
-                  Are you sure you want to delete <b>{update.data.title}</b>{" "}
-                  update?
-                </p>
-              }
-              buttonElement={{
-                text: "",
-                icon: <TrashIcon className="text-red-500 w-5 h-5" />,
-                styleClass:
-                  "bg-transparent p-0 w-max h-max text-red-500 hover:bg-transparent",
-              }}
-            />
+            <>
+              <button
+                onClick={() => {
+                  const url = new URL(
+                    PAGES.PROJECT.UPDATES(
+                      project?.details?.data.slug || project?.uid || ""
+                    ),
+                    window.location.origin
+                  );
+                  url.searchParams.set("tab", "post-update");
+                  url.searchParams.set("editId", update.uid);
+                  router.push(url.toString());
+                }}
+                className="bg-transparent p-0 w-max h-max text-black dark:text-white hover:bg-transparent hover:opacity-75"
+              >
+                <PencilSquareIcon className="w-5 h-5" />
+              </button>
+              <DeleteDialog
+                deleteFunction={deleteProjectUpdate}
+                isLoading={isDeletingUpdate}
+                title={
+                  <p className="font-normal">
+                    Are you sure you want to delete <b>{update.data.title}</b>{" "}
+                    update?
+                  </p>
+                }
+                buttonElement={{
+                  text: "",
+                  icon: <TrashIcon className="text-red-500 w-5 h-5" />,
+                  styleClass:
+                    "bg-transparent p-0 w-max h-max text-red-500 hover:bg-transparent",
+                }}
+              />
+            </>
           ) : null}
         </div>
       </div>
@@ -478,22 +500,38 @@ const UpdateBlock = ({
 
 const ProjectUpdateFormBlock = () => {
   const [, changeTab] = useQueryState("tab");
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("editId");
+  const project = useProjectStore((state) => state.project);
+  const updateBeingEdited = editId
+    ? project?.updates.find((update) => update.uid === editId)
+    : null;
+  const router = useRouter();
+
+  const handleClose = () => {
+    // Navigate to the updates tab without the editId parameter
+    const url = new URL(window.location.href);
+    url.searchParams.delete("editId");
+    url.searchParams.set("tab", "updates");
+    router.push(url.toString());
+  };
+
   return (
     <div className="flex w-full flex-col gap-6 rounded-md bg-gray-200 dark:bg-zinc-900  px-4 py-6 max-lg:max-w-full">
       <div className="flex w-full flex-row justify-between">
         <h4 className="text-2xl font-bold text-black dark:text-zinc-100">
-          Post a project activity
+          {updateBeingEdited
+            ? `Editing ${updateBeingEdited.data.title}`
+            : "Post a project activity"}
         </h4>
         <button
           className="bg-transparent p-4 hover:bg-transparent hover:opacity-75"
-          onClick={() => {
-            changeTab("updates");
-          }}
+          onClick={handleClose}
         >
           <img src="/icons/close.svg" alt="Close" className="h-5 w-5" />
         </button>
       </div>
-      <ProjectUpdateForm />
+      <ProjectUpdateForm afterSubmit={handleClose} />
     </div>
   );
 };

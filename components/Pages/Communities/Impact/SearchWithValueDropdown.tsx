@@ -28,6 +28,7 @@ interface SearchWithValueDropdownProps {
   id?: string;
   isMultiple?: boolean;
   customAddButton?: React.ReactNode;
+  disabled?: boolean;
 }
 
 export const SearchWithValueDropdown: FC<SearchWithValueDropdownProps> = ({
@@ -42,6 +43,7 @@ export const SearchWithValueDropdown: FC<SearchWithValueDropdownProps> = ({
   id,
   isMultiple = true,
   customAddButton,
+  disabled = false,
 }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -85,9 +87,11 @@ export const SearchWithValueDropdown: FC<SearchWithValueDropdownProps> = ({
       <Popover.Trigger
         className={cn(
           "min-w-40 w-full max-w-[320px] max-md:max-w-full justify-between flex flex-row cursor-default rounded-md bg-white dark:bg-zinc-800 dark:text-zinc-100 py-3 px-4 text-left text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm sm:leading-6",
+          disabled && "opacity-50 cursor-not-allowed",
           buttonClassname
         )}
         id={id}
+        disabled={disabled}
       >
         <div className="flex flex-row gap-4 w-full items-center justify-between">
           <p className="block w-max truncate">{renderSelected()}</p>
