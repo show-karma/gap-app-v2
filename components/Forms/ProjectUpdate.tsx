@@ -631,9 +631,9 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
   const selectedOutputs = [...(watch("outputs") || [])];
 
-  const activityWithSameTitle = Boolean(
-    project?.updates.find((u) => u.data.title === watch("title"))
-  );
+  const activityWithSameTitle =
+    Boolean(project?.updates.find((u) => u.data.title === watch("title"))) &&
+    !isEditMode;
 
   return (
     <form
