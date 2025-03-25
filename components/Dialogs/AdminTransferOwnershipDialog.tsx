@@ -1,26 +1,17 @@
 /* eslint-disable @next/next/no-img-element */
 import { useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { useAdminTransferOwnershipModalStore } from "@/store/modals/adminTransferOwnership";
 import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { getProjectById, isOwnershipTransfered } from "@/utilities/sdk";
+import { sanitizeInput } from "@/utilities/sanitize";
 import { Dialog, Transition } from "@headlessui/react";
 import { PlusIcon } from "@heroicons/react/24/solid";
-
 import { FC, Fragment, ReactNode, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { isAddress } from "viem";
-import { useAccount, useSwitchChain } from "wagmi";
 import { Button } from "../Utilities/Button";
-
-import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership";
-import { sanitizeInput } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { errorManager } from "../Utilities/errorManager";
 
-type TransferOwnershipProps = {
+type AdminTransferOwnershipProps = {
   buttonElement?: {
     text: string;
     icon: ReactNode;
@@ -28,31 +19,26 @@ type TransferOwnershipProps = {
   } | null;
 };
 
-export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
+export const AdminTransferOwnershipDialog: FC<AdminTransferOwnershipProps> = ({
   buttonElement = {
     icon: <PlusIcon className="h-4 w-4 text-primary-600" />,
-    text: "Transfer Ownership",
+    text: "Request Transfer Ownership",
     styleClass:
       "flex items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100  hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900",
   },
 }) => {
   const {
-    isTransferOwnershipModalOpen: isOpen,
-    openTransferOwnershipModal: openModal,
-    closeTransferOwnershipModal: closeModal,
-  } = useTransferOwnershipModalStore();
+    isAdminTransferOwnershipModalOpen: isOpen,
+    openAdminTransferOwnershipModal: openModal,
+    closeAdminTransferOwnershipModal: closeModal,
+  } = useAdminTransferOwnershipModalStore();
   const [newOwner, setNewOwner] = useState<string>();
   const [isLoading, setIsLoading] = useState(false);
   const [validAddress, setValidAddress] = useState(true);
 
-  const signer = useSigner();
-  const { chain } = useAccount();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const setIsProjectOwner = useProjectStore((state) => state.setIsProjectOwner);
-  const { switchChainAsync } = useSwitchChain();
-  const { changeStepperStep, setIsStepper } = useStepper();
 
   const transfer = async () => {
     if (!project) return;
@@ -62,62 +48,26 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
     }
     try {
       setIsLoading(true);
-      if (!checkNetworkIsValid(chain?.id) || chain?.id !== project.chainID) {
-        await switchChainAsync?.({ chainId: project.chainID });
-      }
+      const sanitizedAddress = sanitizeInput(newOwner);
 
-      const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
+      const [_, error] = await fetchData(
+        `/attestations/transfer-ownership/${project.uid}/${project.chainID}/${sanitizedAddress}`,
+        "POST",
+        {}
       );
 
-      if (error || !walletClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (error) {
+        toast.error(error);
+        return;
       }
-      if (!walletClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
-      const fetchedProject = await getProjectById(project.uid);
-      if (!fetchedProject) return;
-      await fetchedProject
-        .transferOwnership(
-          walletSigner,
-          sanitizeInput(newOwner),
-          changeStepperStep
-        )
-        .then(async (res) => {
-          let retries = 1000;
-          changeStepperStep("indexing");
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, project.chainID),
-              "POST",
-              {}
-            );
-          }
-          while (retries > 0) {
-            const isTransfered = await isOwnershipTransfered(
-              walletSigner || signer,
-              fetchedProject,
-              newOwner
-            );
 
-            if (isTransfered) {
-              setIsProjectOwner(false);
-              retries = 0;
-              await refreshProject();
-              changeStepperStep("indexed");
-            }
-            retries -= 1;
-            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-            await new Promise((resolve) => setTimeout(resolve, 1500));
-          }
-          toast.success("Ownership transferred successfully");
-        });
+      await refreshProject();
+      toast.success("Transfer ownership request submitted successfully");
       closeModal();
     } catch (error: any) {
       toast.error("Something went wrong. Please try again later.");
       errorManager(
-        `Error transferring ownership from ${project.recipient} to ${newOwner}`,
+        `Error requesting ownership transfer from ${project.recipient} to ${newOwner}`,
         error,
         {
           project: project?.details?.data?.slug || project?.uid,
@@ -128,7 +78,6 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
       console.error(error);
     } finally {
       setIsLoading(false);
-      setIsStepper(false);
     }
   };
 
@@ -173,7 +122,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
+                <Dialog.Panel className="w-full max-w-xl transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle transition-all">
                   <Dialog.Title
                     as="h3"
                     className="text-xl font-medium leading-6 text-gray-900 dark:text-zinc-100"
@@ -183,15 +132,14 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
                   <div className="flex flex-col gap-2 mt-8">
                     <label htmlFor="newOwner">New Owner Address</label>
                     <input
-                      className="rounded border border-zinc-300  dark:bg-zinc-800 px-2 py-1 text-black dark:text-white"
+                      className="rounded border border-zinc-300 dark:bg-zinc-800 px-2 py-1 text-black dark:text-white"
                       type="text"
                       id="newOwner"
                       onChange={(e) => setNewOwner(e.target.value)}
                     />
                     <p className="text-red-500">
                       {!validAddress && newOwner?.length
-                        ? `Invalid address. Address should be a hexadecimal string with
-                exactly 42 characters.`
+                        ? `Invalid address. Address should be a hexadecimal string with exactly 42 characters.`
                         : null}
                     </p>
                   </div>
@@ -204,7 +152,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
                       Cancel
                     </Button>
                     <Button
-                      className="text-white text-lg bg-red-600 border-black  hover:bg-red-600 hover:text-white"
+                      className="text-white text-lg bg-red-600 border-black hover:bg-red-600 hover:text-white"
                       onClick={transfer}
                       disabled={isLoading || !validAddress || !newOwner}
                       isLoading={isLoading}

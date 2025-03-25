@@ -26,15 +26,18 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Fragment, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
 import { LinkContractAddressButton } from "./LinkContractAddressButton";
 import { LinkGithubRepoButton } from "./LinkGithubRepoButton";
 
-import { LinkOSOProfileButton } from "./LinkOSOProfileButton";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { AdminTransferOwnershipDialog } from "@/components/Dialogs/AdminTransferOwnershipDialog";
 import { useContactInfo } from "@/hooks/useContactInfo";
+import { useAdminTransferOwnershipModalStore } from "@/store/modals/adminTransferOwnership";
+import fetchData from "@/utilities/fetchData";
+import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { LinkOSOProfileButton } from "./LinkOSOProfileButton";
 
 const ProjectDialog = dynamic(
   () =>
@@ -69,6 +72,7 @@ const MergeProjectDialog = dynamic(() =>
 const buttonClassName = `group border-none ring-none font-normal bg-transparent dark:bg-transparent text-gray-900 dark:text-zinc-100 dark:hover:bg-brand-blue dark:hover:opacity-100 dark:hover:text-white hover:bg-brand-blue hover:opacity-100 hover:text-white flex w-full items-start justify-start rounded-md px-2 py-2 text-sm`;
 
 export const ProjectOptionsMenu = () => {
+  const [isStaff, setIsStaff] = useState<boolean>(false);
   const { project } = useProjectStore();
   const params = useParams();
   const projectId = params.projectId as string;
@@ -86,6 +90,8 @@ export const ProjectOptionsMenu = () => {
     useGrantGenieModalStore();
   const { isTransferOwnershipModalOpen, openTransferOwnershipModal } =
     useTransferOwnershipModalStore();
+  const { isAdminTransferOwnershipModalOpen, openAdminTransferOwnershipModal } =
+    useAdminTransferOwnershipModalStore();
   const { isProjectOwner } = useProjectStore();
   const { data: contactsInfo } = useContactInfo(projectId);
   const { isOwner: isContractOwner } = useOwnerStore();
@@ -132,6 +138,16 @@ export const ProjectOptionsMenu = () => {
     }
   };
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const [data] = await fetchData("/auth/staff/authorized");
+
+        if (data) setIsStaff(data.authorized);
+      } catch (err) {}
+    })();
+  }, []);
+
   return (
     <>
       {isProjectEditModalOpen ? (
@@ -144,152 +160,167 @@ export const ProjectOptionsMenu = () => {
       ) : null}
       {isMergeModalOpen ? <MergeProjectDialog buttonElement={null} /> : null}
       {isGrantGenieModalOpen ? <GrantsGenieDialog /> : null}
-      {isTransferOwnershipModalOpen ? (
+      {isTransferOwnershipModalOpen && (
         <TransferOwnershipDialog buttonElement={null} />
-      ) : null}
-      <Menu as="div" className={`relative inline-block text-left z-10`}>
-        <div>
-          <Menu.Button className="w-max bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-100 hover:dark:bg-zinc-800 text-black dark:text-white p-2 rounded-lg">
-            <EllipsisVerticalIcon className="h-5 w-5" aria-hidden="true" />
-          </Menu.Button>
-        </div>
-        <Transition
-          as={Fragment}
-          enter="transition ease-out duration-100"
-          enterFrom="transform opacity-0 scale-95"
-          enterTo="transform opacity-100 scale-100"
-          leave="transition ease-in duration-75"
-          leaveFrom="transform opacity-100 scale-100"
-          leaveTo="transform opacity-0 scale-95"
-        >
-          <Menu.Items
-            modal
-            className="z-[10000] absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white dark:bg-zinc-800 shadow-lg ring-1 ring-black/5 focus:outline-none"
+      )}
+      {isAdminTransferOwnershipModalOpen && <AdminTransferOwnershipDialog />}
+      {(isAuthorized || isStaff) && (
+        <Menu as="div" className={`relative inline-block text-left z-10`}>
+          <div>
+            <Menu.Button className="w-max bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-100 hover:dark:bg-zinc-800 text-black dark:text-white p-2 rounded-lg">
+              <EllipsisVerticalIcon className="h-5 w-5" aria-hidden="true" />
+            </Menu.Button>
+          </div>
+          <Transition
+            as={Fragment}
+            enter="transition ease-out duration-100"
+            enterFrom="transform opacity-0 scale-95"
+            enterTo="transform opacity-100 scale-100"
+            leave="transition ease-in duration-75"
+            leaveFrom="transform opacity-100 scale-100"
+            leaveTo="transform opacity-0 scale-95"
           >
-            <div className="flex flex-col gap-1 px-1 py-1">
-              <Menu.Item>
-                <button
-                  type="button"
-                  onClick={openProjectEditModal}
-                  className={buttonClassName}
-                >
-                  <PencilSquareIcon
-                    className={"mr-2 h-5 w-5"}
-                    aria-hidden="true"
-                  />
-                  Edit project
-                </button>
-              </Menu.Item>
-              {isAuthorized ? (
-                <Menu.Item>
-                  <button
-                    type="button"
-                    onClick={openMergeModal}
-                    className={buttonClassName}
-                  >
-                    <ArrowDownOnSquareIcon
-                      className={"mr-2 h-5 w-5"}
-                      aria-hidden="true"
-                    />
-                    Merge
-                  </button>
-                </Menu.Item>
-              ) : null}
-              {isAuthorized ? (
-                <Menu.Item>
-                  <button
-                    type="button"
-                    onClick={openTransferOwnershipModal}
-                    className={buttonClassName}
-                  >
-                    <ArrowsRightLeftIcon
-                      className={"mr-2 h-5 w-5"}
-                      aria-hidden="true"
-                    />
-                    Transfer ownership
-                  </button>
-                </Menu.Item>
-              ) : null}
-              {isAuthorized ? (
-                <Menu.Item>
-                  <LinkContractAddressButton
-                    buttonClassName={buttonClassName}
-                    project={
-                      project as IProjectResponse & {
-                        external: Record<string, string[]>;
-                      }
-                    }
-                  />
-                </Menu.Item>
-              ) : null}
-              {isAuthorized ? (
-                <Menu.Item>
-                  <LinkGithubRepoButton
-                    buttonClassName={buttonClassName}
-                    project={
-                      project as IProjectResponse & {
-                        external: Record<string, string[]>;
-                      }
-                    }
-                  />
-                </Menu.Item>
-              ) : null}
-              {isAuthorized ? (
-                <Menu.Item>
-                  <LinkOSOProfileButton
-                    buttonClassName={buttonClassName}
-                    project={
-                      project as IProjectResponse & {
-                        external: Record<string, string[]>;
-                      }
-                    }
-                  />
-                </Menu.Item>
-              ) : null}
-              <Menu.Item>
-                <Link
-                  href={PAGES.PROJECT.IMPACT.ADD_IMPACT(
-                    project?.details?.data?.slug || projectId
-                  )}
-                  className={buttonClassName}
-                >
-                  <PlusIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
-                  Add impact
-                </Link>
-              </Menu.Item>
-              <Menu.Item>
-                <button
-                  type="button"
-                  onClick={openGrantGenieModal}
-                  className={buttonClassName}
-                >
-                  <LightBulbIcon className="h-5 w-5 mr-2" />
-                  Grant genie
-                </button>
-              </Menu.Item>
-              {isAuthorized ? (
-                <Menu.Item>
-                  <DeleteDialog
-                    title="Are you sure you want to delete this project?"
-                    deleteFunction={deleteFn}
-                    isLoading={isDeleting}
-                    buttonElement={{
-                      icon: (
-                        <TrashIcon
+            <Menu.Items
+              modal
+              className="z-[10000] absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white dark:bg-zinc-800 shadow-lg ring-1 ring-black/5 focus:outline-none"
+            >
+              <div className="flex flex-col gap-1 px-1 py-1">
+                {isAuthorized && (
+                  <>
+                    <Menu.Item>
+                      <button
+                        type="button"
+                        onClick={openProjectEditModal}
+                        className={buttonClassName}
+                      >
+                        <PencilSquareIcon
                           className={"mr-2 h-5 w-5"}
                           aria-hidden="true"
                         />
-                      ),
-                      text: "Delete project",
-                      styleClass: buttonClassName,
-                    }}
-                  />
-                </Menu.Item>
-              ) : null}
-            </div>
-          </Menu.Items>
-        </Transition>
-      </Menu>
+                        Edit project
+                      </button>
+                    </Menu.Item>
+                    <Menu.Item>
+                      <button
+                        type="button"
+                        onClick={openMergeModal}
+                        className={buttonClassName}
+                      >
+                        <ArrowDownOnSquareIcon
+                          className={"mr-2 h-5 w-5"}
+                          aria-hidden="true"
+                        />
+                        Merge
+                      </button>
+                    </Menu.Item>
+                    {!isStaff && (
+                      <Menu.Item>
+                        <button
+                          type="button"
+                          onClick={openTransferOwnershipModal}
+                          className={buttonClassName}
+                        >
+                          <ArrowsRightLeftIcon
+                            className={"mr-2 h-5 w-5"}
+                            aria-hidden="true"
+                          />
+                          Transfer ownership
+                        </button>
+                      </Menu.Item>
+                    )}
+                    <Menu.Item>
+                      <LinkContractAddressButton
+                        buttonClassName={buttonClassName}
+                        project={
+                          project as IProjectResponse & {
+                            external: Record<string, string[]>;
+                          }
+                        }
+                      />
+                    </Menu.Item>
+                    <Menu.Item>
+                      <LinkGithubRepoButton
+                        buttonClassName={buttonClassName}
+                        project={
+                          project as IProjectResponse & {
+                            external: Record<string, string[]>;
+                          }
+                        }
+                      />
+                    </Menu.Item>
+                    <Menu.Item>
+                      <LinkOSOProfileButton
+                        buttonClassName={buttonClassName}
+                        project={
+                          project as IProjectResponse & {
+                            external: Record<string, string[]>;
+                          }
+                        }
+                      />
+                    </Menu.Item>
+                    <Menu.Item>
+                      <Link
+                        href={PAGES.PROJECT.IMPACT.ADD_IMPACT(
+                          project?.details?.data?.slug || projectId
+                        )}
+                        className={buttonClassName}
+                      >
+                        <PlusIcon
+                          className={"mr-2 h-5 w-5"}
+                          aria-hidden="true"
+                        />
+                        Add impact
+                      </Link>
+                    </Menu.Item>
+                    <Menu.Item>
+                      <button
+                        type="button"
+                        onClick={openGrantGenieModal}
+                        className={buttonClassName}
+                      >
+                        <LightBulbIcon className="h-5 w-5 mr-2" />
+                        Grant genie
+                      </button>
+                    </Menu.Item>
+                    <Menu.Item>
+                      <DeleteDialog
+                        title="Are you sure you want to delete this project?"
+                        deleteFunction={deleteFn}
+                        isLoading={isDeleting}
+                        buttonElement={{
+                          icon: (
+                            <TrashIcon
+                              className={"mr-2 h-5 w-5"}
+                              aria-hidden="true"
+                            />
+                          ),
+                          text: "Delete project",
+                          styleClass: buttonClassName,
+                        }}
+                      />
+                    </Menu.Item>
+                  </>
+                )}
+                {isStaff && (
+                  <Menu.Item>
+                    <button
+                      type="button"
+                      onClick={openAdminTransferOwnershipModal}
+                      className={buttonClassName}
+                    >
+                      <ArrowsRightLeftIcon
+                        className={"mr-2 h-5 w-5"}
+                        aria-hidden="true"
+                      />
+                      Transfer ownership
+                    </button>
+                  </Menu.Item>
+                )}
+              </div>
+            </Menu.Items>
+          </Transition>
+        </Menu>
+      )}
     </>
   );
 };
