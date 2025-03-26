@@ -12,6 +12,7 @@ import { retryUntilConditionMet } from "@/utilities/retries";
 import { getProjectById } from "@/utilities/sdk";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { Dialog, Transition } from "@headlessui/react";
+import { ShieldCheckIcon } from "@heroicons/react/24/outline";
 import { ArrowUpIcon } from "@heroicons/react/24/solid";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { FC, Fragment, useState } from "react";
@@ -136,7 +137,7 @@ export const PromoteMemberDialog: FC<PromoteMemberDialogProps> = ({
                   "flex items-center gap-x-1 rounded-md bg-transparent dark:bg-transparent p-2 text-base font-semibold text-white dark:text-zinc-100  hover:bg-transparent dark:hover:bg-transparent hover:opacity-80 hover:bg-zinc-200 dark:hover:bg-zinc-700 text-center justify-center"
                 }
               >
-                <ArrowUpIcon className="w-4 h-4 text-black dark:text-zinc-100" />
+                <ShieldCheckIcon className="w-4 h-4 text-black dark:text-zinc-100" />
               </Button>
             </div>
           </Tooltip.Trigger>

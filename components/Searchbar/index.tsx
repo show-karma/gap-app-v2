@@ -17,14 +17,13 @@ export const Searchbar: FC = () => {
   });
   const [isSearchListOpen, setIsSearchListOpen] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isSearchListInteracting, setIsSearchListInteracting] = useState<boolean>(false);
+  const [isSearchListInteracting, setIsSearchListInteracting] =
+    useState<boolean>(false);
 
   const closeSearchList = () => {
-    if (!isSearchListInteracting) {
-      setTimeout(() => {
-        setIsSearchListOpen(false);
-      }, 300);
-    }
+    setTimeout(() => {
+      setIsSearchListOpen(false);
+    }, 300);
   };
 
   const debouncedSearch = debounce(async (value: string) => {
