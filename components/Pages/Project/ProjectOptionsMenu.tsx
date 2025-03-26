@@ -26,7 +26,7 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
 import { LinkContractAddressButton } from "./LinkContractAddressButton";
@@ -34,8 +34,8 @@ import { LinkGithubRepoButton } from "./LinkGithubRepoButton";
 
 import { AdminTransferOwnershipDialog } from "@/components/Dialogs/AdminTransferOwnershipDialog";
 import { useContactInfo } from "@/hooks/useContactInfo";
+import { useStaff } from "@/hooks/useStaff";
 import { useAdminTransferOwnershipModalStore } from "@/store/modals/adminTransferOwnership";
-import fetchData from "@/utilities/fetchData";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { LinkOSOProfileButton } from "./LinkOSOProfileButton";
 
@@ -72,7 +72,6 @@ const MergeProjectDialog = dynamic(() =>
 const buttonClassName = `group border-none ring-none font-normal bg-transparent dark:bg-transparent text-gray-900 dark:text-zinc-100 dark:hover:bg-brand-blue dark:hover:opacity-100 dark:hover:text-white hover:bg-brand-blue hover:opacity-100 hover:text-white flex w-full items-start justify-start rounded-md px-2 py-2 text-sm`;
 
 export const ProjectOptionsMenu = () => {
-  const [isStaff, setIsStaff] = useState<boolean>(false);
   const { project } = useProjectStore();
   const params = useParams();
   const projectId = params.projectId as string;
@@ -96,6 +95,7 @@ export const ProjectOptionsMenu = () => {
   const { data: contactsInfo } = useContactInfo(projectId);
   const { isOwner: isContractOwner } = useOwnerStore();
   const isAuthorized = isProjectOwner || isContractOwner;
+  const { isStaff } = useStaff();
 
   const deleteFn = async () => {
     if (!address || !project) return;
@@ -137,16 +137,6 @@ export const ProjectOptionsMenu = () => {
       setIsStepper(false);
     }
   };
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const [data] = await fetchData("/auth/staff/authorized");
-
-        if (data) setIsStaff(data.authorized);
-      } catch (err) {}
-    })();
-  }, []);
 
   return (
     <>
