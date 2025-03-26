@@ -280,7 +280,6 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     },
   });
   const { errors, isSubmitting, isValid } = formState;
-
   const [isLoading, setIsLoading] = useState(false);
   const [grants, setGrants] = useState<GrantOption[]>([]);
   const [outputs, setOutputs] = useState<ImpactIndicatorWithData[]>([]);
