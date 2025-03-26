@@ -75,7 +75,7 @@ const updateSchema = z.object({
   outputs: z.array(
     z.object({
       outputId: z.string().min(1, "Output is required"),
-      value: z.union([z.number(), z.string()]),
+      value: z.union([z.number().min(0), z.string()]),
       proof: z.string().optional(),
       startDate: z.string().optional(),
       endDate: z.string().optional(),
@@ -273,6 +273,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     resolver: zodResolver(updateSchema),
     reValidateMode: "onChange",
     mode: "onChange",
+    criteriaMode: "all",
     defaultValues: {
       deliverables: [],
       outputs: [],
@@ -1023,14 +1024,21 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
             <Button
               type="button"
               onClick={() => {
-                setValue("outputs", [
-                  ...selectedOutputs,
+                setValue(
+                  "outputs",
+                  [
+                    ...selectedOutputs,
+                    {
+                      outputId: "",
+                      value: 0,
+                      proof: "",
+                    },
+                  ],
                   {
-                    outputId: "",
-                    value: 0,
-                    proof: "",
-                  },
-                ]);
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  }
+                );
               }}
               className="text-sm bg-zinc-700 text-white px-3 py-1.5"
             >
@@ -1047,14 +1055,21 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
             <Button
               type="button"
               onClick={() => {
-                setValue("outputs", [
-                  ...selectedOutputs,
+                setValue(
+                  "outputs",
+                  [
+                    ...selectedOutputs,
+                    {
+                      outputId: "",
+                      value: 0,
+                      proof: "",
+                    },
+                  ],
                   {
-                    outputId: "",
-                    value: 0,
-                    proof: "",
-                  },
-                ]);
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  }
+                );
               }}
               className="text-sm bg-zinc-700 text-white px-3 py-1.5"
             >

@@ -378,8 +378,15 @@ const UpdateBlock = ({
           {update.type === "ProjectUpdate" ? (
             (update as any).data?.startDate || (update as any).data?.endDate ? (
               <p className="text-sm font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
-                {formatDate((update as any).data?.startDate)} -{" "}
-                {formatDate((update as any).data?.endDate)}
+                {`${
+                  update.data?.startDate
+                    ? formatDate(update.data?.startDate)
+                    : ""
+                } ${
+                  update.data?.startDate && update.data?.endDate ? "-" : ""
+                } ${
+                  update.data?.endDate ? formatDate(update.data?.endDate) : ""
+                }`}
               </p>
             ) : (
               <p className="text-sm font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
