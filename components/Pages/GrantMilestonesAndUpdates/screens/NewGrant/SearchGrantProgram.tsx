@@ -17,7 +17,7 @@ interface SearchGrantProgramProps {
     }
   ) => void;
   watch: (field: string) => any;
-  searchForProgram?: string;
+  searchForProgram?: string | string[];
   canAdd?: boolean;
 }
 
@@ -46,11 +46,15 @@ export function SearchGrantProgram({
         console.log(error);
       }
       if (searchForProgram) {
-        const filteredPrograms = result.filter((program: GrantProgram) =>
-          program.metadata?.title
-            ?.toLowerCase()
-            .includes(searchForProgram.toLowerCase())
-        );
+        const filteredPrograms = result.filter((program: GrantProgram) => {
+          const title = program.metadata?.title?.toLowerCase() || "";
+          if (Array.isArray(searchForProgram)) {
+            return searchForProgram.some(term =>
+              title.includes(term.toLowerCase())
+            );
+          }
+          return title.includes(searchForProgram.toLowerCase());
+        });
         setAllPrograms(filteredPrograms);
       } else {
         const sortedAlphabetically = result.sort(
