@@ -668,8 +668,6 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 
   const cardColor = useMemo(() => pickColor(index), [pickColor, index]);
 
-  console.log(project.projectDetails.data);
-
   return (
     <ExternalLink
       href={PAGES.PROJECT.OVERVIEW(project?.projectUID)}
