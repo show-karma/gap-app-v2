@@ -5,9 +5,12 @@ import fetchData from "@/utilities/fetchData";
 import { sanitizeInput } from "@/utilities/sanitize";
 import { Dialog, Transition } from "@headlessui/react";
 import { PlusIcon } from "@heroicons/react/24/solid";
-import { FC, Fragment, ReactNode, useEffect, useState } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { FC, Fragment, ReactNode, useEffect } from "react";
+import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { isAddress } from "viem";
+import { z } from "zod";
 import { Button } from "../Utilities/Button";
 import { errorManager } from "../Utilities/errorManager";
 
@@ -18,6 +21,21 @@ type AdminTransferOwnershipProps = {
     styleClass: string;
   } | null;
 };
+
+const schema = z.object({
+  newOwner: z
+    .string()
+    .min(1, { message: "Address is required" })
+    .refine((value) => isAddress(value), {
+      message: "Invalid address. Address should be a valid Ethereum address.",
+    }),
+});
+
+type FormData = z.infer<typeof schema>;
+
+const inputStyle =
+  "rounded border border-zinc-300 dark:bg-zinc-800 px-2 py-1 text-black dark:text-white w-full";
+const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 
 export const AdminTransferOwnershipDialog: FC<AdminTransferOwnershipProps> = ({
   buttonElement = {
@@ -32,23 +50,31 @@ export const AdminTransferOwnershipDialog: FC<AdminTransferOwnershipProps> = ({
     openAdminTransferOwnershipModal: openModal,
     closeAdminTransferOwnershipModal: closeModal,
   } = useAdminTransferOwnershipModalStore();
-  const [newOwner, setNewOwner] = useState<string>();
-  const [isLoading, setIsLoading] = useState(false);
-  const [validAddress, setValidAddress] = useState(true);
 
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
 
-  const transfer = async () => {
-    if (!project) return;
-    if (!newOwner || !isAddress(newOwner)) {
-      toast.error("Please enter a valid address");
-      return;
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+  } = useForm<FormData>({
+    resolver: zodResolver(schema),
+    mode: "onChange",
+  });
+
+  useEffect(() => {
+    if (!isOpen) {
+      reset();
     }
+  }, [isOpen, reset]);
+
+  const onSubmit = async (data: FormData) => {
+    if (!project) return;
     try {
-      setIsLoading(true);
-      const sanitizedAddress = sanitizeInput(newOwner);
+      const sanitizedAddress = sanitizeInput(data.newOwner);
 
       const [_, error] = await fetchData(
         `/attestations/transfer-ownership/${project.uid}/${project.chainID}/${sanitizedAddress}`,
@@ -67,23 +93,17 @@ export const AdminTransferOwnershipDialog: FC<AdminTransferOwnershipProps> = ({
     } catch (error: any) {
       toast.error("Something went wrong. Please try again later.");
       errorManager(
-        `Error requesting ownership transfer from ${project.recipient} to ${newOwner}`,
+        `Error requesting ownership transfer from ${project.recipient} to ${data.newOwner}`,
         error,
         {
           project: project?.details?.data?.slug || project?.uid,
           oldOwner: project?.recipient,
-          newOwner,
+          newOwner: data.newOwner,
         }
       );
       console.error(error);
-    } finally {
-      setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (newOwner?.length) setValidAddress(isAddress(newOwner));
-  }, [newOwner]);
 
   return (
     <>
@@ -129,38 +149,42 @@ export const AdminTransferOwnershipDialog: FC<AdminTransferOwnershipProps> = ({
                   >
                     Transfer Project Ownership
                   </Dialog.Title>
-                  <div className="flex flex-col gap-2 mt-8">
-                    <label htmlFor="newOwner">New Owner Address</label>
-                    <input
-                      className="rounded border border-zinc-300 dark:bg-zinc-800 px-2 py-1 text-black dark:text-white"
-                      type="text"
-                      id="newOwner"
-                      onChange={(e) => setNewOwner(e.target.value)}
-                    />
-                    <p className="text-red-500">
-                      {!validAddress && newOwner?.length
-                        ? `Invalid address. Address should be a hexadecimal string with exactly 42 characters.`
-                        : null}
-                    </p>
-                  </div>
-                  <div className="flex flex-row gap-4 mt-10 justify-end">
-                    <Button
-                      className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
-                      onClick={closeModal}
-                      disabled={isLoading}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      className="text-white text-lg bg-red-600 border-black hover:bg-red-600 hover:text-white"
-                      onClick={transfer}
-                      disabled={isLoading || !validAddress || !newOwner}
-                      isLoading={isLoading}
-                      type="button"
-                    >
-                      Continue
-                    </Button>
-                  </div>
+                  <form onSubmit={handleSubmit(onSubmit)} className="mt-8">
+                    <div className="flex flex-col gap-2">
+                      <label htmlFor="newOwner" className={labelStyle}>
+                        New Owner Address
+                      </label>
+                      <input
+                        className={inputStyle}
+                        type="text"
+                        id="newOwner"
+                        {...register("newOwner")}
+                      />
+                      {errors.newOwner && (
+                        <p className="text-red-500 text-sm">
+                          {errors.newOwner.message}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex flex-row gap-4 mt-10 justify-end">
+                      <Button
+                        type="button"
+                        className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
+                        onClick={closeModal}
+                        disabled={isSubmitting}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        className="text-white text-lg bg-red-600 border-black hover:bg-red-600 hover:text-white"
+                        disabled={isSubmitting}
+                        isLoading={isSubmitting}
+                      >
+                        Continue
+                      </Button>
+                    </div>
+                  </form>
                 </Dialog.Panel>
               </Transition.Child>
             </div>
