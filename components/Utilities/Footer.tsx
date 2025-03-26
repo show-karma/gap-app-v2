@@ -1,10 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
-import Image from "next/image";
 import Link from "next/link";
-import { DiscordIcon, MirrorIcon, TelegramIcon, TwitterIcon } from "../Icons";
+import { DiscordIcon, TelegramIcon, TwitterIcon } from "../Icons";
 import { ExternalLink } from "./ExternalLink";
 import { SOCIALS } from "@/utilities/socials";
 import { karmaLinks } from "@/utilities/karma";
+import { ParagraphIcon } from "../Icons/Paragraph";
 
 const navigation = {
   social: [
@@ -24,9 +24,9 @@ const navigation = {
       icon: DiscordIcon,
     },
     {
-      name: "Mirror",
-      href: SOCIALS.MIRROR,
-      icon: MirrorIcon,
+      name: "Paragraph",
+      href: SOCIALS.PARAGRAPH,
+      icon: ParagraphIcon,
     },
   ],
 };

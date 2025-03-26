@@ -14,7 +14,7 @@ import { config } from "@/utilities/wagmi/config";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IProjectUpdate, ProjectUpdate } from "@show-karma/karma-gap-sdk";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { FC } from "react";
 import { useState, useEffect } from "react";
 import type { SubmitHandler } from "react-hook-form";
@@ -63,33 +63,6 @@ interface OutputData {
   proof: string;
 }
 
-interface Output {
-  title: string;
-  id: string;
-  data: OutputData[];
-}
-
-interface Deliverable {
-  name: string;
-  proof: string;
-  description: string;
-}
-
-// Add this interface to extend IProjectUpdate
-interface ExtendedProjectUpdate extends IProjectUpdate {
-  outputs: {
-    outputId: string;
-    value: number;
-    proof?: string;
-  }[];
-}
-
-interface OutputValue {
-  outputId: string;
-  value: number | string;
-  proof?: string;
-}
-
 const updateSchema = z.object({
   title: z
     .string()
@@ -102,8 +75,10 @@ const updateSchema = z.object({
   outputs: z.array(
     z.object({
       outputId: z.string().min(1, "Output is required"),
-      value: z.union([z.number(), z.string()]),
+      value: z.union([z.number().min(0), z.string()]),
       proof: z.string().optional(),
+      startDate: z.string().optional(),
+      endDate: z.string().optional(),
     })
   ),
   deliverables: z.array(
@@ -223,6 +198,55 @@ const isInvalidValue = (value: number | string, unitOfMeasure: string) => {
   return isNaN(numValue);
 };
 
+const getFormErrorMessage = (errors: any, formValues: any) => {
+  const errorMessages = [];
+
+  // Check for validation errors first
+  if (errors.title?.message) {
+    errorMessages.push(errors.title.message);
+  } else if (!formValues.title) {
+    errorMessages.push("Title is required");
+  }
+
+  if (errors.text?.message) {
+    errorMessages.push("Description is required");
+  } else if (!formValues.text) {
+    errorMessages.push("Description is required");
+  }
+
+  // Check outputs
+  if (errors.outputs?.message) {
+    errorMessages.push("Please check your metrics values");
+  } else if (formValues.outputs?.length > 0) {
+    const hasEmptyOutputs = formValues.outputs.some(
+      (output: any) =>
+        !output.outputId || output.value === "" || output.value === 0
+    );
+    if (hasEmptyOutputs) {
+      errorMessages.push("Please fill in all metric values");
+    }
+  }
+
+  // Check deliverables
+  if (errors.deliverables) {
+    const hasDeliverableErrors = errors.deliverables.some(
+      (d: any) => d?.name || d?.proof
+    );
+    if (hasDeliverableErrors) {
+      errorMessages.push("Please fill in all required deliverable fields");
+    }
+  } else if (formValues.deliverables?.length > 0) {
+    const hasEmptyDeliverables = formValues.deliverables.some(
+      (deliverable: any) => !deliverable.name || !deliverable.proof
+    );
+    if (hasEmptyDeliverables) {
+      errorMessages.push("Name and proof are required for all deliverables");
+    }
+  }
+
+  return errorMessages;
+};
+
 export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   afterSubmit,
 }): JSX.Element => {
@@ -231,19 +255,32 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const { switchChainAsync } = useSwitchChain();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const { register, handleSubmit, watch, control, setValue, formState } =
-    useForm<UpdateType>({
-      resolver: zodResolver(updateSchema),
-      reValidateMode: "onChange",
-      mode: "onChange",
-      defaultValues: {
-        deliverables: [],
-        outputs: [],
-        grants: [],
-      },
-    });
-  const { errors, isSubmitting, isValid } = formState;
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("editId");
+  const [isEditMode, setIsEditMode] = useState(false);
 
+  const {
+    register,
+    handleSubmit,
+    watch,
+    control,
+    setValue,
+    formState,
+    reset,
+    setError,
+  } = useForm<UpdateType>({
+    resolver: zodResolver(updateSchema),
+    reValidateMode: "onChange",
+    mode: "onChange",
+    criteriaMode: "all",
+    defaultValues: {
+      deliverables: [],
+      outputs: [],
+      grants: [],
+    },
+  });
+  const { errors, isSubmitting, isValid } = formState;
   const [isLoading, setIsLoading] = useState(false);
   const [grants, setGrants] = useState<GrantOption[]>([]);
   const [outputs, setOutputs] = useState<ImpactIndicatorWithData[]>([]);
@@ -255,8 +292,6 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const [selectedToCreate, setSelectedToCreate] = useState<number | undefined>(
     undefined
   );
-
-  const router = useRouter();
 
   // Custom handlers for deliverables
   const handleAddDeliverable = () => {
@@ -312,6 +347,88 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     fetchProjectData();
   }, [project?.uid, project?.grants?.length]);
 
+  const updateToEdit = project?.updates.find((update) => update.uid === editId);
+  // Effect to load edit data
+  useEffect(() => {
+    if (!editId || !project) return;
+
+    if (!updateToEdit) return;
+
+    setIsEditMode(true);
+
+    // Set form values from the update
+    setValue("title", updateToEdit.data.title || "");
+    setValue("text", updateToEdit.data.text || "");
+
+    if (updateToEdit.data.startDate) {
+      setValue("startDate", new Date(updateToEdit.data.startDate));
+    }
+
+    if (updateToEdit.data.endDate) {
+      setValue("endDate", new Date(updateToEdit.data.endDate));
+    }
+
+    // Set grants if they exist
+    if (updateToEdit.data.grants && updateToEdit.data.grants.length > 0) {
+      setValue("grants", updateToEdit.data.grants);
+    }
+
+    // Set deliverables if they exist
+    if (
+      updateToEdit.data.deliverables &&
+      updateToEdit.data.deliverables.length > 0
+    ) {
+      setValue(
+        "deliverables",
+        updateToEdit.data.deliverables.map((deliverable) => ({
+          name: deliverable.name || "",
+          proof: deliverable.proof || "",
+          description: deliverable.description || "",
+        }))
+      );
+    }
+
+    if (watch("outputs").length === 0) {
+      // Set outputs if they exist and outputs are loaded
+      if (
+        updateToEdit.data.indicators &&
+        updateToEdit.data.indicators.length > 0 &&
+        outputs.length > 0
+      ) {
+        // Access outputs safely
+        const assignOutputsValues = async () => {
+          const indicators = await getImpactAnswers(project?.uid as string);
+
+          setValue(
+            "outputs",
+            updateToEdit.data.indicators!.map((indicator) => {
+              const matchingOutput = indicators.find(
+                (out: any) => out.id === indicator.indicatorId
+              );
+              const orderedDatapoints = matchingOutput?.datapoints.sort(
+                (a: any, b: any) =>
+                  new Date(a.endDate).getTime() - new Date(b.endDate).getTime()
+              );
+              const firstDatapoint = orderedDatapoints?.[0];
+              return {
+                outputId: indicator.indicatorId,
+                value: firstDatapoint?.value || 0,
+                proof: firstDatapoint?.proof || "",
+                startDate: firstDatapoint?.startDate
+                  ? new Date(firstDatapoint.startDate).toISOString()
+                  : undefined,
+                endDate: firstDatapoint?.endDate
+                  ? new Date(firstDatapoint.endDate).toISOString()
+                  : undefined,
+              };
+            })
+          );
+        };
+        assignOutputsValues();
+      }
+    }
+  }, [editId, project, setValue, outputs.length]);
+
   const { changeStepperStep, setIsStepper } = useStepper();
 
   const { gap } = useGap();
@@ -353,6 +470,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         throw new Error("ProjectUpdate schema not found");
       }
 
+      // Filter out autosynced indicators and prepare impact data for submission
       const outputsData = data.outputs
         .filter(
           (output) =>
@@ -366,11 +484,12 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         .map((output) => ({
           value: output.value,
           proof: output.proof,
-          startDate: data.startDate,
-          endDate: data.endDate,
+          startDate: output.startDate || data.startDate?.toISOString(),
+          endDate: output.endDate || data.endDate?.toISOString(),
           id: output.outputId,
         }));
 
+      // Update impact data through the API
       if (outputsData.length > 0) {
         await Promise.all(
           outputsData.map((indicator) =>
@@ -381,12 +500,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                 {
                   value: indicator.value,
                   proof: indicator.proof || "",
-                  startDate:
-                    indicator.startDate?.toISOString() ||
-                    new Date().toISOString(),
-                  endDate:
-                    indicator.endDate?.toISOString() ||
-                    new Date().toISOString(),
+                  startDate: indicator.startDate || new Date().toISOString(),
+                  endDate: indicator.endDate || new Date().toISOString(),
                 },
               ],
               () => {}
@@ -395,7 +510,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         );
       }
 
-      const projectUpdate = new ProjectUpdate({
+      // Create the base project update object
+      const projectUpdateData = {
         data: {
           title: data.title,
           text: data.text,
@@ -416,7 +532,14 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         recipient,
         refUID: projectUid,
         schema,
-      });
+      };
+
+      // If in edit mode, add the existing UID
+      if (isEditMode && editId) {
+        Object.assign(projectUpdateData, { uid: editId });
+      }
+
+      const projectUpdate = new ProjectUpdate(projectUpdateData);
 
       await projectUpdate
         .attest(walletSigner as any, changeStepperStep)
@@ -494,12 +617,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   };
 
   const handleOutputSuccess = (newIndicator: ImpactIndicatorWithData) => {
+    // Update the existing list
     setOutputs((prev) => [...prev, newIndicator]);
-
-    // Automatically select the new output
-    // const newOutputs = [...selectedOutputs];
-    // newOutputs[selectedOutputs.length - 1].title = newIndicator.name;
-    // setSelectedOutputs(newOutputs);
 
     const currentOutputs = watch("outputs") || [];
     if (selectedToCreate !== undefined) {
@@ -559,26 +678,54 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
   const selectedOutputs = [...(watch("outputs") || [])];
 
+  const activityWithSameTitle =
+    Boolean(project?.updates.find((u) => u.data.title === watch("title"))) &&
+    !isEditMode;
+
+  const formValues = watch();
+
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
       className="flex w-full flex-col gap-4"
     >
-      <div className="flex w-full flex-col">
-        <div className="flex items-center gap-2">
-          <label htmlFor="update-title" className={labelStyle}>
-            Activity Name *
-          </label>
-          <InfoTooltip content="Provide a name or title for the activity" />
+      {!isEditMode ? (
+        <div className="flex w-full flex-col">
+          <div className="flex items-center gap-2">
+            <label htmlFor="update-title" className={labelStyle}>
+              Activity Name *
+            </label>
+            <InfoTooltip content="Provide a name or title for the activity" />
+          </div>
+          <input
+            id="update-title"
+            className={cn(
+              inputStyle,
+              isEditMode ? "bg-gray-100 dark:bg-zinc-700" : ""
+            )}
+            placeholder="Ex: Launched a feature to onboard users"
+            {...register("title")}
+            disabled={isEditMode}
+            onChange={(e) => {
+              if (
+                !!project?.updates.find((u) => u.data.title === e.target.value)
+              ) {
+                setError("title", {
+                  message: "You already have an activity with this title.",
+                  type: "required",
+                });
+              } else {
+                setValue("title", e.target.value, {
+                  shouldValidate: true,
+                  shouldDirty: true,
+                  shouldTouch: true,
+                });
+              }
+            }}
+          />
+          <p className="text-base text-red-400">{errors.title?.message}</p>
         </div>
-        <input
-          id="update-title"
-          className={inputStyle}
-          placeholder="Ex: Launched a feature to onboard users"
-          {...register("title")}
-        />
-        <p className="text-base text-red-400">{errors.title?.message}</p>
-      </div>
+      ) : null}
 
       <div className="flex w-full gap-2 flex-col">
         <div className="flex items-center gap-2">
@@ -708,35 +855,15 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         </div>
       </div>
 
-      <div className="flex w-full flex-col gap-4">
-        <div className="flex flex-row items-center gap-2">
-          <label htmlFor="grants" className={labelStyle}>
-            Tell us which grants helped you accomplish this activity? (Optional)
-          </label>
-          <InfoTooltip content="Select grants that helped you accomplish this activity." />
-        </div>
-        {grants.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-4 p-6 border-2 border-dashed border-[#155EEF] rounded-lg bg-[#EEF4FF] dark:bg-zinc-900">
-            <p className="text-center text-lg font-semibold text-black dark:text-zinc-200">
-              No grants available. Create your first grant to get started.
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                router.push(
-                  PAGES.PROJECT.SCREENS.NEW_GRANT(
-                    project?.details?.data?.slug || project?.uid || ""
-                  )
-                );
-                router.refresh();
-              }}
-              className="flex flex-row items-center justify-center gap-2 px-4 py-2.5 text-base font-semibold text-white bg-[#155EEF] rounded-lg hover:opacity-90"
-            >
-              <PlusIcon className="w-5 h-5" />
-              Create a Grant
-            </button>
+      {grants.length === 0 ? null : (
+        <div className="flex w-full flex-col gap-4">
+          <div className="flex flex-row items-center gap-2">
+            <label htmlFor="grants" className={labelStyle}>
+              Tell us which grants helped you accomplish this activity?
+              (Optional)
+            </label>
+            <InfoTooltip content="Select grants that helped you accomplish this activity." />
           </div>
-        ) : (
           <GrantSearchDropdown
             grants={grants}
             onSelect={(grantId) => {
@@ -757,8 +884,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
             className="w-full"
             project={project}
           />
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="flex items-center flex-row gap-2">
         <h2 className={cn(labelStyle, "text-xl")}>Outputs</h2>
@@ -867,9 +994,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                     </td>
                     <td className="px-4 py-2">
                       <button
-                        onClick={() => {
-                          handleRemoveDeliverable(index);
-                        }}
+                        onClick={() => handleRemoveDeliverable(index)}
                         type="button"
                         className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20"
                       >
@@ -899,14 +1024,21 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
             <Button
               type="button"
               onClick={() => {
-                setValue("outputs", [
-                  ...selectedOutputs,
+                setValue(
+                  "outputs",
+                  [
+                    ...selectedOutputs,
+                    {
+                      outputId: "",
+                      value: 0,
+                      proof: "",
+                    },
+                  ],
                   {
-                    outputId: "",
-                    value: 0,
-                    proof: "",
-                  },
-                ]);
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  }
+                );
               }}
               className="text-sm bg-zinc-700 text-white px-3 py-1.5"
             >
@@ -923,14 +1055,21 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
             <Button
               type="button"
               onClick={() => {
-                setValue("outputs", [
-                  ...selectedOutputs,
+                setValue(
+                  "outputs",
+                  [
+                    ...selectedOutputs,
+                    {
+                      outputId: "",
+                      value: 0,
+                      proof: "",
+                    },
+                  ],
                   {
-                    outputId: "",
-                    value: 0,
-                    proof: "",
-                  },
-                ]);
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  }
+                );
               }}
               className="text-sm bg-zinc-700 text-white px-3 py-1.5"
             >
@@ -1129,21 +1268,24 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                       />
                       <EmptyDiv />
                     </td>
-                    <td className="px-4 py-2">
-                      <button
-                        onClick={() => {
-                          const newOutputs = selectedOutputs.filter(
-                            (_, i) => i !== index
-                          );
-                          setValue("outputs", newOutputs, {
-                            shouldValidate: true,
-                          });
-                        }}
-                        type="button"
-                        className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
+                    <td className="px-4 py-0">
+                      <div className="flex items-center justify-center w-full h-full">
+                        <button
+                          onClick={() => {
+                            const newOutputs = selectedOutputs.filter(
+                              (_, i) => i !== index
+                            );
+                            setValue("outputs", newOutputs, {
+                              shouldValidate: true,
+                            });
+                          }}
+                          type="button"
+                          className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20"
+                        >
+                          <TrashIcon className="h-5 w-5" />
+                        </button>
+                      </div>
+                      <EmptyDiv />
                     </td>
                   </tr>
                 ))}
@@ -1154,14 +1296,45 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       </div>
 
       <div className="flex w-full flex-row-reverse">
-        <Button
-          type="submit"
-          className="flex w-max flex-row bg-slate-600 text-slate-200 hover:bg-slate-800 hover:text-slate-200"
-          disabled={isSubmitting || !isValid}
-          isLoading={isSubmitting || isLoading}
-        >
-          Post activity
-        </Button>
+        <Tooltip.Provider>
+          <Tooltip.Root delayDuration={0}>
+            <Tooltip.Trigger asChild>
+              <div>
+                <Button
+                  type="submit"
+                  className="flex w-max flex-row bg-slate-600 text-slate-200 hover:bg-slate-800 hover:text-slate-200"
+                  disabled={isSubmitting || !isValid || activityWithSameTitle}
+                  isLoading={isSubmitting || isLoading}
+                >
+                  {isEditMode ? "Update activity" : "Post activity"}
+                </Button>
+              </div>
+            </Tooltip.Trigger>
+            {(isSubmitting || !isValid || activityWithSameTitle) && (
+              <Tooltip.Portal>
+                <Tooltip.Content
+                  className="TooltipContent bg-brand-darkblue rounded-lg text-white p-3 max-w-[360px] z-[1000]"
+                  sideOffset={5}
+                  side="top"
+                >
+                  {activityWithSameTitle ? (
+                    <p>An activity with this title already exists</p>
+                  ) : !isValid ? (
+                    <div className="flex flex-col gap-2">
+                      {getFormErrorMessage(errors, formValues).map(
+                        (message, index) => (
+                          <p key={index}>{message}</p>
+                        )
+                      )}
+                    </div>
+                  ) : (
+                    <p>Submitting activity...</p>
+                  )}
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            )}
+          </Tooltip.Root>
+        </Tooltip.Provider>
       </div>
     </form>
   );
