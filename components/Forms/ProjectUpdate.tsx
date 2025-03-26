@@ -339,42 +339,44 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       );
     }
 
-    // Set outputs if they exist and outputs are loaded
-    if (
-      updateToEdit.data.indicators &&
-      updateToEdit.data.indicators.length > 0 &&
-      outputs.length > 0
-    ) {
-      // Access outputs safely
-      const assignOutputsValues = async () => {
-        const indicators = await getImpactAnswers(project?.uid as string);
+    if (watch("outputs").length === 0) {
+      // Set outputs if they exist and outputs are loaded
+      if (
+        updateToEdit.data.indicators &&
+        updateToEdit.data.indicators.length > 0 &&
+        outputs.length > 0
+      ) {
+        // Access outputs safely
+        const assignOutputsValues = async () => {
+          const indicators = await getImpactAnswers(project?.uid as string);
 
-        setValue(
-          "outputs",
-          updateToEdit.data.indicators!.map((indicator) => {
-            const matchingOutput = indicators.find(
-              (out: any) => out.id === indicator.indicatorId
-            );
-            const orderedDatapoints = matchingOutput?.datapoints.sort(
-              (a: any, b: any) =>
-                new Date(a.endDate).getTime() - new Date(b.endDate).getTime()
-            );
-            const firstDatapoint = orderedDatapoints?.[0];
-            return {
-              outputId: indicator.indicatorId,
-              value: firstDatapoint?.value || 0,
-              proof: firstDatapoint?.proof || "",
-              startDate: firstDatapoint?.startDate
-                ? new Date(firstDatapoint.startDate).toISOString()
-                : undefined,
-              endDate: firstDatapoint?.endDate
-                ? new Date(firstDatapoint.endDate).toISOString()
-                : undefined,
-            };
-          })
-        );
-      };
-      assignOutputsValues();
+          setValue(
+            "outputs",
+            updateToEdit.data.indicators!.map((indicator) => {
+              const matchingOutput = indicators.find(
+                (out: any) => out.id === indicator.indicatorId
+              );
+              const orderedDatapoints = matchingOutput?.datapoints.sort(
+                (a: any, b: any) =>
+                  new Date(a.endDate).getTime() - new Date(b.endDate).getTime()
+              );
+              const firstDatapoint = orderedDatapoints?.[0];
+              return {
+                outputId: indicator.indicatorId,
+                value: firstDatapoint?.value || 0,
+                proof: firstDatapoint?.proof || "",
+                startDate: firstDatapoint?.startDate
+                  ? new Date(firstDatapoint.startDate).toISOString()
+                  : undefined,
+                endDate: firstDatapoint?.endDate
+                  ? new Date(firstDatapoint.endDate).toISOString()
+                  : undefined,
+              };
+            })
+          );
+        };
+        assignOutputsValues();
+      }
     }
   }, [editId, project, setValue, outputs.length]);
 
@@ -566,17 +568,14 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   };
 
   const handleOutputSuccess = (newIndicator: ImpactIndicatorWithData) => {
+    // Update the existing list
     setOutputs((prev) => [...prev, newIndicator]);
-
-    // Automatically select the new output
-    // const newOutputs = [...selectedOutputs];
-    // newOutputs[selectedOutputs.length - 1].title = newIndicator.name;
-    // setSelectedOutputs(newOutputs);
 
     const currentOutputs = watch("outputs") || [];
     if (selectedToCreate !== undefined) {
       // Update the existing output at the selected index
       const newOutputs = [...currentOutputs];
+      console.log("newOutputs", newOutputs, selectedToCreate);
       newOutputs[selectedToCreate] = {
         ...newOutputs[selectedToCreate],
         outputId: newIndicator.id,
@@ -606,6 +605,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
     setIsOutputDialogOpen(false);
   };
+
+  console.log("outputs", watch("outputs"));
 
   const handleOutputError = () => {
     toast.error("Failed to create output");
@@ -806,35 +807,15 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         </div>
       </div>
 
-      <div className="flex w-full flex-col gap-4">
-        <div className="flex flex-row items-center gap-2">
-          <label htmlFor="grants" className={labelStyle}>
-            Tell us which grants helped you accomplish this activity? (Optional)
-          </label>
-          <InfoTooltip content="Select grants that helped you accomplish this activity." />
-        </div>
-        {grants.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-4 p-6 border-2 border-dashed border-[#155EEF] rounded-lg bg-[#EEF4FF] dark:bg-zinc-900">
-            <p className="text-center text-lg font-semibold text-black dark:text-zinc-200">
-              No grants available. Create your first grant to get started.
-            </p>
-            <button
-              type="button"
-              onClick={() => {
-                router.push(
-                  PAGES.PROJECT.SCREENS.NEW_GRANT(
-                    project?.details?.data?.slug || project?.uid || ""
-                  )
-                );
-                router.refresh();
-              }}
-              className="flex flex-row items-center justify-center gap-2 px-4 py-2.5 text-base font-semibold text-white bg-[#155EEF] rounded-lg hover:opacity-90"
-            >
-              <PlusIcon className="w-5 h-5" />
-              Create a Grant
-            </button>
+      {grants.length === 0 ? null : (
+        <div className="flex w-full flex-col gap-4">
+          <div className="flex flex-row items-center gap-2">
+            <label htmlFor="grants" className={labelStyle}>
+              Tell us which grants helped you accomplish this activity?
+              (Optional)
+            </label>
+            <InfoTooltip content="Select grants that helped you accomplish this activity." />
           </div>
-        ) : (
           <GrantSearchDropdown
             grants={grants}
             onSelect={(grantId) => {
@@ -855,8 +836,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
             className="w-full"
             project={project}
           />
-        )}
-      </div>
+        </div>
+      )}
 
       <div className="flex items-center flex-row gap-2">
         <h2 className={cn(labelStyle, "text-xl")}>Outputs</h2>
