@@ -76,8 +76,7 @@ export const ProjectOptionsMenu = () => {
   const params = useParams();
   const projectId = params.projectId as string;
   const [isDeleting, setIsDeleting] = useState(false);
-  const { address } = useAccount();
-  const { chain } = useAccount();
+  const { address, chain } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const router = useRouter();
   const { gap } = useGap();
@@ -142,7 +141,7 @@ export const ProjectOptionsMenu = () => {
     <>
       {isProjectEditModalOpen ? (
         <ProjectDialog
-          key={project?.uid}
+          key={`${project?.uid}-${address}`}
           buttonElement={null}
           projectToUpdate={project}
           previousContacts={contactsInfo}
