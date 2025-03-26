@@ -21,6 +21,7 @@ import { useMobileStore } from "@/store/mobile";
 
 import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
 import { groupSimilarCommunities } from "@/utilities/communityHelpers"; // You'll need to create this utility function
+import { useRouter } from "next/navigation";
 
 interface Props {
   data: ISearchResponse; // Will be modular in the future
@@ -43,8 +44,9 @@ export const SearchList: React.FC<Props> = ({
   const { isAuth } = useAuthStore();
   const { openConnectModal } = useConnectModal();
   const [shouldOpen, setShouldOpen] = useState(false);
+  const router = useRouter();
 
-  const handleItemClick = (e: React.MouseEvent) => {
+  const handleItemClick = (e: React.MouseEvent, href: string) => {
     e.preventDefault();
     closeSearchList();
     setIsMobileMenuOpen(false);
@@ -54,6 +56,7 @@ export const SearchList: React.FC<Props> = ({
         window.location.href = e.currentTarget.href;
       }
     }, 0);
+    router.push(href);
   };
 
   const handleCreateProject = (e: React.MouseEvent) => {
@@ -88,13 +91,13 @@ export const SearchList: React.FC<Props> = ({
     href: string
   ) => {
     return (
-      <Link
+      <button
         key={item.uid}
-        href={href}
-        onClick={handleItemClick}
+        onClick={(e) => handleItemClick(e, href)}
+        className="w-full cursor-pointer select-none border-b border-slate-100 transition hover:bg-slate-200 dark:hover:bg-zinc-700"
       >
-        <div className=":last:border-b-0 cursor-pointer select-none border-b border-slate-100 px-4 py-2 transition hover:bg-slate-200 dark:hover:bg-zinc-700">
-          <b className="max-w-full text-ellipsis font-bold text-black dark:text-zinc-100">
+        <div className=":last:border-b-0 cursor-pointer flex flex-col justify-start select-none border-b border-slate-100 px-4 py-2 transition hover:bg-slate-200 dark:hover:bg-zinc-700">
+          <b className="max-w-full text-left w-full text-ellipsis font-bold text-black dark:text-zinc-100">
             {title}
           </b>
           <br />
@@ -111,7 +114,7 @@ export const SearchList: React.FC<Props> = ({
             </div>
           </div>
         </div>
-      </Link>
+      </button>
     );
   };
 
