@@ -27,11 +27,12 @@ import { Chain } from "viem";
 import { useAccount } from "wagmi";
 import { OnboardingDialog } from "../Dialogs/OnboardingDialog";
 import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
-import { DiscordIcon, MirrorIcon, TelegramIcon, TwitterIcon } from "../Icons";
+import { DiscordIcon, TelegramIcon, TwitterIcon } from "../Icons";
 import { Searchbar } from "../Searchbar";
 import { Button } from "./Button";
 import { errorManager } from "./errorManager";
 import { ExternalLink } from "./ExternalLink";
+import { ParagraphIcon } from "../Icons/Paragraph";
 
 const ProjectDialog = dynamic(
   () =>
@@ -129,9 +130,9 @@ export default function Header() {
       href: SOCIALS.DISCORD,
     },
     {
-      name: "mirror",
-      icon: <MirrorIcon className="h-6 w-6 object-contain" />,
-      href: SOCIALS.MIRROR,
+      name: "paragraph",
+      icon: <ParagraphIcon className="h-6 w-6 object-contain" />,
+      href: SOCIALS.PARAGRAPH,
     },
   ];
 
@@ -248,7 +249,10 @@ export default function Header() {
                     <div className="fixed inset-y-0 right-0 z-[1000] w-full bg-white dark:bg-black overflow-y-auto">
                       <div className="relative flex justify-between items-center px-4 py-4 border-b border-gray-200">
                         <div className="flex-1">
-                          <Link href="/" onClick={() => setIsMobileMenuOpen(false)}>
+                          <Link
+                            href="/"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                          >
                             <Image
                               className="block h-8 w-auto dark:hidden"
                               src="/logo/karma-gap-logo.svg"
@@ -332,7 +336,8 @@ export default function Header() {
                                   // Note: If your app doesn't use authentication, you
                                   // can remove all 'authenticationStatus' checks
                                   const ready =
-                                    mounted && authenticationStatus !== "loading";
+                                    mounted &&
+                                    authenticationStatus !== "loading";
                                   const connected =
                                     ready &&
                                     account &&
