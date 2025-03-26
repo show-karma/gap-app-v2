@@ -99,8 +99,8 @@ export const ProjectNavigator = ({
           </Link>
         ))}
       </nav>
-      {isAuthorized ? (
-        <div className="flex flex-row gap-2 items-center mb-1">
+      <div className="flex flex-row gap-2 items-center mb-1">
+        {isAuthorized && (
           <Button
             type="button"
             className="w-max bg-brand-blue text-white px-4 py-2 rounded-lg"
@@ -108,9 +108,9 @@ export const ProjectNavigator = ({
           >
             Post an update
           </Button>
-          <ProjectOptionsMenu />
-        </div>
-      ) : null}
+        )}
+        <ProjectOptionsMenu />
+      </div>
     </div>
   );
 };

@@ -6,7 +6,6 @@ import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { getProjectById, isOwnershipTransfered } from "@/utilities/sdk";
-import { config } from "@/utilities/wagmi/config";
 import { Dialog, Transition } from "@headlessui/react";
 import { PlusIcon } from "@heroicons/react/24/solid";
 
@@ -18,8 +17,8 @@ import { Button } from "../Utilities/Button";
 
 import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership";
 import { sanitizeInput } from "@/utilities/sanitize";
-import { errorManager } from "../Utilities/errorManager";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { errorManager } from "../Utilities/errorManager";
 
 type TransferOwnershipProps = {
   buttonElement?: {
