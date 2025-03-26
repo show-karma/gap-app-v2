@@ -27,6 +27,8 @@ interface Props {
   isOpen: boolean;
   isLoading: boolean;
   closeSearchList: () => void;
+  onInteractionStart?: () => void;
+  onInteractionEnd?: () => void;
 }
 
 export const SearchList: React.FC<Props> = ({
@@ -34,20 +36,41 @@ export const SearchList: React.FC<Props> = ({
   isOpen = false,
   isLoading = true,
   closeSearchList,
+  onInteractionStart,
+  onInteractionEnd,
 }) => {
   const { isConnected } = useAccount();
   const { isAuth } = useAuthStore();
   const { openConnectModal } = useConnectModal();
   const [shouldOpen, setShouldOpen] = useState(false);
 
-  const triggerCreateProjectModal = () => {
+  const handleItemClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    closeSearchList();
+    setIsMobileMenuOpen(false);
+    // Use setTimeout to ensure state updates complete before navigation
+    setTimeout(() => {
+      if (e.currentTarget instanceof HTMLAnchorElement) {
+        window.location.href = e.currentTarget.href;
+      }
+    }, 0);
+  };
+
+  const handleCreateProject = (e: React.MouseEvent) => {
+    e.preventDefault();
     if (!isConnected || !isAuth) {
+      closeSearchList();
+      setIsMobileMenuOpen(false);
       openConnectModal?.();
       setShouldOpen(true);
       return;
     }
     const el = document?.getElementById("new-project-button");
-    if (el) el.click();
+    if (el) {
+      closeSearchList();
+      setIsMobileMenuOpen(false);
+      el.click();
+    }
   };
 
   useEffect(() => {
@@ -68,10 +91,7 @@ export const SearchList: React.FC<Props> = ({
       <Link
         key={item.uid}
         href={href}
-        onClick={() => {
-          closeSearchList();
-          setIsMobileMenuOpen(false);
-        }}
+        onClick={handleItemClick}
       >
         <div className=":last:border-b-0 cursor-pointer select-none border-b border-slate-100 px-4 py-2 transition hover:bg-slate-200 dark:hover:bg-zinc-700">
           <b className="max-w-full text-ellipsis font-bold text-black dark:text-zinc-100">
@@ -99,7 +119,13 @@ export const SearchList: React.FC<Props> = ({
 
   return (
     isOpen && (
-      <div className="absolute left-0 top-10 mt-3 max-h-64 min-w-full overflow-y-auto rounded-md bg-white dark:bg-zinc-800 py-4 border border-zinc-200">
+      <div
+        className="absolute left-0 top-10 mt-3 max-h-64 min-w-full overflow-y-auto rounded-md bg-white dark:bg-zinc-800 py-4 border border-zinc-200 z-50"
+        onMouseEnter={() => onInteractionStart?.()}
+        onMouseLeave={() => onInteractionEnd?.()}
+        onTouchStart={() => onInteractionStart?.()}
+        onTouchEnd={() => onInteractionEnd?.()}
+      >
         {data.projects.length > 0 &&
           data.projects.map((project) =>
             renderItem(
@@ -131,7 +157,7 @@ export const SearchList: React.FC<Props> = ({
             <div className="flex flex-col items-center text-center">
               <div className="w-full text-center">No results found.</div>
               <div
-                onClick={() => triggerCreateProjectModal()}
+                onClick={handleCreateProject}
                 className="mt-2 cursor-pointer rounded-sm bg-brand-blue px-3 py-2 text-white font-bold"
               >
                 Create a project
