@@ -198,6 +198,55 @@ const isInvalidValue = (value: number | string, unitOfMeasure: string) => {
   return isNaN(numValue);
 };
 
+const getFormErrorMessage = (errors: any, formValues: any) => {
+  const errorMessages = [];
+
+  // Check for validation errors first
+  if (errors.title?.message) {
+    errorMessages.push(errors.title.message);
+  } else if (!formValues.title) {
+    errorMessages.push("Title is required");
+  }
+
+  if (errors.text?.message) {
+    errorMessages.push("Description is required");
+  } else if (!formValues.text) {
+    errorMessages.push("Description is required");
+  }
+
+  // Check outputs
+  if (errors.outputs?.message) {
+    errorMessages.push("Please check your metrics values");
+  } else if (formValues.outputs?.length > 0) {
+    const hasEmptyOutputs = formValues.outputs.some(
+      (output: any) =>
+        !output.outputId || output.value === "" || output.value === 0
+    );
+    if (hasEmptyOutputs) {
+      errorMessages.push("Please fill in all metric values");
+    }
+  }
+
+  // Check deliverables
+  if (errors.deliverables) {
+    const hasDeliverableErrors = errors.deliverables.some(
+      (d: any) => d?.name || d?.proof
+    );
+    if (hasDeliverableErrors) {
+      errorMessages.push("Please fill in all required deliverable fields");
+    }
+  } else if (formValues.deliverables?.length > 0) {
+    const hasEmptyDeliverables = formValues.deliverables.some(
+      (deliverable: any) => !deliverable.name || !deliverable.proof
+    );
+    if (hasEmptyDeliverables) {
+      errorMessages.push("Name and proof are required for all deliverables");
+    }
+  }
+
+  return errorMessages;
+};
+
 export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   afterSubmit,
 }): JSX.Element => {
@@ -575,7 +624,6 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     if (selectedToCreate !== undefined) {
       // Update the existing output at the selected index
       const newOutputs = [...currentOutputs];
-      console.log("newOutputs", newOutputs, selectedToCreate);
       newOutputs[selectedToCreate] = {
         ...newOutputs[selectedToCreate],
         outputId: newIndicator.id,
@@ -606,8 +654,6 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     setIsOutputDialogOpen(false);
   };
 
-  console.log("outputs", watch("outputs"));
-
   const handleOutputError = () => {
     toast.error("Failed to create output");
   };
@@ -635,6 +681,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const activityWithSameTitle =
     Boolean(project?.updates.find((u) => u.data.title === watch("title"))) &&
     !isEditMode;
+
+  const formValues = watch();
 
   return (
     <form
@@ -1206,21 +1254,24 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                       />
                       <EmptyDiv />
                     </td>
-                    <td className="px-4 py-2">
-                      <button
-                        onClick={() => {
-                          const newOutputs = selectedOutputs.filter(
-                            (_, i) => i !== index
-                          );
-                          setValue("outputs", newOutputs, {
-                            shouldValidate: true,
-                          });
-                        }}
-                        type="button"
-                        className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20"
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </button>
+                    <td className="px-4 py-0">
+                      <div className="flex items-center justify-center w-full h-full">
+                        <button
+                          onClick={() => {
+                            const newOutputs = selectedOutputs.filter(
+                              (_, i) => i !== index
+                            );
+                            setValue("outputs", newOutputs, {
+                              shouldValidate: true,
+                            });
+                          }}
+                          type="button"
+                          className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20"
+                        >
+                          <TrashIcon className="h-5 w-5" />
+                        </button>
+                      </div>
+                      <EmptyDiv />
                     </td>
                   </tr>
                 ))}
@@ -1231,14 +1282,45 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       </div>
 
       <div className="flex w-full flex-row-reverse">
-        <Button
-          type="submit"
-          className="flex w-max flex-row bg-slate-600 text-slate-200 hover:bg-slate-800 hover:text-slate-200"
-          disabled={isSubmitting || !isValid || activityWithSameTitle}
-          isLoading={isSubmitting || isLoading}
-        >
-          {isEditMode ? "Update activity" : "Post activity"}
-        </Button>
+        <Tooltip.Provider>
+          <Tooltip.Root delayDuration={0}>
+            <Tooltip.Trigger asChild>
+              <div>
+                <Button
+                  type="submit"
+                  className="flex w-max flex-row bg-slate-600 text-slate-200 hover:bg-slate-800 hover:text-slate-200"
+                  disabled={isSubmitting || !isValid || activityWithSameTitle}
+                  isLoading={isSubmitting || isLoading}
+                >
+                  {isEditMode ? "Update activity" : "Post activity"}
+                </Button>
+              </div>
+            </Tooltip.Trigger>
+            {(isSubmitting || !isValid || activityWithSameTitle) && (
+              <Tooltip.Portal>
+                <Tooltip.Content
+                  className="TooltipContent bg-brand-darkblue rounded-lg text-white p-3 max-w-[360px] z-[1000]"
+                  sideOffset={5}
+                  side="top"
+                >
+                  {activityWithSameTitle ? (
+                    <p>An activity with this title already exists</p>
+                  ) : !isValid ? (
+                    <div className="flex flex-col gap-2">
+                      {getFormErrorMessage(errors, formValues).map(
+                        (message, index) => (
+                          <p key={index}>{message}</p>
+                        )
+                      )}
+                    </div>
+                  ) : (
+                    <p>Submitting activity...</p>
+                  )}
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            )}
+          </Tooltip.Root>
+        </Tooltip.Provider>
       </div>
     </form>
   );
