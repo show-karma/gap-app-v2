@@ -86,7 +86,7 @@ interface ProjectDetails {
   uid: string;
   data: {
     title: string;
-    description: string;
+    description?: string;
     problem: string;
     missionSummary: string;
     locationOfImpact: string;
@@ -668,6 +668,8 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
 
   const cardColor = useMemo(() => pickColor(index), [pickColor, index]);
 
+  console.log(project.projectDetails.data);
+
   return (
     <ExternalLink
       href={PAGES.PROJECT.OVERVIEW(project?.projectUID)}
@@ -681,12 +683,14 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
         <div className="w-full flex flex-col gap-1">
           <div className="flex w-full flex-col px-3">
             <p className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200 max-2xl:text-sm mr-1">
-              {project.projectDetails.data.title}
+              {project.projectDetails.data?.title}
             </p>
 
             <div className="flex flex-col gap-1 flex-1 h-[64px] w-full max-w-full">
               <div className="line-clamp-2 w-full break-normal text-sm font-normal text-black dark:text-zinc-100 max-2xl:text-sm">
-                {sanitizeMarkdown(project.projectDetails.data.description)}
+                {sanitizeMarkdown(
+                  project.projectDetails.data?.description || ""
+                )}
               </div>
             </div>
           </div>
@@ -741,7 +745,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
       <div className="px-2">
         <button
           className="hover:text-gray-300 dark:hover:text-zinc-300 rounded-full transition-colors"
-          aria-label={`Ask about ${project.projectDetails.data.title}`}
+          aria-label={`Ask about ${project.projectDetails.data?.title}`}
         >
           <ChevronRightIcon className="w-6 h-6 min-h-6 min-w-6 text-gray-500 dark:text-zinc-400" />
         </button>
@@ -802,7 +806,7 @@ function ChatScreen({
     body: {
       projectsInProgram: projects.map((project) => ({
         uid: project.projectUID,
-        projectTitle: project.projectDetails.data.title,
+        projectTitle: project.projectDetails.data?.title,
       })),
     },
   });
