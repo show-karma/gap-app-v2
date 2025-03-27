@@ -23,6 +23,9 @@ interface UseChatOptions {
     projectsInProgram: Array<{
       uid: string;
     }>;
+    programId: string;
+    chainId: string;
+    communityId: string;
   };
 }
 
@@ -78,6 +81,9 @@ export function useChat(options: UseChatOptions) {
             ],
             projectsInProgram: options.body.projectsInProgram,
             sessionId: sessionIdRef.current,
+            programId: options.body.programId,
+            chainId: options.body.chainId,
+            communityId: options.body.communityId,
           }),
         }
       );
