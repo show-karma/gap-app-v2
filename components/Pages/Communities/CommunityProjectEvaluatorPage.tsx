@@ -806,6 +806,9 @@ function ChatScreen({
         uid: project.projectUID,
         projectTitle: project.projectDetails.data?.title,
       })),
+      programId: selectedProgram.programId,
+      chainId: selectedProgram.chainID.toString(),
+      communityId: useParams().communityId as string,
     },
   });
 
