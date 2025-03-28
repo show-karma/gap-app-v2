@@ -191,7 +191,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
     <section>
       <Tabs defaultTab="outputs">
         <div className="flex flex-row gap-2 bg-zinc-100 dark:bg-zinc-900 p-1 rounded-md mb-6">
-          <TabTrigger value="outputs">Outputs and Outcomes</TabTrigger>
+          <TabTrigger value="outputs">Activities & Outputs</TabTrigger>
           <TabTrigger value="impact">Project Impact</TabTrigger>
           <TabTrigger value="oso">OSO Metrics</TabTrigger>
         </div>
