@@ -27,9 +27,23 @@ export const MarkdownPreview: typeof Preview = (props) => {
           backgroundColor: "transparent",
           color: currentTheme === "dark" ? "white" : "rgb(36, 41, 47)",
           width: "100%",
+          maxWidth: "100%",
         }}
         components={{
           p: ({ children }) => <span>{children}</span>,
+          code: ({ children }) => (
+            <code
+              style={{
+                display: "block",
+                overflow: "auto",
+                maxWidth: "100%",
+                whiteSpace: "pre-wrap",
+                wordWrap: "break-word",
+              }}
+            >
+              {children}
+            </code>
+          ),
         }}
         {...props}
       />
