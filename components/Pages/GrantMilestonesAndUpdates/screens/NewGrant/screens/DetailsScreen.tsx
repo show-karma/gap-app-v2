@@ -6,9 +6,8 @@ import { useParams, usePathname, useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { Popover } from "@headlessui/react";
+import { DatePicker } from "@/components/Utilities/DatePicker";
 import { CalendarIcon } from "@heroicons/react/24/outline";
-import { DayPicker } from "react-day-picker";
 import { formatDate } from "@/utilities/formatDate";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -54,9 +53,11 @@ const defaultFundUsage = `| Budget Item    | % of Allocated funding |
 
 // Define base schema for both flows
 const baseSchema = z.object({
-  startDate: z.date({
-    required_error: MESSAGES.GRANT.FORM.DATE,
-  }),
+  startDate: z
+    .date({
+      required_error: MESSAGES.GRANT.FORM.DATE,
+    })
+    .optional(),
   description: z.string().optional(),
 });
 
@@ -307,31 +308,27 @@ export const DetailsScreen: React.FC = () => {
             <div className="flex flex-col flex-1">
               <label className={labelStyle}>Start Date *</label>
               <div className="mt-2">
-                <Popover className="relative">
-                  <Popover.Button className="w-full text-base flex-row flex gap-2 items-center bg-gray-100 dark:bg-zinc-800 px-4 py-2 rounded-md">
-                    {watch("startDate") ? (
-                      formatDate(watch("startDate"))
-                    ) : (
-                      <span>Pick a date</span>
-                    )}
-                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                  </Popover.Button>
-                  <Popover.Panel className="absolute z-10 border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 mt-4 rounded-md">
-                    <DayPicker
-                      mode="single"
-                      selected={watch("startDate")}
-                      onDayClick={(day) => {
-                        setValue("startDate", day, { shouldValidate: true });
-                        trigger();
-                      }}
-                      disabled={(date) => {
-                        if (date < new Date("2000-01-01")) return true;
-                        return false;
-                      }}
-                      initialFocus
-                    />
-                  </Popover.Panel>
-                </Popover>
+                <DatePicker
+                  selected={watch("startDate")}
+                  onSelect={(date) => {
+                    if (
+                      formatDate(date) === formatDate(watch("startDate") || "")
+                    ) {
+                      setValue("startDate", undefined, {
+                        shouldValidate: true,
+                      });
+                    } else {
+                      setValue("startDate", date, { shouldValidate: true });
+                    }
+                    trigger();
+                  }}
+                  placeholder="Pick a date"
+                  buttonClassName="w-full text-base bg-gray-100 dark:bg-zinc-800"
+                  clearButtonFn={() => {
+                    setValue("startDate", undefined, { shouldValidate: true });
+                    trigger();
+                  }}
+                />
               </div>
               {errors.startDate && (
                 <p className="text-red-500 text-sm mt-1">

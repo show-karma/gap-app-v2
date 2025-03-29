@@ -50,6 +50,7 @@ import { autosyncedIndicators } from "../Pages/Admin/IndicatorsHub";
 import Link from "next/link";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { ExternalLink } from "../Utilities/ExternalLink";
+import { DatePicker } from "@/components/Utilities/DatePicker";
 
 interface GrantOption {
   title: string;
@@ -763,39 +764,31 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                 <label className={labelStyle}>
                   Activity Start date (Optional)
                 </label>
-                <div>
-                  <Popover.Root>
-                    <Popover.Trigger asChild>
-                      <button className="w-max text-sm flex-row flex gap-2 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md border border-gray-200">
-                        {field.value ? (
-                          formatDate(field.value)
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </button>
-                    </Popover.Trigger>
-                    <Popover.Portal>
-                      <Popover.Content className="z-10 bg-white dark:bg-zinc-800 mt-4 rounded-md">
-                        <DayPicker
-                          mode="single"
-                          selected={field.value}
-                          onDayClick={(e) => {
-                            setValue("startDate", e, {
-                              shouldValidate: true,
-                            });
-                            field.onChange(e);
-                          }}
-                          disabled={(date) => {
-                            if (date < new Date("2000-01-01")) return true;
-                            return false;
-                          }}
-                          initialFocus
-                        />
-                      </Popover.Content>
-                    </Popover.Portal>
-                  </Popover.Root>
-                </div>
+                <DatePicker
+                  selected={field.value}
+                  onSelect={(date) => {
+                    if (
+                      formatDate(date) === formatDate(watch("startDate") || "")
+                    ) {
+                      setValue("startDate", undefined, {
+                        shouldValidate: true,
+                      });
+                      field.onChange(undefined);
+                    } else {
+                      setValue("startDate", date, {
+                        shouldValidate: true,
+                      });
+                      field.onChange(date);
+                    }
+                  }}
+                  placeholder="Pick a date"
+                  clearButtonFn={() => {
+                    setValue("startDate", undefined, {
+                      shouldValidate: true,
+                    });
+                    field.onChange(undefined);
+                  }}
+                />
                 <p className="text-base text-red-400">
                   {formState.errors.startDate?.message}
                 </p>
@@ -811,41 +804,32 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                 <label className={labelStyle}>
                   Activity End date (Optional)
                 </label>
-                <div>
-                  <Popover.Root>
-                    <Popover.Trigger asChild>
-                      <button className="w-max text-sm flex-row flex gap-2 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md border border-gray-200">
-                        {field.value ? (
-                          formatDate(field.value)
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </button>
-                    </Popover.Trigger>
-                    <Popover.Portal>
-                      <Popover.Content className="z-10 bg-white dark:bg-zinc-800 mt-4 rounded-md">
-                        <DayPicker
-                          mode="single"
-                          selected={field.value}
-                          onDayClick={(e) => {
-                            setValue("endDate", e, {
-                              shouldValidate: true,
-                            });
-                            field.onChange(e);
-                          }}
-                          disabled={(date) => {
-                            if (date < new Date("2000-01-01")) return true;
-                            const startDate = watch("startDate");
-                            if (startDate && date < startDate) return true;
-                            return false;
-                          }}
-                          initialFocus
-                        />
-                      </Popover.Content>
-                    </Popover.Portal>
-                  </Popover.Root>
-                </div>
+                <DatePicker
+                  selected={field.value}
+                  onSelect={(date) => {
+                    if (
+                      formatDate(date) === formatDate(watch("endDate") || "")
+                    ) {
+                      setValue("endDate", undefined, {
+                        shouldValidate: true,
+                      });
+                      field.onChange(undefined);
+                    } else {
+                      setValue("endDate", date, {
+                        shouldValidate: true,
+                      });
+                      field.onChange(date);
+                    }
+                  }}
+                  minDate={watch("startDate")}
+                  placeholder="Pick a date"
+                  clearButtonFn={() => {
+                    setValue("endDate", undefined, {
+                      shouldValidate: true,
+                    });
+                    field.onChange(undefined);
+                  }}
+                />
                 <p className="text-base text-red-400">
                   {formState.errors.endDate?.message}
                 </p>
