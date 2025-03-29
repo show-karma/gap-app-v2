@@ -124,7 +124,7 @@ export const CommunityImpactStatCards = () => {
   const isImpactPage = pathname.includes("/impact");
 
   return (
-    <div className="flex flex-1 gap-6 flex-row max-sm:flex-col">
+    <div className="flex flex-1 gap-6 flex-row max-sm:flex-col py-2">
       {isImpactPage ? <ImpactStatCards /> : <CommunityStatCards />}
     </div>
   );
