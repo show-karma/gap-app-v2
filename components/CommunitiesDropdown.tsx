@@ -8,7 +8,8 @@ import {
   CommandInput,
   CommandItem,
 } from "cmdk";
-import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid";
+import { CheckIcon } from "@heroicons/react/24/solid";
+import { ChevronUpDownIcon } from "@heroicons/react/24/outline";
 import * as Popover from "@radix-ui/react-popover";
 import { shortAddress } from "@/utilities/shortAddress";
 import { cn } from "@/utilities/tailwind";
