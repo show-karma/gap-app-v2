@@ -46,6 +46,7 @@ import { registryHelper } from "./helper";
 import { GrantProgram } from "./ProgramList";
 import { SearchDropdown } from "./SearchDropdown";
 import { StatusDropdown } from "./StatusDropdown";
+import { DatePicker } from "@/components/Utilities/DatePicker";
 
 const labelStyle = "text-sm font-bold text-[#344054] dark:text-zinc-100";
 const inputStyle =
@@ -624,48 +625,40 @@ export default function AddProgram({
                   <Controller
                     name="dates.startsAt"
                     control={control}
-                    render={({ field, formState, fieldState }) => (
+                    render={({ field, formState }) => (
                       <div className="flex w-full flex-col gap-2">
                         <label className={labelStyle}>
                           Start date (optional)
                         </label>
-                        <div>
-                          <Popover className="relative">
-                            <Popover.Button
-                              className={cn(
-                                inputStyle,
-                                "w-max text-sm flex-row flex gap-2 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md"
-                              )}
-                            >
-                              {field.value ? (
-                                formatDate(field.value)
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Popover.Button>
-                            <Popover.Panel className="absolute z-10 border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 mt-4 rounded-md">
-                              <DayPicker
-                                mode="single"
-                                selected={field.value}
-                                onDayClick={(e) => {
-                                  setValue("dates.startsAt", e, {
-                                    shouldValidate: true,
-                                  });
-                                  field.onChange(e);
-                                }}
-                                disabled={(date) => {
-                                  if (date < new Date("2000-01-01"))
-                                    return true;
-                                  return false;
-                                }}
-                                initialFocus
-                              />
-                            </Popover.Panel>
-                          </Popover>
-                        </div>
+                        <DatePicker
+                          selected={field.value}
+                          onSelect={(date) => {
+                            if (
+                              formatDate(date) ===
+                              formatDate(watch("dates.startsAt") || "")
+                            ) {
+                              setValue("dates.startsAt", undefined, {
+                                shouldValidate: true,
+                              });
+                              field.onChange(undefined);
+                            } else {
+                              setValue("dates.startsAt", date, {
+                                shouldValidate: true,
+                              });
+                              field.onChange(date);
+                            }
+                          }}
+                          placeholder="Pick a date"
+                          buttonClassName="w-full text-base bg-white dark:bg-zinc-800"
+                          clearButtonFn={() => {
+                            setValue("dates.startsAt", undefined, {
+                              shouldValidate: true,
+                            });
+                            field.onChange(undefined);
+                          }}
+                        />
                         <p className="text-base text-red-400">
-                          {errors.dates?.startsAt?.message}
+                          {formState.errors.dates?.startsAt?.message}
                         </p>
                       </div>
                     )}
@@ -675,50 +668,41 @@ export default function AddProgram({
                   <Controller
                     name="dates.endsAt"
                     control={control}
-                    render={({ field, formState, fieldState }) => (
+                    render={({ field, formState }) => (
                       <div className="flex w-full flex-col gap-2">
                         <label className={labelStyle}>
                           End date (optional)
                         </label>
-                        <div>
-                          <Popover className="relative">
-                            <Popover.Button
-                              className={cn(
-                                inputStyle,
-                                "w-max text-sm flex-row flex gap-2 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md"
-                              )}
-                            >
-                              {field.value ? (
-                                formatDate(field.value)
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Popover.Button>
-                            <Popover.Panel className="absolute z-10 border border-zinc-300 dark:border-zinc-600 bg-white dark:bg-zinc-800 mt-4 rounded-md">
-                              <DayPicker
-                                mode="single"
-                                selected={field.value}
-                                onDayClick={(e) => {
-                                  setValue("dates.endsAt", e, {
-                                    shouldValidate: true,
-                                  });
-                                  field.onChange(e);
-                                }}
-                                disabled={(date) => {
-                                  if (date < new Date("2000-01-01"))
-                                    return true;
-                                  const startsAt = watch("dates.startsAt");
-                                  if (startsAt && date < startsAt) return true;
-                                  return false;
-                                }}
-                                initialFocus
-                              />
-                            </Popover.Panel>
-                          </Popover>
-                        </div>
+                        <DatePicker
+                          selected={field.value}
+                          onSelect={(date) => {
+                            if (
+                              formatDate(date) ===
+                              formatDate(watch("dates.endsAt") || "")
+                            ) {
+                              setValue("dates.endsAt", undefined, {
+                                shouldValidate: true,
+                              });
+                              field.onChange(undefined);
+                            } else {
+                              setValue("dates.endsAt", date, {
+                                shouldValidate: true,
+                              });
+                              field.onChange(date);
+                            }
+                          }}
+                          minDate={watch("dates.startsAt")}
+                          placeholder="Pick a date"
+                          buttonClassName="w-full text-base bg-white dark:bg-zinc-800"
+                          clearButtonFn={() => {
+                            setValue("dates.endsAt", undefined, {
+                              shouldValidate: true,
+                            });
+                            field.onChange(undefined);
+                          }}
+                        />
                         <p className="text-base text-red-400">
-                          {errors.dates?.endsAt?.message}
+                          {formState.errors.dates?.endsAt?.message}
                         </p>
                       </div>
                     )}

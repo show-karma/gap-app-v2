@@ -52,19 +52,22 @@ import { ProjectBlocks } from "./ProjectBlocks";
 const InformationTab: FC = () => {
   const { project } = useProjectStore();
   return (
-    <div id="information-tab" className="flex flex-col gap-6 max-sm:gap-4">
+    <div
+      id="information-tab"
+      className="flex flex-col gap-6 max-sm:gap-4 flex-1 w-full"
+    >
       <ProjectBlocks />
 
       <div className="flex flex-row gap-2 items-start justify-start">
         <Bars4Icon className="w-6 h-6 max-w-6 max-h-[24px] min-w-6 min-h-[24px] text-black dark:text-zinc-100" />
-        <div className="flex flex-col gap-1 justify-start items-start">
+        <div className="flex flex-col gap-1 justify-start items-start flex-1 w-full max-w-full">
           <p className="font-bold leading-normal text-black dark:text-zinc-100">
             Description
           </p>
           <ReadMore
             readLessText="Show less"
             readMoreText="Show more"
-            markdownClass="text-black dark:text-zinc-100 font-normal text-base"
+            markdownClass="text-black dark:text-zinc-100 font-normal text-base w-full max-w-full"
             side="left"
             words={200}
           >

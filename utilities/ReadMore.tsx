@@ -53,7 +53,7 @@ export const ReadMore = ({
   }, [text]);
 
   return (
-    <div className="text w-full">
+    <div className="w-full max-w-full">
       {isReadMore ? (
         <MarkdownPreview
           className={markdownClass}

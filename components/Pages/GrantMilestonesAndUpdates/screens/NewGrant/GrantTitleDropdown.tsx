@@ -7,19 +7,13 @@ import {
   CommandInput,
   CommandItem,
 } from "cmdk";
-import { CheckIcon, ChevronUpDownIcon } from "@heroicons/react/24/solid";
+import { CheckIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
 import { cn } from "@/utilities/tailwind";
-import { ChevronDown } from "@/components/Icons/ChevronDown";
 import pluralize from "pluralize";
-import Image from "next/image";
 import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import { useAccount } from "wagmi";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
-import { errorManager } from "@/components/Utilities/errorManager";
+import { ChevronDownIcon } from "@heroicons/react/24/solid";
 
 export const GrantTitleDropdown: FC<{
   setValue: (
@@ -119,7 +113,7 @@ export const GrantTitleDropdown: FC<{
           buttonClassname
         )}
       >
-        <div className="flex flex-row gap-4 w-full justify-between">
+        <div className="flex flex-row gap-4 w-full justify-between items-center">
           <p className="block w-max">
             {selectedProgram?.metadata?.title
               ? selectedProgram.metadata.title
@@ -127,9 +121,7 @@ export const GrantTitleDropdown: FC<{
               ? grantToEdit?.details?.data?.title
               : `${prefixUnselected} ${type}`}
           </p>
-          <span>
-            <ChevronDown className="h-5 w-5 text-black dark:text-white" />
-          </span>
+          <ChevronDownIcon className="h-4 w-4" />
         </div>
       </Popover.Trigger>
       <Popover.Content
