@@ -85,7 +85,7 @@ export const FilteredOutputsAndOutcomes = ({
 
   // Use React Query for fetching impact answers
   const { data: impactAnswers = [], isLoading } = useQuery({
-    queryKey: ["impactAnswers", project?.uid, indicatorIds, indicatorNames],
+    queryKey: ["impactAnswers", project?.uid],
     queryFn: async () => {
       if (!project?.uid) return [];
       const data = await getImpactAnswers(project.uid as string);
