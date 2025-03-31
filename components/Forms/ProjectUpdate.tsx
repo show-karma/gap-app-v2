@@ -579,8 +579,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                     shareButtonText: "Share Your Activity on X",
                     shareText: SHARE_TEXTS.PROJECT_ACTIVITY(
                       project?.details?.data?.title as string,
-                      project?.uid as string,
-                      projectUpdate.uid
+                      project?.uid as string
                     ),
                   });
                 }

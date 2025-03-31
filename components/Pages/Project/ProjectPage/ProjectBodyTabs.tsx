@@ -358,8 +358,7 @@ const UpdateBlock = ({
   const shareDictionary = {
     ProjectUpdate: SHARE_TEXTS.PROJECT_ACTIVITY(
       project?.details?.data?.title as string,
-      project?.uid as string,
-      update.uid
+      project?.uid as string
     ),
     GrantUpdate: SHARE_TEXTS.GRANT_UPDATE(
       project?.details?.data?.title as string,
