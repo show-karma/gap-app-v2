@@ -4,21 +4,19 @@ import { XMarkIcon } from "@heroicons/react/24/solid";
 import JSConfetti from "js-confetti";
 import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { useProjectStore } from "@/store";
+import { useShareDialogStore } from "@/store/modals/shareDialog";
+import { shareOnX } from "@/utilities/share/shareOnX";
 
-interface ShareDialogProps {
-  isOpen: boolean;
-  closeDialog: () => void;
-  milestoneName: string;
-  milestoneRefUID: string;
-}
+export const ShareDialog: FC = () => {
+  const {
+    isOpen,
+    modalShareText,
+    shareButtonText,
+    shareText,
+    modalShareSecondText,
+    closeShareDialog,
+  } = useShareDialogStore();
 
-export const ShareDialog: FC<ShareDialogProps> = ({
-  isOpen,
-  closeDialog,
-  milestoneName,
-  milestoneRefUID,
-}) => {
   useEffect(() => {
     if (isOpen) {
       const jsConfetti = new JSConfetti();
@@ -29,28 +27,12 @@ export const ShareDialog: FC<ShareDialogProps> = ({
       });
     }
   }, [isOpen]);
-  const project = useProjectStore((state) => state.project);
-  const grant = project?.grants.find(
-    (item) => item.uid.toLowerCase() === milestoneRefUID.toLowerCase()
-  );
 
-  // 🚀 Just hit a major milestone of my grant from <Grant Name>!
-  // Check out my progress on @karmahq_ GAP and see how we’re advancing: [Link to Grant Milestone Page].
-  // Your thoughts and feedback are invaluable—let me know what you think!
-
-  const encoded = `🚀 Just hit a major milestone of my grant from ${
-    grant?.details?.data?.title
-  }!\nCheck out my progress on @karmahq_ GAP and and see how we’re advancing: https://gap.karmahq.xyz/project/${
-    (project?.details?.data?.slug || project?.uid) as string
-  }/funding?grantId=${
-    grant?.uid
-  }&tab=milestones-and-updates\nYour thoughts and feedback are invaluable—let me know what you think!`;
-  const twitterURL = `https://x.com/intent/post?text=`;
-  const shareURI = twitterURL + encodeURIComponent(encoded);
+  const shareURI = shareOnX(shareText);
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="relative z-10" onClose={closeDialog}>
+      <Dialog as="div" className="relative z-10" onClose={closeShareDialog}>
         <Transition.Child
           as={Fragment}
           enter="ease-out duration-300"
@@ -77,7 +59,7 @@ export const ShareDialog: FC<ShareDialogProps> = ({
               <Dialog.Panel className="w-full max-w-4xl h-max transform overflow-hidden rounded-2xl dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
                 <button
                   className="p-2 text-black dark:text-white absolute top-4 right-4"
-                  onClick={() => closeDialog()}
+                  onClick={closeShareDialog}
                 >
                   <XMarkIcon className="w-6 h-6" />
                 </button>
@@ -85,17 +67,14 @@ export const ShareDialog: FC<ShareDialogProps> = ({
                   <h2 className="text-[40px] font-bold font-body">🎉</h2>
                   <div className="flex flex-col gap-0 justify-center items-center">
                     <h1 className="text-brand-darkblue dark:text-zinc-100 font-bold text-xl">
-                      Congratulations on completing {milestoneName}!
+                      {modalShareText}
                     </h1>
                     <p className="text-brand-darkblue dark:text-zinc-100 font-normal text-base">
-                      {`We're thrilled to celebrate this achievement with you.
-                      Your dedication and hard work have paid off, and we
-                      couldn't be prouder of your progress. Keep up the
-                      fantastic work!`}
+                      {modalShareSecondText}
                     </p>
                     <ExternalLink href={shareURI}>
                       <Button className="px-5 py-3 text-white bg-[#155EEF] dark:bg-[#155EEF] text-sm font-semibold mt-5">
-                        Share Your Success on X
+                        {shareButtonText || "Share Your Success on X"}
                       </Button>
                     </ExternalLink>
                   </div>

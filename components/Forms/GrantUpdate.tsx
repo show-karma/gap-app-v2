@@ -26,6 +26,8 @@ import { useGrantStore } from "@/store/grant";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useShareDialogStore } from "@/store/modals/shareDialog";
+import { SHARE_TEXTS } from "@/utilities/share/text";
 
 const updateSchema = z.object({
   title: z
@@ -109,6 +111,8 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
 
   const { gap } = useGap();
 
+  const { openShareDialog } = useShareDialogStore();
+
   const router = useRouter();
 
   const createGrantUpdate = async (
@@ -183,6 +187,16 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
                       "milestones-and-updates"
                     )
                   );
+                  openShareDialog({
+                    modalShareText: `Congratulations posting your update for ${grant.details?.data?.title}!`,
+                    shareButtonText: "Share Your Update on X",
+                    shareText: SHARE_TEXTS.GRANT_UPDATE(
+                      grant.details?.data?.title as string,
+                      project.uid,
+                      grantToUpdate.uid
+                    ),
+                  });
+
                   router.refresh();
                 }
                 retries -= 1;

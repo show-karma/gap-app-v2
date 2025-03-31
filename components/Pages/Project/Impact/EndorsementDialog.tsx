@@ -23,6 +23,8 @@ import { INDEXER } from "@/utilities/indexer";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { toast } from "react-hot-toast";
+import { useShareDialogStore } from "@/store/modals/shareDialog";
+import { SHARE_TEXTS } from "@/utilities/share/text";
 
 type EndorsementDialogProps = {};
 
@@ -45,6 +47,8 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
   }
 
   const { changeStepperStep, setIsStepper } = useStepper();
+
+  const { openShareDialog } = useShareDialogStore();
 
   const handleFunction = async () => {
     let gapClient = gap;
@@ -104,6 +108,15 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
                   (project.details?.data?.slug || project?.uid) as string
                 )
               );
+              openShareDialog({
+                modalShareText: `Congratulations endorsing ${project?.details?.data?.title}!`,
+                shareButtonText: "Share Your Endorsement on X",
+                shareText: SHARE_TEXTS.PROJECT_ENDORSEMENT(
+                  project?.details?.data?.title as string,
+                  project?.uid as string
+                ),
+                modalShareSecondText: " ",
+              });
               router.refresh();
             }
             retries -= 1;

@@ -51,6 +51,8 @@ import Link from "next/link";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { ExternalLink } from "../Utilities/ExternalLink";
 import { DatePicker } from "@/components/Utilities/DatePicker";
+import { useShareDialogStore } from "@/store/modals/shareDialog";
+import { SHARE_TEXTS } from "@/utilities/share/text";
 
 interface GrantOption {
   title: string;
@@ -432,6 +434,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
   const { changeStepperStep, setIsStepper } = useStepper();
 
+  const { openShareDialog } = useShareDialogStore();
+
   const { gap } = useGap();
 
   const indicatorsList = outputs.map((output) => ({
@@ -570,6 +574,15 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                   afterSubmit?.();
                   router.push(PAGES.PROJECT.UPDATES(projectSlug || projectUid));
                   router.refresh();
+                  openShareDialog({
+                    modalShareText: `Congratulations posting your activity for ${project?.details?.data?.title}!`,
+                    shareButtonText: "Share Your Activity on X",
+                    shareText: SHARE_TEXTS.PROJECT_ACTIVITY(
+                      project?.details?.data?.title as string,
+                      project?.uid as string,
+                      projectUpdate.uid
+                    ),
+                  });
                 }
                 retries -= 1;
                 await new Promise((resolve) => setTimeout(resolve, 1500));
