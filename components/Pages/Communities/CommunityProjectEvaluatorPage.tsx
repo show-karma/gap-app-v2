@@ -115,7 +115,7 @@ interface ProjectInProgram {
 }
 
 // Update the Project interface to use the new type
-type Project = ProjectInProgram;
+export type Project = ProjectInProgram;
 
 const cardColors = [
   "#5FE9D0",
@@ -802,6 +802,7 @@ function ChatScreen({
   const chatScreenRef = useRef<HTMLDivElement>(null);
   const chatHook = useChat({
     body: {
+      projects: projects,
       projectsInProgram: projects.map((project) => ({
         uid: project.projectUID,
         projectTitle: project.projectDetails.data?.title,
