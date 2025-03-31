@@ -41,7 +41,7 @@ export const ProjectActivityBlock = ({
     isConnected && (isProjectOwner || isContractOwner || isCommunityAdmin);
   const { data: impactAnswers = [], isLoading: isLoadingImpactAnswers } =
     useQuery({
-      queryKey: ["impactAnswers", project?.uid, indicatorIds, indicatorNames],
+      queryKey: ["impactAnswers", project?.uid],
       queryFn: async () => {
         if (!project?.uid) return [];
         const data = await getImpactAnswers(project?.uid as string);
