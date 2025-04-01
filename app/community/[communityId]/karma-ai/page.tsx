@@ -89,7 +89,7 @@ export async function generateMetadata({
 
 export default function ProjectsEvaluatorPage() {
   return (
-    <div className="flex flex-col gap-5">
+    <div className="flex flex-col gap-5 h-full">
       <CommunityProjectEvaluatorPage />
     </div>
   );
