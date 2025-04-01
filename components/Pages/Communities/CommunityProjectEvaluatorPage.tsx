@@ -671,23 +671,23 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
   return (
     <ExternalLink
       href={PAGES.PROJECT.OVERVIEW(project?.projectUID)}
-      className="flex-shrink-0 w-full flex flex-row items-center gap-3 max-w-full bg-white dark:bg-zinc-900 p-3 relative"
+      className="w-full flex-1 flex flex-row items-center gap-3 max-w-full bg-white dark:bg-zinc-900 p-3 relative"
     >
       <div
         className="absolute left-3 top-3 bottom-3 w-1 rounded-full"
         style={{ background: cardColor }}
       />
-      <div className="flex flex-col flex-1 gap-3 pl-4">
-        <div className="w-full flex flex-col gap-1">
+      <div className="flex flex-col w-full flex-1 gap-3 pl-4">
+        <div className="w-full flex flex-1 flex-col gap-1">
           <div className="flex w-full flex-col px-3">
             <p className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200 max-2xl:text-sm mr-1">
-              {project.projectDetails.data?.title}
+              {project.projectDetails.data?.title?.slice(0, 200)}
             </p>
 
             <div className="flex flex-col gap-1 flex-1 h-[64px] w-full max-w-full">
               <div className="line-clamp-2 w-full break-normal text-sm font-normal text-black dark:text-zinc-100 max-2xl:text-sm">
                 {sanitizeMarkdown(
-                  project.projectDetails.data?.description || ""
+                  project.projectDetails.data?.description?.slice(0, 200) || ""
                 )}
               </div>
             </div>
@@ -740,7 +740,7 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
           </div>
         </div>
       </div>
-      <div className="px-2">
+      <div className="px-2 w-max">
         <button
           className="hover:text-gray-300 dark:hover:text-zinc-300 rounded-full transition-colors"
           aria-label={`Ask about ${project.projectDetails.data?.title}`}
