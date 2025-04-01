@@ -42,7 +42,7 @@ export default async function RootLayout({
             <StepperDialog />
             <ProgressBarWrapper />
             <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">
-              <div>
+              <div className="flex flex-col w-full h-full">
                 <div className="fixed w-full bg-white dark:bg-black z-10">
                   <Header />
                 </div>

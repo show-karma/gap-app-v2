@@ -1026,81 +1026,89 @@ export const CommunityProjectEvaluatorPage = () => {
   };
 
   return (
-    <div className="flex flex-col w-full h-screen">
+    <div className="flex flex-col w-full h-full min-h-screen">
       {!selectedProgram ? (
-        <div className="flex flex-col items-center justify-center h-full bg-gray-50 dark:bg-zinc-900 p-4">
-          <div className="flex flex-col items-center justify-center gap-2">
-            <Image
-              src="/logo/karma-gap-logo.png"
-              width={80}
-              height={80}
-              alt="Karma AI Logo"
-              className={`text-sm font-medium mb-1 text-primary-600`}
-              quality={100}
-            />
-            <div className="flex flex-col items-center justify-center gap-0">
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 text-center">
-                Karma AI
-              </h1>
-              <p className="text-lg text-gray-600 dark:text-zinc-400 text-center mb-4">
-                Your AI companion for smarter project evaluation
-              </p>
-            </div>
-          </div>
-          <div className="w-1/2 mt-4">
-            {isLoading ? (
-              <div className="flex items-center justify-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-700"></div>
-              </div>
-            ) : (
-              <div className="w-full flex flex-col justify-center items-center">
-                <SearchDropdown
-                  onSelectFunction={(value) => {
-                    const program = programs.find(
-                      (p: Program) => p.name === value
-                    );
-                    if (program) {
-                      handleProgramSelect(program);
-                    }
-                  }}
-                  selected={
-                    selectedProgram ? [(selectedProgram as Program).name] : []
-                  }
-                  list={
-                    programs.length > 0
-                      ? programs.map((p: Program) => p.name)
-                      : []
-                  }
-                  type="program"
-                  prefixUnselected="Select a "
-                  buttonClassname="w-full max-w-[684px]"
-                  canSearch={true}
-                  shouldSort={true}
-                  placeholderText="Search and select a program"
-                  leftIcon={
-                    <Image
-                      src="/logo/karma-gap-logo-purple.svg"
-                      width={24}
-                      height={24}
-                      alt="Karma AI Logo"
-                    />
-                  }
-                  paragraphClassname="text-[16px] text-gray-600 dark:text-zinc-400"
-                  rightIcon={
-                    <MagnifyingGlassIcon className="h-5 w-5 text-black dark:text-white" />
-                  }
+        <div className="flex flex-col w-full h-flex flex-1 bg-gray-50 dark:bg-zinc-900 p-4">
+          <div className="flex flex-col w-full py-24 h-max max-sm:py-8">
+            <div className="flex flex-col items-center justify-center flex-1 h-full ">
+              <div className="flex flex-col items-center justify-center gap-2">
+                <Image
+                  src="/logo/karma-gap-logo.png"
+                  width={80}
+                  height={80}
+                  alt="Karma AI Logo"
+                  className={`text-sm font-medium mb-1 text-primary-600`}
+                  quality={100}
                 />
+                <div className="flex flex-col items-center justify-center gap-0">
+                  <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2 text-center">
+                    Karma AI
+                  </h1>
+                  <p className="text-lg text-gray-600 dark:text-zinc-400 text-center mb-4">
+                    Your AI companion for smarter project evaluation
+                  </p>
+                </div>
               </div>
-            )}
+              <div className="w-1/2 mt-4">
+                {isLoading ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-700"></div>
+                  </div>
+                ) : (
+                  <div className="w-full flex flex-col justify-center items-center">
+                    <SearchDropdown
+                      onSelectFunction={(value) => {
+                        const program = programs.find(
+                          (p: Program) => p.name === value
+                        );
+                        if (program) {
+                          handleProgramSelect(program);
+                        }
+                      }}
+                      selected={
+                        selectedProgram
+                          ? [(selectedProgram as Program).name]
+                          : []
+                      }
+                      list={
+                        programs.length > 0
+                          ? programs.map((p: Program) => p.name)
+                          : []
+                      }
+                      type="program"
+                      prefixUnselected="Select a "
+                      buttonClassname="w-full max-w-[684px]"
+                      canSearch={true}
+                      shouldSort={true}
+                      placeholderText="Search and select a program"
+                      leftIcon={
+                        <Image
+                          src="/logo/karma-gap-logo-purple.svg"
+                          width={24}
+                          height={24}
+                          alt="Karma AI Logo"
+                        />
+                      }
+                      paragraphClassname="text-[16px] text-gray-600 dark:text-zinc-400"
+                      rightIcon={
+                        <MagnifyingGlassIcon className="h-5 w-5 text-black dark:text-white" />
+                      }
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       ) : (
-        <ChatScreen
-          projects={projects}
-          isLoadingProjects={isLoadingProjects}
-          selectedProgram={selectedProgram}
-          setSelectedProgram={setSelectedProgram}
-        />
+        <div className="flex flex-col w-full h-screen">
+          <ChatScreen
+            projects={projects}
+            isLoadingProjects={isLoadingProjects}
+            selectedProgram={selectedProgram}
+            setSelectedProgram={setSelectedProgram}
+          />
+        </div>
       )}
     </div>
   );
