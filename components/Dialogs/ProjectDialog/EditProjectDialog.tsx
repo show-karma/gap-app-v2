@@ -561,6 +561,49 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
         demoVideo: data.demoVideo,
         farcaster: data.farcaster,
       };
+
+      if (
+        data.github &&
+        !(projectToUpdate as any).external?.github?.includes(data.github)
+      ) {
+        const githubFromField = data.github.includes("http")
+          ? data.github
+          : `https://${data.github}`;
+        const repoUrl = new URL(githubFromField);
+        const pathParts = repoUrl.pathname.split("/").filter(Boolean);
+        if (repoUrl.hostname.includes("github.com") && pathParts.length >= 2) {
+          const owner = pathParts[0];
+          const repoName = pathParts[1];
+
+          const response = await fetch(
+            `https://api.github.com/repos/${owner}/${repoName}`
+          );
+
+          if (!response.ok) {
+            throw new Error("Failed to fetch GitHub repository");
+          }
+
+          const repoData = await response.json();
+          if (repoData.private) {
+            throw new Error("GitHub repository is private");
+          }
+
+          const ids = (fetchedProject as any).external?.github || [];
+
+          const [data, error] = await fetchData(
+            INDEXER.PROJECT.EXTERNAL.UPDATE(fetchedProject.uid),
+            "PUT",
+            {
+              target: "github",
+              ids: [...ids, repoUrl.href],
+            }
+          );
+          if (error) {
+            throw new Error("Failed to update GitHub repository");
+          }
+        }
+      }
+
       await updateProject(
         fetchedProject,
         newProjectInfo,
