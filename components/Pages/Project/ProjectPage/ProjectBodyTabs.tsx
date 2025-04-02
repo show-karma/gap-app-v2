@@ -19,6 +19,7 @@ import {
   MapPinIcon,
   PencilIcon,
   PencilSquareIcon,
+  ShareIcon,
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import { Bars4Icon } from "@heroicons/react/24/solid";
@@ -48,6 +49,9 @@ import { retryUntilConditionMet } from "@/utilities/retries";
 import { ProjectActivityBlock } from "./ProjectActivityBlock";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { ProjectBlocks } from "./ProjectBlocks";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { shareOnX } from "@/utilities/share/shareOnX";
+import { SHARE_TEXTS } from "@/utilities/share/text";
 
 const InformationTab: FC = () => {
   const { project } = useProjectStore();
@@ -351,6 +355,18 @@ const UpdateBlock = ({
     ProjectImpact: "IMPACT",
   };
 
+  const shareDictionary = {
+    ProjectUpdate: SHARE_TEXTS.PROJECT_ACTIVITY(
+      project?.details?.data?.title as string,
+      project?.uid as string
+    ),
+    GrantUpdate: SHARE_TEXTS.GRANT_UPDATE(
+      project?.details?.data?.title as string,
+      project?.uid as string,
+      update.uid
+    ),
+  };
+
   return (
     <div className="flex w-full flex-1 flex-col gap-4 rounded-lg  dark:bg-zinc-800 bg-[#F8F9FC] p-4 transition-all duration-200 ease-in-out  max-sm:px-2">
       <div className="flex flex-row items-center justify-between">
@@ -396,6 +412,16 @@ const UpdateBlock = ({
                 Posted on {formatDate(update.createdAt)}
               </p>
             )
+          ) : null}
+          {isAuthorized &&
+          shareDictionary[update.type as keyof typeof shareDictionary] ? (
+            <ExternalLink
+              href={shareOnX(
+                shareDictionary[update.type as keyof typeof shareDictionary]
+              )}
+            >
+              <ShareIcon className="text-gray-900 dark:text-zinc-300 w-5 h-5" />
+            </ExternalLink>
           ) : null}
           {isAuthorized && update.type === "ProjectUpdate" ? (
             <>

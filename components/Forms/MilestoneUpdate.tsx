@@ -29,9 +29,10 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
-import { ShareDialog } from "../Pages/GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/ShareDialog";
 import { errorManager } from "../Utilities/errorManager";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { SHARE_TEXTS } from "@/utilities/share/text";
+import { useShareDialogStore } from "@/store/modals/shareDialog";
 
 interface MilestoneUpdateFormProps {
   milestone: IMilestoneResponse;
@@ -87,7 +88,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   );
   const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { openShareDialog, closeShareDialog } = useShareDialogStore();
   const [noProofCheckbox, setNoProofCheckbox] = useState(false);
   const router = useRouter();
 
@@ -108,15 +109,17 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   });
 
   const openDialog = () => {
-    setIsDialogOpen(true);
+    openShareDialog({
+      modalShareText: `You did it! 🎉 Another milestone down, more impact ahead. Your onchain trail is growing — keep stacking progress.`,
+      modalShareSecondText: ` `,
+      shareText: SHARE_TEXTS.MILESTONE_COMPLETED(
+        grant?.details?.data?.title as string,
+        (project?.details?.data?.slug || project?.uid) as string,
+        grant?.uid as string
+      ),
+    });
   };
 
-  const closeDialog = async () => {
-    setIsDialogOpen(false);
-    await refreshProject();
-    cancelEditing(false);
-    setIsUpdating(false);
-  };
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
   const project = useProjectStore((state) => state.project);
@@ -192,8 +195,10 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                   retries = 0;
                   changeStepperStep("indexed");
                   toast.success(MESSAGES.MILESTONES.COMPLETE.SUCCESS);
-                  closeDialog();
                   afterSubmit?.();
+                  openDialog();
+                  cancelEditing(false);
+                  setIsUpdating(false);
                   router.push(
                     PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
                       fetchedProject?.uid as string,
@@ -306,12 +311,14 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                   retries = 0;
                   changeStepperStep("indexed");
                   toast.success(MESSAGES.MILESTONES.UPDATE_COMPLETION.SUCCESS);
-                  closeDialog();
+                  closeShareDialog();
                   PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
                     fetchedProject?.uid as string,
                     grantInstance.uid,
                     "milestones-and-updates"
                   );
+                  cancelEditing(false);
+                  setIsUpdating(false);
                 }
                 retries -= 1;
                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
@@ -341,16 +348,12 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
     }
   };
 
+  const grant = project?.grants.find(
+    (item) => item.uid.toLowerCase() === milestone.refUID?.toLowerCase()
+  );
+
   return (
     <form className="flex w-full flex-col" onSubmit={handleSubmit(onSubmit)}>
-      {milestone.refUID && isDialogOpen ? (
-        <ShareDialog
-          milestoneName={milestone.data.title}
-          closeDialog={closeDialog}
-          isOpen={isDialogOpen}
-          milestoneRefUID={milestone.refUID as string}
-        />
-      ) : null}
       <div className="flex w-full flex-col items-start gap-2">
         <div
           className="flex w-full flex-col items-start gap-2"
@@ -380,6 +383,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           </p>
           <div className="flex flex-row gap-2 items-center py-2">
             <input
+              id="noProofCheckbox"
               type="checkbox"
               className="rounded-sm w-5 h-5 bg-white fill-black"
               checked={noProofCheckbox}
@@ -390,7 +394,12 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                 });
               }}
             />
-            <p className="text-base text-zinc-900 dark:text-zinc-100">{`I don't have any output to show for this milestone`}</p>
+            <label
+              htmlFor="noProofCheckbox"
+              className="text-base text-zinc-900 dark:text-zinc-100"
+            >
+              {`I don't have any output to show for this milestone`}
+            </label>
           </div>
           <input
             id="proofOfWork-input"

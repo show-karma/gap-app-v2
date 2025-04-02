@@ -15,6 +15,9 @@ import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { shortAddress } from "@/utilities/shortAddress";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { toast } from "react-hot-toast";
+import { useShareDialogStore } from "@/store/modals/shareDialog";
+import { SHARE_TEXTS } from "@/utilities/share/text";
 import { Dialog, Transition } from "@headlessui/react";
 import { Project, ProjectEndorsement } from "@show-karma/karma-gap-sdk";
 import { useRouter } from "next/navigation";
@@ -45,6 +48,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
 
   const { changeStepperStep, setIsStepper } = useStepper();
 
+  const { openShareDialog } = useShareDialogStore();
   const notifyProjectOwner = async (endorsement: ProjectEndorsement) => {
     try {
       if (!contactsInfo?.length || !project) {
@@ -146,6 +150,14 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
                   (project.details?.data?.slug || project?.uid) as string
                 )
               );
+              openShareDialog({
+                modalShareText: `Well played! Project ${project?.details?.data?.title} now has your epic endorsement 🎯🐉!`,
+                shareText: SHARE_TEXTS.PROJECT_ENDORSEMENT(
+                  project?.details?.data?.title as string,
+                  project?.uid as string
+                ),
+                modalShareSecondText: ` `,
+              });
               router.refresh();
             }
             retries -= 1;
