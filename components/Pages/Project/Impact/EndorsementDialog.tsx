@@ -15,7 +15,6 @@ import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { shortAddress } from "@/utilities/shortAddress";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-mport { toast } from "react-hot-toast";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { Dialog, Transition } from "@headlessui/react";
@@ -48,7 +47,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
 
   const { changeStepperStep, setIsStepper } = useStepper();
 
- const { openShareDialog } = useShareDialogStore();
+  const { openShareDialog } = useShareDialogStore();
 
   const notifyProjectOwner = async (endorsement: ProjectEndorsement) => {
     try {
