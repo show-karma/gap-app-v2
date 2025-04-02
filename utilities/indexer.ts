@@ -41,6 +41,10 @@ export const INDEXER = {
     GRANTS_GENIE: (projectId: string) => `/projects/${projectId}/grants-genie`,
     REQUEST_INTRO: (projectIdOrSlug: string) =>
       `/projects/requestintro/${projectIdOrSlug}`,
+    ENDORSEMENT: {
+      NOTIFY: (projectIdOrSlug: string) =>
+        `/projects/${projectIdOrSlug}/endorsements/notify`,
+    },
     ALL_REPORT: (offset: number, limit: number) =>
       `/projects/report?offset=${offset}&limit=${limit}`,
     REVOKE_ATTESTATION: (
