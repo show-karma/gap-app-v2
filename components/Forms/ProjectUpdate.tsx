@@ -575,8 +575,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                   router.push(PAGES.PROJECT.UPDATES(projectSlug || projectUid));
                   router.refresh();
                   openShareDialog({
-                    modalShareText: `Congratulations posting your activity for ${project?.details?.data?.title}!`,
-                    shareButtonText: "Share Your Activity on X",
+                    modalShareText: `🎉 You just dropped an update for ${project?.details?.data?.title}!`,
+                    modalShareSecondText: `That’s how progress gets done! Your update is now live onchain—one step closer to greatness. Keep the vibes high and the milestones rolling! 🚀🔥`,
                     shareText: SHARE_TEXTS.PROJECT_ACTIVITY(
                       project?.details?.data?.title as string,
                       project?.uid as string

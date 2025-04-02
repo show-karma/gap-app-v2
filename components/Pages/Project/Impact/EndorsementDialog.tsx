@@ -151,13 +151,12 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
                 )
               );
               openShareDialog({
-                modalShareText: `Congratulations endorsing ${project?.details?.data?.title}!`,
-                shareButtonText: "Share Your Endorsement on X",
+                modalShareText: `Well played! Project ${project?.details?.data?.title} now has your epic endorsement 🎯🐉!`,
                 shareText: SHARE_TEXTS.PROJECT_ENDORSEMENT(
                   project?.details?.data?.title as string,
                   project?.uid as string
                 ),
-                modalShareSecondText: " ",
+                modalShareSecondText: ` `,
               });
               router.refresh();
             }

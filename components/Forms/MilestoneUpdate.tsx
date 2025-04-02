@@ -110,7 +110,8 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
 
   const openDialog = () => {
     openShareDialog({
-      modalShareText: `Congratulations on completing ${milestone.data.title}!`,
+      modalShareText: `You did it! 🎉 Another milestone down, more impact ahead. Your onchain trail is growing — keep stacking progress.`,
+      modalShareSecondText: ` `,
       shareText: SHARE_TEXTS.MILESTONE_COMPLETED(
         grant?.details?.data?.title as string,
         (project?.details?.data?.slug || project?.uid) as string,

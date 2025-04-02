@@ -6,6 +6,7 @@ import { Button } from "@/components/Utilities/Button";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { shareOnX } from "@/utilities/share/shareOnX";
+import { TwitterIcon } from "@/components/Icons";
 
 export const ShareDialog: FC = () => {
   const {
@@ -66,15 +67,23 @@ export const ShareDialog: FC = () => {
                 <div className="flex flex-col gap-3 justify-center items-center pt-6 pb-12 px-[80px] bg-[#F5F8FF] rounded dark:bg-zinc-700 mt-8">
                   <h2 className="text-[40px] font-bold font-body">🎉</h2>
                   <div className="flex flex-col gap-0 justify-center items-center">
-                    <h1 className="text-brand-darkblue dark:text-zinc-100 font-bold text-xl">
+                    <h1
+                      className="text-brand-darkblue dark:text-zinc-100 font-bold text-xl"
+                      style={{
+                        textAlign:
+                          modalShareSecondText === " " || !modalShareSecondText
+                            ? "center"
+                            : "left",
+                      }}
+                    >
                       {modalShareText}
                     </h1>
                     <p className="text-brand-darkblue dark:text-zinc-100 font-normal text-base">
                       {modalShareSecondText}
                     </p>
                     <ExternalLink href={shareURI}>
-                      <Button className="px-5 py-3 text-white bg-[#155EEF] dark:bg-[#155EEF] text-sm font-semibold mt-5">
-                        {shareButtonText || "Share Your Success on X"}
+                      <Button className="flex flex-row gap-1 items-center px-5 py-3 text-white bg-[#155EEF] dark:bg-[#155EEF] text-sm font-semibold mt-5">
+                        {"Share on"} <TwitterIcon className="w-5 h-5" />
                       </Button>
                     </ExternalLink>
                   </div>
