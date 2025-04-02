@@ -27,7 +27,7 @@ import { Chain } from "viem";
 import { useAccount } from "wagmi";
 import { OnboardingDialog } from "../Dialogs/OnboardingDialog";
 import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
-import { DiscordIcon, TelegramIcon, TwitterIcon } from "../Icons";
+import { DiscordIcon, LogOutIcon, TelegramIcon, TwitterIcon } from "../Icons";
 import { Searchbar } from "../Searchbar";
 import { Button } from "./Button";
 import { errorManager } from "./errorManager";
@@ -370,19 +370,35 @@ export default function Header() {
                                         }
 
                                         return (
-                                          <Button
-                                            onClick={async () => {
-                                              disconnect();
-                                            }}
-                                            className="flex w-full py-1 justify-center items-center flex-row gap-2 rounded-full bg-gray-500 text-sm font-semibold text-white  hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-                                          >
-                                            {account.displayName}
+                                          <Popover.Root>
+                                            <Popover.Trigger asChild>
+                                              <div className="cursor-pointer flex w-full py-1 justify-center items-center flex-row gap-2 rounded-full bg-gray-500 text-sm font-semibold text-white  hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
+                                                {account.displayName}
 
-                                            <EthereumAddressToENSAvatar
-                                              address={account.address}
-                                              className="h-8 w-8 min-h-8 min-w-8 rounded-full"
-                                            />
-                                          </Button>
+                                                <EthereumAddressToENSAvatar
+                                                  address={account.address}
+                                                  className="h-8 w-8 min-h-8 min-w-8 rounded-full"
+                                                />
+                                              </div>
+                                            </Popover.Trigger>
+                                            <Popover.Content
+                                              className="z-50 w-48 rounded-md bg-white p-1 shadow-lg dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"
+                                              sideOffset={5}
+                                              align="center"
+                                            >
+                                              <div className="py-1">
+                                                <button
+                                                  onClick={async () => {
+                                                    disconnect();
+                                                  }}
+                                                  className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                                                >
+                                                  <LogOutIcon className="mr-2 h-4 w-4" />
+                                                  Logout
+                                                </button>
+                                              </div>
+                                            </Popover.Content>
+                                          </Popover.Root>
                                         );
                                       })()}
                                     </div>
@@ -506,19 +522,35 @@ export default function Header() {
                             }
 
                             return (
-                              <Button
-                                onClick={async () => {
-                                  disconnect();
-                                }}
-                                className="flex w-max items-center flex-row gap-2 rounded-full bg-gray-500 p-0 pl-3 text-sm font-semibold text-white hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-                              >
-                                {account.displayName}
+                              <Popover.Root>
+                                <Popover.Trigger asChild>
+                                  <div className="flex cursor-pointer w-max items-center flex-row gap-2 rounded-full bg-gray-500 p-0 pl-3 text-sm font-semibold text-white hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
+                                    {account.displayName}
 
-                                <EthereumAddressToENSAvatar
-                                  address={account.address}
-                                  className="h-10 w-10 rounded-full"
-                                />
-                              </Button>
+                                    <EthereumAddressToENSAvatar
+                                      address={account.address}
+                                      className="h-10 w-10 rounded-full"
+                                    />
+                                  </div>
+                                </Popover.Trigger>
+                                <Popover.Content
+                                  className="z-50 w-48 rounded-md bg-white p-1 shadow-lg dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"
+                                  sideOffset={5}
+                                  align="end"
+                                >
+                                  <div className="py-1">
+                                    <button
+                                      onClick={async () => {
+                                        disconnect();
+                                      }}
+                                      className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                                    >
+                                      <LogOutIcon className="mr-2 h-4 w-4" />
+                                      Logout
+                                    </button>
+                                  </div>
+                                </Popover.Content>
+                              </Popover.Root>
                             );
                           })()}
                         </div>

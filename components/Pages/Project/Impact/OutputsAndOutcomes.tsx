@@ -19,6 +19,8 @@ import { prepareChartData } from "../../Communities/Impact/ImpactCharts";
 import { GrantsOutputsLoading } from "../Loading/Grants/Outputs";
 import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
 import { sendImpactAnswers, getImpactAnswers } from "@/utilities/impact";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { linkName, mapLinks } from "./utils/links";
 
 // Helper function to handle comma-separated URLs
 const parseProofUrls = (proof: string): string[] => {
@@ -335,6 +337,10 @@ export const OutputsAndOutcomes = () => {
               (output) => output.proof && urlRegex.test(output.proof)
             );
 
+            const links = mapLinks(
+              outputsWithProof?.map((output) => output.proof) || []
+            );
+
             return (
               <div
                 key={item.id}
@@ -363,9 +369,102 @@ export const OutputsAndOutcomes = () => {
                         </span>
                       )}
                     </div>
+                    <div className="flex flex-row gap-2 items-center flex-wrap">
+                      {links.map((link, index) => (
+                        <ExternalLink
+                          key={index}
+                          href={link as string}
+                          className="text-sm text-gray-500 dark:text-zinc-400 underline truncate"
+                        >
+                          {linkName(link as string)}
+                        </ExternalLink>
+                      ))}
+                    </div>
                   </div>
                 </div>
                 <div className="flex flex-row gap-4 max-md:flex-col-reverse">
+                  <div className="flex flex-1 flex-col gap-5">
+                    {item.datapoints?.length > 1 && (
+                      <Card className="bg-white dark:bg-zinc-800 rounded">
+                        <Title className="text-sm font-medium text-gray-700 dark:text-zinc-300 mb-4">
+                          Historical Values
+                        </Title>
+                        <div className="relative">
+                          <AreaChart
+                            className="h-48 mt-4"
+                            data={prepareChartData(
+                              item.datapoints.map((datapoint) =>
+                                Number(datapoint.value)
+                              ),
+                              item.datapoints.map(
+                                (datapoint) =>
+                                  datapoint.endDate || new Date().toISOString()
+                              ),
+                              item.name,
+                              undefined,
+                              item.datapoints.map(
+                                (datapoint) => datapoint.proof
+                              )
+                            )}
+                            index="date"
+                            categories={[item.name]}
+                            colors={["blue"]}
+                            valueFormatter={(value) => `${value}`}
+                            showLegend={false}
+                            noDataText="Awaiting grantees to submit values"
+                            onValueChange={(v) => {
+                              if (!v) {
+                                console.log(
+                                  "No value received from chart click"
+                                );
+                                return;
+                              }
+                              console.log("Chart click data:", v);
+
+                              const selectedItem = filteredOutputs.find(
+                                (i) => i.id === item.id
+                              );
+                              if (!selectedItem) {
+                                console.log("Could not find matching item");
+                                return;
+                              }
+
+                              // Find the exact datapoint that matches this date and value
+                              const exactDatapoint = item.datapoints.find(
+                                (dp) => {
+                                  const dpDate = formatDate(
+                                    new Date(
+                                      dp.endDate || new Date().toISOString()
+                                    ),
+                                    "UTC"
+                                  );
+                                  return (
+                                    dpDate === v.date &&
+                                    Number(dp.value) ===
+                                      Number(v[selectedItem.name])
+                                  );
+                                }
+                              );
+
+                              console.log(
+                                "Found matching datapoint:",
+                                exactDatapoint
+                              );
+
+                              setSelectedPoint({
+                                itemId: item.id,
+                                data: {
+                                  value: v[selectedItem.name],
+                                  date: v.date,
+                                  proof: exactDatapoint?.proof || v.proof,
+                                },
+                              });
+                            }}
+                          />
+                        </div>
+                      </Card>
+                    )}
+                  </div>
                   <div className="flex flex-1">
                     <div className="w-full">
                       <div className="flex flex-col">
@@ -374,7 +473,6 @@ export const OutputsAndOutcomes = () => {
                             (i) => i.name === item.name
                           );
                           const displayTable =
-                            (isAutosynced && item.datapoints.length < 5) ||
                             (!isAutosynced && item.hasData) ||
                             (!isAutosynced && form?.isEditing);
                           return displayTable;
@@ -647,88 +745,6 @@ export const OutputsAndOutcomes = () => {
                         )}
                       </div>
                     </div>
-                  </div>
-                  <div className="flex flex-1 flex-col gap-5">
-                    {item.datapoints?.length > 1 && (
-                      <Card className="bg-white dark:bg-zinc-800 rounded">
-                        <Title className="text-sm font-medium text-gray-700 dark:text-zinc-300 mb-4">
-                          Historical Values
-                        </Title>
-                        <div className="relative">
-                          <AreaChart
-                            className="h-48 mt-4"
-                            data={prepareChartData(
-                              item.datapoints.map((datapoint) =>
-                                Number(datapoint.value)
-                              ),
-                              item.datapoints.map(
-                                (datapoint) =>
-                                  datapoint.endDate || new Date().toISOString()
-                              ),
-                              item.name,
-                              undefined,
-                              item.datapoints.map(
-                                (datapoint) => datapoint.proof
-                              )
-                            )}
-                            index="date"
-                            categories={[item.name]}
-                            colors={["blue"]}
-                            valueFormatter={(value) => `${value}`}
-                            showLegend={false}
-                            noDataText="Awaiting grantees to submit values"
-                            onValueChange={(v) => {
-                              if (!v) {
-                                console.log(
-                                  "No value received from chart click"
-                                );
-                                return;
-                              }
-                              console.log("Chart click data:", v);
-
-                              const selectedItem = filteredOutputs.find(
-                                (i) => i.id === item.id
-                              );
-                              if (!selectedItem) {
-                                console.log("Could not find matching item");
-                                return;
-                              }
-
-                              // Find the exact datapoint that matches this date and value
-                              const exactDatapoint = item.datapoints.find(
-                                (dp) => {
-                                  const dpDate = formatDate(
-                                    new Date(
-                                      dp.endDate || new Date().toISOString()
-                                    ),
-                                    "UTC"
-                                  );
-                                  return (
-                                    dpDate === v.date &&
-                                    Number(dp.value) ===
-                                      Number(v[selectedItem.name])
-                                  );
-                                }
-                              );
-
-                              console.log(
-                                "Found matching datapoint:",
-                                exactDatapoint
-                              );
-
-                              setSelectedPoint({
-                                itemId: item.id,
-                                data: {
-                                  value: v[selectedItem.name],
-                                  date: v.date,
-                                  proof: exactDatapoint?.proof || v.proof,
-                                },
-                              });
-                            }}
-                          />
-                        </div>
-                      </Card>
-                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-4 w-full justify-end">

@@ -526,6 +526,48 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               : gapClient.fetch.projectById(project.uid as Hex)
             ).catch(() => null);
             if (fetchedProject?.uid && fetchedProject.uid !== zeroHash) {
+              if (data.github) {
+                const githubFromField = data.github.includes("http")
+                  ? data.github
+                  : `https://${data.github}`;
+                const repoUrl = new URL(githubFromField);
+                const pathParts = repoUrl.pathname.split("/").filter(Boolean);
+                if (
+                  repoUrl.hostname.includes("github.com") &&
+                  pathParts.length >= 2
+                ) {
+                  const owner = pathParts[0];
+                  const repoName = pathParts[1];
+
+                  const response = await fetch(
+                    `https://api.github.com/repos/${owner}/${repoName}`
+                  );
+
+                  if (!response.ok) {
+                    toast.error("Failed to fetch GitHub repository");
+                    throw new Error("Failed to fetch GitHub repository");
+                  }
+
+                  const repoData = await response.json();
+                  if (repoData.private) {
+                    toast.error("GitHub repository is private");
+                    throw new Error("GitHub repository is private");
+                  }
+
+                  const [data, error] = await fetchData(
+                    INDEXER.PROJECT.EXTERNAL.UPDATE(fetchedProject.uid),
+                    "PUT",
+                    {
+                      target: "github",
+                      ids: [repoUrl.href],
+                    }
+                  );
+                  if (error) {
+                    toast.error("Failed to update GitHub repository");
+                    throw new Error("Failed to update GitHub repository");
+                  }
+                }
+              }
               await fetchData(
                 INDEXER.SUBSCRIPTION.CREATE(fetchedProject.uid),
                 "POST",
