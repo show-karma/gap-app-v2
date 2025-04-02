@@ -1,28 +1,26 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { FC, Fragment, useState } from "react";
-import { Dialog, Transition } from "@headlessui/react";
 import { Button } from "@/components/Utilities/Button";
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { useProjectStore } from "@/store";
-import { shortAddress } from "@/utilities/shortAddress";
-import { getWalletClient } from "@wagmi/core";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { Project, ProjectEndorsement } from "@show-karma/karma-gap-sdk";
-import { useAccount, useSwitchChain } from "wagmi";
-import { getGapClient, useGap } from "@/hooks";
-import { useRouter } from "next/navigation";
-import { PAGES } from "@/utilities/pages";
-import { useStepper } from "@/store/modals/txStepper";
-import { Hex } from "viem";
-import { config } from "@/utilities/wagmi/config";
-import { useEndorsementStore } from "@/store/modals/endorsement";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { getGapClient, useGap } from "@/hooks";
+import { useContactInfo } from "@/hooks/useContactInfo";
+import { useProjectStore } from "@/store";
+import { useEndorsementStore } from "@/store/modals/endorsement";
+import { useStepper } from "@/store/modals/txStepper";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
+import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
+import { shortAddress } from "@/utilities/shortAddress";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { toast } from "react-hot-toast";
+import { Dialog, Transition } from "@headlessui/react";
+import { Project, ProjectEndorsement } from "@show-karma/karma-gap-sdk";
+import { useRouter } from "next/navigation";
+import { FC, Fragment, useState } from "react";
+import { Hex } from "viem";
+import { useAccount, useSwitchChain } from "wagmi";
 
 type EndorsementDialogProps = {};
 
@@ -39,12 +37,53 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
   const { address } = useAccount();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();
+  const { data: contactsInfo } = useContactInfo(project?.uid, true);
 
   function closeModal() {
     setIsOpen(false);
   }
 
   const { changeStepperStep, setIsStepper } = useStepper();
+
+  const notifyProjectOwner = async (endorsement: ProjectEndorsement) => {
+    try {
+      if (!contactsInfo?.length || !project) {
+        return;
+      }
+
+      for (const contact of contactsInfo) {
+        if (!contact.email) {
+          continue;
+        }
+
+        const [_, error] = await fetchData(
+          INDEXER.PROJECT.ENDORSEMENT.NOTIFY(
+            project.details?.data?.slug || (project.uid as string)
+          ),
+          "POST",
+          {
+            email: contact.email,
+            name: contact.name,
+            endorsementId: endorsement.uid,
+            endorserAddress: address,
+            projectTitle: project.details?.data?.title || project.uid,
+            comment: comment || undefined,
+          }
+        );
+
+        if (error) {
+          console.error(
+            "Failed to send notification to",
+            contact.email,
+            ":",
+            error
+          );
+        }
+      }
+    } catch (error) {
+      console.error("Failed to send endorsement notification:", error);
+    }
+  };
 
   const handleFunction = async () => {
     let gapClient = gap;
@@ -99,6 +138,9 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
             ) {
               retries = 0;
               changeStepperStep("indexed");
+
+              await notifyProjectOwner(endorsement);
+
               router.push(
                 PAGES.PROJECT.OVERVIEW(
                   (project.details?.data?.slug || project?.uid) as string
