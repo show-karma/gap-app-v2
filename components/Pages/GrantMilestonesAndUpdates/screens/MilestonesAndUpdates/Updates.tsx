@@ -13,7 +13,11 @@ import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { ReadMore } from "@/utilities/ReadMore";
-import { PencilSquareIcon, TrashIcon } from "@heroicons/react/24/outline";
+import {
+  PencilSquareIcon,
+  ShareIcon,
+  TrashIcon,
+} from "@heroicons/react/24/outline";
 import {
   IMilestoneCompleted,
   IMilestoneResponse,
@@ -28,6 +32,9 @@ import { VerifyMilestoneUpdateDialog } from "./VerifyMilestoneUpdateDialog";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { retryUntilConditionMet } from "@/utilities/retries";
+import { SHARE_TEXTS } from "@/utilities/share/text";
+import { useShareDialogStore } from "@/store/modals/shareDialog";
+import { shareOnX } from "@/utilities/share/shareOnX";
 
 interface UpdatesProps {
   milestone: IMilestoneResponse;
@@ -183,6 +190,10 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
 
   const isAfterProofLaunch = checkProofLaunch();
 
+  const grant = project?.grants.find(
+    (g) => g.uid.toLowerCase() === milestone.refUID.toLowerCase()
+  );
+
   if (
     !isEditing &&
     (milestone?.completed?.data?.reason?.length ||
@@ -273,6 +284,21 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
               <div className="flex flex-1 flex-row items-center justify-end">
                 {isAuthorized ? (
                   <div className="flex w-max flex-row items-center gap-2">
+                    <ExternalLink
+                      type="button"
+                      className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
+                      href={shareOnX(
+                        SHARE_TEXTS.MILESTONE_COMPLETED(
+                          grant?.details?.data?.title as string,
+                          (project?.details?.data?.slug ||
+                            project?.uid) as string,
+                          grant?.uid as string
+                        )
+                      )}
+                    >
+                      <ShareIcon className="h-5 w-5" />
+                      Share
+                    </ExternalLink>
                     <Button
                       type="button"
                       className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
