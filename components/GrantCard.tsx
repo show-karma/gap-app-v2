@@ -19,7 +19,7 @@ const firstFiveMembers = (members: Grant["members"]) =>
 const restMembersCounter = (members: Grant["members"]) =>
   members?.length ? members.length - 5 : 0;
 
-const pickColor = (index: number) => {
+export const pickColor = (index: number) => {
   const cardColors = [
     "#5FE9D0",
     "#875BF7",
