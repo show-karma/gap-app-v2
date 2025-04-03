@@ -8,6 +8,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import ProjectHeaderLoading from "@/components/Pages/Project/Loading/Header";
+import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 
 export async function generateMetadata({
   params,
@@ -28,7 +29,10 @@ export async function generateMetadata({
   const dynamicMetadata = {
     title: `${projectInfo.details?.data?.title} | Karma GAP`,
     description:
-      projectInfo.details?.data?.description?.substring(0, 160) || "",
+      cleanMarkdownForPlainText(
+        projectInfo.details?.data?.description || "",
+        160
+      ) || "",
   };
 
   const framesAdditionalMetatags = Object.entries(

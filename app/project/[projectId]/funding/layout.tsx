@@ -10,6 +10,7 @@ import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { defaultMetadata } from "@/utilities/meta";
+import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 
 export async function generateMetadata({
   params,
@@ -40,7 +41,10 @@ export async function generateMetadata({
     ...metadata,
     title: `${projectInfo?.details?.data?.title} Grants | Karma GAP`,
     description:
-      projectInfo?.details?.data?.description?.substring(0, 80) || "",
+      cleanMarkdownForPlainText(
+        projectInfo?.details?.data?.description || "",
+        80
+      ) || "",
   };
 
   return {

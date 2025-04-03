@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
 import pluralize from "pluralize";
@@ -26,11 +27,10 @@ export async function GET(
       ? project?.details?.data.title.substring(0, 30) + "..."
       : project?.details?.data.title;
 
-  const description =
-    project?.details?.data.description &&
-    project?.details?.data.description?.length > 200
-      ? project?.details?.data.description.substring(0, 200) + "..."
-      : project?.details?.data.description;
+  const description = cleanMarkdownForPlainText(
+    project?.details?.data?.description || "",
+    200
+  );
 
   const milestonesCompleted = project.grants.reduce((acc, grant) => {
     return (

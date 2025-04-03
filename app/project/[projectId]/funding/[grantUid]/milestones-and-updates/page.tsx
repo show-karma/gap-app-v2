@@ -7,6 +7,7 @@ import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { Suspense } from "react";
 import { ProjectGrantsMilestonesAndUpdatesLoading } from "@/components/Pages/Project/Loading/Grants/MilestonesAndUpdate";
 import { envVars } from "@/utilities/enviromentVars";
+import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 
 export async function generateMetadata({
   params,
@@ -57,7 +58,10 @@ export async function generateMetadata({
       ...metadata,
       title: `${projectInfo?.details?.data?.title} | Karma GAP`,
       description:
-        projectInfo?.details?.data?.description?.substring(0, 80) || "",
+        cleanMarkdownForPlainText(
+          projectInfo?.details?.data?.description || "",
+          80
+        ) || "",
     };
   }
 
