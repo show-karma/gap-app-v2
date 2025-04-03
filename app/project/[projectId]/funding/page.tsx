@@ -3,6 +3,7 @@ import { ProjectGrantsOverviewLoading } from "@/components/Pages/Project/Loading
 import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 import { defaultMetadata } from "@/utilities/meta";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -51,12 +52,10 @@ export async function generateMetadata({
         overview: {
           title: `${projectInfo?.details?.data?.title} - ${grantInfo?.details?.data?.title} grant overview | Karma GAP`,
           description:
-            `${grantInfo?.details?.data?.description?.slice(0, 160)}${
-              grantInfo?.details?.data?.description &&
-              grantInfo?.details?.data?.description?.length >= 160
-                ? "..."
-                : ""
-            }` || "",
+            `${cleanMarkdownForPlainText(
+              grantInfo?.details?.data?.description || "",
+              160
+            )}` || "",
         },
       };
 
@@ -76,8 +75,10 @@ export async function generateMetadata({
     metadata = {
       ...metadata,
       title: `${projectInfo?.details?.data?.title} | Karma GAP`,
-      description:
-        projectInfo?.details?.data?.description?.substring(0, 80) || "",
+      description: cleanMarkdownForPlainText(
+        projectInfo?.details?.data?.description || "",
+        80
+      ),
     };
   }
 

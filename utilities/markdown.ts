@@ -61,4 +61,97 @@ export function truncateDescription(description: string, maxLength: number) {
   }
 }
 
+/**
+ * Utilities for working with markdown text
+ */
+
+/**
+ * Removes all markdown syntax from a string for use in contexts that don't support markdown
+ * like meta tags, plain text displays, etc.
+ *
+ * @param markdownText - The markdown text to clean
+ * @param maxLength - Optional maximum length for the output text
+ * @returns Plain text with markdown syntax removed
+ */
+export function cleanMarkdownForPlainText(
+  markdownText: string,
+  maxLength?: number
+): string {
+  if (!markdownText) return "";
+
+  let text = markdownText;
+
+  // Remove link syntax but keep the text: [link text](url) -> link text
+  text = text.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+
+  // Remove image syntax: ![alt text](url) -> alt text
+  text = text.replace(/!\[([^\]]+)\]\([^)]+\)/g, "$1");
+
+  // Remove bold and italic syntax
+  text = text.replace(/(\*\*|__)(.*?)\1/g, "$2"); // Bold: **text** or __text__
+  text = text.replace(/(\*|_)(.*?)\1/g, "$2"); // Italic: *text* or _text_
+
+  // Remove code blocks and inline code
+  text = text.replace(/```[\s\S]*?```/g, ""); // Code blocks: ```code```
+  text = text.replace(/`([^`]+)`/g, "$1"); // Inline code: `code`
+
+  // Remove blockquotes
+  text = text.replace(/^>\s+/gm, "");
+
+  // Remove headings
+  text = text.replace(/^#{1,6}\s+/gm, "");
+
+  // Remove horizontal rules
+  text = text.replace(/^(?:[-*_]){3,}$/gm, "");
+
+  // Remove HTML tags
+  text = text.replace(/<[^>]*>/g, "");
+
+  // Handle lists - replace bullet points with a space
+  text = text.replace(/^\s*[-+*]\s+/gm, "");
+  text = text.replace(/^\s*\d+\.\s+/gm, "");
+
+  // Collapse multiple newlines and spaces
+  text = text.replace(/\n{2,}/g, " ");
+  text = text.replace(/\s{2,}/g, " ");
+
+  // Trim any whitespace
+  text = text.trim();
+
+  // If maxLength is provided, truncate to that length
+  if (maxLength && text.length > maxLength) {
+    // Find the last space before maxLength to avoid cutting words
+    const lastSpace = text.lastIndexOf(" ", maxLength);
+    if (lastSpace > 0 && maxLength - lastSpace < 20) {
+      // Only use lastSpace if it's within a reasonable distance from maxLength
+      text = text.substring(0, lastSpace);
+    } else {
+      // Otherwise just cut at maxLength
+      text = text.substring(0, maxLength);
+    }
+
+    // Add ellipsis if truncated
+    if (text.length < markdownText.length) {
+      text += "...";
+    }
+  }
+
+  return text;
+}
+
+/**
+ * Safely truncates a string to a maximum length without breaking in the middle of a word
+ * and cleans any markdown syntax
+ *
+ * @param text - The text to truncate and clean
+ * @param maxLength - Maximum length for the resulting string
+ * @returns Truncated and markdown-free text
+ */
+export function truncateAndCleanMarkdown(
+  text: string,
+  maxLength: number
+): string {
+  return cleanMarkdownForPlainText(text, maxLength);
+}
+
 export default { renderToHTML, renderToPlainText };
