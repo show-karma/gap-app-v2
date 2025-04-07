@@ -248,20 +248,6 @@ export const ProjectOptionsMenu = () => {
                       />
                     </Menu.Item>
                     <Menu.Item>
-                      <Link
-                        href={PAGES.PROJECT.IMPACT.ADD_IMPACT(
-                          project?.details?.data?.slug || projectId
-                        )}
-                        className={buttonClassName}
-                      >
-                        <PlusIcon
-                          className={"mr-2 h-5 w-5"}
-                          aria-hidden="true"
-                        />
-                        Add impact
-                      </Link>
-                    </Menu.Item>
-                    <Menu.Item>
                       <button
                         type="button"
                         onClick={openGrantGenieModal}

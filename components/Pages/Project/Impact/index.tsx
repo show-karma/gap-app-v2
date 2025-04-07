@@ -192,7 +192,9 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
       <Tabs defaultTab="outputs">
         <div className="flex flex-row gap-2 bg-zinc-100 dark:bg-zinc-900 p-1 rounded-md mb-6">
           <TabTrigger value="outputs">Activities & Outputs</TabTrigger>
-          <TabTrigger value="impact">Project Impact</TabTrigger>
+          {orderedImpacts.length > 0 && (
+            <TabTrigger value="impact">Project Impact</TabTrigger>
+          )}
           <TabTrigger value="oso">OSO Metrics</TabTrigger>
         </div>
 
@@ -202,20 +204,10 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
           </div>
         </TabContent>
 
-        <TabContent value="impact">
-          <div className="flex flex-col gap-4">
-            {orderedImpacts.length ? (
+        {orderedImpacts.length > 0 && (
+          <TabContent value="impact">
+            <div className="flex flex-col gap-4">
               <div className="flex w-full flex-col overflow-x-auto">
-                {isAuthorized ? (
-                  <div className="flex flex-row-reverse max-sm:flex-row">
-                    <Button
-                      onClick={() => changeTab("add-impact")}
-                      className="bg-black text-white hover:bg-black dark:bg-zinc-800 w-max"
-                    >
-                      Add impact
-                    </Button>
-                  </div>
-                ) : null}
                 <table className="overflow-x-auto w-full">
                   <thead>
                     <tr>
@@ -348,11 +340,9 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
                   </tbody>
                 </table>
               </div>
-            ) : (
-              <EmptyImpactScreen />
-            )}
-          </div>
-        </TabContent>
+            </div>
+          </TabContent>
+        )}
 
         <TabContent value="oso">
           <div className="flex flex-col gap-8">
