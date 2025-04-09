@@ -138,7 +138,11 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
 
   const getSocials = (links: IProjectDetails["data"]["links"]) => {
     const types = [
-      { name: "Twitter", prefix: "x.com/", icon: TwitterIcon },
+      {
+        name: "Twitter",
+        prefix: ["twitter.com/", "x.com/"],
+        icon: TwitterIcon,
+      },
       { name: "Github", prefix: "github.com/", icon: GithubIcon },
       { name: "Discord", prefix: "discord.gg/", icon: DiscordIcon },
       { name: "Website", prefix: "https://", icon: WebsiteIcon },
@@ -190,16 +194,28 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
               ? socialLink?.replace("@", "") || ""
               : socialLink;
 
-            return {
-              name,
-              url: formatPrefix(prefix, url),
-              icon,
-            };
+            if (Array.isArray(prefix)) {
+              if (url.includes("twitter.com/") || url.includes("x.com/")) {
+                return {
+                  name,
+                  url: hasHttpOrWWW(url) ? url : addPrefix(url),
+                  icon,
+                };
+              }
+              return {
+                name,
+                url: formatPrefix(prefix[1], url),
+                icon,
+              };
+            }
           }
 
           return {
             name,
-            url: formatPrefix(prefix, socialLink),
+            url: formatPrefix(
+              typeof prefix === "string" ? prefix : prefix[0],
+              socialLink
+            ),
             icon,
           };
         }
