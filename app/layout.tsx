@@ -3,7 +3,6 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import "@/styles/globals.css";
 import "@/styles/index.scss";
 import "@/components/Utilities/DynamicStars/styles.css";
-import "@rainbow-me/rainbowkit/styles.css";
 import "rc-slider/assets/index.css";
 import "react-day-picker/dist/style.css";
 import "@uiw/react-markdown-preview/markdown.css";
@@ -17,7 +16,6 @@ import { ThemeProvider } from "next-themes";
 import { Analytics } from "@vercel/analytics/react";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { Suspense } from "react";
-import { headers } from "next/headers";
 
 export const metadata = defaultMetadata;
 
@@ -26,7 +24,6 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const cookie = (await headers()).get("cookie") ?? "";
   return (
     <html lang="en" className="h-full" style={{ scrollBehavior: "smooth" }}>
       {process.env.NEXT_PUBLIC_GA_TRACKING_ID &&
@@ -37,7 +34,7 @@ export default async function RootLayout({
         )}
       <body>
         <ThemeProvider defaultTheme="light" attribute="class">
-          <WagmiProvider cookie={cookie}>
+          <WagmiProvider>
             <Toaster />
             <StepperDialog />
             <ProgressBarWrapper />

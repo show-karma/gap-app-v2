@@ -20,7 +20,7 @@ import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { cn } from "@/utilities/tailwind";
 import { config } from "@/utilities/wagmi/config";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectModal } from "@/hooks/useConnectModal";
 import { ContributorProfile } from "@show-karma/karma-gap-sdk";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";

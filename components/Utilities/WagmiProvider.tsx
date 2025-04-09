@@ -1,34 +1,29 @@
 "use client";
-import { cookieToInitialState, WagmiProvider as Wagmi } from "wagmi";
-import { RainbowKitProvider, lightTheme } from "@rainbow-me/rainbowkit";
+import { PrivyProvider } from "@privy-io/react-auth";
+import { WagmiProvider as PrivyWagmiProvider } from "@privy-io/wagmi";
 import { config } from "@/utilities/wagmi/config";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { privyConfig } from "@/utilities/privy/config";
+// import { SmartWalletsProvider } from "@privy-io/react-auth/smart-wallets";
+import { envVars } from "@/utilities/enviromentVars";
 
 export const queryClient = new QueryClient();
 
-const WagmiProvider = ({
-  children,
-  cookie,
-}: {
-  cookie: string;
-  children: React.ReactNode;
-}) => {
-  const initialState = cookieToInitialState(config, cookie);
-
+const WagmiProvider = ({ children }: { children: React.ReactNode }) => {
   return (
-    <Wagmi config={config} initialState={initialState}>
+    <PrivyProvider appId={envVars.PRIVY_APP_ID} config={privyConfig}>
+      {/* <SmartWalletsProvider
+        config={{
+          paymasterContext: {
+            policyId: envVars.ALCHEMY_POLICY_ID,
+          },
+        }}
+      > */}
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider
-          theme={lightTheme({
-            accentColor: "#E40536",
-            accentColorForeground: "white",
-            borderRadius: "medium",
-          })}
-        >
-          {children}
-        </RainbowKitProvider>
+        <PrivyWagmiProvider config={config}>{children}</PrivyWagmiProvider>
       </QueryClientProvider>
-    </Wagmi>
+      {/* </SmartWalletsProvider> */}
+    </PrivyProvider>
   );
 };
 export default WagmiProvider;

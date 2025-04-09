@@ -6,7 +6,7 @@ import { IExpirationStatus, ISession } from "@/types/auth";
 import { checkExpirationStatus } from "@/utilities/checkExpirationStatus";
 import fetchData from "@/utilities/fetchData";
 import { PAGES } from "@/utilities/pages";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { usePrivy } from "@privy-io/react-auth";
 import { jwtDecode } from "jwt-decode";
 import { usePathname, useRouter } from "next/navigation";
 import { useQueryState } from "nuqs";
@@ -48,12 +48,11 @@ const isTokenValid = (tokenValue: string | null) => {
 
 export const useAuth = () => {
   const { isConnected, address } = useAccount();
-  const { openConnectModal } = useConnectModal();
   const chainId = useChainId();
   const { setIsAuthenticating, setIsAuth, isAuthenticating, setWalletType } =
     useAuthStore();
-  // const { signMessageAsync } = useSignMessage();
-  const { disconnectAsync } = useDisconnect();
+  // const { disconnectAsync } = useDisconnect();
+  const { logout } = usePrivy();
   const { setIsOnboarding } = useOnboarding?.();
   const router = useRouter();
   const cookies = new Cookies();
@@ -63,14 +62,18 @@ export const useAuth = () => {
 
   const pathname = usePathname();
 
+  // Replace Rainbow Kit's useConnectModal with Privy's login
+  const { login: openConnectModal } = usePrivy();
+
   const signMessage = async (messageToSign: string) => {
     try {
       const signedMessage = await signMessageAsync({ message: messageToSign });
       return signedMessage;
     } catch (err) {
-      // eslint-disable-next-line no-console
-      await disconnectAsync?.();
+      // await disconnectAsync?.();
+      await logout();
       errorManager(`Error in signing message of user ${address}`, err);
+      // eslint-disable-next-line no-console
       console.log(err);
       return null;
     }
@@ -206,7 +209,8 @@ export const useAuth = () => {
 
     setIsAuth(false);
     setWalletType(undefined);
-    await disconnectAsync?.();
+    await logout();
+    // await disconnectAsync?.();
   };
 
   const softDisconnect = (newAddress: Hex) => {
@@ -223,5 +227,11 @@ export const useAuth = () => {
     authenticate(newAddress);
   };
 
-  return { authenticate, disconnect, softDisconnect, signMessage };
+  return {
+    authenticate,
+    disconnect,
+    softDisconnect,
+    signMessage,
+    openConnectModal,
+  };
 };

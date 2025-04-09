@@ -1,7 +1,7 @@
 import { useAuthStore } from "@/store/auth";
 import { FC, useState } from "react";
 import { useAccount } from "wagmi";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectModal } from "@/hooks/useConnectModal";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { Button } from "@/components/Utilities/Button";
 import { cn } from "@/utilities/tailwind";

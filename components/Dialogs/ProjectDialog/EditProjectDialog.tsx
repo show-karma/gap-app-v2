@@ -23,7 +23,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectModal } from "@/hooks/useConnectModal";
 import {
   type ExternalLink,
   type IProjectDetails,

@@ -21,7 +21,7 @@ import { useProgressModalStore } from "@/store/modals/progress";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { getProjectById } from "@/utilities/sdk";
 import { cn } from "@/utilities/tailwind";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useConnectModal } from "@/hooks/useConnectModal";
 import {
   IProjectDetails,
   IProjectResponse,
