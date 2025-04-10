@@ -1,0 +1,169 @@
+---
+description: 
+globs: 
+alwaysApply: false
+---
+ ---
+description: Key patterns and practices for the GAP App v2 codebase
+globs: "**/*.{ts,tsx,js,jsx}"
+alwaysApply: true
+---
+
+# GAP App Patterns
+
+## Component Structure
+- **Place components in appropriate directories:**
+  - Common/reusable UI components go in `/components`
+  - Page-specific components go in `/app/[page-path]`
+  - Complex features with multiple components get their own subdirectory
+
+- **Component File Organization:**
+  ```tsx
+  // Imports
+  import { useState } from 'react';
+  import { Component } from '@/components';
+  
+  // Types
+  interface Props {
+    // ...
+  }
+  
+  // Component Definition
+  export function MyComponent({ prop1, prop2 }: Props) {
+    // Hooks and state
+    const [state, setState] = useState();
+    
+    // Event handlers
+    const handleEvent = () => {
+      // ...
+    };
+    
+    // JSX
+    return (
+      <div>
+        {/* Component content */}
+      </div>
+    );
+  }
+  ```
+
+## Data Fetching
+- **Prefer React Query for data fetching:**
+  ```tsx
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['projects', projectId],
+    queryFn: () => fetchProject(projectId),
+  });
+  ```
+
+- **Use Server Components for initial data loading where possible:**
+  ```tsx
+  // In a Server Component
+  const projects = await getProjects();
+  
+  return <ClientComponent initialData={projects} />;
+  ```
+
+## State Management
+- **Use Zustand for global state:**
+  ```tsx
+  // In store/projectStore.ts
+  export const useProjectStore = create<ProjectStore>((set) => ({
+    projects: [],
+    setProjects: (projects) => set({ projects }),
+    // ...
+  }));
+  
+  // In components
+  const { projects, setProjects } = useProjectStore();
+  ```
+
+- **Keep component state local when possible:**
+  ```tsx
+  const [isOpen, setIsOpen] = useState(false);
+  ```
+
+## Styling
+- **Use TailwindCSS for styling:**
+  ```tsx
+  <button className="rounded-md bg-primary-600 px-4 py-2 text-white hover:bg-primary-700">
+    Submit
+  </button>
+  ```
+
+- **Use cx/clsx for conditional classes:**
+  ```tsx
+  import { cx } from 'class-variance-authority';
+  
+  <div className={cx(
+    "base-class",
+    isActive && "active-class",
+    variant === 'large' && "large-class"
+  )}>
+    {/* content */}
+  </div>
+  ```
+
+## Form Handling
+- **Use React Hook Form with Zod validation:**
+  ```tsx
+  const schema = z.object({
+    name: z.string().min(3),
+    email: z.string().email(),
+  });
+  
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(schema),
+    defaultValues,
+  });
+  
+  const onSubmit = (data) => {
+    // Handle submission
+  };
+  ```
+
+## Authentication
+- **Use Privy for auth-related functionality:**
+  ```tsx
+  import { usePrivy } from '@privy-io/react-auth';
+  
+  const { login, logout, authenticated, user } = usePrivy();
+  
+  // Check authentication
+  if (!authenticated) {
+    return <LoginButton onClick={login} />;
+  }
+  ```
+
+## Error Handling
+- **Use structured error handling:**
+  ```tsx
+  try {
+    // Operation that might fail
+  } catch (error) {
+    // Log to Sentry
+    captureException(error);
+    
+    // Present user-friendly message
+    toast.error('Unable to complete action. Please try again.');
+  }
+  ```
+
+## Testing
+- **Write tests for components:**
+  ```tsx
+  // Component test example
+  import { render, screen } from '@testing-library/react';
+  import { MyComponent } from './MyComponent';
+  
+  describe('MyComponent', () => {
+    it('renders correctly', () => {
+      render(<MyComponent />);
+      expect(screen.getByText('Expected Text')).toBeInTheDocument();
+    });
+  });
+  ```
