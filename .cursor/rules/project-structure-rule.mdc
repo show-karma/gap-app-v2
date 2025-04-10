@@ -1,4 +1,9 @@
 ---
+description: 
+globs: 
+alwaysApply: false
+---
+---
 description: This rule is for the project structure
 globs: 
 alwaysApply: false
