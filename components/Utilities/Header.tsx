@@ -34,6 +34,7 @@ import { ExternalLink } from "./ExternalLink";
 import { ParagraphIcon } from "../Icons/Paragraph";
 import { useSetActiveWallet } from "@privy-io/wagmi";
 import { useWalletInteraction } from "@/hooks/useWalletInteraction";
+import { appNetwork } from "@/utilities/network";
 
 const ProjectDialog = dynamic(
   () =>
@@ -129,11 +130,12 @@ export default function Header() {
     }
   };
 
+  const { isOwner } = useOwnerStore();
   const setIsOwner = useOwnerStore((state) => state.setIsOwner);
   const setIsOwnerLoading = useOwnerStore((state) => state.setIsOwnerLoading);
 
   useEffect(() => {
-    if (!signer || !address || !isConnected) {
+    if (!signer || !isConnected) {
       setIsOwnerLoading(false);
       setIsOwner(false);
       return;
@@ -145,7 +147,8 @@ export default function Header() {
         setIsOwner(false);
         return;
       }
-      await getContractOwner(signer as any, chain as Chain)
+      const newChain = appNetwork[0];
+      await getContractOwner(signer as any, chain || newChain)
         .then((owner) => {
           setIsOwner(owner?.toLowerCase() === address?.toLowerCase());
         })

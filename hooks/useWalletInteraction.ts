@@ -1,13 +1,12 @@
-import { appNetwork } from "@/utilities/network";
 import { usePrivy, useWallets } from "@privy-io/react-auth";
-import { useChainId } from "wagmi";
+import { useAccount } from "wagmi";
 
 export function useWalletInteraction() {
   const { user, ready, authenticated, login, logout } = usePrivy();
-  const chainId = useChainId();
+  const { chain: wagmiChain } = useAccount();
   const { wallets } = useWallets();
   const isConnected = ready && authenticated && wallets.length !== 0;
-  const chain = appNetwork.find((c) => c.id === chainId);
+  const chain = wagmiChain;
   const address = user && (wallets[0]?.address as `0x${string}`);
   const connector = wallets[0];
 

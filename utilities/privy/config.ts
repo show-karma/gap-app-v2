@@ -22,6 +22,11 @@ export const privyConfig: PrivyClientConfig = {
     requireUserPasswordOnCreate: true,
     showWalletUIs: true,
   },
+  externalWallets: {
+    walletConnect: {
+      enabled: true,
+    },
+  },
   loginMethods: ["wallet", "email", "google"],
   supportedChains: config.chains,
   walletConnectCloudProjectId: envVars.PROJECT_ID,
