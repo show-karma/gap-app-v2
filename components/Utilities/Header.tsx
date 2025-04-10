@@ -1,7 +1,6 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { useAuth } from "@/hooks/useAuth";
-import { useAuthStore } from "@/store/auth";
+
 import { useCommunitiesStore } from "@/store/communities";
 import { useMobileStore } from "@/store/mobile";
 import { useOwnerStore } from "@/store/owner";
@@ -15,7 +14,7 @@ import { config } from "@/utilities/wagmi/config";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { MoonIcon, SunIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { usePrivy, useWallets } from "@privy-io/react-auth";
 import { watchAccount } from "@wagmi/core";
 import { useTheme } from "next-themes";
 import dynamic from "next/dynamic";
@@ -24,7 +23,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Chain } from "viem";
-import { useAccount } from "wagmi";
+
 import { OnboardingDialog } from "../Dialogs/OnboardingDialog";
 import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
 import { DiscordIcon, LogOutIcon, TelegramIcon, TwitterIcon } from "../Icons";
@@ -33,6 +32,9 @@ import { Button } from "./Button";
 import { errorManager } from "./errorManager";
 import { ExternalLink } from "./ExternalLink";
 import { ParagraphIcon } from "../Icons/Paragraph";
+import { useSetActiveWallet } from "@privy-io/wagmi";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
+import { appNetwork } from "@/utilities/network";
 
 const ProjectDialog = dynamic(
   () =>
@@ -45,10 +47,61 @@ const ProjectDialog = dynamic(
 const buttonStyle: HTMLButtonElement["className"] =
   "rounded-md bg-white w-max dark:bg-black px-0 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 hover:bg-transparent dark:hover:bg-opacity-75 dark:border-zinc-900";
 
+const PrivyConnectButton = () => {
+  const { login, authenticated, user, logout } = usePrivy();
+
+  if (authenticated && user) {
+    return (
+      <div className="flex items-center gap-2">
+        <Popover.Root>
+          <Popover.Trigger asChild>
+            <button
+              type="button"
+              className="flex items-center gap-2 bg-gray-500 dark:bg-zinc-900 hover:opacity-80 rounded-full p-0 text-sm "
+            >
+              <span className="ml-3 text-white font-semibold hidden sm:inline truncate max-w-[100px]">
+                {user.wallet?.address?.slice(0, 6)}...
+                {user.wallet?.address?.slice(-4)}
+              </span>
+              <div className="relative w-10 h-10 rounded-full overflow-hidden">
+                {user.wallet?.address ? (
+                  <EthereumAddressToENSAvatar
+                    address={user.wallet?.address}
+                    className="h-10 w-10"
+                  />
+                ) : null}
+              </div>
+            </button>
+          </Popover.Trigger>
+          <Popover.Content
+            align="end"
+            className="z-50 mt-2 w-60 origin-top-right rounded-md bg-white dark:bg-black py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+          >
+            <div className="p-2">
+              <button
+                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-900"
+                onClick={() => logout()}
+              >
+                <LogOutIcon className="h-4 w-4" />
+                <span>Disconnect</span>
+              </button>
+            </div>
+          </Popover.Content>
+        </Popover.Root>
+      </div>
+    );
+  }
+
+  return (
+    <Button className="!rounded-full" onClick={() => login()}>
+      Connect Wallet
+    </Button>
+  );
+};
+
 export default function Header() {
   const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
-  const { isConnected, address } = useAccount();
-  const { isAuth, isAuthenticating } = useAuthStore();
+  const { isConnected, address, chain } = useWalletInteraction();
   const { communities, setCommunities, setIsLoading } = useCommunitiesStore();
 
   const signer = useSigner();
@@ -56,7 +109,7 @@ export default function Header() {
   const isCommunityAdmin = communities.length !== 0;
 
   const getCommunities = async () => {
-    if (!address || !isAuth) {
+    if (!address || !isConnected) {
       setCommunities([]);
       return;
     }
@@ -79,13 +132,12 @@ export default function Header() {
     }
   };
 
+  const { isOwner } = useOwnerStore();
   const setIsOwner = useOwnerStore((state) => state.setIsOwner);
   const setIsOwnerLoading = useOwnerStore((state) => state.setIsOwnerLoading);
 
-  const { chain } = useAccount();
-
   useEffect(() => {
-    if (!signer || !address || !isAuth) {
+    if (!signer || !isConnected) {
       setIsOwnerLoading(false);
       setIsOwner(false);
       return;
@@ -97,7 +149,8 @@ export default function Header() {
         setIsOwner(false);
         return;
       }
-      await getContractOwner(signer as any, chain as Chain)
+      const newChain = appNetwork[0];
+      await getContractOwner(signer as any, chain || newChain)
         .then((owner) => {
           setIsOwner(owner?.toLowerCase() === address?.toLowerCase());
         })
@@ -106,11 +159,12 @@ export default function Header() {
         });
     };
     setupOwner();
-  }, [signer, address, isAuth]);
+  }, [signer, isConnected]);
 
   useEffect(() => {
+    if (!isConnected) return;
     getCommunities();
-  }, [address, isAuth]);
+  }, [isConnected]);
 
   const socials = [
     {
@@ -142,38 +196,44 @@ export default function Header() {
     setIsReady(true);
   }, []);
 
-  const { authenticate, disconnect, softDisconnect } = useAuth();
+  const { setActiveWallet } = useSetActiveWallet();
+  const { wallets } = useWallets();
 
-  useEffect(() => {
-    const unwatch = watchAccount?.(config, {
-      onChange: (account, prevAccount) => {
-        if (!account) {
-          errorManager("User changed to empty account instance", account, {
-            account,
-            prevAccount,
-          });
-        }
-        if (account.address && account.address !== prevAccount.address) {
-          softDisconnect(account.address);
-        }
-      },
-    });
-    return () => unwatch();
-  }, []);
+  // useEffect(() => {
+  //   const unwatch = watchAccount?.(config, {
+  //     onChange: async (account, prevAccount) => {
+  //       if (!account) {
+  //         errorManager("User changed to empty account instance", account, {
+  //           account,
+  //           prevAccount,
+  //         });
+  //       }
+  //       if (account.address && account.address !== prevAccount.address) {
+  //         // softDisconnect(account.address);
+  //         const newActiveWallet = wallets.find(
+  //           (wallet) => wallet.address === account.address
+  //         );
+  //         if (newActiveWallet) {
+  //           await setActiveWallet(newActiveWallet);
+  //         }
+  //       }
+  //     },
+  //   });
+  //   return () => unwatch();
+  // }, []);
 
-  useEffect(() => {
-    if (isConnected && isReady && !isAuth) {
-      authenticate();
-    }
-  }, [isConnected, isReady, isAuth]);
+  // useEffect(() => {
+  //   if (isConnected && isReady && !isAuth) {
+  //     authenticate();
+  //   }
+  // }, [isConnected, isReady, isAuth]);
 
   const { isMobileMenuOpen, setIsMobileMenuOpen } = useMobileStore();
 
   const pathname = usePathname();
   const isFundingMap = pathname.includes("funding-map");
   const { isPoolManager, isRegistryAdmin } = useRegistryStore();
-  const isRegistryAllowed =
-    address && (isRegistryAdmin || isPoolManager) && isAuth;
+  const isRegistryAllowed = (isRegistryAdmin || isPoolManager) && isConnected;
 
   return (
     <>
@@ -305,14 +365,14 @@ export default function Header() {
                                 ) : null
                               ) : (
                                 <>
-                                  {isConnected && isAuth && (
+                                  {isConnected && (
                                     <Link href={PAGES.MY_PROJECTS}>
                                       <button className="rounded-md bg-white w-full dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
                                         My Projects
                                       </button>
                                     </Link>
                                   )}
-                                  {isCommunityAdmin && isConnected && isAuth ? (
+                                  {isCommunityAdmin && isConnected ? (
                                     <Link href={PAGES.ADMIN.LIST}>
                                       <button className="rounded-md w-full bg-white dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
                                         Admin
@@ -320,91 +380,11 @@ export default function Header() {
                                     </Link>
                                   ) : null}
 
-                                  {isConnected && isAuth && <ProjectDialog />}
+                                  {isConnected && <ProjectDialog />}
                                 </>
                               )}
 
-                              <ConnectButton.Custom>
-                                {({
-                                  account,
-                                  chain,
-                                  openAccountModal,
-                                  openConnectModal,
-                                  authenticationStatus,
-                                  mounted,
-                                }) => {
-                                  // Note: If your app doesn't use authentication, you
-                                  // can remove all 'authenticationStatus' checks
-                                  const ready =
-                                    mounted &&
-                                    authenticationStatus !== "loading";
-                                  const connected =
-                                    ready &&
-                                    account &&
-                                    chain &&
-                                    (!authenticationStatus ||
-                                      authenticationStatus === "authenticated");
-
-                                  return (
-                                    <div
-                                      {...(!ready && {
-                                        "aria-hidden": true,
-                                        style: {
-                                          opacity: 0,
-                                          pointerEvents: "none",
-                                          userSelect: "none",
-                                        },
-                                      })}
-                                    >
-                                      {(() => {
-                                        if (!connected) {
-                                          return (
-                                            <button
-                                              onClick={openConnectModal}
-                                              type="button"
-                                              className="rounded-md border max-lg:w-full max-lg:justify-center border-brand-blue dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-brand-blue  hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-                                            >
-                                              Login / Register
-                                            </button>
-                                          );
-                                        }
-
-                                        return (
-                                          <Popover.Root>
-                                            <Popover.Trigger asChild>
-                                              <div className="cursor-pointer flex w-full py-1 justify-center items-center flex-row gap-2 rounded-full bg-gray-500 text-sm font-semibold text-white  hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
-                                                {account.displayName}
-
-                                                <EthereumAddressToENSAvatar
-                                                  address={account.address}
-                                                  className="h-8 w-8 min-h-8 min-w-8 rounded-full"
-                                                />
-                                              </div>
-                                            </Popover.Trigger>
-                                            <Popover.Content
-                                              className="z-50 w-48 rounded-md bg-white p-1 shadow-lg dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"
-                                              sideOffset={5}
-                                              align="center"
-                                            >
-                                              <div className="py-1">
-                                                <button
-                                                  onClick={async () => {
-                                                    disconnect();
-                                                  }}
-                                                  className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700"
-                                                >
-                                                  <LogOutIcon className="mr-2 h-4 w-4" />
-                                                  Logout
-                                                </button>
-                                              </div>
-                                            </Popover.Content>
-                                          </Popover.Root>
-                                        );
-                                      })()}
-                                    </div>
-                                  );
-                                }}
-                              </ConnectButton.Custom>
+                              <PrivyConnectButton />
                             </>
                           ) : null}
                         </div>
@@ -450,113 +430,23 @@ export default function Header() {
                     ) : null
                   ) : (
                     <>
-                      {isCommunityAdmin && isConnected && isAuth ? (
+                      {isCommunityAdmin && isConnected ? (
                         <Link href={PAGES.ADMIN.LIST}>
                           <button className={buttonStyle}>Admin</button>
                         </Link>
                       ) : null}
-                      {isConnected && isAuth && (
+                      {isConnected && (
                         <Link href={PAGES.MY_PROJECTS}>
                           <button className={buttonStyle}>My Projects</button>
                         </Link>
                       )}
 
                       {/* Rainbowkit custom connect button start */}
-                      {isConnected && isAuth && <ProjectDialog />}
+                      {isConnected && <ProjectDialog />}
                     </>
                   )}
 
-                  <ConnectButton.Custom>
-                    {({
-                      account,
-                      chain,
-                      openAccountModal,
-                      openConnectModal,
-                      authenticationStatus,
-                      mounted,
-                    }) => {
-                      // Note: If your app doesn't use authentication, you
-                      // can remove all 'authenticationStatus' checks
-                      const ready =
-                        mounted && authenticationStatus !== "loading";
-                      const connected =
-                        ready &&
-                        account &&
-                        chain &&
-                        (!authenticationStatus ||
-                          authenticationStatus === "authenticated");
-
-                      return (
-                        <div
-                          {...(!ready && {
-                            "aria-hidden": true,
-                            style: {
-                              opacity: 0,
-                              pointerEvents: "none",
-                              userSelect: "none",
-                            },
-                          })}
-                        >
-                          {(() => {
-                            if (!connected || !isAuth) {
-                              return (
-                                <button
-                                  onClick={() => {
-                                    if (isAuthenticating) return;
-                                    if (
-                                      !isAuth &&
-                                      connected &&
-                                      !isAuthenticating
-                                    ) {
-                                      authenticate();
-                                      return;
-                                    }
-                                    openConnectModal?.();
-                                  }}
-                                  type="button"
-                                  className="rounded-md border border-brand-blue dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-brand-blue hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-                                >
-                                  Login / Register
-                                </button>
-                              );
-                            }
-
-                            return (
-                              <Popover.Root>
-                                <Popover.Trigger asChild>
-                                  <div className="flex cursor-pointer w-max items-center flex-row gap-2 rounded-full bg-gray-500 p-0 pl-3 text-sm font-semibold text-white hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
-                                    {account.displayName}
-
-                                    <EthereumAddressToENSAvatar
-                                      address={account.address}
-                                      className="h-10 w-10 rounded-full"
-                                    />
-                                  </div>
-                                </Popover.Trigger>
-                                <Popover.Content
-                                  className="z-50 w-48 rounded-md bg-white p-1 shadow-lg dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"
-                                  sideOffset={5}
-                                  align="end"
-                                >
-                                  <div className="py-1">
-                                    <button
-                                      onClick={async () => {
-                                        disconnect();
-                                      }}
-                                      className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700"
-                                    >
-                                      <LogOutIcon className="mr-2 h-4 w-4" />
-                                      Logout
-                                    </button>
-                                  </div>
-                                </Popover.Content>
-                              </Popover.Root>
-                            );
-                          })()}
-                        </div>
-                      );
-                    }}
-                  </ConnectButton.Custom>
+                  <PrivyConnectButton />
                 </>
               ) : null}
               {/* Rainbowkit custom connect button end */}

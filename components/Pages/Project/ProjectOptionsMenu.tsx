@@ -28,7 +28,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Fragment, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useSwitchChain } from "wagmi";
 import { LinkContractAddressButton } from "./LinkContractAddressButton";
 import { LinkGithubRepoButton } from "./LinkGithubRepoButton";
 
@@ -38,6 +38,7 @@ import { useStaff } from "@/hooks/useStaff";
 import { useAdminTransferOwnershipModalStore } from "@/store/modals/adminTransferOwnership";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { LinkOSOProfileButton } from "./LinkOSOProfileButton";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 const ProjectDialog = dynamic(
   () =>
@@ -76,7 +77,7 @@ export const ProjectOptionsMenu = () => {
   const params = useParams();
   const projectId = params.projectId as string;
   const [isDeleting, setIsDeleting] = useState(false);
-  const { address, chain } = useAccount();
+  const { address, chain } = useWalletInteraction();
   const { switchChainAsync } = useSwitchChain();
   const router = useRouter();
   const { gap } = useGap();

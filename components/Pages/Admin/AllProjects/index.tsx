@@ -17,10 +17,11 @@ import toast from "react-hot-toast";
 import { ProjectDescriptionDialog } from "./Dialog";
 import { ProjectContacts } from "./Contacts";
 import { AllProjectsLoadingTable } from "./Loading";
-import { useAuthStore } from "@/store/auth";
+
 import { PAGES } from "@/utilities/pages";
 import Link from "next/link";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 const getAllProjects = async (
   offset: number,
@@ -59,7 +60,7 @@ export const AllProjects = () => {
     undefined
   );
 
-  const { isAuth } = useAuthStore();
+  const { isConnected } = useWalletInteraction();
   // const isLoading = true;
   const { data, isLoading } = useQuery({
     queryKey: ["all-projects", page, pageSize],
@@ -68,7 +69,7 @@ export const AllProjects = () => {
         setCurrentPageInfo(res.pageInfo);
         return res;
       }),
-    enabled: isAuth && isOwner,
+    enabled: isConnected && isOwner,
   });
   const projects = data?.data || [];
 

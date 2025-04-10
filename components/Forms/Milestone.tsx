@@ -32,10 +32,11 @@ import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { Hex } from "viem";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useSwitchChain } from "wagmi";
 import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 const milestoneSchema = z.object({
   title: z
@@ -88,7 +89,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   const isOwner = useOwnerStore((state) => state.isOwner);
   const [recipient, setRecipient] = useState("");
 
-  const { address } = useAccount();
+  const { address, chain } = useWalletInteraction();
   const {
     register,
     handleSubmit,
@@ -102,7 +103,6 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   });
   const [isLoading, setIsLoading] = useState(false);
   const { gap } = useGap();
-  const { chain } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const isCommunityAdmin = useCommunityAdminStore(

@@ -57,5 +57,6 @@ export const useContactInfo = (
       }
     },
     enabled: !!projectId && isAuthorized,
+    retry: 1,
   });
 };

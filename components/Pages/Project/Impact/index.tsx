@@ -23,7 +23,7 @@ import { useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { FC, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useSwitchChain } from "wagmi";
 import { AddImpactScreen } from "./AddImpactScreen";
 import { EmptyImpactScreen } from "./EmptyImpactScreen";
 import { ImpactVerifications } from "./ImpactVerifications";
@@ -32,6 +32,7 @@ import { Tabs } from "@/components/Utilities/Tabs";
 import { TabTrigger } from "@/components/Utilities/Tabs";
 import { TabContent } from "@/components/Utilities/Tabs";
 import { OSOMetrics } from "./OSOMetrics";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 const headClasses =
   "text-black dark:text-white text-xs font-medium uppercase text-left px-6 py-3 font-body";
@@ -65,8 +66,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
 
   const grantScreen = searchParams?.get("tab");
 
-  const { address } = useAccount();
-  const { chain } = useAccount();
+  const { address, chain } = useWalletInteraction();
   const { switchChainAsync } = useSwitchChain();
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const { changeStepperStep, setIsStepper } = useStepper();

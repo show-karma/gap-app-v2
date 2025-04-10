@@ -32,7 +32,7 @@ import {
 import { useQueryState } from "nuqs";
 import { ButtonHTMLAttributes, FC, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useSwitchChain } from "wagmi";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -52,6 +52,7 @@ import { ProjectBlocks } from "./ProjectBlocks";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 const InformationTab: FC = () => {
   const { project } = useProjectStore();
@@ -239,7 +240,7 @@ const UpdateBlock = ({
   const [isDeletingUpdate, setIsDeletingUpdate] = useState(false);
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
-  const { chain } = useAccount();
+  const { chain } = useWalletInteraction();
   const { switchChainAsync } = useSwitchChain();
   const { project, isProjectOwner } = useProjectStore();
   const refreshProject = useProjectStore((state) => state.refreshProject);

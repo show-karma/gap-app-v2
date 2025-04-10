@@ -13,10 +13,11 @@ import { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-i
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useSwitchChain } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { retryUntilConditionMet } from "@/utilities/retries";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 interface MilestoneDeleteProps {
   milestone: IMilestoneResponse;
 }
@@ -25,7 +26,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
   const [isDeletingMilestone, setIsDeletingMilestone] = useState(false);
 
   const { switchChainAsync } = useSwitchChain();
-  const { chain } = useAccount();
+  const { chain } = useWalletInteraction();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();

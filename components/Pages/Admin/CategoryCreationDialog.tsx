@@ -9,11 +9,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 import fetchData from "@/utilities/fetchData";
 import { useParams } from "next/navigation";
-import { useAuthStore } from "@/store/auth";
-import { useAuth } from "@/hooks/useAuth";
+
 import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
+import { usePrivy } from "@privy-io/react-auth";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 type CategoryCreationDialogProps = {
   refreshCategories: () => Promise<void>;
@@ -52,14 +53,14 @@ export const CategoryCreationDialog: FC<CategoryCreationDialogProps> = ({
     setIsOpen(true);
   }
 
-  const { isAuth } = useAuthStore();
-  const { authenticate } = useAuth();
+  const { login, isConnected } = useWalletInteraction();
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
     try {
       setIsLoading(true);
-      if (!isAuth) {
-        await authenticate();
+      if (!isConnected) {
+        login();
+        return;
       }
       const [request, error] = await fetchData(
         INDEXER.CATEGORIES.CREATE(communityId),

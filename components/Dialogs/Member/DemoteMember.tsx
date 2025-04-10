@@ -2,6 +2,7 @@ import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { queryClient } from "@/components/Utilities/WagmiProvider";
 import { getGapClient, useGap } from "@/hooks";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -17,7 +18,7 @@ import { ArrowDownIcon } from "@heroicons/react/24/solid";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { FC, Fragment, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useSwitchChain } from "wagmi";
 
 interface DemoteMemberDialogProps {
   memberAddress: string;
@@ -29,7 +30,7 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [isDemoting, setIsDemoting] = useState(false);
   const { gap } = useGap();
-  const { address, chain } = useAccount();
+  const { address, chain } = useWalletInteraction();
   const { project, teamProfiles } = useProjectStore();
   const { changeStepperStep, setIsStepper } = useStepper();
   const { switchChainAsync } = useSwitchChain();

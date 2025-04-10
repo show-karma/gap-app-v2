@@ -20,11 +20,11 @@ import debounce from "lodash.debounce";
 import { useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import React, { Dispatch, useEffect, useState } from "react";
-import { useAccount } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { LoadingProgramTable } from "./Loading/Programs";
 import { ProgramHeader } from "./ProgramHeader";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 const statuses = ["Active", "Inactive"];
 
@@ -131,9 +131,8 @@ export const ProgramsExplorer = () => {
 
   const pageSize = 10;
 
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chain } = useWalletInteraction();
 
-  const { chain } = useAccount();
   const { setIsRegistryAdmin, setIsPoolManager } = useRegistryStore();
   useEffect(() => {
     if (!address || !isConnected) {

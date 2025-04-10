@@ -1,6 +1,6 @@
 const isDev = process.env.NEXT_PUBLIC_ENV === "staging";
-const baseDevUrl = "https://gapstagapi.karmahq.xyz";
-// const baseDevUrl = "http://localhost:3002";
+// const baseDevUrl = "https://gapstagapi.karmahq.xyz";
+const baseDevUrl = "http://localhost:3002";
 
 export const envVars = {
   isDev,
@@ -38,4 +38,6 @@ export const envVars = {
       ? `https://gap.karmahq.xyz`
       : "https://gapstag.karmahq.xyz",
   OSO_API_KEY: process.env.NEXT_PUBLIC_OSO_API_KEY || "",
+  ALCHEMY_POLICY_ID: process.env.NEXT_PUBLIC_ALCHEMY_POLICY_ID || "",
+  PRIVY_APP_ID: process.env.NEXT_PUBLIC_PRIVY_APP_ID || "",
 };

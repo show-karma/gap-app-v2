@@ -6,7 +6,7 @@ import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useGap } from "@/hooks";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useAuthStore } from "@/store/auth";
+
 import { useCommunitiesStore } from "@/store/communities";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useGrantStore } from "@/store/grant";
@@ -22,13 +22,14 @@ import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-ind
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useAccount } from "wagmi";
+
 import { GrantCompleteButton } from "../../GrantMilestonesAndUpdates/GrantCompleteButton";
 import { GrantContext } from "../../GrantMilestonesAndUpdates/GrantContext";
 import { GrantDelete } from "../../GrantMilestonesAndUpdates/GrantDelete";
 import { GrantLinkExternalAddressButton } from "../../GrantMilestonesAndUpdates/GrantLinkExternalAddressButton";
 import { EmptyGrantsSection } from "../../GrantMilestonesAndUpdates/screens/EmptyGrantsSection";
 import { ProjectGrantsLayoutLoading } from "../Loading/Grants/Layout";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 interface GrantsLayoutProps {
   children: React.ReactNode;
@@ -112,7 +113,7 @@ export const GrantsLayout = ({
   const isCommunityAdminOfSome = communities.length !== 0;
   const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
 
-  const { address } = useAccount();
+  const { address } = useWalletInteraction();
 
   //   UseEffect to check if current URL changes
   useEffect(() => {
@@ -191,13 +192,12 @@ export const GrantsLayout = ({
   );
 
   const signer = useSigner();
-  const { chain } = useAccount();
+  const { chain, isConnected } = useWalletInteraction();
   const { gap } = useGap();
-  const { isAuth } = useAuthStore();
 
   const checkIfAdmin = async () => {
     setIsCommunityAdmin(false);
-    if (!chain?.id || !gap || !grant || !address || !signer || !isAuth) {
+    if (!chain?.id || !gap || !grant || !address || !signer || !isConnected) {
       setIsCommunityAdmin(false);
       setIsCommunityAdminLoading(false);
       return;
@@ -224,7 +224,7 @@ export const GrantsLayout = ({
 
   useEffect(() => {
     checkIfAdmin();
-  }, [address, grant?.uid, signer, isAuth]);
+  }, [address, grant?.uid, signer, isConnected]);
 
   if (loading || (!grant && project.grants?.length > 0)) {
     return <ProjectGrantsLayoutLoading>{children}</ProjectGrantsLayoutLoading>;

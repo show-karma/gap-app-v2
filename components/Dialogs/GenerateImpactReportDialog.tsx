@@ -33,9 +33,10 @@ import {
   IGrantResponse,
   IProjectResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useSwitchChain } from "wagmi";
 import { errorManager } from "../Utilities/errorManager";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 // Create styles
 const styles = StyleSheet.create({});
@@ -645,7 +646,7 @@ type Props = {
 };
 
 export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
-  const { chain } = useAccount();
+  const { chain } = useWalletInteraction();
   const project = useProjectStore((state) => state.project);
   const { switchChainAsync } = useSwitchChain();
   let [isOpen, setIsOpen] = useState(false);
