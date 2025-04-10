@@ -9,7 +9,7 @@ import { Twitter2Icon } from "@/components/Icons/Twitter2";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useGap } from "@/hooks";
-import { useAuthStore } from "@/store/auth";
+
 import { useStepper } from "@/store/modals/txStepper";
 import { useRegistryStore } from "@/store/registry";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
@@ -40,13 +40,14 @@ import { DayPicker } from "react-day-picker";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useSwitchChain } from "wagmi";
 import { z } from "zod";
 import { registryHelper } from "./helper";
 import { GrantProgram } from "./ProgramList";
 import { SearchDropdown } from "./SearchDropdown";
 import { StatusDropdown } from "./StatusDropdown";
 import { DatePicker } from "@/components/Utilities/DatePicker";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 const labelStyle = "text-sm font-bold text-[#344054] dark:text-zinc-100";
 const inputStyle =
@@ -286,9 +287,7 @@ export default function AddProgram({
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const { address, isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
-  const { chain } = useAccount();
+  const { address, isConnected, chain } = useWalletInteraction();
   const { switchChainAsync } = useSwitchChain();
   const { openConnectModal } = useConnectModal();
   const { changeStepperStep, setIsStepper } = useStepper();
@@ -298,7 +297,7 @@ export default function AddProgram({
   const createProgram = async (data: CreateProgramType) => {
     setIsLoading(true);
     try {
-      if (!isConnected || !isAuth) {
+      if (!isConnected) {
         openConnectModal?.();
         return;
       }
@@ -386,7 +385,7 @@ export default function AddProgram({
   const editProgram = async (data: CreateProgramType) => {
     setIsLoading(true);
     try {
-      if (!isConnected || !isAuth || !address) {
+      if (!isConnected || !address) {
         openConnectModal?.();
         return;
       }

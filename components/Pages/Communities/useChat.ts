@@ -1,7 +1,8 @@
 import { useState, useRef } from "react";
 import { envVars } from "@/utilities/enviromentVars";
-import { useAccount } from "wagmi";
+
 import { Project } from "./CommunityProjectEvaluatorPage";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 export interface Message {
   id: string;
@@ -37,7 +38,7 @@ export function useChat(options: UseChatOptions) {
   const [isLoading, setIsLoading] = useState(false);
   const [currentMessage, setCurrentMessage] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
-  const { address } = useAccount();
+  const { address } = useWalletInteraction();
   const sessionIdRef = useRef<string>(crypto.randomUUID());
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,7 +57,7 @@ export function useChat(options: UseChatOptions) {
       role: "user",
       content: input,
       id: crypto.randomUUID(),
-      sender: address,
+      sender: address ?? undefined,
       timestamp: new Date().toISOString(),
     };
 

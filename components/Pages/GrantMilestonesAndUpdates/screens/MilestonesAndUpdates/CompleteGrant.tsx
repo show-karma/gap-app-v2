@@ -22,7 +22,8 @@ import type { FC } from "react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { Hex } from "viem";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useSwitchChain } from "wagmi";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 
@@ -34,7 +35,7 @@ export const GrantCompletion: FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const { chain } = useAccount();
+  const { chain } = useWalletInteraction();
   const { switchChainAsync } = useSwitchChain();
   const signer = useSigner();
   const refreshProject = useProjectStore((state) => state.refreshProject);

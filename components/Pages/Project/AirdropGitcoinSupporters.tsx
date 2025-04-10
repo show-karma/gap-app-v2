@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 import React from "react";
 import { useState } from "react";
-import { useAccount, useChainId, useSwitchChain } from "wagmi";
+import { useChainId, useSwitchChain } from "wagmi";
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 import { TransactionLink } from "@/components/Utilities/TransactionLink";
 import axios from "axios";
@@ -22,6 +22,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useEffect } from "react";
 import { Dispatch, SetStateAction } from "react";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 type ProjectApplicationData = {
   project: {
@@ -73,7 +74,7 @@ const PlatformFeeNote = ({
     functionName: "PLATFORM_FEE",
   });
 
-  const { address: walletAddress } = useAccount();
+  const { address: walletAddress } = useWalletInteraction();
 
   useEffect(() => {
     if (platformFee) {

@@ -37,13 +37,13 @@ import { type FC, Fragment, type ReactNode, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { type Hex, isAddress, zeroHash } from "viem";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useSwitchChain } from "wagmi";
 import { z } from "zod";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink as ExternalLinkComponent } from "@/components/Utilities/ExternalLink";
 import { Skeleton } from "@/components/Utilities/Skeleton";
-import { useAuthStore } from "@/store/auth";
+
 import { useProjectEditModalStore } from "@/store/modals/projectEdit";
 import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
 import { useStepper } from "@/store/modals/txStepper";
@@ -70,6 +70,7 @@ import { DeckIcon } from "@/components/Icons/Deck";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { projectSchema } from ".";
 import { VideoIcon } from "@/components/Icons/Video";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -151,9 +152,7 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [step, setStep] = useState(0);
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isConnected, address } = useAccount();
-  const { isAuth } = useAuthStore();
-  const { chain } = useAccount();
+  const { isConnected, address, chain } = useWalletInteraction();
   const { switchChainAsync } = useSwitchChain();
   const [isLoading, setIsLoading] = useState(false);
   const { openConnectModal } = useConnectModal();
@@ -306,7 +305,7 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
   const createProject = async (data: SchemaType) => {
     try {
       setIsLoading(true);
-      if (!isConnected || !isAuth) {
+      if (!isConnected) {
         openConnectModal?.();
         return;
       }
@@ -514,7 +513,7 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
     let gapClient = gap;
     try {
       setIsLoading(true);
-      if (!isConnected || !isAuth) {
+      if (!isConnected) {
         openConnectModal?.();
         return;
       }

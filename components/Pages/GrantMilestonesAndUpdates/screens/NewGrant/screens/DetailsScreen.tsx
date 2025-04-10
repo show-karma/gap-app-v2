@@ -15,8 +15,8 @@ import { useForm } from "react-hook-form";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { isAddress } from "viem";
 import { MESSAGES } from "@/utilities/messages";
-import { useAuthStore } from "@/store/auth";
-import { useAccount, useSwitchChain } from "wagmi";
+
+import { useSwitchChain } from "wagmi";
 import { useStepper } from "@/store/modals/txStepper";
 import toast from "react-hot-toast";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -40,6 +40,7 @@ import {
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getProjectById } from "@/utilities/sdk";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -99,8 +100,7 @@ export const DetailsScreen: React.FC = () => {
   const selectedProject = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();
-  const { address, isConnected, connector, chain } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { address, isConnected, chain } = useWalletInteraction();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
   const { isCommunityAdmin } = useCommunityAdminStore();

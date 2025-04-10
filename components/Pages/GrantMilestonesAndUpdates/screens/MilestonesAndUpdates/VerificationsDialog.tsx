@@ -16,7 +16,7 @@ import {
 import { Tabs, TabContent, TabTrigger } from "@/components/Utilities/Tabs";
 import { useGrant } from "@/components/Pages/GrantMilestonesAndUpdates/GrantContext";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { useAccount } from "wagmi";
+
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
 
 interface VerificationsDialogProps {

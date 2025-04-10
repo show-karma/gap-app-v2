@@ -14,7 +14,8 @@ import { PAGES } from "@/utilities/pages";
 import { useQuery } from "@tanstack/react-query";
 import { getImpactAnswers } from "@/utilities/impact";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { useAccount } from "wagmi";
+
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 export const ProjectActivityBlock = ({
   activity,
@@ -36,7 +37,7 @@ export const ProjectActivityBlock = ({
     (indicator) => indicator.name
   );
 
-  const { isConnected } = useAccount();
+  const { isConnected } = useWalletInteraction();
   const isAuthorized =
     isConnected && (isProjectOwner || isContractOwner || isCommunityAdmin);
   const { data: impactAnswers = [], isLoading: isLoadingImpactAnswers } =

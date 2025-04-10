@@ -40,7 +40,8 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import pluralize from "pluralize";
-import { useAccount } from "wagmi";
+
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 const ContributorProfileDialog = dynamic(
   () =>
@@ -60,7 +61,7 @@ function ProjectPage() {
   const isAuthorized = isProjectOwner || isContractOwner;
   const isAdminOrAbove = isProjectOwner || isContractOwner || isProjectAdmin;
   const { teamProfiles } = useProjectStore((state) => state);
-  const { address } = useAccount();
+  const { address } = useWalletInteraction();
   const { openModal } = useContributorProfileModalStore();
   const inviteCodeParam = useSearchParams().get("invite-code");
   const params = useParams();
@@ -281,8 +282,8 @@ function ProjectPage() {
     );
     if (isAlreadyMember) return;
     checkCodeValidation().then((isValid) => {
-      if (isValid) {
-        openModal(address);
+      if (isValid && address) {
+        openModal(address as string);
       }
     });
   }, [project, address, inviteCodeParam]);

@@ -13,8 +13,7 @@ import {
   ICommunityResponse,
   ISearchResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useAccount } from "wagmi";
-import { useAuthStore } from "@/store/auth";
+
 import { useConnectModal } from "@/hooks/useConnectModal";
 import { useEffect, useState } from "react";
 import { useMobileStore } from "@/store/mobile";
@@ -22,6 +21,7 @@ import { useMobileStore } from "@/store/mobile";
 import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
 import { groupSimilarCommunities } from "@/utilities/communityHelpers"; // You'll need to create this utility function
 import { useRouter } from "next/navigation";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 interface Props {
   data: ISearchResponse; // Will be modular in the future
@@ -40,8 +40,7 @@ export const SearchList: React.FC<Props> = ({
   onInteractionStart,
   onInteractionEnd,
 }) => {
-  const { isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { isConnected } = useWalletInteraction();
   const { openConnectModal } = useConnectModal();
   const [shouldOpen, setShouldOpen] = useState(false);
   const router = useRouter();
@@ -61,7 +60,7 @@ export const SearchList: React.FC<Props> = ({
 
   const handleCreateProject = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!isConnected || !isAuth) {
+    if (!isConnected) {
       closeSearchList();
       setIsMobileMenuOpen(false);
       openConnectModal?.();
@@ -77,12 +76,12 @@ export const SearchList: React.FC<Props> = ({
   };
 
   useEffect(() => {
-    if (shouldOpen && isAuth && isConnected) {
+    if (shouldOpen && isConnected) {
       const el = document?.getElementById("new-project-button");
       if (el) el.click();
       setShouldOpen(false);
     }
-  }, [isAuth, isConnected, shouldOpen]);
+  }, [isConnected, shouldOpen]);
   const { isMobileMenuOpen, setIsMobileMenuOpen } = useMobileStore();
 
   const renderItem = (

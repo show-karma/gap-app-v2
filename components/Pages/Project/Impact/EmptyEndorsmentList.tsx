@@ -1,26 +1,25 @@
-import { useAuthStore } from "@/store/auth";
 import { FC, useState } from "react";
-import { useAccount } from "wagmi";
+
 import { useConnectModal } from "@/hooks/useConnectModal";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { Button } from "@/components/Utilities/Button";
 import { cn } from "@/utilities/tailwind";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 export const EmptyEndorsmentList: FC = () => {
-  const { isConnected, isConnecting } = useAccount();
+  const { isConnected } = useWalletInteraction();
   const { openConnectModal } = useConnectModal();
-  const { isAuth } = useAuthStore();
 
   const { setIsEndorsementOpen: setIsOpen } = useEndorsementStore();
 
   return (
     <div className="flex flex-col gap-3 px-3 py-3">
       <p>Be the first to endorse this project!</p>
-      {!isConnected || !isAuth ? (
+      {!isConnected ? (
         <button
           className="bg-brand-blue text-white px-4 rounded-md py-2 w-max"
           onClick={() => {
-            if (!isConnecting) {
+            if (!isConnected) {
               openConnectModal?.();
             }
           }}

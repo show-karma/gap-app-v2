@@ -7,7 +7,7 @@ import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
 import { Button } from "@/components/Utilities/Button";
 import Pagination from "@/components/Utilities/Pagination";
-import { useAuthStore } from "@/store/auth";
+
 import { useStepper } from "@/store/modals/txStepper";
 import { useRegistryStore } from "@/store/registry";
 import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
@@ -28,11 +28,12 @@ import { useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import React, { Dispatch, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useSwitchChain } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { LoadingProgramTable } from "./Loading/Programs";
 import { SearchDropdown } from "./SearchDropdown";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 export const ManagePrograms = () => {
   const searchParams = useSearchParams();
@@ -81,10 +82,7 @@ export const ManagePrograms = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [programToEdit, setProgramToEdit] = useState<GrantProgram | null>(null);
 
-  const { address, isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
-
-  const { chain } = useAccount();
+  const { address, isConnected } = useWalletInteraction();
 
   const signer = useSigner();
 
@@ -99,7 +97,7 @@ export const ManagePrograms = () => {
     setIsPoolManagerLoading,
   } = useRegistryStore();
 
-  const isAllowed = address && (isRegistryAdmin || isPoolManager) && isAuth;
+  const isAllowed = isConnected && (isRegistryAdmin || isPoolManager);
 
   useEffect(() => {
     if (!address || !isConnected) {
@@ -342,7 +340,7 @@ export const ManagePrograms = () => {
   };
 
   const NotAllowedCases = () => {
-    if (!address || !isAuth || !isConnected) {
+    if (!isConnected) {
       return (
         <div className="flex flex-col gap-2 justify-center items-center">
           <p>You need to login to access this page</p>

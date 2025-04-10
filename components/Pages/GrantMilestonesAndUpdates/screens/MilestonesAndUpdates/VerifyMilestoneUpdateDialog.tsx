@@ -6,8 +6,8 @@ import { z } from "zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
-import { useAuthStore } from "@/store/auth";
-import { useAccount, useSwitchChain } from "wagmi";
+
+import { useSwitchChain } from "wagmi";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
@@ -24,6 +24,7 @@ import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { sanitizeObject } from "@/utilities/sanitize";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 type VerifyMilestoneUpdateDialogProps = {
   milestone: IMilestoneResponse;
@@ -58,12 +59,11 @@ export const VerifyMilestoneUpdateDialog: FC<
   function openModal() {
     setIsOpen(true);
   }
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chain } = useWalletInteraction();
 
   const hasVerifiedThis = milestone?.verified?.find(
     (v) => v.attester?.toLowerCase() === address?.toLowerCase()
   );
-  const { chain } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const { gap } = useGap();
   const refreshProject = useProjectStore((state) => state.refreshProject);
@@ -162,11 +162,10 @@ export const VerifyMilestoneUpdateDialog: FC<
       setIsStepper(false);
     }
   };
-  const isAuthorized = useAuthStore((state) => state.isAuth);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const verifyPermission = () => {
-    if (!isAuthorized || !isConnected) return false;
+    if (!isConnected) return false;
     return isContractOwner || !isProjectAdmin;
   };
   const ableToVerify = verifyPermission();

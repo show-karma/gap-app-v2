@@ -9,11 +9,12 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/solid";
 import { useMixpanel } from "@/hooks/useMixpanel";
-import { useAccount } from "wagmi";
+
 import { Hex } from "viem";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 const WelcomeStep = () => {
-  const { address } = useAccount();
+  const { address } = useWalletInteraction();
   const { changeOnboardingStep, isOnboardingOpen } = useOnboarding();
 
   return (
@@ -52,7 +53,7 @@ const WelcomeStep = () => {
 };
 const FirstStep = () => {
   const { changeOnboardingStep } = useOnboarding();
-  const { address } = useAccount();
+  const { address } = useWalletInteraction();
   return (
     <div className="flex flex-row gap-6 items-center">
       <img
@@ -95,7 +96,7 @@ You do this just once!`}</p>
 };
 const GrantStep = () => {
   const { changeOnboardingStep } = useOnboarding();
-  const { address } = useAccount();
+  const { address } = useWalletInteraction();
 
   return (
     <div className="flex flex-row gap-6 items-start pt-6">
@@ -141,7 +142,7 @@ const GrantStep = () => {
 const UpdatesStep = () => {
   const { changeOnboardingStep } = useOnboarding();
 
-  const { address } = useAccount();
+  const { address } = useWalletInteraction();
 
   return (
     <div className="flex flex-col">
@@ -185,7 +186,7 @@ const UpdatesStep = () => {
 const StructureStep = () => {
   const { changeOnboardingStep, setIsOnboarding } = useOnboarding();
 
-  const { address } = useAccount();
+  const { address } = useWalletInteraction();
 
   return (
     <div className="flex flex-col">

@@ -14,13 +14,14 @@ import { TrashIcon } from "@heroicons/react/24/outline";
 import { AreaChart, Card, Title } from "@tremor/react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
+
 import { prepareChartData } from "../../Communities/Impact/ImpactCharts";
 import { GrantsOutputsLoading } from "../Loading/Grants/Outputs";
 import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
 import { sendImpactAnswers, getImpactAnswers } from "@/utilities/impact";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { linkName, mapLinks } from "./utils/links";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 // Helper function to handle comma-separated URLs
 const parseProofUrls = (proof: string): string[] => {
@@ -56,7 +57,7 @@ export const OutputsAndOutcomes = () => {
     (state) => state.isCommunityAdmin
   );
 
-  const { isConnected } = useAccount();
+  const { isConnected } = useWalletInteraction();
 
   const isAuthorized =
     isConnected && (isProjectOwner || isContractOwner || isCommunityAdmin);

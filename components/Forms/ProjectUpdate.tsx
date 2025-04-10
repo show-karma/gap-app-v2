@@ -20,7 +20,7 @@ import { useState, useEffect } from "react";
 import type { SubmitHandler } from "react-hook-form";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
 import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useSwitchChain } from "wagmi";
 import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
 import * as Tooltip from "@radix-ui/react-tooltip";
@@ -53,6 +53,7 @@ import { ExternalLink } from "../Utilities/ExternalLink";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { SHARE_TEXTS } from "@/utilities/share/text";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 interface GrantOption {
   title: string;
@@ -253,8 +254,7 @@ const getFormErrorMessage = (errors: any, formValues: any) => {
 export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   afterSubmit,
 }): JSX.Element => {
-  const { address } = useAccount();
-  const { chain } = useAccount();
+  const { address, chain } = useWalletInteraction();
   const { switchChainAsync } = useSwitchChain();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);

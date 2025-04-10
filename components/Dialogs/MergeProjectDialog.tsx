@@ -19,7 +19,7 @@ import {
   IProjectResponse,
   ISearchResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useAccount } from "wagmi";
+
 import { MESSAGES } from "@/utilities/messages";
 import { z } from "zod";
 import { getGapClient, useGap } from "@/hooks";
@@ -33,6 +33,7 @@ import { sanitizeInput } from "@/utilities/sanitize";
 import { useMergeModalStore } from "@/store/modals/merge";
 import EthereumAddressToENSName from "../EthereumAddressToENSName";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 type MergeProjectProps = {
   buttonElement?: {
@@ -181,7 +182,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   const [validAddress, setValidAddress] = useState(true);
 
   const { gap } = useGap();
-  const { address, chain } = useAccount();
+  const { address, chain } = useWalletInteraction();
   const router = useRouter();
   function closeModal() {
     setIsOpen(false);

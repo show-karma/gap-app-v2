@@ -12,13 +12,14 @@ import { PlusIcon } from "@heroicons/react/24/solid";
 import { FC, Fragment, ReactNode, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { isAddress } from "viem";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useSwitchChain } from "wagmi";
 import { Button } from "../Utilities/Button";
 
 import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership";
 import { sanitizeInput } from "@/utilities/sanitize";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { errorManager } from "../Utilities/errorManager";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 type TransferOwnershipProps = {
   buttonElement?: {
@@ -46,7 +47,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
   const [validAddress, setValidAddress] = useState(true);
 
   const signer = useSigner();
-  const { chain } = useAccount();
+  const { chain } = useWalletInteraction();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);

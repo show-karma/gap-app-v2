@@ -1,7 +1,6 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { useAuth } from "@/hooks/useAuth";
-import { useAuthStore } from "@/store/auth";
+
 import { useCommunitiesStore } from "@/store/communities";
 import { useMobileStore } from "@/store/mobile";
 import { useOwnerStore } from "@/store/owner";
@@ -24,7 +23,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Chain } from "viem";
-import { useAccount } from "wagmi";
+
 import { OnboardingDialog } from "../Dialogs/OnboardingDialog";
 import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
 import { DiscordIcon, LogOutIcon, TelegramIcon, TwitterIcon } from "../Icons";
@@ -34,6 +33,7 @@ import { errorManager } from "./errorManager";
 import { ExternalLink } from "./ExternalLink";
 import { ParagraphIcon } from "../Icons/Paragraph";
 import { useSetActiveWallet } from "@privy-io/wagmi";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 const ProjectDialog = dynamic(
   () =>
@@ -47,8 +47,7 @@ const buttonStyle: HTMLButtonElement["className"] =
   "rounded-md bg-white w-max dark:bg-black px-0 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 hover:bg-transparent dark:hover:bg-opacity-75 dark:border-zinc-900";
 
 const PrivyConnectButton = () => {
-  const { login, authenticated, user } = usePrivy();
-  const { disconnect } = useAuth();
+  const { login, authenticated, user, logout } = usePrivy();
 
   if (authenticated && user) {
     return (
@@ -78,7 +77,7 @@ const PrivyConnectButton = () => {
             <div className="p-2">
               <button
                 className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 dark:text-zinc-300 hover:bg-gray-100 dark:hover:bg-zinc-900"
-                onClick={() => disconnect()}
+                onClick={() => logout()}
               >
                 <LogOutIcon className="h-4 w-4" />
                 <span>Disconnect</span>
@@ -99,8 +98,7 @@ const PrivyConnectButton = () => {
 
 export default function Header() {
   const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
-  const { isConnected, address } = useAccount();
-  const { isAuth, isAuthenticating } = useAuthStore();
+  const { isConnected, address, chain } = useWalletInteraction();
   const { communities, setCommunities, setIsLoading } = useCommunitiesStore();
 
   const signer = useSigner();
@@ -108,7 +106,7 @@ export default function Header() {
   const isCommunityAdmin = communities.length !== 0;
 
   const getCommunities = async () => {
-    if (!address || !isAuth) {
+    if (!address || !isConnected) {
       setCommunities([]);
       return;
     }
@@ -134,10 +132,8 @@ export default function Header() {
   const setIsOwner = useOwnerStore((state) => state.setIsOwner);
   const setIsOwnerLoading = useOwnerStore((state) => state.setIsOwnerLoading);
 
-  const { chain } = useAccount();
-
   useEffect(() => {
-    if (!signer || !address || !isAuth) {
+    if (!signer || !address || !isConnected) {
       setIsOwnerLoading(false);
       setIsOwner(false);
       return;
@@ -158,11 +154,12 @@ export default function Header() {
         });
     };
     setupOwner();
-  }, [signer, address, isAuth]);
+  }, [signer, isConnected]);
 
   useEffect(() => {
+    if (!isConnected) return;
     getCommunities();
-  }, [address, isAuth]);
+  }, [isConnected]);
 
   const socials = [
     {
@@ -194,46 +191,44 @@ export default function Header() {
     setIsReady(true);
   }, []);
 
-  const { authenticate, disconnect, softDisconnect } = useAuth();
   const { setActiveWallet } = useSetActiveWallet();
   const { wallets } = useWallets();
 
-  useEffect(() => {
-    const unwatch = watchAccount?.(config, {
-      onChange: async (account, prevAccount) => {
-        if (!account) {
-          errorManager("User changed to empty account instance", account, {
-            account,
-            prevAccount,
-          });
-        }
-        if (account.address && account.address !== prevAccount.address) {
-          // softDisconnect(account.address);
-          const newActiveWallet = wallets.find(
-            (wallet) => wallet.address === account.address
-          );
-          if (newActiveWallet) {
-            await setActiveWallet(newActiveWallet);
-          }
-        }
-      },
-    });
-    return () => unwatch();
-  }, []);
+  // useEffect(() => {
+  //   const unwatch = watchAccount?.(config, {
+  //     onChange: async (account, prevAccount) => {
+  //       if (!account) {
+  //         errorManager("User changed to empty account instance", account, {
+  //           account,
+  //           prevAccount,
+  //         });
+  //       }
+  //       if (account.address && account.address !== prevAccount.address) {
+  //         // softDisconnect(account.address);
+  //         const newActiveWallet = wallets.find(
+  //           (wallet) => wallet.address === account.address
+  //         );
+  //         if (newActiveWallet) {
+  //           await setActiveWallet(newActiveWallet);
+  //         }
+  //       }
+  //     },
+  //   });
+  //   return () => unwatch();
+  // }, []);
 
-  useEffect(() => {
-    if (isConnected && isReady && !isAuth) {
-      authenticate();
-    }
-  }, [isConnected, isReady, isAuth]);
+  // useEffect(() => {
+  //   if (isConnected && isReady && !isAuth) {
+  //     authenticate();
+  //   }
+  // }, [isConnected, isReady, isAuth]);
 
   const { isMobileMenuOpen, setIsMobileMenuOpen } = useMobileStore();
 
   const pathname = usePathname();
   const isFundingMap = pathname.includes("funding-map");
   const { isPoolManager, isRegistryAdmin } = useRegistryStore();
-  const isRegistryAllowed =
-    address && (isRegistryAdmin || isPoolManager) && isAuth;
+  const isRegistryAllowed = (isRegistryAdmin || isPoolManager) && isConnected;
 
   return (
     <>
@@ -365,14 +360,14 @@ export default function Header() {
                                 ) : null
                               ) : (
                                 <>
-                                  {isConnected && isAuth && (
+                                  {isConnected && (
                                     <Link href={PAGES.MY_PROJECTS}>
                                       <button className="rounded-md bg-white w-full dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
                                         My Projects
                                       </button>
                                     </Link>
                                   )}
-                                  {isCommunityAdmin && isConnected && isAuth ? (
+                                  {isCommunityAdmin && isConnected ? (
                                     <Link href={PAGES.ADMIN.LIST}>
                                       <button className="rounded-md w-full bg-white dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
                                         Admin
@@ -380,7 +375,7 @@ export default function Header() {
                                     </Link>
                                   ) : null}
 
-                                  {isConnected && isAuth && <ProjectDialog />}
+                                  {isConnected && <ProjectDialog />}
                                 </>
                               )}
 
@@ -430,19 +425,19 @@ export default function Header() {
                     ) : null
                   ) : (
                     <>
-                      {isCommunityAdmin && isConnected && isAuth ? (
+                      {isCommunityAdmin && isConnected ? (
                         <Link href={PAGES.ADMIN.LIST}>
                           <button className={buttonStyle}>Admin</button>
                         </Link>
                       ) : null}
-                      {isConnected && isAuth && (
+                      {isConnected && (
                         <Link href={PAGES.MY_PROJECTS}>
                           <button className={buttonStyle}>My Projects</button>
                         </Link>
                       )}
 
                       {/* Rainbowkit custom connect button start */}
-                      {isConnected && isAuth && <ProjectDialog />}
+                      {isConnected && <ProjectDialog />}
                     </>
                   )}
 

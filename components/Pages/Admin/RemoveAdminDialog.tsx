@@ -10,7 +10,7 @@ import {
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useSwitchChain } from "wagmi";
 import { GAP } from "@show-karma/karma-gap-sdk";
 import { Button } from "../../Utilities/Button";
 import { MESSAGES } from "@/utilities/messages";
@@ -23,6 +23,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -74,7 +75,7 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
   });
 
   const [isLoading, setIsLoading] = useState(false);
-  const { chain } = useAccount();
+  const { chain } = useWalletInteraction();
   const { switchChainAsync } = useSwitchChain();
 
   const { changeStepperStep, setIsStepper } = useStepper();

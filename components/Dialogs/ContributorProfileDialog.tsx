@@ -8,11 +8,11 @@ import { useProjectStore } from "@/store";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useSwitchChain } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks";
-import { useAuthStore } from "@/store/auth";
+
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -26,6 +26,7 @@ import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 type ContributorProfileDialogProps = {};
 
@@ -86,7 +87,7 @@ export const ContributorProfileDialog: FC<
   ContributorProfileDialogProps
 > = () => {
   const project = useProjectStore((state) => state.project);
-  const { address, chain, isConnected } = useAccount();
+  const { address, chain, isConnected } = useWalletInteraction();
   const { closeModal, isModalOpen: isOpen } = useContributorProfileModalStore();
   const refreshMembers = useProjectStore((state) => state.refreshMembers);
 
@@ -111,10 +112,7 @@ export const ContributorProfileDialog: FC<
   const { openConnectModal } = useConnectModal();
   const [isLoading, setIsLoading] = useState(false);
   const { changeStepperStep, setIsStepper } = useStepper();
-  const { isAuth } = useAuthStore();
   const refreshProject = useProjectStore((state) => state.refreshProject);
-
-  const isAllowed = isConnected && isAuth;
 
   const onSubmit = async (data: SchemaType) => {
     let gapClient = gap;
@@ -296,7 +294,7 @@ export const ContributorProfileDialog: FC<
                         project?.details?.data.title || "this project"
                       }`}
                 </Dialog.Title>
-                {isAllowed ? (
+                {isConnected ? (
                   <form onSubmit={handleSubmit(onSubmit)}>
                     <div className="flex flex-col gap-2 mt-8">
                       <div className="w-full flex flex-col gap-1">

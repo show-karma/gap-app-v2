@@ -12,7 +12,7 @@ import { TrashIcon } from "@heroicons/react/24/outline";
 import { AreaChart, Card, Title } from "@tremor/react";
 import { useState, useEffect } from "react";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
+
 import { prepareChartData } from "../../Communities/Impact/ImpactCharts";
 import { GrantsOutputsLoading } from "../Loading/Grants/Outputs";
 import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
@@ -23,6 +23,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { linkName, mapLinks } from "./utils/links";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 type OutputForm = {
   id: string;
@@ -78,7 +79,7 @@ export const FilteredOutputsAndOutcomes = ({
     (state) => state.isCommunityAdmin
   );
 
-  const { isConnected } = useAccount();
+  const { isConnected } = useWalletInteraction();
 
   const isAuthorized =
     isConnected && (isProjectOwner || isContractOwner || isCommunityAdmin);

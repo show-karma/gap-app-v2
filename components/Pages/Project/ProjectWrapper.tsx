@@ -14,7 +14,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useGap } from "@/hooks";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useAuthStore } from "@/store/auth";
+
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { useProgressModalStore } from "@/store/modals/progress";
@@ -29,7 +29,7 @@ import {
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
-import { useAccount } from "wagmi";
+
 import { IntroDialog } from "./IntroDialog";
 
 import { getRPCClient } from "@/utilities/rpcClient";
@@ -37,6 +37,7 @@ import { useContactInfo } from "@/hooks/useContactInfo";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { ShareDialog } from "../GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/ShareDialog";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
 
 interface ProjectWrapperProps {
   project: IProjectResponse;
@@ -75,12 +76,11 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   const hasContactInfo = Boolean(contactsInfo?.length);
 
   const signer = useSigner();
-  const { address, isConnected, isConnecting, chain } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { address, isConnected } = useWalletInteraction();
   const { gap } = useGap();
 
   useEffect(() => {
-    if (!project || !project?.chainID || !isAuth || !isConnected || !address) {
+    if (!project || !project?.chainID || !isConnected || !address) {
       setIsProjectAdmin(false);
       setIsProjectAdminLoading(false);
       setIsProjectOwner(false);
@@ -134,7 +134,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
       }
     };
     setupProjectAdmin();
-  }, [project?.uid, address, isAuth, isConnected, signer]);
+  }, [project?.uid, address, isConnected, signer]);
 
   const getSocials = (links: IProjectDetails["data"]["links"]) => {
     const types = [
@@ -234,37 +234,6 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   );
   const { openConnectModal } = useConnectModal();
   const { setIsEndorsementOpen: setIsOpen } = useEndorsementStore();
-
-  const handleEndorse = () => {
-    if (!isConnected || !isAuth) {
-      return (
-        <Button
-          className="hover:bg-white dark:hover:bg-black border border-black bg-white text-black dark:bg-black dark:text-white px-4 rounded-md py-2 w-max"
-          onClick={() => {
-            if (!isConnecting) {
-              openConnectModal?.();
-            }
-          }}
-        >
-          Endorse this project
-        </Button>
-      );
-    }
-    if (!hasAlreadyEndorsed) {
-      return (
-        <Button
-          onClick={() => setIsOpen(true)}
-          className={cn(
-            "flex justify-center items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100  hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900",
-            "hover:bg-white dark:hover:bg-black border border-black bg-white text-black dark:bg-black dark:text-white px-4 rounded-md py-2 w-max"
-          )}
-        >
-          Endorse this project
-        </Button>
-      );
-    }
-    return null;
-  };
 
   interface Member {
     uid: string;
