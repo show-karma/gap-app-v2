@@ -7,7 +7,10 @@ export function useWalletInteraction() {
   const { wallets } = useWallets();
   const isConnected = ready && authenticated && wallets.length !== 0;
   const chain = wagmiChain;
-  const address = user && (wallets[0]?.address as `0x${string}`);
+  const address =
+    user && (wallets[0]?.address as `0x${string}`)
+      ? (wallets[0]?.address as `0x${string}`)
+      : null;
   const connector = wallets[0];
 
   return {

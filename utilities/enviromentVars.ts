@@ -1,6 +1,6 @@
 const isDev = process.env.NEXT_PUBLIC_ENV === "staging";
-const baseDevUrl = "https://gapstagapi.karmahq.xyz";
-// const baseDevUrl = "http://localhost:3002";
+// const baseDevUrl = "https://gapstagapi.karmahq.xyz";
+const baseDevUrl = "http://localhost:3002";
 
 export const envVars = {
   isDev,

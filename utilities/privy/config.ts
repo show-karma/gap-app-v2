@@ -15,6 +15,7 @@ export const privyConfig: PrivyClientConfig = {
       "coinbase_wallet",
       "detected_wallets",
     ],
+    walletChainType: "ethereum-only",
     logo: "https://gap.karmahq.xyz/logo/karma-gap-logo2.png",
   },
   embeddedWallets: {

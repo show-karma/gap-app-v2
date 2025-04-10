@@ -57,18 +57,20 @@ const PrivyConnectButton = () => {
           <Popover.Trigger asChild>
             <button
               type="button"
-              className="flex items-center gap-2 bg-white dark:bg-black rounded-full pr-3 pl-1 py-1 text-sm border border-gray-300 dark:border-zinc-700 hover:border-gray-400 dark:hover:border-zinc-600"
+              className="flex items-center gap-2 bg-gray-500 dark:bg-zinc-900 hover:opacity-80 rounded-full p-0 text-sm "
             >
-              <div className="relative w-8 h-8 rounded-full overflow-hidden border border-gray-100 dark:border-zinc-800">
-                <EthereumAddressToENSAvatar
-                  address={user.wallet?.address}
-                  className="h-8 w-8"
-                />
-              </div>
-              <span className="text-gray-700 dark:text-zinc-300 hidden sm:inline truncate max-w-[100px]">
+              <span className="ml-3 text-white font-semibold hidden sm:inline truncate max-w-[100px]">
                 {user.wallet?.address?.slice(0, 6)}...
                 {user.wallet?.address?.slice(-4)}
               </span>
+              <div className="relative w-10 h-10 rounded-full overflow-hidden">
+                {user.wallet?.address ? (
+                  <EthereumAddressToENSAvatar
+                    address={user.wallet?.address}
+                    className="h-10 w-10"
+                  />
+                ) : null}
+              </div>
             </button>
           </Popover.Trigger>
           <Popover.Content
