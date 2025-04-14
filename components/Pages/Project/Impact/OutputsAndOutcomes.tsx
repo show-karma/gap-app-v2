@@ -19,8 +19,7 @@ import { prepareChartData } from "../../Communities/Impact/ImpactCharts";
 import { GrantsOutputsLoading } from "../Loading/Grants/Outputs";
 import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
 import { sendImpactAnswers, getImpactAnswers } from "@/utilities/impact";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { linkName, mapLinks } from "./utils/links";
+import { GroupedLinks } from "./GroupedLinks";
 
 // Helper function to handle comma-separated URLs
 const parseProofUrls = (proof: string): string[] => {
@@ -186,13 +185,12 @@ export const OutputsAndOutcomes = () => {
   };
 
   // Filter outputs based on authorization
-  const filteredOutputs = isAuthorized
-    ? impactAnswers.filter(
-        (item) => item.isAssociatedWithPrograms || item.hasData
-      )
-    : impactAnswers.filter(
-        (item) => item.hasData && item.isAssociatedWithPrograms
-      );
+  const filteredOutputs = impactAnswers.filter(
+    (item) =>
+      item.isAssociatedWithPrograms ||
+      item.hasData ||
+      autosyncedIndicators.find((autosynced) => item.id === autosynced.id)
+  );
 
   const handleAddEntry = (id: string) => {
     const output = impactAnswers.find((o) => o.id === id);
@@ -337,9 +335,8 @@ export const OutputsAndOutcomes = () => {
               (output) => output.proof && urlRegex.test(output.proof)
             );
 
-            const links = mapLinks(
-              outputsWithProof?.map((output) => output.proof) || []
-            );
+            const proofs =
+              outputsWithProof?.map((output) => output.proof) || [];
 
             return (
               <div
@@ -370,21 +367,13 @@ export const OutputsAndOutcomes = () => {
                       )}
                     </div>
                     <div className="flex flex-row gap-2 items-center flex-wrap">
-                      {links.map((link, index) => (
-                        <ExternalLink
-                          key={index}
-                          href={link as string}
-                          className="text-sm text-gray-500 dark:text-zinc-400 underline truncate"
-                        >
-                          {linkName(link as string)}
-                        </ExternalLink>
-                      ))}
+                      <GroupedLinks proofs={proofs} />
                     </div>
                   </div>
                 </div>
                 <div className="flex flex-row gap-4 max-md:flex-col-reverse">
                   <div className="flex flex-1 flex-col gap-5">
-                    {item.datapoints?.length > 1 && (
+                    {item.datapoints?.length > 1 ? (
                       <Card className="bg-white dark:bg-zinc-800 rounded">
                         <Title className="text-sm font-medium text-gray-700 dark:text-zinc-300 mb-4">
                           Historical Values
@@ -463,6 +452,10 @@ export const OutputsAndOutcomes = () => {
                           />
                         </div>
                       </Card>
+                    ) : (
+                      <p className="text-gray-600 dark:text-zinc-300 text-left">
+                        {MESSAGES.GRANT.OUTPUTS.EMPTY_DATAPOINTS}
+                      </p>
                     )}
                   </div>
                   <div className="flex flex-1">
@@ -476,7 +469,7 @@ export const OutputsAndOutcomes = () => {
                             (!isAutosynced && item.hasData) ||
                             (!isAutosynced && form?.isEditing);
                           return displayTable;
-                        })() && (
+                        })() ? (
                           <div className="overflow-y-auto overflow-x-auto rounded">
                             <table className="min-w-full divide-y divide-gray-200 dark:divide-zinc-700 rounded border border-gray-200 dark:border-zinc-700">
                               <thead className="">
@@ -742,7 +735,7 @@ export const OutputsAndOutcomes = () => {
                               </tbody>
                             </table>
                           </div>
-                        )}
+                        ) : null}
                       </div>
                     </div>
                   </div>
