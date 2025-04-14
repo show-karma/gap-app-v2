@@ -67,6 +67,7 @@ export const linkName = (link: string) => {
     }
   } catch (error) {
     // If URL parsing fails, return original link
+    return link;
   }
 
   return link;

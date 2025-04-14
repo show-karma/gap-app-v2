@@ -21,8 +21,8 @@ import {
   getImpactAnswers,
 } from "@/utilities/impact/impactAnswers";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { linkName, mapLinks } from "./utils/links";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { GroupedLinks } from "./GroupedLinks";
 
 type OutputForm = {
   id: string;
@@ -374,9 +374,8 @@ export const FilteredOutputsAndOutcomes = ({
               (output) => output.proof && urlRegex.test(output.proof)
             );
 
-            const links = mapLinks(
-              outputsWithProof?.map((output) => output.proof) || []
-            );
+            const proofs =
+              outputsWithProof?.map((output) => output.proof) || [];
 
             return (
               <div
@@ -407,15 +406,7 @@ export const FilteredOutputsAndOutcomes = ({
                       )}
                     </div>
                     <div className="flex flex-row gap-2 items-center flex-wrap">
-                      {links.map((link, index) => (
-                        <ExternalLink
-                          key={index}
-                          href={link as string}
-                          className="text-sm text-gray-500 dark:text-zinc-400 underline truncate"
-                        >
-                          {linkName(link as string)}
-                        </ExternalLink>
-                      ))}
+                      <GroupedLinks proofs={proofs} />
                     </div>
                   </div>
                 </div>

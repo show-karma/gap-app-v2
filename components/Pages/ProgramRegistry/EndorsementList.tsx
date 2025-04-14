@@ -13,6 +13,11 @@ import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { IProjectEndorsement } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import { useEndorsementStore } from "@/store/modals/endorsement";
+import { useAccount } from "wagmi";
+import { useAuthStore } from "@/store/auth";
+import * as Tooltip from "@radix-ui/react-tooltip";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 interface EndorsementRowProps {
   endorsement: IProjectEndorsement;
@@ -70,6 +75,19 @@ export const EndorsementList: FC = () => {
   const [hasMore, setHasMore] = useState<boolean>(true);
 
   const { populateEns } = useENS();
+  const { setIsEndorsementOpen: setIsOpen } = useEndorsementStore();
+  const { address, isConnected } = useAccount();
+  const { isAuth } = useAuthStore();
+  const { openConnectModal } = useConnectModal();
+
+  const userHasEndorsed = useMemo(() => {
+    if (!address || !isConnected || !isAuth || !project?.endorsements?.length)
+      return false;
+    return project.endorsements.some(
+      (endorsement) =>
+        endorsement.recipient?.toLowerCase() === address.toLowerCase()
+    );
+  }, [address, isConnected, isAuth, project?.endorsements]);
 
   useMemo(() => {
     const endorsements = project?.endorsements || [];
@@ -108,23 +126,59 @@ export const EndorsementList: FC = () => {
   return (
     <div className="w-full flex flex-col gap-3">
       {handledEndorsements.length ? (
-        <div className="flex flex-col gap-0 divide-y divide-y-gray-200  rounded-xl">
-          {handledEndorsements.map((endorsement, index) => (
-            <EndorsementRow key={index} endorsement={endorsement} />
-          ))}
-          {hasMore ? (
-            <div className="w-full flex flex-row justify-center items-center py-2 px-4">
-              <Button
-                onClick={() => {
-                  setPage((old) => old + 1);
-                }}
-                className="w-max text-base bg-white border border-black dark:text-black dark:bg-black dark:border-white hover:bg-black dark:hover:bg-white"
-              >
-                Load more
-              </Button>
-            </div>
-          ) : null}
-        </div>
+        <>
+          <div className="flex flex-row gap-2 px-2 py-2 mb-[-20px] justify-start">
+            <Tooltip.Provider>
+              <Tooltip.Root delayDuration={300}>
+                <Tooltip.Trigger asChild>
+                  <div>
+                    <Button
+                      onClick={() => {
+                        if (isConnected) {
+                          setIsOpen(true);
+                        } else {
+                          openConnectModal?.();
+                        }
+                      }}
+                      className="whitespace-nowrap bg-brand-blue text-white px-4 py-2 rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                      Endorse the project
+                    </Button>
+                  </div>
+                </Tooltip.Trigger>
+                {userHasEndorsed && (
+                  <Tooltip.Portal>
+                    <Tooltip.Content
+                      className="rounded-lg bg-white p-2 text-sm text-gray-700 shadow-lg dark:bg-zinc-800 dark:text-gray-300 z-50"
+                      sideOffset={5}
+                      side="bottom"
+                    >
+                      <p>You have already endorsed this project.</p>
+                      <Tooltip.Arrow className="fill-white dark:fill-zinc-800" />
+                    </Tooltip.Content>
+                  </Tooltip.Portal>
+                )}
+              </Tooltip.Root>
+            </Tooltip.Provider>
+          </div>
+          <div className="flex flex-col gap-0 divide-y divide-y-gray-200  rounded-xl">
+            {handledEndorsements.map((endorsement, index) => (
+              <EndorsementRow key={index} endorsement={endorsement} />
+            ))}
+            {hasMore ? (
+              <div className="w-full flex flex-row justify-center items-center py-2 px-4">
+                <Button
+                  onClick={() => {
+                    setPage((old) => old + 1);
+                  }}
+                  className="w-max text-base bg-white border border-black dark:text-black dark:bg-black dark:border-white hover:bg-black dark:hover:bg-white"
+                >
+                  Load more
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        </>
       ) : (
         <EmptyEndorsmentList />
       )}
