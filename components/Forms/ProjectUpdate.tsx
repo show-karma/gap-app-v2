@@ -24,6 +24,7 @@ import { useSwitchChain } from "wagmi";
 import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
 import * as Tooltip from "@radix-ui/react-tooltip";
+import { SchemaEncoder } from "@ethereum-attestation-service/eas-sdk";
 import {
   InformationCircleIcon,
   CalendarIcon,
@@ -54,6 +55,8 @@ import { DatePicker } from "@/components/Utilities/DatePicker";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { useWalletInteraction } from "@/hooks/useWalletInteraction";
+import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
+import { getRPCClient } from "@/utilities/rpcClient";
 
 interface GrantOption {
   title: string;
@@ -443,6 +446,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     name: output.name,
   }));
 
+  const { getClientForChain } = useSmartWallets();
+
   const createProjectUpdate = async (data: UpdateType) => {
     let gapClient = gap;
     if (!address || !project) return;
@@ -462,15 +467,13 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         gapClient = getGapClient(chainId);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(chainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      // Get the Privy smart wallet client for the appropriate chain
+      const walletClient = await getClientForChain({ id: chainId });
+      if (!walletClient) {
+        throw new Error("Failed to connect to wallet");
       }
 
-      const walletSigner = await walletClientToSigner(walletClient);
-      const schema = gapClient.findSchema("ProjectUpdate");
-
+      const schema = gapClient?.findSchema("ProjectUpdate");
       if (!schema) {
         throw new Error("ProjectUpdate schema not found");
       }
@@ -515,56 +518,124 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         );
       }
 
-      // Create the base project update object
+      // Create the project update data object
       const projectUpdateData = {
-        data: {
-          title: data.title,
-          text: data.text,
-          startDate: data.startDate ? data.startDate : undefined,
-          endDate: data.endDate ? data.endDate : undefined,
-          grants: data.grants || [],
-          indicators: data.outputs.map((indicator) => ({
-            indicatorId: indicator.outputId,
-            name: outputs.find((o) => o.id === indicator.outputId)?.name || "",
-          })),
-          deliverables: data.deliverables.map((deliverable) => ({
-            name: deliverable.name,
-            proof: deliverable.proof,
-            description: deliverable.description || "",
-          })),
-          type: "project-update",
-        },
-        recipient,
-        refUID: projectUid,
-        schema,
+        title: data.title,
+        text: data.text,
+        startDate: data.startDate ? data.startDate : undefined,
+        endDate: data.endDate ? data.endDate : undefined,
+        grants: data.grants || [],
+        indicators: data.outputs.map((indicator) => ({
+          indicatorId: indicator.outputId,
+          name: outputs.find((o) => o.id === indicator.outputId)?.name || "",
+        })),
+        deliverables: data.deliverables.map((deliverable) => ({
+          name: deliverable.name,
+          proof: deliverable.proof,
+          description: deliverable.description || "",
+        })),
+        type: "project-update",
       };
 
-      // If in edit mode, add the existing UID
-      if (isEditMode && editId) {
-        Object.assign(projectUpdateData, { uid: editId });
+      // Get the public client for the chain
+      const publicClient = await getRPCClient(chainId);
+      console.log("publicClient", publicClient);
+
+      // Encode the data using SchemaEncoder
+      const schemaEncoder = new SchemaEncoder("string json");
+      const encodedData = schemaEncoder.encodeData([
+        {
+          name: "json",
+          type: "string",
+          value: JSON.stringify(projectUpdateData),
+        },
+      ]);
+
+      // Get the contract address and abi
+      const { Networks } = await import(
+        "@show-karma/karma-gap-sdk/core/consts"
+      );
+
+      if (!gapClient) {
+        gapClient = getGapClient(chainId);
       }
 
-      const projectUpdate = new ProjectUpdate(projectUpdateData);
+      const easContractAddress = Networks[gapClient.network].contracts.eas;
 
-      await projectUpdate
-        .attest(walletSigner as any, changeStepperStep)
-        .then(async (res) => {
-          let retries = 1000;
+      // Import EAS ABI
+      const { default: easAbi } = await import(
+        "@ethereum-attestation-service/eas-contracts/deployments/optimism/EAS.json"
+      );
+
+      changeStepperStep("preparing");
+
+      try {
+        // Import Chain objects for proper type compatibility
+        const { optimism, optimismSepolia } = await import("viem/chains");
+
+        // Prepare the contract parameters using multiAttest for better compatibility with Alchemy
+        const contractParams = {
+          address: easContractAddress as `0x${string}`,
+          abi: easAbi.abi,
+          functionName: "multiAttest",
+          args: [
+            [
+              {
+                schema: schema.uid,
+                data: [
+                  {
+                    recipient: recipient as `0x${string}`,
+                    expirationTime: BigInt(0),
+                    revocable: true,
+                    refUID: projectUid as `0x${string}`,
+                    data: encodedData,
+                    value: BigInt(0),
+                  },
+                ],
+              },
+            ],
+          ],
+          chain:
+            process.env.NEXT_PUBLIC_VERCEL_ENV !== "production"
+              ? optimismSepolia
+              : optimism,
+          account: walletClient.account,
+        };
+
+        // Simulate the transaction first
+        const simulationResult = await (publicClient as any).simulateContract(
+          contractParams
+        );
+
+        // Execute the transaction - use as any to bypass TypeScript errors with Privy smart wallets
+        changeStepperStep("pending");
+        const hash = await (walletClient as any).writeContract(
+          simulationResult.request
+        );
+
+        changeStepperStep("confirmed");
+
+        // Process with indexing using the transaction hash
+        if (hash) {
+          // Wait for transaction confirmation
+          await publicClient.waitForTransactionReceipt({ hash });
+
+          // Send to indexer
+          await fetchData(
+            INDEXER.ATTESTATION_LISTENER(hash, chainId),
+            "POST",
+            {}
+          );
+
+          // Monitor indexing
           changeStepperStep("indexing");
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, projectUpdate.chainID),
-              "POST",
-              {}
-            );
-          }
+          let retries = 20;
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {
-                const attestUID = projectUpdate.uid;
+                // Check if the update is indexed by looking for a matching title
                 const alreadyExists = fetchedProject?.updates.find(
-                  (g) => g.uid === attestUID
+                  (g) => g.data.title === data.title
                 );
 
                 if (alreadyExists) {
@@ -576,7 +647,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                   router.refresh();
                   openShareDialog({
                     modalShareText: `🎉 You just dropped an update for ${project?.details?.data?.title}!`,
-                    modalShareSecondText: `That’s how progress gets done! Your update is now live onchain—one step closer to greatness. Keep the vibes high and the milestones rolling! 🚀🔥`,
+                    modalShareSecondText: `That's how progress gets done! Your update is now live onchain—one step closer to greatness. Keep the vibes high and the milestones rolling! 🚀🔥`,
                     shareText: SHARE_TEXTS.PROJECT_ACTIVITY(
                       project?.details?.data?.title as string,
                       project?.uid as string
@@ -591,7 +662,34 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                 await new Promise((resolve) => setTimeout(resolve, 1500));
               });
           }
-        });
+        }
+      } catch (error) {
+        errorManager(
+          `Error of user ${address} creating project activity for project ${project?.uid}`,
+          error,
+          {
+            projectUID: project?.uid,
+            address: address,
+            data: {
+              title: data.title,
+              text: data.text,
+              startDate: data.startDate,
+              endDate: data.endDate,
+              grants: data.grants,
+              indicators: indicatorsList.map((indicator) => ({
+                indicatorId: indicator.indicatorId,
+                name: indicator.name,
+              })),
+              deliverables: data.deliverables,
+            } as IProjectUpdate,
+          }
+        );
+        console.error(error);
+        toast.error(MESSAGES.PROJECT_UPDATE_FORM.ERROR);
+      } finally {
+        setIsStepper(false);
+        setIsLoading(false);
+      }
     } catch (error) {
       errorManager(
         `Error of user ${address} creating project activity for project ${project?.uid}`,
@@ -613,11 +711,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
           } as IProjectUpdate,
         }
       );
-      console.log(error);
+      console.error(error);
       toast.error(MESSAGES.PROJECT_UPDATE_FORM.ERROR);
-    } finally {
-      setIsStepper(false);
-      setIsLoading(false);
     }
   };
 

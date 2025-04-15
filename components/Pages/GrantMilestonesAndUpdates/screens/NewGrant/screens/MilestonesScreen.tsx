@@ -8,7 +8,7 @@ import { useProjectStore } from "@/store";
 import { Milestone } from "../Milestone";
 import { PlusIcon } from "@heroicons/react/24/outline";
 
-import { useSwitchChain } from "wagmi";
+import { useAccount, useSwitchChain } from "wagmi";
 import { useStepper } from "@/store/modals/txStepper";
 import toast from "react-hot-toast";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -56,6 +56,8 @@ export const MilestonesScreen: React.FC = () => {
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
 
+  const { chain: wagmiChain } = useAccount();
+
   const pathname = usePathname();
   const isEditing = pathname.includes("edit");
 
@@ -85,6 +87,7 @@ export const MilestonesScreen: React.FC = () => {
       }
     });
   };
+  console.log(wagmiChain);
 
   const createNewGrant = async () => {
     if (!address || !selectedProject || !gap) return;
@@ -94,11 +97,16 @@ export const MilestonesScreen: React.FC = () => {
       if (!isConnected) return;
 
       // Check if we need to switch chains
-      const chainId = chain?.id;
-      if (!checkNetworkIsValid(chainId) || chainId !== communityNetworkId) {
-        await switchChainAsync?.({ chainId: communityNetworkId });
-        gapClient = getGapClient(communityNetworkId);
-      }
+      const chainId = chain?.id || wagmiChain?.id;
+      console.log(chainId, communityNetworkId);
+      // if (
+      //   !checkNetworkIsValid(chainId) ||
+      //   chainId !== communityNetworkId ||
+      //   !chain
+      // ) {
+      //   await switchChainAsync?.({ chainId: communityNetworkId });
+      //   gapClient = getGapClient(communityNetworkId);
+      // }
 
       // Save all milestones
       saveAllMilestones();
@@ -182,6 +190,7 @@ export const MilestonesScreen: React.FC = () => {
       const { walletClient, error } = await safeGetWalletClient(
         communityNetworkId
       );
+      console.log(error, walletClient, chain, communityNetworkId);
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
       }

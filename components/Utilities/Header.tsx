@@ -22,7 +22,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Chain } from "viem";
+import { Chain, parseEther } from "viem";
+import toast from "react-hot-toast";
+import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
+import { useWalletInteraction } from "@/hooks/useWalletInteraction";
+import { appNetwork } from "@/utilities/network";
+import { optimism, optimismSepolia } from "viem/chains";
 
 import { OnboardingDialog } from "../Dialogs/OnboardingDialog";
 import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
@@ -33,8 +38,7 @@ import { errorManager } from "./errorManager";
 import { ExternalLink } from "./ExternalLink";
 import { ParagraphIcon } from "../Icons/Paragraph";
 import { useSetActiveWallet } from "@privy-io/wagmi";
-import { useWalletInteraction } from "@/hooks/useWalletInteraction";
-import { appNetwork } from "@/utilities/network";
+import { envVars } from "@/utilities/enviromentVars";
 
 const ProjectDialog = dynamic(
   () =>
@@ -48,7 +52,8 @@ const buttonStyle: HTMLButtonElement["className"] =
   "rounded-md bg-white w-max dark:bg-black px-0 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 hover:bg-transparent dark:hover:bg-opacity-75 dark:border-zinc-900";
 
 const PrivyConnectButton = () => {
-  const { login, authenticated, user, logout } = usePrivy();
+  const { authenticated, user } = usePrivy();
+  const { login, logout } = useWalletInteraction();
 
   if (authenticated && user) {
     return (
@@ -101,8 +106,12 @@ const PrivyConnectButton = () => {
 
 export default function Header() {
   const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
-  const { isConnected, address, chain } = useWalletInteraction();
+  const { isConnected, address, chain, connector, getClient } =
+    useWalletInteraction();
   const { communities, setCommunities, setIsLoading } = useCommunitiesStore();
+  const { wallets } = useWallets();
+  const { client } = useSmartWallets();
+  const { user } = usePrivy();
 
   const signer = useSigner();
 
@@ -197,36 +206,95 @@ export default function Header() {
   }, []);
 
   const { setActiveWallet } = useSetActiveWallet();
-  const { wallets } = useWallets();
 
-  // useEffect(() => {
-  //   const unwatch = watchAccount?.(config, {
-  //     onChange: async (account, prevAccount) => {
-  //       if (!account) {
-  //         errorManager("User changed to empty account instance", account, {
-  //           account,
-  //           prevAccount,
-  //         });
-  //       }
-  //       if (account.address && account.address !== prevAccount.address) {
-  //         // softDisconnect(account.address);
-  //         const newActiveWallet = wallets.find(
-  //           (wallet) => wallet.address === account.address
-  //         );
-  //         if (newActiveWallet) {
-  //           await setActiveWallet(newActiveWallet);
-  //         }
-  //       }
-  //     },
-  //   });
-  //   return () => unwatch();
-  // }, []);
+  // Add the test transfer function
+  const handleTestTransfer = async () => {
+    try {
+      if (!isConnected) {
+        toast.error("Please connect your wallet first");
+        return;
+      }
 
-  // useEffect(() => {
-  //   if (isConnected && isReady && !isAuth) {
-  //     authenticate();
-  //   }
-  // }, [isConnected, isReady, isAuth]);
+      // Target address and amount
+      const to = "0x5A4830885f12438E00D8f4d98e9Fe083e707698C";
+      const amount = parseEther("0.00001");
+
+      // Check if user has a smart wallet
+      const hasSmartWallet = user?.linkedAccounts?.some(
+        (account) => account.type === "smart_wallet"
+      );
+      console.log("Has smart wallet:", hasSmartWallet);
+
+      // If client is available, use it to send a gasless transaction
+      if (client) {
+        console.log("Using smart wallet client for transaction");
+        toast.loading("Sending transaction via smart wallet...", {
+          id: "sending-tx",
+        });
+
+        try {
+          // For debugging purpose
+          console.log("Optimism Sepolia chain ID:", optimismSepolia.id);
+          console.log("Sending transaction to:", to);
+          console.log("Amount:", amount.toString());
+
+          // Send transaction using the smart wallet client
+          const hash = await client.sendTransaction({
+            to,
+            value: amount,
+            chain: optimismSepolia as any,
+            paymasterContext: {
+              policyId: envVars.ALCHEMY_POLICY_ID,
+            },
+          });
+
+          console.log("Transaction sent:", hash);
+          toast.success(`Transaction sent! Hash: ${hash}`, {
+            id: "sending-tx",
+          });
+          return;
+        } catch (smartWalletError: any) {
+          console.error("Smart wallet transaction failed:", smartWalletError);
+          toast.error(
+            `Smart wallet transaction failed: ${
+              smartWalletError?.message || "Unknown error"
+            }`,
+            { id: "sending-tx" }
+          );
+
+          // Log more details for debugging
+          if (smartWalletError?.cause) {
+            console.error("Error cause:", smartWalletError.cause);
+          }
+
+          // Fall back to regular wallet
+        }
+      } else {
+        console.log("Smart wallet client not available");
+      }
+
+      // Fallback to regular wallet if smart wallet fails or is not available
+      console.log("Falling back to regular wallet");
+      toast.loading("Using regular wallet...", { id: "sending-tx" });
+
+      // Get wallet client using the connector
+      const walletClient = await getClient(optimismSepolia);
+
+      // Send transaction using the wallet client
+      const hash = await walletClient.sendTransaction({
+        to,
+        value: amount,
+      });
+
+      console.log("Transaction sent:", hash);
+      toast.success(`Transaction sent! Hash: ${hash}`, { id: "sending-tx" });
+    } catch (error: any) {
+      console.error("Error sending test transaction:", error);
+      toast.error(`Transaction failed: ${error?.message || "Unknown error"}`, {
+        id: "sending-tx",
+      });
+    }
+  };
 
   const { isMobileMenuOpen, setIsMobileMenuOpen } = useMobileStore();
 
@@ -348,6 +416,15 @@ export default function Header() {
                               Get Funding
                             </button>
                           </Link>
+                          {/* Test Transfer Button for mobile */}
+                          {isConnected && (
+                            <button
+                              className="rounded-md bg-yellow-100 w-full dark:bg-yellow-900 px-3 py-2 text-sm font-semibold text-yellow-700 dark:text-yellow-300 hover:bg-yellow-50 dark:hover:bg-yellow-800 border border-yellow-200 dark:border-yellow-800"
+                              onClick={handleTestTransfer}
+                            >
+                              Test 1 ETH Transfer
+                            </button>
+                          )}
                           <ExternalLink href={"https://docs.gap.karmahq.xyz/"}>
                             <button className="rounded-md bg-white w-full dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
                               Docs
@@ -419,6 +496,15 @@ export default function Header() {
                   <Link href={PAGES.REGISTRY.ROOT}>
                     <button className={buttonStyle}>Get Funding</button>
                   </Link>
+                  {/* Test Transfer Button */}
+                  {isConnected && (
+                    <button
+                      className={`${buttonStyle} !bg-yellow-100 dark:!bg-yellow-900 !text-yellow-700 dark:!text-yellow-300`}
+                      onClick={handleTestTransfer}
+                    >
+                      Test 1 ETH
+                    </button>
+                  )}
                   <ExternalLink href={"https://docs.gap.karmahq.xyz/"}>
                     <button className={buttonStyle}>Docs</button>
                   </ExternalLink>

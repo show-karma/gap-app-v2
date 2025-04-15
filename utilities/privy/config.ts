@@ -20,8 +20,8 @@ export const privyConfig: PrivyClientConfig = {
   },
   embeddedWallets: {
     createOnLogin: "users-without-wallets",
-    requireUserPasswordOnCreate: true,
-    showWalletUIs: true,
+    // requireUserPasswordOnCreate: true,
+    showWalletUIs: false,
   },
   externalWallets: {
     walletConnect: {
@@ -31,4 +31,5 @@ export const privyConfig: PrivyClientConfig = {
   loginMethods: ["wallet", "email", "google"],
   supportedChains: config.chains,
   walletConnectCloudProjectId: envVars.PROJECT_ID,
+  defaultChain: config.chains[0],
 };

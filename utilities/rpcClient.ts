@@ -54,12 +54,15 @@ export const rpcClient = {
   celo: celoClient,
   //   testnets
   optimismSepolia: optimismSepoliaClient,
+  "optimism-sepolia": optimismSepoliaClient,
   sepolia: sepoliaClient,
   baseSepolia: baseSepoliaClient,
 };
 
 export const getRPCClient = async (chainId: number) => {
   const chainName = getChainNameById(chainId);
+  console.log("chainName", chainName, chainId);
   const client = rpcClient[chainName as keyof typeof rpcClient];
+  console.log("client", client);
   return client;
 };

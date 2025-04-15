@@ -78,6 +78,7 @@ import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { DeckIcon } from "@/components/Icons/Deck";
 import { VideoIcon } from "@/components/Icons/Video";
 import { useWalletInteraction } from "@/hooks/useWalletInteraction";
+import { useSmartWallets } from "@privy-io/react-auth/smart-wallets";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -226,6 +227,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const { changeStepperStep, setIsStepper } = useStepper();
   const { openSimilarProjectsModal, isSimilarProjectsModalOpen } =
     useSimilarProjectsModalStore();
+
+  const { getClientForChain, client } = useSmartWallets();
 
   const {
     register,
@@ -502,6 +505,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         throw new Error("Failed to connect to wallet", { cause: error });
       }
       const walletSigner = await walletClientToSigner(walletClient);
+
       closeModal();
       changeStepperStep("preparing");
       await project

@@ -11,8 +11,30 @@ import {
 import { createConfig } from "@privy-io/wagmi";
 import { appNetwork } from "../network";
 import { envVars } from "../enviromentVars";
+import { WalletConnector } from "@privy-io/react-auth";
+
+import {
+  coinbaseWallet,
+  walletConnect,
+  injected,
+  safe,
+  metaMask,
+} from "wagmi/connectors";
 
 export const config = createConfig({
+  // connectors: [
+  //   walletConnect({
+  //     projectId: envVars.PROJECT_ID,
+  //     showQrModal: true,
+  //     qrModalOptions: {
+  //       themeMode: "dark",
+  //     },
+  //   }),
+  //   metaMask(),
+  //   coinbaseWallet(),
+  //   injected(),
+  //   safe(),
+  // ],
   chains: appNetwork,
   transports: {
     [optimism.id]: http(envVars.RPC.OPTIMISM),
