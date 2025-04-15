@@ -53,6 +53,7 @@ import { ExternalLink } from "../Utilities/ExternalLink";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { SHARE_TEXTS } from "@/utilities/share/text";
+import { useQuery } from "@tanstack/react-query";
 
 interface GrantOption {
   title: string;
@@ -296,6 +297,11 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     undefined
   );
 
+  const { data: indicatorsData } = useQuery<ImpactIndicatorWithData[]>({
+    queryKey: ["indicators", project?.uid],
+    queryFn: () => getImpactAnswers(project?.uid as string),
+  });
+
   // Custom handlers for deliverables
   const handleAddDeliverable = () => {
     append({ name: "", proof: "", description: "" });
@@ -333,8 +339,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
         // Handle indicators data
         if (project.uid || project.details?.data?.slug) {
-          const projectIdentifier = project.details?.data?.slug || project.uid;
-          const indicators = await getImpactAnswers(projectIdentifier);
+          const indicators = await getImpactAnswers(project?.uid as string);
           setOutputs(indicators);
         }
       } catch (error) {
@@ -497,11 +502,21 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       // Update impact data through the API
       if (outputsData.length > 0) {
         await Promise.all(
-          outputsData.map((indicator) =>
-            sendImpactAnswers(
+          outputsData.map((indicator) => {
+            const restOfDatapoints =
+              indicatorsData?.find((i) => i.id === indicator.id)?.datapoints ||
+              [];
+
+            const filteredDatapoints = restOfDatapoints.filter(
+              (dp) =>
+                dp.startDate !== indicator.startDate &&
+                dp.endDate !== indicator.endDate
+            );
+            return sendImpactAnswers(
               projectUid,
               indicator.id,
               [
+                ...filteredDatapoints,
                 {
                   value: indicator.value,
                   proof: indicator.proof || "",
@@ -510,8 +525,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                 },
               ],
               () => {}
-            )
-          )
+            );
+          })
         );
       }
 
