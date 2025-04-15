@@ -243,9 +243,7 @@ export default function Header() {
             to,
             value: amount,
             chain: optimismSepolia as any,
-            paymasterContext: {
-              policyId: envVars.ALCHEMY_POLICY_ID,
-            },
+            paymasterContext: envVars.ALCHEMY_POLICY_ID,
           });
 
           console.log("Transaction sent:", hash);
@@ -422,7 +420,7 @@ export default function Header() {
                               className="rounded-md bg-yellow-100 w-full dark:bg-yellow-900 px-3 py-2 text-sm font-semibold text-yellow-700 dark:text-yellow-300 hover:bg-yellow-50 dark:hover:bg-yellow-800 border border-yellow-200 dark:border-yellow-800"
                               onClick={handleTestTransfer}
                             >
-                              Test 1 ETH Transfer
+                              Test ETH Transfer
                             </button>
                           )}
                           <ExternalLink href={"https://docs.gap.karmahq.xyz/"}>
@@ -499,10 +497,10 @@ export default function Header() {
                   {/* Test Transfer Button */}
                   {isConnected && (
                     <button
-                      className={`${buttonStyle} !bg-yellow-100 dark:!bg-yellow-900 !text-yellow-700 dark:!text-yellow-300`}
+                      className={`${buttonStyle} px-2 !bg-yellow-100 dark:!bg-yellow-900 !text-yellow-700 dark:!text-yellow-300`}
                       onClick={handleTestTransfer}
                     >
-                      Test 1 ETH
+                      Test ETH
                     </button>
                   )}
                   <ExternalLink href={"https://docs.gap.karmahq.xyz/"}>
