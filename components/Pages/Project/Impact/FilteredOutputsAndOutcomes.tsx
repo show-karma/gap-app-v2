@@ -21,6 +21,8 @@ import {
   getImpactAnswers,
 } from "@/utilities/impact/impactAnswers";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { GroupedLinks } from "./GroupedLinks";
 
 type OutputForm = {
   id: string;
@@ -372,6 +374,9 @@ export const FilteredOutputsAndOutcomes = ({
               (output) => output.proof && urlRegex.test(output.proof)
             );
 
+            const proofs =
+              outputsWithProof?.map((output) => output.proof) || [];
+
             return (
               <div
                 key={item.id}
@@ -400,9 +405,40 @@ export const FilteredOutputsAndOutcomes = ({
                         </span>
                       )}
                     </div>
+                    <div className="flex flex-row gap-2 items-center flex-wrap">
+                      <GroupedLinks proofs={proofs} />
+                    </div>
                   </div>
                 </div>
                 <div className="flex flex-col-reverse gap-4">
+                  <div className="flex flex-1 flex-col gap-5">
+                    {item.datapoints?.length > 1 && (
+                      <Card className="bg-white dark:bg-zinc-800 rounded">
+                        <Title className="text-sm font-medium text-gray-700 dark:text-zinc-300 mb-4">
+                          Historical Values
+                        </Title>
+                        <AreaChart
+                          className="h-48 mt-4"
+                          data={prepareChartData(
+                            item.datapoints.map((datapoint) =>
+                              Number(datapoint.value)
+                            ),
+                            item.datapoints.map(
+                              (datapoint) =>
+                                datapoint.endDate || new Date().toISOString()
+                            ),
+                            item.name
+                          )}
+                          index="date"
+                          categories={[item.name]}
+                          colors={["blue"]}
+                          valueFormatter={(value) => `${value}`}
+                          showLegend={false}
+                          noDataText="Awaiting grantees to submit values"
+                        />
+                      </Card>
+                    )}
+                  </div>
                   <div className="flex flex-1">
                     <div className="w-full">
                       <div className="flex flex-col">
@@ -670,34 +706,6 @@ export const FilteredOutputsAndOutcomes = ({
                         )}
                       </div>
                     </div>
-                  </div>
-                  <div className="flex flex-1 flex-col gap-5">
-                    {item.datapoints?.length > 1 && (
-                      <Card className="bg-white dark:bg-zinc-800 rounded">
-                        <Title className="text-sm font-medium text-gray-700 dark:text-zinc-300 mb-4">
-                          Historical Values
-                        </Title>
-                        <AreaChart
-                          className="h-48 mt-4"
-                          data={prepareChartData(
-                            item.datapoints.map((datapoint) =>
-                              Number(datapoint.value)
-                            ),
-                            item.datapoints.map(
-                              (datapoint) =>
-                                datapoint.endDate || new Date().toISOString()
-                            ),
-                            item.name
-                          )}
-                          index="date"
-                          categories={[item.name]}
-                          colors={["blue"]}
-                          valueFormatter={(value) => `${value}`}
-                          showLegend={false}
-                          noDataText="Awaiting grantees to submit values"
-                        />
-                      </Card>
-                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-4 w-full justify-end">

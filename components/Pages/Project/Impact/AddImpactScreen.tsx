@@ -28,6 +28,7 @@ import toast from "react-hot-toast";
 import { Hex } from "viem";
 import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
+import { DatePicker } from "@/components/Utilities/DatePicker";
 
 const updateSchema = z.object({
   startedAt: z.date({
@@ -63,6 +64,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
     control,
     setValue,
     formState: { errors, isSubmitting, isValid },
+    watch,
   } = useForm<UpdateType>({
     resolver: zodResolver(updateSchema),
     reValidateMode: "onChange",
@@ -195,38 +197,21 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
             <Controller
               name="startedAt"
               control={control}
-              render={({ field, formState, fieldState }) => (
+              render={({ field, formState }) => (
                 <div className="flex w-full flex-col gap-2 mr-2">
                   <label className={labelStyle}>Started at *</label>
-                  <div>
-                    <Popover className="relative">
-                      <Popover.Button className="max-lg:w-full w-max text-sm flex-row flex gap-2 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
-                        {field.value ? (
-                          formatDate(field.value)
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Popover.Button>
-                      <Popover.Panel className="absolute z-10 bg-white dark:bg-zinc-800 mt-4 rounded-md">
-                        <DayPicker
-                          mode="single"
-                          selected={field.value}
-                          onDayClick={(e) => {
-                            setValue("startedAt", e, {
-                              shouldValidate: true,
-                            });
-                            field.onChange(e);
-                          }}
-                          disabled={(date) => {
-                            if (date < new Date("2000-01-01")) return true;
-                            return false;
-                          }}
-                          initialFocus
-                        />
-                      </Popover.Panel>
-                    </Popover>
-                  </div>
+                  <DatePicker
+                    selected={field.value}
+                    onSelect={(date) => {
+                      setValue("startedAt", date, {
+                        shouldValidate: true,
+                      });
+                      field.onChange(date);
+                    }}
+                    minDate={new Date("2000-01-01")}
+                    placeholder="Pick a date"
+                    buttonClassName="w-full text-base bg-white dark:bg-zinc-800"
+                  />
                   <p className="text-base text-red-400">
                     {formState.errors.startedAt?.message}
                   </p>
@@ -237,38 +222,21 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
             <Controller
               name="completedAt"
               control={control}
-              render={({ field, formState, fieldState }) => (
+              render={({ field, formState }) => (
                 <div className="flex w-full flex-col gap-2">
                   <label className={labelStyle}>Completed at *</label>
-                  <div>
-                    <Popover className="relative">
-                      <Popover.Button className="max-lg:w-full w-max text-sm flex-row flex gap-2 items-center bg-white dark:bg-zinc-800 px-4 py-2 rounded-md">
-                        {field.value ? (
-                          formatDate(field.value)
-                        ) : (
-                          <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                      </Popover.Button>
-                      <Popover.Panel className="absolute z-10 bg-white dark:bg-zinc-800 mt-4 rounded-md">
-                        <DayPicker
-                          mode="single"
-                          selected={field.value}
-                          onDayClick={(e) => {
-                            setValue("completedAt", e, {
-                              shouldValidate: true,
-                            });
-                            field.onChange(e);
-                          }}
-                          disabled={(date) => {
-                            if (date < new Date("2000-01-01")) return true;
-                            return false;
-                          }}
-                          initialFocus
-                        />
-                      </Popover.Panel>
-                    </Popover>
-                  </div>
+                  <DatePicker
+                    selected={field.value}
+                    onSelect={(date) => {
+                      setValue("completedAt", date, {
+                        shouldValidate: true,
+                      });
+                      field.onChange(date);
+                    }}
+                    minDate={watch("startedAt")}
+                    placeholder="Pick a date"
+                    buttonClassName="w-full text-base bg-white dark:bg-zinc-800"
+                  />
                   <p className="text-base text-red-400">
                     {formState.errors.completedAt?.message}
                   </p>

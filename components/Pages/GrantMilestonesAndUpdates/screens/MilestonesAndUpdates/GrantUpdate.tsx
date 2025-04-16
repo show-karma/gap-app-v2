@@ -25,6 +25,9 @@ import { VerifyGrantUpdateDialog } from "./VerifyGrantUpdateDialog";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { retryUntilConditionMet } from "@/utilities/retries";
+import { shareOnX } from "@/utilities/share/shareOnX";
+import { SHARE_TEXTS } from "@/utilities/share/text";
+import { ShareIcon } from "@heroicons/react/24/outline";
 
 interface UpdateTagProps {
   index: number;
@@ -220,6 +223,10 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
 
   const isAfterProofLaunch = checkProofLaunch();
 
+  const grant = project?.grants.find(
+    (g) => g.uid.toLowerCase() === update.refUID.toLowerCase()
+  );
+
   return (
     <div className="flex w-full flex-1 max-w-full flex-col gap-4 rounded-lg border border-zinc-200 dark:bg-zinc-800 dark:border-zinc-700 bg-white p-4 transition-all duration-200 ease-in-out  max-sm:px-2">
       <div className="flex flex-row items-center justify-between gap-4 flex-wrap">
@@ -241,22 +248,35 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
             Posted on {formatDate(date)}
           </p>
           {isAuthorized ? (
-            <DeleteDialog
-              deleteFunction={undoGrantUpdate}
-              isLoading={isDeletingGrantUpdate}
-              title={
-                <p className="font-normal">
-                  Are you sure you want to delete <b>{update.data.title}</b>{" "}
-                  update?
-                </p>
-              }
-              buttonElement={{
-                text: "",
-                icon: <TrashIcon className="text-red-500 w-5 h-5" />,
-                styleClass:
-                  "bg-transparent p-0 w-max h-max text-red-500 hover:bg-transparent",
-              }}
-            />
+            <div className="flex flex-row gap-2 items-center">
+              <ExternalLink
+                href={shareOnX(
+                  SHARE_TEXTS.GRANT_UPDATE(
+                    grant?.details?.data?.title as string,
+                    project?.uid as string,
+                    update.uid
+                  )
+                )}
+              >
+                <ShareIcon className="text-gray-500 dark:text-zinc-300 w-5 h-5" />
+              </ExternalLink>
+              <DeleteDialog
+                deleteFunction={undoGrantUpdate}
+                isLoading={isDeletingGrantUpdate}
+                title={
+                  <p className="font-normal">
+                    Are you sure you want to delete <b>{update.data.title}</b>{" "}
+                    update?
+                  </p>
+                }
+                buttonElement={{
+                  text: "",
+                  icon: <TrashIcon className="text-red-500 w-5 h-5" />,
+                  styleClass:
+                    "bg-transparent p-0 w-max h-max text-red-500 hover:bg-transparent",
+                }}
+              />
+            </div>
           ) : null}
         </div>
       </div>

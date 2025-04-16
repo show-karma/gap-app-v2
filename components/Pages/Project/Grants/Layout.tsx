@@ -385,28 +385,28 @@ export const GrantsLayout = ({
                   <div className="text-xl font-semibold text-black dark:text-zinc-100">
                     {grant?.details?.data.title}
                   </div>
+                  {isAuthorized && grant && project ? (
+                    <Link
+                      href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
+                        project.details?.data.slug || project?.uid || "",
+                        grant?.uid as string,
+                        "edit"
+                      )}
+                      className="rounded-md items-center text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-35 hover:opacity-75 transition-all ease-in-out duration-300 flex h-max w-max flex-row gap-2 text-zinc-800 p-2 dark:text-zinc-100"
+                    >
+                      <PencilSquareIcon className="h-5 w-5" />
+                    </Link>
+                  ) : null}
                 </div>
                 {isAuthorized && grant ? (
-                  <div className="flex flex-row gap-2">
+                  <div className="flex flex-row gap-2 items-center">
                     {project ? (
                       <GrantLinkExternalAddressButton grant={grant as any} />
                     ) : null}
                     {project ? (
                       <GrantCompleteButton project={project} grant={grant} />
                     ) : null}
-                    {project ? (
-                      <Link
-                        href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                          project.details?.data.slug || project?.uid || "",
-                          grant?.uid as string,
-                          "edit"
-                        )}
-                        className="rounded-md items-center text-sm font-semibold focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600 disabled:opacity-35 hover:opacity-75 transition-all ease-in-out duration-300 flex h-max w-max flex-row gap-2 bg-zinc-800 p-2 text-white hover:bg-zinc-800 hover:text-white"
-                      >
-                        Update grant
-                        <PencilSquareIcon className="h-4 w-4" />
-                      </Link>
-                    ) : null}
+
                     <GrantDelete grant={grant} />
                   </div>
                 ) : null}

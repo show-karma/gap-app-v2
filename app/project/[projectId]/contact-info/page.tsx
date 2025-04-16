@@ -9,6 +9,7 @@ import { defaultMetadata } from "@/utilities/meta";
 import ContactInfoPage from "@/components/Pages/Project/ContactInfoPage";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { envVars } from "@/utilities/enviromentVars";
+import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 
 export async function generateMetadata({
   params,
@@ -31,7 +32,11 @@ export async function generateMetadata({
 
   return {
     title: `${projectInfo.details?.data.title} | Karma GAP`,
-    description: projectInfo.details?.data.description?.substring(0, 80) || "",
+    description:
+      cleanMarkdownForPlainText(
+        projectInfo.details?.data.description || "",
+        80
+      ) || "",
     twitter: {
       creator: defaultMetadata.twitter.creator,
       site: defaultMetadata.twitter.site,
@@ -47,7 +52,10 @@ export async function generateMetadata({
       url: defaultMetadata.openGraph.url,
       title: `${projectInfo.details?.data.title} | Karma GAP`,
       description:
-        projectInfo.details?.data.description?.substring(0, 80) || "",
+        cleanMarkdownForPlainText(
+          projectInfo.details?.data.description || "",
+          80
+        ) || "",
 
       images: [
         {

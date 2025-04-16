@@ -123,6 +123,7 @@ option {
 
 .wmde-markdown {
   @apply bg-transparent;
+  @apply text-wrap;
 
   @media (max-width: 1440px) {
     @apply text-[14px];

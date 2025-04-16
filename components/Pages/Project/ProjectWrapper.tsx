@@ -35,6 +35,8 @@ import { IntroDialog } from "./IntroDialog";
 import { getRPCClient } from "@/utilities/rpcClient";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
+import { ShareDialog } from "../GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/ShareDialog";
+import { useShareDialogStore } from "@/store/modals/shareDialog";
 
 interface ProjectWrapperProps {
   project: IProjectResponse;
@@ -136,7 +138,11 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
 
   const getSocials = (links: IProjectDetails["data"]["links"]) => {
     const types = [
-      { name: "Twitter", prefix: "x.com/", icon: TwitterIcon },
+      {
+        name: "Twitter",
+        prefix: ["twitter.com/", "x.com/"],
+        icon: TwitterIcon,
+      },
       { name: "Github", prefix: "github.com/", icon: GithubIcon },
       { name: "Discord", prefix: "discord.gg/", icon: DiscordIcon },
       { name: "Website", prefix: "https://", icon: WebsiteIcon },
@@ -188,16 +194,28 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
               ? socialLink?.replace("@", "") || ""
               : socialLink;
 
-            return {
-              name,
-              url: formatPrefix(prefix, url),
-              icon,
-            };
+            if (Array.isArray(prefix)) {
+              if (url.includes("twitter.com/") || url.includes("x.com/")) {
+                return {
+                  name,
+                  url: hasHttpOrWWW(url) ? url : addPrefix(url),
+                  icon,
+                };
+              }
+              return {
+                name,
+                url: formatPrefix(prefix[1], url),
+                icon,
+              };
+            }
           }
 
           return {
             name,
-            url: formatPrefix(prefix, socialLink),
+            url: formatPrefix(
+              typeof prefix === "string" ? prefix : prefix[0],
+              socialLink
+            ),
             icon,
           };
         }
@@ -308,13 +326,14 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   const { isIntroModalOpen } = useIntroModalStore();
   const { isEndorsementOpen } = useEndorsementStore();
   const { isProgressModalOpen } = useProgressModalStore();
+  const { isOpen: isShareDialogOpen } = useShareDialogStore();
 
   return (
     <>
       {isIntroModalOpen ? <IntroDialog /> : null}
       {isEndorsementOpen ? <EndorsementDialog /> : null}
       {isProgressModalOpen ? <ProgressDialog /> : null}
-
+      {isShareDialogOpen ? <ShareDialog /> : null}
       <div className="relative border-b border-gray-200 ">
         <div className="px-4 sm:px-6 lg:px-12 lg:flex py-5 lg:items-start lg:justify-between flex flex-row max-lg:flex-col max-lg:justify-center max-lg:items-center gap-4">
           <div className="flex flex-col gap-4">

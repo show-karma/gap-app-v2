@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { envVars } from "@/utilities/enviromentVars";
 import { useAccount } from "wagmi";
+import { Project } from "./CommunityProjectEvaluatorPage";
 
 export interface Message {
   id: string;
@@ -20,9 +21,13 @@ export interface Message {
 
 interface UseChatOptions {
   body: {
+    projects: Project[];
     projectsInProgram: Array<{
       uid: string;
     }>;
+    programId: string;
+    chainId: string;
+    communityId: string;
   };
 }
 
@@ -76,8 +81,12 @@ export function useChat(options: UseChatOptions) {
               ...messagesToSend,
               { role: userMessage.role, content: userMessage.content },
             ],
+            projects: options.body.projects,
             projectsInProgram: options.body.projectsInProgram,
             sessionId: sessionIdRef.current,
+            programId: options.body.programId,
+            chainId: options.body.chainId,
+            communityId: options.body.communityId,
           }),
         }
       );

@@ -1,24 +1,25 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
-import React, { useEffect, useState } from "react";
-import Link from "next/link";
-import { Spinner } from "@/components/Utilities/Spinner";
-import { PAGES } from "@/utilities/pages";
-import { MESSAGES } from "@/utilities/messages";
-import { Community } from "@show-karma/karma-gap-sdk";
-import { useGap } from "@/hooks";
-import { blo } from "blo";
-import { LinkIcon } from "@heroicons/react/24/solid";
-import { chainImgDictionary } from "@/utilities/chainImgDictionary";
-import { chainNameDictionary } from "@/utilities/chainNameDictionary";
+import CommunityStats from "@/components/CommunityStats";
 import { CommunityDialog } from "@/components/Dialogs/CommunityDialog";
-import { formatDate } from "@/utilities/formatDate";
 import { AddAdmin } from "@/components/Pages/Admin/AddAdminDialog";
 import { RemoveAdmin } from "@/components/Pages/Admin/RemoveAdminDialog";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { useGap } from "@/hooks";
+import { useStaff } from "@/hooks/useStaff";
 import { useOwnerStore } from "@/store";
-import CommunityStats from "@/components/CommunityStats";
+import { chainImgDictionary } from "@/utilities/chainImgDictionary";
+import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import fetchData from "@/utilities/fetchData";
+import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
+import { LinkIcon } from "@heroicons/react/24/solid";
+import { Community } from "@show-karma/karma-gap-sdk";
+import { blo } from "blo";
+import Link from "next/link";
+import React, { useEffect, useState } from "react";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 
@@ -30,8 +31,13 @@ interface CommunityAdmin {
 export default function CommunitiesToAdminPage() {
   const [allCommunities, setAllCommunities] = useState<Community[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [communityAdmins, setCommunityAdmins] = useState<any>([]);
 
   const { gap } = useGap();
+  const isOwner = useOwnerStore((state) => state.isOwner);
+  const { isStaff, isLoading: isStaffLoading } = useStaff();
+
+  const hasAccess = isOwner || isStaff;
 
   const fetchCommunities = async () => {
     try {
@@ -81,10 +87,6 @@ export default function CommunitiesToAdminPage() {
     fetchCommunities();
   }, []);
 
-  const isOwner = useOwnerStore((state) => state.isOwner);
-
-  const [communityAdmins, setCommunityAdmins] = useState<any>([]);
-
   function shortenHex(hexString: string) {
     const firstPart = hexString.substring(0, 6);
     const lastPart = hexString.substring(hexString.length - 6);
@@ -94,7 +96,9 @@ export default function CommunitiesToAdminPage() {
 
   return (
     <div className="px-4 sm:px-6 lg:px-12 py-5">
-      {isOwner ? (
+      {isLoading || isStaffLoading ? (
+        <Spinner />
+      ) : hasAccess ? (
         <div className="flex flex-col gap-2">
           <div className="flex justify-between">
             <div className="text-2xl font-bold">

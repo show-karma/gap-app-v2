@@ -1,6 +1,6 @@
-import fetchData from "./fetchData";
 import axios from "axios";
 import Cookies from "universal-cookie";
+import fetchData from "./fetchData";
 
 jest.mock("axios");
 jest.mock("universal-cookie");

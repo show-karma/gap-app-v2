@@ -118,7 +118,9 @@ export const CommunitySelectionScreen: React.FC = () => {
                 formData[field as keyof typeof formData] || ""
               }
               searchForProgram={
-                flowType === "grant" ? undefined : "Proof of Ship"
+                flowType === "grant"
+                  ? undefined
+                  : ["Proof of Ship", "Hackathon"]
               }
               canAdd={flowType === "grant" ? true : false}
             />

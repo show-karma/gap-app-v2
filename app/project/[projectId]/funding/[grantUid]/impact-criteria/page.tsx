@@ -3,6 +3,7 @@ import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
 import { fetchFromLocalApi } from "@/utilities/fetchFromServer";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 import { defaultMetadata } from "@/utilities/meta";
 import {
   IGrantResponse,
@@ -59,7 +60,10 @@ export async function generateMetadata({
       ...metadata,
       title: `${projectInfo?.details?.data?.title} | Karma GAP`,
       description:
-        projectInfo?.details?.data?.description?.substring(0, 80) || "",
+        cleanMarkdownForPlainText(
+          projectInfo?.details?.data?.description || "",
+          80
+        ) || "",
     };
   }
 

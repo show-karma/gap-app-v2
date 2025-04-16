@@ -292,7 +292,7 @@ export const CategoryRow = ({
         self.findIndex((t) => t.projectUID === output.projectUID) === index
     );
 
-  // // Group outputs and outcomes by their names
+  // // Group Activities & Outputs by their names
 
   // // Sort function to get the most recent datapoint timestamp
   // const getLatestDatapointTimestamp = (item: ProgramImpactSegment) => {

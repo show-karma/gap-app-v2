@@ -45,7 +45,7 @@ export async function middleware(request: NextRequest) {
 
   if (path.startsWith("/project/")) {
     // Check if the path contains /grants and redirect to /funding
-    if (path.includes("/grants")) {
+    if (path.includes("/grants") && !path.includes("/project/grants")) {
       const newPath = path.replace("/grants", "/funding");
       return NextResponse.redirect(new URL(newPath, request.url));
     }

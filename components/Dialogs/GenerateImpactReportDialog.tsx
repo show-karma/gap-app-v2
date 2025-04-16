@@ -108,18 +108,20 @@ function GenerateDocument({
   };
 
   const getTwitterUserNameOnly = (text: string) => {
-    if (text.includes("twitter.com/") || text.includes("x.com/")) {
+    if (!text) return "";
+
+    if (text.includes("twitter.com/")) {
+      const twitterUsername = text.split("x.com/")[1];
+      return twitterUsername;
+    }
+
+    if (text.includes("x.com/")) {
       const twitterUsername = text.split("x.com/")[1];
       return twitterUsername;
     }
 
     if (text.includes("@")) {
       const twitterUsername = text.split("@")[1];
-      return twitterUsername;
-    }
-
-    if (text.includes("x.com/")) {
-      const twitterUsername = text.split("x.com/")[1];
       return twitterUsername;
     }
 

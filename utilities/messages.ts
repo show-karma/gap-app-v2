@@ -87,6 +87,7 @@ export const MESSAGES = {
     },
     OUTPUTS: {
       EMPTY: "There are not output metrics available for this grant.",
+      EMPTY_DATAPOINTS: "No data points are available for this metric yet.",
       EMPTY_ALL: "There are not output metrics available yet.",
       VALUE_REQUIRED: "Value is required",
       SUCCESS: "Outputs sent successfully",

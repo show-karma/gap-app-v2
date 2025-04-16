@@ -6,7 +6,7 @@ import { DocumentCheckIcon, LightBulbIcon } from "@heroicons/react/24/solid";
 import { Button } from "../Utilities/Button";
 import toast from "react-hot-toast";
 import { useProjectStore } from "@/store";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useSwitchChain } from "wagmi";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 

@@ -116,21 +116,21 @@ export const chosenCommunities = () => {
       },
     },
     {
-      name: "Glo Dollar",
-      slug: "glodollar",
-      uid: "0x78e493fec641879ea6ab95c0d5d61c96df0622df5da38c627f0e0b171709da78",
-      imageURL: {
-        light: "/logos/karma-glodollar.jpeg",
-        dark: "/logos/karma-glodollar.jpeg",
-      },
-    },
-    {
       name: "Pokt",
       slug: "pokt",
       uid: "0x1be3b3cfd9ea03ef066beae8c0e94c289bf1eae8732bfcf82177ea4e848e61fa",
       imageURL: {
         light: "/logos/karma-pokt-black.svg",
         dark: "/logos/karma-pokt-white.svg",
+      },
+    },
+    {
+      name: "Regen Coordination",
+      slug: "regen-coordination",
+      uid: "0xccff29d65d80f9ae4e6bc9b6a09b4e4dd588e47333903aa0f9c8b251cc91d96d",
+      imageURL: {
+        light: "/logos/karma-regen-coordination.png",
+        dark: "/logos/karma-regen-coordination.png",
       },
     },
     {

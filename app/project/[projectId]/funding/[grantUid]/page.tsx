@@ -4,6 +4,7 @@ import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
 import { fetchFromLocalApi } from "@/utilities/fetchFromServer";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 import { defaultMetadata } from "@/utilities/meta";
 import {
   IGrantResponse,
@@ -56,12 +57,10 @@ export async function generateMetadata({
         overview: {
           title: `${grantInfo?.details?.data?.title} Grant Overview | ${projectInfo?.details?.data?.title} | Karma GAP`,
           description:
-            `${grantInfo?.details?.data?.description?.slice(0, 160)}${
-              grantInfo?.details?.data?.description &&
-              grantInfo?.details?.data?.description?.length >= 160
-                ? "..."
-                : ""
-            }` || "",
+            `${cleanMarkdownForPlainText(
+              grantInfo?.details?.data?.description || "",
+              160
+            )}` || "",
         },
       };
 
@@ -75,8 +74,10 @@ export async function generateMetadata({
     metadata = {
       ...metadata,
       title: `${projectInfo?.details?.data?.title} | Karma GAP`,
-      description:
-        projectInfo?.details?.data?.description?.substring(0, 80) || "",
+      description: cleanMarkdownForPlainText(
+        projectInfo?.details?.data?.description || "",
+        80
+      ),
     };
   }
 

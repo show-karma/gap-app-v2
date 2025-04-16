@@ -34,21 +34,9 @@ export const autosyncedIndicators: IndicatorWithPrograms[] = [
     unitOfMeasure: "int"
   },
   {
-    name: "parttime_developers",
-    id: "",
-    description: "No. of part time developers (*oso)",
-    unitOfMeasure: "int"
-  },
-  {
     name: "active_developers",
     id: "",
     description: "No. of active developers (*oso)",
-    unitOfMeasure: "int"
-  },
-  {
-    name: "fulltime_developers",
-    id: "",
-    description: "No. of full time developers (*oso)",
     unitOfMeasure: "int"
   },
   {
@@ -82,23 +70,11 @@ export const autosyncedIndicators: IndicatorWithPrograms[] = [
     unitOfMeasure: "int"
   },
   {
-    name: "PULL_REQUEST_REVIEW_COMMENT",
-    id: "",
-    description: "Number of pull request review comments (*oso)",
-    unitOfMeasure: "int"
-  },
-  {
     name: "STARRED",
     id: "",
     description: "Number of repository stars (*oso)",
     unitOfMeasure: "int"
   },
-  // {
-  //   name: "COMMIT_CODE",
-  //   id: "",
-  //   description: "Number of code commits (*oso)",
-  //   unitOfMeasure: "int"
-  // },
   {
     name: 'GitHub Commits',
     id: "",
@@ -112,27 +88,21 @@ export const autosyncedIndicators: IndicatorWithPrograms[] = [
     unitOfMeasure: "int"
   },
   {
-    name: "PULL_REQUEST_CLOSED",
-    id: "",
-    description: "Number of pull requests closed (*oso)",
-    unitOfMeasure: "int"
-  },
-  {
     name: 'GitHub Merged PRs',
     id: "",
     description: "Number of pull requests merged (*github)",
     unitOfMeasure: "int"
   },
   {
-    name: "PULL_REQUEST_REOPENED",
-    id: "",
-    description: "Number of pull requests reopened (*oso)",
-    unitOfMeasure: "int"
-  },
-  {
     name: "RELEASE_PUBLISHED",
     id: "",
     description: "Number of releases published (*oso)",
+    unitOfMeasure: "int"
+  },
+  {
+    name: "contributors",
+    id: "",
+    description: "No. of contributors (*oso)",
     unitOfMeasure: "int"
   }
 ]
