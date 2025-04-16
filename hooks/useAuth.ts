@@ -238,7 +238,6 @@ export const useAuth = () => {
     };
   }, []);
 
-  // Setup the account watcher - moved from Header.tsx
   useEffect(() => {
     const unwatch = watchAccount(config, {
       onChange: (account, prevAccount) => {
