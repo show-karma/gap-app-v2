@@ -37,11 +37,11 @@ export const CommunitySelectionScreen: React.FC = () => {
         const result = await gapIndexerApi.communities();
 
         if (flowType === "program") {
-          // Filter to only show Celo community for program flow
-          const celoCommunity = result.data.find((community) =>
-            community.details?.data?.name?.toLowerCase().includes("celo")
+          const filteredCommunities = result.data.filter((community) =>
+            community.details?.data?.name?.toLowerCase().includes("celo") || 
+            community.details?.data?.name?.toLowerCase().includes("divvi")
           );
-          setAllCommunities(celoCommunity ? [celoCommunity] : []);
+          setAllCommunities(filteredCommunities.length > 0 ? filteredCommunities : []);
         } else {
           setAllCommunities(result.data);
         }
@@ -120,7 +120,7 @@ export const CommunitySelectionScreen: React.FC = () => {
               searchForProgram={
                 flowType === "grant"
                   ? undefined
-                  : ["Proof of Ship", "Hackathon"]
+                  : ["Proof of Ship", "Hackathon", "Divvi Builder Camp"]
               }
               canAdd={flowType === "grant" ? true : false}
             />
