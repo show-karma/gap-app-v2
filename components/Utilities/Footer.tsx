@@ -5,6 +5,7 @@ import { ExternalLink } from "./ExternalLink";
 import { SOCIALS } from "@/utilities/socials";
 import { karmaLinks } from "@/utilities/karma";
 import { ParagraphIcon } from "../Icons/Paragraph";
+import { PAGES } from "@/utilities/pages";
 
 const navigation = {
   social: [
@@ -85,14 +86,14 @@ export default function Footer() {
             API Docs
           </ExternalLink>
           <ExternalLink
-            href={karmaLinks.termsAndConditions}
+            href={PAGES.TERMS_AND_CONDITIONS}
             className="text-[#A5A7C0] transition-all ease-in-out hover:text-gray-300"
             target="_blank"
           >
             Terms and Conditions
           </ExternalLink>
           <ExternalLink
-            href={karmaLinks.privacyPolicy}
+            href={PAGES.PRIVACY_POLICY}
             className="text-[#A5A7C0] transition-all ease-in-out hover:text-gray-300"
             target="_blank"
           >
