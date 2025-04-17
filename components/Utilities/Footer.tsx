@@ -84,6 +84,20 @@ export default function Footer() {
           >
             API Docs
           </ExternalLink>
+          <ExternalLink
+            href={karmaLinks.termsAndConditions}
+            className="text-[#A5A7C0] transition-all ease-in-out hover:text-gray-300"
+            target="_blank"
+          >
+            Terms and Conditions
+          </ExternalLink>
+          <ExternalLink
+            href={karmaLinks.privacyPolicy}
+            className="text-[#A5A7C0] transition-all ease-in-out hover:text-gray-300"
+            target="_blank"
+          >
+            Privacy Policy
+          </ExternalLink>
         </div>
       </div>
     </footer>
