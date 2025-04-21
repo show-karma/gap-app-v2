@@ -90,7 +90,7 @@ export const INDEXER = {
     GET: (communityIdOrSlug: string) => `/communities/${communityIdOrSlug}`,
     CATEGORIES: (idOrSlug: string) => `/communities/${idOrSlug}/categories`,
     SUBSCRIBE: {
-      BULK: `/communities/subscribe/bulk`,
+      BULK: `/bulk-subscription/subscribe`,
     },
     REPORT: {
       GET: (communityIdOrSlug: string) =>
