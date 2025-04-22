@@ -1,8 +1,26 @@
 import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
-import fetchData from "../fetchData";
-import { INDEXER } from "../indexer";
-import { MESSAGES } from "../messages";
-import toast from "react-hot-toast";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+
+/**
+ * Fetches impact indicator data for a project
+ *
+ * @param projectIdentifier - The project slug or UID
+ * @returns Promise with the impact indicators data
+ */
+export const getImpactAnswers = async (
+  projectIdentifier: string
+): Promise<ImpactIndicatorWithData[]> => {
+  const [data, error] = await fetchData(
+    INDEXER.PROJECT.IMPACT_INDICATORS.GET(projectIdentifier)
+  );
+
+  if (error) {
+    throw new Error(error);
+  }
+
+  return data;
+};
 
 /**
  * Sends impact indicator data for a project
@@ -10,8 +28,6 @@ import toast from "react-hot-toast";
  * @param projectIdentifier - The project slug or UID
  * @param indicatorId - The ID of the impact indicator
  * @param datapoints - Array of datapoints to send
- * @param onSuccess - Optional callback function to execute on success
- * @param onError - Optional callback function to execute on error
  * @returns Promise<boolean> - Returns true if successful, false otherwise
  */
 export const sendImpactAnswers = async (
@@ -22,9 +38,7 @@ export const sendImpactAnswers = async (
     proof: string;
     startDate: string;
     endDate: string;
-  }[],
-  onSuccess?: () => void,
-  onError?: (error: string) => void
+  }[]
 ): Promise<boolean> => {
   try {
     const [, error] = await fetchData(
@@ -42,26 +56,12 @@ export const sendImpactAnswers = async (
     );
 
     if (error) {
-      if (onError) {
-        onError(error);
-      } else {
-        toast.error(MESSAGES.GRANT.OUTPUTS.ERROR);
-      }
-      return false;
-    } else {
-      if (onSuccess) {
-        onSuccess();
-      } else {
-        toast.success(MESSAGES.GRANT.OUTPUTS.SUCCESS);
-      }
-      return true;
+      throw new Error(error);
     }
+
+    return true;
   } catch (error) {
-    if (onError) {
-      onError(error instanceof Error ? error.message : String(error));
-    } else {
-      toast.error(MESSAGES.GRANT.OUTPUTS.ERROR);
-    }
-    return false;
+    console.error("Error sending impact answers:", error);
+    throw error;
   }
 };
