@@ -6,7 +6,7 @@
 import * as Sentry from "@sentry/nextjs";
 
 Sentry.init({
-  enabled: process.env.NEXT_PUBLIC_VERCEL_ENV === "xxx",
+  enabled: process.env.NEXT_PUBLIC_VERCEL_ENV === "production",
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
   // Adjust this value in production, or use tracesSampler for greater control
