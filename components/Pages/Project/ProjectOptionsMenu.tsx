@@ -127,9 +127,12 @@ export const ProjectOptionsMenu = () => {
         toast.success(MESSAGES.PROJECT.DELETE.SUCCESS);
       });
     } catch (error: any) {
-      console.log(error);
-      toast.error(MESSAGES.PROJECT.DELETE.ERROR);
-      errorManager(`Error deleting project ${projectId}`, error);
+      errorManager(
+        MESSAGES.PROJECT.DELETE.ERROR,
+        error,
+        { projectUID: projectId, address },
+        { error: MESSAGES.PROJECT.DELETE.ERROR }
+      );
       setIsStepper(false);
     } finally {
       setIsDeleting(false);

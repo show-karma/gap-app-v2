@@ -151,11 +151,14 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
           });
       }
     } catch (error: any) {
-      console.log(error);
-      toast.error(MESSAGES.MILESTONES.COMPLETE.UNDO.ERROR);
       errorManager(
-        `Error deleting milestone completion of ${milestone.uid} from grant ${milestone.refUID}`,
-        error
+        MESSAGES.MILESTONES.COMPLETE.UNDO.ERROR,
+        error,
+        {
+          milestone: milestone.uid,
+          grant: milestone.refUID,
+        },
+        { error: MESSAGES.MILESTONES.COMPLETE.UNDO.ERROR }
       );
     } finally {
       setIsStepper(false);

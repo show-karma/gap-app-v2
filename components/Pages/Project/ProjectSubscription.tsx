@@ -86,12 +86,13 @@ export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({
           `Error subscribing to ${
             project?.details?.data?.title || "this project"
           }`,
-          error
-        );
-        toast.error(
-          `There was an error subscribing to ${
-            project?.details?.data?.title || "this project"
-          }.`
+          error,
+          { projectUID: project.uid },
+          {
+            error: MESSAGES.PROJECT.SUBSCRIPTION.ERROR(
+              project?.details?.data?.title || "this project"
+            ),
+          }
         );
       }
     } finally {

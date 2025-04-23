@@ -606,8 +606,17 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
       setContacts([]);
     } catch (error: any) {
       console.log({ error });
-      errorManager(`Error creating project`, error);
-      toast.error(MESSAGES.PROJECT.CREATE.ERROR);
+      errorManager(
+        MESSAGES.PROJECT.CREATE.ERROR(data.title),
+        error,
+        {
+          address,
+          data,
+        },
+        {
+          error: MESSAGES.PROJECT.CREATE.ERROR(data.title),
+        }
+      );
       setIsStepper(false);
       openModal();
     } finally {
@@ -687,9 +696,11 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           projectToUpdate?.details?.data?.slug || projectToUpdate?.uid
         }`,
         error,
-        data
+        data,
+        {
+          error: MESSAGES.PROJECT.UPDATE.ERROR,
+        }
       );
-      toast.error(MESSAGES.PROJECT.UPDATE.ERROR);
       openModal();
     } finally {
       setIsLoading(false);

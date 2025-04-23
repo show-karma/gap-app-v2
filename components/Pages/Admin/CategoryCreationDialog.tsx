@@ -14,6 +14,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
+import { MESSAGES } from "@/utilities/messages";
 
 type CategoryCreationDialogProps = {
   refreshCategories: () => Promise<void>;
@@ -76,12 +77,14 @@ export const CategoryCreationDialog: FC<CategoryCreationDialogProps> = ({
       closeModal();
     } catch (error: any) {
       errorManager(
-        `Error creating category of community ${communityId}`,
+        MESSAGES.CATEGORY.CREATE.ERROR,
         error,
-        data
+        { data, communityId },
+        {
+          error: MESSAGES.CATEGORY.CREATE.ERROR,
+        }
       );
       console.log(error);
-      toast.error("An error occurred while creating the category");
     } finally {
       setIsLoading(false);
     }

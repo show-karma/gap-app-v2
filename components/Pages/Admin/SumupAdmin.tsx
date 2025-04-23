@@ -8,6 +8,8 @@ import toast from "react-hot-toast";
 import { Button } from "@/components/Utilities/Button";
 import axios from "axios";
 import { envVars } from "@/utilities/enviromentVars";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { MESSAGES } from "@/utilities/messages";
 
 const schema = z.object({
   addressOrEmail: z
@@ -48,9 +50,16 @@ export default function SumupAdminPage() {
         }
       );
       reset();
-      toast.success("Successfully added to the whitelist");
+      toast.success(MESSAGES.SUMUP_ADMIN.ADD_TO_WHITELIST.SUCCESS);
     } catch (error: any) {
-      toast.error("An error occurred while adding to the whitelist");
+      errorManager(
+        MESSAGES.SUMUP_ADMIN.ADD_TO_WHITELIST.ERROR,
+        error,
+        {
+          addressOrEmail: data.addressOrEmail,
+        },
+        { error: MESSAGES.SUMUP_ADMIN.ADD_TO_WHITELIST.ERROR }
+      );
     } finally {
       setIsLoading(false);
     }

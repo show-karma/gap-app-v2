@@ -186,8 +186,12 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
           });
       }
     } catch (error: any) {
-      toast.error(MESSAGES.GRANT.GRANT_UPDATE.UNDO.ERROR);
-      errorManager(`Error deleting grant update ${update.uid}`, error);
+      errorManager(
+        MESSAGES.GRANT.GRANT_UPDATE.UNDO.ERROR,
+        error,
+        { grantUpdateUID: update.uid },
+        { error: MESSAGES.GRANT.GRANT_UPDATE.UNDO.ERROR }
+      );
     } finally {
       setIsDeletingGrantUpdate(false);
       setIsStepper(false);

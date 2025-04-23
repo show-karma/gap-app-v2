@@ -185,12 +185,15 @@ export const ObjectiveOptionsMenu = ({
           });
       }
     } catch (error: any) {
-      console.log(error);
-      toast.error(MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.ERROR);
-      errorManager(`Error deleting objective ${objectiveId}`, error, {
-        project: projectId,
-        objective: objectiveId,
-      });
+      errorManager(
+        MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.ERROR,
+        error,
+        {
+          project: projectId,
+          objective: objectiveId,
+        },
+        { error: MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.ERROR }
+      );
       setIsStepper(false);
     } finally {
       setIsDeleting(false);
