@@ -47,6 +47,7 @@ module.exports = withSentryConfig(
     silent: true,
     org: "karma-crypto-inc",
     project: "gap-frontend",
+    tunnelRoute: "/monitoring",
   },
   {
     // For all available options, see:
