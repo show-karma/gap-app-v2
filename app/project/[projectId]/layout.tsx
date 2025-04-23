@@ -35,23 +35,6 @@ export async function generateMetadata({
       ) || "",
   };
 
-  const framesAdditionalMetatags = Object.entries(
-    await fetchMetadata(
-      new URL(
-        `/api/frames/${projectId}?projectInfo=${
-          // Base64 encoded projectInfo
-          encodeURIComponent(
-            Buffer.from(JSON.stringify(projectInfo)).toString("base64")
-          )
-        }`,
-        envVars.VERCEL_URL
-      )
-    )
-  ).map(([key, value]) => ({
-    name: key,
-    content: String(value),
-  }));
-
   return {
     title: dynamicMetadata.title || defaultMetadata.title,
     description: dynamicMetadata.description || defaultMetadata.description,
@@ -83,7 +66,6 @@ export async function generateMetadata({
         href: "/favicon.ico",
       },
     ],
-    additionalMetaTags: framesAdditionalMetatags,
   };
 }
 
