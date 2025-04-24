@@ -3,23 +3,24 @@ import { ObjectiveFilter } from "@/components/Pages/Project/Objective/Filter";
 import { ObjectivesSub } from "@/components/Pages/Project/Objective/ObjectivesSub";
 import { RoadmapListLoading } from "../Loading/Roadmap";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import dynamic from "next/dynamic";
-
-const ObjectiveList = dynamic(
-  () =>
-    import("@/components/Pages/Project/Objective/List").then(
-      (mod) => mod.ObjectiveList
-    ),
-  {
-    loading: () => <RoadmapListLoading />,
-  }
-);
+import { useAllMilestones } from "@/hooks/useAllMilestones";
+import { MilestonesList } from "@/components/Milestone/MilestonesList";
+import { useParams } from "next/navigation";
 
 interface ProjectRoadmapProps {
   project: IProjectResponse;
 }
 
 export const ProjectRoadmap = ({ project }: ProjectRoadmapProps) => {
+  const projectId = useParams().projectId as string;
+  const { milestones, isLoading, getMilestonesSortedByEndDate } =
+    useAllMilestones(projectId);
+
+  // Filter to only show pending milestones
+  const pendingMilestones = getMilestonesSortedByEndDate().filter(
+    (milestone) => !milestone.completed
+  );
+
   return (
     <div className="flex flex-col w-full h-full items-center justify-start">
       <div className="flex flex-col gap-2 py-11 items-center justify-start w-full max-w-6xl max-lg:py-6">
@@ -33,7 +34,11 @@ export const ProjectRoadmap = ({ project }: ProjectRoadmapProps) => {
           <ObjectiveFilter />
         </div>
         <div className="py-6 w-full">
-          <ObjectiveList />
+          {isLoading ? (
+            <RoadmapListLoading />
+          ) : (
+            <MilestonesList milestones={pendingMilestones} />
+          )}
         </div>
       </div>
     </div>

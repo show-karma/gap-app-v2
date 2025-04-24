@@ -1,78 +1,43 @@
-"use client";
-import { MESSAGES } from "@/utilities/messages";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { SubmitHandler, useForm } from "react-hook-form";
-import { z } from "zod";
-import { MarkdownEditor } from "../Utilities/MarkdownEditor";
-import { Button } from "../Utilities/Button";
-import { errorManager } from "../Utilities/errorManager";
+import { useState } from "react";
 import { useAccount, useSwitchChain } from "wagmi";
 import { useProjectStore } from "@/store";
 import { getGapClient, useGap } from "@/hooks";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
-
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { useStepper } from "@/store/modals/txStepper";
 import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
 import toast from "react-hot-toast";
-import { useState } from "react";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { XMarkIcon } from "@heroicons/react/24/solid";
-import { cn } from "@/utilities/tailwind";
-import { useQuery } from "@tanstack/react-query";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { MESSAGES } from "@/utilities/messages";
+import { useQuery } from "@tanstack/react-query";
 
-const objectiveSchema = z.object({
-  title: z
-    .string()
-    .min(3, { message: MESSAGES.PROJECT_OBJECTIVE_FORM.TITLE.MIN })
-    .max(50, { message: MESSAGES.PROJECT_OBJECTIVE_FORM.TITLE.MAX }),
-  text: z.string().min(3, { message: MESSAGES.PROJECT_OBJECTIVE_FORM.TEXT }),
-});
-
-type ObjectiveType = z.infer<typeof objectiveSchema>;
-
-const labelStyle = "text-sm font-bold";
-const inputStyle =
-  "w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-white";
-
-interface ProjectObjectiveFormProps {
-  previousObjective?: IProjectMilestoneResponse;
-  stateHandler?: (state: boolean) => void;
+export interface ProjectMilestoneFormData {
+  title: string;
+  text: string;
 }
 
-export const ProjectObjectiveForm = ({
-  previousObjective,
-  stateHandler,
-}: ProjectObjectiveFormProps) => {
+interface UseProjectMilestoneFormProps {
+  previousMilestone?: IProjectMilestoneResponse;
+  onSuccess?: () => void;
+}
+
+export function useProjectMilestoneForm({
+  previousMilestone,
+  onSuccess,
+}: UseProjectMilestoneFormProps = {}) {
   const { address, chain } = useAccount();
   const { project } = useProjectStore();
   const { switchChainAsync } = useSwitchChain();
   const params = useParams();
   const projectId = params.projectId as string;
-
-  const isEditing = !!previousObjective;
-
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors, isValid },
-  } = useForm<ObjectiveType>({
-    resolver: zodResolver(objectiveSchema),
-    reValidateMode: "onChange",
-    mode: "onChange",
-    defaultValues: {
-      title: previousObjective?.data.title,
-      text: previousObjective?.data.text,
-    },
-  });
+  const isEditing = !!previousMilestone;
 
   const { gap } = useGap();
   const [isLoading, setIsLoading] = useState(false);
@@ -83,17 +48,17 @@ export const ProjectObjectiveForm = ({
     queryFn: () => getProjectObjectives(projectId),
   });
 
-  const createObjective = async (data: ObjectiveType) => {
+  const createMilestone = async (data: ProjectMilestoneFormData) => {
     if (!gap) return;
     let gapClient = gap;
     setIsLoading(true);
     try {
       if (chain?.id != project?.chainID) {
-        console.log("Switching chain");
         await switchChainAsync?.({ chainId: project?.chainID as number });
         gapClient = getGapClient(project?.chainID as number);
       }
-      const newObjective = new ProjectMilestone({
+
+      const newMilestone = new ProjectMilestone({
         data: sanitizeObject({
           title: data.title,
           text: data.text,
@@ -111,16 +76,17 @@ export const ProjectObjectiveForm = ({
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
-      if (!walletClient) return;
+
       const walletSigner = await walletClientToSigner(walletClient);
       const sanitizedData = {
         title: sanitizeInput(data.title),
         text: sanitizeInput(data.text),
       };
-      await newObjective
+
+      await newMilestone
         .attest(walletSigner as any, sanitizedData, changeStepperStep)
         .then(async (res) => {
-          let fetchedObjectives = null;
+          let fetchedMilestones = null;
           const txHash = res?.tx[0]?.hash;
           if (txHash) {
             await fetchData(
@@ -131,20 +97,22 @@ export const ProjectObjectiveForm = ({
           } else {
             await fetchData(
               INDEXER.ATTESTATION_LISTENER(
-                newObjective.uid,
+                newMilestone.uid,
                 project?.chainID as number
               ),
               "POST",
               {}
             );
           }
+
           let retries = 1000;
           changeStepperStep("indexing");
+
           while (retries > 0) {
             await getProjectObjectives(projectId)
-              .then(async (fetchedObjectives) => {
-                const attestUID = newObjective.uid;
-                const alreadyExists = fetchedObjectives.find(
+              .then(async (fetchedMilestones) => {
+                const attestUID = newMilestone.uid;
+                const alreadyExists = fetchedMilestones.find(
                   (m) => m.uid === attestUID
                 );
 
@@ -153,7 +121,7 @@ export const ProjectObjectiveForm = ({
                   changeStepperStep("indexed");
                   toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.SUCCESS);
                   await refetch();
-                  stateHandler?.(false);
+                  onSuccess?.();
                 }
                 retries -= 1;
                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
@@ -179,10 +147,11 @@ export const ProjectObjectiveForm = ({
     }
   };
 
-  const updateObjective = async (data: ObjectiveType) => {
-    if (!gap) return;
+  const updateMilestone = async (data: ProjectMilestoneFormData) => {
+    if (!gap || !previousMilestone) return;
     let gapClient = gap;
     setIsLoading(true);
+
     try {
       if (chain?.id != project?.chainID) {
         await switchChainAsync?.({ chainId: project?.chainID as number });
@@ -196,30 +165,39 @@ export const ProjectObjectiveForm = ({
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
+
       const walletSigner = await walletClientToSigner(walletClient);
       const sanitizedData = {
         title: sanitizeInput(data.title),
         text: sanitizeInput(data.text),
       };
+
       const fetchedMilestones = await gapIndexerApi
         .projectMilestones(projectId)
         .then((res) => res.data);
+
       if (!fetchedMilestones || !gapClient?.network) return;
-      const objectivesInstances = ProjectMilestone.from(
+
+      const milestonesInstances = ProjectMilestone.from(
         fetchedMilestones,
         gapClient?.network
       );
-      const objectiveInstance = objectivesInstances.find(
+
+      const milestoneInstance = milestonesInstances.find(
         (item) =>
-          item.uid.toLowerCase() === previousObjective?.uid.toLowerCase()
+          item.uid.toLowerCase() === previousMilestone?.uid.toLowerCase()
       );
-      if (!objectiveInstance) return;
-      objectiveInstance.setValues(sanitizedData);
-      await objectiveInstance
+
+      if (!milestoneInstance) return;
+
+      milestoneInstance.setValues(sanitizedData);
+
+      await milestoneInstance
         .attest(walletSigner as any, sanitizedData, changeStepperStep)
         .then(async (res) => {
-          let fetchedObjectives = null;
+          let fetchedMilestones = null;
           const txHash = res?.tx[0]?.hash;
+
           if (txHash) {
             await fetchData(
               INDEXER.ATTESTATION_LISTENER(txHash, project?.chainID as number),
@@ -229,29 +207,31 @@ export const ProjectObjectiveForm = ({
           } else {
             await fetchData(
               INDEXER.ATTESTATION_LISTENER(
-                objectiveInstance.uid,
+                milestoneInstance.uid,
                 project?.chainID as number
               ),
               "POST",
               {}
             );
           }
+
           let retries = 1000;
           changeStepperStep("indexing");
+
           while (retries > 0) {
             await getProjectObjectives(projectId)
-              .then(async (fetchedObjectives) => {
-                const attestUID = objectiveInstance.uid;
-                const alreadyExists = fetchedObjectives.find(
+              .then(async (fetchedMilestones) => {
+                const attestUID = milestoneInstance.uid;
+                const alreadyExists = fetchedMilestones.find(
                   (m) => m.uid === attestUID
                 );
 
                 if (alreadyExists) {
                   retries = 0;
                   changeStepperStep("indexed");
-                  toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.SUCCESS);
+                  toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.EDIT.SUCCESS);
                   await refetch();
-                  stateHandler?.(false);
+                  onSuccess?.();
                 }
                 retries -= 1;
                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
@@ -265,90 +245,31 @@ export const ProjectObjectiveForm = ({
           }
         });
     } catch (error) {
-      errorManager(MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR, error, {
+      errorManager(MESSAGES.PROJECT_OBJECTIVE_FORM.EDIT.ERROR, error, {
         data,
         address,
         project: project?.uid,
       });
-      toast.error(MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR);
+      toast.error(MESSAGES.PROJECT_OBJECTIVE_FORM.EDIT.ERROR);
     } finally {
       setIsLoading(false);
       setIsStepper(false);
     }
   };
 
-  const onSubmit: SubmitHandler<ObjectiveType> = async (data) => {
+  const submitMilestone = async (data: ProjectMilestoneFormData) => {
     if (isEditing) {
-      updateObjective(data);
+      await updateMilestone(data);
     } else {
-      createObjective(data);
+      await createMilestone(data);
     }
   };
 
-  return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="space-y-4 w-full py-4 px-0 rounded-2xl max-md:px-0"
-    >
-      <div className="flex flex-col gap-4 items-start justify-start w-full">
-        <div className="flex flex-col gap-1 items-start justify-start w-full">
-          <label htmlFor="title" className={labelStyle}>
-            Milestone Title
-          </label>
-          <input
-            type="text"
-            id="title"
-            className={`${inputStyle} ${
-              errors.title
-                ? "border-red-500 dark:border-red-500 text-red-500 dark:text-red-500"
-                : ""
-            }`}
-            placeholder={MESSAGES.PROJECT_OBJECTIVE_FORM.TITLE.MIN}
-            {...register("title")}
-          />
-          {errors.title && (
-            <p className="text-red-500">{errors.title.message}</p>
-          )}
-        </div>
-        <div className="flex flex-col gap-1 items-start justify-start w-full">
-          <label htmlFor="text" className={labelStyle}>
-            Milestone Description
-          </label>
-          <MarkdownEditor
-            placeholderText={MESSAGES.PROJECT_OBJECTIVE_FORM.TEXT}
-            value={watch("text") || ""}
-            onChange={(newValue: string) => {
-              setValue("text", newValue || "", {
-                shouldValidate: true,
-              });
-            }}
-            className={errors.text ? "border border-red-500" : ""}
-          />
-          {errors.text && <p className="text-red-500">{errors.text.message}</p>}
-        </div>
-      </div>
-      <div className="flex flex-row gap-2 items-center justify-start pt-2">
-        <Button
-          onClick={(e) => {
-            e.preventDefault();
-            stateHandler?.(false);
-          }}
-          className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-700"
-          type="button"
-        >
-          Cancel
-        </Button>
-        <Button
-          type="submit"
-          isLoading={isLoading}
-          className={`bg-brand-blue text-white px-4 py-2 ${
-            !isValid || isLoading ? "cursor-not-allowed opacity-50" : ""
-          }`}
-          disabled={!isValid || isLoading}
-        >
-          {isEditing ? "Edit Milestone" : "Add Milestone"}
-        </Button>
-      </div>
-    </form>
-  );
-};
+  return {
+    submitMilestone,
+    createMilestone,
+    updateMilestone,
+    isLoading,
+    isEditing,
+  };
+}

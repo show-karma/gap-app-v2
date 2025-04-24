@@ -28,7 +28,7 @@ export const PAGES = {
   },
   PROJECT: {
     OVERVIEW: (project: string) => `/project/${project}`,
-    UPDATES: (project: string) => `/project/${project}?tab=updates`,
+    UPDATES: (project: string) => `/project/${project}/updates`,
     GRANTS: (project: string) => `/project/${project}/funding`,
     ROADMAP: {
       ROOT: (project: string) => `/project/${project}/roadmap`,

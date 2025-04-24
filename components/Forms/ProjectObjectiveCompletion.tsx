@@ -154,7 +154,7 @@ export const ProjectObjectiveCompletionForm = ({
     } catch (error: any) {
       console.log(error);
       toast.error(MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.ERROR);
-      errorManager(`Error completing objective ${objectiveUID}`, error, {
+      errorManager(`Error completing milestone ${objectiveUID}`, error, {
         project: projectId,
         objective: objectiveUID,
       });

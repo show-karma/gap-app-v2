@@ -19,7 +19,6 @@ import { Hex } from "viem";
 import { ProjectSubscription } from "../ProjectSubscription";
 import { ProjectSubTabs } from "../ProjectSubTabs";
 import { ProjectBlocks } from "./ProjectBlocks";
-import { ProjectBodyTabs } from "./ProjectBodyTabs";
 
 import { MemberDialog } from "@/components/Dialogs/Member";
 import { DeleteMemberDialog } from "@/components/Dialogs/Member/DeleteMember";
@@ -41,6 +40,7 @@ import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import pluralize from "pluralize";
 import { useAccount } from "wagmi";
+import { InformationBlock } from "./ProjectBodyTabs";
 
 const ContributorProfileDialog = dynamic(
   () =>
@@ -295,7 +295,7 @@ function ProjectPage() {
         <Team />
       </div>
       <div className="flex flex-col flex-[7.5] max-lg:w-full gap-4">
-        <ProjectBodyTabs />
+        <InformationBlock />
       </div>
       <div className="flex flex-col flex-[4] gap-8 max-lg:w-full">
         <div className="flex w-full flex-col gap-2 lg:hidden">
