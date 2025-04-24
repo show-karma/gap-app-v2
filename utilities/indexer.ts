@@ -29,6 +29,12 @@ export const INDEXER = {
       }${sortOrder ? `&sortOrder=${sortOrder}` : ""}`,
     BY_PROGRAM: (programId: string, chainId: number, communityId: string) =>
       `/projects/by-program?programId=${programId}&chainId=${chainId}&communityId=${communityId}`,
+    TRACKS: (projectId: string, chainId: number) =>
+      `/projects/${projectId}/tracks?chainID=${chainId}`,
+  },
+  PROGRAMS: {
+    TRACKS: (programId: string, chainId: number) =>
+      `/programs/${programId}/tracks?chainID=${chainId}`,
   },
   PROJECT: {
     EXTERNAL: {

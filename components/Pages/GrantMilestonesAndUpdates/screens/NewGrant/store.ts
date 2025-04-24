@@ -24,6 +24,7 @@ export interface GrantFormData {
     explanation?: string;
     type: string;
   }[];
+  selectedTrackIds?: string[];
 }
 
 interface GrantFormStore {
@@ -65,6 +66,7 @@ const initialFormData: GrantFormData = {
   linkToProposal: "",
   recipient: "",
   questions: [],
+  selectedTrackIds: [],
 };
 
 export const useGrantFormStore = create<GrantFormStore>((set, get) => ({
