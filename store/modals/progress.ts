@@ -2,10 +2,10 @@ import { create } from "zustand";
 
 export type ProgressModalScreen =
   | "menu"
-  | "grant_update"
   | "project_update"
   | "milestone"
-  | "milestone_update";
+  | "milestone_update"
+  | "unified_milestone";
 
 interface ProgressModalStore {
   isProgressModalOpen: boolean;

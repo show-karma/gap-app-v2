@@ -45,7 +45,6 @@ const authorizedViews: GrantScreen[] = [
   "create-milestone",
   "new",
   "edit",
-  "grant-update",
   "complete-grant",
 ];
 
@@ -54,12 +53,10 @@ const allViews: GrantScreen[] = [
   "create-milestone",
   "new",
   "edit",
-  "grant-update",
   "impact-criteria",
   "outputs",
   "overview",
   "complete-grant",
-  "grant-update",
 ];
 
 const getScreen = (pathname: string): GrantScreen | undefined => {

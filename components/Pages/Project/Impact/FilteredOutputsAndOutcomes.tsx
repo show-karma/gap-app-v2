@@ -10,18 +10,13 @@ import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { cn } from "@/utilities/tailwind";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { AreaChart, Card, Title } from "@tremor/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import toast from "react-hot-toast";
 import { useAccount } from "wagmi";
 import { prepareChartData } from "../../Communities/Impact/ImpactCharts";
 import { GrantsOutputsLoading } from "../Loading/Grants/Outputs";
 import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
-import {
-  sendImpactAnswers,
-  getImpactAnswers,
-} from "@/utilities/impact/impactAnswers";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { GroupedLinks } from "./GroupedLinks";
 
 type OutputForm = {
@@ -71,7 +66,6 @@ export const FilteredOutputsAndOutcomes = ({
   indicatorNames,
 }: FilteredOutputsAndOutcomesProps) => {
   const { project, isProjectOwner } = useProjectStore();
-  const queryClient = useQueryClient();
 
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
@@ -85,21 +79,25 @@ export const FilteredOutputsAndOutcomes = ({
 
   const [forms, setForms] = useState<OutputForm[]>([]);
 
-  // Use React Query for fetching impact answers
-  const { data: impactAnswers = [], isLoading } = useQuery({
-    queryKey: ["impactAnswers", project?.uid, indicatorIds, indicatorNames],
-    queryFn: async () => {
-      if (!project?.uid) return [];
-      const data = await getImpactAnswers(project.uid as string);
-      return filterIndicators(data, indicatorIds, indicatorNames);
-    },
+  // Use our custom hook for submitting impact answers
+  const {
+    data: impactAnswers = [],
+    isLoading,
+    submitImpactAnswer,
+  } = useImpactAnswers({
+    projectIdentifier: project?.uid as string,
     enabled:
       !!project?.uid && !!indicatorIds?.length && !!indicatorNames?.length,
   });
 
+  // Filter indicators based on IDs and names
+  const filteredAnswers = useMemo(() => {
+    return filterIndicators(impactAnswers, indicatorIds, indicatorNames);
+  }, [impactAnswers, indicatorIds, indicatorNames]);
+
   // Initialize forms when impact answers are loaded
   useEffect(() => {
-    if (impactAnswers.length > 0) {
+    if (filteredAnswers.length > 0) {
       // Preserve editing state for forms that already exist
       const existingForms = forms.reduce((acc, form) => {
         acc[form.id] = {
@@ -110,9 +108,9 @@ export const FilteredOutputsAndOutcomes = ({
       }, {} as Record<string, { isEditing: boolean; isEdited: boolean }>);
 
       setForms(
-        impactAnswers.map((item) => ({
+        filteredAnswers.map((item) => ({
           id: item.id,
-          categoryId: "", // ImpactIndicatorWithData doesn't have categoryId
+          categoryId: "",
           datapoints:
             item.datapoints.map((datapoint) => ({
               value: datapoint.value,
@@ -130,49 +128,7 @@ export const FilteredOutputsAndOutcomes = ({
         }))
       );
     }
-  }, [impactAnswers]);
-
-  // Use mutation for sending impact answers
-  const mutation = useMutation({
-    mutationFn: async ({
-      projectId,
-      indicatorId,
-      datapoints,
-    }: {
-      projectId: string;
-      indicatorId: string;
-      datapoints: any[];
-    }) => {
-      return sendImpactAnswers(projectId, indicatorId, datapoints);
-    },
-    onSuccess: () => {
-      // Reset editing state for all forms
-      setForms((prev) =>
-        prev.map((form) => ({
-          ...form,
-          isEditing: false,
-          isSaving: false,
-          isEdited: false,
-        }))
-      );
-
-      // Invalidate and refetch
-      queryClient.invalidateQueries({
-        queryKey: ["impactAnswers", project?.uid],
-      });
-    },
-    onError: () => {
-      toast.error(MESSAGES.GRANT.OUTPUTS.ERROR);
-
-      // Reset saving state but keep edited state
-      setForms((prev) =>
-        prev.map((form) => ({
-          ...form,
-          isSaving: false,
-        }))
-      );
-    },
-  });
+  }, [filteredAnswers]);
 
   const handleSubmit = async (id: string) => {
     const form = forms.find((f) => f.id === id);
@@ -185,11 +141,30 @@ export const FilteredOutputsAndOutcomes = ({
       prev.map((f) => (f.id === id ? { ...f, isSaving: true } : f))
     );
 
-    mutation.mutate({
-      projectId: project?.details?.data?.slug || (project?.uid as string),
-      indicatorId: id,
-      datapoints: form.datapoints,
-    });
+    try {
+      await submitImpactAnswer({
+        indicatorId: id,
+        datapoints: form.datapoints,
+      });
+
+      // Reset editing state
+      setForms((prev) =>
+        prev.map((form) => ({
+          ...form,
+          isEditing: false,
+          isSaving: false,
+          isEdited: false,
+        }))
+      );
+    } catch (error) {
+      // Reset saving state but keep edited state
+      setForms((prev) =>
+        prev.map((form) => ({
+          ...form,
+          isSaving: false,
+        }))
+      );
+    }
   };
 
   const handleInputChange = (
@@ -237,8 +212,8 @@ export const FilteredOutputsAndOutcomes = ({
 
   // Filter outputs based on authorization
   const filteredOutputs = isAuthorized
-    ? impactAnswers
-    : impactAnswers.filter((item) => item.datapoints?.length);
+    ? filteredAnswers
+    : filteredAnswers.filter((item) => item.datapoints?.length);
 
   const handleAddEntry = (id: string) => {
     setForms((prev) =>

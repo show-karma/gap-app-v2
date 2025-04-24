@@ -16,6 +16,7 @@ import { Transition, Dialog } from "@headlessui/react";
 import { ProjectUpdateScreen } from "./ProjectUpdateScreen";
 import { MilestoneScreen } from "./MilestoneScreen";
 import { MilestoneUpdateScreen } from "./MilestoneUpdateScreen";
+import { UnifiedMilestoneScreen } from "./UnifiedMilestoneScreen";
 import { cn } from "@/utilities/tailwind";
 
 const Box = ({
@@ -33,30 +34,28 @@ const Box = ({
 }) => {
   return (
     <button
-      type="button"
       onClick={onClick}
-      id="box"
       className={cn(
-        `flex flex-1 w-full max-w-[300px] h-[230px] flex-col gap-8 justify-center items-center rounded border px-4 py-4 bg-white`,
+        "py-4 flex flex-1 group flex-col gap-4 items-center justify-center w-full border hover:border-blue-800 hover:bg-slate-50 dark:hover:bg-slate-900 p-8 rounded-lg bg-white dark:bg-zinc-800 border-gray-200 dark:border-gray-700 transition-all ease-in-out duration-200",
         isSelected
-          ? "border-blue-500 bg-blue-500/5 dark:border-blue-500"
-          : "border-gray-400 dark:bg-zinc-900 dark:border-zinc-600"
+          ? "border-blue-800 bg-slate-50 dark:bg-slate-900 shadow-sm dark:border-blue-800"
+          : ""
       )}
     >
-      <Image
-        src={icon}
-        alt={title}
-        width={40}
-        height={40}
-        className="w-10 h-10"
-      />
-      <div className="flex flex-col gap-0 text-center">
+      <div className="flex flex-col items-center justify-center gap-4">
+        <Image
+          src={icon}
+          width={40}
+          height={40}
+          alt=""
+          className="object-contain h-10 w-10"
+        />
         <h3
           className={cn(
-            `text-center text-lg font-bold`,
+            `text-lg font-bold`,
             isSelected
               ? "text-gray-900 dark:text-zinc-200"
-              : " text-gray-900 dark:text-zinc-200"
+              : "text-gray-900 dark:text-zinc-200"
           )}
         >
           {title}
@@ -125,9 +124,9 @@ const Menu = () => {
           <Box
             icon="/icons/milestone.png"
             title="Milestone"
-            description="Define specific milestone goals for grant achievements."
-            onClick={() => select("milestone")}
-            isSelected={selectedScreen === "milestone"}
+            description="Create milestones for your project roadmap or grants."
+            onClick={() => select("unified_milestone")}
+            isSelected={selectedScreen === "unified_milestone"}
           />
           <Box
             icon="/icons/milestone-update.png"
@@ -142,16 +141,9 @@ const Menu = () => {
           <Box
             icon="/icons/project-update.png"
             title="Project Activity"
-            description="Provide overall project progress, beyond grant specifics."
+            description="Provide overall project progress and optionally associate it with grants."
             onClick={() => select("project_update")}
             isSelected={selectedScreen === "project_update"}
-          />
-          <Box
-            icon="/icons/grant-update.png"
-            title="Grant Update"
-            description="Share progress updates to keep community informed."
-            onClick={() => select("grant_update")}
-            isSelected={selectedScreen === "grant_update"}
           />
         </div>
       </div>
@@ -174,10 +166,10 @@ export const ProgressDialog = () => {
 
   const screenToShow: Record<ProgressModalScreen, ReactNode> = {
     menu: <Menu />,
-    grant_update: <GrantUpdateScreen />,
     project_update: <ProjectUpdateScreen />,
     milestone: <MilestoneScreen />,
     milestone_update: <MilestoneUpdateScreen />,
+    unified_milestone: <UnifiedMilestoneScreen />,
   };
 
   const screenTitleAndDescription: Record<
@@ -200,9 +192,10 @@ export const ProgressDialog = () => {
       title: `Craft your Project Activity`,
       description: "Provide overall project progress, beyond grant specifics.",
     },
-    grant_update: {
-      title: `Select the grant you wish to update`,
-      description: "Share progress updates to keep community informed.",
+    unified_milestone: {
+      title: `Create a Milestone`,
+      description:
+        "Create milestones for your project roadmap or specific grants.",
     },
   };
 
@@ -232,7 +225,7 @@ export const ProgressDialog = () => {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-2xl h-max transform overflow-hidden rounded dark:bg-zinc-800 bg-white p-6 text-left align-middle  transition-all">
+              <Dialog.Panel className="w-full max-w-2xl h-max transform overflow-hidden rounded dark:bg-zinc-800 bg-white p-6 text-left align-middle transition-all">
                 <div className="flex flex-col gap-6">
                   <div className="flex flex-col gap-2">
                     <div className="flex flex-row gap-2 px-4 pt-4 items-center">
@@ -253,7 +246,7 @@ export const ProgressDialog = () => {
                         <XMarkIcon className="w-6 h-6" />
                       </button>
                     </div>
-                    <h3 className="text-zinc-600 w-full text-center">
+                    <h3 className="text-zinc-600 dark:text-zinc-300 w-full text-center">
                       {
                         screenTitleAndDescription[progressModalScreen]
                           .description

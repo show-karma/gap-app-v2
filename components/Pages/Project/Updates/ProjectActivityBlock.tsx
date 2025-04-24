@@ -11,9 +11,9 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useMemo } from "react";
 import { PAGES } from "@/utilities/pages";
-import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useAccount } from "wagmi";
+import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 
 export const ProjectActivityBlock = ({
   activity,

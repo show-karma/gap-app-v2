@@ -18,7 +18,7 @@ import { useAccount } from "wagmi";
 import { prepareChartData } from "../../Communities/Impact/ImpactCharts";
 import { GrantsOutputsLoading } from "../Loading/Grants/Outputs";
 import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
-import { sendImpactAnswers, getImpactAnswers } from "@/utilities/impact";
+import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { GroupedLinks } from "./GroupedLinks";
 
 // Helper function to handle comma-separated URLs
@@ -60,15 +60,22 @@ export const OutputsAndOutcomes = () => {
   const isAuthorized =
     isConnected && (isProjectOwner || isContractOwner || isCommunityAdmin);
 
-  const [impactAnswers, setImpactAnswers] = useState<ImpactIndicatorWithData[]>(
-    []
-  );
   const [forms, setForms] = useState<OutputForm[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [selectedPoint, setSelectedPoint] = useState<{
     itemId: string;
     data: any;
   } | null>(null);
+
+  // Use our custom hook for fetching impact answers
+  const {
+    data: impactAnswers = [],
+    isLoading,
+    submitImpactAnswer,
+    refetch,
+  } = useImpactAnswers({
+    projectIdentifier: project?.uid as string,
+    enabled: !!project?.uid,
+  });
 
   const handleSubmit = async (id: string) => {
     const form = forms.find((f) => f.id === id);
@@ -81,34 +88,37 @@ export const OutputsAndOutcomes = () => {
       prev.map((f) => (f.id === id ? { ...f, isSaving: true } : f))
     );
 
-    const success = await sendImpactAnswers(
-      project?.details?.data?.slug || (project?.uid as string),
-      id,
-      form.datapoints,
-      () => {
-        toast.success(MESSAGES.GRANT.OUTPUTS.SUCCESS);
-        handleCancel();
-      },
-      (error) => {
-        toast.error(MESSAGES.GRANT.OUTPUTS.ERROR);
-      }
-    );
+    try {
+      await submitImpactAnswer({
+        indicatorId: id,
+        datapoints: form.datapoints,
+      });
 
-    setForms((prev) =>
-      prev.map((f) =>
-        f.id === id
-          ? {
-              ...f,
-              isSaving: false,
-              isEdited: !success,
-            }
-          : f
-      )
-    );
+      setForms((prev) =>
+        prev.map((f) =>
+          f.id === id
+            ? {
+                ...f,
+                isSaving: false,
+                isEdited: false,
+              }
+            : f
+        )
+      );
 
-    if (project && success) {
-      const response = await getImpactAnswers(project?.uid as string);
-      setImpactAnswers(response);
+      handleCancel();
+    } catch (error) {
+      setForms((prev) =>
+        prev.map((f) =>
+          f.id === id
+            ? {
+                ...f,
+                isSaving: false,
+                isEdited: true,
+              }
+            : f
+        )
+      );
     }
   };
 
@@ -138,41 +148,40 @@ export const OutputsAndOutcomes = () => {
     );
   };
 
-  async function getImpactAnswersData(projectUid: string, silent = false) {
-    if (!silent) setIsLoading(true);
-    try {
-      const outputDataWithAnswers = await getImpactAnswers(projectUid);
-      setImpactAnswers(outputDataWithAnswers);
+  // Initialize forms when impact answers are loaded
+  useEffect(() => {
+    if (impactAnswers.length > 0) {
+      // Preserve editing state for forms that already exist
+      const existingForms = forms.reduce((acc, form) => {
+        acc[form.id] = {
+          isEditing: form.isEditing || false,
+          isEdited: form.isEdited || false,
+        };
+        return acc;
+      }, {} as Record<string, { isEditing: boolean; isEdited: boolean }>);
 
-      // Initialize forms with existing values
       setForms(
-        outputDataWithAnswers.map((item: any) => ({
+        impactAnswers.map((item) => ({
           id: item.id,
-          categoryId: item.categoryId,
+          categoryId: "",
           datapoints:
-            item.datapoints.map((datapoint: any) => ({
+            item.datapoints.map((datapoint) => ({
               value: datapoint.value,
               proof: datapoint.proof || "",
               startDate: datapoint.startDate || "",
               endDate: datapoint.endDate || datapoint.outputTimestamp || "",
               outputTimestamp: datapoint.outputTimestamp || "",
             })) || [],
-          unitOfMeasure: item.unitOfMeasure,
-          isEdited: false,
-          isEditing: false,
+          unitOfMeasure:
+            item.unitOfMeasure === "int" || item.unitOfMeasure === "float"
+              ? item.unitOfMeasure
+              : ("int" as "int" | "float"),
+          isEdited: existingForms[item.id]?.isEdited || false,
+          isEditing: existingForms[item.id]?.isEditing || false,
         }))
       );
-    } catch (error) {
-      console.error("Error fetching impact answers:", error);
-      toast.error("Failed to load impact data");
-    } finally {
-      if (!silent) setIsLoading(false);
     }
-  }
-
-  useEffect(() => {
-    if (project) getImpactAnswersData(project.uid as string);
-  }, [project]);
+  }, [impactAnswers]);
 
   const handleEditClick = (id: string) => {
     setForms((prev) =>
@@ -181,7 +190,14 @@ export const OutputsAndOutcomes = () => {
   };
 
   const handleCancel = async () => {
-    await getImpactAnswersData(project?.uid as string, true);
+    await refetch();
+    setForms((prev) =>
+      prev.map((form) => ({
+        ...form,
+        isEditing: false,
+        isEdited: false,
+      }))
+    );
   };
 
   // Filter outputs based on authorization

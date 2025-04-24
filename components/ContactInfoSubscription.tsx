@@ -282,8 +282,6 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
     });
   };
 
-  console.log(existingContacts);
-
   return isAuthorized ? (
     <div className="px-4 py-4 rounded-md border border-transparent dark:bg-zinc-800 dark:border flex flex-col gap-4 items-start">
       <h3 className="text-xl font-bold leading-6 text-gray-900 dark:text-zinc-100">

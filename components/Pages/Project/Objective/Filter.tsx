@@ -3,17 +3,13 @@
 import { cn } from "@/utilities/tailwind";
 import { CheckIcon } from "@heroicons/react/20/solid";
 import { Listbox, Transition } from "@headlessui/react";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment } from "react";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { useQueryState } from "nuqs";
-import { useQuery } from "@tanstack/react-query";
-import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import {
-  getProjectObjectives,
-  StatusOptions,
-} from "@/utilities/gapIndexerApi/getProjectObjectives";
+import { StatusOptions } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { useParams } from "next/navigation";
 import { queryClient } from "@/components/Utilities/WagmiProvider";
+import { useAllMilestones } from "@/hooks/useAllMilestones";
 
 const statuses: Record<StatusOptions, string> = {
   all: "All",
@@ -22,7 +18,7 @@ const statuses: Record<StatusOptions, string> = {
 };
 
 export const ObjectiveFilter = () => {
-  const uidOrSlug = useParams().projectId as string;
+  const projectId = useParams().projectId as string;
   const [selectedStatus, changeStatus] = useQueryState<StatusOptions>(
     "status",
     {
@@ -33,10 +29,9 @@ export const ObjectiveFilter = () => {
     }
   );
 
-  const { data: objectives } = useQuery<IProjectMilestoneResponse[]>({
-    queryKey: ["projectMilestones"],
-  });
-  if (!objectives?.length || !objectives) return null;
+  const { milestones } = useAllMilestones(projectId);
+
+  if (!milestones?.length || !milestones) return null;
 
   return (
     <div className="flex flex-row gap-6 justify-center items-center">
@@ -45,7 +40,7 @@ export const ObjectiveFilter = () => {
         onChange={(value) => {
           changeStatus(value);
           queryClient.invalidateQueries({
-            queryKey: ["projectMilestones"],
+            queryKey: ["all-milestones", projectId],
           });
         }}
       >

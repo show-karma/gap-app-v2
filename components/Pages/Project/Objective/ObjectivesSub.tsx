@@ -1,26 +1,28 @@
 "use client";
 import { formatDate } from "@/utilities/formatDate";
-import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
-import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useQuery } from "@tanstack/react-query";
+import { useAllMilestones } from "@/hooks/useAllMilestones";
 import { useParams } from "next/navigation";
 import pluralize from "pluralize";
 
 export const ObjectivesSub = () => {
   const { projectId } = useParams();
-  const { data: objectives } = useQuery<IProjectMilestoneResponse[]>({
-    queryKey: ["projectMilestones"],
-    queryFn: () => getProjectObjectives(projectId as string),
-  });
-  const completedObjectives =
-    objectives?.filter((objective) => objective.completed)?.length || 0;
+  const { milestones } = useAllMilestones(projectId as string);
 
-  const totalObjectives = objectives?.length || 0;
-  const lastUpdated = objectives
-    ? objectives?.sort((a, b) => {
-        const getDate = (item: IProjectMilestoneResponse) => {
+  const completedMilestones =
+    milestones?.filter((milestone) => milestone.completed)?.length || 0;
+  const totalMilestones = milestones?.length || 0;
+
+  const lastUpdated = milestones
+    ? milestones?.sort((a, b) => {
+        const getDate = (item: any) => {
           if (item.completed) {
-            return new Date(item.completed.createdAt).getTime();
+            return new Date(
+              item.type === "project"
+                ? item.source.projectMilestone?.completed?.createdAt ||
+                  item.createdAt
+                : item.source.grantMilestone?.milestone.completed?.createdAt ||
+                  item.createdAt
+            ).getTime();
           }
           return new Date(item.createdAt).getTime();
         };
@@ -28,15 +30,15 @@ export const ObjectivesSub = () => {
       })[0]?.createdAt
     : null;
 
-  if (totalObjectives === 0) return null;
+  if (totalMilestones === 0) return null;
 
   return (
     <div className="flex flex-row gap-2 items-center justify-start max-lg:flex-col max-lg:items-start max-lg:justify-center max-lg:gap-1">
       <p className="text-base font-normal text-[#475467] dark:text-gray-400">
-        {`${totalObjectives} ${pluralize(
-          "Objective",
-          totalObjectives
-        )}, ${completedObjectives} Completed`}
+        {`${totalMilestones} ${pluralize(
+          "Milestone",
+          totalMilestones
+        )}, ${completedMilestones} Completed`}
       </p>
       {lastUpdated ? (
         <>

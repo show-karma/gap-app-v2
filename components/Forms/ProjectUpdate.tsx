@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { getGapClient, useGap } from "@/hooks";
+import { getGapClient, useGap, useImpactAnswers } from "@/hooks";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -45,7 +45,7 @@ import { XMarkIcon } from "@heroicons/react/24/solid";
 import { InfoTooltip } from "@/components/Utilities/InfoTooltip";
 import { ImpactIndicatorWithData } from "@/types/impactMeasurement";
 import { IndicatorForm, IndicatorFormData } from "./IndicatorForm";
-import { getImpactAnswers, sendImpactAnswers } from "@/utilities/impact";
+import { sendImpactAnswers } from "@/utilities/impact";
 import { autosyncedIndicators } from "../Pages/Admin/IndicatorsHub";
 import Link from "next/link";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
@@ -297,9 +297,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     undefined
   );
 
-  const { data: indicatorsData } = useQuery<ImpactIndicatorWithData[]>({
-    queryKey: ["indicators", project?.uid],
-    queryFn: () => getImpactAnswers(project?.uid as string),
+  const { data: indicatorsData } = useImpactAnswers({
+    projectIdentifier: project?.uid,
   });
 
   // Custom handlers for deliverables
@@ -339,7 +338,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
         // Handle indicators data
         if (project.uid || project.details?.data?.slug) {
-          const indicators = await getImpactAnswers(project?.uid as string);
+          const indicators = indicatorsData;
           setOutputs(indicators);
         }
       } catch (error) {
@@ -405,7 +404,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
       ) {
         // Access outputs safely
         const assignOutputsValues = async () => {
-          const indicators = await getImpactAnswers(project?.uid as string);
+          const indicators = indicatorsData;
 
           setValue(
             "outputs",

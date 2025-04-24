@@ -20,9 +20,9 @@ const CardSkeleton = () => {
       </div>
       <div className="flex flex-row gap-x-4 gap-y-2 items-center justify-between w-full flex-wrap">
         <div className="flex flex-row gap-2 items-center flex-wrap">
-          <p className="text-zinc-800 dark:text-zinc-300 text-sm lg:text-base">
+          <div className="text-zinc-800 dark:text-zinc-300 text-sm lg:text-base">
             <Skeleton className="w-64 h-6" />
-          </p>
+          </div>
         </div>
         <Skeleton className="w-20 h-8 rounded-full" />
       </div>

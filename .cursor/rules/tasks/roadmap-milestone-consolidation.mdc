@@ -1,0 +1,94 @@
+---
+description: Roadmap/Objective and Milestone Consolidation
+globs: 
+alwaysApply: false
+---
+# Development Tasks: Unified Roadmap & Milestone Management
+
+## Phase 1: Foundation & Preparation
+
+*   [x] **Task 1.1: Terminology Update (Text Only)**
+    *   Carefully search and replace user-facing instances of "Objective" with "Milestone" in the following files and any others identified:
+        *   `app/project/[projectId]/roadmap/page.tsx`
+        *   `app/project/[projectId]/roadmap/loading.tsx`
+        *   `components/Forms/ProjectObjective.tsx`
+        *   `components/Forms/ProjectObjectiveCompletion.tsx`
+        *   `utilities/messages.ts` (Update `MESSAGES.PROJECT_OBJECTIVE_FORM` keys/values)
+        *   Other UI components displaying roadmap objectives.
+    *   **Constraint:** Do *not* modify variable names, function names, types, or constants.
+*   [x] **Task 1.2: Data Fetching Preparation**
+    *   Identify or create functions/hooks needed to fetch:
+        *   All project-level milestones (formerly objectives) for a given `projectId`.
+        *   All grant-specific milestones across all grants associated with a given `projectId`.
+    *   Ensure these functions return data in a format suitable for combined display.
+
+## Phase 2: Component Development & Refactoring
+
+*   [x] **Task 2.1: Develop/Refine Multi-Select Dropdown Component**
+    *   Create or adapt a reusable React component for multi-select dropdown functionality.
+    *   Must include search/filtering capabilities.
+    *   Must support selecting zero, one, or multiple items (grant UIDs).
+*   [x] **Task 2.2: Develop Reusable `MilestoneCard` Component**
+    *   Create a new component `MilestoneCard.tsx` or significantly refactor an existing card.
+    *   Props should accept data from both grant-specific milestones and roadmap milestones.
+    *   Visually differentiate between roadmap and grant-specific milestones.
+    *   Display associated grant names/identifiers if applicable.
+    *   Handle potential "stacking" display if the same milestone exists across multiple grants.
+*   [x] **Task 2.3: Refactor `ProjectObjectiveForm` Logic**
+    *   Extract the core form fields (Title, Text/Description) and submission logic (`createObjective` logic using `ProjectMilestone` SDK) from `components/Forms/ProjectObjective.tsx` into reusable hooks or functions.
+    *   Ensure the extracted logic can be called independently with form data.
+*   [x] **Task 2.4: Refactor `MilestoneForm` Logic**
+    *   Extract the core form fields (Title, Priority, Dates, etc.) and submission logic (`onSubmit` logic using `Milestone` SDK) from `components/Forms/Milestone.tsx` into reusable hooks or functions.
+    *   Ensure the extracted logic can handle being called with a list of target grant UIDs for creating multiple attestations.
+
+## Phase 3: Unified Roadmap Display Implementation
+
+*   [x] **Task 3.1: Implement Unified Data Fetching on Roadmap Page**
+    *   In `app/project/[projectId]/roadmap/page.tsx`, use the functions from Task 1.2 to fetch both project and grant milestones.
+*   [x] **Task 3.2: Implement Combined Sorting and Display**
+    *   Combine the fetched milestone lists.
+    *   Implement sorting logic primarily by `endsAt` (ascending). Define and implement handling for milestones without `endsAt`.
+    *   Map over the sorted, combined list and render each item using the `MilestoneCard` component (Task 2.2).
+    *   Handle the "empty state" message appropriately based on the combined list.
+
+## Phase 4: Unified Creation Modal Implementation
+
+*   [x] **Task 4.1: Create Modal Wrapper Component (`UnifiedMilestoneCreationDialog`)**
+    *   Create a new component, e.g., `components/Dialogs/ProgressDialog/UnifiedMilestoneScreen.tsx` or similar.
+    *   Integrate with `useProgressModalStore` to manage visibility and potentially screen state within the progress modal.
+*   [x] **Task 4.2: Implement Grant Selection Step**
+    *   Within the modal wrapper, implement the initial step using the Multi-Select Dropdown (Task 2.1).
+    *   Fetch and populate the dropdown with grants for the current project.
+    *   Store the selected grant UIDs (could be an empty array).
+*   [x] **Task 4.3: Implement Conditional Form Rendering**
+    *   Based on the number of selected grant UIDs (0 vs. 1+), conditionally render the appropriate form fields:
+        *   If 0 grants: Render fields corresponding to the refactored `ProjectObjectiveForm` (Task 2.3).
+        *   If 1+ grants: Render fields corresponding to the refactored `MilestoneForm` (Task 2.4).
+*   [x] **Task 4.4: Implement Conditional Submission Logic**
+    *   Add a submit button to the modal.
+    *   On submit, based on the number of selected grants:
+        *   If 0 grants: Call the refactored `createObjective` logic (Task 2.3).
+        *   If 1+ grants: Call the refactored `MilestoneForm` submission logic (Task 2.4), passing the list of selected grant UIDs. Ensure proper handling of multiple attestations (feedback, error handling).
+*   [x] **Task 4.5: Integrate Modal Trigger**
+    *   Modify the "Create" button on the Roadmap page (`app/project/[projectId]/roadmap/page.tsx`) to open the progress modal and display the new `UnifiedMilestoneScreen` (Task 4.1).
+
+## Phase 5: Testing & Refinement
+
+*   [ ] **Task 5.1: Testing**
+    *   Thoroughly test the unified display (sorting, differentiation, stacking).
+    *   Test the creation modal for all cases (0, 1, multiple grants selected).
+    *   Verify terminology changes across the UI.
+    *   Test edge cases (no grants in project, large number of grants, form validation).
+*   [ ] **Task 5.2: Final Data/Sorting Decisions**
+    *   Address any remaining questions about handling/sorting milestones without end dates. Implement the chosen solution.
+*   [ ] **Task 5.3: Code Cleanup & Review**
+    *   Review code for clarity, efficiency, and adherence to project standards.
+
+
+
+
+
+
+
+
+    *   Remove any redundant code from the original `ProjectObjective.tsx` and `Milestone.tsx` forms if they are no longer directly used pages/components.
