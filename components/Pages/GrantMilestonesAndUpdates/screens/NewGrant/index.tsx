@@ -18,6 +18,8 @@ import { useCommunityAdminStore } from "@/store/communityAdmin";
 import Link from "next/link";
 import { Button } from "@/components/Utilities/Button";
 import { PAGES } from "@/utilities/pages";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
 
 // Export the SearchGrantProgram component from its own file
 export { SearchGrantProgram } from "./SearchGrantProgram";
@@ -87,6 +89,25 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
         }));
 
         setMilestonesForms(milestones);
+      }
+
+      if (grantToEdit?.details?.data?.programId && selectedProject) {
+        const fetchTracks = async () => {
+          try {
+            const [result, error] = await fetchData(
+              INDEXER.PROJECTS.TRACKS(selectedProject.uid, grantToEdit.chainID)
+            );
+            
+            if (!error && result?.data) {
+              const trackIds = result.data.map((track: any) => track.id);
+              updateFormData({ selectedTrackIds: trackIds });
+            }
+          } catch (error) {
+            console.error("Error fetching tracks for project:", error);
+          }
+        };
+        
+        fetchTracks();
       }
     } else {
       // Reset form data for new grant
