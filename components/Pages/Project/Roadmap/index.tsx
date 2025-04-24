@@ -1,5 +1,4 @@
 "use client";
-import { ObjectiveFilter } from "@/components/Pages/Project/Objective/Filter";
 import { ObjectivesSub } from "@/components/Pages/Project/Objective/ObjectivesSub";
 import { RoadmapListLoading } from "../Loading/Roadmap";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
@@ -13,8 +12,27 @@ interface ProjectRoadmapProps {
 
 export const ProjectRoadmap = ({ project }: ProjectRoadmapProps) => {
   const projectId = useParams().projectId as string;
-  const { milestones, isLoading, getMilestonesSortedByEndDate } =
-    useAllMilestones(projectId);
+  const { milestones, isLoading } = useAllMilestones(projectId);
+
+  // Helper function to get milestones sorted by end date (ascending)
+  const getMilestonesSortedByEndDate = () => {
+    if (!milestones) return [];
+
+    return [...milestones].sort((a, b) => {
+      // Sort logic for milestones with and without end dates
+      // 1. If both have end dates, compare them
+      if (a.endsAt && b.endsAt) {
+        return a.endsAt - b.endsAt;
+      }
+
+      // 2. If only one has an end date, prioritize it (those with end dates come first)
+      if (a.endsAt && !b.endsAt) return -1;
+      if (!a.endsAt && b.endsAt) return 1;
+
+      // 3. If neither has an end date, fall back to creation date
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    });
+  };
 
   // Filter to only show pending milestones
   const pendingMilestones = getMilestonesSortedByEndDate().filter(
@@ -31,7 +49,6 @@ export const ProjectRoadmap = ({ project }: ProjectRoadmapProps) => {
             </h3>
             <ObjectivesSub />
           </div>
-          <ObjectiveFilter />
         </div>
         <div className="py-6 w-full">
           {isLoading ? (

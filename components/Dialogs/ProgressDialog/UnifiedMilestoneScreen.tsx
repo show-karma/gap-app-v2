@@ -161,7 +161,7 @@ export const UnifiedMilestoneScreen = () => {
 
           changeStepperStep("indexing");
           toast.success("Roadmap milestone created successfully");
-          refetch();
+          await refetch();
           changeStepperStep("indexed");
           closeProgressModal();
         });
@@ -240,6 +240,7 @@ export const UnifiedMilestoneScreen = () => {
           );
         }
 
+        await refetch();
         return { grant, result };
       });
 
@@ -249,7 +250,7 @@ export const UnifiedMilestoneScreen = () => {
       await Promise.all(creationPromises);
 
       changeStepperStep("indexed");
-      refetch();
+      await refetch();
       toast.success(
         `Created milestones for ${selectedGrantIds.length} grant(s) successfully`
       );
