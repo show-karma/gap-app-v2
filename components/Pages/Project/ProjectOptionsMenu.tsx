@@ -154,7 +154,7 @@ export const ProjectOptionsMenu = () => {
       )}
       {isAdminTransferOwnershipModalOpen && <AdminTransferOwnershipDialog />}
       {(isAuthorized || isStaff) && (
-        <Menu as="div" className={`relative inline-block text-left z-10`}>
+        <Menu as="div" className={`relative inline-block text-left z-1`}>
           <div>
             <Menu.Button className="w-max bg-zinc-100 dark:bg-zinc-800 hover:bg-zinc-100 hover:dark:bg-zinc-800 text-black dark:text-white p-2 rounded-lg">
               <EllipsisVerticalIcon className="h-5 w-5" aria-hidden="true" />
