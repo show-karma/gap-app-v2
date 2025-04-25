@@ -138,10 +138,18 @@ export const ActivityOutcomeModal = ({
       handleClose();
     } catch (error) {
       const action = editingSegment ? "update" : "create";
-      toast.error(
-        `Failed to ${action} ${OUTPUT_TYPE_DISPLAY[data.type].toLowerCase()}`
+      errorManager(
+        `Failed to ${action} impact segment`,
+        error,
+        {
+          data,
+        },
+        {
+          error: `Failed to ${action} ${OUTPUT_TYPE_DISPLAY[
+            data.type
+          ].toLowerCase()}`,
+        }
       );
-      errorManager(`Failed to ${action} impact segment`, error);
     } finally {
       setIsSaving(false);
     }

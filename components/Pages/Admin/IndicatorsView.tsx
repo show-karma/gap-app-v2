@@ -22,6 +22,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useIndicators } from "@/hooks/useIndicators";
 import { ProgramCard } from "./ProgramCard";
+import { MESSAGES } from "@/utilities/messages";
 
 // Custom Dropdown Menu Component - copied from CategoryView.tsx
 const DropdownMenu = ({
@@ -194,8 +195,14 @@ export const IndicatorsView = ({
 
       toast.success("Indicator deleted successfully");
     } catch (error) {
-      errorManager("Failed to delete indicator", error);
-      toast.error("Failed to delete indicator");
+      errorManager(
+        "Failed to delete indicator",
+        error,
+        {
+          indicatorId: id,
+        },
+        { error: MESSAGES.INDICATOR.DELETE.ERROR }
+      );
     } finally {
       setIsDeletingId(null);
     }

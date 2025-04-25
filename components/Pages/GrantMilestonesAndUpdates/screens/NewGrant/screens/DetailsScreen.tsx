@@ -249,12 +249,15 @@ export const DetailsScreen: React.FC = () => {
           }
         });
     } catch (error: any) {
-      toast.error(MESSAGES.GRANT.UPDATE.ERROR);
       errorManager(
-        `Error updating grant ${oldGrant.uid} from project ${selectedProject.uid}`,
-        error
+        MESSAGES.GRANT.UPDATE.ERROR,
+        error,
+        {
+          grantUID: oldGrant.uid,
+          projectUID: selectedProject.uid,
+        },
+        { error: MESSAGES.GRANT.UPDATE.ERROR }
       );
-      console.log(error);
     } finally {
       setIsLoading(false);
       setIsStepper(false);

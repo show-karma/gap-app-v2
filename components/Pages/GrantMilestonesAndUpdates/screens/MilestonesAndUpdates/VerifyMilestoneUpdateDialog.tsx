@@ -151,11 +151,14 @@ export const VerifyMilestoneUpdateDialog: FC<
         });
       closeModal();
     } catch (error: any) {
-      console.log(error);
-      toast.error(MESSAGES.MILESTONES.VERIFY.ERROR);
       errorManager(
-        `Error verifying milestone ${milestone.uid} from grant ${milestone.refUID}`,
-        error
+        MESSAGES.MILESTONES.VERIFY.ERROR,
+        error,
+        {
+          milestoneUID: milestone.uid,
+          grantUID: milestone.refUID,
+        },
+        { error: MESSAGES.MILESTONES.VERIFY.ERROR }
       );
     } finally {
       setIsLoading(false);

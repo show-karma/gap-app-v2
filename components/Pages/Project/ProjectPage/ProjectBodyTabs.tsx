@@ -336,11 +336,14 @@ const UpdateBlock = ({
           });
       }
     } catch (error: any) {
-      console.log(error);
-      toast.error(MESSAGES.PROJECT_UPDATE_FORM.DELETE.ERROR);
       errorManager(
-        `Error deleting project activity ${update.uid} from project ${project?.uid}`,
-        error
+        MESSAGES.PROJECT_UPDATE_FORM.DELETE.ERROR,
+        error,
+        {
+          projectUID: project?.uid,
+          updateUID: update.uid,
+        },
+        { error: MESSAGES.PROJECT_UPDATE_FORM.DELETE.ERROR }
       );
     } finally {
       setIsDeletingUpdate(false);

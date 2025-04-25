@@ -153,11 +153,17 @@ export const ProjectObjectiveCompletionForm = ({
         });
     } catch (error: any) {
       console.log(error);
-      toast.error(MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.ERROR);
-      errorManager(`Error completing objective ${objectiveUID}`, error, {
-        project: projectId,
-        objective: objectiveUID,
-      });
+      errorManager(
+        `Error completing objective ${objectiveUID}`,
+        error,
+        {
+          project: projectId,
+          objective: objectiveUID,
+        },
+        {
+          error: MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.ERROR,
+        }
+      );
       setIsStepper(false);
     } finally {
       setIsCompleting(false);

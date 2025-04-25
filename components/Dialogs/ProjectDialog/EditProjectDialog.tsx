@@ -501,8 +501,16 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
       setContacts([]);
     } catch (error: any) {
       console.log({ error });
-      errorManager(`Error creating project`, error);
-      toast.error(MESSAGES.PROJECT.CREATE.ERROR);
+      errorManager(
+        `Error creating project`,
+        error,
+        {
+          project: data.title,
+        },
+        {
+          error: "Failed to create project.",
+        }
+      );
       setIsStepper(false);
       openModal();
     } finally {
@@ -630,9 +638,11 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
           projectToUpdate?.details?.data?.slug || projectToUpdate?.uid
         }`,
         error,
-        data
+        data,
+        {
+          error: MESSAGES.PROJECT.UPDATE.ERROR,
+        }
       );
-      toast.error(MESSAGES.PROJECT.UPDATE.ERROR);
       openModal();
     } finally {
       setIsLoading(false);

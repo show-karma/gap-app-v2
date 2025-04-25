@@ -157,10 +157,14 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
       closeModal();
     } catch (error: any) {
       console.log(error);
-      toast.error(MESSAGES.GRANT.GRANT_UPDATE.VERIFY.ERROR);
       errorManager(
-        `Error verifying grant update ${grantUpdate.uid} from grant ${grantUpdate.refUID}`,
-        error
+        MESSAGES.GRANT.GRANT_UPDATE.VERIFY.ERROR,
+        error,
+        {
+          grantUpdateUID: grantUpdate.uid,
+          grantUID: grantUpdate.refUID,
+        },
+        { error: MESSAGES.GRANT.GRANT_UPDATE.VERIFY.ERROR }
       );
     } finally {
       setIsLoading(false);

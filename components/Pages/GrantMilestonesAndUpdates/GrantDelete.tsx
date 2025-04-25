@@ -142,12 +142,18 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
           });
       }
     } catch (error: any) {
-      toast.error(
+      errorManager(
         MESSAGES.GRANT.DELETE.ERROR(
           grant.details?.data?.title || shortAddress(grant.uid)
-        )
+        ),
+        error,
+        { grantUID: grant.uid, address },
+        {
+          error: MESSAGES.GRANT.DELETE.ERROR(
+            grant.details?.data?.title || shortAddress(grant.uid)
+          ),
+        }
       );
-      errorManager(`Error deleting grant ${grant.uid}`, error);
     } finally {
       setIsDeletingGrant(false);
       setIsStepper(false);

@@ -292,11 +292,17 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
         });
       }
     } catch (error: any) {
-      toast.error("Something went wrong. Please try again later.");
-      errorManager(`Error creating contact`, error, {
-        project: project?.details?.data?.slug || project?.uid,
-        data,
-      });
+      errorManager(
+        `Error creating contact`,
+        error,
+        {
+          project: project?.details?.data?.slug || project?.uid,
+          data,
+        },
+        {
+          error: "Failed to create contact.",
+        }
+      );
     } finally {
       setIsLoading(false);
     }
@@ -339,9 +345,6 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
       });
       // const subscription = await fetchData(INDEXER.NOTIFICATIONS.UPDATE())
     } catch (error: any) {
-      toast.error("Something went wrong. Please try again later.", {
-        className: "z-[9999]",
-      });
       errorManager(
         `Error deleting contact ${contactId} from project ${
           project?.details?.data?.slug || project?.uid
@@ -350,6 +353,9 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
         {
           project: project?.details?.data?.slug || project?.uid,
           contactId,
+        },
+        {
+          error: "Failed to delete contact.",
         }
       );
       console.log(error);

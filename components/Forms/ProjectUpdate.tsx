@@ -626,10 +626,12 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
             })),
             deliverables: data.deliverables,
           } as IProjectUpdate,
+        },
+        {
+          error: MESSAGES.PROJECT_UPDATE_FORM.ERROR,
         }
       );
       console.log(error);
-      toast.error(MESSAGES.PROJECT_UPDATE_FORM.ERROR);
     } finally {
       setIsStepper(false);
       setIsLoading(false);
