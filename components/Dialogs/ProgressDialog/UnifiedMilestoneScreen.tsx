@@ -27,6 +27,12 @@ import { MESSAGES } from "@/utilities/messages";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 import { useAllMilestones } from "@/hooks/useAllMilestones";
 import { useParams } from "next/navigation";
+import { chainNameDictionary } from "@/utilities/chainNameDictionary";
+import { GapContract } from "@show-karma/karma-gap-sdk/core/class/contract/GapContract";
+import { Transaction } from "ethers";
+
+// Helper function to wait for a specified time
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Define the form schema for creating milestones
 const milestoneSchema = z.object({
@@ -97,7 +103,8 @@ export const UnifiedMilestoneScreen = () => {
 
   const grantOptions = grants.map((grant) => ({
     value: grant.uid,
-    label: grant.details?.data.title || "Untitled Grant",
+    label: `${grant.details?.data.title || "Untitled Grant"}`,
+    chainId: grant.chainID,
   }));
 
   const handleGrantSelectionChange = (selectedIds: string[]) => {
@@ -160,17 +167,31 @@ export const UnifiedMilestoneScreen = () => {
           }
 
           changeStepperStep("indexing");
+
+          // More robust refetch with multiple attempts
+          await tryRefetch();
+
           toast.success("Roadmap milestone created successfully");
-          await refetch();
           changeStepperStep("indexed");
           closeProgressModal();
         });
     } catch (error) {
       errorManager("Error creating roadmap milestone", error);
       toast.error("Failed to create roadmap milestone");
+      console.log(error);
     } finally {
       setIsSubmitting(false);
       setIsStepper(false);
+    }
+  };
+
+  // Function to attempt multiple refetches with delays between attempts
+  const tryRefetch = async (attempts = 3, delayMs = 2000) => {
+    for (let i = 0; i < attempts; i++) {
+      await refetch();
+      if (i < attempts - 1) {
+        await sleep(delayMs);
+      }
     }
   };
 
@@ -178,86 +199,227 @@ export const UnifiedMilestoneScreen = () => {
   const createGrantMilestones = async (data: MilestoneFormData) => {
     if (!gap || !project || selectedGrantIds.length === 0) return;
 
-    let gapClient = gap;
     setIsSubmitting(true);
+    setIsStepper(true);
 
     try {
-      // Process each selected grant
-      const creationPromises = selectedGrantIds.map(async (grantId) => {
+      // Group grants by chain ID to process each network separately
+      const grantsByChain: Record<
+        number,
+        { grant: IGrantResponse; index: number }[]
+      > = {};
+
+      // Build the groups by chain
+      selectedGrantIds.forEach((grantId, index) => {
         const grant = grants.find((g) => g.uid === grantId);
-        if (!grant) return null;
+        if (!grant) return;
+
+        if (!grantsByChain[grant.chainID]) {
+          grantsByChain[grant.chainID] = [];
+        }
+
+        grantsByChain[grant.chainID].push({ grant, index });
+      });
+
+      // Sort chain IDs to prioritize the user's current chain
+      const sortedChainIds = Object.keys(grantsByChain).sort((a, b) => {
+        const aId = Number(a);
+        const bId = Number(b);
+
+        // If user is on chain A, prioritize A
+        if (chain?.id === aId) return -1;
+        // If user is on chain B, prioritize B
+        if (chain?.id === bId) return 1;
+        // Otherwise, just sort numerically as fallback
+        return aId - bId;
+      });
+
+      // Process each chain group in the prioritized order
+      for (const chainIdStr of sortedChainIds) {
+        let gapClient = gap;
+        const chainId = Number(chainIdStr);
+        const chainGrants = grantsByChain[chainId];
+        const chainName = chainNameDictionary(chainId);
+
+        changeStepperStep("preparing");
+        // Notify user we're processing grants on this chain
+        toast.loading(
+          `Processing ${chainGrants.length} grant(s) on ${chainName}...`,
+          {
+            id: `chain-${chainId}`,
+          }
+        );
 
         // Switch chain if needed
-        if (chain?.id !== grant.chainID) {
-          await switchChainAsync?.({ chainId: grant.chainID });
-          gapClient = getGapClient(grant.chainID);
+        if (chain?.id !== chainId) {
+          await switchChainAsync?.({ chainId });
+          gapClient = getGapClient(chainId);
         }
 
-        const milestone = sanitizeObject({
-          title: data.title,
-          description: data.description,
-          endsAt: data.dates?.endsAt
-            ? data.dates.endsAt.getTime() / 1000
-            : undefined,
-          startsAt: data.dates?.startsAt
-            ? data.dates.startsAt.getTime() / 1000
-            : undefined,
-          priority:
-            data.priority !== undefined && data.priority !== null
-              ? data.priority
+        // If there's only one grant on this chain, process it normally
+        if (chainGrants.length === 1) {
+          const { grant } = chainGrants[0];
+
+          const milestone = sanitizeObject({
+            title: data.title,
+            description: data.description,
+            endsAt: data.dates?.endsAt
+              ? data.dates.endsAt.getTime() / 1000
               : undefined,
-        });
+            startsAt: data.dates?.startsAt
+              ? data.dates.startsAt.getTime() / 1000
+              : undefined,
+            priority:
+              data.priority !== undefined && data.priority !== null
+                ? data.priority
+                : undefined,
+          });
 
-        const milestoneToAttest = new Milestone({
-          refUID: grant.uid,
-          schema: gapClient.findSchema("Milestone"),
-          recipient: address as `0x${string}`,
-          data: milestone,
-        });
+          const milestoneToAttest = new Milestone({
+            refUID: grant.uid,
+            schema: gapClient.findSchema("Milestone"),
+            recipient: address as `0x${string}`,
+            data: milestone,
+          });
 
-        const { walletClient, error } = await safeGetWalletClient(
-          grant.chainID
-        );
+          const { walletClient, error } = await safeGetWalletClient(chainId);
 
-        if (error || !walletClient || !gapClient) {
-          throw new Error("Failed to connect to wallet", { cause: error });
-        }
+          if (error || !walletClient || !gapClient) {
+            throw new Error(`Failed to connect to wallet on ${chainName}`, {
+              cause: error,
+            });
+          }
 
-        const walletSigner = await walletClientToSigner(walletClient);
+          const walletSigner = await walletClientToSigner(walletClient);
 
-        const result = await milestoneToAttest.attest(
-          walletSigner as any,
-          changeStepperStep
-        );
+          const result = await milestoneToAttest.attest(
+            walletSigner as any,
+            changeStepperStep
+          );
 
-        // Handle indexer notification
-        const txHash = result?.tx[0]?.hash;
-        if (txHash) {
-          await fetchData(
-            INDEXER.ATTESTATION_LISTENER(txHash, milestoneToAttest.chainID),
-            "POST",
-            {}
+          // Handle indexer notification
+          const txHash = result?.tx[0]?.hash;
+          if (txHash) {
+            await fetchData(
+              INDEXER.ATTESTATION_LISTENER(txHash, milestoneToAttest.chainID),
+              "POST",
+              {}
+            );
+          }
+
+          toast.success(`Created milestone for grant on ${chainName}`, {
+            id: `chain-${chainId}`,
+          });
+        } else {
+          // Multiple grants on the same chain - use attestToMultipleGrants
+          // Get the first grant as reference
+          const firstGrant = chainGrants[0].grant;
+
+          const milestone = sanitizeObject({
+            title: data.title,
+            description: data.description,
+            endsAt: data.dates?.endsAt
+              ? data.dates.endsAt.getTime() / 1000
+              : undefined,
+            startsAt: data.dates?.startsAt
+              ? data.dates.startsAt.getTime() / 1000
+              : undefined,
+            priority:
+              data.priority !== undefined && data.priority !== null
+                ? data.priority
+                : undefined,
+          });
+
+          const milestoneToAttest = new Milestone({
+            // We'll use the first grant as reference, but it will be attested to all selected grants
+            refUID: firstGrant.uid,
+            schema: gapClient.findSchema("Milestone"),
+            recipient: address as `0x${string}`,
+            data: milestone,
+          });
+
+          const { walletClient, error } = await safeGetWalletClient(chainId);
+
+          if (error || !walletClient || !gapClient) {
+            throw new Error(`Failed to connect to wallet on ${chainName}`, {
+              cause: error,
+            });
+          }
+
+          const walletSigner = await walletClientToSigner(walletClient);
+
+          // Instead of using indices, directly use grant UIDs
+          const grantUIDs = chainGrants.map(
+            (item) => item.grant.uid as `0x${string}`
+          );
+
+          // Create separate milestone objects for each grant
+          const allPayloads: any[] = [];
+
+          for (const grantUID of grantUIDs) {
+            // Create a new milestone for each grant with direct reference
+            const grantMilestone = new Milestone({
+              schema: milestoneToAttest.schema,
+              recipient: milestoneToAttest.recipient,
+              data: milestoneToAttest.data,
+              refUID: grantUID, // Direct reference to the grant UID
+            });
+
+            // Generate payload for this grant
+            const payload = await grantMilestone.multiAttestPayload();
+            // Add each item from payload to allPayloads
+            payload.forEach((item) => allPayloads.push(item));
+          }
+
+          // Use the GapContract to submit all attestations in a single transaction
+          const result = await GapContract.multiAttest(
+            walletSigner as any,
+            allPayloads.map((p) => p[1]),
+            changeStepperStep
+          );
+
+          // Handle indexer notification for each tx
+          if (result.tx.length > 0) {
+            const txPromises = result.tx.map((tx: Transaction) =>
+              tx.hash
+                ? fetchData(
+                    INDEXER.ATTESTATION_LISTENER(
+                      tx.hash as `0x${string}`,
+                      chainId
+                    ),
+                    "POST",
+                    {}
+                  )
+                : Promise.resolve()
+            );
+            await Promise.all(txPromises);
+          }
+
+          toast.success(
+            `Created milestones for ${chainGrants.length} grants on ${chainName}`,
+            {
+              id: `chain-${chainId}`,
+            }
           );
         }
-
-        await refetch();
-        return { grant, result };
-      });
+      }
 
       changeStepperStep("indexing");
 
-      // Wait for all milestones to be created
-      await Promise.all(creationPromises);
+      // Wait a bit for indexing and perform multiple refetch attempts
+      await sleep(1500);
+      await tryRefetch();
 
       changeStepperStep("indexed");
-      await refetch();
+
       toast.success(
-        `Created milestones for ${selectedGrantIds.length} grant(s) successfully`
+        `Created milestones for all ${selectedGrantIds.length} grant(s) successfully`
       );
       closeProgressModal();
     } catch (error) {
       errorManager("Error creating grant milestones", error);
       toast.error("Failed to create grant milestones");
+      console.log(error);
     } finally {
       setIsSubmitting(false);
       setIsStepper(false);
@@ -306,6 +468,24 @@ export const UnifiedMilestoneScreen = () => {
       </div>
     );
   }
+
+  // Group grants by chain for better display
+  const grantsByChain = selectedGrantIds.reduce((acc, grantId) => {
+    const grant = grants.find((g) => g.uid === grantId);
+    if (!grant) return acc;
+
+    const chainId = grant.chainID;
+    if (!acc[chainId]) {
+      acc[chainId] = {
+        chainId,
+        chainName: chainNameDictionary(chainId),
+        grants: [],
+      };
+    }
+
+    acc[chainId].grants.push(grant);
+    return acc;
+  }, {} as Record<number, { chainId: number; chainName: string; grants: IGrantResponse[] }>);
 
   return (
     <div className="flex flex-col gap-6">
@@ -430,6 +610,17 @@ export const UnifiedMilestoneScreen = () => {
             </div>
           </>
         )}
+
+        {/* Display warning if grants are on multiple chains */}
+        {selectedGrantIds.length > 0 &&
+          Object.keys(grantsByChain).length > 1 && (
+            <div className="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
+              <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                You are creating milestones across multiple chains. You will
+                need to approve transactions for each chain separately.
+              </p>
+            </div>
+          )}
 
         <div className="flex flex-row gap-2 justify-end mt-4">
           <Button

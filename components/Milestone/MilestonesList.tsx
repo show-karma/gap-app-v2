@@ -13,6 +13,9 @@ interface MilestonesListProps {
 
 // Extended milestone type that includes multiple grant references
 interface MergedMilestone extends UnifiedMilestone {
+  id: string;
+  chainID: number;
+  refUID: string;
   mergedGrants?: Array<{
     grantId: string;
     grantTitle?: string;
@@ -47,7 +50,12 @@ export const MilestonesList = ({ milestones }: MilestonesListProps) => {
 
       // Skip project milestones from merging (they're unique by nature)
       if (milestone.type === "project") {
-        mergedMap.set(`project-${milestone.id}`, { ...milestone });
+        mergedMap.set(`project-${milestone.id}`, {
+          ...milestone,
+          id: milestone.id || "",
+          chainID: milestone.source.projectMilestone?.chainID || 0,
+          refUID: milestone.source.projectMilestone?.uid || "",
+        });
         return;
       }
 
@@ -95,8 +103,13 @@ export const MilestonesList = ({ milestones }: MilestonesListProps) => {
 
         mergedMap.set(key, existingMilestone);
       } else {
-        // Add as new milestone
-        mergedMap.set(key, { ...milestone });
+        // Add as new milestone with required properties
+        mergedMap.set(key, {
+          ...milestone,
+          id: milestone.id || "",
+          chainID: milestone.source.grantMilestone?.grant.chainID || 0,
+          refUID: milestone.source.grantMilestone?.grant.uid || "",
+        });
       }
     });
 
@@ -126,7 +139,7 @@ export const MilestonesList = ({ milestones }: MilestonesListProps) => {
         <div className="flex w-full flex-col gap-6 px-6 py-10 bg-[#F9FAFB] dark:bg-zinc-900 rounded-xl max-lg:px-2 max-lg:py-4">
           {mergedMilestones.map((milestone, index) => (
             <MilestoneCard
-              key={milestone.id}
+              key={`${milestone.id}-${index}-${milestone.title}`}
               milestone={milestone}
               isAuthorized={isAuthorized}
             />
