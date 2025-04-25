@@ -250,15 +250,20 @@ export const MilestonesScreen: React.FC = () => {
           }
         });
     } catch (error: any) {
-      console.log(error);
-      toast.error(
-        flowType === "grant"
-          ? MESSAGES.GRANT.CREATE.ERROR
-          : "Error applying to funding program"
-      );
       errorManager(
-        `Error creating ${flowType} to project ${selectedProject?.uid}`,
-        error
+        MESSAGES.GRANT.CREATE.ERROR(formData.title),
+        error,
+        {
+          flowType: flowType,
+          projectUID: selectedProject.uid,
+          address,
+        },
+        {
+          error:
+            flowType === "grant"
+              ? MESSAGES.GRANT.CREATE.ERROR(formData.title)
+              : "Error applying to funding program",
+        }
       );
     } finally {
       setIsStepper(false);

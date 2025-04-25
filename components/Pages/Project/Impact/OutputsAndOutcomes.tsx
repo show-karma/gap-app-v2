@@ -20,6 +20,7 @@ import { GrantsOutputsLoading } from "../Loading/Grants/Outputs";
 import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
 import { sendImpactAnswers, getImpactAnswers } from "@/utilities/impact";
 import { GroupedLinks } from "./GroupedLinks";
+import { errorManager } from "@/components/Utilities/errorManager";
 
 // Helper function to handle comma-separated URLs
 const parseProofUrls = (proof: string): string[] => {
@@ -163,8 +164,12 @@ export const OutputsAndOutcomes = () => {
         }))
       );
     } catch (error) {
-      console.error("Error fetching impact answers:", error);
-      toast.error("Failed to load impact data");
+      errorManager(
+        MESSAGES.PROJECT.IMPACT_ANSWERS.ERROR,
+        error,
+        { projectUID: project?.uid },
+        { error: MESSAGES.PROJECT.IMPACT_ANSWERS.ERROR }
+      );
     } finally {
       if (!silent) setIsLoading(false);
     }

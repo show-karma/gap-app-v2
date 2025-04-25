@@ -13,7 +13,6 @@ import { ReadMore } from "@/utilities/ReadMore";
 import { cn } from "@/utilities/tailwind";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import toast from "react-hot-toast";
 import { ProjectDescriptionDialog } from "./Dialog";
 import { ProjectContacts } from "./Contacts";
 import { AllProjectsLoadingTable } from "./Loading";
@@ -37,8 +36,12 @@ const getAllProjects = async (
     if (!error) {
       return res;
     }
-    toast.error("Something went wrong while fetching projects");
-    errorManager("Something went wrong while fetching projects", error);
+    errorManager(
+      MESSAGES.PROJECT.ALL_REPORT.ERROR,
+      error,
+      {},
+      { error: MESSAGES.PROJECT.ALL_REPORT.ERROR }
+    );
     return [];
   });
 

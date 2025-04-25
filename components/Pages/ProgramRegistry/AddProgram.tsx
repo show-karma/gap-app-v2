@@ -375,8 +375,17 @@ export default function AddProgram({
       if (errorMessage?.includes("already exists")) {
         toast.error("A program with this name already exists");
       } else {
-        toast.error("An error occurred while creating the program");
-        errorManager(`Error while creating a program`, error);
+        errorManager(
+          MESSAGES.PROGRAM_REGISTRY.CREATE.ERROR(data.name),
+          error,
+          {
+            address,
+            data,
+          },
+          {
+            error: MESSAGES.PROGRAM_REGISTRY.CREATE.ERROR(data.name),
+          }
+        );
       }
     } finally {
       setIsLoading(false);
@@ -523,9 +532,15 @@ export default function AddProgram({
         backTo?.();
       });
     } catch (error: any) {
-      errorManager(`Error while editing a program`, error);
-      console.log(error);
-      toast.error("An error occurred while editing the program");
+      errorManager(
+        MESSAGES.PROGRAM_REGISTRY.EDIT.ERROR(data.name),
+        error,
+        {
+          address,
+          data,
+        },
+        { error: MESSAGES.PROGRAM_REGISTRY.EDIT.ERROR(data.name) }
+      );
     } finally {
       setIsLoading(false);
       setIsStepper(false);

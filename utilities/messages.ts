@@ -11,12 +11,61 @@ export const MESSAGES = {
     },
     MEMBERS: "Invalid address",
   },
+  PROGRAM_REGISTRY: {
+    CREATE: {
+      ERROR: (title: string) => `There was an error creating ${title} program.`,
+    },
+    EDIT: {
+      ERROR: (title: string) => `There was an error editing ${title} program.`,
+    },
+  },
+  REQUEST_INTRO: {
+    ERROR: "Something went wrong while requesting intro.",
+  },
+  AIRDROP_GITCOIN_SUPPORTERS: {
+    MINT_NFT: {
+      ERROR: "Error minting NFTs.",
+    },
+  },
+  CATEGORY: {
+    CREATE: {
+      ERROR: "Something went wrong while creating the category.",
+    },
+    UPDATE: {
+      ERROR: "Something went wrong while updating the category.",
+    },
+  },
+  INDICATOR: {
+    DELETE: {
+      ERROR: "Something went wrong while deleting the indicator.",
+    },
+  },
+  SUMUP_ADMIN: {
+    ADD_TO_WHITELIST: {
+      ERROR: "An error occurred while adding to the whitelist.",
+      SUCCESS: "Successfully added to the whitelist.",
+    },
+  },
+  ACTIVITY_OUTCOME: {
+    CREATE: {
+      SUCCESS: "Activity/outcome created successfully.",
+      ERROR: "Something went wrong while creating the activity/outcome.",
+    },
+    DELETE: {
+      SUCCESS: "Activity/outcome deleted successfully.",
+      ERROR: "Something went wrong while deleting the activity/outcome.",
+    },
+    UPDATE: {
+      SUCCESS: "Activity/outcome updated successfully.",
+      ERROR: "Something went wrong while updating the activity/outcome.",
+    },
+  },
   PROJECT_POINTER_FORM: {
     SUCCESS: "Project was successfully merged.",
-    ERROR: "There was an error merging the project. Please try again.",
+    ERROR: "There was an error merging the project.",
     DELETE: {
       SUCCESS: "Pointer deleted successfully",
-      ERROR: "There was an error deleting the pointer. Please try again",
+      ERROR: "There was an error deleting the pointer.",
     },
   },
   PROJECT_UPDATE_FORM: {
@@ -26,11 +75,11 @@ export const MESSAGES = {
     },
     TEXT: "Text must be at least 3 characters",
     SUCCESS: "Update was successfully added to the project.",
-    ERROR: "There was an error creating the update. Please try again.",
+    ERROR: "There was an error creating the update.",
     DELETE: {
-      LOADING: "Deleting update...",
+      LOADING: "Deleting update.",
       SUCCESS: "Update deleted successfully",
-      ERROR: "There was an error deleting the update. Please try again",
+      ERROR: "There was an error deleting the update.",
     },
   },
   PROJECT_OBJECTIVE_FORM: {
@@ -40,25 +89,24 @@ export const MESSAGES = {
     },
     TEXT: "Text must be at least 3 characters",
     SUCCESS: "Objective was successfully added to the project.",
-    ERROR: "There was an error creating the objective. Please try again.",
+    ERROR: "There was an error creating the objective.",
     COMPLETE: {
       SUCCESS: "Objective completed successfully",
-      ERROR: "There was an error completing the objective. Please try again",
+      ERROR: "There was an error completing the objective.",
       DELETE: {
-        LOADING: "Deleting objective completion...",
+        LOADING: "Deleting objective completion.",
         SUCCESS: "Objective completion deleted successfully",
-        ERROR:
-          "There was an error deleting the objective completion. Please try again",
+        ERROR: "There was an error deleting the objective completion.",
       },
     },
     EDIT: {
       SUCCESS: "Objective edited successfully",
-      ERROR: "There was an error editing the objective. Please try again",
+      ERROR: "There was an error editing the objective.",
     },
     DELETE: {
-      LOADING: "Deleting objective...",
+      LOADING: "Deleting objective.",
       SUCCESS: "Objective deleted successfully",
-      ERROR: "There was an error deleting the objective. Please try again",
+      ERROR: "There was an error deleting the objective.",
     },
   },
   COMMUNITY_FORM: {
@@ -85,13 +133,16 @@ export const MESSAGES = {
     IMPACT_CRITERIA: {
       EMPTY: "The grantee has not defined any impact criteria yet.",
     },
+    ADD_EXTERNAL_ID: {
+      ERROR: "Error adding external ID",
+    },
     OUTPUTS: {
       EMPTY: "There are not output metrics available for this grant.",
       EMPTY_DATAPOINTS: "No data points are available for this metric yet.",
       EMPTY_ALL: "There are not output metrics available yet.",
       VALUE_REQUIRED: "Value is required",
       SUCCESS: "Outputs sent successfully",
-      ERROR: "There was an error sending the outputs. Please try again",
+      ERROR: "There was an error sending the outputs.",
     },
     REVIEW: {
       NOT_AUTHORIZED: "You are not authorized to review this grant.",
@@ -113,11 +164,11 @@ export const MESSAGES = {
     },
     MARK_AS_COMPLETE: {
       SUCCESS: "Grant completed successfully",
-      ERROR: "There was an error doing the grant completion. Please try again",
+      ERROR: "There was an error doing the grant completion.",
     },
     CREATE: {
       SUCCESS: "Your grant was created successfully!",
-      ERROR: "There was an error creating the grant. Please try again.",
+      ERROR: (title: string) => `There was an error creating ${title} grant.`,
     },
     FORM: {
       TITLE: {
@@ -131,21 +182,20 @@ export const MESSAGES = {
     },
     GRANT_UPDATE: {
       SUCCESS: "Update was successfully added to the grant.",
-      ERROR: "There was an error creating the update. Please try again.",
+      ERROR: "There was an error creating the update.",
       UNDO: {
-        LOADING: "Undoing grant update...",
+        LOADING: "Undoing grant update.",
         SUCCESS: "Grant Update successfully removed",
-        ERROR: "There was an error undoing the grant update. Please try again",
+        ERROR: "There was an error undoing the grant update.",
       },
       VERIFY: {
         SUCCESS: "You have successfully verified the grant update.",
-        ERROR:
-          "There was an error verifying the grant update. Please try again.",
+        ERROR: "There was an error verifying the grant update.",
       },
     },
     UPDATE: {
       SUCCESS: "Your grant was edited successfully!",
-      ERROR: "There was an error editing the grant. Please try again.",
+      ERROR: "There was an error editing the grant",
       FORM: {
         TITLE: {
           MIN: "Title must be at least 3 characters",
@@ -155,10 +205,9 @@ export const MESSAGES = {
       },
     },
     DELETE: {
-      LOADING: "Deleting grant...",
+      LOADING: "Deleting grant.",
       SUCCESS: "Grant deleted successfully",
-      ERROR: (title: string) =>
-        `There was an error deleting ${title}. Please try again.`,
+      ERROR: (title: string) => `There was an error deleting ${title}.`,
     },
   },
   MILESTONES: {
@@ -170,50 +219,47 @@ export const MESSAGES = {
       DATE: "Date is required",
     },
     DELETE: {
-      LOADING: "Deleting milestone...",
+      LOADING: "Deleting milestone.",
       SUCCESS: "Milestone deleted successfully",
-      ERROR: (title: string) =>
-        `There was an error deleting ${title}. Please try again.`,
+      ERROR: (title: string) => `There was an error deleting ${title}`,
     },
     REJECT: {
       SUCCESS: "Milestone has been rejected.",
-      ERROR: "There was an error rejecting the milestone. Please try again.",
+      ERROR: "There was an error rejecting the milestone.",
       UNDO: {
         SUCCESS: "Rejection successfully undone",
-        ERROR: "There was an error undoing the rejection. Please try again",
+        ERROR: "There was an error undoing the rejection.",
       },
     },
     UPDATE_COMPLETION: {
       SUCCESS: "The milestone completion has been updated!",
-      ERROR:
-        "There was an error updating the milestone completion. Please try again.",
+      ERROR: "There was an error updating the milestone completion.",
     },
     COMPLETE: {
-      LOADING: "Marking milestone as complete...",
+      LOADING: "Marking milestone as complete.",
       SUCCESS: "The milestone has been marked as complete!",
-      ERROR:
-        "There was an error marking the milestone as completed. Please try again.",
+      ERROR: "There was an error marking the milestone as completed.",
       UNDO: {
-        LOADING: "Undoing milestone completion...",
+        LOADING: "Undoing milestone completion.",
         SUCCESS: "Completion successfully removed",
-        ERROR:
-          "There was an error undoing the milestone completion. Please try again",
+        ERROR: "There was an error undoing the milestone completion.",
       },
     },
     CREATE: {
       SUCCESS: "Milestone was successfully added to the grant.",
-      ERROR: "There was an error creating the milestone. Please try again.",
+      ERROR: (title: string) =>
+        `There was an error creating ${title} milestone.`,
     },
     VERIFY: {
       SUCCESS: "You have successfully verified the milestone.",
-      ERROR: "There was an error verifying the milestone. Please try again.",
+      ERROR: "There was an error verifying the milestone.",
     },
     APPROVE: {
       SUCCESS: "You have successfully approved the milestone.",
-      ERROR: "There was an error approving the milestone. Please try again.",
+      ERROR: "There was an error approving the milestone.",
       UNDO: {
         SUCCESS: "Approval successfully undone",
-        ERROR: "There was an error undoing the approval. Please try again.",
+        ERROR: "There was an error undoing the approval.",
       },
     },
   },
@@ -228,6 +274,9 @@ export const MESSAGES = {
     NOT_CONNECTED: "Please login to view all your projects",
   },
   PROJECT: {
+    ALL_REPORT: {
+      ERROR: "Something went wrong while fetching projects",
+    },
     NOT_AUTHORIZED: "You are not authorized to see this page.",
     INTRO: {
       EMAIL: "E-mail must be a valid email address",
@@ -240,30 +289,47 @@ export const MESSAGES = {
         MAX: "Name must be less than 50 characters",
       },
       EMAIL: "E-mail must be at least 3 characters",
+      ERROR: (projectName: string) =>
+        `Something went wrong while subscribing to ${projectName}.`,
+    },
+    LINK_CONTRACT_ADDRESSES: {
+      SUCCESS: "Contract addresses updated successfully",
+      ERROR: "Something went wrong while updating contract addresses.",
+    },
+    LINK_GITHUB_REPOS: {
+      SUCCESS: "GitHub repositories updated successfully",
+      ERROR: "Something went wrong while updating GitHub repositories.",
+    },
+    LINK_OSO_PROFILE: {
+      SUCCESS: "OSO profile IDs updated successfully",
+      ERROR: "Something went wrong while updating OSO profile IDs.",
     },
     CREATE: {
       SUCCESS: "Project created successfully, please create grants now",
-      ERROR: "There was an error creating project. Please try again",
+      ERROR: (title: string) => `There was an error creating ${title} project.`,
     },
     UPDATE: {
       SUCCESS: "Project updated successfully",
-      ERROR: "There was an error updating project. Please try again",
+      ERROR: "There was an error updating project.",
     },
     DELETE: {
       SUCCESS: "Project deleted successfully",
-      ERROR: "There was an error deleting project. Please try again",
+      ERROR: "There was an error deleting project.",
     },
     REMOVE_MEMBER: {
       SUCCESS: "Member deleted successfully",
-      ERROR: "There was an error deleting members. Please try again",
+      ERROR: "There was an error deleting members.",
+    },
+    IMPACT_ANSWERS: {
+      ERROR: "Something went wrong while loading impact data",
     },
     IMPACT: {
       SUCCESS: "Impact added successfully",
-      ERROR: "There was an error adding impact. Please try again",
+      ERROR: "There was an error adding impact.",
       REMOVE: {
-        LOADING: "Removing impact...",
+        LOADING: "Removing impact.",
         SUCCESS: "Impact removed successfully",
-        ERROR: "There was an error removing impact. Please try again",
+        ERROR: "There was an error removing impact.",
       },
       FORM: {
         WORK: "Work is required",
@@ -273,13 +339,13 @@ export const MESSAGES = {
       },
       VERIFY: {
         SUCCESS: "You have successfully verified the milestone.",
-        ERROR: "There was an error verifying the milestone. Please try again.",
+        ERROR: "There was an error verifying the milestone.",
       },
     },
     TRANSFER_OWNERSHIP: {
       SUCCESS: (newOwner: string) =>
         `Ownership transferred successfully to ${newOwner}. Updating our systems.`,
-      ERROR: "There was an error transferring ownership. Please try again",
+      ERROR: "There was an error transferring ownership.",
     },
     EMPTY: {
       UPDATES: {
