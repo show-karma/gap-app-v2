@@ -29,12 +29,26 @@ export const INDEXER = {
       }${sortOrder ? `&sortOrder=${sortOrder}` : ""}`,
     BY_PROGRAM: (programId: string, chainId: number, communityId: string) =>
       `/projects/by-program?programId=${programId}&chainId=${chainId}&communityId=${communityId}`,
-    TRACKS: (projectId: string, chainId: number) =>
-      `/projects/${projectId}/tracks?chainID=${chainId}`,
+    TRACKS: (projectId: string) => `/tracks/projects/${projectId}/tracks`,
   },
   PROGRAMS: {
-    TRACKS: (programId: string, chainId: number) =>
-      `/programs/${programId}/tracks?chainID=${chainId}`,
+    TRACKS: (programId: string) => `/tracks/programs/${programId}/tracks`,
+    TRACKS_ASSIGN: (programId: string) =>
+      `/tracks/programs/${programId}/tracks`,
+    TRACKS_REMOVE: (programId: string, trackId: string) =>
+      `/tracks/programs/${programId}/tracks/${trackId}`,
+    GET: (programId: string) => `/programs/${programId}`,
+    COMMUNITY: (communityId: string) => `/communities/${communityId}/programs`,
+  },
+  TRACKS: {
+    ALL: (communityUID: string, includeArchived: boolean = false) =>
+      `/tracks?communityUID=${communityUID}${
+        includeArchived ? "&includeArchived=true" : ""
+      }`,
+    BY_ID: (id: string) => `/tracks/${id}`,
+    CREATE: () => `/tracks`,
+    UPDATE: (id: string) => `/tracks/${id}`,
+    ARCHIVE: (id: string) => `/tracks/${id}`,
   },
   PROJECT: {
     EXTERNAL: {

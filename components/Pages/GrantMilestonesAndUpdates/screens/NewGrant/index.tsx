@@ -18,8 +18,8 @@ import { useCommunityAdminStore } from "@/store/communityAdmin";
 import Link from "next/link";
 import { Button } from "@/components/Utilities/Button";
 import { PAGES } from "@/utilities/pages";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
+import { useTracksForProject } from "@/hooks/useTracks";
+import { Track } from "@/services/tracks";
 
 // Export the SearchGrantProgram component from its own file
 export { SearchGrantProgram } from "./SearchGrantProgram";
@@ -49,6 +49,11 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { isOwner } = useOwnerStore();
   const { isCommunityAdmin } = useCommunityAdminStore();
   const isAuthorized = isProjectAdmin || isOwner || isCommunityAdmin;
+
+  // Use React Query to fetch project tracks when editing a grant
+  const { data: projectTracks = [] } = useTracksForProject(
+    selectedProject?.uid || ""
+  );
 
   // Initialize form data when editing a grant
   useEffect(() => {
@@ -90,25 +95,6 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
 
         setMilestonesForms(milestones);
       }
-
-      if (grantToEdit?.details?.data?.programId && selectedProject) {
-        const fetchTracks = async () => {
-          try {
-            const [result, error] = await fetchData(
-              INDEXER.PROJECTS.TRACKS(selectedProject.uid, grantToEdit.chainID)
-            );
-            
-            if (!error && result?.data) {
-              const trackIds = result.data.map((track: any) => track.id);
-              updateFormData({ selectedTrackIds: trackIds });
-            }
-          } catch (error) {
-            console.error("Error fetching tracks for project:", error);
-          }
-        };
-        
-        fetchTracks();
-      }
     } else {
       // Reset form data for new grant
       resetFormData();
@@ -128,6 +114,18 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     setMilestonesForms,
     updateFormData,
   ]);
+
+  // Update track IDs when project tracks are loaded
+  useEffect(() => {
+    if (
+      grantScreen === "edit" &&
+      projectTracks.length > 0 &&
+      grantToEdit?.details?.data?.programId
+    ) {
+      const trackIds = projectTracks.map((track: Track) => track.id);
+      updateFormData({ selectedTrackIds: trackIds });
+    }
+  }, [projectTracks, grantScreen, grantToEdit, updateFormData]);
 
   if (!isAuthorized) {
     return (

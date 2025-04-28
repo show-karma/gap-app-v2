@@ -235,25 +235,35 @@ export const MilestonesScreen: React.FC = () => {
               setFlowType("grant"); // Reset to default flow type
 
               // Redirect to grants page instead of specific grant
-              if (flowType === "program" && newGrantData.selectedTrackIds && newGrantData.selectedTrackIds.length > 0 && newGrantData.programId) {
+              if (
+                flowType === "program" &&
+                newGrantData.selectedTrackIds &&
+                newGrantData.selectedTrackIds.length > 0 &&
+                newGrantData.programId
+              ) {
                 try {
-                  const programIdParts = newGrantData.programId.split('_');
+                  const programIdParts = newGrantData.programId.split("_");
                   const programId = programIdParts[0];
-                  const chainID = parseInt(programIdParts[1] || communityNetworkId.toString());
-                  
+                  const chainID = parseInt(
+                    programIdParts[1] || communityNetworkId.toString()
+                  );
+
                   await fetchData(
-                    INDEXER.PROJECTS.TRACKS(selectedProject.uid, chainID),
+                    INDEXER.PROJECTS.TRACKS(selectedProject.uid),
                     "POST",
                     {
                       trackIds: newGrantData.selectedTrackIds,
-                      programId
+                      programId,
                     }
                   );
                 } catch (trackError) {
-                  console.error("Error assigning tracks to project:", trackError);
+                  console.error(
+                    "Error assigning tracks to project:",
+                    trackError
+                  );
                 }
               }
-              
+
               router.push(
                 PAGES.PROJECT.GRANT(
                   selectedProject.details?.data.slug || selectedProject.uid,

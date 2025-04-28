@@ -1,20 +1,9 @@
-import React, { useEffect, useState } from "react";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { cn } from "@/utilities/tailwind/index";
+import React from "react";
 import { CheckIcon } from "@heroicons/react/24/solid";
-
-interface Track {
-  id: string;
-  name: string;
-  description?: string;
-  communityUID: string;
-  isArchived: boolean;
-  createdAt: string;
-  updatedAt: string;
-  programId?: string;
-  isActive?: boolean;
-}
+import { cn } from "@/utilities/tailwind/index";
+import { useTracksForProgram } from "@/hooks/useTracks";
+import { Spinner } from "@/components/Utilities/Spinner";
+import { Track } from "@/services/tracks";
 
 interface TrackSelectionProps {
   programId?: string;
@@ -31,48 +20,18 @@ export const TrackSelection: React.FC<TrackSelectionProps> = ({
   onTrackSelectionChange,
   disabled = false,
 }) => {
-  const [tracks, setTracks] = useState<Track[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
+  const actualProgramId = programId ? programId.split("_")[0] : "";
 
-  useEffect(() => {
-    const fetchTracks = async () => {
-      if (!programId) {
-        setTracks([]);
-        return;
-      }
-
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const actualProgramId = programId.split("_")[0];
-        const [result, error] = await fetchData(
-          INDEXER.PROGRAMS.TRACKS(actualProgramId, chainId)
-        );
-        
-        if (error) {
-          console.error("Error fetching tracks:", error);
-          setError("Failed to load tracks for this program");
-          setTracks([]);
-        } else {
-          setTracks(result?.data || []);
-        }
-      } catch (err) {
-        console.error("Error fetching tracks:", err);
-        setError("Failed to load tracks for this program");
-        setTracks([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchTracks();
-  }, [programId, chainId]);
+  const {
+    data: tracks = [],
+    isLoading,
+    isError,
+    error,
+  } = useTracksForProgram(actualProgramId);
 
   const handleTrackSelection = (trackId: string) => {
     if (disabled) return;
-    
+
     const newSelectedTrackIds = [...selectedTrackIds];
     const trackIndex = newSelectedTrackIds.indexOf(trackId);
 
@@ -87,16 +46,20 @@ export const TrackSelection: React.FC<TrackSelectionProps> = ({
 
   if (isLoading) {
     return (
-      <div className="mt-4 p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-lg">
-        <p className="text-sm text-gray-500 dark:text-gray-400">Loading tracks...</p>
+      <div className="mt-4 p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-lg flex justify-center">
+        <Spinner />
       </div>
     );
   }
 
-  if (error) {
+  if (isError) {
     return (
       <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
-        <p className="text-sm text-red-500 dark:text-red-400">{error}</p>
+        <p className="text-sm text-red-500 dark:text-red-400">
+          {error instanceof Error
+            ? error.message
+            : "Failed to load tracks for this program"}
+        </p>
       </div>
     );
   }
@@ -121,7 +84,7 @@ export const TrackSelection: React.FC<TrackSelectionProps> = ({
         Select tracks for this program
       </h4>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-        {tracks.map((track) => (
+        {tracks.map((track: Track) => (
           <div
             key={track.id}
             onClick={() => handleTrackSelection(track.id)}
