@@ -22,6 +22,7 @@ export const PAGES = {
       `/community/${community}/admin/milestones-report`,
     MANAGE_INDICATORS: (community: string) =>
       `/community/${community}/admin/manage-indicators`,
+    TRACKS: (community: string) => `/community/${community}/admin/tracks`,
     COMMUNITIES: `/admin/communities`,
     COMMUNITY_STATS: `/admin/communities/stats`,
     PROJECTS: `/admin/projects`,

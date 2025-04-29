@@ -11,7 +11,7 @@ import { useAccount } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Button } from "@/components/Utilities/Button";
-import { ChevronRightIcon, Square2StackIcon, FlagIcon, ChartBarIcon } from "@heroicons/react/24/outline";
+import { ChevronRightIcon, Square2StackIcon, FlagIcon, ChartBarIcon, TagIcon } from "@heroicons/react/24/outline";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { cn } from "@/utilities/tailwind";
 
@@ -133,6 +133,14 @@ export const CommunityAdminPage = ({
               description="Setup and manage impact indicators"
               colorClass=""
               icon={<ChartBarIcon className="w-6 h-6" />}
+            />
+            
+            <AdminButton
+              href={PAGES.ADMIN.TRACKS(community?.details?.data?.slug || communityId)}
+              label="Tracks"
+              description="Manage tracks and assign them to programs"
+              colorClass=""
+              icon={<TagIcon className="w-6 h-6" />}
             />
           </div>
         ) : (

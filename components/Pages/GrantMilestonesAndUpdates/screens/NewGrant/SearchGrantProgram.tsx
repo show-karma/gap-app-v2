@@ -4,6 +4,8 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { GrantTitleDropdown } from "./GrantTitleDropdown";
+import { TrackSelection } from "./TrackSelection";
+import { useGrantFormStore } from "./store";
 
 interface SearchGrantProgramProps {
   grantToEdit?: IGrantResponse;
@@ -35,6 +37,7 @@ export function SearchGrantProgram({
   const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(
     null
   );
+  const { formData, updateFormData, flowType } = useGrantFormStore();
 
   useEffect(() => {
     (async () => {
@@ -49,7 +52,7 @@ export function SearchGrantProgram({
         const filteredPrograms = result.filter((program: GrantProgram) => {
           const title = program.metadata?.title?.toLowerCase() || "";
           if (Array.isArray(searchForProgram)) {
-            return searchForProgram.some(term =>
+            return searchForProgram.some((term) =>
               title.includes(term.toLowerCase())
             );
           }
@@ -83,18 +86,37 @@ export function SearchGrantProgram({
           Select a community to proceed
         </div>
       ) : (
-        <GrantTitleDropdown
-          chainId={chainId}
-          list={allPrograms}
-          setValue={setValue}
-          setSelectedProgram={setSelectedProgram}
-          type={"Program"}
-          grantToEdit={grantToEdit}
-          selectedProgram={selectedProgram}
-          prefixUnselected="Select"
-          buttonClassname="w-full max-w-full"
-          canAdd={canAdd}
-        />
+        <>
+          <GrantTitleDropdown
+            chainId={chainId}
+            list={allPrograms}
+            setValue={setValue}
+            setSelectedProgram={setSelectedProgram}
+            type={"Program"}
+            grantToEdit={grantToEdit}
+            selectedProgram={selectedProgram}
+            prefixUnselected="Select"
+            buttonClassname="w-full max-w-full"
+            canAdd={canAdd}
+          />
+
+          {selectedProgram && (
+            <TrackSelection
+              programId={
+                selectedProgram.programId
+                  ? `${selectedProgram.programId}_${selectedProgram.chainID}`
+                  : undefined
+              }
+              chainId={chainId}
+              selectedTrackIds={formData.selectedTrackIds || []}
+              onTrackSelectionChange={(trackIds) => {
+                updateFormData({ selectedTrackIds: trackIds });
+              }}
+              disabled={false}
+              showForFlowType={flowType}
+            />
+          )}
+        </>
       )}
     </div>
   );

@@ -14,6 +14,7 @@ import { appNetwork } from "@/utilities/network";
 import { CancelButton } from "./buttons/CancelButton";
 import { NextButton } from "./buttons/NextButton";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
+import { useTracksForProgram } from "@/hooks/useTracks";
 
 export const CommunitySelectionScreen: React.FC = () => {
   const {
@@ -30,6 +31,10 @@ export const CommunitySelectionScreen: React.FC = () => {
     []
   );
 
+  // Get tracks for the selected program
+  const programId = formData.programId ? formData.programId.split("_")[0] : "";
+  const { data: programTracks = [] } = useTracksForProgram(programId);
+
   // For funding program flow, we only show Celo community
   useEffect(() => {
     const fetchCommunities = async () => {
@@ -37,11 +42,14 @@ export const CommunitySelectionScreen: React.FC = () => {
         const result = await gapIndexerApi.communities();
 
         if (flowType === "program") {
-          const filteredCommunities = result.data.filter((community) =>
-            community.details?.data?.name?.toLowerCase().includes("celo") || 
-            community.details?.data?.name?.toLowerCase().includes("divvi")
+          const filteredCommunities = result.data.filter(
+            (community) =>
+              community.details?.data?.name?.toLowerCase().includes("celo") ||
+              community.details?.data?.name?.toLowerCase().includes("divvi")
           );
-          setAllCommunities(filteredCommunities.length > 0 ? filteredCommunities : []);
+          setAllCommunities(
+            filteredCommunities.length > 0 ? filteredCommunities : []
+          );
         } else {
           setAllCommunities(result.data);
         }
@@ -77,8 +85,15 @@ export const CommunitySelectionScreen: React.FC = () => {
   };
 
   // Check if we can proceed to the next step
+  const needsTrackSelection =
+    flowType === "program" && programTracks.length > 0;
+  const hasSelectedTracks =
+    formData.selectedTrackIds && formData.selectedTrackIds.length > 0;
+
   const canProceed =
-    !!formData.community && (!!formData.programId || !!formData.title);
+    !!formData.community &&
+    (!!formData.programId || !!formData.title) &&
+    (!needsTrackSelection || hasSelectedTracks);
 
   return (
     <StepBlock currentStep={2} totalSteps={4}>
@@ -126,6 +141,11 @@ export const CommunitySelectionScreen: React.FC = () => {
             />
           )}
         </div>
+        {needsTrackSelection && !hasSelectedTracks && formData.programId && (
+          <div className="mt-4 w-full text-center text-sm text-red-500">
+            Please select at least one track to proceed
+          </div>
+        )}
 
         <div className="flex justify-between w-full">
           <CancelButton text="Cancel" onClick={handleCancel} />
