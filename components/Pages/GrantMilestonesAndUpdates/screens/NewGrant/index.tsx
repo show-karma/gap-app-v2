@@ -42,6 +42,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     setMilestonesForms,
     flowType,
     setFlowType,
+    formData,
   } = useGrantFormStore();
 
   const selectedProject = useProjectStore((state) => state.project);
@@ -50,9 +51,9 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { isCommunityAdmin } = useCommunityAdminStore();
   const isAuthorized = isProjectAdmin || isOwner || isCommunityAdmin;
 
-  // Use React Query to fetch project tracks when editing a grant
   const { data: projectTracks = [] } = useTracksForProject(
-    selectedProject?.uid || ""
+    selectedProject?.uid || "",
+    formData.community || ""
   );
 
   // Initialize form data when editing a grant

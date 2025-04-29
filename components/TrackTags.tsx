@@ -51,39 +51,41 @@ export const TrackTags: React.FC<TrackTagsProps> = ({
       {showLabel && tracks.length > 0 && (
         <span className="text-xs text-gray-500 dark:text-gray-400 mr-1 self-center flex items-center">
           <TagIcon className="w-3 h-3 mr-1" />
-          Tracks:
+          Tracks
         </span>
       )}
-      {tracks.map((track) => (
-        <Tooltip.Provider key={track.id}>
-          <Tooltip.Root delayDuration={300}>
-            <Tooltip.Trigger asChild>
-              <div
-                className={`inline-flex items-center rounded-full bg-indigo-100 dark:bg-indigo-900/40 px-2 py-0.5 text-xs font-medium text-indigo-700 dark:text-indigo-300 cursor-help ${className}`}
-              >
-                {track.name}
-              </div>
-            </Tooltip.Trigger>
-            <Tooltip.Portal>
-              <Tooltip.Content
-                className="max-w-xs rounded-lg bg-white p-2 text-sm text-gray-700 shadow-lg dark:bg-zinc-800 dark:text-gray-300 z-50"
-                sideOffset={5}
-                side="top"
-              >
-                <div className="flex flex-col">
-                  <span className="font-medium">{track.name}</span>
-                  {track.description && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {track.description}
-                    </p>
-                  )}
+      <div className="flex flex-wrap gap-1">
+        {tracks.map((track) => (
+          <Tooltip.Provider key={track.id}>
+            <Tooltip.Root delayDuration={300}>
+              <Tooltip.Trigger asChild>
+                <div
+                  className={`w-max cursor-help max-w-full inline-flex items-center gap-x-2 rounded-3xl bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900 ${className}`}
+                >
+                  {track.name}
                 </div>
-                <Tooltip.Arrow className="fill-white dark:fill-zinc-800" />
-              </Tooltip.Content>
-            </Tooltip.Portal>
-          </Tooltip.Root>
-        </Tooltip.Provider>
-      ))}
+              </Tooltip.Trigger>
+              <Tooltip.Portal>
+                <Tooltip.Content
+                  className="max-w-xs rounded-lg bg-white p-2 text-sm text-gray-700 shadow-lg dark:bg-zinc-800 dark:text-gray-300 z-50"
+                  sideOffset={5}
+                  side="top"
+                >
+                  <div className="flex flex-col">
+                    <span className="font-medium">{track.name}</span>
+                    {track.description && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {track.description}
+                      </p>
+                    )}
+                  </div>
+                  <Tooltip.Arrow className="fill-white dark:fill-zinc-800" />
+                </Tooltip.Content>
+              </Tooltip.Portal>
+            </Tooltip.Root>
+          </Tooltip.Provider>
+        ))}
+      </div>
     </div>
   );
 };

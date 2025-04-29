@@ -115,7 +115,8 @@ export const trackService = {
   updateTrack: async (
     id: string,
     name: string,
-    description?: string
+    description?: string,
+    communityUID?: string
   ): Promise<Track> => {
     try {
       const [data, error] = await fetchData(
@@ -124,6 +125,7 @@ export const trackService = {
         {
           name,
           description,
+          communityUID,
         },
         {},
         {},
@@ -147,10 +149,10 @@ export const trackService = {
   },
 
   // Archive a track
-  archiveTrack: async (id: string): Promise<void> => {
+  archiveTrack: async (id: string, communityUID: string): Promise<void> => {
     try {
       const [, error] = await fetchData(
-        INDEXER.TRACKS.ARCHIVE(id),
+        INDEXER.TRACKS.ARCHIVE(id, communityUID),
         "DELETE",
         {},
         {},
@@ -171,13 +173,14 @@ export const trackService = {
   // Assign tracks to a program
   assignTracksToProgram: async (
     programId: string,
-    trackIds: string[]
+    trackIds: string[],
+    communityUID: string
   ): Promise<void> => {
     try {
       const [, error] = await fetchData(
         INDEXER.PROGRAMS.TRACKS_ASSIGN(programId),
         "POST",
-        { trackIds },
+        { trackIds, communityUID },
         {},
         {},
         true,
@@ -196,11 +199,12 @@ export const trackService = {
   // Remove a track from a program
   removeTrackFromProgram: async (
     programId: string,
-    trackId: string
+    trackId: string,
+    communityUID: string
   ): Promise<void> => {
     try {
       const [, error] = await fetchData(
-        INDEXER.PROGRAMS.TRACKS_REMOVE(programId, trackId),
+        INDEXER.PROGRAMS.TRACKS_REMOVE(programId, trackId, communityUID),
         "DELETE",
         {},
         {},
@@ -214,6 +218,32 @@ export const trackService = {
       }
     } catch (error: any) {
       errorManager("Error removing track from program", error);
+      throw error;
+    }
+  },
+
+  // Remove multiple tracks from a program in batch
+  removeTracksFromProgramBatch: async (
+    programId: string,
+    trackIds: string[],
+    communityUID: string
+  ): Promise<void> => {
+    try {
+      const [, error] = await fetchData(
+        INDEXER.PROGRAMS.TRACKS_REMOVE_BATCH(programId),
+        "DELETE",
+        { trackIds, communityUID },
+        {},
+        {},
+        true,
+        false
+      );
+
+      if (error) {
+        throw new Error(error);
+      }
+    } catch (error: any) {
+      errorManager("Error removing tracks from program in batch", error);
       throw error;
     }
   },
@@ -246,13 +276,14 @@ export const trackService = {
   assignTracksToProject: async (
     projectId: string,
     trackIds: string[],
-    programId: string
+    programId: string,
+    communityUID: string
   ): Promise<void> => {
     try {
       const [, error] = await fetchData(
         INDEXER.PROJECTS.TRACKS(projectId),
         "POST",
-        { trackIds, programId },
+        { trackIds, programId, communityUID },
         {},
         {},
         true,

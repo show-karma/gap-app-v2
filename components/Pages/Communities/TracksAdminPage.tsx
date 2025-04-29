@@ -28,6 +28,7 @@ import {
   useArchiveTrack,
   useAssignTracksToProgram,
   useRemoveTrackFromProgram,
+  useRemoveTracksFromProgramBatch,
 } from "@/hooks/useTracks";
 import { Track } from "@/services/tracks";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
@@ -79,9 +80,11 @@ export const TracksAdminPage = ({
   );
   const { mutate: archiveTrack } = useArchiveTrack(community?.uid || "");
   const { mutate: assignTracksToProgram, isPending: isAssigningTracks } =
-    useAssignTracksToProgram(selectedProgram);
-  const { mutate: removeTrackFromProgram } =
-    useRemoveTrackFromProgram(selectedProgram);
+    useAssignTracksToProgram(selectedProgram, community?.uid || "");
+  const { mutate: removeTracksFromProgram } = useRemoveTracksFromProgramBatch(
+    selectedProgram,
+    community?.uid || ""
+  );
 
   useEffect(() => {
     if (!community) return;
@@ -108,6 +111,15 @@ export const TracksAdminPage = ({
 
     checkIfAdmin();
   }, [address, isConnected, isAuth, community?.uid, signer]);
+
+  // Set selected track IDs based on program tracks when program changes
+  useEffect(() => {
+    if (programTracks.length > 0) {
+      setSelectedTrackIds(programTracks.map((track) => track.id));
+    } else {
+      setSelectedTrackIds([]);
+    }
+  }, [programTracks]);
 
   const handleCreateTrack = async () => {
     if (!newTrack.name) {
@@ -161,20 +173,25 @@ export const TracksAdminPage = ({
       return;
     }
 
-    assignTracksToProgram(selectedTrackIds, {
-      onSuccess: () => {
-        setSelectedTrackIds([]);
-      },
-    });
-  };
+    // Get tracks to add (selected but not in program)
+    const tracksToAdd = selectedTrackIds.filter(
+      (id) => !programTracks.some((pt) => pt.id === id)
+    );
 
-  const handleUnassignTrack = async (trackId: string) => {
-    if (!selectedProgram) {
-      toast.error("Please select a program");
-      return;
+    // Get tracks to remove (in program but not selected)
+    const tracksToRemove = programTracks
+      .filter((pt) => !selectedTrackIds.includes(pt.id))
+      .map((pt) => pt.id);
+
+    // Add new tracks
+    if (tracksToAdd.length > 0) {
+      assignTracksToProgram(tracksToAdd);
     }
 
-    removeTrackFromProgram(trackId);
+    // Remove unselected tracks
+    if (tracksToRemove.length > 0) {
+      removeTracksFromProgram(tracksToRemove);
+    }
   };
 
   const handleProgramChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -190,6 +207,11 @@ export const TracksAdminPage = ({
         return [...prev, trackId];
       }
     });
+  };
+
+  // Check if a track exists in the all tracks list
+  const isTrackInAllTracks = (trackId: string) => {
+    return tracks.some((track) => track.id === trackId);
   };
 
   if (loading) {
@@ -331,115 +353,115 @@ export const TracksAdminPage = ({
             </div>
 
             {selectedProgram ? (
-              <>
-                <div className="mb-6">
-                  <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-white">
-                    Assign Tracks to Program
-                  </h3>
+              <div className="mb-6">
+                <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-white">
+                  Tracks assigned to this program
+                </h3>
 
-                  {isLoadingTracks ? (
-                    <div className="flex justify-center py-8">
-                      <Spinner />
-                    </div>
-                  ) : tracks.length === 0 ? (
-                    <p className="text-gray-500 dark:text-gray-400">
-                      No tracks available to assign.
-                    </p>
-                  ) : (
-                    <>
-                      <div className="space-y-2 max-h-60 overflow-y-auto p-2 border border-gray-200 dark:border-zinc-800 rounded-lg mb-4">
-                        {tracks.map((track) => (
+                {isLoadingTracks || isLoadingProgramTracks ? (
+                  <div className="flex justify-center py-8">
+                    <Spinner />
+                  </div>
+                ) : tracks.length === 0 && programTracks.length === 0 ? (
+                  <p className="text-gray-500 dark:text-gray-400">
+                    No tracks available to assign.
+                  </p>
+                ) : (
+                  <>
+                    <div className="space-y-2 max-h-80 overflow-y-auto p-2 border border-gray-200 dark:border-zinc-800 rounded-lg mb-4">
+                      {/* All regular tracks from the community */}
+                      {tracks.map((track) => (
+                        <div
+                          key={track.id}
+                          className={cn(
+                            "flex items-center p-2 rounded-md",
+                            selectedTrackIds.includes(track.id)
+                              ? "bg-primary-100 dark:bg-primary-900/20 border border-primary-500"
+                              : "hover:bg-gray-100 dark:hover:bg-zinc-800 border border-transparent",
+                            "cursor-pointer"
+                          )}
+                          onClick={() => handleTrackSelection(track.id)}
+                        >
+                          <div
+                            className={cn(
+                              "w-4 h-4 rounded-sm mr-3 flex items-center justify-center border",
+                              selectedTrackIds.includes(track.id)
+                                ? "bg-primary-500 border-primary-500"
+                                : "border-gray-300 dark:border-zinc-600"
+                            )}
+                          >
+                            {selectedTrackIds.includes(track.id) && (
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="white"
+                                className="w-3 h-3"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M19.916 4.626a.75.75 0 01.208 1.04l-9 13.5a.75.75 0 01-1.154.114l-6-6a.75.75 0 011.06-1.06l5.353 5.353 8.493-12.739a.75.75 0 011.04-.208z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            )}
+                          </div>
+                          <span className="text-gray-900 dark:text-white">
+                            {track.name}
+                          </span>
+                        </div>
+                      ))}
+
+                      {/* Show tracks that are in programTracks but not in tracks */}
+                      {programTracks
+                        .filter((pt) => !tracks.some((t) => t.id === pt.id))
+                        .map((track) => (
                           <div
                             key={track.id}
                             className={cn(
-                              "flex items-center p-2 rounded-md cursor-pointer",
-                              selectedTrackIds.includes(track.id)
-                                ? "bg-primary-100 dark:bg-primary-900/20 border border-primary-500"
-                                : "hover:bg-gray-100 dark:hover:bg-zinc-800 border border-transparent"
+                              "flex items-center p-2 rounded-md bg-gray-200 dark:bg-zinc-700 border border-gray-300 dark:border-zinc-600 opacity-75 cursor-not-allowed"
                             )}
-                            onClick={() => handleTrackSelection(track.id)}
                           >
                             <div
                               className={cn(
-                                "w-4 h-4 rounded-sm mr-3 flex items-center justify-center border",
-                                selectedTrackIds.includes(track.id)
-                                  ? "bg-primary-500 border-primary-500"
-                                  : "border-gray-300 dark:border-zinc-600"
+                                "w-4 h-4 rounded-sm mr-3 flex items-center justify-center border bg-primary-500 border-primary-500"
                               )}
                             >
-                              {selectedTrackIds.includes(track.id) && (
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  viewBox="0 0 24 24"
-                                  fill="white"
-                                  className="w-3 h-3"
-                                >
-                                  <path
-                                    fillRule="evenodd"
-                                    d="M19.916 4.626a.75.75 0 01.208 1.04l-9 13.5a.75.75 0 01-1.154.114l-6-6a.75.75 0 011.06-1.06l5.353 5.353 8.493-12.739a.75.75 0 011.04-.208z"
-                                    clipRule="evenodd"
-                                  />
-                                </svg>
-                              )}
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="white"
+                                className="w-3 h-3"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M19.916 4.626a.75.75 0 01.208 1.04l-9 13.5a.75.75 0 01-1.154.114l-6-6a.75.75 0 011.06-1.06l5.353 5.353 8.493-12.739a.75.75 0 011.04-.208z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
                             </div>
-                            <span className="text-gray-900 dark:text-white">
+                            <span className="text-gray-900 dark:text-white flex items-center">
                               {track.name}
+                              <span className="ml-2 text-xs text-gray-500 dark:text-gray-400 italic">
+                                (Archived)
+                              </span>
                             </span>
                           </div>
                         ))}
-                      </div>
-
-                      <Button
-                        onClick={handleAssignTracks}
-                        disabled={
-                          isAssigningTracks || selectedTrackIds.length === 0
-                        }
-                        className="w-full"
-                      >
-                        {isAssigningTracks ? (
-                          <Spinner className="w-4 h-4 mr-2" />
-                        ) : null}
-                        Assign Selected Tracks
-                      </Button>
-                    </>
-                  )}
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-medium mb-2 text-gray-900 dark:text-white">
-                    Current Program Tracks
-                  </h3>
-
-                  {isLoadingProgramTracks ? (
-                    <div className="flex justify-center py-8">
-                      <Spinner />
                     </div>
-                  ) : programTracks.length === 0 ? (
-                    <p className="text-gray-500 dark:text-gray-400">
-                      No tracks assigned to this program.
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      {programTracks.map((track) => (
-                        <div
-                          key={track.id}
-                          className="flex items-center justify-between p-3 bg-gray-50 dark:bg-zinc-800 rounded-lg"
-                        >
-                          <div className="flex items-center">
-                            <TagIcon className="w-5 h-5 text-primary-500 mr-2" />
-                            <span className="text-gray-900 dark:text-white">
-                              {track.name}
-                            </span>
-                          </div>
-                          <Button onClick={() => handleUnassignTrack(track.id)}>
-                            Remove
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </>
+
+                    <Button
+                      onClick={handleAssignTracks}
+                      disabled={isAssigningTracks}
+                      className="w-full"
+                    >
+                      {isAssigningTracks ? (
+                        <Spinner className="w-4 h-4 mr-2" />
+                      ) : null}
+                      Save Track Assignments
+                    </Button>
+                  </>
+                )}
+              </div>
             ) : (
               <p className="text-gray-500 dark:text-gray-400">
                 Select a program to manage its tracks.

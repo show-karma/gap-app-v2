@@ -35,8 +35,10 @@ export const INDEXER = {
     TRACKS: (programId: string) => `/tracks/programs/${programId}/tracks`,
     TRACKS_ASSIGN: (programId: string) =>
       `/tracks/programs/${programId}/tracks`,
-    TRACKS_REMOVE: (programId: string, trackId: string) =>
-      `/tracks/programs/${programId}/tracks/${trackId}`,
+    TRACKS_REMOVE: (programId: string, trackId: string, communityUID: string) =>
+      `/tracks/programs/${programId}/tracks/${trackId}?communityUID=${communityUID}`,
+    TRACKS_REMOVE_BATCH: (programId: string) =>
+      `/tracks/programs/${programId}/tracks`,
     GET: (programId: string) => `/programs/${programId}`,
     COMMUNITY: (communityId: string) => `/communities/${communityId}/programs`,
   },
@@ -48,7 +50,8 @@ export const INDEXER = {
     BY_ID: (id: string) => `/tracks/${id}`,
     CREATE: () => `/tracks`,
     UPDATE: (id: string) => `/tracks/${id}`,
-    ARCHIVE: (id: string) => `/tracks/${id}`,
+    ARCHIVE: (id: string, communityUID: string) =>
+      `/tracks/${id}?communityUID=${communityUID}`,
   },
   PROJECT: {
     EXTERNAL: {
