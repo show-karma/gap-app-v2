@@ -240,6 +240,17 @@ export const CommunityGrants = ({
           />
 
           <div className="flex flex-1 flex-row gap-8 justify-end flex-wrap">
+            {selectedProgramId ? (
+              <TrackFilter
+                onChange={(trackIds) => {
+                  changeSelectedTrackIdsQuery(trackIds);
+                  setCurrentPage(0);
+                  setGrants([]);
+                }}
+                communityUid={communityUid}
+                selectedTrackIds={selectedTrackIds || []}
+              />
+            ) : null}
             {/* Filter by category start */}
             {categoriesOptions.length ? (
               <Listbox
@@ -505,16 +516,6 @@ export const CommunityGrants = ({
               )}
             </Listbox>
             {/* Status end */}
-
-            <TrackFilter
-              onChange={(trackIds) => {
-                changeSelectedTrackIdsQuery(trackIds);
-                setCurrentPage(0);
-                setGrants([]);
-              }}
-              communityUid={communityUid}
-              selectedTrackIds={selectedTrackIds || []}
-            />
           </div>
         </div>
       </div>

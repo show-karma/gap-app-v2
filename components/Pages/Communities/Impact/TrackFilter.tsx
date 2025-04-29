@@ -57,7 +57,6 @@ export const TrackFilter: React.FC<TrackFilterProps> = ({
           <div className="relative flex-1 w-max">
             <Listbox.Button className="cursor-pointer items-center relative w-full rounded-md pr-8 text-left sm:text-sm sm:leading-6 text-black dark:text-white text-base font-normal">
               <div className="flex items-center gap-2">
-                <FunnelIcon className="h-4 w-4 text-gray-400" />
                 {selectedTrackIds.length > 0 ? (
                   <p className="flex flex-row gap-1">
                     {selectedTrackIds.length}{" "}
