@@ -18,6 +18,8 @@ import { useCommunityAdminStore } from "@/store/communityAdmin";
 import Link from "next/link";
 import { Button } from "@/components/Utilities/Button";
 import { PAGES } from "@/utilities/pages";
+import { useTracksForProject } from "@/hooks/useTracks";
+import { Track } from "@/services/tracks";
 
 // Export the SearchGrantProgram component from its own file
 export { SearchGrantProgram } from "./SearchGrantProgram";
@@ -40,6 +42,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     setMilestonesForms,
     flowType,
     setFlowType,
+    formData,
   } = useGrantFormStore();
 
   const selectedProject = useProjectStore((state) => state.project);
@@ -47,6 +50,11 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { isOwner } = useOwnerStore();
   const { isCommunityAdmin } = useCommunityAdminStore();
   const isAuthorized = isProjectAdmin || isOwner || isCommunityAdmin;
+
+  const { data: projectTracks = [] } = useTracksForProject(
+    selectedProject?.uid || "",
+    formData.community || ""
+  );
 
   // Initialize form data when editing a grant
   useEffect(() => {
@@ -107,6 +115,18 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     setMilestonesForms,
     updateFormData,
   ]);
+
+  // Update track IDs when project tracks are loaded
+  useEffect(() => {
+    if (
+      grantScreen === "edit" &&
+      projectTracks.length > 0 &&
+      grantToEdit?.details?.data?.programId
+    ) {
+      const trackIds = projectTracks.map((track: Track) => track.id);
+      updateFormData({ selectedTrackIds: trackIds });
+    }
+  }, [projectTracks, grantScreen, grantToEdit, updateFormData]);
 
   if (!isAuthorized) {
     return (

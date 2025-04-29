@@ -20,6 +20,7 @@ export interface GrantsFilter {
   sortBy?: SortByOptions;
   status?: StatusOptions;
   selectedProgramId?: string;
+  selectedTrackIds?: string[];
 }
 
 export const getGrants = async (
@@ -39,6 +40,7 @@ export const getGrants = async (
         sort: filter?.sortBy,
         status: filter?.status,
         selectedProgramId: filter?.selectedProgramId,
+        selectedTrackIds: filter?.selectedTrackIds,
       })
     );
     if (!response) return { grants: [], pageInfo: {}, uniqueProjectCount: 0 };
