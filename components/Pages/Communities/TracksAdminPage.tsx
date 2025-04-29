@@ -34,6 +34,10 @@ import { Track } from "@/services/tracks";
 import { useCommunityPrograms } from "@/hooks/usePrograms";
 import { CreateTrackModal } from "@/components/Pages/Communities/Tracks/CreateTrackModal";
 import { EditTrackModal } from "./Tracks/EditTrackModal";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { PAGES } from "@/utilities/pages";
+import { ChevronLeftIcon } from "@heroicons/react/24/solid";
 
 export const TracksAdminPage = ({
   communityId,
@@ -44,6 +48,7 @@ export const TracksAdminPage = ({
 }) => {
   const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore();
+  const router = useRouter();
 
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
@@ -228,7 +233,7 @@ export const TracksAdminPage = ({
         <p className="text-gray-600 dark:text-gray-300 text-center">
           {MESSAGES.ADMIN.NOT_AUTHORIZED(community?.uid || "")}
         </p>
-        <Button className="mt-4" onClick={() => window.history.back()}>
+        <Button className="mt-4" onClick={() => router.back()}>
           Go Back
         </Button>
       </div>
@@ -238,6 +243,18 @@ export const TracksAdminPage = ({
   return (
     <div className="container mx-auto px-4 py-8 mt-2">
       <div className="max-w-7xl mx-auto">
+        <div className="w-full flex flex-row items-center justify-between max-w-4xl mb-4">
+          <Link
+            href={PAGES.ADMIN.ROOT(
+              community?.details?.data?.slug || (community?.uid as string)
+            )}
+          >
+            <Button className="flex flex-row items-center gap-2 px-4 py-2 bg-transparent text-black dark:text-white dark:bg-transparent hover:bg-transparent rounded-md transition-all ease-in-out duration-200">
+              <ChevronLeftIcon className="h-5 w-5" />
+              Return to admin page
+            </Button>
+          </Link>
+        </div>
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             Tracks Management
