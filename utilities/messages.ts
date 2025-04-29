@@ -300,6 +300,10 @@ export const MESSAGES = {
       SUCCESS: "GitHub repositories updated successfully",
       ERROR: "Something went wrong while updating GitHub repositories.",
     },
+    LINK_DIVVI_ID: {
+      SUCCESS: "Divvi ID updated successfully",
+      ERROR: "Something went wrong while updating Divvi ID.",
+    },
     LINK_OSO_PROFILE: {
       SUCCESS: "OSO profile IDs updated successfully",
       ERROR: "Something went wrong while updating OSO profile IDs.",
@@ -356,9 +360,9 @@ export const MESSAGES = {
         NOT_CREATED_USER: `Create a new impact attestation to show the world the impact of your work!`,
       },
       GRANTS: {
-        NOT_CREATED: `Check back in a few days and we’ll surely have something cool to
+        NOT_CREATED: `Check back in a few days and we'll surely have something cool to
           show you :)`,
-        NOT_CREATED_USER: `Once you’ve created a grant, this is where you can add milestones
+        NOT_CREATED_USER: `Once you've created a grant, this is where you can add milestones
           and updates to it`,
         UPDATES: `Grantee hasn't posted any updates for this grant.`,
         CTA_UPDATES: `But be sure to check back in.`,
