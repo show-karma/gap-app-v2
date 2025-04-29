@@ -322,8 +322,8 @@ export const TracksAdminPage = ({
                   <option disabled>Loading programs...</option>
                 ) : (
                   programs.map((program) => (
-                    <option key={program.uid} value={program.uid}>
-                      {program.name}
+                    <option key={program.programId} value={program.programId}>
+                      {program.metadata?.title}
                     </option>
                   ))
                 )}

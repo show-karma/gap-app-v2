@@ -44,5 +44,9 @@ export const GrantPercentage: React.FC<TProps> = ({ grant, className }) => {
     return null;
   }
 
-  return <span className={className}>{percentage}% complete</span>;
+  return (
+    <div className="flex h-max w-max items-center justify-start rounded-full bg-teal-50 dark:bg-teal-700 text-teal-600 dark:text-teal-200 px-3 py-1 max-2xl:px-2">
+      <span className={className}>{percentage}% complete</span>
+    </div>
+  );
 };

@@ -1,21 +1,13 @@
+import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
-export interface Program {
-  uid: string;
-  name: string;
-  description: string;
-  communityId: string;
-  startDate?: string;
-  endDate?: string;
-  image?: string;
-  attributes?: Record<string, any>;
-}
-
 export const programService = {
   // Get all programs for a community
-  getCommunityPrograms: async (communityId: string): Promise<Program[]> => {
+  getCommunityPrograms: async (
+    communityId: string
+  ): Promise<GrantProgram[]> => {
     try {
       const [data, error] = await fetchData(
         INDEXER.PROGRAMS.COMMUNITY(communityId)
@@ -25,7 +17,7 @@ export const programService = {
         throw new Error(error);
       }
 
-      return data as Program[];
+      return data as GrantProgram[];
     } catch (error: any) {
       errorManager(
         `Error fetching programs for community ${communityId}`,
@@ -36,7 +28,7 @@ export const programService = {
   },
 
   // Get a specific program by ID
-  getProgram: async (programId: string): Promise<Program> => {
+  getProgram: async (programId: string): Promise<GrantProgram> => {
     try {
       const [data, error] = await fetchData(INDEXER.PROGRAMS.GET(programId));
 
@@ -44,7 +36,7 @@ export const programService = {
         throw new Error(error);
       }
 
-      return data as Program;
+      return data as GrantProgram;
     } catch (error: any) {
       errorManager(`Error fetching program ${programId}`, error);
       throw error;

@@ -11,6 +11,7 @@ interface TrackSelectionProps {
   selectedTrackIds: string[];
   onTrackSelectionChange: (trackIds: string[]) => void;
   disabled?: boolean;
+  showForFlowType?: "grant" | "program" | "both";
 }
 
 export const TrackSelection: React.FC<TrackSelectionProps> = ({
@@ -19,6 +20,7 @@ export const TrackSelection: React.FC<TrackSelectionProps> = ({
   selectedTrackIds,
   onTrackSelectionChange,
   disabled = false,
+  showForFlowType = "both",
 }) => {
   const actualProgramId = programId ? programId.split("_")[0] : "";
 
@@ -43,6 +45,11 @@ export const TrackSelection: React.FC<TrackSelectionProps> = ({
 
     onTrackSelectionChange(newSelectedTrackIds);
   };
+
+  // Only show for program flow type or both
+  if (showForFlowType === "grant") {
+    return null;
+  }
 
   if (isLoading) {
     return (
@@ -69,13 +76,7 @@ export const TrackSelection: React.FC<TrackSelectionProps> = ({
   }
 
   if (tracks.length === 0) {
-    return (
-      <div className="mt-4 p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-lg">
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          No tracks available for this program
-        </p>
-      </div>
-    );
+    return null;
   }
 
   return (

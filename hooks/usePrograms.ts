@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { programService, Program } from "@/services/programs";
+import { programService } from "@/services/programs";
 
 // Query keys
 export const PROGRAM_QUERY_KEYS = {

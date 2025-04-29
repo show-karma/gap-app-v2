@@ -37,7 +37,7 @@ export function SearchGrantProgram({
   const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(
     null
   );
-  const { formData, updateFormData } = useGrantFormStore();
+  const { formData, updateFormData, flowType } = useGrantFormStore();
 
   useEffect(() => {
     (async () => {
@@ -52,7 +52,7 @@ export function SearchGrantProgram({
         const filteredPrograms = result.filter((program: GrantProgram) => {
           const title = program.metadata?.title?.toLowerCase() || "";
           if (Array.isArray(searchForProgram)) {
-            return searchForProgram.some(term =>
+            return searchForProgram.some((term) =>
               title.includes(term.toLowerCase())
             );
           }
@@ -99,16 +99,21 @@ export function SearchGrantProgram({
             buttonClassname="w-full max-w-full"
             canAdd={canAdd}
           />
-          
+
           {selectedProgram && (
             <TrackSelection
-              programId={selectedProgram.programId ? `${selectedProgram.programId}_${selectedProgram.chainID}` : undefined}
+              programId={
+                selectedProgram.programId
+                  ? `${selectedProgram.programId}_${selectedProgram.chainID}`
+                  : undefined
+              }
               chainId={chainId}
               selectedTrackIds={formData.selectedTrackIds || []}
               onTrackSelectionChange={(trackIds) => {
                 updateFormData({ selectedTrackIds: trackIds });
               }}
               disabled={false}
+              showForFlowType={flowType}
             />
           )}
         </>

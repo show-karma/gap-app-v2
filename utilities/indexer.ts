@@ -145,6 +145,7 @@ export const INDEXER = {
         selectedProgramId,
         grantTitle,
         download,
+        selectedTrackIds,
       }: {
         page?: number;
         pageLimit?: number;
@@ -154,6 +155,7 @@ export const INDEXER = {
         selectedProgramId?: string;
         grantTitle?: string;
         download?: boolean;
+        selectedTrackIds?: string[];
       }
     ) =>
       `/communities/${communityIdOrSlug}/grants?${
@@ -164,7 +166,9 @@ export const INDEXER = {
         categories ? `&categories=${categories}` : ""
       }${selectedProgramId ? `&selectedProgramIds=${selectedProgramId}` : ""}${
         download ? `&download=${download}` : ""
-      }${grantTitle ? `&grantTitle=${grantTitle}` : ""}`,
+      }${grantTitle ? `&grantTitle=${grantTitle}` : ""}${
+        selectedTrackIds ? `&selectedTrackIds=${selectedTrackIds}` : ""
+      }`,
     FEED: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/feed`,
     STATS: (communityIdOrSlug: string) =>
