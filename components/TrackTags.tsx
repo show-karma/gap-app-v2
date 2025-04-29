@@ -60,7 +60,7 @@ export const TrackTags: React.FC<TrackTagsProps> = ({
             <Tooltip.Root delayDuration={300}>
               <Tooltip.Trigger asChild>
                 <div
-                  className={`w-max cursor-help max-w-full inline-flex items-center gap-x-2 rounded-3xl bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 dark:text-blue-500 px-2 py-1 text-xs font-medium text-gray-900 ${className}`}
+                  className={`w-max cursor-help max-w-full inline-flex items-center gap-x-2 rounded-3xl bg-[#E0EAFF] dark:bg-zinc-800 dark:border-gray-800 text-black dark:text-gray-100 px-2 py-1 text-xs font-medium  ${className}`}
                 >
                   {track.name}
                 </div>
