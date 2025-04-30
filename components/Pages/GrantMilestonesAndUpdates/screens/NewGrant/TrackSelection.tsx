@@ -46,11 +46,6 @@ export const TrackSelection: React.FC<TrackSelectionProps> = ({
     onTrackSelectionChange(newSelectedTrackIds);
   };
 
-  // Only show for program flow type or both
-  if (showForFlowType === "grant") {
-    return null;
-  }
-
   if (isLoading) {
     return (
       <div className="mt-4 p-4 bg-gray-50 dark:bg-zinc-800/50 rounded-lg flex justify-center">
@@ -82,7 +77,9 @@ export const TrackSelection: React.FC<TrackSelectionProps> = ({
   return (
     <div className="mt-4">
       <h4 className="text-sm font-semibold mb-2 text-gray-700 dark:text-gray-300">
-        Select tracks for this program
+        {disabled
+          ? "Tracks for this program"
+          : "Select tracks for this program"}
       </h4>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
         {tracks.map((track: Track) => (
