@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { StepBlock } from "../StepBlock";
 import { Button } from "@/components/Utilities/Button";
 import { useGrantFormStore } from "../store";
@@ -30,7 +29,6 @@ import { MESSAGES } from "@/utilities/messages";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { CancelButton } from "./buttons/CancelButton";
 import { NextButton } from "./buttons/NextButton";
-import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 
 export const MilestonesScreen: React.FC = () => {
   const {

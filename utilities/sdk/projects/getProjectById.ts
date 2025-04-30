@@ -2,7 +2,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient } from "@/hooks";
 import { zeroUID } from "@/utilities/commons";
 import { appNetwork } from "@/utilities/network";
-import type { Project } from "@show-karma/karma-gap-sdk";
+import type { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
 import { Hex } from "viem";
 
 export const getProjectById = async (
