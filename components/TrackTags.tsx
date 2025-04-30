@@ -25,7 +25,7 @@ export const TrackTags: React.FC<TrackTagsProps> = ({
     data: tracks = [],
     isLoading,
     isError,
-  } = useTracksById(communityId, trackIds, programId);
+  } = useTracksById(communityId, trackIds || [], programId as string);
 
   if (!trackIds || trackIds.length === 0) {
     return null;

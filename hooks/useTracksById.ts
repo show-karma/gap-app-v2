@@ -2,7 +2,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { Track } from "@/services/tracks";
-import { useTracksForCommunity } from "./useTracks";
+import { useTracksForCommunity, useTracksForProgram } from "./useTracks";
 
 /**
  * Hook to fetch tracks by their IDs
@@ -13,11 +13,11 @@ import { useTracksForCommunity } from "./useTracks";
  */
 export const useTracksById = (
   communityId: string,
-  trackIds?: string[],
-  programId?: string
+  trackIds: string[],
+  programId: string
 ) => {
   // First fetch all tracks for the community
-  const tracksQuery = useTracksForCommunity(communityId);
+  const tracksQuery = useTracksForProgram(programId);
 
   // Then filter the tracks by the provided trackIds
   return useQuery<Track[]>({
@@ -34,7 +34,11 @@ export const useTracksById = (
       return tracks.filter((track: Track) => trackIds.includes(track.id));
     },
     enabled:
-      !!communityId && !!trackIds && trackIds.length > 0 && !!tracksQuery.data,
+      !!communityId &&
+      !!trackIds &&
+      trackIds.length > 0 &&
+      !!tracksQuery.data &&
+      !!programId,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 };

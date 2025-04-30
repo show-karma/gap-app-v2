@@ -3,23 +3,40 @@
 
 import { usePathname } from "next/navigation";
 import type { FC } from "react";
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
+import dynamic from "next/dynamic";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useGrantFormStore } from "./store";
 import { useOwnerStore, useProjectStore } from "@/store";
-import {
-  TypeSelectionScreen,
-  CommunitySelectionScreen,
-  DetailsScreen,
-  MilestonesScreen,
-} from "./screens";
+
 import { MESSAGES } from "@/utilities/messages";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import Link from "next/link";
 import { Button } from "@/components/Utilities/Button";
 import { PAGES } from "@/utilities/pages";
-import { useTracksForProject } from "@/hooks/useTracks";
 import { Track } from "@/services/tracks";
+import { TypeSelectionScreen } from "./screens/TypeSelectionScreen";
+import { CommunitySelectionScreen } from "./screens/CommunitySelectionScreen";
+import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
+// import { MilestonesScreen } from "./screens/MilestonesScreen";
+
+// Dynamically import heavy components
+const DetailsScreen = dynamic(
+  () => import("./screens/DetailsScreen").then((mod) => mod.DetailsScreen),
+  {
+    loading: () => <DefaultLoading />,
+    ssr: false,
+  }
+);
+
+const MilestonesScreen = dynamic(
+  () =>
+    import("./screens/MilestonesScreen").then((mod) => mod.MilestonesScreen),
+  {
+    loading: () => <DefaultLoading />,
+    ssr: false,
+  }
+);
 
 // Export the SearchGrantProgram component from its own file
 export { SearchGrantProgram } from "./SearchGrantProgram";
@@ -51,19 +68,14 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { isCommunityAdmin } = useCommunityAdminStore();
   const isAuthorized = isProjectAdmin || isOwner || isCommunityAdmin;
 
-  const { data: projectTracks = [] } = useTracksForProject(
-    selectedProject?.uid || "",
-    formData.community || ""
-  );
-
   // Initialize form data when editing a grant
   useEffect(() => {
     if (grantScreen === "edit" && grantToEdit) {
       // Set flow type to grant for edit mode
       setFlowType("grant");
 
-      // Skip to details step for edit mode
-      setCurrentStep(3);
+      // Start at community selection step for edit mode to show tracks
+      setCurrentStep(2);
 
       // Populate form data from grantToEdit
       updateFormData({
@@ -78,6 +90,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
           ? new Date(grantToEdit?.details?.data?.startDate * 1000)
           : undefined,
         questions: grantToEdit?.details?.data?.questions || [],
+        selectedTrackIds: grantToEdit?.details?.data?.selectedTrackIds || [],
       });
 
       // Initialize milestones if they exist
@@ -115,18 +128,6 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     setMilestonesForms,
     updateFormData,
   ]);
-
-  // Update track IDs when project tracks are loaded
-  useEffect(() => {
-    if (
-      grantScreen === "edit" &&
-      projectTracks.length > 0 &&
-      grantToEdit?.details?.data?.programId
-    ) {
-      const trackIds = projectTracks.map((track: Track) => track.id);
-      updateFormData({ selectedTrackIds: trackIds });
-    }
-  }, [projectTracks, grantScreen, grantToEdit, updateFormData]);
 
   if (!isAuthorized) {
     return (
