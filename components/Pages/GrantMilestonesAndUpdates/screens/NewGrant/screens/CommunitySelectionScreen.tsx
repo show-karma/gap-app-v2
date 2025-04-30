@@ -134,6 +134,7 @@ export const CommunitySelectionScreen: React.FC = () => {
               }
               communityUID={formData.community}
               chainId={communityNetworkId}
+              canAdd={flowType === "grant"}
               setValue={(
                 field: string,
                 value?: string,
