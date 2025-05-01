@@ -11,7 +11,7 @@ import { Dialog, Transition } from "@headlessui/react";
 import { WalletIcon } from "@heroicons/react/24/outline";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { FC } from "react";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useState, useCallback } from "react";
 import toast from "react-hot-toast";
 
 interface LinkDivviWalletButtonProps {
@@ -47,12 +47,12 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
     }
   }, [project?.external?.divvi_wallets]);
 
-  const handleWalletChange = (value: string) => {
+  const handleWalletChange = useCallback((value: string) => {
     setWalletAddress(value);
     setValidationError(null);
-  };
+  }, []);
 
-  const validateWalletAddress = (address: string): boolean => {
+  const validateWalletAddress = useCallback((address: string): boolean => {
     if (!address) return true; // Empty is valid (for removing a wallet)
 
     if (!ETH_ADDRESS_REGEX.test(address)) {
@@ -63,9 +63,9 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
     }
 
     return true;
-  };
+  }, []);
 
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     setError(null);
     setValidationError(null);
 
@@ -106,7 +106,7 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [project.uid, walletAddress, validateWalletAddress]);
 
   if (!isAuthorized) {
     return null;
