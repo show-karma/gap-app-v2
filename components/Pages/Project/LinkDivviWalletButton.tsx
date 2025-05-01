@@ -186,12 +186,12 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
                     <Button
                       onClick={handleSave}
                       disabled={isLoading}
-                      className="bg-primary-500 text-white hover:bg-primary-600"
+                      className="bg-primary-500 text-lg text-white hover:bg-primary-600"
                     >
                       {isLoading ? "Saving..." : "Save"}
                     </Button>
                     <Button
-                      className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
+                      className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-transparent hover:text-black disabled:hover:bg-transparent disabled:hover:text-zinc-900"
                       onClick={() => setIsOpen(false)}
                     >
                       Close
