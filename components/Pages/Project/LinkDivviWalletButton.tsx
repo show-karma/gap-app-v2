@@ -191,7 +191,7 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
                       {isLoading ? "Saving..." : "Save"}
                     </Button>
                     <Button
-                      className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-transparent hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
+                      className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-transparent hover:text-black disabled:hover:bg-transparent disabled:hover:text-zinc-900"
                       onClick={() => setIsOpen(false)}
                     >
                       Close
