@@ -38,6 +38,7 @@ import { useStaff } from "@/hooks/useStaff";
 import { useAdminTransferOwnershipModalStore } from "@/store/modals/adminTransferOwnership";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { LinkOSOProfileButton } from "./LinkOSOProfileButton";
+import { LinkDivviWalletButton } from "./LinkDivviWalletButton";
 
 const ProjectDialog = dynamic(
   () =>
@@ -176,7 +177,7 @@ export const ProjectOptionsMenu = () => {
               modal
               className="z-[10000] absolute right-0 mt-2 w-56 origin-top-right divide-y divide-gray-100 rounded-md bg-white dark:bg-zinc-800 shadow-lg ring-1 ring-black/5 focus:outline-none"
             >
-              <div className="flex flex-col gap-1 px-1 py-1">
+              <div className="flex flex-col gap-1 px-1 py-1 h-full max-h-96 overflow-y-auto">
                 {isAuthorized && (
                   <>
                     <Menu.Item>
@@ -230,6 +231,7 @@ export const ProjectOptionsMenu = () => {
                         }
                       />
                     </Menu.Item>
+
                     <Menu.Item>
                       <LinkGithubRepoButton
                         buttonClassName={buttonClassName}
@@ -242,6 +244,16 @@ export const ProjectOptionsMenu = () => {
                     </Menu.Item>
                     <Menu.Item>
                       <LinkOSOProfileButton
+                        buttonClassName={buttonClassName}
+                        project={
+                          project as IProjectResponse & {
+                            external: Record<string, string[]>;
+                          }
+                        }
+                      />
+                    </Menu.Item>
+                    <Menu.Item>
+                      <LinkDivviWalletButton
                         buttonClassName={buttonClassName}
                         project={
                           project as IProjectResponse & {
