@@ -11,7 +11,7 @@ import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
-import { getGapClient, useGap } from "@/hooks";
+import { getGapClient, useGap } from "@/hooks/useGap";
 import { useAuthStore } from "@/store/auth";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { useStepper } from "@/store/modals/txStepper";

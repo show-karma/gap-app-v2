@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useAccount, useSwitchChain } from "wagmi";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { getGapClient, useGap } from "@/hooks";
+import { getGapClient, useGap } from "@/hooks/useGap";
 import { Milestone } from "@show-karma/karma-gap-sdk";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { useStepper } from "@/store/modals/txStepper";

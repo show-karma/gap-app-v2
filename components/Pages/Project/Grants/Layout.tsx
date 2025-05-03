@@ -4,7 +4,7 @@
 import { GrantsAccordion } from "@/components/GrantsAccordion";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { useGap } from "@/hooks";
+import { useGap } from "@/hooks/useGap";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useAuthStore } from "@/store/auth";
 import { useCommunitiesStore } from "@/store/communities";

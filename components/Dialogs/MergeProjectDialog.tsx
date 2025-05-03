@@ -22,7 +22,7 @@ import {
 import { useAccount } from "wagmi";
 import { MESSAGES } from "@/utilities/messages";
 import { z } from "zod";
-import { getGapClient, useGap } from "@/hooks";
+import { getGapClient, useGap } from "@/hooks/useGap";
 import { ProjectPointer } from "@show-karma/karma-gap-sdk";
 import { useRouter } from "next/navigation";
 import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";

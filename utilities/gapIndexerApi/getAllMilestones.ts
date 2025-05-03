@@ -1,29 +1,7 @@
-import {
-  IGrantResponse,
-  IMilestoneResponse,
-  IProjectMilestoneResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getProjectObjectives } from "./getProjectObjectives";
 import { getGrantMilestones } from "./getGrantMilestones";
 import { errorManager } from "@/components/Utilities/errorManager";
-
-// Create a unified milestone type that can represent both project and grant milestones
-export type UnifiedMilestone = {
-  id: string; // Unique identifier
-  type: "project" | "grant"; // Type of milestone
-  title: string;
-  description?: string;
-  completed: boolean;
-  createdAt: string;
-  endsAt?: number; // For sorting
-  source: {
-    projectMilestone?: IProjectMilestoneResponse;
-    grantMilestone?: {
-      milestone: IMilestoneResponse;
-      grant: IGrantResponse;
-    };
-  };
-};
+import { UnifiedMilestone } from "@/types/roadmap";
 
 export async function getAllMilestones(
   projectId: string
@@ -38,7 +16,9 @@ export async function getAllMilestones(
     // Transform project milestones to unified format
     const unifiedProjectMilestones: UnifiedMilestone[] = projectMilestones.map(
       (milestone) => ({
-        id: `project-${milestone.uid}`,
+        uid: milestone.uid,
+        chainID: milestone.chainID,
+        refUID: milestone.refUID,
         type: "project",
         title: milestone.data.title,
         description: milestone.data.text,
@@ -55,7 +35,9 @@ export async function getAllMilestones(
     // Transform grant milestones to unified format
     const unifiedGrantMilestones: UnifiedMilestone[] =
       grantMilestonesWithGrants.map(({ milestone, grant }) => ({
-        id: `grant-${milestone.uid}`,
+        uid: milestone.uid,
+        chainID: milestone.chainID,
+        refUID: milestone.refUID,
         type: "grant",
         title: milestone.data.title,
         description: milestone.data.description,
@@ -71,7 +53,12 @@ export async function getAllMilestones(
       }));
 
     // Combine both types of milestones
-    return [...unifiedProjectMilestones, ...unifiedGrantMilestones];
+    const allMilestones = [
+      ...unifiedProjectMilestones,
+      ...unifiedGrantMilestones,
+    ];
+
+    return allMilestones;
   } catch (error) {
     errorManager("Error fetching all milestones", error, {
       projectId,

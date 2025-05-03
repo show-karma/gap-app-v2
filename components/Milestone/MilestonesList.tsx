@@ -1,27 +1,14 @@
 "use client";
 
-import { UnifiedMilestone } from "@/utilities/gapIndexerApi/getAllMilestones";
 import { MilestoneCard } from "./MilestoneCard";
 import { useQueryState } from "nuqs";
 import { StatusOptions } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { SetAnObjective } from "@/components/Pages/Project/Objective/SetAnObjective";
+import { UnifiedMilestone } from "@/types/roadmap";
 
 interface MilestonesListProps {
   milestones: UnifiedMilestone[];
-}
-
-// Extended milestone type that includes multiple grant references
-interface MergedMilestone extends UnifiedMilestone {
-  id: string;
-  chainID: number;
-  refUID: string;
-  mergedGrants?: Array<{
-    grantId: string;
-    grantTitle?: string;
-    communityName?: string;
-    communityImage?: string;
-  }>;
 }
 
 export const MilestonesList = ({ milestones }: MilestonesListProps) => {
@@ -39,8 +26,8 @@ export const MilestonesList = ({ milestones }: MilestonesListProps) => {
   // Merge duplicate milestones based on content
   const mergeDuplicateMilestones = (
     milestones: UnifiedMilestone[]
-  ): MergedMilestone[] => {
-    const mergedMap = new Map<string, MergedMilestone>();
+  ): UnifiedMilestone[] => {
+    const mergedMap = new Map<string, UnifiedMilestone>();
 
     milestones.forEach((milestone) => {
       // Create a unique key based on title, description, and dates
@@ -50,9 +37,9 @@ export const MilestonesList = ({ milestones }: MilestonesListProps) => {
 
       // Skip project milestones from merging (they're unique by nature)
       if (milestone.type === "project") {
-        mergedMap.set(`project-${milestone.id}`, {
+        mergedMap.set(milestone.uid, {
           ...milestone,
-          id: milestone.id || "",
+          uid: milestone.uid || "",
           chainID: milestone.source.projectMilestone?.chainID || 0,
           refUID: milestone.source.projectMilestone?.uid || "",
         });
@@ -72,18 +59,20 @@ export const MilestonesList = ({ milestones }: MilestonesListProps) => {
           const firstGrant = existingMilestone.source.grantMilestone;
           existingMilestone.mergedGrants = [
             {
-              grantId: firstGrant?.grant.uid || "",
+              grantUID: firstGrant?.grant.uid || "",
               grantTitle: firstGrant?.grant.details?.data.title,
               communityName: firstGrant?.grant.community?.details?.data.name,
               communityImage:
                 firstGrant?.grant.community?.details?.data.imageURL,
+              chainID: firstGrant?.grant.chainID || 0,
+              milestoneUID: firstGrant?.milestone.uid || "",
             },
           ];
         }
 
         // Add the current grant to the merged list
         existingMilestone.mergedGrants.push({
-          grantId: milestone.source.grantMilestone?.grant.uid || "",
+          grantUID: milestone.source.grantMilestone?.grant.uid || "",
           grantTitle:
             milestone.source.grantMilestone?.grant.details?.data.title,
           communityName:
@@ -92,6 +81,8 @@ export const MilestonesList = ({ milestones }: MilestonesListProps) => {
           communityImage:
             milestone.source.grantMilestone?.grant.community?.details?.data
               .imageURL,
+          chainID: milestone.source.grantMilestone?.grant.chainID || 0,
+          milestoneUID: milestone.source.grantMilestone?.milestone.uid || "",
         });
 
         // Sort the merged grants alphabetically
@@ -106,7 +97,7 @@ export const MilestonesList = ({ milestones }: MilestonesListProps) => {
         // Add as new milestone with required properties
         mergedMap.set(key, {
           ...milestone,
-          id: milestone.id || "",
+          uid: milestone.uid || "",
           chainID: milestone.source.grantMilestone?.grant.chainID || 0,
           refUID: milestone.source.grantMilestone?.grant.uid || "",
         });
@@ -122,24 +113,23 @@ export const MilestonesList = ({ milestones }: MilestonesListProps) => {
     return true;
   });
 
-  // Merge duplicate milestones after filtering
-  const mergedMilestones = mergeDuplicateMilestones(filteredMilestones);
+  const unifiedMilestones = mergeDuplicateMilestones(filteredMilestones);
 
   return (
     <div className="flex flex-col gap-6 w-full">
       {isAuthorized ? (
         <SetAnObjective
           hasObjectives={
-            (mergedMilestones && mergedMilestones.length > 0) || false
+            (unifiedMilestones && unifiedMilestones.length > 0) || false
           }
         />
       ) : null}
 
-      {mergedMilestones && mergedMilestones.length > 0 ? (
+      {unifiedMilestones && unifiedMilestones.length > 0 ? (
         <div className="flex w-full flex-col gap-6 px-6 py-10 bg-[#F9FAFB] dark:bg-zinc-900 rounded-xl max-lg:px-2 max-lg:py-4">
-          {mergedMilestones.map((milestone, index) => (
+          {unifiedMilestones.map((milestone, index) => (
             <MilestoneCard
-              key={`${milestone.id}-${index}-${milestone.title}`}
+              key={`${milestone.uid}-${index}-${milestone.title}`}
               milestone={milestone}
               isAuthorized={isAuthorized}
             />

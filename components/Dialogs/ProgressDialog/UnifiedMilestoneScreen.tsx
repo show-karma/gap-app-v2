@@ -14,7 +14,7 @@ import { useForm, Controller, SubmitHandler } from "react-hook-form";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useAccount, useSwitchChain } from "wagmi";
 import { Milestone } from "@show-karma/karma-gap-sdk";
-import { getGapClient, useGap } from "@/hooks";
+import { getGapClient, useGap } from "@/hooks/useGap";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { sanitizeObject, sanitizeInput } from "@/utilities/sanitize";
 import fetchData from "@/utilities/fetchData";

@@ -9,7 +9,7 @@ import {
 } from "@/components/Icons";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { getGapClient, useGap } from "@/hooks";
+import { getGapClient, useGap } from "@/hooks/useGap";
 import { useProjectStore } from "@/store";
 import { useOwnerStore } from "@/store/owner";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";

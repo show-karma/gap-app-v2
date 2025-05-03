@@ -1,7 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { getGapClient, useGap, useImpactAnswers } from "@/hooks";
+import { getGapClient, useGap } from "@/hooks/useGap";
+import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";

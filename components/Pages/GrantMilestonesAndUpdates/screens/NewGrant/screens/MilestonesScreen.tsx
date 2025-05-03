@@ -12,7 +12,7 @@ import { useAccount, useSwitchChain } from "wagmi";
 import { useStepper } from "@/store/modals/txStepper";
 import toast from "react-hot-toast";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { useGap } from "@/hooks";
+import { useGap } from "@/hooks/useGap";
 import { sanitizeObject } from "@/utilities/sanitize";
 import {
   Grant,
@@ -22,7 +22,7 @@ import {
 } from "@show-karma/karma-gap-sdk";
 import { Hex } from "viem";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { getGapClient } from "@/hooks";
+import { getGapClient } from "@/hooks/useGap";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";

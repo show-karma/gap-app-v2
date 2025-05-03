@@ -3,11 +3,11 @@ import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar"
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 import { formatDate } from "@/utilities/formatDate";
 import { ReadMore } from "@/utilities/ReadMore";
-import { UnifiedMilestone } from "@/utilities/gapIndexerApi/getAllMilestones";
 import { useState } from "react";
 import { cn } from "@/utilities/tailwind";
 import dynamic from "next/dynamic";
 import Image from "next/image";
+import { UnifiedMilestone } from "@/types/roadmap";
 
 const ProjectObjectiveCompletion = dynamic(
   () =>
@@ -49,20 +49,8 @@ const GrantMilestoneCompletion = dynamic(
   }
 );
 
-export interface MergedMilestone extends UnifiedMilestone {
-  id: string;
-  chainID: number;
-  refUID: string;
-  mergedGrants?: Array<{
-    grantId: string;
-    grantTitle?: string;
-    communityName?: string;
-    communityImage?: string;
-  }>;
-}
-
 interface MilestoneCardProps {
-  milestone: MergedMilestone;
+  milestone: UnifiedMilestone;
   isAuthorized: boolean;
 }
 
@@ -199,13 +187,13 @@ export const MilestoneCard = ({
             />
           )}
 
-          {/* {isAuthorized && type === "grant" && grantMilestone && (
+          {isAuthorized && type === "grant" && grantMilestone && (
             <GrantMilestoneOptionsMenu
               milestone={milestone}
               completeFn={handleCompleting}
               alreadyCompleted={completed}
             />
-          )} */}
+          )}
         </div>
 
         {/* Due date */}
@@ -307,7 +295,7 @@ export const MilestoneCard = ({
                   })
                   .map((grant, index) => (
                     <div
-                      key={`${grant.grantId}-${grant.grantTitle}-${milestone.id}-${milestone.title}-${index}`}
+                      key={`${grant.grantUID}-${grant.grantTitle}-${milestone.uid}-${milestone.title}-${index}`}
                       className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1"
                     >
                       {grant.communityImage && (

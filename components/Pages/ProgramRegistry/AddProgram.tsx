@@ -8,7 +8,7 @@ import { OrganizationIcon } from "@/components/Icons/Organization";
 import { Twitter2Icon } from "@/components/Icons/Twitter2";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { useGap } from "@/hooks";
+import { useGap } from "@/hooks/useGap";
 import { useAuthStore } from "@/store/auth";
 import { useStepper } from "@/store/modals/txStepper";
 import { useRegistryStore } from "@/store/registry";
