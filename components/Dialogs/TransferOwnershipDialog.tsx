@@ -115,7 +115,6 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
         });
       closeModal();
     } catch (error: any) {
-      toast.error("Something went wrong. Please try again later.");
       errorManager(
         `Error transferring ownership from ${project.recipient} to ${newOwner}`,
         error,
@@ -123,6 +122,9 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
           project: project?.details?.data?.slug || project?.uid,
           oldOwner: project?.recipient,
           newOwner,
+        },
+        {
+          error: "Failed to transfer ownership.",
         }
       );
       console.error(error);

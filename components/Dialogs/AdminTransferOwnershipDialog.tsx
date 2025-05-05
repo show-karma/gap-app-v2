@@ -65,8 +65,7 @@ export const AdminTransferOwnershipDialog: FC = () => {
       );
 
       if (error) {
-        toast.error(error);
-        return;
+        throw error;
       }
 
       await refreshProject();
@@ -75,7 +74,6 @@ export const AdminTransferOwnershipDialog: FC = () => {
       );
       closeModal();
     } catch (error: any) {
-      toast.error("Something went wrong. Please try again later.");
       errorManager(
         `Error requesting ownership transfer from ${project.recipient} to ${data.newOwner}`,
         error,
@@ -83,6 +81,9 @@ export const AdminTransferOwnershipDialog: FC = () => {
           project: project?.details?.data?.slug || project?.uid,
           oldOwner: project?.recipient,
           newOwner: data.newOwner,
+        },
+        {
+          error: "Failed to request ownership transfer.",
         }
       );
       console.error(error);

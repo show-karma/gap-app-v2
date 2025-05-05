@@ -82,6 +82,7 @@ export default async function Page({ params }: Props) {
             defaultSelectedCategories={defaultSelectedCategories}
             defaultSortBy={defaultSortBy}
             defaultSelectedStatus={defaultSelectedStatus}
+            communityUid={(community as ICommunityResponse).uid}
           />
         </div>
       </div>

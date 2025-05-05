@@ -1,18 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { StepBlock } from "../StepBlock";
-import { Button } from "@/components/Utilities/Button";
 import { useGrantFormStore } from "../store";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { DatePicker } from "@/components/Utilities/DatePicker";
-import { CalendarIcon } from "@heroicons/react/24/outline";
 import { formatDate } from "@/utilities/formatDate";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { isAddress } from "viem";
 import { MESSAGES } from "@/utilities/messages";
 import { useAuthStore } from "@/store/auth";
@@ -22,9 +19,6 @@ import toast from "react-hot-toast";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useGap } from "@/hooks";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { Grant, GrantDetails, nullRef } from "@show-karma/karma-gap-sdk";
-import { Hex } from "viem";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { getGapClient } from "@/hooks";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { INDEXER } from "@/utilities/indexer";
@@ -33,11 +27,7 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { NextButton } from "./buttons/NextButton";
 import { CancelButton } from "./buttons/CancelButton";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
-import {
-  ICommunityResponse,
-  IGrantResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getProjectById } from "@/utilities/sdk";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 
@@ -180,6 +170,8 @@ export const DetailsScreen: React.FC = () => {
         startDate: data.startDate
           ? new Date(data.startDate).getTime() / 1000
           : oldGrantInstance.details?.startDate,
+        selectedTrackIds:
+          data.selectedTrackIds || formData.selectedTrackIds || [],
       });
       oldGrantInstance.details?.setValues(grantData);
 
@@ -249,12 +241,15 @@ export const DetailsScreen: React.FC = () => {
           }
         });
     } catch (error: any) {
-      toast.error(MESSAGES.GRANT.UPDATE.ERROR);
       errorManager(
-        `Error updating grant ${oldGrant.uid} from project ${selectedProject.uid}`,
-        error
+        MESSAGES.GRANT.UPDATE.ERROR,
+        error,
+        {
+          grantUID: oldGrant.uid,
+          projectUID: selectedProject.uid,
+        },
+        { error: MESSAGES.GRANT.UPDATE.ERROR }
       );
-      console.log(error);
     } finally {
       setIsLoading(false);
       setIsStepper(false);
@@ -275,6 +270,8 @@ export const DetailsScreen: React.FC = () => {
       updateObj.amount = watch("amount");
       updateObj.linkToProposal = watch("linkToProposal");
       updateObj.recipient = watch("recipient");
+      // Always include the latest selectedTrackIds from the form data
+      updateObj.selectedTrackIds = formData.selectedTrackIds;
     }
 
     // Update form data
@@ -438,15 +435,7 @@ export const DetailsScreen: React.FC = () => {
           <CancelButton onClick={handleCancel} text="Cancel" />
 
           <div className="flex gap-4">
-            <CancelButton
-              onClick={() => {
-                if (!isEditing) {
-                  handleBack();
-                }
-              }}
-              text="Back"
-              disabled={isEditing}
-            />
+            <CancelButton onClick={handleBack} text="Back" />
             <NextButton
               onClick={handleSubmit(handleNext)}
               disabled={!isValid}

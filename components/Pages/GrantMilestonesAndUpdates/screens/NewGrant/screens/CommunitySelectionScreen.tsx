@@ -1,19 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { StepBlock } from "../StepBlock";
-import { Button } from "@/components/Utilities/Button";
 import { useGrantFormStore } from "../store";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
 import { useProjectStore } from "@/store";
 import { CommunitiesDropdown } from "@/components/CommunitiesDropdown";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { SearchGrantProgram } from "../index";
-import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import { appNetwork } from "@/utilities/network";
 import { CancelButton } from "./buttons/CancelButton";
 import { NextButton } from "./buttons/NextButton";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
+import { useTracksForProgram } from "@/hooks/useTracks";
 
 export const CommunitySelectionScreen: React.FC = () => {
   const {
@@ -26,9 +24,15 @@ export const CommunitySelectionScreen: React.FC = () => {
   } = useGrantFormStore();
   const selectedProject = useProjectStore((state) => state.project);
   const router = useRouter();
+  const pathname = usePathname();
+  const isEditing = pathname.includes("/edit");
   const [allCommunities, setAllCommunities] = useState<ICommunityResponse[]>(
     []
   );
+
+  // Get tracks for the selected program
+  const programId = formData.programId ? formData.programId.split("_")[0] : "";
+  const { data: programTracks = [] } = useTracksForProgram(programId);
 
   // For funding program flow, we only show Celo community
   useEffect(() => {
@@ -37,11 +41,14 @@ export const CommunitySelectionScreen: React.FC = () => {
         const result = await gapIndexerApi.communities();
 
         if (flowType === "program") {
-          const filteredCommunities = result.data.filter((community) =>
-            community.details?.data?.name?.toLowerCase().includes("celo") || 
-            community.details?.data?.name?.toLowerCase().includes("divvi")
+          const filteredCommunities = result.data.filter(
+            (community) =>
+              community.details?.data?.name?.toLowerCase().includes("celo") ||
+              community.details?.data?.name?.toLowerCase().includes("divvi")
           );
-          setAllCommunities(filteredCommunities.length > 0 ? filteredCommunities : []);
+          setAllCommunities(
+            filteredCommunities.length > 0 ? filteredCommunities : []
+          );
         } else {
           setAllCommunities(result.data);
         }
@@ -76,7 +83,6 @@ export const CommunitySelectionScreen: React.FC = () => {
     );
   };
 
-  // Check if we can proceed to the next step
   const canProceed =
     !!formData.community && (!!formData.programId || !!formData.title);
 
@@ -84,33 +90,59 @@ export const CommunitySelectionScreen: React.FC = () => {
     <StepBlock currentStep={2} totalSteps={4}>
       <div className="flex flex-col items-center w-full mx-auto">
         <h3 className="text-xl font-semibold mb-6 text-center">
-          Select a community for your{" "}
-          {flowType === "grant" ? "grant" : "funding program"}
+          {isEditing
+            ? "Edit grant community, program and tracks"
+            : `Select a community for your ${
+                flowType === "grant" ? "grant" : "funding program"
+              }`}
         </h3>
 
         <div className="w-full my-10 flex flex-col gap-4 items-center justify-center">
           <CommunitiesDropdown
-            onSelectFunction={setCommunityValue}
+            onSelectFunction={(value, networkId) => {
+              if (!isEditing) {
+                setCommunityValue(value, networkId);
+                updateFormData({
+                  programId: undefined,
+                  title: "",
+                  selectedTrackIds: [],
+                });
+              }
+            }}
             previousValue={formData.community}
             communities={allCommunities}
-            triggerClassName="w-full max-w-full"
+            triggerClassName={`w-full max-w-full ${
+              isEditing ? "opacity-70 pointer-events-none" : ""
+            }`}
             RightIcon={ChevronDownIcon}
             rightIconClassName="w-4 h-4 text-black dark:text-white opacity-100"
           />
 
           {formData.community && (
             <SearchGrantProgram
-              grantToEdit={undefined}
+              grantToEdit={
+                isEditing
+                  ? ({
+                      details: {
+                        data: {
+                          programId: formData.programId || "",
+                          title: formData.title || "",
+                        },
+                      },
+                    } as any)
+                  : undefined
+              }
               communityUID={formData.community}
               chainId={communityNetworkId}
+              canAdd={flowType === "grant"}
               setValue={(
                 field: string,
                 value?: string,
                 options?: { shouldValidate: boolean }
               ) => {
-                if (field === "programId") {
+                if (field === "programId" && !isEditing) {
                   updateFormData({ programId: value });
-                } else if (field === "title") {
+                } else if (field === "title" && !isEditing) {
                   updateFormData({ title: value || "" });
                 }
               }}
@@ -122,7 +154,6 @@ export const CommunitySelectionScreen: React.FC = () => {
                   ? undefined
                   : ["Proof of Ship", "Hackathon", "Divvi Builder Camp"]
               }
-              canAdd={flowType === "grant" ? true : false}
             />
           )}
         </div>
@@ -131,7 +162,15 @@ export const CommunitySelectionScreen: React.FC = () => {
           <CancelButton text="Cancel" onClick={handleCancel} />
 
           <div className="flex flex-row gap-4">
-            <CancelButton text="Back" onClick={handleBack} />
+            <CancelButton
+              text="Back"
+              disabled={isEditing}
+              onClick={() => {
+                if (!isEditing) {
+                  handleBack();
+                }
+              }}
+            />
             <NextButton
               text="Next"
               onClick={handleNext}

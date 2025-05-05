@@ -1,6 +1,5 @@
 import React from "react";
 import { StepBlock } from "../StepBlock";
-import { Button } from "@/components/Utilities/Button";
 import { useGrantFormStore } from "../store";
 import { useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
@@ -88,10 +87,10 @@ export const TypeSelectionScreen: React.FC = () => {
                 />
               </div>
               <div className="flex flex-col items-center">
-                <h4 className="text-xl text-brand-darkblue dark:text-brand-lightblue text-center font-bold">
+                <h4 className="text-xl text-brand-darkblue dark:text-zinc-100 text-center font-bold">
                   {option.title}
                 </h4>
-                <p className="text-brand-darkblue dark:text-brand-lightblue text-base text-center">
+                <p className="text-brand-darkblue dark:text-zinc-200 text-base text-center">
                   {option.description}
                 </p>
               </div>

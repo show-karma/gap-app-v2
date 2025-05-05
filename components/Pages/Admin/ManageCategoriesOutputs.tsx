@@ -242,10 +242,17 @@ export const ManageCategoriesOutputs = ({
         setCategories(refreshedCategories);
       });
       reset();
-      toast.success("Impact segment created successfully");
+      toast.success(MESSAGES.ACTIVITY_OUTCOME.CREATE.SUCCESS);
     } catch (error) {
-      toast.error("Failed to create impact segment");
-      errorManager("Failed to create impact segment", error);
+      errorManager(
+        MESSAGES.ACTIVITY_OUTCOME.CREATE.ERROR,
+        error,
+        {
+          data,
+          categoryId,
+        },
+        { error: MESSAGES.ACTIVITY_OUTCOME.CREATE.ERROR }
+      );
     } finally {
       setIsSavingOutput("");
     }
@@ -266,10 +273,17 @@ export const ManageCategoriesOutputs = ({
       refreshCategories(true).then((refreshedCategories) => {
         setCategories(refreshedCategories);
       });
-      toast.success("Impact segment deleted successfully");
+      toast.success(MESSAGES.ACTIVITY_OUTCOME.DELETE.SUCCESS);
     } catch (error) {
-      toast.error("Failed to delete impact segment");
-      errorManager("Failed to delete impact segment", error);
+      errorManager(
+        MESSAGES.ACTIVITY_OUTCOME.DELETE.ERROR,
+        error,
+        {
+          categoryId,
+          segmentId,
+        },
+        { error: MESSAGES.ACTIVITY_OUTCOME.DELETE.ERROR }
+      );
     } finally {
       setIsDeletingOutput("");
     }
@@ -306,10 +320,18 @@ export const ManageCategoriesOutputs = ({
         setCategories(refreshedCategories);
       });
 
-      toast.success("Impact segment updated successfully");
+      toast.success(MESSAGES.ACTIVITY_OUTCOME.UPDATE.SUCCESS);
     } catch (error) {
-      toast.error("Failed to update impact segment");
-      errorManager("Failed to update impact segment", error);
+      errorManager(
+        MESSAGES.ACTIVITY_OUTCOME.UPDATE.ERROR,
+        error,
+        {
+          data,
+          categoryId,
+          outputId,
+        },
+        { error: MESSAGES.ACTIVITY_OUTCOME.UPDATE.ERROR }
+      );
     } finally {
       setIsSavingOutput("");
     }
