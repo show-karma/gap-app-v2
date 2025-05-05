@@ -22,14 +22,12 @@ export const TrackSelection: React.FC<TrackSelectionProps> = ({
   disabled = false,
   showForFlowType = "both",
 }) => {
-  const actualProgramId = programId ? programId.split("_")[0] : "";
-
   const {
     data: tracks = [],
     isLoading,
     isError,
     error,
-  } = useTracksForProgram(actualProgramId);
+  } = useTracksForProgram(programId as string);
 
   const handleTrackSelection = (trackId: string) => {
     if (disabled) return;

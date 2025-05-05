@@ -227,12 +227,17 @@ export const CommunityGrants = ({
     }
   };
 
+  const resetTrackIds = () => {
+    changeSelectedTrackIdsQuery(null);
+  };
+
   return (
     <div className="flex flex-col gap-4 w-full">
       <div className="flex items-center justify-between flex-row flex-wrap-reverse max-lg:flex-wrap max-lg:flex-col-reverse max-lg:justify-start max-lg:items-start gap-3 max-lg:gap-4">
         <div className="flex items-center gap-x-3 flex-wrap gap-y-2 w-full">
           <ProgramFilter
             onChange={(programId) => {
+              resetTrackIds();
               changeSelectedProgramIdQuery(programId);
               setCurrentPage(0);
               setGrants([]);

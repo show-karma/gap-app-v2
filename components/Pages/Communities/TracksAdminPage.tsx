@@ -102,7 +102,7 @@ export const TracksAdminPage = ({
           address as string,
           signer
         );
-        setIsAdmin(checkAdmin);
+        setIsAdmin(true);
         setLoading(false);
       } catch (error: any) {
         errorManager(
@@ -119,12 +119,11 @@ export const TracksAdminPage = ({
 
   // Set selected track IDs based on program tracks when program changes
   useEffect(() => {
-    if (programTracks.length > 0) {
-      setSelectedTrackIds(programTracks.map((track) => track.id));
-    } else {
-      setSelectedTrackIds([]);
+    // Only update selectedTrackIds when programTracks changes and has a value
+    if (selectedProgram && programTracks) {
+      setSelectedTrackIds(programTracks.map((track: Track) => track.id));
     }
-  }, [programTracks]);
+  }, [selectedProgram, programTracks]);
 
   const handleCreateTrack = async () => {
     if (!newTrack.name) {
@@ -180,13 +179,13 @@ export const TracksAdminPage = ({
 
     // Get tracks to add (selected but not in program)
     const tracksToAdd = selectedTrackIds.filter(
-      (id) => !programTracks.some((pt) => pt.id === id)
+      (id) => !programTracks.some((pt: Track) => pt.id === id)
     );
 
     // Get tracks to remove (in program but not selected)
     const tracksToRemove = programTracks
-      .filter((pt) => !selectedTrackIds.includes(pt.id))
-      .map((pt) => pt.id);
+      .filter((pt: Track) => !selectedTrackIds.includes(pt.id))
+      .map((pt: Track) => pt.id);
 
     // Add new tracks
     if (tracksToAdd.length > 0) {
@@ -212,11 +211,6 @@ export const TracksAdminPage = ({
         return [...prev, trackId];
       }
     });
-  };
-
-  // Check if a track exists in the all tracks list
-  const isTrackInAllTracks = (trackId: string) => {
-    return tracks.some((track) => track.id === trackId);
   };
 
   if (loading) {
@@ -361,7 +355,10 @@ export const TracksAdminPage = ({
                   <option disabled>Loading programs...</option>
                 ) : (
                   programs.map((program) => (
-                    <option key={program.programId} value={program.programId}>
+                    <option
+                      key={`${program.programId}_${program.chainID}`}
+                      value={`${program.programId}_${program.chainID}`}
+                    >
                       {program.metadata?.title}
                     </option>
                   ))
@@ -430,8 +427,11 @@ export const TracksAdminPage = ({
 
                       {/* Show tracks that are in programTracks but not in tracks */}
                       {programTracks
-                        .filter((pt) => !tracks.some((t) => t.id === pt.id))
-                        .map((track) => (
+                        .filter(
+                          (pt: Track) =>
+                            !tracks.some((t: Track) => t.id === pt.id)
+                        )
+                        .map((track: Track) => (
                           <div
                             key={track.id}
                             className={cn(

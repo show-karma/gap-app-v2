@@ -167,7 +167,6 @@ export const GrantOverview = () => {
                       communityId={communityId}
                       trackIds={selectedTrackIds}
                       className="font-medium"
-                      programId={baseProgramId}
                     />
                   </div>
                 </div>
