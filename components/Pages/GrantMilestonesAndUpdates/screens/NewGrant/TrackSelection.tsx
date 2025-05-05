@@ -105,7 +105,7 @@ export const TrackSelection: React.FC<TrackSelectionProps> = ({
               )}
             </div>
             {selectedTrackIds.includes(track.id) && (
-              <CheckIcon className="h-5 w-5 text-blue-500 dark:text-blue-400" />
+              <CheckIcon className="h-5 w-5 min-h-5 min-w-5 max-h-5 max-w-5 text-blue-500 dark:text-blue-400" />
             )}
           </div>
         ))}
