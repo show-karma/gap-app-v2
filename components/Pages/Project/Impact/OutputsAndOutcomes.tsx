@@ -20,7 +20,6 @@ import { GrantsOutputsLoading } from "../Loading/Grants/Outputs";
 import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
 import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { GroupedLinks } from "./GroupedLinks";
-import { errorManager } from "@/components/Utilities/errorManager";
 
 // Helper function to handle comma-separated URLs
 const parseProofUrls = (proof: string): string[] => {
@@ -149,7 +148,6 @@ export const OutputsAndOutcomes = () => {
     );
   };
 
-  // Initialize forms when impact answers are loaded
   useEffect(() => {
     if (impactAnswers.length > 0) {
       // Preserve editing state for forms that already exist
@@ -181,15 +179,6 @@ export const OutputsAndOutcomes = () => {
           isEditing: existingForms[item.id]?.isEditing || false,
         }))
       );
-    } catch (error) {
-      errorManager(
-        MESSAGES.PROJECT.IMPACT_ANSWERS.ERROR,
-        error,
-        { projectUID: project?.uid },
-        { error: MESSAGES.PROJECT.IMPACT_ANSWERS.ERROR }
-      );
-    } finally {
-      if (!silent) setIsLoading(false);
     }
   }, [impactAnswers]);
 
