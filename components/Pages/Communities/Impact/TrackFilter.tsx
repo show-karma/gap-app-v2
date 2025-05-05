@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { useParams } from "next/navigation";
-import { useTracksForCommunity } from "@/hooks/useTracks";
+import { useParams, useSearchParams } from "next/navigation";
+import { useTracksForCommunity, useTracksForProgram } from "@/hooks/useTracks";
 import { Track } from "@/services/tracks";
 import { FunnelIcon } from "@heroicons/react/24/outline";
 import { cn } from "@/utilities/tailwind";
@@ -20,16 +20,15 @@ interface TrackFilterProps {
 export const TrackFilter: React.FC<TrackFilterProps> = ({
   onChange,
   selectedTrackIds = [],
-  communityUid,
 }) => {
   const [initialLoad, setInitialLoad] = useState(true);
-
-  // Fetch all tracks for the community
+  const params = useSearchParams();
+  const programIdParam = params.get("programId");
   const {
     data: tracks = [],
     isLoading,
     isError,
-  } = useTracksForCommunity(communityUid);
+  } = useTracksForProgram(programIdParam as string);
 
   useEffect(() => {
     // Skip the initial change trigger to avoid overriding URL params

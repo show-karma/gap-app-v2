@@ -48,7 +48,7 @@ export const trackService = {
   },
 
   // Get tracks for a program
-  getProgramTracks: async (programId: string): Promise<Track[]> => {
+  getProgramTracks: async (programId: string) => {
     try {
       const [data, error] = await fetchData(
         INDEXER.PROGRAMS.TRACKS(programId),
@@ -64,11 +64,12 @@ export const trackService = {
         throw new Error(error);
       }
 
-      return data.map((track: any) => ({
+      const mappedTracks = data.map((track: any) => ({
         ...track,
         createdAt: new Date(track.createdAt),
         updatedAt: new Date(track.updatedAt),
       }));
+      return mappedTracks;
     } catch (error: any) {
       errorManager(`Error fetching tracks for program ${programId}`, error);
       throw error;

@@ -46,6 +46,7 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
   const selectedTrackIds = grant.details?.data?.selectedTrackIds as
     | string[]
     | undefined;
+  console.log(grant.details?.data?.selectedTrackIds);
   const communityId = grant.data?.communityUID;
   const programId = grant.details?.data?.programId;
 
@@ -97,7 +98,6 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
               <TrackTags
                 communityId={communityId}
                 trackIds={selectedTrackIds}
-                programId={baseProgramId}
               />
             </div>
           )}

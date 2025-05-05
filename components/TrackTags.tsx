@@ -2,9 +2,9 @@
 
 import React from "react";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { useTracksById } from "@/hooks/useTracksById";
 import { Spinner } from "./Utilities/Spinner";
 import { TagIcon } from "@heroicons/react/24/outline";
+import { useTracksForCommunity } from "@/hooks/useTracks";
 
 interface TrackTagsProps {
   communityId: string;
@@ -19,13 +19,16 @@ export const TrackTags: React.FC<TrackTagsProps> = ({
   trackIds,
   className = "",
   showLabel = false,
-  programId,
 }) => {
   const {
-    data: tracks = [],
+    data: communityTracks = [],
     isLoading,
     isError,
-  } = useTracksById(communityId, trackIds || [], programId as string);
+  } = useTracksForCommunity(communityId);
+
+  const tracks = communityTracks.filter((track) =>
+    trackIds?.includes(track.id)
+  );
 
   if (!trackIds || trackIds.length === 0) {
     return null;

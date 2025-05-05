@@ -11,7 +11,6 @@ import { SearchGrantProgram } from "../index";
 import { CancelButton } from "./buttons/CancelButton";
 import { NextButton } from "./buttons/NextButton";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
-import { useTracksForProgram } from "@/hooks/useTracks";
 
 export const CommunitySelectionScreen: React.FC = () => {
   const {
@@ -29,10 +28,6 @@ export const CommunitySelectionScreen: React.FC = () => {
   const [allCommunities, setAllCommunities] = useState<ICommunityResponse[]>(
     []
   );
-
-  // Get tracks for the selected program
-  const programId = formData.programId ? formData.programId.split("_")[0] : "";
-  const { data: programTracks = [] } = useTracksForProgram(programId);
 
   // For funding program flow, we only show Celo community
   useEffect(() => {
