@@ -102,7 +102,7 @@ export const TracksAdminPage = ({
           address as string,
           signer
         );
-        setIsAdmin(true);
+        setIsAdmin(checkAdmin);
         setLoading(false);
       } catch (error: any) {
         errorManager(
