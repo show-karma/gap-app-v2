@@ -11,8 +11,7 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useMemo } from "react";
 import { PAGES } from "@/utilities/pages";
-import { useQuery } from "@tanstack/react-query";
-import { getImpactAnswers } from "@/utilities/impact";
+import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useAccount } from "wagmi";
 
@@ -39,22 +38,23 @@ export const ProjectActivityBlock = ({
   const { isConnected } = useAccount();
   const isAuthorized =
     isConnected && (isProjectOwner || isContractOwner || isCommunityAdmin);
+
   const { data: impactAnswers = [], isLoading: isLoadingImpactAnswers } =
-    useQuery({
-      queryKey: ["impactAnswers", project?.uid, indicatorIds, indicatorNames],
-      queryFn: async () => {
-        if (!project?.uid) return [];
-        const data = await getImpactAnswers(project?.uid as string);
-        return filterIndicators(data, indicatorIds, indicatorNames);
-      },
+    useImpactAnswers({
+      projectIdentifier: project?.uid as string,
       enabled:
         !!project?.uid && !!indicatorIds?.length && !!indicatorNames?.length,
     });
 
+  // Filter indicators based on IDs and names
+  const filteredAnswers = useMemo(() => {
+    return filterIndicators(impactAnswers, indicatorIds, indicatorNames);
+  }, [impactAnswers, indicatorIds, indicatorNames]);
+
   // Filter outputs based on authorization
   const filteredOutputs = isAuthorized
-    ? impactAnswers
-    : impactAnswers.filter((item) => item.datapoints?.length);
+    ? filteredAnswers
+    : filteredAnswers.filter((item) => item.datapoints?.length);
 
   const relatedGrants = useMemo(() => {
     if (
