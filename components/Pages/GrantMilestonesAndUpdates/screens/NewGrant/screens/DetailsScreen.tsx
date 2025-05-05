@@ -144,7 +144,7 @@ export const DetailsScreen: React.FC = () => {
     oldGrant: IGrantResponse,
     data: Partial<typeof formData>
   ) => {
-    if (!address || !oldGrant.refUID || !selectedProject) return;
+    if (!address || !oldGrant?.refUID || !selectedProject) return;
     let gapClient = gap;
     try {
       setIsLoading(true);
