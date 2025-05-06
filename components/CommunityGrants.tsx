@@ -5,7 +5,6 @@ import { useCommunityStore } from "@/store/community";
 import { SortByOptions, StatusOptions } from "@/types";
 import { zeroUID } from "@/utilities/commons";
 import { getGrants } from "@/utilities/sdk/communities/getGrants";
-import { getPrograms } from "@/utilities/sdk/communities/getPrograms";
 import { cn } from "@/utilities/tailwind";
 import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon } from "@heroicons/react/20/solid";
@@ -23,6 +22,7 @@ import { TrackFilter } from "./Pages/Communities/Impact/TrackFilter";
 import { CardListSkeleton } from "./Pages/Communities/Loading";
 import { errorManager } from "./Utilities/errorManager";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { ProgramBanner } from "./ProgramBanner";
 
 const sortOptions: Record<SortByOptions, string> = {
   recent: "Recent",
@@ -80,10 +80,6 @@ export const CommunityGrants = ({
       value ? (value as StatusOptions) : ("all" as StatusOptions),
   });
 
-  // Call API
-  const [programs, setPrograms] = useState<GrantProgram[]>([]);
-  const [programsLoading, setProgramsLoading] = useState<boolean>(true);
-
   const [selectedProgramId, changeSelectedProgramIdQuery] = useQueryState<
     string | null
   >("programId", {
@@ -114,26 +110,6 @@ export const CommunityGrants = ({
     () => selectedCategories.join("_"),
     [selectedCategories]
   );
-
-  useEffect(() => {
-    if (!communityId || communityId === zeroUID) return;
-
-    setProgramsLoading(true);
-    const fetchPrograms = async () => {
-      const programs = await getPrograms(communityId as Hex);
-      const orderProgramsByTitle = (programs: GrantProgram[]) => {
-        return programs.sort((a, b) => {
-          const aTime = new Date(a.createdAt).getTime();
-          const bTime = new Date(b.createdAt).getTime();
-          return bTime - aTime;
-        });
-      };
-
-      setPrograms(orderProgramsByTitle(programs));
-      setProgramsLoading(false);
-    };
-    fetchPrograms();
-  }, [communityId]);
 
   useEffect(() => {
     if (!communityId || communityId === zeroUID) return;
@@ -524,7 +500,7 @@ export const CommunityGrants = ({
           </div>
         </div>
       </div>
-
+      <ProgramBanner />
       <section className="flex flex-col gap-4 md:flex-row">
         <div className="h-full w-full mb-8">
           {grants.length > 0 ? (

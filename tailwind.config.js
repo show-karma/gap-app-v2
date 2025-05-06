@@ -71,6 +71,7 @@ module.exports = {
         brand: {
           blue: "#4C6FFF",
           darkblue: "#101828",
+          lightblue: "#EEF4FF",
         },
         tremor: {
           brand: {
