@@ -1,30 +1,27 @@
 import fetchData from "@/utilities/fetchData";
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useAccount } from "wagmi";
 
 export const useStaff = () => {
-  const [isStaff, setIsStaff] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
+  const { address } = useAccount();
 
-  useEffect(() => {
-    const checkStaffAuthorization = async () => {
-      try {
-        setIsLoading(true);
-        const [data] = await fetchData("/auth/staff/authorized");
-        setIsStaff(data?.authorized ?? false);
-      } catch (err) {
-        setError(
-          err instanceof Error
-            ? err
-            : new Error("Failed to check staff authorization")
-        );
-      } finally {
-        setIsLoading(false);
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["staffAuthorization", address],
+    queryFn: async () => {
+      if (!address) return { authorized: false };
+
+      const [data, error] = await fetchData("/auth/staff/authorized");
+
+      if (error) {
+        throw new Error(error || "Failed to check staff authorization");
       }
-    };
 
-    checkStaffAuthorization();
-  }, []);
+      return data;
+    },
+    enabled: !!address,
+  });
+
+  const isStaff = data?.authorized ?? false;
 
   return { isStaff, isLoading, error };
 };
