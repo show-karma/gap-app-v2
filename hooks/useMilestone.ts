@@ -18,6 +18,7 @@ import { useAllMilestones } from "./useAllMilestones";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { MilestoneCompletedFormData } from "@/components/Forms/GrantMilestoneCompletion";
+import { PAGES } from "@/utilities/pages";
 
 export const useMilestone = () => {
   const [isDeleting, setIsDeleting] = useState(false);
@@ -29,6 +30,7 @@ export const useMilestone = () => {
   const project = useProjectStore((state) => state.project);
   const { projectId } = useParams();
   const { refetch } = useAllMilestones(projectId as string);
+  const router = useRouter();
 
   const multiGrantDelete = async (milestone: UnifiedMilestone) => {
     setIsDeleting(true);
@@ -341,7 +343,7 @@ export const useMilestone = () => {
         type: "completed",
       });
 
-      toast.loading(`Completing ${milestone.title} milestone...`, {
+      toast.loading(`Marking milestone as complete`, {
         id: `milestone-${milestone.uid}`,
       });
 
@@ -388,6 +390,11 @@ export const useMilestone = () => {
               }
             );
             refetch();
+            router.push(
+              PAGES.PROJECT.UPDATES(
+                project?.details?.data.slug || project?.uid || ""
+              )
+            );
           });
         })
         .catch(() => {
@@ -548,6 +555,11 @@ export const useMilestone = () => {
                 }
               );
               refetch();
+              router.push(
+                PAGES.PROJECT.UPDATES(
+                  project?.details?.data.slug || project?.uid || ""
+                )
+              );
             });
           })
           .catch(() => {

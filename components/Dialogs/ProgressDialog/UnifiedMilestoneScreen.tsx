@@ -26,10 +26,11 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { MESSAGES } from "@/utilities/messages";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 import { useAllMilestones } from "@/hooks/useAllMilestones";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { GapContract } from "@show-karma/karma-gap-sdk/core/class/contract/GapContract";
 import { Transaction } from "ethers";
+import { PAGES } from "@/utilities/pages";
 
 // Helper function to wait for a specified time
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -72,7 +73,7 @@ const milestoneSchema = z.object({
 type MilestoneFormData = z.infer<typeof milestoneSchema>;
 
 export const UnifiedMilestoneScreen = () => {
-  const { project } = useProjectStore();
+  const { project, refreshProject } = useProjectStore();
   const { closeProgressModal } = useProgressModalStore();
   const [selectedGrantIds, setSelectedGrantIds] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -83,6 +84,7 @@ export const UnifiedMilestoneScreen = () => {
   const { changeStepperStep, setIsStepper } = useStepper();
   const { projectId } = useParams();
   const { refetch } = useAllMilestones(projectId as string);
+  const router = useRouter();
 
   const {
     register,
@@ -189,6 +191,7 @@ export const UnifiedMilestoneScreen = () => {
   const tryRefetch = async (attempts = 3, delayMs = 2000) => {
     for (let i = 0; i < attempts; i++) {
       await refetch();
+      await refreshProject();
       if (i < attempts - 1) {
         await sleep(delayMs);
       }
@@ -243,12 +246,9 @@ export const UnifiedMilestoneScreen = () => {
 
         changeStepperStep("preparing");
         // Notify user we're processing grants on this chain
-        toast.loading(
-          `Processing ${chainGrants.length} grant(s) on ${chainName}...`,
-          {
-            id: `chain-${chainId}`,
-          }
-        );
+        toast.loading(`Creating milestone`, {
+          id: `chain-${chainId}`,
+        });
 
         // Switch chain if needed
         if (chain?.id !== chainId) {
@@ -307,7 +307,7 @@ export const UnifiedMilestoneScreen = () => {
             );
           }
 
-          toast.success(`Created milestone for grant on ${chainName}`, {
+          toast.success(`Created milestone successfully`, {
             id: `chain-${chainId}`,
           });
         } else {
@@ -395,12 +395,9 @@ export const UnifiedMilestoneScreen = () => {
             await Promise.all(txPromises);
           }
 
-          toast.success(
-            `Created milestones for ${chainGrants.length} grants on ${chainName}`,
-            {
-              id: `chain-${chainId}`,
-            }
-          );
+          toast.success(`Created milestones on ${chainName}`, {
+            id: `chain-${chainId}`,
+          });
         }
       }
 
@@ -412,8 +409,10 @@ export const UnifiedMilestoneScreen = () => {
 
       changeStepperStep("indexed");
 
-      toast.success(
-        `Created milestones for all ${selectedGrantIds.length} grant(s) successfully`
+      router.push(
+        PAGES.PROJECT.ROADMAP.ROOT(
+          project?.details?.data.slug || project?.uid || ""
+        )
       );
       closeProgressModal();
     } catch (error) {
@@ -454,12 +453,6 @@ export const UnifiedMilestoneScreen = () => {
   if (!grants.length && project) {
     return (
       <div className="flex flex-col gap-6">
-        <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
-          <p className="text-sm text-blue-700 dark:text-blue-300">
-            No grants found for this project. You can still create a roadmap
-            milestone.
-          </p>
-        </div>
         <ProjectObjectiveForm
           stateHandler={(state) => {
             if (!state) closeProgressModal();

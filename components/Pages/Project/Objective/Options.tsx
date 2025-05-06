@@ -235,7 +235,7 @@ export const ObjectiveOptionsMenu = ({
               </Menu.Item>
               <Menu.Item>
                 <DeleteDialog
-                  title="Are you sure you want to delete this objective?"
+                  title="Are you sure you want to delete this milestone?"
                   deleteFunction={deleteFn}
                   isLoading={isDeleting}
                   buttonElement={{

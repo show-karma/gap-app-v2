@@ -135,18 +135,16 @@ export const MilestonesList = ({ milestones }: MilestonesListProps) => {
             />
           ))}
         </div>
-      ) : (
+      ) : !isAuthorized ? (
         <div className="flex flex-col gap-2 justify-center items-start border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-8 w-full">
           <p className="text-zinc-900 font-bold text-center text-lg w-full dark:text-zinc-300">
             No milestones found!
           </p>
           <p className="text-zinc-900 dark:text-zinc-300 w-full text-center">
-            {!isAuthorized
-              ? "The project owner is working on setting milestones. Check back in a few days :)"
-              : "Start creating milestones by clicking the 'Create' button above."}
+            {`The project owner is working on setting milestones. Check back in a few days :)`}
           </p>
         </div>
-      )}
+      ) : null}
     </div>
   );
 };

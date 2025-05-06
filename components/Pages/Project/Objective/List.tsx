@@ -69,11 +69,11 @@ export const ObjectiveList = () => {
       ) : !isAuthorized ? (
         <div className="flex flex-col gap-2 justify-center items-start border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-8 w-full">
           <p className="text-zinc-900 font-bold text-center text-lg w-full dark:text-zinc-300">
-            No objectives found!
+            No milestones found!
           </p>
           <p className="text-zinc-900 dark:text-zinc-300 w-full text-center">
             {
-              "The project owner is working on setting objectives. Check back in a few days :)"
+              "The project owner is working on setting milestones. Check back in a few days :)"
             }
           </p>
         </div>

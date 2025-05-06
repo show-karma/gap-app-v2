@@ -224,7 +224,7 @@ export const ObjectiveCardComplete = ({
                 </ExternalLink>
               ) : (
                 <p className="text-sm font-medium text-gray-500 dark:text-zinc-300 max-sm:text-xs">
-                  There is no proof for this objective.
+                  There is no proof for this milestone.
                 </p>
               )}
             </div>

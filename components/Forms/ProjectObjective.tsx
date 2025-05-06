@@ -21,11 +21,10 @@ import { INDEXER } from "@/utilities/indexer";
 import { useParams, useRouter } from "next/navigation";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { XMarkIcon } from "@heroicons/react/24/solid";
-import { cn } from "@/utilities/tailwind";
-import { useQuery } from "@tanstack/react-query";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useAllMilestones } from "@/hooks/useAllMilestones";
+import { PAGES } from "@/utilities/pages";
 
 const objectiveSchema = z.object({
   title: z
@@ -55,6 +54,7 @@ export const ProjectObjectiveForm = ({
   const { switchChainAsync } = useSwitchChain();
   const params = useParams();
   const projectId = params.projectId as string;
+  const router = useRouter();
 
   const isEditing = !!previousObjective;
 
@@ -78,10 +78,7 @@ export const ProjectObjectiveForm = ({
   const [isLoading, setIsLoading] = useState(false);
   const { changeStepperStep, setIsStepper } = useStepper();
 
-  const { refetch } = useQuery<IProjectMilestoneResponse[]>({
-    queryKey: ["projectMilestones"],
-    queryFn: () => getProjectObjectives(projectId),
-  });
+  const { refetch } = useAllMilestones(projectId as string);
 
   const createObjective = async (data: ObjectiveType) => {
     if (!gap) return;
@@ -154,6 +151,7 @@ export const ProjectObjectiveForm = ({
                   toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.SUCCESS);
                   await refetch();
                   stateHandler?.(false);
+                  router.push(PAGES.PROJECT.ROADMAP.ROOT(projectId));
                 }
                 retries -= 1;
                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
@@ -327,13 +325,13 @@ export const ProjectObjectiveForm = ({
           {errors.text && <p className="text-red-500">{errors.text.message}</p>}
         </div>
       </div>
-      <div className="flex flex-row gap-2 items-center justify-start pt-2">
+      <div className="flex flex-row gap-2 items-center justify-end pt-2">
         <Button
           onClick={(e) => {
             e.preventDefault();
             stateHandler?.(false);
           }}
-          className="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 dark:bg-zinc-800 dark:text-white dark:hover:bg-zinc-700"
+          className="px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:bg-zinc-800 dark:border-zinc-600 dark:text-white"
           type="button"
         >
           Cancel
@@ -341,12 +339,12 @@ export const ProjectObjectiveForm = ({
         <Button
           type="submit"
           isLoading={isLoading}
-          className={`bg-brand-blue text-white px-4 py-2 ${
+          className={`px-4 py-2 bg-brand-blue text-white hover:bg-brand-blue/90 disabled:opacity-50 ${
             !isValid || isLoading ? "cursor-not-allowed opacity-50" : ""
           }`}
           disabled={!isValid || isLoading}
         >
-          {isEditing ? "Edit Milestone" : "Add Milestone"}
+          {isEditing ? "Edit Milestone" : "Create Milestone"}
         </Button>
       </div>
     </form>
