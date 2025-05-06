@@ -280,6 +280,8 @@ export const ReadMore = ({
   useEffect(() => {
     if (text && text.length - 1 < getMinimumText()) {
       setIsReadMore(false);
+    } else {
+      setIsReadMore(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text]);
