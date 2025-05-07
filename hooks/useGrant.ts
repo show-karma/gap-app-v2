@@ -1,3 +1,4 @@
+"use client";
 import { useState } from "react";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useGap } from "./useGap";
