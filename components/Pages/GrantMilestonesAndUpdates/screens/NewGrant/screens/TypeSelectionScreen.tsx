@@ -61,7 +61,7 @@ export const TypeSelectionScreen: React.FC = () => {
   };
 
   return (
-    <StepBlock currentStep={1} totalSteps={4}>
+    <StepBlock currentStep={1}>
       <div className="flex flex-col items-center w-full mx-auto">
         <h3 className="text-2xl text-black dark:text-zinc-100 font-semibold mb-6 text-center">
           What are you looking for?

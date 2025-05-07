@@ -68,11 +68,18 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const { isCommunityAdmin } = useCommunityAdminStore();
   const isAuthorized = isProjectAdmin || isOwner || isCommunityAdmin;
 
+  const isProgramApplication = formData.description.includes(
+    "I am applying to participate in the"
+  );
   // Initialize form data when editing a grant
   useEffect(() => {
     if (grantScreen === "edit" && grantToEdit) {
       // Set flow type to grant for edit mode
-      setFlowType("grant");
+      if (isProgramApplication) {
+        setFlowType("program");
+      } else {
+        setFlowType("grant");
+      }
 
       // Start at community selection step for edit mode to show tracks
       setCurrentStep(2);
@@ -112,11 +119,15 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     } else {
       // Reset form data for new grant
       resetFormData();
+      setCurrentStep(1);
+      setMilestonesForms([]);
     }
 
     // Cleanup on unmount
     return () => {
       resetFormData();
+      setCurrentStep(1);
+      setMilestonesForms([]);
     };
   }, [
     grantScreen,
@@ -127,6 +138,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     setFlowType,
     setMilestonesForms,
     updateFormData,
+    isProgramApplication,
   ]);
 
   if (!isAuthorized) {

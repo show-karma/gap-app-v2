@@ -1,19 +1,42 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { cn } from "@/utilities/tailwind";
+import { useGrantFormStore } from "./store";
+import { usePathname } from "next/navigation";
 
 interface StepBlockProps {
   currentStep: number;
-  totalSteps: number;
   title?: string;
   children: React.ReactNode;
 }
 
 export const StepBlock: React.FC<StepBlockProps> = ({
   currentStep,
-  totalSteps,
   title = "Add New Funding",
   children,
 }) => {
+  const { flowType } = useGrantFormStore();
+  const getTotalSteps = useCallback(() => {
+    return flowType === "program" ? 3 : 4;
+  }, [flowType]);
+  const totalSteps = getTotalSteps();
+
+  // Helper function to get step label based on index and flow type
+  const getStepLabel = (index: number) => {
+    if (index === 0) return "Type";
+    if (index === 1) return "Community";
+
+    if (flowType === "program") {
+      // For funding programs (3 steps): Type, Community, Milestones
+      if (index === 2) return "Milestones";
+    } else {
+      // For grants (4 steps): Type, Community, Details, Milestones
+      if (index === 2) return "Details";
+      if (index === 3) return "Milestones";
+    }
+
+    return ""; // Fallback
+  };
+
   return (
     <div className="flex w-full flex-col items-center justify-center mb-8 rounded-lg p-3 flex-1">
       <div className="flex w-full flex-col items-center justify-center mb-6 bg-gray-50 dark:bg-zinc-900 rounded-lg p-3">
@@ -44,13 +67,7 @@ export const StepBlock: React.FC<StepBlockProps> = ({
                       : "text-gray-400 dark:text-zinc-400"
                   )}
                 >
-                  {index === 0
-                    ? "Type"
-                    : index === 1
-                    ? "Community"
-                    : index === 2
-                    ? "Details"
-                    : "Milestones"}
+                  {getStepLabel(index)}
                 </span>
               </div>
 

@@ -58,7 +58,11 @@ export const MilestonesScreen: React.FC = () => {
   const isEditing = pathname.includes("edit");
 
   const handleBack = () => {
-    setCurrentStep(3);
+    if (flowType === "program") {
+      setCurrentStep(2);
+    } else {
+      setCurrentStep(3);
+    }
   };
 
   const handleCancel = () => {
@@ -299,7 +303,7 @@ export const MilestonesScreen: React.FC = () => {
   };
 
   return (
-    <StepBlock currentStep={4} totalSteps={4}>
+    <StepBlock currentStep={4}>
       <div className="flex flex-col w-full mx-auto">
         <div className="flex justify-between items-center mb-6 max-md:flex-col max-md:gap-2">
           <h3 className="text-xl font-semibold">
@@ -322,8 +326,8 @@ export const MilestonesScreen: React.FC = () => {
             <div className="text-center py-8 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
               <p className="text-gray-500 dark:text-gray-400 text-center">
                 Set your goals by adding milestones you plan to accomplish.
-                There’s no limit—add as many as you need to track your progress
-                effectively!
+                There&apos;s no limit—add as many as you need to track your
+                progress effectively!
               </p>
             </div>
           ) : (
