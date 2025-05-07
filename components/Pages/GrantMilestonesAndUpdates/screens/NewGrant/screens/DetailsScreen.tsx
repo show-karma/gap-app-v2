@@ -17,7 +17,7 @@ import { useAccount, useSwitchChain } from "wagmi";
 import { useStepper } from "@/store/modals/txStepper";
 import toast from "react-hot-toast";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { useGap } from "@/hooks";
+import { useGap, useGrant } from "@/hooks";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { getGapClient } from "@/hooks";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -92,6 +92,7 @@ export const DetailsScreen: React.FC = () => {
   const { address, isConnected, connector, chain } = useAccount();
   const { isAuth } = useAuthStore();
   const { gap } = useGap();
+  const { updateGrant, isLoading: isUpdatingGrant } = useGrant();
   const { changeStepperStep, setIsStepper } = useStepper();
   const { isCommunityAdmin } = useCommunityAdminStore();
   const { isOwner } = useOwnerStore();
@@ -140,122 +141,6 @@ export const DetailsScreen: React.FC = () => {
     );
   };
 
-  const updateGrant = async (
-    oldGrant: IGrantResponse,
-    data: Partial<typeof formData>
-  ) => {
-    if (!address || !oldGrant?.refUID || !selectedProject) return;
-    let gapClient = gap;
-    try {
-      setIsLoading(true);
-      if (chain?.id !== oldGrant.chainID) {
-        await switchChainAsync?.({ chainId: oldGrant.chainID });
-        gapClient = getGapClient(communityNetworkId);
-      }
-      if (!gapClient) return;
-      const projectInstance = await getProjectById(oldGrant.refUID);
-      const oldGrantInstance = projectInstance?.grants?.find(
-        (item) => item?.uid?.toLowerCase() === oldGrant?.uid?.toLowerCase()
-      );
-      if (!oldGrantInstance) return;
-
-      oldGrantInstance.setValues({
-        communityUID: data.community,
-      });
-      const grantData = sanitizeObject({
-        ...oldGrantInstance.details?.data,
-        ...data,
-        proposalURL: data.linkToProposal,
-        payoutAddress: address,
-        startDate: data.startDate
-          ? new Date(data.startDate).getTime() / 1000
-          : oldGrantInstance.details?.startDate,
-        selectedTrackIds:
-          data.selectedTrackIds || formData.selectedTrackIds || [],
-      });
-      oldGrantInstance.details?.setValues(grantData);
-
-      const { walletClient, error } = await safeGetWalletClient(
-        oldGrant.chainID
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      if (!walletClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
-      const oldProjectData = await gapIndexerApi
-        .projectBySlug(oldGrant.refUID)
-        .then((res) => res.data);
-      const oldGrantData = oldProjectData?.grants?.find(
-        (item) => item.uid.toLowerCase() === oldGrant.uid.toLowerCase()
-      );
-      await oldGrantInstance.details
-        ?.attest(walletSigner as any, changeStepperStep)
-        .then(async (res) => {
-          let retries = 1000;
-          changeStepperStep("indexing");
-          const txHash = res?.tx[0]?.hash;
-          if (txHash) {
-            await fetchData(
-              INDEXER.ATTESTATION_LISTENER(txHash, oldGrant.chainID),
-              "POST",
-              {}
-            );
-          }
-          while (retries > 0) {
-            const fetchedProject = await gapIndexerApi
-              .projectBySlug(oldGrant.refUID)
-              .then((res) => res.data)
-              .catch(() => null);
-            const fetchedGrant = fetchedProject?.grants.find(
-              (item) => item.uid.toLowerCase() === oldGrant.uid.toLowerCase()
-            );
-
-            if (
-              new Date(fetchedGrant?.details?.updatedAt) >
-              new Date(oldGrantData?.details?.updatedAt)
-            ) {
-              clearMilestonesForms();
-              // Reset form data and go back to step 1 for a new grant
-              resetFormData();
-              setFormPriorities([]);
-              setCurrentStep(1);
-              setFlowType("grant"); // Reset to default flow type
-              retries = 0;
-              toast.success(MESSAGES.GRANT.UPDATE.SUCCESS);
-              changeStepperStep("indexed");
-              await refreshProject().then(() => {
-                router.push(
-                  PAGES.PROJECT.GRANT(
-                    selectedProject.details?.data?.slug || selectedProject.uid,
-                    oldGrant.uid
-                  )
-                );
-                router.refresh();
-              });
-            }
-            retries -= 1;
-            // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
-            await new Promise((resolve) => setTimeout(resolve, 1500));
-          }
-        });
-    } catch (error: any) {
-      errorManager(
-        MESSAGES.GRANT.UPDATE.ERROR,
-        error,
-        {
-          grantUID: oldGrant.uid,
-          projectUID: selectedProject.uid,
-        },
-        { error: MESSAGES.GRANT.UPDATE.ERROR }
-      );
-    } finally {
-      setIsLoading(false);
-      setIsStepper(false);
-    }
-  };
-
   const handleNext = () => {
     if (!isValid) return;
 
@@ -288,8 +173,10 @@ export const DetailsScreen: React.FC = () => {
     }
   };
 
+  const totalSteps = flowType === "program" ? 3 : 4;
+
   return (
-    <StepBlock currentStep={3} totalSteps={4}>
+    <StepBlock currentStep={3}>
       <div className="flex flex-col w-full mx-auto">
         <h3 className="text-xl font-semibold mb-6 text-center">
           Add details to your {flowType === "grant" ? "grant" : "application"}
@@ -440,7 +327,11 @@ export const DetailsScreen: React.FC = () => {
               onClick={handleSubmit(handleNext)}
               disabled={!isValid}
               text={
-                flowType === "grant" ? (isEditing ? "Update" : "Next") : "Next"
+                flowType === "program" && isEditing
+                  ? isEditing
+                    ? "Update"
+                    : "Next"
+                  : "Next"
               }
             />
           </div>

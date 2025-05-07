@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { StepBlock } from "../StepBlock";
 import { useGrantFormStore } from "../store";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useParams } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
 import { useProjectStore } from "@/store";
 import { CommunitiesDropdown } from "@/components/CommunitiesDropdown";
@@ -11,6 +11,7 @@ import { SearchGrantProgram } from "../index";
 import { CancelButton } from "./buttons/CancelButton";
 import { NextButton } from "./buttons/NextButton";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
+import { useGrant } from "@/hooks";
 
 export const CommunitySelectionScreen: React.FC = () => {
   const {
@@ -24,7 +25,10 @@ export const CommunitySelectionScreen: React.FC = () => {
   const selectedProject = useProjectStore((state) => state.project);
   const router = useRouter();
   const pathname = usePathname();
+  const params = useParams();
+  const grantUid = params.grantUid as string;
   const isEditing = pathname.includes("/edit");
+  const { updateGrant, isLoading: isUpdatingGrant } = useGrant();
   const [allCommunities, setAllCommunities] = useState<ICommunityResponse[]>(
     []
   );
@@ -62,7 +66,28 @@ export const CommunitySelectionScreen: React.FC = () => {
   };
 
   const handleNext = () => {
-    setCurrentStep(3);
+    if (isEditing && flowType === "program") {
+      const grantToUpdate = selectedProject?.grants?.find(
+        (g) => g.uid.toLowerCase() === grantUid?.toLowerCase()
+      );
+
+      if (grantToUpdate) {
+        const updateData = {
+          community: formData.community || "",
+          programId: formData.programId,
+          title: formData.title,
+          selectedTrackIds: formData.selectedTrackIds || [],
+        };
+
+        updateGrant(grantToUpdate, updateData);
+      }
+    } else {
+      if (flowType === "program") {
+        setCurrentStep(4); // Go directly to milestones screen
+      } else {
+        setCurrentStep(3); // Go to details screen for grants
+      }
+    }
   };
 
   const handleBack = () => {
@@ -82,7 +107,7 @@ export const CommunitySelectionScreen: React.FC = () => {
     !!formData.community && (!!formData.programId || !!formData.title);
 
   return (
-    <StepBlock currentStep={2} totalSteps={4}>
+    <StepBlock currentStep={2}>
       <div className="flex flex-col items-center w-full mx-auto">
         <h3 className="text-xl font-semibold mb-6 text-center">
           {isEditing
@@ -167,7 +192,7 @@ export const CommunitySelectionScreen: React.FC = () => {
               }}
             />
             <NextButton
-              text="Next"
+              text={flowType === "program" && isEditing ? "Update" : "Next"}
               onClick={handleNext}
               disabled={!canProceed}
             />

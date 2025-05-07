@@ -7,6 +7,7 @@ import { GrantTitleDropdown } from "./GrantTitleDropdown";
 import { TrackSelection } from "./TrackSelection";
 import { useGrantFormStore } from "./store";
 import { usePathname } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 
 interface SearchGrantProgramProps {
   grantToEdit?: IGrantResponse;
@@ -33,8 +34,6 @@ export function SearchGrantProgram({
   searchForProgram,
   canAdd = true,
 }: SearchGrantProgramProps) {
-  const [allPrograms, setAllPrograms] = useState<GrantProgram[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [selectedProgram, setSelectedProgram] = useState<GrantProgram | null>(
     null
   );
@@ -44,13 +43,12 @@ export function SearchGrantProgram({
   const pathname = usePathname();
   const isEditing = pathname.includes("/edit");
 
-  // Only fetch programs when community changes or on first load
-  useEffect(() => {
-    // Skip if we don't have a community UID
-    if (!communityUID) return;
+  // Use React Query to fetch programs
+  const { data: allPrograms = [], isLoading } = useQuery({
+    queryKey: ["programs", communityUID, searchForProgram],
+    queryFn: async () => {
+      if (!communityUID) return [];
 
-    const fetchPrograms = async () => {
-      setIsLoading(true);
       try {
         const [result, error] = await fetchData(
           INDEXER.COMMUNITY.PROGRAMS(communityUID)
@@ -58,9 +56,7 @@ export function SearchGrantProgram({
 
         if (error) {
           console.error("Error fetching programs:", error);
-          setAllPrograms([]);
-          setIsLoading(false);
-          return;
+          return [];
         }
 
         let programsList = result;
@@ -87,52 +83,62 @@ export function SearchGrantProgram({
           });
         }
 
-        setAllPrograms(programsList);
-
-        // Try to auto-select program for grant editing
-        if (
-          isEditing &&
-          grantToEdit?.details?.data?.programId &&
-          !hasAttemptedAutoSelect
-        ) {
-          const editingProgramId =
-            grantToEdit.details.data.programId.split("_")[0];
-          const matchingProgram = programsList.find(
-            (program: GrantProgram) => program.programId === editingProgramId
-          );
-
-          if (matchingProgram) {
-            setSelectedProgram(matchingProgram);
-            setValue(
-              "programId",
-              `${matchingProgram.programId}_${matchingProgram.chainID}`
-            );
-            if (!formData.title) {
-              setValue("title", matchingProgram.metadata?.title, {
-                shouldValidate: true,
-              });
-            }
-          }
-
-          // Mark that we've attempted auto-selection to prevent endless loops
-          setHasAttemptedAutoSelect(true);
-        }
+        return programsList;
       } catch (err) {
         console.error("Failed to fetch programs:", err);
-      } finally {
-        setIsLoading(false);
+        return [];
       }
-    };
+    },
+    enabled: !!communityUID,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
-    fetchPrograms();
-  }, [communityUID, searchForProgram]);
+  // Handle auto-selection for editing mode
+  useEffect(() => {
+    if (
+      isEditing &&
+      allPrograms?.length > 0 &&
+      grantToEdit?.details?.data?.programId &&
+      !hasAttemptedAutoSelect
+    ) {
+      const editingProgramId = grantToEdit.details.data.programId.split("_")[0];
+      const matchingProgram = allPrograms.find(
+        (program: GrantProgram) => program.programId === editingProgramId
+      );
+
+      if (matchingProgram) {
+        setSelectedProgram(matchingProgram);
+        setValue(
+          "programId",
+          `${matchingProgram.programId}_${matchingProgram.chainID}`
+        );
+        if (!formData.title) {
+          setValue("title", matchingProgram.metadata?.title, {
+            shouldValidate: true,
+          });
+        }
+      }
+
+      // Mark that we've attempted auto-selection to prevent endless loops
+      setHasAttemptedAutoSelect(true);
+    }
+  }, [
+    allPrograms,
+    isEditing,
+    grantToEdit,
+    hasAttemptedAutoSelect,
+    setValue,
+    formData.title,
+  ]);
+
+  const programIdWatch = watch("programId");
 
   // Reset selected program when programId is cleared
   useEffect(() => {
-    if (!watch("programId") && !isEditing) {
+    if (!programIdWatch && !isEditing) {
       setSelectedProgram(null);
     }
-  }, [watch, isEditing]);
+  }, [programIdWatch, isEditing]);
 
   return (
     <div className="w-full">
