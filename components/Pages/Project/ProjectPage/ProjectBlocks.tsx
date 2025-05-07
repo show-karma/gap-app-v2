@@ -6,6 +6,7 @@ import { useIntroModalStore } from "@/store/modals/intro";
 import { envVars } from "@/utilities/enviromentVars";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 
 export function ProjectBlocks() {
@@ -15,108 +16,108 @@ export function ProjectBlocks() {
   const params = useParams();
   const { setIsIntroModalOpen } = useIntroModalStore();
 
-  const blocks: {
-    iconSrc: string;
-    title: string;
-    description: string;
-    link?: string;
-    action?: () => void;
-    disabled?: boolean;
-    bg: string;
-  }[] = [
-    // {
-    //   iconSrc: "/icons/donate-once.png",
-    //   title: "Donate once",
-    //   description: "Make a one-time contribution",
-    //   link: "/",
-    //   bg: "bg-[#DDF9F2]",
-    // },
-    // {
-    //   iconSrc: "/icons/recurring-donate.png",
-    //   title: "Recurring Donation",
-    //   description: "Setup a monthly donation",
-    //   link: "/",
-    //   bg: "bg-[#ECE9FE]",
-    // },
-    {
-      iconSrc: "/icons/deck.svg",
-      title: "Read Pitch Deck",
-      description: "Read the pitch deck of the project",
-      bg: "bg-[#ECE9FE]",
-      link: project?.details?.data.links
-        ?.find((link) => link.type === "pitchDeck")
-        ?.url.includes("http")
-        ? project?.details?.data.links?.find(
-            (link) => link.type === "pitchDeck"
-          )?.url
-        : `https://${
-            project?.details?.data.links?.find(
+  const mountBlocks = () => {
+    let blocks: {
+      iconSrc: string;
+      title: string;
+      description: string;
+      link?: string;
+      action?: () => void;
+      disabled?: boolean;
+      bg: string;
+    }[] = [
+      {
+        iconSrc: "/icons/wave.svg",
+        title: "Request intro",
+        description: "Get an introduction to connect",
+        action: () => setIsIntroModalOpen(true),
+        bg: "bg-[#DBFFC5]",
+      },
+    ];
+
+    const havePitchDeck = !!project?.details?.data.links?.find(
+      (link) => link.type === "pitchDeck"
+    )?.url;
+    const haveDemoVideo = !!project?.details?.data.links?.find(
+      (link) => link.type === "demoVideo"
+    )?.url;
+    const haveWebsite = !!project?.details?.data.links?.find(
+      (link) => link.type === "website"
+    )?.url;
+
+    if (!havePitchDeck || !haveDemoVideo) {
+      blocks.push({
+        iconSrc: "/icons/thumbs-up.svg",
+        title: "Endorse the Project",
+        description: "Publicly endorse our project",
+        action: () => setIsEndorsementOpen(true),
+        bg: "bg-[#FFF3D4]",
+      });
+    }
+    if (haveWebsite) {
+      blocks.push({
+        iconSrc: "/icons/website.svg",
+        title: "Website",
+        description: "Visit the website of the project",
+        link: project?.details?.data.links
+          ?.find((link) => link.type === "website")
+          ?.url.includes("http")
+          ? project?.details?.data.links?.find(
+              (link) => link.type === "website"
+            )?.url
+          : `https://${
+              project?.details?.data.links?.find(
+                (link) => link.type === "website"
+              )?.url
+            }`,
+        bg: "bg-[#FFE6D5]",
+      });
+    }
+    if (havePitchDeck) {
+      blocks.push({
+        iconSrc: "/icons/deck.svg",
+        title: "Read Pitch Deck",
+        description: "Read the pitch deck of the project",
+        bg: "bg-[#ECE9FE]",
+        link: project?.details?.data.links
+          ?.find((link) => link.type === "pitchDeck")
+          ?.url.includes("http")
+          ? project?.details?.data.links?.find(
               (link) => link.type === "pitchDeck"
             )?.url
-          }`,
-      disabled: !project?.details?.data.links?.find(
-        (link) => link.type === "pitchDeck"
-      )?.url,
-    },
-    {
-      iconSrc: "/icons/video.svg",
-      title: "Watch Demo Video",
-      description: "Watch the demo video of the project",
-      bg: "bg-[#FDE3FF]",
-      link: project?.details?.data.links
-        ?.find((link) => link.type === "demoVideo")
-        ?.url.includes("http")
-        ? project?.details?.data.links?.find(
-            (link) => link.type === "demoVideo"
-          )?.url
-        : `https://${
-            project?.details?.data.links?.find(
+          : `https://${
+              project?.details?.data.links?.find(
+                (link) => link.type === "pitchDeck"
+              )?.url
+            }`,
+      });
+    }
+    if (haveDemoVideo) {
+      blocks.push({
+        iconSrc: "/icons/video.svg",
+        title: "Watch Demo Video",
+        description: "Watch the demo video of the project",
+        bg: "bg-[#FDE3FF]",
+        link: project?.details?.data.links
+          ?.find((link) => link.type === "demoVideo")
+          ?.url.includes("http")
+          ? project?.details?.data.links?.find(
               (link) => link.type === "demoVideo"
             )?.url
-          }`,
-      disabled: !project?.details?.data.links?.find(
-        (link) => link.type === "demoVideo"
-      )?.url,
-    },
-    {
-      iconSrc: "/icons/wave.svg",
-      title: "Request intro",
-      description: "Get an introduction to connect",
-      action: () => setIsIntroModalOpen(true),
-      bg: "bg-[#DBFFC5]",
-    },
-    {
-      iconSrc: "/icons/thumbs-up.svg",
-      title: "Endorse the Project",
-      description: "Publicly endorse our project",
-      action: () => setIsEndorsementOpen(true),
-      bg: "bg-[#FFF3D4]",
-    },
-    // {
-    //   iconSrc: "/icons/link.png",
-    //   title: "Farcaster Link",
-    //   description: "Share your project on Farcaster as a frame",
-    //   bg: "bg-[#FFE6D5]",
-    //   action: () => {
-    //     copy(
-    //       envVars.VERCEL_URL +
-    //         PAGES.PROJECT.OVERVIEW(
-    //           project?.details?.data.slug || (params.projectId as string)
-    //         ),
-    //       "Just post the link to Farcaster and it will be displayed as a frame!"
-    //     );
-    //   },
-    // },
-    // {
-    //   iconSrc: "/icons/support.png",
-    //   title: "Support the Project",
-    //   description: "Help us continue our work",
-    //   link: "/",
-    //   bg: "bg-[#FDE3FF]",
-    // },
-  ];
+          : `https://${
+              project?.details?.data.links?.find(
+                (link) => link.type === "demoVideo"
+              )?.url
+            }`,
+      });
+    }
 
-  function Block({ item }: { item: (typeof blocks)[number] }) {
+    return blocks;
+  };
+
+  const blocksMounted = mountBlocks();
+
+  function Block({ item }: { item: (typeof blocksMounted)[number] }) {
     return (
       <div
         className={cn(
@@ -124,16 +125,21 @@ export function ProjectBlocks() {
           item.bg
         )}
       >
-        <img src={item.iconSrc} alt={item.title} className="w-6 h-6" />
+        <Image
+          width={24}
+          height={24}
+          src={item.iconSrc}
+          alt={item.title}
+          className="w-6 h-6"
+        />
         <p className="text-sm font-bold text-black text-left">{item.title}</p>
       </div>
     );
   }
 
-  const blocksWithCondition = blocks.filter((item) => !item.disabled);
   return (
     <div className="flex flex-row gap-3 flex-wrap max-lg:gap-1 max-md:flex-col">
-      {blocksWithCondition.map((item) =>
+      {blocksMounted.map((item) =>
         item.action ? (
           <div className="flex flex-1" key={item.title}>
             <button
