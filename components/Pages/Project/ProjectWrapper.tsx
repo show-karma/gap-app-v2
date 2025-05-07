@@ -62,13 +62,13 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   const isAuthorized = isOwner || isProjectAdmin || isProjectOwner;
 
   useEffect(() => {
-    if (!project) {
+    if (!storedProject) {
       setProject(project);
       return;
     }
 
     refreshMembers();
-  }, [project]);
+  }, [project, storedProject]);
 
   const { data: contactsInfo } = useContactInfo(projectId, isAuthorized);
 
