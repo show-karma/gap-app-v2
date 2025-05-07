@@ -3731,9 +3731,10 @@
     unplugin "1.0.1"
     uuid "^9.0.0"
 
-"@show-karma/karma-gap-sdk@git+https://github.com/show-karma/karma-gap-sdk.git#dcc1780":
-  version "0.4.10"
-  resolved "git+https://github.com/show-karma/karma-gap-sdk.git#dcc178051c70a4eaf610608670254dd2d33d1a05"
+"@show-karma/karma-gap-sdk@^0.4.11":
+  version "0.4.11"
+  resolved "https://registry.yarnpkg.com/@show-karma/karma-gap-sdk/-/karma-gap-sdk-0.4.11.tgz#3852abcac7bf4547fa2112347214d10fb2a33b32"
+  integrity sha512-68lwwcNNvrD6tfs6uoZogp3Gl77Q7ksNRS9XZfWm8yKOD8CY6NaaMW814Rbut9cZk1ttPJrBR3FcYwf7H8oZJQ==
   dependencies:
     "@allo-team/allo-v2-sdk" "^1.0.63"
     "@ethereum-attestation-service/eas-sdk" "1.4.2"

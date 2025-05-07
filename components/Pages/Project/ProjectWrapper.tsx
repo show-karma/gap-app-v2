@@ -28,15 +28,15 @@ import {
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useEffect } from "react";
 import { useAccount } from "wagmi";
 import { IntroDialog } from "./IntroDialog";
 
-import { getRPCClient } from "@/utilities/rpcClient";
-import { useContactInfo } from "@/hooks/useContactInfo";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
-import { ShareDialog } from "../GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/ShareDialog";
+import { useContactInfo } from "@/hooks/useContactInfo";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
+import { getRPCClient } from "@/utilities/rpcClient";
+import { ShareDialog } from "../GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/ShareDialog";
 
 interface ProjectWrapperProps {
   project: IProjectResponse;
@@ -58,15 +58,15 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   const router = useRouter();
   const pathname = usePathname();
 
-  useEffect(() => {
-    setProject(project);
-  }, [project]);
-
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isOwner || isProjectAdmin || isProjectOwner;
 
   useEffect(() => {
-    if (!project) return;
+    if (!project) {
+      setProject(project);
+      return;
+    }
+
     refreshMembers();
   }, [project]);
 
