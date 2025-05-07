@@ -1,7 +1,4 @@
-import { APIContact, Contact } from "@/types/project";
-import fetchData from "@/utilities/fetchData";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { INDEXER } from "@/utilities/indexer";
 import { getContributorProfiles } from "@/utilities/indexer/getContributorProfiles";
 import { ContributorProfile } from "@show-karma/karma-gap-sdk";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
