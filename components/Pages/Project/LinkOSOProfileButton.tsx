@@ -15,18 +15,24 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import type { FC } from "react";
+import type { FC, ReactNode } from "react";
 import { Fragment, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 interface LinkOSOProfileButtonProps {
   buttonClassName?: string;
   project: IProjectResponse & { external: Record<string, string[]> };
+  "data-link-oso-button"?: string;
+  buttonElement?: { text: string; icon: ReactNode; styleClass: string } | null;
+  onClose?: () => void;
 }
 
 export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
   project,
   buttonClassName,
+  "data-link-oso-button": dataAttr,
+  buttonElement,
+  onClose,
 }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
@@ -48,6 +54,12 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
     }
   }, [project?.external?.oso]);
 
+  useEffect(() => {
+    if (buttonElement === null) {
+      setIsOpen(true);
+    }
+  }, [buttonElement]);
+
   const handleAddId = () => {
     setIds([...ids, ""]);
   };
@@ -65,6 +77,13 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
     const newIds = [...ids];
     newIds[index] = value;
     setIds(newIds);
+  };
+
+  const handleClose = () => {
+    setIsOpen(false);
+    if (buttonElement === null && onClose) {
+      onClose();
+    }
   };
 
   const handleSave = async () => {
@@ -86,6 +105,10 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
       if (data) {
         setIds(validIds);
         toast.success(MESSAGES.PROJECT.LINK_OSO_PROFILE.SUCCESS);
+        if (buttonElement === null && onClose) {
+          setIsOpen(false);
+          onClose();
+        }
       }
 
       if (error) {
@@ -111,16 +134,18 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
 
   return (
     <>
-      <Button onClick={() => setIsOpen(true)} className={buttonClassName}>
-        <FingerPrintIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
-        Link OSO Profiles
-      </Button>
-      <Transition appear show={isOpen} as={Fragment}>
-        <Dialog
-          as="div"
-          className="relative z-10"
-          onClose={() => setIsOpen(false)}
+      {buttonElement !== null && (
+        <Button
+          onClick={() => setIsOpen(true)}
+          className={buttonClassName}
+          data-link-oso-button={dataAttr}
         >
+          <FingerPrintIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
+          Link OSO Profiles
+        </Button>
+      )}
+      <Transition appear show={isOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-10" onClose={handleClose}>
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -206,7 +231,7 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
                     </Button>
                     <Button
                       className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
-                      onClick={() => setIsOpen(false)}
+                      onClick={handleClose}
                     >
                       Close
                     </Button>

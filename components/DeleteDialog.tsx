@@ -15,6 +15,7 @@ type DeleteDialogProps = {
   } | null;
   isLoading: boolean;
   afterFunction?: () => void;
+  "data-delete-project-button"?: string;
 };
 
 export const DeleteDialog: FC<DeleteDialogProps> = ({
@@ -28,6 +29,7 @@ export const DeleteDialog: FC<DeleteDialogProps> = ({
   },
   isLoading,
   afterFunction,
+  "data-delete-project-button": dataAttr,
 }) => {
   let [isOpen, setIsOpen] = useState(false);
 
@@ -52,7 +54,11 @@ export const DeleteDialog: FC<DeleteDialogProps> = ({
   return (
     <>
       {buttonElement ? (
-        <Button onClick={openModal} className={buttonElement.styleClass}>
+        <Button
+          onClick={openModal}
+          className={buttonElement.styleClass}
+          data-delete-project-button={dataAttr}
+        >
           {buttonElement.icon}
           {buttonElement.text}
         </Button>
