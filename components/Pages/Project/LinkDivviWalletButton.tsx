@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import fetchData from "@/utilities/fetchData";
@@ -10,13 +11,16 @@ import { MESSAGES } from "@/utilities/messages";
 import { Dialog, Transition } from "@headlessui/react";
 import { WalletIcon } from "@heroicons/react/24/outline";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import type { FC } from "react";
+import type { FC, ReactNode } from "react";
 import { Fragment, useEffect, useState, useCallback } from "react";
 import toast from "react-hot-toast";
 
 interface LinkDivviWalletButtonProps {
   buttonClassName?: string;
   project: IProjectResponse & { external: Record<string, string[]> };
+  "data-link-divvi-button"?: string;
+  buttonElement?: { text: string; icon: ReactNode; styleClass: string } | null;
+  onClose?: () => void;
 }
 
 // Regex pattern for Ethereum addresses
@@ -25,6 +29,9 @@ const ETH_ADDRESS_REGEX = /^0x[a-fA-F0-9]{40}$/;
 export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
   project,
   buttonClassName,
+  "data-link-divvi-button": dataAttr,
+  buttonElement,
+  onClose,
 }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
@@ -47,6 +54,13 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
     }
   }, [project?.external?.divvi_wallets]);
 
+  // Auto open the dialog if buttonElement is null
+  useEffect(() => {
+    if (buttonElement === null) {
+      setIsOpen(true);
+    }
+  }, [buttonElement]);
+
   const handleWalletChange = useCallback((value: string) => {
     setWalletAddress(value);
     setValidationError(null);
@@ -64,6 +78,13 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
 
     return true;
   }, []);
+
+  const handleClose = () => {
+    setIsOpen(false);
+    if (buttonElement === null && onClose) {
+      onClose();
+    }
+  };
 
   const handleSave = useCallback(async () => {
     setError(null);
@@ -88,7 +109,11 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
       );
 
       if (data) {
-        toast.success("Divvi wallet address successfully linked to project");
+        toast.success("Divvi identifier successfully linked to project");
+        if (buttonElement === null && onClose) {
+          setIsOpen(false);
+          onClose();
+        }
       }
 
       if (error) {
@@ -106,7 +131,7 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [project.uid, walletAddress, validateWalletAddress]);
+  }, [project.uid, walletAddress, validateWalletAddress, onClose]);
 
   if (!isAuthorized) {
     return null;
@@ -114,16 +139,18 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
 
   return (
     <>
-      <Button onClick={() => setIsOpen(true)} className={buttonClassName}>
-        <WalletIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
-        Link Divvi Identifier
-      </Button>
-      <Transition appear show={isOpen} as={Fragment}>
-        <Dialog
-          as="div"
-          className="relative z-10"
-          onClose={() => setIsOpen(false)}
+      {buttonElement !== null && (
+        <Button
+          onClick={() => setIsOpen(true)}
+          className={buttonClassName}
+          data-link-divvi-button={dataAttr}
         >
+          <WalletIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
+          Link Divvi Identifier
+        </Button>
+      )}
+      <Transition appear show={isOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-10" onClose={handleClose}>
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -153,25 +180,31 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
                     className="text-gray-900 dark:text-zinc-100"
                   >
                     <h2 className="text-2xl font-bold leading-6">
-                      Link Divvi Entity Wallet Address
+                      Link Divvi Identifier
                     </h2>
-                    <p className="text-md text-gray-500 dark:text-gray-400 mt-2">
-                      Add a Divvi wallet address for the project. This will
-                      enable the project to integrate with Divvi functionality.
-                    </p>
+                    <span className="text-md text-gray-500 dark:text-gray-400 mt-2">
+                      Add your Divvi wallet address (Divvi Identifier) from{" "}
+                      <ExternalLink
+                        href="https://app.divvi.xyz"
+                        className="text-blue-500 underline cursor-pointer"
+                      >
+                        app.divvi.xyz
+                      </ExternalLink>{" "}
+                      to enable Divvi integration.
+                    </span>
                   </Dialog.Title>
                   <div className="mt-8">
                     <div className="flex items-center justify-between p-4 bg-gray-100 dark:bg-zinc-700 rounded-lg w-full">
                       <div className="flex items-center space-x-4 w-full">
                         <span className="text-md font-bold capitalize whitespace-nowrap">
-                          Wallet Address
+                          Divvi Identifier
                         </span>
                         <input
                           type="text"
                           value={walletAddress}
                           onChange={(e) => handleWalletChange(e.target.value)}
                           className="text-sm rounded-md w-full text-gray-900 dark:text-gray-300 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-blue-500"
-                          placeholder="Enter Divvi wallet address (0x...)"
+                          placeholder="Enter Divvi Identifier (0x...)"
                         />
                       </div>
                     </div>
@@ -191,8 +224,8 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
                       {isLoading ? "Saving..." : "Save"}
                     </Button>
                     <Button
-                      className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-transparent hover:text-black disabled:hover:bg-transparent disabled:hover:text-zinc-900"
-                      onClick={() => setIsOpen(false)}
+                      className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
+                      onClick={handleClose}
                     >
                       Close
                     </Button>

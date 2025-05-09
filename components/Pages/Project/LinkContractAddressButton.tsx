@@ -13,7 +13,7 @@ import {
   TrashIcon,
 } from "@heroicons/react/24/outline";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import type { FC } from "react";
+import type { FC, ReactNode } from "react";
 import { Fragment, useEffect, useState } from "react";
 import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdown";
 import toast from "react-hot-toast";
@@ -23,6 +23,9 @@ import { MESSAGES } from "@/utilities/messages";
 interface LinkContractAddressesButtonProps {
   buttonClassName?: string;
   project: IProjectResponse & { external: Record<string, string[]> };
+  "data-link-contracts-button"?: string;
+  buttonElement?: { text: string; icon: ReactNode; styleClass: string } | null;
+  onClose?: () => void;
 }
 
 interface NetworkAddressPair {
@@ -73,7 +76,13 @@ const SUPPORTED_NETWORKS = [
 
 export const LinkContractAddressButton: FC<
   LinkContractAddressesButtonProps
-> = ({ project, buttonClassName }) => {
+> = ({
+  project,
+  buttonClassName,
+  "data-link-contracts-button": dataAttr,
+  buttonElement,
+  onClose,
+}) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isCommunityAdmin = useCommunityAdminStore(
@@ -99,6 +108,12 @@ export const LinkContractAddressButton: FC<
       setNetworkAddressPairs([{ network: "", address: "" }]);
     }
   }, [project?.external?.network_addresses]);
+
+  useEffect(() => {
+    if (buttonElement === null) {
+      setIsOpen(true);
+    }
+  }, [buttonElement]);
 
   const handleAddPair = () => {
     setNetworkAddressPairs([
@@ -154,6 +169,10 @@ export const LinkContractAddressButton: FC<
       if (data) {
         setNetworkAddressPairs(validPairs);
         toast.success(MESSAGES.PROJECT.LINK_CONTRACT_ADDRESSES.SUCCESS);
+        if (buttonElement === null && onClose) {
+          setIsOpen(false);
+          onClose();
+        }
       }
 
       if (error) {
@@ -175,22 +194,32 @@ export const LinkContractAddressButton: FC<
     }
   };
 
+  // Define a function to handle dialog close
+  const handleClose = () => {
+    setIsOpen(false);
+    if (buttonElement === null && onClose) {
+      onClose();
+    }
+  };
+
   if (!isAuthorized) {
     return null;
   }
 
   return (
     <>
-      <Button onClick={() => setIsOpen(true)} className={buttonClassName}>
-        <LinkIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
-        Link Contracts
-      </Button>
-      <Transition appear show={isOpen} as={Fragment}>
-        <Dialog
-          as="div"
-          className="relative z-10"
-          onClose={() => setIsOpen(false)}
+      {buttonElement !== null && (
+        <Button
+          onClick={() => setIsOpen(true)}
+          className={buttonClassName}
+          data-link-contracts-button={dataAttr}
         >
+          <LinkIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
+          Link Contracts
+        </Button>
+      )}
+      <Transition appear show={isOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-10" onClose={handleClose}>
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -289,7 +318,7 @@ export const LinkContractAddressButton: FC<
                     </Button>
                     <Button
                       className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
-                      onClick={() => setIsOpen(false)}
+                      onClick={handleClose}
                     >
                       Close
                     </Button>

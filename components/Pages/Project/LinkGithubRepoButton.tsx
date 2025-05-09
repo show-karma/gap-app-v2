@@ -10,7 +10,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { Dialog, Transition } from "@headlessui/react";
 import { PlusIcon, TrashIcon, CheckIcon } from "@heroicons/react/24/outline";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import type { FC } from "react";
+import type { FC, ReactNode } from "react";
 import { Fragment, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -34,11 +34,17 @@ const GitHubIcon: FC<{ className?: string }> = ({ className }) => (
 interface LinkGithubRepoButtonProps {
   buttonClassName?: string;
   project: IProjectResponse & { external: Record<string, string[]> };
+  "data-link-github-button"?: string;
+  buttonElement?: { text: string; icon: ReactNode; styleClass: string } | null;
+  onClose?: () => void;
 }
 
 export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
   project,
   buttonClassName,
+  "data-link-github-button": dataAttr,
+  buttonElement,
+  onClose,
 }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
@@ -58,6 +64,13 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
   const [validatedRepos, setValidatedRepos] = useState<Record<number, boolean>>(
     {}
   );
+
+  // Auto open the dialog if buttonElement is null
+  useEffect(() => {
+    if (buttonElement === null) {
+      setIsOpen(true);
+    }
+  }, [buttonElement]);
 
   useEffect(() => {
     if (project?.external?.github?.length) {
@@ -252,7 +265,10 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
       if (data) {
         setRepos(nonEmptyRepos.length ? nonEmptyRepos : [""]);
         toast.success("GitHub repositories updated successfully");
-        setIsOpen(false);
+        if (buttonElement === null && onClose) {
+          setIsOpen(false);
+          onClose();
+        }
       }
 
       if (error) {
@@ -278,22 +294,31 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
       .every((_, index) => validatedRepos[index]);
   };
 
+  const handleClose = () => {
+    setIsOpen(false);
+    if (buttonElement === null && onClose) {
+      onClose();
+    }
+  };
+
   if (!isAuthorized) {
     return null;
   }
 
   return (
     <>
-      <Button onClick={() => setIsOpen(true)} className={buttonClassName}>
-        <GitHubIcon className="mr-2 h-5 w-5" />
-        Link GitHub Repos
-      </Button>
-      <Transition appear show={isOpen} as={Fragment}>
-        <Dialog
-          as="div"
-          className="relative z-10"
-          onClose={() => setIsOpen(false)}
+      {buttonElement !== null && (
+        <Button
+          onClick={() => setIsOpen(true)}
+          className={buttonClassName}
+          data-link-github-button={dataAttr}
         >
+          <GitHubIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
+          Link GitHub Repo
+        </Button>
+      )}
+      <Transition appear show={isOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-10" onClose={handleClose}>
           <Transition.Child
             as={Fragment}
             enter="ease-out duration-300"
@@ -419,10 +444,11 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
                       {isLoading ? "Saving..." : "Save All"}
                     </Button>
                     <Button
-                      className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900"
-                      onClick={() => setIsOpen(false)}
+                      className="text-zinc-900 text-lg bg-transparent border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white"
+                      onClick={handleClose}
+                      type="button"
                     >
-                      Close
+                      Cancel
                     </Button>
                   </div>
                 </Dialog.Panel>
@@ -434,3 +460,6 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
     </>
   );
 };
+
+// Add display name
+LinkGithubRepoButton.displayName = "LinkGithubRepoButton";
