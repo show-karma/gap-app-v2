@@ -1,5 +1,5 @@
 import { render, screen } from "@testing-library/react";
-import Projects from "@/app/projects/page";
+import Projects from "@/app/old-projects/page";
 import "@testing-library/jest-dom";
 import { getNewProjects } from "@/utilities/indexer/getNewProjects";
 
