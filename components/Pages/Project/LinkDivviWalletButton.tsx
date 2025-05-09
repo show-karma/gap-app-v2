@@ -92,16 +92,16 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
       }
 
       if (error) {
-        setError("Failed to link Divvi wallet address.");
-        throw new Error("Failed to link Divvi wallet address");
+        setError("Failed to Link Divvi Identifier address.");
+        throw new Error("Failed to Link Divvi Identifier address");
       }
     } catch (err) {
-      setError("Failed to link Divvi wallet address.");
+      setError("Failed to Link Divvi Identifier address.");
       errorManager(
-        "Failed to link Divvi wallet address.",
+        "Failed to Link Divvi Identifier address.",
         err,
         { projectUID: project.uid },
-        { error: "Failed to link Divvi wallet address." }
+        { error: "Failed to Link Divvi Identifier address." }
       );
     } finally {
       setIsLoading(false);
@@ -116,7 +116,7 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
     <>
       <Button onClick={() => setIsOpen(true)} className={buttonClassName}>
         <WalletIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
-        Link Divvi Wallet
+        Link Divvi Identifier
       </Button>
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog
