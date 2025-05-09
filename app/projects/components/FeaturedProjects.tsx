@@ -130,7 +130,7 @@ export default function FeaturedProjects() {
       id="featured-projects"
       className="mb-20 px-16 py-12 flex flex-col gap-6 h-full min-h-screen  max-sm:px-4 max-sm:py-6"
     >
-      <h2 className="text-4xl max-sm:text-2xl max-sm:mb-0 font-semibold text-black dark:text-zinc-100 mb-8">
+      <h2 className="text-4xl max-sm:text-2xl font-semibold text-black dark:text-zinc-100 max-sm:mb-0 mb-8">
         Featured projects
       </h2>
 

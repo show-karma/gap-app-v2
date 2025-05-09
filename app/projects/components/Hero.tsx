@@ -1,5 +1,15 @@
+import { PAGES } from "@/utilities/pages";
 import Image from "next/image";
 import Link from "next/link";
+import dynamic from "next/dynamic";
+
+const ProjectDialog = dynamic(
+  () =>
+    import("@/components/Dialogs/ProjectDialog").then(
+      (mod) => mod.ProjectDialog
+    ),
+  { ssr: false }
+);
 
 const areGrantOperatorLink = "/";
 
@@ -31,12 +41,15 @@ export default function Hero() {
     },
   ];
   return (
-    <section className="flex flex-1 flex-col gap-2 relative h-full min-h-screen mb-10">
+    <section className="flex flex-1 flex-col gap-2 relative h-full min-h-[95vh] mb-10">
       <div
         id="hero-top"
-        className="flex flex-col gap-2 max-h-1/2 h-full w-full items-center justify-end pt-24 z-[2]"
+        className="flex flex-col gap-2 max-h-1/2 h-full w-full items-center justify-end pt-24 z-[2] max-sm:px-2"
       >
-        <div id="icons-row" className="flex flex-row gap-4 flex-wrap mb-7">
+        <div
+          id="icons-row"
+          className="flex flex-row gap-4 flex-wrap mb-7 items-center max-sm:justify-center"
+        >
           {icons.map((icon, index) => (
             <div
               key={index}
@@ -49,23 +62,31 @@ export default function Hero() {
             </div>
           ))}
         </div>
-        <p className="text-[#6172F3] font-semibold text-xl font-body">
+        <p className="text-[#6172F3] font-semibold text-xl font-body text-center">
           Show your work. Build your rep. Earn trust onchain
         </p>
-        <h1 className="text-brand-darkblue dark:text-zinc-100 font-bold text-6xl font-body">
+        <h1 className="text-brand-darkblue dark:text-zinc-100 font-bold text-6xl font-body text-center max-sm:text-3xl">
           Projects on Karma GAP
         </h1>
-        <p className="text-brand-darkblue  dark:text-zinc-200 font-body text-xl font-normal text-center">
-          Track milestones, grow reputation, and connect with funders <br />{" "}
-          using the Grantee Accountability Protocol.
+        <p className="text-brand-darkblue  dark:text-zinc-200 font-body text-xl font-normal text-center max-sm:text-base">
+          Track milestones, grow reputation, and connect with funders{" "}
+          <br className="max-sm:hidden" /> using the Grantee Accountability
+          Protocol.
         </p>
         <div className="flex flex-row gap-4 mt-4">
-          <button className="px-5 py-2.5 font-semibold text-sm rounded bg-white text-brand-blue dark:bg-zinc-900 border border-brand-blue transition-all ease-in-out duration-200 hover:opacity-80">
+          <Link
+            href={PAGES.PROJECTS_EXPLORER("browse-projects")}
+            className="px-5 py-2.5 font-semibold text-sm rounded bg-white text-brand-blue dark:bg-zinc-900 border border-brand-blue transition-all ease-in-out duration-200 hover:opacity-80"
+          >
             Explore Projects
-          </button>
-          <button className="px-5 py-2.5 font-semibold text-sm rounded bg-brand-blue text-white border border-brand-blue transition-all ease-in-out duration-200 hover:opacity-80">
-            Create Project
-          </button>
+          </Link>
+          <ProjectDialog
+            buttonElement={{
+              text: "Create Project",
+              iconSide: "left",
+              styleClass: "",
+            }}
+          />
         </div>
         <div className="mt-4 text-sm text-brand-darkblue dark:text-zinc-200 font-normal">
           Are you a <span className="font-bold">grant operator?</span> Click{" "}
@@ -79,9 +100,9 @@ export default function Hero() {
       </div>
       <div
         id="hero-bottom"
-        className="flex max-h-1/2 h-full flex-col gap-2 w-full "
+        className="flex max-h-1/2 h-full flex-col gap-2 w-full"
       />
-      <div className="absolute top-10 bottom-0 left-0 w-full h-full z-[1] flex items-end justify-center">
+      <div className="absolute top-10 max-sm:top-0 bottom-0  overflow-x-hidden left-0 w-full h-full z-[1] flex items-end justify-center">
         <Image
           src="/images/explorer/artwork.svg"
           alt="hero-bottom"
@@ -89,7 +110,7 @@ export default function Hero() {
           height="0"
           sizes="100vw"
           quality={100}
-          className="w-[90%] h-auto"
+          className="w-[90%] h-auto max-sm:w-[300vw] "
         />
       </div>
     </section>

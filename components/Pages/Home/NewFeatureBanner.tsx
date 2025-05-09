@@ -15,7 +15,7 @@ export function NewFeatureBanner() {
               We just launched Project Explorer!
             </p>{" "}
             <Link
-              href={PAGES.PROJECTS_EXPLORER}
+              href={PAGES.PROJECTS_EXPLORER()}
               className="text-sm font-semibold text-blue-600 max-md:text-xs underline"
             >
               Explore all projects on Karma GAP!
@@ -26,7 +26,7 @@ export function NewFeatureBanner() {
                           </p> */}
           </div>
         </div>
-        <ExternalLink href={PAGES.PROJECTS_EXPLORER}>
+        <ExternalLink href={PAGES.PROJECTS_EXPLORER()}>
           <button
             type="button"
             className="max-md:text-xs max-md:p-[8px_12px] bg-[#080a0e] rounded-[4px] text-[#1de9b6] flex items-center justify-center gap-[8px] p-[16px_24px] outline-none border-none font-semibold text-[14px] leading-[16px]"

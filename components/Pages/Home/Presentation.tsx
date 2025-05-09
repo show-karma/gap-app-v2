@@ -72,7 +72,7 @@ export const Presentation = () => {
                     "max-sm:px-2 max-sm:py-2 flex rounded-md hover:opacity-75 border-none transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-3 bg-brand-darkblue dark:bg-gray-700 px-7 py-4 text-lg font-semibold leading-7 text-white hover:bg-brand-darkblue max-2xl:px-5 max-2xl:text-base max-lg:text-sm",
                 }}
               />
-              <Link href={PAGES.PROJECTS_EXPLORER}>
+              <Link href={PAGES.PROJECTS_EXPLORER()}>
                 <Button className="max-sm:px-2 max-sm:py-2 flex rounded-md hover:opacity-75 border-black dark:border-zinc-100 border transition-all ease-in-out duration-300 items-center h-max w-max flex-row gap-3 bg-transparent dark:bg-transparent px-7 py-4 text-lg font-semibold leading-7 text-black dark:text-zinc-100 hover:bg-transparent max-2xl:px-5 max-2xl:text-base max-lg:text-sm ">
                   Explore projects on GAP
                 </Button>
@@ -96,16 +96,21 @@ export const Presentation = () => {
                 <li className="flex w-full flex-row gap-4 break-words">
                   <CheckIcon className="h-6 min-h-[24px] w-6 min-w-[24px]" />
                   <p className="text-base font-normal">
-                    Create and utilize a single onchain project resume for all your grants
+                    Create and utilize a single onchain project resume for all
+                    your grants
                   </p>
                 </li>
                 <li className="flex w-full flex-row gap-4 break-words">
                   <CheckIcon className="h-6 min-h-[24px] w-6 min-w-[24px]" />
-                  <p className="text-base font-normal">Share project progress and build reputation onchain</p>
+                  <p className="text-base font-normal">
+                    Share project progress and build reputation onchain
+                  </p>
                 </li>
                 <li className="flex w-full flex-row gap-4 break-words">
                   <CheckIcon className="h-6 min-h-[24px] w-6 min-w-[24px]" />
-                  <p className="text-base font-normal">Receive rewards and funding for your work</p>
+                  <p className="text-base font-normal">
+                    Receive rewards and funding for your work
+                  </p>
                 </li>
               </ul>
             </div>
@@ -136,7 +141,8 @@ export const Presentation = () => {
                 <li className="flex w-full flex-row gap-4 break-words">
                   <CheckIcon className="h-6 max-h-[24px] min-h-[24px] w-6 min-w-[24px] max-w-[24px]" />
                   <p className="text-base font-normal ">
-                    Use Karma AI to monitor project progress and improve capital allocation
+                    Use Karma AI to monitor project progress and improve capital
+                    allocation
                   </p>
                 </li>
               </ul>

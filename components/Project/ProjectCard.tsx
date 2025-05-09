@@ -26,9 +26,11 @@ interface ProjectCardProps {
 }
 
 export default function ProjectCard({ project }: ProjectCardProps) {
-  // Pick a color based on the project uid to ensure consistency
   const colorIndex = project.uid.charCodeAt(0) % cardColors.length;
   const cardColor = cardColors[colorIndex];
+
+  const allMilestones =
+    project.noOfGrantMilestones + project.noOfProjectMilestones;
 
   return (
     <ExternalLink
@@ -54,7 +56,10 @@ export default function ProjectCard({ project }: ProjectCardProps) {
 
           {/* Project description */}
           <div className="flex-1 h-[72px]">
-            <MarkdownPreview source={project?.description?.slice(0, 160)} />
+            <MarkdownPreview
+              className="line-clamp-3"
+              source={project?.description?.slice(0, 160)}
+            />
           </div>
         </div>
       </div>
@@ -71,22 +76,13 @@ export default function ProjectCard({ project }: ProjectCardProps) {
           </div>
 
           {/* Milestone stats if available */}
-          {project.noOfGrantMilestones > 0 && (
+          {allMilestones > 0 && (
             <div className="flex h-max items-center justify-center rounded-full bg-slate-50 text-slate-600 dark:bg-zinc-800 dark:text-zinc-300 px-3 py-1">
               <p className="text-center text-sm font-medium">
-                {project.noOfGrantMilestones}{" "}
-                {pluralize("Milestone", project.noOfGrantMilestones)}
+                {allMilestones} {pluralize("Milestone", allMilestones)}
               </p>
             </div>
           )}
-
-          {/* Roadmap stats */}
-          <div className="flex h-max items-center justify-center rounded-full bg-slate-50 text-slate-600 dark:bg-zinc-800 dark:text-zinc-300 px-3 py-1">
-            <p className="text-center text-sm font-medium">
-              {formatCurrency(project.noOfProjectMilestones)} Roadmap{" "}
-              {pluralize("item", project.noOfProjectMilestones)}
-            </p>
-          </div>
         </div>
       </div>
     </ExternalLink>

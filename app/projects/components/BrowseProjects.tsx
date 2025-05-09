@@ -10,7 +10,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import ProjectCard from "@/components/Project/ProjectCard";
 import {
   useExplorerProjects,
@@ -18,6 +17,7 @@ import {
 } from "@/hooks/useExplorerProjects";
 import { Community } from "@/services/explorerProjects";
 import Image from "next/image";
+import { SelectIcon } from "@radix-ui/react-select";
 
 const PAGE_SIZE = 12;
 
@@ -131,7 +131,7 @@ export default function BrowseProjects() {
   return (
     <section id="browse-projects" className="w-full py-16 px-4 md:px-8">
       <div className="max-w-7xl mx-auto">
-        <div className="flex-1 flex flex-row items-center justify-between gap-4">
+        <div className="flex-1 flex flex-row items-center justify-between gap-4 max-sm:flex-col max-sm:gap-2 max-sm:items-start max-sm:mb-4">
           <h2 className="text-3xl font-bold mb-8">Browse Projects</h2>
           <Input
             type="text"
@@ -145,10 +145,10 @@ export default function BrowseProjects() {
         <div className="flex flex-col md:flex-row justify-end items-center gap-4 mb-8">
           <div className="w-full md:w-48">
             <Select onValueChange={handleSortChange} defaultValue="newest">
-              <SelectTrigger className="w-full max-w-48 text-black bg-white dark:bg-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-500">
+              <SelectTrigger className="w-full max-w-48 max-sm:max-w-full px-3 text-black bg-white dark:bg-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-500">
                 <SelectValue placeholder="Sort by" />
               </SelectTrigger>
-              <SelectContent className="w-full max-w-48 text-black bg-white dark:bg-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-500">
+              <SelectContent className="w-full max-w-48 max-sm:max-w-full text-black bg-white dark:bg-zinc-900 dark:text-zinc-100 border border-zinc-300 dark:border-zinc-500">
                 <SelectItem
                   value="newest"
                   className="hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-zinc-300"
@@ -182,7 +182,7 @@ export default function BrowseProjects() {
             <button
               type="button"
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className={`flex items-center justify-between w-full md:min-w-[200px] px-4 py-2 text-sm font-medium rounded-md border border-zinc-300 dark:border-zinc-500 text-black bg-white dark:bg-zinc-900 dark:text-zinc-100`}
+              className={`flex items-center justify-between w-full md:min-w-[200px] px-3 py-2 text-sm font-medium rounded-md border border-zinc-300 dark:border-zinc-500 text-black bg-white dark:bg-zinc-900 dark:text-zinc-100`}
             >
               <span>
                 {selectedCommunities.length === 0
@@ -238,25 +238,24 @@ export default function BrowseProjects() {
                           : ""
                       }`}
                     >
-                      <div className="flex-shrink-0 h-6 w-6 relative overflow-hidden rounded-full">
-                        {hasImage(community) ? (
-                          <Image
-                            src={getImageUrl(community)}
-                            alt={community.name}
-                            width={24}
-                            height={24}
-                            className="object-cover"
-                          />
-                        ) : (
-                          <div
-                            className={`flex items-center justify-center w-full h-full text-white text-xs font-bold ${getColorForCommunity(
-                              community.name
-                            )}`}
-                          >
-                            {getInitial(community.name)}
-                          </div>
-                        )}
-                      </div>
+                      {hasImage(community) ? (
+                        <Image
+                          src={getImageUrl(community)}
+                          alt={community.name}
+                          width={24}
+                          height={24}
+                          className="object-cover rounded-full w-6 h-6"
+                          quality={80}
+                        />
+                      ) : (
+                        <div
+                          className={`flex items-center justify-center w-6 h-6 rounded-full text-white text-xs font-bold ${getColorForCommunity(
+                            community.name
+                          )}`}
+                        >
+                          {getInitial(community.name)}
+                        </div>
+                      )}
                       <span className="ml-3 text-sm text-gray-900 dark:text-gray-100">
                         {community.name}
                       </span>

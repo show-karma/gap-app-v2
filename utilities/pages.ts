@@ -1,7 +1,8 @@
 export const PAGES = {
   HOME: `/`,
   NOT_FOUND: `/not-found`,
-  PROJECTS_EXPLORER: `/projects`,
+  PROJECTS_EXPLORER: (anchor?: string) =>
+    `/projects${anchor ? `#${anchor}` : ""}`,
   PRIVACY_POLICY: `/privacy-policy`,
   TERMS_AND_CONDITIONS: `/terms-and-conditions`,
   COMMUNITY: {
