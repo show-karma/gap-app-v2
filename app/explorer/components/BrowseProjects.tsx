@@ -81,7 +81,8 @@ export default function BrowseProjects() {
 
   // Handle search input change
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    handleSearchChange(e.target.value);
+    const value = e.target.value;
+    handleSearchChange(value);
   };
 
   // Helper to check if a community is selected

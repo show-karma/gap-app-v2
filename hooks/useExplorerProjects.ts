@@ -39,19 +39,21 @@ export const useExplorerProjects = (
   const [autoLoadEnabled, setAutoLoadEnabled] = useState(false);
   // State to limit initial items shown
   const [itemLimit, setItemLimit] = useState(initialItemsToShow);
+  // State to track if "See All" button has been clicked
+  const [hasClickedSeeAll, setHasClickedSeeAll] = useState(false);
 
   // Create debounced search function
   const debouncedSearch = useCallback(
     debounce((value: string) => {
       setDebouncedSearchTerm(value);
-    }, 500),
+    }, 800),
     []
   );
 
   // Update search term and trigger debounced search
   const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
-    debouncedSearch(value);
+    setSearchTerm(value); // Update immediately for UI
+    debouncedSearch(value); // Debounce the actual search query
   };
 
   // Add a community to filter
@@ -103,10 +105,10 @@ export const useExplorerProjects = (
       setSortBy("createdAt");
       setSortOrder("asc");
     } else if (value === "name-az") {
-      setSortBy("name");
+      setSortBy("title");
       setSortOrder("asc");
     } else if (value === "name-za") {
-      setSortBy("name");
+      setSortBy("title");
       setSortOrder("desc");
     }
   };
@@ -115,6 +117,7 @@ export const useExplorerProjects = (
   const handleSeeAll = () => {
     setAutoLoadEnabled(true);
     setItemLimit(Number.MAX_SAFE_INTEGER);
+    setHasClickedSeeAll(true);
   };
 
   // Extract UIDs from selected communities for API call
@@ -166,7 +169,7 @@ export const useExplorerProjects = (
     // State for display control
     autoLoadEnabled,
     showingSeeAllButton:
-      !autoLoadEnabled && limitedProjects.length < allProjects.length,
+      !hasClickedSeeAll && allProjects.length >= initialItemsToShow,
     // State and handlers for filters
     searchTerm,
     selectedCommunities,
