@@ -46,9 +46,12 @@ export default function ProjectCard({ project }: ProjectCardProps) {
 
         {/* Project title and created date */}
         <div className="flex w-full flex-col">
-          <h4 className="line-clamp-1 break-all text-lg font-semibold text-gray-900 dark:text-white mb-1">
-            {project?.title}
+          <h4 className="line-clamp-1 break-all text-lg font-semibold text-gray-900 dark:text-white">
+            {project?.grantDetails?.[0]?.title}
           </h4>
+          <p className="line-clamp-1 break-all text-sm font-semibold text-gray-500 dark:text-zinc-300">
+            {project?.title}
+          </p>
 
           <p className="mb-2 text-sm font-medium text-gray-500 dark:text-zinc-300">
             Created on {formatDate(project.createdAt)}

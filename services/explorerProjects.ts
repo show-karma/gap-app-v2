@@ -12,6 +12,11 @@ export interface GetExplorerProjectsParams {
   sortOrder?: "asc" | "desc";
   name?: string;
   communities?: string[];
+  communityConfigurations?: Array<{
+    id: string;
+    isBlockchain: boolean;
+    chainId?: number;
+  }>;
 }
 
 export interface GetExplorerProjectsResponse {
@@ -41,35 +46,31 @@ export const explorerProjectsService = {
     sortOrder = "desc",
     name,
     communities,
+    communityConfigurations,
   }: GetExplorerProjectsParams): Promise<GetExplorerProjectsResponse> => {
     try {
-      // Construct URL parameters for API call
-      let url = INDEXER.PROJECTS.GET_ALL(
-        page * pageSize,
-        pageSize,
-        sortBy,
-        sortOrder
-      );
+      // URL for POST request
+      const url = INDEXER.PROJECTS.POST_ALL();
 
-      // Add name search parameter if provided
-      if (name && name.trim() !== "") {
-        url += `&name=${encodeURIComponent(name.trim())}`;
-      }
-
-      // Add communities filter if provided
-      if (communities && communities.length > 0) {
-        // Join communities with comma for backend API
-        const communitiesParam = communities.join(",");
-        url += `&communities=${encodeURIComponent(communitiesParam)}`;
-      }
+      // Create request body
+      const requestBody = {
+        limit: pageSize,
+        offset: page * pageSize,
+        sortField: sortBy,
+        sortOrder,
+        name: name && name.trim() !== "" ? name.trim() : undefined,
+        communityConfigurations,
+      };
 
       const [data, error, pageInfo] = await fetchData(
         url,
+        "POST",
+        requestBody,
         undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
+        {
+          "Content-Type": "application/json",
+        },
+        true,
         true
       );
 

@@ -33,6 +33,13 @@ export const useExplorerProjects = (
   const [selectedCommunities, setSelectedCommunities] = useState<Community[]>(
     []
   );
+  const [communityConfigurations, setCommunityConfigurations] = useState<
+    Array<{
+      id: string;
+      isBlockchain: boolean;
+      chainId?: number;
+    }>
+  >([]);
   const [sortBy, setSortBy] = useState(initialSortBy);
   const [sortOrder, setSortOrder] = useState(initialSortOrder);
   // State to control whether infinite loading is enabled
@@ -96,6 +103,17 @@ export const useExplorerProjects = (
     setSelectedCommunities([]);
   };
 
+  // Set community configurations for advanced filtering
+  const setCommunityConfig = (
+    config: Array<{
+      id: string;
+      isBlockchain: boolean;
+      chainId?: number;
+    }>
+  ) => {
+    setCommunityConfigurations(config);
+  };
+
   // Handle sort changes
   const handleSortChange = (value: string) => {
     if (value === "newest") {
@@ -132,6 +150,8 @@ export const useExplorerProjects = (
     name: debouncedSearchTerm !== "" ? debouncedSearchTerm : undefined,
     communities:
       selectedCommunityUids.length > 0 ? selectedCommunityUids : undefined,
+    communityConfigurations:
+      communityConfigurations.length > 0 ? communityConfigurations : undefined,
   };
 
   // Use infinite query
@@ -173,6 +193,7 @@ export const useExplorerProjects = (
     // State and handlers for filters
     searchTerm,
     selectedCommunities,
+    communityConfigurations,
     sortBy,
     sortOrder,
     // Actions
@@ -182,6 +203,7 @@ export const useExplorerProjects = (
     addCommunitiesFilter,
     toggleCommunity,
     clearCommunities,
+    setCommunityConfig,
     handleSortChange,
     handleSeeAll,
   };

@@ -52,4 +52,12 @@ export interface ProjectFromList {
   noOfGrants: number;
   noOfProjectMilestones: number;
   noOfGrantMilestones: number;
+  grantDetails?: [
+    {
+      uid: string;
+      title: string;
+      amount: string;
+      communityUID: string;
+    }
+  ];
 }

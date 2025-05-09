@@ -6,9 +6,7 @@ export const envVars = {
   isDev,
   NEXT_PUBLIC_ENV: process.env.NEXT_PUBLIC_ENV,
   NEXT_PUBLIC_KARMA_API: "https://api.karmahq.xyz/api",
-  NEXT_PUBLIC_GAP_INDEXER_URL: isDev
-    ? baseDevUrl
-    : "https://gapapi.karmahq.xyz",
+  NEXT_PUBLIC_GAP_INDEXER_URL: isDev ? baseDevUrl : "http://localhost:3002",
   NEXT_PUBLIC_ALLO_V2_GRAPHQL_URL: isDev
     ? "https://indexer-staging.fly.dev/graphql"
     : "https://grants-stack-indexer-v2.gitcoin.co/graphql",
