@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+// @ts-ignore
 "use client";
 import CommunityStats from "@/components/CommunityStats";
 import { CommunityDialog } from "@/components/Dialogs/CommunityDialog";
@@ -19,35 +20,45 @@ import { LinkIcon } from "@heroicons/react/24/solid";
 import { Community } from "@show-karma/karma-gap-sdk";
 import { blo } from "blo";
 import Link from "next/link";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { isAddress } from "viem";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 
 interface CommunityAdmin {
   id: string;
-  admins: { user: { id: string } }[];
+  admins: Array<{
+    user: {
+      id: string;
+    };
+  }>;
+}
+
+interface CommunitiesData {
+  communities: Community[];
+  admins: CommunityAdmin[];
 }
 
 export default function CommunitiesToAdminPage() {
   const [allCommunities, setAllCommunities] = useState<Community[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [communityAdmins, setCommunityAdmins] = useState<any>([]);
+  const [communityAdmins, setCommunityAdmins] = useState<CommunityAdmin[]>([]);
 
   const { gap } = useGap();
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isStaff, isLoading: isStaffLoading } = useStaff();
+  const { isStaff } = useStaff();
 
   const hasAccess = isOwner || isStaff;
 
-  const fetchCommunities = async () => {
-    try {
+  const fetchCommunitiesData =
+    useCallback(async (): Promise<CommunitiesData> => {
       if (!gap) throw new Error("Gap not initialized");
-      setIsLoading(true);
+
       const result = await gap.fetch.communities();
       result.sort((a, b) =>
         (a.details?.name || a.uid).localeCompare(b.details?.name || b.uid)
       );
-      setAllCommunities(result);
+
       const fetchPromises = result.map(async (community) => {
         try {
           const [data, error] = await fetchData(
@@ -61,31 +72,53 @@ export default function CommunitiesToAdminPage() {
 
           if (!data) return { id: community.uid, admins: [] };
           if (error) throw Error(error);
+
           return data;
         } catch {
           return { id: community.uid, admins: [] };
         }
       });
       const communityAdmins = await Promise.all(fetchPromises);
+      setAllCommunities(result || []);
+      setCommunityAdmins(communityAdmins || []);
+      return { communities: result, admins: communityAdmins };
+    }, [gap]);
 
-      // Update the state with the fetched data
-      setCommunityAdmins(communityAdmins);
+  const { isLoading, refetch } = useQuery({
+    queryKey: ["communities", "admins"],
+    queryFn: fetchCommunitiesData,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false,
+    retry: 1,
+  });
 
-      return result;
+  const handleRefetch = useCallback(async () => {
+    try {
+      const result = await refetch();
+      if (result.data) {
+        setAllCommunities(result.data.communities);
+        setCommunityAdmins(result.data.admins);
+      }
     } catch (error: any) {
       console.log(error);
-      errorManager(`Error fetching all communities`, error);
-      setAllCommunities([]);
-      setCommunityAdmins([]);
-      return undefined;
-    } finally {
-      setIsLoading(false);
+      errorManager(`Error refetching communities`, error);
     }
-  };
+    return undefined;
+  }, [refetch]);
 
-  useEffect(() => {
-    fetchCommunities();
-  }, []);
+  // Ensure address has 0x prefix
+  const formatAdminAddress = (address: string): `0x${string}` => {
+    if (isAddress(address)) {
+      return address as `0x${string}`;
+    }
+    if (address.startsWith("0x") && address.length === 42) {
+      return address as `0x${string}`;
+    }
+    // Return a default format if not a valid address (should not happen)
+    return `0x${address.replace("0x", "")}` as `0x${string}`;
+  };
 
   function shortenHex(hexString: string) {
     const firstPart = hexString.substring(0, 6);
@@ -96,7 +129,7 @@ export default function CommunitiesToAdminPage() {
 
   return (
     <div className="px-4 sm:px-6 lg:px-12 py-5">
-      {isLoading || isStaffLoading ? (
+      {isLoading ? (
         <Spinner />
       ) : hasAccess ? (
         <div className="flex flex-col gap-2">
@@ -106,7 +139,7 @@ export default function CommunitiesToAdminPage() {
               {allCommunities.length ? `(${allCommunities.length})` : ""}
             </div>
 
-            <CommunityDialog refreshCommunities={fetchCommunities} />
+            <CommunityDialog refreshCommunities={handleRefetch} />
           </div>
           <div className="mt-5 w-full gap-5">
             {allCommunities.length ? (
@@ -128,8 +161,12 @@ export default function CommunitiesToAdminPage() {
                 <tbody className="divide-y divide-x">
                   {allCommunities.map((community) => {
                     const matchingCommunityAdmin = communityAdmins.find(
-                      (admin: any) => admin.id === community.uid
+                      (admin) => admin.id === community.uid
                     );
+                    // TypeScript workaround for the 0x string format
+                    const communityId =
+                      community.uid as unknown as `0x${string}`;
+
                     return (
                       <React.Fragment key={community.uid}>
                         <tr className="divide-x">
@@ -190,22 +227,14 @@ export default function CommunitiesToAdminPage() {
                           <td>
                             {matchingCommunityAdmin &&
                               matchingCommunityAdmin.admins.map(
-                                (admin: any, index: any) => (
+                                (admin, index) => (
                                   <div className="flex gap-2 p-5" key={index}>
-                                    <div key={index}>
-                                      {shortenHex(admin.user.id)}
-                                    </div>
-                                    {/* <TrashIcon
-                                          width={20}
-                                          onClick={() => {
-                                            console.log(community.uid);
-                                          }}
-                                        /> */}
+                                    <div>{shortenHex(admin.user.id)}</div>
                                     <RemoveAdmin
-                                      UUID={community.uid}
+                                      UUID={communityId}
                                       chainid={community.chainID}
-                                      Admin={admin.user.id}
-                                      fetchAdmins={fetchCommunities}
+                                      Admin={formatAdminAddress(admin.user.id)}
+                                      fetchAdmins={handleRefetch}
                                     />
                                   </div>
                                 )
@@ -213,9 +242,9 @@ export default function CommunitiesToAdminPage() {
                           </td>
                           <td>
                             <AddAdmin
-                              UUID={community.uid}
+                              UUID={communityId}
                               chainid={community.chainID}
-                              fetchAdmins={fetchCommunities}
+                              fetchAdmins={handleRefetch}
                             />
                           </td>
                         </tr>

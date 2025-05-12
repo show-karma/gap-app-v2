@@ -47,7 +47,7 @@ export default async function fetchData(
   } catch (err: any) {
     let error = "";
     if (!err.response) {
-      error = "No server response";
+      error = err;
     } else {
       error = err.response.data.message || err.message;
     }
