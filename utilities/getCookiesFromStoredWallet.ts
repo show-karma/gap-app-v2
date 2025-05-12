@@ -3,7 +3,7 @@ import { getWalletFromWagmiStore } from "./getWalletFromWagmiStore";
 import {
   getAddressSpecificAuthCookie,
   getAddressSpecificWalletTypeCookie,
-} from "@/hooks/useAuth";
+} from "@/utilities/cookies";
 
 export function getCookiesFromStoredWallet(): {
   token: string | undefined;
