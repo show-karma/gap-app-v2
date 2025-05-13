@@ -8,6 +8,7 @@ import {
   sei,
   sepolia,
 } from "@wagmi/core/chains";
+import { farcasterFrame } from "@farcaster/frame-wagmi-connector";
 import {
   coinbaseWallet,
   injectedWallet,
@@ -43,7 +44,7 @@ const connectors = connectorsForWallets(
 
 export const config = createConfig({
   chains: appNetwork,
-  connectors,
+  connectors: [farcasterFrame(), ...connectors],
   transports: {
     [optimism.id]: http(envVars.RPC.OPTIMISM),
     [arbitrum.id]: http(envVars.RPC.ARBITRUM),

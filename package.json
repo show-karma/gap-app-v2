@@ -21,6 +21,8 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.1.0",
+    "@farcaster/frame-sdk": "^0.0.41",
+    "@farcaster/frame-wagmi-connector": "^0.0.30",
     "@headlessui/react": "^2.1.2",
     "@heroicons/react": "^2.0.18",
     "@hookform/resolvers": "^3.3.4",

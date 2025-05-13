@@ -1,0 +1,11 @@
+{
+  "frame": {
+    "version": "1",
+    "name": "GAP Community",
+    "iconUrl": "https://gap.karmahq.xyz/logo/karma-gap-logo.svg",
+    "homeUrl": "https://gap.karmahq.xyz",
+    "buttonTitle": "🚩 Start",
+    "splashImageUrl": "https://gap.karmahq.xyz/logo/karma-gap-logo.svg",
+    "splashBackgroundColor": "#FFFFFF"
+  }
+}
