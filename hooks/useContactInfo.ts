@@ -21,9 +21,8 @@ export const useContactInfo = (
   const isDefaultAuthorized = isOwner || isProjectAdmin;
   return useQuery({
     queryKey: ["contactInfo", projectId],
-    queryFn: async (): Promise<Contact[] | undefined> => {
-      if (!projectId || !(isAuthorized || isDefaultAuthorized))
-        return undefined;
+    queryFn: async (): Promise<Contact[] | null> => {
+      if (!projectId || !(isAuthorized || isDefaultAuthorized)) return null;
 
       try {
         const [data, error] = await fetchData(
@@ -53,7 +52,7 @@ export const useContactInfo = (
           `Error fetching project contacts info from project ${projectId}`,
           error
         );
-        return undefined;
+        return null;
       }
     },
     enabled: !!projectId && isAuthorized,

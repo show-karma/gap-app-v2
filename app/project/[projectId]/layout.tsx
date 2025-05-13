@@ -86,11 +86,11 @@ export default async function RootLayout({
   }
 
   return (
-    <>
+    <div className="flex flex-col gap-0">
       <Suspense fallback={<ProjectHeaderLoading />}>
         <ProjectWrapper projectId={projectId} project={project} />
       </Suspense>
       <div className="px-4 sm:px-6 lg:px-12">{children}</div>
-    </>
+    </div>
   );
 }

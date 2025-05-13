@@ -51,14 +51,12 @@ const EndorsementRow: FC<EndorsementRowProps> = ({ endorsement }) => {
       </div>
       {endorsement.data.comment ? (
         <div className="text-left px-0 flex flex-row items-start">
-          <p className="text-sm text-[#344054] dark:text-zinc-100  font-normal">
-            <div
-              className="w-full break-normal text-base font-normal text-black dark:text-zinc-100 max-2xl:text-sm"
-              data-color-mode="light"
-            >
-              <MarkdownPreview source={endorsement.data.comment} />
-            </div>
-          </p>
+          <div
+            className="w-full break-normal text-base font-normal text-black dark:text-zinc-100 max-2xl:text-sm"
+            data-color-mode="light"
+          >
+            <MarkdownPreview source={endorsement.data.comment} />
+          </div>
         </div>
       ) : null}
     </div>

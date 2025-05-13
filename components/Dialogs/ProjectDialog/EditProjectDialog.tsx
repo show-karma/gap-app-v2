@@ -88,7 +88,7 @@ type ProjectDialogProps = {
     styleClass: string;
   } | null;
   projectToUpdate?: IProjectResponse;
-  previousContacts?: Contact[];
+  previousContacts?: Contact[] | null;
 };
 
 export const EditProjectDialog: FC<ProjectDialogProps> = ({
