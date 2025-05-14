@@ -11,6 +11,7 @@ export const FarcasterProvider = ({
     const isMini =
       url.pathname.startsWith("/mini") ||
       url.searchParams.get("miniApp") === "true";
+    console.log(url.searchParams.get("miniApp"));
 
     if (isMini) {
       import("@farcaster/frame-sdk").then(({ sdk }) => {

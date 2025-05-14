@@ -2,10 +2,10 @@
   "frame": {
     "version": "1",
     "name": "GAP Community",
-    "iconUrl": "https://gap.karmahq.xyz/logo/karma-gap-logo.svg",
-    "homeUrl": "https://gap.karmahq.xyz",
+    "iconUrl": "https://gap-app-v2-git-feat-mini-app-karma-devs.vercel.app/logo/karma-gap-logo.svg",
+    "homeUrl": "https://gap-app-v2-git-feat-mini-app-karma-devs.vercel.app/community/celo?miniApp=true",
     "buttonTitle": "🚩 Start",
-    "splashImageUrl": "https://gap.karmahq.xyz/logo/karma-gap-logo.svg",
+    "splashImageUrl": "https://gap-app-v2-git-feat-mini-app-karma-devs.vercel.app/logo/karma-gap-logo.svg",
     "splashBackgroundColor": "#FFFFFF"
   }
 }

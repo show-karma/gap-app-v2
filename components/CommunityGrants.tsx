@@ -220,7 +220,7 @@ export const CommunityGrants = ({
             }}
           />
 
-          <div className="flex flex-1 flex-row gap-8 justify-end flex-wrap">
+          <div className="flex flex-1 flex-row gap-8 justify-end flex-wrap max-sm:gap-2">
             {selectedProgramId ? (
               <TrackFilter
                 onChange={(trackIds) => {

@@ -34,19 +34,19 @@ export const Communities = () => {
         </h4>
       </div>
       <div className="flex w-full flex-col items-center justify-center gap-8">
-        <div className="grid w-full grid-cols-4 max-md:grid-cols-2">
+        <div className="grid w-full grid-cols-4 max-md:grid-cols-2 max-sm:gap-4">
           {chosenCommunities().map((community) => (
             <Link
               key={community.uid}
               href={PAGES.COMMUNITY.ALL_GRANTS(community.slug || community.uid)}
-              className="flex hover:shadow-md h-full max-h-[166px] w-full flex-col items-center justify-center gap-2 rounded-2xl px-4 py-6 transition-all duration-300 ease-in-out "
+              className="flex hover:shadow-md h-full max-h-[166px] w-full flex-col items-center justify-center gap-2 rounded-2xl px-4 py-6 transition-all duration-300 ease-in-out max-sm:p-2"
             >
               <ImageTheme
                 alt={community.name}
                 lightSrc={community.imageURL.light}
                 darkSrc={community.imageURL.dark}
                 className={
-                  "h-20 w-20 rounded-full object-cover max-lg:h-10 max-lg:w-10 max-sm:h-6 max-sm:w-6"
+                  "h-20 w-20 rounded-full object-cover max-lg:h-10 max-lg:w-10"
                 }
               />
 

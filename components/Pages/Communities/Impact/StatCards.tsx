@@ -104,7 +104,7 @@ export const CommunityStatCards = () => {
           }}
         />
       </div>
-      <div className="h-full flex flex-col items-start justify-end py-2">
+      <div className="h-full flex flex-col items-start justify-end py-2 min-w-min pr-2">
         <h3 className="text-slate-800 dark:text-zinc-100 text-base font-semibold font-['Inter']">
           {item.title}
         </h3>
@@ -124,7 +124,7 @@ export const CommunityImpactStatCards = () => {
   const isImpactPage = pathname.includes("/impact");
 
   return (
-    <div className="flex flex-1 gap-6 flex-row max-sm:flex-col py-2">
+    <div className="flex flex-1 gap-6 flex-row max-sm:flex-wrap py-2 max-sm:gap-2">
       {isImpactPage ? <ImpactStatCards /> : <CommunityStatCards />}
     </div>
   );
