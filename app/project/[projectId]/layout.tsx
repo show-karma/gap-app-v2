@@ -1,5 +1,4 @@
 /* eslint-disable @next/next/no-img-element */
-import { fetchMetadata } from "frames.js/next/pages-router/client";
 import { envVars } from "@/utilities/enviromentVars";
 import { ProjectWrapper } from "@/components/Pages/Project/ProjectWrapper";
 import { zeroUID } from "@/utilities/commons";

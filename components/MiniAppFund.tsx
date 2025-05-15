@@ -8,6 +8,7 @@ import {
   useSwitchChain,
   useBalance,
   useWriteContract,
+  useConnect,
 } from "wagmi";
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment } from "react";
@@ -17,6 +18,7 @@ import toast from "react-hot-toast";
 import { errorManager } from "./Utilities/errorManager";
 import { TransactionLink } from "./Utilities/TransactionLink";
 import { useProjectStore } from "@/store";
+import { useMiniAppStore } from "@/store/miniApp";
 
 interface MiniAppFundProps {
   position?: "bottom-right" | "bottom-left" | "top-right" | "top-left";
@@ -63,7 +65,7 @@ const NETWORKS: Network[] = [
       {
         symbol: "USDC",
         name: "USD Coin",
-        address: "0x37f750b7cc259a2f741af45294f6a16572cf5cad",
+        address: "0xceba9300f2b948710d2653dd7b07f33a8b32118c",
         decimals: 6,
       },
       {
@@ -98,12 +100,13 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
   const { project } = useProjectStore();
   const projectName = project?.details?.data?.title;
   const projectOwnerAddress = project?.recipient as `0x${string}`;
-  const projectChainId = project?.chainID;
   const { isConnected, address } = useAccount();
+  const { connectors, connectAsync } = useConnect();
   const [isOpen, setIsOpen] = useState(false);
   const [amount, setAmount] = useState<string>("0.01");
   const [isSuccess, setIsSuccess] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
+  const { isMiniApp } = useMiniAppStore();
 
   // Network selection state
   const [selectedNetwork, setSelectedNetwork] = useState<Network>(NETWORKS[0]); // Default to Celo
@@ -187,11 +190,6 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
 
   const handleFund = async () => {
     try {
-      if (!isConnected) {
-        toast.error("Please connect your wallet first");
-        return;
-      }
-
       if (!isAddress(projectOwnerAddress)) {
         toast.error("Invalid recipient address");
         return;
@@ -200,6 +198,10 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
       if (parseFloat(amount) <= 0) {
         toast.error("Please enter a valid amount");
         return;
+      }
+
+      if (!isConnected) {
+        await connectAsync({ connector: connectors[0] });
       }
 
       // Switch to the selected network
@@ -252,6 +254,27 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
     "top-right": "top-4 right-4",
     "top-left": "top-4 left-4",
   };
+
+  const tryConnect = async () => {
+    try {
+      await connectAsync({ connector: connectors[0] });
+    } catch (error) {
+      errorManager(
+        "Error connecting to Farcaster",
+        error,
+        {
+          connector: connectors[0],
+        },
+        { error: "Failed to connect to Farcaster" }
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (isMiniApp && !isConnected) {
+      tryConnect();
+    }
+  }, [isMiniApp, isConnected]);
 
   return (
     <>
@@ -433,7 +456,7 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
                         <Button
                           onClick={handleFund}
                           isLoading={isPending}
-                          disabled={isPending || !isConnected}
+                          disabled={isPending}
                           className="bg-brand-blue text-white hover:bg-brand-blue/80"
                         >
                           Send Fund

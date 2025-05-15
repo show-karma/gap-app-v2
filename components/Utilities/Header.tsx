@@ -31,6 +31,7 @@ import { errorManager } from "./errorManager";
 import { ExternalLink } from "./ExternalLink";
 import { ParagraphIcon } from "../Icons/Paragraph";
 import { useMiniAppStore } from "@/store/miniApp";
+import { shortAddress } from "@/utilities/shortAddress";
 
 const ProjectDialog = dynamic(
   () =>
@@ -240,15 +241,52 @@ const MiniAppConnectButton = () => {
   const { isConnected, address } = useAccount();
   const { connect, connectors } = useConnect();
 
+  const connectNow = () => {
+    connect({ connector: connectors[0] });
+  };
+
   return (
     <div className="flex w-full">
-      {isConnected ? (
-        <button>{address}</button>
-      ) : (
-        <button onClick={() => connect({ connector: connectors[0] })}>
-          Connect
-        </button>
-      )}
+      <div className="lg:flex hidden max-w-max">
+        {isConnected ? (
+          <div className="cursor-pointer flex w-full py-1 justify-center items-center flex-row gap-2 rounded-full bg-gray-500 text-sm font-semibold text-white  hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
+            {shortAddress(address as string)}
+
+            <EthereumAddressToENSAvatar
+              address={address}
+              className="h-8 w-8 min-h-8 min-w-8 rounded-full"
+            />
+          </div>
+        ) : (
+          <button
+            onClick={connectNow}
+            className="rounded-md border max-lg:w-full max-lg:justify-center border-brand-blue dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-brand-blue  hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+          >
+            {/* Login / Register */}
+            Connect
+          </button>
+        )}
+      </div>
+      <div className="lg:hidden flex justify-center items-center">
+        {isConnected ? (
+          <div className="cursor-pointer flex w-full py-1 px-2 justify-center items-center flex-row gap-2 rounded-full bg-gray-500 text-sm font-semibold text-white  hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
+            {shortAddress(address as string)}
+
+            <EthereumAddressToENSAvatar
+              address={address}
+              className="h-8 w-8 min-h-8 min-w-8 rounded-full"
+            />
+          </div>
+        ) : (
+          <button
+            onClick={connectNow}
+            className="rounded-md border max-lg:w-full max-lg:justify-center border-brand-blue dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-brand-blue  hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+          >
+            {/* Login / Register */}
+            Connect
+          </button>
+        )}
+      </div>
     </div>
   );
 };
