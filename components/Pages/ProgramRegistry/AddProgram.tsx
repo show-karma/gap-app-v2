@@ -514,11 +514,12 @@ export default function AddProgram({
         }
       } else {
         const [request, error] = await fetchData(
-          INDEXER.REGISTRY.UPDATE,
+          INDEXER.REGISTRY.UPDATE(
+            programToEdit?._id.$oid as string,
+            chainSelected as number
+          ),
           "PUT",
           {
-            id: programToEdit?._id.$oid,
-            chainId: chainSelected,
             metadata,
           },
           {},
