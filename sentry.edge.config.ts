@@ -6,7 +6,9 @@
 import * as Sentry from "@sentry/nextjs";
 
 Sentry.init({
-  enabled: process.env.NEXT_PUBLIC_VERCEL_ENV === "production",
+  enabled:
+    process.env.NEXT_PUBLIC_VERCEL_ENV === "production" ||
+    process.env.NEXT_PUBLIC_VERCEL_ENV === "production-miniapp",
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
 
   // Adds request headers and IP for users, for more info visit:

@@ -255,7 +255,7 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
           token: selectedToken.symbol,
           network: selectedNetwork.name,
         },
-        { error: "Failed to process funds." }
+        { error: "Failed to send funds." }
       );
     }
   };

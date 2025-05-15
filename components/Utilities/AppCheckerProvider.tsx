@@ -20,7 +20,7 @@ export const AppCheckerProvider = ({
   useEffect(() => {
     const url = new URL(window.location.href);
     const isMini =
-      url.host.startsWith("49fd-2804-1b3-a9c0-7fc1-b4d7-9258-1ca9-b") ||
+      url.host.startsWith("f8fd4917fca4") ||
       url.host.startsWith("gap-app-v2-git-feat-mini-app-karma-devs") ||
       url.host.startsWith("minigap.") ||
       url.searchParams.get("miniApp") === "true";

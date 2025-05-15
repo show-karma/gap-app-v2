@@ -7,6 +7,10 @@ const securityHeaders = [
     key: "X-Frame-Options",
     value: "SAMEORIGIN",
   },
+  {
+    key: "Content-Security-Policy",
+    value: "frame-ancestors 'self' https://warpcast.com",
+  },
 ];
 
 const removeImports = require("next-remove-imports")();
