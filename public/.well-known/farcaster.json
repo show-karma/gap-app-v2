@@ -5,6 +5,16 @@
     "iconUrl": "https://minigap.karmahq.xyz/logo/karma_twitter_logo.jpg",
     "homeUrl": "https://minigap.karmahq.xyz/community/celo",
     "splashImageUrl": "https://minigap.karmahq.xyz/logo/karma-gap-logo.svg",
-    "splashBackgroundColor": "#FFFFFF"
+    "splashBackgroundColor": "#FFFFFF",
+    "subtitle": "Karma Celo Community",
+    "description": "Karma Celo Community.",
+    "screenshotUrls": [],
+    "primaryCategory": "utility",
+    "tags": ["utility", "leaderboard", "warpcast", "earn"],
+    "heroImageUrl": "https://minigap.karmahq.xyz/logo/karma_twitter_logo.jpg",
+    "tagline": "Karma Celo Community",
+    "ogTitle": "Karma Celo Community",
+    "ogDescription": "Karma Celo Community",
+    "ogImageUrl": "https://minigap.karmahq.xyz/logo/karma_twitter_logo.jpg"
   }
 }
