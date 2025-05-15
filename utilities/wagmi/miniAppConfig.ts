@@ -9,7 +9,7 @@ export const miniAppWagmiConfig = createConfig({
   connectors: [farcasterFrame()],
   transports: {
     [celo.id]: http(envVars.RPC.CELO),
-    [base.id]: http(),
+    [base.id]: http(envVars.RPC.BASE),
   },
   ssr: false,
   storage: createStorage({

@@ -6,15 +6,21 @@
     "homeUrl": "https://minigap.karmahq.xyz/community/celo",
     "splashImageUrl": "https://minigap.karmahq.xyz/logo/karma-gap-logo.svg",
     "splashBackgroundColor": "#FFFFFF",
-    "subtitle": "Karma Celo Community",
-    "description": "Karma Celo Community.",
+    "subtitle": "Browse and Fund Celo Builders",
+    "description": "Discover impactful projects in the Celo ecosystem. Browse by category, track progress, and fund directly, all in one place. Support the future of web3 on Celo.",
     "screenshotUrls": [],
     "primaryCategory": "utility",
-    "tags": ["utility", "leaderboard", "warpcast", "earn"],
+    "tags": [
+      "funding",
+      "reputation",
+      "ecosystem projects",
+      "project profile",
+      "onchain app"
+    ],
     "heroImageUrl": "https://minigap.karmahq.xyz/logo/karma_twitter_logo.jpg",
-    "tagline": "Karma Celo Community",
-    "ogTitle": "Karma Celo Community",
-    "ogDescription": "Karma Celo Community",
+    "tagline": "Turn Capital into Impact — Browse and Fund Celo Builders",
+    "ogTitle": "Browse and Fund Celo Builders",
+    "ogDescription": "Discover impactful projects in the Celo ecosystem. Browse by category, track progress, and fund directly, all in one place. Support the future of web3 on Celo.",
     "ogImageUrl": "https://minigap.karmahq.xyz/logo/karma_twitter_logo.jpg"
   }
 }

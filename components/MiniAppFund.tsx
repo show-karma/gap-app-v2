@@ -76,24 +76,24 @@ const NETWORKS: Network[] = [
       },
     ],
   },
-  {
-    id: 8453, // Base
-    name: "Base",
-    nativeCurrency: {
-      name: "Ethereum",
-      symbol: "ETH",
-      decimals: 18,
-    },
-    tokens: [
-      { symbol: "ETH", name: "Ethereum", address: undefined, decimals: 18 },
-      {
-        symbol: "USDC",
-        name: "USD Coin",
-        address: "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
-        decimals: 6,
-      },
-    ],
-  },
+  // {
+  //   id: 8453, // Base
+  //   name: "Base",
+  //   nativeCurrency: {
+  //     name: "Ethereum",
+  //     symbol: "ETH",
+  //     decimals: 18,
+  //   },
+  //   tokens: [
+  //     { symbol: "ETH", name: "Ethereum", address: undefined, decimals: 18 },
+  //     {
+  //       symbol: "USDC",
+  //       name: "USD Coin",
+  //       address: "0x833589fcd6edb6e08f4c7c32d4f71b54bda02913",
+  //       decimals: 6,
+  //     },
+  //   ],
+  // },
 ];
 
 const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
@@ -117,7 +117,8 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
   ); // Default to native CELO
 
   const currentChainId = useChainId();
-  const { switchChain } = useSwitchChain();
+  console.log("currentChainId", currentChainId);
+  const { switchChainAsync, switchChain } = useSwitchChain();
 
   // Update selected token when network changes
   useEffect(() => {
@@ -139,6 +140,7 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
         toast.success(`Thank you for your fund to ${projectName}!`);
       },
       onError: (error: Error) => {
+        console.log("error", error);
         errorManager(
           `Error sending fund to ${projectOwnerAddress}`,
           error,
@@ -163,6 +165,7 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
         toast.success(`Thank you for your fund to ${projectName}!`);
       },
       onError: (error: Error) => {
+        console.log("error", error);
         errorManager(
           `Error sending ${selectedToken.symbol} to ${projectOwnerAddress}`,
           error,
@@ -203,17 +206,16 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
       if (!isConnected) {
         await connectAsync({ connector: connectors[0] });
       }
-
-      // Switch to the selected network
-      if (currentChainId !== selectedNetwork.id) {
-        await switchChain({ chainId: selectedNetwork.id });
-      }
+      console.log("currentChainId", currentChainId);
+      console.log("selectedNetwork.id", selectedNetwork.id);
+      // // Switch to the selected network
 
       // If native token
       if (!selectedToken.address) {
         sendTransaction({
           to: projectOwnerAddress,
           value: parseEther(amount),
+          chainId: 8453,
         });
       } else {
         // If ERC20 token
@@ -224,9 +226,12 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
           abi: erc20Abi,
           functionName: "transfer",
           args: [projectOwnerAddress, tokenAmount],
+          chainId: 8453,
         });
       }
     } catch (error) {
+      console.log("-------------------");
+      console.log("error", error);
       errorManager(
         `Error processing fund to ${projectOwnerAddress}`,
         error,
@@ -363,7 +368,7 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
                         </p>
 
                         {/* Network Selection Dropdown */}
-                        <div className="mt-4">
+                        {/* <div className="mt-4">
                           <label
                             htmlFor="network"
                             className="block text-sm font-medium text-gray-700 dark:text-gray-300"
@@ -379,7 +384,12 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
                               const network = NETWORKS.find(
                                 (n) => n.name === e.target.value
                               );
-                              if (network) setSelectedNetwork(network);
+                              if (network) {
+                                setSelectedNetwork(network);
+                                if (currentChainId !== selectedNetwork.id) {
+                                  switchChain({ chainId: selectedNetwork.id });
+                                }
+                              }
                             }}
                           >
                             {NETWORKS.map((network) => (
@@ -388,7 +398,7 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
                               </option>
                             ))}
                           </select>
-                        </div>
+                        </div> */}
 
                         {/* Token Selection Dropdown */}
                         <div className="mt-4">
