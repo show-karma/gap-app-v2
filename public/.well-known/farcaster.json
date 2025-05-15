@@ -6,5 +6,10 @@
     "homeUrl": "https://4948-2804-1b3-a9c0-7fc1-489f-f9a2-c59d-44cf.ngrok-free.app/community/celo?miniApp=true",
     "splashImageUrl": "https://4948-2804-1b3-a9c0-7fc1-489f-f9a2-c59d-44cf.ngrok-free.app/logo/karma-gap-logo.svg",
     "splashBackgroundColor": "#FFFFFF"
+  },
+  "accountAssociation": {
+    "header": "eyJmaWQiOjEwNzgyNDQsInR5cGUiOiJjdXN0b2R5Iiwia2V5IjoiMHhhNjVkQzNlNjIxOTFGMWZCQjllQmQ2NjhiMDE3MjQ1OTIzZkM5RmQxIn0",
+    "payload": "eyJkb21haW4iOiJnYXAtYXBwLXYyLWdpdC1mZWF0LW1pbmktYXBwLWthcm1hLWRldnMudmVyY2VsLmFwcCJ9",
+    "signature": "MHgxOWE5OWNlMGQ5ZjU3NjlkYzg4NzkwN2M2M2E2MDViYmJmMTBkYWUyYTFhMWJkMDJiMzA3NzZlODgyMDZlNTgzMjBhOGU5N2IxODhmNmNlZWM2NjcxMmU3YTU3ZjA3ODYyYjBlMmIyNDdjYzMzMzFkY2Y3OTNkNGY2YzgyYjBhNDFi"
   }
 }
