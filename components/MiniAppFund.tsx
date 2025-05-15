@@ -126,7 +126,7 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
   }, [selectedNetwork]);
 
   // Get balance for selected token
-  const { data: balance } = useBalance({
+  const { data: balance, refetch: refetchBalance } = useBalance({
     address,
     token: selectedToken.address,
     chainId: selectedNetwork.id,
@@ -230,6 +230,7 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
           chainId: selectedNetwork.id,
         });
       }
+      refetchBalance();
     } catch (error) {
       errorManager(
         `Error funding ${projectOwnerAddress}`,
