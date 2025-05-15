@@ -20,5 +20,10 @@
     "ogTitle": "Browse and Fund Celo Builders",
     "ogDescription": "Discover impactful projects in the Celo ecosystem, track progress, and fund, all in one place.",
     "ogImageUrl": "https://minigap.karmahq.xyz/logo/karma_twitter_logo.jpg"
+  },
+  "accountAssociation": {
+    "header": "eyJmaWQiOjQ3NiwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDY5NzQwYzg4YzIxNTUwOEUzRWQ5MTBGMGNlYzg5Mjg5Y0EzYjYxNzkifQ",
+    "payload": "eyJkb21haW4iOiJtaW5pZ2FwLmthcm1haHEueHl6In0",
+    "signature": "MHg0NWZiN2ZiMDk2OTM0MjI1NzMwZGMxMzJhMTA4MGQ4MzQ2ZWQ3Y2FiZjUxYjk2YWVjZWY5MDEyZjBkZWMwYWQwMWVmMDdhYjMxMmMzOWRjNTAwZTNlNWU4NmQyZTU5MThlYTFlOWRiMTM5NTI0M2VmZTJlZGI1ZDg5MTJiZTllMjFj"
   }
 }
