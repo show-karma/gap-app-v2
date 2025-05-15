@@ -249,14 +249,19 @@ const MiniAppConnectButton = () => {
     <div className="flex w-full">
       <div className="lg:flex hidden max-w-max">
         {isConnected ? (
-          <div className="cursor-pointer flex w-full py-1 justify-center items-center flex-row gap-2 rounded-full bg-gray-500 text-sm font-semibold text-white  hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
+          <button
+            onClick={() => {
+              disconnect();
+            }}
+            className="cursor-pointer flex w-full py-1 justify-center items-center flex-row gap-2 rounded-full bg-gray-500 text-sm font-semibold text-white  hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+          >
             {shortAddress(address as string)}
 
             <EthereumAddressToENSAvatar
               address={address}
               className="h-8 w-8 min-h-8 min-w-8 rounded-full"
             />
-          </div>
+          </button>
         ) : (
           <button
             onClick={connectNow}
@@ -269,14 +274,19 @@ const MiniAppConnectButton = () => {
       </div>
       <div className="lg:hidden flex justify-center items-center">
         {isConnected ? (
-          <div className="cursor-pointer flex w-full py-1 px-2 justify-center items-center flex-row gap-2 rounded-full bg-gray-500 text-sm font-semibold text-white  hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
+          <button
+            onClick={() => {
+              disconnect();
+            }}
+            className="cursor-pointer flex w-full py-1 px-2 justify-center items-center flex-row gap-2 rounded-full bg-gray-500 text-sm font-semibold text-white  hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+          >
             {shortAddress(address as string)}
 
             <EthereumAddressToENSAvatar
               address={address}
               className="h-8 w-8 min-h-8 min-w-8 rounded-full"
             />
-          </div>
+          </button>
         ) : (
           <button
             onClick={connectNow}
