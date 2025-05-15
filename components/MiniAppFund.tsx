@@ -215,7 +215,6 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
         sendTransaction({
           to: projectOwnerAddress,
           value: parseEther(amount),
-          chainId: 8453,
         });
       } else {
         // If ERC20 token
@@ -226,12 +225,9 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
           abi: erc20Abi,
           functionName: "transfer",
           args: [projectOwnerAddress, tokenAmount],
-          chainId: 8453,
         });
       }
     } catch (error) {
-      console.log("-------------------");
-      console.log("error", error);
       errorManager(
         `Error processing fund to ${projectOwnerAddress}`,
         error,
