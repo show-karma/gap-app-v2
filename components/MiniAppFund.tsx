@@ -215,6 +215,7 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
         sendTransaction({
           to: projectOwnerAddress,
           value: parseEther(amount),
+          chainId: selectedNetwork.id,
         });
       } else {
         // If ERC20 token
@@ -225,6 +226,7 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
           abi: erc20Abi,
           functionName: "transfer",
           args: [projectOwnerAddress, tokenAmount],
+          chainId: selectedNetwork.id,
         });
       }
     } catch (error) {
@@ -282,8 +284,8 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
       {/* Floating button */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed ${positionClasses[position]} z-50 flex items-center justify-center p-4 bg-brand-blue rounded-full shadow-lg hover:bg-brand-blue/80 transition-all duration-300 text-white`}
-        aria-label="Fund project"
+        className={`fixed ${positionClasses[position]} z-50 flex items-center justify-center p-4 bg-green-700 rounded-full shadow-lg hover:bg-brand-blue/80 transition-all duration-300 text-white`}
+        aria-label="Contribute Now"
       >
         {/* Dollar/Currency icon */}
         <svg
@@ -339,8 +341,8 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
                   {isSuccess && txHash ? (
                     <div className="mt-4">
                       <p className="text-gray-500 dark:text-gray-300">
-                        Your fund has been sent successfully! Thank you for
-                        supporting {projectName}.
+                        Appreciate your support! {projectName} just got stronger
+                        thanks to your contribution.
                       </p>
                       <div className="mt-4">
                         <p className="text-sm text-gray-500 dark:text-gray-300">
@@ -359,8 +361,8 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
                     <>
                       <div className="mt-4">
                         <p className="text-gray-500 dark:text-gray-300">
-                          Support {projectName} by sending a fund directly to
-                          the project owner.
+                          Support {projectName} by sending funds directly to the
+                          project creator.
                         </p>
 
                         {/* Network Selection Dropdown */}
@@ -465,7 +467,7 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
                           disabled={isPending}
                           className="bg-brand-blue text-white hover:bg-brand-blue/80"
                         >
-                          Send Fund
+                          Send
                         </Button>
                       </div>
                     </>
