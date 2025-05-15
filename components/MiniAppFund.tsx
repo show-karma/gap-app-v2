@@ -284,7 +284,7 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
       {/* Floating button */}
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed ${positionClasses[position]} z-50 flex items-center justify-center p-4 bg-green-700 rounded-full shadow-lg hover:bg-brand-blue/80 transition-all duration-300 text-white`}
+        className={`fixed ${positionClasses[position]} z-50 flex items-center justify-center p-4 bg-green-700 rounded-full shadow-lg hover:bg-green-700/80 transition-all duration-300 text-white`}
         aria-label="Contribute Now"
       >
         {/* Dollar/Currency icon */}
