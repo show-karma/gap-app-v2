@@ -11,11 +11,10 @@ import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { PAGES } from "@/utilities/pages";
 import { getContractOwner } from "@/utilities/sdk/getContractOwner";
 import { SOCIALS } from "@/utilities/socials";
-import { config } from "@/utilities/wagmi/config";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { MoonIcon, SunIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+
 import { useTheme } from "next-themes";
 import dynamic from "next/dynamic";
 import Image from "next/image";
@@ -23,15 +22,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Chain } from "viem";
-import { useAccount } from "wagmi";
+import { useAccount, useConnect } from "wagmi";
 import { OnboardingDialog } from "../Dialogs/OnboardingDialog";
 import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
 import { DiscordIcon, LogOutIcon, TelegramIcon, TwitterIcon } from "../Icons";
 import { Searchbar } from "../Searchbar";
-import { Button } from "./Button";
 import { errorManager } from "./errorManager";
 import { ExternalLink } from "./ExternalLink";
 import { ParagraphIcon } from "../Icons/Paragraph";
+import { useMiniAppStore } from "@/store/miniApp";
 
 const ProjectDialog = dynamic(
   () =>
@@ -44,11 +43,227 @@ const ProjectDialog = dynamic(
 const buttonStyle: HTMLButtonElement["className"] =
   "rounded-md bg-white w-max dark:bg-black px-0 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100 hover:bg-transparent dark:hover:bg-opacity-75 dark:border-zinc-900";
 
+const RainbowKitButton = () => {
+  const { isAuth, isAuthenticating } = useAuthStore();
+  const { authenticate, disconnect } = useAuth();
+  const { isConnected, address } = useAccount();
+
+  useEffect(() => {
+    if (isConnected && !isAuth && !isAuthenticating) {
+      authenticate();
+    }
+  }, [isConnected, isAuth, isAuthenticating]);
+
+  const ConnectButton = dynamic(
+    () =>
+      import("@rainbow-me/rainbowkit").then((mod) => mod.ConnectButton.Custom),
+    { ssr: false }
+  );
+  return (
+    <div className="flex w-full">
+      <div className="lg:hidden flex">
+        <ConnectButton>
+          {({
+            account,
+            chain,
+            openAccountModal,
+            openConnectModal,
+            authenticationStatus,
+            mounted,
+          }) => {
+            // Note: If your app doesn't use authentication, you
+            // can remove all 'authenticationStatus' checks
+            const ready = mounted && authenticationStatus !== "loading";
+            const connected =
+              ready &&
+              account &&
+              chain &&
+              (!authenticationStatus ||
+                authenticationStatus === "authenticated");
+
+            return (
+              <div
+                {...(!ready && {
+                  "aria-hidden": true,
+                  style: {
+                    opacity: 0,
+                    pointerEvents: "none",
+                    userSelect: "none",
+                  },
+                })}
+              >
+                {(() => {
+                  if (!connected) {
+                    return (
+                      <button
+                        onClick={openConnectModal}
+                        type="button"
+                        className="rounded-md border max-lg:w-full max-lg:justify-center border-brand-blue dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-brand-blue  hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                      >
+                        Login / Register
+                      </button>
+                    );
+                  }
+
+                  return (
+                    <Popover.Root>
+                      <Popover.Trigger asChild>
+                        <div className="cursor-pointer flex w-full py-1 justify-center items-center flex-row gap-2 rounded-full bg-gray-500 text-sm font-semibold text-white  hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
+                          {account.displayName}
+
+                          <EthereumAddressToENSAvatar
+                            address={account.address}
+                            className="h-8 w-8 min-h-8 min-w-8 rounded-full"
+                          />
+                        </div>
+                      </Popover.Trigger>
+                      <Popover.Content
+                        className="z-50 w-48 rounded-md bg-white p-1 shadow-lg dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"
+                        sideOffset={5}
+                        align="center"
+                      >
+                        <div className="py-1">
+                          <button
+                            onClick={async () => {
+                              disconnect();
+                            }}
+                            className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                          >
+                            <LogOutIcon className="mr-2 h-4 w-4" />
+                            Logout
+                          </button>
+                        </div>
+                      </Popover.Content>
+                    </Popover.Root>
+                  );
+                })()}
+              </div>
+            );
+          }}
+        </ConnectButton>
+      </div>
+      <div className="hidden lg:flex  max-w-max">
+        <ConnectButton>
+          {({
+            account,
+            chain,
+            openAccountModal,
+            openConnectModal,
+            authenticationStatus,
+            mounted,
+          }) => {
+            // Note: If your app doesn't use authentication, you
+            // can remove all 'authenticationStatus' checks
+            const ready = mounted && authenticationStatus !== "loading";
+            const connected =
+              ready &&
+              account &&
+              chain &&
+              (!authenticationStatus ||
+                authenticationStatus === "authenticated");
+
+            return (
+              <div
+                {...(!ready && {
+                  "aria-hidden": true,
+                  style: {
+                    opacity: 0,
+                    pointerEvents: "none",
+                    userSelect: "none",
+                  },
+                })}
+              >
+                {(() => {
+                  if (!connected || !isAuth) {
+                    return (
+                      <button
+                        onClick={() => {
+                          if (isAuthenticating) return;
+                          if (!isAuth && connected && !isAuthenticating) {
+                            authenticate();
+                            return;
+                          }
+                          openConnectModal?.();
+                        }}
+                        type="button"
+                        className="rounded-md border border-brand-blue dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-brand-blue hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                      >
+                        Login / Register
+                      </button>
+                    );
+                  }
+
+                  return (
+                    <Popover.Root>
+                      <Popover.Trigger asChild>
+                        <div className="flex cursor-pointer w-max items-center flex-row gap-2 rounded-full bg-gray-500 p-0 pl-3 text-sm font-semibold text-white hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
+                          {account.displayName}
+
+                          <EthereumAddressToENSAvatar
+                            address={account.address}
+                            className="h-10 w-10 rounded-full"
+                          />
+                        </div>
+                      </Popover.Trigger>
+                      <Popover.Content
+                        className="z-50 w-48 rounded-md bg-white p-1 shadow-lg dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"
+                        sideOffset={5}
+                        align="end"
+                      >
+                        <div className="py-1">
+                          <button
+                            onClick={async () => {
+                              disconnect();
+                            }}
+                            className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                          >
+                            <LogOutIcon className="mr-2 h-4 w-4" />
+                            Logout
+                          </button>
+                        </div>
+                      </Popover.Content>
+                    </Popover.Root>
+                  );
+                })()}
+              </div>
+            );
+          }}
+        </ConnectButton>
+      </div>
+    </div>
+  );
+};
+
+const MiniAppConnectButton = () => {
+  const { isAuth, isAuthenticating } = useAuthStore();
+  const { authenticate, disconnect } = useAuth();
+  const { isConnected, address } = useAccount();
+  const { connect, connectors } = useConnect();
+
+  return (
+    <div className="flex w-full">
+      {isConnected ? (
+        <button>{address}</button>
+      ) : (
+        <button onClick={() => connect({ connector: connectors[0] })}>
+          Connect
+        </button>
+      )}
+    </div>
+  );
+};
+
 export default function Header() {
   const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
   const { isConnected, address } = useAccount();
   const { isAuth, isAuthenticating } = useAuthStore();
   const { communities, setCommunities, setIsLoading } = useCommunitiesStore();
+  const { isMiniApp } = useMiniAppStore();
+  const [isReady, setIsReady] = useState(false);
+
+  useEffect(() => {
+    setIsReady(true);
+  }, []);
 
   const signer = useSigner();
 
@@ -134,20 +349,6 @@ export default function Header() {
       href: SOCIALS.PARAGRAPH,
     },
   ];
-
-  const [isReady, setIsReady] = useState(false);
-
-  useEffect(() => {
-    setIsReady(true);
-  }, []);
-
-  const { authenticate, disconnect, softDisconnect } = useAuth();
-
-  useEffect(() => {
-    if (isConnected && isReady && !isAuth && !isAuthenticating) {
-      authenticate();
-    }
-  }, [isConnected, isReady, isAuth, isAuthenticating]);
 
   const { isMobileMenuOpen, setIsMobileMenuOpen } = useMobileStore();
 
@@ -305,88 +506,11 @@ export default function Header() {
                                   {isConnected && isAuth && <ProjectDialog />}
                                 </>
                               )}
-
-                              <ConnectButton.Custom>
-                                {({
-                                  account,
-                                  chain,
-                                  openAccountModal,
-                                  openConnectModal,
-                                  authenticationStatus,
-                                  mounted,
-                                }) => {
-                                  // Note: If your app doesn't use authentication, you
-                                  // can remove all 'authenticationStatus' checks
-                                  const ready =
-                                    mounted &&
-                                    authenticationStatus !== "loading";
-                                  const connected =
-                                    ready &&
-                                    account &&
-                                    chain &&
-                                    (!authenticationStatus ||
-                                      authenticationStatus === "authenticated");
-
-                                  return (
-                                    <div
-                                      {...(!ready && {
-                                        "aria-hidden": true,
-                                        style: {
-                                          opacity: 0,
-                                          pointerEvents: "none",
-                                          userSelect: "none",
-                                        },
-                                      })}
-                                    >
-                                      {(() => {
-                                        if (!connected) {
-                                          return (
-                                            <button
-                                              onClick={openConnectModal}
-                                              type="button"
-                                              className="rounded-md border max-lg:w-full max-lg:justify-center border-brand-blue dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-brand-blue  hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-                                            >
-                                              Login / Register
-                                            </button>
-                                          );
-                                        }
-
-                                        return (
-                                          <Popover.Root>
-                                            <Popover.Trigger asChild>
-                                              <div className="cursor-pointer flex w-full py-1 justify-center items-center flex-row gap-2 rounded-full bg-gray-500 text-sm font-semibold text-white  hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
-                                                {account.displayName}
-
-                                                <EthereumAddressToENSAvatar
-                                                  address={account.address}
-                                                  className="h-8 w-8 min-h-8 min-w-8 rounded-full"
-                                                />
-                                              </div>
-                                            </Popover.Trigger>
-                                            <Popover.Content
-                                              className="z-50 w-48 rounded-md bg-white p-1 shadow-lg dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"
-                                              sideOffset={5}
-                                              align="center"
-                                            >
-                                              <div className="py-1">
-                                                <button
-                                                  onClick={async () => {
-                                                    disconnect();
-                                                  }}
-                                                  className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700"
-                                                >
-                                                  <LogOutIcon className="mr-2 h-4 w-4" />
-                                                  Logout
-                                                </button>
-                                              </div>
-                                            </Popover.Content>
-                                          </Popover.Root>
-                                        );
-                                      })()}
-                                    </div>
-                                  );
-                                }}
-                              </ConnectButton.Custom>
+                              {isMiniApp ? (
+                                <MiniAppConnectButton />
+                              ) : (
+                                <RainbowKitButton />
+                              )}
                             </>
                           ) : null}
                         </div>
@@ -448,97 +572,7 @@ export default function Header() {
                     </>
                   )}
 
-                  <ConnectButton.Custom>
-                    {({
-                      account,
-                      chain,
-                      openAccountModal,
-                      openConnectModal,
-                      authenticationStatus,
-                      mounted,
-                    }) => {
-                      // Note: If your app doesn't use authentication, you
-                      // can remove all 'authenticationStatus' checks
-                      const ready =
-                        mounted && authenticationStatus !== "loading";
-                      const connected =
-                        ready &&
-                        account &&
-                        chain &&
-                        (!authenticationStatus ||
-                          authenticationStatus === "authenticated");
-
-                      return (
-                        <div
-                          {...(!ready && {
-                            "aria-hidden": true,
-                            style: {
-                              opacity: 0,
-                              pointerEvents: "none",
-                              userSelect: "none",
-                            },
-                          })}
-                        >
-                          {(() => {
-                            if (!connected || !isAuth) {
-                              return (
-                                <button
-                                  onClick={() => {
-                                    if (isAuthenticating) return;
-                                    if (
-                                      !isAuth &&
-                                      connected &&
-                                      !isAuthenticating
-                                    ) {
-                                      authenticate();
-                                      return;
-                                    }
-                                    openConnectModal?.();
-                                  }}
-                                  type="button"
-                                  className="rounded-md border border-brand-blue dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-brand-blue hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-                                >
-                                  Login / Register
-                                </button>
-                              );
-                            }
-
-                            return (
-                              <Popover.Root>
-                                <Popover.Trigger asChild>
-                                  <div className="flex cursor-pointer w-max items-center flex-row gap-2 rounded-full bg-gray-500 p-0 pl-3 text-sm font-semibold text-white hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
-                                    {account.displayName}
-
-                                    <EthereumAddressToENSAvatar
-                                      address={account.address}
-                                      className="h-10 w-10 rounded-full"
-                                    />
-                                  </div>
-                                </Popover.Trigger>
-                                <Popover.Content
-                                  className="z-50 w-48 rounded-md bg-white p-1 shadow-lg dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"
-                                  sideOffset={5}
-                                  align="end"
-                                >
-                                  <div className="py-1">
-                                    <button
-                                      onClick={async () => {
-                                        disconnect();
-                                      }}
-                                      className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700"
-                                    >
-                                      <LogOutIcon className="mr-2 h-4 w-4" />
-                                      Logout
-                                    </button>
-                                  </div>
-                                </Popover.Content>
-                              </Popover.Root>
-                            );
-                          })()}
-                        </div>
-                      );
-                    }}
-                  </ConnectButton.Custom>
+                  {isMiniApp ? <MiniAppConnectButton /> : <RainbowKitButton />}
                 </>
               ) : null}
               {/* Rainbowkit custom connect button end */}

@@ -7,17 +7,32 @@ import {
   baseSepolia,
   sepolia,
   sei,
+  base,
 } from "viem/chains";
 import type { TNetwork } from "@show-karma/karma-gap-sdk";
 
-export const appNetwork: [Chain, ...Chain[]] =
-  process.env.NEXT_PUBLIC_ENV === "production"
-    ? [optimism, arbitrum, celo, sei]
-    : [optimismSepolia, baseSepolia, sepolia];
+const getNetwork = (): [Chain, ...Chain[]] => {
+  if (process.env.NEXT_PUBLIC_ENV === "production-miniapp") {
+    return [celo, base];
+  }
+  if (process.env.NEXT_PUBLIC_ENV === "production") {
+    return [optimism, arbitrum, celo, sei];
+  }
+  return [optimismSepolia, baseSepolia, sepolia];
+};
 
+export const appNetwork = getNetwork();
 
 export function getExplorerUrl(chainId: number, transactionHash: string) {
-  const chain = [optimism, arbitrum, celo, sei, optimismSepolia, baseSepolia, sepolia].find(c => c.id === chainId);
+  const chain = [
+    optimism,
+    arbitrum,
+    celo,
+    sei,
+    optimismSepolia,
+    baseSepolia,
+    sepolia,
+  ].find((c) => c.id === chainId);
   if (!chain || !chain.blockExplorers?.default?.url) {
     // Return a fallback block explorer URL if the chain or its explorer is not found
     return `https://www.oklink.com/multi-search#key=${transactionHash}`;

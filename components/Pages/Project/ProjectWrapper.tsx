@@ -37,6 +37,8 @@ import { useContactInfo } from "@/hooks/useContactInfo";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { ShareDialog } from "../GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/ShareDialog";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
+import { useMiniAppStore } from "@/store/miniApp";
+import MiniAppFund from "@/components/MiniAppFund";
 
 interface ProjectWrapperProps {
   project: IProjectResponse;
@@ -327,9 +329,11 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   const { isEndorsementOpen } = useEndorsementStore();
   const { isProgressModalOpen } = useProgressModalStore();
   const { isOpen: isShareDialogOpen } = useShareDialogStore();
+  const { isMiniApp } = useMiniAppStore();
 
   return (
     <>
+      {isMiniApp ? <MiniAppFund /> : null}
       {isIntroModalOpen ? <IntroDialog /> : null}
       {isEndorsementOpen ? <EndorsementDialog /> : null}
       {isProgressModalOpen ? <ProgressDialog /> : null}

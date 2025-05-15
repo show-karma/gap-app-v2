@@ -10,15 +10,13 @@ import "@uiw/react-markdown-preview/markdown.css";
 import Footer from "@/components/Utilities/Footer";
 import Header from "@/components/Utilities/Header";
 import { Toaster } from "react-hot-toast";
-import WagmiProvider from "@/components/Utilities/WagmiProvider";
 import { StepperDialog } from "@/components/Dialogs/StepperDialog";
 import { ProgressBarWrapper } from "@/components/ProgressBarWrapper";
 import { ThemeProvider } from "next-themes";
 import { Analytics } from "@vercel/analytics/react";
 import { GoogleAnalytics } from "@next/third-parties/google";
-import { Suspense } from "react";
 import { headers } from "next/headers";
-import { FarcasterProvider } from "@/components/Utilities/FarcasterProvider";
+import { AppCheckerProvider } from "@/components/Utilities/AppCheckerProvider";
 
 export const metadata = defaultMetadata;
 
@@ -38,24 +36,22 @@ export default async function RootLayout({
         )}
       <body>
         <ThemeProvider defaultTheme="light" attribute="class">
-          <WagmiProvider cookie={cookie}>
-            <FarcasterProvider>
-              <Toaster />
-              <StepperDialog />
-              <ProgressBarWrapper />
-              <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">
-                <div className="flex flex-col w-full h-full">
-                  <div className="fixed w-full bg-white dark:bg-black z-10">
-                    <Header />
-                  </div>
-                  <div className="h-[72px] w-full" />
-                  {children}
-                  <Analytics />
+          <AppCheckerProvider cookie={cookie}>
+            <Toaster />
+            <StepperDialog />
+            <ProgressBarWrapper />
+            <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">
+              <div className="flex flex-col w-full h-full">
+                <div className="fixed w-full bg-white dark:bg-black z-10">
+                  <Header />
                 </div>
-                <Footer />
+                <div className="h-[72px] w-full" />
+                {children}
+                <Analytics />
               </div>
-            </FarcasterProvider>
-          </WagmiProvider>
+              <Footer />
+            </div>
+          </AppCheckerProvider>
           <SpeedInsights />
         </ThemeProvider>
       </body>
