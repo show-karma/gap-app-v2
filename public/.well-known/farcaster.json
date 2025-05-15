@@ -8,19 +8,17 @@
     "splashBackgroundColor": "#FFFFFF",
     "subtitle": "Browse and Fund Celo Builders",
     "description": "Discover impactful projects in the Celo ecosystem. Browse by category, track progress, and fund directly, all in one place. Support the future of web3 on Celo.",
-    "screenshotUrls": [],
-    "primaryCategory": "utility",
-    "tags": [
-      "funding",
-      "reputation",
-      "ecosystem projects",
-      "project profile",
-      "onchain app"
+    "screenshotUrls": [
+      "https://minigap.karmahq.xyz/images/miniapp/screenshot-karma-project.png",
+      "https://minigap.karmahq.xyz/images/miniapp/screenshot-celo-community.png",
+      "https://minigap.karmahq.xyz/images/miniapp/screenshot-project-funding.png"
     ],
+    "primaryCategory": "utility",
+    "tags": ["funding", "reputation", "celo", "project-profile", "onchain-app"],
     "heroImageUrl": "https://minigap.karmahq.xyz/images/karma-miniapp-hero.png",
-    "tagline": "Turn Capital into Impact — Browse and Fund Celo Builders",
+    "tagline": "Browse and Fund Celo Builders",
     "ogTitle": "Browse and Fund Celo Builders",
-    "ogDescription": "Discover impactful projects in the Celo ecosystem. Browse by category, track progress, and fund directly, all in one place. Support the future of web3 on Celo.",
+    "ogDescription": "Discover impactful projects in the Celo ecosystem, track progress, and fund, all in one place.",
     "ogImageUrl": "https://minigap.karmahq.xyz/logo/karma_twitter_logo.jpg"
   }
 }
