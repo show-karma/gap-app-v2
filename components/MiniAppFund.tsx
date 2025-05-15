@@ -137,12 +137,12 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
       onSuccess: (data: Hash) => {
         setTxHash(data);
         setIsSuccess(true);
-        toast.success(`Thank you for your fund to ${projectName}!`);
+        toast.success(`Thank you for funding ${projectName}!`);
       },
       onError: (error: Error) => {
         console.log("error", error);
         errorManager(
-          `Error sending fund to ${projectOwnerAddress}`,
+          `Error sending funds to ${projectOwnerAddress}`,
           error,
           {
             projectOwnerAddress,
@@ -150,7 +150,7 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
             token: selectedToken.symbol,
             network: selectedNetwork.name,
           },
-          { error: "Failed to send fund." }
+          { error: "Failed to send funds." }
         );
       },
     },
@@ -162,7 +162,7 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
       onSuccess: (data: Hash) => {
         setTxHash(data);
         setIsSuccess(true);
-        toast.success(`Thank you for your fund to ${projectName}!`);
+        toast.success(`Thank you for funding ${projectName}!`);
       },
       onError: (error: Error) => {
         console.log("error", error);
@@ -175,7 +175,7 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
             token: selectedToken.symbol,
             network: selectedNetwork.name,
           },
-          { error: "Failed to send fund." }
+          { error: "Failed to send funds." }
         );
       },
     },
@@ -231,7 +231,7 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
       }
     } catch (error) {
       errorManager(
-        `Error processing fund to ${projectOwnerAddress}`,
+        `Error funding ${projectOwnerAddress}`,
         error,
         {
           projectOwnerAddress,
@@ -239,7 +239,7 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
           token: selectedToken.symbol,
           network: selectedNetwork.name,
         },
-        { error: "Failed to process fund." }
+        { error: "Failed to process funds." }
       );
     }
   };
