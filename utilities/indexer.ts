@@ -12,7 +12,8 @@ export const INDEXER = {
       `/registry/find/${id}/${chainId}`,
     GET_ALL_PENDING: "/registry/pending",
     APPROVE: "/registry/approve",
-    UPDATE: "/registry/updateMetadata",
+    UPDATE: (id: string, chainId: number) =>
+      `/registry/${id}/${chainId}/updateMetadata`,
     CREATE: "/registry/offchain/create",
     MANAGERS: (profileId: string, chainId: number) =>
       `/registry/profile/${profileId}/${chainId}/members`,
