@@ -206,9 +206,10 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
       if (!isConnected) {
         await connectAsync({ connector: connectors[0] });
       }
-      console.log("currentChainId", currentChainId);
-      console.log("selectedNetwork.id", selectedNetwork.id);
-      // // Switch to the selected network
+
+      if (currentChainId !== selectedNetwork.id) {
+        await switchChainAsync({ chainId: selectedNetwork.id });
+      }
 
       // If native token
       if (!selectedToken.address) {

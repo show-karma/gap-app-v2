@@ -1,5 +1,5 @@
 import { http, createConfig, createStorage, cookieStorage } from "@wagmi/core";
-import { celo, base } from "@wagmi/core/chains";
+import { celo } from "@wagmi/core/chains";
 import { farcasterFrame } from "@farcaster/frame-wagmi-connector";
 import { appNetwork } from "../network";
 import { envVars } from "../enviromentVars";
@@ -9,7 +9,6 @@ export const miniAppWagmiConfig = createConfig({
   connectors: [farcasterFrame()],
   transports: {
     [celo.id]: http(envVars.RPC.CELO),
-    [base.id]: http(envVars.RPC.BASE),
   },
   ssr: false,
   storage: createStorage({

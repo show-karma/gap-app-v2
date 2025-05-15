@@ -13,7 +13,7 @@ import type { TNetwork } from "@show-karma/karma-gap-sdk";
 
 const getNetwork = (): [Chain, ...Chain[]] => {
   if (process.env.NEXT_PUBLIC_ENV === "production-miniapp") {
-    return [celo, base];
+    return [celo];
   }
   if (process.env.NEXT_PUBLIC_ENV === "production") {
     return [optimism, arbitrum, celo, sei];
