@@ -2,9 +2,9 @@
   "frame": {
     "version": "1",
     "name": "Karma Celo Community",
-    "iconUrl": "https://minigap.karmahq.xyz/logo/karma_twitter_logo.jpg",
+    "iconUrl": "https://minigap.karmahq.xyz/logo/karma-twitter-logo.png",
     "homeUrl": "https://minigap.karmahq.xyz/community/celo",
-    "splashImageUrl": "https://minigap.karmahq.xyz/logo/karma-gap-logo2.png",
+    "splashImageUrl": "https://minigap.karmahq.xyz/logo/karma-twitter-logo.png",
     "splashBackgroundColor": "#FFFFFF",
     "subtitle": "Browse and Fund Celo Builders",
     "description": "Discover impactful projects in the Celo ecosystem. Browse by category, track progress, and fund directly, all in one place. Support the future of web3 on Celo.",
@@ -19,7 +19,7 @@
     "tagline": "Browse and Fund Celo Builders",
     "ogTitle": "Browse and Fund Celo Builders",
     "ogDescription": "Discover impactful projects in the Celo ecosystem, track progress, and fund, all in one place.",
-    "ogImageUrl": "https://minigap.karmahq.xyz/logo/karma_twitter_logo.jpg"
+    "ogImageUrl": "https://minigap.karmahq.xyz/logo/karma-twitter-logo.png"
   },
   "accountAssociation": {
     "header": "eyJmaWQiOjQ3NiwidHlwZSI6ImN1c3RvZHkiLCJrZXkiOiIweDY5NzQwYzg4YzIxNTUwOEUzRWQ5MTBGMGNlYzg5Mjg5Y0EzYjYxNzkifQ",

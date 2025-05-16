@@ -5,6 +5,7 @@ import formatCurrency from "@/utilities/formatCurrency";
 import { getHeaderStats } from "@/utilities/karma/getHeaderStats";
 import { useQuery } from "@tanstack/react-query";
 import { useParams, usePathname } from "next/navigation";
+import { useMiniAppStore } from "@/store/miniApp";
 
 export const ImpactStatCards = () => {
   const { data, isLoading } = useImpactMeasurement();
@@ -122,6 +123,9 @@ export const CommunityStatCards = () => {
 export const CommunityImpactStatCards = () => {
   const pathname = usePathname();
   const isImpactPage = pathname.includes("/impact");
+  const { isMiniApp } = useMiniAppStore();
+
+  if (isMiniApp) return null;
 
   return (
     <div className="flex flex-1 gap-6 flex-row max-sm:flex-wrap py-2 max-sm:gap-2">

@@ -8,6 +8,7 @@ import { cn } from "@/utilities/tailwind";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
+import { useMiniAppStore } from "@/store/miniApp";
 
 const activeLinkStyle =
   "text-brand-darkblue dark:text-white font-bold border-b border-b-4 border-b-brand-blue dark:border-b-brand-blue";
@@ -62,6 +63,7 @@ export const CommunityPageNavigator = () => {
   const params = useParams();
   const communityId = params.communityId as string;
   const pathname = usePathname();
+  const { isMiniApp } = useMiniAppStore();
   const { data: community } = useQuery({
     queryKey: ["community", communityId],
     queryFn: () => getCommunityBySlug(communityId),
@@ -69,6 +71,19 @@ export const CommunityPageNavigator = () => {
 
   const isAdminPage = pathname.includes("/admin");
   if (isAdminPage) return null;
+
+  if (isMiniApp) {
+    return (
+      <div className="flex flex-col gap-2 px-1.5 pt-2 mb-[-1px]">
+        <h1 className="text-2xl font-bold text-brand-darkblue dark:text-white">
+          🙌 Back Projects on Celo
+        </h1>
+        <p className="text-gray-600 dark:text-zinc-400 mb-6">
+          This page lists all projects in the Celo ecosystem. Browse, explore their work, and tip the ones you love!
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-row max-md:flex-col flex-wrap px-1.5 pt-2 mb-[-1px] rounded-lg justify-start items-center gap-4 flex h-max">

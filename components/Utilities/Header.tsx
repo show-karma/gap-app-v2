@@ -415,7 +415,7 @@ export default function Header() {
               <div className="flex py-4 lg:inset-y-0 lg:left-0 lg:static">
                 <Link
                   className="flex-shrink-0 max-w-[180px] max-h-[40px]"
-                  href="/"
+                  href={isMiniApp ? "/community/celo" : "/"}
                 >
                   <Image
                     className="block w-full h-auto dark:hidden"
