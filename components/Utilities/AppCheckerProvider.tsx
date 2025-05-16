@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import FarcasterProvider from "./FarcasterProvider";
 import WagmiProvider from "@/components/Utilities/WagmiProvider";
 import { useMiniAppStore } from "@/store/miniApp";
-import { usePathname, useRouter } from "next/navigation";
+import { useMetrics } from "@/hooks/useMetrics";
 
 export const AppCheckerProvider = ({
   children,
@@ -15,7 +15,7 @@ export const AppCheckerProvider = ({
 }) => {
   const { isMiniApp, setIsMiniApp } = useMiniAppStore();
 
-  const router = useRouter();
+  const { captureClient } = useMetrics();
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -30,6 +30,9 @@ export const AppCheckerProvider = ({
       import("@farcaster/frame-sdk").then(({ sdk }) => {
         // Mini-App–specific bootstrap here
         sdk.actions.ready();
+        captureClient.reportEvent({
+          event: "mini-app:loaded",
+        });
       });
     }
   }, []);

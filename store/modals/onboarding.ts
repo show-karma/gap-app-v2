@@ -1,4 +1,4 @@
-import { mixpanelEvent } from "@/utilities/mixpanelEvent";
+import * as amplitude from "@amplitude/analytics-browser";
 import { Hex } from "viem";
 import { create } from "zustand";
 
@@ -27,9 +27,9 @@ export const useOnboarding = create<OnboardingStore>((set, get) => ({
   onboardingStep: "welcome",
   changeOnboardingStep: (onboardingStep: OnboardingSteps, address: string) => {
     if (get().isOnboardingOpen) {
-      mixpanelEvent({
-        event: "onboarding:navigation",
-        properties: { address, id: onboardingStep },
+      amplitude.track("onboarding:navigation", {
+        address,
+        id: onboardingStep,
       });
     }
     set({ onboardingStep });

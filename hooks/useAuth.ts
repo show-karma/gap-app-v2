@@ -14,7 +14,7 @@ import toast from "react-hot-toast";
 import Cookies from "universal-cookie";
 import { Hex } from "viem";
 import { useAccount, useChainId, useDisconnect, useSignMessage } from "wagmi";
-import { useMixpanel } from "./useMixpanel";
+import { useMetrics } from "./useMetrics";
 import { config } from "@/utilities/wagmi/config";
 import { watchAccount } from "@wagmi/core";
 import { useEffect, useRef } from "react";
@@ -116,7 +116,7 @@ export const useAuth = () => {
   const { setIsOnboarding } = useOnboarding?.();
   const router = useRouter();
   const cookies = new Cookies();
-  const { mixpanel } = useMixpanel();
+  const { captureClient } = useMetrics();
   const { signMessageAsync } = useSignMessage();
   const [inviteCode] = useQueryState("invite-code");
 
@@ -533,11 +533,11 @@ export const useAuth = () => {
         setIsOnboarding?.(true);
       }
       if (address) {
-        mixpanel.reportEvent({
+        captureClient.reportEvent({
           event: "onboarding:popup",
           properties: { address },
         });
-        mixpanel.reportEvent({
+        captureClient.reportEvent({
           event: "onboarding:navigation",
           properties: { address, id: "welcome" },
         });

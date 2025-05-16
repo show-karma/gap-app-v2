@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "@ai-sdk/openai": "^1.1.0",
+    "@amplitude/analytics-browser": "^2.17.6",
     "@farcaster/frame-sdk": "^0.0.41",
     "@farcaster/frame-wagmi-connector": "^0.0.30",
     "@headlessui/react": "^2.1.2",

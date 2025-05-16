@@ -19,7 +19,7 @@ import { errorManager } from "./Utilities/errorManager";
 import { TransactionLink } from "./Utilities/TransactionLink";
 import { useProjectStore } from "@/store";
 import { useMiniAppStore } from "@/store/miniApp";
-import { useMixpanel } from "@/hooks/useMixpanel";
+import { useMetrics } from "@/hooks/useMetrics";
 
 interface MiniAppFundProps {
   position?: "bottom-right" | "bottom-left" | "top-right" | "top-left";
@@ -108,7 +108,7 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
   const [isSuccess, setIsSuccess] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
   const { isMiniApp } = useMiniAppStore();
-  const { mixpanel } = useMixpanel();
+  const { captureClient } = useMetrics();
 
   // Network selection state
   const [selectedNetwork, setSelectedNetwork] = useState<Network>(NETWORKS[0]); // Default to Celo
@@ -119,7 +119,7 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
   ); // Default to native CELO
 
   const currentChainId = useChainId();
-  console.log("currentChainId", currentChainId);
+
   const { switchChainAsync, switchChain } = useSwitchChain();
 
   // Update selected token when network changes
@@ -232,7 +232,7 @@ const MiniAppFund = ({ position = "bottom-right" }: MiniAppFundProps) => {
           chainId: selectedNetwork.id,
         });
       }
-      mixpanel.reportEvent({
+      await captureClient.reportEvent({
         event: "funding:miniapp",
         properties: {
           address,

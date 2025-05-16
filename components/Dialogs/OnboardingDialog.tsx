@@ -8,7 +8,6 @@ import {
   ChevronRightIcon,
   XMarkIcon,
 } from "@heroicons/react/24/solid";
-import { useMixpanel } from "@/hooks/useMixpanel";
 import { useAccount } from "wagmi";
 import { Hex } from "viem";
 

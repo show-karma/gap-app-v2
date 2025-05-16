@@ -3,7 +3,7 @@
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import Pagination from "@/components/Utilities/Pagination";
-import { useMixpanel } from "@/hooks/useMixpanel";
+import { useMetrics } from "@/hooks/useMetrics";
 import { useAuthStore } from "@/store/auth";
 import { useOnboarding } from "@/store/modals/onboarding";
 import formatCurrency from "@/utilities/formatCurrency";
@@ -47,7 +47,7 @@ const pickColor = (index: number) => {
 
 const OnboardingButton = () => {
   const { setIsOnboarding } = useOnboarding();
-  const { mixpanel } = useMixpanel();
+  const { captureClient } = useMetrics();
   const { address } = useAccount();
 
   return (
@@ -55,11 +55,11 @@ const OnboardingButton = () => {
       onClick={() => {
         setIsOnboarding(true);
         if (address) {
-          mixpanel.reportEvent({
+          captureClient.reportEvent({
             event: "onboarding:popup",
             properties: { address },
           });
-          mixpanel.reportEvent({
+          captureClient.reportEvent({
             event: "onboarding:navigation",
             properties: { address, id: "welcome" },
           });
