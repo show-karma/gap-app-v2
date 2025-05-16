@@ -10,6 +10,7 @@ import { MarkdownPreview } from "./Utilities/MarkdownPreview";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { TrackTags } from "./TrackTags";
 import { useMiniAppStore } from "@/store/miniApp";
+import Link from "next/link";
 
 interface GrantCardProps {
   grant: IGrantResponse;
@@ -185,20 +186,11 @@ export const NormalGrantCard = ({ grant, index }: GrantCardProps) => {
 };
 
 const MiniAppGrantCard = ({ grant, index }: GrantCardProps) => {
-  const selectedTrackIds = grant.details?.data?.selectedTrackIds as
-    | string[]
-    | undefined;
-  const communityId = grant.data?.communityUID;
-
-  // Check if we have valid track IDs to display
-  const hasTrackIds = selectedTrackIds && selectedTrackIds.length > 0;
-
   return (
     <a
       id="grant-card"
-      href={PAGES.PROJECT.GRANT(
-        grant.project?.details?.data?.slug || grant.refUID || "",
-        grant.uid
+      href={PAGES.PROJECT.OVERVIEW(
+        grant.project?.details?.data?.slug || grant.refUID || ""
       )}
       className="flex h-full w-full max-w-full relative flex-col items-start justify-between gap-3 rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2 transition-all duration-300 ease-in-out hover:opacity-80"
     >
@@ -227,8 +219,11 @@ const MiniAppGrantCard = ({ grant, index }: GrantCardProps) => {
               <MarkdownPreview
                 source={grant.project?.details?.data?.description?.slice(
                   0,
-                  140
+                  200
                 )}
+                components={{
+                  img: ({ node, ...props }) => null,
+                }}
               />
             </div>
           </div>

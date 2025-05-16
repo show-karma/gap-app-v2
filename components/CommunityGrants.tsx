@@ -138,14 +138,44 @@ export const CommunityGrants = ({
             pageLimit: itemsPerPage,
           }
         );
+
+        // Filter for unique projects in miniapp mode
+        let processedGrants = fetchedGrants;
+        if (isMiniApp && fetchedGrants && fetchedGrants.length) {
+          const uniqueProjectMap = new Map();
+
+          // First populate map with existing projects from current grants state
+          if (currentPage > 0) {
+            grants.forEach((existingGrant) => {
+              uniqueProjectMap.set(existingGrant.project.uid, true);
+            });
+          }
+
+          // Then filter new grants to only include those with unique project UIDs
+          processedGrants = fetchedGrants.filter((grant) => {
+            if (!uniqueProjectMap.has(grant.project.uid)) {
+              uniqueProjectMap.set(grant.project.uid, true);
+              return true;
+            }
+            return false;
+          });
+        }
+
         setPaginationInfo({
           grantsNo: pageInfo.totalItems,
           projectsNo: uniqueProjectCount,
         });
         if (fetchedGrants && fetchedGrants.length) {
-          setHaveMore(fetchedGrants.length === itemsPerPage);
+          // For miniapp mode, check if we have more based on original fetchedGrants length
+          // but use processedGrants for the state update
+          setHaveMore(
+            isMiniApp
+              ? processedGrants.length > 0 &&
+                  fetchedGrants.length === itemsPerPage
+              : fetchedGrants.length === itemsPerPage
+          );
           setGrants((prev) =>
-            currentPage === 0 ? fetchedGrants : [...prev, ...fetchedGrants]
+            currentPage === 0 ? processedGrants : [...prev, ...processedGrants]
           );
           setTotalGrants(pageInfo?.totalItems || totalGrants);
         } else {
@@ -522,7 +552,7 @@ export const CommunityGrants = ({
               }}
             >
               {isMiniApp ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-4">
                   {grants.map((grant, index) => (
                     <GrantCard key={grant.uid} grant={grant} index={index} />
                   ))}
