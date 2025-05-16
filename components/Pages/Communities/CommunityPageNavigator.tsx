@@ -79,7 +79,7 @@ export const CommunityPageNavigator = () => {
           🙌 Back Projects on Celo
         </h1>
         <p className="text-gray-600 dark:text-zinc-400 mb-6">
-          This page lists all projects in the Celo ecosystem. Browse, explore their work, and tip the ones you love!
+          This page lists all projects in the Celo ecosystem. Browse, explore their work, and click on a project to tip the ones you love!
         </p>
       </div>
     );
