@@ -142,6 +142,11 @@ export const CommunityGrants = ({
         // Filter for unique projects in miniapp mode
         let processedGrants = fetchedGrants;
         if (isMiniApp && fetchedGrants && fetchedGrants.length) {
+          // Randomize order in miniapp mode
+          const shuffledGrants = [...fetchedGrants].sort(
+            () => Math.random() - 0.5
+          );
+
           const uniqueProjectMap = new Map();
 
           // First populate map with existing projects from current grants state
@@ -152,7 +157,7 @@ export const CommunityGrants = ({
           }
 
           // Then filter new grants to only include those with unique project UIDs
-          processedGrants = fetchedGrants.filter((grant) => {
+          processedGrants = shuffledGrants.filter((grant) => {
             if (!uniqueProjectMap.has(grant.project.uid)) {
               uniqueProjectMap.set(grant.project.uid, true);
               return true;
