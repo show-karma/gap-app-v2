@@ -30,7 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   const dynamicMetadata = {
-    title: `Karma GAP - ${communityName} community grants`,
+    title: `Karma GAP - ${communityName} community projects`,
     description: `View the list of grants issued by ${communityName} and the grantee updates.`,
   };
 

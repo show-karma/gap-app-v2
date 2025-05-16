@@ -36,7 +36,7 @@ export async function generateMetadata({
   }
 
   let dynamicMetadata = {
-    title: `Karma AI - ${communityName} community grants`,
+    title: `Karma AI - ${communityName} community projects`,
     description: `Chat with Karma AI assistant to projects in ${communityName}, measure their impact and fund them.`,
   };
 
