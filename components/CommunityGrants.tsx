@@ -19,10 +19,12 @@ import { Hex } from "viem";
 import { GrantCard } from "./GrantCard";
 import { ProgramFilter } from "./Pages/Communities/Impact/ProgramFilter";
 import { TrackFilter } from "./Pages/Communities/Impact/TrackFilter";
-import { CardListSkeleton } from "./Pages/Communities/Loading";
 import { errorManager } from "./Utilities/errorManager";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { ProgramBanner } from "./ProgramBanner";
+import { useMiniAppStore } from "@/store/miniApp";
+import { CardListSkeleton } from "./Pages/Communities/Loading";
+import { MiniAppCardListSkeleton } from "./MiniApp/LoadingCards";
 
 const sortOptions: Record<SortByOptions, string> = {
   recent: "Recent",
@@ -110,6 +112,7 @@ export const CommunityGrants = ({
     () => selectedCategories.join("_"),
     [selectedCategories]
   );
+  const { isMiniApp } = useMiniAppStore();
 
   useEffect(() => {
     if (!communityId || communityId === zeroUID) return;
@@ -328,175 +331,179 @@ export const CommunityGrants = ({
             ) : null}
             {/* Filter by category end */}
 
-            {/* Sort start */}
-            <Listbox
-              value={selectedSort}
-              onChange={(value) => {
-                changeSort(value);
-              }}
-            >
-              {({ open }) => (
-                <div className="flex items-center gap-x-2 max-sm:w-full max-sm:justify-between">
-                  <div className="relative flex-1 w-max">
-                    <Listbox.Button
-                      id="sort-by-button"
-                      className="cursor-pointer items-center relative w-full rounded-md pr-8 text-left  sm:text-sm sm:leading-6 text-black dark:text-white text-base font-normal"
-                    >
-                      <span className="flex flex-row gap-1">
-                        Sort by {sortOptions[selectedSort]}
-                      </span>
-                      <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                        <ChevronDownIcon
-                          className="h-4 w-4 text-gray-400"
-                          aria-hidden="true"
-                        />
-                      </span>
-                    </Listbox.Button>
+            {!isMiniApp ? (
+              <Listbox
+                value={selectedSort}
+                onChange={(value) => {
+                  changeSort(value);
+                }}
+              >
+                {({ open }) => (
+                  <div className="flex items-center gap-x-2 max-sm:w-full max-sm:justify-between">
+                    <div className="relative flex-1 w-max">
+                      <Listbox.Button
+                        id="sort-by-button"
+                        className="cursor-pointer items-center relative w-full rounded-md pr-8 text-left  sm:text-sm sm:leading-6 text-black dark:text-white text-base font-normal"
+                      >
+                        <span className="flex flex-row gap-1">
+                          Sort by {sortOptions[selectedSort]}
+                        </span>
+                        <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                          <ChevronDownIcon
+                            className="h-4 w-4 text-gray-400"
+                            aria-hidden="true"
+                          />
+                        </span>
+                      </Listbox.Button>
 
-                    <Transition
-                      show={open}
-                      as={Fragment}
-                      leave="transition ease-in duration-100"
-                      leaveFrom="opacity-100"
-                      leaveTo="opacity-0"
-                    >
-                      <Listbox.Options className="absolute  z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base  dark:bg-zinc-800 dark:text-zinc-200 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                        {Object.keys(sortOptions).map((sortOption) => (
-                          <Listbox.Option
-                            key={sortOption}
-                            className={({ active }) =>
-                              cn(
-                                active
-                                  ? "bg-gray-100 text-black dark:text-gray-300 dark:bg-zinc-900"
-                                  : "text-gray-900 dark:text-gray-200 ",
-                                "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
-                              )
-                            }
-                            value={sortOption}
-                            onClick={() => {
-                              setCurrentPage(1);
-                            }}
-                          >
-                            {({ selected, active }) => (
-                              <>
-                                <span
-                                  className={cn(
-                                    selected ? "font-semibold" : "font-normal",
-                                    "block truncate"
-                                  )}
-                                >
-                                  {sortOptions[sortOption as SortByOptions]}
-                                </span>
-
-                                {selected ? (
+                      <Transition
+                        show={open}
+                        as={Fragment}
+                        leave="transition ease-in duration-100"
+                        leaveFrom="opacity-100"
+                        leaveTo="opacity-0"
+                      >
+                        <Listbox.Options className="absolute  z-10 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base  dark:bg-zinc-800 dark:text-zinc-200 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                          {Object.keys(sortOptions).map((sortOption) => (
+                            <Listbox.Option
+                              key={sortOption}
+                              className={({ active }) =>
+                                cn(
+                                  active
+                                    ? "bg-gray-100 text-black dark:text-gray-300 dark:bg-zinc-900"
+                                    : "text-gray-900 dark:text-gray-200 ",
+                                  "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
+                                )
+                              }
+                              value={sortOption}
+                              onClick={() => {
+                                setCurrentPage(1);
+                              }}
+                            >
+                              {({ selected, active }) => (
+                                <>
                                   <span
                                     className={cn(
-                                      "text-blue-600 dark:text-blue-400",
-                                      "absolute inset-y-0 right-0 flex items-center pr-4"
+                                      selected
+                                        ? "font-semibold"
+                                        : "font-normal",
+                                      "block truncate"
                                     )}
                                   >
-                                    <CheckIcon
-                                      className="h-5 w-5"
-                                      aria-hidden="true"
-                                    />
+                                    {sortOptions[sortOption as SortByOptions]}
                                   </span>
-                                ) : null}
-                              </>
-                            )}
-                          </Listbox.Option>
-                        ))}
-                      </Listbox.Options>
-                    </Transition>
+
+                                  {selected ? (
+                                    <span
+                                      className={cn(
+                                        "text-blue-600 dark:text-blue-400",
+                                        "absolute inset-y-0 right-0 flex items-center pr-4"
+                                      )}
+                                    >
+                                      <CheckIcon
+                                        className="h-5 w-5"
+                                        aria-hidden="true"
+                                      />
+                                    </span>
+                                  ) : null}
+                                </>
+                              )}
+                            </Listbox.Option>
+                          ))}
+                        </Listbox.Options>
+                      </Transition>
+                    </div>
                   </div>
-                </div>
-              )}
-            </Listbox>
-            {/* Sort end */}
+                )}
+              </Listbox>
+            ) : null}
 
-            {/* Status start */}
-            <Listbox
-              value={selectedStatus}
-              onChange={(value) => {
-                changeStatus(value);
-              }}
-            >
-              {({ open }) => (
-                <div className="flex items-center gap-x-2  max-sm:w-full max-sm:justify-between">
-                  <div className="relative flex-1 w-max">
-                    <Listbox.Button
-                      id="status-button"
-                      className="cursor-pointer items-center relative w-full rounded-md pr-8 text-left  sm:text-sm sm:leading-6 text-black dark:text-white text-base font-normal"
-                    >
-                      <span className="flex flex-row gap-1">
-                        {statuses[selectedStatus]}
-                      </span>
-                      <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                        <ChevronDownIcon
-                          className="h-4 w-4 text-gray-400"
-                          aria-hidden="true"
-                        />
-                      </span>
-                    </Listbox.Button>
+            {!isMiniApp ? (
+              <Listbox
+                value={selectedStatus}
+                onChange={(value) => {
+                  changeStatus(value);
+                }}
+              >
+                {({ open }) => (
+                  <div className="flex items-center gap-x-2  max-sm:w-full max-sm:justify-between">
+                    <div className="relative flex-1 w-max">
+                      <Listbox.Button
+                        id="status-button"
+                        className="cursor-pointer items-center relative w-full rounded-md pr-8 text-left  sm:text-sm sm:leading-6 text-black dark:text-white text-base font-normal"
+                      >
+                        <span className="flex flex-row gap-1">
+                          {statuses[selectedStatus]}
+                        </span>
+                        <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                          <ChevronDownIcon
+                            className="h-4 w-4 text-gray-400"
+                            aria-hidden="true"
+                          />
+                        </span>
+                      </Listbox.Button>
 
-                    <Transition
-                      show={open}
-                      as={Fragment}
-                      leave="transition ease-in duration-100"
-                      leaveFrom="opacity-100"
-                      leaveTo="opacity-0"
-                    >
-                      <Listbox.Options className="absolute z-10 dark:bg-zinc-800 dark:text-zinc-200 mt-1 max-h-60 w-max overflow-auto rounded-md bg-white py-1 text-base  ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                        {Object.keys(statuses).map((statusOption) => (
-                          <Listbox.Option
-                            key={statusOption}
-                            className={({ active }) =>
-                              cn(
-                                active
-                                  ? "bg-gray-100 text-black dark:text-gray-300 dark:bg-zinc-900"
-                                  : "text-gray-900 dark:text-gray-200 ",
-                                "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
-                              )
-                            }
-                            value={statusOption}
-                            onClick={() => {
-                              setCurrentPage(1);
-                            }}
-                          >
-                            {({ selected, active }) => (
-                              <>
-                                <span
-                                  className={cn(
-                                    selected ? "font-semibold" : "font-normal",
-                                    "block truncate"
-                                  )}
-                                >
-                                  {statuses[statusOption as StatusOptions]}
-                                </span>
-
-                                {selected ? (
+                      <Transition
+                        show={open}
+                        as={Fragment}
+                        leave="transition ease-in duration-100"
+                        leaveFrom="opacity-100"
+                        leaveTo="opacity-0"
+                      >
+                        <Listbox.Options className="absolute z-10 dark:bg-zinc-800 dark:text-zinc-200 mt-1 max-h-60 w-max overflow-auto rounded-md bg-white py-1 text-base  ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                          {Object.keys(statuses).map((statusOption) => (
+                            <Listbox.Option
+                              key={statusOption}
+                              className={({ active }) =>
+                                cn(
+                                  active
+                                    ? "bg-gray-100 text-black dark:text-gray-300 dark:bg-zinc-900"
+                                    : "text-gray-900 dark:text-gray-200 ",
+                                  "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
+                                )
+                              }
+                              value={statusOption}
+                              onClick={() => {
+                                setCurrentPage(1);
+                              }}
+                            >
+                              {({ selected, active }) => (
+                                <>
                                   <span
                                     className={cn(
-                                      "text-blue-600 dark:text-blue-400",
-                                      "absolute inset-y-0 right-0 flex items-center pr-4"
+                                      selected
+                                        ? "font-semibold"
+                                        : "font-normal",
+                                      "block truncate"
                                     )}
                                   >
-                                    <CheckIcon
-                                      className="h-5 w-5"
-                                      aria-hidden="true"
-                                    />
+                                    {statuses[statusOption as StatusOptions]}
                                   </span>
-                                ) : null}
-                              </>
-                            )}
-                          </Listbox.Option>
-                        ))}
-                      </Listbox.Options>
-                    </Transition>
+
+                                  {selected ? (
+                                    <span
+                                      className={cn(
+                                        "text-blue-600 dark:text-blue-400",
+                                        "absolute inset-y-0 right-0 flex items-center pr-4"
+                                      )}
+                                    >
+                                      <CheckIcon
+                                        className="h-5 w-5"
+                                        aria-hidden="true"
+                                      />
+                                    </span>
+                                  ) : null}
+                                </>
+                              )}
+                            </Listbox.Option>
+                          ))}
+                        </Listbox.Options>
+                      </Transition>
+                    </div>
                   </div>
-                </div>
-              )}
-            </Listbox>
-            {/* Status end */}
+                )}
+              </Listbox>
+            ) : null}
           </div>
         </div>
       </div>
@@ -504,12 +511,6 @@ export const CommunityGrants = ({
       <section className="flex flex-col gap-4 md:flex-row">
         <div className="h-full w-full mb-8">
           {grants.length > 0 ? (
-            // <div className="grid grid-cols-4 justify-items-center gap-3 pb-20 max-2xl:grid-cols-4 max-xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1">
-            //   {grants.map((grant, index) => {
-            //     return <GrantCard key={grant.uid} grant={grant} index={index} />;
-            //   })}
-            // </div>
-
             <InfiniteScroll
               dataLength={grants.length}
               next={loadMore}
@@ -520,74 +521,88 @@ export const CommunityGrants = ({
                 height: "100%",
               }}
             >
-              <AutoSizer disableHeight>
-                {({ width }) => {
-                  const columnCounter = Math.floor(width / 240)
-                    ? Math.floor(width / 240) > 4
-                      ? 4
-                      : Math.floor(width / 240)
-                    : 1;
-                  const columnWidth = Math.floor(width / columnCounter);
-                  const gutterSize = 20;
-                  const height = Math.ceil(grants.length / columnCounter) * 360;
-                  return (
-                    <Grid
-                      height={height + 120}
-                      width={width}
-                      rowCount={Math.ceil(grants.length / columnCounter)}
-                      rowHeight={360}
-                      columnWidth={
-                        columnWidth - 20 < 240 ? 240 : columnWidth - 5
-                      }
-                      columnCount={columnCounter}
-                      cellRenderer={({ columnIndex, key, rowIndex, style }) => {
-                        const grant =
-                          grants[rowIndex * columnCounter + columnIndex];
-                        return (
-                          <div
-                            key={key}
-                            style={{
-                              ...style,
-                              left:
-                                columnIndex === 0
-                                  ? +(style.left || 0)
-                                  : +(style.left || 0) + gutterSize,
-                              width:
-                                columnIndex === 0
-                                  ? +(style.width || 0)
-                                  : +(style.width || 0) - gutterSize,
-                              top:
-                                rowIndex === 0
-                                  ? +(style.top || 0)
-                                  : +(style.top || 0) + gutterSize,
-                              height: +(style.height || 0) - gutterSize,
-                            }}
-                          >
-                            {grant && (
-                              <div
-                                style={{
-                                  height: "100%",
-                                }}
-                              >
-                                <GrantCard
-                                  index={rowIndex * 4 + columnIndex}
-                                  key={grant.uid}
-                                  grant={grant}
-                                />
-                              </div>
-                            )}
-                          </div>
-                        );
-                      }}
-                    />
-                  );
-                }}
-              </AutoSizer>
+              {isMiniApp ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {grants.map((grant, index) => (
+                    <GrantCard key={grant.uid} grant={grant} index={index} />
+                  ))}
+                </div>
+              ) : (
+                <AutoSizer disableHeight>
+                  {({ width }) => {
+                    const columnCounter = Math.floor(width / 240)
+                      ? Math.floor(width / 240) > 4
+                        ? 4
+                        : Math.floor(width / 240)
+                      : 1;
+                    const columnWidth = Math.floor(width / columnCounter);
+                    const gutterSize = 20;
+                    const height =
+                      Math.ceil(grants.length / columnCounter) * 360;
+                    return (
+                      <Grid
+                        height={height + 120}
+                        width={width}
+                        rowCount={Math.ceil(grants.length / columnCounter)}
+                        rowHeight={360}
+                        columnWidth={
+                          columnWidth - 20 < 240 ? 240 : columnWidth - 5
+                        }
+                        columnCount={columnCounter}
+                        cellRenderer={({
+                          columnIndex,
+                          key,
+                          rowIndex,
+                          style,
+                        }) => {
+                          const grant =
+                            grants[rowIndex * columnCounter + columnIndex];
+                          return (
+                            <div
+                              key={key}
+                              style={{
+                                ...style,
+                                left:
+                                  columnIndex === 0
+                                    ? +(style.left || 0)
+                                    : +(style.left || 0) + gutterSize,
+                                width:
+                                  columnIndex === 0
+                                    ? +(style.width || 0)
+                                    : +(style.width || 0) - gutterSize,
+                                top:
+                                  rowIndex === 0
+                                    ? +(style.top || 0)
+                                    : +(style.top || 0) + gutterSize,
+                                height: +(style.height || 0) - gutterSize,
+                              }}
+                            >
+                              {grant && (
+                                <div
+                                  style={{
+                                    height: "100%",
+                                  }}
+                                >
+                                  <GrantCard
+                                    index={rowIndex * 4 + columnIndex}
+                                    key={grant.uid}
+                                    grant={grant}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        }}
+                      />
+                    );
+                  }}
+                </AutoSizer>
+              )}
             </InfiniteScroll>
           ) : null}
           {loading ? (
             <div className="w-full flex items-center justify-center">
-              <CardListSkeleton />
+              {isMiniApp ? <MiniAppCardListSkeleton /> : <CardListSkeleton />}
             </div>
           ) : null}
         </div>

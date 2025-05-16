@@ -9,6 +9,7 @@ import { GrantPercentage } from "./Pages/Project/Grants/components/GrantPercenta
 import { MarkdownPreview } from "./Utilities/MarkdownPreview";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { TrackTags } from "./TrackTags";
+import { useMiniAppStore } from "@/store/miniApp";
 
 interface GrantCardProps {
   grant: IGrantResponse;
@@ -42,17 +43,11 @@ const updatesLength = (
 ) =>
   milestones.filter((milestone) => milestone.completed).length + updatesLength;
 
-export const GrantCard = ({ grant, index }: GrantCardProps) => {
+export const NormalGrantCard = ({ grant, index }: GrantCardProps) => {
   const selectedTrackIds = grant.details?.data?.selectedTrackIds as
     | string[]
     | undefined;
   const communityId = grant.data?.communityUID;
-  const programId = grant.details?.data?.programId;
-
-  // Extract the base programId if it includes a chainId suffix (format: programId_chainId)
-  const baseProgramId = programId?.includes("_")
-    ? programId.split("_")[0]
-    : programId;
 
   // Check if we have valid track IDs to display
   const hasTrackIds = selectedTrackIds && selectedTrackIds.length > 0;
@@ -187,4 +182,78 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
       </div> */}
     </a>
   );
+};
+
+const MiniAppGrantCard = ({ grant, index }: GrantCardProps) => {
+  const selectedTrackIds = grant.details?.data?.selectedTrackIds as
+    | string[]
+    | undefined;
+  const communityId = grant.data?.communityUID;
+
+  // Check if we have valid track IDs to display
+  const hasTrackIds = selectedTrackIds && selectedTrackIds.length > 0;
+
+  return (
+    <a
+      id="grant-card"
+      href={PAGES.PROJECT.GRANT(
+        grant.project?.details?.data?.slug || grant.refUID || "",
+        grant.uid
+      )}
+      className="flex h-full w-full max-w-full relative flex-col items-start justify-between gap-3 rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2 transition-all duration-300 ease-in-out hover:opacity-80"
+    >
+      <div className="w-full flex flex-col gap-1 ">
+        <div
+          className="h-[4px] w-full rounded-full mb-2.5"
+          style={{
+            background: pickColor(index),
+          }}
+        />
+
+        <div className="flex w-full flex-col px-3">
+          <div className="flex flex-row items-center justify-between">
+            <p
+              id="grant-project-title"
+              className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200 max-2xl:text-base mr-1"
+            >
+              {grant.project?.details?.data?.title || grant.uid}
+            </p>
+          </div>
+          <p className="mb-2 text-sm font-medium text-gray-400 dark:text-zinc-400 max-2xl:text-[13px]">
+            Created on {formatDate(grant.createdAt)}
+          </p>
+          <div className="flex flex-col gap-1 flex-1 h-[64px]">
+            <div className="text-sm text-gray-900 dark:text-gray-400 text-ellipsis line-clamp-2">
+              <MarkdownPreview
+                source={grant.project?.details?.data?.description?.slice(
+                  0,
+                  140
+                )}
+              />
+            </div>
+          </div>
+        </div>
+        <div className="px-3 mt-2 gap-1 flex items-center justify-start flex-row flex-wrap overflow-y-auto">
+          {grant.categories?.map((category, index) => (
+            <div
+              key={category}
+              className="flex h-max max-h-[64px] w-max items-center justify-start  rounded-2xl bg-blue-100 dark:bg-blue-900 dark:mix-blend-normal px-3 py-1 mix-blend-multiply  max-2xl:px-2"
+            >
+              <div className="h-max max-h-[64px] w-max max-w-[260px] truncate break-words text-start text-sm font-semibold text-slate-600 dark:text-slate-100 max-2xl:text-[13px]">
+                {category}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </a>
+  );
+};
+
+export const GrantCard = ({ grant, index }: GrantCardProps) => {
+  const { isMiniApp } = useMiniAppStore();
+  if (isMiniApp) {
+    return <MiniAppGrantCard grant={grant} index={index} />;
+  }
+  return <NormalGrantCard grant={grant} index={index} />;
 };
