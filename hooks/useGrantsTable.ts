@@ -50,7 +50,12 @@ export const useGrantsTable = ({
     const programs = grants.reduce((acc, grant) => {
       const key = grant.programId;
       if (!programsSet.has(key)) {
-        programsSet.add(key);
+        if (key) {
+          programsSet.add(key);
+        }
+        if (acc.find((program) => program.grant === grant.grant)) {
+          return acc;
+        }
         acc.push({
           programId: grant.programId,
           grant: grant.grant,
