@@ -66,6 +66,7 @@ export const MilestonesList = ({ milestones }: MilestonesListProps) => {
                 firstGrant?.grant.community?.details?.data.imageURL,
               chainID: firstGrant?.grant.chainID || 0,
               milestoneUID: firstGrant?.milestone.uid || "",
+              programId: firstGrant?.grant.details?.data.programId,
             },
           ];
         }
@@ -83,6 +84,8 @@ export const MilestonesList = ({ milestones }: MilestonesListProps) => {
               .imageURL,
           chainID: milestone.source.grantMilestone?.grant.chainID || 0,
           milestoneUID: milestone.source.grantMilestone?.milestone.uid || "",
+          programId:
+            milestone.source.grantMilestone?.grant.details?.data.programId,
         });
 
         // Sort the merged grants alphabetically

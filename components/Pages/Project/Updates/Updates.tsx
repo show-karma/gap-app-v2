@@ -16,13 +16,6 @@ import { useProgressModalStore } from "@/store/modals/progress";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { useQuery } from "@tanstack/react-query";
 
-type UpdateType =
-  | IProjectUpdate
-  | IGrantUpdate
-  | IMilestoneResponse
-  | IProjectMilestoneResponse
-  | IProjectImpact;
-
 export const UpdatesPage: FC = () => {
   const { project } = useProjectStore();
 

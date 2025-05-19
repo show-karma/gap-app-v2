@@ -29,5 +29,6 @@ export type UnifiedMilestone = {
     communityName?: string;
     communityImage?: string;
     chainID: number;
+    programId?: string;
   }>;
 };

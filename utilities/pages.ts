@@ -5,7 +5,8 @@ export const PAGES = {
   PRIVACY_POLICY: `/privacy-policy`,
   TERMS_AND_CONDITIONS: `/terms-and-conditions`,
   COMMUNITY: {
-    ALL_GRANTS: (community: string) => `/community/${community}`,
+    ALL_GRANTS: (community: string, programId?: string) =>
+      `/community/${community}${programId ? `?programId=${programId}` : ""}`,
     IMPACT: (community: string) => `/community/${community}/impact`,
     PROJECT_DISCOVERY: (community: string) =>
       `/community/${community}/impact/project-discovery`,

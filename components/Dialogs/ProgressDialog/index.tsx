@@ -36,7 +36,7 @@ const Box = ({
     <button
       onClick={onClick}
       className={cn(
-        "py-4 flex flex-1 group flex-col gap-4 items-center justify-center w-full border hover:border-blue-800 hover:bg-slate-50 dark:hover:bg-slate-900 p-8 rounded-lg bg-white dark:bg-zinc-800 border-gray-200 dark:border-gray-700 transition-all ease-in-out duration-200",
+        "flex flex-1 group flex-col gap-4 items-center justify-center w-full border hover:border-blue-800 hover:bg-slate-50 dark:hover:bg-slate-900 p-2 rounded-lg bg-white dark:bg-zinc-800 border-gray-200 dark:border-gray-700 transition-all ease-in-out duration-200",
         isSelected
           ? "border-blue-800 bg-slate-50 dark:bg-slate-900 shadow-sm dark:border-blue-800"
           : ""
@@ -119,33 +119,28 @@ const Menu = () => {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-5">
-        <div className="flex flex-row gap-5">
-          <Box
-            icon="/icons/milestone.png"
-            title="Milestone"
-            description="Create milestones for your project roadmap or grants."
-            onClick={() => select("unified_milestone")}
-            isSelected={selectedScreen === "unified_milestone"}
-          />
-          <Box
-            icon="/icons/milestone-update.png"
-            title="Milestone Update"
-            description="Report completion of a milestone for tracking."
-            onClick={() => select("milestone_update")}
-            isSelected={selectedScreen === "milestone_update"}
-          />
-        </div>
-
-        <div className="flex flex-row gap-5">
-          <Box
-            icon="/icons/project-update.png"
-            title="Project Activity"
-            description="Provide overall project progress and optionally associate it with grants."
-            onClick={() => select("project_update")}
-            isSelected={selectedScreen === "project_update"}
-          />
-        </div>
+      <div className="flex flex-row gap-2">
+        <Box
+          icon="/icons/milestone.png"
+          title="Milestone"
+          description="Create milestones for your project roadmap or grants."
+          onClick={() => select("unified_milestone")}
+          isSelected={selectedScreen === "unified_milestone"}
+        />
+        <Box
+          icon="/icons/milestone-update.png"
+          title="Milestone Update"
+          description="Report completion of a milestone for tracking."
+          onClick={() => select("milestone_update")}
+          isSelected={selectedScreen === "milestone_update"}
+        />
+        <Box
+          icon="/icons/project-update.png"
+          title="Project Activity"
+          description="Provide overall project progress and optionally associate it with grants."
+          onClick={() => select("project_update")}
+          isSelected={selectedScreen === "project_update"}
+        />
       </div>
       <Footer selectFn={next} selectedScreen={selectedScreen} />
     </div>
@@ -225,7 +220,7 @@ export const ProgressDialog = () => {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-2xl h-max transform overflow-hidden rounded dark:bg-zinc-800 bg-white p-6 text-left align-middle transition-all">
+              <Dialog.Panel className="w-full max-w-3xl h-max transform overflow-hidden rounded dark:bg-zinc-800 bg-white p-6 text-left align-middle transition-all">
                 <div className="flex flex-col gap-6">
                   <div className="flex flex-col gap-2">
                     <div className="flex flex-row gap-2 px-4 pt-4 items-center">

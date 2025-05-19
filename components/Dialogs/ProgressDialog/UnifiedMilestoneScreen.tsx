@@ -205,6 +205,8 @@ export const UnifiedMilestoneScreen = () => {
     setIsSubmitting(true);
     setIsStepper(true);
 
+    let toastsToRemove: string[] = [];
+
     try {
       // Group grants by chain ID to process each network separately
       const grantsByChain: Record<
@@ -249,6 +251,7 @@ export const UnifiedMilestoneScreen = () => {
         toast.loading(`Creating milestone`, {
           id: `chain-${chainId}`,
         });
+        toastsToRemove.push(`chain-${chainId}`);
 
         // Switch chain if needed
         if (chain?.id !== chainId) {
@@ -417,7 +420,7 @@ export const UnifiedMilestoneScreen = () => {
       closeProgressModal();
     } catch (error) {
       errorManager("Error creating grant milestones", error);
-      toast.error("Failed to create grant milestones");
+      toastsToRemove.forEach((toastId) => toast.remove(toastId));
       console.log(error);
     } finally {
       setIsSubmitting(false);

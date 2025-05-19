@@ -8,6 +8,8 @@ import { cn } from "@/utilities/tailwind";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import { UnifiedMilestone } from "@/types/roadmap";
+import { ExternalLink } from "../Utilities/ExternalLink";
+import { PAGES } from "@/utilities/pages";
 
 const ProjectObjectiveCompletion = dynamic(
   () =>
@@ -78,6 +80,7 @@ export const MilestoneCard = ({
   // Handle grant milestone-specific properties
   const grantMilestone = milestone.source.grantMilestone;
   const grantTitle = grantMilestone?.grant.details?.data.title;
+  const programId = grantMilestone?.grant.details?.data.programId;
   const communityData = grantMilestone?.grant.community?.details?.data;
   const endsAt = milestone.endsAt;
 
@@ -294,7 +297,11 @@ export const MilestoneCard = ({
                     return titleA.localeCompare(titleB);
                   })
                   .map((grant, index) => (
-                    <div
+                    <ExternalLink
+                      href={PAGES.COMMUNITY.ALL_GRANTS(
+                        communityData?.slug || "",
+                        grant.programId
+                      )}
                       key={`${grant.grantUID}-${grant.grantTitle}-${milestone.uid}-${milestone.title}-${index}`}
                       className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1"
                     >
@@ -311,11 +318,17 @@ export const MilestoneCard = ({
                       <span className="font-medium">
                         {grant.grantTitle || "Untitled Grant"}
                       </span>
-                    </div>
+                    </ExternalLink>
                   ))
               : // Single grant display with community image
                 grantTitle && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1">
+                  <ExternalLink
+                    href={PAGES.COMMUNITY.ALL_GRANTS(
+                      communityData?.slug || "",
+                      programId
+                    )}
+                    className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1"
+                  >
                     {communityData?.imageURL && (
                       <div className="w-4 h-4 relative overflow-hidden rounded-full">
                         <Image
@@ -327,7 +340,7 @@ export const MilestoneCard = ({
                       </div>
                     )}
                     <span className="font-medium">{grantTitle}</span>
-                  </div>
+                  </ExternalLink>
                 )}
           </div>
         </div>
