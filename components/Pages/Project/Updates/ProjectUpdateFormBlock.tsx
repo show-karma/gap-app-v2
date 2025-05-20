@@ -4,8 +4,16 @@ import { useProjectStore } from "@/store";
 import { useQueryState } from "nuqs";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ProjectUpdateForm } from "@/components/Forms/ProjectUpdate";
+import { useEffect } from "react";
+import { XMarkIcon } from "@heroicons/react/24/solid";
 
-export const ProjectUpdateFormBlock = () => {
+interface ProjectUpdateFormBlockProps {
+  onClose?: () => void;
+}
+
+export const ProjectUpdateFormBlock = ({
+  onClose,
+}: ProjectUpdateFormBlockProps) => {
   const [, changeTab] = useQueryState("tab");
   const searchParams = useSearchParams();
   const editId = searchParams.get("editId");
@@ -15,30 +23,31 @@ export const ProjectUpdateFormBlock = () => {
     : null;
   const router = useRouter();
 
-  const handleClose = () => {
-    // Navigate to the updates tab without the editId parameter
-    const url = new URL(window.location.href);
-    url.searchParams.delete("editId");
-    url.searchParams.set("tab", "updates");
-    router.push(url.toString());
+  // Clean up on success
+  const handleSuccess = () => {
+    router.refresh();
+    if (onClose) {
+      onClose();
+    }
   };
 
   return (
-    <div className="flex w-full flex-col gap-6 rounded-md bg-gray-200 dark:bg-zinc-900  px-4 py-6 max-lg:max-w-full">
-      <div className="flex w-full flex-row justify-between">
-        <h4 className="text-2xl font-bold text-black dark:text-zinc-100">
-          {updateBeingEdited
-            ? `Editing ${updateBeingEdited.data.title}`
-            : "Post a project activity"}
-        </h4>
-        <button
-          className="bg-transparent p-4 hover:bg-transparent hover:opacity-75"
-          onClick={handleClose}
-        >
-          <img src="/icons/close.svg" alt="Close" className="h-5 w-5" />
-        </button>
+    <div className="flex flex-col w-full gap-4">
+      <div className="flex justify-between items-center mb-2">
+        <h2 className="text-xl font-bold text-black dark:text-zinc-100">
+          {editId ? "Edit Activity" : "Add Activity"}
+        </h2>
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="p-1 rounded-full hover:bg-gray-100 dark:hover:bg-zinc-700"
+          >
+            <XMarkIcon className="w-5 h-5 text-gray-500" />
+          </button>
+        )}
       </div>
-      <ProjectUpdateForm afterSubmit={handleClose} />
+
+      <ProjectUpdateForm afterSubmit={handleSuccess} />
     </div>
   );
 };
