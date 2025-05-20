@@ -259,24 +259,69 @@ export const UpdateBlock = ({
               />
               {getStatusText()}
             </span>
-            {update.type != "ProjectUpdate" &&
-            update.type != "ProjectImpact" &&
-            update.type != "ProjectMilestone"
+            {update.type != "ProjectImpact" && update.type != "ProjectMilestone"
               ? (() => {
                   const grant = project?.grants?.find(
                     (grant) =>
                       grant.uid?.toLowerCase() === update.refUID?.toLowerCase()
                   );
 
-                  if (!grant) return null;
+                  const multipleGrants = project?.grants.filter((grant) =>
+                    (update as IProjectUpdate)?.data?.grants?.some(
+                      (grantId: string) =>
+                        grantId.toLowerCase() === grant.uid.toLowerCase()
+                    )
+                  );
 
-                  const communityData = grant.community?.details?.data;
+                  if (!grant && !multipleGrants?.length) return null;
+
+                  if (multipleGrants?.length) {
+                    return (
+                      <div className="flex flex-wrap gap-2">
+                        {multipleGrants.map((individualGrant) => (
+                          <ExternalLink
+                            href={PAGES.COMMUNITY.ALL_GRANTS(
+                              individualGrant.community?.details?.data?.slug ||
+                                "",
+                              individualGrant.details?.data.programId
+                            )}
+                            key={`${individualGrant.uid}-${individualGrant.details?.data.title}-${update.uid}-${update.data?.title}-${index}`}
+                            className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1"
+                          >
+                            {individualGrant.community?.details?.data
+                              ?.imageURL ? (
+                              <div className="w-4 h-4 relative overflow-hidden rounded-full">
+                                <Image
+                                  src={
+                                    individualGrant.community?.details?.data
+                                      ?.imageURL
+                                  }
+                                  alt={
+                                    individualGrant.community?.details?.data
+                                      ?.name || "Community"
+                                  }
+                                  width={16}
+                                  height={16}
+                                />
+                              </div>
+                            ) : null}
+                            <span className="font-medium">
+                              {individualGrant.details?.data.title ||
+                                "Untitled Grant"}
+                            </span>
+                          </ExternalLink>
+                        ))}
+                      </div>
+                    );
+                  }
+
+                  const communityData = grant?.community?.details?.data;
 
                   return (
                     <ExternalLink
                       href={PAGES.COMMUNITY.ALL_GRANTS(
-                        communityData?.slug || grant.community?.uid || "",
-                        grant.details?.data.programId || ""
+                        communityData?.slug || grant?.community?.uid || "",
+                        grant?.details?.data.programId || ""
                       )}
                       className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1"
                     >
@@ -291,7 +336,7 @@ export const UpdateBlock = ({
                         </div>
                       ) : null}
                       <span className="font-medium">
-                        {grant.details?.data.title}
+                        {grant?.details?.data.title}
                       </span>
                     </ExternalLink>
                   );

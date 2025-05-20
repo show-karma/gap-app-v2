@@ -247,9 +247,6 @@ export const MilestoneCard = ({
               <div className="w-full flex-col flex gap-2 px-4 py-2 bg-[#F8F9FC] dark:bg-zinc-700 rounded-lg">
                 {completionReason ? (
                   <div className="flex flex-col gap-1">
-                    <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-                      Completion Notes:
-                    </p>
                     <ReadMore side="left">{completionReason}</ReadMore>
                   </div>
                 ) : null}

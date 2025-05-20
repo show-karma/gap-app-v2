@@ -56,21 +56,21 @@ export const ProjectActivityBlock = ({
     ? filteredAnswers
     : filteredAnswers.filter((item) => item.datapoints?.length);
 
-  const relatedGrants = useMemo(() => {
-    if (
-      !project ||
-      !activity?.data?.grants ||
-      activity?.data?.grants?.length === 0
-    )
-      return [];
+  // const relatedGrants = useMemo(() => {
+  //   if (
+  //     !project ||
+  //     !activity?.data?.grants ||
+  //     activity?.data?.grants?.length === 0
+  //   )
+  //     return [];
 
-    // Find grants that match the activity's grants
-    return project.grants.filter((grant) =>
-      activity?.data?.grants?.some(
-        (grantId) => grantId.toLowerCase() === grant.uid.toLowerCase()
-      )
-    );
-  }, [project, activity?.data?.grants]);
+  //   // Find grants that match the activity's grants
+  //   return project.grants.filter((grant) =>
+  //     activity?.data?.grants?.some(
+  //       (grantId) => grantId.toLowerCase() === grant.uid.toLowerCase()
+  //     )
+  //   );
+  // }, [project, activity?.data?.grants]);
 
   if (
     !activity.data?.deliverables?.length &&
@@ -166,7 +166,7 @@ export const ProjectActivityBlock = ({
           />
 
           {/* Grants Section */}
-          {relatedGrants?.length > 0 ? (
+          {/* {relatedGrants?.length > 0 ? (
             <div className="mt-4 pt-4 border-t border-gray-200 dark:border-zinc-700">
               <p className="text-sm font-bold text-black dark:text-zinc-100 mb-3">
                 Related Grants
@@ -206,7 +206,7 @@ export const ProjectActivityBlock = ({
                 ))}
               </div>
             </div>
-          ) : null}
+          ) : null} */}
         </div>
       ) : null}
     </div>
