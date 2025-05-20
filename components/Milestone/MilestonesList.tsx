@@ -42,14 +42,19 @@ export const MilestonesList = ({
     const mergedMap = new Map<string, UnifiedMilestone>();
 
     milestones.forEach((milestone) => {
-      // Skip updates from merging as they're unique
-      if (milestone.type === "update") {
+      // Skip updates, impacts, activities from merging as they're unique
+      if (
+        milestone.type === "update" ||
+        milestone.type === "impact" ||
+        milestone.type === "activity" ||
+        milestone.type === "grant_update"
+      ) {
         mergedMap.set(milestone.uid, milestone);
         return;
       }
 
       // Skip project milestones from merging (they're unique by nature)
-      if (milestone.type === "project") {
+      if (milestone.type === "project" || milestone.type === "milestone") {
         mergedMap.set(milestone.uid, {
           ...milestone,
           uid: milestone.uid || "",
@@ -130,7 +135,13 @@ export const MilestonesList = ({
 
   // Type guard function to check if an item is an update
   const isUpdateType = (item: UnifiedMilestone): boolean => {
-    return item.type === "update";
+    // Consider all non-milestone types as "updates" for rendering purposes
+    return (
+      item.type === "update" ||
+      item.type === "impact" ||
+      item.type === "activity" ||
+      item.type === "grant_update"
+    );
   };
 
   // Type guard function to check if an update data exists

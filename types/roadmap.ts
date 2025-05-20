@@ -10,7 +10,14 @@ import {
 // Create a unified milestone type that can represent both project and grant milestones
 export type UnifiedMilestone = {
   uid: string; // Unique identifier
-  type: "project" | "grant" | "update"; // Type of milestone or update
+  type:
+    | "project"
+    | "grant"
+    | "update"
+    | "impact"
+    | "activity"
+    | "grant_update"
+    | "milestone"; // Type of milestone or update
   title: string;
   description?: string;
   completed:

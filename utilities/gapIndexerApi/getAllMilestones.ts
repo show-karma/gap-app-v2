@@ -19,7 +19,7 @@ export async function getAllMilestones(
         uid: milestone.uid,
         chainID: milestone.chainID,
         refUID: milestone.refUID,
-        type: "project",
+        type: "milestone",
         title: milestone.data.title,
         description: milestone.data.text,
         completed: !!milestone.completed,

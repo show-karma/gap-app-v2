@@ -86,7 +86,6 @@ export const ProjectObjectiveForm = ({
     setIsLoading(true);
     try {
       if (chain?.id != project?.chainID) {
-        console.log("Switching chain");
         await switchChainAsync?.({ chainId: project?.chainID as number });
         gapClient = getGapClient(project?.chainID as number);
       }

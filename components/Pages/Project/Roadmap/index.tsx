@@ -11,8 +11,8 @@ import {
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useAllMilestones } from "@/hooks/useAllMilestones";
 import { MilestonesList } from "@/components/Milestone/MilestonesList";
-import { useParams } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { useQuery } from "@tanstack/react-query";
 import { useProgressModalStore } from "@/store/modals/progress";
@@ -20,6 +20,7 @@ import { Button } from "@/components/Utilities/Button";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { MESSAGES } from "@/utilities/messages";
 import { UnifiedMilestone } from "@/types/roadmap";
+import { RoadmapFilter } from "./RoadmapFilter";
 
 interface ProjectRoadmapProps {
   project: IProjectResponse;
@@ -27,6 +28,7 @@ interface ProjectRoadmapProps {
 
 export const ProjectRoadmap = ({ project }: ProjectRoadmapProps) => {
   const { projectId } = useParams();
+  const searchParams = useSearchParams();
   const {
     pendingMilestones,
     milestones = [],
@@ -40,6 +42,27 @@ export const ProjectRoadmap = ({ project }: ProjectRoadmapProps) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isAuthorized = isOwner || isProjectAdmin;
+
+  // Parse filters from URL
+  const getActiveFilters = () => {
+    const filterParam = searchParams.get("filter");
+    if (!filterParam) return ["all"];
+    return filterParam.split(",");
+  };
+
+  const [activeFilters, setActiveFilters] = useState<string[]>(
+    getActiveFilters()
+  );
+
+  // Handle filter changes
+  const handleFilterChange = (filters: string[]) => {
+    setActiveFilters(filters);
+  };
+
+  // Sync with URL params when they change
+  useEffect(() => {
+    setActiveFilters(getActiveFilters());
+  }, [searchParams]);
 
   // Fetch project milestones directly from API
   const { data: projectMilestones } = useQuery<IProjectMilestoneResponse[]>({
@@ -94,14 +117,12 @@ export const ProjectRoadmap = ({ project }: ProjectRoadmapProps) => {
         normalizeToMilliseconds(item?.createdAt),
       ];
 
-      // Return the first valid date in our priority order, or fallback to now
       return dates.find((date) => date !== null) || Date.now();
     } catch (error) {
       return Date.now();
     }
   };
 
-  // Memoize combined updates and milestones to prevent infinite loops
   const combinedUpdatesAndMilestones = useMemo(() => {
     const updates: IProjectUpdate[] = project?.updates || [];
     const grantUpdates: IGrantUpdate[] = [];
@@ -115,16 +136,11 @@ export const ProjectRoadmap = ({ project }: ProjectRoadmapProps) => {
       });
     }
 
-    // For milestone data, we'll use milestones directly from the useAllMilestones hook
-    // Convert updates to a format compatible with UnifiedMilestone
     const allUpdates = [...updates, ...grantUpdates, ...impacts];
 
-    // Create normalized update objects
     const updateItems = allUpdates.map((update: any): UnifiedMilestone => {
-      // Ensure we have valid dates by providing defaults
       const createdAt = update.createdAt || new Date().toISOString();
 
-      // Parse dates carefully to avoid NaN or invalid dates
       let startDate: number | undefined;
       if (update.data?.startDate) {
         const parsedDate = new Date(update.data.startDate).getTime();
@@ -137,61 +153,59 @@ export const ProjectRoadmap = ({ project }: ProjectRoadmapProps) => {
         endDate = !isNaN(parsedDate) ? parsedDate : undefined;
       }
 
+      let type = "update";
+
+      if (
+        update.data?.type === "impact" ||
+        update.data?.type === "project-impact" ||
+        (update.data?.title &&
+          update.data.title.toLowerCase().includes("impact")) ||
+        (update.__typename && update.__typename === "Impact")
+      ) {
+        type = "impact";
+      } else if (
+        update.source === "grant" ||
+        (update.data?.title &&
+          update.data.title.toLowerCase().includes("grant")) ||
+        (update.refUID && update.refUID !== project.uid) // If referencing something other than the project, likely a grant
+      ) {
+        type = "grant_update";
+      } else if (update.data?.type === "project-milestone") {
+        type = "milestone";
+      } else {
+        type = "activity";
+      }
+
       return {
         uid: update.uid,
         chainID: update.chainID,
         refUID: update.refUID || project.uid,
         title: update.data?.title || "Update",
         description: update.data?.text || "",
-        type: "update" as const,
+        type: type as any,
         completed: false,
         createdAt,
         startsAt: startDate,
         endsAt: endDate,
         updateData: update,
         source: {
-          type: "update",
+          type: update.data?.type === "impact" ? "impact" : "update",
           update,
         },
       };
     });
 
-    // Ensure milestones is an array before attempting to spread it
     const milestonesArray = Array.isArray(milestones) ? milestones : [];
 
-    // Combine all items
     const allItems = [...milestonesArray, ...updateItems];
 
-    // Sort by timestamp, newest first
     const allSortedItems = [...allItems].sort((a, b) => {
       const timestampA = getSortTimestamp(a);
       const timestampB = getSortTimestamp(b);
 
-      // Log any sorting anomalies
-      if (
-        process.env.NODE_ENV === "development" &&
-        (isNaN(timestampA) || isNaN(timestampB))
-      ) {
-        console.warn("Invalid timestamp for sorting:", {
-          itemA: { title: a.title, timestamp: timestampA },
-          itemB: { title: b.title, timestamp: timestampB },
-        });
-      }
-
       return timestampB - timestampA;
     });
-    console.log(
-      allSortedItems
-        .map((item) => ({
-          title: item.title,
-          startsAt: item.startsAt,
-          endsAt: item.endsAt,
-          createdAt: item.createdAt,
-          sortTimestamp: getSortTimestamp(item),
-          sortDate: new Date(getSortTimestamp(item)).toISOString(),
-        }))
-        .slice(0, 10)
-    );
+
     return allSortedItems;
   }, [
     project?.grants,
@@ -201,6 +215,80 @@ export const ProjectRoadmap = ({ project }: ProjectRoadmapProps) => {
     milestones,
     projectMilestones,
   ]);
+
+  // Filter items based on active filters
+  const filteredItems = useMemo(() => {
+    // If user selected "all", return everything
+    if (activeFilters.includes("all")) {
+      return combinedUpdatesAndMilestones;
+    }
+
+    // Core filtering function
+    return combinedUpdatesAndMilestones.filter((item) => {
+      // We'll thoroughly examine each item and check against all selected filters
+
+      // ===== PENDING MILESTONES =====
+      if (activeFilters.includes("pending")) {
+        // Using a direct approach - looking at the 'completed' flag directly
+        if (item.completed === false) {
+          // For pending, check the underlying schema matches a milestone type
+          const isMilestoneType =
+            item.type === "milestone" ||
+            item.type === "grant" ||
+            item.type === "project";
+
+          if (isMilestoneType) {
+            return true;
+          }
+        }
+      }
+
+      // ===== COMPLETED MILESTONES =====
+      if (activeFilters.includes("completed")) {
+        // Both boolean true and object {"createdAt": ...} should be treated as completed
+        const isItemCompleted =
+          item.completed === true ||
+          (item.completed && typeof item.completed === "object");
+
+        // Check if it's a milestone or grant type
+        const isMilestoneType =
+          item.type === "milestone" ||
+          item.type === "grant" ||
+          item.type === "project";
+
+        if (isItemCompleted && isMilestoneType) {
+          return true;
+        }
+      }
+
+      // ===== IMPACT FILTER =====
+      if (activeFilters.includes("impacts")) {
+        // Simply check the type - we've improved the type detection
+        if (item.type === "impact") {
+          return true;
+        }
+      }
+
+      // ===== ACTIVITIES FILTER =====
+      if (activeFilters.includes("activities")) {
+        // Activities should only be items explicitly marked as activities
+        if (item.type === "activity") {
+          return true;
+        }
+      }
+
+      // ===== GRANT UPDATES FILTER =====
+      if (activeFilters.includes("updates")) {
+        // Simply check the type - we've improved the type detection
+        if (item.type === "grant_update") {
+          return true;
+        }
+      }
+
+      // If none of the filters matched, don't include this item
+      return false;
+    });
+  }, [combinedUpdatesAndMilestones, activeFilters]);
 
   return (
     <div className="flex flex-col w-full h-full items-center justify-start">
@@ -212,17 +300,21 @@ export const ProjectRoadmap = ({ project }: ProjectRoadmapProps) => {
             </h3>
             <ObjectivesSub />
           </div>
+          <RoadmapFilter
+            onChange={handleFilterChange}
+            className="min-w-[280px] max-w-[400px]"
+          />
         </div>
 
         {/* Combined List Section */}
         <div className="py-6 w-full">
           {isLoading ? (
             <RoadmapListLoading />
-          ) : combinedUpdatesAndMilestones.length > 0 ? (
+          ) : filteredItems.length > 0 ? (
             <MilestonesList
-              milestones={combinedUpdatesAndMilestones}
+              milestones={filteredItems}
               showAllTypes={true}
-              totalItems={combinedUpdatesAndMilestones.length}
+              totalItems={filteredItems.length}
             />
           ) : (
             <div className="flex flex-col gap-6">
