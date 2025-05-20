@@ -27,7 +27,7 @@ export const ProjectNavigator = ({
       href: PAGES.PROJECT.OVERVIEW(project?.details?.data?.slug || projectId),
     },
     {
-      name: "Roadmap & Updates",
+      name: "Roadmap",
       href: PAGES.PROJECT.ROADMAP.ROOT(
         project?.details?.data?.slug || projectId
       ),

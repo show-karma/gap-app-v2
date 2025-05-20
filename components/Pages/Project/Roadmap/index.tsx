@@ -121,23 +121,10 @@ export const ProjectRoadmap = ({ project }: ProjectRoadmapProps) => {
         <div className="py-5 w-full items-center flex flex-row justify-between gap-4 max-lg:flex-col max-lg:items-start max-lg:py-0">
           <div className="flex flex-col gap-1 items-start justify-start">
             <h3 className="text-2xl font-bold text-black dark:text-zinc-200">
-              {project.details?.data?.title} Roadmap & Updates
+              {project.details?.data?.title} Roadmap
             </h3>
             <ObjectivesSub />
           </div>
-
-          {isAuthorized && (
-            <Button
-              type="button"
-              className="w-max bg-brand-blue text-white px-4 py-2 rounded-lg"
-              onClick={() => {
-                setProgressModalScreen("project_update");
-                setIsProgressModalOpen(true);
-              }}
-            >
-              Post an update
-            </Button>
-          )}
         </div>
 
         {/* Combined List Section */}

@@ -287,6 +287,20 @@ export const MilestoneCard = ({
       {type === "grant" ? (
         <div className="flex flex-col gap-2 w-full">
           <div className="flex flex-wrap gap-2">
+            <span
+              className={cn(
+                "px-3 py-1.5 rounded-full text-sm w-max flex flex-row gap-2 font-semibold items-center",
+                "bg-[#FFEFE0] text-black dark:bg-[#FFEFE0] dark:text-black"
+              )}
+            >
+              <Image
+                src={"/icons/milestone.svg"}
+                alt={"Milestone"}
+                width={20}
+                height={20}
+              />
+              Milestone
+            </span>
             {milestone.mergedGrants && milestone.mergedGrants.length > 0 ? (
               // Display all merged grants with their images
               [...milestone.mergedGrants]
