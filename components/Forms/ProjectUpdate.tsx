@@ -103,6 +103,7 @@ type UpdateType = z.infer<typeof updateSchema>;
 
 interface ProjectUpdateFormProps {
   afterSubmit?: () => void;
+  editId?: string;
 }
 
 const GrantSearchDropdown: FC<{
@@ -254,6 +255,7 @@ const getFormErrorMessage = (errors: any, formValues: any) => {
 
 export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   afterSubmit,
+  editId: propEditId,
 }): JSX.Element => {
   const { address } = useAccount();
   const { chain } = useAccount();
@@ -262,7 +264,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const editId = searchParams.get("editId");
+  const editId = propEditId || searchParams.get("editId");
   const [isEditMode, setIsEditMode] = useState(false);
 
   const {

@@ -66,10 +66,9 @@ export const MilestoneCard = ({
     setIsCompleting(isCompleting);
   };
 
-  // Extract common milestone information
   const { title, description, completed, type } = milestone;
 
-  // Handle project milestone-specific properties
+  // project milestone-specific properties
   const projectMilestone = milestone.source.projectMilestone;
   const attester =
     projectMilestone?.attester ||
@@ -77,14 +76,14 @@ export const MilestoneCard = ({
     "";
   const createdAt = milestone.createdAt;
 
-  // Handle grant milestone-specific properties
+  // grant milestone-specific properties
   const grantMilestone = milestone.source.grantMilestone;
   const grantTitle = grantMilestone?.grant.details?.data.title;
   const programId = grantMilestone?.grant.details?.data.programId;
   const communityData = grantMilestone?.grant.community?.details?.data;
   const endsAt = milestone.endsAt;
 
-  // Handle completion information
+  // completion information
   const completionReason =
     projectMilestone?.completed?.data?.reason ||
     grantMilestone?.milestone.completed?.data?.reason;
@@ -280,24 +279,24 @@ export const MilestoneCard = ({
         getBorderColor()
       )}
     >
-      {/* Multiple grants display */}
-      {type === "grant" ? (
-        <div className="flex flex-col gap-2 w-full">
+      <div className="flex flex-row gap-x-4 gap-y-2 items-center justify-start w-full flex-wrap">
+        <span
+          className={cn(
+            "px-3 py-1.5 rounded-full text-sm w-max flex flex-row gap-2 font-semibold items-center",
+            "bg-[#FFEFE0] text-black dark:bg-[#FFEFE0] dark:text-black"
+          )}
+        >
+          <Image
+            src={"/icons/milestone.svg"}
+            alt={"Milestone"}
+            width={20}
+            height={20}
+          />
+          Milestone
+        </span>
+        {/* Multiple grants display */}
+        {type === "grant" ? (
           <div className="flex flex-wrap gap-2">
-            <span
-              className={cn(
-                "px-3 py-1.5 rounded-full text-sm w-max flex flex-row gap-2 font-semibold items-center",
-                "bg-[#FFEFE0] text-black dark:bg-[#FFEFE0] dark:text-black"
-              )}
-            >
-              <Image
-                src={"/icons/milestone.svg"}
-                alt={"Milestone"}
-                width={20}
-                height={20}
-              />
-              Milestone
-            </span>
             {milestone.mergedGrants && milestone.mergedGrants.length > 0 ? (
               // Display all merged grants with their images
               [...milestone.mergedGrants]
@@ -354,9 +353,8 @@ export const MilestoneCard = ({
               </ExternalLink>
             ) : null}
           </div>
-        </div>
-      ) : null}
-
+        ) : null}
+      </div>
       {/* Use the extracted render function for the main content */}
       {renderMilestoneContent()}
     </div>

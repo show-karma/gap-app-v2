@@ -470,9 +470,7 @@ export const UpdateBlock = ({
                 update.data?.endDate ? formatDate(update.data?.endDate) : ""
               }`}
             </span>
-          ) : (
-            <span>Posted on {formatDate(update.createdAt)}</span>
-          )}
+          ) : null}
         </div>
       )}
 

@@ -1,8 +1,6 @@
 import { Dialog, Transition } from "@headlessui/react";
-import { Fragment, useEffect } from "react";
+import { Fragment, useState } from "react";
 import { ProjectUpdateFormBlock } from "./ProjectUpdateFormBlock";
-import { useRouter } from "next/navigation";
-import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 
 interface EditUpdateDialogProps {
@@ -18,25 +16,13 @@ export const EditUpdateDialog = ({
   projectId,
   updateId,
 }: EditUpdateDialogProps) => {
-  const router = useRouter();
+  // Keep track of current update ID to force remount when changed
+  const [currentUpdateId, setCurrentUpdateId] = useState(updateId);
 
-  // Set up editId query parameter when dialog opens
-  useEffect(() => {
-    if (isOpen && updateId) {
-      const url = new URL(window.location.href);
-      url.searchParams.set("editId", updateId);
-      router.replace(url.toString(), { scroll: false });
-    }
-
-    // Clean up URL parameters when dialog closes
-    return () => {
-      if (!isOpen && window.location.href.includes("editId=")) {
-        const url = new URL(window.location.href);
-        url.searchParams.delete("editId");
-        router.replace(url.toString(), { scroll: false });
-      }
-    };
-  }, [isOpen, updateId, router]);
+  // Update state if props change
+  if (isOpen && updateId !== currentUpdateId) {
+    setCurrentUpdateId(updateId);
+  }
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
@@ -70,7 +56,11 @@ export const EditUpdateDialog = ({
                   "shadow-xl transition-all"
                 )}
               >
-                <ProjectUpdateFormBlock onClose={onClose} />
+                <ProjectUpdateFormBlock
+                  key={`update-form-${currentUpdateId}`}
+                  onClose={onClose}
+                  updateId={currentUpdateId}
+                />
               </Dialog.Panel>
             </Transition.Child>
           </div>

@@ -12,7 +12,7 @@ import {
 import { useAllMilestones } from "@/hooks/useAllMilestones";
 import { MilestonesList } from "@/components/Milestone/MilestonesList";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { useQuery } from "@tanstack/react-query";
 import { useProgressModalStore } from "@/store/modals/progress";
@@ -33,8 +33,7 @@ export const ProjectRoadmap = ({ project }: ProjectRoadmapProps) => {
     isLoading,
     refetch,
   } = useAllMilestones(projectId as string);
-  const [combinedUpdatesAndMilestones, setCombinedUpdatesAndMilestones] =
-    useState<UnifiedMilestone[]>([]);
+
   const { setIsProgressModalOpen, setProgressModalScreen } =
     useProgressModalStore();
 
@@ -49,70 +48,158 @@ export const ProjectRoadmap = ({ project }: ProjectRoadmapProps) => {
     enabled: !!project?.uid,
   });
 
-  useEffect(() => {
+  // Helper function to normalize any timestamp format to milliseconds
+  const normalizeToMilliseconds = (timestamp: unknown): number | null => {
+    if (timestamp === null || timestamp === undefined) {
+      return null;
+    }
+
+    // If it's already a number
+    if (typeof timestamp === "number") {
+      // Detect if it's seconds (Unix timestamps in seconds typically have 10 digits or less)
+      // While millisecond timestamps have 13 digits
+      const isSeconds = timestamp < 10000000000; // If less than 11 digits, assume seconds
+      return isSeconds ? timestamp * 1000 : timestamp;
+    }
+
+    // If it's a string date or anything else, try to parse it
+    try {
+      // Only parse data types that Date constructor can handle
+      if (
+        typeof timestamp === "string" ||
+        timestamp instanceof Date ||
+        (typeof timestamp === "object" && timestamp !== null)
+      ) {
+        const parsed = new Date(timestamp as string | number | Date).getTime();
+        return !isNaN(parsed) ? parsed : null;
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  };
+
+  // Create a function to get sortable timestamp for any item
+  const getSortTimestamp = (item: UnifiedMilestone): number => {
+    try {
+      // Check dates in priority order - end date is most important for milestones
+      const dates = [
+        normalizeToMilliseconds(item?.endsAt),
+        normalizeToMilliseconds(item?.startsAt),
+        item?.completed &&
+        typeof item.completed === "object" &&
+        "createdAt" in item.completed
+          ? normalizeToMilliseconds(item.completed.createdAt)
+          : null,
+        normalizeToMilliseconds(item?.createdAt),
+      ];
+
+      // Return the first valid date in our priority order, or fallback to now
+      return dates.find((date) => date !== null) || Date.now();
+    } catch (error) {
+      return Date.now();
+    }
+  };
+
+  // Memoize combined updates and milestones to prevent infinite loops
+  const combinedUpdatesAndMilestones = useMemo(() => {
     const updates: IProjectUpdate[] = project?.updates || [];
     const grantUpdates: IGrantUpdate[] = [];
     const grantMilestones: IMilestoneResponse[] = [];
     const impacts: IProjectImpact[] = project?.impacts || [];
 
-    project?.grants.forEach((grant) => {
-      grantUpdates.push(...grant.updates);
-      grantMilestones.push(...grant.milestones);
-    });
+    if (project?.grants) {
+      project.grants.forEach((grant) => {
+        if (grant.updates) grantUpdates.push(...grant.updates);
+        if (grant.milestones) grantMilestones.push(...grant.milestones);
+      });
+    }
 
-    // For milestone data, use the unified list from useAllMilestones
-    // Convert other updates to a format compatible with UnifiedMilestone
+    // For milestone data, we'll use milestones directly from the useAllMilestones hook
+    // Convert updates to a format compatible with UnifiedMilestone
+    const allUpdates = [...updates, ...grantUpdates, ...impacts];
 
-    const updateMilestones = [...updates, ...grantUpdates, ...impacts].map(
-      (update: any) => {
-        // Create a simplified UnifiedMilestone-compatible object for updates
-        const createdAt = new Date(update.createdAt).getTime();
-        const startDate = update.data?.startDate
-          ? new Date(update.data.startDate).getTime()
-          : undefined;
-        const endDate = update.data?.endDate
-          ? new Date(update.data.endDate).getTime()
-          : undefined;
+    // Create normalized update objects
+    const updateItems = allUpdates.map((update: any): UnifiedMilestone => {
+      // Ensure we have valid dates by providing defaults
+      const createdAt = update.createdAt || new Date().toISOString();
 
-        // Create a properly typed update milestone
-        const updateMilestone: UnifiedMilestone = {
-          uid: update.uid,
-          chainID: update.chainID,
-          refUID: update.refUID || project.uid,
-          title: update.data?.title || "Update",
-          description: update.data?.text || "",
-          type: "update",
-          completed: false,
-          createdAt: update.createdAt,
-          startsAt: startDate || createdAt,
-          endsAt: endDate,
-          updateData: update,
-          source: {
-            type: "update",
-            update: update,
-          },
-        };
-
-        return updateMilestone;
+      // Parse dates carefully to avoid NaN or invalid dates
+      let startDate: number | undefined;
+      if (update.data?.startDate) {
+        const parsedDate = new Date(update.data.startDate).getTime();
+        startDate = !isNaN(parsedDate) ? parsedDate : undefined;
       }
-    );
 
-    // Combine and sort all items by date
-    const allItems = [...milestones, ...updateMilestones].sort((a, b) => {
-      // Get dates for sorting, preferring end date, then start date, then created date
-      const dateA = a.endsAt || a.startsAt || new Date(a.createdAt).getTime();
-      const dateB = b.endsAt || b.startsAt || new Date(b.createdAt).getTime();
+      let endDate: number | undefined;
+      if (update.data?.endDate) {
+        const parsedDate = new Date(update.data.endDate).getTime();
+        endDate = !isNaN(parsedDate) ? parsedDate : undefined;
+      }
 
-      return dateB - dateA; // Sort by newest first
+      return {
+        uid: update.uid,
+        chainID: update.chainID,
+        refUID: update.refUID || project.uid,
+        title: update.data?.title || "Update",
+        description: update.data?.text || "",
+        type: "update" as const,
+        completed: false,
+        createdAt,
+        startsAt: startDate,
+        endsAt: endDate,
+        updateData: update,
+        source: {
+          type: "update",
+          update,
+        },
+      };
     });
 
-    setCombinedUpdatesAndMilestones(allItems);
+    // Ensure milestones is an array before attempting to spread it
+    const milestonesArray = Array.isArray(milestones) ? milestones : [];
+
+    // Combine all items
+    const allItems = [...milestonesArray, ...updateItems];
+
+    // Sort by timestamp, newest first
+    const allSortedItems = [...allItems].sort((a, b) => {
+      const timestampA = getSortTimestamp(a);
+      const timestampB = getSortTimestamp(b);
+
+      // Log any sorting anomalies
+      if (
+        process.env.NODE_ENV === "development" &&
+        (isNaN(timestampA) || isNaN(timestampB))
+      ) {
+        console.warn("Invalid timestamp for sorting:", {
+          itemA: { title: a.title, timestamp: timestampA },
+          itemB: { title: b.title, timestamp: timestampB },
+        });
+      }
+
+      return timestampB - timestampA;
+    });
+    console.log(
+      allSortedItems
+        .map((item) => ({
+          title: item.title,
+          startsAt: item.startsAt,
+          endsAt: item.endsAt,
+          createdAt: item.createdAt,
+          sortTimestamp: getSortTimestamp(item),
+          sortDate: new Date(getSortTimestamp(item)).toISOString(),
+        }))
+        .slice(0, 10)
+    );
+    return allSortedItems;
   }, [
     project?.grants,
     project?.updates,
     project?.impacts,
-    projectMilestones,
+    project?.uid,
     milestones,
+    projectMilestones,
   ]);
 
   return (

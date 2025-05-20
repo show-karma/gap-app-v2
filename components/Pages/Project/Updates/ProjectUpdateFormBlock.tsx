@@ -1,27 +1,33 @@
 /* eslint-disable @next/next/no-img-element */
 import { useProjectStore } from "@/store";
-
-import { useQueryState } from "nuqs";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { ProjectUpdateForm } from "@/components/Forms/ProjectUpdate";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 
 interface ProjectUpdateFormBlockProps {
   onClose?: () => void;
+  updateId?: string;
 }
 
 export const ProjectUpdateFormBlock = ({
   onClose,
+  updateId,
 }: ProjectUpdateFormBlockProps) => {
-  const [, changeTab] = useQueryState("tab");
-  const searchParams = useSearchParams();
-  const editId = searchParams.get("editId");
   const project = useProjectStore((state) => state.project);
-  const updateBeingEdited = editId
-    ? project?.updates.find((update) => update.uid === editId)
+  // Maintain state to force fresh render when updateId changes
+  const [currentUpdateId, setCurrentUpdateId] = useState(updateId);
+  const updateBeingEdited = updateId
+    ? project?.updates.find((update) => update.uid === updateId)
     : null;
   const router = useRouter();
+
+  // Update the component state when updateId changes
+  useEffect(() => {
+    if (updateId !== currentUpdateId) {
+      setCurrentUpdateId(updateId);
+    }
+  }, [updateId, currentUpdateId]);
 
   // Clean up on success
   const handleSuccess = () => {
@@ -35,7 +41,9 @@ export const ProjectUpdateFormBlock = ({
     <div className="flex flex-col w-full gap-4">
       <div className="flex justify-between items-center mb-2">
         <h2 className="text-xl font-bold text-black dark:text-zinc-100">
-          {editId ? "Edit Activity" : "Add Activity"}
+          {updateId
+            ? `Edit "${updateBeingEdited?.data?.title || "Activity"}"`
+            : "Add Activity"}
         </h2>
         {onClose && (
           <button
@@ -47,7 +55,11 @@ export const ProjectUpdateFormBlock = ({
         )}
       </div>
 
-      <ProjectUpdateForm afterSubmit={handleSuccess} />
+      <ProjectUpdateForm
+        key={`form-${currentUpdateId}`}
+        afterSubmit={handleSuccess}
+        editId={currentUpdateId}
+      />
     </div>
   );
 };
