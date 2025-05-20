@@ -172,7 +172,7 @@ export const CommunitySelectionScreen: React.FC = () => {
               searchForProgram={
                 flowType === "grant"
                   ? undefined
-                  : ["Proof of", "Hackathon", "Divvi Builder Camp"]
+                  : ["Proof of", "Hackathon", "Divvi Builder Camp", "Celo Support Streams"]
               }
             />
           )}
