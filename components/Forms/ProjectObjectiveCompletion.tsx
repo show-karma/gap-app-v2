@@ -146,7 +146,7 @@ export const ProjectObjectiveCompletionForm = ({
               toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.SUCCESS);
               await refetch();
               handleCompleting(false);
-              router.push(PAGES.PROJECT.UPDATES(projectId));
+              router.push(PAGES.PROJECT.ROADMAP.ROOT(projectId));
             }
             retries -= 1;
             // eslint-disable-next-line no-await-in-loop, no-promise-executor-return

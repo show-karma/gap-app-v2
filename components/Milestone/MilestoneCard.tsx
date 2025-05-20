@@ -130,12 +130,12 @@ export const MilestoneCard = ({
           />
         ) : (
           <>
-            {completionReason && (
+            {completionReason ? (
               <div className="flex flex-col gap-1">
                 <ReadMore side="left">{completionReason}</ReadMore>
               </div>
-            )}
-            {completionProof && (
+            ) : null}
+            {completionProof ? (
               <div className="flex flex-col gap-1">
                 <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
                   Proof of Work:
@@ -149,7 +149,7 @@ export const MilestoneCard = ({
                   {completionProof}
                 </a>
               </div>
-            )}
+            ) : null}
           </>
         )}
       </div>
@@ -182,36 +182,36 @@ export const MilestoneCard = ({
             </p>
           </div>
 
-          {isAuthorized && type === "project" && projectMilestone && (
+          {isAuthorized && type === "project" && projectMilestone ? (
             <ObjectiveOptionsMenu
               objectiveId={projectMilestone.uid}
               completeFn={handleCompleting}
-              alreadyCompleted={completed}
+              alreadyCompleted={!!completed}
             />
-          )}
+          ) : null}
 
-          {isAuthorized && type === "grant" && grantMilestone && (
+          {isAuthorized && type === "grant" && grantMilestone ? (
             <GrantMilestoneOptionsMenu
               milestone={milestone}
               completeFn={handleCompleting}
-              alreadyCompleted={completed}
+              alreadyCompleted={!!completed}
             />
-          )}
+          ) : null}
         </div>
 
         {/* Due date */}
-        {type === "grant" && endsAt && (
+        {type === "grant" && endsAt ? (
           <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
             <span>Due by {formatDate(endsAt * 1000)}</span>
           </div>
-        )}
+        ) : null}
 
         {/* Description */}
-        {description && (
+        {description ? (
           <div className="flex flex-col my-2">
             <ReadMore side="left">{description}</ReadMore>
           </div>
-        )}
+        ) : null}
 
         {/* Attribution and Date */}
         <div className="flex flex-row gap-x-4 gap-y-2 items-center justify-between w-full flex-wrap">
@@ -232,7 +232,7 @@ export const MilestoneCard = ({
         </div>
 
         {/* Completion Information */}
-        {(isCompleting || completionReason || completionProof) && (
+        {isCompleting || completionReason || completionProof ? (
           <>
             {type === "project" ? (
               handleProjectMilestoneCompletion()
@@ -245,15 +245,15 @@ export const MilestoneCard = ({
               </div>
             ) : (
               <div className="w-full flex-col flex gap-2 px-4 py-2 bg-[#F8F9FC] dark:bg-zinc-700 rounded-lg">
-                {completionReason && (
+                {completionReason ? (
                   <div className="flex flex-col gap-1">
                     <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
                       Completion Notes:
                     </p>
                     <ReadMore side="left">{completionReason}</ReadMore>
                   </div>
-                )}
-                {completionProof && (
+                ) : null}
+                {completionProof ? (
                   <div className="flex flex-col gap-1">
                     <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
                       Proof of Work:
@@ -267,11 +267,11 @@ export const MilestoneCard = ({
                       {completionProof}
                     </a>
                   </div>
-                )}
+                ) : null}
               </div>
             )}
           </>
-        )}
+        ) : null}
       </>
     );
   };
@@ -287,61 +287,61 @@ export const MilestoneCard = ({
       {type === "grant" ? (
         <div className="flex flex-col gap-2 w-full">
           <div className="flex flex-wrap gap-2">
-            {milestone.mergedGrants && milestone.mergedGrants.length > 0
-              ? // Display all merged grants with their images
-                [...milestone.mergedGrants]
-                  .sort((a, b) => {
-                    // Sort alphabetically by grant title
-                    const titleA = a.grantTitle || "Untitled Grant";
-                    const titleB = b.grantTitle || "Untitled Grant";
-                    return titleA.localeCompare(titleB);
-                  })
-                  .map((grant, index) => (
-                    <ExternalLink
-                      href={PAGES.COMMUNITY.ALL_GRANTS(
-                        communityData?.slug || "",
-                        grant.programId
-                      )}
-                      key={`${grant.grantUID}-${grant.grantTitle}-${milestone.uid}-${milestone.title}-${index}`}
-                      className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1"
-                    >
-                      {grant.communityImage && (
-                        <div className="w-4 h-4 relative overflow-hidden rounded-full">
-                          <Image
-                            src={grant.communityImage}
-                            alt={grant.communityName || "Community"}
-                            width={16}
-                            height={16}
-                          />
-                        </div>
-                      )}
-                      <span className="font-medium">
-                        {grant.grantTitle || "Untitled Grant"}
-                      </span>
-                    </ExternalLink>
-                  ))
-              : // Single grant display with community image
-                grantTitle && (
+            {milestone.mergedGrants && milestone.mergedGrants.length > 0 ? (
+              // Display all merged grants with their images
+              [...milestone.mergedGrants]
+                .sort((a, b) => {
+                  // Sort alphabetically by grant title
+                  const titleA = a.grantTitle || "Untitled Grant";
+                  const titleB = b.grantTitle || "Untitled Grant";
+                  return titleA.localeCompare(titleB);
+                })
+                .map((grant, index) => (
                   <ExternalLink
                     href={PAGES.COMMUNITY.ALL_GRANTS(
                       communityData?.slug || "",
-                      programId
+                      grant.programId
                     )}
+                    key={`${grant.grantUID}-${grant.grantTitle}-${milestone.uid}-${milestone.title}-${index}`}
                     className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1"
                   >
-                    {communityData?.imageURL && (
+                    {grant.communityImage ? (
                       <div className="w-4 h-4 relative overflow-hidden rounded-full">
                         <Image
-                          src={communityData.imageURL}
-                          alt={communityData.name || "Community"}
+                          src={grant.communityImage}
+                          alt={grant.communityName || "Community"}
                           width={16}
                           height={16}
                         />
                       </div>
-                    )}
-                    <span className="font-medium">{grantTitle}</span>
+                    ) : null}
+                    <span className="font-medium">
+                      {grant.grantTitle || "Untitled Grant"}
+                    </span>
                   </ExternalLink>
+                ))
+            ) : // Single grant display with community image
+            grantTitle ? (
+              <ExternalLink
+                href={PAGES.COMMUNITY.ALL_GRANTS(
+                  communityData?.slug || "",
+                  programId
                 )}
+                className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1"
+              >
+                {communityData?.imageURL ? (
+                  <div className="w-4 h-4 relative overflow-hidden rounded-full">
+                    <Image
+                      src={communityData.imageURL}
+                      alt={communityData.name || "Community"}
+                      width={16}
+                      height={16}
+                    />
+                  </div>
+                ) : null}
+                <span className="font-medium">{grantTitle}</span>
+              </ExternalLink>
+            ) : null}
           </div>
         </div>
       ) : null}

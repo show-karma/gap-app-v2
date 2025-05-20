@@ -10,6 +10,7 @@ import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { ReadMore } from "@/utilities/ReadMore";
+import { cn } from "@/utilities/tailwind";
 import {
   PencilSquareIcon,
   ShareIcon,
@@ -28,6 +29,8 @@ import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 
@@ -38,6 +41,7 @@ import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { ProjectActivityBlock } from "./ProjectActivityBlock";
+import Image from "next/image";
 
 export const UpdateBlock = ({
   update,
@@ -167,11 +171,11 @@ export const UpdateBlock = ({
   };
 
   const labelDictionary = {
-    ProjectUpdate: "ACTIVITY",
-    GrantUpdate: "GRANT UPDATE",
-    Milestone: "MILESTONE",
-    ProjectMilestone: "MILESTONE",
-    ProjectImpact: "IMPACT",
+    ProjectUpdate: "Project Activity",
+    GrantUpdate: "Grant Update",
+    Milestone: "Milestone",
+    ProjectMilestone: "Milestone",
+    ProjectImpact: "Project Impact",
   };
 
   const shareDictionary = {
@@ -191,76 +195,141 @@ export const UpdateBlock = ({
     ),
   };
 
-  return (
-    <div className="flex w-full flex-1 flex-col gap-4 rounded-lg dark:bg-zinc-800 bg-[#F8F9FC] p-4 transition-all duration-200 ease-in-out max-sm:px-2">
-      <div className="flex flex-row items-center justify-between">
-        <div className="flex flex-row gap-3 items-center">
-          <div className="flex items-center h-max w-max flex-row gap-2 rounded-full bg-[#5720B7] dark:bg-purple-900 px-3 py-1">
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M7.3335 2.66421H4.5335C3.41339 2.66421 2.85334 2.66421 2.42552 2.8822C2.04919 3.07395 1.74323 3.37991 1.55148 3.75623C1.3335 4.18406 1.3335 4.74411 1.3335 5.86421V11.4642C1.3335 12.5843 1.3335 13.1444 1.55148 13.5722C1.74323 13.9485 2.04919 14.2545 2.42552 14.4462C2.85334 14.6642 3.41339 14.6642 4.5335 14.6642H10.1335C11.2536 14.6642 11.8137 14.6642 12.2415 14.4462C12.6178 14.2545 12.9238 13.9485 13.1155 13.5722C13.3335 13.1444 13.3335 12.5843 13.3335 11.4642V8.66421M5.33348 10.6642H6.44984C6.77596 10.6642 6.93902 10.6642 7.09247 10.6274C7.22852 10.5947 7.35858 10.5408 7.47788 10.4677C7.61243 10.3853 7.72773 10.27 7.95833 10.0394L14.3335 3.66421C14.8858 3.11193 14.8858 2.2165 14.3335 1.66421C13.7812 1.11193 12.8858 1.11193 12.3335 1.66421L5.95832 8.03938C5.72772 8.26998 5.61241 8.38528 5.52996 8.51983C5.45685 8.63913 5.40298 8.76919 5.37032 8.90524C5.33348 9.05869 5.33348 9.22175 5.33348 9.54787V10.6642Z"
-                stroke="white"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
+  const getStatusColor = (label: keyof typeof labelDictionary) => {
+    switch (label) {
+      case "ProjectUpdate":
+        return "bg-[#EFF4FF] text-black dark:bg-[#EFF4FF] dark:text-black";
+      case "GrantUpdate":
+        return "bg-[#DCFAE6] text-black dark:bg-[#DCFAE6] dark:text-black";
+      case "ProjectImpact":
+        return "bg-[#FBE8FF] text-black dark:bg-[#FBE8FF] dark:text-black";
+      case "Milestone":
+        return "bg-[#FFEFE0] text-black dark:bg-[#FFEFE0] dark:text-black";
+      case "ProjectMilestone":
+        return "bg-[#FFEFE0] text-black dark:bg-[#FFEFE0] dark:text-black";
+      default:
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300";
+    }
+  };
 
-            <p className="text-xs font-bold text-white">
-              {labelDictionary[update.type as keyof typeof labelDictionary]}
-            </p>
-          </div>
-        </div>
-        <div className="flex flex-row gap-3 items-center">
-          {update.type === "ProjectUpdate" ? (
-            (update as any).data?.startDate || (update as any).data?.endDate ? (
-              <p className="text-sm font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
-                {`${
-                  update.data?.startDate
-                    ? formatDate(update.data?.startDate)
-                    : ""
-                } ${
-                  update.data?.startDate && update.data?.endDate ? "-" : ""
-                } ${
-                  update.data?.endDate ? formatDate(update.data?.endDate) : ""
-                }`}
-              </p>
-            ) : (
-              <p className="text-sm font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
-                Posted on {formatDate(update.createdAt)}
-              </p>
-            )
-          ) : update.type === "ProjectMilestone" ? (
-            <p className="text-sm font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
-              {update.type === "ProjectMilestone" &&
-              "completed" in update &&
-              update.completed
-                ? `Completed on ${formatDate(update.completed.createdAt)}`
-                : `Posted on ${formatDate(update.createdAt)}`}
-            </p>
-          ) : null}
-          {isAuthorized &&
-          shareDictionary[update.type as keyof typeof shareDictionary] ? (
-            <ExternalLink
-              href={shareOnX(
-                shareDictionary[update.type as keyof typeof shareDictionary]
+  const getStatusIcon = (label: keyof typeof labelDictionary) => {
+    switch (label) {
+      case "ProjectUpdate":
+        return "/icons/activity.svg";
+      case "GrantUpdate":
+        return "/icons/grant-update.svg";
+      case "ProjectImpact":
+        return "/icons/project-impact.svg";
+      case "Milestone":
+        return "/icons/milestone.svg";
+      case "ProjectMilestone":
+        return "/icons/milestone.svg";
+      default:
+        return "/icons/project-update.svg";
+    }
+  };
+
+  const getStatusText = () => {
+    return (
+      labelDictionary[update.type as keyof typeof labelDictionary] || "UPDATE"
+    );
+  };
+
+  return (
+    <div
+      className={cn(
+        "border bg-white dark:bg-zinc-800 rounded-xl p-6 gap-3 flex flex-col items-start justify-start",
+        "border-[#D0D5DD] dark:border-zinc-400"
+      )}
+    >
+      <div className="flex flex-row gap-3 items-start justify-between w-full">
+        <div className="flex flex-col w-full gap-3  items-start">
+          <div className="flex flex-row gap-2">
+            <span
+              className={cn(
+                "px-3 py-1.5 rounded-full text-sm w-max flex flex-row gap-2 font-semibold items-center",
+                getStatusColor(update.type as keyof typeof labelDictionary)
               )}
             >
-              <ShareIcon className="text-gray-900 dark:text-zinc-300 w-5 h-5" />
-            </ExternalLink>
-          ) : null}
-          {isAuthorized && update.type === "ProjectUpdate" ? (
+              <Image
+                src={getStatusIcon(update.type as keyof typeof labelDictionary)}
+                alt={getStatusText()}
+                width={20}
+                height={20}
+              />
+              {getStatusText()}
+            </span>
+            {update.type != "ProjectUpdate" &&
+            update.type != "ProjectImpact" &&
+            update.type != "ProjectMilestone"
+              ? (() => {
+                  const grant = project?.grants?.find(
+                    (grant) =>
+                      grant.uid?.toLowerCase() === update.refUID?.toLowerCase()
+                  );
+
+                  if (!grant) return null;
+
+                  const communityData = grant.community?.details?.data;
+
+                  return (
+                    <ExternalLink
+                      href={PAGES.COMMUNITY.ALL_GRANTS(
+                        communityData?.slug || grant.community?.uid || "",
+                        grant.details?.data.programId || ""
+                      )}
+                      className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-zinc-700 rounded-lg px-2 py-1"
+                    >
+                      {communityData?.imageURL ? (
+                        <div className="w-4 h-4 relative overflow-hidden rounded-full">
+                          <Image
+                            src={communityData.imageURL}
+                            alt={communityData.name || "Community"}
+                            width={16}
+                            height={16}
+                          />
+                        </div>
+                      ) : null}
+                      <span className="font-medium">
+                        {grant.details?.data.title}
+                      </span>
+                    </ExternalLink>
+                  );
+                })()
+              : null}
+          </div>
+          {update.type !== "ProjectImpact" &&
+            update.data &&
+            "title" in update.data &&
+            update.data.title && (
+              <p
+                className="text-xl font-bold text-[#101828] dark:text-zinc-100 pl-4 border-l-4"
+                style={{
+                  borderLeftColor: "#2196F3",
+                }}
+              >
+                {update.data.title}
+              </p>
+            )}
+        </div>
+
+        <div className="flex flex-row gap-2">
+          {isAuthorized &&
+            shareDictionary[update.type as keyof typeof shareDictionary] && (
+              <ExternalLink
+                href={shareOnX(
+                  shareDictionary[update.type as keyof typeof shareDictionary]
+                )}
+              >
+                <ShareIcon className="text-gray-900 dark:text-zinc-300 w-5 h-5" />
+              </ExternalLink>
+            )}
+          {isAuthorized && update.type === "ProjectUpdate" && (
             <>
               <button
                 onClick={() => {
                   const url = new URL(
-                    PAGES.PROJECT.UPDATES(
+                    PAGES.PROJECT.ROADMAP.ROOT(
                       project?.details?.data.slug || project?.uid || ""
                     ),
                     window.location.origin
@@ -290,91 +359,104 @@ export const UpdateBlock = ({
                 }}
               />
             </>
-          ) : null}
+          )}
         </div>
       </div>
-      {update.type !== "ProjectImpact" &&
-        (update.data && "title" in update.data && update.data.title ? (
-          <p className="text-lg font-semibold text-black dark:text-zinc-100 max-sm:text-base">
-            {update.data.title}
-          </p>
-        ) : null)}
-      <div className="relative flex justify-between items-end">
-        <div className="flex-grow">
-          <ReadMore
-            readLessText="Read less update"
-            readMoreText="Read full update"
-            markdownClass="text-black font-normal text-base"
-            side="left"
-            othersideButton={
-              update.type != "ProjectUpdate" &&
-              update.type != "ProjectImpact" &&
-              update.type != "ProjectMilestone" ? (
-                <Link
-                  href={PAGES.PROJECT.MILESTONES_AND_UPDATES(
-                    project?.details?.data.slug || "",
-                    update.refUID
-                  )}
-                  className="underline text-blue-600 dark:text-blue-400 font-semibold text-sm hover:underline"
-                >
-                  {
-                    project?.grants?.find(
-                      (grant) =>
-                        grant.uid?.toLowerCase() ===
-                        update.refUID?.toLowerCase()
-                    )?.details?.data.title
-                  }
-                </Link>
-              ) : update.type === "ProjectImpact" ? (
-                <Link
-                  href={PAGES.PROJECT.IMPACT.ROOT(
-                    project?.details?.data.slug || project?.uid || ""
-                  )}
-                  className="underline text-blue-600 dark:text-blue-400 font-semibold text-sm hover:underline"
-                >
-                  See impact
-                </Link>
-              ) : update.type === "ProjectMilestone" &&
-                "completed" in update &&
-                update.completed?.data.proofOfWork ? (
-                <Link
-                  href={update.completed.data.proofOfWork}
-                  className="underline text-blue-600 dark:text-blue-400 font-semibold text-sm hover:underline"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  View proof
-                </Link>
-              ) : null
+
+      {update.type === "ProjectUpdate" && (
+        <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+          {(update as any).data?.startDate || (update as any).data?.endDate ? (
+            <span>
+              {`${
+                update.data?.startDate ? formatDate(update.data?.startDate) : ""
+              } ${update.data?.startDate && update.data?.endDate ? "-" : ""} ${
+                update.data?.endDate ? formatDate(update.data?.endDate) : ""
+              }`}
+            </span>
+          ) : (
+            <span>Posted on {formatDate(update.createdAt)}</span>
+          )}
+        </div>
+      )}
+
+      <div className="flex flex-col my-2 w-full">
+        <ReadMore
+          side="left"
+          markdownClass="text-black dark:text-zinc-200 font-normal text-base"
+          readLessText="Read less"
+          readMoreText="Read more"
+          othersideButton={
+            update.type === "ProjectImpact" ? (
+              <Link
+                href={PAGES.PROJECT.IMPACT.ROOT(
+                  project?.details?.data.slug || project?.uid || ""
+                )}
+                className="underline text-blue-600 dark:text-blue-400 font-semibold text-sm hover:underline"
+              >
+                See impact
+              </Link>
+            ) : update.type === "ProjectMilestone" &&
+              "completed" in update &&
+              update.completed?.data.proofOfWork ? (
+              <Link
+                href={update.completed.data.proofOfWork}
+                className="underline text-blue-600 dark:text-blue-400 font-semibold text-sm hover:underline"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                View proof
+              </Link>
+            ) : null
+          }
+        >
+          {(() => {
+            switch (update.type) {
+              case "ProjectUpdate":
+              case "GrantUpdate":
+                return update.data.text;
+              case "Milestone":
+                return "description" in update.data
+                  ? update.data.description
+                  : "";
+              case "ProjectMilestone":
+                return update.data.text || "";
+              case "ProjectImpact":
+                const data = update.data as IProjectImpact["data"];
+                const { impact, proof, work } = data;
+                return `### Work \n${work} \n\n### Impact \n${impact} \n\n### Proof \n${proof}`;
+              default:
+                return "";
             }
-          >
-            {(() => {
-              switch (update.type) {
-                case "ProjectUpdate":
-                case "GrantUpdate":
-                  return update.data.text;
-                case "Milestone":
-                  return "description" in update.data
-                    ? update.data.description
-                    : "";
-                case "ProjectMilestone":
-                  return update.data.text || "";
-                case "ProjectImpact":
-                  const data = update.data as IProjectImpact["data"];
-                  const { impact, proof, work } = data;
-                  return `### Work \n${work} \n\n### Impact \n${impact} \n\n### Proof \n${proof}`;
-                default:
-                  return "";
-              }
-            })()}
-          </ReadMore>
+          })()}
+        </ReadMore>
+      </div>
+
+      <div className="flex flex-row gap-x-4 gap-y-2 items-center justify-between w-full flex-wrap">
+        <div className="flex flex-row gap-2 items-center flex-wrap">
+          <p className="text-zinc-800 dark:text-zinc-300 text-sm lg:text-base">
+            Posted on {formatDate(update.createdAt)}
+            {update.attester ? " by" : ""}
+          </p>
+          {update.attester && (
+            <div className="flex flex-row gap-1 items-center">
+              <EthereumAddressToENSAvatar
+                address={update.attester}
+                className="h-5 w-5 min-h-5 min-w-5 rounded-full border-1 border-gray-100 dark:border-zinc-900"
+              />
+              <p className="text-sm text-center font-bold text-black dark:text-zinc-200 max-2xl:text-[13px]">
+                <EthereumAddressToENSName address={update.attester} />
+              </p>
+            </div>
+          )}
         </div>
       </div>
-      {update.type === "ProjectUpdate" ? (
-        (update as IProjectUpdate).data?.indicators?.length ||
-        (update as IProjectUpdate).data?.deliverables?.length ? (
+
+      {update.type === "ProjectUpdate" &&
+      ((update as IProjectUpdate).data?.indicators?.length ||
+        (update as IProjectUpdate).data?.deliverables?.length) ? (
+        <div className="w-full flex-col flex gap-2 px-4 py-2 bg-[#F8F9FC] dark:bg-zinc-700 rounded-lg">
           <ProjectActivityBlock activity={update as IProjectUpdate} />
-        ) : null
+        </div>
       ) : null}
     </div>
   );

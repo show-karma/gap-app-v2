@@ -6,12 +6,24 @@ import { StatusOptions } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { SetAnObjective } from "@/components/Pages/Project/Objective/SetAnObjective";
 import { UnifiedMilestone } from "@/types/roadmap";
+import { UpdateBlock } from "@/components/Pages/Project/Updates/UpdateBlock";
+import {
+  IGrantUpdate,
+  IProjectImpact,
+  IProjectUpdate,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 interface MilestonesListProps {
   milestones: UnifiedMilestone[];
+  showAllTypes?: boolean;
+  totalItems?: number;
 }
 
-export const MilestonesList = ({ milestones }: MilestonesListProps) => {
+export const MilestonesList = ({
+  milestones,
+  showAllTypes = false,
+  totalItems,
+}: MilestonesListProps) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isAuthorized = isOwner || isProjectAdmin;
@@ -30,10 +42,11 @@ export const MilestonesList = ({ milestones }: MilestonesListProps) => {
     const mergedMap = new Map<string, UnifiedMilestone>();
 
     milestones.forEach((milestone) => {
-      // Create a unique key based on title, description, and dates
-      const startDate =
-        milestone.source.grantMilestone?.milestone.data.startsAt;
-      const endDate = milestone.source.grantMilestone?.milestone.data.endsAt;
+      // Skip updates from merging as they're unique
+      if (milestone.type === "update") {
+        mergedMap.set(milestone.uid, milestone);
+        return;
+      }
 
       // Skip project milestones from merging (they're unique by nature)
       if (milestone.type === "project") {
@@ -45,6 +58,11 @@ export const MilestonesList = ({ milestones }: MilestonesListProps) => {
         });
         return;
       }
+
+      // Create a unique key based on title, description, and dates
+      const startDate =
+        milestone.source.grantMilestone?.milestone.data.startsAt;
+      const endDate = milestone.source.grantMilestone?.milestone.data.endsAt;
 
       const key = `${milestone.title}|${milestone.description || ""}|${
         startDate || ""
@@ -110,12 +128,29 @@ export const MilestonesList = ({ milestones }: MilestonesListProps) => {
     return Array.from(mergedMap.values());
   };
 
-  const filteredMilestones = milestones.filter((milestone) => {
+  // Type guard function to check if an item is an update
+  const isUpdateType = (item: UnifiedMilestone): boolean => {
+    return item.type === "update";
+  };
+
+  // Type guard function to check if an update data exists
+  const hasUpdateData = (
+    item: UnifiedMilestone
+  ): item is UnifiedMilestone & {
+    updateData: IProjectUpdate | IGrantUpdate | IProjectImpact;
+  } => {
+    return isUpdateType(item) && !!item.updateData;
+  };
+
+  // Filter milestones based on status
+  let filteredMilestones = milestones.filter((milestone) => {
+    if (!showAllTypes && milestone.type === "update") return false;
     if (status === "completed") return milestone.completed;
     if (status === "pending") return !milestone.completed;
     return true;
   });
 
+  // Merge duplicates for regular milestones
   const unifiedMilestones = mergeDuplicateMilestones(filteredMilestones);
 
   return (
@@ -129,22 +164,38 @@ export const MilestonesList = ({ milestones }: MilestonesListProps) => {
       ) : null}
 
       {unifiedMilestones && unifiedMilestones.length > 0 ? (
-        <div className="flex w-full flex-col gap-6 px-6 py-10 bg-[#F9FAFB] dark:bg-zinc-900 rounded-xl max-lg:px-2 max-lg:py-4">
-          {unifiedMilestones.map((milestone, index) => (
-            <MilestoneCard
-              key={`${milestone.uid}-${index}-${milestone.title}`}
-              milestone={milestone}
-              isAuthorized={isAuthorized}
-            />
-          ))}
+        <div className="flex w-full flex-col gap-6 dark:bg-zinc-900 rounded-xl max-lg:px-2 max-lg:py-4">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-xl font-bold text-black dark:text-zinc-200">
+              {`Activities ${totalItems ? `(${totalItems})` : ""}`}
+            </h3>
+          </div>
+
+          {unifiedMilestones.map((item, index) =>
+            hasUpdateData(item) ? (
+              <UpdateBlock
+                key={`update-${item.uid}-${index}`}
+                update={item.updateData}
+                index={index}
+              />
+            ) : (
+              <MilestoneCard
+                key={`milestone-${item.uid}-${index}`}
+                milestone={item}
+                isAuthorized={isAuthorized}
+              />
+            )
+          )}
         </div>
       ) : !isAuthorized ? (
         <div className="flex flex-col gap-2 justify-center items-start border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-8 w-full">
           <p className="text-zinc-900 font-bold text-center text-lg w-full dark:text-zinc-300">
-            No milestones found!
+            {showAllTypes ? "No content found!" : "No milestones found!"}
           </p>
           <p className="text-zinc-900 dark:text-zinc-300 w-full text-center">
-            {`The project owner is working on setting milestones. Check back in a few days :)`}
+            {`The project owner is working on setting ${
+              showAllTypes ? "milestones and activities" : "milestones"
+            }. Check back in a few days :)`}
           </p>
         </div>
       ) : null}

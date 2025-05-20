@@ -587,11 +587,13 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                   changeStepperStep("indexed");
                   toast.success(MESSAGES.PROJECT_UPDATE_FORM.SUCCESS);
                   afterSubmit?.();
-                  router.push(PAGES.PROJECT.UPDATES(projectSlug || projectUid));
+                  router.push(
+                    PAGES.PROJECT.ROADMAP.ROOT(projectSlug || projectUid)
+                  );
                   router.refresh();
                   openShareDialog({
                     modalShareText: `🎉 You just dropped an update for ${project?.details?.data?.title}!`,
-                    modalShareSecondText: `That’s how progress gets done! Your update is now live onchain—one step closer to greatness. Keep the vibes high and the milestones rolling! 🚀🔥`,
+                    modalShareSecondText: `That's how progress gets done! Your update is now live onchain—one step closer to greatness. Keep the vibes high and the milestones rolling! 🚀🔥`,
                     shareText: SHARE_TEXTS.PROJECT_ACTIVITY(
                       project?.details?.data?.title as string,
                       project?.uid as string
