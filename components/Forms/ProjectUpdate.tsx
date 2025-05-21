@@ -345,7 +345,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         errorManager(
           `Error fetching project data for project ${project?.uid}`,
           error,
-          { projectUID: project?.uid }
+          { projectUID: project?.uid, address }
         );
         console.error("Failed to fetch project data:", error);
       }

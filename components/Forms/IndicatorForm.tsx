@@ -191,7 +191,8 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
       });
       errorManager(
         `Failed to ${indicatorId ? "update" : "create"} indicator`,
-        error
+        error,
+        { ...data, indicatorId }
       );
       onError?.(error);
     } finally {

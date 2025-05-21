@@ -38,7 +38,7 @@ type FormType = z.infer<typeof subscriptionSchema>;
 
 interface ContactBlockProps {
   onSelectFunction: (value: string) => void;
-  contacts?: Contact[];
+  contacts?: Contact[] | null;
   value: string;
   deleteFunction: (value: string) => void;
   newContact: () => void;

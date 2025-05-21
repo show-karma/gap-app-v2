@@ -14,6 +14,7 @@ import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-ind
 import type { FC, ReactNode } from "react";
 import { Fragment, useEffect, useState, useCallback } from "react";
 import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
 
 interface LinkDivviWalletButtonProps {
   buttonClassName?: string;
@@ -38,6 +39,7 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );
+  const { address } = useAccount();
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
 
   const [isOpen, setIsOpen] = useState(false);
@@ -96,9 +98,8 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
     }
 
     setIsLoading(true);
+    const ids = walletAddress.trim() ? [walletAddress.trim()] : [];
     try {
-      const ids = walletAddress.trim() ? [walletAddress.trim()] : [];
-
       const [data, error] = await fetchData(
         INDEXER.PROJECT.EXTERNAL.UPDATE(project.uid),
         "PUT",
@@ -125,7 +126,12 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
       errorManager(
         "Failed to Link Divvi Identifier address.",
         err,
-        { projectUID: project.uid },
+        {
+          projectUID: project.uid,
+          target: "divvi_wallets",
+          ids: ids,
+          address,
+        },
         { error: "Failed to Link Divvi Identifier address." }
       );
     } finally {

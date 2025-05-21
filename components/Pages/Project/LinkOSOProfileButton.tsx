@@ -18,6 +18,7 @@ import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-ind
 import type { FC, ReactNode } from "react";
 import { Fragment, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
 
 interface LinkOSOProfileButtonProps {
   buttonClassName?: string;
@@ -39,6 +40,7 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );
+  const { address } = useAccount();
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
 
   const [isOpen, setIsOpen] = useState(false);
@@ -89,10 +91,8 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
   const handleSave = async () => {
     setIsLoading(true);
     setError(null);
+    const validIds = ids.filter((id) => id.trim() !== "");
     try {
-      // Filter out empty addresses
-      const validIds = ids.filter((id) => id.trim() !== "");
-
       const [data, error] = await fetchData(
         INDEXER.PROJECT.EXTERNAL.UPDATE(project.uid),
         "PUT",
@@ -120,7 +120,7 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
       errorManager(
         MESSAGES.PROJECT.LINK_OSO_PROFILE.ERROR,
         err,
-        { projectUID: project.uid },
+        { projectUID: project.uid, target: "oso", ids: validIds, address },
         { error: MESSAGES.PROJECT.LINK_OSO_PROFILE.ERROR }
       );
     } finally {

@@ -101,6 +101,7 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({
         {
           project: project?.details?.data?.slug || project?.uid,
           member: memberAddress,
+          address: address,
         },
         {
           error: `Failed to remove member ${memberAddress}.`,

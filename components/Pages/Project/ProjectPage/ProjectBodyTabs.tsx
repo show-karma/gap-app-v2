@@ -239,7 +239,7 @@ const UpdateBlock = ({
   const [isDeletingUpdate, setIsDeletingUpdate] = useState(false);
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
-  const { chain } = useAccount();
+  const { chain, address } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const { project, isProjectOwner } = useProjectStore();
   const refreshProject = useProjectStore((state) => state.refreshProject);
@@ -342,6 +342,7 @@ const UpdateBlock = ({
         {
           projectUID: project?.uid,
           updateUID: update.uid,
+          address,
         },
         { error: MESSAGES.PROJECT_UPDATE_FORM.DELETE.ERROR }
       );

@@ -46,7 +46,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
   const [validAddress, setValidAddress] = useState(true);
 
   const signer = useSigner();
-  const { chain } = useAccount();
+  const { chain, address } = useAccount();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
@@ -122,6 +122,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
           project: project?.details?.data?.slug || project?.uid,
           oldOwner: project?.recipient,
           newOwner,
+          address: address,
         },
         {
           error: "Failed to transfer ownership.",

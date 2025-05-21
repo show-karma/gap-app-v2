@@ -277,6 +277,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
           project: project?.details?.data?.slug || project?.uid,
           primaryProject:
             primaryProject?.details?.data?.slug || primaryProject?.uid,
+          address: address,
         },
         {
           error: "Failed to create project pointer.",
