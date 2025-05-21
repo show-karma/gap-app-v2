@@ -53,7 +53,6 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
   const [isLoading, setIsLoading] = useState(false);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const project = useProjectStore((state) => state.project);
-  const { signMessageAsync } = useSignMessage();
   const [, copyToClipboard] = useCopyToClipboard();
   const { data, isSuccess } = useQuery<InviteCode | null>({
     queryKey: ["invite-code"],
