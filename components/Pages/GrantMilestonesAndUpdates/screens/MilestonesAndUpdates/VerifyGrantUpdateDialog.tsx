@@ -59,12 +59,11 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
   function openModal() {
     setIsOpen(true);
   }
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chain } = useAccount();
 
   const hasVerifiedThis = grantUpdate?.verified?.find(
     (v) => v.attester?.toLowerCase() === address?.toLowerCase()
   );
-  const { chain } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const { gap } = useGap();
   const project = useProjectStore((state) => state.project);
@@ -163,6 +162,7 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
         {
           grantUpdateUID: grantUpdate.uid,
           grantUID: grantUpdate.refUID,
+          address,
         },
         { error: MESSAGES.GRANT.GRANT_UPDATE.VERIFY.ERROR }
       );

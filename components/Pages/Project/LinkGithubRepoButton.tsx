@@ -13,6 +13,7 @@ import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-ind
 import type { FC, ReactNode } from "react";
 import { Fragment, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
 
 // GitHub icon SVG component
 const GitHubIcon: FC<{ className?: string }> = ({ className }) => (
@@ -52,6 +53,7 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
     (state) => state.isCommunityAdmin
   );
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
+  const { address } = useAccount();
 
   const [isOpen, setIsOpen] = useState(false);
   const [repos, setRepos] = useState<string[]>([]);
@@ -279,7 +281,12 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
       errorManager(
         MESSAGES.PROJECT.LINK_GITHUB_REPOS.ERROR,
         err,
-        { projectUID: project.uid },
+        {
+          projectUID: project.uid,
+          target: "github",
+          ids: nonEmptyRepos,
+          address,
+        },
         { error: MESSAGES.PROJECT.LINK_GITHUB_REPOS.ERROR }
       );
     } finally {

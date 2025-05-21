@@ -77,7 +77,9 @@ const getProfile = async (
     if (data instanceof Array) return data[0];
     return data;
   } catch (e) {
-    errorManager("Failed to fetch profile", e);
+    errorManager("Failed to fetch profile", e, {
+      address,
+    });
     return null;
   }
 };

@@ -151,7 +151,11 @@ export default function EditCategoriesPage() {
       errorManager(
         `Error updating categories of ${communityId}`,
         error,
-        {},
+        {
+          communityId,
+          address,
+          selectedCategories,
+        },
         { error: MESSAGES.CATEGORY.UPDATE.ERROR }
       );
       console.log(error);

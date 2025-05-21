@@ -3,10 +3,12 @@
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 import * as Sentry from "@sentry/nextjs";
+import { sentryIgnoreErrors } from "./utilities/sentry/ignoreErrors";
 
 Sentry.init({
   enabled: process.env.NEXT_PUBLIC_VERCEL_ENV === "production",
   dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
+  ignoreErrors: sentryIgnoreErrors,
   // Adjust this value in production, or use tracesSampler for greater control
   tracesSampleRate: 0.01,
 

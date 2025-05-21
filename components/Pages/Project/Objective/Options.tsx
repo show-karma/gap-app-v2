@@ -73,8 +73,7 @@ export const ObjectiveOptionsMenu = ({
   const params = useParams();
   const projectId = params.projectId as string;
   const [isDeleting, setIsDeleting] = useState(false);
-  const { address } = useAccount();
-  const { chain } = useAccount();
+  const { chain, address } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const router = useRouter();
   const { gap } = useGap();
@@ -191,6 +190,7 @@ export const ObjectiveOptionsMenu = ({
         {
           project: projectId,
           objective: objectiveId,
+          address,
         },
         { error: MESSAGES.PROJECT_OBJECTIVE_FORM.DELETE.ERROR }
       );

@@ -66,7 +66,11 @@ const SubscribeForm = ({ address, changeIsSubscribed }: SubscribeFormProps) => {
       console.error(error);
       errorManager(
         `Error of user ${address}/${data.email} subscribing to all projects funded by his wallet`,
-        error
+        error,
+        {
+          address,
+          email: data.email,
+        }
       );
       toast.error("An error occurred while subscribing, try again later.");
       changeIsSubscribed(false);

@@ -329,7 +329,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   const { isOpen: isShareDialogOpen } = useShareDialogStore();
 
   return (
-    <>
+    <div>
       {isIntroModalOpen ? <IntroDialog /> : null}
       {isEndorsementOpen ? <EndorsementDialog /> : null}
       {isProgressModalOpen ? <ProgressDialog /> : null}
@@ -410,6 +410,6 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
