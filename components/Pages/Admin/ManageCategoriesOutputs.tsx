@@ -22,6 +22,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { DeleteDialog } from "@/components/DeleteDialog";
+import { useAccount } from "wagmi";
 
 const OUTPUT_TYPES = ["output", "outcome"] as const;
 type OutputType = (typeof OUTPUT_TYPES)[number];
@@ -192,6 +193,7 @@ export const ManageCategoriesOutputs = ({
   community,
   refreshCategories,
 }: ManageCategoriesOutputsProps) => {
+  const { address } = useAccount();
   const [isSavingOutput, setIsSavingOutput] = useState<string>("");
   const [isDeletingOutput, setIsDeletingOutput] = useState<string>("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
@@ -250,6 +252,7 @@ export const ManageCategoriesOutputs = ({
         {
           data,
           categoryId,
+          address,
         },
         { error: MESSAGES.ACTIVITY_OUTCOME.CREATE.ERROR }
       );
@@ -281,6 +284,7 @@ export const ManageCategoriesOutputs = ({
         {
           categoryId,
           segmentId,
+          address,
         },
         { error: MESSAGES.ACTIVITY_OUTCOME.DELETE.ERROR }
       );
@@ -329,6 +333,7 @@ export const ManageCategoriesOutputs = ({
           data,
           categoryId,
           outputId,
+          address,
         },
         { error: MESSAGES.ACTIVITY_OUTCOME.UPDATE.ERROR }
       );

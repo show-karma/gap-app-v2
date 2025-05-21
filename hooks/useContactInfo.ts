@@ -4,6 +4,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { APIContact } from "@/types/project";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useOwnerStore, useProjectStore } from "@/store";
+import { useAccount } from "wagmi";
 
 interface Contact {
   id: string;
@@ -19,6 +20,7 @@ export const useContactInfo = (
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isDefaultAuthorized = isOwner || isProjectAdmin;
+  const { address } = useAccount();
   return useQuery({
     queryKey: ["contactInfo", projectId],
     queryFn: async (): Promise<Contact[] | null> => {
@@ -50,7 +52,11 @@ export const useContactInfo = (
         console.error(error);
         errorManager(
           `Error fetching project contacts info from project ${projectId}`,
-          error
+          error,
+          {
+            projectUID: projectId,
+            address,
+          }
         );
         return null;
       }

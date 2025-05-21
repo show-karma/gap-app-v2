@@ -10,6 +10,7 @@ import toast from "react-hot-toast";
 import { AddExternalId } from "./AddExternalIdDialog";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MESSAGES } from "@/utilities/messages";
+import { useAccount } from "wagmi";
 
 export default function ExternalIds({
   projectUID,
@@ -23,6 +24,7 @@ export default function ExternalIds({
   refreshGrant: () => Promise<IGrantResponse | undefined>;
 }) {
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const { address } = useAccount();
 
   const handleRemove = async (id: string) => {
     setRemovingId(id);
@@ -45,9 +47,19 @@ export default function ExternalIds({
       await refreshGrant();
       toast.success("External ID removed successfully");
     } catch (error) {
-      errorManager(MESSAGES.GRANT.ADD_EXTERNAL_ID.ERROR, error, {
-        error: MESSAGES.GRANT.ADD_EXTERNAL_ID.ERROR,
-      });
+      errorManager(
+        MESSAGES.GRANT.ADD_EXTERNAL_ID.ERROR,
+        error,
+        {
+          removingExternalId: id,
+          projectUID,
+          communityUID,
+          address,
+        },
+        {
+          error: MESSAGES.GRANT.ADD_EXTERNAL_ID.ERROR,
+        }
+      );
     } finally {
       setRemovingId(null);
     }

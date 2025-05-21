@@ -25,6 +25,7 @@ import { INDEXER } from "@/utilities/indexer";
 import toast from "react-hot-toast";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MESSAGES } from "@/utilities/messages";
+import { useAccount } from "wagmi";
 
 interface CategoryViewProps {
   selectedCategory: Category;
@@ -114,6 +115,7 @@ export const CategoryView = ({
   onRefreshCategory,
   communityId,
 }: CategoryViewProps) => {
+  const { address } = useAccount();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [initialModalType, setInitialModalType] = useState<
     "output" | "outcome"
@@ -207,6 +209,8 @@ export const CategoryView = ({
         error,
         {
           segmentId,
+          address,
+          categoryId: selectedCategory.id,
         },
         { error: MESSAGES.ACTIVITY_OUTCOME.DELETE.ERROR }
       );

@@ -25,7 +25,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
   const [isDeletingMilestone, setIsDeletingMilestone] = useState(false);
 
   const { switchChainAsync } = useSwitchChain();
-  const { chain } = useAccount();
+  const { chain, address } = useAccount();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
@@ -132,6 +132,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
         {
           milestone: milestone.uid,
           grant: milestone.refUID,
+          address: address,
         },
         { error: MESSAGES.MILESTONES.DELETE.ERROR(milestone.data.title) }
       );

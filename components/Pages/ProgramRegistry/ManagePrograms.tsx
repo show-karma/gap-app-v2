@@ -84,8 +84,6 @@ export const ManagePrograms = () => {
   const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore();
 
-  const { chain } = useAccount();
-
   const signer = useSigner();
 
   const {
@@ -316,6 +314,7 @@ export const ManagePrograms = () => {
         {
           program: program._id.$oid,
           isValid: value,
+          address,
         }
       );
       console.log(`Error ${messageDict[value]} program ${program._id.$oid}`);

@@ -505,6 +505,7 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
         `Error creating project`,
         error,
         {
+          address,
           project: data.title,
         },
         {
@@ -638,7 +639,7 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
           projectToUpdate?.details?.data?.slug || projectToUpdate?.uid
         }`,
         error,
-        data,
+        { ...data, address },
         {
           error: MESSAGES.PROJECT.UPDATE.ERROR,
         }

@@ -71,7 +71,13 @@ export default function Header() {
         setCommunities([]);
       }
     } catch (e) {
-      errorManager(`Error fetching communities of user ${address} is admin`, e);
+      errorManager(
+        `Error fetching communities of user ${address} is admin`,
+        e,
+        {
+          address,
+        }
+      );
       setCommunities([]);
     } finally {
       setIsLoading(false);

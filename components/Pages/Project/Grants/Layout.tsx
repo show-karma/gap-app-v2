@@ -214,7 +214,10 @@ export const GrantsLayout = ({
       );
       setIsCommunityAdmin(result);
     } catch (error: any) {
-      errorManager(`Error checking if ${address} is a community admin`, error);
+      errorManager(`Error checking if ${address} is a community admin`, error, {
+        address,
+        communityUID: grant.data.communityUID,
+      });
       console.log(error);
       setIsCommunityAdmin(false);
     } finally {

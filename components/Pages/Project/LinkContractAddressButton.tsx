@@ -19,6 +19,7 @@ import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdow
 import toast from "react-hot-toast";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MESSAGES } from "@/utilities/messages";
+import { useAccount } from "wagmi";
 
 interface LinkContractAddressesButtonProps {
   buttonClassName?: string;
@@ -88,6 +89,7 @@ export const LinkContractAddressButton: FC<
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );
+  const { address } = useAccount();
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
 
   const [isOpen, setIsOpen] = useState(false);
@@ -146,17 +148,16 @@ export const LinkContractAddressButton: FC<
   const handleSave = async () => {
     setIsLoading(true);
     setError(null);
+    // Filter out pairs with empty network or address
+    const validPairs = networkAddressPairs.filter(
+      (pair) => pair?.network?.trim() !== "" && pair?.address?.trim() !== ""
+    );
+
+    // Format pairs as network:address strings
+    const formattedAddresses = validPairs.map(
+      (pair) => `${pair.network}:${pair.address}`
+    );
     try {
-      // Filter out pairs with empty network or address
-      const validPairs = networkAddressPairs.filter(
-        (pair) => pair.network.trim() !== "" && pair.address.trim() !== ""
-      );
-
-      // Format pairs as network:address strings
-      const formattedAddresses = validPairs.map(
-        (pair) => `${pair.network}:${pair.address}`
-      );
-
       const [data, error] = await fetchData(
         INDEXER.PROJECT.EXTERNAL.UPDATE(project.uid),
         "PUT",
@@ -186,6 +187,9 @@ export const LinkContractAddressButton: FC<
         err,
         {
           projectUID: project.uid,
+          target: "network_addresses",
+          ids: formattedAddresses,
+          address,
         },
         { error: MESSAGES.PROJECT.LINK_CONTRACT_ADDRESSES.ERROR }
       );

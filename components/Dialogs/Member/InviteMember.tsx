@@ -9,7 +9,7 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 import { FC, Fragment, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { keccak256, toHex } from "viem";
-import { useSignMessage } from "wagmi";
+import { useAccount, useSignMessage } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -59,6 +59,7 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
     queryFn: () => getCurrentCode(project?.uid as string),
     enabled: !!project,
   });
+  const { address } = useAccount();
   const code = data?.hash;
   const openModal = () => {
     setIsOpen(true);
@@ -82,7 +83,11 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
       if (error) throw error;
       queryClient.invalidateQueries({ queryKey: ["invite-code"] });
     } catch (e) {
-      errorManager("Failed to generate code to invite members", e);
+      errorManager("Failed to generate code to invite members", e, {
+        projectId: project?.uid,
+        address,
+        isProjectOwner,
+      });
     } finally {
       setIsLoading(false);
     }

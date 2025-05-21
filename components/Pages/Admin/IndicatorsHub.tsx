@@ -16,6 +16,7 @@ import {
 import { Indicator } from "@/utilities/queries/getIndicatorsByCommunity";
 import { ProgramCard } from "./ProgramCard";
 import { MESSAGES } from "@/utilities/messages";
+import { useAccount } from "wagmi";
 
 interface Program {
   programId: string;
@@ -116,6 +117,7 @@ export const IndicatorsHub = ({
   communitySlug,
   communityId,
 }: IndicatorsHubProps) => {
+  const { address } = useAccount();
   const [isLoading, setIsLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingIndicator, setEditingIndicator] =
@@ -218,6 +220,7 @@ export const IndicatorsHub = ({
         error,
         {
           indicatorId: id,
+          address,
         },
         { error: MESSAGES.INDICATOR.DELETE.ERROR }
       );
