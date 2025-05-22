@@ -155,6 +155,8 @@ export const CategoryView = ({
     );
   };
 
+  console.log("selectedCategory", selectedCategory);
+
   const hasSegments =
     selectedCategory?.impact_segments &&
     selectedCategory.impact_segments.length > 0;
@@ -393,22 +395,24 @@ export const CategoryView = ({
                         </Menu.Item>
                         <Menu.Item>
                           {({ active }) => (
-                            <DeleteDialog
-                              title={`Are you sure you want to delete ${segment.name}?`}
-                              deleteFunction={() =>
-                                handleDeleteSegment(segment.id)
-                              }
-                              isLoading={isDeletingSegment === segment.id}
-                              buttonElement={{
-                                icon: <TrashIcon className="h-4 w-4 mr-2" />,
-                                text: "Delete",
-                                styleClass: `${
-                                  active
-                                    ? "bg-gray-100 dark:bg-zinc-700"
-                                    : "bg-transparent"
-                                } hover:bg-gray-100 dark:hover:bg-zinc-700 font-normal w-full px-4 py-2 text-left flex items-center text-sm text-red-500`,
-                              }}
-                            />
+                            <div className="flex flex-row gap-2 w-full">
+                              <DeleteDialog
+                                title={`Are you sure you want to delete ${segment.name}?`}
+                                deleteFunction={() =>
+                                  handleDeleteSegment(segment.id)
+                                }
+                                isLoading={isDeletingSegment === segment.id}
+                                buttonElement={{
+                                  icon: <TrashIcon className="h-4 w-4 mr-2" />,
+                                  text: "Delete",
+                                  styleClass: `${
+                                    active
+                                      ? "bg-gray-100 dark:bg-zinc-700"
+                                      : "bg-transparent"
+                                  } hover:bg-gray-100 dark:hover:bg-zinc-700 font-normal w-full px-4 py-2 text-left flex items-center text-sm text-red-500`,
+                                }}
+                              />
+                            </div>
                           )}
                         </Menu.Item>
                       </div>
