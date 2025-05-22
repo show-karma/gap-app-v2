@@ -7,6 +7,7 @@ const walletConnectErrors = [
   "No matching key. session topic doesn't exist",
   // See https://github.com/hemilabs/ui-monorepo/issues/1081
   "this.provider.disconnect is not a function",
+  "n.disconnect is not a function",
 ];
 
 export const sentryIgnoreErrors = [
