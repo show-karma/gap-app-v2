@@ -15,13 +15,13 @@ export function NewFeatureBanner() {
           <MegaphoneIcon />
           <div className="flex flex-row gap-1">
             <p className="text-sm font-semibold text-[#080a0e] max-md:text-xs">
-              We just launched Karma Celo MiniApp!
+              We launched Farcaster miniapp for Celo ecosystem.
             </p>{" "}
             <Link
               href={bannerLink}
               className="text-sm font-semibold text-blue-600 max-md:text-xs underline"
             >
-              Explore all projects on Karma Celo Community inside Farcaster!
+              Explore projects on Farcaster and tip them!
             </Link>
             {/* <p>
                               Visibility and accountability for community funded and public
