@@ -3,3 +3,4 @@ export * from "./useMediaQuery";
 export * from "./usePagination";
 export * from "./useImpactAnswers";
 export * from "./useGrant";
+export * from "./useProgramRegistry";

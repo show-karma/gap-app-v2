@@ -1,10 +1,7 @@
-import { INDEXER } from "@/utilities/indexer";
-import fetchData from "@/utilities/fetchData";
 import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import { useEffect, useState } from "react";
 import { cn } from "@/utilities/tailwind";
-import { chainIdToNetwork } from "@show-karma/karma-gap-sdk";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
+import { useProgramRegistry } from "@/hooks/useProgramRegistry";
 
 interface ProgramCardProps {
   programId: string;
@@ -17,30 +14,17 @@ export const ProgramCard = ({
   chainID,
   minimal = false,
 }: ProgramCardProps) => {
-  const [program, setProgram] = useState<GrantProgram | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    async function loadProgram() {
-      try {
-        setIsLoading(true);
-        const [result, error] = await fetchData(
-          INDEXER.REGISTRY.FIND_BY_ID(programId, chainID)
-        );
-        if (error) throw error;
-        setProgram(result);
-      } catch (error) {
-        console.error("Failed to load program:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    loadProgram();
-  }, [programId, chainID]);
+  const {
+    data: program,
+    isLoading,
+    error,
+  } = useProgramRegistry(programId, chainID);
 
   if (isLoading) return <ProgramCardSkeleton />;
-  if (!program) return null;
+  if (error || !program) return null;
+
+  // Handle both single program and array responses
+  const programData = Array.isArray(program) ? program[0] : program;
 
   return (
     <div className="inline-flex items-center gap-2 text-xs bg-gray-100 dark:bg-zinc-800 px-2 py-1 rounded-full border border-gray-200 dark:border-zinc-700">
@@ -50,7 +34,7 @@ export const ProgramCard = ({
           minimal ? "w-max max-w-[full] truncate" : ""
         )}
       >
-        {program.metadata?.title || "Untitled Program"}
+        {programData.metadata?.title || "Untitled Program"}
       </span>
       <span className="text-gray-500 dark:text-gray-400">
         Chain {chainNameDictionary(chainID)}

@@ -33,6 +33,7 @@ import { useAccount, useSwitchChain } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { LoadingProgramTable } from "./Loading/Programs";
 import { SearchDropdown } from "./SearchDropdown";
+import { useProgramRegistry } from "@/hooks/useProgramRegistry";
 
 export const ManagePrograms = () => {
   const searchParams = useSearchParams();
@@ -164,29 +165,22 @@ export const ManagePrograms = () => {
     null
   );
 
+  // Use React Query hook for fetching program by ID
+  const { data: programData, error: programError } = useProgramRegistry(
+    programId || "",
+    registryHelper.supportedNetworks
+  );
+
   useEffect(() => {
-    const searchProgramById = async (id: string) => {
-      try {
-        const [data, error] = await fetchData(
-          INDEXER.REGISTRY.FIND_BY_ID(id, registryHelper.supportedNetworks)
-        );
-        if (error) throw Error(error);
-        if (data) {
-          data.forEach((program: GrantProgram) => {
-            if (typeof program.metadata?.grantTypes === "string") {
-              program.metadata.grantTypes = [program.metadata.grantTypes];
-            }
-          });
-          setSelectedProgram(data);
-        }
-      } catch (error: any) {
-        errorManager(`Error while searching for program by id`, error);
-      }
-    };
-    if (programId) {
-      searchProgramById(programId);
+    if (programData && programId) {
+      // Handle both single program and array responses
+      const program = Array.isArray(programData) ? programData[0] : programData;
+      setSelectedProgram(program);
+    } else if (programError) {
+      errorManager(`Error while searching for program by id`, programError);
+      console.log(programError);
     }
-  }, [programId]);
+  }, [programData, programError, programId]);
 
   const debouncedSearch = debounce((value: string) => {
     setPage(1);
