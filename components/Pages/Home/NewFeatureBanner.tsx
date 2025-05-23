@@ -4,6 +4,9 @@ import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { PAGES } from "@/utilities/pages";
 import Link from "next/link";
 
+const bannerLink =
+  "https://farcaster.xyz/miniapps/fEVg6B21KEJN/karma-celo-community";
+
 export function NewFeatureBanner() {
   return (
     <div className="flex w-full">
@@ -12,13 +15,13 @@ export function NewFeatureBanner() {
           <MegaphoneIcon />
           <div className="flex flex-row gap-1">
             <p className="text-sm font-semibold text-[#080a0e] max-md:text-xs">
-              We just launched Project Explorer!
+              We just launched Karma Celo MiniApp!
             </p>{" "}
             <Link
-              href={PAGES.PROJECTS_EXPLORER}
+              href={bannerLink}
               className="text-sm font-semibold text-blue-600 max-md:text-xs underline"
             >
-              Explore all projects on Karma GAP!
+              Explore all projects on Karma Celo Community inside Farcaster!
             </Link>
             {/* <p>
                               Visibility and accountability for community funded and public
@@ -26,7 +29,7 @@ export function NewFeatureBanner() {
                           </p> */}
           </div>
         </div>
-        <ExternalLink href={PAGES.PROJECTS_EXPLORER}>
+        <ExternalLink href={bannerLink}>
           <button
             type="button"
             className="max-md:text-xs max-md:p-[8px_12px] bg-[#080a0e] rounded-[4px] text-[#1de9b6] flex items-center justify-center gap-[8px] p-[16px_24px] outline-none border-none font-semibold text-[14px] leading-[16px]"
