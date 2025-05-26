@@ -15,7 +15,7 @@ import { useOwnerStore } from "@/store/owner";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { Dialog, Transition } from "@headlessui/react";
-import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
+import { ExclamationTriangleIcon, UserCircleIcon } from "@heroicons/react/24/outline";
 import {
   ChevronRightIcon,
   PlusIcon,
@@ -148,6 +148,7 @@ export const projectSchema = z.object({
   pitchDeck: z.string().optional(),
   demoVideo: z.string().optional(),
   farcaster: z.string().optional(),
+  profilePicture: z.string().optional(),
   businessModel: z.string().optional(),
   stageIn: z.string().optional(),
   raisedMoney: z.string().optional(),
@@ -200,6 +201,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     )?.url,
     linkedin: projectToUpdate?.details?.data?.links?.find(
       (link) => link.type === "linkedin"
+    )?.url,
+    profilePicture: projectToUpdate?.details?.data?.links?.find(
+      (link) => link.type === "profilePicture"
     )?.url,
     tags: projectToUpdate?.details?.data?.tags?.map((item) => item.name),
     members: projectToUpdate?.members.map((item) => item.recipient),
@@ -439,6 +443,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             type: "farcaster",
             url: data.farcaster || "",
           },
+          {
+            type: "profilePicture",
+            url: data.profilePicture || "",
+          },
         ],
         imageURL: "",
       };
@@ -669,6 +677,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         pitchDeck: data.pitchDeck,
         demoVideo: data.demoVideo,
         farcaster: data.farcaster,
+        profilePicture: data.profilePicture,
       };
       await updateProject(
         fetchedProject,
@@ -1076,6 +1085,22 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
               />
             </div>
             <p className="text-red-500">{errors.farcaster?.message}</p>
+          </div>
+          <div className="flex w-full flex-col gap-2">
+            <label htmlFor="profile-picture-input" className={labelStyle}>
+              Profile Picture (optional)
+            </label>
+            <div className="flex w-full flex-row items-center gap-2 rounded-lg border border-gray-400 px-4 py-2">
+              <UserCircleIcon className="h-5 w-5" />
+              <input
+                id="profile-picture-input"
+                type="text"
+                className={socialMediaInputStyle}
+                placeholder="https://example.com/profile-picture.jpg"
+                {...register("profilePicture")}
+              />
+            </div>
+            <p className="text-red-500">{errors.profilePicture?.message}</p>
           </div>
         </div>
       ),
