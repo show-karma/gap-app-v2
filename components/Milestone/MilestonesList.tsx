@@ -1,12 +1,11 @@
 "use client";
 
-import { MilestoneCard } from "./MilestoneCard";
+import { ActivityCard } from "@/components/Shared/ActivityCard";
 import { useQueryState } from "nuqs";
 import { StatusOptions } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { SetAnObjective } from "@/components/Pages/Project/Objective/SetAnObjective";
 import { UnifiedMilestone } from "@/types/roadmap";
-import { UpdateBlock } from "@/components/Pages/Project/Updates/UpdateBlock";
 import {
   IGrantUpdate,
   IProjectImpact,
@@ -184,15 +183,19 @@ export const MilestonesList = ({
 
           {unifiedMilestones.map((item, index) =>
             hasUpdateData(item) ? (
-              <UpdateBlock
+              <ActivityCard
                 key={`update-${item.uid}-${index}`}
-                update={item.updateData}
-                index={index}
+                activity={{
+                  type: "update",
+                  data: item.updateData,
+                  index: index,
+                }}
+                isAuthorized={isAuthorized}
               />
             ) : (
-              <MilestoneCard
+              <ActivityCard
                 key={`milestone-${item.uid}-${index}`}
-                milestone={item}
+                activity={{ type: "milestone", data: item }}
                 isAuthorized={isAuthorized}
               />
             )

@@ -42,7 +42,7 @@ const EndorsementRow: FC<EndorsementRowProps> = ({ endorsement }) => {
               {ensData[endorsement?.recipient]?.name ||
                 shortAddress(endorsement.recipient)}
               {` `}
-              <span className="text-sm font-normal text-[#344054] dark:text-zinc-200">
+              <span className="text-sm font-normal text-brand-gray dark:text-zinc-200">
                 endorsed this on {formatDate(endorsement.createdAt)}
               </span>
             </p>
@@ -51,7 +51,7 @@ const EndorsementRow: FC<EndorsementRowProps> = ({ endorsement }) => {
       </div>
       {endorsement.data.comment ? (
         <div className="text-left px-0 flex flex-row items-start">
-          <p className="text-sm text-[#344054] dark:text-zinc-100  font-normal">
+          <p className="text-sm text-brand-gray dark:text-zinc-100  font-normal">
             <div
               className="w-full break-normal text-base font-normal text-black dark:text-zinc-100 max-2xl:text-sm"
               data-color-mode="light"

@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/Utilities/Skeleton";
 const CardSkeleton = () => {
   return (
     <div
-      className={`border border-[#D0D5DD] dark:border-zinc-400 bg-white dark:bg-zinc-800 rounded-xl p-6 gap-3 flex flex-col items-start justify-start`}
+      className={`border border-gray-300 dark:border-zinc-400 bg-white dark:bg-zinc-800 rounded-xl p-6 gap-3 flex flex-col items-start justify-start`}
     >
       <div className="flex flex-row gap-3 items-start justify-between w-full">
         <div className="flex flex-row gap-3 items-center max-lg:flex-col-reverse max-lg:items-start max-lg:gap-2 w-full">
@@ -44,7 +44,7 @@ export const RoadmapListLoading = () => {
 export const ProjectRoadmapLoading = () => {
   return (
     <div className="flex flex-col w-full h-full items-center justify-start">
-      <div className="flex flex-col gap-2 py-11 items-center justify-start w-full max-w-6xl max-lg:py-6">
+      <div className="flex flex-col gap-2 py-11 items-center justify-start w-full max-w-full max-lg:py-6">
         <div className="py-5 w-full items-center flex flex-row justify-between gap-4 max-lg:flex-col max-lg:items-start max-lg:py-0">
           <div className="flex flex-col gap-1 items-start justify-start w-full">
             <div className="flex flex-row gap-2">

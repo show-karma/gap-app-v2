@@ -317,7 +317,7 @@ function ProjectPage() {
                   {project?.grants.length || 0}
                 </p>
                 <div className="flex flex-row gap-2">
-                  <p className="font-normal text-[#344054] text-sm dark:text-zinc-300">
+                  <p className="font-normal text-brand-gray text-sm dark:text-zinc-300">
                     {pluralize("Grant", project?.grants.length || 0)}
                   </p>
                   <img
@@ -341,7 +341,7 @@ function ProjectPage() {
                   {formatCurrency(project?.endorsements.length || 0)}
                 </p>
                 <div className="flex flex-row gap-2">
-                  <p className="font-normal text-[#344054] text-sm dark:text-zinc-300">
+                  <p className="font-normal text-brand-gray text-sm dark:text-zinc-300">
                     {pluralize(
                       "Endorsement",
                       project?.endorsements.length || 0

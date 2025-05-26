@@ -1,0 +1,219 @@
+import { FC } from "react";
+import Link from "next/link";
+import { useProjectStore } from "@/store";
+import { useUpdateActions } from "@/hooks/useUpdateActions";
+import { ActivityStatus } from "./ActivityStatus";
+import { ActivityStatusHeader } from "./ActivityStatusHeader";
+import { ActivityMenu } from "./ActivityMenu";
+import { ActivityAttribution } from "./ActivityAttribution";
+import { GrantAssociation } from "./GrantAssociation";
+import { ReadMore } from "@/utilities/ReadMore";
+import { PAGES } from "@/utilities/pages";
+import { ProjectActivityBlock } from "../../Pages/Project/Updates/ProjectActivityBlock";
+import { EditUpdateDialog } from "../../Pages/Project/Updates/EditUpdateDialog";
+import { formatDate } from "@/utilities/formatDate";
+import {
+  IGrantUpdate,
+  IMilestoneResponse,
+  IProjectImpact,
+  IProjectMilestoneResponse,
+  IProjectUpdate,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+
+type UpdateType =
+  | IProjectUpdate
+  | IGrantUpdate
+  | IMilestoneResponse
+  | IProjectImpact
+  | IProjectMilestoneResponse;
+
+interface UpdateCardProps {
+  update: UpdateType;
+  index: number;
+  isAuthorized: boolean;
+}
+
+export const UpdateCard: FC<UpdateCardProps> = ({
+  update,
+  index,
+  isAuthorized,
+}) => {
+  const { project } = useProjectStore();
+  const {
+    isDeletingUpdate,
+    isEditDialogOpen,
+    deleteProjectUpdate,
+    handleShare,
+    handleEdit,
+    closeEditDialog,
+    canShare,
+  } = useUpdateActions(update);
+
+  const getUpdateContent = () => {
+    switch (update.type) {
+      case "ProjectUpdate":
+      case "GrantUpdate":
+        return update.data.text;
+      case "Milestone":
+        return "description" in update.data ? update.data.description : "";
+      case "ProjectMilestone":
+        return update.data.text || "";
+      case "ProjectImpact":
+        const data = update.data as IProjectImpact["data"];
+        const { impact, proof, work } = data;
+        return `### Work \n${work} \n\n### Impact \n${impact} \n\n### Proof \n${proof}`;
+      default:
+        return "";
+    }
+  };
+
+  const getReadMoreSideButton = () => {
+    if (update.type === "ProjectImpact") {
+      return (
+        <Link
+          href={PAGES.PROJECT.IMPACT.ROOT(
+            project?.details?.data.slug || project?.uid || ""
+          )}
+          className="underline text-blue-600 dark:text-blue-400 font-semibold text-sm hover:underline"
+        >
+          See impact
+        </Link>
+      );
+    }
+
+    if (
+      update.type === "ProjectMilestone" &&
+      "completed" in update &&
+      update.completed?.data.proofOfWork
+    ) {
+      return (
+        <Link
+          href={update.completed.data.proofOfWork}
+          className="underline text-blue-600 dark:text-blue-400 font-semibold text-sm hover:underline"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          View proof
+        </Link>
+      );
+    }
+
+    return null;
+  };
+
+  const canEdit = update.type === "ProjectUpdate";
+  const canDelete = update.type === "ProjectUpdate";
+
+  // Get due date for milestones
+  const getDueDate = () => {
+    if (update.type === "Milestone" || update.type === "ProjectMilestone") {
+      const milestoneData = update.data as any;
+      if (milestoneData.endsAt) {
+        return formatDate(milestoneData.endsAt * 1000);
+      }
+      if (milestoneData.endDate) {
+        return formatDate(milestoneData.endDate);
+      }
+    }
+    return null;
+  };
+
+  // Get completion status for milestones
+  const getCompletionStatus = () => {
+    if (update.type === "Milestone" || update.type === "ProjectMilestone") {
+      const milestoneData = update.data as any;
+      return (
+        milestoneData.completed ||
+        (milestoneData.completed &&
+          typeof milestoneData.completed === "object" &&
+          Object.keys(milestoneData.completed).length > 0)
+      );
+    }
+    return false;
+  };
+
+  return (
+    <div className="flex flex-col gap-0 w-full">
+      {/* Grants Related Section */}
+      {/* Show grants related if they exist */}
+      <GrantAssociation update={update} index={index} />{" "}
+      <div className="flex flex-col gap-3 w-full px-5 py-4">
+        <div className="flex flex-col gap-3 w-full">
+          {/* Activity Pill with Due Date and Status */}{" "}
+          <ActivityStatusHeader
+            activityType={update.type}
+            dueDate={getDueDate()}
+            showCompletionStatus={
+              update.type === "Milestone" || update.type === "ProjectMilestone"
+            }
+            completed={getCompletionStatus()}
+            completionStatusClassName="text-xs px-2 py-1"
+          />
+          {/* Title */}
+          {update.type !== "ProjectImpact" &&
+            update.data &&
+            "title" in update.data &&
+            update.data.title && (
+              <p className="text-xl font-bold text-[#101828] dark:text-zinc-100">
+                {update.data.title}
+              </p>
+            )}
+        </div>
+        {/* Content */}
+        <div className="flex flex-col my-2 w-full">
+          <ReadMore
+            side="left"
+            markdownClass="text-black dark:text-zinc-200 font-normal text-base"
+            readLessText="Read less"
+            readMoreText="Read more"
+            othersideButton={getReadMoreSideButton()}
+          >
+            {getUpdateContent()}
+          </ReadMore>
+        </div>
+        {update.type === "ProjectUpdate" &&
+        ((update as IProjectUpdate).data?.indicators?.length ||
+          (update as IProjectUpdate).data?.deliverables?.length) ? (
+          <div className="w-full flex-col flex gap-2 px-4 py-2 bg-[#F8F9FC] dark:bg-zinc-700 rounded-lg">
+            <ProjectActivityBlock activity={update as IProjectUpdate} />
+          </div>
+        ) : null}
+        {/* Bottom Attribution with Actions */}
+        {isAuthorized && update.type === "ProjectUpdate" && (
+          <EditUpdateDialog
+            isOpen={isEditDialogOpen}
+            onClose={closeEditDialog}
+            projectId={project?.uid || ""}
+            updateId={update.uid}
+          />
+        )}
+      </div>
+      <ActivityAttribution
+        createdAt={update.createdAt}
+        attester={update.attester}
+        startDate={(update as any).data?.startDate}
+        endDate={(update as any).data?.endDate}
+        showDateRange={update.type === "ProjectUpdate"}
+        actions={
+          isAuthorized ? (
+            <ActivityMenu
+              onShare={canShare ? handleShare : undefined}
+              onEdit={canEdit ? handleEdit : undefined}
+              onDelete={canDelete ? deleteProjectUpdate : undefined}
+              canShare={canShare}
+              canEdit={canEdit}
+              canDelete={canDelete}
+              isDeleting={isDeletingUpdate}
+              deleteTitle={
+                <p className="font-normal">
+                  Are you sure you want to delete <b>{update.data.title}</b>{" "}
+                  update?
+                </p>
+              }
+            />
+          ) : undefined
+        }
+      />
+    </div>
+  );
+};

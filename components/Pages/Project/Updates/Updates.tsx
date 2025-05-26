@@ -9,7 +9,7 @@ import {
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { FC, useEffect, useState } from "react";
-import { UpdateBlock } from "./UpdateBlock";
+import { ActivityList } from "@/components/Shared/ActivityList";
 import { MESSAGES } from "@/utilities/messages";
 import { Button } from "@/components/Utilities/Button";
 import { useProgressModalStore } from "@/store/modals/progress";
@@ -118,15 +118,11 @@ export const UpdatesPage: FC = () => {
           </p>
         </div>
         {allUpdates.length ? (
-          <div className="flex flex-col gap-6">
-            {allUpdates.map((update, index) => (
-              <UpdateBlock
-                key={update.id || update.uid}
-                update={update}
-                index={index}
-              />
-            ))}
-          </div>
+          <ActivityList
+            updates={allUpdates}
+            milestones={[]}
+            isAuthorized={isAuthorized}
+          />
         ) : (
           <div className="flex flex-col gap-6">
             {isAuthorized ? (

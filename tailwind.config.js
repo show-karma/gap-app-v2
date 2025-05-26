@@ -66,11 +66,13 @@ module.exports = {
       },
       animation: {
         marquee: "marquee 30s linear infinite",
+        default: "transition-all duration-300 ease-in-out",
       },
       colors: {
         brand: {
           blue: "#4C6FFF",
           darkblue: "#101828",
+          gray: "#344054",
         },
         tremor: {
           brand: {

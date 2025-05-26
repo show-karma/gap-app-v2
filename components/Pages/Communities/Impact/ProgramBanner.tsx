@@ -37,7 +37,7 @@ export const ProgramBanner = () => {
   const totalCategories = impactData?.stats.totalCategories;
 
   return (
-    <div className="px-4 py-3 border border-[#D0D5DD] rounded">
+    <div className="px-4 py-3 border border-gray-300 rounded">
       <div className="border-l-[#7839EE] border-l-2 pl-4">
         <p className="text-black dark:text-zinc-300 text-2xl font-semibold">
           {selectedProgram
