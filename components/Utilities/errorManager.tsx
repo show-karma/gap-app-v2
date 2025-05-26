@@ -20,7 +20,6 @@ export const errorManager = (
     }
   }
   if (toastError?.error) {
-    let errorToToast = toastError.error;
     const wasRPCIssue =
       error?.originalError?.code?.toLowerCase()?.includes("rpc error") ||
       error?.originalError?.message?.toLowerCase()?.includes("rpc error") ||
@@ -35,9 +34,11 @@ export const errorManager = (
       );
     }
   }
+  const errorToCapture = error?.originalError || error?.message;
   Sentry.captureException(error, {
     extra: {
       errorMessage,
+      errorInstance: errorToCapture,
       ...extra,
     },
   });

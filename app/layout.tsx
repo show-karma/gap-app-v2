@@ -18,6 +18,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { GoogleAnalytics } from "@next/third-parties/google";
 import { Suspense } from "react";
 import { headers } from "next/headers";
+import HotjarAnalytics from "@/components/Utilities/HotjarAnalytics";
 
 export const metadata = defaultMetadata;
 
@@ -35,6 +36,9 @@ export default async function RootLayout({
             gaId={process.env.NEXT_PUBLIC_GA_TRACKING_ID as string}
           />
         )}
+      <Suspense>
+        <HotjarAnalytics />
+      </Suspense>
       <body>
         <ThemeProvider defaultTheme="light" attribute="class">
           <WagmiProvider cookie={cookie}>

@@ -23,6 +23,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { useIndicators } from "@/hooks/useIndicators";
 import { ProgramCard } from "./ProgramCard";
 import { MESSAGES } from "@/utilities/messages";
+import { useAccount } from "wagmi";
 
 // Custom Dropdown Menu Component - copied from CategoryView.tsx
 const DropdownMenu = ({
@@ -108,6 +109,7 @@ export const IndicatorsView = ({
   onRefresh,
   communityId,
 }: IndicatorsViewProps) => {
+  const { address } = useAccount();
   const [indicatorViewType, setIndicatorViewType] = useState<
     "all" | "automated" | "manual"
   >("all");
@@ -200,6 +202,7 @@ export const IndicatorsView = ({
         error,
         {
           indicatorId: id,
+          address,
         },
         { error: MESSAGES.INDICATOR.DELETE.ERROR }
       );

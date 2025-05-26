@@ -37,7 +37,9 @@ export const useGrants = (communityId: string) => {
         }
         return [];
       } catch (error: any) {
-        errorManager(`Error fetching grants of ${communityId}`, error);
+        errorManager(`Error fetching grants of ${communityId}`, error, {
+          communityUID: communityId,
+        });
         return [];
       }
     },

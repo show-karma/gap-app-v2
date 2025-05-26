@@ -16,6 +16,7 @@ import toast from "react-hot-toast";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import { IndicatorsDropdown } from "./IndicatorsDropdown";
+import { useAccount } from "wagmi";
 
 const OUTPUT_TYPES = ["output", "outcome"] as const;
 type OutputType = (typeof OUTPUT_TYPES)[number];
@@ -63,6 +64,7 @@ export const ActivityOutcomeModal = ({
   editingSegment = null,
 }: ActivityOutcomeModalProps) => {
   const [isSaving, setIsSaving] = useState(false);
+  const { address } = useAccount();
 
   const {
     register,
@@ -142,7 +144,8 @@ export const ActivityOutcomeModal = ({
         `Failed to ${action} impact segment`,
         error,
         {
-          data,
+          ...data,
+          address,
         },
         {
           error: `Failed to ${action} ${OUTPUT_TYPE_DISPLAY[

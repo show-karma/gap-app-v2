@@ -158,6 +158,7 @@ export function useGrant() {
         {
           grantUID: oldGrant.uid,
           projectUID: selectedProject.uid,
+          address,
         },
         { error: MESSAGES.GRANT.UPDATE.ERROR }
       );

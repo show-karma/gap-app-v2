@@ -705,7 +705,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           projectToUpdate?.details?.data?.slug || projectToUpdate?.uid
         }`,
         error,
-        data,
+        { ...data, address },
         {
           error: MESSAGES.PROJECT.UPDATE.ERROR,
         }

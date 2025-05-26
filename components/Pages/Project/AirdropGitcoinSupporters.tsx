@@ -113,6 +113,7 @@ function MintNFTs({
   projectDetails: ProjectApplicationData;
   donations: DonationData[];
 }) {
+  const { address } = useAccount();
   const [fileUploading, setFileUploading] = useState(false);
   const [imageIPFSHash, setImageIPFSHash] = useState<string | null>(null);
   const [chainSelected, setChainSelected] = useState<number>(
@@ -245,6 +246,7 @@ function MintNFTs({
         {
           projectDetails,
           donations,
+          address,
         },
         { error: MESSAGES.AIRDROP_GITCOIN_SUPPORTERS.MINT_NFT.ERROR }
       );

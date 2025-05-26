@@ -53,7 +53,7 @@ export const ObjectiveCardComplete = ({
 
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
-  const { chain } = useAccount();
+  const { chain, address } = useAccount();
   const { switchChainAsync } = useSwitchChain();
 
   const params = useParams();
@@ -171,6 +171,7 @@ export const ObjectiveCardComplete = ({
         {
           objectiveUID: objective.uid,
           projectUID: objective.refUID,
+          address,
         },
         { error: MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.ERROR }
       );

@@ -159,6 +159,7 @@ export const ProjectObjectiveCompletionForm = ({
         {
           project: projectId,
           objective: objectiveUID,
+          address,
         },
         {
           error: MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.ERROR,

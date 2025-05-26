@@ -77,11 +77,10 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
   date,
   update,
 }) => {
-  const { chain } = useAccount();
+  const { chain, address } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [isDeletingGrantUpdate, setIsDeletingGrantUpdate] = useState(false);
-
   const selectedProject = useProjectStore((state) => state.project);
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
@@ -189,7 +188,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
       errorManager(
         MESSAGES.GRANT.GRANT_UPDATE.UNDO.ERROR,
         error,
-        { grantUpdateUID: update.uid },
+        { grantUpdateUID: update.uid, address },
         { error: MESSAGES.GRANT.GRANT_UPDATE.UNDO.ERROR }
       );
     } finally {

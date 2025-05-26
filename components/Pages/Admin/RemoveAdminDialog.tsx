@@ -56,7 +56,7 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
   fetchAdmins,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-
+  const { address } = useAccount();
   function closeModal() {
     setIsOpen(false);
   }
@@ -148,7 +148,11 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
         }
       });
     } catch (error: any) {
-      errorManager(`Error removing admin of ${UUID}`, error);
+      errorManager(`Error removing admin of ${UUID}`, error, {
+        removingAdmin: Admin,
+        community: UUID,
+        address,
+      });
       console.log(error);
     } finally {
       setIsStepper(false);

@@ -15,6 +15,7 @@ import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MESSAGES } from "@/utilities/messages";
+import { useAccount } from "wagmi";
 
 type CategoryCreationDialogProps = {
   refreshCategories: () => Promise<void>;
@@ -33,6 +34,7 @@ export const CategoryCreationDialog: FC<CategoryCreationDialogProps> = ({
 }) => {
   let [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const { address } = useAccount();
   const params = useParams();
   const communityId = params.communityId as string;
 
@@ -79,7 +81,7 @@ export const CategoryCreationDialog: FC<CategoryCreationDialogProps> = ({
       errorManager(
         MESSAGES.CATEGORY.CREATE.ERROR,
         error,
-        { data, communityId },
+        { data, communityId, address },
         {
           error: MESSAGES.CATEGORY.CREATE.ERROR,
         }
