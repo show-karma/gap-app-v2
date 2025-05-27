@@ -103,7 +103,7 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
           <div className="flex flex-col gap-1 flex-1 h-[64px]">
             <div className="text-sm text-gray-900 dark:text-gray-400 text-ellipsis line-clamp-2">
               <MarkdownPreview
-                source={grant.details?.data?.description?.slice(0, 100)}
+                source={grant.project?.details?.data?.description?.slice(0, 100)}
               />
             </div>
           </div>
