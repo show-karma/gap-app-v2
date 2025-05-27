@@ -208,6 +208,7 @@ export const UpdateCard: FC<UpdateCardProps> = ({
               onClose={closeEditDialog}
               projectId={project?.uid || ""}
               updateId={update.uid}
+              updateType={update.type as "ProjectUpdate" | "ProjectImpact"}
             />
           )}
       </div>

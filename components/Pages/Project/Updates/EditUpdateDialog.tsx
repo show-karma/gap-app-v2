@@ -2,12 +2,19 @@ import { Dialog, Transition } from "@headlessui/react";
 import { Fragment, useState } from "react";
 import { ProjectUpdateFormBlock } from "./ProjectUpdateFormBlock";
 import { cn } from "@/utilities/tailwind";
+import dynamic from "next/dynamic";
+
+// Dynamic import for the EditImpactFormBlock with proper typing
+const EditImpactFormBlock = dynamic(() => import("./EditImpactFormBlock"), {
+  ssr: false,
+});
 
 interface EditUpdateDialogProps {
   isOpen: boolean;
   onClose: () => void;
   projectId: string;
   updateId: string;
+  updateType?: "ProjectUpdate" | "ProjectImpact";
 }
 
 export const EditUpdateDialog = ({
@@ -15,6 +22,7 @@ export const EditUpdateDialog = ({
   onClose,
   projectId,
   updateId,
+  updateType = "ProjectUpdate",
 }: EditUpdateDialogProps) => {
   // Keep track of current update ID to force remount when changed
   const [currentUpdateId, setCurrentUpdateId] = useState(updateId);
@@ -56,11 +64,19 @@ export const EditUpdateDialog = ({
                   "shadow-xl transition-all"
                 )}
               >
-                <ProjectUpdateFormBlock
-                  key={`update-form-${currentUpdateId}`}
-                  onClose={onClose}
-                  updateId={currentUpdateId}
-                />
+                {updateType === "ProjectImpact" ? (
+                  <EditImpactFormBlock
+                    key={`impact-form-${currentUpdateId}`}
+                    onClose={onClose}
+                    impactId={currentUpdateId}
+                  />
+                ) : (
+                  <ProjectUpdateFormBlock
+                    key={`update-form-${currentUpdateId}`}
+                    onClose={onClose}
+                    updateId={currentUpdateId}
+                  />
+                )}
               </Dialog.Panel>
             </Transition.Child>
           </div>
