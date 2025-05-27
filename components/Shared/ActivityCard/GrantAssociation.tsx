@@ -62,7 +62,7 @@ export const GrantAssociation = ({
   milestone,
   className = "",
 }: GrantAssociationProps) => {
-  const containerClass = `flex flex-col px-5 py-2 w-full flex-wrap gap-2 border-b border-b-gray-300 dark:border-b-zinc-400 ${className}`;
+  const containerClass = `flex flex-row px-5 py-2 w-full flex-wrap gap-2 border-b border-b-gray-300 dark:border-b-zinc-400 ${className}`;
   const { project } = useProjectStore();
 
   // Handle milestone data

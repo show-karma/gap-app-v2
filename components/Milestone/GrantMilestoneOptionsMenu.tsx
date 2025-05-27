@@ -36,14 +36,12 @@ export const GrantMilestoneOptionsMenu = ({
   return (
     <>
       <Menu as="div" className="relative inline-block text-left">
-        <div>
-          <Menu.Button className="w-max bg-transparent hover:bg-zinc-100 hover:dark:bg-zinc-800 text-black dark:text-white p-0 rounded-lg">
-            <EllipsisVerticalIcon
-              className="h-6 w-6 text-zinc-500"
-              aria-hidden="true"
-            />
-          </Menu.Button>
-        </div>
+        <Menu.Button className="w-max bg-transparent hover:bg-zinc-100 hover:dark:bg-zinc-800 text-black dark:text-white p-0 rounded-lg">
+          <EllipsisVerticalIcon
+            className="h-6 w-6 text-zinc-500"
+            aria-hidden="true"
+          />
+        </Menu.Button>
         <Transition
           as={Fragment}
           enter="transition ease-out duration-100"

@@ -43,7 +43,7 @@ export const UpdateCard: FC<UpdateCardProps> = ({
   const {
     isDeletingUpdate,
     isEditDialogOpen,
-    deleteProjectUpdate,
+    deleteUpdate,
     handleShare,
     handleEdit,
     closeEditDialog,
@@ -139,6 +139,9 @@ export const UpdateCard: FC<UpdateCardProps> = ({
     return false;
   };
 
+  const startDate = (update as any).data?.startDate;
+  const endDate = (update as any).data?.endDate;
+
   return (
     <div className="flex flex-col gap-0 w-full">
       {/* Grants Related Section */}
@@ -165,7 +168,18 @@ export const UpdateCard: FC<UpdateCardProps> = ({
                 {update.data.title}
               </p>
             )}
+          {/* Date range for activities */}
+          {(startDate || endDate) && (
+            <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
+              <span>
+                {`${startDate ? formatDate(startDate) : ""} ${
+                  startDate && endDate ? "-" : ""
+                } ${endDate ? formatDate(endDate) : ""}`}
+              </span>
+            </div>
+          )}
         </div>
+
         {/* Content */}
         <div className="flex flex-col my-2 w-full">
           <ReadMore
@@ -200,15 +214,14 @@ export const UpdateCard: FC<UpdateCardProps> = ({
       <ActivityAttribution
         createdAt={update.createdAt}
         attester={update.attester}
-        startDate={(update as any).data?.startDate}
-        endDate={(update as any).data?.endDate}
-        showDateRange={update.type === "ProjectUpdate"}
+        // startDate={(update as any).data?.startDate}
+        // endDate={(update as any).data?.endDate}
         actions={
           isAuthorized ? (
             <ActivityMenu
               onShare={canShare ? handleShare : undefined}
               onEdit={canEdit ? handleEdit : undefined}
-              onDelete={canDelete ? deleteProjectUpdate : undefined}
+              onDelete={canDelete ? deleteUpdate : undefined}
               canShare={canShare}
               canEdit={canEdit}
               canDelete={canDelete}

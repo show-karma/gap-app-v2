@@ -5,33 +5,16 @@ import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 interface ActivityAttributionProps {
   createdAt: number | string;
   attester?: string;
-  startDate?: string;
-  endDate?: string;
-  showDateRange?: boolean;
   actions?: React.ReactNode;
 }
 
 export const ActivityAttribution = ({
   createdAt,
   attester,
-  startDate,
-  endDate,
-  showDateRange = false,
   actions,
 }: ActivityAttributionProps) => {
   return (
     <div className="flex flex-col gap-2 w-full border-t border-gray-300 dark:border-zinc-400 px-5 py-3">
-      {/* Date range for activities */}
-      {showDateRange && (startDate || endDate) && (
-        <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
-          <span>
-            {`${startDate ? formatDate(startDate) : ""} ${
-              startDate && endDate ? "-" : ""
-            } ${endDate ? formatDate(endDate) : ""}`}
-          </span>
-        </div>
-      )}
-
       {/* Attribution line with actions */}
       <div className="flex flex-row gap-x-4 gap-y-2 items-center justify-between w-full flex-wrap">
         <div className="flex flex-row gap-4 items-center flex-wrap">

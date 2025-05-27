@@ -71,15 +71,13 @@ export const ActivityMenu = ({
 
       {/* Options Menu with only Delete */}
       {canDelete && onDelete && (
-        <Menu as="div" className="relative inline-block text-left">
-          <div>
-            <Menu.Button className="w-max bg-transparent hover:bg-zinc-100 hover:dark:bg-zinc-800 text-black dark:text-white p-0 rounded-lg">
-              <EllipsisVerticalIcon
-                className="h-6 w-6 text-zinc-500"
-                aria-hidden="true"
-              />
-            </Menu.Button>
-          </div>
+        <Menu as="div" className="relative inline-block text-left h-6">
+          <Menu.Button className="w-max h-6 bg-transparent hover:bg-zinc-100 hover:dark:bg-zinc-800 text-black dark:text-white p-0 rounded-lg">
+            <EllipsisVerticalIcon
+              className="h-6 w-6 text-zinc-500"
+              aria-hidden="true"
+            />
+          </Menu.Button>
           <Transition
             as={Fragment}
             enter="transition ease-out duration-100"
