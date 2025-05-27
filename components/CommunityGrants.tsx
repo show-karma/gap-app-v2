@@ -111,6 +111,22 @@ export const CommunityGrants = ({
     [selectedCategories]
   );
 
+  const displayedGrants = useMemo(() => {
+    const uniqueProjectsMap = new Map<string, IGrantResponse>();
+
+    grants.forEach((grant) => {
+      const projectUid = grant.project?.uid;
+      if (projectUid) {
+        if (!uniqueProjectsMap.has(projectUid) ||
+            new Date(grant.createdAt) > new Date(uniqueProjectsMap.get(projectUid)!.createdAt)) {
+          uniqueProjectsMap.set(projectUid, grant);
+        }
+      }
+    });
+
+    return Array.from(uniqueProjectsMap.values());
+  }, [grants]);
+
   useEffect(() => {
     if (!communityId || communityId === zeroUID) return;
 
@@ -503,7 +519,7 @@ export const CommunityGrants = ({
       <ProgramBanner />
       <section className="flex flex-col gap-4 md:flex-row">
         <div className="h-full w-full mb-8">
-          {grants.length > 0 ? (
+          {displayedGrants.length > 0 ? (
             // <div className="grid grid-cols-4 justify-items-center gap-3 pb-20 max-2xl:grid-cols-4 max-xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1">
             //   {grants.map((grant, index) => {
             //     return <GrantCard key={grant.uid} grant={grant} index={index} />;
@@ -511,7 +527,7 @@ export const CommunityGrants = ({
             // </div>
 
             <InfiniteScroll
-              dataLength={grants.length}
+              dataLength={displayedGrants.length}
               next={loadMore}
               hasMore={haveMore}
               loader={null}
@@ -529,12 +545,12 @@ export const CommunityGrants = ({
                     : 1;
                   const columnWidth = Math.floor(width / columnCounter);
                   const gutterSize = 20;
-                  const height = Math.ceil(grants.length / columnCounter) * 360;
+                  const height = Math.ceil(displayedGrants.length / columnCounter) * 360;
                   return (
                     <Grid
                       height={height + 120}
                       width={width}
-                      rowCount={Math.ceil(grants.length / columnCounter)}
+                      rowCount={Math.ceil(displayedGrants.length / columnCounter)}
                       rowHeight={360}
                       columnWidth={
                         columnWidth - 20 < 240 ? 240 : columnWidth - 5
@@ -542,7 +558,7 @@ export const CommunityGrants = ({
                       columnCount={columnCounter}
                       cellRenderer={({ columnIndex, key, rowIndex, style }) => {
                         const grant =
-                          grants[rowIndex * columnCounter + columnIndex];
+                          displayedGrants[rowIndex * columnCounter + columnIndex];
                         return (
                           <div
                             key={key}
