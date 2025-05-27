@@ -174,7 +174,7 @@ export const MilestonesList = ({
       ) : null}
 
       {unifiedMilestones && unifiedMilestones.length > 0 ? (
-        <div className="flex w-full flex-col gap-6 dark:bg-zinc-900 rounded-xl max-lg:px-2 max-lg:py-4">
+        <div className="flex w-full flex-col gap-6 rounded-xl max-lg:px-2 max-lg:py-4">
           <div className="flex justify-between items-center mb-2">
             <h3 className="text-xl font-bold text-black dark:text-zinc-200">
               {`Activities ${totalItems ? `(${totalItems})` : ""}`}

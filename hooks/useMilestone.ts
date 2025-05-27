@@ -185,7 +185,7 @@ export const useMilestone = () => {
         // Handle single milestone deletion
         let gapClient = gap;
 
-        toast.loading(`Deleting milestone...`, {
+        const loadingToast = toast.loading(`Deleting milestone...`, {
           id: `milestone-${milestone.uid}`,
         });
 
@@ -278,13 +278,15 @@ export const useMilestone = () => {
             await checkIfMilestoneExists(() => {
               changeStepperStep("indexed");
             }).then(() => {
-              toast.success("Milestone deleted successfully");
+              toast.success("Milestone deleted successfully", {
+                id: loadingToast,
+              });
               // Use our new force refresh function
               refetch();
             });
           })
           .catch(() => {
-            toast.remove(`milestone-${milestone.uid}`);
+            toast.remove(loadingToast);
           });
       }
     } catch (error) {

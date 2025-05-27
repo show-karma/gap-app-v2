@@ -1,9 +1,10 @@
 import { FC } from "react";
 import { ActivityStatus } from "./ActivityStatus";
+import { ActivityType } from "./ActivityTypes";
 
 interface ActivityStatusHeaderProps {
   /** The activity type to display in the left status pill */
-  activityType: string;
+  activityType: ActivityType;
   /** Optional due date to display on the right */
   dueDate?: string | null;
   /** Whether to show completion status for milestones */
@@ -22,7 +23,7 @@ export const ActivityStatusHeader: FC<ActivityStatusHeaderProps> = ({
   completionStatusClassName = "text-xs px-2 py-1",
 }) => {
   return (
-    <div className="flex flex-row items-center justify-between w-full">
+    <div className="flex flex-row items-center justify-between w-full flex-wrap gap-2">
       <div className="flex flex-row items-center gap-2">
         <ActivityStatus type={activityType} />
         {dueDate && (

@@ -160,6 +160,14 @@ export const useUpdateActions = (update: UpdateType) => {
         project?.uid as string,
         update.uid
       ),
+      ProjectImpact: SHARE_TEXTS.PROJECT_ACTIVITY(
+        project?.details?.data?.title as string,
+        project?.uid as string
+      ),
+      Milestone: SHARE_TEXTS.PROJECT_ACTIVITY(
+        project?.details?.data?.title as string,
+        project?.uid as string
+      ),
     };
 
     return shareDictionary[update.type as keyof typeof shareDictionary];

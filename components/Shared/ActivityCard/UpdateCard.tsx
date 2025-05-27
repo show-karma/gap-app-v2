@@ -19,6 +19,7 @@ import {
   IProjectMilestoneResponse,
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { ActivityType } from "./ActivityTypes";
 
 type UpdateType =
   | IProjectUpdate
@@ -101,8 +102,14 @@ export const UpdateCard: FC<UpdateCardProps> = ({
     return null;
   };
 
-  const canEdit = update.type === "ProjectUpdate";
-  const canDelete = update.type === "ProjectUpdate";
+  const canEdit =
+    update.type === "ProjectUpdate" || update.type === "ProjectImpact";
+  const canDelete =
+    update.type === "ProjectUpdate" ||
+    update.type === "ProjectImpact" ||
+    update.type === "GrantUpdate" ||
+    update.type === "Milestone" ||
+    update.type === "ProjectMilestone";
 
   // Get due date for milestones
   const getDueDate = () => {
@@ -141,7 +148,7 @@ export const UpdateCard: FC<UpdateCardProps> = ({
         <div className="flex flex-col gap-3 w-full">
           {/* Activity Pill with Due Date and Status */}{" "}
           <ActivityStatusHeader
-            activityType={update.type}
+            activityType={update.type as ActivityType}
             dueDate={getDueDate()}
             showCompletionStatus={
               update.type === "Milestone" || update.type === "ProjectMilestone"
@@ -179,14 +186,16 @@ export const UpdateCard: FC<UpdateCardProps> = ({
           </div>
         ) : null}
         {/* Bottom Attribution with Actions */}
-        {isAuthorized && update.type === "ProjectUpdate" && (
-          <EditUpdateDialog
-            isOpen={isEditDialogOpen}
-            onClose={closeEditDialog}
-            projectId={project?.uid || ""}
-            updateId={update.uid}
-          />
-        )}
+        {isAuthorized &&
+          (update.type === "ProjectUpdate" ||
+            update.type === "ProjectImpact") && (
+            <EditUpdateDialog
+              isOpen={isEditDialogOpen}
+              onClose={closeEditDialog}
+              projectId={project?.uid || ""}
+              updateId={update.uid}
+            />
+          )}
       </div>
       <ActivityAttribution
         createdAt={update.createdAt}
@@ -204,6 +213,7 @@ export const UpdateCard: FC<UpdateCardProps> = ({
               canEdit={canEdit}
               canDelete={canDelete}
               isDeleting={isDeletingUpdate}
+              activityType={update.type}
               deleteTitle={
                 <p className="font-normal">
                   Are you sure you want to delete <b>{update.data.title}</b>{" "}

@@ -1,8 +1,9 @@
 import { cn } from "@/utilities/tailwind";
 import Image from "next/image";
+import { ActivityType } from "./ActivityTypes";
 
 interface ActivityStatusProps {
-  type: string;
+  type: ActivityType;
   completed?: boolean;
   className?: string;
 }
@@ -23,6 +24,8 @@ export const ActivityStatus = ({
       case "Milestone":
       case "ProjectMilestone":
         return "bg-[#FFEFE0] text-black dark:bg-[#FFEFE0] dark:text-black";
+      case "MilestoneUpdate":
+        return "bg-[#FEE4E2] text-black dark:bg-[#FEE4E2] dark:text-black";
       default:
         return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300";
     }
@@ -36,6 +39,8 @@ export const ActivityStatus = ({
         return "/icons/grant-update.svg";
       case "ProjectImpact":
         return "/icons/project-impact.svg";
+      case "MilestoneUpdate":
+        return "/icons/milestone-update.svg";
       case "Milestone":
       case "ProjectMilestone":
         return "/icons/milestone.svg";
@@ -51,6 +56,7 @@ export const ActivityStatus = ({
       Milestone: "Milestone",
       ProjectMilestone: "Milestone",
       ProjectImpact: "Project Impact",
+      MilestoneUpdate: "Milestone Update",
     };
     return labelDictionary[type as keyof typeof labelDictionary] || "UPDATE";
   };
@@ -58,8 +64,9 @@ export const ActivityStatus = ({
   // For milestones, handle completion status differently
   if (type === "Milestone" && completed !== undefined) {
     const getCompletionStatusColor = () => {
-      if (completed) return "text-[#067647] bg-[#ECFDF3]";
-      return "bg-[#FFFAEB] text-[#B54708] dark:bg-[#FFFAEB]/10 dark:text-orange-100";
+      if (completed)
+        return "text-[#067647] bg-[#ECFDF3] dark:text-green-400 dark:bg-zinc-900";
+      return "bg-[#FFFAEB] text-[#B54708] dark:bg-zinc-900 dark:text-orange-300";
     };
 
     const getCompletionStatusText = () => {

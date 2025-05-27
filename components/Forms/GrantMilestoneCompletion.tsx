@@ -95,6 +95,11 @@ export const GrantMilestoneCompletionForm = ({
         ...data,
         noProofCheckbox,
       });
+      // Close the form after successful completion
+      handleCompleting(false);
+    } catch (error) {
+      // Don't close the form if there was an error
+      console.error("Error completing milestone:", error);
     } finally {
       setIsCompleting(false);
     }

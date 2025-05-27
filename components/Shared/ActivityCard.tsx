@@ -31,6 +31,9 @@ interface ActivityCardProps {
   isAuthorized?: boolean;
 }
 
+export const containerClassName =
+  "border bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-400 rounded-xl gap-0 flex flex-col items-start justify-start";
+
 export const ActivityCard: FC<ActivityCardProps> = ({
   activity,
   isAuthorized = false,
@@ -40,17 +43,15 @@ export const ActivityCard: FC<ActivityCardProps> = ({
   const isAuthenticatedUser = isOwner || isProjectAdmin || isAuthorized;
 
   return (
-    <div
-      className={
-        "border bg-white dark:bg-zinc-800 border-gray-300 dark:border-zinc-400 rounded-xl gap-0 flex flex-col items-start justify-start"
-      }
-    >
+    <div className="flex flex-col w-full">
       {activity.type === "update" ? (
-        <UpdateCard
-          update={activity.data}
-          index={activity.index}
-          isAuthorized={isAuthenticatedUser}
-        />
+        <div className={containerClassName}>
+          <UpdateCard
+            update={activity.data}
+            index={activity.index}
+            isAuthorized={isAuthenticatedUser}
+          />
+        </div>
       ) : (
         <MilestoneCard
           milestone={activity.data}

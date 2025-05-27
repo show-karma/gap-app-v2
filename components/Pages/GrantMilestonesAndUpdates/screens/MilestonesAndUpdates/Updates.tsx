@@ -26,8 +26,7 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
 import { UpdateMilestone } from "./UpdateMilestone";
-import { VerifiedBadge } from "./VerifiedBadge";
-import { VerifyMilestoneUpdateDialog } from "./VerifyMilestoneUpdateDialog";
+import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerification";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -211,15 +210,11 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
               />
               <p className="text-xs font-bold text-white">UPDATE</p>
             </div>
-            {verifiedMilestones.length ? (
-              <VerifiedBadge
-                verifications={verifiedMilestones}
-                title={`${milestone.data.title} - Reviews`}
-              />
-            ) : null}
-            <VerifyMilestoneUpdateDialog
+            <MilestoneVerificationSection
               milestone={milestone}
-              addVerifiedMilestone={addVerifiedMilestone}
+              title={`${milestone.data.title} - Reviews`}
+              verifiedMilestones={verifiedMilestones}
+              onVerificationAdded={addVerifiedMilestone}
             />
           </div>
           <p className="text-sm font-semibold text-gray-500 dark:text-zinc-100">
@@ -297,7 +292,6 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
                       )}
                     >
                       <ShareIcon className="h-5 w-5" />
-                      Share
                     </ExternalLink>
                     <Button
                       type="button"
@@ -305,7 +299,6 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
                       onClick={() => handleEditing(true)}
                     >
                       <PencilSquareIcon className="h-5 w-5" />
-                      Edit
                     </Button>
                     <Button
                       type="button"
@@ -313,7 +306,6 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
                       onClick={() => undoMilestoneCompletion(milestone)}
                     >
                       <TrashIcon className="h-5 w-5" />
-                      Remove
                     </Button>
                   </div>
                 ) : null}

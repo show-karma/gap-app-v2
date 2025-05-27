@@ -9,6 +9,19 @@ import { ReadMore } from "@/utilities/ReadMore";
 import { formatDate } from "@/utilities/formatDate";
 import { UnifiedMilestone } from "@/types/roadmap";
 import dynamic from "next/dynamic";
+import { cn } from "@/utilities/tailwind";
+import { containerClassName } from "../ActivityCard";
+import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerification";
+import { Button } from "@/components/Utilities/Button";
+import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import {
+  CheckCircleIcon,
+  ShareIcon,
+  PencilSquareIcon,
+} from "@heroicons/react/24/outline";
+import { SHARE_TEXTS } from "@/utilities/share/text";
+import { shareOnX } from "@/utilities/share/shareOnX";
+import { useProjectStore } from "@/store";
 
 const ProjectObjectiveCompletion = dynamic(
   () =>
@@ -20,20 +33,20 @@ const ProjectObjectiveCompletion = dynamic(
   }
 );
 
-const ObjectiveOptionsMenu = dynamic(
+const ObjectiveSimpleOptionsMenu = dynamic(
   () =>
-    import("@/components/Pages/Project/Objective/Options").then(
-      (mod) => mod.ObjectiveOptionsMenu
-    ),
+    import(
+      "@/components/Pages/Project/Objective/ObjectiveSimpleOptionsMenu"
+    ).then((mod) => mod.ObjectiveSimpleOptionsMenu),
   {
     ssr: false,
   }
 );
 
-const GrantMilestoneOptionsMenu = dynamic(
+const GrantMilestoneSimpleOptionsMenu = dynamic(
   () =>
-    import("@/components/Milestone/GrantMilestoneOptionsMenu").then(
-      (mod) => mod.GrantMilestoneOptionsMenu
+    import("@/components/Milestone/GrantMilestoneSimpleOptionsMenu").then(
+      (mod) => mod.GrantMilestoneSimpleOptionsMenu
     ),
   {
     ssr: false,
@@ -61,6 +74,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
 }) => {
   const { isCompleting, handleCompleting } = useMilestoneActions();
   const { title, description, completed, type } = milestone;
+  const { project } = useProjectStore();
 
   // project milestone-specific properties
   const projectMilestone = milestone.source.projectMilestone;
@@ -84,12 +98,15 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
   const completionProof =
     projectMilestone?.completed?.data?.proofOfWork ||
     grantMilestone?.milestone.completed?.data?.proofOfWork;
-
-  // Get the left border color based on completion status
-  const getLeftBorderColor = () => {
-    if (completed) return "#2ED3B7";
-    return "#FDB022";
-  };
+  const completionDate =
+    projectMilestone?.completed?.createdAt ||
+    grantMilestone?.milestone.completed?.createdAt;
+  const completionAttester =
+    projectMilestone?.completed?.attester ||
+    grantMilestone?.milestone.completed?.attester;
+  const verifiedMilestones =
+    projectMilestone?.verified?.length ||
+    grantMilestone?.milestone.verified?.length;
 
   // Function to render project milestone completion form or details
   const renderMilestoneCompletion = () => {
@@ -112,91 +129,165 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
     }
 
     return (
-      <>
-        {completionReason ? (
-          <div className="flex flex-col gap-1">
-            <ReadMore side="left">{completionReason}</ReadMore>
+      <div className={cn(containerClassName, "flex flex-col gap-1 w-full")}>
+        <div className={"w-full flex-col flex gap-2 px-5 py-4"}>
+          <div className="flex flex-row items-center justify-between gap-2 flex-wrap">
+            <div className="flex flex-row items-center gap-3">
+              {!verifiedMilestones ? (
+                <div className="bg-red-600 w-2 h-2 max-w-2 max-h-2 rounded-full min-w-2 min-h-2" />
+              ) : null}
+              <ActivityStatusHeader
+                activityType="MilestoneUpdate"
+                dueDate={null}
+                showCompletionStatus={false}
+                completed={true}
+                completionStatusClassName="text-xs px-2 py-1"
+              />
+            </div>
+            <MilestoneVerificationSection
+              milestone={milestone}
+              title={`${title} - Reviews`}
+            />
           </div>
-        ) : null}
-        {completionProof ? (
-          <div className="flex flex-col gap-1">
-            <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-              Proof of Work:
-            </p>
-            <a
-              href={completionProof}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-brand-blue hover:underline break-all"
-            >
-              {completionProof}
-            </a>
-          </div>
-        ) : null}
-      </>
+          {completionReason ? (
+            <div className="flex flex-col gap-1">
+              <ReadMore side="left">{completionReason}</ReadMore>
+            </div>
+          ) : null}
+          {completionProof ? (
+            <div className="flex flex-col gap-1">
+              <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
+                Proof of Work:
+              </p>
+              <a
+                href={completionProof}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-brand-blue hover:underline break-all"
+              >
+                {completionProof}
+              </a>
+            </div>
+          ) : null}
+        </div>
+        <ActivityAttribution
+          createdAt={completionDate}
+          attester={completionAttester}
+          actions={
+            isAuthorized ? (
+              <div className="flex flex-row gap-2 items-center">
+                {/* Share Button */}
+                <ExternalLink
+                  href={shareOnX(
+                    type === "grant" && grantMilestone
+                      ? SHARE_TEXTS.MILESTONE_COMPLETED(
+                          grantTitle || "Grant",
+                          (project?.details?.data?.slug ||
+                            project?.uid) as string,
+                          grantMilestone.grant.uid
+                        )
+                      : SHARE_TEXTS.PROJECT_ACTIVITY(
+                          title,
+                          (project?.details?.data?.slug ||
+                            project?.uid) as string
+                        )
+                  )}
+                  className="flex flex-row gap-1 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent hover:opacity-75  h-6 w-6"
+                >
+                  <ShareIcon className="h-5 w-5" />
+                </ExternalLink>
+
+                {/* Edit Button */}
+                <Button
+                  className="flex flex-row gap-1 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent hover:opacity-75  h-6 w-6"
+                  onClick={() => {
+                    /* TODO: Implement edit functionality */
+                  }}
+                >
+                  <PencilSquareIcon className="h-5 w-5" />
+                </Button>
+
+                {/* Options Menu */}
+                {type === "project" && projectMilestone ? (
+                  <ObjectiveSimpleOptionsMenu
+                    objectiveId={projectMilestone.uid}
+                  />
+                ) : type === "grant" && grantMilestone ? (
+                  <GrantMilestoneSimpleOptionsMenu milestone={milestone} />
+                ) : null}
+              </div>
+            ) : undefined
+          }
+        />
+      </div>
     );
   };
 
   return (
-    <>
-      {/* Grants Related Section */}
-      <GrantAssociation milestone={milestone} />{" "}
-      <div className="flex flex-col gap-3 w-full px-5 py-4">
-        <div className="flex flex-col gap-3 w-full">
-          {/* Show grants related if they exist */}
-          {/* Activity Pill with Due Date and Status */}{" "}
-          <ActivityStatusHeader
-            activityType="Milestone"
-            dueDate={
-              type === "grant" && endsAt ? formatDate(endsAt * 1000) : null
-            }
-            showCompletionStatus={true}
-            completed={!!completed}
-            completionStatusClassName="text-xs px-2 py-1"
-          />
-          {/* Title */}
-          <p className="text-xl font-bold text-[#101828] dark:text-zinc-100">
-            {title}
-          </p>
-        </div>
-
-        {/* Description */}
-        {description ? (
-          <div className="flex flex-col my-2">
-            <ReadMore side="left">{description}</ReadMore>
+    <div className="flex flex-col w-full  gap-2.5 md:gap-5">
+      {/* Main Milestone Card */}
+      <div className={cn(containerClassName, "flex flex-col w-full")}>
+        {/* Grants Related Section */}
+        <GrantAssociation milestone={milestone} />
+        <div className="flex flex-col gap-3 w-full px-5 py-4">
+          <div className="flex flex-col gap-3 w-full">
+            <ActivityStatusHeader
+              activityType="Milestone"
+              dueDate={
+                type === "grant" && endsAt ? formatDate(endsAt * 1000) : null
+              }
+              showCompletionStatus={true}
+              completed={!!completed}
+              completionStatusClassName="text-xs px-2 py-1"
+            />
+            {/* Title */}
+            <p className="text-xl font-bold text-[#101828] dark:text-zinc-100">
+              {title}
+            </p>
           </div>
-        ) : null}
-      </div>
-      {/* Bottom Attribution with Actions */}
-      <ActivityAttribution
-        createdAt={createdAt}
-        attester={attester}
-        actions={
-          isAuthorized ? (
-            <div className="flex">
-              {type === "project" && projectMilestone ? (
-                <ObjectiveOptionsMenu
-                  objectiveId={projectMilestone.uid}
-                  completeFn={handleCompleting}
-                  alreadyCompleted={!!completed}
-                />
-              ) : type === "grant" && grantMilestone ? (
-                <GrantMilestoneOptionsMenu
-                  milestone={milestone}
-                  completeFn={handleCompleting}
-                  alreadyCompleted={!!completed}
-                />
-              ) : null}
+
+          {/* Description */}
+          {description ? (
+            <div className="flex flex-col my-2">
+              <ReadMore side="left">{description}</ReadMore>
             </div>
-          ) : undefined
-        }
-      />
-      {/* Completion Information */}
+          ) : null}
+        </div>
+        {/* Bottom Attribution with Actions */}
+        <ActivityAttribution
+          createdAt={createdAt}
+          attester={attester}
+          actions={
+            isAuthorized ? (
+              <div className="flex flex-row gap-6 items-center">
+                {!completed && (
+                  <Button
+                    className="flex flex-row gap-1 border border-brand-blue text-brand-blue  text-sm font-semibold bg-white hover:bg-white dark:bg-transparent dark:hover:bg-transparent p-3  rounded-md max-sm:px-2 max-sm:py-1"
+                    onClick={() => handleCompleting(true)}
+                  >
+                    Mark Milestone Complete
+                    <CheckCircleIcon className="h-5 w-5" />
+                  </Button>
+                )}
+
+                {/* Options Menu with only Delete */}
+                {type === "project" && projectMilestone ? (
+                  <ObjectiveSimpleOptionsMenu
+                    objectiveId={projectMilestone.uid}
+                  />
+                ) : type === "grant" && grantMilestone ? (
+                  <GrantMilestoneSimpleOptionsMenu milestone={milestone} />
+                ) : null}
+              </div>
+            ) : undefined
+          }
+        />
+      </div>
       {isCompleting || completionReason || completionProof ? (
-        <div className="w-full flex-col flex gap-2 px-4 py-2 bg-[#F8F9FC] dark:bg-zinc-700 rounded-lg">
+        <div className="flex flex-col w-full pl-8 md:pl-[120px]">
           {renderMilestoneCompletion()}
         </div>
       ) : null}
-    </>
+    </div>
   );
 };
