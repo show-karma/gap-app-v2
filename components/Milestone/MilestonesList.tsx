@@ -4,6 +4,7 @@ import { ActivityCard } from "@/components/Shared/ActivityCard";
 import { useQueryState } from "nuqs";
 import { StatusOptions } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { useOwnerStore, useProjectStore } from "@/store";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { SetAnObjective } from "@/components/Pages/Project/Objective/SetAnObjective";
 import { UnifiedMilestone } from "@/types/roadmap";
 import {
@@ -11,6 +12,23 @@ import {
   IProjectImpact,
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { ObjectivesSub } from "../Pages/Project/Objective/ObjectivesSub";
+import { Listbox, Transition } from "@headlessui/react";
+import { CheckIcon } from "@heroicons/react/20/solid";
+import { ChevronDownIcon } from "@heroicons/react/24/solid";
+import { Fragment, useState, useEffect, useMemo } from "react";
+import { cn } from "@/utilities/tailwind";
+import pluralize from "pluralize";
+
+// Filter options for the content type filter
+const CONTENT_TYPE_OPTIONS: Record<string, string> = {
+  all: "All Content Types",
+  pending: "Pending Milestones",
+  completed: "Completed Milestones",
+  impacts: "Project Impacts",
+  activities: "Project Activities",
+  updates: "Grant Updates",
+};
 
 interface MilestonesListProps {
   milestones: UnifiedMilestone[];
@@ -33,6 +51,25 @@ export const MilestonesList = ({
     parse: (value) =>
       value ? (value as StatusOptions) : ("all" as StatusOptions),
   });
+
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // Content type filter with URL search params support
+  const [selectedContentType, setSelectedContentTypeQuery] = useQueryState(
+    "contentType",
+    {
+      defaultValue: "all",
+      serialize: (value) => value,
+      parse: (value) => value || "all",
+    }
+  );
+
+  // Handle content type filter change
+  const handleContentTypeChange = (newContentType: string) => {
+    setSelectedContentTypeQuery(newContentType);
+  };
 
   // Merge duplicate milestones based on content
   const mergeDuplicateMilestones = (
@@ -152,36 +189,159 @@ export const MilestonesList = ({
     return isUpdateType(item) && !!item.updateData;
   };
 
-  // Filter milestones based on status
-  let filteredMilestones = milestones.filter((milestone) => {
-    if (!showAllTypes && milestone.type === "update") return false;
-    if (status === "completed") return milestone.completed;
-    if (status === "pending") return !milestone.completed;
-    return true;
-  });
+  // Memoize the filtered and unified milestones for better performance
+  const unifiedMilestones = useMemo(() => {
+    // Filter milestones based on status and content type
+    let filteredMilestones = milestones.filter((milestone) => {
+      if (!showAllTypes && milestone.type === "update") return false;
 
-  // Merge duplicates for regular milestones
-  const unifiedMilestones = mergeDuplicateMilestones(filteredMilestones);
+      // Apply status filter
+      if (status === "completed") {
+        const isCompleted =
+          milestone.completed === true ||
+          (milestone.completed && typeof milestone.completed === "object");
+        if (!isCompleted) return false;
+      }
+      if (status === "pending") {
+        if (milestone.completed) return false;
+      }
+
+      // Apply content type filter
+      if (selectedContentType !== "all") {
+        switch (selectedContentType) {
+          case "pending":
+            const isPending = milestone.completed === false;
+            const isMilestoneType =
+              milestone.type === "milestone" ||
+              milestone.type === "grant" ||
+              milestone.type === "project";
+            return isPending && isMilestoneType;
+
+          case "completed":
+            const isCompleted =
+              milestone.completed === true ||
+              (milestone.completed && typeof milestone.completed === "object");
+            const isMilestoneTypeCompleted =
+              milestone.type === "milestone" ||
+              milestone.type === "grant" ||
+              milestone.type === "project";
+            return isCompleted && isMilestoneTypeCompleted;
+
+          case "impacts":
+            return milestone.type === "impact";
+
+          case "activities":
+            return milestone.type === "activity";
+
+          case "updates":
+            return milestone.type === "grant_update";
+
+          default:
+            return true;
+        }
+      }
+
+      return true;
+    });
+
+    // Merge duplicates for regular milestones
+    return mergeDuplicateMilestones(filteredMilestones);
+  }, [milestones, showAllTypes, status, selectedContentType]);
 
   return (
     <div className="flex flex-col gap-6 w-full">
-      {isAuthorized ? (
+      {/* {isAuthorized ? (
         <SetAnObjective
           hasObjectives={
             (unifiedMilestones && unifiedMilestones.length > 0) || false
           }
         />
-      ) : null}
+      ) : null} */}
 
-      {unifiedMilestones && unifiedMilestones.length > 0 ? (
-        <div className="flex w-full flex-col gap-6 rounded-xl max-lg:px-2 max-lg:py-4">
-          <div className="flex justify-between items-center mb-2">
+      <div className="flex w-full flex-col gap-6 rounded-xl max-lg:px-2 max-lg:py-4">
+        <div className="flex flex-row gap-2 flex-wrap justify-between items-center mb-2">
+          <div className="flex flex-row gap-2 flex-wrap justify-start items-center">
             <h3 className="text-xl font-bold text-black dark:text-zinc-200">
-              {`Activities ${totalItems ? `(${totalItems})` : ""}`}
+              {`All Content Types ${totalItems ? `(${totalItems})` : ""}`}
             </h3>
+            <ObjectivesSub />
           </div>
 
-          {unifiedMilestones.map((item, index) =>
+          {/* Content Type Filter */}
+          <div className="relative">
+            <Listbox
+              value={selectedContentType}
+              onChange={handleContentTypeChange}
+            >
+              <div className="relative">
+                <Listbox.Button className="cursor-pointer items-center relative w-full rounded-md pr-8 text-left sm:text-sm sm:leading-6 text-black dark:text-white text-base font-normal">
+                  <span className="flex flex-row gap-1">
+                    {CONTENT_TYPE_OPTIONS[selectedContentType]}
+                  </span>
+                  <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                    <ChevronDownIcon
+                      className="h-4 w-4 text-gray-400"
+                      aria-hidden="true"
+                    />
+                  </span>
+                </Listbox.Button>
+
+                <Transition
+                  as={Fragment}
+                  leave="transition ease-in duration-100"
+                  leaveFrom="opacity-100"
+                  leaveTo="opacity-0"
+                >
+                  <Listbox.Options className="absolute right-0 z-50 mt-1 max-h-60 w-max overflow-auto rounded-md bg-white py-1 text-base dark:bg-zinc-800 dark:text-zinc-200 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                    {Object.keys(CONTENT_TYPE_OPTIONS).map((contentType) => (
+                      <Listbox.Option
+                        key={contentType}
+                        className={({ active }) =>
+                          cn(
+                            active
+                              ? "bg-gray-100 text-black dark:text-gray-300 dark:bg-zinc-900"
+                              : "text-gray-900 dark:text-gray-200",
+                            "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
+                          )
+                        }
+                        value={contentType}
+                      >
+                        {({ selected }) => (
+                          <>
+                            <span
+                              className={cn(
+                                selected ? "font-semibold" : "font-normal",
+                                "block truncate"
+                              )}
+                            >
+                              {CONTENT_TYPE_OPTIONS[contentType]}
+                            </span>
+
+                            {selected ? (
+                              <span
+                                className={cn(
+                                  "text-blue-600 dark:text-blue-400",
+                                  "absolute inset-y-0 right-0 flex items-center pr-4"
+                                )}
+                              >
+                                <CheckIcon
+                                  className="h-5 w-5"
+                                  aria-hidden="true"
+                                />
+                              </span>
+                            ) : null}
+                          </>
+                        )}
+                      </Listbox.Option>
+                    ))}
+                  </Listbox.Options>
+                </Transition>
+              </div>
+            </Listbox>
+          </div>
+        </div>
+        {unifiedMilestones && unifiedMilestones.length > 0 ? (
+          unifiedMilestones.map((item, index) =>
             hasUpdateData(item) ? (
               <ActivityCard
                 key={`update-${item.uid}-${index}`}
@@ -199,20 +359,20 @@ export const MilestonesList = ({
                 isAuthorized={isAuthorized}
               />
             )
-          )}
-        </div>
-      ) : !isAuthorized ? (
-        <div className="flex flex-col gap-2 justify-center items-start border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-8 w-full">
-          <p className="text-zinc-900 font-bold text-center text-lg w-full dark:text-zinc-300">
-            {showAllTypes ? "No content found!" : "No milestones found!"}
-          </p>
-          <p className="text-zinc-900 dark:text-zinc-300 w-full text-center">
-            {`The project owner is working on setting ${
-              showAllTypes ? "milestones and activities" : "milestones"
-            }. Check back in a few days :)`}
-          </p>
-        </div>
-      ) : null}
+          )
+        ) : !isAuthorized ? (
+          <div className="flex flex-col gap-2 justify-center items-start border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-8 w-full">
+            <p className="text-zinc-900 font-bold text-center text-lg w-full dark:text-zinc-300">
+              {showAllTypes ? "No content found!" : "No milestones found!"}
+            </p>
+            <p className="text-zinc-900 dark:text-zinc-300 w-full text-center">
+              {`The project owner is working on setting ${
+                showAllTypes ? "milestones and activities" : "milestones"
+              }. Check back in a few days :)`}
+            </p>
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 };

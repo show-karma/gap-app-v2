@@ -12,24 +12,6 @@ export const ObjectivesSub = () => {
     milestones?.filter((milestone) => milestone.completed)?.length || 0;
   const totalMilestones = milestones?.length || 0;
 
-  const lastUpdated = milestones
-    ? milestones?.sort((a, b) => {
-        const getDate = (item: any) => {
-          if (item.completed) {
-            return new Date(
-              item.type === "project"
-                ? item.source.projectMilestone?.completed?.createdAt ||
-                  item.createdAt
-                : item.source.grantMilestone?.milestone.completed?.createdAt ||
-                  item.createdAt
-            ).getTime();
-          }
-          return new Date(item.createdAt).getTime();
-        };
-        return getDate(b) - getDate(a);
-      })[0]?.createdAt
-    : null;
-
   if (totalMilestones === 0) return null;
 
   return (
@@ -40,14 +22,6 @@ export const ObjectivesSub = () => {
           totalMilestones
         )}, ${completedMilestones} Completed`}
       </p>
-      {lastUpdated ? (
-        <>
-          <div className="w-[4px] h-[4px] rounded-full bg-gray-500 max-lg:hidden" />
-          <p className="text-base font-normal text-[#475467] dark:text-gray-400">
-            {`Last Updated on ${formatDate(lastUpdated)}`}
-          </p>
-        </>
-      ) : null}
     </div>
   );
 };
