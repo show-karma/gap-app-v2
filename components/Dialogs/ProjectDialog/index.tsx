@@ -202,9 +202,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     linkedin: projectToUpdate?.details?.data?.links?.find(
       (link) => link.type === "linkedin"
     )?.url,
-    profilePicture: projectToUpdate?.details?.data?.links?.find(
-      (link) => link.type === "profilePicture"
-    )?.url,
+    profilePicture: projectToUpdate?.details?.data?.imageURL,
     tags: projectToUpdate?.details?.data?.tags?.map((item) => item.name),
     members: projectToUpdate?.members.map((item) => item.recipient),
     recipient: projectToUpdate?.recipient,
@@ -321,7 +319,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         !!errors?.linkedin ||
         !!errors?.pitchDeck ||
         !!errors?.demoVideo ||
-        !!errors?.farcaster
+        !!errors?.farcaster ||
+        !!errors?.profilePicture
       );
     }
     if (step === 3) {
@@ -354,6 +353,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         "pitchDeck",
         "demoVideo",
         "farcaster",
+        "profilePicture",
       ],
       3: ["chainID"],
     };
@@ -443,12 +443,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
             type: "farcaster",
             url: data.farcaster || "",
           },
-          {
-            type: "profilePicture",
-            url: data.profilePicture || "",
-          },
         ],
-        imageURL: "",
+        imageURL: data.profilePicture || "",
       };
 
       if (!gapClient) return;
@@ -463,7 +459,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           solution: newProjectInfo.solution,
           missionSummary: newProjectInfo.missionSummary,
           locationOfImpact: newProjectInfo.locationOfImpact,
-          imageURL: "",
+          imageURL: data.profilePicture || "",
           links: newProjectInfo.links,
           slug,
           tags: newProjectInfo.tags?.map((tag) => ({
@@ -667,6 +663,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         stageIn: data.stageIn,
         raisedMoney: data.raisedMoney,
         pathToTake: data.pathToTake,
+        imageURL: data.profilePicture,
       };
       const socialData = {
         discord: data.discord,
@@ -677,7 +674,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         pitchDeck: data.pitchDeck,
         demoVideo: data.demoVideo,
         farcaster: data.farcaster,
-        profilePicture: data.profilePicture,
       };
       await updateProject(
         fetchedProject,

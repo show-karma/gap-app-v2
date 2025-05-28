@@ -23,6 +23,7 @@ export const updateProject = async (
     solution?: string;
     missionSummary?: string;
     locationOfImpact?: string;
+    imageURL?: string;
   },
   data: {
     twitter?: string;
@@ -62,7 +63,7 @@ export const updateProject = async (
       solution: newProjectInfo.solution,
       missionSummary: newProjectInfo.missionSummary,
       locationOfImpact: newProjectInfo.locationOfImpact,
-      imageURL: "",
+      imageURL: newProjectInfo.imageURL || "",
       links: linksArray,
       slug,
       tags: newProjectInfo.tags?.map((tag) => ({

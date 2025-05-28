@@ -142,9 +142,7 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
     farcaster: projectToUpdate?.details?.data?.links?.find(
       (link) => link.type === "farcaster"
     )?.url,
-    profilePicture: projectToUpdate?.details?.data?.links?.find(
-      (link) => link.type === "profilePicture"
-    )?.url,
+    profilePicture: projectToUpdate?.details?.data?.imageURL,
   };
 
   const [contacts, setContacts] = useState<Contact[]>(previousContacts || []);
@@ -380,12 +378,8 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
             type: "farcaster",
             url: data.farcaster || "",
           },
-          {
-            type: "profilePicture",
-            url: data.profilePicture || "",
-          },
         ],
-        imageURL: "",
+        imageURL: data.profilePicture || "",
       };
 
       if (!gapClient) return;
@@ -400,7 +394,7 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
           solution: newProjectInfo.solution,
           missionSummary: newProjectInfo.missionSummary,
           locationOfImpact: newProjectInfo.locationOfImpact,
-          imageURL: "",
+          imageURL: data.profilePicture || "",
           links: newProjectInfo.links,
           slug,
           tags: newProjectInfo.tags?.map((tag) => ({
@@ -569,6 +563,7 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
         stageIn: data.stageIn,
         raisedMoney: data.raisedMoney,
         pathToTake: data.pathToTake,
+        imageURL: data.profilePicture,
       };
       const socialData = {
         discord: data.discord,
@@ -579,7 +574,6 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
         pitchDeck: data.pitchDeck,
         demoVideo: data.demoVideo,
         farcaster: data.farcaster,
-        profilePicture: data.profilePicture,
       };
 
       if (
