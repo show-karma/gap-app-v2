@@ -13,7 +13,7 @@ export const prepareChartData = (
   name: string,
   runningValues?: number[],
   proofs?: string[]
-): { date: string;[key: string]: number | string }[] => {
+): { date: string; [key: string]: number | string }[] => {
   const chartData = timestamps
     .map((timestamp, index) => {
       if (runningValues?.length) {
@@ -37,6 +37,7 @@ export const prepareChartData = (
 export const CommunityImpactCharts = () => {
   const searchParams = useSearchParams();
   const projectSelected = searchParams.get("projectId");
+  const programSelected = searchParams.get("programId");
   const { data, isLoading } = useImpactMeasurement(projectSelected);
 
   const categories = data?.data;
@@ -63,12 +64,26 @@ export const CommunityImpactCharts = () => {
         </div>
       ) : orderedData?.length ? (
         orderedData.map((category, index) => (
-          <>
-            <CategoryRow key={category.categoryName} category={category} />
+          <div
+            key={`category-container-${category.categoryName}-${
+              projectSelected || "all"
+            }-${programSelected || "all"}-${index}`}
+          >
+            <CategoryRow
+              key={`category-row-${category.categoryName}-${
+                projectSelected || "all"
+              }-${programSelected || "all"}-${index}`}
+              category={category}
+            />
             {index !== orderedData.length - 1 && (
-              <div className="w-full my-8 h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-700 to-transparent" />
+              <div
+                key={`category-divider-${category.categoryName}-${
+                  projectSelected || "all"
+                }-${programSelected || "all"}-${index}`}
+                className="w-full my-8 h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-700 to-transparent"
+              />
             )}
-          </>
+          </div>
         ))
       ) : (
         <div className="flex flex-col items-center justify-center py-10 text-center">
