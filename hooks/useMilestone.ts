@@ -416,67 +416,67 @@ export const useMilestone = () => {
             );
           };
 
-          if (!isOnChainAuthorized) {
-            // Use off-chain revocation for each completion
-            for (const milestoneInstance of milestoneInstances) {
-              if (milestoneInstance.completed?.uid) {
-                await fetchData(
-                  INDEXER.PROJECT.REVOKE_ATTESTATION(
-                    milestoneInstance.completed.uid as `0x${string}`,
-                    milestoneInstance.chainID
-                  ),
-                  "POST",
-                  {}
-                );
-              }
-            }
-
-            await checkIfCompletionExists(() => {
-              changeStepperStep("indexed");
-            }).then(() => {
-              toast.success(
-                `Undid completion for ${milestoneOfChain?.length} milestone(s) on ${chainName} successfully!`,
-                {
-                  id: `chain-${chainId}`,
-                }
+          // if (!isOnChainAuthorized) {
+          // Use off-chain revocation for each completion
+          for (const milestoneInstance of milestoneInstances) {
+            if (milestoneInstance.completed?.uid) {
+              await fetchData(
+                INDEXER.PROJECT.REVOKE_ATTESTATION(
+                  milestoneInstance.completed.uid as `0x${string}`,
+                  milestoneInstance.chainID
+                ),
+                "POST",
+                {}
               );
-              refetch();
-            });
-          } else {
-            // Use on-chain revocation for each milestone
-            for (const milestoneInstance of milestoneInstances) {
-              if (milestoneInstance.completed) {
-                await milestoneInstance
-                  .revokeCompletion(walletSigner as any, changeStepperStep)
-                  .then(async (res) => {
-                    changeStepperStep("indexing");
-                    const txHash = res?.tx[0]?.hash;
-                    if (txHash) {
-                      await fetchData(
-                        INDEXER.ATTESTATION_LISTENER(
-                          txHash,
-                          milestoneInstance.chainID
-                        ),
-                        "POST",
-                        {}
-                      );
-                    }
-                  });
-              }
             }
-
-            await checkIfCompletionExists(() => {
-              changeStepperStep("indexed");
-            }).then(() => {
-              toast.success(
-                `Undid completion for ${milestoneOfChain?.length} milestone(s) on ${chainName} successfully!`,
-                {
-                  id: `chain-${chainId}`,
-                }
-              );
-              refetch();
-            });
           }
+
+          await checkIfCompletionExists(() => {
+            changeStepperStep("indexed");
+          }).then(() => {
+            toast.success(
+              `Undid completion for ${milestoneOfChain?.length} milestone(s) successfully!`,
+              {
+                id: `chain-${chainId}`,
+              }
+            );
+            refetch();
+          });
+          // } else {
+          //   // Use on-chain revocation for each milestone
+          //   for (const milestoneInstance of milestoneInstances) {
+          //     if (milestoneInstance.completed) {
+          //       await milestoneInstance
+          //         .revokeCompletion(walletSigner as any, changeStepperStep)
+          //         .then(async (res) => {
+          //           changeStepperStep("indexing");
+          //           const txHash = res?.tx[0]?.hash;
+          //           if (txHash) {
+          //             await fetchData(
+          //               INDEXER.ATTESTATION_LISTENER(
+          //                 txHash,
+          //                 milestoneInstance.chainID
+          //               ),
+          //               "POST",
+          //               {}
+          //             );
+          //           }
+          //         });
+          //     }
+          //   }
+
+          //   await checkIfCompletionExists(() => {
+          //     changeStepperStep("indexed");
+          //   }).then(() => {
+          //     toast.success(
+          //       `Undid completion for ${milestoneOfChain?.length} milestone(s) on ${chainName} successfully!`,
+          //       {
+          //         id: `chain-${chainId}`,
+          //       }
+          //     );
+          //     refetch();
+          //   });
+          // }
         }
       } else {
         // Handle single milestone completion revocation
@@ -546,73 +546,74 @@ export const useMilestone = () => {
           );
         };
 
-        if (!isOnChainAuthorized) {
-          // Use off-chain revocation
-          await fetchData(
-            INDEXER.PROJECT.REVOKE_ATTESTATION(
-              milestoneInstance.completed.uid as `0x${string}`,
-              milestoneInstance.chainID
-            ),
-            "POST",
-            {}
-          );
+        // if (!isOnChainAuthorized) {
+        // Use off-chain revocation
+        await fetchData(
+          INDEXER.PROJECT.REVOKE_ATTESTATION(
+            milestoneInstance.completed.uid as `0x${string}`,
+            milestoneInstance.chainID
+          ),
+          "POST",
+          {}
+        );
 
-          await checkIfCompletionExists(() => {
-            changeStepperStep("indexed");
-          }).then(() => {
-            toast.success(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS, {
-              id: loadingToast,
-            });
-            refetch();
+        await checkIfCompletionExists(() => {
+          changeStepperStep("indexed");
+        }).then(() => {
+          toast.success(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS, {
+            id: loadingToast,
           });
-        } else {
-          // Use on-chain revocation
-          console.log(milestoneInstance?.completed);
-          console.log([
-            {
-              uid: milestoneInstance?.completed?.uid as `0x${string}`,
-              schemaId: (milestoneInstance?.completed as any)?.schema.uid,
-            },
-          ]);
-          const gapClient = getGapClient(milestoneInstance?.chainID);
-          await milestoneInstance
-            .revokeMultipleAttestations(
-              walletSigner as any,
-              [
-                {
-                  uid: milestoneInstance?.completed?.uid as `0x${string}`,
-                  schemaId: gapClient.findSchema("MilestoneCompleted").uid,
-                },
-              ],
-              changeStepperStep
-            )
-            .then(async (res) => {
-              changeStepperStep("indexing");
-              const txHash = res?.tx[0]?.hash;
-              if (txHash) {
-                await fetchData(
-                  INDEXER.ATTESTATION_LISTENER(
-                    txHash,
-                    milestoneInstance.chainID
-                  ),
-                  "POST",
-                  {}
-                );
-              }
+          refetch();
+        });
+        // } else {
+        //   // Use on-chain revocation
+        //   console.log(milestoneInstance?.completed);
+        //   console.log([
+        //     {
+        //       uid: milestoneInstance?.completed?.uid as `0x${string}`,
+        //       schemaId: (milestoneInstance?.completed as any)?.schema.uid,
+        //     },
+        //   ]);
+        //   const gapClient = getGapClient(milestoneInstance?.chainID);
+        //   console.log("milestoneInstance", milestoneInstance);
+        //   await milestoneInstance
+        //     .revokeMultipleAttestations(
+        //       walletSigner as any,
+        //       [
+        //         {
+        //           uid: milestoneInstance?.completed?.uid as `0x${string}`,
+        //           schemaId: gapClient.findSchema("MilestoneCompleted").uid,
+        //         },
+        //       ],
+        //       changeStepperStep
+        //     )
+        //     .then(async (res) => {
+        //       changeStepperStep("indexing");
+        //       const txHash = res?.tx[0]?.hash;
+        //       if (txHash) {
+        //         await fetchData(
+        //           INDEXER.ATTESTATION_LISTENER(
+        //             txHash,
+        //             milestoneInstance.chainID
+        //           ),
+        //           "POST",
+        //           {}
+        //         );
+        //       }
 
-              await checkIfCompletionExists(() => {
-                changeStepperStep("indexed");
-              }).then(() => {
-                toast.success(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS, {
-                  id: loadingToast,
-                });
-                refetch();
-              });
-            })
-            .catch(() => {
-              toast.remove(loadingToast);
-            });
-        }
+        //       await checkIfCompletionExists(() => {
+        //         changeStepperStep("indexed");
+        //       }).then(() => {
+        //         toast.success(MESSAGES.MILESTONES.COMPLETE.UNDO.SUCCESS, {
+        //           id: loadingToast,
+        //         });
+        //         refetch();
+        //       });
+        //     })
+        //     .catch(() => {
+        //       toast.remove(loadingToast);
+        //     });
+        // }
       }
     } catch (error) {
       console.error("Error during completion revocation:", error);
