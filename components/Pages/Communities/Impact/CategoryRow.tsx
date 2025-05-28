@@ -177,11 +177,11 @@ const SegmentCard = ({
               </p>
             </div>
             <Carousel
-              key={`${selectedSegment.impactSegmentType}-${selectedSegment.impactSegmentName}-${selectedSegment.impactSegmentId}`}
+              key={`carousel-${selectedSegment.impactSegmentType}-${selectedSegment.impactSegmentId}`}
               items={selectedSegment.indicators}
               renderItem={({ item, isSnapPoint, index }) => (
                 <CarouselItem
-                  key={`${item.categoryId}-${item.impactSegmentId}-${item.impactSegmentType}-${item.impactIndicatorId}-${item.indicatorName}-${item.projectUID}`}
+                  key={`carousel-item-${item.categoryId}-${item.impactSegmentId}-${item.impactIndicatorId}-${item.projectUID}-${index}`}
                   isSnapPoint={isSnapPoint}
                 >
                   <MetricCard

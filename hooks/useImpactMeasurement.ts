@@ -10,10 +10,12 @@ export function useImpactMeasurement(projectSelected?: string | null) {
   const programSelected = searchParams.get("programId");
   const { data: allCategories } = useCommunityCategory();
 
-  const queryKey =
-    programSelected || projectSelected
-      ? ["impact-measurement-project", programSelected, projectSelected]
-      : ["impact-measurement-projects"];
+  const queryKey = [
+    "impact-measurement",
+    communityId,
+    programSelected || "all",
+    projectSelected || "all",
+  ];
 
   const queryFn = () => {
     return getProgramsImpact(
