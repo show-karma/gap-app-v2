@@ -12,4 +12,6 @@ export const communityColors: Record<string, string> = {
     "#FC031F",
   "0x838fa5fcdf99f4e6e28aef702d1780b155015602413c15e7242819e2e5dd0113":
     "#4cc38a",
+  "0x5e85f26150e28595525573a8ed18a98049435256d1c93a7132079914864902be":
+    "#ecf0f1",
 };
