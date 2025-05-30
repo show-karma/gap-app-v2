@@ -151,6 +151,7 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
           name: data.name,
           description: data.description,
           unitOfMeasure: data.unitOfMeasure,
+          communityUID: communityId,
           programs:
             preSelectedPrograms?.map((item) => {
               return {
