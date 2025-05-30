@@ -343,10 +343,10 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
                 <img
                   alt={project?.details?.data?.title || "Project"}
                   src={project?.details?.data?.imageURL}
-                  className="h-14 w-14 min-w-14 min-h-14 rounded-full object-cover border-2 border-white shadow-lg max-lg:h-8 max-lg:w-8 max-lg:min-h-8 max-lg:min-w-8"
+                  className="h-14 w-14 min-w-14 min-h-14 rounded-full object-cover border-2 border-white shadow-lg max-lg:h-12 max-lg:w-12 max-lg:min-h-12 max-lg:min-w-12"
                 />
               ) : (
-                <div className="h-14 w-14 min-w-14 min-h-14 rounded-full overflow-hidden border-2 border-white shadow-lg max-lg:h-8 max-lg:w-8 max-lg:min-h-8 max-lg:min-w-8">
+                <div className="h-14 w-14 min-w-14 min-h-14 rounded-full overflow-hidden border-2 border-white shadow-lg max-lg:h-12 max-lg:w-12 max-lg:min-h-12 max-lg:min-w-12">
                   <Avatar
                     size="56"
                     name={project?.uid || ""}
