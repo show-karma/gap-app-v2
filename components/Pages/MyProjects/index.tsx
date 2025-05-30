@@ -20,6 +20,7 @@ import pluralize from "pluralize";
 import { useState } from "react";
 import { useAccount } from "wagmi";
 import { LoadingCard } from "./LoadingCard";
+import Avatar from "boring-avatars";
 
 const ProjectDialog = dynamic(
   () =>
@@ -143,8 +144,28 @@ export default function MyProjects() {
                           </div>
 
                           <div className="px-5 flex flex-col gap-0">
-                            <div className="font-body line-clamp-1 mb-0 pb-0 truncate text-base font-semibold text-gray-900 dark:text-gray-100">
-                              {card.details?.data.title || card.uid}
+                            <div className="flex flex-row items-center gap-2 mb-1">
+                              <div className="flex justify-center">
+                                {card.details?.data?.imageURL ? (
+                                  <img
+                                    alt={card.details?.data?.title || "Project"}
+                                    src={card.details?.data?.imageURL}
+                                    className="h-8 w-8 min-w-8 min-h-8 rounded-full object-cover border border-white shadow-sm"
+                                  />
+                                ) : (
+                                  <div className="h-8 w-8 min-w-8 min-h-8 rounded-full overflow-hidden border border-white shadow-sm">
+                                    <Avatar
+                                      size="32"
+                                      name={card.uid || ""}
+                                      variant="marble"
+                                      colors={["#92A1C6", "#146A7C", "#F0AB3D", "#C271B4", "#C20D90"]}
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="font-body line-clamp-1 mb-0 pb-0 truncate text-base font-semibold text-gray-900 dark:text-gray-100 flex-1">
+                                {card.details?.data.title || card.uid}
+                              </div>
                             </div>
                             <div className="font-body dark:text-slate-400 mb-2 text-sm font-medium text-slate-500">
                               {`Created on ${formatDate(card.createdAt)}`}
