@@ -9,7 +9,7 @@ const securityHeaders = [
   },
   {
     key: "Content-Security-Policy",
-    value: "frame-ancestors 'self' https://warpcast.com",
+    value: "frame-ancestors 'self' https://warpcast.com https://farcaster.xyz",
   },
 ];
 
