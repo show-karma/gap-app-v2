@@ -12,6 +12,7 @@ import { ProjectNavigator } from "@/components/Pages/Project/ProjectNavigator";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { useGap } from "@/hooks";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useAuthStore } from "@/store/auth";
@@ -31,7 +32,6 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import { useAccount } from "wagmi";
 import { IntroDialog } from "./IntroDialog";
-import Avatar from "boring-avatars";
 
 import { getRPCClient } from "@/utilities/rpcClient";
 import { useContactInfo } from "@/hooks/useContactInfo";
@@ -339,22 +339,13 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
         <div className="px-4 sm:px-6 lg:px-12 lg:flex py-5 lg:items-start lg:justify-between flex flex-row max-lg:flex-col max-lg:justify-center max-lg:items-center gap-4">
           <div className="flex flex-row gap-4 items-start">
             <div className="flex justify-center">
-              {project?.details?.data?.imageURL ? (
-                <img
-                  alt={project?.details?.data?.title || "Project"}
-                  src={project?.details?.data?.imageURL}
-                  className="h-14 w-14 min-w-14 min-h-14 rounded-full object-cover border-2 border-white shadow-lg max-lg:h-12 max-lg:w-12 max-lg:min-h-12 max-lg:min-w-12"
-                />
-              ) : (
-                <div className="h-14 w-14 min-w-14 min-h-14 rounded-full overflow-hidden border-2 border-white shadow-lg max-lg:h-12 max-lg:w-12 max-lg:min-h-12 max-lg:min-w-12">
-                  <Avatar
-                    size="56"
-                    name={project?.uid || ""}
-                    variant="marble"
-                    colors={["#92A1C6", "#146A7C", "#F0AB3D", "#C271B4", "#C20D90"]}
-                  />
-                </div>
-              )}
+              <ProfilePicture
+                imageURL={project?.details?.data?.imageURL}
+                name={project?.uid || ""}
+                size="56"
+                className="h-14 w-14 min-w-14 min-h-14 border-2 border-white shadow-lg max-lg:h-12 max-lg:w-12 max-lg:min-h-12 max-lg:min-w-12"
+                alt={project?.details?.data?.title || "Project"}
+              />
             </div>
             <div className="flex flex-col gap-4">
               <h1
