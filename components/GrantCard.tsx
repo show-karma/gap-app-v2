@@ -9,6 +9,7 @@ import { GrantPercentage } from "./Pages/Project/Grants/components/GrantPercenta
 import { MarkdownPreview } from "./Utilities/MarkdownPreview";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { TrackTags } from "./TrackTags";
+import Avatar from "boring-avatars";
 
 interface GrantCardProps {
   grant: IGrantResponse;
@@ -75,13 +76,33 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
         />
 
         <div className="flex w-full flex-col px-3">
-          <div className="flex flex-row items-center justify-between">
-            <p
-              id="grant-project-title"
-              className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200 max-2xl:text-sm mr-1"
-            >
-              {grant.project?.details?.data?.title || grant.uid}
-            </p>
+          <div className="flex flex-row items-center justify-between mb-1">
+            <div className="flex flex-row items-center gap-2">
+              <div className="flex justify-center">
+                {grant.project?.details?.data?.imageURL ? (
+                  <img
+                    alt={grant.project?.details?.data?.title || "Project"}
+                    src={grant.project?.details?.data?.imageURL}
+                    className="h-8 w-8 min-w-8 min-h-8 rounded-full object-cover border border-white shadow-sm"
+                  />
+                ) : (
+                  <div className="h-8 w-8 min-w-8 min-h-8 rounded-full overflow-hidden border border-white shadow-sm">
+                    <Avatar
+                      size="32"
+                      name={grant.project?.uid || grant.refUID || ""}
+                      variant="marble"
+                      colors={["#92A1C6", "#146A7C", "#F0AB3D", "#C271B4", "#C20D90"]}
+                    />
+                  </div>
+                )}
+              </div>
+              <p
+                id="grant-project-title"
+                className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200 max-2xl:text-sm flex-1"
+              >
+                {grant.project?.details?.data?.title || grant.uid}
+              </p>
+            </div>
           </div>
           <p
             id="grant-title"

@@ -31,6 +31,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
 import { useAccount } from "wagmi";
 import { IntroDialog } from "./IntroDialog";
+import Avatar from "boring-avatars";
 
 import { getRPCClient } from "@/utilities/rpcClient";
 import { useContactInfo } from "@/hooks/useContactInfo";
@@ -336,48 +337,68 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
       {isShareDialogOpen ? <ShareDialog /> : null}
       <div className="relative border-b border-gray-200 ">
         <div className="px-4 sm:px-6 lg:px-12 lg:flex py-5 lg:items-start lg:justify-between flex flex-row max-lg:flex-col max-lg:justify-center max-lg:items-center gap-4">
-          <div className="flex flex-col gap-4">
-            <h1
-              className={
-                "text-[32px] font-bold leading-tight text-black dark:text-zinc-100 line-clamp-2"
-              }
-            >
-              {project?.details?.data?.title}
-            </h1>
-            <div className="flex flex-row gap-10 max-lg:gap-4 flex-wrap max-lg:flex-col items-center max-lg:justify-center">
-              {socials.length > 0 && (
-                <div className="flex flex-row gap-4 items-center">
-                  {socials
-                    .filter((social) => social?.url)
-                    .map((social, index) => (
-                      <a
-                        key={social?.url || index}
-                        href={social?.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {social?.icon && (
-                          <social.icon className="h-5 w-5 fill-black text-black dark:text-white dark:fill-zinc-200" />
-                        )}
-                      </a>
-                    ))}
+          <div className="flex flex-row gap-4 items-start">
+            <div className="flex justify-center">
+              {project?.details?.data?.imageURL ? (
+                <img
+                  alt={project?.details?.data?.title || "Project"}
+                  src={project?.details?.data?.imageURL}
+                  className="h-14 w-14 min-w-14 min-h-14 rounded-full object-cover border-2 border-white shadow-lg max-lg:h-12 max-lg:w-12 max-lg:min-h-12 max-lg:min-w-12"
+                />
+              ) : (
+                <div className="h-14 w-14 min-w-14 min-h-14 rounded-full overflow-hidden border-2 border-white shadow-lg max-lg:h-12 max-lg:w-12 max-lg:min-h-12 max-lg:min-w-12">
+                  <Avatar
+                    size="56"
+                    name={project?.uid || ""}
+                    variant="marble"
+                    colors={["#92A1C6", "#146A7C", "#F0AB3D", "#C271B4", "#C20D90"]}
+                  />
                 </div>
               )}
             </div>
-            {project?.details?.data?.tags?.length ? (
-              <div className="flex flex-col gap-2 max-md:hidden">
-                <div className="flex items-center gap-x-1">
-                  {project?.details?.data?.tags?.map((tag) => (
-                    <span
-                      key={tag.name}
-                      className="rounded bg-gray-100 px-2 py-1 text-sm  font-normal text-slate-700"
-                    >
-                      {tag.name}
-                    </span>
-                  ))}
-                </div>
+            <div className="flex flex-col gap-4">
+              <h1
+                className={
+                  "text-[32px] font-bold leading-tight text-black dark:text-zinc-100 line-clamp-2"
+                }
+              >
+                {project?.details?.data?.title}
+              </h1>
+              <div className="flex flex-row gap-10 max-lg:gap-4 flex-wrap max-lg:flex-col items-center max-lg:justify-center">
+                {socials.length > 0 && (
+                  <div className="flex flex-row gap-4 items-center">
+                    {socials
+                      .filter((social) => social?.url)
+                      .map((social, index) => (
+                        <a
+                          key={social?.url || index}
+                          href={social?.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {social?.icon && (
+                            <social.icon className="h-5 w-5 fill-black text-black dark:text-white dark:fill-zinc-200" />
+                          )}
+                        </a>
+                      ))}
+                  </div>
+                )}
               </div>
-            ) : null}
+              {project?.details?.data?.tags?.length ? (
+                <div className="flex flex-col gap-2 max-md:hidden">
+                  <div className="flex items-center gap-x-1">
+                    {project?.details?.data?.tags?.map((tag) => (
+                      <span
+                        key={tag.name}
+                        className="rounded bg-gray-100 px-2 py-1 text-sm  font-normal text-slate-700"
+                      >
+                        {tag.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
           </div>
           <div className="flex flex-col gap-3 items-end justify-end">
             <div className="flex flex-row gap-6 max-lg:flex-col  max-lg:gap-3">

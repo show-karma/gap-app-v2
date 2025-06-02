@@ -116,12 +116,12 @@ export const chosenCommunities = () => {
       },
     },
     {
-      name: "Pokt",
-      slug: "pokt",
-      uid: "0x1be3b3cfd9ea03ef066beae8c0e94c289bf1eae8732bfcf82177ea4e848e61fa",
+      name: "Livepeer",
+      slug: "livepeer",
+      uid: "0x5e85f26150e28595525573a8ed18a98049435256d1c93a7132079914864902be",
       imageURL: {
-        light: "/logos/karma-pokt-black.svg",
-        dark: "/logos/karma-pokt-white.svg",
+        light: "/logos/karma-livepeer-logo-black.svg",
+        dark: "/logos/karma-livepeer-logo-white.svg",
       },
     },
     {
@@ -149,6 +149,15 @@ export const chosenCommunities = () => {
       imageURL: {
         light: "/logos/karma-greenpill.svg",
         dark: "/logos/karma-greenpill.svg",
+      },
+    },
+    {
+      name: "Good Dollar",
+      slug: "good-dollar",
+      uid: "0x801528cc69368f07500d669c4636e88a086b8bc6a2fb3c9d71f219f7853e3dba",
+      imageURL: {
+        light: "/logos/karma-gap-gooddollar.jpg",
+        dark: "/logos/karma-gap-gooddollar.jpg",
       },
     },
   ];
