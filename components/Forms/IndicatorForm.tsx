@@ -225,56 +225,6 @@ export const IndicatorForm: React.FC<IndicatorFormProps> = ({
       );
     }
 
-    // If we're in the IndicatorsHub scenario
-    if (communityId) {
-      return (
-        <div>
-          <label className="block text-sm font-medium mb-1">Programs</label>
-          <SearchWithValueDropdown
-            onSelectFunction={(value) => {
-              const selectedProgram = availablePrograms.find(
-                (p) => p.programId && p.programId === value
-              );
-              if (!selectedProgram?.programId || !selectedProgram.chainID)
-                return;
-
-              const currentPrograms = watch("programs") || [];
-              const programExists = currentPrograms.some(
-                (p) => p.programId === selectedProgram.programId
-              );
-
-              if (programExists) {
-                setValue(
-                  "programs",
-                  currentPrograms.filter(
-                    (p) => p.programId !== selectedProgram.programId
-                  )
-                );
-              } else {
-                setValue("programs", [
-                  ...currentPrograms,
-                  {
-                    programId: selectedProgram.programId,
-                    chainID: selectedProgram.chainID,
-                  },
-                ]);
-              }
-            }}
-            selected={selectedPrograms.map((p) => p.programId)}
-            list={availablePrograms
-              .filter((program) => program.programId && program.chainID)
-              .map((program) => ({
-                value: program.programId as string,
-                title: program.metadata?.title || "Untitled Program",
-              }))}
-            type="programs"
-            prefixUnselected="Select"
-            isMultiple={true}
-          />
-        </div>
-      );
-    }
-
     return null;
   };
 
