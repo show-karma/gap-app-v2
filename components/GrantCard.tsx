@@ -9,7 +9,7 @@ import { GrantPercentage } from "./Pages/Project/Grants/components/GrantPercenta
 import { MarkdownPreview } from "./Utilities/MarkdownPreview";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { TrackTags } from "./TrackTags";
-import Avatar from "boring-avatars";
+import { ProfilePicture } from "./Utilities/ProfilePicture";
 
 interface GrantCardProps {
   grant: IGrantResponse;
@@ -79,22 +79,13 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
           <div className="flex flex-row items-center justify-between mb-1">
             <div className="flex flex-row items-center gap-2">
               <div className="flex justify-center">
-                {grant.project?.details?.data?.imageURL ? (
-                  <img
-                    alt={grant.project?.details?.data?.title || "Project"}
-                    src={grant.project?.details?.data?.imageURL}
-                    className="h-8 w-8 min-w-8 min-h-8 rounded-full object-cover border border-white shadow-sm"
-                  />
-                ) : (
-                  <div className="h-8 w-8 min-w-8 min-h-8 rounded-full overflow-hidden border border-white shadow-sm">
-                    <Avatar
-                      size="32"
-                      name={grant.project?.uid || grant.refUID || ""}
-                      variant="marble"
-                      colors={["#92A1C6", "#146A7C", "#F0AB3D", "#C271B4", "#C20D90"]}
-                    />
-                  </div>
-                )}
+                <ProfilePicture
+                  imageURL={grant.project?.details?.data?.imageURL}
+                  name={grant.project?.uid || grant.refUID || ""}
+                  size="32"
+                  className="h-8 w-8 min-w-8 min-h-8 border border-white shadow-sm"
+                  alt={grant.project?.details?.data?.title || "Project"}
+                />
               </div>
               <p
                 id="grant-project-title"

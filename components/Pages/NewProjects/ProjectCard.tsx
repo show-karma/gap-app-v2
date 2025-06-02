@@ -8,7 +8,7 @@ import { PAGES } from "@/utilities/pages";
 import { formatDate } from "@/utilities/formatDate";
 import { ProjectFromList } from "@/types/project";
 import Link from "next/link";
-import Avatar from "boring-avatars";
+import { ProfilePicture } from "../../Utilities/ProfilePicture";
 
 interface ProjectCardProps {
   project: ProjectFromList;
@@ -49,22 +49,13 @@ export const ProjectCard = ({ project, index }: ProjectCardProps) => {
         <div className="flex w-full flex-col px-3">
           <div className="flex flex-row items-center gap-2 mb-1">
             <div className="flex justify-center">
-              {project?.imageURL ? (
-                <img
-                  alt={project?.title || "Project"}
-                  src={project?.imageURL}
-                  className="h-8 w-8 min-w-8 min-h-8 rounded-full object-cover border border-white shadow-sm"
-                />
-              ) : (
-                <div className="h-8 w-8 min-w-8 min-h-8 rounded-full overflow-hidden border border-white shadow-sm">
-                  <Avatar
-                    size="32"
-                    name={project?.uid || ""}
-                    variant="marble"
-                    colors={["#92A1C6", "#146A7C", "#F0AB3D", "#C271B4", "#C20D90"]}
-                  />
-                </div>
-              )}
+              <ProfilePicture
+                imageURL={project?.imageURL}
+                name={project?.uid || ""}
+                size="32"
+                className="h-8 w-8 min-w-8 min-h-8 border border-white shadow-sm"
+                alt={project?.title || "Project"}
+              />
             </div>
             <p className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200 max-2xl:text-sm flex-1">
               {project?.title}
