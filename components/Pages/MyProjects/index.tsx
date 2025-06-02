@@ -3,6 +3,7 @@
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import Pagination from "@/components/Utilities/Pagination";
+import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { useMixpanel } from "@/hooks/useMixpanel";
 import { useAuthStore } from "@/store/auth";
 import { useOnboarding } from "@/store/modals/onboarding";
@@ -20,7 +21,6 @@ import pluralize from "pluralize";
 import { useState } from "react";
 import { useAccount } from "wagmi";
 import { LoadingCard } from "./LoadingCard";
-import Avatar from "boring-avatars";
 
 const ProjectDialog = dynamic(
   () =>
@@ -146,22 +146,13 @@ export default function MyProjects() {
                           <div className="px-5 flex flex-col gap-0">
                             <div className="flex flex-row items-center gap-2 mb-1">
                               <div className="flex justify-center">
-                                {card.details?.data?.imageURL ? (
-                                  <img
-                                    alt={card.details?.data?.title || "Project"}
-                                    src={card.details?.data?.imageURL}
-                                    className="h-8 w-8 min-w-8 min-h-8 rounded-full object-cover border border-white shadow-sm"
-                                  />
-                                ) : (
-                                  <div className="h-8 w-8 min-w-8 min-h-8 rounded-full overflow-hidden border border-white shadow-sm">
-                                    <Avatar
-                                      size="32"
-                                      name={card.uid || ""}
-                                      variant="marble"
-                                      colors={["#92A1C6", "#146A7C", "#F0AB3D", "#C271B4", "#C20D90"]}
-                                    />
-                                  </div>
-                                )}
+                                <ProfilePicture
+                                  imageURL={card.details?.data?.imageURL}
+                                  name={card.uid || ""}
+                                  size="32"
+                                  className="h-8 w-8 min-w-8 min-h-8 border border-white shadow-sm"
+                                  alt={card.details?.data?.title || "Project"}
+                                />
                               </div>
                               <div className="font-body line-clamp-1 mb-0 pb-0 truncate text-base font-semibold text-gray-900 dark:text-gray-100 flex-1">
                                 {card.details?.data.title || card.uid}

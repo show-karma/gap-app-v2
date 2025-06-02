@@ -20,7 +20,7 @@ import { PAGES } from "@/utilities/pages";
 import pluralize from "pluralize";
 import { ShareIcon } from "@heroicons/react/24/outline";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import Avatar from "boring-avatars";
+import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 
 const sanitizeMarkdown = (text: string) => {
   return (
@@ -683,22 +683,13 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
           <div className="flex w-full flex-col px-3">
             <div className="flex flex-row items-center gap-2 mb-1">
               <div className="flex justify-center">
-                {project.projectDetails.data?.imageURL ? (
-                  <img
-                    alt={project.projectDetails.data?.title || "Project"}
-                    src={project.projectDetails.data?.imageURL}
-                    className="h-8 w-8 min-w-8 min-h-8 rounded-full object-cover border border-white shadow-sm"
-                  />
-                ) : (
-                  <div className="h-8 w-8 min-w-8 min-h-8 rounded-full overflow-hidden border border-white shadow-sm">
-                    <Avatar
-                      size="32"
-                      name={project.projectUID || ""}
-                      variant="marble"
-                      colors={["#92A1C6", "#146A7C", "#F0AB3D", "#C271B4", "#C20D90"]}
-                    />
-                  </div>
-                )}
+                <ProfilePicture
+                  imageURL={project.projectDetails.data?.imageURL}
+                  name={project.projectUID || ""}
+                  size="32"
+                  className="h-8 w-8 min-w-8 min-h-8 border border-white shadow-sm"
+                  alt={project.projectDetails.data?.title || "Project"}
+                />
               </div>
               <p className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200 max-2xl:text-sm flex-1">
                 {project.projectDetails.data?.title?.slice(0, 200)}
