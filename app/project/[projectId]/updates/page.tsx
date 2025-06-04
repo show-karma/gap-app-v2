@@ -34,8 +34,8 @@ export async function generateMetadata({
 
   metadata = {
     ...metadata,
-    title: `${projectInfo?.details?.data?.title} Roadmap | Karma GAP`,
-    description: `Explore the detailed roadmap of ${projectInfo?.details?.data?.title} on Karma GAP, outlining key milestones, deliverables, and progress updates. Stay informed about the project's journey and future plans, providing transparency for funders and stakeholders.`,
+    title: `${projectInfo?.details?.data?.title} Updates | Karma GAP`,
+    description: `Explore the updates of ${projectInfo?.details?.data?.title} on Karma GAP.`,
   };
 
   return {

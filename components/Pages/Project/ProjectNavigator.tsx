@@ -27,10 +27,8 @@ export const ProjectNavigator = ({
       href: PAGES.PROJECT.OVERVIEW(project?.details?.data?.slug || projectId),
     },
     {
-      name: "Roadmap",
-      href: PAGES.PROJECT.ROADMAP.ROOT(
-        project?.details?.data?.slug || projectId
-      ),
+      name: "Updates",
+      href: PAGES.PROJECT.UPDATES(project?.details?.data?.slug || projectId),
     },
     {
       name: "Funding",

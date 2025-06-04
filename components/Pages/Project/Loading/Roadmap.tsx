@@ -49,9 +49,6 @@ export const ProjectRoadmapLoading = () => {
           <div className="flex flex-col gap-1 items-start justify-start w-full">
             <div className="flex flex-row gap-2">
               <Skeleton className="h-10 w-40" />
-              <h3 className="text-2xl font-bold text-black dark:text-zinc-200">
-                Roadmap
-              </h3>
             </div>
             <div className="flex flex-row gap-2 items-center justify-start max-lg:flex-col max-lg:items-start max-lg:justify-center max-lg:gap-1">
               <Skeleton className="h-5 w-64 max-w-full" />

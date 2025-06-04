@@ -6,7 +6,6 @@ import { ActivityStatus } from "./ActivityStatus";
 import { ActivityStatusHeader } from "./ActivityStatusHeader";
 import { ActivityMenu } from "./ActivityMenu";
 import { ActivityAttribution } from "./ActivityAttribution";
-import { GrantAssociation } from "./GrantAssociation";
 import { ReadMore } from "@/utilities/ReadMore";
 import { PAGES } from "@/utilities/pages";
 import { ProjectActivityBlock } from "../../Pages/Project/Updates/ProjectActivityBlock";
@@ -146,7 +145,6 @@ export const UpdateCard: FC<UpdateCardProps> = ({
     <div className="flex flex-col gap-0 w-full">
       {/* Grants Related Section */}
       {/* Show grants related if they exist */}
-      <GrantAssociation update={update} index={index} />{" "}
       <div className="flex flex-col gap-3 w-full px-5 py-4">
         <div className="flex flex-col gap-3 w-full">
           {/* Activity Pill with Due Date and Status */}{" "}
@@ -158,6 +156,8 @@ export const UpdateCard: FC<UpdateCardProps> = ({
             }
             completed={getCompletionStatus()}
             completionStatusClassName="text-xs px-2 py-1"
+            update={update}
+            index={index}
           />
           {/* Title */}
           {update.type !== "ProjectImpact" &&

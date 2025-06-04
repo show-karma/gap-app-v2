@@ -7,7 +7,6 @@ import { useParams } from "next/navigation";
 import { ActivityStatus } from "./ActivityStatus";
 import { ActivityStatusHeader } from "./ActivityStatusHeader";
 import { ActivityAttribution } from "./ActivityAttribution";
-import { GrantAssociation } from "./GrantAssociation";
 import { ReadMore } from "@/utilities/ReadMore";
 import { formatDate } from "@/utilities/formatDate";
 import { UnifiedMilestone } from "@/types/roadmap";
@@ -220,12 +219,9 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
                 showCompletionStatus={false}
                 completed={true}
                 completionStatusClassName="text-xs px-2 py-1"
+                milestone={milestone}
               />
             </div>
-            <MilestoneVerificationSection
-              milestone={milestone}
-              title={`${title} - Reviews`}
-            />
           </div>
           {completionReason ? (
             <div className="flex flex-col gap-1">
@@ -254,6 +250,10 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
           actions={
             isAuthorized ? (
               <div className="flex flex-row gap-3 max-sm:gap-4 items-center">
+                <MilestoneVerificationSection
+                  milestone={milestone}
+                  title={`${title} - Reviews`}
+                />
                 {/* Share Button */}
                 <ExternalLink
                   href={shareOnX(
@@ -303,7 +303,6 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
       {/* Main Milestone Card */}
       <div className={cn(containerClassName, "flex flex-col w-full")}>
         {/* Grants Related Section */}
-        <GrantAssociation milestone={milestone} />
         <div className="flex flex-col gap-3 w-full px-5 py-4">
           <div className="flex flex-col gap-3 w-full">
             <ActivityStatusHeader
@@ -314,6 +313,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
               showCompletionStatus={true}
               completed={!!completed}
               completionStatusClassName="text-xs px-2 py-1"
+              milestone={milestone}
             />
             {/* Title */}
             <p className="text-xl font-bold text-[#101828] dark:text-zinc-100">

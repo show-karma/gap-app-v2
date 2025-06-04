@@ -133,7 +133,9 @@ export const VerifiedBadge: FC<VerifiedBadgeProps> = ({
         src={"/icons/milestone-verified-badge.svg"}
         className="w-6 h-6"
       />
-      <span className="text-sm font-semibold text-[#0E9384]">Verified</span>
+      <span className="text-sm font-semibold text-gray-700 dark:text-gray-400">
+        Verified by
+      </span>
       <VerificationsDialog
         verifications={orderedSort}
         isOpen={isOpenDialog}

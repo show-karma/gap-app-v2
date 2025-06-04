@@ -210,12 +210,6 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
               />
               <p className="text-xs font-bold text-white">UPDATE</p>
             </div>
-            <MilestoneVerificationSection
-              milestone={milestone}
-              title={`${milestone.data.title} - Reviews`}
-              verifiedMilestones={verifiedMilestones}
-              onVerificationAdded={addVerifiedMilestone}
-            />
           </div>
           <p className="text-sm font-semibold text-gray-500 dark:text-zinc-100">
             Posted on {formatDate(milestone?.completed?.createdAt)}
@@ -279,6 +273,12 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
               <div className="flex flex-1 flex-row items-center justify-end">
                 {isAuthorized ? (
                   <div className="flex w-max flex-row items-center gap-2">
+                    <MilestoneVerificationSection
+                      milestone={milestone}
+                      title={`${milestone.data.title} - Reviews`}
+                      verifiedMilestones={verifiedMilestones}
+                      onVerificationAdded={addVerifiedMilestone}
+                    />
                     <ExternalLink
                       type="button"
                       className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
