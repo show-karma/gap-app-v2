@@ -260,8 +260,8 @@ export const MilestonesList = ({
 
       <div className="flex w-full flex-col gap-6 rounded-xl max-lg:px-2 max-lg:py-4">
         <div className="flex flex-row gap-2 flex-wrap justify-between items-center mb-2">
-          <div className="flex flex-row gap-2 flex-wrap justify-start items-center">
-            <h3 className="text-xl font-bold text-black dark:text-zinc-200">
+          <div className="flex flex-row gap-4 flex-wrap justify-start items-center">
+            <h3 className="text-base font-bold text-black dark:text-zinc-200">
               {`All Content Types ${totalItems ? `(${totalItems})` : ""}`}
             </h3>
             <ObjectivesSub />

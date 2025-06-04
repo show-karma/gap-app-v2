@@ -292,7 +292,7 @@ export const ProjectRoadmap = ({ project }: ProjectRoadmapProps) => {
 
   return (
     <div className="flex flex-col w-full h-full items-center justify-start">
-      <div className="flex flex-col gap-2 py-11 items-center justify-start w-full max-w-full max-lg:py-6">
+      <div className="flex flex-col gap-2 pt-4 pb-11 items-center justify-start w-full max-w-full max-lg:py-6">
         {/* Combined List Section */}
         <div className="py-6 w-full">
           {isLoading ? (
