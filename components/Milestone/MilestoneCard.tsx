@@ -137,7 +137,7 @@ export const MilestoneCard = ({
             {completionProof ? (
               <div className="flex flex-col gap-1">
                 <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-                  Proof of Work:
+                  Proof of Work
                 </p>
                 <a
                   href={completionProof}
@@ -211,7 +211,7 @@ export const MilestoneCard = ({
         <div className="flex flex-row gap-x-4 gap-y-2 items-center justify-between w-full flex-wrap">
           <div className="flex flex-row gap-2 items-center flex-wrap">
             <p className="text-zinc-800 dark:text-zinc-300 text-sm lg:text-base">
-              Posted on {formatDate(createdAt)} by
+              Created on {formatDate(createdAt)} by
             </p>
             <div className="flex flex-row gap-1 items-center">
               <EthereumAddressToENSAvatar
@@ -247,7 +247,7 @@ export const MilestoneCard = ({
                 {completionProof ? (
                   <div className="flex flex-col gap-1">
                     <p className="text-sm font-semibold text-zinc-800 dark:text-zinc-200">
-                      Proof of Work:
+                      Proof of Work
                     </p>
                     <a
                       href={completionProof}

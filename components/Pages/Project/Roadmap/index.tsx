@@ -20,7 +20,6 @@ import { Button } from "@/components/Utilities/Button";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { MESSAGES } from "@/utilities/messages";
 import { UnifiedMilestone } from "@/types/roadmap";
-import { RoadmapFilter } from "./RoadmapFilter";
 
 interface ProjectRoadmapProps {
   project: IProjectResponse;

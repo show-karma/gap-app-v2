@@ -22,10 +22,10 @@ import pluralize from "pluralize";
 
 // Filter options for the content type filter
 const CONTENT_TYPE_OPTIONS: Record<string, string> = {
-  all: "All Content Types",
+  all: "All Updates",
   pending: "Pending Milestones",
   completed: "Completed Milestones",
-  impacts: "Project Impacts",
+  // impacts: "Project Impacts",
   activities: "Project Activities",
   updates: "Grant Updates",
 };
@@ -259,30 +259,21 @@ export const MilestonesList = ({
       ) : null} */}
 
       <div className="flex w-full flex-col gap-6 rounded-xl max-lg:px-2 max-lg:py-4">
-        <div className="flex flex-row gap-2 flex-wrap justify-between items-center mb-2">
-          <div className="flex flex-row gap-4 flex-wrap justify-start items-center">
-            <h3 className="text-base font-bold text-black dark:text-zinc-200">
-              {`All Content Types ${totalItems ? `(${totalItems})` : ""}`}
-            </h3>
-            <ObjectivesSub />
-          </div>
-
-          {/* Content Type Filter */}
-          <div className="relative">
+        <div className="flex flex-col gap-2 flex-wrap justify-start items-start mb-2">
+          <div className="flex flex-row gap-4 flex-wrap justify-between items-center w-full">
             <Listbox
               value={selectedContentType}
               onChange={handleContentTypeChange}
             >
               <div className="relative">
-                <Listbox.Button className="cursor-pointer items-center relative w-full rounded-md pr-8 text-left sm:text-sm sm:leading-6 text-black dark:text-white text-base font-normal">
-                  <span className="flex flex-row gap-1">
-                    {CONTENT_TYPE_OPTIONS[selectedContentType]}
+                <Listbox.Button className="cursor-pointer items-center relative w-full rounded-md pr-8 text-left sm:text-sm sm:leading-6 text-base font-semibold bg-zinc-100 text-zinc-800 dark:bg-zinc-800 dark:text-zinc-100 px-3 py-2">
+                  <span className="flex flex-row gap-1 ">
+                    {CONTENT_TYPE_OPTIONS[selectedContentType] === "All Updates"
+                      ? `All Updates ${totalItems ? `(${totalItems})` : ""}`
+                      : CONTENT_TYPE_OPTIONS[selectedContentType]}
                   </span>
                   <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                    <ChevronDownIcon
-                      className="h-4 w-4 text-gray-400"
-                      aria-hidden="true"
-                    />
+                    <ChevronDownIcon className="h-4 w-4" aria-hidden="true" />
                   </span>
                 </Listbox.Button>
 
@@ -292,7 +283,7 @@ export const MilestonesList = ({
                   leaveFrom="opacity-100"
                   leaveTo="opacity-0"
                 >
-                  <Listbox.Options className="absolute right-0 z-50 mt-1 max-h-60 w-max overflow-auto rounded-md bg-white py-1 text-base dark:bg-zinc-800 dark:text-zinc-200 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                  <Listbox.Options className="absolute left-0 z-50 mt-1 max-h-60 w-max overflow-auto rounded-md bg-white py-1 text-base dark:bg-zinc-800 dark:text-zinc-200 ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                     {Object.keys(CONTENT_TYPE_OPTIONS).map((contentType) => (
                       <Listbox.Option
                         key={contentType}
@@ -338,7 +329,10 @@ export const MilestonesList = ({
                 </Transition>
               </div>
             </Listbox>
+            <ObjectivesSub />
           </div>
+
+          {/* Content Type Filter */}
         </div>
         {unifiedMilestones && unifiedMilestones.length > 0 ? (
           unifiedMilestones.map((item, index) =>

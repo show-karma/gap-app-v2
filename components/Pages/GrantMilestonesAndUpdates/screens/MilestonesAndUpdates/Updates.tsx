@@ -212,7 +212,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
             </div>
           </div>
           <p className="text-sm font-semibold text-gray-500 dark:text-zinc-100">
-            Posted on {formatDate(milestone?.completed?.createdAt)}
+            Completed on {formatDate(milestone?.completed?.createdAt)}
           </p>
         </div>
 

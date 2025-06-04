@@ -42,12 +42,12 @@ export const ActivityStatusHeader: FC<ActivityStatusHeaderProps> = ({
     <div className="w-full flex flex-row gap-2">
       <div className="flex flex-row items-center justify-between w-full flex-wrap gap-2">
         <div className="flex flex-row items-center gap-2 w-full flex-1 flex-wrap">
+          <ActivityStatus type={activityType} />
           <GrantAssociation
             update={update}
             index={index}
             milestone={milestone}
           />
-          <ActivityStatus type={activityType} />
           {dueDate && (
             <span className="text-sm font-semibold text-brand-gray dark:text-gray-400">
               Due by {dueDate}

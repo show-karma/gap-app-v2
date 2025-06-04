@@ -6,12 +6,14 @@ interface ActivityAttributionProps {
   createdAt: number | string;
   attester?: string;
   actions?: React.ReactNode;
+  isCompleted?: boolean;
 }
 
 export const ActivityAttribution = ({
   createdAt,
   attester,
   actions,
+  isCompleted = false,
 }: ActivityAttributionProps) => {
   return (
     <div className="flex flex-col gap-2 w-full border-t border-gray-300 dark:border-zinc-400 px-5 py-3">
@@ -31,7 +33,8 @@ export const ActivityAttribution = ({
               </p>
             )}
             <p className="text-gray-600 dark:text-zinc-300 text-sm font-medium">
-              Posted on {formatDate(createdAt)}
+              {isCompleted ? "Completed on" : "Created on"}{" "}
+              {formatDate(createdAt)}
             </p>
           </div>
         </div>

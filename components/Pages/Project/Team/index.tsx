@@ -54,10 +54,7 @@ export const Team = () => {
   return (
     <div className="pt-5 pb-20 flex flex-col items-start gap-4">
       <ContributorProfileDialog />
-      <div className="flex flex-row gap-2 w-full max-w-3xl justify-between">
-        <h3 className="font-semibold text-lg text-black dark:text-white">
-          Built by
-        </h3>
+      <div className="flex flex-row gap-2 w-full max-w-3xl justify-end">
         {isAuthorized ? <InviteMemberDialog /> : null}
       </div>
       <div className="flex flex-col gap-4 max-w-3xl w-full">

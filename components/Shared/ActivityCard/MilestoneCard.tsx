@@ -210,9 +210,6 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
         <div className={"w-full flex-col flex gap-2 px-5 py-4"}>
           <div className="flex flex-row items-center justify-between gap-2 flex-wrap">
             <div className="flex flex-row items-center gap-3">
-              {!verifiedMilestones ? (
-                <div className="bg-red-600 w-2 h-2 max-w-2 max-h-2 rounded-full min-w-2 min-h-2" />
-              ) : null}
               <ActivityStatusHeader
                 activityType="MilestoneUpdate"
                 dueDate={null}
@@ -293,6 +290,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
               </div>
             ) : undefined
           }
+          isCompleted
         />
       </div>
     );

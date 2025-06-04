@@ -137,7 +137,7 @@ const Menu = () => {
         <Box
           icon="/icons/project-update.png"
           title="Project Activity"
-          description="Provide overall project progress and optionally associate it with grants."
+          description="Provide overall project progress across grants."
           onClick={() => select("project_update")}
           isSelected={selectedScreen === "project_update"}
         />
@@ -174,7 +174,7 @@ export const ProgressDialog = () => {
       description: string;
     }
   > = {
-    menu: { title: `What would you like to post today?`, description: "" },
+    menu: { title: `What would you like to share today?`, description: "" },
     milestone: {
       title: `Select the grant you wish to update`,
       description: "Define specific milestone goals for grant achievements",
