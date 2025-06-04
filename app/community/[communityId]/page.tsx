@@ -57,7 +57,7 @@ export default async function Page({ params }: Props) {
     notFound();
   }
 
-  const defaultSortBy = "milestones" as SortByOptions;
+  const defaultSortBy = "transactions_desc" as SortByOptions;
   const defaultSelectedCategories: string[] = [];
   const defaultSelectedStatus = "all" as StatusOptions;
 
