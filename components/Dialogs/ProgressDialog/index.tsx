@@ -123,7 +123,7 @@ const Menu = () => {
         <Box
           icon="/icons/milestone.png"
           title="Milestone"
-          description="Create milestones for your project roadmap or grants."
+          description="Create milestones for your project or grant(s)."
           onClick={() => select("unified_milestone")}
           isSelected={selectedScreen === "unified_milestone"}
         />
@@ -189,8 +189,7 @@ export const ProgressDialog = () => {
     },
     unified_milestone: {
       title: `Create a Milestone`,
-      description:
-        "Create milestones for your project roadmap or specific grants.",
+      description: "Create milestones for your project or grant(s).",
     },
   };
 
