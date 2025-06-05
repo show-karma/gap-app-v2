@@ -148,7 +148,13 @@ export const projectSchema = z.object({
   pitchDeck: z.string().optional(),
   demoVideo: z.string().optional(),
   farcaster: z.string().optional(),
-  profilePicture: z.string().optional(),
+  profilePicture: z
+    .string({
+      required_error: "Profile picture URL is required",
+    })
+    .min(1, {
+      message: "Profile picture URL is required",
+    }),
   businessModel: z.string().optional(),
   stageIn: z.string().optional(),
   raisedMoney: z.string().optional(),
@@ -1084,7 +1090,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           </div>
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="profile-picture-input" className={labelStyle}>
-              Profile Picture (optional)
+              Profile Picture
             </label>
             <div className="flex w-full flex-row items-center gap-2 rounded-lg border border-gray-400 px-4 py-2">
               <UserCircleIcon className="h-5 w-5" />
@@ -1340,9 +1346,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                   {!projectToUpdate && (
                     <div className="mt-2  max-w-3xl">
                       <p className="text-sm text-gray-600 dark:text-zinc-300">
-                        We’ll start by outlining some basics about your project.
-                        Don’t worry about grants right now, you can add that
-                        from your Project Page once it’s been created.
+                        We&apos;ll start by outlining some basics about your project.
+                        Don&apos;t worry about grants right now, you can add that
+                        from your Project Page once it&apos;s been created.
                       </p>
                     </div>
                   )}
