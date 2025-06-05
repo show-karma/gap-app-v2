@@ -1,0 +1,106 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_poolId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getPool",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "bytes32",
+            "name": "profileId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "contract IStrategy",
+            "name": "strategy",
+            "type": "address"
+          },
+          {
+            "internalType": "address",
+            "name": "token",
+            "type": "address"
+          },
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "protocol",
+                "type": "uint256"
+              },
+              {
+                "internalType": "string",
+                "name": "pointer",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct Metadata",
+            "name": "metadata",
+            "type": "tuple"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "managerRole",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "adminRole",
+            "type": "bytes32"
+          }
+        ],
+        "internalType": "struct Pool",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_poolId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address[]",
+        "name": "_recipientIds",
+        "type": "address[]"
+      },
+      {
+        "internalType": "bytes",
+        "name": "_data",
+        "type": "bytes"
+      }
+    ],
+    "name": "distribute",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_poolId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_amount",
+        "type": "uint256"
+      }
+    ],
+    "name": "fundPool",
+    "outputs": [],
+    "stateMutability": "payable",
+    "type": "function"
+  }
+] 
