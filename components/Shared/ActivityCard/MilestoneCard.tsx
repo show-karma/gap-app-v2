@@ -130,7 +130,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
   // Function to render project milestone completion form or details
   const renderMilestoneCompletion = () => {
     if (isCompleting) {
-      if (type === "project" && projectMilestone) {
+      if (type === "milestone" && projectMilestone) {
         return (
           <ProjectObjectiveCompletion
             objectiveUID={projectMilestone.uid}
@@ -174,7 +174,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
       );
     }
 
-    if (isEditing && type === "project") {
+    if (isEditing && type === "milestone") {
       return (
         <div
           className={cn(containerClassName, "flex flex-col gap-4 w-full p-4")}
@@ -344,7 +344,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
                 )}
 
                 {/* Options Menu with only Delete */}
-                {type === "project" && projectMilestone ? (
+                {type === "milestone" && projectMilestone ? (
                   <ObjectiveSimpleOptionsMenu
                     objectiveId={projectMilestone.uid}
                   />

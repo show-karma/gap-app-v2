@@ -413,9 +413,7 @@ export const UnifiedMilestoneScreen = () => {
       changeStepperStep("indexed");
 
       router.push(
-        PAGES.PROJECT.ROADMAP.ROOT(
-          project?.details?.data.slug || project?.uid || ""
-        )
+        PAGES.PROJECT.UPDATES(project?.details?.data.slug || project?.uid || "")
       );
       closeProgressModal();
     } catch (error) {

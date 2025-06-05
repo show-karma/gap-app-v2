@@ -721,7 +721,7 @@ export const useMilestone = () => {
             );
             refetch();
             router.push(
-              PAGES.PROJECT.ROADMAP.ROOT(
+              PAGES.PROJECT.UPDATES(
                 project?.details?.data.slug || project?.uid || ""
               )
             );
@@ -886,7 +886,7 @@ export const useMilestone = () => {
               );
               refetch();
               router.push(
-                PAGES.PROJECT.ROADMAP.ROOT(
+                PAGES.PROJECT.UPDATES(
                   project?.details?.data.slug || project?.uid || ""
                 )
               );

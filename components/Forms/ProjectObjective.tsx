@@ -150,7 +150,7 @@ export const ProjectObjectiveForm = ({
                   toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.SUCCESS);
                   await refetch();
                   stateHandler?.(false);
-                  router.push(PAGES.PROJECT.ROADMAP.ROOT(projectId));
+                  router.push(PAGES.PROJECT.UPDATES(projectId));
                 }
                 retries -= 1;
                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return

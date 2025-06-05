@@ -589,9 +589,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                   changeStepperStep("indexed");
                   toast.success(MESSAGES.PROJECT_UPDATE_FORM.SUCCESS);
                   afterSubmit?.();
-                  router.push(
-                    PAGES.PROJECT.ROADMAP.ROOT(projectSlug || projectUid)
-                  );
+                  router.push(PAGES.PROJECT.UPDATES(projectSlug || projectUid));
                   router.refresh();
                   openShareDialog({
                     modalShareText: `🎉 You just dropped an update for ${project?.details?.data?.title}!`,
