@@ -16,6 +16,8 @@ type DeleteDialogProps = {
   isLoading: boolean;
   afterFunction?: () => void;
   "data-delete-project-button"?: string;
+  externalIsOpen?: boolean;
+  externalSetIsOpen?: (isOpen: boolean) => void;
 };
 
 export const DeleteDialog: FC<DeleteDialogProps> = ({
@@ -30,14 +32,18 @@ export const DeleteDialog: FC<DeleteDialogProps> = ({
   isLoading,
   afterFunction,
   "data-delete-project-button": dataAttr,
+  externalIsOpen,
+  externalSetIsOpen,
 }) => {
-  let [isOpen, setIsOpen] = useState(false);
+  let [isOpen, setIsOpen] = useState(externalIsOpen || false);
 
   function closeModal() {
     setIsOpen(false);
+    externalSetIsOpen?.(false);
   }
   function openModal() {
     setIsOpen(true);
+    externalSetIsOpen?.(true);
   }
 
   const handleFunction = async () => {
