@@ -150,7 +150,11 @@ export const ProjectObjectiveForm = ({
                   toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.SUCCESS);
                   await refetch();
                   stateHandler?.(false);
-                  router.push(PAGES.PROJECT.UPDATES(projectId));
+                  router.push(
+                    PAGES.PROJECT.UPDATES(
+                      project?.details?.data.slug || project?.uid || ""
+                    )
+                  );
                 }
                 retries -= 1;
                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return

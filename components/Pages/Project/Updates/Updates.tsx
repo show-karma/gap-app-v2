@@ -47,14 +47,6 @@ export const UpdatesPage: FC = () => {
       grantMilestones.push(...grant.milestones);
     });
 
-    console.log("Data counts:", {
-      updates: updates.length,
-      grantUpdates: grantUpdates.length,
-      grantMilestones: grantMilestones.length,
-      projectMilestones: projectMilestones?.length || 0,
-      projectImpacts: impacts.length,
-    });
-
     const sortedUpdates = [
       ...updates,
       ...grantUpdates,
