@@ -249,6 +249,8 @@ export const ProjectOptionsMenu = () => {
               isLoading={isDeleting}
               buttonElement={null}
               afterFunction={handleDeleteDialogClose}
+              externalIsOpen={showDeleteDialog}
+              externalSetIsOpen={setShowDeleteDialog}
             />
           )}
         </>
