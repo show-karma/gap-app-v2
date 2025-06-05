@@ -1,5 +1,5 @@
 import { Dialog, Transition } from "@headlessui/react";
-import { Fragment, useState } from "react";
+import { Fragment, useState, useEffect } from "react";
 import { ProjectUpdateFormBlock } from "./ProjectUpdateFormBlock";
 import { cn } from "@/utilities/tailwind";
 import dynamic from "next/dynamic";
@@ -27,10 +27,11 @@ export const EditUpdateDialog = ({
   // Keep track of current update ID to force remount when changed
   const [currentUpdateId, setCurrentUpdateId] = useState(updateId);
 
-  // Update state if props change
-  if (isOpen && updateId !== currentUpdateId) {
-    setCurrentUpdateId(updateId);
-  }
+  useEffect(() => {
+    if (isOpen && updateId !== currentUpdateId) {
+      setCurrentUpdateId(updateId);
+    }
+  }, [isOpen, updateId, currentUpdateId]);
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
