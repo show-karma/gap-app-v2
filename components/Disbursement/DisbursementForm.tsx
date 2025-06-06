@@ -8,7 +8,13 @@ import { DisbursementReview } from "./DisbursementReview";
 import { DisbursementRecipient } from "../../types/disbursement";
 import { DisbursementStepper, DisbursementStep } from "./DisbursementStepper";
 import { NETWORKS, TOKENS, SupportedChainId } from "../../config/tokens";
-import { isSafeOwner, getSafeTokenBalance, signAndProposeDisbursement, isSafeDeployed } from "../../utilities/safe";
+import {
+  isSafeOwner,
+  getSafeTokenBalance,
+  signAndProposeDisbursement,
+  isSafeDeployed,
+} from "../../utilities/safe";
+import { formatNumber } from "../Pages/Project/Impact/OSOMetrics";
 
 const NETWORK_OPTIONS = [
   { id: 42220, name: "Celo" },
@@ -86,7 +92,7 @@ export const DisbursementForm = () => {
 
   const handleNetworkChange = async (newNetwork: SupportedChainId) => {
     setNetwork(newNetwork);
-    
+
     // Auto-switch wallet network if connected and different from selected
     if (isConnected && walletChainId !== newNetwork) {
       try {
@@ -139,22 +145,20 @@ export const DisbursementForm = () => {
       complete: (results) => {
         // Skip the first row (header row)
         const dataRows = results.data.slice(1);
-        
-        const parsedData: DisbursementRecipient[] = dataRows.map(
-          (row: any) => {
-            const address = row[0]?.trim();
-            const amount = row[1]?.trim();
-            let error: string | undefined;
 
-            if (!isAddress(address)) {
-              error = "Invalid address";
-            } else if (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
-              error = "Invalid amount";
-            }
+        const parsedData: DisbursementRecipient[] = dataRows.map((row: any) => {
+          const address = row[0]?.trim();
+          const amount = row[1]?.trim();
+          let error: string | undefined;
 
-            return { address, amount, error };
+          if (!isAddress(address)) {
+            error = "Invalid address";
+          } else if (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+            error = "Invalid amount";
           }
-        );
+
+          return { address, amount, error };
+        });
         setRecipients(parsedData);
       },
     });
@@ -162,16 +166,21 @@ export const DisbursementForm = () => {
 
   // Run pre-flight checks
   const runPreflightChecks = useCallback(async () => {
-    if (!safeAddress || !userAddress || !isConnected || recipients.length === 0) {
+    if (
+      !safeAddress ||
+      !userAddress ||
+      !isConnected ||
+      recipients.length === 0
+    ) {
       return;
     }
 
-    setPreflightChecks(prev => ({ ...prev, isChecking: true, error: null }));
+    setPreflightChecks((prev) => ({ ...prev, isChecking: true, error: null }));
 
     try {
       // First check if wallet is on correct network
       const isCorrectNetwork = walletChainId === network;
-      
+
       if (!isCorrectNetwork) {
         setPreflightChecks({
           isCorrectNetwork: false,
@@ -180,14 +189,16 @@ export const DisbursementForm = () => {
           hasSufficientBalance: null,
           safeBalance: "0",
           isChecking: false,
-          error: `Please switch your wallet to ${NETWORK_OPTIONS.find(n => n.id === network)?.name} network.`,
+          error: `Please switch your wallet to ${
+            NETWORK_OPTIONS.find((n) => n.id === network)?.name
+          } network.`,
         });
         return;
       }
 
       // Check if Safe is deployed on this network
       const isDeployed = await isSafeDeployed(safeAddress, network);
-      
+
       if (!isDeployed) {
         setPreflightChecks({
           isCorrectNetwork: true,
@@ -196,7 +207,9 @@ export const DisbursementForm = () => {
           hasSufficientBalance: null,
           safeBalance: "0",
           isChecking: false,
-          error: `Safe is not deployed on ${NETWORK_OPTIONS.find(n => n.id === network)?.name}. Please check the address and network.`,
+          error: `Safe is not deployed on ${
+            NETWORK_OPTIONS.find((n) => n.id === network)?.name
+          }. Please check the address and network.`,
         });
         return;
       }
@@ -205,8 +218,12 @@ export const DisbursementForm = () => {
       const isOwner = await isSafeOwner(safeAddress, userAddress, network);
 
       // Get Safe token balance
-      const balanceInfo = await getSafeTokenBalance(safeAddress, token, network);
-      
+      const balanceInfo = await getSafeTokenBalance(
+        safeAddress,
+        token,
+        network
+      );
+
       // Calculate total amount needed
       const totalAmount = recipients.reduce((sum, r) => {
         if (!r.error) {
@@ -215,7 +232,8 @@ export const DisbursementForm = () => {
         return sum;
       }, 0);
 
-      const hasSufficientBalance = parseFloat(balanceInfo.balanceFormatted) >= totalAmount;
+      const hasSufficientBalance =
+        parseFloat(balanceInfo.balanceFormatted) >= totalAmount;
 
       setPreflightChecks({
         isCorrectNetwork: true,
@@ -226,10 +244,9 @@ export const DisbursementForm = () => {
         isChecking: false,
         error: null,
       });
-
     } catch (error) {
       console.error("Pre-flight check failed:", error);
-      setPreflightChecks(prev => ({
+      setPreflightChecks((prev) => ({
         ...prev,
         isChecking: false,
         error: "Failed to verify Safe. Please check the address and network.",
@@ -265,7 +282,6 @@ export const DisbursementForm = () => {
         error: null,
         result,
       });
-
     } catch (error) {
       console.error("Disbursement failed:", error);
       setTransactionState({
@@ -282,7 +298,14 @@ export const DisbursementForm = () => {
     if (safeAddress && userAddress && isConnected && recipients.length > 0) {
       runPreflightChecks();
     }
-  }, [runPreflightChecks, safeAddress, userAddress, isConnected, recipients, walletChainId]);
+  }, [
+    runPreflightChecks,
+    safeAddress,
+    userAddress,
+    isConnected,
+    recipients,
+    walletChainId,
+  ]);
 
   // Update step based on form completion
   useEffect(() => {
@@ -293,9 +316,10 @@ export const DisbursementForm = () => {
   }, [safeAddress, completedSteps]);
 
   const hasErrors = recipients.some((r) => r.error);
-  const canDisburse = recipients.length > 0 && 
-    !hasErrors && 
-    safeAddress && 
+  const canDisburse =
+    recipients.length > 0 &&
+    !hasErrors &&
+    safeAddress &&
     isConnected &&
     preflightChecks.isCorrectNetwork === true &&
     preflightChecks.isDeployed === true &&
@@ -304,7 +328,10 @@ export const DisbursementForm = () => {
     !preflightChecks.isChecking &&
     !transactionState.isProcessing;
 
-  const totalAmount = recipients.reduce((sum, r) => sum + (parseFloat(r.amount) || 0), 0);
+  const totalAmount = recipients.reduce(
+    (sum, r) => sum + (parseFloat(r.amount) || 0),
+    0
+  );
 
   // Don't show form if transaction is complete
   if (transactionState.isComplete && transactionState.result) {
@@ -312,34 +339,57 @@ export const DisbursementForm = () => {
       <div className="mx-auto max-w-4xl py-8">
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
           <div className="px-8 py-12 text-center">
-            <div className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ${
-              transactionState.result.executed ? 'bg-green-100' : 'bg-blue-100'
-            }`}>
+            <div
+              className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full ${
+                transactionState.result.executed
+                  ? "bg-green-100"
+                  : "bg-blue-100"
+              }`}
+            >
               {transactionState.result.executed ? (
-                <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                <svg
+                  className="h-8 w-8 text-green-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="2"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M4.5 12.75l6 6 9-13.5"
+                  />
                 </svg>
               ) : (
-                <svg className="h-8 w-8 text-blue-600" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  className="h-8 w-8 text-blue-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="2"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
               )}
             </div>
             <div className="mt-6">
               <h3 className="text-2xl font-bold text-gray-900">
-                {transactionState.result.executed ? '🎉 Disbursement Completed!' : '✅ Transaction Ready!'}
+                {transactionState.result.executed
+                  ? "🎉 Disbursement Completed!"
+                  : "✅ Transaction Ready!"}
               </h3>
               <div className="mt-4 space-y-3">
                 <p className="text-gray-600 max-w-2xl mx-auto">
-                  {transactionState.result.executed 
+                  {transactionState.result.executed
                     ? `Successfully executed disbursement to ${transactionState.result.totalRecipients} recipients for a total of ${transactionState.result.totalAmount} USDC. The funds have been transferred!`
-                    : `Successfully signed disbursement to ${transactionState.result.totalRecipients} recipients for a total of ${transactionState.result.totalAmount} USDC. The transaction is ready for execution.`
-                  }
+                    : `Successfully signed disbursement to ${transactionState.result.totalRecipients} recipients for a total of ${transactionState.result.totalAmount} USDC. The transaction is ready for execution.`}
                 </p>
                 <div className="bg-gray-50 rounded-lg px-4 py-3 mx-auto max-w-md">
-                  <p className="text-sm text-gray-600">
-                    Transaction Hash:
-                  </p>
+                  <p className="text-sm text-gray-600">Transaction Hash:</p>
                   <code className="text-xs font-mono bg-white px-2 py-1 rounded border text-gray-800 break-all">
                     {transactionState.result.txHash}
                   </code>
@@ -347,13 +397,24 @@ export const DisbursementForm = () => {
                 {transactionState.result.createTxUrl && (
                   <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
                     <div className="flex items-start">
-                      <svg className="h-5 w-5 text-amber-400 mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                      <svg
+                        className="h-5 w-5 text-amber-400 mt-0.5 mr-3 flex-shrink-0"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
+                          clipRule="evenodd"
+                        />
                       </svg>
                       <div>
-                        <p className="text-sm font-medium text-amber-800">Manual Action Required</p>
+                        <p className="text-sm font-medium text-amber-800">
+                          Manual Action Required
+                        </p>
                         <p className="text-sm text-amber-700 mt-1">
-                          The Safe Transaction Service is unavailable. Please use the Safe app to manually create this transaction.
+                          The Safe Transaction Service is unavailable. Please
+                          use the Safe app to manually create this transaction.
                         </p>
                       </div>
                     </div>
@@ -368,8 +429,18 @@ export const DisbursementForm = () => {
                     rel="noopener noreferrer"
                     className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200"
                   >
-                    <svg className="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    <svg
+                      className="mr-2 h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                      />
                     </svg>
                     View Transaction
                   </a>
@@ -380,8 +451,18 @@ export const DisbursementForm = () => {
                     rel="noopener noreferrer"
                     className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
                   >
-                    <svg className="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    <svg
+                      className="mr-2 h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                      />
                     </svg>
                     Open Safe App
                   </a>
@@ -392,8 +473,18 @@ export const DisbursementForm = () => {
                     rel="noopener noreferrer"
                     className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
                   >
-                    <svg className="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    <svg
+                      className="mr-2 h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                      />
                     </svg>
                     View in Safe App
                   </a>
@@ -415,8 +506,18 @@ export const DisbursementForm = () => {
                   }}
                   className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 shadow-sm"
                 >
-                  <svg className="mr-2 h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                  <svg
+                    className="mr-2 h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 4v16m8-8H4"
+                    />
                   </svg>
                   Start New Disbursement
                 </button>
@@ -433,8 +534,12 @@ export const DisbursementForm = () => {
       <div className="mx-auto max-w-6xl px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">💰 Safe Disbursement</h1>
-          <p className="text-gray-600">Distribute USDC tokens to multiple recipients using Gnosis Safe</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            💰 Safe Disbursement
+          </h1>
+          <p className="text-gray-600">
+            Distribute USDC tokens to multiple recipients using Gnosis Safe
+          </p>
         </div>
 
         {/* Stepper */}
@@ -446,14 +551,21 @@ export const DisbursementForm = () => {
         </div>
 
         <div className="space-y-6">
-
           {/* Transaction Error */}
           {transactionState.error && (
             <div className="rounded-xl bg-red-50 border border-red-200 p-6 shadow-sm">
               <div className="flex">
                 <div className="flex-shrink-0">
-                  <svg className="h-6 w-6 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clipRule="evenodd" />
+                  <svg
+                    className="h-6 w-6 text-red-400"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </div>
                 <div className="ml-3">
@@ -466,7 +578,12 @@ export const DisbursementForm = () => {
                   <div className="mt-3">
                     <button
                       type="button"
-                      onClick={() => setTransactionState(prev => ({ ...prev, error: null }))}
+                      onClick={() =>
+                        setTransactionState((prev) => ({
+                          ...prev,
+                          error: null,
+                        }))
+                      }
                       className="text-sm text-red-800 hover:text-red-900 underline font-medium"
                     >
                       Dismiss
@@ -482,8 +599,16 @@ export const DisbursementForm = () => {
             <div className="rounded-xl bg-amber-50 border border-amber-200 p-6 shadow-sm">
               <div className="flex">
                 <div className="flex-shrink-0">
-                  <svg className="h-6 w-6 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z" clipRule="evenodd" />
+                  <svg
+                    className="h-6 w-6 text-amber-400"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </div>
                 <div className="ml-3">
@@ -501,11 +626,23 @@ export const DisbursementForm = () => {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-center mb-6">
               <div className="bg-indigo-100 rounded-lg p-2 mr-3">
-                <svg className="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4" />
+                <svg
+                  className="h-5 w-5 text-indigo-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"
+                  />
                 </svg>
               </div>
-              <h2 className="text-xl font-semibold text-gray-900">⚙️ Configure Disbursement</h2>
+              <h2 className="text-xl font-semibold text-gray-900">
+                ⚙️ Configure Disbursement
+              </h2>
             </div>
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               {/* Safe Address Input */}
@@ -540,7 +677,11 @@ export const DisbursementForm = () => {
                   id="network"
                   name="network"
                   value={network}
-                  onChange={(e) => handleNetworkChange(Number(e.target.value) as SupportedChainId)}
+                  onChange={(e) =>
+                    handleNetworkChange(
+                      Number(e.target.value) as SupportedChainId
+                    )
+                  }
                   className="block w-full rounded-lg border-gray-300 py-2 pl-3 pr-10 text-base focus:border-indigo-500 focus:outline-none focus:ring-indigo-500 sm:text-sm transition-colors"
                   disabled={transactionState.isProcessing || isSwitchingNetwork}
                 >
@@ -581,11 +722,23 @@ export const DisbursementForm = () => {
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div className="flex items-center mb-6">
               <div className="bg-emerald-100 rounded-lg p-2 mr-3">
-                <svg className="h-5 w-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                <svg
+                  className="h-5 w-5 text-emerald-600"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
                 </svg>
               </div>
-              <h2 className="text-xl font-semibold text-gray-900">📄 Upload Recipients</h2>
+              <h2 className="text-xl font-semibold text-gray-900">
+                📄 Upload Recipients
+              </h2>
             </div>
             <div>
               <label
@@ -599,7 +752,11 @@ export const DisbursementForm = () => {
                   isDragOver
                     ? "border-indigo-400 bg-indigo-50 scale-105"
                     : "border-gray-300 hover:border-gray-400"
-                } ${transactionState.isProcessing ? "opacity-50 pointer-events-none" : ""}`}
+                } ${
+                  transactionState.isProcessing
+                    ? "opacity-50 pointer-events-none"
+                    : ""
+                }`}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
@@ -649,82 +806,145 @@ export const DisbursementForm = () => {
             </div>
           </div>
 
-      <DisbursementReview recipients={recipients} />
+          <DisbursementReview recipients={recipients} />
 
           {/* Pre-flight Check Status */}
           {safeAddress && isConnected && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <div className="flex items-center mb-6">
                 <div className="bg-blue-100 rounded-lg p-2 mr-3">
-                  <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <svg
+                    className="h-5 w-5 text-blue-600"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
                   </svg>
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900">🔍 Pre-flight Checks</h3>
+                <h3 className="text-xl font-semibold text-gray-900">
+                  🔍 Pre-flight Checks
+                </h3>
               </div>
               <div className="space-y-4">
                 {preflightChecks.isChecking ? (
                   <div className="flex items-center justify-center py-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3"></div>
-                    <span className="text-blue-600 font-medium">Verifying Safe access and balance...</span>
+                    <span className="text-blue-600 font-medium">
+                      Verifying Safe access and balance...
+                    </span>
                   </div>
                 ) : (
                   <>
-                    <div className={`flex items-center p-3 rounded-lg border ${
-                      preflightChecks.isCorrectNetwork === true ? "bg-green-50 border-green-200 text-green-700" : 
-                      preflightChecks.isCorrectNetwork === false ? "bg-red-50 border-red-200 text-red-700" : "bg-gray-50 border-gray-200 text-gray-600"
-                    }`}>
+                    <div
+                      className={`flex items-center p-3 rounded-lg border ${
+                        preflightChecks.isCorrectNetwork === true
+                          ? "bg-green-50 border-green-200 text-green-700"
+                          : preflightChecks.isCorrectNetwork === false
+                          ? "bg-red-50 border-red-200 text-red-700"
+                          : "bg-gray-50 border-gray-200 text-gray-600"
+                      }`}
+                    >
                       <span className="text-lg mr-3">
-                        {preflightChecks.isCorrectNetwork === true ? "✅" : preflightChecks.isCorrectNetwork === false ? "❌" : "⏳"}
+                        {preflightChecks.isCorrectNetwork === true
+                          ? "✅"
+                          : preflightChecks.isCorrectNetwork === false
+                          ? "❌"
+                          : "⏳"}
                       </span>
                       <div>
                         <div className="font-medium">🌐 Wallet Network</div>
                         <div className="text-sm">
-                          {preflightChecks.isCorrectNetwork === true ? "Connected to correct network" :
-                          preflightChecks.isCorrectNetwork === false ? `Auto-switching to ${NETWORK_OPTIONS.find(n => n.id === network)?.name}...` : 
-                          isSwitchingNetwork ? "Switching networks..." : "Checking network..."}
+                          {preflightChecks.isCorrectNetwork === true
+                            ? "Connected to correct network"
+                            : preflightChecks.isCorrectNetwork === false
+                            ? `Auto-switching to ${
+                                NETWORK_OPTIONS.find((n) => n.id === network)
+                                  ?.name
+                              }...`
+                            : isSwitchingNetwork
+                            ? "Switching networks..."
+                            : "Checking network..."}
                         </div>
                       </div>
                     </div>
 
-                    <div className={`flex items-center p-3 rounded-lg border ${
-                      preflightChecks.isDeployed === true ? "bg-green-50 border-green-200 text-green-700" : 
-                      preflightChecks.isDeployed === false ? "bg-red-50 border-red-200 text-red-700" : "bg-gray-50 border-gray-200 text-gray-600"
-                    }`}>
+                    <div
+                      className={`flex items-center p-3 rounded-lg border ${
+                        preflightChecks.isDeployed === true
+                          ? "bg-green-50 border-green-200 text-green-700"
+                          : preflightChecks.isDeployed === false
+                          ? "bg-red-50 border-red-200 text-red-700"
+                          : "bg-gray-50 border-gray-200 text-gray-600"
+                      }`}
+                    >
                       <span className="text-lg mr-3">
-                        {preflightChecks.isDeployed === true ? "✅" : preflightChecks.isDeployed === false ? "❌" : "⏳"}
+                        {preflightChecks.isDeployed === true
+                          ? "✅"
+                          : preflightChecks.isDeployed === false
+                          ? "❌"
+                          : "⏳"}
                       </span>
                       <div>
                         <div className="font-medium">🏦 Safe Contract</div>
                         <div className="text-sm">
-                          {preflightChecks.isDeployed === true ? "Safe found on network" :
-                          preflightChecks.isDeployed === false ? "Safe not found on this network" : "Checking deployment..."}
+                          {preflightChecks.isDeployed === true
+                            ? "Safe found on network"
+                            : preflightChecks.isDeployed === false
+                            ? "Safe not found on this network"
+                            : "Checking deployment..."}
                         </div>
                       </div>
                     </div>
 
-                    <div className={`flex items-center p-3 rounded-lg border ${
-                      preflightChecks.isOwner === true ? "bg-green-50 border-green-200 text-green-700" : 
-                      preflightChecks.isOwner === false ? "bg-red-50 border-red-200 text-red-700" : "bg-gray-50 border-gray-200 text-gray-600"
-                    }`}>
+                    <div
+                      className={`flex items-center p-3 rounded-lg border ${
+                        preflightChecks.isOwner === true
+                          ? "bg-green-50 border-green-200 text-green-700"
+                          : preflightChecks.isOwner === false
+                          ? "bg-red-50 border-red-200 text-red-700"
+                          : "bg-gray-50 border-gray-200 text-gray-600"
+                      }`}
+                    >
                       <span className="text-lg mr-3">
-                        {preflightChecks.isOwner === true ? "✅" : preflightChecks.isOwner === false ? "❌" : "⏳"}
+                        {preflightChecks.isOwner === true
+                          ? "✅"
+                          : preflightChecks.isOwner === false
+                          ? "❌"
+                          : "⏳"}
                       </span>
                       <div>
                         <div className="font-medium">👤 Ownership</div>
                         <div className="text-sm">
-                          {preflightChecks.isOwner === true ? "Wallet is Safe owner" :
-                          preflightChecks.isOwner === false ? "Wallet is not a Safe owner" : "Checking ownership..."}
+                          {preflightChecks.isOwner === true
+                            ? "Wallet is Safe owner"
+                            : preflightChecks.isOwner === false
+                            ? "Wallet is not a Safe owner"
+                            : "Checking ownership..."}
                         </div>
                       </div>
                     </div>
 
-                    <div className={`flex items-center p-3 rounded-lg border ${
-                      preflightChecks.hasSufficientBalance === true ? "bg-green-50 border-green-200 text-green-700" : 
-                      preflightChecks.hasSufficientBalance === false ? "bg-red-50 border-red-200 text-red-700" : "bg-gray-50 border-gray-200 text-gray-600"
-                    }`}>
+                    <div
+                      className={`flex items-center p-3 rounded-lg border ${
+                        preflightChecks.hasSufficientBalance === true
+                          ? "bg-green-50 border-green-200 text-green-700"
+                          : preflightChecks.hasSufficientBalance === false
+                          ? "bg-red-50 border-red-200 text-red-700"
+                          : "bg-gray-50 border-gray-200 text-gray-600"
+                      }`}
+                    >
                       <span className="text-lg mr-3">
-                        {preflightChecks.hasSufficientBalance === true ? "✅" : preflightChecks.hasSufficientBalance === false ? "❌" : "⏳"}
+                        {preflightChecks.hasSufficientBalance === true
+                          ? "✅"
+                          : preflightChecks.hasSufficientBalance === false
+                          ? "❌"
+                          : "⏳"}
                       </span>
                       <div>
                         <div className="font-medium">💰 Balance</div>
@@ -737,7 +957,9 @@ export const DisbursementForm = () => {
 
                     {preflightChecks.error && (
                       <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                        <div className="text-red-700 text-sm font-medium">❌ {preflightChecks.error}</div>
+                        <div className="text-red-700 text-sm font-medium">
+                          ❌ {preflightChecks.error}
+                        </div>
                       </div>
                     )}
                   </>
@@ -752,8 +974,18 @@ export const DisbursementForm = () => {
                 <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 flex-1">
                   <div className="flex items-center">
                     <div className="bg-white rounded-lg p-2 mr-3">
-                      <svg className="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      <svg
+                        className="h-5 w-5 text-indigo-600"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                        />
                       </svg>
                     </div>
                     <div>
@@ -761,7 +993,8 @@ export const DisbursementForm = () => {
                         📊 Summary
                       </div>
                       <div className="text-sm text-gray-600">
-                        👥 {recipients.length} recipients • 💰 {totalAmount} USDC total
+                        👥 {recipients.length} recipients • 💰{" "}
+                        {formatNumber(totalAmount)} USDC total
                       </div>
                     </div>
                   </div>
@@ -785,8 +1018,18 @@ export const DisbursementForm = () => {
                     </>
                   ) : (
                     <>
-                      <svg className="mr-2 h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      <svg
+                        className="mr-2 h-6 w-6"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                          d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                        />
                       </svg>
                       🚀 Disburse Funds
                     </>
@@ -799,4 +1042,4 @@ export const DisbursementForm = () => {
       </div>
     </div>
   );
-}; 
+};

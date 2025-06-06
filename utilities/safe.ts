@@ -1,36 +1,16 @@
 import Safe from "@safe-global/protocol-kit";
 import SafeApiKit from "@safe-global/api-kit";
-import { createPublicClient, http, erc20Abi, formatUnits, parseUnits, encodeFunctionData } from "viem";
-import { arbitrum, celo, optimism } from "viem/chains";
+import { erc20Abi, formatUnits, parseUnits, encodeFunctionData } from "viem";
 import { NETWORKS, TOKEN_ADDRESSES, SupportedChainId } from "../config/tokens";
 import { DisbursementRecipient } from "../types/disbursement";
-
-// Chain configurations for viem
-const chainConfigs = {
-  42220: celo,
-  42161: arbitrum,
-  10: optimism,
-} as const;
+import { getRPCClient } from "./rpcClient";
 
 // Safe Transaction Service URLs
 const SAFE_SERVICE_URLS = {
   42220: "https://safe-transaction-celo.safe.global",
-  42161: "https://safe-transaction-arbitrum.safe.global", 
+  42161: "https://safe-transaction-arbitrum.safe.global",
   10: "https://safe-transaction-optimism.safe.global",
 } as const;
-
-/**
- * Creates a viem public client for the specified network
- */
-function getPublicClient(chainId: SupportedChainId) {
-  const chain = chainConfigs[chainId];
-  const rpcUrl = NETWORKS[chainId].rpcUrl;
-  
-  return createPublicClient({
-    chain,
-    transport: http(rpcUrl),
-  });
-}
 
 /**
  * Checks if a signer address is an owner of the specified Safe
@@ -42,7 +22,7 @@ export async function isSafeOwner(
 ): Promise<boolean> {
   try {
     const rpcUrl = NETWORKS[chainId].rpcUrl;
-    
+
     // Initialize Safe SDK with RPC URL
     const safe = await Safe.init({
       provider: rpcUrl,
@@ -51,7 +31,7 @@ export async function isSafeOwner(
 
     // Get Safe owners
     const owners = await safe.getOwners();
-    
+
     // Check if signer is one of the owners
     return owners.some(
       (owner) => owner.toLowerCase() === signerAddress.toLowerCase()
@@ -75,7 +55,7 @@ export async function getSafeTokenBalance(
   decimals: number;
 }> {
   try {
-    const publicClient = getPublicClient(chainId);
+    const publicClient = await getRPCClient(chainId);
     const tokenAddress = TOKEN_ADDRESSES[tokenSymbol][chainId];
 
     // Get token balance
@@ -114,13 +94,13 @@ export async function isSafeDeployed(
   chainId: SupportedChainId
 ): Promise<boolean> {
   try {
-    const publicClient = getPublicClient(chainId);
-    
+    const publicClient = await getRPCClient(chainId);
+
     // Check if there's code at the Safe address
     const code = await publicClient.getBytecode({
       address: safeAddress as `0x${string}`,
     });
-    
+
     // If there's no code, the Safe is not deployed
     return code !== undefined && code !== "0x";
   } catch (error) {
@@ -142,7 +122,7 @@ export async function getSafeInfo(
 }> {
   try {
     const rpcUrl = NETWORKS[chainId].rpcUrl;
-    
+
     const safe = await Safe.init({
       provider: rpcUrl,
       safeAddress,
@@ -185,7 +165,7 @@ export async function prepareDisbursementTransaction(
     });
 
     // Get token decimals
-    const publicClient = getPublicClient(chainId);
+    const publicClient = await getRPCClient(chainId);
     const decimals = await publicClient.readContract({
       address: tokenAddress as `0x${string}`,
       abi: erc20Abi,
@@ -194,8 +174,8 @@ export async function prepareDisbursementTransaction(
 
     // Create individual transfer transactions
     const transactions = recipients
-      .filter(recipient => !recipient.error) // Only include valid recipients
-      .map(recipient => {
+      .filter((recipient) => !recipient.error) // Only include valid recipients
+      .map((recipient) => {
         // Convert amount to wei units based on token decimals
         const amount = parseUnits(recipient.amount, decimals);
 
@@ -222,7 +202,7 @@ export async function prepareDisbursementTransaction(
       safeTx,
       totalRecipients: transactions.length,
       totalAmount: recipients
-        .filter(r => !r.error)
+        .filter((r) => !r.error)
         .reduce((sum, r) => sum + parseFloat(r.amount), 0),
     };
   } catch (error) {
@@ -236,42 +216,51 @@ export async function prepareDisbursementTransaction(
  */
 function createEthereumProvider(walletClient: any, chainId: SupportedChainId) {
   const rpcUrl = NETWORKS[chainId].rpcUrl;
-  
+
   // Create a provider object that Safe SDK can understand
   return {
     request: async (args: { method: string; params?: any }) => {
       const { method, params } = args;
       console.log(`Provider request: ${method}`, params);
-      
+
       try {
         // Handle signing methods through wallet client
-        if (method === 'eth_sendTransaction') {
+        if (method === "eth_sendTransaction") {
           console.log("Handling eth_sendTransaction through wallet client");
           return await walletClient.sendTransaction(params[0]);
         }
-        
-        if (method === 'eth_signTransaction') {
+
+        if (method === "eth_signTransaction") {
           console.log("Handling eth_signTransaction through wallet client");
           return await walletClient.signTransaction(params[0]);
         }
-        
-        if (method === 'eth_signTypedData_v4' || method === 'eth_signTypedData') {
+
+        if (
+          method === "eth_signTypedData_v4" ||
+          method === "eth_signTypedData"
+        ) {
           console.log("Handling eth_signTypedData through wallet client");
           console.log("TypedData params:", params);
-          
+
           // params[0] is the address, params[1] is the typed data
           const [address, typedData] = params;
-          
+
           // Parse the typed data if it's a string
-          const parsedTypedData = typeof typedData === 'string' ? JSON.parse(typedData) : typedData;
-          
+          const parsedTypedData =
+            typeof typedData === "string" ? JSON.parse(typedData) : typedData;
+
           console.log("Parsed typed data:", parsedTypedData);
-          
+
           // Verify the address matches the wallet client account
-          if (address?.toLowerCase() !== walletClient.account?.address?.toLowerCase()) {
-            throw new Error(`Address mismatch: ${address} vs ${walletClient.account?.address}`);
+          if (
+            address?.toLowerCase() !==
+            walletClient.account?.address?.toLowerCase()
+          ) {
+            throw new Error(
+              `Address mismatch: ${address} vs ${walletClient.account?.address}`
+            );
           }
-          
+
           return await walletClient.signTypedData({
             domain: parsedTypedData.domain,
             types: parsedTypedData.types,
@@ -279,70 +268,77 @@ function createEthereumProvider(walletClient: any, chainId: SupportedChainId) {
             message: parsedTypedData.message,
           });
         }
-        
-        if (method === 'personal_sign') {
+
+        if (method === "personal_sign") {
           console.log("Handling personal_sign through wallet client");
           console.log("Personal sign params:", params);
-          
+
           // params[0] is the message, params[1] is the address
           const [message, address] = params;
-          
+
           // Verify the address matches the wallet client account
-          if (address?.toLowerCase() !== walletClient.account?.address?.toLowerCase()) {
-            throw new Error(`Address mismatch: ${address} vs ${walletClient.account?.address}`);
+          if (
+            address?.toLowerCase() !==
+            walletClient.account?.address?.toLowerCase()
+          ) {
+            throw new Error(
+              `Address mismatch: ${address} vs ${walletClient.account?.address}`
+            );
           }
-          
-          return await walletClient.signMessage({ 
-            message: typeof message === 'string' && message.startsWith('0x') 
-              ? { raw: message } 
-              : message 
+
+          return await walletClient.signMessage({
+            message:
+              typeof message === "string" && message.startsWith("0x")
+                ? { raw: message }
+                : message,
           });
         }
-        
+
         // Handle account access
-        if (method === 'eth_accounts' || method === 'eth_requestAccounts') {
+        if (method === "eth_accounts" || method === "eth_requestAccounts") {
           const accounts = [walletClient.account?.address].filter(Boolean);
           console.log("Returning accounts:", accounts);
           return accounts;
         }
-        
+
         // Handle chain ID
-        if (method === 'eth_chainId') {
+        if (method === "eth_chainId") {
           const chainIdHex = `0x${chainId.toString(16)}`;
           console.log("Returning chainId:", chainIdHex);
           return chainIdHex;
         }
-        
+
         // For other methods, fall back to RPC
         console.log(`Falling back to RPC for method: ${method}`);
         const response = await fetch(rpcUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            jsonrpc: '2.0',
+            jsonrpc: "2.0",
             id: 1,
             method,
             params: params || [],
           }),
         });
-        
+
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
-        
+
         const result = await response.json();
         if (result.error) {
           console.error("RPC error:", result.error);
           throw new Error(result.error.message);
         }
-        
+
         return result.result;
       } catch (error) {
         console.error(`Provider request failed for method ${method}:`, error);
         console.error("Error details:", {
           method,
           params,
-          errorMessage: error instanceof Error ? error.message : "Unknown error",
+          errorMessage:
+            error instanceof Error ? error.message : "Unknown error",
           errorStack: error instanceof Error ? error.stack : undefined,
         });
         throw error;
@@ -381,7 +377,7 @@ export async function signAndProposeDisbursement(
     console.log("Creating Safe SDK instance...");
     // Create provider that can handle signing
     const provider = createEthereumProvider(walletClient, chainId);
-    
+
     const safe = await Safe.init({
       provider,
       signer: walletClient.account.address,
@@ -397,12 +393,13 @@ export async function signAndProposeDisbursement(
 
     console.log("Preparing transaction...");
     // Prepare the transaction
-    const { safeTx, totalRecipients, totalAmount } = await prepareDisbursementTransaction(
-      safeAddress,
-      recipients, 
-      tokenSymbol,
-      chainId
-    );
+    const { safeTx, totalRecipients, totalAmount } =
+      await prepareDisbursementTransaction(
+        safeAddress,
+        recipients,
+        tokenSymbol,
+        chainId
+      );
 
     console.log("Signing transaction...");
     // Sign the transaction
@@ -420,7 +417,10 @@ export async function signAndProposeDisbursement(
     // Get signature
     const signature = signedTx.signatures.get(signerAddress.toLowerCase());
     if (!signature) {
-      console.error("Available signatures:", Array.from(signedTx.signatures.keys()));
+      console.error(
+        "Available signatures:",
+        Array.from(signedTx.signatures.keys())
+      );
       throw new Error("Unable to get signature for signer address");
     }
 
@@ -436,41 +436,51 @@ export async function signAndProposeDisbursement(
       // First, try to execute the transaction directly
       console.log("Attempting direct transaction execution...");
       const executeTxResponse = await safe.executeTransaction(signedTx);
-      
+
       // Try to wait for transaction confirmation if possible
       let receipt;
       try {
         if (executeTxResponse.transactionResponse) {
-          receipt = await (executeTxResponse.transactionResponse as any).wait?.();
+          receipt = await (
+            executeTxResponse.transactionResponse as any
+          ).wait?.();
         }
       } catch (waitError) {
         console.warn("Failed to wait for transaction confirmation:", waitError);
       }
-      
-      const finalTxHash = receipt?.transactionHash || executeTxResponse.hash || txHash;
-      
+
+      const finalTxHash =
+        receipt?.transactionHash || executeTxResponse.hash || txHash;
+
       console.log("Transaction executed successfully!", {
         txHash: finalTxHash,
         blockNumber: receipt?.blockNumber,
         gasUsed: receipt?.gasUsed?.toString(),
       });
-      
+
       return {
         txHash: finalTxHash,
         totalRecipients,
         totalAmount,
-        safeUrl: `https://app.safe.global/transactions/tx?safe=${NETWORKS[chainId].name.toLowerCase()}:${safeAddress}&id=${finalTxHash}`,
+        safeUrl: `https://app.safe.global/transactions/tx?safe=${NETWORKS[
+          chainId
+        ].name.toLowerCase()}:${safeAddress}&id=${finalTxHash}`,
         executed: true,
       };
     } catch (executionError) {
       console.error("Direct execution failed:", {
         error: executionError,
-        message: executionError instanceof Error ? executionError.message : "Unknown execution error",
+        message:
+          executionError instanceof Error
+            ? executionError.message
+            : "Unknown execution error",
       });
-      
+
       // If direct execution fails, fall back to proposing the transaction
       try {
-        console.log("Falling back to proposing transaction to Safe Transaction Service...");
+        console.log(
+          "Falling back to proposing transaction to Safe Transaction Service..."
+        );
         const proposalResult = await apiKit.proposeTransaction({
           safeAddress,
           safeTransactionData: signedTx.data,
@@ -482,21 +492,32 @@ export async function signAndProposeDisbursement(
       } catch (apiError) {
         console.error("Failed to propose transaction to Safe service:", {
           error: apiError,
-          message: apiError instanceof Error ? apiError.message : "Unknown API error",
+          message:
+            apiError instanceof Error ? apiError.message : "Unknown API error",
           stack: apiError instanceof Error ? apiError.stack : undefined,
           serviceUrl: SAFE_SERVICE_URLS[chainId],
           safeAddress,
           txHash,
           signerAddress,
         });
-        
+
         // Check if it's a network/fetch error vs a validation error
         if (apiError instanceof Error) {
-          if (apiError.message.includes("Failed to fetch") || apiError.message.includes("fetch")) {
-            console.warn("Network connectivity issue with Safe Transaction Service");
-            console.warn("The transaction is signed and can be executed manually in the Safe app");
+          if (
+            apiError.message.includes("Failed to fetch") ||
+            apiError.message.includes("fetch")
+          ) {
+            console.warn(
+              "Network connectivity issue with Safe Transaction Service"
+            );
+            console.warn(
+              "The transaction is signed and can be executed manually in the Safe app"
+            );
             // Don't throw - just continue
-          } else if (apiError.message.includes("Invalid") || apiError.message.includes("already exists")) {
+          } else if (
+            apiError.message.includes("Invalid") ||
+            apiError.message.includes("already exists")
+          ) {
             console.warn("Safe service validation issue:", apiError.message);
             // Don't throw - just continue
           } else {
@@ -504,16 +525,20 @@ export async function signAndProposeDisbursement(
             console.warn("Unexpected Safe service error:", apiError.message);
           }
         }
-        
-        console.log("Continuing despite Safe service error - transaction is signed and ready");
+
+        console.log(
+          "Continuing despite Safe service error - transaction is signed and ready"
+        );
       }
     }
-    
+
     return {
       txHash,
       totalRecipients,
       totalAmount,
-      safeUrl: `https://app.safe.global/transactions/tx?safe=${NETWORKS[chainId].name.toLowerCase()}:${safeAddress}&id=multisig_${safeAddress}_${txHash}`,
+      safeUrl: `https://app.safe.global/transactions/tx?safe=${NETWORKS[
+        chainId
+      ].name.toLowerCase()}:${safeAddress}&id=multisig_${safeAddress}_${txHash}`,
       // Include transaction data for manual submission
       transactionData: {
         safe: safeAddress,
@@ -531,7 +556,9 @@ export async function signAndProposeDisbursement(
         signatures: signedTx.signatures,
       },
       // Direct Safe app URL for creating new transaction
-      createTxUrl: `https://app.safe.global/home?safe=${NETWORKS[chainId].name.toLowerCase()}:${safeAddress}`,
+      createTxUrl: `https://app.safe.global/home?safe=${NETWORKS[
+        chainId
+      ].name.toLowerCase()}:${safeAddress}`,
     };
   } catch (error) {
     console.error("Detailed error in signAndProposeDisbursement:", {
@@ -542,7 +569,7 @@ export async function signAndProposeDisbursement(
       recipientCount: recipients.length,
       step: "unknown",
     });
-    
+
     // Re-throw with more specific error message
     if (error instanceof Error) {
       throw new Error(`Transaction failed: ${error.message}`);
@@ -550,4 +577,4 @@ export async function signAndProposeDisbursement(
       throw new Error("Transaction failed with unknown error");
     }
   }
-} 
+}
