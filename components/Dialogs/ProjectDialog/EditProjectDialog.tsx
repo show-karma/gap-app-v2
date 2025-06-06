@@ -1019,7 +1019,7 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
           </div>
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="profile-picture-input" className={labelStyle}>
-              Profile Picture (optional)
+              Profile Picture
             </label>
             <div className="flex w-full flex-row items-center gap-2 rounded-lg border border-gray-400 px-4 py-2">
               <UserCircleIcon className="h-5 w-5" />

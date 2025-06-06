@@ -257,7 +257,7 @@ export const IndicatorsHub = ({
           )}
 
           <IndicatorForm
-            communityId={communitySlug}
+            communityId={communityId}
             onSuccess={editingIndicator ? handleEditSuccess : handleSuccess}
             onError={editingIndicator ? handleEditError : handleError}
             isLoading={isLoading}
