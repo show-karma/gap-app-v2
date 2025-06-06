@@ -115,7 +115,8 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
         },
         schema: gapClient.findSchema("Community"),
         refUID: nullRef,
-        recipient: address || "0x00",
+        recipient: (address ||
+          "0x0000000000000000000000000000000000000000") as `0x${string}`,
         uid: nullRef,
       });
       if (await gapClient.fetch.slugExists(data.slug as string)) {
