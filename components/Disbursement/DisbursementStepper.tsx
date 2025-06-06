@@ -11,9 +11,24 @@ interface DisbursementStepperProps {
 }
 
 const steps = [
-  { id: "configure", name: "Configure", description: "Set Safe address and network", icon: "⚙️" },
-  { id: "upload", name: "Upload CSV", description: "Upload recipient list", icon: "📄" },
-  { id: "review", name: "Review & Disburse", description: "Review and execute disbursement", icon: "🚀" },
+  {
+    id: "configure",
+    name: "Configure",
+    description: "Set Safe address and network",
+    icon: "⚙️",
+  },
+  {
+    id: "upload",
+    name: "Upload CSV",
+    description: "Upload recipient list",
+    icon: "📄",
+  },
+  {
+    id: "review",
+    name: "Review & Disburse",
+    description: "Review and execute",
+    icon: "🚀",
+  },
 ];
 
 export const DisbursementStepper: React.FC<DisbursementStepperProps> = ({
@@ -36,18 +51,15 @@ export const DisbursementStepper: React.FC<DisbursementStepperProps> = ({
         <ol role="list" className="flex items-center justify-between">
           {steps.map((step, stepIdx) => {
             const status = getStepStatus(step.id as DisbursementStep);
-            
+
             return (
-              <li
-                key={step.name}
-                className="relative flex-1"
-              >
+              <li key={step.name} className="relative flex-1">
                 <div className="flex flex-col items-center">
                   {status === "completed" ? (
                     <>
                       {stepIdx !== steps.length - 1 && (
                         <div
-                          className="absolute top-5 left-1/2 w-full h-0.5 bg-gradient-to-r from-green-500 to-blue-500 transform translate-x-1/2"
+                          className="absolute top-5 left-1/2 w-full h-0.5 bg-gradient-to-r from-green-500 to-blue-500"
                           aria-hidden="true"
                         />
                       )}
@@ -63,12 +75,12 @@ export const DisbursementStepper: React.FC<DisbursementStepperProps> = ({
                     <>
                       {stepIdx !== steps.length - 1 && (
                         <div
-                          className="absolute top-5 left-1/2 w-full h-0.5 bg-gray-200 transform translate-x-1/2"
+                          className="absolute top-5 left-1/2 w-full h-0.5 bg-gray-200"
                           aria-hidden="true"
                         />
                       )}
                       <div
-                        className="relative flex h-12 w-12 items-center justify-center rounded-full border-4 border-blue-500 bg-white shadow-lg animate-pulse"
+                        className="relative flex h-12 w-12 items-center justify-center rounded-full border-4 border-blue-500 bg-white shadow-lg"
                         aria-current="step"
                       >
                         <span className="text-lg" aria-hidden="true">
@@ -81,7 +93,7 @@ export const DisbursementStepper: React.FC<DisbursementStepperProps> = ({
                     <>
                       {stepIdx !== steps.length - 1 && (
                         <div
-                          className="absolute top-5 left-1/2 w-full h-0.5 bg-gray-200 transform translate-x-1/2"
+                          className="absolute top-5 left-1/2 w-full h-0.5 bg-gray-200"
                           aria-hidden="true"
                         />
                       )}
@@ -94,13 +106,15 @@ export const DisbursementStepper: React.FC<DisbursementStepperProps> = ({
                     </>
                   )}
                   <div className="mt-4 text-center">
-                    <span className={`text-sm font-semibold block ${
-                      status === "completed" 
-                        ? "text-green-600" 
-                        : status === "current" 
-                          ? "text-blue-600" 
+                    <span
+                      className={`text-sm font-semibold block ${
+                        status === "completed"
+                          ? "text-green-600"
+                          : status === "current"
+                          ? "text-blue-600"
                           : "text-gray-500"
-                    }`}>
+                      }`}
+                    >
                       {step.name}
                     </span>
                     <span className="text-xs text-gray-500 mt-1 block max-w-24 mx-auto">
@@ -115,4 +129,4 @@ export const DisbursementStepper: React.FC<DisbursementStepperProps> = ({
       </nav>
     </div>
   );
-}; 
+};

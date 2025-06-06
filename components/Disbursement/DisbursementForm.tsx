@@ -7,7 +7,7 @@ import { useAccount, useWalletClient, useChainId, useSwitchChain } from "wagmi";
 import { DisbursementReview } from "./DisbursementReview";
 import { DisbursementRecipient } from "../../types/disbursement";
 import { DisbursementStepper, DisbursementStep } from "./DisbursementStepper";
-import { NETWORKS, TOKENS, SupportedChainId } from "../../config/tokens";
+import { SupportedChainId } from "../../config/tokens";
 import {
   isSafeOwner,
   getSafeTokenBalance,
@@ -15,6 +15,18 @@ import {
   isSafeDeployed,
 } from "../../utilities/safe";
 import { formatNumber } from "../Pages/Project/Impact/OSOMetrics";
+// Import our new reusable components
+import { StatusAlert } from "./components/StatusAlert";
+import { Button } from "./components/Button";
+import { Card } from "./components/Card";
+import {
+  CheckIcon,
+  CheckCircleIcon,
+  ExternalLinkIcon,
+  PlusIcon,
+  ConfigIcon,
+  DocumentIcon,
+} from "./components/Icons";
 
 const NETWORK_OPTIONS = [
   { id: 42220, name: "Celo" },
@@ -328,10 +340,12 @@ export const DisbursementForm = () => {
     !preflightChecks.isChecking &&
     !transactionState.isProcessing;
 
-  const totalAmount = recipients.reduce(
-    (sum, r) => sum + (parseFloat(r.amount) || 0),
-    0
-  );
+  const totalAmount = recipients.reduce((sum, r) => {
+    if (!r.error) {
+      return sum + parseFloat(r.amount);
+    }
+    return sum;
+  }, 0);
 
   // Don't show form if transaction is complete
   if (transactionState.isComplete && transactionState.result) {
@@ -347,33 +361,9 @@ export const DisbursementForm = () => {
               }`}
             >
               {transactionState.result.executed ? (
-                <svg
-                  className="h-8 w-8 text-green-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="2"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M4.5 12.75l6 6 9-13.5"
-                  />
-                </svg>
+                <CheckIcon className="h-8 w-8 text-green-600" />
               ) : (
-                <svg
-                  className="h-8 w-8 text-blue-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="2"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                  />
-                </svg>
+                <CheckCircleIcon className="h-8 w-8 text-blue-600" />
               )}
             </div>
             <div className="mt-6">
@@ -423,74 +413,34 @@ export const DisbursementForm = () => {
               </div>
               <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center">
                 {transactionState.result.executed ? (
-                  <a
+                  <Button
+                    variant="success"
                     href={transactionState.result.safeUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200"
+                    external
+                    icon={<ExternalLinkIcon />}
                   >
-                    <svg
-                      className="mr-2 h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                      />
-                    </svg>
                     View Transaction
-                  </a>
+                  </Button>
                 ) : transactionState.result.createTxUrl ? (
-                  <a
+                  <Button
                     href={transactionState.result.createTxUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                    external
+                    icon={<ExternalLinkIcon />}
                   >
-                    <svg
-                      className="mr-2 h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                      />
-                    </svg>
                     Open Safe App
-                  </a>
+                  </Button>
                 ) : (
-                  <a
+                  <Button
                     href={transactionState.result.safeUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-lg shadow-sm text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200"
+                    external
+                    icon={<ExternalLinkIcon />}
                   >
-                    <svg
-                      className="mr-2 h-5 w-5"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                      />
-                    </svg>
                     View in Safe App
-                  </a>
+                  </Button>
                 )}
-                <button
-                  type="button"
+                <Button
+                  variant="secondary"
+                  icon={<PlusIcon />}
                   onClick={() => {
                     setTransactionState({
                       isProcessing: false,
@@ -504,23 +454,9 @@ export const DisbursementForm = () => {
                     setCurrentStep("configure");
                     setCompletedSteps([]);
                   }}
-                  className="inline-flex items-center px-6 py-3 border border-gray-300 text-base font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 shadow-sm"
                 >
-                  <svg
-                    className="mr-2 h-5 w-5"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
                   Start New Disbursement
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -553,97 +489,33 @@ export const DisbursementForm = () => {
         <div className="space-y-6">
           {/* Transaction Error */}
           {transactionState.error && (
-            <div className="rounded-xl bg-red-50 border border-red-200 p-6 shadow-sm">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg
-                    className="h-6 w-6 text-red-400"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-semibold text-red-800">
-                    ❌ Transaction Failed
-                  </h3>
-                  <div className="mt-2 text-sm text-red-700">
-                    {transactionState.error}
-                  </div>
-                  <div className="mt-3">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setTransactionState((prev) => ({
-                          ...prev,
-                          error: null,
-                        }))
-                      }
-                      className="text-sm text-red-800 hover:text-red-900 underline font-medium"
-                    >
-                      Dismiss
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <StatusAlert
+              type="error"
+              title="❌ Transaction Failed"
+              message={transactionState.error}
+              onDismiss={() =>
+                setTransactionState((prev) => ({
+                  ...prev,
+                  error: null,
+                }))
+              }
+            />
           )}
 
           {/* Wallet Connection Warning */}
           {!isConnected && (
-            <div className="rounded-xl bg-amber-50 border border-amber-200 p-6 shadow-sm">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg
-                    className="h-6 w-6 text-amber-400"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M8.485 2.495c.673-1.167 2.357-1.167 3.03 0l6.28 10.875c.673 1.167-.17 2.625-1.516 2.625H3.72c-1.347 0-2.189-1.458-1.515-2.625L8.485 2.495zM10 5a.75.75 0 01.75.75v3.5a.75.75 0 01-1.5 0v-3.5A.75.75 0 0110 5zm0 9a1 1 0 100-2 1 1 0 000 2z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-semibold text-amber-800">
-                    🔗 Wallet Connection Required
-                  </h3>
-                  <div className="mt-2 text-sm text-amber-700">
-                    Please connect your wallet to proceed with the disbursement.
-                  </div>
-                </div>
-              </div>
-            </div>
+            <StatusAlert
+              type="warning"
+              title="🔗 Wallet Connection Required"
+              message="Please connect your wallet to proceed with the disbursement."
+            />
           )}
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center mb-6">
-              <div className="bg-indigo-100 rounded-lg p-2 mr-3">
-                <svg
-                  className="h-5 w-5 text-indigo-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 100 4m0-4v2m0-6V4"
-                  />
-                </svg>
-              </div>
-              <h2 className="text-xl font-semibold text-gray-900">
-                ⚙️ Configure Disbursement
-              </h2>
-            </div>
+          <Card
+            title="Configure Disbursement"
+            titleIcon={<ConfigIcon className="h-5 w-5 text-indigo-600" />}
+            titleEmoji="⚙️"
+          >
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               {/* Safe Address Input */}
               <div className="sm:col-span-2">
@@ -717,29 +589,13 @@ export const DisbursementForm = () => {
                 </select>
               </div>
             </div>
-          </div>
+          </Card>
 
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center mb-6">
-              <div className="bg-emerald-100 rounded-lg p-2 mr-3">
-                <svg
-                  className="h-5 w-5 text-emerald-600"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                  />
-                </svg>
-              </div>
-              <h2 className="text-xl font-semibold text-gray-900">
-                📄 Upload Recipients
-              </h2>
-            </div>
+          <Card
+            title="Upload Recipients"
+            titleIcon={<DocumentIcon className="h-5 w-5 text-emerald-600" />}
+            titleEmoji="📄"
+          >
             <div>
               <label
                 htmlFor="csv-upload"
@@ -804,7 +660,7 @@ export const DisbursementForm = () => {
                 </div>
               </div>
             </div>
-          </div>
+          </Card>
 
           <DisbursementReview recipients={recipients} />
 
@@ -949,8 +805,12 @@ export const DisbursementForm = () => {
                       <div>
                         <div className="font-medium">💰 Balance</div>
                         <div className="text-sm">
-                          {preflightChecks.safeBalance} USDC available
-                          {totalAmount > 0 && ` (${totalAmount} USDC needed)`}
+                          {formatNumber(
+                            parseFloat(preflightChecks.safeBalance) || 0
+                          )}{" "}
+                          USDC available
+                          {totalAmount > 0 &&
+                            ` (${formatNumber(totalAmount)} USDC needed)`}
                         </div>
                       </div>
                     </div>
