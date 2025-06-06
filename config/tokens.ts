@@ -26,7 +26,7 @@ export const NETWORKS = {
     blockExplorer: "https://arbiscan.io",
   },
   10: {
-    name: "Optimism", 
+    name: "Optimism",
     chainId: 10,
     rpcUrl: "https://mainnet.optimism.io",
     blockExplorer: "https://optimistic.etherscan.io",
@@ -43,4 +43,4 @@ export const TOKENS = {
 } as const;
 
 export type SupportedChainId = keyof typeof NETWORKS;
-export type SupportedToken = keyof typeof TOKEN_ADDRESSES; 
+export type SupportedToken = keyof typeof TOKEN_ADDRESSES;
