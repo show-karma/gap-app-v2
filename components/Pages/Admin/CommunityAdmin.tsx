@@ -1,5 +1,4 @@
 /* eslint-disable @next/next/no-img-element */
-// @ts-ignore
 "use client";
 import CommunityStats from "@/components/CommunityStats";
 import { CommunityDialog } from "@/components/Dialogs/CommunityDialog";
@@ -23,6 +22,8 @@ import Link from "next/link";
 import React, { useCallback, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { isAddress } from "viem";
+import { useAccount, useSwitchChain } from "wagmi";
+import { z } from "zod";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 
@@ -109,7 +110,7 @@ export default function CommunitiesToAdminPage() {
   }, [refetch]);
 
   // Ensure address has 0x prefix
-  const formatAdminAddress = (address: string): `0x${string}` => {
+  const formatAdminAddress = (address: any): `0x${string}` => {
     if (isAddress(address)) {
       return address as `0x${string}`;
     }
