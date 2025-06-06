@@ -28,6 +28,8 @@ const sortOptions: Record<SortByOptions, string> = {
   recent: "Recent",
   completed: "Completed",
   milestones: "Milestones",
+  transactions_asc: "Transaction Count (Low to High)",
+  transactions_desc: "Transaction Count (High to Low)",
 };
 
 const statuses: Record<StatusOptions, string> = {
