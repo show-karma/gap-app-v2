@@ -19,6 +19,7 @@ import { envVars } from "@/utilities/enviromentVars";
 import { getProjectById } from "@/utilities/sdk";
 import { config } from "@/utilities/wagmi/config";
 import {
+  BlobProvider,
   Document,
   Font,
   Image,
@@ -830,8 +831,7 @@ export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
                     >
                       Cancel
                     </Button>
-                    <PDFDownloadLink
-                      className="text-primary-600 text-lg bg-primary-100 border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900 p-3 rounded-md"
+                    <BlobProvider
                       document={
                         <GenerateDocument
                           grant={grant}
@@ -843,17 +843,22 @@ export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
                           impactBannerImageURL={impactBannerImageURL}
                         />
                       }
-                      fileName={`${
-                        project?.details?.data?.slug || "project"
-                      }-impact-report-${grant?.details?.data?.title?.replaceAll(
-                        " ",
-                        "-"
-                      )}.pdf`}
                     >
-                      {({ blob, url, loading, error }) =>
-                        loading ? "Loading document..." : "💾 Download"
-                      }
-                    </PDFDownloadLink>
+                      {({ blob, url, loading, error }) => (
+                        <a
+                          href={url || "#"}
+                          download={`${
+                            project?.details?.data?.slug || "project"
+                          }-impact-report-${grant?.details?.data?.title?.replaceAll(
+                            " ",
+                            "-"
+                          )}.pdf`}
+                          className="text-primary-600 text-lg bg-primary-100 border-black border dark:text-zinc-100 dark:border-zinc-100 hover:bg-zinc-900 hover:text-white disabled:hover:bg-transparent disabled:hover:text-zinc-900 p-3 rounded-md"
+                        >
+                          {loading ? "Loading document..." : "💾 Download"}
+                        </a>
+                      )}
+                    </BlobProvider>
                   </div>
                 </Dialog.Panel>
               </Transition.Child>
