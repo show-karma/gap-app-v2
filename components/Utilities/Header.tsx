@@ -62,7 +62,7 @@ export default function Header() {
     setIsLoading(true);
     try {
       const communitiesOf = await gapIndexerApi
-        .adminOf(address)
+        .adminOf(address as `0x${string}`)
         .catch(() => undefined);
 
       if (communitiesOf?.data && communitiesOf?.data.length !== 0) {

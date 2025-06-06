@@ -86,7 +86,7 @@ export default function MyProjects() {
     refetch,
   } = useQuery({
     queryKey: ["totalProjects", address],
-    queryFn: () => fetchMyProjects(address),
+    queryFn: () => fetchMyProjects(address as `0x${string}` | undefined),
     enabled: Boolean(address),
   });
 

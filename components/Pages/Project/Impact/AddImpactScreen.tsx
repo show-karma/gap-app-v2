@@ -110,8 +110,8 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
       });
       const newImpact = new ProjectImpact({
         data: dataToAttest,
-        recipient: address,
-        attester: address,
+        recipient: address as `0x${string}`,
+        attester: address as `0x${string}`,
         schema: gapClient!.findSchema("ProjectImpact"),
         refUID: project.uid,
         createdAt: new Date(),
