@@ -1,7 +1,7 @@
-/* eslint-disable @next/next/no-img-element */
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { getGapClient, useGap, useImpactAnswers } from "@/hooks";
+import { getGapClient, useGap } from "@/hooks/useGap";
+import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -102,6 +102,7 @@ type UpdateType = z.infer<typeof updateSchema>;
 
 interface ProjectUpdateFormProps {
   afterSubmit?: () => void;
+  editId?: string;
 }
 
 const GrantSearchDropdown: FC<{
@@ -253,6 +254,7 @@ const getFormErrorMessage = (errors: any, formValues: any) => {
 
 export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   afterSubmit,
+  editId: propEditId,
 }): JSX.Element => {
   const { address } = useAccount();
   const { chain } = useAccount();
@@ -261,7 +263,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const editId = searchParams.get("editId");
+  const editId = propEditId || searchParams.get("editId");
   const [isEditMode, setIsEditMode] = useState(false);
 
   const {
@@ -590,7 +592,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                   router.refresh();
                   openShareDialog({
                     modalShareText: `🎉 You just dropped an update for ${project?.details?.data?.title}!`,
-                    modalShareSecondText: `That’s how progress gets done! Your update is now live onchain—one step closer to greatness. Keep the vibes high and the milestones rolling! 🚀🔥`,
+                    modalShareSecondText: `That's how progress gets done! Your update is now live onchain—one step closer to greatness. Keep the vibes high and the milestones rolling! 🚀🔥`,
                     shareText: SHARE_TEXTS.PROJECT_ACTIVITY(
                       project?.details?.data?.title as string,
                       project?.uid as string

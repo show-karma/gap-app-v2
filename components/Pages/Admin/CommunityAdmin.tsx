@@ -6,7 +6,7 @@ import { CommunityDialog } from "@/components/Dialogs/CommunityDialog";
 import { AddAdmin } from "@/components/Pages/Admin/AddAdminDialog";
 import { RemoveAdmin } from "@/components/Pages/Admin/RemoveAdminDialog";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { useGap } from "@/hooks";
+import { useGap } from "@/hooks/useGap";
 import { useStaff } from "@/hooks/useStaff";
 import { useOwnerStore } from "@/store";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";

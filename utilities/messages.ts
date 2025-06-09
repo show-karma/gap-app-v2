@@ -88,25 +88,26 @@ export const MESSAGES = {
       MAX: "Title must be less than 50 characters",
     },
     TEXT: "Text must be at least 3 characters",
-    SUCCESS: "Objective was successfully added to the project.",
-    ERROR: "There was an error creating the objective.",
+    SUCCESS: "Milestone was successfully added to the project.",
+    ERROR: "There was an error creating the milestone. Please try again.",
     COMPLETE: {
-      SUCCESS: "Objective completed successfully",
-      ERROR: "There was an error completing the objective.",
+      SUCCESS: "Milestone completed successfully",
+      ERROR: "There was an error completing the milestone. Please try again",
       DELETE: {
-        LOADING: "Deleting objective completion.",
-        SUCCESS: "Objective completion deleted successfully",
-        ERROR: "There was an error deleting the objective completion.",
+        LOADING: "Deleting milestone completion...",
+        SUCCESS: "Milestone completion deleted successfully",
+        ERROR:
+          "There was an error deleting the milestone completion. Please try again",
       },
     },
     EDIT: {
-      SUCCESS: "Objective edited successfully",
-      ERROR: "There was an error editing the objective.",
+      SUCCESS: "Milestone edited successfully",
+      ERROR: "There was an error editing the milestone. Please try again",
     },
     DELETE: {
-      LOADING: "Deleting objective.",
-      SUCCESS: "Objective deleted successfully",
-      ERROR: "There was an error deleting the objective.",
+      LOADING: "Deleting milestone...",
+      SUCCESS: "Milestone deleted successfully",
+      ERROR: "There was an error deleting the milestone. Please try again",
     },
   },
   COMMUNITY_FORM: {
@@ -356,13 +357,13 @@ export const MESSAGES = {
         NOT_CREATED_USER: `Create a new impact attestation to show the world the impact of your work!`,
       },
       GRANTS: {
-        NOT_CREATED: `Check back in a few days and we’ll surely have something cool to
+        NOT_CREATED: `Check back in a few days and we'll surely have something cool to
           show you :)`,
-        NOT_CREATED_USER: `Once you’ve created a grant, this is where you can add milestones
+        NOT_CREATED_USER: `Once you've created a grant, this is where you can add milestones
           and updates to it`,
         UPDATES: `Grantee hasn't posted any updates for this grant.`,
         CTA_UPDATES: `But be sure to check back in.`,
-        NOT_ADDED_MILESTONE: `Create a new milestone for forthcoming work, or post an update about the work you've already finished.`,
+        NOT_ADDED_MILESTONE: `Create a new milestone for forthcoming work.`,
       },
     },
   },

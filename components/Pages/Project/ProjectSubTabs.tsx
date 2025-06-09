@@ -1,96 +1,70 @@
 "use client";
-import { useEffect } from "react";
 import { EndorsementList } from "../ProgramRegistry/EndorsementList";
-import { ProjectFeed } from "@/components/ProjectFeed";
-import { useActivityTabStore } from "@/store/activityTab";
+import { useMemo } from "react";
+import { useEndorsementStore } from "@/store/modals/endorsement";
+import { useAccount } from "wagmi";
+import { useAuthStore } from "@/store/auth";
+import * as Tooltip from "@radix-ui/react-tooltip";
 import { useProjectStore } from "@/store";
-
-const SelectedButton = ({
-  children,
-  onClick,
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-}) => {
-  return (
-    <button
-      onClick={onClick}
-      className="text-base py-4 mx-4 px-2.5 text-[#30374F] dark:text-zinc-300 font-bold border-b-2 border-b-[#155EEF]"
-    >
-      {children}
-    </button>
-  );
-};
-const UnselectedButton = ({
-  children,
-  onClick,
-}: {
-  children: React.ReactNode;
-  onClick: () => void;
-}) => {
-  return (
-    <button
-      onClick={onClick}
-      className="text-base py-4 mx-4 px-2.5 text-[#4B5565] dark:text-zinc-400 font-normal border-b border-b-transparent"
-    >
-      {children}
-    </button>
-  );
-};
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 export const ProjectSubTabs = () => {
-  const { activityTab, setActivityTab } = useActivityTabStore();
-  const { project } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
+  const { setIsEndorsementOpen: setIsOpen } = useEndorsementStore();
+  const { address, isConnected } = useAccount();
+  const { isAuth } = useAuthStore();
+  const { openConnectModal } = useConnectModal();
 
-  useEffect(() => {
-    if (project) {
-      if (project.endorsements?.length > 0) {
-        setActivityTab("endorsements");
-      } else {
-        setActivityTab("project-feed");
-      }
-    }
-  }, [project]);
-
+  const userHasEndorsed = useMemo(() => {
+    if (!address || !isConnected || !isAuth || !project?.endorsements?.length)
+      return false;
+    return project.endorsements.some(
+      (endorsement) =>
+        endorsement.recipient?.toLowerCase() === address.toLowerCase()
+    );
+  }, [address, isConnected, isAuth, project?.endorsements]);
   return (
     <div className="flex flex-col border border-zinc-300 rounded-xl w-full">
-      <div className="flex flex-row gap-1 justify-center items-center border-b border-b-zinc-300">
-        {activityTab === "project-feed" ? (
-          <SelectedButton
-            onClick={() => {
-              setActivityTab("project-feed");
-            }}
-          >
-            Project Feed
-          </SelectedButton>
-        ) : (
-          <UnselectedButton
-            onClick={() => {
-              setActivityTab("project-feed");
-            }}
-          >
-            Project Feed
-          </UnselectedButton>
-        )}
-        {activityTab === "endorsements" ? (
-          <SelectedButton
-            onClick={() => {
-              setActivityTab("endorsements");
-            }}
-          >
-            Endorsements
-          </SelectedButton>
-        ) : (
-          <UnselectedButton
-            onClick={() => {
-              setActivityTab("endorsements");
-            }}
-          >
-            Endorsements
-          </UnselectedButton>
-        )}
+      <div className="flex flex-row gap-1 justify-between items-center border-b border-b-zinc-300">
+        <p className="text-base py-4 mx-4 px-2.5 text-[#30374F] dark:text-zinc-300 font-bold">
+          Endorsements
+        </p>
+        <div className="flex flex-row gap-2 px-2 py-2 justify-end">
+          <Tooltip.Provider>
+            <Tooltip.Root delayDuration={300}>
+              <Tooltip.Trigger asChild>
+                <div>
+                  <button
+                    onClick={() => {
+                      if (isConnected) {
+                        setIsOpen(true);
+                      } else {
+                        openConnectModal?.();
+                      }
+                    }}
+                    className="whitespace-nowrap text-blue-600 text-sm px-4 py-2 rounded-md underline bg-transparent hover:bg-transparent transition-colors"
+                  >
+                    Endorse this project
+                  </button>
+                </div>
+              </Tooltip.Trigger>
+              {userHasEndorsed && (
+                <Tooltip.Portal>
+                  <Tooltip.Content
+                    className="rounded-lg bg-white p-2 text-sm text-gray-700 shadow-lg dark:bg-zinc-800 dark:text-gray-300 z-50"
+                    sideOffset={5}
+                    side="bottom"
+                  >
+                    <p>You have already endorsed this project.</p>
+                    <Tooltip.Arrow className="fill-white dark:fill-zinc-800" />
+                  </Tooltip.Content>
+                </Tooltip.Portal>
+              )}
+            </Tooltip.Root>
+          </Tooltip.Provider>
+        </div>
       </div>
-      {activityTab === "endorsements" ? <EndorsementList /> : <ProjectFeed />}
+      <EndorsementList />
     </div>
   );
 };

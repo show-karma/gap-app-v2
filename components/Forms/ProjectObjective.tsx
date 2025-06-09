@@ -8,7 +8,7 @@ import { Button } from "../Utilities/Button";
 import { errorManager } from "../Utilities/errorManager";
 import { useAccount, useSwitchChain } from "wagmi";
 import { useProjectStore } from "@/store";
-import { getGapClient, useGap } from "@/hooks";
+import { getGapClient, useGap } from "@/hooks/useGap";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -21,11 +21,10 @@ import { INDEXER } from "@/utilities/indexer";
 import { useParams, useRouter } from "next/navigation";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { XMarkIcon } from "@heroicons/react/24/solid";
-import { cn } from "@/utilities/tailwind";
-import { useQuery } from "@tanstack/react-query";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useAllMilestones } from "@/hooks/useAllMilestones";
+import { PAGES } from "@/utilities/pages";
 
 const objectiveSchema = z.object({
   title: z
@@ -55,6 +54,7 @@ export const ProjectObjectiveForm = ({
   const { switchChainAsync } = useSwitchChain();
   const params = useParams();
   const projectId = params.projectId as string;
+  const router = useRouter();
 
   const isEditing = !!previousObjective;
 
@@ -78,10 +78,7 @@ export const ProjectObjectiveForm = ({
   const [isLoading, setIsLoading] = useState(false);
   const { changeStepperStep, setIsStepper } = useStepper();
 
-  const { refetch } = useQuery<IProjectMilestoneResponse[]>({
-    queryKey: ["projectMilestones"],
-    queryFn: () => getProjectObjectives(projectId),
-  });
+  const { refetch } = useAllMilestones(projectId as string);
 
   const createObjective = async (data: ObjectiveType) => {
     if (!gap) return;
@@ -89,7 +86,6 @@ export const ProjectObjectiveForm = ({
     setIsLoading(true);
     try {
       if (chain?.id != project?.chainID) {
-        console.log("Switching chain");
         await switchChainAsync?.({ chainId: project?.chainID as number });
         gapClient = getGapClient(project?.chainID as number);
       }
@@ -154,6 +150,11 @@ export const ProjectObjectiveForm = ({
                   toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.SUCCESS);
                   await refetch();
                   stateHandler?.(false);
+                  router.push(
+                    PAGES.PROJECT.UPDATES(
+                      project?.details?.data.slug || project?.uid || ""
+                    )
+                  );
                 }
                 retries -= 1;
                 // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
@@ -300,56 +301,67 @@ export const ProjectObjectiveForm = ({
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="border border-[#D0D5DD] dark:border-zinc-400 rounded-xl p-6 gap-3 flex flex-col items-start justify-start"
+      className="space-y-4 w-full py-4 px-0 rounded-2xl max-md:px-0"
     >
-      <div className="flex flex-col gap-2 w-full items-start justify-start">
-        <div className="flex flex-row gap-3 items-center justify-between w-full">
-          <div className="flex flex-row gap-3 justify-between items-center w-full">
-            <input
-              id="name-input"
-              type="text"
-              className={cn(
-                inputStyle,
-                "text-xl py-1 font-bold text-[#101828] dark:text-zinc-100 pl-4 border-l-4 rounded-sm w-full"
-              )}
-              style={{
-                borderLeftColor: previousObjective?.completed
-                  ? "#2ED3B7"
-                  : "#FDB022",
-              }}
-              placeholder="Enter a concise and descriptive project title"
-              {...register("title")}
-            />
-          </div>
-          <button onClick={() => stateHandler?.(false)}>
-            <XMarkIcon className="w-5 h-5 text-zinc-800 dark:text-zinc-200" />
-          </button>
+      <div className="flex flex-col gap-4 items-start justify-start w-full">
+        <div className="flex flex-col gap-1 items-start justify-start w-full">
+          <label htmlFor="title" className={labelStyle}>
+            Milestone Title
+          </label>
+          <input
+            type="text"
+            id="title"
+            className={`${inputStyle} ${
+              errors.title
+                ? "border-red-500 dark:border-red-500 text-red-500 dark:text-red-500"
+                : ""
+            }`}
+            placeholder={MESSAGES.PROJECT_OBJECTIVE_FORM.TITLE.MIN}
+            {...register("title")}
+          />
+          {errors.title && (
+            <p className="text-red-500">{errors.title.message}</p>
+          )}
         </div>
-        <p className="text-sm text-red-500">{errors.title?.message}</p>
-      </div>
-      <div className="flex w-full flex-col gap-2">
-        <div className="w-full" data-color-mode="light">
+        <div className="flex flex-col gap-1 items-start justify-start w-full">
+          <label htmlFor="text" className={labelStyle}>
+            Milestone Description
+          </label>
           <MarkdownEditor
-            placeholderText="Provide a clear and detailed description of this objective"
+            placeholderText={MESSAGES.PROJECT_OBJECTIVE_FORM.TEXT}
             value={watch("text") || ""}
             onChange={(newValue: string) => {
               setValue("text", newValue || "", {
                 shouldValidate: true,
               });
             }}
+            className={errors.text ? "border border-red-500" : ""}
           />
+          {errors.text && <p className="text-red-500">{errors.text.message}</p>}
         </div>
-        <p className="text-sm text-red-500">{errors.text?.message}</p>
       </div>
-
-      <Button
-        className="w-full max-w-max bg-brand-blue text-white text-sm px-3 py-2"
-        type="submit"
-        disabled={!isValid || isLoading}
-        isLoading={isLoading}
-      >
-        {previousObjective ? "Update Objective" : "Create Objective"}
-      </Button>
+      <div className="flex flex-row gap-2 items-center justify-end pt-2">
+        <Button
+          onClick={(e) => {
+            e.preventDefault();
+            stateHandler?.(false);
+          }}
+          className="px-4 py-2 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:bg-zinc-800 dark:border-zinc-600 dark:text-white"
+          type="button"
+        >
+          Cancel
+        </Button>
+        <Button
+          type="submit"
+          isLoading={isLoading}
+          className={`px-4 py-2 bg-brand-blue text-white hover:bg-brand-blue/90 disabled:opacity-50 ${
+            !isValid || isLoading ? "cursor-not-allowed opacity-50" : ""
+          }`}
+          disabled={!isValid || isLoading}
+        >
+          {isEditing ? "Edit Milestone" : "Create Milestone"}
+        </Button>
+      </div>
     </form>
   );
 };
