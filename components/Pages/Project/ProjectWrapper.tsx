@@ -13,7 +13,7 @@ import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
-import { useGap } from "@/hooks";
+import { useGap } from "@/hooks/useGap";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useAuthStore } from "@/store/auth";
 import { useEndorsementStore } from "@/store/modals/endorsement";

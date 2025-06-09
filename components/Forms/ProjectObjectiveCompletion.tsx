@@ -1,5 +1,5 @@
 "use client";
-import { getGapClient, useGap } from "@/hooks";
+import { getGapClient, useGap } from "@/hooks/useGap";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -16,7 +16,7 @@ import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/
 import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useQuery } from "@tanstack/react-query";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
@@ -27,6 +27,8 @@ import { Button } from "../Utilities/Button";
 import { cn } from "@/utilities/tailwind";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 import { sanitizeInput } from "@/utilities/sanitize";
+import { useAllMilestones } from "@/hooks/useAllMilestones";
+import { PAGES } from "@/utilities/pages";
 
 const schema = z.object({
   description: z.string().optional(),
@@ -74,10 +76,9 @@ export const ProjectObjectiveCompletionForm = ({
     mode: "onChange",
   });
   const [noProofCheckbox, setNoProofCheckbox] = useState(false);
-  const { refetch } = useQuery<IProjectMilestoneResponse[]>({
-    queryKey: ["projectMilestones"],
-    queryFn: () => getProjectObjectives(projectId),
-  });
+  const router = useRouter();
+
+  const { refetch } = useAllMilestones(projectId as string);
 
   const onSubmit = async (data: SchemaType) => {
     if (!address || !project) return;
@@ -145,6 +146,11 @@ export const ProjectObjectiveCompletionForm = ({
               toast.success(MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.SUCCESS);
               await refetch();
               handleCompleting(false);
+              router.push(
+                PAGES.PROJECT.UPDATES(
+                  project?.details?.data.slug || project?.uid || ""
+                )
+              );
             }
             retries -= 1;
             // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
@@ -154,7 +160,7 @@ export const ProjectObjectiveCompletionForm = ({
     } catch (error: any) {
       console.log(error);
       errorManager(
-        `Error completing objective ${objectiveUID}`,
+        `Error completing milestone ${objectiveUID}`,
         error,
         {
           project: projectId,
@@ -205,6 +211,7 @@ export const ProjectObjectiveCompletionForm = ({
           </p>
           <div className="flex flex-row gap-2 items-center py-2">
             <input
+              id="noProofCheckbox"
               type="checkbox"
               className="rounded-sm w-5 h-5 bg-white fill-black"
               checked={noProofCheckbox}
@@ -215,7 +222,10 @@ export const ProjectObjectiveCompletionForm = ({
                 });
               }}
             />
-            <p className="text-base text-zinc-900 dark:text-zinc-100 max-lg:text-xs">{`I don't have any output to show for this milestone`}</p>
+            <label
+              htmlFor="noProofCheckbox"
+              className="text-base text-zinc-900 dark:text-zinc-100 max-lg:text-xs"
+            >{`I don't have any output to show for this milestone`}</label>
           </div>
           <input
             id="proofOfWork-input"
@@ -246,7 +256,7 @@ export const ProjectObjectiveCompletionForm = ({
           }
           isLoading={isCompleting}
         >
-          Complete Objective
+          Complete
         </Button>
       </div>
     </form>

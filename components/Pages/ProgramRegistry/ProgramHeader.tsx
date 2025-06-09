@@ -32,7 +32,7 @@ export const ProgramHeader = () => {
             <p className="text-black text-sm font-semibold">
               Looking for funding?
             </p>
-            <p className="text-[#344054] text-sm font-normal">
+            <p className="text-brand-gray text-sm font-normal">
               <ExternalLink
                 href={links.funding_block}
                 className="text-[#155EEF] underline font-semibold"
@@ -49,7 +49,7 @@ export const ProgramHeader = () => {
             <p className="text-black text-sm font-semibold">
               Are we missing a grant program?
             </p>
-            <p className="text-[#344054] text-sm font-normal">
+            <p className="text-brand-gray text-sm font-normal">
               <ExternalLink
                 href={links.add_program}
                 className="text-[#155EEF] underline font-semibold"
@@ -70,7 +70,7 @@ export const ProgramHeader = () => {
             <p className="text-black text-sm font-semibold">
               This registry is maintained by the Cartographer Syndicate.
             </p>
-            <p className="text-[#344054] text-sm font-normal">
+            <p className="text-brand-gray text-sm font-normal">
               <ExternalLink
                 href={links.cryptographer}
                 className="text-[#155EEF] underline font-semibold"
@@ -91,7 +91,7 @@ export const ProgramHeader = () => {
             <p className="text-black text-sm font-semibold">
               Our vision and roadmap for the funding map.
             </p>
-            <p className="text-[#344054] text-sm font-normal">
+            <p className="text-brand-gray text-sm font-normal">
               <ExternalLink
                 href={links.notion}
                 className="text-[#155EEF] underline font-semibold"

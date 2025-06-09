@@ -2,7 +2,7 @@
 import { type FC, useEffect, useState } from "react";
 
 import { Button } from "@/components/Utilities/Button";
-import { getGapClient, useGap } from "@/hooks";
+import { getGapClient, useGap } from "@/hooks/useGap";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useStepper } from "@/store/modals/txStepper";
@@ -26,8 +26,7 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
 import { UpdateMilestone } from "./UpdateMilestone";
-import { VerifiedBadge } from "./VerifiedBadge";
-import { VerifyMilestoneUpdateDialog } from "./VerifyMilestoneUpdateDialog";
+import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerification";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -215,19 +214,9 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
               />
               <p className="text-xs font-bold text-white">UPDATE</p>
             </div>
-            {verifiedMilestones.length ? (
-              <VerifiedBadge
-                verifications={verifiedMilestones}
-                title={`${milestone.data.title} - Reviews`}
-              />
-            ) : null}
-            <VerifyMilestoneUpdateDialog
-              milestone={milestone}
-              addVerifiedMilestone={addVerifiedMilestone}
-            />
           </div>
           <p className="text-sm font-semibold text-gray-500 dark:text-zinc-100">
-            Posted on {formatDate(milestone?.completed?.createdAt)}
+            Completed on {formatDate(milestone?.completed?.createdAt)}
           </p>
         </div>
 
@@ -288,6 +277,12 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
               <div className="flex flex-1 flex-row items-center justify-end">
                 {isAuthorized ? (
                   <div className="flex w-max flex-row items-center gap-2">
+                    <MilestoneVerificationSection
+                      milestone={milestone}
+                      title={`${milestone.data.title} - Reviews`}
+                      verifiedMilestones={verifiedMilestones}
+                      onVerificationAdded={addVerifiedMilestone}
+                    />
                     <ExternalLink
                       type="button"
                       className="flex flex-row gap-2 bg-transparent text-sm font-semibold text-gray-600 dark:text-zinc-100 hover:bg-transparent"
@@ -301,7 +296,6 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
                       )}
                     >
                       <ShareIcon className="h-5 w-5" />
-                      Share
                     </ExternalLink>
                     <Button
                       type="button"
@@ -309,7 +303,6 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
                       onClick={() => handleEditing(true)}
                     >
                       <PencilSquareIcon className="h-5 w-5" />
-                      Edit
                     </Button>
                     <Button
                       type="button"
@@ -317,7 +310,6 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
                       onClick={() => undoMilestoneCompletion(milestone)}
                     >
                       <TrashIcon className="h-5 w-5" />
-                      Remove
                     </Button>
                   </div>
                 ) : null}

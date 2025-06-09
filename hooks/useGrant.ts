@@ -1,9 +1,8 @@
 "use client";
 import { useState } from "react";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useGap } from "./useGap";
+import { getGapClient, useGap } from "./useGap";
 import { useAccount, useSwitchChain } from "wagmi";
-import { getGapClient } from "./index";
 import { getProjectById } from "@/utilities/sdk";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";

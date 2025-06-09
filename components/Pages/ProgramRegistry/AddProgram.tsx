@@ -8,7 +8,7 @@ import { OrganizationIcon } from "@/components/Icons/Organization";
 import { Twitter2Icon } from "@/components/Icons/Twitter2";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { useGap } from "@/hooks";
+import { useGap } from "@/hooks/useGap";
 import { useAuthStore } from "@/store/auth";
 import { useStepper } from "@/store/modals/txStepper";
 import { useRegistryStore } from "@/store/registry";
@@ -48,7 +48,7 @@ import { SearchDropdown } from "./SearchDropdown";
 import { StatusDropdown } from "./StatusDropdown";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 
-const labelStyle = "text-sm font-bold text-[#344054] dark:text-zinc-100";
+const labelStyle = "text-sm font-bold text-brand-gray dark:text-zinc-100";
 const inputStyle =
   "mt-1 w-full rounded-lg border border-gray-200 bg-white px-4 py-3 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100";
 
