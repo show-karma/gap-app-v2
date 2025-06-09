@@ -18,6 +18,7 @@ import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useContactInfo } from "@/hooks/useContactInfo";
+import { useAccount } from "wagmi";
 
 type IntroDialogProps = {};
 
@@ -41,6 +42,7 @@ const labelStyle =
 
 export const IntroDialog: FC<IntroDialogProps> = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const { address } = useAccount();
 
   const { isIntroModalOpen: isOpen, setIsIntroModalOpen: setIsOpen } =
     useIntroModalStore();
@@ -89,8 +91,15 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
       closeModal();
       toast.success("Successfully requested intro!");
     } catch (error: any) {
-      errorManager(`Error while requesting intro`, error);
-      console.log(error);
+      errorManager(
+        MESSAGES.REQUEST_INTRO.ERROR,
+        error,
+        {
+          projectUID: project?.uid,
+          address,
+        },
+        { error: MESSAGES.REQUEST_INTRO.ERROR }
+      );
     } finally {
       setIsLoading(false);
     }

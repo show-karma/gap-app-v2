@@ -22,6 +22,7 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { DeleteDialog } from "@/components/DeleteDialog";
+import { useAccount } from "wagmi";
 
 const OUTPUT_TYPES = ["output", "outcome"] as const;
 type OutputType = (typeof OUTPUT_TYPES)[number];
@@ -192,6 +193,7 @@ export const ManageCategoriesOutputs = ({
   community,
   refreshCategories,
 }: ManageCategoriesOutputsProps) => {
+  const { address } = useAccount();
   const [isSavingOutput, setIsSavingOutput] = useState<string>("");
   const [isDeletingOutput, setIsDeletingOutput] = useState<string>("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
@@ -242,10 +244,18 @@ export const ManageCategoriesOutputs = ({
         setCategories(refreshedCategories);
       });
       reset();
-      toast.success("Impact segment created successfully");
+      toast.success(MESSAGES.ACTIVITY_OUTCOME.CREATE.SUCCESS);
     } catch (error) {
-      toast.error("Failed to create impact segment");
-      errorManager("Failed to create impact segment", error);
+      errorManager(
+        MESSAGES.ACTIVITY_OUTCOME.CREATE.ERROR,
+        error,
+        {
+          data,
+          categoryId,
+          address,
+        },
+        { error: MESSAGES.ACTIVITY_OUTCOME.CREATE.ERROR }
+      );
     } finally {
       setIsSavingOutput("");
     }
@@ -266,10 +276,18 @@ export const ManageCategoriesOutputs = ({
       refreshCategories(true).then((refreshedCategories) => {
         setCategories(refreshedCategories);
       });
-      toast.success("Impact segment deleted successfully");
+      toast.success(MESSAGES.ACTIVITY_OUTCOME.DELETE.SUCCESS);
     } catch (error) {
-      toast.error("Failed to delete impact segment");
-      errorManager("Failed to delete impact segment", error);
+      errorManager(
+        MESSAGES.ACTIVITY_OUTCOME.DELETE.ERROR,
+        error,
+        {
+          categoryId,
+          segmentId,
+          address,
+        },
+        { error: MESSAGES.ACTIVITY_OUTCOME.DELETE.ERROR }
+      );
     } finally {
       setIsDeletingOutput("");
     }
@@ -306,10 +324,19 @@ export const ManageCategoriesOutputs = ({
         setCategories(refreshedCategories);
       });
 
-      toast.success("Impact segment updated successfully");
+      toast.success(MESSAGES.ACTIVITY_OUTCOME.UPDATE.SUCCESS);
     } catch (error) {
-      toast.error("Failed to update impact segment");
-      errorManager("Failed to update impact segment", error);
+      errorManager(
+        MESSAGES.ACTIVITY_OUTCOME.UPDATE.ERROR,
+        error,
+        {
+          data,
+          categoryId,
+          outputId,
+          address,
+        },
+        { error: MESSAGES.ACTIVITY_OUTCOME.UPDATE.ERROR }
+      );
     } finally {
       setIsSavingOutput("");
     }

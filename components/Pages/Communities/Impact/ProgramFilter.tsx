@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { SearchWithValueDropdown } from "./SearchWithValueDropdown";
+import { useCommunityPrograms } from "@/hooks/usePrograms";
 
 interface ProgramFilterProps {
   defaultProgramSelected?: string;
@@ -17,10 +18,7 @@ export const ProgramFilter = ({
 }: ProgramFilterProps) => {
   const { communityId } = useParams();
 
-  const { data, isLoading } = useQuery({
-    queryKey: ["programs"],
-    queryFn: () => getAllProgramsOfCommunity(communityId as string),
-  });
+  const { data, isLoading } = useCommunityPrograms(communityId as string);
   const programs = data?.map((program) => ({
     title: program.metadata?.title || "",
     value: `${program.programId}_${program.chainID}` || "",
@@ -39,7 +37,7 @@ export const ProgramFilter = ({
   );
 
   return (
-    <div className="flex flex-row gap-4 items-center flex-1 max-w-[450px]">
+    <div className="flex flex-row gap-4 items-center flex-1 max-w-[400px]">
       <Image
         src={"/icons/program.svg"}
         alt="program"

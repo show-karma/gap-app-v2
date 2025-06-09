@@ -8,6 +8,8 @@ import { Hex } from "viem";
 import { GrantPercentage } from "./Pages/Project/Grants/components/GrantPercentage";
 import { MarkdownPreview } from "./Utilities/MarkdownPreview";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { TrackTags } from "./TrackTags";
+import { ProfilePicture } from "./Utilities/ProfilePicture";
 
 interface GrantCardProps {
   grant: IGrantResponse;
@@ -42,6 +44,20 @@ const updatesLength = (
   milestones.filter((milestone) => milestone.completed).length + updatesLength;
 
 export const GrantCard = ({ grant, index }: GrantCardProps) => {
+  const selectedTrackIds = grant.details?.data?.selectedTrackIds as
+    | string[]
+    | undefined;
+  const communityId = grant.data?.communityUID;
+  const programId = grant.details?.data?.programId;
+
+  // Extract the base programId if it includes a chainId suffix (format: programId_chainId)
+  const baseProgramId = programId?.includes("_")
+    ? programId.split("_")[0]
+    : programId;
+
+  // Check if we have valid track IDs to display
+  const hasTrackIds = selectedTrackIds && selectedTrackIds.length > 0;
+
   return (
     <a
       id="grant-card"
@@ -60,25 +76,46 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
         />
 
         <div className="flex w-full flex-col px-3">
-          <p
-            id="grant-project-title"
-            className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200  max-2xl:text-sm mr-1"
-          >
-            {grant.project?.details?.data?.title || grant.uid}
-          </p>
+          <div className="flex flex-row items-center justify-between mb-1">
+            <div className="flex flex-row items-center gap-2">
+              <div className="flex justify-center">
+                <ProfilePicture
+                  imageURL={grant.project?.details?.data?.imageURL}
+                  name={grant.project?.uid || grant.refUID || ""}
+                  size="32"
+                  className="h-8 w-8 min-w-8 min-h-8 border border-white shadow-sm"
+                  alt={grant.project?.details?.data?.title || "Project"}
+                />
+              </div>
+              <p
+                id="grant-project-title"
+                className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200 max-2xl:text-sm flex-1"
+              >
+                {grant.project?.details?.data?.title || grant.uid}
+              </p>
+            </div>
+          </div>
           <p
             id="grant-title"
             className="line-clamp-1 break-all text-sm font-semibold text-gray-500 dark:text-zinc-300 max-2xl:text-[13px]"
           >
             {grant.details?.data.title}
           </p>
-          <p className="mb-2 text-sm font-medium text-gray-400  dark:text-zinc-400  max-2xl:text-[13px]">
+          <p className="mb-2 text-sm font-medium text-gray-400 dark:text-zinc-400 max-2xl:text-[13px]">
             Created on {formatDate(grant.createdAt)}
           </p>
+          {communityId && hasTrackIds && (
+            <div className="mb-2">
+              <TrackTags
+                communityId={communityId}
+                trackIds={selectedTrackIds}
+              />
+            </div>
+          )}
           <div className="flex flex-col gap-1 flex-1 h-[64px]">
             <div className="text-sm text-gray-900 dark:text-gray-400 text-ellipsis line-clamp-2">
               <MarkdownPreview
-                source={grant.details?.data?.description?.slice(0, 100)}
+                source={grant.project?.details?.data?.description?.slice(0, 100)}
               />
             </div>
           </div>
@@ -96,12 +133,10 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
         </div>
 
         {grant && (
-          <div className="flex h-max w-max items-center justify-start rounded-full bg-teal-50 dark:bg-teal-700 text-teal-600 dark:text-teal-200 px-3 py-1 max-2xl:px-2">
-            <GrantPercentage
-              grant={grant}
-              className="text-center text-sm font-medium text-teal-600 dark:text-teal-100 max-2xl:text-[13px]"
-            />
-          </div>
+          <GrantPercentage
+            grant={grant}
+            className="text-center text-sm font-medium text-teal-600 dark:text-teal-100 max-2xl:text-[13px]"
+          />
         )}
 
         <div className="flex h-max w-max items-center justify-start rounded-full bg-slate-50 dark:bg-slate-600 text-slate-600 dark:text-gray-300 px-3 py-1 max-2xl:px-2">

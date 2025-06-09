@@ -1,5 +1,4 @@
-import { authCookiePath } from "@/utilities/auth-keys";
-import Cookies from "universal-cookie";
+import { getCookiesFromStoredWallet } from "@/utilities/getCookiesFromStoredWallet";
 import { create } from "zustand";
 
 interface AuthStore {
@@ -16,8 +15,8 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   isAuth: false,
   setIsAuth: (isAuth: boolean) => set({ isAuth }),
   getToken: () => {
-    const cookies = new Cookies();
-    return cookies.get(authCookiePath);
+    const { token } = getCookiesFromStoredWallet();
+    return token;
   },
   isAuthenticating: false,
   setIsAuthenticating: (isAuthenticating: boolean) => set({ isAuthenticating }),

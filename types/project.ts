@@ -52,4 +52,5 @@ export interface ProjectFromList {
   noOfGrants: number;
   noOfProjectMilestones: number;
   noOfGrantMilestones: number;
+  imageURL?: string;
 }

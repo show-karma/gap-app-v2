@@ -8,6 +8,9 @@ import Link from "next/link";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { AddExternalId } from "./AddExternalIdDialog";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { MESSAGES } from "@/utilities/messages";
+import { useAccount } from "wagmi";
 
 export default function ExternalIds({
   projectUID,
@@ -21,28 +24,45 @@ export default function ExternalIds({
   refreshGrant: () => Promise<IGrantResponse | undefined>;
 }) {
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const { address } = useAccount();
 
   const handleRemove = async (id: string) => {
     setRemovingId(id);
-    const [result, error] = await fetchData(
-      INDEXER.GRANTS.REMOVE_EXTERNAL_ID,
-      "POST",
-      {
-        projectUID: projectUID,
-        communityUID: communityUID,
-        externalId: id,
-      },
-      {},
-      {},
-      true
-    );
-    if (error) {
-      toast.error("Error removing external ID");
-    } else {
+    try {
+      const [result, error] = await fetchData(
+        INDEXER.GRANTS.REMOVE_EXTERNAL_ID,
+        "POST",
+        {
+          projectUID: projectUID,
+          communityUID: communityUID,
+          externalId: id,
+        },
+        {},
+        {},
+        true
+      );
+      if (error) {
+        throw new Error(error);
+      }
       await refreshGrant();
       toast.success("External ID removed successfully");
+    } catch (error) {
+      errorManager(
+        MESSAGES.GRANT.ADD_EXTERNAL_ID.ERROR,
+        error,
+        {
+          removingExternalId: id,
+          projectUID,
+          communityUID,
+          address,
+        },
+        {
+          error: MESSAGES.GRANT.ADD_EXTERNAL_ID.ERROR,
+        }
+      );
+    } finally {
+      setRemovingId(null);
     }
-    setRemovingId(null);
   };
 
   async function fetchApplicationsByProjectId(projectId: string) {

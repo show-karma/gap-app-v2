@@ -112,8 +112,18 @@ export const PromoteMemberDialog: FC<PromoteMemberDialogProps> = ({
           });
         });
     } catch (error) {
-      errorManager("Error promoting member", error);
-      toast.error("Failed to promote member");
+      errorManager(
+        "Error promoting member",
+        error,
+        {
+          address,
+          memberAddress,
+          projectUid: project?.uid,
+        },
+        {
+          error: `Failed to promote member ${memberAddress}.`,
+        }
+      );
       console.log(error);
     } finally {
       setIsPromoting(false);

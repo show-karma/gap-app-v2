@@ -22,6 +22,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useEffect } from "react";
 import { Dispatch, SetStateAction } from "react";
+import { MESSAGES } from "@/utilities/messages";
 
 type ProjectApplicationData = {
   project: {
@@ -112,6 +113,7 @@ function MintNFTs({
   projectDetails: ProjectApplicationData;
   donations: DonationData[];
 }) {
+  const { address } = useAccount();
   const [fileUploading, setFileUploading] = useState(false);
   const [imageIPFSHash, setImageIPFSHash] = useState<string | null>(null);
   const [chainSelected, setChainSelected] = useState<number>(
@@ -238,8 +240,16 @@ function MintNFTs({
         );
       }
     } catch (error) {
-      console.log("Error minting NFTs", error);
-      errorManager("Error minting NFTs", error);
+      errorManager(
+        MESSAGES.AIRDROP_GITCOIN_SUPPORTERS.MINT_NFT.ERROR,
+        error,
+        {
+          projectDetails,
+          donations,
+          address,
+        },
+        { error: MESSAGES.AIRDROP_GITCOIN_SUPPORTERS.MINT_NFT.ERROR }
+      );
     }
   };
 

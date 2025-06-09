@@ -53,7 +53,7 @@ export const ObjectiveCardComplete = ({
 
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
-  const { chain } = useAccount();
+  const { chain, address } = useAccount();
   const { switchChainAsync } = useSwitchChain();
 
   const params = useParams();
@@ -165,11 +165,15 @@ export const ObjectiveCardComplete = ({
           });
       }
     } catch (error: any) {
-      console.log(error);
-      toast.error(MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.ERROR);
       errorManager(
-        `Error deleting objective completion of ${objective.uid} from project ${objective.refUID}`,
-        error
+        MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.ERROR,
+        error,
+        {
+          objectiveUID: objective.uid,
+          projectUID: objective.refUID,
+          address,
+        },
+        { error: MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.DELETE.ERROR }
       );
     } finally {
       setIsStepper(false);

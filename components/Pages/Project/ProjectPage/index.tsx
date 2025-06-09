@@ -271,6 +271,7 @@ function ProjectPage() {
       errorManager("Failed to check code validation", error, {
         projectId,
         code: inviteCodeParam,
+        address,
       });
     }
   };

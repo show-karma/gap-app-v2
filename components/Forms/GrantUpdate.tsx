@@ -212,7 +212,6 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
         });
     } catch (error) {
       console.log(error);
-      toast.error(MESSAGES.GRANT.GRANT_UPDATE.ERROR);
       errorManager(
         `Error creating grant update for grant ${grantToUpdate.uid} from project ${project.uid}`,
         error,
@@ -226,6 +225,9 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
             proofOfWork: data.proofOfWork,
             type: "grant-update",
           },
+        },
+        {
+          error: MESSAGES.GRANT.GRANT_UPDATE.ERROR,
         }
       );
     } finally {

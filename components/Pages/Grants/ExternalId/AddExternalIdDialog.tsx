@@ -15,6 +15,8 @@ import { INDEXER } from "@/utilities/indexer";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 import { cn } from "@/utilities/tailwind";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { useAccount } from "wagmi";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -82,6 +84,7 @@ export const AddExternalId: FC<AddExternalIdDialogProps> = ({
   communityUID,
   refreshGrant,
 }) => {
+  const { address } = useAccount();
   const dataToUpdate = {
     profile: "",
   };
@@ -186,8 +189,16 @@ export const AddExternalId: FC<AddExternalIdDialogProps> = ({
         closeModal();
       }
     } catch (error) {
-      console.log(error);
-      toast.error("Error adding external ID");
+      errorManager(
+        MESSAGES.GRANT.ADD_EXTERNAL_ID.ERROR,
+        error,
+        {
+          projectUID,
+          communityUID,
+          address,
+        },
+        { error: MESSAGES.GRANT.ADD_EXTERNAL_ID.ERROR }
+      );
       closeModal();
     } finally {
       data.profile = "";

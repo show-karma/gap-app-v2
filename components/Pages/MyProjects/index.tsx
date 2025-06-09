@@ -3,6 +3,7 @@
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import Pagination from "@/components/Utilities/Pagination";
+import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { useMixpanel } from "@/hooks/useMixpanel";
 import { useAuthStore } from "@/store/auth";
 import { useOnboarding } from "@/store/modals/onboarding";
@@ -84,7 +85,7 @@ export default function MyProjects() {
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ["totalProjects"],
+    queryKey: ["totalProjects", address],
     queryFn: () => fetchMyProjects(address),
     enabled: Boolean(address),
   });
@@ -143,8 +144,19 @@ export default function MyProjects() {
                           </div>
 
                           <div className="px-5 flex flex-col gap-0">
-                            <div className="font-body line-clamp-1 mb-0 pb-0 truncate text-base font-semibold text-gray-900 dark:text-gray-100">
-                              {card.details?.data.title || card.uid}
+                            <div className="flex flex-row items-center gap-2 mb-1">
+                              <div className="flex justify-center">
+                                <ProfilePicture
+                                  imageURL={card.details?.data?.imageURL}
+                                  name={card.uid || ""}
+                                  size="32"
+                                  className="h-8 w-8 min-w-8 min-h-8 border border-white shadow-sm"
+                                  alt={card.details?.data?.title || "Project"}
+                                />
+                              </div>
+                              <div className="font-body line-clamp-1 mb-0 pb-0 truncate text-base font-semibold text-gray-900 dark:text-gray-100 flex-1">
+                                {card.details?.data.title || card.uid}
+                              </div>
                             </div>
                             <div className="font-body dark:text-slate-400 mb-2 text-sm font-medium text-slate-500">
                               {`Created on ${formatDate(card.createdAt)}`}

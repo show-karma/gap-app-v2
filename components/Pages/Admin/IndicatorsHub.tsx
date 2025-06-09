@@ -15,107 +15,113 @@ import {
 } from "@/components/Forms/IndicatorForm";
 import { Indicator } from "@/utilities/queries/getIndicatorsByCommunity";
 import { ProgramCard } from "./ProgramCard";
+import { MESSAGES } from "@/utilities/messages";
+import { useAccount } from "wagmi";
 
 interface Program {
   programId: string;
   chainID: number;
 }
 
-
 type IndicatorWithPrograms = Indicator & {
   programs?: Program[];
-}
+};
 
 export const autosyncedIndicators: IndicatorWithPrograms[] = [
   {
     name: "no_of_txs",
     id: "",
     description: "No. of transactions (*dune)",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
     name: "active_developers",
     id: "",
     description: "No. of active developers (*oso)",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'PULL_REQUEST_MERGED',
+    name: "PULL_REQUEST_MERGED",
     id: "",
     description: "Number of pull requests merged (*oso)",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
     name: "ISSUE_OPENED",
     id: "",
     description: "Number of issues opened (*oso)",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
     name: "FORKED",
     id: "",
     description: "Number of repository forks (*oso)",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
     name: "ISSUE_CLOSED",
     id: "",
     description: "Number of issues closed (*oso)",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
     name: "ISSUE_COMMENT",
     id: "",
     description: "Number of comments on issues (*oso)",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
     name: "STARRED",
     id: "",
     description: "Number of repository stars (*oso)",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'GitHub Commits',
+    name: "GitHub Commits",
     id: "",
     description: "Number of code commits (*github)",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
     name: "PULL_REQUEST_OPENED",
     id: "",
     description: "Number of pull requests opened (*oso)",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
-    name: 'GitHub Merged PRs',
+    name: "GitHub Merged PRs",
     id: "",
     description: "Number of pull requests merged (*github)",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
     name: "RELEASE_PUBLISHED",
     id: "",
     description: "Number of releases published (*oso)",
-    unitOfMeasure: "int"
+    unitOfMeasure: "int",
   },
   {
     name: "contributors",
     id: "",
     description: "No. of contributors (*oso)",
-    unitOfMeasure: "int"
-  }
-]
+    unitOfMeasure: "int",
+  },
+];
 
 interface IndicatorsHubProps {
   communitySlug: string;
   communityId: string;
 }
 
-export const IndicatorsHub = ({ communitySlug, communityId }: IndicatorsHubProps) => {
+export const IndicatorsHub = ({
+  communitySlug,
+  communityId,
+}: IndicatorsHubProps) => {
+  const { address } = useAccount();
   const [isLoading, setIsLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [editingIndicator, setEditingIndicator] = useState<IndicatorWithPrograms | null>(null);
+  const [editingIndicator, setEditingIndicator] =
+    useState<IndicatorWithPrograms | null>(null);
   const [selectedAutosynced, setSelectedAutosynced] = useState<string>("");
   const [formDefaultValues, setFormDefaultValues] = useState<
     Partial<IndicatorFormData>
@@ -209,15 +215,22 @@ export const IndicatorsHub = ({ communitySlug, communityId }: IndicatorsHubProps
       refetch();
       toast.success("Indicator deleted successfully");
     } catch (error) {
-      errorManager("Failed to delete indicator", error);
-      toast.error("Failed to delete indicator");
+      errorManager(
+        "Failed to delete indicator",
+        error,
+        {
+          indicatorId: id,
+          address,
+        },
+        { error: MESSAGES.INDICATOR.DELETE.ERROR }
+      );
     } finally {
       setDeletingId(null);
     }
   };
 
   return (
-    <div className="w-full h-max max-h-full flex flex-col" >
+    <div className="w-full h-max max-h-full flex flex-col">
       <div className="bg-white dark:bg-zinc-800 rounded-lg p-6 mb-6">
         <h3 className="text-lg font-semibold mb-4">
           {editingIndicator ? "Edit Indicator" : "Create New Indicator"}
@@ -244,16 +257,31 @@ export const IndicatorsHub = ({ communitySlug, communityId }: IndicatorsHubProps
           )}
 
           <IndicatorForm
-            communityId={communitySlug}
+            communityId={communityId}
             onSuccess={editingIndicator ? handleEditSuccess : handleSuccess}
             onError={editingIndicator ? handleEditError : handleError}
             isLoading={isLoading}
             defaultValues={formDefaultValues}
             indicatorId={editingIndicator?.id}
             readOnlyFields={{
-              name: !!selectedAutosynced || (!!editingIndicator && autosyncedIndicators.some(i => i.name === editingIndicator.name)),
-              description: !!selectedAutosynced || (!!editingIndicator && autosyncedIndicators.some(i => i.name === editingIndicator.name)),
-              unitOfMeasure: !!selectedAutosynced || (!!editingIndicator && autosyncedIndicators.some(i => i.name === editingIndicator.name)),
+              name:
+                !!selectedAutosynced ||
+                (!!editingIndicator &&
+                  autosyncedIndicators.some(
+                    (i) => i.name === editingIndicator.name
+                  )),
+              description:
+                !!selectedAutosynced ||
+                (!!editingIndicator &&
+                  autosyncedIndicators.some(
+                    (i) => i.name === editingIndicator.name
+                  )),
+              unitOfMeasure:
+                !!selectedAutosynced ||
+                (!!editingIndicator &&
+                  autosyncedIndicators.some(
+                    (i) => i.name === editingIndicator.name
+                  )),
             }}
           />
 
@@ -301,10 +329,10 @@ export const IndicatorsHub = ({ communitySlug, communityId }: IndicatorsHubProps
                     {autosyncedIndicators.find(
                       (i) => i.name === indicator.name
                     ) && (
-                        <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 rounded-full">
-                          Autosynced
-                        </span>
-                      )}
+                      <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 rounded-full">
+                        Autosynced
+                      </span>
+                    )}
                   </div>
                   {indicator.programs && indicator.programs.length > 0 && (
                     <div className="mt-2">
@@ -352,6 +380,6 @@ export const IndicatorsHub = ({ communitySlug, communityId }: IndicatorsHubProps
           )}
         </div>
       </div>
-    </div >
+    </div>
   );
 };

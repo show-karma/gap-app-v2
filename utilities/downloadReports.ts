@@ -35,7 +35,7 @@ export const downloadCommunityReport = (
       status,
       grantTitle:
         selectedGrantTitles.length > 0
-          ? encodeURIComponent(selectedGrantTitles.join("_"))
+          ? encodeURIComponent(selectedGrantTitles.join(","))
           : undefined,
       download: true,
     });

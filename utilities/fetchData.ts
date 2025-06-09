@@ -1,8 +1,7 @@
 import axios, { Method } from "axios";
-import Cookies from "universal-cookie";
-import { authCookiePath } from "./auth-keys";
 import { envVars } from "./enviromentVars";
 import { sanitizeObject } from "./sanitize";
+import { getCookiesFromStoredWallet } from "./getCookiesFromStoredWallet";
 
 export default async function fetchData(
   endpoint: string,
@@ -15,8 +14,7 @@ export default async function fetchData(
   baseUrl: string = envVars.NEXT_PUBLIC_GAP_INDEXER_URL
 ) {
   try {
-    const cookies = new Cookies();
-    const token = cookies.get(authCookiePath);
+    const { token, walletType } = getCookiesFromStoredWallet();
 
     const sanitizedData = sanitizeObject(axiosData);
     const isIndexerUrl = baseUrl === envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
@@ -49,7 +47,7 @@ export default async function fetchData(
   } catch (err: any) {
     let error = "";
     if (!err.response) {
-      error = "No server response";
+      error = err;
     } else {
       error = err.response.data.message || err.message;
     }

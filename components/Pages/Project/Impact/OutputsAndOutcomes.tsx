@@ -148,7 +148,6 @@ export const OutputsAndOutcomes = () => {
     );
   };
 
-  // Initialize forms when impact answers are loaded
   useEffect(() => {
     if (impactAnswers.length > 0) {
       // Preserve editing state for forms that already exist

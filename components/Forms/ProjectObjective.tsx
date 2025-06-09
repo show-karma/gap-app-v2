@@ -168,12 +168,18 @@ export const ProjectObjectiveForm = ({
           }
         });
     } catch (error) {
-      errorManager(MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR, error, {
-        data,
-        address,
-        project: project?.uid,
-      });
-      toast.error(MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR);
+      errorManager(
+        MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR,
+        error,
+        {
+          data,
+          address,
+          project: project?.uid,
+        },
+        {
+          error: MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR,
+        }
+      );
     } finally {
       setIsLoading(false);
       setIsStepper(false);
@@ -266,12 +272,18 @@ export const ProjectObjectiveForm = ({
           }
         });
     } catch (error) {
-      errorManager(MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR, error, {
-        data,
-        address,
-        project: project?.uid,
-      });
-      toast.error(MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR);
+      errorManager(
+        MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR,
+        error,
+        {
+          data,
+          address,
+          project: project?.uid,
+        },
+        {
+          error: MESSAGES.PROJECT_OBJECTIVE_FORM.ERROR,
+        }
+      );
     } finally {
       setIsLoading(false);
       setIsStepper(false);

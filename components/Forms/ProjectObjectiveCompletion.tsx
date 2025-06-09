@@ -159,11 +159,18 @@ export const ProjectObjectiveCompletionForm = ({
         });
     } catch (error: any) {
       console.log(error);
-      toast.error(MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.ERROR);
-      errorManager(`Error completing milestone ${objectiveUID}`, error, {
-        project: projectId,
-        objective: objectiveUID,
-      });
+      errorManager(
+        `Error completing milestone ${objectiveUID}`,
+        error,
+        {
+          project: projectId,
+          objective: objectiveUID,
+          address,
+        },
+        {
+          error: MESSAGES.PROJECT_OBJECTIVE_FORM.COMPLETE.ERROR,
+        }
+      );
       setIsStepper(false);
     } finally {
       setIsCompleting(false);

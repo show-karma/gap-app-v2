@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { StepBlock } from "../StepBlock";
 import { Button } from "@/components/Utilities/Button";
 import { useGrantFormStore } from "../store";
@@ -30,7 +29,6 @@ import { MESSAGES } from "@/utilities/messages";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { CancelButton } from "./buttons/CancelButton";
 import { NextButton } from "./buttons/NextButton";
-import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 
 export const MilestonesScreen: React.FC = () => {
   const {
@@ -60,7 +58,11 @@ export const MilestonesScreen: React.FC = () => {
   const isEditing = pathname.includes("edit");
 
   const handleBack = () => {
-    setCurrentStep(3);
+    if (flowType === "program") {
+      setCurrentStep(2);
+    } else {
+      setCurrentStep(3);
+    }
   };
 
   const handleCancel = () => {
@@ -120,6 +122,7 @@ export const MilestonesScreen: React.FC = () => {
           : undefined,
         programId: formData.programId,
         questions: formData.questions || [],
+        selectedTrackIds: formData.selectedTrackIds || [],
       };
 
       // Create grant instance
@@ -234,6 +237,35 @@ export const MilestonesScreen: React.FC = () => {
               setFlowType("grant"); // Reset to default flow type
 
               // Redirect to grants page instead of specific grant
+              if (
+                flowType === "program" &&
+                newGrantData.selectedTrackIds &&
+                newGrantData.selectedTrackIds.length > 0 &&
+                newGrantData.programId
+              ) {
+                try {
+                  const programIdParts = newGrantData.programId.split("_");
+                  const programId = programIdParts[0];
+                  const chainID = parseInt(
+                    programIdParts[1] || communityNetworkId.toString()
+                  );
+
+                  await fetchData(
+                    INDEXER.PROJECTS.TRACKS(selectedProject.uid),
+                    "POST",
+                    {
+                      trackIds: newGrantData.selectedTrackIds,
+                      programId,
+                    }
+                  );
+                } catch (trackError) {
+                  console.error(
+                    "Error assigning tracks to project:",
+                    trackError
+                  );
+                }
+              }
+
               router.push(
                 PAGES.PROJECT.GRANT(
                   selectedProject.details?.data.slug || selectedProject.uid,
@@ -250,15 +282,20 @@ export const MilestonesScreen: React.FC = () => {
           }
         });
     } catch (error: any) {
-      console.log(error);
-      toast.error(
-        flowType === "grant"
-          ? MESSAGES.GRANT.CREATE.ERROR
-          : "Error applying to funding program"
-      );
       errorManager(
-        `Error creating ${flowType} to project ${selectedProject?.uid}`,
-        error
+        MESSAGES.GRANT.CREATE.ERROR(formData.title),
+        error,
+        {
+          flowType: flowType,
+          projectUID: selectedProject.uid,
+          address,
+        },
+        {
+          error:
+            flowType === "grant"
+              ? MESSAGES.GRANT.CREATE.ERROR(formData.title)
+              : "Error applying to funding program",
+        }
       );
     } finally {
       setIsStepper(false);
@@ -266,7 +303,7 @@ export const MilestonesScreen: React.FC = () => {
   };
 
   return (
-    <StepBlock currentStep={4} totalSteps={4}>
+    <StepBlock currentStep={4}>
       <div className="flex flex-col w-full mx-auto">
         <div className="flex justify-between items-center mb-6 max-md:flex-col max-md:gap-2">
           <h3 className="text-xl font-semibold">
@@ -289,8 +326,8 @@ export const MilestonesScreen: React.FC = () => {
             <div className="text-center py-8 border border-dashed border-gray-300 dark:border-gray-700 rounded-lg">
               <p className="text-gray-500 dark:text-gray-400 text-center">
                 Set your goals by adding milestones you plan to accomplish.
-                There’s no limit—add as many as you need to track your progress
-                effectively!
+                There&apos;s no limit—add as many as you need to track your
+                progress effectively!
               </p>
             </div>
           ) : (

@@ -221,7 +221,6 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         });
     } catch (error) {
       console.log(error);
-      toast.error(MESSAGES.MILESTONES.COMPLETE.ERROR);
       errorManager(
         `Error completing milestone ${milestone.uid} from grant ${milestone.refUID}`,
         error,
@@ -230,6 +229,9 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           projectUID: project?.uid,
           address: address,
           data: milestone,
+        },
+        {
+          error: MESSAGES.MILESTONES.COMPLETE.ERROR,
         }
       );
     } finally {
@@ -333,7 +335,19 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         });
     } catch (error) {
       console.log(error);
-      toast.error(MESSAGES.MILESTONES.UPDATE_COMPLETION.ERROR);
+      errorManager(
+        `Error updating milestone completion ${milestone.uid} from grant ${milestone.refUID}`,
+        error,
+        {
+          grantUID: milestone.refUID,
+          projectUID: project?.uid,
+          address: address,
+          data: milestone,
+        },
+        {
+          error: MESSAGES.MILESTONES.UPDATE_COMPLETION.ERROR,
+        }
+      );
     } finally {
       setIsStepper(false);
     }

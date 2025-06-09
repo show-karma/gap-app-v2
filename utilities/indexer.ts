@@ -12,7 +12,8 @@ export const INDEXER = {
       `/registry/find/${id}/${chainId}`,
     GET_ALL_PENDING: "/registry/pending",
     APPROVE: "/registry/approve",
-    UPDATE: "/registry/updateMetadata",
+    UPDATE: (id: string, chainId: number) =>
+      `/registry/${id}/${chainId}/updateMetadata`,
     CREATE: "/registry/offchain/create",
     MANAGERS: (profileId: string, chainId: number) =>
       `/registry/profile/${profileId}/${chainId}/members`,
@@ -29,6 +30,29 @@ export const INDEXER = {
       }${sortOrder ? `&sortOrder=${sortOrder}` : ""}`,
     BY_PROGRAM: (programId: string, chainId: number, communityId: string) =>
       `/projects/by-program?programId=${programId}&chainId=${chainId}&communityId=${communityId}`,
+    TRACKS: (projectId: string) => `/tracks/projects/${projectId}/tracks`,
+  },
+  PROGRAMS: {
+    TRACKS: (programId: string) => `/tracks/programs/${programId}/tracks`,
+    TRACKS_ASSIGN: (programId: string) =>
+      `/tracks/programs/${programId}/tracks`,
+    TRACKS_REMOVE: (programId: string, trackId: string, communityUID: string) =>
+      `/tracks/programs/${programId}/tracks/${trackId}?communityUID=${communityUID}`,
+    TRACKS_REMOVE_BATCH: (programId: string) =>
+      `/tracks/programs/${programId}/tracks`,
+    GET: (programId: string) => `/programs/${programId}`,
+    COMMUNITY: (communityId: string) => `/communities/${communityId}/programs`,
+  },
+  TRACKS: {
+    ALL: (communityUID: string, includeArchived: boolean = false) =>
+      `/tracks?communityUID=${communityUID}${
+        includeArchived ? "&includeArchived=true" : ""
+      }`,
+    BY_ID: (id: string) => `/tracks/${id}`,
+    CREATE: () => `/tracks`,
+    UPDATE: (id: string) => `/tracks/${id}`,
+    ARCHIVE: (id: string, communityUID: string) =>
+      `/tracks/${id}?communityUID=${communityUID}`,
   },
   PROJECT: {
     EXTERNAL: {
@@ -125,6 +149,7 @@ export const INDEXER = {
         selectedProgramId,
         grantTitle,
         download,
+        selectedTrackIds,
       }: {
         page?: number;
         pageLimit?: number;
@@ -134,6 +159,7 @@ export const INDEXER = {
         selectedProgramId?: string;
         grantTitle?: string;
         download?: boolean;
+        selectedTrackIds?: string[];
       }
     ) =>
       `/communities/${communityIdOrSlug}/grants?${
@@ -144,7 +170,9 @@ export const INDEXER = {
         categories ? `&categories=${categories}` : ""
       }${selectedProgramId ? `&selectedProgramIds=${selectedProgramId}` : ""}${
         download ? `&download=${download}` : ""
-      }${grantTitle ? `&grantTitle=${grantTitle}` : ""}`,
+      }${grantTitle ? `&grantTitle=${grantTitle}` : ""}${
+        selectedTrackIds ? `&selectedTrackIds=${selectedTrackIds}` : ""
+      }`,
     FEED: (communityIdOrSlug: string) =>
       `/communities/${communityIdOrSlug}/feed`,
     STATS: (communityIdOrSlug: string) =>

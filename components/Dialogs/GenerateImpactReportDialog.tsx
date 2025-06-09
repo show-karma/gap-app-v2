@@ -688,7 +688,6 @@ export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
 
       closeModal();
     } catch (error: any) {
-      toast.error("Something went wrong. Please try again later.");
       errorManager(`Error generating impact report`, error);
       console.error(error);
     } finally {

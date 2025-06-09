@@ -20,6 +20,7 @@ import { PAGES } from "@/utilities/pages";
 import pluralize from "pluralize";
 import { ShareIcon } from "@heroicons/react/24/outline";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 
 const sanitizeMarkdown = (text: string) => {
   return (
@@ -680,9 +681,20 @@ function ProjectCard({ project, index }: { project: Project; index: number }) {
       <div className="flex flex-col w-full flex-1 gap-3 pl-4">
         <div className="w-full flex flex-1 flex-col gap-1">
           <div className="flex w-full flex-col px-3">
-            <p className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200 max-2xl:text-sm mr-1">
-              {project.projectDetails.data?.title?.slice(0, 200)}
-            </p>
+            <div className="flex flex-row items-center gap-2 mb-1">
+              <div className="flex justify-center">
+                <ProfilePicture
+                  imageURL={project.projectDetails.data?.imageURL}
+                  name={project.projectUID || ""}
+                  size="32"
+                  className="h-8 w-8 min-w-8 min-h-8 border border-white shadow-sm"
+                  alt={project.projectDetails.data?.title || "Project"}
+                />
+              </div>
+              <p className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200 max-2xl:text-sm flex-1">
+                {project.projectDetails.data?.title?.slice(0, 200)}
+              </p>
+            </div>
 
             <div className="flex flex-col gap-1 flex-1 h-[64px] w-full max-w-full">
               <div className="line-clamp-2 w-full break-normal text-sm font-normal text-black dark:text-zinc-100 max-2xl:text-sm">

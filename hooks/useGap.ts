@@ -1,10 +1,7 @@
 "use client";
 
-import { GAP } from "@show-karma/karma-gap-sdk";
-import {
-  GapIndexerClient,
-  IpfsStorage,
-} from "@show-karma/karma-gap-sdk/core/class";
+import { GAP } from "@show-karma/karma-gap-sdk/core/class/GAP";
+import { GapIndexerClient } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/GapIndexerClient";
 import { useEffect, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 
@@ -14,6 +11,7 @@ import {
   getChainNameById,
 } from "@/utilities/network";
 import { envVars } from "@/utilities/enviromentVars";
+import { IpfsStorage } from "@show-karma/karma-gap-sdk/core/class/remote-storage/IpfsStorage";
 
 const ipfsClient = new IpfsStorage({
   token: envVars.IPFS_TOKEN,

@@ -148,8 +148,16 @@ export default function EditCategoriesPage() {
 
       toast.success("Categories updated successfully.");
     } catch (error: any) {
-      toast.error("Something went wrong, please try again later.");
-      errorManager(`Error updating categories of ${communityId}`, error);
+      errorManager(
+        `Error updating categories of ${communityId}`,
+        error,
+        {
+          communityId,
+          address,
+          selectedCategories,
+        },
+        { error: MESSAGES.CATEGORY.UPDATE.ERROR }
+      );
       console.log(error);
     } finally {
       setIsSaving(false);

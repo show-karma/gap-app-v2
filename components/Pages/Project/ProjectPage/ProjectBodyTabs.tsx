@@ -1,57 +1,20 @@
 /* eslint-disable @next/next/no-img-element */
-import { DeleteDialog } from "@/components/DeleteDialog";
-import { Button } from "@/components/Utilities/Button";
-import { getGapClient, useGap } from "@/hooks/useGap";
-import { useOwnerStore, useProjectStore } from "@/store";
-import { useStepper } from "@/store/modals/txStepper";
-import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import fetchData from "@/utilities/fetchData";
-import { formatDate } from "@/utilities/formatDate";
-import { INDEXER } from "@/utilities/indexer";
-import { MESSAGES } from "@/utilities/messages";
+import { useProjectStore } from "@/store";
 import { ReadMore } from "@/utilities/ReadMore";
-import { cn } from "@/utilities/tailwind";
-import { config } from "@/utilities/wagmi/config";
 import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
   MapPinIcon,
-  PencilIcon,
-  PencilSquareIcon,
-  ShareIcon,
-  TrashIcon,
 } from "@heroicons/react/24/outline";
 import { Bars4Icon } from "@heroicons/react/24/solid";
-import {
-  IGrantUpdate,
-  IMilestoneResponse,
-  IProjectImpact,
-  IProjectUpdate,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useQueryState } from "nuqs";
-import { ButtonHTMLAttributes, FC, useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
-import { useRouter, useSearchParams } from "next/navigation";
-import Link from "next/link";
-
-import { ProjectUpdateForm } from "@/components/Forms/ProjectUpdate";
-import { errorManager } from "@/components/Utilities/errorManager";
+import { FC } from "react";
 
 import { BusinessModelIcon } from "@/components/Icons/BusinessModel";
 import { FundsRaisedIcon } from "@/components/Icons/FundsRaised";
 import { PathIcon } from "@/components/Icons/PathIcon";
 import { StageIcon } from "@/components/Icons/StageIcon";
 import { TargetIcon } from "@/components/Icons/Target";
-import { PAGES } from "@/utilities/pages";
-import { retryUntilConditionMet } from "@/utilities/retries";
-import { ProjectActivityBlock } from "./ProjectActivityBlock";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { ProjectBlocks } from "./ProjectBlocks";
-import { ExternalLink } from "@/components/Utilities/ExternalLink";
-import { shareOnX } from "@/utilities/share/shareOnX";
-import { SHARE_TEXTS } from "@/utilities/share/text";
 
 export const InformationBlock: FC = () => {
   const { project } = useProjectStore();

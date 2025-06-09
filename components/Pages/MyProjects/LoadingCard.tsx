@@ -29,19 +29,19 @@ export const LoadingCard = () => {
 
         <div className="px-5 flex min-h-[24px] w-full flex-row gap-2">
           <div className="flex h-7 items-center justify-start rounded-2xl bg-slate-50 px-3 py-1">
-            <p className="text-center text-sm font-semibold leading-tight text-slate-600">
+            <span className="text-center text-sm font-semibold leading-tight text-slate-600">
               <Skeleton className="h-2 w-20" />
-            </p>
+            </span>
           </div>
           <div className="flex h-7 items-center justify-start gap-1.5 rounded-2xl bg-teal-50 py-1 pl-2.5 pr-3">
             <div className="relative h-2 w-2">
               <div className="absolute left-[1px] top-[1px] h-1.5 w-1.5 rounded-full bg-teal-600" />
             </div>
-            <p className="text-center text-sm font-medium leading-tight text-teal-600">
+            <span className="text-center text-sm font-medium leading-tight text-teal-600">
               {/* {formatCurrency(active)} active{" "}
                                   {pluralize("grants", active)} */}
               <Skeleton className="h-2 w-20" />
-            </p>
+            </span>
           </div>
         </div>
       </div>

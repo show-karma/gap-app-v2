@@ -150,9 +150,17 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
           }
         });
     } catch (error: any) {
-      console.log(error);
-      toast.error(MESSAGES.PROJECT.IMPACT.ERROR);
-      errorManager(`Error adding impact to project ${project.uid}`, error);
+      errorManager(
+        MESSAGES.PROJECT.IMPACT.ERROR,
+        error,
+        {
+          projectUID: project.uid,
+          address,
+        },
+        {
+          error: MESSAGES.PROJECT.IMPACT.ERROR,
+        }
+      );
     } finally {
       setIsLoading(false);
       setIsStepper(false);

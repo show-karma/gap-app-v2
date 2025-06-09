@@ -172,10 +172,14 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
     } catch (error: any) {
       console.log(error);
       errorManager(
-        `Error of user ${address} verifying impact from project ${project?.uid}`,
-        error
+        MESSAGES.PROJECT.IMPACT.VERIFY.ERROR,
+        error,
+        {
+          address,
+          projectUID: project?.uid,
+        },
+        { error: MESSAGES.PROJECT.IMPACT.VERIFY.ERROR }
       );
-      toast.error(MESSAGES.PROJECT.IMPACT.VERIFY.ERROR);
     } finally {
       setIsLoading(false);
       setIsStepper(false);

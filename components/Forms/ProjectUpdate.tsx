@@ -1,4 +1,3 @@
-/* eslint-disable @next/next/no-img-element */
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks/useGap";
@@ -348,7 +347,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         errorManager(
           `Error fetching project data for project ${project?.uid}`,
           error,
-          { projectUID: project?.uid }
+          { projectUID: project?.uid, address }
         );
         console.error("Failed to fetch project data:", error);
       }
@@ -628,10 +627,12 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
             })),
             deliverables: data.deliverables,
           } as IProjectUpdate,
+        },
+        {
+          error: MESSAGES.PROJECT_UPDATE_FORM.ERROR,
         }
       );
       console.log(error);
-      toast.error(MESSAGES.PROJECT_UPDATE_FORM.ERROR);
     } finally {
       setIsStepper(false);
       setIsLoading(false);

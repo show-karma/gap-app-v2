@@ -156,12 +156,12 @@ export function useGrantMilestoneForm({
       // Call onSuccess after all grant milestones are created
       onSuccess?.();
     } catch (error) {
-      errorManager(MESSAGES.MILESTONES.CREATE.ERROR, error, {
+      errorManager(MESSAGES.MILESTONES.CREATE.ERROR(data.title), error, {
         data,
         address,
         grantUIDs,
       });
-      toast.error(MESSAGES.MILESTONES.CREATE.ERROR);
+      toast.error(MESSAGES.MILESTONES.CREATE.ERROR(data.title));
     } finally {
       setIsLoading(false);
       setIsStepper(false);

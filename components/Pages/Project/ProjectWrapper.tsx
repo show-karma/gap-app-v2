@@ -12,6 +12,7 @@ import { ProjectNavigator } from "@/components/Pages/Project/ProjectNavigator";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { useGap } from "@/hooks/useGap";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useAuthStore } from "@/store/auth";
@@ -329,55 +330,66 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   const { isOpen: isShareDialogOpen } = useShareDialogStore();
 
   return (
-    <>
+    <div>
       {isIntroModalOpen ? <IntroDialog /> : null}
       {isEndorsementOpen ? <EndorsementDialog /> : null}
       {isProgressModalOpen ? <ProgressDialog /> : null}
       {isShareDialogOpen ? <ShareDialog /> : null}
       <div className="relative border-b border-gray-200 ">
         <div className="px-4 sm:px-6 lg:px-12 lg:flex py-5 lg:items-start lg:justify-between flex flex-row max-lg:flex-col max-lg:justify-center max-lg:items-center gap-4">
-          <div className="flex flex-col gap-4">
-            <h1
-              className={
-                "text-[32px] font-bold leading-tight text-black dark:text-zinc-100 line-clamp-2"
-              }
-            >
-              {project?.details?.data?.title}
-            </h1>
-            <div className="flex flex-row gap-10 max-lg:gap-4 flex-wrap max-lg:flex-col items-center max-lg:justify-center">
-              {socials.length > 0 && (
-                <div className="flex flex-row gap-4 items-center">
-                  {socials
-                    .filter((social) => social?.url)
-                    .map((social, index) => (
-                      <a
-                        key={social?.url || index}
-                        href={social?.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {social?.icon && (
-                          <social.icon className="h-5 w-5 fill-black text-black dark:text-white dark:fill-zinc-200" />
-                        )}
-                      </a>
-                    ))}
-                </div>
-              )}
+          <div className="flex flex-row gap-4 items-start">
+            <div className="flex justify-center">
+              <ProfilePicture
+                imageURL={project?.details?.data?.imageURL}
+                name={project?.uid || ""}
+                size="56"
+                className="h-14 w-14 min-w-14 min-h-14 border-2 border-white shadow-lg max-lg:h-12 max-lg:w-12 max-lg:min-h-12 max-lg:min-w-12"
+                alt={project?.details?.data?.title || "Project"}
+              />
             </div>
-            {project?.details?.data?.tags?.length ? (
-              <div className="flex flex-col gap-2 max-md:hidden">
-                <div className="flex items-center gap-x-1">
-                  {project?.details?.data?.tags?.map((tag) => (
-                    <span
-                      key={tag.name}
-                      className="rounded bg-gray-100 px-2 py-1 text-sm  font-normal text-slate-700"
-                    >
-                      {tag.name}
-                    </span>
-                  ))}
-                </div>
+            <div className="flex flex-col gap-4">
+              <h1
+                className={
+                  "text-[32px] font-bold leading-tight text-black dark:text-zinc-100 line-clamp-2"
+                }
+              >
+                {project?.details?.data?.title}
+              </h1>
+              <div className="flex flex-row gap-10 max-lg:gap-4 flex-wrap max-lg:flex-col items-center max-lg:justify-center">
+                {socials.length > 0 && (
+                  <div className="flex flex-row gap-4 items-center">
+                    {socials
+                      .filter((social) => social?.url)
+                      .map((social, index) => (
+                        <a
+                          key={social?.url || index}
+                          href={social?.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {social?.icon && (
+                            <social.icon className="h-5 w-5 fill-black text-black dark:text-white dark:fill-zinc-200" />
+                          )}
+                        </a>
+                      ))}
+                  </div>
+                )}
               </div>
-            ) : null}
+              {project?.details?.data?.tags?.length ? (
+                <div className="flex flex-col gap-2 max-md:hidden">
+                  <div className="flex items-center gap-x-1">
+                    {project?.details?.data?.tags?.map((tag) => (
+                      <span
+                        key={tag.name}
+                        className="rounded bg-gray-100 px-2 py-1 text-sm  font-normal text-slate-700"
+                      >
+                        {tag.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
           </div>
           <div className="flex flex-col gap-3 items-end justify-end">
             <div className="flex flex-row gap-6 max-lg:flex-col  max-lg:gap-3">
@@ -410,6 +422,6 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };

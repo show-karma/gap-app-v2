@@ -25,7 +25,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
   const [isDeletingMilestone, setIsDeletingMilestone] = useState(false);
 
   const { switchChainAsync } = useSwitchChain();
-  const { chain } = useAccount();
+  const { chain, address } = useAccount();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
@@ -126,12 +126,16 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
           });
       }
     } catch (error: any) {
-      toast.error(MESSAGES.MILESTONES.DELETE.ERROR(milestone.data.title));
       errorManager(
-        `Error deleting milestone ${milestone.uid} from grant ${milestone.refUID}`,
-        error
+        MESSAGES.MILESTONES.DELETE.ERROR(milestone.data.title),
+        error,
+        {
+          milestone: milestone.uid,
+          grant: milestone.refUID,
+          address: address,
+        },
+        { error: MESSAGES.MILESTONES.DELETE.ERROR(milestone.data.title) }
       );
-      throw error;
     } finally {
       setIsDeletingMilestone(false);
       setIsStepper(false);

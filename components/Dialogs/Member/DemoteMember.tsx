@@ -112,8 +112,18 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({
           });
         });
     } catch (error) {
-      errorManager("Error removing member as admin", error);
-      toast.error("Failed to remove member as admin");
+      errorManager(
+        "Error removing member as admin",
+        error,
+        {
+          address,
+          memberAddress,
+          projectUid: project?.uid,
+        },
+        {
+          error: `Failed to remove member ${memberAddress} as admin.`,
+        }
+      );
       console.log(error);
     } finally {
       setIsDemoting(false);

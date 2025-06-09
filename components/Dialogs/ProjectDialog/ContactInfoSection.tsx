@@ -16,6 +16,7 @@ import { generateRandomString } from "@/utilities/generateRandomString";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { useMutation } from "@tanstack/react-query";
+import { useAccount } from "wagmi";
 
 const labelStyle = "text-sm font-bold";
 const inputStyle =
@@ -141,6 +142,7 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
   addContact,
   removeContact,
 }) => {
+  const { address } = useAccount();
   const [isLoading, setIsLoading] = useState(false);
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
@@ -292,11 +294,18 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
         });
       }
     } catch (error: any) {
-      toast.error("Something went wrong. Please try again later.");
-      errorManager(`Error creating contact`, error, {
-        project: project?.details?.data?.slug || project?.uid,
-        data,
-      });
+      errorManager(
+        `Error creating contact`,
+        error,
+        {
+          address,
+          project: project?.details?.data?.slug || project?.uid,
+          data,
+        },
+        {
+          error: "Failed to create contact.",
+        }
+      );
     } finally {
       setIsLoading(false);
     }
@@ -339,17 +348,18 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
       });
       // const subscription = await fetchData(INDEXER.NOTIFICATIONS.UPDATE())
     } catch (error: any) {
-      toast.error("Something went wrong. Please try again later.", {
-        className: "z-[9999]",
-      });
       errorManager(
         `Error deleting contact ${contactId} from project ${
           project?.details?.data?.slug || project?.uid
         }`,
         error,
         {
+          address,
           project: project?.details?.data?.slug || project?.uid,
           contactId,
+        },
+        {
+          error: "Failed to delete contact.",
         }
       );
       console.log(error);

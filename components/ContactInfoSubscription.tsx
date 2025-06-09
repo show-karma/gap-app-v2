@@ -38,7 +38,7 @@ type FormType = z.infer<typeof subscriptionSchema>;
 
 interface ContactBlockProps {
   onSelectFunction: (value: string) => void;
-  contacts?: Contact[];
+  contacts?: Contact[] | null;
   value: string;
   deleteFunction: (value: string) => void;
   newContact: () => void;
@@ -218,12 +218,19 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
       }
       // const subscription = await fetchData(INDEXER.NOTIFICATIONS.UPDATE())
     } catch (error: any) {
-      errorManager("Error while updating contact info", error, {
-        project: project?.details?.data?.slug || (project?.uid as string),
-        contactId: data.id,
-        data,
-      });
-      toast.error("Something went wrong. Please try again later.");
+      errorManager(
+        "Error while updating contact info",
+        error,
+        {
+          project: project?.details?.data?.slug || (project?.uid as string),
+          contactId: data.id,
+          data,
+        },
+        {
+          error: "Failed to update contact information.",
+        }
+      );
+
       console.log(error);
     } finally {
       setIsLoading(false);
@@ -255,11 +262,17 @@ export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
       });
       // const subscription = await fetchData(INDEXER.NOTIFICATIONS.UPDATE())
     } catch (error: any) {
-      errorManager("Error deleting contact info", error, {
-        project: project?.details?.data?.slug || (project?.uid as string),
-        contactId: watch("id"),
-      });
-      toast.error("Something went wrong. Please try again later.");
+      errorManager(
+        "Error deleting contact info",
+        error,
+        {
+          project: project?.details?.data?.slug || (project?.uid as string),
+          contactId: watch("id"),
+        },
+        {
+          error: "Failed to delete contact info.",
+        }
+      );
       console.log(error);
     } finally {
       setIsDeleteLoading(false);

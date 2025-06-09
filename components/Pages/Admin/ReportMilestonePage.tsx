@@ -286,11 +286,11 @@ export const ReportMilestonePage = ({
                 <>
                   <StatCard
                     title="Total Grants"
-                    value={`${data?.stats.totalGrants}`}
+                    value={`${data?.stats?.totalGrants}`}
                   />
                   <StatCard
                     title="Total projects with Milestones"
-                    value={`${data?.stats.totalProjectsWithMilestones}`}
+                    value={`${data?.stats?.totalProjectsWithMilestones}`}
                   />
                   <StatCard
                     title="% of project who added Milestones"
@@ -302,15 +302,15 @@ export const ReportMilestonePage = ({
                   />
                   <StatCard
                     title="Total Milestones"
-                    value={`${data?.stats.totalMilestones}`}
+                    value={`${data?.stats?.totalMilestones}`}
                   />
                   <StatCard
                     title="Total Completed Milestones"
-                    value={`${data?.stats.totalCompletedMilestones}`}
+                    value={`${data?.stats?.totalCompletedMilestones}`}
                   />
                   <StatCard
                     title="Total Pending Milestones"
-                    value={`${data?.stats.totalPendingMilestones}`}
+                    value={`${data?.stats?.totalPendingMilestones}`}
                   />
                   <StatCard
                     title="Milestones Completion %"

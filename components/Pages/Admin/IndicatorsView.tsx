@@ -22,6 +22,8 @@ import { INDEXER } from "@/utilities/indexer";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useIndicators } from "@/hooks/useIndicators";
 import { ProgramCard } from "./ProgramCard";
+import { MESSAGES } from "@/utilities/messages";
+import { useAccount } from "wagmi";
 
 // Custom Dropdown Menu Component - copied from CategoryView.tsx
 const DropdownMenu = ({
@@ -107,6 +109,7 @@ export const IndicatorsView = ({
   onRefresh,
   communityId,
 }: IndicatorsViewProps) => {
+  const { address } = useAccount();
   const [indicatorViewType, setIndicatorViewType] = useState<
     "all" | "automated" | "manual"
   >("all");
@@ -194,8 +197,15 @@ export const IndicatorsView = ({
 
       toast.success("Indicator deleted successfully");
     } catch (error) {
-      errorManager("Failed to delete indicator", error);
-      toast.error("Failed to delete indicator");
+      errorManager(
+        "Failed to delete indicator",
+        error,
+        {
+          indicatorId: id,
+          address,
+        },
+        { error: MESSAGES.INDICATOR.DELETE.ERROR }
+      );
     } finally {
       setIsDeletingId(null);
     }

@@ -13,6 +13,7 @@ import toast from "react-hot-toast";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { cn } from "@/utilities/tailwind";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useAccount } from "wagmi";
 
 const inputStyle =
   "bg-transparent bg-white dark:bg-zinc-900  w-full text-black dark:text-zinc-200 placeholder:text-zinc-400  dark:placeholder:text-zinc-200";
@@ -43,7 +44,7 @@ export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({
   project,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
-
+  const { address } = useAccount();
   const {
     register,
     handleSubmit,
@@ -86,12 +87,13 @@ export const ProjectSubscription: FC<ProjectSubscriptionProps> = ({
           `Error subscribing to ${
             project?.details?.data?.title || "this project"
           }`,
-          error
-        );
-        toast.error(
-          `There was an error subscribing to ${
-            project?.details?.data?.title || "this project"
-          }.`
+          error,
+          { projectUID: project.uid, address },
+          {
+            error: MESSAGES.PROJECT.SUBSCRIPTION.ERROR(
+              project?.details?.data?.title || "this project"
+            ),
+          }
         );
       }
     } finally {

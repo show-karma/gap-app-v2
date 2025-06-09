@@ -1,15 +1,4 @@
-import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
-import dynamic from "next/dynamic";
-
-const NewGrant = dynamic(
-  () =>
-    import(
-      "@/components/Pages/GrantMilestonesAndUpdates/screens/NewGrant"
-    ).then((mod) => mod.NewGrant),
-  {
-    loading: () => <DefaultLoading />,
-  }
-);
+import { NewGrant } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewGrant";
 
 export default function Page() {
   return <NewGrant />;

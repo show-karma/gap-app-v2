@@ -169,13 +169,16 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
           });
       }
     } catch (error: any) {
-      console.log(error);
       errorManager(
-        `Error of user ${address} revoking impact from project ${project?.uid}`,
-        error
+        MESSAGES.PROJECT.IMPACT.REMOVE.ERROR,
+        error,
+        {
+          projectUID: project?.uid,
+          address,
+        },
+        { error: MESSAGES.PROJECT.IMPACT.REMOVE.ERROR }
       );
       setLoading({ ...loading, [impact.uid.toLowerCase()]: false });
-      toast.error(MESSAGES.PROJECT.IMPACT.REMOVE.ERROR);
     } finally {
       setLoading({ ...loading, [impact.uid.toLowerCase()]: false });
       setIsStepper(false);

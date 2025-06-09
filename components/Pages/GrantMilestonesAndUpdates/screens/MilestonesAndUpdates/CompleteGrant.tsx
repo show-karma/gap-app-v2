@@ -34,9 +34,8 @@ export const GrantCompletion: FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const { chain } = useAccount();
+  const { chain, address } = useAccount();
   const { switchChainAsync } = useSwitchChain();
-  const signer = useSigner();
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
   const { changeStepperStep, setIsStepper } = useStepper();
@@ -118,8 +117,12 @@ export const GrantCompletion: FC = () => {
           await new Promise((resolve) => setTimeout(resolve, 1500));
         });
     } catch (error: any) {
-      errorManager(`Error marking grant ${grant?.uid} as complete`, error);
-      toast.error(MESSAGES.GRANT.MARK_AS_COMPLETE.ERROR);
+      errorManager(
+        MESSAGES.GRANT.MARK_AS_COMPLETE.ERROR,
+        error,
+        { grantUID: grant?.uid, address },
+        { error: MESSAGES.GRANT.MARK_AS_COMPLETE.ERROR }
+      );
     } finally {
       setIsStepper(false);
     }

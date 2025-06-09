@@ -8,6 +8,7 @@ import { PAGES } from "@/utilities/pages";
 import { formatDate } from "@/utilities/formatDate";
 import { ProjectFromList } from "@/types/project";
 import Link from "next/link";
+import { ProfilePicture } from "../../Utilities/ProfilePicture";
 
 interface ProjectCardProps {
   project: ProjectFromList;
@@ -46,9 +47,20 @@ export const ProjectCard = ({ project, index }: ProjectCardProps) => {
         />
 
         <div className="flex w-full flex-col px-3">
-          <p className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200  max-2xl:text-sm mr-1">
-            {project?.title}
-          </p>
+          <div className="flex flex-row items-center gap-2 mb-1">
+            <div className="flex justify-center">
+              <ProfilePicture
+                imageURL={project?.imageURL}
+                name={project?.uid || ""}
+                size="32"
+                className="h-8 w-8 min-w-8 min-h-8 border border-white shadow-sm"
+                alt={project?.title || "Project"}
+              />
+            </div>
+            <p className="line-clamp-1 break-all text-base font-semibold text-gray-900 dark:text-zinc-200 max-2xl:text-sm flex-1">
+              {project?.title}
+            </p>
+          </div>
 
           <p className="mb-2 text-sm font-medium text-gray-400  dark:text-zinc-400  max-2xl:text-[13px]">
             Created on {formatDate(project.createdAt)}

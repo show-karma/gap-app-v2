@@ -1,20 +1,16 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 import { FC, useEffect, useMemo, useState } from "react";
-import { blo } from "blo";
 import { Hex } from "viem";
 import { useENS } from "@/store/ens";
 import { shortAddress } from "@/utilities/shortAddress";
 import { formatDate } from "@/utilities/formatDate";
 import { EmptyEndorsmentList } from "../Project/Impact/EmptyEndorsmentList";
 import { useProjectStore } from "@/store";
-import pluralize from "pluralize";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { IProjectEndorsement } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
-
-import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 interface EndorsementRowProps {
   endorsement: IProjectEndorsement;

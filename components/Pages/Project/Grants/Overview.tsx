@@ -15,6 +15,8 @@ import { Suspense } from "react";
 import { Hex } from "viem";
 import { ProjectGrantsOverviewLoading } from "../Loading/Grants/Overview";
 import { GrantPercentage } from "./components/GrantPercentage";
+import { TrackTags } from "@/components/TrackTags";
+
 const isValidAmount = (amount?: string | undefined) => {
   if (!amount) return undefined;
   let amountToFormat = amount;
@@ -64,6 +66,20 @@ export const GrantOverview = () => {
     //   title: "Cycle",
     // },
   ];
+
+  const selectedTrackIds = grant?.details?.data?.selectedTrackIds as
+    | string[]
+    | undefined;
+  const communityId = grant?.data?.communityUID;
+  const programId = grant?.details?.data?.programId;
+
+  // Extract the base programId if it includes a chainId suffix (format: programId_chainId)
+  const baseProgramId = programId?.includes("_")
+    ? programId.split("_")[0]
+    : programId;
+
+  // Check if we have valid track IDs to display
+  const hasTrackIds = selectedTrackIds && selectedTrackIds.length > 0;
 
   return (
     <Suspense fallback={<ProjectGrantsOverviewLoading />}>
@@ -141,6 +157,21 @@ export const GrantOverview = () => {
                 </div>
               </div>
 
+              {communityId && hasTrackIds && (
+                <div className="flex items-center justify-between gap-2">
+                  <div className="text-gray-500 text-base font-semibold dark:text-gray-300">
+                    Tracks
+                  </div>
+                  <div className="flex flex-wrap gap-1 justify-end">
+                    <TrackTags
+                      communityId={communityId}
+                      trackIds={selectedTrackIds}
+                      className="font-medium"
+                    />
+                  </div>
+                </div>
+              )}
+
               {grant?.details?.data?.proposalURL ? (
                 <div className="flex items-center justify-between">
                   <div className="text-gray-500  font-semibold text-base dark:text-gray-300">
@@ -203,7 +234,7 @@ export const GrantOverview = () => {
           ) : null}
         </div>
       </div>
-      {isOwner ? (
+      {isOwner && grant?.refUID ? (
         <div className="mt-8">
           <ExternalIds
             projectUID={grant?.refUID as string}

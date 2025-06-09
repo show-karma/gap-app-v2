@@ -5,7 +5,6 @@ import { useCommunityStore } from "@/store/community";
 import { SortByOptions, StatusOptions } from "@/types";
 import { zeroUID } from "@/utilities/commons";
 import { getGrants } from "@/utilities/sdk/communities/getGrants";
-import { getPrograms } from "@/utilities/sdk/communities/getPrograms";
 import { cn } from "@/utilities/tailwind";
 import { Listbox, Transition } from "@headlessui/react";
 import { CheckIcon } from "@heroicons/react/20/solid";
@@ -19,9 +18,11 @@ import { AutoSizer, Grid } from "react-virtualized";
 import { Hex } from "viem";
 import { GrantCard } from "./GrantCard";
 import { ProgramFilter } from "./Pages/Communities/Impact/ProgramFilter";
+import { TrackFilter } from "./Pages/Communities/Impact/TrackFilter";
 import { CardListSkeleton } from "./Pages/Communities/Loading";
 import { errorManager } from "./Utilities/errorManager";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { ProgramBanner } from "./ProgramBanner";
 
 const sortOptions: Record<SortByOptions, string> = {
   recent: "Recent",
@@ -41,6 +42,7 @@ interface CommunityGrantsProps {
   defaultSelectedCategories: string[];
   defaultSortBy: SortByOptions;
   defaultSelectedStatus: StatusOptions;
+  communityUid: string;
 }
 
 export const CommunityGrants = ({
@@ -48,6 +50,7 @@ export const CommunityGrants = ({
   defaultSelectedCategories,
   defaultSortBy,
   defaultSelectedStatus,
+  communityUid,
 }: CommunityGrantsProps) => {
   const params = useParams();
   const communityId = params.communityId as string;
@@ -77,16 +80,21 @@ export const CommunityGrants = ({
       value ? (value as StatusOptions) : ("all" as StatusOptions),
   });
 
-  // Call API
-  const [programs, setPrograms] = useState<GrantProgram[]>([]);
-  const [programsLoading, setProgramsLoading] = useState<boolean>(true);
-
   const [selectedProgramId, changeSelectedProgramIdQuery] = useQueryState<
     string | null
   >("programId", {
     defaultValue: null,
     serialize: (value) => value ?? "",
     parse: (value) => value || null,
+  });
+
+  // Add state for selected track IDs
+  const [selectedTrackIds, changeSelectedTrackIdsQuery] = useQueryState<
+    string[] | null
+  >("trackIds", {
+    defaultValue: null,
+    serialize: (value) => value?.join(",") ?? "",
+    parse: (value) => (value ? value.split(",") : null),
   });
 
   const [loading, setLoading] = useState<boolean>(true); // Loading state of the API call
@@ -106,26 +114,6 @@ export const CommunityGrants = ({
   useEffect(() => {
     if (!communityId || communityId === zeroUID) return;
 
-    setProgramsLoading(true);
-    const fetchPrograms = async () => {
-      const programs = await getPrograms(communityId as Hex);
-      const orderProgramsByTitle = (programs: GrantProgram[]) => {
-        return programs.sort((a, b) => {
-          const aTime = new Date(a.createdAt).getTime();
-          const bTime = new Date(b.createdAt).getTime();
-          return bTime - aTime;
-        });
-      };
-
-      setPrograms(orderProgramsByTitle(programs));
-      setProgramsLoading(false);
-    };
-    fetchPrograms();
-  }, [communityId]);
-
-  useEffect(() => {
-    if (!communityId || communityId === zeroUID) return;
-
     const fetchNewGrants = async () => {
       setLoading(true);
       try {
@@ -140,6 +128,7 @@ export const CommunityGrants = ({
             status: selectedStatus,
             categories: selectedCategoriesIds.split("_"),
             selectedProgramId: selectedProgramId || undefined,
+            selectedTrackIds: selectedTrackIds || undefined,
           },
           {
             page: currentPage,
@@ -174,6 +163,7 @@ export const CommunityGrants = ({
           status: selectedStatus,
           categories: selectedCategoriesIds.split("_"),
           selectedProgramId: selectedProgramId || undefined,
+          selectedTrackIds: selectedTrackIds || undefined,
           page: currentPage,
           pageLimit: itemsPerPage,
         });
@@ -189,6 +179,7 @@ export const CommunityGrants = ({
     selectedStatus,
     selectedCategoriesIds,
     selectedProgramId,
+    selectedTrackIds,
     currentPage,
   ]);
 
@@ -212,18 +203,35 @@ export const CommunityGrants = ({
     }
   };
 
+  const resetTrackIds = () => {
+    changeSelectedTrackIdsQuery(null);
+  };
+
   return (
     <div className="flex flex-col gap-4 w-full">
       <div className="flex items-center justify-between flex-row flex-wrap-reverse max-lg:flex-wrap max-lg:flex-col-reverse max-lg:justify-start max-lg:items-start gap-3 max-lg:gap-4">
         <div className="flex items-center gap-x-3 flex-wrap gap-y-2 w-full">
           <ProgramFilter
             onChange={(programId) => {
+              resetTrackIds();
               changeSelectedProgramIdQuery(programId);
               setCurrentPage(0);
               setGrants([]);
             }}
           />
+
           <div className="flex flex-1 flex-row gap-8 justify-end flex-wrap">
+            {selectedProgramId ? (
+              <TrackFilter
+                onChange={(trackIds) => {
+                  changeSelectedTrackIdsQuery(trackIds);
+                  setCurrentPage(0);
+                  setGrants([]);
+                }}
+                communityUid={communityUid}
+                selectedTrackIds={selectedTrackIds || []}
+              />
+            ) : null}
             {/* Filter by category start */}
             {categoriesOptions.length ? (
               <Listbox
@@ -492,7 +500,7 @@ export const CommunityGrants = ({
           </div>
         </div>
       </div>
-
+      <ProgramBanner />
       <section className="flex flex-col gap-4 md:flex-row">
         <div className="h-full w-full mb-8">
           {grants.length > 0 ? (

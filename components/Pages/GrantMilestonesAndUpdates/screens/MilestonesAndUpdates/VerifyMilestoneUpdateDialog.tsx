@@ -59,12 +59,11 @@ export const VerifyMilestoneUpdateDialog: FC<
   function openModal() {
     setIsOpen(true);
   }
-  const { address, isConnected } = useAccount();
+  const { address, isConnected, chain } = useAccount();
 
   const hasVerifiedThis = milestone?.verified?.find(
     (v) => v.attester?.toLowerCase() === address?.toLowerCase()
   );
-  const { chain } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const { gap } = useGap();
   const refreshProject = useProjectStore((state) => state.refreshProject);
@@ -152,11 +151,15 @@ export const VerifyMilestoneUpdateDialog: FC<
         });
       closeModal();
     } catch (error: any) {
-      console.log(error);
-      toast.error(MESSAGES.MILESTONES.VERIFY.ERROR);
       errorManager(
-        `Error verifying milestone ${milestone.uid} from grant ${milestone.refUID}`,
-        error
+        MESSAGES.MILESTONES.VERIFY.ERROR,
+        error,
+        {
+          milestoneUID: milestone.uid,
+          grantUID: milestone.refUID,
+          address,
+        },
+        { error: MESSAGES.MILESTONES.VERIFY.ERROR }
       );
     } finally {
       setIsLoading(false);

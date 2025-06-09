@@ -177,8 +177,17 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
           }
         });
     } catch (error: any) {
-      errorManager(`Error creating community`, error, data);
-      toast.error("Error creating community");
+      errorManager(
+        `Error creating community`,
+        error,
+        {
+          ...data,
+          address: address,
+        },
+        {
+          error: "Failed to create community.",
+        }
+      );
     } finally {
       setIsLoading(false); // Reset loading state
       setIsStepper(false);

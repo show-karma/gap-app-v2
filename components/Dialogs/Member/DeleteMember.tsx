@@ -95,12 +95,17 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({
           }
         });
     } catch (error: any) {
-      errorManager(`Error removing member ${memberAddress}`, error, {
-        project: project?.details?.data?.slug || project?.uid,
-        member: memberAddress,
-      });
-      toast.error(
-        "Something went wrong at removing member. Please try again later."
+      errorManager(
+        `Error removing member ${memberAddress}`,
+        error,
+        {
+          project: project?.details?.data?.slug || project?.uid,
+          member: memberAddress,
+          address: address,
+        },
+        {
+          error: `Failed to remove member ${memberAddress}.`,
+        }
       );
     } finally {
       setIsDeleting(false);

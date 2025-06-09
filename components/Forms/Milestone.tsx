@@ -202,15 +202,17 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         });
     } catch (error) {
       console.error(error);
-      toast.error(MESSAGES.MILESTONES.CREATE.ERROR);
       errorManager(
-        `Error creating milestone for grant ${uid} from project ${projectUID}`,
+        MESSAGES.MILESTONES.CREATE.ERROR(data.title),
         error,
         {
           grantUID: uid,
           projectUID: projectUID,
           address: address,
           data: milestone,
+        },
+        {
+          error: MESSAGES.MILESTONES.CREATE.ERROR(data.title),
         }
       );
     } finally {

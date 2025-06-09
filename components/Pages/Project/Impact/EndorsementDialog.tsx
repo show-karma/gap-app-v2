@@ -170,7 +170,11 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
       console.log(error);
       errorManager(
         `Error of user ${address} endorsing project ${project?.uid}`,
-        error
+        error,
+        {
+          projectUID: project?.uid,
+          address,
+        }
       );
     } finally {
       setIsLoading(false);
