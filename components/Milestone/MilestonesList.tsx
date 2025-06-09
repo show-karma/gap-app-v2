@@ -26,7 +26,7 @@ const CONTENT_TYPE_OPTIONS: Record<string, string> = {
   pending: "Pending Milestones",
   completed: "Completed Milestones",
   // impacts: "Project Impacts",
-  activities: "Project Activities",
+  activities: "Project Activity",
   updates: "Grant Updates",
 };
 
