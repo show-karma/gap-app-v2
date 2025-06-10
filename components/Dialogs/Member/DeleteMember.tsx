@@ -3,7 +3,6 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { getProjectById } from "@/utilities/sdk";
@@ -14,7 +13,8 @@ import dynamic from "next/dynamic";
 import { FC, Fragment, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 
 const DeleteDialog = dynamic(() =>
   import("@/components/DeleteDialog").then((mod) => mod.DeleteDialog)
@@ -35,6 +35,7 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({
   const { changeStepperStep, setIsStepper } = useStepper();
   const { switchChainAsync } = useSwitchChain();
   const refreshProject = useProjectStore((state) => state.refreshProject);
+  const dynamicWallet = useDynamicWallet();
 
   const deleteMember = async () => {
     // await deleteMemberFromProject(memberAddress);
@@ -46,16 +47,16 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({
         await switchChainAsync?.({ chainId: project.chainID });
         gapClient = getGapClient(project.chainID);
       }
-      // Replace direct getWalletClient call with safeGetWalletClient
-
-      const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get GAP client");
       }
-      const walletSigner = await walletClientToSigner(walletClient);
+
+      // Use account abstraction aware wallet signer
+      const walletSigner = await getWalletSignerWithAA(
+        project.chainID,
+        dynamicWallet,
+        "Delete member"
+      );
       const fetchedProject = await getProjectById(project.uid);
       if (!fetchedProject) throw new Error("Project not found");
       const member = fetchedProject.members.find(

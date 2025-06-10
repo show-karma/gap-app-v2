@@ -29,6 +29,8 @@ import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
 import { MultiSelect } from "../../../components/Utilities/MultiSelect";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 
 // Helper function to wait for a specified time
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -83,6 +85,7 @@ export const UnifiedMilestoneScreen = () => {
   const { projectId } = useParams();
   const { refetch } = useAllMilestones(projectId as string);
   const router = useRouter();
+  const dynamicWallet = useDynamicWallet();
 
   const {
     register,
@@ -134,15 +137,16 @@ export const UnifiedMilestoneScreen = () => {
         recipient: (address as `0x${string}`) || "0x00",
       });
 
-      const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
+      // Get wallet signer with AA support
+      const walletSigner = await getWalletSignerWithAA(
+        project.chainID,
+        dynamicWallet,
+        "Creating roadmap milestone"
       );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      
+      if (!walletSigner || !gapClient) {
+        throw new Error("Failed to connect to wallet");
       }
-
-      const walletSigner = await walletClientToSigner(walletClient);
       const sanitizedData = {
         title: sanitizeInput(data.title),
         text: sanitizeInput(data.description),
@@ -283,15 +287,16 @@ export const UnifiedMilestoneScreen = () => {
             data: milestone,
           });
 
-          const { walletClient, error } = await safeGetWalletClient(chainId);
-
-          if (error || !walletClient || !gapClient) {
-            throw new Error(`Failed to connect to wallet on ${chainName}`, {
-              cause: error,
-            });
+          // Get wallet signer with AA support
+          const walletSigner = await getWalletSignerWithAA(
+            chainId,
+            dynamicWallet,
+            "Creating grant milestone"
+          );
+          
+          if (!walletSigner || !gapClient) {
+            throw new Error(`Failed to connect to wallet on ${chainName}`);
           }
-
-          const walletSigner = await walletClientToSigner(walletClient);
 
           const result = await milestoneToAttest.attest(
             walletSigner as any,
@@ -339,15 +344,16 @@ export const UnifiedMilestoneScreen = () => {
             data: milestone,
           });
 
-          const { walletClient, error } = await safeGetWalletClient(chainId);
-
-          if (error || !walletClient || !gapClient) {
-            throw new Error(`Failed to connect to wallet on ${chainName}`, {
-              cause: error,
-            });
+          // Get wallet signer with AA support for multiple grants
+          const walletSigner = await getWalletSignerWithAA(
+            chainId,
+            dynamicWallet,
+            "Creating multiple grant milestones"
+          );
+          
+          if (!walletSigner || !gapClient) {
+            throw new Error(`Failed to connect to wallet on ${chainName}`);
           }
-
-          const walletSigner = await walletClientToSigner(walletClient);
 
           // Instead of using indices, directly use grant UIDs
           const grantUIDs = chainGrants.map(

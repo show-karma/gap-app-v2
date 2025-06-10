@@ -234,56 +234,56 @@ export const useAuth = () => {
     };
   }, []);
 
-  useEffect(() => {
-    const unwatch = watchAccount(config, {
-      onChange: (account, prevAccount) => {
-        if (!account) {
-          errorManager("User changed to empty account instance", account, {
-            account,
-            prevAccount,
-          });
-          return;
-        }
+  // useEffect(() => {
+  //   const unwatch = watchAccount(config, {
+  //     onChange: (account, prevAccount) => {
+  //       if (!account) {
+  //         errorManager("User changed to empty account instance", account, {
+  //           account,
+  //           prevAccount,
+  //         });
+  //         return;
+  //       }
 
-        if (account.address && account.address !== prevAccount.address) {
-          // Address changed - try to authenticate with the new address
-          // Check if we already have a token for this address
-          const addressSpecificCookie = getAddressSpecificAuthCookie(
-            account.address
-          );
-          const savedToken = cookies.get(addressSpecificCookie);
+  //       if (account.address && account.address !== prevAccount.address) {
+  //         // Address changed - try to authenticate with the new address
+  //         // Check if we already have a token for this address
+  //         const addressSpecificCookie = getAddressSpecificAuthCookie(
+  //           account.address
+  //         );
+  //         const savedToken = cookies.get(addressSpecificCookie);
 
-          if (savedToken) {
-            // We have a token for this address, check if it's valid
-            const isValid = isTokenValid(savedToken);
-            if (isValid) {
-              // Token is valid, set up auth state with it
-              const walletTypeCookie = getAddressSpecificWalletTypeCookie(
-                account.address
-              );
-              const savedWalletType = cookies.get(walletTypeCookie);
+  //         if (savedToken) {
+  //           // We have a token for this address, check if it's valid
+  //           const isValid = isTokenValid(savedToken);
+  //           if (isValid) {
+  //             // Token is valid, set up auth state with it
+  //             const walletTypeCookie = getAddressSpecificWalletTypeCookie(
+  //               account.address
+  //             );
+  //             const savedWalletType = cookies.get(walletTypeCookie);
 
-              // Update the current address token in the regular auth cookie
-              cookies.set(authCookiePath, savedToken, { path: "/" });
-              cookies.set(authWalletTypeCookiePath, savedWalletType, {
-                path: "/",
-              });
+  //             // Update the current address token in the regular auth cookie
+  //             cookies.set(authCookiePath, savedToken, { path: "/" });
+  //             cookies.set(authWalletTypeCookiePath, savedWalletType, {
+  //               path: "/",
+  //             });
 
-              setWalletType(savedWalletType);
-              setIsAuth(true);
-              return;
-            }
-          }
+  //             setWalletType(savedWalletType);
+  //             setIsAuth(true);
+  //             return;
+  //           }
+  //         }
 
-          // No valid token found for this address, need to authenticate
-          setIsAuth(false);
-          setWalletType(undefined);
-          authenticate(account.address);
-        }
-      },
-    });
-    return () => unwatch();
-  }, []);
+  //         // No valid token found for this address, need to authenticate
+  //         setIsAuth(false);
+  //         setWalletType(undefined);
+  //         authenticate(account.address);
+  //       }
+  //     },
+  //   });
+  //   return () => unwatch();
+  // }, []);
 
   const signMessage = async (messageToSign: string) => {
     try {
@@ -608,7 +608,7 @@ export const useAuth = () => {
       address,
     });
     // We don't need to disconnect now, just make sure we have a valid token
-    authenticate(newAddress);
+    // authenticate(newAddress);
   };
 
   return { authenticate, disconnect, softDisconnect, signMessage };

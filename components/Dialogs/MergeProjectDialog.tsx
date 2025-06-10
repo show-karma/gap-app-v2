@@ -7,6 +7,8 @@ import toast from "react-hot-toast";
 import { useProjectStore } from "@/store";
 import { useSwitchChain } from "wagmi";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers";
 
 import { useStepper } from "@/store/modals/txStepper";
 import { config } from "@/utilities/wagmi/config";
@@ -183,6 +185,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   const { gap } = useGap();
   const { address, chain } = useAccount();
   const router = useRouter();
+  const { wallet: dynamicWallet } = useDynamicWallet();
   function closeModal() {
     setIsOpen(false);
   }
@@ -214,7 +217,11 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getWalletSignerWithAA(
+        walletClient,
+        dynamicWallet,
+        "mergeProject"
+      );
 
       const projectPointer = new ProjectPointer({
         data: {

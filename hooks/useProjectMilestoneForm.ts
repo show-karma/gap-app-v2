@@ -17,6 +17,8 @@ import { useParams } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 
 export interface ProjectMilestoneFormData {
   title: string;
@@ -38,6 +40,7 @@ export function useProjectMilestoneForm({
   const params = useParams();
   const projectId = params.projectId as string;
   const isEditing = !!previousMilestone;
+  const dynamicWallet = useDynamicWallet();
 
   const { gap } = useGap();
   const [isLoading, setIsLoading] = useState(false);
@@ -69,15 +72,16 @@ export function useProjectMilestoneForm({
         recipient: (address as `0x${string}`) || "0x00",
       });
 
-      const { walletClient, error } = await safeGetWalletClient(
-        project?.chainID as number
+      // Get wallet signer with AA support
+      const walletSigner = await getWalletSignerWithAA(
+        project?.chainID as number,
+        dynamicWallet,
+        "Creating project milestone"
       );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      
+      if (!walletSigner || !gapClient) {
+        throw new Error("Failed to connect to wallet");
       }
-
-      const walletSigner = await walletClientToSigner(walletClient);
       const sanitizedData = {
         title: sanitizeInput(data.title),
         text: sanitizeInput(data.text),
@@ -158,15 +162,16 @@ export function useProjectMilestoneForm({
         gapClient = getGapClient(project?.chainID as number);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        project?.chainID as number
+      // Get wallet signer with AA support
+      const walletSigner = await getWalletSignerWithAA(
+        project?.chainID as number,
+        dynamicWallet,
+        "Updating project milestone"
       );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      
+      if (!walletSigner || !gapClient) {
+        throw new Error("Failed to connect to wallet");
       }
-
-      const walletSigner = await walletClientToSigner(walletClient);
       const sanitizedData = {
         title: sanitizeInput(data.title),
         text: sanitizeInput(data.text),

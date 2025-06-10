@@ -36,6 +36,8 @@ import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 
 const milestoneSchema = z.object({
   title: z
@@ -87,6 +89,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   });
   const isOwner = useOwnerStore((state) => state.isOwner);
   const [recipient, setRecipient] = useState("");
+  const dynamicWallet = useDynamicWallet();
 
   const { address } = useAccount();
   const {
@@ -144,14 +147,16 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         data: milestone,
       });
 
-      // Replace direct getWalletClient call with safeGetWalletClient
-
-      const { walletClient, error } = await safeGetWalletClient(chainID);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      // Get wallet signer with AA support
+      const walletSigner = await getWalletSignerWithAA(
+        chainID,
+        dynamicWallet,
+        "Creating milestone"
+      );
+      
+      if (!walletSigner || !gapClient) {
+        throw new Error("Failed to connect to wallet");
       }
-      const walletSigner = await walletClientToSigner(walletClient);
       await milestoneToAttest
         .attest(walletSigner as any, changeStepperStep)
         .then(async (res) => {

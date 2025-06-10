@@ -27,6 +27,8 @@ import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
 import { UpdateMilestone } from "./UpdateMilestone";
 import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerification";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -48,6 +50,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const { chain, address } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const refreshProject = useProjectStore((state) => state.refreshProject);
+  const dynamicWallet = useDynamicWallet();
 
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
@@ -63,15 +66,16 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
         gapClient = getGapClient(milestone.chainID);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        milestone.chainID
+      // Get wallet signer with AA support
+      const walletSigner = await getWalletSignerWithAA(
+        milestone.chainID,
+        dynamicWallet,
+        "Undoing milestone completion"
       );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      
+      if (!walletSigner || !gapClient) {
+        throw new Error("Failed to connect to wallet");
       }
-      if (!walletClient || !gapClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
       // const instanceMilestone = new Milestone({
       //   ...milestone,
       //   schema: gapClient.findSchema("Milestone"),

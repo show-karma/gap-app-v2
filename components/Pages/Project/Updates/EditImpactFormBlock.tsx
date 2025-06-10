@@ -5,12 +5,10 @@ import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProjectImpact } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
@@ -22,6 +20,8 @@ import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 
 const updateSchema = z.object({
   startedAt: z.date({
@@ -78,6 +78,7 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
+  const dynamicWallet = useDynamicWallet();
 
   // Load existing impact data
   useEffect(() => {
@@ -109,15 +110,15 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({
         gapClient = getGapClient(project.chainID);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
+      const walletSigner = await getWalletSignerWithAA(
+        project.chainID,
+        dynamicWallet,
+        "impact update"
       );
 
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!walletSigner || !gapClient) {
+        throw new Error("Failed to connect to wallet");
       }
-
-      const walletSigner = await walletClientToSigner(walletClient);
 
       const fetchedProject = await gapClient.fetch.projectById(project.uid);
       if (!fetchedProject) return;

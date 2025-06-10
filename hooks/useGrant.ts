@@ -5,8 +5,6 @@ import { getGapClient, useGap } from "./useGap";
 import { useAccount, useSwitchChain } from "wagmi";
 import { getProjectById } from "@/utilities/sdk";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
@@ -18,6 +16,8 @@ import { useProjectStore } from "@/store";
 import { useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
 import { useGrantFormStore } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewGrant/store";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 
 export function useGrant() {
   const [isLoading, setIsLoading] = useState(false);
@@ -28,6 +28,7 @@ export function useGrant() {
   const selectedProject = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();
+  const dynamicWallet = useDynamicWallet();
   const {
     clearMilestonesForms,
     resetFormData,
@@ -83,16 +84,13 @@ export function useGrant() {
 
       oldGrantInstance.details?.setValues(grantData);
 
-      const { walletClient, error } = await safeGetWalletClient(
-        oldGrant.chainID
+      const walletSigner = await getWalletSignerWithAA(
+        oldGrant.chainID,
+        dynamicWallet,
+        "grant update"
       );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      if (!walletClient) return;
-
-      const walletSigner = await walletClientToSigner(walletClient);
+      
+      if (!gapClient) return;
       const oldProjectData = await gapIndexerApi
         .projectBySlug(oldGrant.refUID)
         .then((res) => res.data);

@@ -17,6 +17,8 @@ import { useAccount, useSwitchChain } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { retryUntilConditionMet } from "@/utilities/retries";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 interface MilestoneDeleteProps {
   milestone: IMilestoneResponse;
 }
@@ -30,6 +32,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
   const selectedProject = useProjectStore((state) => state.project);
+  const dynamicWallet = useDynamicWallet();
 
   const { project, isProjectOwner } = useProjectStore();
   const { isOwner: isContractOwner } = useOwnerStore();
@@ -45,15 +48,16 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
       }
       const milestoneUID = milestone.uid;
 
-      const { walletClient, error } = await safeGetWalletClient(
-        milestone.chainID
+      // Get wallet signer with AA support
+      const walletSigner = await getWalletSignerWithAA(
+        milestone.chainID,
+        dynamicWallet,
+        "Deleting milestone"
       );
 
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!walletSigner || !gapClient) {
+        throw new Error("Failed to connect to wallet");
       }
-      if (!walletClient || !gapClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
       const instanceProject = await gapClient.fetch.projectById(project?.uid);
       const grantInstance = instanceProject?.grants.find(
         (item) => item.uid.toLowerCase() === milestone.refUID.toLowerCase()

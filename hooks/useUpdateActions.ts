@@ -10,12 +10,13 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { retryUntilConditionMet } from "@/utilities/retries";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { safeGetWalletClient, getWalletSignerWithAA } from "@/utilities/wallet-helpers";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { queryClient } from "@/components/Utilities/WagmiProvider";
 import { useParams, useRouter } from "next/navigation";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
 import {
   IGrantUpdate,
   IMilestoneResponse,
@@ -44,6 +45,7 @@ export const useUpdateActions = (update: UpdateType) => {
   const isOnChainAuthorized = isProjectOwner || isOwner;
   const projectId = useParams().projectId as string;
   const router = useRouter();
+  const { wallet: dynamicWallet } = useDynamicWallet();
 
   // Function to refresh data after successful deletion
   const refreshDataAfterDeletion = async () => {
@@ -94,7 +96,11 @@ export const useUpdateActions = (update: UpdateType) => {
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getWalletSignerWithAA(
+        walletClient,
+        dynamicWallet,
+        "deleteUpdate"
+      );
 
       let findUpdate: any = null;
       let deleteMessage = "";

@@ -20,6 +20,8 @@ import { formatDate } from "@/utilities/formatDate";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers";
 import { appNetwork } from "@/utilities/network";
 import { PAGES } from "@/utilities/pages";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
@@ -168,6 +170,7 @@ export default function AddProgram({
   refreshPrograms?: () => Promise<void>;
 }) {
   const router = useRouter();
+  const { wallet: dynamicWallet } = useDynamicWallet();
   const supportedChains = appNetwork
     .filter((chain) => {
       const support = [10, 42161, 11155111];
@@ -411,7 +414,11 @@ export default function AddProgram({
       if (error || !walletClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getWalletSignerWithAA(
+        walletClient,
+        dynamicWallet,
+        "updateProgram"
+      );
 
       const metadata = sanitizeObject({
         title: data.name,

@@ -14,6 +14,8 @@ import { useProjectStore } from "@/store";
 import { useOwnerStore } from "@/store/owner";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers";
 import { Dialog, Transition } from "@headlessui/react";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 import {
@@ -102,6 +104,7 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
   projectToUpdate,
   previousContacts,
 }) => {
+  const { wallet: dynamicWallet } = useDynamicWallet();
   const dataToUpdate = {
     chainID: projectToUpdate?.chainID,
     description: projectToUpdate?.details?.data?.description || "",
@@ -443,7 +446,11 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getWalletSignerWithAA(
+        walletClient,
+        dynamicWallet,
+        "createProject"
+      );
       closeModal();
       changeStepperStep("preparing");
       await project
@@ -547,7 +554,11 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getWalletSignerWithAA(
+        walletClient,
+        dynamicWallet,
+        "updateProject"
+      );
       const fetchedProject = await getProjectById(projectToUpdate.uid);
       if (!fetchedProject) return;
       changeStepperStep("preparing");

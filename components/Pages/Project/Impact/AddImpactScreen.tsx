@@ -18,6 +18,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { ProjectImpact } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
 import { getWalletClient } from "@wagmi/core";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 import { useQueryState } from "nuqs";
 import type { FC } from "react";
 import { useState } from "react";
@@ -58,6 +60,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [, changeTab] = useQueryState("tab");
+  const dynamicWallet = useDynamicWallet();
   const {
     register,
     handleSubmit,
@@ -91,15 +94,15 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
         gapClient = getGapClient(project.chainID);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        project.chainID as number
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get GAP client");
       }
 
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getWalletSignerWithAA(
+        project.chainID as number,
+        dynamicWallet,
+        "Add impact"
+      );
       const dataToAttest = sanitizeObject({
         work,
         impact,
