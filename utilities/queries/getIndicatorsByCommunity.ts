@@ -9,6 +9,11 @@ export interface Indicator {
   unitOfMeasure: string;
 }
 
+export interface GroupedIndicators {
+  communityAdminCreated: Indicator[];
+  projectOwnerCreated: Indicator[];
+}
+
 export const getIndicatorsByCommunity = async (communityId: string) => {
   try {
     const [data, error] = await fetchData(
@@ -21,5 +26,23 @@ export const getIndicatorsByCommunity = async (communityId: string) => {
   } catch (error) {
     errorManager("Error fetching indicators by community", error);
     return [];
+  }
+};
+
+export const getGroupedIndicatorsByCommunity = async (communityId: string) => {
+  try {
+    const [data, error] = await fetchData(
+      `${INDEXER.COMMUNITY.INDICATORS.COMMUNITY.LIST(communityId)}/grouped`
+    );
+    if (error) {
+      throw error;
+    }
+    return data as GroupedIndicators;
+  } catch (error) {
+    errorManager("Error fetching grouped indicators by community", error);
+    return {
+      communityAdminCreated: [],
+      projectOwnerCreated: []
+    };
   }
 };
