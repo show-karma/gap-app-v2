@@ -1,22 +1,22 @@
-import { useState } from "react";
-import { useAccount, useSwitchChain } from "wagmi";
-import { useProjectStore } from "@/store";
-import { getGapClient, useGap } from "@/hooks/useGap";
-import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { useStepper } from "@/store/modals/txStepper";
-import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
-import toast from "react-hot-toast";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
-import { useParams } from "next/navigation";
-import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
-import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { getGapClient, useGap } from "@/hooks/useGap";
+import { useProjectStore } from "@/store";
+import { useStepper } from "@/store/modals/txStepper";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import fetchData from "@/utilities/fetchData";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
+import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
+import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
+import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useQuery } from "@tanstack/react-query";
+import { useParams } from "next/navigation";
+import { useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount, useSwitchChain } from "wagmi";
 
 export interface ProjectMilestoneFormData {
   title: string;
@@ -66,7 +66,7 @@ export function useProjectMilestoneForm({
         }),
         schema: gapClient.findSchema("ProjectMilestone"),
         refUID: project?.uid,
-        recipient: address || "0x00",
+        recipient: (address as `0x${string}`) || "0x00",
       });
 
       const { walletClient, error } = await safeGetWalletClient(

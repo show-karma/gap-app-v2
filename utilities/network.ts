@@ -15,9 +15,16 @@ export const appNetwork: [Chain, ...Chain[]] =
     ? [optimism, arbitrum, celo, sei]
     : [optimismSepolia, baseSepolia, sepolia];
 
-
 export function getExplorerUrl(chainId: number, transactionHash: string) {
-  const chain = [optimism, arbitrum, celo, sei, optimismSepolia, baseSepolia, sepolia].find(c => c.id === chainId);
+  const chain = [
+    optimism,
+    arbitrum,
+    celo,
+    sei,
+    optimismSepolia,
+    baseSepolia,
+    sepolia,
+  ].find((c) => c.id === chainId);
   if (!chain || !chain.blockExplorers?.default?.url) {
     // Return a fallback block explorer URL if the chain or its explorer is not found
     return `https://www.oklink.com/multi-search#key=${transactionHash}`;
