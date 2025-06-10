@@ -97,7 +97,8 @@ export const ProjectObjectiveForm = ({
         }),
         schema: gapClient.findSchema("ProjectMilestone"),
         refUID: project?.uid,
-        recipient: address || "0x00",
+        recipient: (address ||
+          "0x0000000000000000000000000000000000000000") as `0x${string}`,
       });
 
       const { walletClient, error } = await safeGetWalletClient(
