@@ -8,7 +8,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { Dialog, Transition } from "@headlessui/react";
-import { WalletIcon, CheckIcon } from "@heroicons/react/24/outline";
+import { CurrencyDollarIcon , CheckIcon } from "@heroicons/react/24/outline";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { FC, ReactNode } from "react";
 import { Fragment, useEffect, useState, useCallback } from "react";
@@ -313,7 +313,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
           className={buttonClassName}
           data-set-payout-button={dataAttr}
         >
-          <WalletIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
+          <CurrencyDollarIcon  className={"mr-2 h-5 w-5"} aria-hidden="true" />
           {project?.payoutAddress ? "Manage Payout Address" : "Set Payout Address"}
         </Button>
       )}
