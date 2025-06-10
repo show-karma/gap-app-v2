@@ -24,7 +24,7 @@ import { useGroupedIndicators } from "@/hooks/useGroupedIndicators";
 import { ProgramCard } from "./ProgramCard";
 import { MESSAGES } from "@/utilities/messages";
 import { useAccount } from "wagmi";
-import { Spinner } from "@/components/Utilities/Spinner";
+import { LoadingSpinner } from "@/components/Disbursement/components/LoadingSpinner";
 
 // Custom Dropdown Menu Component - copied from CategoryView.tsx
 const DropdownMenu = ({
@@ -351,10 +351,7 @@ export const IndicatorsView = ({
       </div>
 
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center py-12">
-          <Spinner />
-          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading indicators...</p>
-        </div>
+        <LoadingSpinner size="lg" color="blue" message="Loading indicators..." />
       ) : (
         <>
           {hasIndicators && (
