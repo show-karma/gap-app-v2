@@ -20,10 +20,11 @@ import toast from "react-hot-toast";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { useIndicators } from "@/hooks/useIndicators";
+import { useGroupedIndicators } from "@/hooks/useGroupedIndicators";
 import { ProgramCard } from "./ProgramCard";
 import { MESSAGES } from "@/utilities/messages";
 import { useAccount } from "wagmi";
+import { Spinner } from "@/components/Utilities/Spinner";
 
 // Custom Dropdown Menu Component - copied from CategoryView.tsx
 const DropdownMenu = ({
@@ -134,10 +135,10 @@ export const IndicatorsView = ({
 
   // Use the indicators hook instead of direct fetch
   const {
-    data: apiIndicators = [],
+    data: groupedIndicators = { communityAdminCreated: [], projectOwnerCreated: [] },
     refetch: refetchIndicators,
     isLoading,
-  } = useIndicators({
+  } = useGroupedIndicators({
     communityId: communityId || "",
   });
 
@@ -213,16 +214,9 @@ export const IndicatorsView = ({
 
   // Total indicators count
   const getTotalIndicatorsCount = () => {
-    let count = apiIndicators.length;
-
-    // Also count any newly created indicators not yet in the API response
-    const existingIds = new Set(apiIndicators.map((ind) => ind.id));
-    const uniqueNewIndicators = newIndicators.filter(
-      (ind) => !existingIds.has(ind.id)
-    );
-    count += uniqueNewIndicators.length;
-
-    return count;
+    return groupedIndicators.communityAdminCreated.length + 
+           groupedIndicators.projectOwnerCreated.length + 
+           newIndicators.length;
   };
 
   // Check if an indicator is autosynced
@@ -231,29 +225,19 @@ export const IndicatorsView = ({
   };
 
   // Filter indicators based on search and view type
-  const getFilteredIndicators = (): ImpactIndicator[] => {
-    // Combine API indicators with any newly created ones
-    let allIndicators: ImpactIndicator[] = [...apiIndicators];
+  const getFilteredIndicators = (indicators: ImpactIndicator[]): ImpactIndicator[] => {
+    let filteredIndicators = [...indicators];
 
-    // Add any new indicators that aren't yet in the API response
-    const existingIds = new Set(allIndicators.map((ind) => ind.id));
-    const uniqueNewIndicators = newIndicators.filter(
-      (ind) => !existingIds.has(ind.id)
-    );
-    allIndicators = [...allIndicators, ...uniqueNewIndicators];
-
-    // Filter by view type (automated/manual)
     if (indicatorViewType === "automated") {
-      allIndicators = allIndicators.filter((ind) => isAutosyncedIndicator(ind));
+      filteredIndicators = filteredIndicators.filter((ind) => isAutosyncedIndicator(ind));
     } else if (indicatorViewType === "manual") {
-      allIndicators = allIndicators.filter(
+      filteredIndicators = filteredIndicators.filter(
         (ind) => !isAutosyncedIndicator(ind)
       );
     }
 
-    // Filter by search query
     if (searchQuery) {
-      allIndicators = allIndicators.filter(
+      filteredIndicators = filteredIndicators.filter(
         (indicator) =>
           indicator.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           (indicator.description &&
@@ -263,16 +247,81 @@ export const IndicatorsView = ({
       );
     }
 
-    // Sort indicators alphabetically
-    return allIndicators.sort((a, b) =>
+    return filteredIndicators.sort((a, b) =>
       a.name.toLowerCase().localeCompare(b.name.toLowerCase())
     );
   };
 
+  const filteredCommunityAdminIndicators = getFilteredIndicators(groupedIndicators.communityAdminCreated);
+  const filteredProjectOwnerIndicators = getFilteredIndicators(groupedIndicators.projectOwnerCreated);
+
   const hasIndicators = getTotalIndicatorsCount() > 0;
-  const filteredIndicators = getFilteredIndicators();
-  const hasFilteredIndicators = filteredIndicators.length > 0;
+  const hasFilteredIndicators = filteredCommunityAdminIndicators.length > 0 || filteredProjectOwnerIndicators.length > 0;
   const isFiltering = searchQuery || indicatorViewType !== "all";
+
+  const renderIndicatorsList = (indicators: ImpactIndicator[], title: string) => {
+    if (indicators.length === 0 && !isFiltering) {
+      return null;
+    }
+
+    return (
+      <div className="mb-8">
+        <h2 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+          {title} ({indicators.length})
+        </h2>
+        {indicators.length > 0 ? (
+          <div className="grid grid-cols-1 gap-0 rounded border border-gray-300 dark:border-zinc-700 divide-y divide-gray-300 dark:divide-zinc-700">
+            {indicators.map((indicator) => (
+              <div
+                key={indicator.id}
+                className="p-5 flex justify-between items-start"
+              >
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {indicator.name}
+                  </h3>
+                  {indicator.description && (
+                    <p className="text-gray-900 text-base font-normal dark:text-gray-400 mt-1">
+                      {indicator.description}
+                    </p>
+                  )}
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    <span className="text-xs bg-white dark:bg-zinc-800 px-2 py-0.5 rounded-full border border-gray-200 dark:border-zinc-700 inline-block">
+                      {indicator.unitOfMeasure || "N/A"}
+                    </span>
+                    {autosyncedIndicators.find(
+                      (i) => i.name === indicator.name
+                    ) && (
+                      <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 rounded-full inline-block">
+                        Autosynced
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <DeleteDialog
+                  title={`Are you sure you want to delete ${indicator.name}?`}
+                  deleteFunction={() => handleDeleteIndicator(indicator.id)}
+                  isLoading={isDeletingId === indicator.id}
+                  buttonElement={{
+                    icon: <TrashIcon className="h-5 w-5" />,
+                    text: "",
+                    styleClass:
+                      "text-red-500 hover:text-red-700 transition-colors p-1.5 bg-transparent hover:bg-transparent hover:opacity-75",
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="py-8 px-8 flex flex-col items-center justify-center text-center rounded border border-gray-300 dark:border-zinc-700 bg-gray-50 dark:bg-zinc-800">
+            <p className="text-gray-500 dark:text-gray-400">
+              No {title.toLowerCase()} found with current filters.
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="w-full">
@@ -301,170 +350,117 @@ export const IndicatorsView = ({
         </Button>
       </div>
 
-      {/* Search and Filters - Only show if there are indicators */}
-      {hasIndicators && (
-        <div className="flex justify-between items-center mb-6">
-          <div className="w-2/3">
-            <input
-              type="text"
-              placeholder="Search indicators..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-4 py-2 border rounded-md dark:bg-zinc-800 dark:border-zinc-700"
-            />
-          </div>
-          {/* Replace the select with the DropdownMenu component */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              View
-            </span>
-            <div className="w-36">
-              <DropdownMenu
-                value={indicatorViewType}
-                onChange={(value) =>
-                  setIndicatorViewType(value as "all" | "automated" | "manual")
-                }
-                options={filterOptions}
-              />
-            </div>
-          </div>
+      {isLoading ? (
+        <div className="flex flex-col items-center justify-center py-12">
+          <Spinner />
+          <p className="mt-4 text-gray-600 dark:text-gray-400">Loading indicators...</p>
         </div>
-      )}
-
-      {/* Empty State - No indicators at all */}
-      {!hasIndicators && (
-        <div className="py-16 px-8 flex flex-col items-center justify-center text-center">
-          <div className="bg-gray-100 dark:bg-zinc-800 p-4 rounded-full mb-4">
-            <Image
-              alt="Empty state"
-              width={40}
-              height={40}
-              src="/icons/chart-bar.svg"
-              className="text-indigo-500"
-            />
-          </div>
-          <h3 className="text-xl font-semibold mb-2">No indicators yet</h3>
-          <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-lg">
-            Indicators help you measure the impact of your activities and
-            outcomes. Add your first indicator to start tracking impact.
-          </p>
-          <Button
-            className="flex items-center gap-1 text-white"
-            onClick={() => setIsFormModalOpen(true)}
-          >
-            Add Your First Indicator
-            <PlusIcon className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
-
-      {/* Filter Empty State - Has indicators but none match filter */}
-      {hasIndicators && !hasFilteredIndicators && (
-        <div className="py-12 px-8 flex flex-col items-center justify-center text-center">
-          <div className="bg-gray-100 dark:bg-zinc-800 p-3 rounded-full mb-4">
-            <Image
-              alt="No results"
-              width={32}
-              height={32}
-              src="/icons/search.svg"
-              className="text-indigo-500"
-            />
-          </div>
-          <h3 className="text-lg font-semibold mb-2">No indicators found</h3>
-          <p className="text-gray-500 dark:text-gray-400 mb-4 max-w-lg">
-            {searchQuery ? (
-              <>No indicators match your search term. Try a different search.</>
-            ) : indicatorViewType !== "all" ? (
-              <>
-                No {indicatorViewType} indicators found. Try a different filter.
-              </>
-            ) : (
-              <>No indicators match your current filters.</>
-            )}
-          </p>
-          {searchQuery && (
-            <Button
-              variant="secondary"
-              className="mb-2"
-              onClick={() => setSearchQuery("")}
-            >
-              Clear Search
-            </Button>
-          )}
-          {indicatorViewType !== "all" && (
-            <Button
-              variant="secondary"
-              onClick={() => setIndicatorViewType("all")}
-            >
-              Show All Indicators
-            </Button>
-          )}
-        </div>
-      )}
-
-      {/* Indicators List - Updated to show programs */}
-      {hasFilteredIndicators && (
-        <div className="grid grid-cols-1 gap-0 rounded border border-gray-300 dark:border-zinc-700 divide-y divide-gray-300 dark:divide-zinc-700">
-          {filteredIndicators.map((indicator) => (
-            <div
-              key={indicator.id}
-              className="p-5 flex justify-between items-start"
-            >
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {indicator.name}
-                </h3>
-                {indicator.description && (
-                  <p className="text-gray-900 text-base font-normal dark:text-gray-400 mt-1">
-                    {indicator.description}
-                  </p>
-                )}
-                <div className="flex flex-wrap gap-2 mt-2">
-                  <span className="text-xs bg-white dark:bg-zinc-800 px-2 py-0.5 rounded-full border border-gray-200 dark:border-zinc-700 inline-block">
-                    {indicator.unitOfMeasure || "N/A"}
-                  </span>
-                  {autosyncedIndicators.find(
-                    (i) => i.name === indicator.name
-                  ) && (
-                    <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300 rounded-full inline-block">
-                      Autosynced
-                    </span>
-                  )}
-                </div>
-
-                {/* Add programs display */}
-                {indicator.programs && indicator.programs.length > 0 && (
-                  <div className="mt-3">
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
-                      Associated Programs:
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {indicator.programs.map((program) => (
-                        <ProgramCard
-                          key={`${program.programId}-${program.chainID}`}
-                          programId={program.programId}
-                          chainID={program.chainID}
-                          minimal={true}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
+      ) : (
+        <>
+          {hasIndicators && (
+            <div className="flex justify-between items-center mb-6">
+              <div className="w-2/3">
+                <input
+                  type="text"
+                  placeholder="Search indicators..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full px-4 py-2 border rounded-md dark:bg-zinc-800 dark:border-zinc-700"
+                />
               </div>
-              <DeleteDialog
-                title={`Are you sure you want to delete ${indicator.name}?`}
-                deleteFunction={() => handleDeleteIndicator(indicator.id)}
-                isLoading={isDeletingId === indicator.id}
-                buttonElement={{
-                  icon: <TrashIcon className="h-5 w-5" />,
-                  text: "",
-                  styleClass:
-                    "text-red-500 hover:text-red-700 transition-colors p-1.5 bg-transparent hover:bg-transparent hover:opacity-75",
-                }}
-              />
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  View
+                </span>
+                <div className="w-36">
+                  <DropdownMenu
+                    value={indicatorViewType}
+                    onChange={(value: any) =>
+                      setIndicatorViewType(value as "all" | "automated" | "manual")
+                    }
+                    options={filterOptions}
+                  />
+                </div>
+              </div>
             </div>
-          ))}
-        </div>
+          )}
+
+          {!hasIndicators && (
+            <div className="py-12 px-8 flex flex-col items-center justify-center text-center">
+              <div className="bg-gray-100 dark:bg-zinc-800 p-3 rounded-full mb-4">
+                <Image
+                  alt="No indicators"
+                  width={32}
+                  height={32}
+                  src="/icons/bars.svg"
+                  className="text-indigo-500"
+                />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">No indicators yet</h3>
+              <p className="text-gray-500 dark:text-gray-400 mb-4 max-w-lg">
+                Get started by creating your first indicator to track impact
+                measurements.
+              </p>
+              <Button
+                className="flex items-center gap-1 text-white"
+                onClick={() => setIsFormModalOpen(true)}
+              >
+                Add Indicator
+                <PlusIcon className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+
+          {hasIndicators && !hasFilteredIndicators && (
+            <div className="py-12 px-8 flex flex-col items-center justify-center text-center">
+              <div className="bg-gray-100 dark:bg-zinc-800 p-3 rounded-full mb-4">
+                <Image
+                  alt="No results"
+                  width={32}
+                  height={32}
+                  src="/icons/search.svg"
+                  className="text-indigo-500"
+                />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">No indicators found</h3>
+              <p className="text-gray-500 dark:text-gray-400 mb-4 max-w-lg">
+                {searchQuery ? (
+                  <>No indicators match your search term. Try a different search.</>
+                ) : indicatorViewType !== "all" ? (
+                  <>
+                    No {indicatorViewType} indicators found. Try a different filter.
+                  </>
+                ) : (
+                  <>No indicators match your current filters.</>
+                )}
+              </p>
+              {searchQuery && (
+                <Button
+                  variant="secondary"
+                  className="mb-2"
+                  onClick={() => setSearchQuery("")}
+                >
+                  Clear Search
+                </Button>
+              )}
+              {indicatorViewType !== "all" && (
+                <Button
+                  variant="secondary"
+                  onClick={() => setIndicatorViewType("all")}
+                >
+                  Show All Indicators
+                </Button>
+              )}
+            </div>
+          )}
+
+          {hasFilteredIndicators && (
+            <div>
+              {renderIndicatorsList(filteredCommunityAdminIndicators, "Community Admin Indicators")}
+              {renderIndicatorsList(filteredProjectOwnerIndicators, "Project Owner Indicators")}
+            </div>
+          )}
+        </>
       )}
 
       {/* Modal for creating new indicator */}
