@@ -8,44 +8,11 @@ import {
   sei,
   sepolia,
 } from "@wagmi/core/chains";
-import {
-  coinbaseWallet,
-  injectedWallet,
-  metaMaskWallet,
-  rabbyWallet,
-  rainbowWallet,
-  walletConnectWallet,
-} from "@rainbow-me/rainbowkit/wallets";
-import { connectorsForWallets } from "@rainbow-me/rainbowkit";
 import { appNetwork } from "../network";
 import { envVars } from "../enviromentVars";
 
-const connectors = connectorsForWallets(
-  [
-    {
-      groupName: "Recommended",
-      wallets: [
-        metaMaskWallet,
-        rabbyWallet,
-        coinbaseWallet,
-        walletConnectWallet,
-        injectedWallet,
-        rainbowWallet,
-      ],
-    },
-  ],
-  {
-    appName: "Karma GAP",
-    projectId: process.env.NEXT_PUBLIC_PROJECT_ID || "",
-    appDescription: "Karma GAP",
-    appUrl: "https://gap.karmahq.xyz",
-    appIcon: "https://gap.karmahq.xyz/favicon.ico",
-  }
-);
-
 export const config = createConfig({
   chains: appNetwork,
-  connectors,
   transports: {
     [optimism.id]: http(envVars.RPC.OPTIMISM),
     [arbitrum.id]: http(envVars.RPC.ARBITRUM),
@@ -55,6 +22,7 @@ export const config = createConfig({
     [sei.id]: http(envVars.RPC.SEI),
     [sepolia.id]: http(envVars.RPC.SEPOLIA),
   },
+  multiInjectedProviderDiscovery: false,
   ssr: false,
   storage: createStorage({
     storage: cookieStorage,

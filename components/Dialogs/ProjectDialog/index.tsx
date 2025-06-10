@@ -16,6 +16,7 @@ import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { Dialog, Transition } from "@headlessui/react";
 import {
+  CurrencyDollarIcon,
   ExclamationTriangleIcon,
   UserCircleIcon,
 } from "@heroicons/react/24/outline";
@@ -80,6 +81,8 @@ import { useContactInfo } from "@/hooks/useContactInfo";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { DeckIcon } from "@/components/Icons/Deck";
 import { VideoIcon } from "@/components/Icons/Video";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
+import { SmartWalletIndicator } from "@/components/SmartWalletIndicator";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -238,6 +241,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const { changeStepperStep, setIsStepper } = useStepper();
   const { openSimilarProjectsModal, isSimilarProjectsModalOpen } =
     useSimilarProjectsModalStore();
+  const { isSmartWallet, supportsGasless, getSigner, walletAddress } =
+    useDynamicWallet();
 
   const {
     register,
@@ -381,17 +386,18 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
 
   const createProject = async (data: SchemaType) => {
     try {
+      console.log("Creating project", data);
       setIsLoading(true);
-      if (!isConnected || !isAuth) {
+      if (!isConnected) {
         openConnectModal?.();
         return;
       }
-      if (!address) return;
-      if (!gap) return;
+      console.log("Gap client", gap);
 
       const chainSelected = data.chainID;
       let gapClient = getGapClient(chainSelected);
 
+      console.log(chain?.id, chainSelected);
       if (chain?.id !== chainSelected) {
         await switchChainAsync?.({ chainId: chainSelected });
         gapClient = getGapClient(chainSelected);
@@ -508,16 +514,49 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         );
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
-      );
+      let walletSigner;
 
-      if (error || !walletClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      // Check if we're using a smart wallet with Dynamic
+      if (isSmartWallet && supportsGasless) {
+        try {
+          // Use Dynamic's signer for AA transactions
+          walletSigner = await getSigner();
+          console.log("Using Dynamic smart wallet for gasless transaction");
+        } catch (dynamicError) {
+          console.warn(
+            "Failed to get Dynamic signer, falling back to standard wallet",
+            dynamicError
+          );
+          // Fallback to standard wallet
+          const { walletClient, error } = await safeGetWalletClient(
+            project.chainID
+          );
+          if (error || !walletClient) {
+            throw new Error("Failed to connect to wallet", { cause: error });
+          }
+          walletSigner = await walletClientToSigner(walletClient);
+        }
+      } else {
+        // Standard wallet flow
+        const { walletClient, error } = await safeGetWalletClient(
+          project.chainID
+        );
+        if (error || !walletClient) {
+          throw new Error("Failed to connect to wallet", { cause: error });
+        }
+        walletSigner = await walletClientToSigner(walletClient);
       }
-      const walletSigner = await walletClientToSigner(walletClient);
       closeModal();
       changeStepperStep("preparing");
+
+      // Show gasless transaction indicator if using smart wallet
+      if (isSmartWallet && supportsGasless) {
+        toast.success("Creating project with gasless transaction", {
+          icon: "⛽",
+          duration: 4000,
+        });
+      }
+
       await project
         .attest(walletSigner, changeStepperStep)
         .then(async (res) => {
@@ -1357,13 +1396,20 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                     </div>
                   )}
                   {!projectToUpdate && (
-                    <div className="bg-yellow-100  max-w-3xl flex flex-row gap-4 rounded-md text-sm px-4 py-2 items-center my-3 dark:bg-yellow-900  text-orange-900 dark:text-white">
-                      <ExclamationTriangleIcon className="w-5 h-5" />
-                      <p>
-                        If you have already created this project in another
-                        platform, make sure you connect to the right wallet.
-                      </p>
-                    </div>
+                    <>
+                      <div className="bg-yellow-100  max-w-3xl flex flex-row gap-4 rounded-md text-sm px-4 py-2 items-center my-3 dark:bg-yellow-900  text-orange-900 dark:text-white">
+                        <ExclamationTriangleIcon className="w-5 h-5" />
+                        <p>
+                          If you have already created this project in another
+                          platform, make sure you connect to the right wallet.
+                        </p>
+                      </div>
+                      {isSmartWallet && (
+                        <div className="max-w-3xl mb-3">
+                          <SmartWalletIndicator className="inline-flex" />
+                        </div>
+                      )}
+                    </>
                   )}
                   {/* Screens start */}
                   <form onSubmit={handleSubmit(onSubmit)}>

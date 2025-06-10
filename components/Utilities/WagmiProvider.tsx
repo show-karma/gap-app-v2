@@ -1,34 +1,41 @@
 "use client";
-import { cookieToInitialState, WagmiProvider as Wagmi } from "wagmi";
-import { RainbowKitProvider, lightTheme } from "@rainbow-me/rainbowkit";
-import { config } from "@/utilities/wagmi/config";
+import { WagmiProvider as Wagmi } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+import {
+  DynamicContextProvider,
+  DynamicWidget,
+} from "@dynamic-labs/sdk-react-core";
+import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
+import { DynamicWagmiConnector } from "@dynamic-labs/wagmi-connector";
+import { config } from "@/utilities/wagmi/config";
+import {
+  ZeroDevSmartWalletConnectors,
+  isZeroDevConnector,
+} from "@dynamic-labs/ethereum-aa";
 
 export const queryClient = new QueryClient();
 
-const WagmiProvider = ({
-  children,
-  cookie,
-}: {
-  cookie: string;
-  children: React.ReactNode;
-}) => {
-  const initialState = cookieToInitialState(config, cookie);
-
+const CustomWagmiProvider = ({ children }: { children: React.ReactNode }) => {
   return (
-    <Wagmi config={config} initialState={initialState}>
-      <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider
-          theme={lightTheme({
-            accentColor: "#E40536",
-            accentColorForeground: "white",
-            borderRadius: "medium",
-          })}
-        >
-          {children}
-        </RainbowKitProvider>
-      </QueryClientProvider>
-    </Wagmi>
+    <DynamicContextProvider
+      settings={{
+        environmentId: "f1d1b7df-5091-467d-8b32-8f88f2f699cd",
+        walletConnectors: [
+          EthereumWalletConnectors,
+          ZeroDevSmartWalletConnectors,
+        ],
+      }}
+    >
+      <Wagmi config={config}>
+        <QueryClientProvider client={queryClient}>
+          <DynamicWagmiConnector>
+            <DynamicWidget />
+            {children}
+          </DynamicWagmiConnector>
+        </QueryClientProvider>
+      </Wagmi>
+    </DynamicContextProvider>
   );
 };
-export default WagmiProvider;
+export default CustomWagmiProvider;

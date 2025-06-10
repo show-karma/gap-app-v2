@@ -25,6 +25,8 @@ import { INDEXER } from "@/utilities/indexer";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { ArrowRightIcon } from "@heroicons/react/24/solid";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 
 type VerifyMilestoneUpdateDialogProps = {
   milestone: IMilestoneResponse;
@@ -42,6 +44,7 @@ export const VerifyMilestoneUpdateDialog: FC<
 > = ({ milestone, addVerifiedMilestone }) => {
   let [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const dynamicWallet = useDynamicWallet();
 
   const {
     register,
@@ -80,14 +83,15 @@ export const VerifyMilestoneUpdateDialog: FC<
         gapClient = getGapClient(milestone.chainID);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        milestone.chainID
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get GAP client");
       }
-      const walletSigner = await walletClientToSigner(walletClient);
+      
+      const walletSigner = await getWalletSignerWithAA(
+        milestone.chainID,
+        dynamicWallet,
+        "Verify milestone update"
+      );
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
       if (!fetchedProject) return;
       const grantInstance = fetchedProject.grants.find(

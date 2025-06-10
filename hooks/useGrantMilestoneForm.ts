@@ -16,6 +16,8 @@ import { Hex } from "viem";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MESSAGES } from "@/utilities/messages";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 
 export interface GrantMilestoneFormData {
   title: string;
@@ -40,6 +42,7 @@ export function useGrantMilestoneForm({
   const { project, refreshProject } = useProjectStore();
   const { switchChainAsync } = useSwitchChain();
   const isOwner = useOwnerStore((state) => state.isOwner);
+  const dynamicWallet = useDynamicWallet();
 
   const { gap } = useGap();
   const [isLoading, setIsLoading] = useState(false);
@@ -88,14 +91,16 @@ export function useGrantMilestoneForm({
           data: milestone,
         });
 
-        // Get wallet client safely
-        const { walletClient, error } = await safeGetWalletClient(chainID);
-
-        if (error || !walletClient || !gapClient) {
-          throw new Error("Failed to connect to wallet", { cause: error });
+        // Get wallet signer with AA support
+        const walletSigner = await getWalletSignerWithAA(
+          chainID,
+          dynamicWallet,
+          "Creating grant milestone"
+        );
+        
+        if (!walletSigner || !gapClient) {
+          throw new Error("Failed to connect to wallet");
         }
-
-        const walletSigner = await walletClientToSigner(walletClient);
 
         // Attest the milestone
         await milestoneToAttest

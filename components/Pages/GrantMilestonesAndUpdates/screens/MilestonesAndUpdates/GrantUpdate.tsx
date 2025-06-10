@@ -1,10 +1,11 @@
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { getGapClient, useGap } from "@/hooks/useGap";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
@@ -15,7 +16,6 @@ import {
   IGrantUpdate,
   IGrantUpdateStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useEffect, useState, type FC } from "react";
 import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
@@ -87,6 +87,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
   const { project, isProjectOwner } = useProjectStore();
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
+  const dynamicWallet = useDynamicWallet();
 
   const undoGrantUpdate = async () => {
     let gapClient = gap;
@@ -97,13 +98,15 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
         gapClient = getGapClient(update.chainID);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(update.chainID);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get GAP client");
       }
-      if (!walletClient || !gapClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
+      
+      const walletSigner = await getWalletSignerWithAA(
+        update.chainID,
+        dynamicWallet,
+        "grant update deletion"
+      );
 
       const instanceProject = await gapClient.fetch.projectById(project?.uid);
       const grantInstance = instanceProject?.grants.find(

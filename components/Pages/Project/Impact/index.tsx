@@ -19,6 +19,8 @@ import { TrashIcon } from "@heroicons/react/24/outline";
 import { IProjectImpact } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getWalletClient } from "@wagmi/core";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 import { useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { FC, useEffect, useState } from "react";
@@ -49,6 +51,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isAuthorized = isOwner || isProjectAdmin;
+  const dynamicWallet = useDynamicWallet();
 
   useEffect(() => {
     if (!project || !project.impacts || !project.impacts.length) {
@@ -84,22 +87,20 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
         gapClient = getGapClient(project.chainID);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
-      );
+      const walletSigner = await getWalletSignerWithAA(
+        project.chainID,
+        dynamicWallet,
+        "Revoke impact"
+      ).catch((error) => {
+        toast.error(error.message || "Failed to connect wallet");
+        setLoading({ ...loading, [impact.uid.toLowerCase()]: false });
+        throw error;
+      });
 
-      if (error) {
-        toast.error(error);
+      if (!walletSigner) {
         setLoading({ ...loading, [impact.uid.toLowerCase()]: false });
         return;
       }
-
-      if (!walletClient) {
-        setLoading({ ...loading, [impact.uid.toLowerCase()]: false });
-        return;
-      }
-
-      const walletSigner = await walletClientToSigner(walletClient);
 
       const fetchedProject = await getProjectById(project.uid);
       const instanceImpact = fetchedProject?.impacts?.find(

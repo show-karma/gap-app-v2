@@ -23,6 +23,8 @@ import { useRouter } from "next/navigation";
 import { FC, Fragment, useState } from "react";
 import { Hex } from "viem";
 import { useAccount, useSwitchChain } from "wagmi";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 
 type EndorsementDialogProps = {};
 
@@ -40,6 +42,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();
   const { data: contactsInfo } = useContactInfo(project?.uid, true);
+  const dynamicWallet = useDynamicWallet();
 
   function closeModal() {
     setIsOpen(false);
@@ -99,15 +102,15 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
         gapClient = getGapClient(project.chainID);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
-      );
-
-      if (error || !walletClient || !gapClient || !address) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient || !address) {
+        throw new Error("Failed to get GAP client or address");
       }
 
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getWalletSignerWithAA(
+        project.chainID,
+        dynamicWallet,
+        "Endorse project"
+      );
       const endorsement = new ProjectEndorsement({
         data: sanitizeObject({
           comment,

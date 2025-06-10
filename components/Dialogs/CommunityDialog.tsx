@@ -14,11 +14,11 @@ import { useAccount, useSwitchChain } from "wagmi";
 import { Community, nullRef } from "@show-karma/karma-gap-sdk";
 import { Button } from "../Utilities/Button";
 import { MESSAGES } from "@/utilities/messages";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { appNetwork } from "@/utilities/network";
 import { cn } from "@/utilities/tailwind";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 import toast from "react-hot-toast";
 import { useStepper } from "@/store/modals/txStepper";
 import { config } from "@/utilities/wagmi/config";
@@ -98,6 +98,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
 
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
+  const dynamicWallet = useDynamicWallet();
 
   const createCommunity = async (data: SchemaType) => {
     if (!gap) return;
@@ -123,13 +124,12 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
         data.slug = await gapClient.generateSlug(data.slug as string);
       }
 
-      // Replace direct getWalletClient call with safeGetWalletClient
-      const { walletClient, error } = await safeGetWalletClient(selectedChain);
-
-      if (error || !walletClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      const walletSigner = await walletClientToSigner(walletClient);
+      // Use account abstraction aware wallet signer
+      const walletSigner = await getWalletSignerWithAA(
+        selectedChain,
+        dynamicWallet,
+        "Create community"
+      );
       const sanitizedData = sanitizeObject({
         name: data.name,
         description: description as string,

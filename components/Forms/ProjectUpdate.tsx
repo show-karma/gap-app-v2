@@ -4,7 +4,6 @@ import { getGapClient, useGap } from "@/hooks/useGap";
 import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -13,7 +12,6 @@ import { sanitizeObject } from "@/utilities/sanitize";
 import { config } from "@/utilities/wagmi/config";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IProjectUpdate, ProjectUpdate } from "@show-karma/karma-gap-sdk";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { FC } from "react";
 import { useState, useEffect } from "react";
@@ -23,6 +21,8 @@ import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import {
   InformationCircleIcon,
@@ -443,6 +443,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const { openShareDialog } = useShareDialogStore();
 
   const { gap } = useGap();
+  const dynamicWallet = useDynamicWallet();
 
   const indicatorsList = outputs.map((output) => ({
     indicatorId: output.id,
@@ -468,13 +469,15 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         gapClient = getGapClient(chainId);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(chainId);
+      const walletSigner = await getWalletSignerWithAA(
+        chainId,
+        dynamicWallet,
+        "project update"
+      );
 
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!walletSigner || !gapClient) {
+        throw new Error("Failed to connect to wallet");
       }
-
-      const walletSigner = await walletClientToSigner(walletClient);
       const schema = gapClient.findSchema("ProjectUpdate");
 
       if (!schema) {

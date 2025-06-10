@@ -29,6 +29,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { CancelButton } from "./buttons/CancelButton";
 import { NextButton } from "./buttons/NextButton";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
 
 export const MilestonesScreen: React.FC = () => {
   const {
@@ -53,6 +54,7 @@ export const MilestonesScreen: React.FC = () => {
   const { isAuth } = useAuthStore();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
+  const { isSmartWallet, supportsGasless, getSigner } = useDynamicWallet();
 
   const pathname = usePathname();
   const isEditing = pathname.includes("edit");
@@ -181,16 +183,39 @@ export const MilestonesScreen: React.FC = () => {
             })
           : [];
 
-      // Get wallet client
-      const { walletClient, error } = await safeGetWalletClient(
-        communityNetworkId
-      );
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      let walletSigner;
+      
+      // Check if we're using a smart wallet with Dynamic
+      if (isSmartWallet && supportsGasless) {
+        try {
+          // Use Dynamic's signer for AA transactions
+          walletSigner = await getSigner();
+          console.log("Using Dynamic smart wallet for gasless grant creation");
+          toast.success("Creating grant with gasless transaction", {
+            icon: "⛽",
+            duration: 4000,
+          });
+        } catch (dynamicError) {
+          console.warn("Failed to get Dynamic signer, falling back to standard wallet", dynamicError);
+          // Fallback to standard wallet
+          const { walletClient, error } = await safeGetWalletClient(
+            communityNetworkId
+          );
+          if (error || !walletClient || !gapClient) {
+            throw new Error("Failed to connect to wallet", { cause: error });
+          }
+          walletSigner = await walletClientToSigner(walletClient);
+        }
+      } else {
+        // Standard wallet flow
+        const { walletClient, error } = await safeGetWalletClient(
+          communityNetworkId
+        );
+        if (error || !walletClient || !gapClient) {
+          throw new Error("Failed to connect to wallet", { cause: error });
+        }
+        walletSigner = await walletClientToSigner(walletClient);
       }
-
-      // Get wallet signer
-      const walletSigner = await walletClientToSigner(walletClient);
 
       // Attest grant
       setIsStepper(true);

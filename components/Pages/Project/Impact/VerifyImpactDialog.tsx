@@ -30,6 +30,8 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 
 type VerifyImpactDialogProps = {
   impact: IProjectImpact;
@@ -48,6 +50,7 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
 }) => {
   let [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const dynamicWallet = useDynamicWallet();
 
   const {
     register,
@@ -98,22 +101,20 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
         gapClient = getGapClient(findImpact!.chainID);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        findImpact!.chainID
-      );
-
-      if (error) {
-        toast.error(error);
+      if (!address || !gapClient) {
         setIsLoading(false);
         return;
       }
 
-      if (!walletClient || !address || !gapClient) {
+      const walletSigner = await getWalletSignerWithAA(
+        findImpact!.chainID,
+        dynamicWallet,
+        "Verify impact"
+      ).catch((error) => {
+        toast.error(error.message || "Failed to connect wallet");
         setIsLoading(false);
-        return;
-      }
-
-      const walletSigner = await walletClientToSigner(walletClient);
+        throw error;
+      });
       await findImpact
         .verify(
           walletSigner,

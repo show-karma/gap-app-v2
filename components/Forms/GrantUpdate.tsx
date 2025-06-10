@@ -2,9 +2,10 @@
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks/useGap";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -25,7 +26,6 @@ import { sanitizeObject } from "@/utilities/sanitize";
 import { useGrantStore } from "@/store/grant";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 
@@ -84,6 +84,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [noProofCheckbox, setNoProofCheckbox] = useState(false);
+  const dynamicWallet = useDynamicWallet();
 
   const {
     register,
@@ -127,15 +128,15 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
         gapClient = getGapClient(grantToUpdate.chainID);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        grantToUpdate.chainID
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get GAP client");
       }
-      if (!walletClient || !gapClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
+      
+      const walletSigner = await getWalletSignerWithAA(
+        grantToUpdate.chainID,
+        dynamicWallet,
+        "grant update"
+      );
 
       const sanitizedGrantUpdate = sanitizeObject({
         text: data.description,

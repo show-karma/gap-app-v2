@@ -11,6 +11,8 @@ import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers";
 import { ReadMore } from "@/utilities/ReadMore";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { getProjectById } from "@/utilities/sdk";
@@ -55,6 +57,7 @@ export const ObjectiveCardComplete = ({
   const { gap } = useGap();
   const { chain, address } = useAccount();
   const { switchChainAsync } = useSwitchChain();
+  const { wallet: dynamicWallet } = useDynamicWallet();
 
   const params = useParams();
   const projectId = params.projectId as string;
@@ -80,7 +83,11 @@ export const ObjectiveCardComplete = ({
         throw new Error("Failed to connect to wallet", { cause: error });
       }
       if (!walletClient || !gapClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getWalletSignerWithAA(
+        walletClient,
+        dynamicWallet,
+        "revokeObjectiveCompletion"
+      );
       const fetchedProject = await getProjectById(projectId);
       if (!fetchedProject) return;
       const fetchedMilestones = await gapIndexerApi

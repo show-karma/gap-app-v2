@@ -24,6 +24,8 @@ import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 import { sanitizeInput } from "@/utilities/sanitize";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 
 export const useMilestone = () => {
   const [isDeleting, setIsDeleting] = useState(false);
@@ -39,6 +41,7 @@ export const useMilestone = () => {
   const { isProjectOwner } = useProjectStore();
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
+  const dynamicWallet = useDynamicWallet();
 
   const multiGrantDelete = async (milestone: UnifiedMilestone) => {
     setIsDeleting(true);
@@ -94,12 +97,16 @@ export const useMilestone = () => {
             throw new Error("Failed to get GAP client");
           }
 
-          const { walletClient, error } = await safeGetWalletClient(chainId);
-          if (error || !walletClient) {
-            throw new Error("Failed to connect to wallet", { cause: error });
+          // Get wallet signer with AA support
+          const walletSigner = await getWalletSignerWithAA(
+            chainId,
+            dynamicWallet,
+            "Deleting milestones"
+          );
+          
+          if (!walletSigner) {
+            throw new Error("Failed to connect to wallet");
           }
-
-          const walletSigner = await walletClientToSigner(walletClient);
           const fetchedProject = await getProjectById(
             project!.details?.data.slug || ""
           );
@@ -205,14 +212,16 @@ export const useMilestone = () => {
           gapClient = getGapClient(milestone.chainID);
         }
 
-        const { walletClient, error } = await safeGetWalletClient(
-          milestone.chainID
+        // Get wallet signer with AA support
+        const walletSigner = await getWalletSignerWithAA(
+          milestone.chainID,
+          dynamicWallet,
+          "Deleting milestone"
         );
-        if (error || !walletClient || !gapClient) {
-          throw new Error("Failed to connect to wallet", { cause: error });
+        
+        if (!walletSigner || !gapClient) {
+          throw new Error("Failed to connect to wallet");
         }
-
-        const walletSigner = await walletClientToSigner(walletClient);
         const fetchedProject = await gapClient.fetch.projectById(project?.uid);
 
         if (!fetchedProject) {
@@ -366,12 +375,16 @@ export const useMilestone = () => {
             throw new Error("Failed to get GAP client");
           }
 
-          const { walletClient, error } = await safeGetWalletClient(chainId);
-          if (error || !walletClient) {
-            throw new Error("Failed to connect to wallet", { cause: error });
+          // Get wallet signer with AA support
+          const walletSigner = await getWalletSignerWithAA(
+            chainId,
+            dynamicWallet,
+            "Deleting milestones"
+          );
+          
+          if (!walletSigner) {
+            throw new Error("Failed to connect to wallet");
           }
-
-          const walletSigner = await walletClientToSigner(walletClient);
           const fetchedProject = await getProjectById(
             project!.details?.data.slug || ""
           );
@@ -494,14 +507,16 @@ export const useMilestone = () => {
           gapClient = getGapClient(milestone.chainID);
         }
 
-        const { walletClient, error } = await safeGetWalletClient(
-          milestone.chainID
+        // Get wallet signer with AA support
+        const walletSigner = await getWalletSignerWithAA(
+          milestone.chainID,
+          dynamicWallet,
+          "Deleting milestone"
         );
-        if (error || !walletClient || !gapClient) {
-          throw new Error("Failed to connect to wallet", { cause: error });
+        
+        if (!walletSigner || !gapClient) {
+          throw new Error("Failed to connect to wallet");
         }
-
-        const walletSigner = await walletClientToSigner(walletClient);
         const fetchedProject = await gapClient.fetch.projectById(project?.uid);
 
         if (!fetchedProject) {
@@ -641,15 +656,16 @@ export const useMilestone = () => {
         await switchChainAsync?.({ chainId: milestone.chainID });
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        milestone.chainID
+      // Get wallet signer with AA support
+      const walletSigner = await getWalletSignerWithAA(
+        milestone.chainID,
+        dynamicWallet,
+        "Completing milestone"
       );
 
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!walletSigner || !gapClient) {
+        throw new Error("Failed to connect to wallet");
       }
-
-      const walletSigner = await walletClientToSigner(walletClient);
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
 
       if (!fetchedProject) return;
@@ -797,12 +813,16 @@ export const useMilestone = () => {
           throw new Error("Failed to get GAP client");
         }
 
-        const { walletClient, error } = await safeGetWalletClient(chainId);
-        if (error || !walletClient) {
-          throw new Error("Failed to connect to wallet", { cause: error });
+        // Get wallet signer with AA support
+        const walletSigner = await getWalletSignerWithAA(
+          chainId,
+          dynamicWallet,
+          "Completing milestones"
+        );
+        
+        if (!walletSigner) {
+          throw new Error("Failed to connect to wallet");
         }
-
-        const walletSigner = await walletClientToSigner(walletClient);
         const fetchedProject = await getProjectById(
           project!.details?.data.slug || ""
         );
@@ -966,12 +986,16 @@ export const useMilestone = () => {
             throw new Error("Failed to get GAP client");
           }
 
-          const { walletClient, error } = await safeGetWalletClient(chainId);
-          if (error || !walletClient) {
-            throw new Error("Failed to connect to wallet", { cause: error });
+          // Get wallet signer with AA support
+          const walletSigner = await getWalletSignerWithAA(
+            chainId,
+            dynamicWallet,
+            "Deleting milestones"
+          );
+          
+          if (!walletSigner) {
+            throw new Error("Failed to connect to wallet");
           }
-
-          const walletSigner = await walletClientToSigner(walletClient);
           const fetchedProject = await getProjectById(
             project!.details?.data.slug || ""
           );
@@ -1086,14 +1110,16 @@ export const useMilestone = () => {
           gapClient = getGapClient(milestone.chainID);
         }
 
-        const { walletClient, error } = await safeGetWalletClient(
-          milestone.chainID
+        // Get wallet signer with AA support
+        const walletSigner = await getWalletSignerWithAA(
+          milestone.chainID,
+          dynamicWallet,
+          "Deleting milestone"
         );
-        if (error || !walletClient || !gapClient) {
-          throw new Error("Failed to connect to wallet", { cause: error });
+        
+        if (!walletSigner || !gapClient) {
+          throw new Error("Failed to connect to wallet");
         }
-
-        const walletSigner = await walletClientToSigner(walletClient);
 
         if (milestone.type === "grant") {
           // Grant milestone editing

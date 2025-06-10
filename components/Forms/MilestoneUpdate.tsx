@@ -33,6 +33,8 @@ import { errorManager } from "../Utilities/errorManager";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 
 interface MilestoneUpdateFormProps {
   milestone: IMilestoneResponse;
@@ -91,6 +93,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   const { openShareDialog, closeShareDialog } = useShareDialogStore();
   const [noProofCheckbox, setNoProofCheckbox] = useState(false);
   const router = useRouter();
+  const dynamicWallet = useDynamicWallet();
 
   const {
     register,
@@ -135,14 +138,16 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         await switchChainAsync?.({ chainId: milestone.chainID });
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        milestone.chainID
+      // Get wallet signer with AA support
+      const walletSigner = await getWalletSignerWithAA(
+        milestone.chainID,
+        dynamicWallet,
+        "Completing milestone"
       );
 
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!walletSigner || !gapClient) {
+        throw new Error("Failed to connect to wallet");
       }
-      const walletSigner = await walletClientToSigner(walletClient);
 
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
       if (!fetchedProject) return;
@@ -252,15 +257,16 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         gapClient = getGapClient(milestone.chainID);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        milestone.chainID
+      // Get wallet signer with AA support
+      const walletSigner = await getWalletSignerWithAA(
+        milestone.chainID,
+        dynamicWallet,
+        "Updating milestone completion"
       );
 
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!walletSigner || !gapClient) {
+        throw new Error("Failed to connect to wallet");
       }
-      if (!walletClient || !gapClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
       if (!fetchedProject) return;
       const grantInstance = fetchedProject.grants.find(

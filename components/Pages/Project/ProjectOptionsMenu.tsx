@@ -11,6 +11,8 @@ import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { deleteProject, getProjectById } from "@/utilities/sdk";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers";
 
 import { Menu, Transition } from "@headlessui/react";
 import {
@@ -91,6 +93,7 @@ export const ProjectOptionsMenu = () => {
   const router = useRouter();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
+  const { wallet: dynamicWallet } = useDynamicWallet();
   const { isProjectEditModalOpen, openProjectEditModal } =
     useProjectEditModalStore();
   const { isMergeModalOpen, openMergeModal } = useMergeModalStore();
@@ -145,7 +148,11 @@ export const ProjectOptionsMenu = () => {
         return;
       }
 
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getWalletSignerWithAA(
+        walletClient,
+        dynamicWallet,
+        "deleteProject"
+      );
       const fetchedProject = await getProjectById(projectId);
       if (!fetchedProject) return;
       await deleteProject(

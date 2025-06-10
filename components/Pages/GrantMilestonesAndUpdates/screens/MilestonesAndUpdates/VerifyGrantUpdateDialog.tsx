@@ -25,6 +25,8 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { ArrowRightIcon } from "@heroicons/react/24/solid";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 
 type VerifyGrantUpdateDialogProps = {
   grantUpdate: IGrantUpdate;
@@ -43,6 +45,7 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
 }) => {
   let [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const dynamicWallet = useDynamicWallet();
 
   const {
     register,
@@ -84,14 +87,15 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
         gapClient = getGapClient(grantUpdate.chainID);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        grantUpdate.chainID
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get GAP client");
       }
-      const walletSigner = await walletClientToSigner(walletClient);
+      
+      const walletSigner = await getWalletSignerWithAA(
+        grantUpdate.chainID,
+        dynamicWallet,
+        "Verify grant update"
+      );
 
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
       if (!fetchedProject) return;

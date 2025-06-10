@@ -6,6 +6,8 @@ import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { getProjectById, isOwnershipTransfered } from "@/utilities/sdk";
+import { useDynamicWallet } from "@/hooks/useDynamicWallet";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers";
 import { Dialog, Transition } from "@headlessui/react";
 import { PlusIcon } from "@heroicons/react/24/solid";
 
@@ -53,6 +55,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
   const setIsProjectOwner = useProjectStore((state) => state.setIsProjectOwner);
   const { switchChainAsync } = useSwitchChain();
   const { changeStepperStep, setIsStepper } = useStepper();
+  const { wallet: dynamicWallet } = useDynamicWallet();
 
   const transfer = async () => {
     if (!project) return;
@@ -74,7 +77,11 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
         throw new Error("Failed to connect to wallet", { cause: error });
       }
       if (!walletClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getWalletSignerWithAA(
+        walletClient,
+        dynamicWallet,
+        "transferOwnership"
+      );
       const fetchedProject = await getProjectById(project.uid);
       if (!fetchedProject) return;
       await fetchedProject
