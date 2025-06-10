@@ -1,4 +1,5 @@
 import { Button } from "@/components/Utilities/Button";
+import { DatePicker } from "@/components/Utilities/DatePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks/useGap";
@@ -9,19 +10,18 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { ProjectImpact } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { XMarkIcon } from "@heroicons/react/24/outline";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ProjectImpact } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
+import { useRouter } from "next/navigation";
 import type { FC } from "react";
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
 import { z } from "zod";
-import { DatePicker } from "@/components/Utilities/DatePicker";
-import { useRouter } from "next/navigation";
 
 const updateSchema = z.object({
   startedAt: z.date({
@@ -145,7 +145,7 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({
       const updatedImpact = new ProjectImpact({
         data: updatedImpactData,
         recipient: impactInstance.recipient,
-        attester: address,
+        attester: address as `0x${string}`,
         schema: impactInstance.schema,
         refUID: impactInstance.refUID,
         uid: impactInstance.uid,

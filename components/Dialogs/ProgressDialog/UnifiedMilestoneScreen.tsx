@@ -1,36 +1,34 @@
 "use client";
+import { ProjectObjectiveForm } from "@/components/Forms/ProjectObjective";
 import { Button } from "@/components/Utilities/Button";
+import { DatePicker } from "@/components/Utilities/DatePicker";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
+import { useAllMilestones } from "@/hooks/useAllMilestones";
+import { getGapClient, useGap } from "@/hooks/useGap";
 import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
-import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useState, useEffect } from "react";
-import { MultiSelect } from "../../../components/Utilities/MultiSelect";
-import { MilestoneForm } from "@/components/Forms/Milestone";
-import { ProjectObjectiveForm } from "@/components/Forms/ProjectObjective";
 import { useStepper } from "@/store/modals/txStepper";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
-import { useForm, Controller, SubmitHandler } from "react-hook-form";
-import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { useAccount, useSwitchChain } from "wagmi";
-import { Milestone } from "@show-karma/karma-gap-sdk";
-import { getGapClient, useGap } from "@/hooks/useGap";
+import { chainNameDictionary } from "@/utilities/chainNameDictionary";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { sanitizeObject, sanitizeInput } from "@/utilities/sanitize";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import toast from "react-hot-toast";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { DatePicker } from "@/components/Utilities/DatePicker";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { MESSAGES } from "@/utilities/messages";
-import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
-import { useAllMilestones } from "@/hooks/useAllMilestones";
-import { useParams, useRouter } from "next/navigation";
-import { chainNameDictionary } from "@/utilities/chainNameDictionary";
-import { GapContract } from "@show-karma/karma-gap-sdk/core/class/contract/GapContract";
-import { Transaction } from "ethers";
 import { PAGES } from "@/utilities/pages";
+import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Milestone } from "@show-karma/karma-gap-sdk";
+import { GapContract } from "@show-karma/karma-gap-sdk/core/class/contract/GapContract";
+import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
+import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { Transaction } from "ethers";
+import { useParams, useRouter } from "next/navigation";
+import { useState } from "react";
+import { Controller, SubmitHandler, useForm } from "react-hook-form";
+import toast from "react-hot-toast";
+import { useAccount, useSwitchChain } from "wagmi";
+import { z } from "zod";
+import { MultiSelect } from "../../../components/Utilities/MultiSelect";
 
 // Helper function to wait for a specified time
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -133,7 +131,7 @@ export const UnifiedMilestoneScreen = () => {
         }),
         schema: gapClient.findSchema("ProjectMilestone"),
         refUID: project.uid,
-        recipient: address || "0x00",
+        recipient: (address as `0x${string}`) || "0x00",
       });
 
       const { walletClient, error } = await safeGetWalletClient(
