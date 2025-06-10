@@ -96,6 +96,10 @@ export const INDEXER = {
         `/projects/${projectUID}/indicators/data/all`,
       SEND: (projectUID: string) => `/projects/${projectUID}/indicators/data`,
     },
+    PAYOUT_ADDRESS: {
+      UPDATE: (projectUID: string) => `/projects/${projectUID}/payout-address`,
+      GET: (projectUID: string) => `/projects/${projectUID}/payout-address`,
+    },
   },
   CATEGORIES: {
     CREATE: (idOrSlug: string) => `/categories/create/${idOrSlug}`,
