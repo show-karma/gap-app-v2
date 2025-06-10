@@ -34,8 +34,8 @@
     "@radix-ui/react-tooltip": "^1.0.7",
     "@rainbow-me/rainbowkit": "^2.2.5",
     "@react-pdf/renderer": "^3.4.4",
-    "@safe-global/api-kit": "^3.0.1",
-    "@safe-global/protocol-kit": "^6.0.4",
+    "@safe-global/api-kit": "^3.0.2",
+    "@safe-global/protocol-kit": "^6.0.5",
     "@safe-global/safe-core-sdk-types": "^5.1.0",
     "@semaphore-protocol/core": "^4.0.0-beta.6",
     "@sentry/nextjs": "^9.14.0",
@@ -135,5 +135,9 @@
     "start-server-and-test": "^2.0.8",
     "tailwindcss": "^3.3.2",
     "ts-node": "^10.9.2"
+  },
+  "resolutions": {
+    "@noble/hashes": "^1.4.0",
+    "@noble/curves": "^1.4.2"
   }
 }
