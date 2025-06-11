@@ -305,6 +305,10 @@ export const MESSAGES = {
       SUCCESS: "OSO profile IDs updated successfully",
       ERROR: "Something went wrong while updating OSO profile IDs.",
     },
+    PAYOUT_ADDRESS: {
+      SUCCESS: "Payout address updated successfully",
+      ERROR: "Something went wrong while updating payout address.",
+    },
     CREATE: {
       SUCCESS: "Project created successfully, please create grants now",
       ERROR: (title: string) => `There was an error creating ${title} project.`,
