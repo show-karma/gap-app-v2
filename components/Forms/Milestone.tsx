@@ -150,8 +150,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
       // Get wallet signer with AA support
       const walletSigner = await getWalletSignerWithAA(
         chainID,
-        dynamicWallet,
-        "Creating milestone"
+        dynamicWallet
       );
       
       if (!walletSigner || !gapClient) {

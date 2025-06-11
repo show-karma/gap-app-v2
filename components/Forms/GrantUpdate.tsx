@@ -134,8 +134,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
       
       const walletSigner = await getWalletSignerWithAA(
         grantToUpdate.chainID,
-        dynamicWallet,
-        "grant update"
+        dynamicWallet
       );
 
       const sanitizedGrantUpdate = sanitizeObject({

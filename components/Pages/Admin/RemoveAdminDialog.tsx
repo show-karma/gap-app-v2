@@ -89,8 +89,7 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
     // Use account abstraction aware wallet signer
     const walletSigner = await getWalletSignerWithAA(
       chainid,
-      dynamicWallet,
-      "Remove admin"
+      dynamicWallet
     );
     try {
       const communityResolver = (await GAP.getCommunityResolver(

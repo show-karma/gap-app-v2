@@ -15,33 +15,28 @@ export async function getWalletSignerWithAA(
   dynamicWalletHook: {
     isSmartWallet: boolean;
     supportsGasless: boolean;
-    getSigner: () => Promise<any>;
   },
   operation?: string
 ) {
-  const { isSmartWallet, supportsGasless, getSigner } = dynamicWalletHook;
+  const { isSmartWallet, supportsGasless } = dynamicWalletHook;
   
-  // Check if we're using a smart wallet with Dynamic
-  if (isSmartWallet && supportsGasless) {
-    try {
-      // Use Dynamic's signer for AA transactions
-      const walletSigner = await getSigner();
-      console.log(`Using Dynamic smart wallet for gasless ${operation || 'transaction'}`);
-      toast.success(`${operation ? operation + ' with' : 'Using'} gasless transaction`, {
-        icon: "⛽",
-        duration: 4000,
-      });
-      return walletSigner;
-    } catch (dynamicError) {
-      console.warn("Failed to get Dynamic signer, falling back to standard wallet", dynamicError);
-      // Fall through to standard wallet flow
-    }
-  }
-  
-  // Standard wallet flow
-  const { walletClient, error } = await safeGetWalletClient(chainId);
+  // Get the wallet client (this will work for both standard and smart wallets)
+  const { walletClient, error } = await safeGetWalletClient(chainId, false, undefined);
   if (error || !walletClient) {
     throw new Error("Failed to connect to wallet", { cause: error });
   }
-  return await walletClientToSigner(walletClient);
+  
+  // Convert to signer
+  const walletSigner = await walletClientToSigner(walletClient);
+  
+  // If it's a smart wallet, show the gasless notification
+  if (isSmartWallet && supportsGasless) {
+    console.log(`Using Dynamic smart wallet for gasless ${operation || 'transaction'}`);
+    toast.success(`${operation ? operation + ' with' : 'Using'} gasless transaction`, {
+      icon: "⛽",
+      duration: 4000,
+    });
+  }
+  
+  return walletSigner;
 }

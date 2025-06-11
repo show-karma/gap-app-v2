@@ -9,7 +9,7 @@ import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObject
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { useDynamicWallet } from "@/hooks/useDynamicWallet";
-import { getWalletSignerWithAA } from "@/utilities/wallet-helpers";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { getProjectById } from "@/utilities/sdk";
 import { config } from "@/utilities/wagmi/config";
@@ -66,7 +66,7 @@ export const ProjectObjectiveCompletionForm = ({
   const { changeStepperStep, setIsStepper } = useStepper();
   const { switchChainAsync } = useSwitchChain();
   const projectId = useParams().projectId as string;
-  const { wallet: dynamicWallet } = useDynamicWallet();
+  const dynamicWallet = useDynamicWallet();
   const {
     register,
     setValue,
@@ -101,9 +101,8 @@ export const ProjectObjectiveCompletionForm = ({
         throw new Error("Failed to connect to wallet", { cause: error });
       }
       const walletSigner = await getWalletSignerWithAA(
-        walletClient,
-        dynamicWallet,
-        "completeObjective"
+        chain?.id || 1,
+        dynamicWallet
       );
       const fetchedProject = await getProjectById(projectId);
       if (!fetchedProject) return;

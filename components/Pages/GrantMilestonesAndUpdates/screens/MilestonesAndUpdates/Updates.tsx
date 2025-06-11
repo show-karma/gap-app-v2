@@ -69,8 +69,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
       // Get wallet signer with AA support
       const walletSigner = await getWalletSignerWithAA(
         milestone.chainID,
-        dynamicWallet,
-        "Undoing milestone completion"
+        dynamicWallet
       );
       
       if (!walletSigner || !gapClient) {

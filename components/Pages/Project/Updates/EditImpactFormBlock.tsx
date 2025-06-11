@@ -112,8 +112,7 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({
 
       const walletSigner = await getWalletSignerWithAA(
         project.chainID,
-        dynamicWallet,
-        "impact update"
+        dynamicWallet
       );
 
       if (!walletSigner || !gapClient) {

@@ -140,8 +140,7 @@ export const UnifiedMilestoneScreen = () => {
       // Get wallet signer with AA support
       const walletSigner = await getWalletSignerWithAA(
         project.chainID,
-        dynamicWallet,
-        "Creating roadmap milestone"
+        dynamicWallet
       );
       
       if (!walletSigner || !gapClient) {
@@ -290,8 +289,7 @@ export const UnifiedMilestoneScreen = () => {
           // Get wallet signer with AA support
           const walletSigner = await getWalletSignerWithAA(
             chainId,
-            dynamicWallet,
-            "Creating grant milestone"
+            dynamicWallet
           );
           
           if (!walletSigner || !gapClient) {
@@ -347,8 +345,7 @@ export const UnifiedMilestoneScreen = () => {
           // Get wallet signer with AA support for multiple grants
           const walletSigner = await getWalletSignerWithAA(
             chainId,
-            dynamicWallet,
-            "Creating multiple grant milestones"
+            dynamicWallet
           );
           
           if (!walletSigner || !gapClient) {

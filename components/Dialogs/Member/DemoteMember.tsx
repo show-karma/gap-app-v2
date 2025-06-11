@@ -58,8 +58,7 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({
       // Use account abstraction aware wallet signer
       const walletSigner = await getWalletSignerWithAA(
         project.chainID,
-        dynamicWallet,
-        "Demote member"
+        dynamicWallet
       );
       const fetchedProject = await getProjectById(project.uid);
       if (!fetchedProject) throw new Error("Project not found");

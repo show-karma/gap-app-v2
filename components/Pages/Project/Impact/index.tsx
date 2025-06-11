@@ -89,8 +89,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
 
       const walletSigner = await getWalletSignerWithAA(
         project.chainID,
-        dynamicWallet,
-        "Revoke impact"
+        dynamicWallet
       ).catch((error) => {
         toast.error(error.message || "Failed to connect wallet");
         setLoading({ ...loading, [impact.uid.toLowerCase()]: false });

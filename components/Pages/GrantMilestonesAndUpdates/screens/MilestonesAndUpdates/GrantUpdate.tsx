@@ -104,8 +104,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
       
       const walletSigner = await getWalletSignerWithAA(
         update.chainID,
-        dynamicWallet,
-        "grant update deletion"
+        dynamicWallet
       );
 
       const instanceProject = await gapClient.fetch.projectById(project?.uid);

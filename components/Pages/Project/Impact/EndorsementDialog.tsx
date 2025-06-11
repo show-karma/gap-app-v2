@@ -108,8 +108,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
 
       const walletSigner = await getWalletSignerWithAA(
         project.chainID,
-        dynamicWallet,
-        "Endorse project"
+        dynamicWallet
       );
       const endorsement = new ProjectEndorsement({
         data: sanitizeObject({

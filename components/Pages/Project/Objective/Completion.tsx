@@ -12,7 +12,7 @@ import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObject
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { useDynamicWallet } from "@/hooks/useDynamicWallet";
-import { getWalletSignerWithAA } from "@/utilities/wallet-helpers";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 import { ReadMore } from "@/utilities/ReadMore";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { getProjectById } from "@/utilities/sdk";
@@ -57,7 +57,7 @@ export const ObjectiveCardComplete = ({
   const { gap } = useGap();
   const { chain, address } = useAccount();
   const { switchChainAsync } = useSwitchChain();
-  const { wallet: dynamicWallet } = useDynamicWallet();
+  const dynamicWallet = useDynamicWallet();
 
   const params = useParams();
   const projectId = params.projectId as string;
@@ -84,9 +84,8 @@ export const ObjectiveCardComplete = ({
       }
       if (!walletClient || !gapClient) return;
       const walletSigner = await getWalletSignerWithAA(
-        walletClient,
-        dynamicWallet,
-        "revokeObjectiveCompletion"
+        chain?.id || 1,
+        dynamicWallet
       );
       const fetchedProject = await getProjectById(projectId);
       if (!fetchedProject) return;

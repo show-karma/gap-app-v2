@@ -7,7 +7,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { getProjectById, isOwnershipTransfered } from "@/utilities/sdk";
 import { useDynamicWallet } from "@/hooks/useDynamicWallet";
-import { getWalletSignerWithAA } from "@/utilities/wallet-helpers";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 import { Dialog, Transition } from "@headlessui/react";
 import { PlusIcon } from "@heroicons/react/24/solid";
 
@@ -55,7 +55,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
   const setIsProjectOwner = useProjectStore((state) => state.setIsProjectOwner);
   const { switchChainAsync } = useSwitchChain();
   const { changeStepperStep, setIsStepper } = useStepper();
-  const { wallet: dynamicWallet } = useDynamicWallet();
+  const dynamicWallet = useDynamicWallet();
 
   const transfer = async () => {
     if (!project) return;
@@ -78,9 +78,8 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
       }
       if (!walletClient) return;
       const walletSigner = await getWalletSignerWithAA(
-        walletClient,
-        dynamicWallet,
-        "transferOwnership"
+        chain?.id || 1,
+        dynamicWallet
       );
       const fetchedProject = await getProjectById(project.uid);
       if (!fetchedProject) return;

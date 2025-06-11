@@ -110,8 +110,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
     // Use account abstraction aware wallet signer
     const walletSigner = await getWalletSignerWithAA(
       chainid,
-      dynamicWallet,
-      "Add admin"
+      dynamicWallet
     );
     try {
       const communityResolver = await GAP.getCommunityResolver(walletSigner);

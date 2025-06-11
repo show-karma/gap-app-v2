@@ -89,8 +89,7 @@ export const VerifyMilestoneUpdateDialog: FC<
       
       const walletSigner = await getWalletSignerWithAA(
         milestone.chainID,
-        dynamicWallet,
-        "Verify milestone update"
+        dynamicWallet
       );
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
       if (!fetchedProject) return;

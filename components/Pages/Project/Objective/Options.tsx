@@ -11,7 +11,7 @@ import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObject
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { useDynamicWallet } from "@/hooks/useDynamicWallet";
-import { getWalletSignerWithAA } from "@/utilities/wallet-helpers";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { getProjectById } from "@/utilities/sdk";
 import { cn } from "@/utilities/tailwind";
@@ -83,7 +83,7 @@ export const ObjectiveOptionsMenu = ({
   const { project, isProjectOwner } = useProjectStore();
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
-  const { wallet: dynamicWallet } = useDynamicWallet();
+  const dynamicWallet = useDynamicWallet();
 
   const { refetch } = useQuery<IProjectMilestoneResponse[]>({
     queryKey: ["projectMilestones"],
@@ -108,9 +108,8 @@ export const ObjectiveOptionsMenu = ({
         throw new Error("Failed to connect to wallet", { cause: error });
       }
       const walletSigner = await getWalletSignerWithAA(
-        walletClient,
-        dynamicWallet,
-        "deleteObjective"
+        chain?.id || 1,
+        dynamicWallet
       );
       const fetchedProject = await getProjectById(projectId);
       if (!fetchedProject) return;

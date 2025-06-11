@@ -139,9 +139,5 @@
     "start-server-and-test": "^2.0.8",
     "tailwindcss": "^3.3.2",
     "ts-node": "^10.9.2"
-  },
-  "resolutions": {
-    "@noble/hashes": "^1.4.0",
-    "@noble/curves": "^1.4.2"
   }
 }

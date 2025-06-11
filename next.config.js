@@ -15,8 +15,13 @@ const removeImports = require("next-remove-imports")();
 const nextConfig = {
   reactStrictMode: true,
   staticPageGenerationTimeout: 1000,
-  webpack: (config) => {
+  webpack: (config, { webpack }) => {
     config.externals.push("pino-pretty", "lokijs", "encoding");
+    config.plugins.push(
+      new webpack.IgnorePlugin({
+        resourceRegExp: /@react-native-async-storage\/async-storage/,
+      })
+    );
     return config;
   },
   images: {

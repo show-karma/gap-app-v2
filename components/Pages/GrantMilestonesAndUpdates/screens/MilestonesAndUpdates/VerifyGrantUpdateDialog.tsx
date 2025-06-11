@@ -93,8 +93,7 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
       
       const walletSigner = await getWalletSignerWithAA(
         grantUpdate.chainID,
-        dynamicWallet,
-        "Verify grant update"
+        dynamicWallet
       );
 
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);

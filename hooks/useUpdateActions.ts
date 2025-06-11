@@ -10,7 +10,8 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { retryUntilConditionMet } from "@/utilities/retries";
-import { safeGetWalletClient, getWalletSignerWithAA } from "@/utilities/wallet-helpers";
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
@@ -97,9 +98,8 @@ export const useUpdateActions = (update: UpdateType) => {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
       const walletSigner = await getWalletSignerWithAA(
-        walletClient,
-        dynamicWallet,
-        "deleteUpdate"
+        update.chainID,
+        dynamicWallet
       );
 
       let findUpdate: any = null;

@@ -8,7 +8,7 @@ import { useProjectStore } from "@/store";
 import { useSwitchChain } from "wagmi";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { useDynamicWallet } from "@/hooks/useDynamicWallet";
-import { getWalletSignerWithAA } from "@/utilities/wallet-helpers";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 
 import { useStepper } from "@/store/modals/txStepper";
 import { config } from "@/utilities/wagmi/config";
@@ -185,7 +185,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   const { gap } = useGap();
   const { address, chain } = useAccount();
   const router = useRouter();
-  const { wallet: dynamicWallet } = useDynamicWallet();
+  const dynamicWallet = useDynamicWallet();
   function closeModal() {
     setIsOpen(false);
   }
@@ -218,9 +218,8 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
         throw new Error("Failed to connect to wallet", { cause: error });
       }
       const walletSigner = await getWalletSignerWithAA(
-        walletClient,
-        dynamicWallet,
-        "mergeProject"
+        chain?.id || 1,
+        dynamicWallet
       );
 
       const projectPointer = new ProjectPointer({

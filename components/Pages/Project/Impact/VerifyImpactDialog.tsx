@@ -108,8 +108,7 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
 
       const walletSigner = await getWalletSignerWithAA(
         findImpact!.chainID,
-        dynamicWallet,
-        "Verify impact"
+        dynamicWallet
       ).catch((error) => {
         toast.error(error.message || "Failed to connect wallet");
         setIsLoading(false);

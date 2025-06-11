@@ -51,8 +51,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
       // Get wallet signer with AA support
       const walletSigner = await getWalletSignerWithAA(
         milestone.chainID,
-        dynamicWallet,
-        "Deleting milestone"
+        dynamicWallet
       );
 
       if (!walletSigner || !gapClient) {

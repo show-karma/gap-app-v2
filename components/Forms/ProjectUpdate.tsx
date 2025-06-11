@@ -471,8 +471,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
       const walletSigner = await getWalletSignerWithAA(
         chainId,
-        dynamicWallet,
-        "project update"
+        dynamicWallet
       );
 
       if (!walletSigner || !gapClient) {

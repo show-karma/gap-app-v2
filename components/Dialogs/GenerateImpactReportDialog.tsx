@@ -19,7 +19,7 @@ import { envVars } from "@/utilities/enviromentVars";
 import { getProjectById } from "@/utilities/sdk";
 import { config } from "@/utilities/wagmi/config";
 import { useDynamicWallet } from "@/hooks/useDynamicWallet";
-import { getWalletSignerWithAA } from "@/utilities/wallet-helpers";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 import {
   BlobProvider,
   Document,
@@ -653,7 +653,7 @@ export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
   const { switchChainAsync } = useSwitchChain();
   let [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { wallet: dynamicWallet } = useDynamicWallet();
+  const dynamicWallet = useDynamicWallet();
 
   const [impactSummary, setImpactSummary] = useState<string>("");
   const [impactRecipientTestimonial, setImpactRecipientTestimonial] =
@@ -687,9 +687,8 @@ export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
       }
       if (!walletClient) return;
       const walletSigner = await getWalletSignerWithAA(
-        walletClient,
-        dynamicWallet,
-        "generateImpactReport"
+        chain?.id || 1,
+        dynamicWallet
       );
       const fetchedProject = await getProjectById(project.uid);
       if (!fetchedProject) return;

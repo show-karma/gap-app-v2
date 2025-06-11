@@ -20,7 +20,7 @@ import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { cn } from "@/utilities/tailwind";
 import { config } from "@/utilities/wagmi/config";
 import { useDynamicWallet } from "@/hooks/useDynamicWallet";
-import { getWalletSignerWithAA } from "@/utilities/wallet-helpers";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { ContributorProfile } from "@show-karma/karma-gap-sdk";
@@ -100,7 +100,7 @@ export const ContributorProfileDialog: FC<
   const inviteCodeParam = useSearchParams().get("invite-code");
   const { gap } = useGap();
   const { switchChainAsync } = useSwitchChain();
-  const { wallet: dynamicWallet } = useDynamicWallet();
+  const dynamicWallet = useDynamicWallet();
   const {
     register,
     setValue,
@@ -139,9 +139,8 @@ export const ContributorProfileDialog: FC<
         throw new Error("Failed to connect to wallet", { cause: error });
       }
       const walletSigner = await getWalletSignerWithAA(
-        walletClient,
-        dynamicWallet,
-        "contributorProfile"
+        chain?.id || 1,
+        dynamicWallet
       );
       const contributorProfile = new ContributorProfile({
         data: {

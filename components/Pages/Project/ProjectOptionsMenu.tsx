@@ -12,7 +12,6 @@ import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { deleteProject, getProjectById } from "@/utilities/sdk";
 import { useDynamicWallet } from "@/hooks/useDynamicWallet";
-import { getWalletSignerWithAA } from "@/utilities/wallet-helpers";
 
 import { Menu, Transition } from "@headlessui/react";
 import {
@@ -45,6 +44,7 @@ import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-ind
 import { LinkOSOProfileButton } from "./LinkOSOProfileButton";
 import { LinkDivviWalletButton } from "./LinkDivviWalletButton";
 import { GithubIcon } from "@/components/Icons";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 
 const ProjectDialog = dynamic(
   () =>
@@ -93,7 +93,7 @@ export const ProjectOptionsMenu = () => {
   const router = useRouter();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
-  const { wallet: dynamicWallet } = useDynamicWallet();
+  const dynamicWallet = useDynamicWallet();
   const { isProjectEditModalOpen, openProjectEditModal } =
     useProjectEditModalStore();
   const { isMergeModalOpen, openMergeModal } = useMergeModalStore();
@@ -149,9 +149,8 @@ export const ProjectOptionsMenu = () => {
       }
 
       const walletSigner = await getWalletSignerWithAA(
-        walletClient,
-        dynamicWallet,
-        "deleteProject"
+        chain?.id || 1,
+        dynamicWallet
       );
       const fetchedProject = await getProjectById(projectId);
       if (!fetchedProject) return;

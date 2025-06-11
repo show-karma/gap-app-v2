@@ -100,8 +100,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
 
       const walletSigner = await getWalletSignerWithAA(
         project.chainID as number,
-        dynamicWallet,
-        "Add impact"
+        dynamicWallet
       );
       const dataToAttest = sanitizeObject({
         work,

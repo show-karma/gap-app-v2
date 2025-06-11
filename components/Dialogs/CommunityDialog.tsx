@@ -127,8 +127,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
       // Use account abstraction aware wallet signer
       const walletSigner = await getWalletSignerWithAA(
         selectedChain,
-        dynamicWallet,
-        "Create community"
+        dynamicWallet
       );
       const sanitizedData = sanitizeObject({
         name: data.name,

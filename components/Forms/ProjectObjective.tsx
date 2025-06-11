@@ -13,7 +13,7 @@ import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/
 
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { useDynamicWallet } from "@/hooks/useDynamicWallet";
-import { getWalletSignerWithAA } from "@/utilities/wallet-helpers";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 import { useStepper } from "@/store/modals/txStepper";
 import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
 import toast from "react-hot-toast";
@@ -57,7 +57,7 @@ export const ProjectObjectiveForm = ({
   const params = useParams();
   const projectId = params.projectId as string;
   const router = useRouter();
-  const { wallet: dynamicWallet } = useDynamicWallet();
+  const dynamicWallet = useDynamicWallet();
 
   const isEditing = !!previousObjective;
 
@@ -113,9 +113,8 @@ export const ProjectObjectiveForm = ({
       }
       if (!walletClient) return;
       const walletSigner = await getWalletSignerWithAA(
-        walletClient,
-        dynamicWallet,
-        "createObjective"
+        chain?.id || 1,
+        dynamicWallet
       );
       const sanitizedData = {
         title: sanitizeInput(data.title),
@@ -212,9 +211,8 @@ export const ProjectObjectiveForm = ({
         throw new Error("Failed to connect to wallet", { cause: error });
       }
       const walletSigner = await getWalletSignerWithAA(
-        walletClient,
-        dynamicWallet,
-        "updateObjective"
+        chain?.id || 1,
+        dynamicWallet
       );
       const sanitizedData = {
         title: sanitizeInput(data.title),

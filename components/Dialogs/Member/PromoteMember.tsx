@@ -58,8 +58,7 @@ export const PromoteMemberDialog: FC<PromoteMemberDialogProps> = ({
       // Use account abstraction aware wallet signer
       const walletSigner = await getWalletSignerWithAA(
         project.chainID,
-        dynamicWallet,
-        "Promote member"
+        dynamicWallet
       );
       const fetchedProject = await getProjectById(project.uid);
       if (!fetchedProject) throw new Error("Project not found");
