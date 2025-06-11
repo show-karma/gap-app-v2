@@ -56,16 +56,10 @@ const ContributorProfileDialog = dynamic(
 function ProjectPage() {
   const storeProject = useProjectStore((state) => state.project);
   
-  // Try to get project from context as fallback
-  let contextProject = null;
-  try {
-    const contextData = useProjectContext();
-    contextProject = contextData?.project;
-  } catch {
-    // Not within ProjectProvider context, contextProject remains null
-  }
+  // Get project from context as primary source
+  const { project: contextProject } = useProjectContext();
   
-  const project = storeProject || contextProject;
+  const project = contextProject || storeProject;
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);

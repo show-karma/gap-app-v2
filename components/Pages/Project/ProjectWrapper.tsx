@@ -29,7 +29,7 @@ import {
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAccount } from "wagmi";
 import { IntroDialog } from "./IntroDialog";
 
@@ -42,10 +42,9 @@ import { useProjectContext } from "@/contexts/ProjectContext";
 import ProjectHeaderLoading from "./Loading/Header";
 
 interface ProjectWrapperProps {
-  project?: IProjectResponse;
   projectId: string;
 }
-export const ProjectWrapper = ({ projectId, project: propProject }: ProjectWrapperProps) => {
+export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
   // All hooks must be called first, before any conditional logic
   const {
     refreshMembers,
@@ -56,7 +55,6 @@ export const ProjectWrapper = ({ projectId, project: propProject }: ProjectWrapp
     isProjectOwner,
     setIsProjectOwner,
     setIsProjectOwnerLoading,
-    project: storedProject,
   } = useProjectStore((state) => state);
 
   const router = useRouter();
@@ -67,19 +65,16 @@ export const ProjectWrapper = ({ projectId, project: propProject }: ProjectWrapp
   const { isAuth } = useAuthStore();
   const { gap } = useGap();
   
-  // Always call useProjectContext, but handle the case where it's not available
-  let contextProject = null;
-  try {
-    const contextData = useProjectContext();
-    contextProject = contextData?.project;
-  } catch {
-    // Not within ProjectProvider context, contextProject remains null
-  }
-  
-  const project = propProject || contextProject || undefined;
+  // Get project from context
+  const { project } = useProjectContext();
   const isAuthorized = isOwner || isProjectAdmin || isProjectOwner;
   const { data: contactsInfo } = useContactInfo(projectId, isAuthorized);
   const hasContactInfo = Boolean(contactsInfo?.length);
+
+  // Memoized project SDK object to avoid multiple API calls
+  const [cachedProject, setCachedProject] = useState<any>(null);
+  const [projectCacheKey, setProjectCacheKey] = useState<string>("");
+  const [isFetchingSDK, setIsFetchingSDK] = useState(false);
 
   useEffect(() => {
     if (project) {
@@ -92,7 +87,36 @@ export const ProjectWrapper = ({ projectId, project: propProject }: ProjectWrapp
     refreshMembers();
   }, [project, refreshMembers]);
 
+  // Cache project SDK object to avoid multiple API calls
   useEffect(() => {
+    if (!project) return;
+    
+    const currentKey = project.uid || project.details?.data?.slug || projectId;
+    if (cachedProject && projectCacheKey === currentKey) {
+      return; // Already cached
+    }
+
+    if (isFetchingSDK) return; // Already fetching
+
+    const fetchProjectSDK = async () => {
+      setIsFetchingSDK(true);
+      try {
+        const sdkProject = await getProjectById(currentKey);
+        setCachedProject(sdkProject);
+        setProjectCacheKey(currentKey);
+      } catch (error) {
+        console.error('Failed to fetch project SDK object:', error);
+        setCachedProject(null);
+      } finally {
+        setIsFetchingSDK(false);
+      }
+    };
+
+    fetchProjectSDK();
+  }, [project?.uid, project?.details?.data?.slug, projectId, cachedProject, projectCacheKey, isFetchingSDK]);
+
+  useEffect(() => {
+    // Only run permission checks if user is authenticated and we need permissions
     if (!project || !project?.chainID || !isAuth || !isConnected || !address) {
       setIsProjectAdmin(false);
       setIsProjectAdminLoading(false);
@@ -101,53 +125,50 @@ export const ProjectWrapper = ({ projectId, project: propProject }: ProjectWrapp
       return;
     }
 
-    const setupProjectOwner = async () => {
+    // Skip permission checks if user is already identified as contract owner
+    if (isOwner) {
+      setIsProjectAdmin(true);
+      setIsProjectOwner(true);
+      setIsProjectAdminLoading(false);
+      setIsProjectOwnerLoading(false);
+      return;
+    }
+
+    // Skip if we don't have the cached project yet
+    if (!cachedProject || isFetchingSDK) {
+      return;
+    }
+
+    const runPermissionChecks = async () => {
       try {
-        setIsProjectOwnerLoading(true);
         const rpcClient = await getRPCClient(project.chainID);
-        const fetchedProject = await getProjectById(projectId);
-        if (!fetchedProject) return;
-        await fetchedProject
-          .isOwner(rpcClient as any, address)
-          .then((res) => {
-            setIsProjectOwner(res);
-          })
-          .finally(() => setIsProjectOwnerLoading(false));
+        
+        // Run both permission checks in parallel using the cached SDK project
+        setIsProjectOwnerLoading(true);
+        setIsProjectAdminLoading(true);
+
+        const [isOwnerResult, isAdminResult] = await Promise.all([
+          cachedProject.isOwner(rpcClient as any, address).catch(() => false),
+          cachedProject.isAdmin(rpcClient as any, address).catch(() => false)
+        ]);
+
+        setIsProjectOwner(isOwnerResult);
+        setIsProjectAdmin(isAdminResult);
       } catch (error: any) {
         setIsProjectOwner(false);
+        setIsProjectAdmin(false);
         errorManager(
-          `Error checking if user ${address} is project owner from project ${projectId}`,
+          `Error checking permissions for user ${address} on project ${projectId}`,
           error
         );
       } finally {
         setIsProjectOwnerLoading(false);
-      }
-    };
-    setupProjectOwner();
-    const setupProjectAdmin = async () => {
-      try {
-        setIsProjectAdminLoading(true);
-        const rpcClient = await getRPCClient(project.chainID);
-        const fetchedProject = await getProjectById(projectId);
-        if (!fetchedProject) return;
-        await fetchedProject
-          .isAdmin(rpcClient as any, address)
-          .then((res) => {
-            setIsProjectAdmin(res);
-          })
-          .finally(() => setIsProjectAdminLoading(false));
-      } catch (error: any) {
-        setIsProjectAdmin(false);
-        errorManager(
-          `Error checking if user ${address} is project admin from project ${projectId}`,
-          error
-        );
-      } finally {
         setIsProjectAdminLoading(false);
       }
     };
-    setupProjectAdmin();
-  }, [project?.uid, address, isAuth, isConnected, signer]);
+
+    runPermissionChecks();
+  }, [project?.uid, address, isAuth, isConnected, signer, isOwner, cachedProject, isFetchingSDK]);
 
   const getSocials = (links: IProjectDetails["data"]["links"]) => {
     const types = [
@@ -238,9 +259,7 @@ export const ProjectWrapper = ({ projectId, project: propProject }: ProjectWrapp
       .filter((social) => social);
   };
 
-  const socials = getSocials(
-    storedProject?.details?.data.links || project?.details?.data.links
-  );
+  const socials = getSocials(project?.details?.data.links);
 
   const hasAlreadyEndorsed = project?.endorsements?.find(
     (item) => item.recipient?.toLowerCase() === address?.toLowerCase()
@@ -315,25 +334,53 @@ export const ProjectWrapper = ({ projectId, project: propProject }: ProjectWrapp
 
   useEffect(() => {
     if (project && project?.pointers?.length > 0) {
-      gap?.fetch
-        ?.projectById(project.pointers[0].data?.ogProjectUID)
-        .then((_project) => {
-          if (_project) {
-            const isUsingUid = pathname.includes(`/project/${project.uid}`);
-            const newPath = isUsingUid
-              ? pathname.replace(
-                  `/project/${project.uid}`,
-                  `/project/${_project?.details?.data?.slug}`
-                )
-              : pathname.replace(
-                  `/project/${project.details?.data?.slug}`,
-                  `/project/${_project?.details?.data?.slug}`
-                );
-            router.push(newPath);
+      // Use cached project if available to avoid additional API call
+      if (cachedProject && !isFetchingSDK) {
+        // Check if the cached project has pointer data
+        if (cachedProject.pointers?.length > 0) {
+          const ogProjectUID = cachedProject.pointers[0].data?.ogProjectUID;
+          if (ogProjectUID) {
+            gap?.fetch
+              ?.projectById(ogProjectUID)
+              .then((_project) => {
+                if (_project) {
+                  const isUsingUid = pathname.includes(`/project/${project.uid}`);
+                  const newPath = isUsingUid
+                    ? pathname.replace(
+                        `/project/${project.uid}`,
+                        `/project/${_project?.details?.data?.slug}`
+                      )
+                    : pathname.replace(
+                        `/project/${project.details?.data?.slug}`,
+                        `/project/${_project?.details?.data?.slug}`
+                      );
+                  router.push(newPath);
+                }
+              });
           }
-        });
+        }
+      } else {
+        // Fallback to original logic if cached project not ready
+        gap?.fetch
+          ?.projectById(project.pointers[0].data?.ogProjectUID)
+          .then((_project) => {
+            if (_project) {
+              const isUsingUid = pathname.includes(`/project/${project.uid}`);
+              const newPath = isUsingUid
+                ? pathname.replace(
+                    `/project/${project.uid}`,
+                    `/project/${_project?.details?.data?.slug}`
+                  )
+                : pathname.replace(
+                    `/project/${project.details?.data?.slug}`,
+                    `/project/${_project?.details?.data?.slug}`
+                  );
+              router.push(newPath);
+            }
+          });
+      }
     }
-  }, [project]);
+  }, [project, cachedProject, isFetchingSDK, pathname, router, gap]);
 
   const members = mountMembers();
   const { isIntroModalOpen } = useIntroModalStore();

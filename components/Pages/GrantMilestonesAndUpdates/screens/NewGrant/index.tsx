@@ -65,16 +65,10 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
 
   const storeProject = useProjectStore((state) => state.project);
   
-  // Try to get project from context as fallback
-  let contextProject = null;
-  try {
-    const contextData = useProjectContext();
-    contextProject = contextData?.project;
-  } catch {
-    // Not within ProjectProvider context, contextProject remains null
-  }
+  // Get project from context as primary source
+  const { project: contextProject } = useProjectContext();
   
-  const selectedProject = storeProject || contextProject;
+  const selectedProject = contextProject || storeProject;
   const { isProjectAdmin } = useProjectStore();
   const { isOwner } = useOwnerStore();
   const { isCommunityAdmin } = useCommunityAdminStore();

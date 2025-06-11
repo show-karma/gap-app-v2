@@ -16,14 +16,8 @@ const NewGrant = dynamic(
 export default function Page() {
   const { grant } = useGrantStore();
   
-  // Connect to project context for future use
-  let contextProject = null;
-  try {
-    const contextData = useProjectContext();
-    contextProject = contextData?.project;
-  } catch {
-    // Not within ProjectProvider context, contextProject remains null
-  }
+  // Get project from context  
+  const { project } = useProjectContext();
   
   return <NewGrant grantToEdit={grant} />;
 }

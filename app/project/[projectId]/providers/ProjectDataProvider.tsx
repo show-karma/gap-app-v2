@@ -9,14 +9,12 @@ import ProjectDataErrorBoundary from './ProjectDataErrorBoundary';
 export interface ProjectDataProviderProps {
   projectId: string;
   children: ReactNode;
-  fallbackToExisting?: boolean; // For gradual migration
 }
 
 // Server component that fetches project data
 export const ProjectDataProvider = async ({ 
   projectId, 
-  children, 
-  fallbackToExisting = false 
+  children
 }: ProjectDataProviderProps) => {
   let project: IProjectResponse | null = null;
   let loading = false;
@@ -28,21 +26,14 @@ export const ProjectDataProvider = async ({
     project = response.data;
     
     if (!project || project.uid === zeroUID) {
-      if (!fallbackToExisting) {
-        notFound();
-      } else {
-        error = 'Project not found';
-      }
+      notFound();
     }
     loading = false;
   } catch (err) {
     loading = false;
     error = err instanceof Error ? err.message : 'Failed to fetch project data';
-    
-    if (!fallbackToExisting) {
-      console.error('ProjectDataProvider: Failed to fetch project data:', err);
-      notFound();
-    }
+    console.error('ProjectDataProvider: Failed to fetch project data:', err);
+    notFound();
   }
 
   const contextValue: ProjectContextData = {
@@ -57,28 +48,5 @@ export const ProjectDataProvider = async ({
         {children}
       </ProjectProvider>
     </ProjectDataErrorBoundary>
-  );
-};
-
-// Client component wrapper for gradual migration support
-export const ProjectDataProviderClient = ({ 
-  projectId, 
-  children, 
-  existingProject 
-}: {
-  projectId: string;
-  children: ReactNode;
-  existingProject?: IProjectResponse | null;
-}) => {
-  const contextValue: ProjectContextData = {
-    project: existingProject || null,
-    loading: false,
-    error: existingProject ? null : 'No project data available',
-  };
-
-  return (
-    <ProjectProvider value={contextValue}>
-      {children}
-    </ProjectProvider>
   );
 }; 

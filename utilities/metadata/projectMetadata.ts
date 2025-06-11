@@ -179,4 +179,36 @@ export const createMetadataFromContext = (
       }
       return generateProjectOverviewMetadata(project, projectId);
   }
+};
+
+// Grant-specific metadata composition functions
+export const createGrantMetadataFromContext = (
+  project: IProjectResponse | null,
+  grant: IGrantResponse | null,
+  projectId: string,
+  grantUid?: string,
+  metadataType: 'overview' | 'milestones' | 'impact-criteria' = 'overview'
+): Metadata => {
+  if (!project) {
+    return {
+      title: 'Project Not Found | Karma GAP',
+      description: 'The requested project could not be found.',
+      icons: defaultMetadata.icons,
+    };
+  }
+
+  if (!grant) {
+    // If no specific grant, return funding overview
+    return generateProjectFundingMetadata(project, projectId);
+  }
+
+  switch (metadataType) {
+    case 'milestones':
+      return generateGrantMilestonesMetadata(project, grant, projectId);
+    case 'impact-criteria':
+      return generateGrantImpactCriteriaMetadata(project, grant, projectId);
+    case 'overview':
+    default:
+      return generateGrantOverviewMetadata(project, grant, projectId);
+  }
 }; 

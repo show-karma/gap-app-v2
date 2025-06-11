@@ -44,16 +44,10 @@ interface ImpactComponentProps {}
 export const ImpactComponent: FC<ImpactComponentProps> = () => {
   const storeData = useProjectStore((state) => ({ project: state.project, isProjectOwner: state.isProjectOwner }));
   
-  // Try to get project from context as fallback
-  let contextProject = null;
-  try {
-    const contextData = useProjectContext();
-    contextProject = contextData?.project;
-  } catch {
-    // Not within ProjectProvider context, contextProject remains null
-  }
+  // Get project from context as primary source
+  const { project: contextProject } = useProjectContext();
   
-  const project = storeData.project || contextProject;
+  const project = contextProject || storeData.project;
   const isProjectOwner = storeData.isProjectOwner;
   
   const [orderedImpacts, setOrderedImpacts] = useState<IProjectImpact[]>(
