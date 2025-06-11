@@ -4,6 +4,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useOwnerStore, useProjectStore } from "@/store";
+import { useProjectContext } from "@/contexts/ProjectContext";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
@@ -41,7 +42,20 @@ const cellClasses =
 interface ImpactComponentProps {}
 
 export const ImpactComponent: FC<ImpactComponentProps> = () => {
-  const { project, isProjectOwner } = useProjectStore();
+  const storeData = useProjectStore((state) => ({ project: state.project, isProjectOwner: state.isProjectOwner }));
+  
+  // Try to get project from context as fallback
+  let contextProject = null;
+  try {
+    const contextData = useProjectContext();
+    contextProject = contextData?.project;
+  } catch {
+    // Not within ProjectProvider context, contextProject remains null
+  }
+  
+  const project = storeData.project || contextProject;
+  const isProjectOwner = storeData.isProjectOwner;
+  
   const [orderedImpacts, setOrderedImpacts] = useState<IProjectImpact[]>(
     project?.impacts || []
   );

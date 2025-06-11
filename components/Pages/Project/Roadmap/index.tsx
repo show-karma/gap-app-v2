@@ -20,14 +20,29 @@ import { Button } from "@/components/Utilities/Button";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { MESSAGES } from "@/utilities/messages";
 import { UnifiedMilestone } from "@/types/roadmap";
+import { useProjectContext } from "@/contexts/ProjectContext";
 
 interface ProjectRoadmapProps {
-  project: IProjectResponse;
+  project?: IProjectResponse;
 }
 
-export const ProjectRoadmap = ({ project }: ProjectRoadmapProps) => {
+export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) => {
+  // All hooks must be called before any early returns
   const { projectId } = useParams();
   const searchParams = useSearchParams();
+  
+  // Try to get project from context as fallback
+  let contextProject = null;
+  try {
+    const contextData = useProjectContext();
+    contextProject = contextData?.project;
+  } catch {
+    // Not within ProjectProvider context, contextProject remains null
+  }
+  
+  // Use prop project first, then context project as fallback
+  const project = propProject || contextProject;
+  
   const {
     pendingMilestones,
     milestones = [],
@@ -166,7 +181,7 @@ export const ProjectRoadmap = ({ project }: ProjectRoadmapProps) => {
         update.source === "grant" ||
         (update.data?.title &&
           update.data.title.toLowerCase().includes("grant")) ||
-        (update.refUID && update.refUID !== project.uid) // If referencing something other than the project, likely a grant
+        (update.refUID && update.refUID !== project?.uid) // If referencing something other than the project, likely a grant
       ) {
         type = "grant_update";
       } else if (update.data?.type === "project-milestone") {
@@ -178,7 +193,7 @@ export const ProjectRoadmap = ({ project }: ProjectRoadmapProps) => {
       return {
         uid: update.uid,
         chainID: update.chainID,
-        refUID: update.refUID || project.uid,
+        refUID: update.refUID || project?.uid || "",
         title: update.data?.title || "Update",
         description: update.data?.text || "",
         type: type as any,
@@ -288,6 +303,11 @@ export const ProjectRoadmap = ({ project }: ProjectRoadmapProps) => {
       return false;
     });
   }, [combinedUpdatesAndMilestones, activeFilters]);
+
+  // If no project data is available, show loading
+  if (!project) {
+    return <RoadmapListLoading />;
+  }
 
   return (
     <div className="flex flex-col w-full h-full items-center justify-start">

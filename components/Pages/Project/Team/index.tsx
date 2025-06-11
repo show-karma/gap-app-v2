@@ -9,11 +9,23 @@ import {
 } from "@/utilities/getProjectMemberRoles";
 import { useQuery } from "@tanstack/react-query";
 import { MemberCard } from "./MemberCard";
+import { useProjectContext } from "@/contexts/ProjectContext";
 
 export const Team = () => {
-  const { project } = useProjectStore((state) => state);
+  const storeProject = useProjectStore((state) => state.project);
+  
+  // Try to get project from context as fallback
+  let contextProject = null;
+  try {
+    const contextData = useProjectContext();
+    contextProject = contextData?.project;
+  } catch {
+    // Not within ProjectProvider context, contextProject remains null
+  }
+  
+  const project = storeProject || contextProject;
+  
   //   check if it have some duplicated
-
   const members = project
     ? Array.from(
         new Set([

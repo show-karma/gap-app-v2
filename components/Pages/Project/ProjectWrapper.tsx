@@ -38,12 +38,15 @@ import { useContactInfo } from "@/hooks/useContactInfo";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { ShareDialog } from "../GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/ShareDialog";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
+import { useProjectContext } from "@/contexts/ProjectContext";
+import ProjectHeaderLoading from "./Loading/Header";
 
 interface ProjectWrapperProps {
-  project: IProjectResponse;
+  project?: IProjectResponse;
   projectId: string;
 }
-export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
+export const ProjectWrapper = ({ projectId, project: propProject }: ProjectWrapperProps) => {
+  // All hooks must be called first, before any conditional logic
   const {
     refreshMembers,
     setProject,
@@ -58,27 +61,36 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
 
   const router = useRouter();
   const pathname = usePathname();
-
-  useEffect(() => {
-    setProject(project);
-  }, [project]);
-
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const isAuthorized = isOwner || isProjectAdmin || isProjectOwner;
-
-  useEffect(() => {
-    if (!project) return;
-    refreshMembers();
-  }, [project]);
-
-  const { data: contactsInfo } = useContactInfo(projectId, isAuthorized);
-
-  const hasContactInfo = Boolean(contactsInfo?.length);
-
   const signer = useSigner();
   const { address, isConnected, isConnecting, chain } = useAccount();
   const { isAuth } = useAuthStore();
   const { gap } = useGap();
+  
+  // Always call useProjectContext, but handle the case where it's not available
+  let contextProject = null;
+  try {
+    const contextData = useProjectContext();
+    contextProject = contextData?.project;
+  } catch {
+    // Not within ProjectProvider context, contextProject remains null
+  }
+  
+  const project = propProject || contextProject || undefined;
+  const isAuthorized = isOwner || isProjectAdmin || isProjectOwner;
+  const { data: contactsInfo } = useContactInfo(projectId, isAuthorized);
+  const hasContactInfo = Boolean(contactsInfo?.length);
+
+  useEffect(() => {
+    if (project) {
+      setProject(project);
+    }
+  }, [project, setProject]);
+
+  useEffect(() => {
+    if (!project) return;
+    refreshMembers();
+  }, [project, refreshMembers]);
 
   useEffect(() => {
     if (!project || !project?.chainID || !isAuth || !isConnected || !address) {
@@ -328,6 +340,11 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   const { isEndorsementOpen } = useEndorsementStore();
   const { isProgressModalOpen } = useProgressModalStore();
   const { isOpen: isShareDialogOpen } = useShareDialogStore();
+
+  // Show loading state if no project available (after all hooks are called)
+  if (!project) {
+    return <ProjectHeaderLoading />;
+  }
 
   return (
     <div>

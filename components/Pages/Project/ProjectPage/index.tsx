@@ -4,6 +4,7 @@
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
+import { useProjectContext } from "@/contexts/ProjectContext";
 
 import { PAGES } from "@/utilities/pages";
 import Link from "next/link";
@@ -53,7 +54,18 @@ const ContributorProfileDialog = dynamic(
 );
 
 function ProjectPage() {
-  const project = useProjectStore((state) => state.project);
+  const storeProject = useProjectStore((state) => state.project);
+  
+  // Try to get project from context as fallback
+  let contextProject = null;
+  try {
+    const contextData = useProjectContext();
+    contextProject = contextData?.project;
+  } catch {
+    // Not within ProjectProvider context, contextProject remains null
+  }
+  
+  const project = storeProject || contextProject;
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);

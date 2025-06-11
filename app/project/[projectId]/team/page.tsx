@@ -1,14 +1,10 @@
 import React from "react";
-import { Hex } from "viem";
 import { Metadata } from "next";
-import { getMetadata } from "@/utilities/sdk";
-import { zeroUID } from "@/utilities/commons";
-import { defaultMetadata } from "@/utilities/meta";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { envVars } from "@/utilities/enviromentVars";
-import { Team } from "@/components/Pages/Project/Team";
 import { notFound } from "next/navigation";
-import { cleanMarkdownForPlainText } from "@/utilities/markdown";
+import { Team } from "@/components/Pages/Project/Team";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { createMetadataFromContext } from "@/utilities/metadata/projectMetadata";
+import { zeroUID } from "@/utilities/commons";
 
 export async function generateMetadata({
   params,
@@ -17,70 +13,23 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const projectId = params.projectId;
 
-  const projectInfo = await getMetadata<IProjectResponse>(
-    "project",
-    projectId as Hex
-  );
+  // Use our new optimized API call and metadata generation
+  try {
+    const projectInfo = await gapIndexerApi
+      .projectBySlug(projectId)
+      .then((res) => res.data)
+      .catch(() => null);
 
-  if (projectInfo?.uid === zeroUID || !projectInfo) {
-    return {
-      title: "Not Found",
-      description: "Project not found",
-    };
+    return createMetadataFromContext(projectInfo, projectId, 'team');
+  } catch (error) {
+    console.error('Error generating team page metadata:', error);
+    return createMetadataFromContext(null, projectId, 'team');
   }
-
-  return {
-    title: `${projectInfo.details?.data?.title} | Karma GAP`,
-    description:
-      cleanMarkdownForPlainText(
-        projectInfo.details?.data?.description || "",
-        80
-      ) || "",
-    twitter: {
-      creator: defaultMetadata.twitter.creator,
-      site: defaultMetadata.twitter.site,
-      card: "summary_large_image",
-      images: [
-        {
-          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
-          alt: `${projectInfo.details?.data?.title} | Karma GAP`,
-        },
-      ],
-    },
-    openGraph: {
-      url: defaultMetadata.openGraph.url,
-      title: `${projectInfo.details?.data?.title} | Karma GAP`,
-      description:
-        cleanMarkdownForPlainText(
-          projectInfo.details?.data?.description || "",
-          80
-        ) || "",
-
-      images: [
-        {
-          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
-          alt: `${projectInfo.details?.data?.title} | Karma GAP`,
-        },
-      ],
-    },
-    icons: {
-      icon: "/favicon.ico",
-    },
-  };
 }
 
-const TeamPage = async ({ params }: { params: { projectId: string } }) => {
-  const projectId = params.projectId;
-
-  const projectInfo = await getMetadata<IProjectResponse>(
-    "project",
-    projectId as Hex
-  );
-
-  if (projectInfo?.uid === zeroUID || !projectInfo) {
-    notFound();
-  }
-
+const TeamPage = () => {
+  // The Team component will get project data from context
+  // No need to fetch data here since the layout already provides it via context
   return <Team />;
 };
 
