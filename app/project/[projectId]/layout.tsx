@@ -26,7 +26,7 @@ export async function generateMetadata({
     notFound();
   }
 
-  if (projectInfo.pointers && projectInfo.pointers.length > 0) {
+  if (projectInfo?.pointers && projectInfo?.pointers?.length > 0) {
     const original = await gapIndexerApi
       .projectBySlug(projectInfo.pointers[0].data?.ogProjectUID)
       .then((res) => res.data)
@@ -95,7 +95,7 @@ export default async function RootLayout({
     notFound();
   }
 
-  if (project.pointers && project.pointers.length > 0) {
+  if (project?.pointers && project?.pointers?.length > 0) {
     const original = await gapIndexerApi
       .projectBySlug(project.pointers[0].data?.ogProjectUID)
       .then((res) => res.data)
