@@ -9,27 +9,22 @@ import {
 } from "@/components/Icons";
 import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
 import { ProjectNavigator } from "@/components/Pages/Project/ProjectNavigator";
-import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
-import { useGap } from "@/hooks/useGap";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useAuthStore } from "@/store/auth";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { useProgressModalStore } from "@/store/modals/progress";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
-import { getProjectById } from "@/utilities/sdk";
-import { cn } from "@/utilities/tailwind";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
 import {
   IProjectDetails,
   IProjectResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+
+import { useEffect, useMemo } from "react";
 import { useAccount } from "wagmi";
 import { IntroDialog } from "./IntroDialog";
 
@@ -71,7 +66,7 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
 
   // Fetch team profiles using React Query (automatically syncs with store)
   useTeamProfiles(project);
-  
+
   useEffect(() => {
     if (project) {
       setProject(project);
@@ -221,43 +216,6 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
   };
 
   const socials = getSocials(project?.details?.data.links);
-
-  const hasAlreadyEndorsed = project?.endorsements?.find(
-    (item) => item.recipient?.toLowerCase() === address?.toLowerCase()
-  );
-  const { openConnectModal } = useConnectModal();
-  const { setIsEndorsementOpen: setIsOpen } = useEndorsementStore();
-
-  const handleEndorse = () => {
-    if (!isConnected || !isAuth) {
-      return (
-        <Button
-          className="hover:bg-white dark:hover:bg-black border border-black bg-white text-black dark:bg-black dark:text-white px-4 rounded-md py-2 w-max"
-          onClick={() => {
-            if (!isConnecting) {
-              openConnectModal?.();
-            }
-          }}
-        >
-          Endorse this project
-        </Button>
-      );
-    }
-    if (!hasAlreadyEndorsed) {
-      return (
-        <Button
-          onClick={() => setIsOpen(true)}
-          className={cn(
-            "flex justify-center items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100  hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900",
-            "hover:bg-white dark:hover:bg-black border border-black bg-white text-black dark:bg-black dark:text-white px-4 rounded-md py-2 w-max"
-          )}
-        >
-          Endorse this project
-        </Button>
-      );
-    }
-    return null;
-  };
 
   interface Member {
     uid: string;
