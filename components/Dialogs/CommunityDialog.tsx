@@ -17,7 +17,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { appNetwork } from "@/utilities/network";
 import { cn } from "@/utilities/tailwind";
-import { getGapClient, useGap } from "@/hooks";
+import { getGapClient, useGap } from "@/hooks/useGap";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import toast from "react-hot-toast";
 import { useStepper } from "@/store/modals/txStepper";
@@ -115,7 +115,8 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
         },
         schema: gapClient.findSchema("Community"),
         refUID: nullRef,
-        recipient: address || "0x00",
+        recipient: (address ||
+          "0x0000000000000000000000000000000000000000") as `0x${string}`,
         uid: nullRef,
       });
       if (await gapClient.fetch.slugExists(data.slug as string)) {

@@ -5,7 +5,8 @@ export const PAGES = {
   PRIVACY_POLICY: `/privacy-policy`,
   TERMS_AND_CONDITIONS: `/terms-and-conditions`,
   COMMUNITY: {
-    ALL_GRANTS: (community: string) => `/community/${community}`,
+    ALL_GRANTS: (community: string, programId?: string) =>
+      `/community/${community}${programId ? `?programId=${programId}` : ""}`,
     IMPACT: (community: string) => `/community/${community}/impact`,
     PROJECT_DISCOVERY: (community: string) =>
       `/community/${community}/impact/project-discovery`,
@@ -29,11 +30,9 @@ export const PAGES = {
   },
   PROJECT: {
     OVERVIEW: (project: string) => `/project/${project}`,
-    UPDATES: (project: string) => `/project/${project}?tab=updates`,
+    UPDATES: (project: string) => `/project/${project}/updates`,
     GRANTS: (project: string) => `/project/${project}/funding`,
-    ROADMAP: {
-      ROOT: (project: string) => `/project/${project}/roadmap`,
-    },
+
     GRANT: (project: string, grant: string) =>
       `/project/${project}/funding/${grant}`,
     CONTACT_INFO: (project: string) => `/project/${project}/contact-info`,

@@ -9,7 +9,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { Community } from "@show-karma/karma-gap-sdk";
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
-import { useGap } from "@/hooks";
+import { useGap } from "@/hooks/useGap";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { AddAdmin } from "./AddAdminDialog";
 import { RemoveAdmin } from "./RemoveAdminDialog";

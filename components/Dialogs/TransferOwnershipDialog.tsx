@@ -98,7 +98,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
             const isTransfered = await isOwnershipTransfered(
               walletSigner || signer,
               fetchedProject,
-              newOwner
+              newOwner as `0x${string}`
             );
 
             if (isTransfered) {

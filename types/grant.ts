@@ -3,9 +3,7 @@ export type GrantScreen =
   | "create-milestone"
   | "new"
   | "edit"
-  | "grant-update"
   | "impact-criteria"
   | "overview"
   | "complete-grant"
-  | "grant-update"
   | "outputs";
