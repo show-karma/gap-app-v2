@@ -63,7 +63,7 @@ export const CommunityGrants = ({
       defaultValue: defaultSelectedCategories,
       serialize: (value) => value?.join(","),
       parse: (value) => (value ? value.split(",") : null),
-    }
+    },
   );
 
   const [selectedSort, changeSortQuery] = useQueryState("sortBy", {
@@ -108,7 +108,7 @@ export const CommunityGrants = ({
   } | null>(null);
   const selectedCategoriesIds = useMemo(
     () => selectedCategories.join("_"),
-    [selectedCategories]
+    [selectedCategories],
   );
 
   useEffect(() => {
@@ -133,7 +133,7 @@ export const CommunityGrants = ({
           {
             page: currentPage,
             pageLimit: itemsPerPage,
-          }
+          },
         );
         setPaginationInfo({
           grantsNo: pageInfo.totalItems,
@@ -142,7 +142,7 @@ export const CommunityGrants = ({
         if (fetchedGrants && fetchedGrants.length) {
           setHaveMore(fetchedGrants.length === itemsPerPage);
           setGrants((prev) =>
-            currentPage === 0 ? fetchedGrants : [...prev, ...fetchedGrants]
+            currentPage === 0 ? fetchedGrants : [...prev, ...fetchedGrants],
           );
           setTotalGrants(pageInfo?.totalItems || totalGrants);
         } else {
@@ -281,7 +281,7 @@ export const CommunityGrants = ({
                                   active
                                     ? "bg-gray-100 text-black dark:text-gray-300 dark:bg-zinc-900"
                                     : "text-gray-900 dark:text-gray-200 ",
-                                  "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
+                                  "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200",
                                 )
                               }
                               value={category}
@@ -296,7 +296,7 @@ export const CommunityGrants = ({
                                       selected
                                         ? "font-semibold"
                                         : "font-normal",
-                                      "block truncate"
+                                      "block truncate",
                                     )}
                                   >
                                     {category}
@@ -306,7 +306,7 @@ export const CommunityGrants = ({
                                     <span
                                       className={cn(
                                         "text-blue-600 dark:text-blue-400",
-                                        "absolute inset-y-0 right-0 flex items-center pr-4"
+                                        "absolute inset-y-0 right-0 flex items-center pr-4",
                                       )}
                                     >
                                       <CheckIcon
@@ -369,7 +369,7 @@ export const CommunityGrants = ({
                                 active
                                   ? "bg-gray-100 text-black dark:text-gray-300 dark:bg-zinc-900"
                                   : "text-gray-900 dark:text-gray-200 ",
-                                "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
+                                "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200",
                               )
                             }
                             value={sortOption}
@@ -382,7 +382,7 @@ export const CommunityGrants = ({
                                 <span
                                   className={cn(
                                     selected ? "font-semibold" : "font-normal",
-                                    "block truncate"
+                                    "block truncate",
                                   )}
                                 >
                                   {sortOptions[sortOption as SortByOptions]}
@@ -392,7 +392,7 @@ export const CommunityGrants = ({
                                   <span
                                     className={cn(
                                       "text-blue-600 dark:text-blue-400",
-                                      "absolute inset-y-0 right-0 flex items-center pr-4"
+                                      "absolute inset-y-0 right-0 flex items-center pr-4",
                                     )}
                                   >
                                     <CheckIcon
@@ -454,7 +454,7 @@ export const CommunityGrants = ({
                                 active
                                   ? "bg-gray-100 text-black dark:text-gray-300 dark:bg-zinc-900"
                                   : "text-gray-900 dark:text-gray-200 ",
-                                "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
+                                "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200",
                               )
                             }
                             value={statusOption}
@@ -467,7 +467,7 @@ export const CommunityGrants = ({
                                 <span
                                   className={cn(
                                     selected ? "font-semibold" : "font-normal",
-                                    "block truncate"
+                                    "block truncate",
                                   )}
                                 >
                                   {statuses[statusOption as StatusOptions]}
@@ -477,7 +477,7 @@ export const CommunityGrants = ({
                                   <span
                                     className={cn(
                                       "text-blue-600 dark:text-blue-400",
-                                      "absolute inset-y-0 right-0 flex items-center pr-4"
+                                      "absolute inset-y-0 right-0 flex items-center pr-4",
                                     )}
                                   >
                                     <CheckIcon
@@ -523,13 +523,12 @@ export const CommunityGrants = ({
               {/* @ts-expect-error - AutoSizer type compatibility issue with React 18 */}
               <AutoSizer disableHeight>
                 {({ width }) => {
-                  const columnCounter = Math.floor(width / 240)
-                    ? Math.floor(width / 240) > 4
-                      ? 4
-                      : Math.floor(width / 240)
-                    : 1;
-                  const columnWidth = Math.floor(width / columnCounter);
                   const gutterSize = 20;
+                  const columnCounter = Math.max(
+                    1,
+                    Math.floor((width + gutterSize) / (240 + gutterSize)),
+                  );
+                  const columnWidth = Math.floor(width / columnCounter);
                   const height = Math.ceil(grants.length / columnCounter) * 360;
                   return (
                     /* @ts-expect-error - Grid type compatibility issue with React 18 */
@@ -538,9 +537,7 @@ export const CommunityGrants = ({
                       width={width}
                       rowCount={Math.ceil(grants.length / columnCounter)}
                       rowHeight={360}
-                      columnWidth={
-                        columnWidth - 20 < 240 ? 240 : columnWidth - 5
-                      }
+                      columnWidth={Math.max(240, columnWidth - gutterSize)}
                       columnCount={columnCounter}
                       cellRenderer={({ columnIndex, key, rowIndex, style }) => {
                         const grant =
@@ -572,7 +569,7 @@ export const CommunityGrants = ({
                                 }}
                               >
                                 <GrantCard
-                                  index={rowIndex * 4 + columnIndex}
+                                  index={rowIndex * columnCounter + columnIndex}
                                   key={grant.uid}
                                   grant={grant}
                                 />
