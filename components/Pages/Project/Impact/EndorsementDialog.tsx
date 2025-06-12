@@ -3,7 +3,7 @@
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { getGapClient, useGap } from "@/hooks";
+import { getGapClient, useGap } from "@/hooks/useGap";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { useProjectStore } from "@/store";
 import { useEndorsementStore } from "@/store/modals/endorsement";
@@ -114,7 +114,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
         }),
         schema: gapClient!.findSchema("ProjectEndorsement"),
         refUID: project?.uid,
-        recipient: address,
+        recipient: address as `0x${string}`,
       });
       await endorsement
         .attest(walletSigner, changeStepperStep)

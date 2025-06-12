@@ -1,7 +1,7 @@
 "use client";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { getGapClient, useGap } from "@/hooks";
+import { getGapClient, useGap } from "@/hooks/useGap";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -238,7 +238,7 @@ export const ObjectiveOptionsMenu = ({
               </Menu.Item>
               <Menu.Item>
                 <DeleteDialog
-                  title="Are you sure you want to delete this objective?"
+                  title="Are you sure you want to delete this milestone?"
                   deleteFunction={deleteFn}
                   isLoading={isDeleting}
                   buttonElement={{

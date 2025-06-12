@@ -1,5 +1,5 @@
 import { errorManager } from "@/components/Utilities/errorManager";
-import { getGapClient } from "@/hooks";
+import { getGapClient } from "@/hooks/useGap";
 import { zeroUID } from "@/utilities/commons";
 import { appNetwork } from "@/utilities/network";
 import type { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";

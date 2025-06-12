@@ -116,7 +116,7 @@ export async function GET(
                   {item.value}
                 </p>
                 <div tw="flex flex-row items-center h-[40px]">
-                  <p tw="font-normal text-[#344054] text-[26px] h-max mr-3">
+                  <p tw="font-normal text-brand-gray text-[26px] h-max mr-3">
                     {item.title}
                   </p>
                   <img

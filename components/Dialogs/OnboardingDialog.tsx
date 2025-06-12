@@ -62,7 +62,7 @@ const FirstStep = () => {
       />
       <div className="flex flex-col gap-6">
         <div className="mt-4 flex flex-col gap-0">
-          <h3 className="text-sm font-semibold text-[#344054] dark:text-zinc-200">
+          <h3 className="text-sm font-semibold text-brand-gray dark:text-zinc-200">
             STEP 1
           </h3>
           <h4 className="text-black dark:text-white font-bold text-xl">
@@ -106,7 +106,7 @@ const GrantStep = () => {
       />
       <div className="flex flex-col gap-6">
         <div className="mt-4 flex flex-col gap-0">
-          <h3 className="text-sm font-semibold text-[#344054] dark:text-zinc-200">
+          <h3 className="text-sm font-semibold text-brand-gray dark:text-zinc-200">
             STEP 2
           </h3>
           <h4 className="text-black dark:text-white font-bold text-xl">

@@ -385,7 +385,7 @@ export const FilteredOutputsAndOutcomes = ({
                     </div>
                   </div>
                 </div>
-                <div className="flex flex-col-reverse gap-4">
+                <div className="flex max-md:flex-col-reverse flex-row-reverse gap-4">
                   <div className="flex flex-1 flex-col gap-5">
                     {item.datapoints?.length > 1 && (
                       <Card className="bg-white dark:bg-zinc-800 rounded">

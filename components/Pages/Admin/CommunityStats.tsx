@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Community } from "@show-karma/karma-gap-sdk";
-import { useGap } from "@/hooks";
+import { useGap } from "@/hooks/useGap";
 import { useOwnerStore } from "@/store/owner";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { MESSAGES } from "@/utilities/messages";

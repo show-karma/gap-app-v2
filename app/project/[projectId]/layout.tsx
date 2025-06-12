@@ -4,7 +4,7 @@ import { envVars } from "@/utilities/enviromentVars";
 import { ProjectWrapper } from "@/components/Pages/Project/ProjectWrapper";
 import { zeroUID } from "@/utilities/commons";
 import { defaultMetadata } from "@/utilities/meta";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import ProjectHeaderLoading from "@/components/Pages/Project/Loading/Header";
@@ -24,6 +24,16 @@ export async function generateMetadata({
 
   if (!projectInfo || projectInfo?.uid === zeroUID) {
     notFound();
+  }
+
+  if (projectInfo?.pointers && projectInfo?.pointers?.length > 0) {
+    const original = await gapIndexerApi
+      .projectBySlug(projectInfo.pointers[0].data?.ogProjectUID)
+      .then((res) => res.data)
+      .catch(() => null);
+    if (original) {
+      redirect(`/project/${original.details?.data?.slug}`);
+    }
   }
 
   const dynamicMetadata = {
@@ -83,6 +93,16 @@ export default async function RootLayout({
 
   if (!project || project.uid === zeroUID) {
     notFound();
+  }
+
+  if (project?.pointers && project?.pointers?.length > 0) {
+    const original = await gapIndexerApi
+      .projectBySlug(project.pointers[0].data?.ogProjectUID)
+      .then((res) => res.data)
+      .catch(() => null);
+    if (original) {
+      redirect(`/project/${original.details?.data?.slug}`);
+    }
   }
 
   return (

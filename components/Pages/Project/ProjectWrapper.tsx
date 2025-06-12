@@ -13,7 +13,6 @@ import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
-import { useGap } from "@/hooks";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useAuthStore } from "@/store/auth";
 import { useEndorsementStore } from "@/store/modals/endorsement";
@@ -28,7 +27,7 @@ import {
   IProjectResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+
 import { useEffect, useMemo } from "react";
 import { useAccount } from "wagmi";
 import { IntroDialog } from "./IntroDialog";
@@ -56,9 +55,6 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
     project: storedProject,
   } = useProjectStore((state) => state);
 
-  const router = useRouter();
-  const pathname = usePathname();
-
   useEffect(() => {
     setProject(project);
   }, [project]);
@@ -78,7 +74,6 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   const signer = useSigner();
   const { address, isConnected, isConnecting, chain } = useAccount();
   const { isAuth } = useAuthStore();
-  const { gap } = useGap();
 
   useEffect(() => {
     if (!project || !project?.chainID || !isAuth || !isConnected || !address) {
@@ -300,28 +295,6 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
 
     return members;
   };
-
-  useEffect(() => {
-    if (project && project?.pointers?.length > 0) {
-      gap?.fetch
-        ?.projectById(project.pointers[0].data?.ogProjectUID)
-        .then((_project) => {
-          if (_project) {
-            const isUsingUid = pathname.includes(`/project/${project.uid}`);
-            const newPath = isUsingUid
-              ? pathname.replace(
-                  `/project/${project.uid}`,
-                  `/project/${_project?.details?.data?.slug}`
-                )
-              : pathname.replace(
-                  `/project/${project.details?.data?.slug}`,
-                  `/project/${_project?.details?.data?.slug}`
-                );
-            router.push(newPath);
-          }
-        });
-    }
-  }, [project]);
 
   const members = mountMembers();
   const { isIntroModalOpen } = useIntroModalStore();

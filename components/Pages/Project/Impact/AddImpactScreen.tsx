@@ -2,7 +2,7 @@
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { getGapClient, useGap } from "@/hooks";
+import { getGapClient, useGap } from "@/hooks/useGap";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -110,8 +110,8 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
       });
       const newImpact = new ProjectImpact({
         data: dataToAttest,
-        recipient: address,
-        attester: address,
+        recipient: address as `0x${string}`,
+        attester: address as `0x${string}`,
         schema: gapClient!.findSchema("ProjectImpact"),
         refUID: project.uid,
         createdAt: new Date(),

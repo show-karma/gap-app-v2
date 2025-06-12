@@ -1,6 +1,6 @@
 'use client';
 import { errorManager } from '@/components/Utilities/errorManager';
-import { useGap } from '@/hooks';
+import { useGap } from '@/hooks/useGap';
 import { useOwnerStore, useProjectStore } from '@/store';
 import { useGrantGenieModalStore } from '@/store/modals/genie';
 import { useMergeModalStore } from '@/store/modals/merge';

@@ -16,7 +16,6 @@ export const appNetwork: [Chain, ...Chain[]] =
     ? [optimism, arbitrum, celo, sei]
     : [optimismSepolia, baseSepolia, sepolia, lisk];
 
-
 export function getExplorerUrl(chainId: number, transactionHash: string) {
   const chain = [optimism, arbitrum, celo, sei, optimismSepolia, baseSepolia, sepolia, lisk].find(c => c.id === chainId);
   if (!chain || !chain.blockExplorers?.default?.url) {

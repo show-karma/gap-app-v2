@@ -15,21 +15,12 @@ import { MESSAGES } from "@/utilities/messages";
 import { useAuthStore } from "@/store/auth";
 import { useAccount, useSwitchChain } from "wagmi";
 import { useStepper } from "@/store/modals/txStepper";
-import toast from "react-hot-toast";
-import { errorManager } from "@/components/Utilities/errorManager";
-import { useGap, useGrant } from "@/hooks";
-import { sanitizeObject } from "@/utilities/sanitize";
-import { getGapClient } from "@/hooks";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
-import { INDEXER } from "@/utilities/indexer";
-import fetchData from "@/utilities/fetchData";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useGap } from "@/hooks/useGap";
+import { useGrant } from "@/hooks/useGrant";
 import { NextButton } from "./buttons/NextButton";
 import { CancelButton } from "./buttons/CancelButton";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getProjectById } from "@/utilities/sdk";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =

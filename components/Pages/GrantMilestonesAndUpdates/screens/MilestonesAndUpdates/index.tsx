@@ -93,16 +93,6 @@ export const EmptyMilestone = ({
               />
               Add a new Milestone
             </Link>
-            <Link
-              className="items-center justify-center gap-2 rounded border dark:bg-zinc-800 dark:text-white border-black bg-white px-4 py-2.5 text-base font-semibold text-zinc-900 hover:bg-white"
-              href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                project?.details?.data.slug || project?.uid || "",
-                grant?.uid || "",
-                "grant-update"
-              )}
-            >
-              Post an update
-            </Link>
           </div>
         </div>
       </div>
@@ -174,20 +164,6 @@ export const MilestonesAndUpdates = () => {
                     {MESSAGES.PROJECT.EMPTY.GRANTS.NOT_ADDED_MILESTONE}
                   </p>
                   <div className="flex flex-row justify-start gap-4 max-sm:w-full max-sm:flex-col">
-                    {isAuthorized ? (
-                      <div className="flex items-center">
-                        <Link
-                          href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                            project?.details?.data.slug || project?.uid || "",
-                            grant?.uid || "",
-                            "grant-update"
-                          )}
-                          className="flex h-max w-max dark:bg-zinc-900 dark:text-white text-zinc-900 flex-row items-center justify-center gap-3 rounded border border-black bg-transparent px-3 py-1 text-sm font-semibold hover:bg-transparent hover:opacity-75 max-sm:w-full"
-                        >
-                          <p>Post a grant update</p>
-                        </Link>
-                      </div>
-                    ) : null}
                     {isAuthorized && (
                       <Link
                         href={PAGES.PROJECT.SCREENS.SELECTED_SCREEN(

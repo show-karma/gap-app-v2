@@ -44,7 +44,7 @@ export const DatePicker = ({
           </button>
         </Popover.Trigger>
         <Popover.Portal>
-          <Popover.Content className="z-10 bg-white dark:bg-zinc-800 mt-4 rounded-md shadow-lg">
+          <Popover.Content className="z-[100] bg-white dark:bg-zinc-800 mt-4 rounded-md shadow-lg">
             <DayPicker
               mode="single"
               selected={selected}
