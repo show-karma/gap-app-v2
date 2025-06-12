@@ -259,7 +259,11 @@ export const IndicatorsView = ({
   const hasFilteredIndicators = filteredCommunityAdminIndicators.length > 0 || filteredProjectOwnerIndicators.length > 0;
   const isFiltering = searchQuery || indicatorViewType !== "all";
 
-  const renderIndicatorsList = (indicators: ImpactIndicator[], title: string) => {
+  const renderIndicatorsList = (
+    indicators: ImpactIndicator[],
+    title: string,
+    allowDelete: boolean = true
+  ) => {
     if (indicators.length === 0 && !isFiltering) {
       return null;
     }
@@ -298,17 +302,19 @@ export const IndicatorsView = ({
                     )}
                   </div>
                 </div>
-                <DeleteDialog
-                  title={`Are you sure you want to delete ${indicator.name}?`}
-                  deleteFunction={() => handleDeleteIndicator(indicator.id)}
-                  isLoading={isDeletingId === indicator.id}
-                  buttonElement={{
-                    icon: <TrashIcon className="h-5 w-5" />,
-                    text: "",
-                    styleClass:
-                      "text-red-500 hover:text-red-700 transition-colors p-1.5 bg-transparent hover:bg-transparent hover:opacity-75",
-                  }}
-                />
+                {allowDelete && (
+                  <DeleteDialog
+                    title={`Are you sure you want to delete ${indicator.name}?`}
+                    deleteFunction={() => handleDeleteIndicator(indicator.id)}
+                    isLoading={isDeletingId === indicator.id}
+                    buttonElement={{
+                      icon: <TrashIcon className="h-5 w-5" />,
+                      text: "",
+                      styleClass:
+                        "text-red-500 hover:text-red-700 transition-colors p-1.5 bg-transparent hover:bg-transparent hover:opacity-75",
+                    }}
+                  />
+                )}
               </div>
             ))}
           </div>
@@ -454,7 +460,7 @@ export const IndicatorsView = ({
           {hasFilteredIndicators && (
             <div>
               {renderIndicatorsList(filteredCommunityAdminIndicators, "Community Admin Indicators")}
-              {renderIndicatorsList(filteredProjectOwnerIndicators, "Project Owner Indicators")}
+              {renderIndicatorsList(filteredProjectOwnerIndicators, "Project Owner Indicators", false)}
             </div>
           )}
         </>
