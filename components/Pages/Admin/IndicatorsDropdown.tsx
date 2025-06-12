@@ -14,6 +14,7 @@ import { Fragment } from "react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { Switch } from "@headlessui/react";
 import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
+import { LoadingSpinner } from "@/components/Disbursement/components/LoadingSpinner";
 
 interface IndicatorsDropdownProps {
   selectedIndicators: string[];
@@ -21,6 +22,7 @@ interface IndicatorsDropdownProps {
   onIndicatorChange: (value: string) => void;
   communityId?: string;
   onIndicatorCreated?: (indicator: any) => void;
+  isLoading?: boolean;
 }
 
 export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
@@ -29,6 +31,7 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
   onIndicatorChange,
   communityId,
   onIndicatorCreated,
+  isLoading = false,
 }) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -96,13 +99,21 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
           <button
             type="button"
             className="flex w-full items-center justify-between px-3 py-3 text-sm font-medium bg-white dark:bg-zinc-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-zinc-700 focus:outline-none text-left"
+            disabled={isLoading}
           >
             <span className="truncate">
-              {selectedIndicators.length > 0
-                ? `${selectedIndicators.length} indicator${
-                    selectedIndicators.length > 1 ? "s" : ""
-                  } selected`
-                : "Search for indicators"}
+              {isLoading ? (
+                <span className="flex items-center gap-2">
+                  <LoadingSpinner size="sm" color="gray" />
+                  Loading indicators...
+                </span>
+              ) : selectedIndicators.length > 0 ? (
+                `${selectedIndicators.length} indicator${
+                  selectedIndicators.length > 1 ? "s" : ""
+                } selected`
+              ) : (
+                "Search for indicators"
+              )}
             </span>
             <ChevronDownIcon
               className={`ml-2 h-4 w-4 text-gray-400 transition-transform ${
@@ -143,12 +154,15 @@ export const IndicatorsDropdown: FC<IndicatorsDropdownProps> = ({
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   autoFocus
+                  disabled={isLoading}
                 />
               </div>
             </div>
 
             <div className="max-h-60 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700">
-              {filteredIndicators.length === 0 ? (
+              {isLoading ? (
+                <LoadingSpinner size="md" color="blue" message="Loading indicators..." />
+              ) : filteredIndicators.length === 0 ? (
                 <div className="px-4 py-6 text-sm text-gray-500 dark:text-gray-400 text-center flex flex-col items-center">
                   <MagnifyingGlassIcon className="h-6 w-6 mb-2 text-gray-400" />
                   <p>No indicators found</p>
