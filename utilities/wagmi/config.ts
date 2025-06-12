@@ -7,6 +7,7 @@ import {
   celo,
   sei,
   sepolia,
+  lisk
 } from "@wagmi/core/chains";
 import {
   coinbaseWallet,
@@ -54,6 +55,7 @@ export const config = createConfig({
     [celo.id]: http(envVars.RPC.CELO),
     [sei.id]: http(envVars.RPC.SEI),
     [sepolia.id]: http(envVars.RPC.SEPOLIA),
+    [lisk.id]: http(envVars.RPC.LISK),
   },
   ssr: false,
   storage: createStorage({
