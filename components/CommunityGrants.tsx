@@ -24,6 +24,25 @@ import { errorManager } from "./Utilities/errorManager";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { ProgramBanner } from "./ProgramBanner";
 
+// Helper function to map maturity stage to status format
+const getStatusFromMaturityStage = (
+  stage: MaturityStageOptions
+): StatusOptions | undefined => {
+  if (stage === "all") return undefined;
+  return `maturity-stage-${stage}` as StatusOptions;
+};
+
+// Map frontend sort options to API sort values
+const mapSortToApiValue = (sortOption: SortByOptions): string => {
+  const sortMappings: Record<SortByOptions, string> = {
+    recent: "recent",
+    completed: "completed",
+    milestones: "milestones",
+    txnCount: "transactions_desc",
+  };
+  return sortMappings[sortOption];
+};
+
 const sortOptions: Record<SortByOptions, string> = {
   recent: "Recent",
   completed: "Completed",
@@ -76,12 +95,17 @@ export const CommunityGrants = ({
       value ? (value as SortByOptions) : ("milestones" as SortByOptions),
   });
 
-  const [selectedMaturityStage, changeMaturityStageQuery] = useQueryState("maturityStage", {
-    defaultValue: defaultSelectedMaturityStage,
-    serialize: (value) => value,
-    parse: (value) =>
-      value ? (value as MaturityStageOptions) : ("all" as MaturityStageOptions),
-  });
+  const [selectedMaturityStage, changeMaturityStageQuery] = useQueryState(
+    "maturityStage",
+    {
+      defaultValue: defaultSelectedMaturityStage,
+      serialize: (value) => value,
+      parse: (value) =>
+        value
+          ? (value as MaturityStageOptions)
+          : ("all" as MaturityStageOptions),
+    }
+  );
 
   const [selectedProgramId, changeSelectedProgramIdQuery] = useQueryState<
     string | null
@@ -120,12 +144,6 @@ export const CommunityGrants = ({
     const fetchNewGrants = async () => {
       setLoading(true);
       try {
-        // Map maturity stage to status format
-        const getStatusFromMaturityStage = (stage: MaturityStageOptions): StatusOptions | undefined => {
-          if (stage === "all") return undefined;
-          return `maturity-stage-${stage}` as StatusOptions;
-        };
-
         const {
           grants: fetchedGrants,
           pageInfo,
@@ -133,7 +151,7 @@ export const CommunityGrants = ({
         } = await getGrants(
           communityId as Hex,
           {
-            sortBy: selectedSort === "txnCount" ? "transactions_desc" as any : selectedSort,
+            sortBy: mapSortToApiValue(selectedSort) as SortByOptions,
             status: getStatusFromMaturityStage(selectedMaturityStage),
             categories: selectedCategoriesIds.split("_"),
             selectedProgramId: selectedProgramId || undefined,
@@ -167,12 +185,6 @@ export const CommunityGrants = ({
         }
       } catch (error: any) {
         console.log("error", error);
-        // Map maturity stage to status format for error logging
-        const getStatusFromMaturityStage = (stage: MaturityStageOptions): StatusOptions | undefined => {
-          if (stage === "all") return undefined;
-          return `maturity-stage-${stage}` as StatusOptions;
-        };
-
         errorManager("Error while fetching community grants", error, {
           sortBy: selectedSort,
           status: getStatusFromMaturityStage(selectedMaturityStage),
@@ -482,11 +494,17 @@ export const CommunityGrants = ({
                                 <>
                                   <span
                                     className={cn(
-                                      selected ? "font-semibold" : "font-normal",
+                                      selected
+                                        ? "font-semibold"
+                                        : "font-normal",
                                       "block truncate"
                                     )}
                                   >
-                                    {maturityStages[stageOption as MaturityStageOptions]}
+                                    {
+                                      maturityStages[
+                                        stageOption as MaturityStageOptions
+                                      ]
+                                    }
                                   </span>
 
                                   {selected ? (
