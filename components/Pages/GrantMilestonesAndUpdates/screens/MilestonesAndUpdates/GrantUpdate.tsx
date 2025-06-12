@@ -1,5 +1,5 @@
 import { DeleteDialog } from "@/components/DeleteDialog";
-import { getGapClient, useGap } from "@/hooks";
+import { getGapClient, useGap } from "@/hooks/useGap";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useStepper } from "@/store/modals/txStepper";
@@ -248,7 +248,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
         </div>
         <div className="flex flex-row gap-3 items-center flex-wrap">
           <p className="text-sm font-semibold text-gray-500 dark:text-zinc-300 max-sm:text-xs">
-            Posted on {formatDate(date)}
+            Created on {formatDate(date)}
           </p>
           {isAuthorized ? (
             <div className="flex flex-row gap-2 items-center">

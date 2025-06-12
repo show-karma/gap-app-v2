@@ -13,7 +13,7 @@ import { getWalletClient } from "@wagmi/core";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { MESSAGES } from "@/utilities/messages";
-import { getGapClient, useGap } from "@/hooks";
+import { getGapClient, useGap } from "@/hooks/useGap";
 
 import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { useStepper } from "@/store/modals/txStepper";

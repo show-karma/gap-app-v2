@@ -6,7 +6,7 @@ import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { useProjectStore } from "@/store";
 import { shortAddress } from "@/utilities/shortAddress";
-import { useGap } from "@/hooks";
+import { useGap } from "@/hooks/useGap";
 import { useIntroModalStore } from "@/store/modals/intro";
 import fetchData from "@/utilities/fetchData";
 import toast from "react-hot-toast";

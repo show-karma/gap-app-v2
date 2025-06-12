@@ -51,12 +51,12 @@ const VerificationItem = ({ verification }: VerificationsItemProps) => {
         />
         <p className="text-sm font-bold text-brand-darkblue font-body dark:text-zinc-200">
           {ensData[verification.attester as Hex]?.name || verification.attester}
-          <span className="ml-1 font-normal font-body text-[#344054] dark:text-zinc-300">
+          <span className="ml-1 font-normal font-body text-brand-gray dark:text-zinc-300">
             reviewed on {formatDate(verification.createdAt)}
           </span>
         </p>
       </div>
-      <p className="pl-11 text-base font-normal text-[#344054] dark:text-zinc-300">
+      <p className="pl-11 text-base font-normal text-brand-gray dark:text-zinc-300">
         {verification.data?.reason}
       </p>
     </div>

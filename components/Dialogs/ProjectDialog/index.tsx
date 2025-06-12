@@ -9,13 +9,16 @@ import {
 } from "@/components/Icons";
 import { Button } from "@/components/Utilities/Button";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
-import { getGapClient, useGap } from "@/hooks";
+import { getGapClient, useGap } from "@/hooks/useGap";
 import { useProjectStore } from "@/store";
 import { useOwnerStore } from "@/store/owner";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { Dialog, Transition } from "@headlessui/react";
-import { ExclamationTriangleIcon, UserCircleIcon } from "@heroicons/react/24/outline";
+import {
+  ExclamationTriangleIcon,
+  UserCircleIcon,
+} from "@heroicons/react/24/outline";
 import {
   ChevronRightIcon,
   PlusIcon,
@@ -148,7 +151,13 @@ export const projectSchema = z.object({
   pitchDeck: z.string().optional(),
   demoVideo: z.string().optional(),
   farcaster: z.string().optional(),
-  profilePicture: z.string().optional(),
+  profilePicture: z
+    .string({
+      required_error: "Profile picture URL is required",
+    })
+    .min(1, {
+      message: "Profile picture URL is required",
+    }),
   businessModel: z.string().optional(),
   stageIn: z.string().optional(),
   raisedMoney: z.string().optional(),
@@ -248,7 +257,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const { errors, isValid } = formState;
 
   const [team, setTeam] = useState<string[]>(dataToUpdate?.members || []);
-  const [teamInput, setTeamInput] = useState("");
+  const [teamInput, setTeamInput] = useState<string>("");
   const [teamInputError, setTeamInputError] = useState<string | undefined>("");
 
   function closeModal() {
@@ -262,24 +271,24 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     event?.preventDefault();
     event?.stopPropagation();
     const splittedMembers = new Set(
-      teamInput.split(",").map((m) => m.trim().toLowerCase())
+      teamInput.split(",").map((m: string) => m.trim().toLowerCase())
     );
     const uniqueMembers = Array.from(splittedMembers).filter(
-      (m) => !team.includes(m)
+      (m: string) => !team.includes(m)
     );
     setTeamInput("");
     setTeam((prev) => [...prev, ...uniqueMembers]);
   };
 
   const checkTeamError = () => {
-    if (isAddress(teamInput) || teamInput.length === 0) {
+    if (isAddress(teamInput as string) || (teamInput as string).length === 0) {
       setTeamInputError(undefined);
       return;
     }
-    const splittedMembers = teamInput
+    const splittedMembers = (teamInput as string)
       .split(",")
-      .map((m) => m.trim().toLowerCase());
-    const checkArray = splittedMembers.every((address) => {
+      .map((m: string) => m.trim().toLowerCase());
+    const checkArray = splittedMembers.every((address: string) => {
       return isAddress(address);
     });
     if (checkArray) {
@@ -1084,7 +1093,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
           </div>
           <div className="flex w-full flex-col gap-2">
             <label htmlFor="profile-picture-input" className={labelStyle}>
-              Profile Picture (optional)
+              Profile Picture
             </label>
             <div className="flex w-full flex-row items-center gap-2 rounded-lg border border-gray-400 px-4 py-2">
               <UserCircleIcon className="h-5 w-5" />
@@ -1340,9 +1349,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
                   {!projectToUpdate && (
                     <div className="mt-2  max-w-3xl">
                       <p className="text-sm text-gray-600 dark:text-zinc-300">
-                        We’ll start by outlining some basics about your project.
-                        Don’t worry about grants right now, you can add that
-                        from your Project Page once it’s been created.
+                        We&apos;ll start by outlining some basics about your
+                        project. Don&apos;t worry about grants right now, you
+                        can add that from your Project Page once it&apos;s been
+                        created.
                       </p>
                     </div>
                   )}

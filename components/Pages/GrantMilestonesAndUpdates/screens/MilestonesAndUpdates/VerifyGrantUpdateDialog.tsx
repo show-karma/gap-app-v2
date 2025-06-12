@@ -12,7 +12,7 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { MESSAGES } from "@/utilities/messages";
-import { getGapClient, useGap } from "@/hooks";
+import { getGapClient, useGap } from "@/hooks/useGap";
 import { useStepper } from "@/store/modals/txStepper";
 import { useOwnerStore, useProjectStore } from "@/store";
 import {
@@ -24,6 +24,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { sanitizeObject } from "@/utilities/sanitize";
+import { ArrowRightIcon } from "@heroicons/react/24/solid";
 
 type VerifyGrantUpdateDialogProps = {
   grantUpdate: IGrantUpdate;
@@ -185,11 +186,10 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
     <>
       <Button
         onClick={openModal}
-        className={
-          "flex justify-center items-center gap-x-2 rounded-md bg-transparent dark:bg-transparent px-3 py-2 text-sm font-semibold text-red-600 dark:text-red-300  hover:opacity-75 dark:hover:opacity-75 border border-red-200 dark:border-red-900 hover:bg-transparent"
-        }
+        className="flex flex-row gap-2 border border-brand-blue text-brand-blue  text-sm font-semibold bg-white hover:bg-white dark:bg-transparent dark:hover:bg-transparent p-3  rounded-md max-sm:px-2 max-sm:py-1"
       >
         Verify update
+        <ArrowRightIcon className="w-4 h-4" />
       </Button>
       <Transition appear show={isOpen} as={Fragment}>
         <Dialog as="div" className="relative z-10" onClose={closeModal}>

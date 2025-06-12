@@ -11,7 +11,7 @@ import { SearchGrantProgram } from "../index";
 import { CancelButton } from "./buttons/CancelButton";
 import { NextButton } from "./buttons/NextButton";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
-import { useGrant } from "@/hooks";
+import { useGrant } from "@/hooks/useGrant";
 
 export const CommunitySelectionScreen: React.FC = () => {
   const {
@@ -172,7 +172,12 @@ export const CommunitySelectionScreen: React.FC = () => {
               searchForProgram={
                 flowType === "grant"
                   ? undefined
-                  : ["Proof of", "Hackathon", "Divvi Builder Camp", "Celo Support Streams"]
+                  : [
+                      "Proof of",
+                      "Hackathon",
+                      "Divvi Builder Camp",
+                      "Celo Support Streams",
+                    ]
               }
             />
           )}

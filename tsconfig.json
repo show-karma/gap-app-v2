@@ -33,7 +33,8 @@
     "pages/api/topics/create.ts",
     "pages/api/all-apis",
     "components/Utilities/ChildrenBlur.jsx",
-    ".next/types/**/*.ts"
+    ".next/types/**/*.ts",
+    "app/_error.jsx"
   ],
   "exclude": [
     "node_modules",

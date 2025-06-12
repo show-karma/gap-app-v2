@@ -25,7 +25,9 @@ import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-index
 import { ProgramBanner } from "./ProgramBanner";
 
 // Helper function to map maturity stage to status format
-const getStatusFromMaturityStage = (stage: MaturityStageOptions): StatusOptions | undefined => {
+const getStatusFromMaturityStage = (
+  stage: MaturityStageOptions
+): StatusOptions | undefined => {
   if (stage === "all") return undefined;
   return `maturity-stage-${stage}` as StatusOptions;
 };
@@ -36,7 +38,7 @@ const mapSortToApiValue = (sortOption: SortByOptions): string => {
     recent: "recent",
     completed: "completed",
     milestones: "milestones",
-    txnCount: "transactions_desc"
+    txnCount: "transactions_desc",
   };
   return sortMappings[sortOption];
 };
@@ -93,12 +95,17 @@ export const CommunityGrants = ({
       value ? (value as SortByOptions) : ("milestones" as SortByOptions),
   });
 
-  const [selectedMaturityStage, changeMaturityStageQuery] = useQueryState("maturityStage", {
-    defaultValue: defaultSelectedMaturityStage,
-    serialize: (value) => value,
-    parse: (value) =>
-      value ? (value as MaturityStageOptions) : ("all" as MaturityStageOptions),
-  });
+  const [selectedMaturityStage, changeMaturityStageQuery] = useQueryState(
+    "maturityStage",
+    {
+      defaultValue: defaultSelectedMaturityStage,
+      serialize: (value) => value,
+      parse: (value) =>
+        value
+          ? (value as MaturityStageOptions)
+          : ("all" as MaturityStageOptions),
+    }
+  );
 
   const [selectedProgramId, changeSelectedProgramIdQuery] = useQueryState<
     string | null
@@ -487,11 +494,17 @@ export const CommunityGrants = ({
                                 <>
                                   <span
                                     className={cn(
-                                      selected ? "font-semibold" : "font-normal",
+                                      selected
+                                        ? "font-semibold"
+                                        : "font-normal",
                                       "block truncate"
                                     )}
                                   >
-                                    {maturityStages[stageOption as MaturityStageOptions]}
+                                    {
+                                      maturityStages[
+                                        stageOption as MaturityStageOptions
+                                      ]
+                                    }
                                   </span>
 
                                   {selected ? (

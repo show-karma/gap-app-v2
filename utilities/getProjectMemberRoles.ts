@@ -1,4 +1,4 @@
-import { getGapClient } from "@/hooks";
+import { getGapClient } from "@/hooks/useGap";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getChainNameById } from "./network";
 import { rpcClient } from "./rpcClient";
