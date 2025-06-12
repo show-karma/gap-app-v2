@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { useCommunityStore } from "@/store/community";
-import { SortByOptions, StatusOptions } from "@/types";
+import { SortByOptions, StatusOptions, MaturityStageOptions } from "@/types";
 import { zeroUID } from "@/utilities/commons";
 import { getGrants } from "@/utilities/sdk/communities/getGrants";
 import { cn } from "@/utilities/tailwind";
@@ -28,22 +28,23 @@ const sortOptions: Record<SortByOptions, string> = {
   recent: "Recent",
   completed: "Completed",
   milestones: "Milestones",
-  transactions_asc: "Transaction Count (Low to High)",
-  transactions_desc: "Transaction Count (High to Low)",
+  txnCount: "No. of Txns",
 };
 
-const statuses: Record<StatusOptions, string> = {
-  all: "All",
-  "to-complete": "To Complete",
-  completed: "Completed",
-  starting: "Starting",
+const maturityStages: Record<MaturityStageOptions, string> = {
+  all: "All Stages",
+  "0": "Stage 0",
+  "1": "Stage 1",
+  "2": "Stage 2",
+  "3": "Stage 3",
+  "4": "Stage 4",
 };
 
 interface CommunityGrantsProps {
   categoriesOptions: string[];
   defaultSelectedCategories: string[];
   defaultSortBy: SortByOptions;
-  defaultSelectedStatus: StatusOptions;
+  defaultSelectedMaturityStage: MaturityStageOptions;
   communityUid: string;
 }
 
@@ -51,7 +52,7 @@ export const CommunityGrants = ({
   categoriesOptions,
   defaultSelectedCategories,
   defaultSortBy,
-  defaultSelectedStatus,
+  defaultSelectedMaturityStage,
   communityUid,
 }: CommunityGrantsProps) => {
   const params = useParams();
@@ -75,11 +76,11 @@ export const CommunityGrants = ({
       value ? (value as SortByOptions) : ("milestones" as SortByOptions),
   });
 
-  const [selectedStatus, changeStatusQuery] = useQueryState("status", {
-    defaultValue: defaultSelectedStatus,
+  const [selectedMaturityStage, changeMaturityStageQuery] = useQueryState("maturityStage", {
+    defaultValue: defaultSelectedMaturityStage,
     serialize: (value) => value,
     parse: (value) =>
-      value ? (value as StatusOptions) : ("all" as StatusOptions),
+      value ? (value as MaturityStageOptions) : ("all" as MaturityStageOptions),
   });
 
   const [selectedProgramId, changeSelectedProgramIdQuery] = useQueryState<
@@ -119,6 +120,12 @@ export const CommunityGrants = ({
     const fetchNewGrants = async () => {
       setLoading(true);
       try {
+        // Map maturity stage to status format
+        const getStatusFromMaturityStage = (stage: MaturityStageOptions): StatusOptions | undefined => {
+          if (stage === "all") return undefined;
+          return `maturity-stage-${stage}` as StatusOptions;
+        };
+
         const {
           grants: fetchedGrants,
           pageInfo,
@@ -127,7 +134,7 @@ export const CommunityGrants = ({
           communityId as Hex,
           {
             sortBy: selectedSort,
-            status: selectedStatus,
+            status: getStatusFromMaturityStage(selectedMaturityStage),
             categories: selectedCategoriesIds.split("_"),
             selectedProgramId: selectedProgramId || undefined,
             selectedTrackIds: selectedTrackIds || undefined,
@@ -160,9 +167,15 @@ export const CommunityGrants = ({
         }
       } catch (error: any) {
         console.log("error", error);
+        // Map maturity stage to status format for error logging
+        const getStatusFromMaturityStage = (stage: MaturityStageOptions): StatusOptions | undefined => {
+          if (stage === "all") return undefined;
+          return `maturity-stage-${stage}` as StatusOptions;
+        };
+
         errorManager("Error while fetching community grants", error, {
           sortBy: selectedSort,
-          status: selectedStatus,
+          status: getStatusFromMaturityStage(selectedMaturityStage),
           categories: selectedCategoriesIds.split("_"),
           selectedProgramId: selectedProgramId || undefined,
           selectedTrackIds: selectedTrackIds || undefined,
@@ -178,10 +191,10 @@ export const CommunityGrants = ({
   }, [
     communityId,
     selectedSort,
-    selectedStatus,
     selectedCategoriesIds,
     selectedProgramId,
     selectedTrackIds,
+    selectedMaturityStage,
     currentPage,
   ]);
 
@@ -189,9 +202,9 @@ export const CommunityGrants = ({
     setCurrentPage(0);
     changeSortQuery(newValue);
   };
-  const changeStatus = async (newValue: StatusOptions) => {
+  const changeMaturityStage = async (newValue: MaturityStageOptions) => {
     setCurrentPage(0);
-    changeStatusQuery(newValue);
+    changeMaturityStageQuery(newValue);
   };
   const changeCategories = async (newValue: string[]) => {
     setCurrentPage(0);
@@ -415,22 +428,22 @@ export const CommunityGrants = ({
             </Listbox>
             {/* Sort end */}
 
-            {/* Status start */}
+            {/* Maturity Stage start */}
             <Listbox
-              value={selectedStatus}
+              value={selectedMaturityStage}
               onChange={(value) => {
-                changeStatus(value);
+                changeMaturityStage(value);
               }}
             >
               {({ open }) => (
                 <div className="flex items-center gap-x-2  max-sm:w-full max-sm:justify-between">
                   <div className="relative flex-1 w-max">
                     <Listbox.Button
-                      id="status-button"
+                      id="maturity-stage-button"
                       className="cursor-pointer items-center relative w-full rounded-md pr-8 text-left  sm:text-sm sm:leading-6 text-black dark:text-white text-base font-normal"
                     >
                       <span className="flex flex-row gap-1">
-                        {statuses[selectedStatus]}
+                        {maturityStages[selectedMaturityStage]}
                       </span>
                       <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
                         <ChevronDownIcon
@@ -448,9 +461,9 @@ export const CommunityGrants = ({
                       leaveTo="opacity-0"
                     >
                       <Listbox.Options className="absolute z-10 dark:bg-zinc-800 dark:text-zinc-200 mt-1 max-h-60 w-max overflow-auto rounded-md bg-white py-1 text-base  ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                        {Object.keys(statuses).map((statusOption) => (
+                        {Object.keys(maturityStages).map((stageOption) => (
                           <Listbox.Option
-                            key={statusOption}
+                            key={stageOption}
                             className={({ active }) =>
                               cn(
                                 active
@@ -459,7 +472,7 @@ export const CommunityGrants = ({
                                 "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
                               )
                             }
-                            value={statusOption}
+                            value={stageOption}
                             onClick={() => {
                               setCurrentPage(1);
                             }}
@@ -472,7 +485,7 @@ export const CommunityGrants = ({
                                     "block truncate"
                                   )}
                                 >
-                                  {statuses[statusOption as StatusOptions]}
+                                  {maturityStages[stageOption as MaturityStageOptions]}
                                 </span>
 
                                 {selected ? (
@@ -498,7 +511,7 @@ export const CommunityGrants = ({
                 </div>
               )}
             </Listbox>
-            {/* Status end */}
+            {/* Maturity Stage end */}
           </div>
         </div>
       </div>
