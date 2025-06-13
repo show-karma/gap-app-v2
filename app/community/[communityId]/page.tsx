@@ -2,7 +2,7 @@
 import { CommunityFeed } from "@/components/CommunityFeed";
 import { CommunityGrants } from "@/components/CommunityGrants";
 import { ReceiveProjectUpdates } from "@/components/Pages/ReceiveProjectUpdates";
-import type { SortByOptions, StatusOptions } from "@/types";
+import type { SortByOptions, MaturityStageOptions } from "@/types";
 import fetchData from "@/utilities/fetchData";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { INDEXER } from "@/utilities/indexer";
@@ -59,7 +59,7 @@ export default async function Page({ params }: Props) {
 
   const defaultSortBy = "milestones" as SortByOptions;
   const defaultSelectedCategories: string[] = [];
-  const defaultSelectedStatus = "all" as StatusOptions;
+  const defaultSelectedMaturityStage = "all" as MaturityStageOptions;
 
   return (
     <div className="flex flex-row gap-6 w-full max-w-full sm:px-3 md:px-4 px-6 py-2">
@@ -81,7 +81,7 @@ export default async function Page({ params }: Props) {
             categoriesOptions={categoriesOptions}
             defaultSelectedCategories={defaultSelectedCategories}
             defaultSortBy={defaultSortBy}
-            defaultSelectedStatus={defaultSelectedStatus}
+            defaultSelectedMaturityStage={defaultSelectedMaturityStage}
             communityUid={(community as ICommunityResponse).uid}
           />
         </div>

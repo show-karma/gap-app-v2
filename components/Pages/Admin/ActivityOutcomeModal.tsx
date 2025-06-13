@@ -51,6 +51,7 @@ interface ActivityOutcomeModalProps {
   initialType?: OutputType;
   communityId?: string;
   editingSegment?: ImpactSegment | null;
+  isLoadingIndicators?: boolean;
 }
 
 export const ActivityOutcomeModal = ({
@@ -62,6 +63,7 @@ export const ActivityOutcomeModal = ({
   initialType = "output",
   communityId,
   editingSegment = null,
+  isLoadingIndicators = false,
 }: ActivityOutcomeModalProps) => {
   const [isSaving, setIsSaving] = useState(false);
   const { address } = useAccount();
@@ -323,6 +325,7 @@ export const ActivityOutcomeModal = ({
                       indicators={impact_indicators}
                       onIndicatorChange={handleIndicatorChange}
                       communityId={communityId}
+                      isLoading={isLoadingIndicators}
                       onIndicatorCreated={(newIndicator) => {
                         toast.success("Indicator created successfully");
                       }}
