@@ -174,47 +174,32 @@ const CategorizedIndicatorDropdown: FC<{
   onSelect: (indicatorId: string) => void;
   selected: string;
   onCreateNew: () => void;
-  onCreateCommunity?: () => void;
   selectedCommunities: { uid: string; name: string }[];
-}> = ({ indicators, onSelect, selected, onCreateNew, onCreateCommunity, selectedCommunities }) => {
+}> = ({ indicators, onSelect, selected, onCreateNew, selectedCommunities }) => {
   // Group indicators by source
   const projectIndicators = indicators.filter(ind => ind.source === "project");
   const communityIndicators = indicators.filter(ind => ind.source === "community");
 
-  // Group community indicators by community
-  const indicatorsByCommunity = communityIndicators.reduce((acc, indicator) => {
-    const communityId = indicator.communityId || "unknown";
-    if (!acc[communityId]) {
-      acc[communityId] = [];
-    }
-    acc[communityId].push(indicator);
-    return acc;
-  }, {} as Record<string, CategorizedIndicator[]>);
-
-  // Create list for SearchWithValueDropdown
+  // Create flat list with community indicators first, then project indicators
   const dropdownList = [
-    // Project indicators section
-    ...(projectIndicators.length > 0 ? [
-      { value: "section_project", title: "--- Your Project Indicators ---", disabled: true },
-      ...projectIndicators.map(ind => ({ value: ind.id, title: ind.name }))
-    ] : []),
-    
-    // Community indicators sections
-    ...Object.entries(indicatorsByCommunity).flatMap(([communityId, communityInds]) => {
-      const community = selectedCommunities.find(c => c.uid === communityId);
-      const communityName = community?.name || "Unknown Community";
-      return [
-        { value: `section_${communityId}`, title: `--- ${communityName} Indicators ---`, disabled: true },
-        ...communityInds.map(ind => ({ value: ind.id, title: ind.name }))
-      ];
-    })
+    // Community indicators first (with badges)
+    ...communityIndicators.map(indicator => {
+      const communityName = indicator.communityName || "Community";
+      return { 
+        value: indicator.id, 
+        title: `${indicator.name} [${communityName}]`
+      };
+    }),
+    // Project indicators second (clean names)
+    ...projectIndicators.map(indicator => ({ 
+      value: indicator.id, 
+      title: indicator.name 
+    }))
   ];
 
   return (
     <SearchWithValueDropdown
       onSelectFunction={(value) => {
-        // Ignore section headers
-        if (value.startsWith("section_")) return;
         onSelect(value);
       }}
       isMultiple={false}
@@ -224,30 +209,16 @@ const CategorizedIndicatorDropdown: FC<{
       prefixUnselected="Select"
       buttonClassname="w-full"
       customAddButton={
-        <div className="flex flex-col gap-1 w-full">
-          <Button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onCreateNew();
-            }}
-            className="text-sm w-full bg-zinc-700 text-white"
-          >
-            Create Project Indicator
-          </Button>
-          {selectedCommunities.length > 0 && onCreateCommunity && (
-            <Button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onCreateCommunity();
-              }}
-              className="text-sm w-full bg-blue-600 text-white"
-            >
-              Create Community Indicator
-            </Button>
-          )}
-        </div>
+        <Button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onCreateNew();
+          }}
+          className="text-sm w-full bg-zinc-700 text-white"
+        >
+          Create Project Indicator
+        </Button>
       }
     />
   );
@@ -257,28 +228,23 @@ const OutputDialog: FC<{
   open: boolean;
   onOpenChange: (open: boolean) => void;
   selectedPrograms: { programId: string; title: string; chainID: number }[];
-  selectedCommunities: { uid: string; name: string }[];
   onSuccess: (indicator: ImpactIndicatorWithData) => void;
   onError: () => void;
-  createType: "project" | "community";
-  selectedCommunityId?: string;
-}> = ({ open, onOpenChange, selectedPrograms, selectedCommunities, onSuccess, onError, createType, selectedCommunityId }) => (
+}> = ({ open, onOpenChange, selectedPrograms, onSuccess, onError }) => (
   <Dialog.Root open={open} onOpenChange={onOpenChange}>
     <Dialog.Portal>
       <Dialog.Overlay className="fixed z-[10] inset-0 bg-black/50 backdrop-blur-sm" />
       <Dialog.Content
-        className="fixed z-[11] left-1/2 top-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white p-6 shadow-lg dark:bg-zinc-800"
-        onSubmit={(e) => e.stopPropagation()}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.stopPropagation();
-          }
+        className="fixed z-[10] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 
+               bg-white dark:bg-zinc-800 p-6 rounded-lg shadow-lg 
+               w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+        style={{
+          transform: "translate(-50%, -50%)",
         }}
       >
         <div className="flex items-center justify-between mb-4">
           <Dialog.Title className="text-lg font-semibold">
-            Create New {createType === "project" ? "Project" : "Community"} Indicator
+            Create New Project Indicator
           </Dialog.Title>
           <Dialog.Close className="text-gray-400 hover:text-gray-500">
             <XMarkIcon className="h-5 w-5" />
@@ -286,8 +252,7 @@ const OutputDialog: FC<{
         </div>
 
         <IndicatorForm
-          preSelectedPrograms={createType === "project" ? selectedPrograms : []}
-          communityId={createType === "community" ? selectedCommunityId : undefined}
+          preSelectedPrograms={selectedPrograms}
           onSuccess={onSuccess}
           onError={onError}
         />
@@ -395,8 +360,6 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const [grants, setGrants] = useState<GrantOption[]>([]);
   const [outputs, setOutputs] = useState<ImpactIndicatorWithData[]>([]);
   const [isOutputDialogOpen, setIsOutputDialogOpen] = useState(false);
-  const [createIndicatorType, setCreateIndicatorType] = useState<"project" | "community">("project");
-  const [selectedCommunityForCreation, setSelectedCommunityForCreation] = useState<string>("");
   const { fields, append, remove } = useFieldArray({
     control,
     name: "deliverables",
@@ -831,12 +794,35 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     await createProjectUpdate(data);
   };
 
+  const currentGrantIds = watch("grants") || [];
+  const selectedPrograms = currentGrantIds
+    .map((grantId) => {
+      const grant = grants.find((g) => g.value === grantId);
+      if (!grant) return null;
+      return {
+        programId: grant.value,
+        title: grant.title,
+        chainID: grant.chain,
+      };
+    })
+    .filter(
+      (
+        program
+      ): program is { programId: string; title: string; chainID: number } =>
+        program !== null && program.programId !== ""
+    );
+
+  const selectedOutputs = [...(watch("outputs") || [])];
+
+  const activityWithSameTitle =
+    Boolean(project?.updates.find((u) => u.data.title === watch("title"))) &&
+    !isEditMode;
+
+  const formValues = watch();
+
   const handleOutputSuccess = (newIndicator: ImpactIndicatorWithData) => {
-    // Update the project indicators list if it's a project indicator
-    if (createIndicatorType === "project") {
-      setOutputs((prev) => [...prev, newIndicator]);
-    }
-    // Community indicators will be refetched automatically by the query
+    // Update the project indicators list
+    setOutputs((prev) => [...prev, newIndicator]);
 
     const currentOutputs = watch("outputs") || [];
     if (selectedToCreate !== undefined) {
@@ -875,32 +861,6 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const handleOutputError = () => {
     toast.error("Failed to create output");
   };
-
-  const currentGrantIds = watch("grants") || [];
-  const selectedPrograms = currentGrantIds
-    .map((grantId) => {
-      const grant = grants.find((g) => g.value === grantId);
-      if (!grant) return null;
-      return {
-        programId: grant.value,
-        title: grant.title,
-        chainID: grant.chain,
-      };
-    })
-    .filter(
-      (
-        program
-      ): program is { programId: string; title: string; chainID: number } =>
-        program !== null && program.programId !== ""
-    );
-
-  const selectedOutputs = [...(watch("outputs") || [])];
-
-  const activityWithSameTitle =
-    Boolean(project?.updates.find((u) => u.data.title === watch("title"))) &&
-    !isEditMode;
-
-  const formValues = watch();
 
   return (
     <form
@@ -1330,16 +1290,9 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                         }}
                         selected={output.outputId}
                         onCreateNew={() => {
-                          setCreateIndicatorType("project");
                           setIsOutputDialogOpen(true);
                           setSelectedToCreate(index);
                         }}
-                        onCreateCommunity={selectedCommunities.length > 0 ? () => {
-                          setCreateIndicatorType("community");
-                          setSelectedCommunityForCreation(selectedCommunities[0].uid);
-                          setIsOutputDialogOpen(true);
-                          setSelectedToCreate(index);
-                        } : undefined}
                         selectedCommunities={selectedCommunities}
                       />
                       <OutputDialog
@@ -1348,16 +1301,11 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                           setIsOutputDialogOpen(open);
                           if (!open) {
                             setSelectedToCreate(undefined);
-                            setCreateIndicatorType("project");
-                            setSelectedCommunityForCreation("");
                           }
                         }}
                         selectedPrograms={selectedPrograms}
-                        selectedCommunities={selectedCommunities}
                         onSuccess={handleOutputSuccess}
                         onError={handleOutputError}
-                        createType={createIndicatorType}
-                        selectedCommunityId={selectedCommunityForCreation}
                       />
                       <EmptyDiv />
                     </td>
