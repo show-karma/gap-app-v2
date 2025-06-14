@@ -6,7 +6,7 @@ import Link from "next/link";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { PAGES } from "@/utilities/pages";
 import { useProjectStore } from "@/store";
-import { useProjectContext } from "@/contexts/ProjectContext";
+import { useProjectData } from "@/hooks/useProject";
 
 const MilestoneForm = dynamic(
   () => import("@/components/Forms/Milestone").then((mod) => mod.MilestoneForm),
@@ -18,16 +18,10 @@ export default function Page() {
   const { grant } = useGrantStore();
   const storeProject = useProjectStore((state) => state.project);
   
-  // Try to get project from context as fallback
-  let contextProject = null;
-  try {
-    const contextData = useProjectContext();
-    contextProject = contextData?.project;
-  } catch {
-    // Not within ProjectProvider context, contextProject remains null
-  }
+  // Use Zustand store for project data
+  const { project: zustandProject } = useProjectData();
   
-  const project = storeProject || contextProject;
+  const project = storeProject || zustandProject;
   
   if (!grant) {
     return null;

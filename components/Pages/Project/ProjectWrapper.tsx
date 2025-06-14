@@ -38,7 +38,7 @@ import { useContactInfo } from "@/hooks/useContactInfo";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { ShareDialog } from "../GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/ShareDialog";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
-import { useProjectContext } from "@/contexts/ProjectContext";
+import { useProject } from "@/hooks/useProject";
 import ProjectHeaderLoading from "./Loading/Header";
 
 interface ProjectWrapperProps {
@@ -65,8 +65,8 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
   const { isAuth } = useAuthStore();
   const { gap } = useGap();
   
-  // Get project from context
-  const { project } = useProjectContext();
+  // Fetch project data using React Query + Zustand
+  const { project, isLoading: isProjectLoading } = useProject(projectId);
   const isAuthorized = isOwner || isProjectAdmin || isProjectOwner;
   const { data: contactsInfo } = useContactInfo(projectId, isAuthorized);
   const hasContactInfo = Boolean(contactsInfo?.length);
@@ -388,8 +388,8 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
   const { isProgressModalOpen } = useProgressModalStore();
   const { isOpen: isShareDialogOpen } = useShareDialogStore();
 
-  // Show loading state if no project available (after all hooks are called)
-  if (!project) {
+  // Show loading state if project is still loading or not available
+  if (isProjectLoading || !project) {
     return <ProjectHeaderLoading />;
   }
 

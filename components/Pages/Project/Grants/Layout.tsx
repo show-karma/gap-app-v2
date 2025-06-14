@@ -10,7 +10,7 @@ import { useAuthStore } from "@/store/auth";
 import { useCommunitiesStore } from "@/store/communities";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useGrantStore } from "@/store/grant";
-import { useProjectContext } from "@/contexts/ProjectContext";
+import { useProjectData } from "@/hooks/useProject";
 import { GrantScreen } from "@/types";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
@@ -106,17 +106,11 @@ export const GrantsLayout = ({
   const { gap } = useGap();
   const { isAuth } = useAuthStore();
 
-  // Try to get project from context as fallback
-  let contextProject = null;
-  try {
-    const contextData = useProjectContext();
-    contextProject = contextData?.project;
-  } catch {
-    // Not within ProjectProvider context, contextProject remains null
-  }
+  // Use Zustand store for project data
+  const { project: zustandProject } = useProjectData();
 
-  // Use store project first, then fetched project, then context project as fallback
-  const project = storedProject || fetchedProject || contextProject;
+  // Use store project first, then fetched project, then zustand project as fallback
+  const project = storedProject || fetchedProject || zustandProject;
 
   const checkIfAdmin = async () => {
     setIsCommunityAdmin(false);

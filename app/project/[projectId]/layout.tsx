@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import ProjectHeaderLoading from "@/components/Pages/Project/Loading/Header";
-import { ProjectDataProvider } from "./providers/ProjectDataProvider";
+
 import { generateProjectOverviewMetadata } from "@/utilities/metadata/projectMetadata";
 
 export async function generateMetadata({
@@ -35,13 +35,11 @@ export default async function RootLayout({
   params: { projectId: string };
 }) {
   return (
-    <ProjectDataProvider projectId={projectId}>
-      <div className="flex flex-col gap-0">
-        <Suspense fallback={<ProjectHeaderLoading />}>
-          <ProjectWrapper projectId={projectId} />
-        </Suspense>
-        <div className="px-4 sm:px-6 lg:px-12">{children}</div>
-      </div>
-    </ProjectDataProvider>
+    <div className="flex flex-col gap-0">
+      <Suspense fallback={<ProjectHeaderLoading />}>
+        <ProjectWrapper projectId={projectId} />
+      </Suspense>
+      <div className="px-4 sm:px-6 lg:px-12">{children}</div>
+    </div>
   );
 }

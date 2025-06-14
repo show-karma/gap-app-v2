@@ -8,7 +8,7 @@ import dynamic from "next/dynamic";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useGrantFormStore } from "./store";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useProjectContext } from "@/contexts/ProjectContext";
+import { useProjectData } from "@/hooks/useProject";
 
 import { MESSAGES } from "@/utilities/messages";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
@@ -66,7 +66,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
   const storeProject = useProjectStore((state) => state.project);
   
   // Get project from context as primary source
-  const { project: contextProject } = useProjectContext();
+  const { project: contextProject } = useProjectData();
   
   const selectedProject = contextProject || storeProject;
   const { isProjectAdmin } = useProjectStore();

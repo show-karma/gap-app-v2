@@ -4,7 +4,7 @@
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
-import { useProjectContext } from "@/contexts/ProjectContext";
+import { useProjectData } from "@/hooks/useProject";
 
 import { PAGES } from "@/utilities/pages";
 import Link from "next/link";
@@ -57,7 +57,7 @@ function ProjectPage() {
   const storeProject = useProjectStore((state) => state.project);
   
   // Get project from context as primary source
-  const { project: contextProject } = useProjectContext();
+  const { project: contextProject } = useProjectData();
   
   const project = contextProject || storeProject;
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);

@@ -4,7 +4,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useProjectContext } from "@/contexts/ProjectContext";
+import { useProjectData } from "@/hooks/useProject";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
@@ -45,7 +45,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
   const storeData = useProjectStore((state) => ({ project: state.project, isProjectOwner: state.isProjectOwner }));
   
   // Get project from context as primary source
-  const { project: contextProject } = useProjectContext();
+  const { project: contextProject } = useProjectData();
   
   const project = contextProject || storeData.project;
   const isProjectOwner = storeData.isProjectOwner;

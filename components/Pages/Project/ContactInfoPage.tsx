@@ -3,7 +3,7 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { ContactInfoSubscription } from "@/components/ContactInfoSubscription";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useContactInfo } from "@/hooks/useContactInfo";
-import { useProjectContext } from "@/contexts/ProjectContext";
+import { useProjectData } from "@/hooks/useProject";
 
 const ContactInfoPage = () => {
   const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);
@@ -13,16 +13,10 @@ const ContactInfoPage = () => {
   const storeProjectId = useProjectStore((state) => state.project?.uid);
   const isAuthorized = useProjectStore((state) => state.isProjectAdmin);
   
-  // Try to get project from context as fallback
-  let contextProject = null;
-  try {
-    const contextData = useProjectContext();
-    contextProject = contextData?.project;
-  } catch {
-    // Not within ProjectProvider context, contextProject remains null
-  }
+  // Use Zustand store for project data
+  const { project: zustandProject } = useProjectData();
   
-  const projectId = storeProjectId || contextProject?.uid;
+  const projectId = storeProjectId || zustandProject?.uid;
   const { data: contactsInfo, isLoading } = useContactInfo(
     projectId,
     isAuthorized

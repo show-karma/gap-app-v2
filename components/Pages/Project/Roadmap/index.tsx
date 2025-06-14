@@ -20,7 +20,7 @@ import { Button } from "@/components/Utilities/Button";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { MESSAGES } from "@/utilities/messages";
 import { UnifiedMilestone } from "@/types/roadmap";
-import { useProjectContext } from "@/contexts/ProjectContext";
+import { useProjectData } from "@/hooks/useProject";
 
 interface ProjectRoadmapProps {
   project?: IProjectResponse;
@@ -31,17 +31,11 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
   const { projectId } = useParams();
   const searchParams = useSearchParams();
   
-  // Try to get project from context as fallback
-  let contextProject = null;
-  try {
-    const contextData = useProjectContext();
-    contextProject = contextData?.project;
-  } catch {
-    // Not within ProjectProvider context, contextProject remains null
-  }
+  // Use Zustand store for project data
+  const { project: zustandProject } = useProjectData();
   
-  // Use prop project first, then context project as fallback
-  const project = propProject || contextProject;
+  // Use prop project first, then zustand project as fallback
+  const project = propProject || zustandProject;
   
   const {
     pendingMilestones,
