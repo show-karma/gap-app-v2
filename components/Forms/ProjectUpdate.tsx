@@ -178,23 +178,23 @@ const CategorizedIndicatorDropdown: FC<{
 }> = ({ indicators, onSelect, selected, onCreateNew, selectedCommunities }) => {
   // Group indicators by source
   const projectIndicators = indicators.filter(ind => ind.source === "project");
-  const communityIndicators = indicators.filter(ind => ind.source === "community");
+  const selectedCommunityIds = selectedCommunities.map(c => c.uid);
+  const communityIndicators = indicators.filter(ind => 
+    ind.source === "community" && 
+    ind.communityId && 
+    selectedCommunityIds.includes(ind.communityId)
+  );
 
-  // Create flat list with community indicators first, then project indicators
+  // Create flat list with only community indicators from selected communities
   const dropdownList = [
-    // Community indicators first (with badges)
+    // Only community indicators from selected communities
     ...communityIndicators.map(indicator => {
       const communityName = indicator.communityName || "Community";
       return { 
         value: indicator.id, 
         title: `${indicator.name} [${communityName}]`
       };
-    }),
-    // Project indicators second (clean names)
-    ...projectIndicators.map(indicator => ({ 
-      value: indicator.id, 
-      title: indicator.name 
-    }))
+    })
   ];
 
   return (
