@@ -2,65 +2,42 @@
 /* eslint-disable @next/next/no-img-element */
 import { Button } from "@/components/Utilities/Button";
 import { useProjectStore } from "@/store";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
 import { Dialog, Transition } from "@headlessui/react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { FC, Fragment, useEffect, useState } from "react";
-import toast from "react-hot-toast";
-import { keccak256, toHex } from "viem";
-import { useAccount, useSignMessage } from "wagmi";
+import { useAccount } from "wagmi";
 
-import { errorManager } from "@/components/Utilities/errorManager";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { queryClient } from "@/components/Utilities/WagmiProvider";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
-import { envVars } from "@/utilities/enviromentVars";
+import { useInviteLink, useInviteUrl } from "@/hooks/useInviteLink";
 import {
   ArrowPathIcon,
   CheckIcon,
   ClipboardDocumentIcon,
 } from "@heroicons/react/24/outline";
-import { useQuery } from "@tanstack/react-query";
 
 type InviteMemberDialogProps = {};
-
-interface InviteCode {
-  id: string;
-  hash: string;
-  signature: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-const getCurrentCode = async (projectIdOrSlug: string) => {
-  try {
-    const [data, error] = await fetchData(
-      INDEXER.PROJECT.INVITATION.GET_LINKS(projectIdOrSlug)
-    );
-    if (error) throw error;
-    if (!data || data.length === 0) return null;
-    return data[0] as InviteCode;
-  } catch (e) {
-    errorManager("Failed to get current code", e);
-    return null;
-  }
-};
 
 export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const project = useProjectStore((state) => state.project);
   const [, copyToClipboard] = useCopyToClipboard();
-  const { data, isSuccess } = useQuery<InviteCode | null>({
-    queryKey: ["invite-code"],
-    queryFn: () => getCurrentCode(project?.uid as string),
-    enabled: !!project,
-  });
+
+  const {
+    inviteCode,
+    isLoading,
+    isGenerating,
+    isRevoking,
+    generateCode,
+    revokeCode,
+    isSuccess,
+  } = useInviteLink(project?.uid);
+
   const { address } = useAccount();
-  const code = data?.hash;
+  const code = inviteCode?.hash;
+  const inviteUrl = useInviteUrl(project, code);
   const openModal = () => {
     setIsOpen(true);
   };
@@ -68,59 +45,12 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
   const closeModal = () => {
     setIsOpen(false);
   };
-  const generateCode = async () => {
-    setIsLoading(true);
-    try {
-      const messageToSign = new Date().getTime();
-      const hexedMessage = keccak256(toHex(messageToSign));
-      const [data, error] = await fetchData(
-        INDEXER.PROJECT.INVITATION.NEW_CODE(project?.uid as string),
-        "POST",
-        {
-          hash: hexedMessage,
-        }
-      );
-      if (error) throw error;
-      queryClient.invalidateQueries({ queryKey: ["invite-code"] });
-    } catch (e) {
-      errorManager("Failed to generate code to invite members", e, {
-        projectId: project?.uid,
-        address,
-        isProjectOwner,
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const revokeCode = async () => {
-    try {
-      const [response, error] = await fetchData(
-        INDEXER.PROJECT.INVITATION.REVOKE_CODE(
-          project?.uid as string,
-          data?.id as string
-        ),
-        "PUT"
-      );
-      if (error) throw error;
-      toast.success("Invite code revoked successfully");
-      queryClient.invalidateQueries({ queryKey: ["invite-code"] });
-    } catch (e) {
-      errorManager("Failed to revoke code", e);
-    }
-  };
-
-  const urlToCode = `https://${
-    envVars.isDev ? "gapstag.karmahq.xyz" : "gap.karmahq.xyz"
-  }/project/${
-    project?.details?.data.slug || project?.uid
-  }/?invite-code=${code}`;
 
   useEffect(() => {
-    if (isSuccess && !data && isOpen) {
+    if (isSuccess && !inviteCode && isOpen) {
       generateCode();
     }
-  }, [isSuccess, data, isOpen]);
+  }, [isSuccess, inviteCode, isOpen, generateCode]);
 
   return (
     <>
@@ -176,11 +106,13 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
                           <Button
                             className="text-zinc-800 font-normal hover:opacity-75 dark:text-zinc-100 w-full h-full bg-zinc-100 dark:bg-zinc-900 hover:bg-zinc-200 dark:hover:bg-zinc-800 p-2 rounded-md text-wrap break-all text-left"
                             onClick={() => {
-                              copyToClipboard(urlToCode);
-                              setIsCopied(true);
+                              if (inviteUrl) {
+                                copyToClipboard(inviteUrl);
+                                setIsCopied(true);
+                              }
                             }}
                           >
-                            {urlToCode}
+                            {inviteUrl}
                           </Button>
                           <div className="flex flex-row gap-0 h-full">
                             <Tooltip.Provider>
@@ -190,8 +122,10 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
                                     <Button
                                       className="text-zinc-600 p-2 hover:opacity-75 bg-zinc-200 dark:bg-zinc-700 dark:text-zinc-100 hover:bg-zinc-300 dark:hover:bg-zinc-600 h-full rounded-l-md rounded-r-none"
                                       onClick={() => {
-                                        copyToClipboard(urlToCode);
-                                        setIsCopied(true);
+                                        if (inviteUrl) {
+                                          copyToClipboard(inviteUrl);
+                                          setIsCopied(true);
+                                        }
                                       }}
                                     >
                                       {isCopied ? (
@@ -221,7 +155,9 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
                                       className=" text-blue-900 bg-blue-200 dark:text-blue-200 dark:bg-blue-900 p-2 hover:opacity-75 hover:bg-blue-300 dark:hover:bg-blue-800 rounded-r-md rounded-l-none h-full"
                                       onClick={() => {
                                         setIsCopied(false);
-                                        revokeCode();
+                                        if (inviteCode?.id) {
+                                          revokeCode(inviteCode.id);
+                                        }
                                       }}
                                     >
                                       <ArrowPathIcon className="w-6 h-6" />
@@ -242,7 +178,7 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
                           </div>
                         </div>
                       </div>
-                    ) : isLoading ? (
+                    ) : isLoading || isGenerating ? (
                       <p className="text-black dark:text-zinc-200 text-base">
                         Generating code...
                       </p>

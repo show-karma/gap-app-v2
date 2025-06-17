@@ -1,4 +1,3 @@
-import { ProjectRoadmapLoading } from "@/components/Pages/Project/Loading/Roadmap";
 import { ProjectRoadmap } from "@/components/Pages/Project/Roadmap";
 import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
