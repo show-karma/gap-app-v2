@@ -1,5 +1,5 @@
+"use client";
 import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
-
 import dynamic from "next/dynamic";
 
 const GrantCompletion = dynamic(

@@ -5,6 +5,7 @@ import { APIContact } from "@/types/project";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useAccount } from "wagmi";
+import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 
 interface Contact {
   id: string;
@@ -62,5 +63,6 @@ export const useContactInfo = (
       }
     },
     enabled: !!projectId && isAuthorized,
+    ...defaultQueryOptions,
   });
 };

@@ -9,8 +9,10 @@ const ContactInfoPage = () => {
   const isProjectOwnerLoading = useProjectStore(
     (state) => state.isProjectOwnerLoading
   );
-  const projectId = useProjectStore((state) => state.project?.uid);
+  const project = useProjectStore((state) => state.project);
   const isAuthorized = useProjectStore((state) => state.isProjectAdmin);
+  
+  const projectId = project?.uid;
   const { data: contactsInfo, isLoading } = useContactInfo(
     projectId,
     isAuthorized

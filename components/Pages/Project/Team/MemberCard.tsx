@@ -19,6 +19,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import { useAccount } from "wagmi";
 import { type Hex } from "viem";
+import { useTeamProfiles } from "@/hooks/useTeamProfiles";
+import { useProjectInstance } from "@/hooks/useProjectInstance";
 
 const iconsClassnames = {
   general:
@@ -26,7 +28,8 @@ const iconsClassnames = {
 };
 
 export const MemberCard = ({ member }: { member: string }) => {
-  const { teamProfiles } = useProjectStore((state) => state);
+  const project = useProjectStore((state) => state.project);
+  const { teamProfiles } = useTeamProfiles(project);
   const profile = teamProfiles?.find(
     (item) => item.recipient.toLowerCase() === member.toLowerCase()
   );
@@ -37,7 +40,9 @@ export const MemberCard = ({ member }: { member: string }) => {
   const { address } = useAccount();
   const isAuthorized = isProjectOwner || isContractOwner;
   const isAdminOrAbove = isProjectOwner || isContractOwner || isProjectAdmin;
-  const project = useProjectStore((state) => state.project);
+  const { project: projectInstance } = useProjectInstance(
+    project?.details?.data.slug || project?.uid || ""
+  );
   const { openModal } = useContributorProfileModalStore();
 
   const {
@@ -46,8 +51,11 @@ export const MemberCard = ({ member }: { member: string }) => {
     isFetching: isFetchingRoles,
   } = useQuery<Record<string, Member["role"]>>({
     queryKey: ["memberRoles", project?.uid],
-    queryFn: () => (project ? getProjectMemberRoles(project) : {}),
-    enabled: !!project,
+    queryFn: () =>
+      project && projectInstance
+        ? getProjectMemberRoles(project, projectInstance)
+        : {},
+    enabled: !!project && !!projectInstance,
     staleTime: 1000 * 60 * 5,
   });
 

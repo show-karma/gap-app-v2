@@ -110,7 +110,6 @@ export async function generateMetadata({
     icons: metadata.icons,
   };
 }
-
 const Page = () => {
   return (
     <Suspense fallback={<ProjectGrantsOverviewLoading />}>
