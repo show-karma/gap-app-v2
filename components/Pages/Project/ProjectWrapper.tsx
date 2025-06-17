@@ -38,12 +38,19 @@ import ProjectHeaderLoading from "./Loading/Header";
 import { useProjectInstance } from "@/hooks/useProjectInstance";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 
+interface Member {
+  uid: string;
+  recipient: string;
+  details?: {
+    name?: string;
+  };
+}
 interface ProjectWrapperProps {
   projectId: string;
 }
+
 export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
   const {
-    setProject,
     isProjectAdmin,
     setIsProjectAdmin,
     setIsProjectAdminLoading,
@@ -55,23 +62,15 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
 
   const isOwner = useOwnerStore((state) => state.isOwner);
   const signer = useSigner();
-  const { address, isConnected, isConnecting, chain } = useAccount();
+  const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore();
 
-  // Fetch project data using React Query + Zustand
   const { project, isLoading: isProjectLoading } = useProject(projectId);
   const isAuthorized = isOwner || isProjectAdmin || isProjectOwner;
   const { data: contactsInfo } = useContactInfo(projectId, isAuthorized);
   const hasContactInfo = Boolean(contactsInfo?.length);
 
-  // Fetch team profiles using React Query (automatically syncs with store)
   useTeamProfiles(project);
-
-  useEffect(() => {
-    if (project) {
-      setProject(project);
-    }
-  }, [project, setProject]);
 
   useEffect(() => {
     if (
@@ -217,14 +216,6 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
 
   const socials = getSocials(project?.details?.data.links);
 
-  interface Member {
-    uid: string;
-    recipient: string;
-    details?: {
-      name?: string;
-    };
-  }
-
   const mountMembers = () => {
     const members: Member[] = [];
     if (project?.members) {
@@ -251,7 +242,6 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
     return members;
   };
 
-  const members = mountMembers();
   const { isIntroModalOpen } = useIntroModalStore();
   const { isEndorsementOpen } = useEndorsementStore();
   const { isProgressModalOpen } = useProgressModalStore();
