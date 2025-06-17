@@ -34,7 +34,7 @@ export async function generateMetadata({
       redirect(`/project/${original.details?.data?.slug}`);
     }
   }
-    
+
   return generateProjectOverviewMetadata(projectInfo, projectId);
 }
 
@@ -45,30 +45,29 @@ export default async function RootLayout({
   children: React.ReactNode;
   params: { projectId: string };
 }) {
-  const project = await gapIndexerApi
-    .projectBySlug(projectId)
-    .then((res) => res.data)
-    .catch(() => notFound());
+  // TODO: Remove this once we have our API time running well
+  // const project = await gapIndexerApi
+  //   .projectBySlug(projectId)
+  //   .then((res) => res.data)
+  //   .catch(() => notFound());
 
-  if (!project || project.uid === zeroUID) {
-    notFound();
-  }
+  // if (!project || project.uid === zeroUID) {
+  //   notFound();
+  // }
 
-  if (project?.pointers && project?.pointers?.length > 0) {
-    const original = await gapIndexerApi
-      .projectBySlug(project.pointers[0].data?.ogProjectUID)
-      .then((res) => res.data)
-      .catch(() => null);
-    if (original) {
-      redirect(`/project/${original.details?.data?.slug}`);
-    }
-  }
+  // if (project?.pointers && project?.pointers?.length > 0) {
+  //   const original = await gapIndexerApi
+  //     .projectBySlug(project.pointers[0].data?.ogProjectUID)
+  //     .then((res) => res.data)
+  //     .catch(() => null);
+  //   if (original) {
+  //     redirect(`/project/${original.details?.data?.slug}`);
+  //   }
+  // }
 
   return (
     <div className="flex flex-col gap-0">
-      <Suspense fallback={<ProjectHeaderLoading />}>
-        <ProjectWrapper projectId={projectId} />
-      </Suspense>
+      <ProjectWrapper projectId={projectId} />
       <div className="px-4 sm:px-6 lg:px-12">{children}</div>
     </div>
   );
