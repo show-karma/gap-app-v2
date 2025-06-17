@@ -84,6 +84,7 @@ export const ProjectNavigator = ({
                 ? "border-blue-600 text-gray-700 font-bold px-0 dark:text-gray-200 max-lg:border-b-2"
                 : "border-transparent text-gray-600 px-0 hover:border-gray-300 hover:text-gray-700 dark:text-gray-200 font-normal"
             )}
+            prefetch
           >
             {tab.name}
             {tab.name === "Contact Info" && !hasContactInfo ? (
