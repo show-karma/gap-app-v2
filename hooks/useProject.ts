@@ -15,7 +15,7 @@ export const useProject = (projectId: string) => {
     },
     enabled: !!projectId,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+    gcTime: 1 * 60 * 1000, // 10 minutes (formerly cacheTime)
   });
 
   useEffect(() => {
