@@ -19,6 +19,7 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import { Suspense } from "react";
 import { headers } from "next/headers";
 import HotjarAnalytics from "@/components/Utilities/HotjarAnalytics";
+import { ClientLayoutWrapper } from "@/components/ClientLayoutWrapper";
 
 export const metadata = defaultMetadata;
 
@@ -42,20 +43,22 @@ export default async function RootLayout({
       <body>
         <ThemeProvider defaultTheme="light" attribute="class">
           <WagmiProvider cookie={cookie}>
-            <Toaster />
-            <StepperDialog />
-            <ProgressBarWrapper />
-            <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">
-              <div className="flex flex-col w-full h-full">
-                <div className="fixed w-full bg-white dark:bg-black z-10">
-                  <Header />
+            <ClientLayoutWrapper>
+              <Toaster />
+              <StepperDialog />
+              <ProgressBarWrapper />
+              <div className="min-h-screen flex flex-col justify-between h-full text-gray-700 bg-white dark:bg-black dark:text-white">
+                <div className="flex flex-col w-full h-full">
+                  <div className="fixed w-full bg-white dark:bg-black z-10">
+                    <Header />
+                  </div>
+                  <div className="h-[72px] w-full" />
+                  {children}
+                  <Analytics />
                 </div>
-                <div className="h-[72px] w-full" />
-                {children}
-                <Analytics />
+                <Footer />
               </div>
-              <Footer />
-            </div>
+            </ClientLayoutWrapper>
           </WagmiProvider>
           <SpeedInsights />
         </ThemeProvider>

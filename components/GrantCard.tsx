@@ -10,6 +10,11 @@ import { MarkdownPreview } from "./Utilities/MarkdownPreview";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { TrackTags } from "./TrackTags";
 import { ProfilePicture } from "./Utilities/ProfilePicture";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { useProjectStore } from "@/store";
+import { useState } from "react";
 
 interface GrantCardProps {
   grant: IGrantResponse;
@@ -49,6 +54,10 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
     | undefined;
   const communityId = grant.data?.communityUID;
   const programId = grant.details?.data?.programId;
+  const router = useRouter();
+  const { setProject } = useProjectStore();
+  const [isClicked, setIsClicked] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   // Extract the base programId if it includes a chainId suffix (format: programId_chainId)
   const baseProgramId = programId?.includes("_")
@@ -58,20 +67,75 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
   // Check if we have valid track IDs to display
   const hasTrackIds = selectedTrackIds && selectedTrackIds.length > 0;
 
+  const projectSlug = grant.project?.details?.data?.slug || grant.refUID || "";
+  const targetUrl = PAGES.PROJECT.GRANT(projectSlug, grant.uid);
+
+  // Pre-fetch project data on hover for faster navigation
+  const handleMouseEnter = async () => {
+    setIsHovered(true);
+    try {
+      // Use router.prefetch for Next.js route pre-fetching
+      router.prefetch(targetUrl);
+      
+      // Also pre-fetch project data to store
+      const projectData = await gapIndexerApi
+        .projectBySlug(projectSlug)
+        .then((res) => res.data)
+        .catch(() => null);
+      
+      if (projectData) {
+        // Pre-cache the project data
+        setProject(projectData);
+      }
+    } catch (error) {
+      // Silently fail - pre-fetching is an optimization, not critical
+      console.debug("Pre-fetch failed:", error);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+  };
+
+  // Handle click with immediate feedback
+  const handleClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsClicked(true);
+    
+    // Immediate visual feedback
+    setTimeout(() => setIsClicked(false), 300);
+    
+    // Navigate immediately
+    router.push(targetUrl);
+  };
+
   return (
-    <a
-      id="grant-card"
-      href={PAGES.PROJECT.GRANT(
-        grant.project?.details?.data?.slug || grant.refUID || "",
-        grant.uid
-      )}
-      className="flex h-full w-full max-w-[320px] relative flex-col items-start justify-between gap-3 rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2 transition-all duration-300 ease-in-out hover:opacity-80"
+    <div
+      className={`flex h-full w-full max-w-[320px] relative flex-col items-start justify-between gap-3 rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2 transition-all duration-200 ease-in-out cursor-pointer
+        ${isHovered ? 'shadow-lg scale-[1.02] border-blue-300 dark:border-blue-600' : 'hover:opacity-80'}
+        ${isClicked ? 'scale-[0.98] bg-blue-50 dark:bg-blue-900/20' : ''}
+      `}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onClick={handleClick}
     >
+      {/* Loading overlay for immediate feedback */}
+      {isClicked && (
+        <div className="absolute inset-0 bg-blue-100/50 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center z-10">
+          <div className="flex items-center gap-2 bg-white dark:bg-zinc-800 px-3 py-2 rounded-lg shadow-md">
+            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            <span className="text-sm font-medium text-blue-600 dark:text-blue-400">Opening...</span>
+          </div>
+        </div>
+      )}
+
       <div className="w-full flex flex-col gap-1 ">
         <div
-          className="h-[4px] w-full rounded-full mb-2.5"
+          className="h-[4px] w-full rounded-full mb-2.5 transition-all duration-200"
           style={{
-            background: pickColor(index),
+            background: isHovered ? 
+              `linear-gradient(45deg, ${pickColor(index)}, ${pickColor(index + 1)})` : 
+              pickColor(index),
           }}
         />
 
@@ -94,6 +158,14 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
                 {grant.project?.details?.data?.title || grant.uid}
               </p>
             </div>
+            {/* Click indicator */}
+            {isHovered && (
+              <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </div>
+            )}
           </div>
           <p
             id="grant-title"
@@ -166,37 +238,6 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
       </div>
 
       <div className="h-1" />
-      {/* <div className="flex px-3 items-center justify-between">
-        <div className="flex items-center w-full flex-wrap gap-2">
-          {firstFiveMembers(grant.members).length ? (
-            <>
-              <p className="text-sm font-medium text-slate-500 dark:text-slate-200">
-                Built by
-              </p>
-              <div className="flex flex-row gap-0 flex-1">
-                {firstFiveMembers(grant.members).map((member, index) => (
-                  <span
-                    key={index}
-                    className="-mr-1.5"
-                    style={{ zIndex: 5 - index }}
-                  >
-                    <img
-                      src={blo(member, 8)}
-                      alt={member}
-                      className="h-5 w-5 rounded-full border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5"
-                    />
-                  </span>
-                ))}
-                {restMembersCounter(grant.members) > 0 && (
-                  <p className="flex items-center justify-center h-12 w-12 rounded-full ring-4 ring-gray-50 dark:ring-zinc-800 border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5">
-                    +
-                  </p>
-                )}
-              </div>
-            </>
-          ) : null}
-        </div>
-      </div> */}
-    </a>
+    </div>
   );
 };

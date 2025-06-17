@@ -55,17 +55,22 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
     project: storedProject,
   } = useProjectStore((state) => state);
 
+  // Only update the store if the project data has changed
   useEffect(() => {
-    setProject(project);
-  }, [project]);
+    if (!storedProject || storedProject.uid !== project.uid) {
+      setProject(project);
+    }
+  }, [project, storedProject, setProject]);
 
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isOwner || isProjectAdmin || isProjectOwner;
 
+  // Refresh team members when project changes
   useEffect(() => {
-    if (!project) return;
-    refreshMembers();
-  }, [project]);
+    if (project && (!storedProject || storedProject.uid !== project.uid)) {
+      refreshMembers();
+    }
+  }, [project, storedProject, refreshMembers]);
 
   const { data: contactsInfo } = useContactInfo(projectId, isAuthorized);
 
@@ -75,6 +80,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
   const { address, isConnected, isConnecting, chain } = useAccount();
   const { isAuth } = useAuthStore();
 
+  // Setup project permissions (owner/admin checks)
   useEffect(() => {
     if (!project || !project?.chainID || !isAuth || !isConnected || !address) {
       setIsProjectAdmin(false);
@@ -84,305 +90,140 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
       return;
     }
 
-    const setupProjectOwner = async () => {
+    const setupProjectPermissions = async () => {
       try {
         setIsProjectOwnerLoading(true);
+        setIsProjectAdminLoading(true);
+        
         const rpcClient = await getRPCClient(project.chainID);
         const fetchedProject = await getProjectById(projectId);
+        
         if (!fetchedProject) return;
-        await fetchedProject
-          .isOwner(rpcClient as any, address)
-          .then((res) => {
-            setIsProjectOwner(res);
-          })
-          .finally(() => setIsProjectOwnerLoading(false));
+
+        // Check both owner and admin status in parallel
+        const [isOwnerResult, isAdminResult] = await Promise.all([
+          fetchedProject.isOwner(rpcClient as any, address).catch(() => false),
+          fetchedProject.isAdmin(rpcClient as any, address).catch(() => false),
+        ]);
+
+        setIsProjectOwner(isOwnerResult);
+        setIsProjectAdmin(isAdminResult);
       } catch (error: any) {
         setIsProjectOwner(false);
+        setIsProjectAdmin(false);
         errorManager(
-          `Error checking if user ${address} is project owner from project ${projectId}`,
+          `Error checking user permissions for project ${projectId}`,
           error
         );
       } finally {
         setIsProjectOwnerLoading(false);
-      }
-    };
-    setupProjectOwner();
-    const setupProjectAdmin = async () => {
-      try {
-        setIsProjectAdminLoading(true);
-        const rpcClient = await getRPCClient(project.chainID);
-        const fetchedProject = await getProjectById(projectId);
-        if (!fetchedProject) return;
-        await fetchedProject
-          .isAdmin(rpcClient as any, address)
-          .then((res) => {
-            setIsProjectAdmin(res);
-          })
-          .finally(() => setIsProjectAdminLoading(false));
-      } catch (error: any) {
-        setIsProjectAdmin(false);
-        errorManager(
-          `Error checking if user ${address} is project admin from project ${projectId}`,
-          error
-        );
-      } finally {
         setIsProjectAdminLoading(false);
       }
     };
-    setupProjectAdmin();
+
+    setupProjectPermissions();
   }, [project?.uid, address, isAuth, isConnected, signer]);
 
-  const getSocials = (links: IProjectDetails["data"]["links"]) => {
-    const types = [
-      {
-        name: "Twitter",
-        prefix: ["twitter.com/", "x.com/"],
-        icon: TwitterIcon,
-      },
-      { name: "Github", prefix: "github.com/", icon: GithubIcon },
-      { name: "Discord", prefix: "discord.gg/", icon: DiscordIcon },
-      { name: "Website", prefix: "https://", icon: WebsiteIcon },
-      { name: "LinkedIn", prefix: "linkedin.com/", icon: LinkedInIcon },
-      { name: "Farcaster", prefix: "warpcast.com/", icon: FarcasterIcon },
-    ];
+  const { setIsEndorsementOpen } = useEndorsementStore();
 
-    const hasHttpOrWWW = (link?: string) => {
-      if (!link) return false;
-      if (
-        link.includes("http://") ||
-        link.includes("https://") ||
-        link.includes("www.")
-      ) {
-        return true;
-      }
-      return false;
-    };
+  const links = useMemo(() => {
+    if (!project?.details?.data?.links) return [];
 
-    const addPrefix = (link: string) => `https://${link}`;
-
-    const formatPrefix = (prefix: string, link: string) => {
-      const firstWWW = link.slice(0, 4) === "www.";
-      if (firstWWW) {
-        return addPrefix(link);
-      }
-      const alreadyHasPrefix = link.includes(prefix);
-      if (alreadyHasPrefix) {
-        if (hasHttpOrWWW(link)) {
-          return link;
-        }
-        return addPrefix(link);
-      }
-
-      return hasHttpOrWWW(prefix + link)
-        ? prefix + link
-        : addPrefix(prefix + link);
-    };
-
-    return types
-      .map(({ name, prefix, icon }) => {
-        const socialLink = links?.find(
-          (link) => link.type === name.toLowerCase()
-        )?.url;
-
-        if (socialLink) {
-          if (name === "Twitter") {
-            const url = socialLink?.includes("@")
-              ? socialLink?.replace("@", "") || ""
-              : socialLink;
-
-            if (Array.isArray(prefix)) {
-              if (url.includes("twitter.com/") || url.includes("x.com/")) {
-                return {
-                  name,
-                  url: hasHttpOrWWW(url) ? url : addPrefix(url),
-                  icon,
-                };
-              }
-              return {
-                name,
-                url: formatPrefix(prefix[1], url),
-                icon,
-              };
-            }
-          }
-
-          return {
-            name,
-            url: formatPrefix(
-              typeof prefix === "string" ? prefix : prefix[0],
-              socialLink
-            ),
-            icon,
-          };
-        }
-
-        return undefined;
-      })
-      .filter((social) => social);
-  };
-
-  const socials = getSocials(
-    storedProject?.details?.data.links || project?.details?.data.links
-  );
-
-  const hasAlreadyEndorsed = project?.endorsements?.find(
-    (item) => item.recipient?.toLowerCase() === address?.toLowerCase()
-  );
-  const { openConnectModal } = useConnectModal();
-  const { setIsEndorsementOpen: setIsOpen } = useEndorsementStore();
-
-  const handleEndorse = () => {
-    if (!isConnected || !isAuth) {
-      return (
-        <Button
-          className="hover:bg-white dark:hover:bg-black border border-black bg-white text-black dark:bg-black dark:text-white px-4 rounded-md py-2 w-max"
-          onClick={() => {
-            if (!isConnecting) {
-              openConnectModal?.();
-            }
-          }}
-        >
-          Endorse this project
-        </Button>
-      );
-    }
-    if (!hasAlreadyEndorsed) {
-      return (
-        <Button
-          onClick={() => setIsOpen(true)}
-          className={cn(
-            "flex justify-center items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100  hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900",
-            "hover:bg-white dark:hover:bg-black border border-black bg-white text-black dark:bg-black dark:text-white px-4 rounded-md py-2 w-max"
-          )}
-        >
-          Endorse this project
-        </Button>
-      );
-    }
-    return null;
-  };
-
-  interface Member {
-    uid: string;
-    recipient: string;
-    details?: {
-      name?: string;
-    };
-  }
-
-  const mountMembers = () => {
-    const members: Member[] = [];
-    if (project?.members) {
-      project.members.forEach((member) => {
-        members.push({
-          uid: member.uid,
-          recipient: member.recipient,
-          details: {
-            name: member?.details?.name,
-          },
-        });
-      });
-    }
-    const alreadyHasOwner = project?.members.find(
-      (member) => member.recipient === project.recipient
+    return project.details.data.links.filter(
+      (link) => link.url && link.url.trim() !== ""
     );
-    if (!alreadyHasOwner) {
-      members.push({
-        uid: project?.recipient || "",
-        recipient: project?.recipient || "",
-      });
-    }
+  }, [project?.details?.data?.links]);
 
-    return members;
+  const getLinkIcon = (type: string) => {
+    const iconProps = { className: "w-6 h-6" };
+    switch (type) {
+      case "twitter":
+        return <TwitterIcon {...iconProps} />;
+      case "github":
+        return <GithubIcon {...iconProps} />;
+      case "discord":
+        return <DiscordIcon {...iconProps} />;
+      case "linkedin":
+        return <LinkedInIcon {...iconProps} />;
+      case "website":
+        return <WebsiteIcon {...iconProps} />;
+      case "farcaster":
+        return <FarcasterIcon {...iconProps} />;
+      default:
+        return <WebsiteIcon {...iconProps} />;
+    }
   };
 
-  const members = mountMembers();
-  const { isIntroModalOpen } = useIntroModalStore();
-  const { isEndorsementOpen } = useEndorsementStore();
-  const { isProgressModalOpen } = useProgressModalStore();
-  const { isOpen: isShareDialogOpen } = useShareDialogStore();
+  const { openConnectModal } = useConnectModal();
+  const { openShareDialog } = useShareDialogStore();
 
   return (
-    <div>
-      {isIntroModalOpen ? <IntroDialog /> : null}
-      {isEndorsementOpen ? <EndorsementDialog /> : null}
-      {isProgressModalOpen ? <ProgressDialog /> : null}
-      {isShareDialogOpen ? <ShareDialog /> : null}
+    <>
+      <ProgressDialog />
+      <EndorsementDialog />
+      <IntroDialog />
+      <ShareDialog />
       <div className="relative border-b border-gray-200 ">
         <div className="px-4 sm:px-6 lg:px-12 lg:flex py-5 lg:items-start lg:justify-between flex flex-row max-lg:flex-col max-lg:justify-center max-lg:items-center gap-4">
-          <div className="flex flex-row gap-4 items-start">
-            <div className="flex justify-center">
-              <ProfilePicture
-                imageURL={project?.details?.data?.imageURL}
-                name={project?.uid || ""}
-                size="56"
-                className="h-14 w-14 min-w-14 min-h-14 border-2 border-white shadow-lg max-lg:h-12 max-lg:w-12 max-lg:min-h-12 max-lg:min-w-12"
-                alt={project?.details?.data?.title || "Project"}
-              />
-            </div>
-            <div className="flex flex-col gap-4">
-              <h1
-                className={
-                  "text-[32px] font-bold leading-tight text-black dark:text-zinc-100 line-clamp-2"
-                }
-              >
-                {project?.details?.data?.title}
-              </h1>
-              <div className="flex flex-row gap-10 max-lg:gap-4 flex-wrap max-lg:flex-col items-center max-lg:justify-center">
-                {socials.length > 0 && (
-                  <div className="flex flex-row gap-4 items-center">
-                    {socials
-                      .filter((social) => social?.url)
-                      .map((social, index) => (
-                        <a
-                          key={social?.url || index}
-                          href={social?.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {social?.icon && (
-                            <social.icon className="h-5 w-5 fill-black text-black dark:text-white dark:fill-zinc-200" />
-                          )}
-                        </a>
-                      ))}
-                  </div>
-                )}
+          <div className="flex flex-col gap-4 flex-1">
+            <div className="flex items-center gap-4 max-lg:flex-col max-lg:items-center max-lg:justify-center max-lg:text-center">
+              <div className="flex justify-center">
+                <ProfilePicture
+                  imageURL={project?.details?.data?.imageURL}
+                  name={project?.details?.data?.title || ""}
+                  size="64"
+                  className="h-16 w-16 border border-white shadow-md"
+                />
               </div>
-              {project?.details?.data?.tags?.length ? (
-                <div className="flex flex-col gap-2 max-md:hidden">
-                  <div className="flex items-center gap-x-1">
-                    {project?.details?.data?.tags?.map((tag) => (
-                      <span
-                        key={tag.name}
-                        className="rounded bg-gray-100 px-2 py-1 text-sm  font-normal text-slate-700"
-                      >
-                        {tag.name}
-                      </span>
-                    ))}
-                  </div>
+              <div className="flex flex-col gap-1">
+                <h1 className="text-2xl font-bold leading-tight tracking-tight text-gray-900 dark:text-zinc-100 sm:text-3xl">
+                  {project?.details?.data?.title}
+                </h1>
+                <div className="flex flex-row gap-4 items-center max-lg:justify-center max-lg:flex-wrap">
+                  {links.slice(0, 5).map((link, index) => (
+                    <ExternalLink
+                      key={index}
+                      href={link.url}
+                      className="text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white transition-all duration-200"
+                    >
+                      {getLinkIcon(link.type)}
+                    </ExternalLink>
+                  ))}
+                  {links.length > 5 && (
+                    <span className="text-slate-600 dark:text-slate-400">
+                      +{links.length - 5} more
+                    </span>
+                  )}
                 </div>
-              ) : null}
+              </div>
             </div>
           </div>
           <div className="flex flex-col gap-3 items-end justify-end">
             <div className="flex flex-row gap-6 max-lg:flex-col  max-lg:gap-3">
-              {isProjectAdmin ? (
-                <ExternalLink
-                  href={"https://tally.so/r/w8e6GP"}
-                  className="bg-black dark:bg-zinc-800 text-white justify-center items-center dark:text-zinc-400 flex flex-row gap-2.5 py-2 px-5 rounded-full w-max min-w-max"
+              <div className="flex flex-row gap-10 max-lg:gap-4 flex-wrap max-lg:flex-col items-center max-lg:justify-center">
+                <Button
+                  onClick={() => {
+                    if (!isConnected) {
+                      openConnectModal?.();
+                      return;
+                    }
+                    setIsEndorsementOpen(true);
+                  }}
+                  className="bg-slate-600 hover:bg-slate-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-all duration-200"
                 >
-                  <Image
-                    src="/icons/alert.png"
-                    alt="Looking for help"
-                    className="w-5 h-5"
-                    width={20}
-                    height={20}
-                  />
-                  <p>
-                    Are you <b>looking for help?</b>
-                  </p>
-                </ExternalLink>
-              ) : null}
+                  Endorse
+                </Button>
+                <Button
+                  onClick={() => openShareDialog({
+                    shareText: `Check out ${project?.details?.data?.title} on Karma GAP`,
+                    modalShareText: `Share ${project?.details?.data?.title}`,
+                    shareButtonText: "Share Project"
+                  })}
+                  className="bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 py-2 px-4 rounded-md text-sm font-medium transition-all duration-200"
+                >
+                  Share
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -395,6 +236,6 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 };

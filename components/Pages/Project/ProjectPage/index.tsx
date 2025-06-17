@@ -41,6 +41,7 @@ import dynamic from "next/dynamic";
 import pluralize from "pluralize";
 import { useAccount } from "wagmi";
 import { InformationBlock } from "./ProjectBodyTabs";
+import { ProjectOverviewLoading } from "../Loading/Overview";
 
 const ContributorProfileDialog = dynamic(
   () =>
@@ -85,6 +86,11 @@ function ProjectPage() {
   }, [project?.members]);
 
   const [, copy] = useCopyToClipboard();
+
+  // Show loading state if project is not available yet
+  if (!project) {
+    return <ProjectOverviewLoading />;
+  }
 
   const mountMembers = () => {
     const members: Member[] = [];
