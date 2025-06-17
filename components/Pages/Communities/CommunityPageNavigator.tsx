@@ -7,7 +7,7 @@ import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { useParams, usePathname } from "next/navigation";
+import { useParams, usePathname, useSearchParams } from "next/navigation";
 
 const activeLinkStyle =
   "text-brand-darkblue dark:text-white font-bold border-b border-b-4 border-b-brand-blue dark:border-b-brand-blue";
@@ -60,8 +60,10 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
 
 export const CommunityPageNavigator = () => {
   const params = useParams();
+  const searchParams = useSearchParams();
   const communityId = params.communityId as string;
   const pathname = usePathname();
+  const programId = searchParams.get("programId");
   const { data: community } = useQuery({
     queryKey: ["community", communityId],
     queryFn: () => getCommunityBySlug(communityId),
@@ -70,12 +72,16 @@ export const CommunityPageNavigator = () => {
   const isAdminPage = pathname.includes("/admin");
   if (isAdminPage) return null;
 
+  const getPathWithProgramId = (basePath: string) => {
+    return programId ? `${basePath}?programId=${programId}` : basePath;
+  };
+
   return (
     <div className="flex-row max-md:flex-col flex-wrap px-1.5 pt-2 mb-[-1px] rounded-lg justify-start items-center gap-4 flex h-max">
       {NAVIGATION_ITEMS.map(({ path, title, Icon, isActive, showNewTag }) => (
         <Link
           key={path(communityId)}
-          href={path(communityId)}
+          href={getPathWithProgramId(path(communityId))}
           className={cn(
             baseLinkStyle,
             isActive(pathname) ? activeLinkStyle : inactiveLinkStyle
