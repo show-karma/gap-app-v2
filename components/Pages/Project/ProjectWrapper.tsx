@@ -65,7 +65,7 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
   const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore();
 
-  const { project, isLoading: isProjectLoading } = useProject(projectId);
+  const { project, isLoading: isProjectLoading } = useProject();
   const isAuthorized = isOwner || isProjectAdmin || isProjectOwner;
   const { data: contactsInfo } = useContactInfo(projectId, isAuthorized);
   const hasContactInfo = Boolean(contactsInfo?.length);

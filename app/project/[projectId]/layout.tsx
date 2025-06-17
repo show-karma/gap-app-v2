@@ -6,16 +6,13 @@ import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import ProjectHeaderLoading from "@/components/Pages/Project/Loading/Header";
+import { IProjectResponse } from '@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types';
+import { ReactNode } from 'react';
 
 import { generateProjectOverviewMetadata } from "@/utilities/metadata/projectMetadata";
+import { ProjectStoreInitializer } from './providers/ProjectStoreInitializer';
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { projectId: string };
-}) {
-  const projectId = params.projectId;
-
+const getProject = async (projectId: string) => {
   const projectInfo = await gapIndexerApi
     .projectBySlug(projectId)
     .then((res) => res.data)
@@ -35,7 +32,16 @@ export async function generateMetadata({
     }
   }
 
-  return generateProjectOverviewMetadata(projectInfo, projectId);
+  return projectInfo;
+};
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { projectId: string };
+}) {
+  const project = await getProject(params.projectId);
+  return generateProjectOverviewMetadata(project, params.projectId);
 }
 
 export default async function RootLayout({
@@ -45,30 +51,15 @@ export default async function RootLayout({
   children: React.ReactNode;
   params: { projectId: string };
 }) {
-  // TODO: Remove this once we have our API time running well
-  // const project = await gapIndexerApi
-  //   .projectBySlug(projectId)
-  //   .then((res) => res.data)
-  //   .catch(() => notFound());
-
-  // if (!project || project.uid === zeroUID) {
-  //   notFound();
-  // }
-
-  // if (project?.pointers && project?.pointers?.length > 0) {
-  //   const original = await gapIndexerApi
-  //     .projectBySlug(project.pointers[0].data?.ogProjectUID)
-  //     .then((res) => res.data)
-  //     .catch(() => null);
-  //   if (original) {
-  //     redirect(`/project/${original.details?.data?.slug}`);
-  //   }
-  // }
+  const project = await getProject(projectId);
 
   return (
-    <div className="flex flex-col gap-0">
-      <ProjectWrapper projectId={projectId} />
-      <div className="px-4 sm:px-6 lg:px-12">{children}</div>
-    </div>
+    <>
+      <ProjectStoreInitializer project={project} />
+      <div className="flex flex-col gap-0">
+        <ProjectWrapper projectId={projectId} />
+        <div className="px-4 sm:px-6 lg:px-12">{children}</div>
+      </div>
+    </>
   );
 }
