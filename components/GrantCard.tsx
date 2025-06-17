@@ -76,13 +76,13 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
     try {
       // Use router.prefetch for Next.js route pre-fetching
       router.prefetch(targetUrl);
-      
+
       // Also pre-fetch project data to store
       const projectData = await gapIndexerApi
         .projectBySlug(projectSlug)
         .then((res) => res.data)
         .catch(() => null);
-      
+
       if (projectData) {
         // Pre-cache the project data
         setProject(projectData);
@@ -101,10 +101,10 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
   const handleClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     setIsClicked(true);
-    
+
     // Immediate visual feedback
     setTimeout(() => setIsClicked(false), 300);
-    
+
     // Navigate immediately
     router.push(targetUrl);
   };
@@ -112,8 +112,12 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
   return (
     <div
       className={`flex h-full w-full max-w-[320px] relative flex-col items-start justify-between gap-3 rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2 transition-all duration-200 ease-in-out cursor-pointer
-        ${isHovered ? 'shadow-lg scale-[1.02] border-blue-300 dark:border-blue-600' : 'hover:opacity-80'}
-        ${isClicked ? 'scale-[0.98] bg-blue-50 dark:bg-blue-900/20' : ''}
+        ${
+          isHovered
+            ? "shadow-lg scale-[1.02] border-blue-300 dark:border-blue-600"
+            : "hover:opacity-80"
+        }
+        ${isClicked ? "scale-[0.98] bg-blue-50 dark:bg-blue-900/20" : ""}
       `}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -124,7 +128,9 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
         <div className="absolute inset-0 bg-blue-100/50 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center z-10">
           <div className="flex items-center gap-2 bg-white dark:bg-zinc-800 px-3 py-2 rounded-lg shadow-md">
             <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-            <span className="text-sm font-medium text-blue-600 dark:text-blue-400">Opening...</span>
+            <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
+              Opening...
+            </span>
           </div>
         </div>
       )}
@@ -133,9 +139,11 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
         <div
           className="h-[4px] w-full rounded-full mb-2.5 transition-all duration-200"
           style={{
-            background: isHovered ? 
-              `linear-gradient(45deg, ${pickColor(index)}, ${pickColor(index + 1)})` : 
-              pickColor(index),
+            background: isHovered
+              ? `linear-gradient(45deg, ${pickColor(index)}, ${pickColor(
+                  index + 1
+                )})`
+              : pickColor(index),
           }}
         />
 
@@ -161,8 +169,18 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
             {/* Click indicator */}
             {isHovered && (
               <div className="flex items-center gap-1 text-blue-600 dark:text-blue-400">
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
                 </svg>
               </div>
             )}
@@ -187,7 +205,10 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
           <div className="flex flex-col gap-1 flex-1 h-[64px]">
             <div className="text-sm text-gray-900 dark:text-gray-400 text-ellipsis line-clamp-2">
               <MarkdownPreview
-                source={grant.project?.details?.data?.description?.slice(0, 100)}
+                source={grant.project?.details?.data?.description?.slice(
+                  0,
+                  100
+                )}
               />
             </div>
           </div>
