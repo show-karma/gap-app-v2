@@ -242,6 +242,7 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
     return members;
   };
 
+
   const { isIntroModalOpen } = useIntroModalStore();
   const { isEndorsementOpen } = useEndorsementStore();
   const { isProgressModalOpen } = useProgressModalStore();

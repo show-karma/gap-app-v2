@@ -25,6 +25,16 @@ export async function generateMetadata({
     notFound();
   }
 
+  if (projectInfo?.pointers && projectInfo?.pointers?.length > 0) {
+    const original = await gapIndexerApi
+      .projectBySlug(projectInfo.pointers[0].data?.ogProjectUID)
+      .then((res) => res.data)
+      .catch(() => null);
+    if (original) {
+      redirect(`/project/${original.details?.data?.slug}`);
+    }
+  }
+    
   return generateProjectOverviewMetadata(projectInfo, projectId);
 }
 

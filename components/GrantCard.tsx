@@ -61,9 +61,8 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
   return (
     <a
       id="grant-card"
-      href={PAGES.PROJECT.GRANT(
-        grant.project?.details?.data?.slug || grant.refUID || "",
-        grant.uid
+      href={PAGES.PROJECT.OVERVIEW(
+        grant.project?.details?.data?.slug || grant.refUID || ""
       )}
       className="flex h-full w-full max-w-[320px] relative flex-col items-start justify-between gap-3 rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2 transition-all duration-300 ease-in-out hover:opacity-80"
     >
