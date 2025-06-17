@@ -9,15 +9,9 @@ import {
 } from "@/utilities/getProjectMemberRoles";
 import { useQuery } from "@tanstack/react-query";
 import { MemberCard } from "./MemberCard";
-import { useProjectData } from "@/hooks/useProject";
 
 export const Team = () => {
-  const storeProject = useProjectStore((state) => state.project);
-  
-  // Use Zustand store for project data
-  const { project: zustandProject } = useProjectData();
-  
-  const project = storeProject || zustandProject;
+  const project = useProjectStore((state) => state.project);
   
   //   check if it have some duplicated
   const members = project

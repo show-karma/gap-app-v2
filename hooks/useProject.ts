@@ -38,15 +38,4 @@ export const useProject = (projectId: string) => {
   };
 };
 
-/**
- * Hook that only returns the project from Zustand store
- * Use this when you only need the current project state without fetching
- */
-export const useProjectData = () => {
-  return useProjectStore((state) => ({
-    project: state.project,
-    loading: state.loading,
-    setProject: state.setProject,
-    setLoading: state.setLoading,
-  }));
-}; 
+ 

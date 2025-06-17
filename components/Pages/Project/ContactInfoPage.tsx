@@ -3,20 +3,16 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { ContactInfoSubscription } from "@/components/ContactInfoSubscription";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useContactInfo } from "@/hooks/useContactInfo";
-import { useProjectData } from "@/hooks/useProject";
 
 const ContactInfoPage = () => {
   const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);
   const isProjectOwnerLoading = useProjectStore(
     (state) => state.isProjectOwnerLoading
   );
-  const storeProjectId = useProjectStore((state) => state.project?.uid);
+  const project = useProjectStore((state) => state.project);
   const isAuthorized = useProjectStore((state) => state.isProjectAdmin);
   
-  // Use Zustand store for project data
-  const { project: zustandProject } = useProjectData();
-  
-  const projectId = storeProjectId || zustandProject?.uid;
+  const projectId = project?.uid;
   const { data: contactsInfo, isLoading } = useContactInfo(
     projectId,
     isAuthorized

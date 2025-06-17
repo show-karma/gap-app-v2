@@ -10,7 +10,6 @@ import { useAuthStore } from "@/store/auth";
 import { useCommunitiesStore } from "@/store/communities";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useGrantStore } from "@/store/grant";
-import { useProjectData } from "@/hooks/useProject";
 import { GrantScreen } from "@/types";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
@@ -107,7 +106,7 @@ export const GrantsLayout = ({
   const { isAuth } = useAuthStore();
 
   // Use Zustand store for project data
-  const { project: zustandProject } = useProjectData();
+  const zustandProject = useProjectStore((state) => state.project);
 
   // Use store project first, then fetched project, then zustand project as fallback
   const project = storedProject || fetchedProject || zustandProject;

@@ -4,7 +4,6 @@
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
-import { useProjectData } from "@/hooks/useProject";
 
 import { PAGES } from "@/utilities/pages";
 import Link from "next/link";
@@ -54,12 +53,7 @@ const ContributorProfileDialog = dynamic(
 );
 
 function ProjectPage() {
-  const storeProject = useProjectStore((state) => state.project);
-  
-  // Get project from context as primary source
-  const { project: contextProject } = useProjectData();
-  
-  const project = contextProject || storeProject;
+  const project = useProjectStore((state) => state.project);
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);

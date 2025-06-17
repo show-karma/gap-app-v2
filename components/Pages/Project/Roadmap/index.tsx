@@ -20,7 +20,6 @@ import { Button } from "@/components/Utilities/Button";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { MESSAGES } from "@/utilities/messages";
 import { UnifiedMilestone } from "@/types/roadmap";
-import { useProjectData } from "@/hooks/useProject";
 
 interface ProjectRoadmapProps {
   project?: IProjectResponse;
@@ -32,7 +31,7 @@ export const ProjectRoadmap = ({ project: propProject }: ProjectRoadmapProps) =>
   const searchParams = useSearchParams();
   
   // Use Zustand store for project data
-  const { project: zustandProject } = useProjectData();
+  const zustandProject = useProjectStore((state) => state.project);
   
   // Use prop project first, then zustand project as fallback
   const project = propProject || zustandProject;
