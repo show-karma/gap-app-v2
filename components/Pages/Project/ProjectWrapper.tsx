@@ -9,7 +9,6 @@ import {
 } from "@/components/Icons";
 import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
 import { ProjectNavigator } from "@/components/Pages/Project/ProjectNavigator";
-import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
@@ -19,9 +18,6 @@ import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { useProgressModalStore } from "@/store/modals/progress";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
-import { getProjectById } from "@/utilities/sdk";
-import { cn } from "@/utilities/tailwind";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
 import {
   IProjectDetails,
   IProjectResponse,
@@ -37,52 +33,53 @@ import { useContactInfo } from "@/hooks/useContactInfo";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { ShareDialog } from "../GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/ShareDialog";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
+import { useProject } from "@/hooks/useProject";
+import ProjectHeaderLoading from "./Loading/Header";
+import { useProjectInstance } from "@/hooks/useProjectInstance";
+import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 
+interface Member {
+  uid: string;
+  recipient: string;
+  details?: {
+    name?: string;
+  };
+}
 interface ProjectWrapperProps {
-  project: IProjectResponse;
   projectId: string;
 }
-export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
+
+export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
   const {
-    refreshMembers,
-    setProject,
     isProjectAdmin,
     setIsProjectAdmin,
     setIsProjectAdminLoading,
     isProjectOwner,
     setIsProjectOwner,
     setIsProjectOwnerLoading,
-    project: storedProject,
   } = useProjectStore((state) => state);
-
-  // Only update the store if the project data has changed
-  useEffect(() => {
-    if (!storedProject || storedProject.uid !== project.uid) {
-      setProject(project);
-    }
-  }, [project, storedProject, setProject]);
+  const { project: projectInstance } = useProjectInstance(projectId);
 
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const isAuthorized = isOwner || isProjectAdmin || isProjectOwner;
-
-  // Refresh team members when project changes
-  useEffect(() => {
-    if (project && (!storedProject || storedProject.uid !== project.uid)) {
-      refreshMembers();
-    }
-  }, [project, storedProject, refreshMembers]);
-
-  const { data: contactsInfo } = useContactInfo(projectId, isAuthorized);
-
-  const hasContactInfo = Boolean(contactsInfo?.length);
-
   const signer = useSigner();
-  const { address, isConnected, isConnecting, chain } = useAccount();
+  const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore();
 
-  // Setup project permissions (owner/admin checks)
+  const { project, isLoading: isProjectLoading } = useProject(projectId);
+  const isAuthorized = isOwner || isProjectAdmin || isProjectOwner;
+  const { data: contactsInfo } = useContactInfo(projectId, isAuthorized);
+  const hasContactInfo = Boolean(contactsInfo?.length);
+
+  useTeamProfiles(project);
+
   useEffect(() => {
-    if (!project || !project?.chainID || !isAuth || !isConnected || !address) {
+    if (
+      !projectInstance ||
+      !project?.chainID ||
+      !isAuth ||
+      !isConnected ||
+      !address
+    ) {
       setIsProjectAdmin(false);
       setIsProjectAdminLoading(false);
       setIsProjectOwner(false);
@@ -90,20 +87,24 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
       return;
     }
 
-    const setupProjectPermissions = async () => {
+    if (isOwner) {
+      setIsProjectAdmin(true);
+      setIsProjectOwner(true);
+      setIsProjectAdminLoading(false);
+      setIsProjectOwnerLoading(false);
+      return;
+    }
+
+    const runPermissionChecks = async () => {
       try {
+        const rpcClient = await getRPCClient(project.chainID);
+
         setIsProjectOwnerLoading(true);
         setIsProjectAdminLoading(true);
-        
-        const rpcClient = await getRPCClient(project.chainID);
-        const fetchedProject = await getProjectById(projectId);
-        
-        if (!fetchedProject) return;
 
-        // Check both owner and admin status in parallel
         const [isOwnerResult, isAdminResult] = await Promise.all([
-          fetchedProject.isOwner(rpcClient as any, address).catch(() => false),
-          fetchedProject.isAdmin(rpcClient as any, address).catch(() => false),
+          projectInstance.isOwner(rpcClient as any, address).catch(() => false),
+          projectInstance.isAdmin(rpcClient as any, address).catch(() => false),
         ]);
 
         setIsProjectOwner(isOwnerResult);
@@ -112,7 +113,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
         setIsProjectOwner(false);
         setIsProjectAdmin(false);
         errorManager(
-          `Error checking user permissions for project ${projectId}`,
+          `Error checking permissions for user ${address} on project ${projectId}`,
           error
         );
       } finally {
@@ -121,109 +122,217 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
       }
     };
 
-    setupProjectPermissions();
-  }, [project?.uid, address, isAuth, isConnected, signer]);
+    runPermissionChecks();
+  }, [projectInstance, address, isAuth, isConnected, signer, isOwner]);
 
-  const { setIsEndorsementOpen } = useEndorsementStore();
+  const getSocials = (links: IProjectDetails["data"]["links"]) => {
+    const types = [
+      {
+        name: "Twitter",
+        prefix: ["twitter.com/", "x.com/"],
+        icon: TwitterIcon,
+      },
+      { name: "Github", prefix: "github.com/", icon: GithubIcon },
+      { name: "Discord", prefix: "discord.gg/", icon: DiscordIcon },
+      { name: "Website", prefix: "https://", icon: WebsiteIcon },
+      { name: "LinkedIn", prefix: "linkedin.com/", icon: LinkedInIcon },
+      { name: "Farcaster", prefix: "warpcast.com/", icon: FarcasterIcon },
+    ];
 
-  const links = useMemo(() => {
-    if (!project?.details?.data?.links) return [];
+    const hasHttpOrWWW = (link?: string) => {
+      if (!link) return false;
+      if (
+        link.includes("http://") ||
+        link.includes("https://") ||
+        link.includes("www.")
+      ) {
+        return true;
+      }
+      return false;
+    };
 
-    return project.details.data.links.filter(
-      (link) => link.url && link.url.trim() !== ""
-    );
-  }, [project?.details?.data?.links]);
+    const addPrefix = (link: string) => `https://${link}`;
 
-  const getLinkIcon = (type: string) => {
-    const iconProps = { className: "w-6 h-6" };
-    switch (type) {
-      case "twitter":
-        return <TwitterIcon {...iconProps} />;
-      case "github":
-        return <GithubIcon {...iconProps} />;
-      case "discord":
-        return <DiscordIcon {...iconProps} />;
-      case "linkedin":
-        return <LinkedInIcon {...iconProps} />;
-      case "website":
-        return <WebsiteIcon {...iconProps} />;
-      case "farcaster":
-        return <FarcasterIcon {...iconProps} />;
-      default:
-        return <WebsiteIcon {...iconProps} />;
-    }
+    const formatPrefix = (prefix: string, link: string) => {
+      const firstWWW = link.slice(0, 4) === "www.";
+      if (firstWWW) {
+        return addPrefix(link);
+      }
+      const alreadyHasPrefix = link.includes(prefix);
+      if (alreadyHasPrefix) {
+        if (hasHttpOrWWW(link)) {
+          return link;
+        }
+        return addPrefix(link);
+      }
+
+      return hasHttpOrWWW(prefix + link)
+        ? prefix + link
+        : addPrefix(prefix + link);
+    };
+
+    return types
+      .map(({ name, prefix, icon }) => {
+        const socialLink = links?.find(
+          (link) => link.type === name.toLowerCase()
+        )?.url;
+
+        if (socialLink) {
+          if (name === "Twitter") {
+            const url = socialLink?.includes("@")
+              ? socialLink?.replace("@", "") || ""
+              : socialLink;
+
+            if (Array.isArray(prefix)) {
+              if (url.includes("twitter.com/") || url.includes("x.com/")) {
+                return {
+                  name,
+                  url: hasHttpOrWWW(url) ? url : addPrefix(url),
+                  icon,
+                };
+              }
+              return {
+                name,
+                url: formatPrefix(prefix[1], url),
+                icon,
+              };
+            }
+          }
+
+          return {
+            name,
+            url: formatPrefix(
+              typeof prefix === "string" ? prefix : prefix[0],
+              socialLink
+            ),
+            icon,
+          };
+        }
+
+        return undefined;
+      })
+      .filter((social) => social);
   };
 
-  const { openConnectModal } = useConnectModal();
-  const { openShareDialog } = useShareDialogStore();
+  const socials = getSocials(project?.details?.data.links);
+
+  const mountMembers = () => {
+    const members: Member[] = [];
+    if (project?.members) {
+      project.members.forEach((member) => {
+        members.push({
+          uid: member.uid,
+          recipient: member.recipient,
+          details: {
+            name: member?.details?.name,
+          },
+        });
+      });
+    }
+    const alreadyHasOwner = project?.members.find(
+      (member) => member.recipient === project.recipient
+    );
+    if (!alreadyHasOwner) {
+      members.push({
+        uid: project?.recipient || "",
+        recipient: project?.recipient || "",
+      });
+    }
+
+    return members;
+  };
+
+  const { isIntroModalOpen } = useIntroModalStore();
+  const { isEndorsementOpen } = useEndorsementStore();
+  const { isProgressModalOpen } = useProgressModalStore();
+  const { isOpen: isShareDialogOpen } = useShareDialogStore();
+
+  // Show loading state if project is still loading or not available
+  if (isProjectLoading || !project) {
+    return <ProjectHeaderLoading />;
+  }
 
   return (
-    <>
-      <ProgressDialog />
-      <EndorsementDialog />
-      <IntroDialog />
-      <ShareDialog />
+    <div>
+      {isIntroModalOpen ? <IntroDialog /> : null}
+      {isEndorsementOpen ? <EndorsementDialog /> : null}
+      {isProgressModalOpen ? <ProgressDialog /> : null}
+      {isShareDialogOpen ? <ShareDialog /> : null}
       <div className="relative border-b border-gray-200 ">
         <div className="px-4 sm:px-6 lg:px-12 lg:flex py-5 lg:items-start lg:justify-between flex flex-row max-lg:flex-col max-lg:justify-center max-lg:items-center gap-4">
-          <div className="flex flex-col gap-4 flex-1">
-            <div className="flex items-center gap-4 max-lg:flex-col max-lg:items-center max-lg:justify-center max-lg:text-center">
-              <div className="flex justify-center">
-                <ProfilePicture
-                  imageURL={project?.details?.data?.imageURL}
-                  name={project?.details?.data?.title || ""}
-                  size="64"
-                  className="h-16 w-16 border border-white shadow-md"
-                />
+          <div className="flex flex-row gap-4 items-start">
+            <div className="flex justify-center">
+              <ProfilePicture
+                imageURL={project?.details?.data?.imageURL}
+                name={project?.uid || ""}
+                size="56"
+                className="h-14 w-14 min-w-14 min-h-14 border-2 border-white shadow-lg max-lg:h-12 max-lg:w-12 max-lg:min-h-12 max-lg:min-w-12"
+                alt={project?.details?.data?.title || "Project"}
+              />
+            </div>
+            <div className="flex flex-col gap-4">
+              <h1
+                className={
+                  "text-[32px] font-bold leading-tight text-black dark:text-zinc-100 line-clamp-2"
+                }
+              >
+                {project?.details?.data?.title}
+              </h1>
+              <div className="flex flex-row gap-10 max-lg:gap-4 flex-wrap max-lg:flex-col items-center max-lg:justify-center">
+                {socials.length > 0 && (
+                  <div className="flex flex-row gap-4 items-center">
+                    {socials
+                      .filter((social) => social?.url)
+                      .map((social, index) => (
+                        <a
+                          key={social?.url || index}
+                          href={social?.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {social?.icon && (
+                            <social.icon className="h-5 w-5 fill-black text-black dark:text-white dark:fill-zinc-200" />
+                          )}
+                        </a>
+                      ))}
+                  </div>
+                )}
               </div>
-              <div className="flex flex-col gap-1">
-                <h1 className="text-2xl font-bold leading-tight tracking-tight text-gray-900 dark:text-zinc-100 sm:text-3xl">
-                  {project?.details?.data?.title}
-                </h1>
-                <div className="flex flex-row gap-4 items-center max-lg:justify-center max-lg:flex-wrap">
-                  {links.slice(0, 5).map((link, index) => (
-                    <ExternalLink
-                      key={index}
-                      href={link.url}
-                      className="text-slate-600 dark:text-slate-400 hover:text-black dark:hover:text-white transition-all duration-200"
-                    >
-                      {getLinkIcon(link.type)}
-                    </ExternalLink>
-                  ))}
-                  {links.length > 5 && (
-                    <span className="text-slate-600 dark:text-slate-400">
-                      +{links.length - 5} more
-                    </span>
-                  )}
+              {project?.details?.data?.tags?.length ? (
+                <div className="flex flex-col gap-2 max-md:hidden">
+                  <div className="flex items-center gap-x-1">
+                    {project?.details?.data?.tags?.map((tag) => (
+                      <span
+                        key={tag.name}
+                        className="rounded bg-gray-100 px-2 py-1 text-sm  font-normal text-slate-700"
+                      >
+                        {tag.name}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ) : null}
             </div>
           </div>
           <div className="flex flex-col gap-3 items-end justify-end">
             <div className="flex flex-row gap-6 max-lg:flex-col  max-lg:gap-3">
-              <div className="flex flex-row gap-10 max-lg:gap-4 flex-wrap max-lg:flex-col items-center max-lg:justify-center">
-                <Button
-                  onClick={() => {
-                    if (!isConnected) {
-                      openConnectModal?.();
-                      return;
-                    }
-                    setIsEndorsementOpen(true);
-                  }}
-                  className="bg-slate-600 hover:bg-slate-700 text-white py-2 px-4 rounded-md text-sm font-medium transition-all duration-200"
+              {isProjectAdmin ? (
+                <ExternalLink
+                  href={"https://tally.so/r/w8e6GP"}
+                  className="bg-black dark:bg-zinc-800 text-white justify-center items-center dark:text-zinc-400 flex flex-row gap-2.5 py-2 px-5 rounded-full w-max min-w-max"
                 >
-                  Endorse
-                </Button>
-                <Button
-                  onClick={() => openShareDialog({
-                    shareText: `Check out ${project?.details?.data?.title} on Karma GAP`,
-                    modalShareText: `Share ${project?.details?.data?.title}`,
-                    shareButtonText: "Share Project"
-                  })}
-                  className="bg-transparent hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-600 py-2 px-4 rounded-md text-sm font-medium transition-all duration-200"
-                >
-                  Share
-                </Button>
-              </div>
+                  <Image
+                    src="/icons/alert.png"
+                    alt="Looking for help"
+                    className="w-5 h-5"
+                    width={20}
+                    height={20}
+                  />
+                  <p>
+                    Are you <b>looking for help?</b>
+                  </p>
+                </ExternalLink>
+              ) : null}
             </div>
           </div>
         </div>
@@ -236,6 +345,6 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };

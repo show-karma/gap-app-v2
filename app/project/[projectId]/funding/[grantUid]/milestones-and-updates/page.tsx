@@ -94,10 +94,12 @@ export async function generateMetadata({
     icons: metadata.icons,
   };
 }
-export default function Page() {
+const Page = () => {
   return (
     <Suspense fallback={<ProjectGrantsMilestonesAndUpdatesLoading />}>
       <MilestonesAndUpdates />
     </Suspense>
   );
-}
+};
+
+export default Page;

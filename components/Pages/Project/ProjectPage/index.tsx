@@ -4,6 +4,7 @@
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
+import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 
 import { PAGES } from "@/utilities/pages";
 import Link from "next/link";
@@ -40,6 +41,7 @@ import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import pluralize from "pluralize";
 import { useAccount } from "wagmi";
+import { useProjectInstance } from "@/hooks/useProjectInstance";
 import { InformationBlock } from "./ProjectBodyTabs";
 import { ProjectOverviewLoading } from "../Loading/Overview";
 
@@ -60,7 +62,10 @@ function ProjectPage() {
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isProjectOwner || isContractOwner;
   const isAdminOrAbove = isProjectOwner || isContractOwner || isProjectAdmin;
-  const { teamProfiles } = useProjectStore((state) => state);
+  const { project: projectInstance } = useProjectInstance(
+    project?.details?.data.slug || project?.uid || ""
+  );
+  const { teamProfiles } = useTeamProfiles(project);
   const { address } = useAccount();
   const { openModal } = useContributorProfileModalStore();
   const inviteCodeParam = useSearchParams().get("invite-code");
@@ -74,8 +79,11 @@ function ProjectPage() {
     isFetching: isFetchingRoles,
   } = useQuery<Record<string, Member["role"]>>({
     queryKey: ["memberRoles", project?.uid],
-    queryFn: () => (project ? getProjectMemberRoles(project) : {}),
-    enabled: !!project,
+    queryFn: () =>
+      project && projectInstance
+        ? getProjectMemberRoles(project, projectInstance)
+        : {},
+    enabled: !!project && !!projectInstance,
     staleTime: 1000 * 60 * 5,
   });
 
@@ -86,11 +94,6 @@ function ProjectPage() {
   }, [project?.members]);
 
   const [, copy] = useCopyToClipboard();
-
-  // Show loading state if project is not available yet
-  if (!project) {
-    return <ProjectOverviewLoading />;
-  }
 
   const mountMembers = () => {
     const members: Member[] = [];
@@ -293,6 +296,11 @@ function ProjectPage() {
       }
     });
   }, [project, address, inviteCodeParam]);
+
+  // Show loading state if project is not available yet
+  if (!project) {
+    return <ProjectOverviewLoading />;
+  }
 
   return (
     <div className="flex flex-row max-lg:flex-col gap-6 max-md:gap-4 py-5 mb-20">
