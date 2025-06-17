@@ -18,6 +18,7 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 import { FC, Fragment, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
+import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 
 interface PromoteMemberDialogProps {
   memberAddress: string;
@@ -30,7 +31,8 @@ export const PromoteMemberDialog: FC<PromoteMemberDialogProps> = ({
   const [isPromoting, setIsPromoting] = useState(false);
   const { gap } = useGap();
   const { address, chain } = useAccount();
-  const { project, teamProfiles } = useProjectStore();
+  const { project } = useProjectStore();
+  const { teamProfiles } = useTeamProfiles(project);
   const { changeStepperStep, setIsStepper } = useStepper();
   const { switchChainAsync } = useSwitchChain();
   const refreshProject = useProjectStore((state) => state.refreshProject);
@@ -72,7 +74,10 @@ export const PromoteMemberDialog: FC<PromoteMemberDialogProps> = ({
       const checkIfAttestationExists = async (callbackFn?: () => void) => {
         await retryUntilConditionMet(
           async () => {
-            const memberRoles = await getProjectMemberRoles(project);
+            const memberRoles = await getProjectMemberRoles(
+              project,
+              projectInstance
+            );
             const isAdmin =
               memberRoles[memberAddress.toLowerCase()] === "Admin";
 

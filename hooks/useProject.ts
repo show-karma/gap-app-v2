@@ -4,13 +4,9 @@ import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-ind
 import { useProjectStore } from "@/store";
 import { useEffect } from "react";
 
-/**
- * React Query hook for fetching project data
- * Automatically updates the Zustand store with the fetched data
- */
 export const useProject = (projectId: string) => {
   const setProject = useProjectStore((state) => state.setProject);
-  
+
   const query = useQuery({
     queryKey: ["project", projectId],
     queryFn: async (): Promise<IProjectResponse> => {
@@ -22,7 +18,6 @@ export const useProject = (projectId: string) => {
     gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
   });
 
-  // Update Zustand store when data changes
   useEffect(() => {
     if (query.data) {
       setProject(query.data);
@@ -37,5 +32,3 @@ export const useProject = (projectId: string) => {
     isError: query.isError,
   };
 };
-
- 

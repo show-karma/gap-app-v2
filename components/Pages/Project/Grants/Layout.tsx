@@ -18,7 +18,10 @@ import { isCommunityAdminOf } from "@/utilities/sdk";
 import { cn } from "@/utilities/tailwind";
 import { CheckCircleIcon, PlusIcon } from "@heroicons/react/20/solid";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
-import { IProjectResponse, ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import {
+  IProjectResponse,
+  ICommunityResponse,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -77,7 +80,6 @@ export const GrantsLayout = ({
   children,
   fetchedProject,
 }: GrantsLayoutProps) => {
-  // All hooks must be called before any early returns
   const pathname = usePathname();
   const screen = getScreen(pathname);
   const grantIdFromQueryParam = useParams().grantUid as string;
@@ -122,7 +124,7 @@ export const GrantsLayout = ({
     try {
       // Try to get community data from the grant object first (if already populated)
       let community: ICommunityResponse | null = grant.community || null;
-      
+
       // Only make API call if community data is not already available
       if (!community) {
         community = await gapIndexerApi
@@ -130,7 +132,7 @@ export const GrantsLayout = ({
           .then((res) => res.data)
           .catch(() => null);
       }
-      
+
       // Proceed only if we have valid community data
       if (community && community.uid) {
         try {
@@ -141,7 +143,7 @@ export const GrantsLayout = ({
           );
           setIsCommunityAdmin(result);
         } catch (error) {
-          console.error('Error checking community admin status:', error);
+          console.error("Error checking community admin status:", error);
           setIsCommunityAdmin(false);
         }
       } else {
@@ -202,7 +204,7 @@ export const GrantsLayout = ({
   useEffect(() => {
     checkIfAdmin();
   }, [address, grant?.uid, signer, isAuth]);
-  
+
   // If no project data is available, show loading
   if (!project) {
     return <ProjectGrantsLayoutLoading>{children}</ProjectGrantsLayoutLoading>;
