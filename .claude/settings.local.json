@@ -8,7 +8,8 @@
       "Bash(yarn build:*)",
       "Bash(yarn tsc:*)",
       "WebFetch(domain:nextjs.org)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }
