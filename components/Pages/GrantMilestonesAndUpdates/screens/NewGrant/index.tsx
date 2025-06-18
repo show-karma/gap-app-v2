@@ -14,13 +14,10 @@ import { useCommunityAdminStore } from "@/store/communityAdmin";
 import Link from "next/link";
 import { Button } from "@/components/Utilities/Button";
 import { PAGES } from "@/utilities/pages";
-import { Track } from "@/services/tracks";
 import { TypeSelectionScreen } from "./screens/TypeSelectionScreen";
-import { CommunitySelectionScreen } from "./screens/CommunitySelectionScreen";
 import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
-// import { MilestonesScreen } from "./screens/MilestonesScreen";
+export { SearchGrantProgram } from "./SearchGrantProgram";
 
-// Dynamically import heavy components
 const DetailsScreen = dynamic(
   () => import("./screens/DetailsScreen").then((mod) => mod.DetailsScreen),
   {
@@ -38,8 +35,16 @@ const MilestonesScreen = dynamic(
   }
 );
 
-// Export the SearchGrantProgram component from its own file
-export { SearchGrantProgram } from "./SearchGrantProgram";
+const CommunitySelectionScreen = dynamic(
+  () =>
+    import("./screens/CommunitySelectionScreen").then(
+      (mod) => mod.CommunitySelectionScreen
+    ),
+  {
+    loading: () => <DefaultLoading />,
+    ssr: false,
+  }
+);
 
 interface NewGrantProps {
   grantToEdit?: IGrantResponse;
