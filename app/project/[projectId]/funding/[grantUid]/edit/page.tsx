@@ -14,5 +14,6 @@ const NewGrant = dynamic(
 );
 export default function Page() {
   const { grant } = useGrantStore();
+
   return <NewGrant grantToEdit={grant} />;
 }

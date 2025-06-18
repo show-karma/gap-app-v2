@@ -4,6 +4,7 @@
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
+import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 
 import { PAGES } from "@/utilities/pages";
 import Link from "next/link";
@@ -41,6 +42,7 @@ import dynamic from "next/dynamic";
 import pluralize from "pluralize";
 import { useAccount } from "wagmi";
 import { InformationBlock } from "./ProjectBodyTabs";
+import { useProjectInstance } from "@/hooks/useProjectInstance";
 
 const ContributorProfileDialog = dynamic(
   () =>
@@ -59,7 +61,10 @@ function ProjectPage() {
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isProjectOwner || isContractOwner;
   const isAdminOrAbove = isProjectOwner || isContractOwner || isProjectAdmin;
-  const { teamProfiles } = useProjectStore((state) => state);
+  const { project: projectInstance } = useProjectInstance(
+    project?.details?.data.slug || project?.uid || ""
+  );
+  const { teamProfiles } = useTeamProfiles(project);
   const { address } = useAccount();
   const { openModal } = useContributorProfileModalStore();
   const inviteCodeParam = useSearchParams().get("invite-code");
@@ -73,8 +78,11 @@ function ProjectPage() {
     isFetching: isFetchingRoles,
   } = useQuery<Record<string, Member["role"]>>({
     queryKey: ["memberRoles", project?.uid],
-    queryFn: () => (project ? getProjectMemberRoles(project) : {}),
-    enabled: !!project,
+    queryFn: () =>
+      project && projectInstance
+        ? getProjectMemberRoles(project, projectInstance)
+        : {},
+    enabled: !!project && !!projectInstance,
     staleTime: 1000 * 60 * 5,
   });
 

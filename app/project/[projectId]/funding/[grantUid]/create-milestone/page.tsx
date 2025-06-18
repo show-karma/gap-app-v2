@@ -16,6 +16,7 @@ const MilestoneForm = dynamic(
 export default function Page() {
   const { grant } = useGrantStore();
   const project = useProjectStore((state) => state.project);
+  
   if (!grant) {
     return null;
   }

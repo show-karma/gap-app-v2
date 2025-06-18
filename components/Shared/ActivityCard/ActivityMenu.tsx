@@ -71,48 +71,63 @@ export const ActivityMenu = ({
 
       {/* Options Menu with only Delete */}
       {canDelete && onDelete && (
-        <Menu as="div" className="relative inline-block text-left h-6">
-          <Menu.Button className="w-max h-6 bg-transparent hover:bg-zinc-100 hover:dark:bg-zinc-800 text-black dark:text-white p-0 rounded-lg">
-            <EllipsisVerticalIcon
-              className="h-6 w-6 text-zinc-500"
-              aria-hidden="true"
-            />
-          </Menu.Button>
-          <Transition
-            as={Fragment}
-            enter="transition ease-out duration-100"
-            enterFrom="transform opacity-0 scale-95"
-            enterTo="transform opacity-100 scale-100"
-            leave="transition ease-in duration-75"
-            leaveFrom="transform opacity-100 scale-100"
-            leaveTo="transform opacity-0 scale-95"
-          >
-            <Menu.Items
-              modal
-              className="absolute right-0 mt-2 w-48 origin-top-right divide-y divide-gray-100 rounded-md bg-white dark:bg-zinc-800 shadow-lg ring-1 ring-black/5 focus:outline-none z-50"
-            >
-              <div className="flex flex-col gap-1 px-1 py-1">
-                <Menu.Item>
-                  <DeleteDialog
-                    deleteFunction={onDelete}
-                    isLoading={isDeleting}
-                    title={deleteTitle}
-                    buttonElement={{
-                      text: "Delete",
-                      icon: (
-                        <TrashIcon className="h-5 w-5 text-[#D92D20] dark:text-red-500" />
-                      ),
-                      styleClass: cn(
-                        buttonClassName,
-                        "text-[#D92D20] dark:text-red-500"
-                      ),
-                    }}
-                  />
-                </Menu.Item>
-              </div>
-            </Menu.Items>
-          </Transition>
-        </Menu>
+        <DeleteDialog
+          deleteFunction={onDelete}
+          isLoading={isDeleting}
+          title={deleteTitle}
+          buttonElement={{
+            text: "",
+            icon: (
+              <TrashIcon className="h-5 w-5 text-[#D92D20] dark:text-red-500" />
+            ),
+            styleClass: cn(
+              buttonClassName,
+              "text-[#D92D20] dark:text-red-500 w-max p-0"
+            ),
+          }}
+        />
+        // <Menu as="div" className="relative inline-block text-left h-6">
+        //   <Menu.Button className="w-max h-6 bg-transparent hover:bg-zinc-100 hover:dark:bg-zinc-800 text-black dark:text-white p-0 rounded-lg">
+        //     <EllipsisVerticalIcon
+        //       className="h-6 w-6 text-zinc-500"
+        //       aria-hidden="true"
+        //     />
+        //   </Menu.Button>
+        //   <Transition
+        //     as={Fragment}
+        //     enter="transition ease-out duration-100"
+        //     enterFrom="transform opacity-0 scale-95"
+        //     enterTo="transform opacity-100 scale-100"
+        //     leave="transition ease-in duration-75"
+        //     leaveFrom="transform opacity-100 scale-100"
+        //     leaveTo="transform opacity-0 scale-95"
+        //   >
+        //     <Menu.Items
+        //       modal
+        //       className="absolute right-0 mt-2 w-48 origin-top-right divide-y divide-gray-100 rounded-md bg-white dark:bg-zinc-800 shadow-lg ring-1 ring-black/5 focus:outline-none z-50"
+        //     >
+        //       <div className="flex flex-col gap-1 px-1 py-1">
+        //         <Menu.Item>
+        //           <DeleteDialog
+        //             deleteFunction={onDelete}
+        //             isLoading={isDeleting}
+        //             title={deleteTitle}
+        //             buttonElement={{
+        //               text: "Delete",
+        //               icon: (
+        //                 <TrashIcon className="h-5 w-5 text-[#D92D20] dark:text-red-500" />
+        //               ),
+        //               styleClass: cn(
+        //                 buttonClassName,
+        //                 "text-[#D92D20] dark:text-red-500"
+        //               ),
+        //             }}
+        //           />
+        //         </Menu.Item>
+        //       </div>
+        //     </Menu.Items>
+        //   </Transition>
+        // </Menu>
       )}
     </div>
   );

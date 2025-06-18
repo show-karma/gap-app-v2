@@ -148,7 +148,7 @@ export const DisbursementForm = () => {
     if (files && files[0] && files[0].type === "text/csv") {
       processFile(files[0]);
     }
-  }, []);
+  }, [processFile]);
 
   const parseCsv = (file: File) => {
     Papa.parse(file, {
@@ -264,7 +264,7 @@ export const DisbursementForm = () => {
         error: "Failed to verify Safe. Please check the address and network.",
       }));
     }
-  }, [safeAddress, userAddress, isConnected, recipients, network, token]);
+  }, [safeAddress, userAddress, isConnected, recipients, network, token, walletChainId]);
 
   // Handle disbursement execution
   const handleDisbursement = async () => {
@@ -325,7 +325,7 @@ export const DisbursementForm = () => {
       markStepComplete("configure");
       setCurrentStep("upload");
     }
-  }, [safeAddress, completedSteps]);
+  }, [safeAddress, completedSteps, markStepComplete]);
 
   const hasErrors = recipients.some((r) => r.error);
   const canDisburse =

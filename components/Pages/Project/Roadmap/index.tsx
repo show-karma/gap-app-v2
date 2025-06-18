@@ -22,12 +22,21 @@ import { MESSAGES } from "@/utilities/messages";
 import { UnifiedMilestone } from "@/types/roadmap";
 
 interface ProjectRoadmapProps {
-  project: IProjectResponse;
+  project?: IProjectResponse;
 }
 
-export const ProjectRoadmap = ({ project }: ProjectRoadmapProps) => {
+export const ProjectRoadmap = ({
+  project: propProject,
+}: ProjectRoadmapProps) => {
   const { projectId } = useParams();
   const searchParams = useSearchParams();
+
+  // Use Zustand store for project data
+  const zustandProject = useProjectStore((state) => state.project);
+
+  // Use prop project first, then zustand project as fallback
+  const project = propProject || zustandProject;
+
   const {
     pendingMilestones,
     milestones = [],
@@ -166,7 +175,7 @@ export const ProjectRoadmap = ({ project }: ProjectRoadmapProps) => {
         update.source === "grant" ||
         (update.data?.title &&
           update.data.title.toLowerCase().includes("grant")) ||
-        (update.refUID && update.refUID !== project.uid) // If referencing something other than the project, likely a grant
+        (update.refUID && update.refUID !== project?.uid) // If referencing something other than the project, likely a grant
       ) {
         type = "grant_update";
       } else if (update.data?.type === "project-milestone") {
@@ -178,7 +187,7 @@ export const ProjectRoadmap = ({ project }: ProjectRoadmapProps) => {
       return {
         uid: update.uid,
         chainID: update.chainID,
-        refUID: update.refUID || project.uid,
+        refUID: update.refUID || project?.uid || "",
         title: update.data?.title || "Update",
         description: update.data?.text || "",
         type: type as any,
@@ -288,6 +297,11 @@ export const ProjectRoadmap = ({ project }: ProjectRoadmapProps) => {
       return false;
     });
   }, [combinedUpdatesAndMilestones, activeFilters]);
+
+  // If no project data is available, show loading
+  if (!project) {
+    return <RoadmapListLoading />;
+  }
 
   return (
     <div className="flex flex-col w-full h-full items-center justify-start">

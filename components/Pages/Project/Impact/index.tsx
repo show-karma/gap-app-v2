@@ -41,7 +41,9 @@ const cellClasses =
 interface ImpactComponentProps {}
 
 export const ImpactComponent: FC<ImpactComponentProps> = () => {
-  const { project, isProjectOwner } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  
   const [orderedImpacts, setOrderedImpacts] = useState<IProjectImpact[]>(
     project?.impacts || []
   );
@@ -59,7 +61,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
       return b.data.completedAt - a.data.completedAt;
     });
     setOrderedImpacts(ordered);
-  }, [project?.impacts]);
+  }, [project?.impacts, project]);
 
   const searchParams = useSearchParams();
 

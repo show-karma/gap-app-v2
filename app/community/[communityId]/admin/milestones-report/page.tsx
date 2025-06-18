@@ -11,7 +11,7 @@ import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 export const metadata = defaultMetadata;
 
 interface Props {
-  params: { communityId: string };
+  params: Promise<{ communityId: string }>;
 }
 
 const getGrantPrograms = async (communityId: string): Promise<string[]> => {
@@ -39,7 +39,8 @@ const getGrantPrograms = async (communityId: string): Promise<string[]> => {
   }
 };
 
-export default async function Page({ params }: Props) {
+export default async function Page(props: Props) {
+  const params = await props.params;
   const communityId = params.communityId;
 
   const { data: community } = await gapIndexerApi

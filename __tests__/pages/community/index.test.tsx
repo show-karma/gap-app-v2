@@ -53,7 +53,11 @@ describe("Community Page", () => {
     const { default: PageComponent } = await import(
       "@/app/community/[communityId]/page"
     );
-    render(await PageComponent({ params: { communityId: "test-community" } }));
+    render(
+      await PageComponent({
+        params: Promise.resolve({ communityId: "test-community" }),
+      })
+    );
 
     expect(screen.getByText("Test Community")).toBeInTheDocument();
     expect(screen.getByTestId("community-grants")).toBeInTheDocument();
@@ -69,7 +73,7 @@ describe("Community Page", () => {
     );
     render(
       await PageComponent({
-        params: { communityId: "non-existent-community" },
+        params: Promise.resolve({ communityId: "non-existent-community" }),
       })
     );
 

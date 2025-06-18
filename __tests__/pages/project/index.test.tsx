@@ -7,7 +7,7 @@ jest.mock("next/dynamic", () => ({
   __esModule: true,
   default: (
     callback: () => Promise<any>,
-    options: { loading: () => JSX.Element }
+    options: { loading: () => React.ReactNode }
   ) => {
     return function DynamicComponent() {
       return options.loading();

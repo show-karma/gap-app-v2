@@ -11,11 +11,12 @@ import { notFound } from "next/navigation";
 import { CommunityImpactStatCards } from "@/components/Pages/Communities/Impact/StatCards";
 
 type Props = {
-  params: {
+  params: Promise<{
     communityId: string;
-  };
+  }>;
 };
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(props: Props): Promise<Metadata> {
+  const params = await props.params;
   const communityId = params.communityId;
   let communityName = communityId;
 
@@ -67,13 +68,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function Layout({
-  children,
-  params,
-}: {
-  children: React.ReactNode;
-  params: { communityId: string };
-}) {
+export default async function Layout(
+  props: {
+    children: React.ReactNode;
+    params: Promise<{ communityId: string }>;
+  }
+) {
+  const params = await props.params;
+
+  const {
+    children
+  } = props;
+
   const { communityId } = params;
   let community: ICommunityResponse | null = null;
 

@@ -4,6 +4,8 @@ export const chainImgDictionary = (chainId: number) => {
       return "/images/networks/ethereum.svg";
     case 10:
       return "/images/networks/optimism.svg";
+    case 1135:
+      return "/images/networks/lisk.svg";
     case 1329:
       return "/images/networks/sei.svg";
     case 1328:

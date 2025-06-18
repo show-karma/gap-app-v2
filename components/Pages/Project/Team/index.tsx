@@ -9,11 +9,12 @@ import {
 } from "@/utilities/getProjectMemberRoles";
 import { useQuery } from "@tanstack/react-query";
 import { MemberCard } from "./MemberCard";
+import { useProjectInstance } from "@/hooks/useProjectInstance";
 
 export const Team = () => {
-  const { project } = useProjectStore((state) => state);
-  //   check if it have some duplicated
+  const project = useProjectStore((state) => state.project);
 
+  //   check if it have some duplicated
   const members = project
     ? Array.from(
         new Set([
@@ -26,6 +27,9 @@ export const Team = () => {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isProjectOwner || isContractOwner;
+  const { project: projectInstance } = useProjectInstance(
+    project?.details?.data.slug || project?.uid || ""
+  );
 
   const {
     data: memberRoles,
@@ -33,8 +37,11 @@ export const Team = () => {
     isFetching: isFetchingRoles,
   } = useQuery<Record<string, Member["role"]>>({
     queryKey: ["memberRoles", project?.uid],
-    queryFn: () => (project ? getProjectMemberRoles(project) : {}),
-    enabled: !!project,
+    queryFn: () =>
+      project && projectInstance
+        ? getProjectMemberRoles(project, projectInstance)
+        : {},
+    enabled: !!project && !!projectInstance,
     staleTime: 1000 * 60 * 5,
   });
 

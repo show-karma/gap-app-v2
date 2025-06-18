@@ -1,25 +1,21 @@
 import { GrantImpactCriteria } from "@/components/Pages/Grants/ImpactCriteria";
 import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
-import { fetchFromLocalApi } from "@/utilities/fetchFromServer";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 import { defaultMetadata } from "@/utilities/meta";
-import {
-  IGrantResponse,
-  IProjectResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: {
-    projectId: string;
-    grantUid: string;
-  };
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    params: Promise<{
+      projectId: string;
+      grantUid: string;
+    }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
   const projectId = params?.projectId as string;
   const grantUid = params?.grantUid as string;
 
@@ -96,7 +92,6 @@ export async function generateMetadata({
     icons: metadata.icons,
   };
 }
-
 export default function Page() {
   return <GrantImpactCriteria />;
 }
