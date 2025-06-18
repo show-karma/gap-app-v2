@@ -103,8 +103,12 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
         setIsProjectAdminLoading(true);
 
         const [isOwnerResult, isAdminResult] = await Promise.all([
-          projectInstance.isOwner(rpcClient as any, address).catch(() => false),
-          projectInstance.isAdmin(rpcClient as any, address).catch(() => false),
+          projectInstance
+            ?.isOwner(rpcClient as any, address)
+            .catch(() => false),
+          projectInstance
+            ?.isAdmin(rpcClient as any, address)
+            .catch(() => false),
         ]);
 
         setIsProjectOwner(isOwnerResult);
@@ -242,16 +246,10 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
     return members;
   };
 
-
   const { isIntroModalOpen } = useIntroModalStore();
   const { isEndorsementOpen } = useEndorsementStore();
   const { isProgressModalOpen } = useProgressModalStore();
   const { isOpen: isShareDialogOpen } = useShareDialogStore();
-
-  // Show loading state if project is still loading or not available
-  if (isProjectLoading || !project) {
-    return <ProjectHeaderLoading />;
-  }
 
   return (
     <div>

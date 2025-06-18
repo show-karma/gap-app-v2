@@ -4,9 +4,10 @@
       "Bash(grep:*)",
       "Bash(yarn lint:*)",
       "Bash(gh pr view:*)",
-      "Bash(gh pr diff:*)"
+      "Bash(gh pr diff:*)",
+      "Bash(yarn build:*)",
+      "Bash(yarn tsc:*)"
     ],
     "deny": []
   }
 }
-
