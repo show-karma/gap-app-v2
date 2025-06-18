@@ -1,17 +1,32 @@
 import { getProjectObjectives } from "./getProjectObjectives";
-import { getGrantMilestones } from "./getGrantMilestones";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { UnifiedMilestone } from "@/types/roadmap";
+import {
+  IGrantResponse,
+  IMilestoneResponse,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 export async function getAllMilestones(
-  projectId: string
+  projectId: string,
+  projectGrants: IGrantResponse[]
 ): Promise<UnifiedMilestone[]> {
   try {
     // Fetch both types of milestones in parallel
-    const [projectMilestones, grantMilestonesWithGrants] = await Promise.all([
-      getProjectObjectives(projectId),
-      getGrantMilestones(projectId),
-    ]);
+    const projectMilestones = await getProjectObjectives(projectId);
+    const grantMilestonesWithGrants: {
+      milestone: IMilestoneResponse;
+      grant: IGrantResponse;
+    }[] = [];
+    projectGrants.forEach((grant) => {
+      if (grant.milestones && grant.milestones.length > 0) {
+        grant.milestones.forEach((milestone) => {
+          grantMilestonesWithGrants.push({
+            milestone,
+            grant,
+          });
+        });
+      }
+    });
 
     // Transform project milestones to unified format
     const unifiedProjectMilestones: UnifiedMilestone[] = projectMilestones.map(
