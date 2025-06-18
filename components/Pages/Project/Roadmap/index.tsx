@@ -31,18 +31,11 @@ export const ProjectRoadmap = ({
   const { projectId } = useParams();
   const searchParams = useSearchParams();
 
-  // Use Zustand store for project data
   const zustandProject = useProjectStore((state) => state.project);
 
-  // Use prop project first, then zustand project as fallback
   const project = propProject || zustandProject;
 
-  const {
-    pendingMilestones,
-    milestones = [],
-    isLoading,
-    refetch,
-  } = useAllMilestones(projectId as string);
+  const { milestones = [], isLoading } = useAllMilestones(projectId as string);
 
   const { setIsProgressModalOpen, setProgressModalScreen } =
     useProgressModalStore();
@@ -62,22 +55,10 @@ export const ProjectRoadmap = ({
     getActiveFilters()
   );
 
-  // Handle filter changes
-  const handleFilterChange = (filters: string[]) => {
-    setActiveFilters(filters);
-  };
-
   // Sync with URL params when they change
   useEffect(() => {
     setActiveFilters(getActiveFilters());
   }, [searchParams]);
-
-  // Fetch project milestones directly from API
-  const { data: projectMilestones } = useQuery<IProjectMilestoneResponse[]>({
-    queryKey: ["projectMilestones", project?.uid],
-    queryFn: () => getProjectObjectives(project?.uid || ""),
-    enabled: !!project?.uid,
-  });
 
   // Helper function to normalize any timestamp format to milliseconds
   const normalizeToMilliseconds = (timestamp: unknown): number | null => {
@@ -221,7 +202,6 @@ export const ProjectRoadmap = ({
     project?.impacts,
     project?.uid,
     milestones,
-    projectMilestones,
   ]);
 
   // Filter items based on active filters

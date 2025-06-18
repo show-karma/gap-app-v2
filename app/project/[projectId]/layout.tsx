@@ -1,50 +1,17 @@
 /* eslint-disable @next/next/no-img-element */
 import { ProjectWrapper } from "@/components/Pages/Project/ProjectWrapper";
-import { zeroUID } from "@/utilities/commons";
-import { notFound, redirect } from "next/navigation";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import {
   dehydrate,
   HydrationBoundary,
   QueryClient,
 } from "@tanstack/react-query";
-import { cache } from "react";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 import { generateProjectOverviewMetadata } from "@/utilities/metadata/projectMetadata";
+import { getProjectData } from "@/utilities/queries/getProjectData";
 
-const getProjectData = cache(
-  async (projectId: string): Promise<IProjectResponse> => {
-    try {
-      const response = await gapIndexerApi.projectBySlug(projectId);
-      const project = response.data;
-
-      if (!project || project.uid === zeroUID) {
-        notFound();
-      }
-
-      if (project?.pointers && project?.pointers?.length > 0) {
-        const original = await gapIndexerApi
-          .projectBySlug(project.pointers[0].data?.ogProjectUID)
-          .then((res) => res.data)
-          .catch(() => null);
-        if (original) {
-          redirect(`/project/${original.details?.data?.slug}`);
-        }
-      }
-
-      return project;
-    } catch (error) {
-      notFound();
-    }
-  }
-);
-
-export async function generateMetadata(
-  props: {
-    params: Promise<{ projectId: string }>;
-  }
-) {
+export async function generateMetadata(props: {
+  params: Promise<{ projectId: string }>;
+}) {
   const params = await props.params;
   const projectId = params.projectId;
   const projectInfo = await getProjectData(projectId);
@@ -52,21 +19,15 @@ export async function generateMetadata(
   return generateProjectOverviewMetadata(projectInfo, projectId);
 }
 
-export default async function RootLayout(
-  props: {
-    children: React.ReactNode;
-    params: Promise<{ projectId: string }>;
-  }
-) {
+export default async function RootLayout(props: {
+  children: React.ReactNode;
+  params: Promise<{ projectId: string }>;
+}) {
   const params = await props.params;
 
-  const {
-    projectId
-  } = params;
+  const { projectId } = params;
 
-  const {
-    children
-  } = props;
+  const { children } = props;
 
   const queryClient = new QueryClient({
     defaultOptions: {
