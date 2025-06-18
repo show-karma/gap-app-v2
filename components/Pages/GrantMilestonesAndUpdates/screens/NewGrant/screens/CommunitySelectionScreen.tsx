@@ -28,7 +28,7 @@ export const CommunitySelectionScreen: React.FC = () => {
   const params = useParams();
   const grantUid = params.grantUid as string;
   const isEditing = pathname.includes("/edit");
-  const { updateGrant, isLoading: isUpdatingGrant } = useGrant();
+  const { updateGrant } = useGrant();
   const [allCommunities, setAllCommunities] = useState<ICommunityResponse[]>(
     []
   );
