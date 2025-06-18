@@ -4,14 +4,13 @@ import { useQuery } from "@tanstack/react-query";
 
 export const useProjectInstance = (projectId: string) => {
   const query = useQuery({
-    queryKey: ["project", projectId],
+    queryKey: ["project-instance", projectId],
     queryFn: async (): Promise<Project | undefined> => {
       const fetchedProject = await getProjectById(projectId);
       return fetchedProject;
     },
     enabled: !!projectId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+    staleTime: 5 * 60 * 1000,
   });
 
   return {

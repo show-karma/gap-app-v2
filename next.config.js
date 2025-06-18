@@ -14,14 +14,47 @@ const removeImports = require("next-remove-imports")();
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  staticPageGenerationTimeout: 1000,
-  webpack: (config) => {
-    config.externals.push("pino-pretty", "lokijs", "encoding");
-    return config;
-  },
+  staticPageGenerationTimeout: 10000,
   experimental: {
     streamingMetadata: true,
   },
+  webpack: (config, { isServer, webpack }) => {
+    // Fix for browserslist and other Node.js modules
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+        path: false,
+        os: false,
+        crypto: false,
+        stream: false,
+        http: false,
+        https: false,
+        zlib: false,
+        querystring: false,
+        events: false,
+        url: false,
+        buffer: false,
+        util: false,
+      };
+    }
+
+    // Add external modules that should not be bundled
+    config.externals.push("pino-pretty", "lokijs", "encoding");
+
+    // Ignore dynamic requires in browserslist
+    config.plugins.push(
+      new webpack.IgnorePlugin({
+        resourceRegExp: /^\.\/locale$/,
+        contextRegExp: /moment$/,
+      })
+    );
+
+    return config;
+  },
+  transpilePackages: ["@show-karma/karma-gap-sdk"],
   images: {
     remotePatterns: [
       {
@@ -66,8 +99,8 @@ module.exports = withSentryConfig(
     // Upload a larger set of source maps for prettier stack traces (increases build time)
     widenClientFileUpload: true,
 
-    // Transpiles SDK to be compatible with IE11 (increases bundle size)
-    transpileClientSDK: true,
+    // Remove transpileClientSDK as it's deprecated in Next.js 15
+    // transpileClientSDK: true,
 
     // Uncomment to route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
     // This can increase your server load as well as your hosting bill.
