@@ -1,11 +1,12 @@
 "use client";
 import { Menu, Transition } from "@headlessui/react";
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import { EllipsisVerticalIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { cn } from "@/utilities/tailwind";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { useMilestone } from "@/hooks/useMilestone";
 import { UnifiedMilestone } from "@/types/roadmap";
+import { Button } from "@/components/Utilities/Button";
 
 // Common button styling
 const buttonClassName = `group border-none ring-none font-normal bg-transparent dark:bg-transparent text-gray-900 dark:text-zinc-100 hover:bg-white dark:hover:bg-zinc-800 dark:hover:opacity-75 hover:opacity-75 flex w-full items-start justify-start rounded-md px-2 py-2 text-sm flex-row gap-2`;
@@ -18,6 +19,7 @@ export const GrantMilestoneSimpleOptionsMenu = ({
   milestone,
 }: GrantMilestoneSimpleOptionsMenuProps) => {
   const { isDeleting, multiGrantDelete } = useMilestone();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   // Wrap the multiGrantDelete function to ensure it returns void
   const handleDelete = async () => {
@@ -48,33 +50,43 @@ export const GrantMilestoneSimpleOptionsMenu = ({
           >
             <div className="flex flex-col gap-1 px-1 py-1">
               <Menu.Item>
-                <DeleteDialog
-                  title={
-                    milestone.mergedGrants && milestone.mergedGrants.length > 1
-                      ? "Are you sure you want to delete these milestones?"
-                      : "Are you sure you want to delete this milestone?"
-                  }
-                  deleteFunction={handleDelete}
-                  isLoading={isDeleting}
-                  buttonElement={{
-                    icon: (
-                      <TrashIcon
-                        className={"h-5 w-5 text-[#D92D20] dark:text-red-500"}
-                        aria-hidden="true"
-                      />
-                    ),
-                    text: "Delete",
-                    styleClass: cn(
+                {({ close }) => (
+                  <Button
+                    className={cn(
                       buttonClassName,
                       "text-[#D92D20] dark:text-red-500"
-                    ),
-                  }}
-                />
+                    )}
+                    onClick={() => {
+                      setIsDeleteDialogOpen(true);
+                      close(); // Close the menu
+                    }}
+                  >
+                    <TrashIcon
+                      className={"h-5 w-5 text-[#D92D20] dark:text-red-500"}
+                      aria-hidden="true"
+                    />
+                    Delete
+                  </Button>
+                )}
               </Menu.Item>
             </div>
           </Menu.Items>
         </Transition>
       </Menu>
+      
+      {/* DeleteDialog rendered outside the Menu to prevent modal conflicts */}
+      <DeleteDialog
+        title={
+          milestone.mergedGrants && milestone.mergedGrants.length > 1
+            ? "Are you sure you want to delete these milestones?"
+            : "Are you sure you want to delete this milestone?"
+        }
+        deleteFunction={handleDelete}
+        isLoading={isDeleting}
+        buttonElement={null} // No button element since we control it manually
+        externalIsOpen={isDeleteDialogOpen}
+        externalSetIsOpen={setIsDeleteDialogOpen}
+      />
     </>
   );
 };

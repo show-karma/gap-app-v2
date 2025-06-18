@@ -73,6 +73,7 @@ export const ObjectiveOptionsMenu = ({
   const params = useParams();
   const projectId = params.projectId as string;
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { chain, address } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const router = useRouter();
@@ -237,29 +238,39 @@ export const ObjectiveOptionsMenu = ({
                 </Button>
               </Menu.Item>
               <Menu.Item>
-                <DeleteDialog
-                  title="Are you sure you want to delete this milestone?"
-                  deleteFunction={deleteFn}
-                  isLoading={isDeleting}
-                  buttonElement={{
-                    icon: (
-                      <TrashIcon
-                        className={"h-5 w-5 text-[#D92D20] dark:text-red-500"}
-                        aria-hidden="true"
-                      />
-                    ),
-                    text: "Delete",
-                    styleClass: cn(
+                {({ close }) => (
+                  <Button
+                    className={cn(
                       buttonClassName,
                       "text-[#D92D20] dark:text-red-500"
-                    ),
-                  }}
-                />
+                    )}
+                    onClick={() => {
+                      setIsDeleteDialogOpen(true);
+                      close(); // Close the menu
+                    }}
+                  >
+                    <TrashIcon
+                      className={"h-5 w-5 text-[#D92D20] dark:text-red-500"}
+                      aria-hidden="true"
+                    />
+                    Delete
+                  </Button>
+                )}
               </Menu.Item>
             </div>
           </Menu.Items>
         </Transition>
       </Menu>
+      
+      {/* DeleteDialog rendered outside the Menu to prevent modal conflicts */}
+      <DeleteDialog
+        title="Are you sure you want to delete this milestone?"
+        deleteFunction={deleteFn}
+        isLoading={isDeleting}
+        buttonElement={null} // No button element since we control it manually
+        externalIsOpen={isDeleteDialogOpen}
+        externalSetIsOpen={setIsDeleteDialogOpen}
+      />
     </>
   );
 };

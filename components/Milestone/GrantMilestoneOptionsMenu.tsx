@@ -1,6 +1,6 @@
 "use client";
 import { Menu, Transition } from "@headlessui/react";
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
 import {
   CheckCircleIcon,
   EllipsisVerticalIcon,
@@ -27,6 +27,7 @@ export const GrantMilestoneOptionsMenu = ({
   alreadyCompleted,
 }: GrantMilestoneOptionsMenuProps) => {
   const { isDeleting, multiGrantDelete } = useMilestone();
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   // Wrap the multiGrantDelete function to ensure it returns void
   const handleDelete = async () => {
@@ -67,33 +68,43 @@ export const GrantMilestoneOptionsMenu = ({
                 </Button>
               </Menu.Item>
               <Menu.Item>
-                <DeleteDialog
-                  title={
-                    milestone.mergedGrants && milestone.mergedGrants.length > 1
-                      ? "Are you sure you want to delete these milestones?"
-                      : "Are you sure you want to delete this milestone?"
-                  }
-                  deleteFunction={handleDelete}
-                  isLoading={isDeleting}
-                  buttonElement={{
-                    icon: (
-                      <TrashIcon
-                        className={"h-5 w-5 text-[#D92D20] dark:text-red-500"}
-                        aria-hidden="true"
-                      />
-                    ),
-                    text: "Delete",
-                    styleClass: cn(
+                {({ close }) => (
+                  <Button
+                    className={cn(
                       buttonClassName,
                       "text-[#D92D20] dark:text-red-500"
-                    ),
-                  }}
-                />
+                    )}
+                    onClick={() => {
+                      setIsDeleteDialogOpen(true);
+                      close(); // Close the menu
+                    }}
+                  >
+                    <TrashIcon
+                      className={"h-5 w-5 text-[#D92D20] dark:text-red-500"}
+                      aria-hidden="true"
+                    />
+                    Delete
+                  </Button>
+                )}
               </Menu.Item>
             </div>
           </Menu.Items>
         </Transition>
       </Menu>
+      
+      {/* DeleteDialog rendered outside the Menu to prevent modal conflicts */}
+      <DeleteDialog
+        title={
+          milestone.mergedGrants && milestone.mergedGrants.length > 1
+            ? "Are you sure you want to delete these milestones?"
+            : "Are you sure you want to delete this milestone?"
+        }
+        deleteFunction={handleDelete}
+        isLoading={isDeleting}
+        buttonElement={null} // No button element since we control it manually
+        externalIsOpen={isDeleteDialogOpen}
+        externalSetIsOpen={setIsDeleteDialogOpen}
+      />
     </>
   );
 };
