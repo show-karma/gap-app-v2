@@ -127,7 +127,20 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
     };
 
     runPermissionChecks();
-  }, [projectInstance, address, isAuth, isConnected, signer, isOwner]);
+  }, [
+    projectInstance,
+    address,
+    isAuth,
+    isConnected,
+    signer,
+    isOwner,
+    project?.chainID,
+    projectId,
+    setIsProjectAdmin,
+    setIsProjectAdminLoading,
+    setIsProjectOwner,
+    setIsProjectOwnerLoading,
+  ]);
 
   const getSocials = (links: IProjectDetails["data"]["links"]) => {
     const types = [

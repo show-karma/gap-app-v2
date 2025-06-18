@@ -10,11 +10,12 @@ import { Team } from "@/components/Pages/Project/Team";
 import { notFound } from "next/navigation";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { projectId: string };
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ projectId: string }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
   const projectId = params.projectId;
 
   const projectInfo = await getMetadata<IProjectResponse>(
@@ -69,7 +70,8 @@ export async function generateMetadata({
   };
 }
 
-const TeamPage = async ({ params }: { params: { projectId: string } }) => {
+const TeamPage = async (props: { params: Promise<{ projectId: string }> }) => {
+  const params = await props.params;
   const projectId = params.projectId;
 
   const projectInfo = await getMetadata<IProjectResponse>(

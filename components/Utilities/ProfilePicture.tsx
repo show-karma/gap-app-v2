@@ -30,6 +30,7 @@ export const ProfilePicture = ({
   
   if (isValid && imageURL) {
     return (
+      // eslint-disable-next-line @next/next/no-img-element
       <img
         alt={alt || name || "Profile"}
         src={imageURL}

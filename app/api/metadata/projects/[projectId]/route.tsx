@@ -9,9 +9,9 @@ import pluralize from "pluralize";
 
 export async function GET(
   request: NextRequest,
-  context: { params: { projectId: string } }
+  context: { params: Promise<{ projectId: string }> }
 ) {
-  const projectId = context.params.projectId;
+  const projectId = (await context.params).projectId;
   let project = await gapIndexerApi
     .projectBySlug(projectId)
     .then((res) => res.data)

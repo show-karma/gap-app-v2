@@ -11,11 +11,12 @@ import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-ind
 import { envVars } from "@/utilities/enviromentVars";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { projectId: string };
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ projectId: string }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
   const projectId = params.projectId;
 
   const projectInfo = await getMetadata<IProjectResponse>(
