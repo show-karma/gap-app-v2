@@ -58,6 +58,10 @@ const NAVIGATION_ITEMS: readonly NavigationItem[] = [
   },
 ] as const;
 
+const getPathWithProgramId = (program: string | null, basePath: string) => {
+  return program ? `${basePath}?programId=${program}` : basePath;
+};
+
 export const CommunityPageNavigator = () => {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -72,16 +76,12 @@ export const CommunityPageNavigator = () => {
   const isAdminPage = pathname.includes("/admin");
   if (isAdminPage) return null;
 
-  const getPathWithProgramId = (basePath: string) => {
-    return programId ? `${basePath}?programId=${programId}` : basePath;
-  };
-
   return (
     <div className="flex-row max-md:flex-col flex-wrap px-1.5 pt-2 mb-[-1px] rounded-lg justify-start items-center gap-4 flex h-max">
       {NAVIGATION_ITEMS.map(({ path, title, Icon, isActive, showNewTag }) => (
         <Link
           key={path(communityId)}
-          href={getPathWithProgramId(path(communityId))}
+          href={getPathWithProgramId(programId, path(communityId))}
           className={cn(
             baseLinkStyle,
             isActive(pathname) ? activeLinkStyle : inactiveLinkStyle
