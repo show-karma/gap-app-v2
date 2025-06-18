@@ -255,7 +255,7 @@ const getFormErrorMessage = (errors: any, formValues: any) => {
 export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   afterSubmit,
   editId: propEditId,
-}): JSX.Element => {
+}) => {
   const { address } = useAccount();
   const { chain } = useAccount();
   const { switchChainAsync } = useSwitchChain();

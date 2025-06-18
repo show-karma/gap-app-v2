@@ -61,7 +61,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
       return b.data.completedAt - a.data.completedAt;
     });
     setOrderedImpacts(ordered);
-  }, [project?.impacts]);
+  }, [project?.impacts, project]);
 
   const searchParams = useSearchParams();
 

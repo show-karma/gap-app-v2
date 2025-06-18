@@ -40,24 +40,34 @@ const getProjectData = cache(
   }
 );
 
-export async function generateMetadata({
-  params,
-}: {
-  params: { projectId: string };
-}) {
+export async function generateMetadata(
+  props: {
+    params: Promise<{ projectId: string }>;
+  }
+) {
+  const params = await props.params;
   const projectId = params.projectId;
   const projectInfo = await getProjectData(projectId);
 
   return generateProjectOverviewMetadata(projectInfo, projectId);
 }
 
-export default async function RootLayout({
-  children,
-  params: { projectId },
-}: {
-  children: React.ReactNode;
-  params: { projectId: string };
-}) {
+export default async function RootLayout(
+  props: {
+    children: React.ReactNode;
+    params: Promise<{ projectId: string }>;
+  }
+) {
+  const params = await props.params;
+
+  const {
+    projectId
+  } = params;
+
+  const {
+    children
+  } = props;
+
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
