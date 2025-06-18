@@ -9,10 +9,11 @@ import { TracksAdminPage } from "@/components/Pages/Communities/TracksAdminPage"
 export const metadata = defaultMetadata;
 
 interface Props {
-  params: { communityId: string };
+  params: Promise<{ communityId: string }>;
 }
 
-export default async function Page({ params }: Props) {
+export default async function Page(props: Props) {
+  const params = await props.params;
   const communityId = params.communityId;
   const { data: community } = await gapIndexerApi
     .communityBySlug(communityId)

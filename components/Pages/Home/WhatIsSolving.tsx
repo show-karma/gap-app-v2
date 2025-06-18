@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 export function WhatIsSolving() {
   return (
     <div className="mb-10 mt-16 flex flex-row flex-wrap gap-16 max-lg:flex-col">
@@ -24,10 +26,12 @@ export function WhatIsSolving() {
         <div className="flex flex-row flex-wrap gap-6">
           <div className="flex min-w-[280px]  flex-1 flex-col items-start gap-3 rounded-3xl  bg-[#D7F8EF] px-8 py-6 max-2xl:px-6">
             <div className="flex items-center justify-center rounded-lg border border-black p-2 ">
-              <img
+              <Image
                 src="/icons/coins-stacked.png"
                 alt="Grantee"
                 className="h-7 w-7"
+                width={28}
+                height={28}
               />
             </div>
             <h3 className="text-2xl font-bold text-black  max-2xl:text-xl">
@@ -41,10 +45,12 @@ export function WhatIsSolving() {
           </div>
           <div className="flex min-w-[280px]  flex-1 flex-col items-start gap-3 rounded-3xl bg-[#E0EAFF] px-8 py-6 max-2xl:px-6">
             <div className="flex items-center justify-center rounded-lg border border-black p-2 ">
-              <img
+              <Image
                 src="/icons/coins-stacked.png"
                 alt="Grantee"
                 className="h-7 w-7"
+                width={28}
+                height={28}
               />
             </div>
             <h3 className=" text-2xl font-bold text-black  max-2xl:text-xl">

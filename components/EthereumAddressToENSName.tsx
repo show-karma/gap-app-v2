@@ -23,7 +23,7 @@ const EthereumAddressToENSName: React.FC<Props> = ({
     if (!ensNames[lowerCasedAddress]) {
       populateEns([lowerCasedAddress]);
     }
-  }, [lowerCasedAddress, ensNames]);
+  }, [lowerCasedAddress, ensNames, populateEns]);
 
   const addressToDisplay = shouldTruncate
     ? lowerCasedAddress?.slice(0, 6) + "..." + lowerCasedAddress?.slice(-6)

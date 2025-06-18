@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { PlusIcon } from "@heroicons/react/24/solid";
 import { Button } from "@/components/Utilities/Button";
 import { chosenCommunities } from "@/utilities/chosenCommunities";
@@ -27,7 +28,13 @@ export const Communities = () => {
     <div className="mb-8 mt-[80px] flex h-max w-full flex-row justify-center gap-4 max-md:flex-col max-lg:flex-wrap">
       <div className="flex h-max w-max flex-col gap-6 rounded-3xl  bg-[#EAECF0] dark:bg-zinc-400 p-8 max-lg:w-full">
         <div className="h-max w-max rounded-lg border border-black p-2">
-          <img src="/icons/globe.svg" alt="Globe" className="h-7 w-7" />
+          <Image
+            src="/icons/globe.svg"
+            alt="Globe"
+            className="h-7 w-7"
+            width={28}
+            height={28}
+          />
         </div>
         <h4 className="text-5xl font-bold leading-[50px] text-gray-900 max-lg:text-3xl">
           Communities using GAP

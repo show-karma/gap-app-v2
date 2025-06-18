@@ -58,7 +58,11 @@ export const GroupedLinks = ({ proofs }: { proofs: string[] }) => {
             </ExternalLink>
           ) : (
             <div
-              ref={(el) => (dropdownRefs.current[name] = el)}
+              ref={(el) => {
+                if (el) {
+                  dropdownRefs.current[name] = el;
+                }
+              }}
               className="relative"
             >
               <button

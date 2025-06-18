@@ -15,7 +15,9 @@ export const useProject = (projectId: string) => {
     },
     enabled: !!projectId,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 1 * 60 * 1000, // 10 minutes (formerly cacheTime)
+    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+    refetchOnMount: false, // Prevent refetch of SSR data
+    refetchOnWindowFocus: false,
   });
 
   useEffect(() => {
@@ -30,5 +32,6 @@ export const useProject = (projectId: string) => {
     error: query.error,
     refetch: query.refetch,
     isError: query.isError,
+    isFetching: query.isFetching,
   };
 };

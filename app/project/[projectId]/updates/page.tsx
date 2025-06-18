@@ -6,13 +6,14 @@ import { defaultMetadata } from "@/utilities/meta";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: {
-    projectId: string;
-  };
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    params: Promise<{
+      projectId: string;
+    }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
   const projectId = params?.projectId as string;
 
   const projectInfo = await gapIndexerApi
@@ -67,11 +68,12 @@ export async function generateMetadata({
   };
 }
 
-export default async function RoadmapPage({
-  params,
-}: {
-  params: { projectId: string };
-}) {
+export default async function RoadmapPage(
+  props: {
+    params: Promise<{ projectId: string }>;
+  }
+) {
+  const params = await props.params;
   const project = await gapIndexerApi
     .projectBySlug(params.projectId)
     .then((res) => res.data)

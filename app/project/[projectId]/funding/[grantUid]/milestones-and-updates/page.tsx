@@ -9,14 +9,15 @@ import { ProjectGrantsMilestonesAndUpdatesLoading } from "@/components/Pages/Pro
 import { envVars } from "@/utilities/enviromentVars";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 
-export async function generateMetadata({
-  params,
-}: {
-  params: {
-    projectId: string;
-    grantUid: string;
-  };
-}): Promise<Metadata> {
+export async function generateMetadata(
+  props: {
+    params: Promise<{
+      projectId: string;
+      grantUid: string;
+    }>;
+  }
+): Promise<Metadata> {
+  const params = await props.params;
   const projectId = params?.projectId as string;
   const grantUid = params?.grantUid as string;
 

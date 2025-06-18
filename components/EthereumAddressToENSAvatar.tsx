@@ -22,7 +22,7 @@ const EthereumAddressToENSAvatar: React.FC<Props> = ({
     if (!ensAvatars[lowerCasedAddress]) {
       populateEns([lowerCasedAddress]);
     }
-  }, [lowerCasedAddress]);
+  }, [lowerCasedAddress, ensAvatars, populateEns]);
 
   return (
     <div>

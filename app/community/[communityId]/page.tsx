@@ -12,12 +12,13 @@ import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/ka
 import { notFound } from "next/navigation";
 
 type Props = {
-  params: {
+  params: Promise<{
     communityId: string;
-  };
+  }>;
 };
 
-export default async function Page({ params }: Props) {
+export default async function Page(props: Props) {
+  const params = await props.params;
   const { communityId } = params;
   let community: ICommunityResponse | null = null;
   let categoriesOptions: string[] = [];
