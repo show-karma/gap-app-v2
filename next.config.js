@@ -15,6 +15,7 @@ const removeImports = require("next-remove-imports")();
 const nextConfig = {
   reactStrictMode: true,
   staticPageGenerationTimeout: 10000,
+  turbopack: {},
   webpack: (config, { isServer, webpack }) => {
     // Fix for browserslist and other Node.js modules
     if (!isServer) {
