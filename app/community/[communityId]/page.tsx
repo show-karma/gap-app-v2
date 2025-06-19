@@ -3,7 +3,10 @@ import { CommunityFeed } from "@/components/CommunityFeed";
 import { CommunityGrants } from "@/components/CommunityGrants";
 import { ReceiveProjectUpdates } from "@/components/Pages/ReceiveProjectUpdates";
 import type { SortByOptions, MaturityStageOptions } from "@/types";
-import { getCommunityData, getCommunityCategories } from "@/utilities/queries/getCommunityData";
+import {
+  getCommunityData,
+  getCommunityCategories,
+} from "@/utilities/queries/getCommunityData";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
 import { communitiesToBulkSubscribe } from "@/utilities/subscribe";
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
@@ -15,8 +18,7 @@ type Props = {
 };
 
 export default async function Page(props: Props) {
-  const params = await props.params;
-  const { communityId } = params;
+  const { communityId } = await props.params;
 
   if (pagesOnRoot.includes(communityId)) {
     return undefined;
@@ -24,7 +26,7 @@ export default async function Page(props: Props) {
 
   const [community, categoriesOptions] = await Promise.all([
     getCommunityData(communityId),
-    getCommunityCategories(communityId)
+    getCommunityCategories(communityId),
   ]);
 
   const defaultSortBy = "milestones" as SortByOptions;

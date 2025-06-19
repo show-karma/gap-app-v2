@@ -15,8 +15,7 @@ export async function generateMetadata(props: {
     projectId: string;
   }>;
 }): Promise<Metadata> {
-  const params = await props.params;
-  const projectId = params.projectId;
+  const { projectId } = await props.params;
   const projectInfo = await getProjectData(projectId);
 
   let metadata = {
@@ -66,8 +65,7 @@ export async function generateMetadata(props: {
 export default async function RoadmapPage(props: {
   params: Promise<{ projectId: string }>;
 }) {
-  const params = await props.params;
-  const projectId = params.projectId;
+  const { projectId } = await props.params;
   const projectInfo = await getProjectData(projectId);
 
   const queryClient = new QueryClient({

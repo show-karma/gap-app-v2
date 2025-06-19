@@ -18,9 +18,8 @@ type Props = {
 };
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
-  const params = await props.params;
-  const communityId = params.communityId;
-  const programId = (await props.searchParams).programId;
+  const { communityId } = await props.params;
+  const { programId } = await props.searchParams;
   let communityName = communityId;
 
   try {

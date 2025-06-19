@@ -10,13 +10,10 @@ import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Hex } from "viem";
 
-export async function generateMetadata(
-  props: {
-    params: Promise<{ projectId: string }>;
-  }
-): Promise<Metadata> {
-  const params = await props.params;
-  const projectId = params.projectId;
+export async function generateMetadata(props: {
+  params: Promise<{ projectId: string }>;
+}): Promise<Metadata> {
+  const { projectId } = await props.params;
 
   const projectInfo = await getMetadata<IProjectResponse>(
     "project",

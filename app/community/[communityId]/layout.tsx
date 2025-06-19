@@ -14,9 +14,8 @@ type Props = {
   }>;
 };
 export async function generateMetadata(props: Props): Promise<Metadata> {
-  const params = await props.params;
-  const communityId = params.communityId;
-  
+  const { communityId } = await props.params;
+
   const community = await getCommunityData(communityId);
   const communityName = community?.details?.data?.name || communityId;
 
@@ -58,19 +57,13 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   };
 }
 
-export default async function Layout(
-  props: {
-    children: React.ReactNode;
-    params: Promise<{ communityId: string }>;
-  }
-) {
-  const params = await props.params;
+export default async function Layout(props: {
+  children: React.ReactNode;
+  params: Promise<{ communityId: string }>;
+}) {
+  const { communityId } = await props.params;
 
-  const {
-    children
-  } = props;
-
-  const { communityId } = params;
+  const { children } = props;
 
   if (pagesOnRoot.includes(communityId)) {
     return undefined;
