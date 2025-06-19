@@ -31,8 +31,7 @@ export const InfoTooltip = ({
   arrowClassName,
 }: InfoTooltipProps) => {
   const defaultTrigger = (
-    <button
-      type="button"
+    <div
       className={cn(
         "rounded-full p-1 hover:bg-gray-100 dark:hover:bg-zinc-800",
         className
@@ -55,13 +54,13 @@ export const InfoTooltip = ({
         <path d="M12 16v-4" />
         <path d="M12 8h.01" />
       </svg>
-    </button>
+    </div>
   );
 
   return (
     <Tooltip.Provider>
       <Tooltip.Root delayDuration={delayDuration}>
-        <Tooltip.Trigger asChild={triggerAsChild}>
+        <Tooltip.Trigger asChild={triggerAsChild} type="button">
           {children || defaultTrigger}
         </Tooltip.Trigger>
         <Tooltip.Portal>

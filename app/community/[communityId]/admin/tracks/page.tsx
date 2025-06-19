@@ -5,6 +5,7 @@ import { Suspense } from "react";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { zeroUID } from "@/utilities/commons";
 import { TracksAdminPage } from "@/components/Pages/Communities/TracksAdminPage";
+import { getCommunityData } from "@/utilities/queries/getCommunityData";
 
 export const metadata = defaultMetadata;
 
@@ -13,13 +14,8 @@ interface Props {
 }
 
 export default async function Page(props: Props) {
-  const params = await props.params;
-  const communityId = params.communityId;
-  const { data: community } = await gapIndexerApi
-    .communityBySlug(communityId)
-    .catch(() => {
-      notFound();
-    });
+  const { communityId } = await props.params;
+  const community = await getCommunityData(communityId);
   if (!community || community?.uid === zeroUID) {
     notFound();
   }

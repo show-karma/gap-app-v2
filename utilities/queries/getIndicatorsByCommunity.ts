@@ -17,12 +17,13 @@ export interface GroupedIndicators {
 export const getIndicatorsByCommunity = async (communityId: string) => {
   try {
     const [data, error] = await fetchData(
-      INDEXER.COMMUNITY.INDICATORS.COMMUNITY.LIST(communityId)
+      `${INDEXER.COMMUNITY.INDICATORS.COMMUNITY.LIST(communityId)}/grouped`
     );
     if (error) {
       throw error;
     }
-    return data as Indicator[];
+    const groupedData = data as GroupedIndicators;
+    return groupedData.communityAdminCreated || [];
   } catch (error) {
     errorManager("Error fetching indicators by community", error);
     return [];

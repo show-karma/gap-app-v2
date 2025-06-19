@@ -2,24 +2,18 @@
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { PAGES } from "@/utilities/pages";
-import { Grant, GrantDetails, ProjectDetails } from "@show-karma/karma-gap-sdk";
 import pluralize from "pluralize";
-import { Hex } from "viem";
 import { GrantPercentage } from "./Pages/Project/Grants/components/GrantPercentage";
 import { MarkdownPreview } from "./Utilities/MarkdownPreview";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { TrackTags } from "./TrackTags";
 import { ProfilePicture } from "./Utilities/ProfilePicture";
+import Link from "next/link";
 
 interface GrantCardProps {
   grant: IGrantResponse;
   index: number;
 }
-
-const firstFiveMembers = (members: Grant["members"]) =>
-  members?.slice(0, 5) as Hex[];
-const restMembersCounter = (members: Grant["members"]) =>
-  members?.length ? members.length - 5 : 0;
 
 export const pickColor = (index: number) => {
   const cardColors = [
@@ -59,7 +53,7 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
   const hasTrackIds = selectedTrackIds && selectedTrackIds.length > 0;
 
   return (
-    <a
+    <Link
       id="grant-card"
       href={PAGES.PROJECT.OVERVIEW(
         grant.project?.details?.data?.slug || grant.refUID || ""
@@ -114,7 +108,10 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
           <div className="flex flex-col gap-1 flex-1 h-[64px]">
             <div className="text-sm text-gray-900 dark:text-gray-400 text-ellipsis line-clamp-2">
               <MarkdownPreview
-                source={grant.project?.details?.data?.description?.slice(0, 100)}
+                source={grant.project?.details?.data?.description?.slice(
+                  0,
+                  100
+                )}
               />
             </div>
           </div>
@@ -196,6 +193,6 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
           ) : null}
         </div>
       </div> */}
-    </a>
+    </Link>
   );
 };

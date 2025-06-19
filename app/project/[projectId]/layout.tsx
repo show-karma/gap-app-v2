@@ -12,8 +12,7 @@ import { getProjectData } from "@/utilities/queries/getProjectData";
 export async function generateMetadata(props: {
   params: Promise<{ projectId: string }>;
 }) {
-  const params = await props.params;
-  const projectId = params.projectId;
+  const { projectId } = await props.params;
   const projectInfo = await getProjectData(projectId);
 
   return generateProjectOverviewMetadata(projectInfo, projectId);
@@ -23,9 +22,7 @@ export default async function RootLayout(props: {
   children: React.ReactNode;
   params: Promise<{ projectId: string }>;
 }) {
-  const params = await props.params;
-
-  const { projectId } = params;
+  const { projectId } = await props.params;
 
   const { children } = props;
 

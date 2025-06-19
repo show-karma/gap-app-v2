@@ -214,14 +214,17 @@ export const CommunityGrants = ({
 
   const changeSort = async (newValue: SortByOptions) => {
     setCurrentPage(0);
+    setGrants([]);
     changeSortQuery(newValue);
   };
   const changeMaturityStage = async (newValue: MaturityStageOptions) => {
     setCurrentPage(0);
+    setGrants([]);
     changeMaturityStageQuery(newValue);
   };
   const changeCategories = async (newValue: string[]) => {
     setCurrentPage(0);
+    setGrants([]);
     changeCategoriesQuery(newValue);
   };
 

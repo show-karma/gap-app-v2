@@ -16,7 +16,7 @@ import { IProjectUpdate, ProjectUpdate } from "@show-karma/karma-gap-sdk";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { FC } from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import type { SubmitHandler } from "react-hook-form";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -48,12 +48,13 @@ import { IndicatorForm, IndicatorFormData } from "./IndicatorForm";
 import { sendImpactAnswers } from "@/utilities/impact";
 import { autosyncedIndicators } from "../Pages/Admin/IndicatorsHub";
 import Link from "next/link";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { IProjectResponse, ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { ExternalLink } from "../Utilities/ExternalLink";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { useQuery } from "@tanstack/react-query";
+import { getIndicatorsByCommunity } from "@/utilities/queries/getIndicatorsByCommunity";
 
 interface GrantOption {
   title: string;
@@ -65,6 +66,21 @@ interface GrantOption {
 interface OutputData {
   value: string;
   proof: string;
+}
+
+interface CommunityIndicator {
+  id: string;
+  name: string;
+  description: string;
+  unitOfMeasure: string;
+  communityId: string;
+  communityName?: string;
+}
+
+interface CategorizedIndicator extends ImpactIndicatorWithData {
+  source: "project" | "community";
+  communityName?: string;
+  communityId?: string;
 }
 
 const updateSchema = z.object({
@@ -153,6 +169,62 @@ const GrantSearchDropdown: FC<{
   );
 };
 
+const CategorizedIndicatorDropdown: FC<{
+  indicators: CategorizedIndicator[];
+  onSelect: (indicatorId: string) => void;
+  selected: string;
+  onCreateNew: () => void;
+  selectedCommunities: { uid: string; name: string }[];
+}> = ({ indicators, onSelect, selected, onCreateNew, selectedCommunities }) => {
+  // Group indicators by source
+  const projectIndicators = indicators.filter(ind => ind.source === "project");
+  const selectedCommunityIds = selectedCommunities.map(c => c.uid);
+  const communityIndicators = indicators.filter(ind => 
+    ind.source === "community" && 
+    ind.communityId && 
+    selectedCommunityIds.includes(ind.communityId)
+  );
+
+  // Create flat list with only community indicators from selected communities
+  const dropdownList = [
+    // Only community indicators from selected communities
+    ...communityIndicators.map(indicator => {
+      const communityName = indicator.communityName || "Community";
+      return { 
+        value: indicator.id, 
+        title: `${indicator.name} [${communityName}]`
+      };
+    })
+  ];
+
+  return (
+    <SearchWithValueDropdown
+      onSelectFunction={(value) => {
+        onSelect(value);
+      }}
+      isMultiple={false}
+      selected={selected ? [indicators.find(i => i.id === selected)?.name || ""] : []}
+      list={dropdownList}
+      type="indicator"
+      prefixUnselected="Select"
+      buttonClassname="w-full"
+      customAddButton={
+        // <Button
+        //   type="button"
+        //   onClick={(e) => {
+        //     e.stopPropagation();
+        //     onCreateNew();
+        //   }}
+        //   className="text-sm w-full bg-zinc-700 text-white"
+        // >
+        //   Create Project Indicator
+        // </Button>
+        null
+      }
+    />
+  );
+};
+
 const OutputDialog: FC<{
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -164,18 +236,16 @@ const OutputDialog: FC<{
     <Dialog.Portal>
       <Dialog.Overlay className="fixed z-[10] inset-0 bg-black/50 backdrop-blur-sm" />
       <Dialog.Content
-        className="fixed z-[11] left-1/2 top-1/2 w-full max-w-md -translate-x-1/2 -translate-y-1/2 rounded-lg bg-white p-6 shadow-lg dark:bg-zinc-800"
-        onSubmit={(e) => e.stopPropagation()}
-        onClick={(e) => e.stopPropagation()}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") {
-            e.stopPropagation();
-          }
+        className="fixed z-[10] top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 
+               bg-white dark:bg-zinc-800 p-6 rounded-lg shadow-lg 
+               w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+        style={{
+          transform: "translate(-50%, -50%)",
         }}
       >
         <div className="flex items-center justify-between mb-4">
           <Dialog.Title className="text-lg font-semibold">
-            Create New Output
+            Create New Project Indicator
           </Dialog.Title>
           <Dialog.Close className="text-gray-400 hover:text-gray-500">
             <XMarkIcon className="h-5 w-5" />
@@ -303,6 +373,84 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     projectIdentifier: project?.uid,
   });
 
+  // Get communities from selected grants
+  const watchedGrantIds = watch("grants") || [];
+  const selectedCommunities = useMemo(() => {
+    const communities = new Map<string, { uid: string; name: string }>();
+    
+    watchedGrantIds.forEach(grantId => {
+      const grant = grants.find(g => g.value === grantId);
+      if (grant && grant.communityUID) {
+        // Get community name from project grants
+        const projectGrant = project?.grants?.find(g => g.uid === grantId);
+        const communityName = projectGrant?.community?.details?.data?.name || "Unknown Community";
+        communities.set(grant.communityUID, { 
+          uid: grant.communityUID, 
+          name: communityName 
+        });
+      }
+    });
+    
+    return Array.from(communities.values());
+  }, [watchedGrantIds, grants, project?.grants]);
+
+  // Fetch community indicators for all selected communities
+  const communityIndicatorQueries = selectedCommunities.map(community => ({
+    queryKey: ["communityIndicators", community.uid],
+    queryFn: () => getIndicatorsByCommunity(community.uid),
+    enabled: !!community.uid,
+  }));
+
+  const { data: communityIndicatorsData = [] } = useQuery({
+    queryKey: ["allCommunityIndicators", selectedCommunities.map(c => c.uid).sort()],
+    queryFn: async () => {
+      if (selectedCommunities.length === 0) return [];
+      
+      const results = await Promise.all(
+        selectedCommunities.map(async (community) => {
+          try {
+            const indicators = await getIndicatorsByCommunity(community.uid);
+            return indicators.map(indicator => ({
+              ...indicator,
+              communityId: community.uid,
+              communityName: community.name,
+            }));
+          } catch (error) {
+            console.error(`Failed to fetch indicators for community ${community.uid}:`, error);
+            return [];
+          }
+        })
+      );
+      
+      return results.flat();
+    },
+    enabled: selectedCommunities.length > 0,
+  });
+
+  // Categorized indicators combining project and community indicators
+  const categorizedIndicators = useMemo((): CategorizedIndicator[] => {
+    const projectIndicators: CategorizedIndicator[] = (indicatorsData || []).map(indicator => ({
+      ...indicator,
+      source: "project" as const,
+    }));
+
+    const communityIndicators: CategorizedIndicator[] = (communityIndicatorsData || []).map(indicator => ({
+      id: indicator.id,
+      name: indicator.name,
+      description: indicator.description,
+      unitOfMeasure: indicator.unitOfMeasure,
+      datapoints: [],
+      programs: [], // Community indicators don't have specific programs associated
+      hasData: false, // Community indicators start without data
+      isAssociatedWithPrograms: false, // Community indicators are not associated with specific programs
+      source: "community" as const,
+      communityName: indicator.communityName,
+      communityId: indicator.communityId,
+    }));
+
+    return [...projectIndicators, ...communityIndicators];
+  }, [indicatorsData, communityIndicatorsData]);
+
   // Custom handlers for deliverables
   const handleAddDeliverable = () => {
     append({ name: "", proof: "", description: "" });
@@ -338,10 +486,10 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
         setGrants(grantOptions);
 
-        // Handle indicators data
+        // Handle indicators data - project indicators are handled by categorizedIndicators
         if (project.uid || project.details?.data?.slug) {
           const indicators = indicatorsData;
-          setOutputs(indicators);
+          setOutputs(indicators || []);
         }
       } catch (error) {
         errorManager(
@@ -444,7 +592,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
   const { gap } = useGap();
 
-  const indicatorsList = outputs.map((output) => ({
+  const indicatorsList = categorizedIndicators.map((output) => ({
     indicatorId: output.id,
     name: output.name,
   }));
@@ -541,7 +689,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
           grants: data.grants || [],
           indicators: data.outputs.map((indicator) => ({
             indicatorId: indicator.outputId,
-            name: outputs.find((o) => o.id === indicator.outputId)?.name || "",
+            name: categorizedIndicators.find((o) => o.id === indicator.outputId)?.name || "",
           })),
           deliverables: data.deliverables.map((deliverable) => ({
             name: deliverable.name,
@@ -647,8 +795,34 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     await createProjectUpdate(data);
   };
 
+  const currentGrantIds = watch("grants") || [];
+  const selectedPrograms = currentGrantIds
+    .map((grantId) => {
+      const grant = grants.find((g) => g.value === grantId);
+      if (!grant) return null;
+      return {
+        programId: grant.value,
+        title: grant.title,
+        chainID: grant.chain,
+      };
+    })
+    .filter(
+      (
+        program
+      ): program is { programId: string; title: string; chainID: number } =>
+        program !== null && program.programId !== ""
+    );
+
+  const selectedOutputs = [...(watch("outputs") || [])];
+
+  const activityWithSameTitle =
+    Boolean(project?.updates.find((u) => u.data.title === watch("title"))) &&
+    !isEditMode;
+
+  const formValues = watch();
+
   const handleOutputSuccess = (newIndicator: ImpactIndicatorWithData) => {
-    // Update the existing list
+    // Update the project indicators list
     setOutputs((prev) => [...prev, newIndicator]);
 
     const currentOutputs = watch("outputs") || [];
@@ -688,32 +862,6 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const handleOutputError = () => {
     toast.error("Failed to create output");
   };
-
-  const selectedGrantIds = watch("grants") || [];
-  const selectedPrograms = selectedGrantIds
-    .map((grantId) => {
-      const grant = grants.find((g) => g.value === grantId);
-      if (!grant) return null;
-      return {
-        programId: grant.value,
-        title: grant.title,
-        chainID: grant.chain,
-      };
-    })
-    .filter(
-      (
-        program
-      ): program is { programId: string; title: string; chainID: number } =>
-        program !== null && program.programId !== ""
-    );
-
-  const selectedOutputs = [...(watch("outputs") || [])];
-
-  const activityWithSameTitle =
-    Boolean(project?.updates.find((u) => u.data.title === watch("title"))) &&
-    !isEditMode;
-
-  const formValues = watch();
 
   return (
     <form
@@ -898,6 +1046,25 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
             className="w-full"
             project={project}
           />
+
+          {/* Community Pills Display */}
+          {selectedCommunities.length > 0 && (
+            <div className="flex flex-col gap-2">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Communities involved:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {selectedCommunities.map((community) => (
+                  <div
+                    key={community.uid}
+                    className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800"
+                  >
+                    {community.name}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -1032,7 +1199,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <h3 className={cn(labelStyle)}>Metrics</h3>
-            <InfoTooltip content="Metrics are quantitative data points that capture the direct results of the activity. What measurable outputs can you track to demonstrate the reach, scale, or completion of your activities? This could be for e.g. product launched, services delivered, training sessions delivered, user signups, etc." />
+            <InfoTooltip content="Select from your project indicators or community indicators (created by community admins). You can also create new indicators. Metrics are quantitative data points that capture the direct results of the activity." />
           </div>
           {selectedOutputs.length > 0 && (
             <Button
@@ -1064,7 +1231,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         {selectedOutputs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8">
             <p className="text-gray-500 dark:text-zinc-400 mb-4">
-              Add metrics to your activity
+              Select from your project indicators or community indicators to add metrics
             </p>
             <Button
               type="button"
@@ -1113,61 +1280,21 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                 {selectedOutputs.map((output, index) => (
                   <tr key={index}>
                     <td className="px-4 py-2">
-                      <SearchWithValueDropdown
-                        onSelectFunction={(value) => {
-                          const indicator = outputs.find(
-                            (ind) => ind.id === value
-                          );
-                          if (!indicator) return;
-
-                          // Update the form values
+                      <CategorizedIndicatorDropdown
+                        indicators={categorizedIndicators}
+                        onSelect={(indicatorId) => {
                           const newOutputs = [...selectedOutputs];
-                          if (
-                            !selectedOutputs.find(
-                              (o) => o.outputId === indicator.id
-                            )
-                          ) {
-                            newOutputs[index].outputId = indicator.id;
-                            setValue("outputs", newOutputs, {
-                              shouldValidate: true,
-                            });
-                            setIsOutputDialogOpen(false);
-                          } else {
-                            newOutputs[index].outputId = "";
-                            setValue("outputs", newOutputs, {
-                              shouldValidate: true,
-                            });
-                          }
+                          newOutputs[index].outputId = indicatorId;
+                          setValue("outputs", newOutputs, {
+                            shouldValidate: true,
+                          });
                         }}
-                        isMultiple={false}
-                        selected={
-                          output.outputId
-                            ? [
-                                outputs.find((o) => o.id === output.outputId)
-                                  ?.name || "",
-                              ]
-                            : []
-                        }
-                        list={outputs.map((indicator) => ({
-                          value: indicator.id,
-                          title: indicator.name,
-                        }))}
-                        type="output"
-                        prefixUnselected="Select"
-                        buttonClassname="w-full"
-                        customAddButton={
-                          <Button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setIsOutputDialogOpen(true);
-                              setSelectedToCreate(index);
-                            }}
-                            className="text-sm w-full bg-zinc-700 text-white"
-                          >
-                            Add new output
-                          </Button>
-                        }
+                        selected={output.outputId}
+                        onCreateNew={() => {
+                          setIsOutputDialogOpen(true);
+                          setSelectedToCreate(index);
+                        }}
+                        selectedCommunities={selectedCommunities}
                       />
                       <OutputDialog
                         open={isOutputDialogOpen}
@@ -1189,7 +1316,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                         value={output.value === 0 ? "" : output.value}
                         onChange={(e) => {
                           const newOutputs = [...selectedOutputs];
-                          const indicator = outputs.find(
+                          const indicator = categorizedIndicators.find(
                             (o) => o.id === output.outputId
                           );
                           const unitType = indicator?.unitOfMeasure || "int";
@@ -1212,7 +1339,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                           }
                         }}
                         placeholder={`Enter ${
-                          outputs.find((o) => o.id === output.outputId)
+                          categorizedIndicators.find((o) => o.id === output.outputId)
                             ?.unitOfMeasure === "float"
                             ? "decimal"
                             : "whole"
@@ -1231,7 +1358,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                           output.outputId &&
                             isInvalidValue(
                               output.value,
-                              outputs.find((o) => o.id === output.outputId)
+                              categorizedIndicators.find((o) => o.id === output.outputId)
                                 ?.unitOfMeasure || "int"
                             )
                             ? "border-red-500 dark:border-red-500"
@@ -1248,7 +1375,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                           {typeof output.value === "string" &&
                           output.value === ""
                             ? "This field is required"
-                            : outputs.find((o) => o.id === output.outputId)
+                            : categorizedIndicators.find((o) => o.id === output.outputId)
                                 ?.unitOfMeasure === "int"
                             ? "Please enter a whole number"
                             : "Please enter a valid decimal number"}

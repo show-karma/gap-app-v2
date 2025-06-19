@@ -1,13 +1,11 @@
 import { CommunityPageNavigator } from "@/components/Pages/Communities/CommunityPageNavigator";
-import { zeroUID } from "@/utilities/commons";
 import { communityColors } from "@/utilities/communityColors";
 import { envVars } from "@/utilities/enviromentVars";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { defaultMetadata } from "@/utilities/meta";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
+import { getCommunityData } from "@/utilities/queries/getCommunityData";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { CommunityImpactStatCards } from "@/components/Pages/Communities/Impact/StatCards";
 
 type Props = {
@@ -16,19 +14,10 @@ type Props = {
   }>;
 };
 export async function generateMetadata(props: Props): Promise<Metadata> {
-  const params = await props.params;
-  const communityId = params.communityId;
-  let communityName = communityId;
+  const { communityId } = await props.params;
 
-  try {
-    const { data } = await gapIndexerApi.communityBySlug(communityId);
-    communityName = data?.details?.data?.name || communityId;
-    if (!data || data?.uid === zeroUID || !data?.details?.data?.name) {
-      notFound();
-    }
-  } catch {
-    notFound();
-  }
+  const community = await getCommunityData(communityId);
+  const communityName = community?.details?.data?.name || communityId;
 
   const dynamicMetadata = {
     title: `Karma GAP - ${communityName} community grants`,
@@ -68,42 +57,19 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   };
 }
 
-export default async function Layout(
-  props: {
-    children: React.ReactNode;
-    params: Promise<{ communityId: string }>;
-  }
-) {
-  const params = await props.params;
+export default async function Layout(props: {
+  children: React.ReactNode;
+  params: Promise<{ communityId: string }>;
+}) {
+  const { communityId } = await props.params;
 
-  const {
-    children
-  } = props;
-
-  const { communityId } = params;
-  let community: ICommunityResponse | null = null;
+  const { children } = props;
 
   if (pagesOnRoot.includes(communityId)) {
     return undefined;
   }
 
-  await Promise.all(
-    [
-      async () => {
-        try {
-          const { data } = await gapIndexerApi.communityBySlug(communityId);
-          community = data as ICommunityResponse;
-        } catch {
-          console.log("Not found community", communityId);
-          community = null;
-        }
-      },
-    ].map((func) => func())
-  );
-
-  if (!community) {
-    notFound();
-  }
+  const community = await getCommunityData(communityId);
 
   return (
     <div className="flex w-full h-full max-w-full flex-col justify-start max-lg:flex-col">
