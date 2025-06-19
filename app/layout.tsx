@@ -29,7 +29,7 @@ export default async function RootLayout({
 }) {
   const cookie = (await headers()).get("cookie") ?? "";
   return (
-    <html lang="en" className="h-full" style={{ scrollBehavior: "smooth" }}>
+    <html lang="en" className="h-full" suppressHydrationWarning>
       {process.env.NEXT_PUBLIC_GA_TRACKING_ID &&
         process.env.NEXT_PUBLIC_ENV === "production" && (
           <GoogleAnalytics
@@ -39,8 +39,13 @@ export default async function RootLayout({
       <Suspense>
         <HotjarAnalytics />
       </Suspense>
-      <body>
-        <ThemeProvider defaultTheme="light" attribute="class">
+      <body suppressHydrationWarning>
+        <ThemeProvider
+          defaultTheme="light"
+          attribute="class"
+          enableSystem={true}
+          disableTransitionOnChange
+        >
           <WagmiProvider cookie={cookie}>
             <Toaster />
             <StepperDialog />
