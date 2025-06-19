@@ -57,7 +57,7 @@ export const config = createConfig({
     [sepolia.id]: http(envVars.RPC.SEPOLIA),
     [lisk.id]: http(envVars.RPC.LISK),
   },
-  ssr: false,
+  ssr: true,
   storage: createStorage({
     storage: cookieStorage,
   }),

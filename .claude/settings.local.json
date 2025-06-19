@@ -11,7 +11,10 @@
       "Bash(chmod:*)",
       "Bash(rm:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "WebFetch(domain:github.com)",
+      "Bash(ls:*)",
+      "Bash(find:*)"
     ],
     "deny": []
   }
