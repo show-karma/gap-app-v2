@@ -209,16 +209,17 @@ const CategorizedIndicatorDropdown: FC<{
       prefixUnselected="Select"
       buttonClassname="w-full"
       customAddButton={
-        <Button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onCreateNew();
-          }}
-          className="text-sm w-full bg-zinc-700 text-white"
-        >
-          Create Project Indicator
-        </Button>
+        // <Button
+        //   type="button"
+        //   onClick={(e) => {
+        //     e.stopPropagation();
+        //     onCreateNew();
+        //   }}
+        //   className="text-sm w-full bg-zinc-700 text-white"
+        // >
+        //   Create Project Indicator
+        // </Button>
+        null
       }
     />
   );
