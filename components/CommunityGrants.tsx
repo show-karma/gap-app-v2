@@ -540,13 +540,9 @@ export const CommunityGrants = ({
       <ProgramBanner />
       <section className="flex flex-col gap-4 md:flex-row">
         <div className="h-full w-full mb-8">
-          {grants.length > 0 ? (
-            // <div className="grid grid-cols-4 justify-items-center gap-3 pb-20 max-2xl:grid-cols-4 max-xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1">
-            //   {grants.map((grant, index) => {
-            //     return <GrantCard key={grant.uid} grant={grant} index={index} />;
-            //   })}
-            // </div>
-
+          {loading ? (
+            <CardListSkeleton />
+          ) : grants.length > 0 ? (
             <InfiniteScroll
               dataLength={grants.length}
               next={loadMore}
@@ -621,11 +617,6 @@ export const CommunityGrants = ({
                 }}
               </AutoSizer>
             </InfiniteScroll>
-          ) : null}
-          {loading ? (
-            <div className="w-full flex items-center justify-center">
-              <CardListSkeleton />
-            </div>
           ) : null}
         </div>
       </section>
