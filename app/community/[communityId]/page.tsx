@@ -3,13 +3,10 @@ import { CommunityFeed } from "@/components/CommunityFeed";
 import { CommunityGrants } from "@/components/CommunityGrants";
 import { ReceiveProjectUpdates } from "@/components/Pages/ReceiveProjectUpdates";
 import type { SortByOptions, MaturityStageOptions } from "@/types";
-import fetchData from "@/utilities/fetchData";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { INDEXER } from "@/utilities/indexer";
+import { getCommunityData, getCommunityCategories } from "@/utilities/queries/getCommunityData";
 import { pagesOnRoot } from "@/utilities/pagesOnRoot";
 import { communitiesToBulkSubscribe } from "@/utilities/subscribe";
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { notFound } from "next/navigation";
 
 type Props = {
   params: Promise<{
@@ -20,43 +17,15 @@ type Props = {
 export default async function Page(props: Props) {
   const params = await props.params;
   const { communityId } = params;
-  let community: ICommunityResponse | null = null;
-  let categoriesOptions: string[] = [];
 
   if (pagesOnRoot.includes(communityId)) {
     return undefined;
   }
 
-  await Promise.all(
-    [
-      async () => {
-        try {
-          const { data } = await gapIndexerApi.communityBySlug(communityId);
-          community = data as ICommunityResponse;
-        } catch (error) {
-          console.log("Not found community", communityId, error);
-          community = null;
-        }
-      },
-      async () => {
-        const [data] = await fetchData(
-          INDEXER.COMMUNITY.CATEGORIES(communityId as string)
-        );
-        if (data?.length) {
-          const categoriesToOrder = data.map(
-            (category: { name: string }) => category.name
-          );
-          categoriesOptions = categoriesToOrder.sort((a: string, b: string) => {
-            return a.localeCompare(b, "en");
-          });
-        }
-      },
-    ].map((func) => func())
-  );
-
-  if (!community) {
-    notFound();
-  }
+  const [community, categoriesOptions] = await Promise.all([
+    getCommunityData(communityId),
+    getCommunityCategories(communityId)
+  ]);
 
   const defaultSortBy = "milestones" as SortByOptions;
   const defaultSelectedCategories: string[] = [];
