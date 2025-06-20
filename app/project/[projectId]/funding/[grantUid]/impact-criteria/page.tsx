@@ -19,7 +19,6 @@ export async function generateMetadata({
   params: Params;
 }): Promise<Metadata> {
   const { projectId, grantUid } = await params;
-
   const projectInfo = await getProjectData(projectId);
 
   if (projectInfo?.uid === zeroUID || !projectInfo) {

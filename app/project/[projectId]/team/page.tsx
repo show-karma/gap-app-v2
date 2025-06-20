@@ -21,6 +21,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { projectId } = await params;
 
+
   const projectInfo = await getMetadata<IProjectResponse>(
     "project",
     projectId as Hex

@@ -400,7 +400,6 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         });
       }
     });
-
     return Array.from(communities.values());
   }, [watchedGrantIds, grants, project?.grants]);
 
@@ -418,7 +417,6 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
     ],
     queryFn: async () => {
       if (selectedCommunities.length === 0) return [];
-
       const results = await Promise.all(
         selectedCommunities.map(async (community) => {
           try {
@@ -437,7 +435,6 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
           }
         })
       );
-
       return results.flat();
     },
     enabled: selectedCommunities.length > 0,
