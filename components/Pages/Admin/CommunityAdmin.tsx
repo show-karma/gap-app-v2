@@ -22,7 +22,7 @@ import Link from "next/link";
 import React, { useCallback, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { isAddress } from "viem";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 import { z } from "zod";
 
 import { errorManager } from "@/components/Utilities/errorManager";

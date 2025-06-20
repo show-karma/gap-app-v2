@@ -28,7 +28,7 @@ import { useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import React, { Dispatch, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { LoadingProgramTable } from "./Loading/Programs";
@@ -266,9 +266,6 @@ export const ManagePrograms = () => {
   });
   const grantPrograms = data?.programs || [];
   const totalPrograms = data?.count || 0;
-
-  const { switchChainAsync } = useSwitchChain();
-  const { changeStepperStep, setIsStepper } = useStepper();
 
   const refreshPrograms = async () => {
     await refetch();

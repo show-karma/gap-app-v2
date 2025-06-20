@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 import { useGap, getGapClient } from "@/hooks/useGap";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { sanitizeObject } from "@/utilities/sanitize";

@@ -1,6 +1,7 @@
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks/useGap";
+import { useWallet } from "@/hooks/useWallet";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
@@ -19,7 +20,7 @@ import { useRouter } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 
 interface GrantDeleteProps {
   grant: IGrantResponse;
@@ -29,7 +30,7 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
   const [isDeletingGrant, setIsDeletingGrant] = useState(false);
   const { address } = useAccount();
   const { chain } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
 
   const refreshProject = useProjectStore((state) => state.refreshProject);
 

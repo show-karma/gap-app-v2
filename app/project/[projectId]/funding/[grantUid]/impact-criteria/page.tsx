@@ -4,21 +4,23 @@ import { envVars } from "@/utilities/enviromentVars";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 import { defaultMetadata } from "@/utilities/meta";
+import { getProjectData } from "@/utilities/queries/getProjectData";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-export async function generateMetadata(props: {
-  params: Promise<{
-    projectId: string;
-    grantUid: string;
-  }>;
-}): Promise<Metadata> {
-  const { projectId, grantUid } = await props.params;
+type Params = Promise<{
+  projectId: string;
+  grantUid: string;
+}>;
 
-  const projectInfo = await gapIndexerApi
-    .projectBySlug(projectId as `0x${string}`)
-    .then((res) => res.data)
-    .catch(() => notFound());
+export async function generateMetadata({
+  params,
+}: {
+  params: Params;
+}): Promise<Metadata> {
+  const { projectId, grantUid } = await params;
+
+  const projectInfo = await getProjectData(projectId);
 
   if (projectInfo?.uid === zeroUID || !projectInfo) {
     notFound();

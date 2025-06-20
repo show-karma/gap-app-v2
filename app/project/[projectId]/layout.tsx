@@ -8,11 +8,19 @@ import {
 
 import { generateProjectOverviewMetadata } from "@/utilities/metadata/projectMetadata";
 import { getProjectData } from "@/utilities/queries/getProjectData";
+import { Metadata } from "next";
 
-export async function generateMetadata(props: {
-  params: Promise<{ projectId: string }>;
-}) {
-  const { projectId } = await props.params;
+type Params = Promise<{
+  projectId: string;
+}>;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Params;
+}): Promise<Metadata> {
+  const awaitedParams = await params;
+  const { projectId } = awaitedParams;
   const projectInfo = await getProjectData(projectId);
 
   return generateProjectOverviewMetadata(projectInfo, projectId);
@@ -22,7 +30,8 @@ export default async function RootLayout(props: {
   children: React.ReactNode;
   params: Promise<{ projectId: string }>;
 }) {
-  const { projectId } = await props.params;
+  const awaitedParams = await props.params;
+  const { projectId } = awaitedParams;
 
   const { children } = props;
 

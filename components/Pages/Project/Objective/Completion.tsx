@@ -2,6 +2,7 @@ import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { getGapClient, useGap } from "@/hooks/useGap";
+import { useWallet } from "@/hooks/useWallet";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
@@ -24,7 +25,7 @@ import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 
 const ProjectObjectiveCompletion = dynamic(
   () =>
@@ -54,7 +55,7 @@ export const ObjectiveCardComplete = ({
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
   const { chain, address } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
 
   const params = useParams();
   const projectId = params.projectId as string;

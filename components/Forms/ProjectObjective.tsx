@@ -6,7 +6,7 @@ import { z } from "zod";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 import { Button } from "../Utilities/Button";
 import { errorManager } from "../Utilities/errorManager";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 import { useProjectStore } from "@/store";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
@@ -25,6 +25,7 @@ import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useAllMilestones } from "@/hooks/useAllMilestones";
 import { PAGES } from "@/utilities/pages";
+import { useWallet } from "@/hooks/useWallet";
 
 const objectiveSchema = z.object({
   title: z
@@ -51,7 +52,7 @@ export const ProjectObjectiveForm = ({
 }: ProjectObjectiveFormProps) => {
   const { address, chain } = useAccount();
   const { project } = useProjectStore();
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
   const params = useParams();
   const projectId = params.projectId as string;
   const router = useRouter();

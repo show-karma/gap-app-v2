@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 import React from "react";
 import { useState } from "react";
-import { useAccount, useChainId, useSwitchChain } from "wagmi";
+import { useAccount, useChainId } from "wagmi";
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 import { TransactionLink } from "@/components/Utilities/TransactionLink";
 import axios from "axios";
@@ -23,6 +23,7 @@ import { z } from "zod";
 import { useEffect } from "react";
 import { Dispatch, SetStateAction } from "react";
 import { MESSAGES } from "@/utilities/messages";
+import { useWallet } from "@/hooks/useWallet";
 
 type ProjectApplicationData = {
   project: {
@@ -126,7 +127,7 @@ function MintNFTs({
   const [platformFee, setPlatformFee] = useState<string | null>(null);
   const [topDonors, setTopDonors] = useState<number>(donations.length);
 
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
 
   const chainId = useChainId();
 

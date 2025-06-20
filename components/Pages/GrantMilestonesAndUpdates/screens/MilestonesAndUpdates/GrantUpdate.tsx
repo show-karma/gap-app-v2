@@ -18,7 +18,7 @@ import {
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useEffect, useState, type FC } from "react";
 import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 import { VerifiedBadge } from "./VerifiedBadge";
 import { VerifyGrantUpdateDialog } from "./VerifyGrantUpdateDialog";
 
@@ -28,6 +28,7 @@ import { retryUntilConditionMet } from "@/utilities/retries";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { ShareIcon } from "@heroicons/react/24/outline";
+import { useWallet } from "@/hooks/useWallet";
 
 interface UpdateTagProps {
   index: number;
@@ -78,7 +79,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
   update,
 }) => {
   const { chain, address } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [isDeletingGrantUpdate, setIsDeletingGrantUpdate] = useState(false);
   const selectedProject = useProjectStore((state) => state.project);

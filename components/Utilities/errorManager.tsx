@@ -11,11 +11,22 @@ export const errorManager = (
 ) => {
   if (error?.originalError || error?.message) {
     const wasRejected =
-      error?.originalError?.code?.toLowerCase()?.includes("rejected") ||
-      error?.originalError?.message?.toLowerCase()?.includes("rejected") ||
-      error?.message?.toLowerCase()?.includes("rejected");
+      error?.originalError?.code?.toLowerCase()?.includes("reject") ||
+      error?.originalError?.message?.toLowerCase()?.includes("reject") ||
+      error?.message?.toLowerCase()?.includes("reject");
+    const couldNotSwitchChain =
+      error?.originalError?.code?.toLowerCase()?.includes("switch chain") ||
+      error?.originalError?.message?.toLowerCase()?.includes("switch chain") ||
+      error?.message?.toLowerCase()?.includes("switch chain");
     if (wasRejected) {
       console.log("User rejected action");
+      return;
+    }
+    const targetNetwork = extra?.targetNetwork;
+    if (couldNotSwitchChain) {
+      toast.error(
+        `we couldn't switch to "${targetNetwork}" network in your wallet. Please manually switch network and try again`
+      );
       return;
     }
   }

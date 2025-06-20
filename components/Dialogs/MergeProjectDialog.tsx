@@ -5,11 +5,9 @@ import { PlusIcon } from "@heroicons/react/24/solid";
 import { Button } from "../Utilities/Button";
 import toast from "react-hot-toast";
 import { useProjectStore } from "@/store";
-import { useSwitchChain } from "wagmi";
 import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 
 import { useStepper } from "@/store/modals/txStepper";
-import { config } from "@/utilities/wagmi/config";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import debounce from "lodash.debounce";
 import { MagnifyingGlassIcon } from "@heroicons/react/20/solid";
@@ -33,6 +31,7 @@ import { sanitizeInput } from "@/utilities/sanitize";
 import { useMergeModalStore } from "@/store/modals/merge";
 import EthereumAddressToENSName from "../EthereumAddressToENSName";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useWallet } from "@/hooks/useWallet";
 
 type MergeProjectProps = {
   buttonElement?: {
@@ -194,7 +193,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const setIsProjectAdmin = useProjectStore((state) => state.setIsProjectAdmin);
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
   const { changeStepperStep, setIsStepper } = useStepper();
 
   const createProjectPointer = async ({ ogProjectUID }: PointerType) => {

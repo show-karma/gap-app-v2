@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getGapClient, useGap } from "./useGap";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 import { getProjectById } from "@/utilities/sdk";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
@@ -18,12 +18,13 @@ import { useProjectStore } from "@/store";
 import { useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
 import { useGrantFormStore } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewGrant/store";
+import { useWallet } from "./useWallet";
 
 export function useGrant() {
   const [isLoading, setIsLoading] = useState(false);
   const { gap } = useGap();
   const { address, chain } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
   const { changeStepperStep, setIsStepper } = useStepper();
   const selectedProject = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);

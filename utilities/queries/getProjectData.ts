@@ -5,7 +5,10 @@ import { cache } from "react";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 export const getProjectData = cache(
-  async (projectId: string): Promise<IProjectResponse> => {
+  async (
+    projectId: string,
+    shouldRedirect = true
+  ): Promise<IProjectResponse> => {
     try {
       const response = await gapIndexerApi.projectBySlug(projectId);
       const project = response.data;
@@ -14,13 +17,15 @@ export const getProjectData = cache(
         notFound();
       }
 
-      if (project?.pointers && project?.pointers?.length > 0) {
-        const original = await gapIndexerApi
-          .projectBySlug(project.pointers[0].data?.ogProjectUID)
-          .then((res) => res.data)
-          .catch(() => null);
-        if (original) {
-          redirect(`/project/${original.details?.data?.slug}`);
+      if (shouldRedirect) {
+        if (project?.pointers && project?.pointers?.length > 0) {
+          const original = await gapIndexerApi
+            .projectBySlug(project.pointers[0].data?.ogProjectUID)
+            .then((res) => res.data)
+            .catch(() => null);
+          if (original) {
+            redirect(`/project/${original.details?.data?.slug}`);
+          }
         }
       }
 

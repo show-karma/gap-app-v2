@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import Papa from "papaparse";
 import { isAddress } from "viem";
-import { useAccount, useWalletClient, useChainId, useSwitchChain } from "wagmi";
+import { useAccount, useWalletClient, useChainId } from "wagmi";
 import { DisbursementReview } from "./DisbursementReview";
 import { DisbursementRecipient } from "../../types/disbursement";
 import { DisbursementStepper, DisbursementStep } from "./DisbursementStepper";
@@ -27,6 +27,7 @@ import {
   ConfigIcon,
   DocumentIcon,
 } from "./components/Icons";
+import { useWallet } from "@/hooks/useWallet";
 
 const NETWORK_OPTIONS = [
   { id: 42220, name: "Celo" },
@@ -65,7 +66,7 @@ export const DisbursementForm = () => {
   const { address: userAddress, isConnected } = useAccount();
   const { data: walletClient } = useWalletClient();
   const walletChainId = useChainId();
-  const { switchChain, isPending: isSwitchingNetwork } = useSwitchChain();
+  const { switchChainAsync, isPending: isSwitchingNetwork } = useWallet();
   const [recipients, setRecipients] = useState<DisbursementRecipient[]>([]);
   const [file, setFile] = useState<File | null>(null);
   const [safeAddress, setSafeAddress] = useState("");
@@ -108,7 +109,7 @@ export const DisbursementForm = () => {
     // Auto-switch wallet network if connected and different from selected
     if (isConnected && walletChainId !== newNetwork) {
       try {
-        await switchChain({ chainId: newNetwork });
+        await switchChainAsync({ chainId: newNetwork });
       } catch (error) {
         console.error("Failed to switch network:", error);
         // Continue anyway - user might manually switch later
@@ -140,15 +141,18 @@ export const DisbursementForm = () => {
     setIsDragOver(false);
   }, []);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragOver(false);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setIsDragOver(false);
 
-    const files = e.dataTransfer.files;
-    if (files && files[0] && files[0].type === "text/csv") {
-      processFile(files[0]);
-    }
-  }, [processFile]);
+      const files = e.dataTransfer.files;
+      if (files && files[0] && files[0].type === "text/csv") {
+        processFile(files[0]);
+      }
+    },
+    [processFile]
+  );
 
   const parseCsv = (file: File) => {
     Papa.parse(file, {
@@ -264,7 +268,15 @@ export const DisbursementForm = () => {
         error: "Failed to verify Safe. Please check the address and network.",
       }));
     }
-  }, [safeAddress, userAddress, isConnected, recipients, network, token, walletChainId]);
+  }, [
+    safeAddress,
+    userAddress,
+    isConnected,
+    recipients,
+    network,
+    token,
+    walletChainId,
+  ]);
 
   // Handle disbursement execution
   const handleDisbursement = async () => {

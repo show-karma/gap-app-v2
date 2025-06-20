@@ -8,19 +8,21 @@ import { Suspense } from "react";
 import { ProjectGrantsMilestonesAndUpdatesLoading } from "@/components/Pages/Project/Loading/Grants/MilestonesAndUpdate";
 import { envVars } from "@/utilities/enviromentVars";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
+import { getProjectData } from "@/utilities/queries/getProjectData";
 
-export async function generateMetadata(props: {
-  params: Promise<{
-    projectId: string;
-    grantUid: string;
-  }>;
+type Params = Promise<{
+  projectId: string;
+  grantUid: string;
+}>;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Params;
 }): Promise<Metadata> {
-  const { projectId, grantUid } = await props.params;
+  const { projectId, grantUid } = await params;
 
-  const projectInfo = await gapIndexerApi
-    .projectBySlug(projectId as `0x${string}`)
-    .then((res) => res.data)
-    .catch(() => notFound());
+  const projectInfo = await getProjectData(projectId);
 
   if (projectInfo?.uid === zeroUID || !projectInfo) {
     notFound();

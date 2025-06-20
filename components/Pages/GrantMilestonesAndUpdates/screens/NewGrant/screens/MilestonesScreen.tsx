@@ -7,7 +7,7 @@ import { useProjectStore } from "@/store";
 import { Milestone } from "../Milestone";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import { useAuthStore } from "@/store/auth";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 import { useStepper } from "@/store/modals/txStepper";
 import toast from "react-hot-toast";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -29,6 +29,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { CancelButton } from "./buttons/CancelButton";
 import { NextButton } from "./buttons/NextButton";
+import { useWallet } from "@/hooks/useWallet";
 
 export const MilestonesScreen: React.FC = () => {
   const {
@@ -45,7 +46,7 @@ export const MilestonesScreen: React.FC = () => {
     setFlowType,
     communityNetworkId,
   } = useGrantFormStore();
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
   const selectedProject = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();

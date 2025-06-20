@@ -3,6 +3,7 @@ import { DatePicker } from "@/components/Utilities/DatePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks/useGap";
+import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -20,7 +21,7 @@ import { useEffect, useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 import { z } from "zod";
 
 const updateSchema = z.object({
@@ -51,7 +52,7 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({
 
   const { address } = useAccount();
   const { chain } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();
