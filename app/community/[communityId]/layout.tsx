@@ -61,7 +61,7 @@ export async function generateMetadata({
 
 export default async function Layout(props: {
   children: React.ReactNode;
-  params: Params;
+  params: Promise<Params>;
 }) {
   const { communityId } = await props.params;
 
