@@ -47,7 +47,7 @@ import {
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { type Hex, isAddress, zeroHash } from "viem";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 import { z } from "zod";
 
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -80,6 +80,7 @@ import { useContactInfo } from "@/hooks/useContactInfo";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { DeckIcon } from "@/components/Icons/Deck";
 import { VideoIcon } from "@/components/Icons/Video";
+import { useWallet } from "@/hooks/useWallet";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -230,7 +231,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const { isConnected, address } = useAccount();
   const { isAuth } = useAuthStore();
   const { chain } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
   const { openConnectModal } = useConnectModal();
   const router = useRouter();

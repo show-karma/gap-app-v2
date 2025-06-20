@@ -20,7 +20,7 @@ import { useState, useEffect, useMemo } from "react";
 import type { SubmitHandler } from "react-hook-form";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
 import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
 import * as Tooltip from "@radix-ui/react-tooltip";
@@ -48,13 +48,17 @@ import { IndicatorForm, IndicatorFormData } from "./IndicatorForm";
 import { sendImpactAnswers } from "@/utilities/impact";
 import { autosyncedIndicators } from "../Pages/Admin/IndicatorsHub";
 import Link from "next/link";
-import { IProjectResponse, ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import {
+  IProjectResponse,
+  ICommunityResponse,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { ExternalLink } from "../Utilities/ExternalLink";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { useQuery } from "@tanstack/react-query";
 import { getIndicatorsByCommunity } from "@/utilities/queries/getIndicatorsByCommunity";
+import { useWallet } from "@/hooks/useWallet";
 
 interface GrantOption {
   title: string;
@@ -177,24 +181,27 @@ const CategorizedIndicatorDropdown: FC<{
   selectedCommunities: { uid: string; name: string }[];
 }> = ({ indicators, onSelect, selected, onCreateNew, selectedCommunities }) => {
   // Group indicators by source
-  const projectIndicators = indicators.filter(ind => ind.source === "project");
-  const selectedCommunityIds = selectedCommunities.map(c => c.uid);
-  const communityIndicators = indicators.filter(ind => 
-    ind.source === "community" && 
-    ind.communityId && 
-    selectedCommunityIds.includes(ind.communityId)
+  const projectIndicators = indicators.filter(
+    (ind) => ind.source === "project"
+  );
+  const selectedCommunityIds = selectedCommunities.map((c) => c.uid);
+  const communityIndicators = indicators.filter(
+    (ind) =>
+      ind.source === "community" &&
+      ind.communityId &&
+      selectedCommunityIds.includes(ind.communityId)
   );
 
   // Create flat list with only community indicators from selected communities
   const dropdownList = [
     // Only community indicators from selected communities
-    ...communityIndicators.map(indicator => {
+    ...communityIndicators.map((indicator) => {
       const communityName = indicator.communityName || "Community";
-      return { 
-        value: indicator.id, 
-        title: `${indicator.name} [${communityName}]`
+      return {
+        value: indicator.id,
+        title: `${indicator.name} [${communityName}]`,
       };
-    })
+    }),
   ];
 
   return (
@@ -203,7 +210,9 @@ const CategorizedIndicatorDropdown: FC<{
         onSelect(value);
       }}
       isMultiple={false}
-      selected={selected ? [indicators.find(i => i.id === selected)?.name || ""] : []}
+      selected={
+        selected ? [indicators.find((i) => i.id === selected)?.name || ""] : []
+      }
       list={dropdownList}
       type="indicator"
       prefixUnselected="Select"
@@ -328,7 +337,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 }) => {
   const { address } = useAccount();
   const { chain } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();
@@ -377,51 +386,55 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   const watchedGrantIds = watch("grants") || [];
   const selectedCommunities = useMemo(() => {
     const communities = new Map<string, { uid: string; name: string }>();
-    
-    watchedGrantIds.forEach(grantId => {
-      const grant = grants.find(g => g.value === grantId);
+
+    watchedGrantIds.forEach((grantId) => {
+      const grant = grants.find((g) => g.value === grantId);
       if (grant && grant.communityUID) {
         // Get community name from project grants
-        const projectGrant = project?.grants?.find(g => g.uid === grantId);
-        const communityName = projectGrant?.community?.details?.data?.name || "Unknown Community";
-        communities.set(grant.communityUID, { 
-          uid: grant.communityUID, 
-          name: communityName 
+        const projectGrant = project?.grants?.find((g) => g.uid === grantId);
+        const communityName =
+          projectGrant?.community?.details?.data?.name || "Unknown Community";
+        communities.set(grant.communityUID, {
+          uid: grant.communityUID,
+          name: communityName,
         });
       }
     });
-    
     return Array.from(communities.values());
   }, [watchedGrantIds, grants, project?.grants]);
 
   // Fetch community indicators for all selected communities
-  const communityIndicatorQueries = selectedCommunities.map(community => ({
+  const communityIndicatorQueries = selectedCommunities.map((community) => ({
     queryKey: ["communityIndicators", community.uid],
     queryFn: () => getIndicatorsByCommunity(community.uid),
     enabled: !!community.uid,
   }));
 
   const { data: communityIndicatorsData = [] } = useQuery({
-    queryKey: ["allCommunityIndicators", selectedCommunities.map(c => c.uid).sort()],
+    queryKey: [
+      "allCommunityIndicators",
+      selectedCommunities.map((c) => c.uid).sort(),
+    ],
     queryFn: async () => {
       if (selectedCommunities.length === 0) return [];
-      
       const results = await Promise.all(
         selectedCommunities.map(async (community) => {
           try {
             const indicators = await getIndicatorsByCommunity(community.uid);
-            return indicators.map(indicator => ({
+            return indicators.map((indicator) => ({
               ...indicator,
               communityId: community.uid,
               communityName: community.name,
             }));
           } catch (error) {
-            console.error(`Failed to fetch indicators for community ${community.uid}:`, error);
+            console.error(
+              `Failed to fetch indicators for community ${community.uid}:`,
+              error
+            );
             return [];
           }
         })
       );
-      
       return results.flat();
     },
     enabled: selectedCommunities.length > 0,
@@ -429,12 +442,16 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
 
   // Categorized indicators combining project and community indicators
   const categorizedIndicators = useMemo((): CategorizedIndicator[] => {
-    const projectIndicators: CategorizedIndicator[] = (indicatorsData || []).map(indicator => ({
+    const projectIndicators: CategorizedIndicator[] = (
+      indicatorsData || []
+    ).map((indicator) => ({
       ...indicator,
       source: "project" as const,
     }));
 
-    const communityIndicators: CategorizedIndicator[] = (communityIndicatorsData || []).map(indicator => ({
+    const communityIndicators: CategorizedIndicator[] = (
+      communityIndicatorsData || []
+    ).map((indicator) => ({
       id: indicator.id,
       name: indicator.name,
       description: indicator.description,
@@ -689,7 +706,9 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
           grants: data.grants || [],
           indicators: data.outputs.map((indicator) => ({
             indicatorId: indicator.outputId,
-            name: categorizedIndicators.find((o) => o.id === indicator.outputId)?.name || "",
+            name:
+              categorizedIndicators.find((o) => o.id === indicator.outputId)
+                ?.name || "",
           })),
           deliverables: data.deliverables.map((deliverable) => ({
             name: deliverable.name,
@@ -1231,7 +1250,8 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         {selectedOutputs.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-8">
             <p className="text-gray-500 dark:text-zinc-400 mb-4">
-              Select from your project indicators or community indicators to add metrics
+              Select from your project indicators or community indicators to add
+              metrics
             </p>
             <Button
               type="button"
@@ -1339,8 +1359,9 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                           }
                         }}
                         placeholder={`Enter ${
-                          categorizedIndicators.find((o) => o.id === output.outputId)
-                            ?.unitOfMeasure === "float"
+                          categorizedIndicators.find(
+                            (o) => o.id === output.outputId
+                          )?.unitOfMeasure === "float"
                             ? "decimal"
                             : "whole"
                         } number`}
@@ -1358,8 +1379,9 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                           output.outputId &&
                             isInvalidValue(
                               output.value,
-                              categorizedIndicators.find((o) => o.id === output.outputId)
-                                ?.unitOfMeasure || "int"
+                              categorizedIndicators.find(
+                                (o) => o.id === output.outputId
+                              )?.unitOfMeasure || "int"
                             )
                             ? "border-red-500 dark:border-red-500"
                             : "border-gray-300 dark:border-zinc-700"
@@ -1375,8 +1397,9 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
                           {typeof output.value === "string" &&
                           output.value === ""
                             ? "This field is required"
-                            : categorizedIndicators.find((o) => o.id === output.outputId)
-                                ?.unitOfMeasure === "int"
+                            : categorizedIndicators.find(
+                                (o) => o.id === output.outputId
+                              )?.unitOfMeasure === "int"
                             ? "Please enter a whole number"
                             : "Please enter a valid decimal number"}
                         </p>

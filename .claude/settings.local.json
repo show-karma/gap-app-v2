@@ -14,7 +14,9 @@
       "Bash(git commit:*)",
       "WebFetch(domain:github.com)",
       "Bash(ls:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": []
   }

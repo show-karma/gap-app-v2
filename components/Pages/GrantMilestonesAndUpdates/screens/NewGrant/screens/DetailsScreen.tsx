@@ -13,7 +13,7 @@ import { useForm } from "react-hook-form";
 import { isAddress } from "viem";
 import { MESSAGES } from "@/utilities/messages";
 import { useAuthStore } from "@/store/auth";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 import { useStepper } from "@/store/modals/txStepper";
 import { useGap } from "@/hooks/useGap";
 import { useGrant } from "@/hooks/useGrant";
@@ -94,7 +94,6 @@ export const DetailsScreen: React.FC = () => {
   const pathname = usePathname();
   const isEditing = pathname.includes("/edit");
 
-  const { switchChainAsync } = useSwitchChain();
   // Initialize the appropriate form based on flow type
   const {
     register,

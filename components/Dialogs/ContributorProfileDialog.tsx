@@ -7,7 +7,7 @@ import { Button } from "@/components/Utilities/Button";
 import { useProjectStore } from "@/store";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
 import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks/useGap";
@@ -28,6 +28,7 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
+import { useWallet } from "@/hooks/useWallet";
 
 type ContributorProfileDialogProps = {};
 
@@ -70,17 +71,20 @@ const inputStyle =
 
 type SchemaType = z.infer<typeof profileSchema>;
 
-
 export const ContributorProfileDialog: FC<
   ContributorProfileDialogProps
 > = () => {
   const project = useProjectStore((state) => state.project);
   const { address, chain, isConnected } = useAccount();
   const { closeModal, isModalOpen: isOpen } = useContributorProfileModalStore();
-  
+
   // Fetch contributor profile using React Query
-  const { profile, isLoading: isProfileLoading, refetch: refetchProfile } = useContributorProfile(address);
-  
+  const {
+    profile,
+    isLoading: isProfileLoading,
+    refetch: refetchProfile,
+  } = useContributorProfile(address);
+
   // Fetch team profiles using React Query
   const { refetch: refetchTeamProfiles } = useTeamProfiles(project);
 
@@ -89,7 +93,7 @@ export const ContributorProfileDialog: FC<
   );
   const inviteCodeParam = useSearchParams().get("invite-code");
   const { gap } = useGap();
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
   const {
     register,
     setValue,
@@ -195,7 +199,7 @@ export const ContributorProfileDialog: FC<
                   twitter: updatedProfile.data.twitter,
                   farcaster: updatedProfile.data.farcaster,
                 } as SchemaType;
-                
+
                 const isUpdated = Object.keys(profileFetched).every(
                   (key: string) =>
                     profileFetched[key as keyof SchemaType] ===

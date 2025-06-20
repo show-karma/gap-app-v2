@@ -10,7 +10,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 import { Community, nullRef } from "@show-karma/karma-gap-sdk";
 import { Button } from "../Utilities/Button";
 import { MESSAGES } from "@/utilities/messages";
@@ -27,6 +27,7 @@ import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "../Utilities/errorManager";
 import { sanitizeObject } from "@/utilities/sanitize";
+import { useWallet } from "@/hooks/useWallet";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -93,7 +94,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
   });
 
   const { address, chain } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
 
   const { gap } = useGap();

@@ -16,7 +16,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
+import { useWallet } from "./useWallet";
 
 export interface ProjectMilestoneFormData {
   title: string;
@@ -34,7 +35,7 @@ export function useProjectMilestoneForm({
 }: UseProjectMilestoneFormProps = {}) {
   const { address, chain } = useAccount();
   const { project } = useProjectStore();
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
   const params = useParams();
   const projectId = params.projectId as string;
   const isEditing = !!previousMilestone;

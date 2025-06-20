@@ -26,9 +26,10 @@ import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 import { z } from "zod";
 import { MultiSelect } from "../../../components/Utilities/MultiSelect";
+import { useWallet } from "@/hooks/useWallet";
 
 // Helper function to wait for a specified time
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -77,7 +78,7 @@ export const UnifiedMilestoneScreen = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const grants: IGrantResponse[] = project?.grants || [];
   const { address, chain } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
   const { projectId } = useParams();

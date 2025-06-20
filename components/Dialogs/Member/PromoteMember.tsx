@@ -17,8 +17,9 @@ import { ArrowUpIcon } from "@heroicons/react/24/solid";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { FC, Fragment, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
+import { useWallet } from "@/hooks/useWallet";
 
 interface PromoteMemberDialogProps {
   memberAddress: string;
@@ -34,7 +35,7 @@ export const PromoteMemberDialog: FC<PromoteMemberDialogProps> = ({
   const { project } = useProjectStore();
   const { teamProfiles } = useTeamProfiles(project);
   const { changeStepperStep, setIsStepper } = useStepper();
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
   const openModal = () => setIsOpen(true);

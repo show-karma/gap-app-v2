@@ -8,18 +8,22 @@ import { defaultMetadata } from "@/utilities/meta";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-type Props = {
-  params: Promise<{
-    communityId: string;
-  }>;
-  searchParams: Promise<{
-    programId: string;
-  }>;
-};
+type Params = Promise<{
+  communityId: string;
+}>;
+type SearchParams = Promise<{
+  programId: string;
+}>;
 
-export async function generateMetadata(props: Props): Promise<Metadata> {
-  const { communityId } = await props.params;
-  const { programId } = await props.searchParams;
+export async function generateMetadata({
+  params,
+  searchParams,
+}: {
+  params: Params;
+  searchParams: SearchParams;
+}): Promise<Metadata> {
+  const { communityId } = await params;
+  const { programId } = await searchParams;
   let communityName = communityId;
 
   try {

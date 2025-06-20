@@ -19,7 +19,7 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
 import { useState } from "react";
@@ -29,6 +29,7 @@ import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 import { sanitizeInput } from "@/utilities/sanitize";
 import { useAllMilestones } from "@/hooks/useAllMilestones";
 import { PAGES } from "@/utilities/pages";
+import { useWallet } from "@/hooks/useWallet";
 
 const schema = z.object({
   description: z.string().optional(),
@@ -62,7 +63,7 @@ export const ProjectObjectiveCompletionForm = ({
   const { chain, address } = useAccount();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
   const projectId = useParams().projectId as string;
   const {
     register,

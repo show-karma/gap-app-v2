@@ -10,12 +10,16 @@ import {
 } from "@tanstack/react-query";
 import { Metadata } from "next";
 
-export async function generateMetadata(props: {
-  params: Promise<{
-    projectId: string;
-  }>;
+type Params = Promise<{
+  projectId: string;
+}>;
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Params;
 }): Promise<Metadata> {
-  const { projectId } = await props.params;
+  const { projectId } = await params;
   const projectInfo = await getProjectData(projectId);
 
   let metadata = {

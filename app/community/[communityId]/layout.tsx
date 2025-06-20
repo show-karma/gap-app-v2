@@ -8,13 +8,15 @@ import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-i
 import { Metadata } from "next";
 import { CommunityImpactStatCards } from "@/components/Pages/Communities/Impact/StatCards";
 
-type Props = {
-  params: Promise<{
-    communityId: string;
-  }>;
-};
-export async function generateMetadata(props: Props): Promise<Metadata> {
-  const { communityId } = await props.params;
+type Params = Promise<{
+  communityId: string;
+}>;
+export async function generateMetadata({
+  params,
+}: {
+  params: Params;
+}): Promise<Metadata> {
+  const { communityId } = await params;
 
   const community = await getCommunityData(communityId);
   const communityName = community?.details?.data?.name || communityId;
@@ -59,7 +61,7 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
 
 export default async function Layout(props: {
   children: React.ReactNode;
-  params: Promise<{ communityId: string }>;
+  params: Promise<Params>;
 }) {
   const { communityId } = await props.params;
 

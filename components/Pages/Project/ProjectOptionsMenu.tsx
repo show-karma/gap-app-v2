@@ -1,18 +1,18 @@
-'use client';
-import { errorManager } from '@/components/Utilities/errorManager';
-import { useGap } from '@/hooks/useGap';
-import { useOwnerStore, useProjectStore } from '@/store';
-import { useGrantGenieModalStore } from '@/store/modals/genie';
-import { useMergeModalStore } from '@/store/modals/merge';
-import { useProjectEditModalStore } from '@/store/modals/projectEdit';
-import { useTransferOwnershipModalStore } from '@/store/modals/transferOwnership';
-import { useStepper } from '@/store/modals/txStepper';
-import { walletClientToSigner } from '@/utilities/eas-wagmi-utils';
-import { MESSAGES } from '@/utilities/messages';
-import { PAGES } from '@/utilities/pages';
-import { deleteProject, getProjectById } from '@/utilities/sdk';
+"use client";
+import { errorManager } from "@/components/Utilities/errorManager";
+import { useGap } from "@/hooks/useGap";
+import { useOwnerStore, useProjectStore } from "@/store";
+import { useGrantGenieModalStore } from "@/store/modals/genie";
+import { useMergeModalStore } from "@/store/modals/merge";
+import { useProjectEditModalStore } from "@/store/modals/projectEdit";
+import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership";
+import { useStepper } from "@/store/modals/txStepper";
+import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
+import { MESSAGES } from "@/utilities/messages";
+import { PAGES } from "@/utilities/pages";
+import { deleteProject, getProjectById } from "@/utilities/sdk";
 
-import { Menu, Transition } from '@headlessui/react';
+import { Menu, Transition } from "@headlessui/react";
 import {
   ArrowDownOnSquareIcon,
   ArrowsRightLeftIcon,
@@ -23,55 +23,56 @@ import {
   PencilSquareIcon,
   TrashIcon,
   WalletIcon,
-} from '@heroicons/react/24/outline';
-import { EllipsisVerticalIcon, PlusIcon } from '@heroicons/react/24/solid';
+} from "@heroicons/react/24/outline";
+import { EllipsisVerticalIcon, PlusIcon } from "@heroicons/react/24/solid";
 
-import { safeGetWalletClient } from '@/utilities/wallet-helpers';
-import dynamic from 'next/dynamic';
-import Link from 'next/link';
-import { useParams, useRouter } from 'next/navigation';
-import { Fragment, useEffect, useState } from 'react';
-import toast from 'react-hot-toast';
-import { useAccount, useSwitchChain } from 'wagmi';
-import { LinkContractAddressButton } from './LinkContractAddressButton';
-import { LinkGithubRepoButton } from './LinkGithubRepoButton';
-import { SetPayoutAddressButton } from './SetPayoutAddressButton';
+import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { Fragment, useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
+import { LinkContractAddressButton } from "./LinkContractAddressButton";
+import { LinkGithubRepoButton } from "./LinkGithubRepoButton";
+import { SetPayoutAddressButton } from "./SetPayoutAddressButton";
 
-import { AdminTransferOwnershipDialog } from '@/components/Dialogs/AdminTransferOwnershipDialog';
-import { useContactInfo } from '@/hooks/useContactInfo';
-import { useStaff } from '@/hooks/useStaff';
-import { useAdminTransferOwnershipModalStore } from '@/store/modals/adminTransferOwnership';
-import { IProjectResponse } from '@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types';
-import { LinkOSOProfileButton } from './LinkOSOProfileButton';
-import { LinkDivviWalletButton } from './LinkDivviWalletButton';
-import { GithubIcon } from '@/components/Icons';
+import { AdminTransferOwnershipDialog } from "@/components/Dialogs/AdminTransferOwnershipDialog";
+import { useContactInfo } from "@/hooks/useContactInfo";
+import { useStaff } from "@/hooks/useStaff";
+import { useAdminTransferOwnershipModalStore } from "@/store/modals/adminTransferOwnership";
+import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { LinkOSOProfileButton } from "./LinkOSOProfileButton";
+import { LinkDivviWalletButton } from "./LinkDivviWalletButton";
+import { GithubIcon } from "@/components/Icons";
+import { useWallet } from "@/hooks/useWallet";
 
 const ProjectDialog = dynamic(
   () =>
-    import('@/components/Dialogs/ProjectDialog/EditProjectDialog').then(
+    import("@/components/Dialogs/ProjectDialog/EditProjectDialog").then(
       (mod) => mod.EditProjectDialog
     ),
   { ssr: false }
 );
 const GrantsGenieDialog = dynamic(
   () =>
-    import('@/components/Dialogs/GrantGenieDialog').then(
+    import("@/components/Dialogs/GrantGenieDialog").then(
       (mod) => mod.GrantsGenieDialog
     ),
   { ssr: false }
 );
 
 const DeleteDialog = dynamic(() =>
-  import('@/components/DeleteDialog').then((mod) => mod.DeleteDialog)
+  import("@/components/DeleteDialog").then((mod) => mod.DeleteDialog)
 );
 
 const TransferOwnershipDialog = dynamic(() =>
-  import('@/components/Dialogs/TransferOwnershipDialog').then(
+  import("@/components/Dialogs/TransferOwnershipDialog").then(
     (mod) => mod.TransferOwnershipDialog
   )
 );
 const MergeProjectDialog = dynamic(() =>
-  import('@/components/Dialogs/MergeProjectDialog').then(
+  import("@/components/Dialogs/MergeProjectDialog").then(
     (mod) => mod.MergeProjectDialog
   )
 );
@@ -90,7 +91,7 @@ export const ProjectOptionsMenu = () => {
   const [showSetPayoutDialog, setShowSetPayoutDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { address, chain } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
   const router = useRouter();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
@@ -302,7 +303,7 @@ export const ProjectOptionsMenu = () => {
                           className={buttonClassName}
                         >
                           <PencilSquareIcon
-                            className={'mr-2 h-5 w-5'}
+                            className={"mr-2 h-5 w-5"}
                             aria-hidden="true"
                           />
                           Edit project
@@ -317,7 +318,7 @@ export const ProjectOptionsMenu = () => {
                           className={buttonClassName}
                         >
                           <ArrowDownOnSquareIcon
-                            className={'mr-2 h-5 w-5'}
+                            className={"mr-2 h-5 w-5"}
                             aria-hidden="true"
                           />
                           Merge
@@ -333,7 +334,7 @@ export const ProjectOptionsMenu = () => {
                             className={buttonClassName}
                           >
                             <ArrowsRightLeftIcon
-                              className={'mr-2 h-5 w-5'}
+                              className={"mr-2 h-5 w-5"}
                               aria-hidden="true"
                             />
                             Transfer ownership
@@ -351,7 +352,7 @@ export const ProjectOptionsMenu = () => {
                             className={buttonClassName}
                           >
                             <LinkIcon
-                              className={'mr-2 h-5 w-5'}
+                              className={"mr-2 h-5 w-5"}
                               aria-hidden="true"
                             />
                             Link Contracts
@@ -370,7 +371,7 @@ export const ProjectOptionsMenu = () => {
                             className={buttonClassName}
                           >
                             <GithubIcon
-                              className={'mr-2 h-5 w-5'}
+                              className={"mr-2 h-5 w-5"}
                               aria-hidden="true"
                             />
                             Link GitHub Repo
@@ -388,7 +389,7 @@ export const ProjectOptionsMenu = () => {
                             className={buttonClassName}
                           >
                             <FingerPrintIcon
-                              className={'mr-2 h-5 w-5'}
+                              className={"mr-2 h-5 w-5"}
                               aria-hidden="true"
                             />
                             Link OSO Profile
@@ -406,7 +407,7 @@ export const ProjectOptionsMenu = () => {
                             className={buttonClassName}
                           >
                             <WalletIcon
-                              className={'mr-2 h-5 w-5'}
+                              className={"mr-2 h-5 w-5"}
                               aria-hidden="true"
                             />
                             Link Divvi Identifier
@@ -424,7 +425,7 @@ export const ProjectOptionsMenu = () => {
                             className={buttonClassName}
                           >
                             <CurrencyDollarIcon
-                              className={'mr-2 h-5 w-5'}
+                              className={"mr-2 h-5 w-5"}
                               aria-hidden="true"
                             />
                             Set Payout Address
@@ -452,7 +453,7 @@ export const ProjectOptionsMenu = () => {
                           className={buttonClassName}
                         >
                           <TrashIcon
-                            className={'mr-2 h-5 w-5'}
+                            className={"mr-2 h-5 w-5"}
                             aria-hidden="true"
                           />
                           Delete project
@@ -470,7 +471,7 @@ export const ProjectOptionsMenu = () => {
                         className={buttonClassName}
                       >
                         <ArrowsRightLeftIcon
-                          className={'mr-2 h-5 w-5'}
+                          className={"mr-2 h-5 w-5"}
                           aria-hidden="true"
                         />
                         Transfer ownership

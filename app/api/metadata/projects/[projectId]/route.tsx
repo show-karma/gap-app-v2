@@ -1,21 +1,17 @@
 /* eslint-disable @next/next/no-img-element */
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
+import { getProjectData } from "@/utilities/queries/getProjectData";
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
 import pluralize from "pluralize";
-// App router includes @vercel/og.
-// No need to install it.
 
 export async function GET(
   request: NextRequest,
   context: { params: Promise<{ projectId: string }> }
 ) {
   const projectId = (await context.params).projectId;
-  let project = await gapIndexerApi
-    .projectBySlug(projectId)
-    .then((res) => res.data)
-    .catch(() => null);
+  let project = await getProjectData(projectId, false);
   if (!project) {
     return new Response("Not found", { status: 404 });
   }

@@ -9,7 +9,7 @@ import {
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 import { GAP } from "@show-karma/karma-gap-sdk";
 import { Button } from "../../Utilities/Button";
 import { MESSAGES } from "@/utilities/messages";
@@ -26,6 +26,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { sanitizeInput } from "@/utilities/sanitize";
 import { isAddress } from "viem";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useWallet } from "@/hooks/useWallet";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -97,7 +98,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
 
   const [isLoading, setIsLoading] = useState(false);
   const { chain } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
 
   const { changeStepperStep, setIsStepper } = useStepper();
 
