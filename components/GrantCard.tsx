@@ -1,4 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
+"use client";
+
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
 import { PAGES } from "@/utilities/pages";
@@ -9,6 +11,9 @@ import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-index
 import { TrackTags } from "./TrackTags";
 import { ProfilePicture } from "./Utilities/ProfilePicture";
 import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Spinner } from "./Utilities/Spinner";
 
 interface GrantCardProps {
   grant: IGrantResponse;
@@ -38,6 +43,9 @@ const updatesLength = (
   milestones.filter((milestone) => milestone.completed).length + updatesLength;
 
 export const GrantCard = ({ grant, index }: GrantCardProps) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
+
   const selectedTrackIds = grant.details?.data?.selectedTrackIds as
     | string[]
     | undefined;
@@ -52,15 +60,36 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
   // Check if we have valid track IDs to display
   const hasTrackIds = selectedTrackIds && selectedTrackIds.length > 0;
 
+  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.preventDefault();
+    setIsLoading(true);
+    const href = PAGES.PROJECT.OVERVIEW(
+      grant.project?.details?.data?.slug || grant.refUID || ""
+    );
+    router.push(href);
+  };
+
   return (
     <Link
       id="grant-card"
       href={PAGES.PROJECT.OVERVIEW(
         grant.project?.details?.data?.slug || grant.refUID || ""
       )}
+      onClick={handleClick}
       className="flex h-full w-full max-w-[320px] relative flex-col items-start justify-between gap-3 rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2 transition-all duration-300 ease-in-out hover:opacity-80"
     >
-      <div className="w-full flex flex-col gap-1 ">
+      {isLoading && (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-gradient-to-br from-blue-50/90 to-purple-50/90 dark:from-blue-950/90 dark:to-purple-950/90 rounded-2xl backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-3">
+            <Spinner />
+          </div>
+        </div>
+      )}
+      <div
+        className={`w-full flex flex-col gap-1 transition-all duration-300 ${
+          isLoading ? "scale-95 blur-sm opacity-50" : ""
+        }`}
+      >
         <div
           className="h-[4px] w-full rounded-full mb-2.5"
           style={{
@@ -162,37 +191,6 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
       </div>
 
       <div className="h-1" />
-      {/* <div className="flex px-3 items-center justify-between">
-        <div className="flex items-center w-full flex-wrap gap-2">
-          {firstFiveMembers(grant.members).length ? (
-            <>
-              <p className="text-sm font-medium text-slate-500 dark:text-slate-200">
-                Built by
-              </p>
-              <div className="flex flex-row gap-0 flex-1">
-                {firstFiveMembers(grant.members).map((member, index) => (
-                  <span
-                    key={index}
-                    className="-mr-1.5"
-                    style={{ zIndex: 5 - index }}
-                  >
-                    <img
-                      src={blo(member, 8)}
-                      alt={member}
-                      className="h-5 w-5 rounded-full border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5"
-                    />
-                  </span>
-                ))}
-                {restMembersCounter(grant.members) > 0 && (
-                  <p className="flex items-center justify-center h-12 w-12 rounded-full ring-4 ring-gray-50 dark:ring-zinc-800 border-1 border-gray-100 dark:border-zinc-900 sm:h-5 sm:w-5">
-                    +
-                  </p>
-                )}
-              </div>
-            </>
-          ) : null}
-        </div>
-      </div> */}
     </Link>
   );
 };
