@@ -162,25 +162,21 @@ export const GrantsLayout = ({
     }
   };
 
-  //   UseEffect to check if current URL changes
   useEffect(() => {
-    if (screen && project) {
-      if (
-        !isAuthorized &&
-        currentTab &&
-        authorizedViews.includes(currentTab as GrantScreen)
-      ) {
-        router.push(
-          PAGES.PROJECT.GRANTS(
-            project?.details?.data.slug || project?.uid || ""
-          )
-        );
-        setCurrentTab("overview");
-      } else {
-        setCurrentTab(screen);
-      }
+    if (!project || !screen) return;
+
+    if (!isAuthorized && authorizedViews.includes(screen)) {
+      router.replace(
+        PAGES.PROJECT.GRANTS(project.details?.data.slug || project.uid || "")
+      );
+      setCurrentTab("overview");
+      return;
     }
-  }, [screen, isAuthorized, address, currentTab, project, router]);
+
+    if (currentTab !== screen) {
+      setCurrentTab(screen);
+    }
+  }, [screen, isAuthorized, project, currentTab, router]);
 
   useEffect(() => {
     if (project) {
