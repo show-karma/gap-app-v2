@@ -11,7 +11,7 @@ import { useAccount } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Button } from "@/components/Utilities/Button";
-import { ChevronRightIcon, Square2StackIcon, FlagIcon, ChartBarIcon, TagIcon } from "@heroicons/react/24/outline";
+import { ChevronRightIcon, Square2StackIcon, FlagIcon, ChartBarIcon, TagIcon, EnvelopeIcon } from "@heroicons/react/24/outline";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { cn } from "@/utilities/tailwind";
 
@@ -141,6 +141,14 @@ export const CommunityAdminPage = ({
               description="Manage tracks and assign them to programs"
               colorClass=""
               icon={<TagIcon className="w-6 h-6" />}
+            />
+
+            <AdminButton
+              href={PAGES.ADMIN.ADMIN_EMAILS(community?.details?.data?.slug || communityId)}
+              label="Admin Emails"
+              description="Manage admin email addresses for the community"
+              colorClass=""
+              icon={<EnvelopeIcon className="w-6 h-6" />}
             />
           </div>
         ) : (
