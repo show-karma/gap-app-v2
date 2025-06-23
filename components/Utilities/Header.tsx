@@ -1,17 +1,15 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminCommunities } from "@/hooks/useAdminCommunities";
+import { useContractOwner } from "@/hooks/useContractOwner";
 import { useAuthStore } from "@/store/auth";
 import { useCommunitiesStore } from "@/store/communities";
 import { useMobileStore } from "@/store/mobile";
 import { useOwnerStore } from "@/store/owner";
 import { useRegistryStore } from "@/store/registry";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { PAGES } from "@/utilities/pages";
-import { getContractOwner } from "@/utilities/sdk/getContractOwner";
 import { SOCIALS } from "@/utilities/socials";
-import { config } from "@/utilities/wagmi/config";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { MoonIcon, SunIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
@@ -22,14 +20,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Chain } from "viem";
 import { useAccount } from "wagmi";
 import { OnboardingDialog } from "../Dialogs/OnboardingDialog";
 import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
 import { DiscordIcon, LogOutIcon, TelegramIcon, TwitterIcon } from "../Icons";
 import { Searchbar } from "../Searchbar";
 import { Button } from "./Button";
-import { errorManager } from "./errorManager";
 import { ExternalLink } from "./ExternalLink";
 import { ParagraphIcon } from "../Icons/Paragraph";
 
@@ -46,83 +42,15 @@ const buttonStyle: HTMLButtonElement["className"] =
 
 export default function Header() {
   const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
-  const { isConnected, address } = useAccount();
+  const { isConnected, address, chain } = useAccount();
   const { isAuth, isAuthenticating } = useAuthStore();
-  const { communities, setCommunities, setIsLoading } = useCommunitiesStore();
+  const { communities } = useCommunitiesStore();
 
-  const signer = useSigner();
+  // Use React Query hooks for data fetching
+  useAdminCommunities(address);
+  useContractOwner(address, chain);
 
   const isCommunityAdmin = communities.length !== 0;
-
-  const getCommunities = async () => {
-    if (!address || !isAuth) {
-      setCommunities([]);
-      return;
-    }
-    setIsLoading(true);
-    try {
-      const communitiesOf = await gapIndexerApi
-        .adminOf(address as `0x${string}`)
-        .catch(() => undefined);
-
-      if (communitiesOf?.data && communitiesOf?.data.length !== 0) {
-        setCommunities(communitiesOf.data);
-      } else {
-        setCommunities([]);
-      }
-    } catch (e) {
-      errorManager(
-        `Error fetching communities of user ${address} is admin`,
-        e,
-        {
-          address,
-        }
-      );
-      setCommunities([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const setIsOwner = useOwnerStore((state) => state.setIsOwner);
-  const setIsOwnerLoading = useOwnerStore((state) => state.setIsOwnerLoading);
-
-  const { chain } = useAccount();
-
-  useEffect(() => {
-    if (!signer || !address || !isAuth) {
-      setIsOwnerLoading(false);
-      setIsOwner(false);
-      return;
-    }
-    const setupOwner = async () => {
-      setIsOwnerLoading(true);
-      if (!chain) {
-        setIsOwnerLoading(false);
-        setIsOwner(false);
-        return;
-      }
-      await getContractOwner(signer as any, chain as Chain)
-        .then((owner) => {
-          setIsOwner(owner?.toLowerCase() === address?.toLowerCase());
-        })
-        .catch((e) => {
-          errorManager(`Error fetching contract owner for ${address}`, e, {
-            signer,
-            address,
-            chain,
-          });
-        })
-        .finally(() => {
-          setIsOwnerLoading(false);
-        });
-    };
-    setupOwner();
-  }, [signer, address, isAuth]);
-
-  useEffect(() => {
-    getCommunities();
-  }, [address, isAuth]);
 
   const socials = [
     {
