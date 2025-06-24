@@ -8,12 +8,13 @@ import {
   sepolia,
   sei,
   lisk,
+  scroll
 } from "viem/chains";
 import type { TNetwork } from "@show-karma/karma-gap-sdk";
 
 export const appNetwork: [Chain, ...Chain[]] =
   process.env.NEXT_PUBLIC_ENV === "production"
-    ? [optimism, arbitrum, celo, sei, lisk]
+    ? [optimism, arbitrum, celo, sei, lisk, scroll]
     : [optimismSepolia, baseSepolia, sepolia];
 
 export function getExplorerUrl(chainId: number, transactionHash: string) {
@@ -26,6 +27,7 @@ export function getExplorerUrl(chainId: number, transactionHash: string) {
     baseSepolia,
     sepolia,
     lisk,
+    scroll,
   ].find((c) => c.id === chainId);
   if (!chain || !chain.blockExplorers?.default?.url) {
     // Return a fallback block explorer URL if the chain or its explorer is not found
@@ -78,6 +80,8 @@ export function getChainIdByName(name: string) {
       return 42220;
     case "lisk":
       return 1135;
+    case "scroll":
+      return 534352;
     default:
       return appNetwork[0].id;
   }
@@ -103,6 +107,8 @@ export function getChainNameById(id: number): TNetwork {
       return "celo";
     case 1135:
       return "lisk";
+    case 534352:
+      return "scroll";
     default: {
       const network = appNetwork[0].name;
       return getChainNameById(getChainIdByName(network));

@@ -28,6 +28,8 @@ export const chainImgDictionary = (chainId: number) => {
       return "/images/networks/base.svg";
     case 8453:
       return "/images/networks/base.svg";
+    case 534352:
+      return "/images/networks/scroll.svg";
     default:
       return "";
   }
