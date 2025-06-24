@@ -9,26 +9,21 @@ import {
 } from "@/components/Icons";
 import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
 import { ProjectNavigator } from "@/components/Pages/Project/ProjectNavigator";
-import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useAuthStore } from "@/store/auth";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { useProgressModalStore } from "@/store/modals/progress";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
 import {
   IProjectDetails,
   IProjectResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Image from "next/image";
 
-import { useEffect, useMemo } from "react";
-import { useAccount } from "wagmi";
+import { useMemo } from "react";
 import { IntroDialog } from "./IntroDialog";
 
-import { getRPCClient } from "@/utilities/rpcClient";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { ShareDialog } from "../GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/ShareDialog";
@@ -37,6 +32,7 @@ import { useProject } from "@/hooks/useProject";
 import ProjectHeaderLoading from "./Loading/Header";
 import { useProjectInstance } from "@/hooks/useProjectInstance";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 
 interface Member {
   uid: string;
@@ -50,97 +46,24 @@ interface ProjectWrapperProps {
 }
 
 export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
-  const {
-    isProjectAdmin,
-    setIsProjectAdmin,
-    setIsProjectAdminLoading,
-    isProjectOwner,
-    setIsProjectOwner,
-    setIsProjectOwnerLoading,
-  } = useProjectStore((state) => state);
+  const { isProjectAdmin, isProjectOwner } = useProjectStore((state) => ({
+    isProjectAdmin: state.isProjectAdmin,
+    isProjectOwner: state.isProjectOwner,
+  }));
   const { project: projectInstance } = useProjectInstance(projectId);
 
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const signer = useSigner();
-  const { address, isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
 
   const { project, isLoading: isProjectLoading } = useProject(projectId);
+  
+  // Use the new React Query hook for permissions
+  useProjectPermissions(projectId, project, projectInstance);
+  
   const isAuthorized = isOwner || isProjectAdmin || isProjectOwner;
   const { data: contactsInfo } = useContactInfo(projectId, isAuthorized);
   const hasContactInfo = Boolean(contactsInfo?.length);
 
   useTeamProfiles(project);
-
-  useEffect(() => {
-    if (
-      !projectInstance ||
-      !project?.chainID ||
-      !isAuth ||
-      !isConnected ||
-      !address
-    ) {
-      setIsProjectAdmin(false);
-      setIsProjectAdminLoading(false);
-      setIsProjectOwner(false);
-      setIsProjectOwnerLoading(false);
-      return;
-    }
-
-    if (isOwner) {
-      setIsProjectAdmin(true);
-      setIsProjectOwner(true);
-      setIsProjectAdminLoading(false);
-      setIsProjectOwnerLoading(false);
-      return;
-    }
-
-    const runPermissionChecks = async () => {
-      try {
-        const rpcClient = await getRPCClient(project.chainID);
-
-        setIsProjectOwnerLoading(true);
-        setIsProjectAdminLoading(true);
-
-        const [isOwnerResult, isAdminResult] = await Promise.all([
-          projectInstance
-            ?.isOwner(rpcClient as any, address)
-            .catch(() => false),
-          projectInstance
-            ?.isAdmin(rpcClient as any, address)
-            .catch(() => false),
-        ]);
-
-        setIsProjectOwner(isOwnerResult);
-        setIsProjectAdmin(isAdminResult);
-      } catch (error: any) {
-        setIsProjectOwner(false);
-        setIsProjectAdmin(false);
-        errorManager(
-          `Error checking permissions for user ${address} on project ${projectId}`,
-          error
-        );
-      } finally {
-        setIsProjectOwnerLoading(false);
-        setIsProjectAdminLoading(false);
-      }
-    };
-
-    runPermissionChecks();
-  }, [
-    projectInstance,
-    address,
-    isAuth,
-    isConnected,
-    signer,
-    isOwner,
-    project?.chainID,
-    projectId,
-    setIsProjectAdmin,
-    setIsProjectAdminLoading,
-    setIsProjectOwner,
-    setIsProjectOwnerLoading,
-  ]);
 
   const getSocials = (links: IProjectDetails["data"]["links"]) => {
     const types = [
