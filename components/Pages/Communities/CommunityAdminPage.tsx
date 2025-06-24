@@ -4,7 +4,7 @@ import { useAuthStore } from "@/store/auth";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
-import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
@@ -69,36 +69,10 @@ export const CommunityAdminPage = ({
   const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore();
 
-  const [isAdmin, setIsAdmin] = useState<boolean>(false); // Data returned from the API
   const signer = useSigner();
-  const [loading, setLoading] = useState<boolean>(false);
 
-  useEffect(() => {
-    if (!community) return;
-
-    const checkIfAdmin = async () => {
-      setLoading(true);
-      if (!community?.uid || !isAuth) return;
-      try {
-        const checkAdmin = await isCommunityAdminOf(
-          community,
-          address as string,
-          signer
-        );
-        setIsAdmin(checkAdmin);
-      } catch (error: any) {
-        errorManager(
-          `Error checking if ${address} is admin of ${communityId}`,
-          error
-        );
-        setIsAdmin(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkIfAdmin();
-  }, [address, isConnected, isAuth, community?.uid, signer]);
+  // Check if user is admin of this community
+  const { isCommunityAdmin: isAdmin, isLoading: loading } = useIsCommunityAdmin(community, address);
 
   return (
     <div className="container mx-auto px-4 py-8 mt-2">

@@ -13,7 +13,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { defaultMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
-import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { ChevronLeftIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -41,8 +41,6 @@ export default function EditCategoriesPage() {
     Record<string, string[]>
   >({});
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const signer = useSigner();
 
   const {
@@ -50,6 +48,9 @@ export default function EditCategoriesPage() {
     isLoading: isLoadingCommunity,
     error: communityError,
   } = useCommunityDetails(communityId);
+
+  // Check if user is admin of this community
+  const { isCommunityAdmin: isAdmin, isLoading: loading } = useIsCommunityAdmin(community, address);
 
   useEffect(() => {
     if (
@@ -83,33 +84,7 @@ export default function EditCategoriesPage() {
     itemsPerPage: 12,
   });
 
-  useEffect(() => {
-    if (!community) return;
 
-    const checkIfAdmin = async () => {
-      setLoading(true);
-      if (!community?.uid || !isAuth) return;
-      try {
-        const checkAdmin = await isCommunityAdminOf(
-          community,
-          address as string,
-          signer
-        );
-        setIsAdmin(checkAdmin);
-      } catch (error: any) {
-        console.log(error);
-        errorManager(
-          `Error checking if ${address} is admin of ${communityId}`,
-          error
-        );
-        setIsAdmin(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkIfAdmin();
-  }, [address, isConnected, isAuth, community?.uid, signer]);
 
   const { data: categoriesOptions = [], refetch: refreshCategories } =
     useCategories(communityId);

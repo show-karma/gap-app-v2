@@ -3,7 +3,7 @@ import { useState, useEffect, Fragment } from "react";
 import { useAuthStore } from "@/store/auth";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
-import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useAccount } from "wagmi";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -50,8 +50,6 @@ export const TracksAdminPage = ({
   const { isAuth } = useAuthStore();
   const router = useRouter();
 
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
   const [selectedProgram, setSelectedProgram] = useState<string>("");
   const [newTrack, setNewTrack] = useState({ name: "", description: "" });
   const [selectedTrack, setSelectedTrack] = useState<Track | null>(null);
@@ -61,6 +59,9 @@ export const TracksAdminPage = ({
   const [showAssignModal, setShowAssignModal] = useState<boolean>(false);
 
   const signer = useSigner();
+
+  // Check if user is admin of this community
+  const { isCommunityAdmin: isAdmin, isLoading: loading } = useIsCommunityAdmin(community, address);
 
   // React Query hooks
   const {
@@ -91,31 +92,7 @@ export const TracksAdminPage = ({
     community?.uid || ""
   );
 
-  useEffect(() => {
-    if (!community) return;
 
-    const checkIfAdmin = async () => {
-      if (!community?.uid || !isAuth) return;
-      try {
-        const checkAdmin = await isCommunityAdminOf(
-          community,
-          address as string,
-          signer
-        );
-        setIsAdmin(checkAdmin);
-        setLoading(false);
-      } catch (error: any) {
-        errorManager(
-          `Error checking if ${address} is admin of ${communityId}`,
-          error
-        );
-        setIsAdmin(false);
-        setLoading(false);
-      }
-    };
-
-    checkIfAdmin();
-  }, [address, isConnected, isAuth, community?.uid, signer]);
 
   // Set selected track IDs based on program tracks when program changes
   useEffect(() => {

@@ -8,7 +8,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { defaultMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
-import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import {
   ChevronLeftIcon,
   TrashIcon,
@@ -62,8 +62,10 @@ export default function ManageIndicatorsPage() {
   const [community, setCommunity] = useState<ICommunityResponse | undefined>(
     undefined
   ); // Data returned from the API
-  const [isAdmin, setIsAdmin] = useState<boolean>(false); // Data returned from the API
   const signer = useSigner();
+
+  // Check if user is admin of this community
+  const { isCommunityAdmin: isAdmin, isLoading: adminLoading } = useIsCommunityAdmin(community, address);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -95,37 +97,7 @@ export default function ManageIndicatorsPage() {
     fetchDetails();
   }, [communityId]);
 
-  useEffect(() => {
-    if (!community) return;
 
-    const checkIfAdmin = async () => {
-      setLoading(true);
-      if (!community?.uid || !isAuth) return;
-      try {
-        const checkAdmin = await isCommunityAdminOf(
-          community,
-          address as string,
-          signer
-        );
-        setIsAdmin(checkAdmin);
-      } catch (error: any) {
-        errorManager(
-          `Error checking if ${address} is admin of community ${communityId}`,
-          error,
-          {
-            community: communityId,
-            address: address,
-          }
-        );
-        console.log(error);
-        setIsAdmin(false);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkIfAdmin();
-  }, [address, isConnected, isAuth, community?.uid, signer]);
 
   const getCategories = async (isSilent: boolean = false) => {
     if (!isSilent) {
@@ -200,7 +172,7 @@ export default function ManageIndicatorsPage() {
 
   return (
     <div className="mt-4 flex gap-8 flex-row max-lg:flex-col w-full mb-10">
-      {loading ? (
+      {loading || adminLoading ? (
         <div className="flex w-full min-h-screen h-full items-center justify-center">
           <Spinner />
         </div>
