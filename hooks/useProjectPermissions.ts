@@ -3,8 +3,8 @@ import { useProjectStore, useOwnerStore } from "@/store";
 import { useAuthStore } from "@/store/auth";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getRPCClient } from "@/utilities/rpcClient";
-import { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useEffect } from "react";
 import { useAccount } from "wagmi";
 

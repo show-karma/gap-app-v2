@@ -7,12 +7,13 @@ import {
   WebsiteIcon,
 } from "@/components/Icons";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
-import { IProjectDetails } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { IProjectDetails } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { FC } from "react";
 
 interface SocialLink {
   name: string;
   url: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: FC<{ className?: string }>;
 }
 
 export const useProjectSocials = (links?: IProjectDetails["data"]["links"]): SocialLink[] => {

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 interface Member {
   uid: string;
@@ -16,7 +16,7 @@ export const useProjectMembers = (project?: IProjectResponse): Member[] => {
     const members: Member[] = [];
     
     if (project.members) {
-      project.members.forEach((member) => {
+      project.members.forEach((member: any) => {
         members.push({
           uid: member.uid,
           recipient: member.recipient,
@@ -28,7 +28,7 @@ export const useProjectMembers = (project?: IProjectResponse): Member[] => {
     }
     
     const alreadyHasOwner = project.members?.find(
-      (member) => member.recipient === project.recipient
+      (member: any) => member.recipient === project.recipient
     );
     
     if (!alreadyHasOwner && project.recipient) {
