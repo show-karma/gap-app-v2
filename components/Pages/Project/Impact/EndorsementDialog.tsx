@@ -22,7 +22,8 @@ import { Project, ProjectEndorsement } from "@show-karma/karma-gap-sdk";
 import { useRouter } from "next/navigation";
 import { FC, Fragment, useState } from "react";
 import { Hex } from "viem";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
+import { useWallet } from "@/hooks/useWallet";
 
 type EndorsementDialogProps = {};
 
@@ -33,7 +34,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
     useEndorsementStore();
   const [comment, setComment] = useState<string>("");
   const project = useProjectStore((state) => state.project);
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
   const { gap } = useGap();
   const { chain } = useAccount();
   const { address } = useAccount();

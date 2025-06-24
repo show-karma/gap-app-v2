@@ -23,7 +23,7 @@ import { useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { FC, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 import { AddImpactScreen } from "./AddImpactScreen";
 import { EmptyImpactScreen } from "./EmptyImpactScreen";
 import { ImpactVerifications } from "./ImpactVerifications";
@@ -32,6 +32,7 @@ import { Tabs } from "@/components/Utilities/Tabs";
 import { TabTrigger } from "@/components/Utilities/Tabs";
 import { TabContent } from "@/components/Utilities/Tabs";
 import { OSOMetrics } from "./OSOMetrics";
+import { useWallet } from "@/hooks/useWallet";
 
 const headClasses =
   "text-black dark:text-white text-xs font-medium uppercase text-left px-6 py-3 font-body";
@@ -41,7 +42,9 @@ const cellClasses =
 interface ImpactComponentProps {}
 
 export const ImpactComponent: FC<ImpactComponentProps> = () => {
-  const { project, isProjectOwner } = useProjectStore();
+  const project = useProjectStore((state) => state.project);
+  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+
   const [orderedImpacts, setOrderedImpacts] = useState<IProjectImpact[]>(
     project?.impacts || []
   );
@@ -59,7 +62,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
       return b.data.completedAt - a.data.completedAt;
     });
     setOrderedImpacts(ordered);
-  }, [project?.impacts]);
+  }, [project?.impacts, project]);
 
   const searchParams = useSearchParams();
 
@@ -67,7 +70,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
 
   const { address } = useAccount();
   const { chain } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();

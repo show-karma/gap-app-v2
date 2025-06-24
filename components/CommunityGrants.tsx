@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { useCommunityStore } from "@/store/community";
-import { SortByOptions, StatusOptions } from "@/types";
+import { SortByOptions, StatusOptions, MaturityStageOptions } from "@/types";
 import { zeroUID } from "@/utilities/commons";
 import { getGrants } from "@/utilities/sdk/communities/getGrants";
 import { cn } from "@/utilities/tailwind";
@@ -24,24 +24,46 @@ import { errorManager } from "./Utilities/errorManager";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { ProgramBanner } from "./ProgramBanner";
 
+// Helper function to map maturity stage to status format
+const getStatusFromMaturityStage = (
+  stage: MaturityStageOptions
+): StatusOptions | undefined => {
+  if (stage === "all") return undefined;
+  return `maturity-stage-${stage}` as StatusOptions;
+};
+
+// Map frontend sort options to API sort values
+const mapSortToApiValue = (sortOption: SortByOptions): string => {
+  const sortMappings: Record<SortByOptions, string> = {
+    recent: "recent",
+    completed: "completed",
+    milestones: "milestones",
+    txnCount: "transactions_desc",
+  };
+  return sortMappings[sortOption];
+};
+
 const sortOptions: Record<SortByOptions, string> = {
   recent: "Recent",
   completed: "Completed",
   milestones: "Milestones",
+  txnCount: "No. of Txns",
 };
 
-const statuses: Record<StatusOptions, string> = {
-  all: "All",
-  "to-complete": "To Complete",
-  completed: "Completed",
-  starting: "Starting",
+const maturityStages: Record<MaturityStageOptions, string> = {
+  all: "All Stages",
+  "0": "Stage 0",
+  "1": "Stage 1",
+  "2": "Stage 2",
+  "3": "Stage 3",
+  "4": "Stage 4",
 };
 
 interface CommunityGrantsProps {
   categoriesOptions: string[];
   defaultSelectedCategories: string[];
   defaultSortBy: SortByOptions;
-  defaultSelectedStatus: StatusOptions;
+  defaultSelectedMaturityStage: MaturityStageOptions;
   communityUid: string;
 }
 
@@ -49,7 +71,7 @@ export const CommunityGrants = ({
   categoriesOptions,
   defaultSelectedCategories,
   defaultSortBy,
-  defaultSelectedStatus,
+  defaultSelectedMaturityStage,
   communityUid,
 }: CommunityGrantsProps) => {
   const params = useParams();
@@ -73,12 +95,17 @@ export const CommunityGrants = ({
       value ? (value as SortByOptions) : ("milestones" as SortByOptions),
   });
 
-  const [selectedStatus, changeStatusQuery] = useQueryState("status", {
-    defaultValue: defaultSelectedStatus,
-    serialize: (value) => value,
-    parse: (value) =>
-      value ? (value as StatusOptions) : ("all" as StatusOptions),
-  });
+  const [selectedMaturityStage, changeMaturityStageQuery] = useQueryState(
+    "maturityStage",
+    {
+      defaultValue: defaultSelectedMaturityStage,
+      serialize: (value) => value,
+      parse: (value) =>
+        value
+          ? (value as MaturityStageOptions)
+          : ("all" as MaturityStageOptions),
+    }
+  );
 
   const [selectedProgramId, changeSelectedProgramIdQuery] = useQueryState<
     string | null
@@ -124,8 +151,8 @@ export const CommunityGrants = ({
         } = await getGrants(
           communityId as Hex,
           {
-            sortBy: selectedSort,
-            status: selectedStatus,
+            sortBy: mapSortToApiValue(selectedSort) as SortByOptions,
+            status: getStatusFromMaturityStage(selectedMaturityStage),
             categories: selectedCategoriesIds.split("_"),
             selectedProgramId: selectedProgramId || undefined,
             selectedTrackIds: selectedTrackIds || undefined,
@@ -160,7 +187,7 @@ export const CommunityGrants = ({
         console.log("error", error);
         errorManager("Error while fetching community grants", error, {
           sortBy: selectedSort,
-          status: selectedStatus,
+          status: getStatusFromMaturityStage(selectedMaturityStage),
           categories: selectedCategoriesIds.split("_"),
           selectedProgramId: selectedProgramId || undefined,
           selectedTrackIds: selectedTrackIds || undefined,
@@ -176,23 +203,28 @@ export const CommunityGrants = ({
   }, [
     communityId,
     selectedSort,
-    selectedStatus,
     selectedCategoriesIds,
     selectedProgramId,
     selectedTrackIds,
+    selectedMaturityStage,
     currentPage,
+    setTotalGrants,
+    totalGrants,
   ]);
 
   const changeSort = async (newValue: SortByOptions) => {
     setCurrentPage(0);
+    setGrants([]);
     changeSortQuery(newValue);
   };
-  const changeStatus = async (newValue: StatusOptions) => {
+  const changeMaturityStage = async (newValue: MaturityStageOptions) => {
     setCurrentPage(0);
-    changeStatusQuery(newValue);
+    setGrants([]);
+    changeMaturityStageQuery(newValue);
   };
   const changeCategories = async (newValue: string[]) => {
     setCurrentPage(0);
+    setGrants([]);
     changeCategoriesQuery(newValue);
   };
 
@@ -413,90 +445,98 @@ export const CommunityGrants = ({
             </Listbox>
             {/* Sort end */}
 
-            {/* Status start */}
-            <Listbox
-              value={selectedStatus}
-              onChange={(value) => {
-                changeStatus(value);
-              }}
-            >
-              {({ open }) => (
-                <div className="flex items-center gap-x-2  max-sm:w-full max-sm:justify-between">
-                  <div className="relative flex-1 w-max">
-                    <Listbox.Button
-                      id="status-button"
-                      className="cursor-pointer items-center relative w-full rounded-md pr-8 text-left  sm:text-sm sm:leading-6 text-black dark:text-white text-base font-normal"
-                    >
-                      <span className="flex flex-row gap-1">
-                        {statuses[selectedStatus]}
-                      </span>
-                      <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
-                        <ChevronDownIcon
-                          className="h-4 w-4 text-gray-400"
-                          aria-hidden="true"
-                        />
-                      </span>
-                    </Listbox.Button>
+            {/* Maturity Stage start - Only show for celo community */}
+            {communityId === "celo" && (
+              <Listbox
+                value={selectedMaturityStage}
+                onChange={(value) => {
+                  changeMaturityStage(value);
+                }}
+              >
+                {({ open }) => (
+                  <div className="flex items-center gap-x-2  max-sm:w-full max-sm:justify-between">
+                    <div className="relative flex-1 w-max">
+                      <Listbox.Button
+                        id="maturity-stage-button"
+                        className="cursor-pointer items-center relative w-full rounded-md pr-8 text-left  sm:text-sm sm:leading-6 text-black dark:text-white text-base font-normal"
+                      >
+                        <span className="flex flex-row gap-1">
+                          {maturityStages[selectedMaturityStage]}
+                        </span>
+                        <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                          <ChevronDownIcon
+                            className="h-4 w-4 text-gray-400"
+                            aria-hidden="true"
+                          />
+                        </span>
+                      </Listbox.Button>
 
-                    <Transition
-                      show={open}
-                      as={Fragment}
-                      leave="transition ease-in duration-100"
-                      leaveFrom="opacity-100"
-                      leaveTo="opacity-0"
-                    >
-                      <Listbox.Options className="absolute z-10 dark:bg-zinc-800 dark:text-zinc-200 mt-1 max-h-60 w-max overflow-auto rounded-md bg-white py-1 text-base  ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
-                        {Object.keys(statuses).map((statusOption) => (
-                          <Listbox.Option
-                            key={statusOption}
-                            className={({ active }) =>
-                              cn(
-                                active
-                                  ? "bg-gray-100 text-black dark:text-gray-300 dark:bg-zinc-900"
-                                  : "text-gray-900 dark:text-gray-200 ",
-                                "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
-                              )
-                            }
-                            value={statusOption}
-                            onClick={() => {
-                              setCurrentPage(1);
-                            }}
-                          >
-                            {({ selected, active }) => (
-                              <>
-                                <span
-                                  className={cn(
-                                    selected ? "font-semibold" : "font-normal",
-                                    "block truncate"
-                                  )}
-                                >
-                                  {statuses[statusOption as StatusOptions]}
-                                </span>
-
-                                {selected ? (
+                      <Transition
+                        show={open}
+                        as={Fragment}
+                        leave="transition ease-in duration-100"
+                        leaveFrom="opacity-100"
+                        leaveTo="opacity-0"
+                      >
+                        <Listbox.Options className="absolute z-10 dark:bg-zinc-800 dark:text-zinc-200 mt-1 max-h-60 w-max overflow-auto rounded-md bg-white py-1 text-base  ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                          {Object.keys(maturityStages).map((stageOption) => (
+                            <Listbox.Option
+                              key={stageOption}
+                              className={({ active }) =>
+                                cn(
+                                  active
+                                    ? "bg-gray-100 text-black dark:text-gray-300 dark:bg-zinc-900"
+                                    : "text-gray-900 dark:text-gray-200 ",
+                                  "relative cursor-default select-none py-2 pl-3 pr-9 transition-all ease-in-out duration-200"
+                                )
+                              }
+                              value={stageOption}
+                              onClick={() => {
+                                setCurrentPage(1);
+                              }}
+                            >
+                              {({ selected, active }) => (
+                                <>
                                   <span
                                     className={cn(
-                                      "text-blue-600 dark:text-blue-400",
-                                      "absolute inset-y-0 right-0 flex items-center pr-4"
+                                      selected
+                                        ? "font-semibold"
+                                        : "font-normal",
+                                      "block truncate"
                                     )}
                                   >
-                                    <CheckIcon
-                                      className="h-5 w-5"
-                                      aria-hidden="true"
-                                    />
+                                    {
+                                      maturityStages[
+                                        stageOption as MaturityStageOptions
+                                      ]
+                                    }
                                   </span>
-                                ) : null}
-                              </>
-                            )}
-                          </Listbox.Option>
-                        ))}
-                      </Listbox.Options>
-                    </Transition>
+
+                                  {selected ? (
+                                    <span
+                                      className={cn(
+                                        "text-blue-600 dark:text-blue-400",
+                                        "absolute inset-y-0 right-0 flex items-center pr-4"
+                                      )}
+                                    >
+                                      <CheckIcon
+                                        className="h-5 w-5"
+                                        aria-hidden="true"
+                                      />
+                                    </span>
+                                  ) : null}
+                                </>
+                              )}
+                            </Listbox.Option>
+                          ))}
+                        </Listbox.Options>
+                      </Transition>
+                    </div>
                   </div>
-                </div>
-              )}
-            </Listbox>
-            {/* Status end */}
+                )}
+              </Listbox>
+            )}
+            {/* Maturity Stage end */}
           </div>
         </div>
       </div>
@@ -520,7 +560,6 @@ export const CommunityGrants = ({
                 height: "100%",
               }}
             >
-              {/* @ts-expect-error - AutoSizer type compatibility issue with React 18 */}
               <AutoSizer disableHeight>
                 {({ width }) => {
                   const columnCounter = Math.floor(width / 240)
@@ -532,7 +571,6 @@ export const CommunityGrants = ({
                   const gutterSize = 20;
                   const height = Math.ceil(grants.length / columnCounter) * 360;
                   return (
-                    /* @ts-expect-error - Grid type compatibility issue with React 18 */
                     <Grid
                       height={height + 120}
                       width={width}

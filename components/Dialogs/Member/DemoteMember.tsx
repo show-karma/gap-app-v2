@@ -17,7 +17,9 @@ import { ArrowDownIcon } from "@heroicons/react/24/solid";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { FC, Fragment, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
+import { useTeamProfiles } from "@/hooks/useTeamProfiles";
+import { useWallet } from "@/hooks/useWallet";
 
 interface DemoteMemberDialogProps {
   memberAddress: string;
@@ -30,9 +32,10 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({
   const [isDemoting, setIsDemoting] = useState(false);
   const { gap } = useGap();
   const { address, chain } = useAccount();
-  const { project, teamProfiles } = useProjectStore();
+  const { project } = useProjectStore();
+  const { teamProfiles } = useTeamProfiles(project);
   const { changeStepperStep, setIsStepper } = useStepper();
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
   const openModal = () => setIsOpen(true);
@@ -72,7 +75,10 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({
       const checkIfAttestationExists = async (callbackFn?: () => void) => {
         await retryUntilConditionMet(
           async () => {
-            const memberRoles = await getProjectMemberRoles(project);
+            const memberRoles = await getProjectMemberRoles(
+              project,
+              projectInstance
+            );
             const isAdmin =
               memberRoles[memberAddress.toLowerCase()] !== "Admin";
 

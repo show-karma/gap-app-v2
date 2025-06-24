@@ -9,26 +9,21 @@ import {
 } from "@/components/Icons";
 import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
 import { ProjectNavigator } from "@/components/Pages/Project/ProjectNavigator";
-import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
-import { useGap } from "@/hooks/useGap";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useAuthStore } from "@/store/auth";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { useProgressModalStore } from "@/store/modals/progress";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
-import { getProjectById } from "@/utilities/sdk";
-import { cn } from "@/utilities/tailwind";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
 import {
   IProjectDetails,
   IProjectResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Image from "next/image";
-import { usePathname, useRouter } from "next/navigation";
+
 import { useEffect, useMemo } from "react";
 import { useAccount } from "wagmi";
 import { IntroDialog } from "./IntroDialog";
@@ -38,50 +33,53 @@ import { useContactInfo } from "@/hooks/useContactInfo";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { ShareDialog } from "../GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/ShareDialog";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
+import { useProject } from "@/hooks/useProject";
+import ProjectHeaderLoading from "./Loading/Header";
+import { useProjectInstance } from "@/hooks/useProjectInstance";
+import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 
+interface Member {
+  uid: string;
+  recipient: string;
+  details?: {
+    name?: string;
+  };
+}
 interface ProjectWrapperProps {
-  project: IProjectResponse;
   projectId: string;
 }
-export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
+
+export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
   const {
-    refreshMembers,
-    setProject,
     isProjectAdmin,
     setIsProjectAdmin,
     setIsProjectAdminLoading,
     isProjectOwner,
     setIsProjectOwner,
     setIsProjectOwnerLoading,
-    project: storedProject,
   } = useProjectStore((state) => state);
-
-  const router = useRouter();
-  const pathname = usePathname();
-
-  useEffect(() => {
-    setProject(project);
-  }, [project]);
+  const { project: projectInstance } = useProjectInstance(projectId);
 
   const isOwner = useOwnerStore((state) => state.isOwner);
+  const signer = useSigner();
+  const { address, isConnected } = useAccount();
+  const { isAuth } = useAuthStore();
+
+  const { project, isLoading: isProjectLoading } = useProject(projectId);
   const isAuthorized = isOwner || isProjectAdmin || isProjectOwner;
-
-  useEffect(() => {
-    if (!project) return;
-    refreshMembers();
-  }, [project]);
-
   const { data: contactsInfo } = useContactInfo(projectId, isAuthorized);
-
   const hasContactInfo = Boolean(contactsInfo?.length);
 
-  const signer = useSigner();
-  const { address, isConnected, isConnecting, chain } = useAccount();
-  const { isAuth } = useAuthStore();
-  const { gap } = useGap();
+  useTeamProfiles(project);
 
   useEffect(() => {
-    if (!project || !project?.chainID || !isAuth || !isConnected || !address) {
+    if (
+      !projectInstance ||
+      !project?.chainID ||
+      !isAuth ||
+      !isConnected ||
+      !address
+    ) {
       setIsProjectAdmin(false);
       setIsProjectAdminLoading(false);
       setIsProjectOwner(false);
@@ -89,53 +87,60 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
       return;
     }
 
-    const setupProjectOwner = async () => {
+    if (isOwner) {
+      setIsProjectAdmin(true);
+      setIsProjectOwner(true);
+      setIsProjectAdminLoading(false);
+      setIsProjectOwnerLoading(false);
+      return;
+    }
+
+    const runPermissionChecks = async () => {
       try {
-        setIsProjectOwnerLoading(true);
         const rpcClient = await getRPCClient(project.chainID);
-        const fetchedProject = await getProjectById(projectId);
-        if (!fetchedProject) return;
-        await fetchedProject
-          .isOwner(rpcClient as any, address)
-          .then((res) => {
-            setIsProjectOwner(res);
-          })
-          .finally(() => setIsProjectOwnerLoading(false));
+
+        setIsProjectOwnerLoading(true);
+        setIsProjectAdminLoading(true);
+
+        const [isOwnerResult, isAdminResult] = await Promise.all([
+          projectInstance
+            ?.isOwner(rpcClient as any, address)
+            .catch(() => false),
+          projectInstance
+            ?.isAdmin(rpcClient as any, address)
+            .catch(() => false),
+        ]);
+
+        setIsProjectOwner(isOwnerResult);
+        setIsProjectAdmin(isAdminResult);
       } catch (error: any) {
         setIsProjectOwner(false);
+        setIsProjectAdmin(false);
         errorManager(
-          `Error checking if user ${address} is project owner from project ${projectId}`,
+          `Error checking permissions for user ${address} on project ${projectId}`,
           error
         );
       } finally {
         setIsProjectOwnerLoading(false);
-      }
-    };
-    setupProjectOwner();
-    const setupProjectAdmin = async () => {
-      try {
-        setIsProjectAdminLoading(true);
-        const rpcClient = await getRPCClient(project.chainID);
-        const fetchedProject = await getProjectById(projectId);
-        if (!fetchedProject) return;
-        await fetchedProject
-          .isAdmin(rpcClient as any, address)
-          .then((res) => {
-            setIsProjectAdmin(res);
-          })
-          .finally(() => setIsProjectAdminLoading(false));
-      } catch (error: any) {
-        setIsProjectAdmin(false);
-        errorManager(
-          `Error checking if user ${address} is project admin from project ${projectId}`,
-          error
-        );
-      } finally {
         setIsProjectAdminLoading(false);
       }
     };
-    setupProjectAdmin();
-  }, [project?.uid, address, isAuth, isConnected, signer]);
+
+    runPermissionChecks();
+  }, [
+    projectInstance,
+    address,
+    isAuth,
+    isConnected,
+    signer,
+    isOwner,
+    project?.chainID,
+    projectId,
+    setIsProjectAdmin,
+    setIsProjectAdminLoading,
+    setIsProjectOwner,
+    setIsProjectOwnerLoading,
+  ]);
 
   const getSocials = (links: IProjectDetails["data"]["links"]) => {
     const types = [
@@ -226,54 +231,7 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
       .filter((social) => social);
   };
 
-  const socials = getSocials(
-    storedProject?.details?.data.links || project?.details?.data.links
-  );
-
-  const hasAlreadyEndorsed = project?.endorsements?.find(
-    (item) => item.recipient?.toLowerCase() === address?.toLowerCase()
-  );
-  const { openConnectModal } = useConnectModal();
-  const { setIsEndorsementOpen: setIsOpen } = useEndorsementStore();
-
-  const handleEndorse = () => {
-    if (!isConnected || !isAuth) {
-      return (
-        <Button
-          className="hover:bg-white dark:hover:bg-black border border-black bg-white text-black dark:bg-black dark:text-white px-4 rounded-md py-2 w-max"
-          onClick={() => {
-            if (!isConnecting) {
-              openConnectModal?.();
-            }
-          }}
-        >
-          Endorse this project
-        </Button>
-      );
-    }
-    if (!hasAlreadyEndorsed) {
-      return (
-        <Button
-          onClick={() => setIsOpen(true)}
-          className={cn(
-            "flex justify-center items-center gap-x-1 rounded-md bg-primary-50 dark:bg-primary-900/50 px-3 py-2 text-sm font-semibold text-primary-600 dark:text-zinc-100  hover:bg-primary-100 dark:hover:bg-primary-900 border border-primary-200 dark:border-primary-900",
-            "hover:bg-white dark:hover:bg-black border border-black bg-white text-black dark:bg-black dark:text-white px-4 rounded-md py-2 w-max"
-          )}
-        >
-          Endorse this project
-        </Button>
-      );
-    }
-    return null;
-  };
-
-  interface Member {
-    uid: string;
-    recipient: string;
-    details?: {
-      name?: string;
-    };
-  }
+  const socials = getSocials(project?.details?.data.links);
 
   const mountMembers = () => {
     const members: Member[] = [];
@@ -301,29 +259,6 @@ export const ProjectWrapper = ({ projectId, project }: ProjectWrapperProps) => {
     return members;
   };
 
-  useEffect(() => {
-    if (project && project?.pointers?.length > 0) {
-      gap?.fetch
-        ?.projectById(project.pointers[0].data?.ogProjectUID)
-        .then((_project) => {
-          if (_project) {
-            const isUsingUid = pathname.includes(`/project/${project.uid}`);
-            const newPath = isUsingUid
-              ? pathname.replace(
-                  `/project/${project.uid}`,
-                  `/project/${_project?.details?.data?.slug}`
-                )
-              : pathname.replace(
-                  `/project/${project.details?.data?.slug}`,
-                  `/project/${_project?.details?.data?.slug}`
-                );
-            router.push(newPath);
-          }
-        });
-    }
-  }, [project]);
-
-  const members = mountMembers();
   const { isIntroModalOpen } = useIntroModalStore();
   const { isEndorsementOpen } = useEndorsementStore();
   const { isProgressModalOpen } = useProgressModalStore();

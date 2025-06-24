@@ -2,33 +2,29 @@ import { GrantOverview } from "@/components/Pages/Project/Grants/Overview";
 import { ProjectGrantsOverviewLoading } from "@/components/Pages/Project/Loading/Grants/Overview";
 import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
-import { fetchFromLocalApi } from "@/utilities/fetchFromServer";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 import { defaultMetadata } from "@/utilities/meta";
-import {
-  IGrantResponse,
-  IProjectResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { getProjectData } from "@/utilities/queries/getProjectData";
+
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 
+type Params = Promise<{
+  projectId: string;
+  grantUid: string;
+}>;
+
 export async function generateMetadata({
   params,
 }: {
-  params: {
-    projectId: string;
-    grantUid: string;
-  };
+  params: Params;
 }): Promise<Metadata> {
-  const projectId = params?.projectId as string;
-  const grantUid = params?.grantUid as string;
+  const awaitedParams = await params;
+  const { projectId, grantUid } = awaitedParams;
 
-  const projectInfo = await gapIndexerApi
-    .projectBySlug(projectId as `0x${string}`)
-    .then((res) => res.data)
-    .catch(() => notFound());
+  const projectInfo = await getProjectData(projectId);
 
   if (projectInfo?.uid === zeroUID || !projectInfo) {
     notFound();
@@ -109,7 +105,6 @@ export async function generateMetadata({
     icons: metadata.icons,
   };
 }
-
 const Page = () => {
   return (
     <Suspense fallback={<ProjectGrantsOverviewLoading />}>

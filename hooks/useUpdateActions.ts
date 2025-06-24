@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 import toast from "react-hot-toast";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useOwnerStore, useProjectStore } from "@/store";
@@ -23,6 +23,7 @@ import {
   IProjectMilestoneResponse,
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useWallet } from "./useWallet";
 
 type UpdateType =
   | IProjectUpdate
@@ -37,7 +38,7 @@ export const useUpdateActions = (update: UpdateType) => {
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
   const { chain } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
   const { project, isProjectOwner } = useProjectStore();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const isOwner = useOwnerStore((state) => state.isOwner);

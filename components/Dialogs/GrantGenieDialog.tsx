@@ -6,7 +6,6 @@ import { DocumentCheckIcon, LightBulbIcon } from "@heroicons/react/24/solid";
 import { Button } from "../Utilities/Button";
 import toast from "react-hot-toast";
 import { useProjectStore } from "@/store";
-import { useSwitchChain } from "wagmi";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -15,7 +14,6 @@ import React from "react";
 import { Spinner } from "../Utilities/Spinner";
 import { cn } from "@/utilities/tailwind";
 import { useGrantGenieModalStore } from "@/store/modals/genie";
-
 type Props = {};
 
 function GrantGenieRecommendations({ projectId }: { projectId: string }) {
@@ -94,8 +92,6 @@ export const GrantsGenieDialog: FC<Props> = () => {
   } = useGrantGenieModalStore();
   const project = useProjectStore((state) => state.project);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const setIsProjectAdmin = useProjectStore((state) => state.setIsProjectAdmin);
-  const { switchChainAsync } = useSwitchChain();
   const [isLoading, setIsLoading] = useState(false);
 
   return (

@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 import { useAuthStore } from "@/store/auth";
 
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 import { getWalletClient } from "@wagmi/core";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
@@ -30,6 +30,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useWallet } from "@/hooks/useWallet";
 
 type VerifyImpactDialogProps = {
   impact: IProjectImpact;
@@ -73,7 +74,7 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
       )
     : null;
   const { chain } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
   const { gap } = useGap();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);

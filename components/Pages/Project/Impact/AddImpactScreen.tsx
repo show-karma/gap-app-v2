@@ -26,9 +26,10 @@ import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { Hex } from "viem";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 import { z } from "zod";
 import { DatePicker } from "@/components/Utilities/DatePicker";
+import { useWallet } from "@/hooks/useWallet";
 
 const updateSchema = z.object({
   startedAt: z.date({
@@ -54,7 +55,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
 
   const { address } = useAccount();
   const { chain } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [, changeTab] = useQueryState("tab");

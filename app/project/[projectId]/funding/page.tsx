@@ -5,82 +5,37 @@ import { envVars } from "@/utilities/enviromentVars";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 import { defaultMetadata } from "@/utilities/meta";
+import { getProjectData } from "@/utilities/queries/getProjectData";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { Hex } from "viem";
+
+type Params = Promise<{
+  projectId: string;
+}>;
 
 export async function generateMetadata({
   params,
 }: {
-  params: {
-    projectId: string;
-    grantUid: string;
-  };
+  params: Params;
 }): Promise<Metadata> {
-  const projectId = params?.projectId as string;
-  const grantUid = params?.grantUid as string;
+  const { projectId } = await params;
 
-  const projectInfo = await gapIndexerApi
-    .projectBySlug(projectId)
-    .then((res) => res.data)
-    .catch(() => notFound());
+  const projectInfo = await getProjectData(projectId);
 
   if (projectInfo?.uid === zeroUID || !projectInfo) {
     notFound();
   }
-  let metadata = {
-    title: defaultMetadata.title,
-    description: defaultMetadata.description,
+  const metadata = {
+    title: `${projectInfo?.details?.data?.title} Grants | Karma GAP`,
+    description: cleanMarkdownForPlainText(
+      projectInfo?.details?.data?.description || "",
+      80
+    ),
     twitter: defaultMetadata.twitter,
     openGraph: defaultMetadata.openGraph,
     icons: defaultMetadata.icons,
   };
-  if (grantUid) {
-    const grantInfo = await gapIndexerApi
-      .grantBySlug(grantUid as Hex)
-      .then((res) => res.data)
-      .catch(() => notFound());
-    if (grantInfo) {
-      const tabMetadata: Record<
-        string,
-        {
-          title: string;
-          description: string;
-        }
-      > = {
-        overview: {
-          title: `${projectInfo?.details?.data?.title} - ${grantInfo?.details?.data?.title} grant overview | Karma GAP`,
-          description:
-            `${cleanMarkdownForPlainText(
-              grantInfo?.details?.data?.description || "",
-              160
-            )}` || "",
-        },
-      };
-
-      metadata = {
-        ...metadata,
-        title:
-          tabMetadata["overview"]?.title ||
-          tabMetadata["overview"]?.title ||
-          "",
-        description:
-          tabMetadata["overview"]?.description ||
-          tabMetadata["overview"]?.description ||
-          "",
-      };
-    }
-  } else {
-    metadata = {
-      ...metadata,
-      title: `${projectInfo?.details?.data?.title} | Karma GAP`,
-      description: cleanMarkdownForPlainText(
-        projectInfo?.details?.data?.description || "",
-        80
-      ),
-    };
-  }
 
   return {
     title: metadata.title,
@@ -110,7 +65,6 @@ export async function generateMetadata({
     icons: metadata.icons,
   };
 }
-
 const Page = () => {
   return (
     <Suspense fallback={<ProjectGrantsOverviewLoading />}>

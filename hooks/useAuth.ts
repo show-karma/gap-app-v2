@@ -373,13 +373,8 @@ export const useAuth = () => {
 
       // Check if authentication is in progress in another tab
       if (isAuthenticatingInAnotherTab(addressStr, cookies)) {
-        console.log(
-          "Authentication already in progress for",
-          addressStr,
-          "in another tab"
-        );
         // Wait for a token to become available
-        toast.loading("Authenticating in another tab...");
+        toast.loading("Authenticating...");
 
         // Add to pending requests to prevent additional attempts
         pendingAuthRequests.current.add(addressStr);
@@ -413,7 +408,7 @@ export const useAuth = () => {
 
         // If we get here, the other tab's authentication timed out or failed
         toast.dismiss();
-        toast.error("Authentication in other tab timed out");
+        toast.error("Authentication timed out");
         pendingAuthRequests.current.delete(addressStr);
         setIsAuthenticating(false);
         return false;

@@ -189,7 +189,6 @@ export const NewProjectsPage = () => {
                 height: "100%",
               }}
             >
-              {/* @ts-expect-error - AutoSizer type compatibility issue with React 18 */}
               <AutoSizer disableHeight>
                 {({ width }) => {
                   const columns = Math.floor(width / commonWidth);
@@ -204,7 +203,6 @@ export const NewProjectsPage = () => {
                     Math.ceil(projects.length / columnCounter) * 260;
 
                   return (
-                    /* @ts-expect-error - Grid type compatibility issue with React 18 */
                     <Grid
                       height={height + 60}
                       width={width}

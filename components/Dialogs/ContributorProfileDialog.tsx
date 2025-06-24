@@ -5,10 +5,9 @@ import { FC, Fragment, useEffect, useState } from "react";
 
 import { Button } from "@/components/Utilities/Button";
 import { useProjectStore } from "@/store";
-import fetchData from "@/utilities/fetchData";
-import { INDEXER } from "@/utilities/indexer";
+import { useContributorProfile } from "@/hooks/useContributorProfile";
 import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks/useGap";
@@ -26,6 +25,10 @@ import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import fetchData from "@/utilities/fetchData";
+import { INDEXER } from "@/utilities/indexer";
+import { useTeamProfiles } from "@/hooks/useTeamProfiles";
+import { useWallet } from "@/hooks/useWallet";
 
 type ContributorProfileDialogProps = {};
 
@@ -68,36 +71,29 @@ const inputStyle =
 
 type SchemaType = z.infer<typeof profileSchema>;
 
-const getProfile = async (
-  address: string
-): Promise<ContributorProfile | null> => {
-  try {
-    const [data, error] = await fetchData(INDEXER.PROFILE.GET(address));
-    if (error || !data) throw error;
-    if (data instanceof Array) return data[0];
-    return data;
-  } catch (e) {
-    errorManager("Failed to fetch profile", e, {
-      address,
-    });
-    return null;
-  }
-};
-
 export const ContributorProfileDialog: FC<
   ContributorProfileDialogProps
 > = () => {
   const project = useProjectStore((state) => state.project);
   const { address, chain, isConnected } = useAccount();
   const { closeModal, isModalOpen: isOpen } = useContributorProfileModalStore();
-  const refreshMembers = useProjectStore((state) => state.refreshMembers);
+
+  // Fetch contributor profile using React Query
+  const {
+    profile,
+    isLoading: isProfileLoading,
+    refetch: refetchProfile,
+  } = useContributorProfile(address);
+
+  // Fetch team profiles using React Query
+  const { refetch: refetchTeamProfiles } = useTeamProfiles(project);
 
   const isEditing = !!project?.members.find(
     (item) => item.recipient.toLowerCase() === address?.toLowerCase()
   );
   const inviteCodeParam = useSearchParams().get("invite-code");
   const { gap } = useGap();
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
   const {
     register,
     setValue,
@@ -187,34 +183,35 @@ export const ContributorProfileDialog: FC<
                   toast.success(
                     "Congrats! You have joined the team successfully"
                   );
-                  refreshMembers();
+                  refetchTeamProfiles();
                   closeModal();
                 }
               });
             } else {
-              const profileFetched = await getProfile(address).then(
-                (profile) => {
-                  return {
-                    aboutMe: profile?.data?.aboutMe,
-                    github: profile?.data?.github,
-                    linkedin: profile?.data?.linkedin,
-                    name: profile?.data?.name,
-                    twitter: profile?.data?.twitter,
-                    farcaster: profile?.data?.farcaster,
-                  } as SchemaType;
+              // Refetch profile to check if it's updated
+              const { data: updatedProfile } = await refetchProfile();
+              if (updatedProfile?.data) {
+                const profileFetched = {
+                  aboutMe: updatedProfile.data.aboutMe,
+                  github: updatedProfile.data.github,
+                  linkedin: updatedProfile.data.linkedin,
+                  name: updatedProfile.data.name,
+                  twitter: updatedProfile.data.twitter,
+                  farcaster: updatedProfile.data.farcaster,
+                } as SchemaType;
+
+                const isUpdated = Object.keys(profileFetched).every(
+                  (key: string) =>
+                    profileFetched[key as keyof SchemaType] ===
+                    data[key as keyof SchemaType]
+                );
+                if (isUpdated) {
+                  retries = 0;
+                  changeStepperStep("indexed");
+                  refetchTeamProfiles();
+                  toast.success("Profile updated successfully");
+                  closeModal();
                 }
-              );
-              const isUpdated = Object.keys(profileFetched).every(
-                (key: string) =>
-                  profileFetched[key as keyof SchemaType] ===
-                  data[key as keyof SchemaType]
-              );
-              if (isUpdated) {
-                retries = 0;
-                changeStepperStep("indexed");
-                refreshMembers();
-                toast.success("Profile updated successfully");
-                closeModal();
               }
             }
             retries -= 1;
@@ -235,31 +232,29 @@ export const ContributorProfileDialog: FC<
     }
   };
 
+  // Update form values when profile data is loaded
   useEffect(() => {
-    const fetchProfile = async () => {
-      if (!address) return;
-      const profile = await getProfile(address);
-      setValue("aboutMe", profile?.data?.aboutMe, {
+    if (profile?.data) {
+      setValue("aboutMe", profile.data.aboutMe, {
         shouldValidate: true,
       });
-      setValue("github", profile?.data?.github, {
+      setValue("github", profile.data.github, {
         shouldValidate: true,
       });
-      setValue("linkedin", profile?.data?.linkedin, {
+      setValue("linkedin", profile.data.linkedin, {
         shouldValidate: true,
       });
-      setValue("twitter", profile?.data?.twitter, {
+      setValue("twitter", profile.data.twitter, {
         shouldValidate: true,
       });
-      setValue("name", profile?.data?.name || "", {
-        shouldValidate: !!profile?.data?.name,
+      setValue("name", profile.data.name || "", {
+        shouldValidate: !!profile.data.name,
       });
-      setValue("farcaster", profile?.data?.farcaster, {
-        shouldValidate: !!profile?.data?.farcaster,
+      setValue("farcaster", profile.data.farcaster, {
+        shouldValidate: !!profile.data.farcaster,
       });
-    };
-    fetchProfile();
-  }, [address]);
+    }
+  }, [profile, setValue]);
 
   return (
     <Transition appear show={isOpen} as={Fragment}>

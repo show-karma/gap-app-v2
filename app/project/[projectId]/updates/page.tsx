@@ -1,29 +1,27 @@
-import { ProjectRoadmapLoading } from "@/components/Pages/Project/Loading/Roadmap";
 import { ProjectRoadmap } from "@/components/Pages/Project/Roadmap";
-import { zeroUID } from "@/utilities/commons";
 import { envVars } from "@/utilities/enviromentVars";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+import { getAllMilestones } from "@/utilities/gapIndexerApi/getAllMilestones";
 import { defaultMetadata } from "@/utilities/meta";
+import { getProjectData } from "@/utilities/queries/getProjectData";
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from "@tanstack/react-query";
 import { Metadata } from "next";
-import { notFound } from "next/navigation";
+
+type Params = Promise<{
+  projectId: string;
+}>;
 
 export async function generateMetadata({
   params,
 }: {
-  params: {
-    projectId: string;
-  };
+  params: Params;
 }): Promise<Metadata> {
-  const projectId = params?.projectId as string;
+  const { projectId } = await params;
+  const projectInfo = await getProjectData(projectId);
 
-  const projectInfo = await gapIndexerApi
-    .projectBySlug(projectId)
-    .then((res) => res.data)
-    .catch(() => notFound());
-
-  if (projectInfo?.uid === zeroUID || !projectInfo) {
-    notFound();
-  }
   let metadata = {
     title: defaultMetadata.title,
     description: defaultMetadata.description,
@@ -68,19 +66,31 @@ export async function generateMetadata({
   };
 }
 
-export default async function RoadmapPage({
-  params,
-}: {
-  params: { projectId: string };
+export default async function RoadmapPage(props: {
+  params: Promise<{ projectId: string }>;
 }) {
-  const project = await gapIndexerApi
-    .projectBySlug(params.projectId)
-    .then((res) => res.data)
-    .catch(() => notFound());
+  const { projectId } = await props.params;
+  const projectInfo = await getProjectData(projectId);
 
-  if (project?.uid === zeroUID || !project) {
-    notFound();
-  }
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        gcTime: 10 * 60 * 1000, // 10 minutes
+      },
+    },
+  });
 
-  return <ProjectRoadmap project={project} />;
+  await queryClient.prefetchQuery({
+    queryKey: ["all-milestones", projectId],
+    queryFn: async () => {
+      return await getAllMilestones(projectId, projectInfo?.grants || []);
+    },
+  });
+
+  return (
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <ProjectRoadmap project={projectInfo} />
+    </HydrationBoundary>
+  );
 }

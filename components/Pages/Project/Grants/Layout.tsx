@@ -18,7 +18,10 @@ import { isCommunityAdminOf } from "@/utilities/sdk";
 import { cn } from "@/utilities/tailwind";
 import { CheckCircleIcon, PlusIcon } from "@heroicons/react/20/solid";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
-import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import {
+  IProjectResponse,
+  ICommunityResponse,
+} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -32,7 +35,7 @@ import { ProjectGrantsLayoutLoading } from "../Loading/Grants/Layout";
 
 interface GrantsLayoutProps {
   children: React.ReactNode;
-  fetchedProject: IProjectResponse;
+  fetchedProject?: IProjectResponse;
 }
 
 interface Tab {
@@ -83,23 +86,7 @@ export const GrantsLayout = ({
   const [currentTab, setCurrentTab] = useState("overview");
   const { grant, setGrant, loading, setLoading } = useGrantStore();
   const { project: storedProject } = useProjectStore();
-
-  const project = storedProject || fetchedProject;
-
-  const navigation =
-    project?.grants?.map((item) => ({
-      uid: item.uid,
-      name: item.details?.data?.title || "",
-      href: PAGES.PROJECT.GRANT(
-        project.details?.data?.slug || project.uid,
-        item.uid
-      ),
-      icon: item.community?.details?.data?.imageURL || "",
-      current: item.uid === grantIdFromQueryParam || item.uid === grant?.uid,
-      completed: item.completed,
-    })) || [];
   const router = useRouter();
-
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
@@ -108,32 +95,92 @@ export const GrantsLayout = ({
   const { communities } = useCommunitiesStore();
   const isCommunityAdminOfSome = communities.length !== 0;
   const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
-
   const { address } = useAccount();
+  const setIsCommunityAdmin = useCommunityAdminStore(
+    (state) => state.setIsCommunityAdmin
+  );
+  const setIsCommunityAdminLoading = useCommunityAdminStore(
+    (state) => state.setIsCommunityAdminLoading
+  );
+  const signer = useSigner();
+  const { chain } = useAccount();
+  const { gap } = useGap();
+  const { isAuth } = useAuthStore();
 
-  //   UseEffect to check if current URL changes
-  useEffect(() => {
-    if (screen) {
-      if (
-        !isAuthorized &&
-        currentTab &&
-        authorizedViews.includes(currentTab as GrantScreen)
-      ) {
-        router.push(
-          PAGES.PROJECT.GRANTS(
-            project?.details?.data.slug || project?.uid || ""
-          )
-        );
-        setCurrentTab("overview");
-      } else {
-        setCurrentTab(screen);
-      }
+  // Use Zustand store for project data
+  const zustandProject = useProjectStore((state) => state.project);
+
+  // Use store project first, then fetched project, then zustand project as fallback
+  const project = storedProject || fetchedProject || zustandProject;
+
+  const checkIfAdmin = async () => {
+    setIsCommunityAdmin(false);
+    if (!chain?.id || !gap || !grant || !address || !signer || !isAuth) {
+      setIsCommunityAdmin(false);
+      setIsCommunityAdminLoading(false);
+      return;
     }
-  }, [screen, isAuthorized, address]);
+    setIsCommunityAdminLoading(true);
+    try {
+      // Try to get community data from the grant object first (if already populated)
+      let community: ICommunityResponse | null = grant.community || null;
+
+      // Only make API call if community data is not already available
+      if (!community) {
+        community = await gapIndexerApi
+          .communityBySlug(grant.data.communityUID)
+          .then((res) => res.data)
+          .catch(() => null);
+      }
+
+      // Proceed only if we have valid community data
+      if (community && community.uid) {
+        try {
+          const result = await isCommunityAdminOf(
+            community as any,
+            address as string,
+            signer
+          );
+          setIsCommunityAdmin(result);
+        } catch (error) {
+          console.error("Error checking community admin status:", error);
+          setIsCommunityAdmin(false);
+        }
+      } else {
+        // If we can't get community data, default to false
+        setIsCommunityAdmin(false);
+      }
+    } catch (error: any) {
+      errorManager(`Error checking if ${address} is a community admin`, error, {
+        address,
+        communityUID: grant.data.communityUID,
+      });
+      console.log(error);
+      setIsCommunityAdmin(false);
+    } finally {
+      setIsCommunityAdminLoading(false);
+    }
+  };
 
   useEffect(() => {
-    setLoading(true);
+    if (!project || !screen) return;
+
+    if (!isAuthorized && authorizedViews.includes(screen)) {
+      router.replace(
+        PAGES.PROJECT.GRANTS(project.details?.data.slug || project.uid || "")
+      );
+      setCurrentTab("overview");
+      return;
+    }
+
+    if (currentTab !== screen) {
+      setCurrentTab(screen);
+    }
+  }, [screen, isAuthorized, project, currentTab, router]);
+
+  useEffect(() => {
     if (project) {
+      setLoading(true);
       if (grantIdFromQueryParam) {
         const grantFound = project?.grants?.find(
           (grant) =>
@@ -148,7 +195,29 @@ export const GrantsLayout = ({
       setGrant(project?.grants?.[0]);
       setLoading(false);
     }
-  }, [project, grantIdFromQueryParam]);
+  }, [project, grantIdFromQueryParam, setGrant, setLoading]);
+
+  useEffect(() => {
+    checkIfAdmin();
+  }, [address, grant?.uid, signer, isAuth]);
+
+  // If no project data is available, show loading
+  if (!project) {
+    return <ProjectGrantsLayoutLoading>{children}</ProjectGrantsLayoutLoading>;
+  }
+
+  const navigation =
+    project?.grants?.map((item) => ({
+      uid: item.uid,
+      name: item.details?.data?.title || "",
+      href: PAGES.PROJECT.GRANT(
+        project.details?.data?.slug || project.uid,
+        item.uid
+      ),
+      icon: item.community?.details?.data?.imageURL || "",
+      current: item.uid === grantIdFromQueryParam || item.uid === grant?.uid,
+      completed: item.completed,
+    })) || [];
 
   const defaultTabs: {
     name: string;
@@ -179,52 +248,6 @@ export const GrantsLayout = ({
 
   // const [tabs, setTabs] = useState<Tab[]>(defaultTabs);
   const tabs: Tab[] = defaultTabs;
-
-  const setIsCommunityAdmin = useCommunityAdminStore(
-    (state) => state.setIsCommunityAdmin
-  );
-  const setIsCommunityAdminLoading = useCommunityAdminStore(
-    (state) => state.setIsCommunityAdminLoading
-  );
-
-  const signer = useSigner();
-  const { chain } = useAccount();
-  const { gap } = useGap();
-  const { isAuth } = useAuthStore();
-
-  const checkIfAdmin = async () => {
-    setIsCommunityAdmin(false);
-    if (!chain?.id || !gap || !grant || !address || !signer || !isAuth) {
-      setIsCommunityAdmin(false);
-      setIsCommunityAdminLoading(false);
-      return;
-    }
-    setIsCommunityAdminLoading(true);
-    try {
-      const community = await gapIndexerApi
-        .communityBySlug(grant.data.communityUID)
-        .then((res) => res.data);
-      const result = await isCommunityAdminOf(
-        community,
-        address as string,
-        signer
-      );
-      setIsCommunityAdmin(result);
-    } catch (error: any) {
-      errorManager(`Error checking if ${address} is a community admin`, error, {
-        address,
-        communityUID: grant.data.communityUID,
-      });
-      console.log(error);
-      setIsCommunityAdmin(false);
-    } finally {
-      setIsCommunityAdminLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    checkIfAdmin();
-  }, [address, grant?.uid, signer, isAuth]);
 
   if (loading || (!grant && project.grants?.length > 0)) {
     return <ProjectGrantsLayoutLoading>{children}</ProjectGrantsLayoutLoading>;

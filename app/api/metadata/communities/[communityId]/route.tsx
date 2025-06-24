@@ -10,9 +10,9 @@ import pluralize from "pluralize";
 
 export async function GET(
   request: NextRequest,
-  context: { params: { communityId: string } }
+  context: { params: Promise<{ communityId: string }> }
 ) {
-  const communityId = context.params.communityId;
+  const communityId = (await context.params).communityId;
   const [community, grantsData, projects] = await Promise.all([
     gapIndexerApi
       .communityBySlug(communityId)

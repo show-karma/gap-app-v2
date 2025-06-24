@@ -176,6 +176,11 @@ export default function MyProjects() {
                                   width: "100%",
                                   fontSize: "16px",
                                 }}
+                                components={{
+                                  a: ({ children, href }) => (
+                                    <span>{children}</span>
+                                  ),
+                                }}
                               />
                             </div>
                           </div>

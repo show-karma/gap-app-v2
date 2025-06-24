@@ -84,9 +84,9 @@ export const ProjectGrantsOverviewLoading = () => {
                     >
                       {data.title}
                     </h4>
-                    <p className={"text-base text-gray-900 dark:text-gray-100"}>
+                    <div className={"text-base text-gray-900 dark:text-gray-100"}>
                       <Skeleton className="h-7 w-20 rounded-lg" />
-                    </p>
+                    </div>
                   </div>
                 ) : null
               )}

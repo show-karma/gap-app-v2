@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { Milestone } from "@show-karma/karma-gap-sdk";
@@ -16,6 +16,7 @@ import { Hex } from "viem";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MESSAGES } from "@/utilities/messages";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+import { useWallet } from "./useWallet";
 
 export interface GrantMilestoneFormData {
   title: string;
@@ -38,7 +39,7 @@ export function useGrantMilestoneForm({
 }: UseGrantMilestoneFormProps = {}) {
   const { address, chain } = useAccount();
   const { project, refreshProject } = useProjectStore();
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
   const isOwner = useOwnerStore((state) => state.isOwner);
 
   const { gap } = useGap();

@@ -16,6 +16,7 @@ import { Menu, Transition } from "@headlessui/react";
 import {
   ArrowDownOnSquareIcon,
   ArrowsRightLeftIcon,
+  CurrencyDollarIcon,
   FingerPrintIcon,
   LightBulbIcon,
   LinkIcon,
@@ -31,9 +32,10 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 import { LinkContractAddressButton } from "./LinkContractAddressButton";
 import { LinkGithubRepoButton } from "./LinkGithubRepoButton";
+import { SetPayoutAddressButton } from "./SetPayoutAddressButton";
 
 import { AdminTransferOwnershipDialog } from "@/components/Dialogs/AdminTransferOwnershipDialog";
 import { useContactInfo } from "@/hooks/useContactInfo";
@@ -43,6 +45,7 @@ import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-ind
 import { LinkOSOProfileButton } from "./LinkOSOProfileButton";
 import { LinkDivviWalletButton } from "./LinkDivviWalletButton";
 import { GithubIcon } from "@/components/Icons";
+import { useWallet } from "@/hooks/useWallet";
 
 const ProjectDialog = dynamic(
   () =>
@@ -85,9 +88,10 @@ export const ProjectOptionsMenu = () => {
   const [showLinkGithubDialog, setShowLinkGithubDialog] = useState(false);
   const [showLinkOSODialog, setShowLinkOSODialog] = useState(false);
   const [showLinkDivviDialog, setShowLinkDivviDialog] = useState(false);
+  const [showSetPayoutDialog, setShowSetPayoutDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const { address, chain } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
   const router = useRouter();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
@@ -121,6 +125,10 @@ export const ProjectOptionsMenu = () => {
 
   const handleLinkDivviDialogClose = () => {
     setShowLinkDivviDialog(false);
+  };
+
+  const handleSetPayoutDialogClose = () => {
+    setShowSetPayoutDialog(false);
   };
 
   const handleDeleteDialogClose = () => {
@@ -237,6 +245,14 @@ export const ProjectOptionsMenu = () => {
                 }
               }
               onClose={handleLinkDivviDialogClose}
+            />
+          )}
+          {showSetPayoutDialog && (
+            <SetPayoutAddressButton
+              buttonElement={null}
+              buttonClassName={buttonClassName}
+              project={project as IProjectResponse & { payoutAddress?: string }}
+              onClose={handleSetPayoutDialogClose}
             />
           )}
           {showDeleteDialog && (
@@ -395,6 +411,24 @@ export const ProjectOptionsMenu = () => {
                               aria-hidden="true"
                             />
                             Link Divvi Identifier
+                          </button>
+                        );
+                      }}
+                    </Menu.Item>
+                    <Menu.Item>
+                      {({ active }) => {
+                        if (!project) return <span></span>;
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => setShowSetPayoutDialog(true)}
+                            className={buttonClassName}
+                          >
+                            <CurrencyDollarIcon
+                              className={"mr-2 h-5 w-5"}
+                              aria-hidden="true"
+                            />
+                            Set Payout Address
                           </button>
                         );
                       }}

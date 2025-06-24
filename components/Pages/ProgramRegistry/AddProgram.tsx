@@ -40,13 +40,14 @@ import { DayPicker } from "react-day-picker";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { useAccount, useSwitchChain } from "wagmi";
+import { useAccount } from "wagmi";
 import { z } from "zod";
 import { registryHelper } from "./helper";
 import { GrantProgram } from "./ProgramList";
 import { SearchDropdown } from "./SearchDropdown";
 import { StatusDropdown } from "./StatusDropdown";
 import { DatePicker } from "@/components/Utilities/DatePicker";
+import { useWallet } from "@/hooks/useWallet";
 
 const labelStyle = "text-sm font-bold text-brand-gray dark:text-zinc-100";
 const inputStyle =
@@ -289,7 +290,7 @@ export default function AddProgram({
   const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore();
   const { chain } = useAccount();
-  const { switchChainAsync } = useSwitchChain();
+  const { switchChainAsync } = useWallet();
   const { openConnectModal } = useConnectModal();
   const { changeStepperStep, setIsStepper } = useStepper();
 

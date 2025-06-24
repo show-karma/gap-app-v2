@@ -7,11 +7,12 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
+import { getCommunityData } from "@/utilities/queries/getCommunityData";
 
 export const metadata = defaultMetadata;
 
 interface Props {
-  params: { communityId: string };
+  params: Promise<{ communityId: string }>;
 }
 
 const getGrantPrograms = async (communityId: string): Promise<string[]> => {
@@ -39,17 +40,11 @@ const getGrantPrograms = async (communityId: string): Promise<string[]> => {
   }
 };
 
-export default async function Page({ params }: Props) {
-  const communityId = params.communityId;
+export default async function Page(props: Props) {
+  const { communityId } = await props.params;
 
-  const { data: community } = await gapIndexerApi
-    .communityBySlug(communityId)
-    .catch(() => {
-      console.log("communityId", communityId);
-      notFound();
-    });
+  const community = await getCommunityData(communityId);
   if (!community || community?.uid === zeroUID) {
-    console.log("communityId", communityId);
     notFound();
   }
   const grantPrograms = await getGrantPrograms(communityId);

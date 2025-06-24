@@ -15,9 +15,9 @@ import {
   EllipsisVerticalIcon,
 } from "@heroicons/react/24/outline";
 import { PencilSquareIcon } from "@heroicons/react/24/solid";
-import { useRef, useState, useEffect, Fragment } from "react";
+import { useRef, useState, useEffect, Fragment, useMemo } from "react";
 import { ActivityOutcomeModal } from "./ActivityOutcomeModal";
-import { useIndicators } from "@/hooks/useIndicators";
+import { useGroupedIndicators } from "@/hooks/useGroupedIndicators";
 import { Menu, Transition } from "@headlessui/react";
 import { DeleteDialog } from "@/components/DeleteDialog";
 import fetchData from "@/utilities/fetchData";
@@ -127,10 +127,17 @@ export const CategoryView = ({
     null
   );
 
-  // Fetch indicators for the modal
-  const { data: impact_indicators = [] } = useIndicators({
+  const {
+    data: groupedIndicators = { communityAdminCreated: [], projectOwnerCreated: [] },
+    isLoading: isLoadingIndicators,
+  } = useGroupedIndicators({
     communityId: communityId,
   });
+
+  const impact_indicators = useMemo(() => [
+    ...groupedIndicators.communityAdminCreated,
+    ...groupedIndicators.projectOwnerCreated,
+  ], [groupedIndicators.communityAdminCreated, groupedIndicators.projectOwnerCreated]);
 
   // Count activities and outcomes for a category
   const getCategoryStats = (category: Category) => {
@@ -487,6 +494,7 @@ export const CategoryView = ({
         category={selectedCategory}
         impact_indicators={impact_indicators}
         communityId={communityId}
+        isLoadingIndicators={isLoadingIndicators}
         onSuccess={() => {
           if (onRefreshCategory) {
             onRefreshCategory();

@@ -1,7 +1,4 @@
-import { APIContact, Contact } from "@/types/project";
-import fetchData from "@/utilities/fetchData";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { INDEXER } from "@/utilities/indexer";
 import { getContributorProfiles } from "@/utilities/indexer/getContributorProfiles";
 import { ContributorProfile } from "@show-karma/karma-gap-sdk";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
@@ -24,7 +21,6 @@ interface ProjectStore {
   setIsProjectAdminLoading: (loading: boolean) => void;
   teamProfiles: ContributorProfile[] | undefined;
   setTeamProfiles: (profiles: ContributorProfile[] | undefined) => void;
-  refreshMembers: () => Promise<ContributorProfile[] | undefined>;
 }
 
 export const useProjectStore = create<ProjectStore>((set, get) => ({
@@ -36,7 +32,6 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     const refreshedProject = await gapIndexerApi
       .projectBySlug(project.uid)
       .then((res) => res.data);
-
     const currentGrantState = useGrantStore.getState();
     const shareSameGrant = refreshedProject.grants.find(
       (g) => g.uid.toLowerCase() === currentGrantState.grant?.uid?.toLowerCase()
@@ -50,17 +45,8 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
 
     return refreshedProject;
   },
-
   teamProfiles: undefined,
   setTeamProfiles: (profiles) => set({ teamProfiles: profiles }),
-  refreshMembers: async () => {
-    const { project } = get();
-    if (!project) return undefined;
-    const members = project.members.map((member) => member.recipient);
-    const profiles = await getContributorProfiles(members);
-    set({ teamProfiles: profiles });
-    return profiles;
-  },
   loading: false,
   setLoading: (loading: boolean) => set({ loading }),
   isProjectAdmin: false,

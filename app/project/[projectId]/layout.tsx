@@ -1,96 +1,63 @@
 /* eslint-disable @next/next/no-img-element */
-import { fetchMetadata } from "frames.js/next/pages-router/client";
-import { envVars } from "@/utilities/enviromentVars";
 import { ProjectWrapper } from "@/components/Pages/Project/ProjectWrapper";
-import { zeroUID } from "@/utilities/commons";
-import { defaultMetadata } from "@/utilities/meta";
-import { notFound } from "next/navigation";
-import { Suspense } from "react";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import ProjectHeaderLoading from "@/components/Pages/Project/Loading/Header";
-import { cleanMarkdownForPlainText } from "@/utilities/markdown";
+import {
+  dehydrate,
+  HydrationBoundary,
+  QueryClient,
+} from "@tanstack/react-query";
+
+import { generateProjectOverviewMetadata } from "@/utilities/metadata/projectMetadata";
+import { getProjectData } from "@/utilities/queries/getProjectData";
+import { Metadata } from "next";
+
+type Params = Promise<{
+  projectId: string;
+}>;
 
 export async function generateMetadata({
   params,
 }: {
-  params: { projectId: string };
-}) {
-  const projectId = params.projectId;
+  params: Params;
+}): Promise<Metadata> {
+  const awaitedParams = await params;
+  const { projectId } = awaitedParams;
 
-  const projectInfo = await gapIndexerApi
-    .projectBySlug(projectId)
-    .then((res) => res.data)
-    .catch(() => notFound());
+  const projectInfo = await getProjectData(projectId);
 
-  if (!projectInfo || projectInfo?.uid === zeroUID) {
-    notFound();
-  }
-
-  const dynamicMetadata = {
-    title: `${projectInfo.details?.data?.title} | Karma GAP`,
-    description:
-      cleanMarkdownForPlainText(
-        projectInfo.details?.data?.description || "",
-        160
-      ) || "",
-  };
-
-  return {
-    title: dynamicMetadata.title || defaultMetadata.title,
-    description: dynamicMetadata.description || defaultMetadata.description,
-    twitter: {
-      handle: defaultMetadata.twitter.creator,
-      site: defaultMetadata.twitter.site,
-      cardType: "summary_large_image",
-      images: [
-        {
-          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
-          alt: dynamicMetadata.title || defaultMetadata.title,
-        },
-      ],
-    },
-    openGraph: {
-      url: defaultMetadata.openGraph.url,
-      title: dynamicMetadata.title || defaultMetadata.title,
-      description: dynamicMetadata.description || defaultMetadata.description,
-      images: [
-        {
-          url: `${envVars.VERCEL_URL}/api/metadata/projects/${projectId}`,
-          alt: dynamicMetadata.title || defaultMetadata.title,
-        },
-      ],
-    },
-    additionalLinkTags: [
-      {
-        rel: "icon",
-        href: "/favicon.ico",
-      },
-    ],
-  };
+  return generateProjectOverviewMetadata(projectInfo, projectId);
 }
 
-export default async function RootLayout({
-  children,
-  params: { projectId },
-}: {
+export default async function RootLayout(props: {
   children: React.ReactNode;
-  params: { projectId: string };
+  params: Promise<{ projectId: string }>;
 }) {
-  const project = await gapIndexerApi
-    .projectBySlug(projectId)
-    .then((res) => res.data)
-    .catch(() => notFound());
+  const awaitedParams = await props.params;
+  const { projectId } = awaitedParams;
 
-  if (!project || project.uid === zeroUID) {
-    notFound();
-  }
+  const { children } = props;
+
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 5 * 60 * 1000, // 5 minutes
+        gcTime: 10 * 60 * 1000, // 10 minutes
+      },
+    },
+  });
+
+  await queryClient.prefetchQuery({
+    queryKey: ["project", projectId],
+    queryFn: async () => {
+      return await getProjectData(projectId);
+    },
+  });
 
   return (
-    <div className="flex flex-col gap-0">
-      <Suspense fallback={<ProjectHeaderLoading />}>
-        <ProjectWrapper projectId={projectId} project={project} />
-      </Suspense>
-      <div className="px-4 sm:px-6 lg:px-12">{children}</div>
-    </div>
+    <HydrationBoundary state={dehydrate(queryClient)}>
+      <div className="flex flex-col gap-0">
+        <ProjectWrapper projectId={projectId} />
+        <div className="px-4 sm:px-6 lg:px-12">{children}</div>
+      </div>
+    </HydrationBoundary>
   );
 }

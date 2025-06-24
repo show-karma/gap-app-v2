@@ -1,4 +1,5 @@
 import fetchData from "@/utilities/fetchData";
+import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
 
@@ -19,6 +20,7 @@ export const useStaff = () => {
       return data;
     },
     enabled: !!address,
+    ...defaultQueryOptions,
   });
 
   const isStaff = data?.authorized ?? false;
