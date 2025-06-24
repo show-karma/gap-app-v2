@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import React from "react";
 import {
   DiscordIcon,
   GithubIcon,
@@ -8,16 +8,15 @@ import {
 } from "@/components/Icons";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import type { IProjectDetails } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import type { FC } from "react";
 
 interface SocialLink {
   name: string;
   url: string;
-  icon: FC<{ className?: string }>;
+  icon: React.FC<{ className?: string }>;
 }
 
 export const useProjectSocials = (links?: IProjectDetails["data"]["links"]): SocialLink[] => {
-  return useMemo(() => {
+  return React.useMemo(() => {
     if (!links) return [];
 
     const types = [

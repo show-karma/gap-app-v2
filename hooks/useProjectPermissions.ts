@@ -1,3 +1,4 @@
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useProjectStore, useOwnerStore } from "@/store";
 import { useAuthStore } from "@/store/auth";
@@ -5,7 +6,6 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { getRPCClient } from "@/utilities/rpcClient";
 import type { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
 import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useEffect } from "react";
 import { useAccount } from "wagmi";
 
 interface ProjectPermissionsResult {
@@ -74,7 +74,7 @@ export const useProjectPermissions = (
   });
 
   // Update loading states based on query status
-  useEffect(() => {
+  React.useEffect(() => {
     if (!projectInstance || !project?.chainID || !isAuth || !isConnected || !address) {
       setIsProjectAdminLoading(false);
       setIsProjectOwnerLoading(false);
@@ -104,7 +104,7 @@ export const useProjectPermissions = (
   ]);
 
   // Update permission states when data changes
-  useEffect(() => {
+  React.useEffect(() => {
     if (query.data) {
       setIsProjectOwner(query.data.isProjectOwner);
       setIsProjectAdmin(query.data.isProjectAdmin);

@@ -9,6 +9,7 @@
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
     "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "module": "esnext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,
@@ -26,7 +27,6 @@
   },
   "include": [
     "next-env.d.ts",
-    "types/global.d.ts",
     "**/*.ts",
     "**/*.tsx",
     "pages/contact.jsx",

@@ -1,4 +1,5 @@
 "use client";
+import React from "react";
 import { ProgressDialog } from "@/components/Dialogs/ProgressDialog";
 import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
 import { ProjectNavigator } from "@/components/Pages/Project/ProjectNavigator";

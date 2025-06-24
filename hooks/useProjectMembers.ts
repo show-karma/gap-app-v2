@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import React from "react";
 import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 interface Member {
@@ -10,7 +10,7 @@ interface Member {
 }
 
 export const useProjectMembers = (project?: IProjectResponse): Member[] => {
-  return useMemo(() => {
+  return React.useMemo(() => {
     if (!project) return [];
 
     const members: Member[] = [];
