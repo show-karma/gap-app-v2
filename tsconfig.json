@@ -16,6 +16,7 @@
     "isolatedModules": true,
     "jsx": "preserve",
     "incremental": true,
+
     "paths": {
       "@/*": ["./*"]
     },
@@ -27,6 +28,8 @@
   },
   "include": [
     "next-env.d.ts",
+    "types/modules.d.ts",
+    "types/ambient.d.ts",
     "**/*.ts",
     "**/*.tsx",
     "pages/contact.jsx",
