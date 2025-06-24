@@ -1,12 +1,5 @@
 "use client";
 import { ProgressDialog } from "@/components/Dialogs/ProgressDialog";
-import {
-  DiscordIcon,
-  GithubIcon,
-  LinkedInIcon,
-  TwitterIcon,
-  WebsiteIcon,
-} from "@/components/Icons";
 import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
 import { ProjectNavigator } from "@/components/Pages/Project/ProjectNavigator";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
@@ -15,32 +8,20 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { useProgressModalStore } from "@/store/modals/progress";
-import {
-  IProjectDetails,
-  IProjectResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Image from "next/image";
 
-import { useMemo } from "react";
 import { IntroDialog } from "./IntroDialog";
 
 import { useContactInfo } from "@/hooks/useContactInfo";
-import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { ShareDialog } from "../GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/ShareDialog";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { useProject } from "@/hooks/useProject";
-import ProjectHeaderLoading from "./Loading/Header";
 import { useProjectInstance } from "@/hooks/useProjectInstance";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
+import { useProjectSocials } from "@/hooks/useProjectSocials";
+import { useProjectMembers } from "@/hooks/useProjectMembers";
 
-interface Member {
-  uid: string;
-  recipient: string;
-  details?: {
-    name?: string;
-  };
-}
 interface ProjectWrapperProps {
   projectId: string;
 }
@@ -65,122 +46,9 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
 
   useTeamProfiles(project);
 
-  const getSocials = (links: IProjectDetails["data"]["links"]) => {
-    const types = [
-      {
-        name: "Twitter",
-        prefix: ["twitter.com/", "x.com/"],
-        icon: TwitterIcon,
-      },
-      { name: "Github", prefix: "github.com/", icon: GithubIcon },
-      { name: "Discord", prefix: "discord.gg/", icon: DiscordIcon },
-      { name: "Website", prefix: "https://", icon: WebsiteIcon },
-      { name: "LinkedIn", prefix: "linkedin.com/", icon: LinkedInIcon },
-      { name: "Farcaster", prefix: "warpcast.com/", icon: FarcasterIcon },
-    ];
-
-    const hasHttpOrWWW = (link?: string) => {
-      if (!link) return false;
-      if (
-        link.includes("http://") ||
-        link.includes("https://") ||
-        link.includes("www.")
-      ) {
-        return true;
-      }
-      return false;
-    };
-
-    const addPrefix = (link: string) => `https://${link}`;
-
-    const formatPrefix = (prefix: string, link: string) => {
-      const firstWWW = link.slice(0, 4) === "www.";
-      if (firstWWW) {
-        return addPrefix(link);
-      }
-      const alreadyHasPrefix = link.includes(prefix);
-      if (alreadyHasPrefix) {
-        if (hasHttpOrWWW(link)) {
-          return link;
-        }
-        return addPrefix(link);
-      }
-
-      return hasHttpOrWWW(prefix + link)
-        ? prefix + link
-        : addPrefix(prefix + link);
-    };
-
-    return types
-      .map(({ name, prefix, icon }) => {
-        const socialLink = links?.find(
-          (link) => link.type === name.toLowerCase()
-        )?.url;
-
-        if (socialLink) {
-          if (name === "Twitter") {
-            const url = socialLink?.includes("@")
-              ? socialLink?.replace("@", "") || ""
-              : socialLink;
-
-            if (Array.isArray(prefix)) {
-              if (url.includes("twitter.com/") || url.includes("x.com/")) {
-                return {
-                  name,
-                  url: hasHttpOrWWW(url) ? url : addPrefix(url),
-                  icon,
-                };
-              }
-              return {
-                name,
-                url: formatPrefix(prefix[1], url),
-                icon,
-              };
-            }
-          }
-
-          return {
-            name,
-            url: formatPrefix(
-              typeof prefix === "string" ? prefix : prefix[0],
-              socialLink
-            ),
-            icon,
-          };
-        }
-
-        return undefined;
-      })
-      .filter((social) => social);
-  };
-
-  const socials = getSocials(project?.details?.data.links);
-
-  const mountMembers = () => {
-    const members: Member[] = [];
-    if (project?.members) {
-      project.members.forEach((member) => {
-        members.push({
-          uid: member.uid,
-          recipient: member.recipient,
-          details: {
-            name: member?.details?.name,
-          },
-        });
-      });
-    }
-    const alreadyHasOwner = project?.members.find(
-      (member) => member.recipient === project.recipient
-    );
-    if (!alreadyHasOwner) {
-      members.push({
-        uid: project?.recipient || "",
-        recipient: project?.recipient || "",
-      });
-    }
-
-    return members;
-  };
+  // Use custom hooks for socials and members
+  const socials = useProjectSocials(project?.details?.data.links);
+  const members = useProjectMembers(project);
 
   const { isIntroModalOpen } = useIntroModalStore();
   const { isEndorsementOpen } = useEndorsementStore();
