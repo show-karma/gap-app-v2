@@ -14,7 +14,7 @@ import { GrantScreen } from "@/types";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { PAGES } from "@/utilities/pages";
-import { isCommunityAdminOf } from "@/utilities/sdk";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { cn } from "@/utilities/tailwind";
 import { CheckCircleIcon, PlusIcon } from "@heroicons/react/20/solid";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
@@ -107,60 +107,63 @@ export const GrantsLayout = ({
   const { gap } = useGap();
   const { isAuth } = useAuthStore();
 
+  // State to hold community data for the hook
+  const [communityForAdminCheck, setCommunityForAdminCheck] = useState<ICommunityResponse | null>(null);
+
+  // Use React Query hook to check admin status
+  const { 
+    isCommunityAdmin: isAdminFromHook, 
+    isLoading: isAdminLoading 
+  } = useIsCommunityAdmin(communityForAdminCheck, address);
+
   // Use Zustand store for project data
   const zustandProject = useProjectStore((state) => state.project);
 
   // Use store project first, then fetched project, then zustand project as fallback
   const project = storedProject || fetchedProject || zustandProject;
 
-  const checkIfAdmin = async () => {
-    setIsCommunityAdmin(false);
-    if (!chain?.id || !gap || !grant || !address || !signer || !isAuth) {
-      setIsCommunityAdmin(false);
-      setIsCommunityAdminLoading(false);
-      return;
-    }
-    setIsCommunityAdminLoading(true);
-    try {
-      // Try to get community data from the grant object first (if already populated)
-      let community: ICommunityResponse | null = grant.community || null;
-
-      // Only make API call if community data is not already available
-      if (!community) {
-        community = await gapIndexerApi
-          .communityBySlug(grant.data.communityUID)
-          .then((res) => res.data)
-          .catch(() => null);
+  // Effect to get community data for admin check
+  useEffect(() => {
+    const getCommunityData = async () => {
+      if (!grant) {
+        setCommunityForAdminCheck(null);
+        return;
       }
 
-      // Proceed only if we have valid community data
-      if (community && community.uid) {
-        try {
-          const result = await isCommunityAdminOf(
-            community as any,
-            address as string,
-            signer
-          );
-          setIsCommunityAdmin(result);
-        } catch (error) {
-          console.error("Error checking community admin status:", error);
-          setIsCommunityAdmin(false);
+      try {
+        // Try to get community data from the grant object first (if already populated)
+        let community: ICommunityResponse | null = grant.community || null;
+
+        // Only make API call if community data is not already available
+        if (!community) {
+          community = await gapIndexerApi
+            .communityBySlug(grant.data.communityUID)
+            .then((res) => res.data)
+            .catch(() => null);
         }
-      } else {
-        // If we can't get community data, default to false
-        setIsCommunityAdmin(false);
+
+        setCommunityForAdminCheck(community);
+      } catch (error: any) {
+        console.error("Error fetching community data:", error);
+        setCommunityForAdminCheck(null);
       }
-    } catch (error: any) {
-      errorManager(`Error checking if ${address} is a community admin`, error, {
-        address,
-        communityUID: grant.data.communityUID,
-      });
-      console.log(error);
-      setIsCommunityAdmin(false);
-    } finally {
-      setIsCommunityAdminLoading(false);
+    };
+
+    getCommunityData();
+  }, [grant]);
+
+  // Effect to sync React Query result with Zustand store
+  useEffect(() => {
+    setIsCommunityAdminLoading(isAdminLoading);
+  }, [isAdminLoading, setIsCommunityAdminLoading]);
+
+  useEffect(() => {
+    if (!isAdminLoading) {
+      setIsCommunityAdmin(isAdminFromHook);
     }
-  };
+  }, [isAdminFromHook, isAdminLoading, setIsCommunityAdmin]);
+
+
 
   useEffect(() => {
     if (!project || !screen) return;
@@ -197,9 +200,7 @@ export const GrantsLayout = ({
     }
   }, [project, grantIdFromQueryParam, setGrant, setLoading]);
 
-  useEffect(() => {
-    checkIfAdmin();
-  }, [address, grant?.uid, signer, isAuth]);
+
 
   // If no project data is available, show loading
   if (!project) {
