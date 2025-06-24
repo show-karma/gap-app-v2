@@ -12,15 +12,14 @@ import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useGrantStore } from "@/store/grant";
 import { GrantScreen } from "@/types";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
+
 import { PAGES } from "@/utilities/pages";
-import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
+import { useGrantCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { cn } from "@/utilities/tailwind";
 import { CheckCircleIcon, PlusIcon } from "@heroicons/react/20/solid";
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import {
   IProjectResponse,
-  ICommunityResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
@@ -107,15 +106,10 @@ export const GrantsLayout = ({
   const { gap } = useGap();
   const { isAuth } = useAuthStore();
 
-  // State to hold community data for the hook
-  const [communityForAdminCheck, setCommunityForAdminCheck] = useState<ICommunityResponse | null>(null);
-
   // Use React Query hook to check admin status with Zustand sync
-  useIsCommunityAdmin(communityForAdminCheck, address, {
-    zustandSync: {
-      setIsCommunityAdmin,
-      setIsCommunityAdminLoading,
-    },
+  useGrantCommunityAdmin(grant, address, {
+    setIsCommunityAdmin,
+    setIsCommunityAdminLoading,
   });
 
   // Use Zustand store for project data
@@ -124,35 +118,7 @@ export const GrantsLayout = ({
   // Use store project first, then fetched project, then zustand project as fallback
   const project = storedProject || fetchedProject || zustandProject;
 
-  // Effect to get community data for admin check
-  useEffect(() => {
-    const getCommunityData = async () => {
-      if (!grant) {
-        setCommunityForAdminCheck(null);
-        return;
-      }
 
-      try {
-        // Try to get community data from the grant object first (if already populated)
-        let community: ICommunityResponse | null = grant.community || null;
-
-        // Only make API call if community data is not already available
-        if (!community) {
-          community = await gapIndexerApi
-            .communityBySlug(grant.data.communityUID)
-            .then((res) => res.data)
-            .catch(() => null);
-        }
-
-        setCommunityForAdminCheck(community);
-      } catch (error: any) {
-        console.error("Error fetching community data:", error);
-        setCommunityForAdminCheck(null);
-      }
-    };
-
-    getCommunityData();
-  }, [grant]);
 
 
 
