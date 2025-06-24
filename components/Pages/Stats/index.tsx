@@ -74,6 +74,9 @@ export const Stats = () => {
     setIsLoading(true);
     try {
       const fetchedStats = await getGAPStats();
+      if (!fetchedStats) {
+        throw new Error("No stats fetched");
+      }
       const cleanStats = fetchedStats.filter(
         (item: { name: IAttestationStatsNames; data: any }) =>
           item.name !== "communities" && dataNameDictionary[item.name]
