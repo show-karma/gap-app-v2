@@ -110,11 +110,13 @@ export const GrantsLayout = ({
   // State to hold community data for the hook
   const [communityForAdminCheck, setCommunityForAdminCheck] = useState<ICommunityResponse | null>(null);
 
-  // Use React Query hook to check admin status
-  const { 
-    isCommunityAdmin: isAdminFromHook, 
-    isLoading: isAdminLoading 
-  } = useIsCommunityAdmin(communityForAdminCheck, address);
+  // Use React Query hook to check admin status with Zustand sync
+  useIsCommunityAdmin(communityForAdminCheck, address, {
+    zustandSync: {
+      setIsCommunityAdmin,
+      setIsCommunityAdminLoading,
+    },
+  });
 
   // Use Zustand store for project data
   const zustandProject = useProjectStore((state) => state.project);
@@ -151,17 +153,6 @@ export const GrantsLayout = ({
 
     getCommunityData();
   }, [grant]);
-
-  // Effect to sync React Query result with Zustand store
-  useEffect(() => {
-    setIsCommunityAdminLoading(isAdminLoading);
-  }, [isAdminLoading, setIsCommunityAdminLoading]);
-
-  useEffect(() => {
-    if (!isAdminLoading) {
-      setIsCommunityAdmin(isAdminFromHook);
-    }
-  }, [isAdminFromHook, isAdminLoading, setIsCommunityAdmin]);
 
 
 

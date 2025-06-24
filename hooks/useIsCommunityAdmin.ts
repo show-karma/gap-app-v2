@@ -4,13 +4,20 @@ import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { useAccount } from "wagmi";
 import type { Hex } from "viem";
+import { useEffect } from "react";
+
+interface UseIsCommunityAdminOptions {
+  enabled?: boolean;
+  zustandSync?: {
+    setIsCommunityAdmin?: (isAdmin: boolean) => void;
+    setIsCommunityAdminLoading?: (loading: boolean) => void;
+  };
+}
 
 export const useIsCommunityAdmin = (
   community?: ICommunityResponse | null,
   address?: string | Hex,
-  options?: {
-    enabled?: boolean;
-  }
+  options?: UseIsCommunityAdminOptions
 ) => {
   const { address: accountAddress } = useAccount();
   const signer = useSigner();
@@ -31,6 +38,19 @@ export const useIsCommunityAdmin = (
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
   });
+
+  // Sync with Zustand store if setters are provided
+  useEffect(() => {
+    if (options?.zustandSync?.setIsCommunityAdminLoading) {
+      options.zustandSync.setIsCommunityAdminLoading(query.isLoading);
+    }
+  }, [query.isLoading, options?.zustandSync?.setIsCommunityAdminLoading]);
+
+  useEffect(() => {
+    if (options?.zustandSync?.setIsCommunityAdmin && !query.isLoading) {
+      options.zustandSync.setIsCommunityAdmin(query.data ?? false);
+    }
+  }, [query.data, query.isLoading, options?.zustandSync?.setIsCommunityAdmin]);
   
   return {
     isCommunityAdmin: query.data ?? false,
@@ -45,9 +65,7 @@ export const useIsCommunityAdmin = (
 export const useIsCommunityAdminOfAny = (
   communities?: ICommunityResponse[],
   address?: string | Hex,
-  options?: {
-    enabled?: boolean;
-  }
+  options?: UseIsCommunityAdminOptions
 ) => {
   const { address: accountAddress } = useAccount();
   const signer = useSigner();
@@ -76,6 +94,19 @@ export const useIsCommunityAdminOfAny = (
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
   });
+
+  // Sync with Zustand store if setters are provided
+  useEffect(() => {
+    if (options?.zustandSync?.setIsCommunityAdminLoading) {
+      options.zustandSync.setIsCommunityAdminLoading(query.isLoading);
+    }
+  }, [query.isLoading, options?.zustandSync?.setIsCommunityAdminLoading]);
+
+  useEffect(() => {
+    if (options?.zustandSync?.setIsCommunityAdmin && !query.isLoading) {
+      options.zustandSync.setIsCommunityAdmin(query.data ?? false);
+    }
+  }, [query.data, query.isLoading, options?.zustandSync?.setIsCommunityAdmin]);
   
   return {
     isCommunityAdminOfAny: query.data ?? false,
