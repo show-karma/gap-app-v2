@@ -14,7 +14,7 @@ export const useProjectMembers = (project?: IProjectResponse): Member[] => {
     if (!project) return [];
 
     const members: Member[] = [];
-    
+
     if (project.members) {
       project.members.forEach((member: any) => {
         members.push({
@@ -26,15 +26,15 @@ export const useProjectMembers = (project?: IProjectResponse): Member[] => {
         });
       });
     }
-    
+
     const alreadyHasOwner = project.members?.find(
       (member: any) => member.recipient === project.recipient
     );
-    
-    if (!alreadyHasOwner && project.recipient) {
+
+    if (!alreadyHasOwner) {
       members.push({
-        uid: project.recipient,
-        recipient: project.recipient,
+        uid: project.recipient || "",
+        recipient: project.recipient || "",
       });
     }
 

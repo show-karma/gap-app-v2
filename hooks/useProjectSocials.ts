@@ -15,7 +15,9 @@ interface SocialLink {
   icon: React.FC<{ className?: string }>;
 }
 
-export const useProjectSocials = (links?: IProjectDetails["data"]["links"]): SocialLink[] => {
+export const useProjectSocials = (
+  links?: IProjectDetails["data"]["links"]
+): SocialLink[] => {
   return React.useMemo(() => {
     if (!links) return [];
 
@@ -104,6 +106,8 @@ export const useProjectSocials = (links?: IProjectDetails["data"]["links"]): Soc
 
         return undefined;
       })
-      .filter((social): social is SocialLink => social !== undefined);
+      .filter(
+        (social): social is NonNullable<typeof social> => social !== undefined
+      );
   }, [links]);
 };

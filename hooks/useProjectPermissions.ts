@@ -21,15 +21,29 @@ export const useProjectPermissions = (
   const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore((state: any) => state.isAuth);
   const isOwner = useOwnerStore((state: any) => state.isOwner);
-  
-  const setIsProjectAdmin = useProjectStore((state: any) => state.setIsProjectAdmin);
-  const setIsProjectAdminLoading = useProjectStore((state: any) => state.setIsProjectAdminLoading);
-  const setIsProjectOwner = useProjectStore((state: any) => state.setIsProjectOwner);
-  const setIsProjectOwnerLoading = useProjectStore((state: any) => state.setIsProjectOwnerLoading);
+
+  const setIsProjectAdmin = useProjectStore(
+    (state: any) => state.setIsProjectAdmin
+  );
+  const setIsProjectAdminLoading = useProjectStore(
+    (state: any) => state.setIsProjectAdminLoading
+  );
+  const setIsProjectOwner = useProjectStore(
+    (state: any) => state.setIsProjectOwner
+  );
+  const setIsProjectOwnerLoading = useProjectStore(
+    (state: any) => state.setIsProjectOwnerLoading
+  );
 
   const checkPermissions = async (): Promise<ProjectPermissionsResult> => {
     // Early returns for invalid states
-    if (!projectInstance || !project?.chainID || !isAuth || !isConnected || !address) {
+    if (
+      !projectInstance ||
+      !project?.chainID ||
+      !isAuth ||
+      !isConnected ||
+      !address
+    ) {
       return { isProjectOwner: false, isProjectAdmin: false };
     }
 
@@ -42,12 +56,8 @@ export const useProjectPermissions = (
       const rpcClient = await getRPCClient(project.chainID);
 
       const [isOwnerResult, isAdminResult] = await Promise.all([
-        projectInstance
-          ?.isOwner(rpcClient as any, address)
-          .catch(() => false),
-        projectInstance
-          ?.isAdmin(rpcClient as any, address)
-          .catch(() => false),
+        projectInstance?.isOwner(rpcClient as any, address).catch(() => false),
+        projectInstance?.isAdmin(rpcClient as any, address).catch(() => false),
       ]);
 
       return {
@@ -64,9 +74,23 @@ export const useProjectPermissions = (
   };
 
   const query = useQuery({
-    queryKey: ["project-permissions", projectId, address, project?.chainID, !!projectInstance],
+    queryKey: [
+      "project-permissions",
+      projectId,
+      address,
+      project?.chainID,
+      !!projectInstance,
+      isOwner,
+      isAuth,
+      isConnected,
+    ],
     queryFn: checkPermissions,
-    enabled: !!projectInstance && !!project?.chainID && !!isAuth && !!isConnected && !!address,
+    enabled:
+      !!projectInstance &&
+      !!project?.chainID &&
+      !!isAuth &&
+      !!isConnected &&
+      !!address,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
     refetchOnMount: false,
@@ -75,7 +99,13 @@ export const useProjectPermissions = (
 
   // Update loading states based on query status
   React.useEffect(() => {
-    if (!projectInstance || !project?.chainID || !isAuth || !isConnected || !address) {
+    if (
+      !projectInstance ||
+      !project?.chainID ||
+      !isAuth ||
+      !isConnected ||
+      !address
+    ) {
       setIsProjectAdminLoading(false);
       setIsProjectOwnerLoading(false);
       setIsProjectAdmin(false);
