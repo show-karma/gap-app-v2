@@ -27,13 +27,11 @@ interface ProjectWrapperProps {
 }
 
 export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
-  const { isProjectAdmin, isProjectOwner } = useProjectStore((state) => ({
-    isProjectAdmin: state.isProjectAdmin,
-    isProjectOwner: state.isProjectOwner,
-  }));
+  const isProjectAdmin = useProjectStore((state: any) => state.isProjectAdmin);
+  const isProjectOwner = useProjectStore((state: any) => state.isProjectOwner);
   const { project: projectInstance } = useProjectInstance(projectId);
 
-  const isOwner = useOwnerStore((state) => state.isOwner);
+  const isOwner = useOwnerStore((state: any) => state.isOwner);
 
   const { project, isLoading: isProjectLoading } = useProject(projectId);
   
@@ -50,10 +48,10 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
   const socials = useProjectSocials(project?.details?.data.links);
   const members = useProjectMembers(project);
 
-  const { isIntroModalOpen } = useIntroModalStore();
-  const { isEndorsementOpen } = useEndorsementStore();
-  const { isProgressModalOpen } = useProgressModalStore();
-  const { isOpen: isShareDialogOpen } = useShareDialogStore();
+  const isIntroModalOpen = useIntroModalStore((state: any) => state.isIntroModalOpen);
+  const isEndorsementOpen = useEndorsementStore((state: any) => state.isEndorsementOpen);
+  const isProgressModalOpen = useProgressModalStore((state: any) => state.isProgressModalOpen);
+  const isShareDialogOpen = useShareDialogStore((state: any) => state.isOpen);
 
   return (
     <div>

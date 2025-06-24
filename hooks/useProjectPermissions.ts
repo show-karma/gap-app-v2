@@ -19,15 +19,13 @@ export const useProjectPermissions = (
   projectInstance?: Project
 ) => {
   const { address, isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
-  const isOwner = useOwnerStore((state) => state.isOwner);
+  const { isAuth } = useAuthStore((state: any) => state.isAuth);
+  const isOwner = useOwnerStore((state: any) => state.isOwner);
   
-  const {
-    setIsProjectAdmin,
-    setIsProjectAdminLoading,
-    setIsProjectOwner,
-    setIsProjectOwnerLoading,
-  } = useProjectStore();
+  const setIsProjectAdmin = useProjectStore((state: any) => state.setIsProjectAdmin);
+  const setIsProjectAdminLoading = useProjectStore((state: any) => state.setIsProjectAdminLoading);
+  const setIsProjectOwner = useProjectStore((state: any) => state.setIsProjectOwner);
+  const setIsProjectOwnerLoading = useProjectStore((state: any) => state.setIsProjectOwnerLoading);
 
   const checkPermissions = async (): Promise<ProjectPermissionsResult> => {
     // Early returns for invalid states
