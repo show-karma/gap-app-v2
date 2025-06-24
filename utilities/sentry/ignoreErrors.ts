@@ -8,6 +8,7 @@ const walletConnectErrors = [
   // See https://github.com/hemilabs/ui-monorepo/issues/1081
   "this.provider.disconnect is not a function",
   "n.disconnect is not a function",
+  "indexedDB is not defined",
 ];
 
 export const sentryIgnoreErrors = [
