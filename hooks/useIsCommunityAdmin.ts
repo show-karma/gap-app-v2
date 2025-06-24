@@ -60,6 +60,7 @@ export const useIsCommunityAdmin = (
       resolvedCommunity?.chainID,
       checkAddress,
       !!isAuth,
+      signer,
     ],
     queryFn: async () => {
       if (!resolvedCommunity || !checkAddress || !isAuth) {

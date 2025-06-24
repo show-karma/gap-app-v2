@@ -97,10 +97,14 @@ export const GrantsLayout = ({
   );
 
   // Use React Query hook to check admin status with Zustand sync
-  useGrantCommunityAdmin(grant?.community?.uid, address, {
-    setIsCommunityAdmin,
-    setIsCommunityAdminLoading,
-  });
+  useGrantCommunityAdmin(
+    grant?.community?.uid || grant?.data?.communityUID,
+    address,
+    {
+      setIsCommunityAdmin,
+      setIsCommunityAdminLoading,
+    }
+  );
 
   const zustandProject = useProjectStore((state) => state.project);
 
