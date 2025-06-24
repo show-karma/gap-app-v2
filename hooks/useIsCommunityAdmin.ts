@@ -19,7 +19,8 @@ interface UseIsCommunityAdminOptions {
 export const useIsCommunityAdmin = (
   communityUID?: string,
   address?: string | Hex,
-  options?: UseIsCommunityAdminOptions
+  options?: UseIsCommunityAdminOptions,
+  community?: ICommunityResponse // Optional community object to avoid API calls
 ) => {
   const { address: accountAddress } = useAccount();
   const signer = useSigner();
@@ -32,26 +33,46 @@ export const useIsCommunityAdmin = (
 
   // Determine if input is a community or grant, and resolve community data
   useEffect(() => {
-    const resolveCommunity = async () => {
-      if (!communityUID) {
-        setResolvedCommunity(null);
-        return;
-      }
+    // If community object is provided, use it directly
+    if (community) {
+      setResolvedCommunity(community);
+      return;
+    }
 
+    // Otherwise, fetch community data by UID
+    if (!communityUID) {
+      setResolvedCommunity(null);
+      return;
+    }
+
+    let cancelled = false; // Flag to prevent race conditions
+
+    const resolveCommunity = async () => {
       try {
         const response = await gapIndexerApi
           .communityBySlug(communityUID)
           .catch(() => null);
-        const community = response?.data || null;
-        setResolvedCommunity(community);
+
+        // Only update state if this effect hasn't been cancelled
+        if (!cancelled) {
+          const communityData = response?.data || null;
+          setResolvedCommunity(communityData);
+        }
       } catch (error: any) {
         console.error("Error fetching community data:", error);
-        setResolvedCommunity(null);
+        if (!cancelled) {
+          setResolvedCommunity(null);
+        }
       }
     };
 
     resolveCommunity();
-  }, [communityUID]);
+
+    // Cleanup function to prevent race conditions
+    return () => {
+      cancelled = true;
+    };
+  }, [communityUID, community]);
 
   const query = useQuery({
     queryKey: [
@@ -167,9 +188,15 @@ export const useGrantCommunityAdmin = (
   zustandSync?: {
     setIsCommunityAdmin?: (isAdmin: boolean) => void;
     setIsCommunityAdminLoading?: (loading: boolean) => void;
-  }
+  },
+  community?: ICommunityResponse // Optional community object to avoid API calls
 ) => {
-  return useIsCommunityAdmin(communityUID, address, {
-    zustandSync,
-  });
+  return useIsCommunityAdmin(
+    communityUID,
+    address,
+    {
+      zustandSync,
+    },
+    community
+  );
 };
