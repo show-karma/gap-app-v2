@@ -7,6 +7,7 @@ import type { Hex } from "viem";
 import { useEffect, useState } from "react";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { useAuthStore } from "@/store/auth";
+import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 
 /**
  * Options for configuring the useIsCommunityAdmin hook
@@ -25,23 +26,23 @@ interface UseIsCommunityAdminOptions {
 
 /**
  * Hook to check if a user is admin of a community
- * 
+ *
  * @param communityUID - The community UID to check admin status for
  * @param address - User address to check (defaults to connected account if not provided)
  * @param options - Configuration options for the hook behavior
  * @param community - Optional pre-fetched community object to avoid additional API calls
- * 
+ *
  * @returns {Object} Object containing:
  * - isCommunityAdmin: boolean indicating if the user is an admin
  * - isLoading: boolean indicating if the check is in progress
  * - isError: boolean indicating if an error occurred
  * - error: any error that occurred during the check
  * - refetch: function to manually trigger a re-check
- * 
+ *
  * @example
  * ```tsx
  * const { isCommunityAdmin, isLoading } = useIsCommunityAdmin('community-123', userAddress);
- * 
+ *
  * if (isLoading) return <Spinner />;
  * if (isCommunityAdmin) return <AdminPanel />;
  * ```
@@ -121,8 +122,7 @@ export const useIsCommunityAdmin = (
       return await isCommunityAdminOf(resolvedCommunity, checkAddress, signer);
     },
     enabled: !!resolvedCommunity && options?.enabled !== false,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    gcTime: 1 * 60 * 1000, // Keep in cache for 1 minutes
+    ...defaultQueryOptions,
   });
 
   // Sync with Zustand store if setters are provided
@@ -149,22 +149,22 @@ export const useIsCommunityAdmin = (
 
 /**
  * Hook to check if user is admin of any community from a list
- * 
+ *
  * @param communities - Array of communities to check admin status for
  * @param address - User address to check (defaults to connected account if not provided)
  * @param options - Configuration options for the hook behavior
- * 
+ *
  * @returns {Object} Object containing:
  * - isCommunityAdminOfAny: boolean indicating if the user is admin of at least one community
  * - isLoading: boolean indicating if the check is in progress
  * - isError: boolean indicating if an error occurred
  * - error: any error that occurred during the check
  * - refetch: function to manually trigger a re-check
- * 
+ *
  * @example
  * ```tsx
  * const { isCommunityAdminOfAny, isLoading } = useIsCommunityAdminOfAny(communities);
- * 
+ *
  * if (isCommunityAdminOfAny) {
  *   // User is admin of at least one community
  * }
@@ -207,8 +207,7 @@ export const useIsCommunityAdminOfAny = (
       communities.length > 0 &&
       !!checkAddress &&
       options?.enabled !== false,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    ...defaultQueryOptions,
   });
 
   // Sync with Zustand store if setters are provided
@@ -235,19 +234,19 @@ export const useIsCommunityAdminOfAny = (
 
 /**
  * Convenience hook specifically for grant-based admin checks with automatic Zustand store synchronization
- * 
+ *
  * This hook is designed for use in grant-related components where admin status needs to be
  * synchronized with the Zustand store for backwards compatibility.
- * 
+ *
  * @param communityUID - The community UID associated with the grant
  * @param address - User address to check (defaults to connected account if not provided)
  * @param zustandSync - Zustand store setter functions for synchronization
  * @param zustandSync.setIsCommunityAdmin - Function to update admin status in store
  * @param zustandSync.setIsCommunityAdminLoading - Function to update loading state in store
  * @param community - Optional pre-fetched community object to avoid additional API calls
- * 
+ *
  * @returns Same as useIsCommunityAdmin hook
- * 
+ *
  * @example
  * ```tsx
  * const { isCommunityAdmin, isLoading } = useGrantCommunityAdmin(
