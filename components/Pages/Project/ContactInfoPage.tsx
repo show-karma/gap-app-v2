@@ -3,21 +3,20 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { ContactInfoSubscription } from "@/components/ContactInfoSubscription";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useContactInfo } from "@/hooks/useContactInfo";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 
 const ContactInfoPage = () => {
   const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);
-  const isProjectOwnerLoading = useProjectStore(
-    (state) => state.isProjectOwnerLoading
-  );
+  const { isLoading: isPermissionLoading } = useProjectPermissions();
   const project = useProjectStore((state) => state.project);
   const isAuthorized = useProjectStore((state) => state.isProjectAdmin);
-  
+
   const projectId = project?.uid;
   const { data: contactsInfo, isLoading } = useContactInfo(
     projectId,
     isAuthorized
   );
-  const isAuthorizationLoading = isOwnerLoading || isProjectOwnerLoading;
+  const isAuthorizationLoading = isOwnerLoading || isPermissionLoading;
 
   return (
     <div className="pt-5 pb-20">

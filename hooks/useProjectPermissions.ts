@@ -1,4 +1,4 @@
-import React from "react";
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useProjectStore, useOwnerStore } from "@/store";
 import { useAuthStore } from "@/store/auth";
@@ -7,53 +7,31 @@ import { getRPCClient } from "@/utilities/rpcClient";
 import type { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
 import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useAccount } from "wagmi";
+import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
+import { useProjectInstance } from "./useProjectInstance";
 
 interface ProjectPermissionsResult {
   isProjectOwner: boolean;
   isProjectAdmin: boolean;
 }
 
-export const useProjectPermissions = (
-  projectId: string,
-  project?: IProjectResponse,
-  projectInstance?: Project
-) => {
+export const useProjectPermissions = () => {
   const { address, isConnected } = useAccount();
-  const { isAuth } = useAuthStore((state: any) => state.isAuth);
-  const isOwner = useOwnerStore((state: any) => state.isOwner);
+  const { isAuth } = useAuthStore();
+  const { project } = useProjectStore();
+  const projectId = project?.details?.data.slug || project?.uid;
+  const { project: projectInstance } = useProjectInstance(projectId);
 
-  const setIsProjectAdmin = useProjectStore(
-    (state: any) => state.setIsProjectAdmin
-  );
-  const setIsProjectAdminLoading = useProjectStore(
-    (state: any) => state.setIsProjectAdminLoading
-  );
-  const setIsProjectOwner = useProjectStore(
-    (state: any) => state.setIsProjectOwner
-  );
-  const setIsProjectOwnerLoading = useProjectStore(
-    (state: any) => state.setIsProjectOwnerLoading
-  );
+  const { setIsProjectAdmin, setIsProjectOwner } = useProjectStore();
 
   const checkPermissions = async (): Promise<ProjectPermissionsResult> => {
     // Early returns for invalid states
-    if (
-      !projectInstance ||
-      !project?.chainID ||
-      !isAuth ||
-      !isConnected ||
-      !address
-    ) {
+    if (!projectInstance || !isAuth || !isConnected || !address) {
       return { isProjectOwner: false, isProjectAdmin: false };
     }
 
-    // If user is global owner, they have all permissions
-    if (isOwner) {
-      return { isProjectOwner: true, isProjectAdmin: true };
-    }
-
     try {
-      const rpcClient = await getRPCClient(project.chainID);
+      const rpcClient = await getRPCClient(projectInstance.chainID);
 
       const [isOwnerResult, isAdminResult] = await Promise.all([
         projectInstance?.isOwner(rpcClient as any, address).catch(() => false),
@@ -76,65 +54,19 @@ export const useProjectPermissions = (
   const query = useQuery({
     queryKey: [
       "project-permissions",
-      projectId,
       address,
+      projectId,
       project?.chainID,
-      !!projectInstance,
-      isOwner,
       isAuth,
-      isConnected,
     ],
     queryFn: checkPermissions,
-    enabled:
-      !!projectInstance &&
-      !!project?.chainID &&
-      !!isAuth &&
-      !!isConnected &&
-      !!address,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
+    enabled: !!projectInstance && !!project?.chainID && !!isAuth && !!address,
+    gcTime: 1 * 60 * 1000, // 1 minutes
+    ...defaultQueryOptions,
   });
 
-  // Update loading states based on query status
-  React.useEffect(() => {
-    if (
-      !projectInstance ||
-      !project?.chainID ||
-      !isAuth ||
-      !isConnected ||
-      !address
-    ) {
-      setIsProjectAdminLoading(false);
-      setIsProjectOwnerLoading(false);
-      setIsProjectAdmin(false);
-      setIsProjectOwner(false);
-      return;
-    }
-
-    if (query.isFetching) {
-      setIsProjectAdminLoading(true);
-      setIsProjectOwnerLoading(true);
-    } else {
-      setIsProjectAdminLoading(false);
-      setIsProjectOwnerLoading(false);
-    }
-  }, [
-    query.isFetching,
-    projectInstance,
-    project?.chainID,
-    isAuth,
-    isConnected,
-    address,
-    setIsProjectAdminLoading,
-    setIsProjectOwnerLoading,
-    setIsProjectAdmin,
-    setIsProjectOwner,
-  ]);
-
   // Update permission states when data changes
-  React.useEffect(() => {
+  useEffect(() => {
     if (query.data) {
       setIsProjectOwner(query.data.isProjectOwner);
       setIsProjectAdmin(query.data.isProjectAdmin);

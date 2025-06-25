@@ -2,10 +2,11 @@ import { getProjectById } from "@/utilities/sdk";
 import { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
 import { useQuery } from "@tanstack/react-query";
 
-export const useProjectInstance = (projectId: string) => {
+export const useProjectInstance = (projectId?: string) => {
   const query = useQuery({
     queryKey: ["project-instance", projectId],
     queryFn: async (): Promise<Project | undefined> => {
+      if (!projectId) return;
       const fetchedProject = await getProjectById(projectId);
       return fetchedProject;
     },

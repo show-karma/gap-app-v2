@@ -17,7 +17,6 @@ import { useContactInfo } from "@/hooks/useContactInfo";
 import { ShareDialog } from "../GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/ShareDialog";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { useProject } from "@/hooks/useProject";
-import { useProjectInstance } from "@/hooks/useProjectInstance";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectSocials } from "@/hooks/useProjectSocials";
@@ -28,16 +27,15 @@ interface ProjectWrapperProps {
 }
 
 export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
-  const isProjectAdmin = useProjectStore((state: any) => state.isProjectAdmin);
-  const isProjectOwner = useProjectStore((state: any) => state.isProjectOwner);
-  const { project: projectInstance } = useProjectInstance(projectId);
+  const { isProjectAdmin } = useProjectStore();
+  const { isProjectOwner } = useProjectStore();
 
   const isOwner = useOwnerStore((state: any) => state.isOwner);
 
-  const { project, isLoading: isProjectLoading } = useProject(projectId);
+  const { project } = useProject(projectId);
 
-  // Use the new React Query hook for permissions
-  useProjectPermissions(projectId, project, projectInstance);
+  // Start hook for permissions
+  useProjectPermissions();
 
   const isAuthorized = isOwner || isProjectAdmin || isProjectOwner;
   const { data: contactsInfo } = useContactInfo(projectId, isAuthorized);
