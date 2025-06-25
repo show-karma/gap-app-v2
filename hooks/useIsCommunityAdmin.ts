@@ -8,14 +8,44 @@ import { useEffect, useState } from "react";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { useAuthStore } from "@/store/auth";
 
+/**
+ * Options for configuring the useIsCommunityAdmin hook
+ */
 interface UseIsCommunityAdminOptions {
+  /** Whether the query should be enabled. Defaults to true when prerequisites are met */
   enabled?: boolean;
+  /** Optional Zustand store sync configuration for backwards compatibility */
   zustandSync?: {
+    /** Function to update the community admin status in Zustand store */
     setIsCommunityAdmin?: (isAdmin: boolean) => void;
+    /** Function to update the loading state in Zustand store */
     setIsCommunityAdminLoading?: (loading: boolean) => void;
   };
 }
 
+/**
+ * Hook to check if a user is admin of a community
+ * 
+ * @param communityUID - The community UID to check admin status for
+ * @param address - User address to check (defaults to connected account if not provided)
+ * @param options - Configuration options for the hook behavior
+ * @param community - Optional pre-fetched community object to avoid additional API calls
+ * 
+ * @returns {Object} Object containing:
+ * - isCommunityAdmin: boolean indicating if the user is an admin
+ * - isLoading: boolean indicating if the check is in progress
+ * - isError: boolean indicating if an error occurred
+ * - error: any error that occurred during the check
+ * - refetch: function to manually trigger a re-check
+ * 
+ * @example
+ * ```tsx
+ * const { isCommunityAdmin, isLoading } = useIsCommunityAdmin('community-123', userAddress);
+ * 
+ * if (isLoading) return <Spinner />;
+ * if (isCommunityAdmin) return <AdminPanel />;
+ * ```
+ */
 export const useIsCommunityAdmin = (
   communityUID?: string,
   address?: string | Hex,
@@ -117,7 +147,29 @@ export const useIsCommunityAdmin = (
   };
 };
 
-// Hook to check if user is admin of any community from a list
+/**
+ * Hook to check if user is admin of any community from a list
+ * 
+ * @param communities - Array of communities to check admin status for
+ * @param address - User address to check (defaults to connected account if not provided)
+ * @param options - Configuration options for the hook behavior
+ * 
+ * @returns {Object} Object containing:
+ * - isCommunityAdminOfAny: boolean indicating if the user is admin of at least one community
+ * - isLoading: boolean indicating if the check is in progress
+ * - isError: boolean indicating if an error occurred
+ * - error: any error that occurred during the check
+ * - refetch: function to manually trigger a re-check
+ * 
+ * @example
+ * ```tsx
+ * const { isCommunityAdminOfAny, isLoading } = useIsCommunityAdminOfAny(communities);
+ * 
+ * if (isCommunityAdminOfAny) {
+ *   // User is admin of at least one community
+ * }
+ * ```
+ */
 export const useIsCommunityAdminOfAny = (
   communities?: ICommunityResponse[],
   address?: string | Hex,
@@ -181,7 +233,33 @@ export const useIsCommunityAdminOfAny = (
   };
 };
 
-// Convenience hook specifically for grant-based admin checks with Zustand sync
+/**
+ * Convenience hook specifically for grant-based admin checks with automatic Zustand store synchronization
+ * 
+ * This hook is designed for use in grant-related components where admin status needs to be
+ * synchronized with the Zustand store for backwards compatibility.
+ * 
+ * @param communityUID - The community UID associated with the grant
+ * @param address - User address to check (defaults to connected account if not provided)
+ * @param zustandSync - Zustand store setter functions for synchronization
+ * @param zustandSync.setIsCommunityAdmin - Function to update admin status in store
+ * @param zustandSync.setIsCommunityAdminLoading - Function to update loading state in store
+ * @param community - Optional pre-fetched community object to avoid additional API calls
+ * 
+ * @returns Same as useIsCommunityAdmin hook
+ * 
+ * @example
+ * ```tsx
+ * const { isCommunityAdmin, isLoading } = useGrantCommunityAdmin(
+ *   grant.communityUID,
+ *   userAddress,
+ *   {
+ *     setIsCommunityAdmin: useCommunityAdminStore(state => state.setIsCommunityAdmin),
+ *     setIsCommunityAdminLoading: useCommunityAdminStore(state => state.setLoading)
+ *   }
+ * );
+ * ```
+ */
 export const useGrantCommunityAdmin = (
   communityUID?: string,
   address?: string | Hex,
