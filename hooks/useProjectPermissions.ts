@@ -61,7 +61,6 @@ export const useProjectPermissions = () => {
     ],
     queryFn: checkPermissions,
     enabled: !!projectInstance && !!project?.chainID && !!isAuth && !!address,
-    gcTime: 1 * 60 * 1000, // 1 minutes
     ...defaultQueryOptions,
   });
 

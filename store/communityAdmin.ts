@@ -3,8 +3,6 @@ import { create } from "zustand";
 interface CommunityAdminStore {
   isCommunityAdmin: boolean;
   setIsCommunityAdmin: (isOwner: boolean) => void;
-  isCommunityAdminLoading: boolean;
-  setIsCommunityAdminLoading: (loading: boolean) => void;
 }
 
 export const useCommunityAdminStore = create<CommunityAdminStore>(
@@ -12,8 +10,5 @@ export const useCommunityAdminStore = create<CommunityAdminStore>(
     isCommunityAdmin: false,
     setIsCommunityAdmin: (isCommunityAdmin: boolean) =>
       set({ isCommunityAdmin }),
-    isCommunityAdminLoading: true,
-    setIsCommunityAdminLoading: (isCommunityAdminLoading: boolean) =>
-      set({ isCommunityAdminLoading }),
   })
 );

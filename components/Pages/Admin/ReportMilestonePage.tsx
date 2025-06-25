@@ -13,7 +13,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { defaultMetadata } from "@/utilities/meta";
 import { PAGES } from "@/utilities/pages";
-import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
+import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import { ChevronLeftIcon } from "@heroicons/react/20/solid";
 import {
   ChevronDownIcon,
@@ -114,7 +114,10 @@ export const ReportMilestonePage = ({
   const communityId = params.communityId as string;
   const { address, isConnected } = useAccount();
   const { isAuth } = useAuthStore();
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
+  const { isCommunityAdmin: isAdmin } = useIsCommunityAdmin(
+    community?.uid,
+    address
+  );
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isConnected && isAuth && (isAdmin || isContractOwner);
 
@@ -159,29 +162,6 @@ export const ReportMilestonePage = ({
   const signer = useSigner();
 
   const modelToUse = "gpt-4o-mini";
-
-  useEffect(() => {
-    if (!address || !signer || !community || !isAuth) return;
-
-    const checkIfAdmin = async () => {
-      try {
-        const checkAdmin = await isCommunityAdminOf(
-          community,
-          address as string,
-          signer
-        );
-        setIsAdmin(checkAdmin);
-      } catch (error: any) {
-        errorManager(
-          `Error checking if ${address} is admin of ${communityId}`,
-          error
-        );
-        console.log(error);
-        setIsAdmin(false);
-      }
-    };
-    checkIfAdmin();
-  }, [address, isConnected, isAuth, signer, community]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);

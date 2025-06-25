@@ -3,17 +3,11 @@ import { cookieToInitialState, WagmiProvider as Wagmi } from "wagmi";
 import { RainbowKitProvider, lightTheme } from "@rainbow-me/rainbowkit";
 import { config } from "@/utilities/wagmi/config";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 
 export const queryClient = new QueryClient({
   defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      gcTime: 10 * 60 * 1000, // 10 minutes
-      refetchOnWindowFocus: false,
-      refetchOnMount: true, // Enable to ensure fresh data on mount
-      refetchOnReconnect: false,
-      retry: 1,
-    },
+    queries: defaultQueryOptions,
   },
 });
 
