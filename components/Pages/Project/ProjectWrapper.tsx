@@ -35,10 +35,10 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
   const isOwner = useOwnerStore((state: any) => state.isOwner);
 
   const { project, isLoading: isProjectLoading } = useProject(projectId);
-  
+
   // Use the new React Query hook for permissions
   useProjectPermissions(projectId, project, projectInstance);
-  
+
   const isAuthorized = isOwner || isProjectAdmin || isProjectOwner;
   const { data: contactsInfo } = useContactInfo(projectId, isAuthorized);
   const hasContactInfo = Boolean(contactsInfo?.length);
@@ -47,12 +47,12 @@ export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
 
   // Use custom hooks for socials and members
   const socials = useProjectSocials(project?.details?.data.links);
-  const members = useProjectMembers(project);
+  useProjectMembers(project);
 
-  const isIntroModalOpen = useIntroModalStore((state: any) => state.isIntroModalOpen);
-  const isEndorsementOpen = useEndorsementStore((state: any) => state.isEndorsementOpen);
-  const isProgressModalOpen = useProgressModalStore((state: any) => state.isProgressModalOpen);
-  const isShareDialogOpen = useShareDialogStore((state: any) => state.isOpen);
+  const { isIntroModalOpen } = useIntroModalStore();
+  const { isEndorsementOpen } = useEndorsementStore();
+  const { isProgressModalOpen } = useProgressModalStore();
+  const { isOpen: isShareDialogOpen } = useShareDialogStore();
 
   return (
     <div>
