@@ -1,263 +1,51 @@
 "use client";
+import React from "react";
 import { ProgressDialog } from "@/components/Dialogs/ProgressDialog";
-import {
-  DiscordIcon,
-  GithubIcon,
-  LinkedInIcon,
-  TwitterIcon,
-  WebsiteIcon,
-} from "@/components/Icons";
 import { EndorsementDialog } from "@/components/Pages/Project/Impact/EndorsementDialog";
 import { ProjectNavigator } from "@/components/Pages/Project/ProjectNavigator";
-import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { useOwnerStore, useProjectStore } from "@/store";
-import { useAuthStore } from "@/store/auth";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
 import { useProgressModalStore } from "@/store/modals/progress";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
-import {
-  IProjectDetails,
-  IProjectResponse,
-} from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import Image from "next/image";
 
-import { useEffect, useMemo } from "react";
-import { useAccount } from "wagmi";
 import { IntroDialog } from "./IntroDialog";
 
-import { getRPCClient } from "@/utilities/rpcClient";
 import { useContactInfo } from "@/hooks/useContactInfo";
-import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { ShareDialog } from "../GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/ShareDialog";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { useProject } from "@/hooks/useProject";
-import ProjectHeaderLoading from "./Loading/Header";
-import { useProjectInstance } from "@/hooks/useProjectInstance";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
+import { useProjectPermissions } from "@/hooks/useProjectPermissions";
+import { useProjectSocials } from "@/hooks/useProjectSocials";
+import { useProjectMembers } from "@/hooks/useProjectMembers";
 
-interface Member {
-  uid: string;
-  recipient: string;
-  details?: {
-    name?: string;
-  };
-}
 interface ProjectWrapperProps {
   projectId: string;
 }
 
 export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
-  const {
-    isProjectAdmin,
-    setIsProjectAdmin,
-    setIsProjectAdminLoading,
-    isProjectOwner,
-    setIsProjectOwner,
-    setIsProjectOwnerLoading,
-  } = useProjectStore((state) => state);
-  const { project: projectInstance } = useProjectInstance(projectId);
+  const { isProjectAdmin } = useProjectStore();
+  const { isProjectOwner } = useProjectStore();
 
-  const isOwner = useOwnerStore((state) => state.isOwner);
-  const signer = useSigner();
-  const { address, isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
+  const isOwner = useOwnerStore((state: any) => state.isOwner);
 
-  const { project, isLoading: isProjectLoading } = useProject(projectId);
+  const { project } = useProject(projectId);
+
+  // Start hook for permissions
+  useProjectPermissions();
+
   const isAuthorized = isOwner || isProjectAdmin || isProjectOwner;
   const { data: contactsInfo } = useContactInfo(projectId, isAuthorized);
   const hasContactInfo = Boolean(contactsInfo?.length);
 
   useTeamProfiles(project);
 
-  useEffect(() => {
-    if (
-      !projectInstance ||
-      !project?.chainID ||
-      !isAuth ||
-      !isConnected ||
-      !address
-    ) {
-      setIsProjectAdmin(false);
-      setIsProjectAdminLoading(false);
-      setIsProjectOwner(false);
-      setIsProjectOwnerLoading(false);
-      return;
-    }
-
-    if (isOwner) {
-      setIsProjectAdmin(true);
-      setIsProjectOwner(true);
-      setIsProjectAdminLoading(false);
-      setIsProjectOwnerLoading(false);
-      return;
-    }
-
-    const runPermissionChecks = async () => {
-      try {
-        const rpcClient = await getRPCClient(project.chainID);
-
-        setIsProjectOwnerLoading(true);
-        setIsProjectAdminLoading(true);
-
-        const [isOwnerResult, isAdminResult] = await Promise.all([
-          projectInstance
-            ?.isOwner(rpcClient as any, address)
-            .catch(() => false),
-          projectInstance
-            ?.isAdmin(rpcClient as any, address)
-            .catch(() => false),
-        ]);
-
-        setIsProjectOwner(isOwnerResult);
-        setIsProjectAdmin(isAdminResult);
-      } catch (error: any) {
-        setIsProjectOwner(false);
-        setIsProjectAdmin(false);
-        errorManager(
-          `Error checking permissions for user ${address} on project ${projectId}`,
-          error
-        );
-      } finally {
-        setIsProjectOwnerLoading(false);
-        setIsProjectAdminLoading(false);
-      }
-    };
-
-    runPermissionChecks();
-  }, [
-    projectInstance,
-    address,
-    isAuth,
-    isConnected,
-    signer,
-    isOwner,
-    project?.chainID,
-    projectId,
-    setIsProjectAdmin,
-    setIsProjectAdminLoading,
-    setIsProjectOwner,
-    setIsProjectOwnerLoading,
-  ]);
-
-  const getSocials = (links: IProjectDetails["data"]["links"]) => {
-    const types = [
-      {
-        name: "Twitter",
-        prefix: ["twitter.com/", "x.com/"],
-        icon: TwitterIcon,
-      },
-      { name: "Github", prefix: "github.com/", icon: GithubIcon },
-      { name: "Discord", prefix: "discord.gg/", icon: DiscordIcon },
-      { name: "Website", prefix: "https://", icon: WebsiteIcon },
-      { name: "LinkedIn", prefix: "linkedin.com/", icon: LinkedInIcon },
-      { name: "Farcaster", prefix: "warpcast.com/", icon: FarcasterIcon },
-    ];
-
-    const hasHttpOrWWW = (link?: string) => {
-      if (!link) return false;
-      if (
-        link.includes("http://") ||
-        link.includes("https://") ||
-        link.includes("www.")
-      ) {
-        return true;
-      }
-      return false;
-    };
-
-    const addPrefix = (link: string) => `https://${link}`;
-
-    const formatPrefix = (prefix: string, link: string) => {
-      const firstWWW = link.slice(0, 4) === "www.";
-      if (firstWWW) {
-        return addPrefix(link);
-      }
-      const alreadyHasPrefix = link.includes(prefix);
-      if (alreadyHasPrefix) {
-        if (hasHttpOrWWW(link)) {
-          return link;
-        }
-        return addPrefix(link);
-      }
-
-      return hasHttpOrWWW(prefix + link)
-        ? prefix + link
-        : addPrefix(prefix + link);
-    };
-
-    return types
-      .map(({ name, prefix, icon }) => {
-        const socialLink = links?.find(
-          (link) => link.type === name.toLowerCase()
-        )?.url;
-
-        if (socialLink) {
-          if (name === "Twitter") {
-            const url = socialLink?.includes("@")
-              ? socialLink?.replace("@", "") || ""
-              : socialLink;
-
-            if (Array.isArray(prefix)) {
-              if (url.includes("twitter.com/") || url.includes("x.com/")) {
-                return {
-                  name,
-                  url: hasHttpOrWWW(url) ? url : addPrefix(url),
-                  icon,
-                };
-              }
-              return {
-                name,
-                url: formatPrefix(prefix[1], url),
-                icon,
-              };
-            }
-          }
-
-          return {
-            name,
-            url: formatPrefix(
-              typeof prefix === "string" ? prefix : prefix[0],
-              socialLink
-            ),
-            icon,
-          };
-        }
-
-        return undefined;
-      })
-      .filter((social) => social);
-  };
-
-  const socials = getSocials(project?.details?.data.links);
-
-  const mountMembers = () => {
-    const members: Member[] = [];
-    if (project?.members) {
-      project.members.forEach((member) => {
-        members.push({
-          uid: member.uid,
-          recipient: member.recipient,
-          details: {
-            name: member?.details?.name,
-          },
-        });
-      });
-    }
-    const alreadyHasOwner = project?.members.find(
-      (member) => member.recipient === project.recipient
-    );
-    if (!alreadyHasOwner) {
-      members.push({
-        uid: project?.recipient || "",
-        recipient: project?.recipient || "",
-      });
-    }
-
-    return members;
-  };
+  // Use custom hooks for socials and members
+  const socials = useProjectSocials(project?.details?.data.links);
+  useProjectMembers(project);
 
   const { isIntroModalOpen } = useIntroModalStore();
   const { isEndorsementOpen } = useEndorsementStore();

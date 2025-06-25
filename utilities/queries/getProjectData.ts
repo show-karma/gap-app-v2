@@ -9,29 +9,25 @@ export const getProjectData = cache(
     projectId: string,
     shouldRedirect = true
   ): Promise<IProjectResponse> => {
-    try {
-      const response = await gapIndexerApi.projectBySlug(projectId);
-      const project = response.data;
+    const response = await gapIndexerApi.projectBySlug(projectId);
+    const project = response?.data;
 
-      if (!project || project.uid === zeroUID) {
-        notFound();
-      }
-
-      if (shouldRedirect) {
-        if (project?.pointers && project?.pointers?.length > 0) {
-          const original = await gapIndexerApi
-            .projectBySlug(project.pointers[0].data?.ogProjectUID)
-            .then((res) => res.data)
-            .catch(() => null);
-          if (original) {
-            redirect(`/project/${original.details?.data?.slug}`);
-          }
-        }
-      }
-
-      return project;
-    } catch (error) {
+    if (!project || project.uid === zeroUID || !response?.data) {
       notFound();
     }
+
+    if (shouldRedirect) {
+      if (project?.pointers && project?.pointers?.length > 0) {
+        const original = await gapIndexerApi
+          .projectBySlug(project.pointers[0].data?.ogProjectUID)
+          .then((res) => res.data)
+          .catch(() => null);
+        if (original) {
+          redirect(`/project/${original.details?.data?.slug}`);
+        }
+      }
+    }
+
+    return project;
   }
 );
