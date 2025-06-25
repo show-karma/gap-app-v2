@@ -3,6 +3,7 @@ import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useProjectStore } from "@/store";
 import { useEffect } from "react";
+import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 
 export const useProject = (projectId: string) => {
   const setProject = useProjectStore((state) => state.setProject);
@@ -14,10 +15,7 @@ export const useProject = (projectId: string) => {
       return response.data;
     },
     enabled: !!projectId,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
-    refetchOnMount: false, // Prevent refetch of SSR data
-    refetchOnWindowFocus: false,
+    ...defaultQueryOptions,
   });
 
   useEffect(() => {

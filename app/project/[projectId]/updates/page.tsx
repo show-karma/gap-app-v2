@@ -2,6 +2,7 @@ import { ProjectRoadmap } from "@/components/Pages/Project/Roadmap";
 import { envVars } from "@/utilities/enviromentVars";
 import { getAllMilestones } from "@/utilities/gapIndexerApi/getAllMilestones";
 import { defaultMetadata } from "@/utilities/meta";
+import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { getProjectData } from "@/utilities/queries/getProjectData";
 import {
   dehydrate,
@@ -74,10 +75,7 @@ export default async function RoadmapPage(props: {
 
   const queryClient = new QueryClient({
     defaultOptions: {
-      queries: {
-        staleTime: 5 * 60 * 1000, // 5 minutes
-        gcTime: 10 * 60 * 1000, // 10 minutes
-      },
+      queries: defaultQueryOptions,
     },
   });
 

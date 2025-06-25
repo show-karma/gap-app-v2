@@ -16,6 +16,10 @@ const nextConfig = {
   reactStrictMode: true,
   staticPageGenerationTimeout: 10000,
   turbopack: {},
+  eslint: {
+    dirs: ["app", "components", "utilities", "hooks", "store", "types"],
+  },
+
   webpack: (config, { isServer, webpack }) => {
     // Fix for browserslist and other Node.js modules
     if (!isServer) {

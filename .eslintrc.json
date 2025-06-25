@@ -1,3 +1,17 @@
 {
-  "extends": "next/core-web-vitals"
+  "extends": "next/core-web-vitals",
+  "rules": {
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "no-restricted-syntax": [
+      "error",
+      {
+        "selector": "TryStatement > BlockStatement CallExpression[callee.name='redirect']",
+        "message": "Next.js redirect() should not be called inside try-catch blocks. The redirect works by throwing a NEXT_REDIRECT error that Next.js catches internally. Wrapping redirect in try-catch will intercept this error and break the redirect."
+      },
+      {
+        "selector": "TryStatement > BlockStatement CallExpression[callee.property.name='redirect']",
+        "message": "Next.js redirect() should not be called inside try-catch blocks. The redirect works by throwing a NEXT_REDIRECT error that Next.js catches internally. Wrapping redirect in try-catch will intercept this error and break the redirect."
+      }
+    ]
+  }
 }
