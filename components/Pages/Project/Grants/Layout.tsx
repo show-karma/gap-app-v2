@@ -92,9 +92,6 @@ export const GrantsLayout = ({
   const setIsCommunityAdmin = useCommunityAdminStore(
     (state) => state.setIsCommunityAdmin
   );
-  const setIsCommunityAdminLoading = useCommunityAdminStore(
-    (state) => state.setIsCommunityAdminLoading
-  );
 
   // Use React Query hook to check admin status with Zustand sync
   useGrantCommunityAdmin(
@@ -102,7 +99,6 @@ export const GrantsLayout = ({
     address,
     {
       setIsCommunityAdmin,
-      setIsCommunityAdminLoading,
     }
   );
 

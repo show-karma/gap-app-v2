@@ -20,7 +20,6 @@ interface UseIsCommunityAdminOptions {
     /** Function to update the community admin status in Zustand store */
     setIsCommunityAdmin?: (isAdmin: boolean) => void;
     /** Function to update the loading state in Zustand store */
-    setIsCommunityAdminLoading?: (loading: boolean) => void;
   };
 }
 
@@ -125,13 +124,6 @@ export const useIsCommunityAdmin = (
     ...defaultQueryOptions,
   });
 
-  // Sync with Zustand store if setters are provided
-  useEffect(() => {
-    if (options?.zustandSync?.setIsCommunityAdminLoading) {
-      options.zustandSync.setIsCommunityAdminLoading(query.isLoading);
-    }
-  }, [query.isLoading, options?.zustandSync?.setIsCommunityAdminLoading]);
-
   useEffect(() => {
     if (options?.zustandSync?.setIsCommunityAdmin && !query.isLoading) {
       options.zustandSync.setIsCommunityAdmin(query.data ?? false);
@@ -210,13 +202,6 @@ export const useIsCommunityAdminOfAny = (
     ...defaultQueryOptions,
   });
 
-  // Sync with Zustand store if setters are provided
-  useEffect(() => {
-    if (options?.zustandSync?.setIsCommunityAdminLoading) {
-      options.zustandSync.setIsCommunityAdminLoading(query.isLoading);
-    }
-  }, [query.isLoading, options?.zustandSync?.setIsCommunityAdminLoading]);
-
   useEffect(() => {
     if (options?.zustandSync?.setIsCommunityAdmin && !query.isLoading) {
       options.zustandSync.setIsCommunityAdmin(query.data ?? false);
@@ -242,7 +227,6 @@ export const useIsCommunityAdminOfAny = (
  * @param address - User address to check (defaults to connected account if not provided)
  * @param zustandSync - Zustand store setter functions for synchronization
  * @param zustandSync.setIsCommunityAdmin - Function to update admin status in store
- * @param zustandSync.setIsCommunityAdminLoading - Function to update loading state in store
  * @param community - Optional pre-fetched community object to avoid additional API calls
  *
  * @returns Same as useIsCommunityAdmin hook
@@ -254,7 +238,6 @@ export const useIsCommunityAdminOfAny = (
  *   userAddress,
  *   {
  *     setIsCommunityAdmin: useCommunityAdminStore(state => state.setIsCommunityAdmin),
- *     setIsCommunityAdminLoading: useCommunityAdminStore(state => state.setLoading)
  *   }
  * );
  * ```
@@ -264,7 +247,6 @@ export const useGrantCommunityAdmin = (
   address?: string | Hex,
   zustandSync?: {
     setIsCommunityAdmin?: (isAdmin: boolean) => void;
-    setIsCommunityAdminLoading?: (loading: boolean) => void;
   },
   community?: ICommunityResponse // Optional community object to avoid API calls
 ) => {
