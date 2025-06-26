@@ -27,7 +27,7 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const cookie = (await headers()).get("cookie") ?? "";
+  const cookie: any = (await headers()).get("cookie") ?? "";
   return (
     <html lang="en" className="h-full" style={{ scrollBehavior: "smooth" }}>
       {process.env.NEXT_PUBLIC_GA_TRACKING_ID &&

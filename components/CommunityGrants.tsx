@@ -520,7 +520,6 @@ export const CommunityGrants = ({
                 height: "100%",
               }}
             >
-              {/* @ts-expect-error - AutoSizer type compatibility issue with React 18 */}
               <AutoSizer disableHeight>
                 {({ width }) => {
                   const columnCounter = Math.floor(width / 240)
@@ -532,7 +531,6 @@ export const CommunityGrants = ({
                   const gutterSize = 20;
                   const height = Math.ceil(grants.length / columnCounter) * 360;
                   return (
-                    /* @ts-expect-error - Grid type compatibility issue with React 18 */
                     <Grid
                       height={height + 120}
                       width={width}

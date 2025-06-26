@@ -21,6 +21,7 @@ import { type FC, useState } from "react";
 import toast from "react-hot-toast";
 import { useAccount, useSwitchChain } from "wagmi";
 import { useDynamicWallet } from "@/hooks/useDynamicWallet";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 
 interface GrantDeleteProps {
   grant: IGrantResponse;
@@ -31,7 +32,8 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
   const { address } = useAccount();
   const { chain } = useAccount();
   const { switchChainAsync } = useSwitchChain();
-  const { isSmartWallet, supportsGasless, getSigner } = useDynamicWallet();
+  const { isSmartWallet, supportsGasless } = useDynamicWallet();
+  const dynamicWallet = useDynamicWallet();
 
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
@@ -55,12 +57,15 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
       }
 
       let walletSigner;
-      
+
       // Check if we're using a smart wallet with Dynamic
       if (isSmartWallet && supportsGasless) {
         try {
           // Use Dynamic's signer for AA transactions
-          walletSigner = await getSigner();
+          walletSigner = await getWalletSignerWithAA(
+            grant.chainID,
+            dynamicWallet
+          );
           console.log("Using Dynamic smart wallet for gasless grant deletion");
           if (isOnChainAuthorized) {
             toast.success("Deleting grant with gasless transaction", {
@@ -69,9 +74,14 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
             });
           }
         } catch (dynamicError) {
-          console.warn("Failed to get Dynamic signer, falling back to standard wallet", dynamicError);
+          console.warn(
+            "Failed to get Dynamic signer, falling back to standard wallet",
+            dynamicError
+          );
           // Fallback to standard wallet
-          const { walletClient, error } = await safeGetWalletClient(grant.chainID);
+          const { walletClient, error } = await safeGetWalletClient(
+            grant.chainID
+          );
           if (error || !walletClient || !gapClient) {
             throw new Error("Failed to connect to wallet", { cause: error });
           }
@@ -79,14 +89,16 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
         }
       } else {
         // Standard wallet flow
-        const { walletClient, error } = await safeGetWalletClient(grant.chainID);
+        const { walletClient, error } = await safeGetWalletClient(
+          grant.chainID
+        );
         if (error || !walletClient || !gapClient) {
           throw new Error("Failed to connect to wallet", { cause: error });
         }
         walletSigner = await walletClientToSigner(walletClient);
       }
       const grantUID = grant.uid;
-      const instanceProject = await gapClient.fetch.projectById(project?.uid);
+      const instanceProject = await gapClient?.fetch.projectById(project?.uid);
       const grantInstance = instanceProject?.grants.find(
         (item) => item.uid.toLowerCase() === grantUID.toLowerCase()
       );

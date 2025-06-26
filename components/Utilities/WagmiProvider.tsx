@@ -1,5 +1,5 @@
 "use client";
-import { WagmiProvider as Wagmi } from "wagmi";
+import { cookieToInitialState, WagmiProvider as Wagmi } from "wagmi";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import {
@@ -16,7 +16,14 @@ import {
 
 export const queryClient = new QueryClient();
 
-const CustomWagmiProvider = ({ children }: { children: React.ReactNode }) => {
+const CustomWagmiProvider = ({
+  children,
+  cookie,
+}: {
+  children: React.ReactNode;
+  cookie: string;
+}) => {
+  const initialState = cookieToInitialState(config, cookie);
   return (
     <DynamicContextProvider
       settings={{
@@ -27,7 +34,7 @@ const CustomWagmiProvider = ({ children }: { children: React.ReactNode }) => {
         ],
       }}
     >
-      <Wagmi config={config}>
+      <Wagmi config={config} initialState={initialState}>
         <QueryClientProvider client={queryClient}>
           <DynamicWagmiConnector>
             <DynamicWidget />

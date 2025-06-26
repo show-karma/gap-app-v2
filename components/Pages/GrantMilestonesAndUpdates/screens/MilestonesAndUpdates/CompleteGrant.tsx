@@ -24,6 +24,7 @@ import toast from "react-hot-toast";
 import { Hex } from "viem";
 import { useAccount, useSwitchChain } from "wagmi";
 import { useDynamicWallet } from "@/hooks/useDynamicWallet";
+import { getWalletSignerWithAA } from "@/utilities/wallet-helpers-aa";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 
@@ -38,7 +39,8 @@ export const GrantCompletion: FC = () => {
   const { chain, address } = useAccount();
   const { switchChainAsync } = useSwitchChain();
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const { isSmartWallet, supportsGasless, getSigner } = useDynamicWallet();
+  const { isSmartWallet, supportsGasless } = useDynamicWallet();
+  const dynamicWallet = useDynamicWallet();
 
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
@@ -61,19 +63,27 @@ export const GrantCompletion: FC = () => {
       }
 
       let walletSigner;
-      
+
       // Check if we're using a smart wallet with Dynamic
       if (isSmartWallet && supportsGasless) {
         try {
           // Use Dynamic's signer for AA transactions
-          walletSigner = await getSigner();
-          console.log("Using Dynamic smart wallet for gasless grant completion");
+          walletSigner = await getWalletSignerWithAA(
+            grantToComplete.chainID,
+            dynamicWallet
+          );
+          console.log(
+            "Using Dynamic smart wallet for gasless grant completion"
+          );
           toast.success("Completing grant with gasless transaction", {
             icon: "⛽",
             duration: 4000,
           });
         } catch (dynamicError) {
-          console.warn("Failed to get Dynamic signer, falling back to standard wallet", dynamicError);
+          console.warn(
+            "Failed to get Dynamic signer, falling back to standard wallet",
+            dynamicError
+          );
           // Fallback to standard wallet
           const { walletClient, error } = await safeGetWalletClient(
             grantToComplete.chainID
@@ -93,7 +103,7 @@ export const GrantCompletion: FC = () => {
         }
         walletSigner = await walletClientToSigner(walletClient);
       }
-      const fetchedProject = await gapClient.fetch.projectById(project?.uid);
+      const fetchedProject = await gapClient?.fetch.projectById(project?.uid);
       if (!fetchedProject) return;
       const grantInstance = fetchedProject.grants.find(
         (g) => g.uid.toLowerCase() === grantToComplete.uid.toLowerCase()

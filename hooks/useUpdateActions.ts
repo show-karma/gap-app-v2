@@ -46,7 +46,7 @@ export const useUpdateActions = (update: UpdateType) => {
   const isOnChainAuthorized = isProjectOwner || isOwner;
   const projectId = useParams().projectId as string;
   const router = useRouter();
-  const { wallet: dynamicWallet } = useDynamicWallet();
+  const dynamicWallet = useDynamicWallet();
 
   // Function to refresh data after successful deletion
   const refreshDataAfterDeletion = async () => {
