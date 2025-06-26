@@ -3,7 +3,7 @@ import { envVars } from "@/utilities/enviromentVars";
 import { getAllMilestones } from "@/utilities/gapIndexerApi/getAllMilestones";
 import { defaultMetadata } from "@/utilities/meta";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
-import { getProjectData } from "@/utilities/queries/getProjectData";
+import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 import {
   dehydrate,
   HydrationBoundary,
@@ -21,7 +21,7 @@ export async function generateMetadata({
   params: Params;
 }): Promise<Metadata> {
   const { projectId } = await params;
-  const projectInfo = await getProjectData(projectId);
+  const projectInfo = await getProjectCachedData(projectId);
 
   let metadata = {
     title: defaultMetadata.title,
@@ -71,7 +71,7 @@ export default async function RoadmapPage(props: {
   params: Promise<{ projectId: string }>;
 }) {
   const { projectId } = await props.params;
-  const projectInfo = await getProjectData(projectId);
+  const projectInfo = await getProjectCachedData(projectId);
 
   const queryClient = new QueryClient({
     defaultOptions: {

@@ -4,7 +4,7 @@ import { envVars } from "@/utilities/enviromentVars";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
 import { defaultMetadata } from "@/utilities/meta";
-import { getProjectData } from "@/utilities/queries/getProjectData";
+import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 import { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -19,7 +19,7 @@ export async function generateMetadata({
   params: Params;
 }): Promise<Metadata> {
   const { projectId, grantUid } = await params;
-  const projectInfo = await getProjectData(projectId);
+  const projectInfo = await getProjectCachedData(projectId);
 
   if (projectInfo?.uid === zeroUID || !projectInfo) {
     notFound();

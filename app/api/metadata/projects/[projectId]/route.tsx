@@ -1,7 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
-import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
-import { getProjectData } from "@/utilities/queries/getProjectData";
+import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
 import pluralize from "pluralize";
@@ -11,12 +10,10 @@ export async function GET(
   context: { params: Promise<{ projectId: string }> }
 ) {
   const projectId = (await context.params).projectId;
-  let project = await getProjectData(projectId, false);
+  let project = await getProjectCachedData(projectId, false);
   if (!project) {
     return new Response("Not found", { status: 404 });
   }
-
-  // project.details.data.title = "Rimuru Tempest Rimuru Tempest Rimuru Tempest";
 
   const title =
     project?.details?.data.title && project?.details?.data.title.length > 30

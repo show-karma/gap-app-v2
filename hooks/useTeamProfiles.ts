@@ -17,8 +17,10 @@ export const useTeamProfiles = (project: IProjectResponse | undefined) => {
   const query = useQuery<ContributorProfile[] | undefined>({
     queryKey: ["contributor-profiles", uniqueLowercasedAddresses],
     queryFn: async () => {
-      if (!project || uniqueLowercasedAddresses.length === 0) return undefined;
-      return await getContributorProfiles(uniqueLowercasedAddresses);
+      if (!project || uniqueLowercasedAddresses.length === 0) return [];
+      const profiles =
+        (await getContributorProfiles(uniqueLowercasedAddresses)) || [];
+      return profiles;
     },
     enabled: uniqueLowercasedAddresses.length > 0,
     staleTime: 10 * 60 * 1000, // 10 minutes
