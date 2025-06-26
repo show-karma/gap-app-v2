@@ -8,7 +8,7 @@ import { Suspense } from "react";
 import { ProjectGrantsMilestonesAndUpdatesLoading } from "@/components/Pages/Project/Loading/Grants/MilestonesAndUpdate";
 import { envVars } from "@/utilities/enviromentVars";
 import { cleanMarkdownForPlainText } from "@/utilities/markdown";
-import { getProjectData } from "@/utilities/queries/getProjectData";
+import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 
 type Params = Promise<{
   projectId: string;
@@ -22,7 +22,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { projectId, grantUid } = await params;
 
-  const projectInfo = await getProjectData(projectId);
+  const projectInfo = await getProjectCachedData(projectId);
 
   if (projectInfo?.uid === zeroUID || !projectInfo) {
     notFound();

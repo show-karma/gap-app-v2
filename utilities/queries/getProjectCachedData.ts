@@ -3,24 +3,31 @@ import { notFound, redirect } from "next/navigation";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { cache } from "react";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { envVars } from "@/utilities/enviromentVars";
+import { getProjectData } from "../api/project";
 
-export const getProjectData = cache(
+export const getProjectCachedData = cache(
   async (
     projectId: string,
     shouldRedirect = true
   ): Promise<IProjectResponse> => {
-    let response:
-      | Awaited<ReturnType<typeof gapIndexerApi.projectBySlug>>
-      | undefined;
+    let project: IProjectResponse | undefined;
     try {
-      response = await gapIndexerApi.projectBySlug(projectId);
+      const projectData = await getProjectData(projectId, {
+        // Enable Next.js caching
+        // cache: "force-cache", // Cache the response
+        // Alternative cache options you can use:
+        // cache: "no-store", // Never cache
+        cache: "reload", // Always fetch fresh
+        next: { revalidate: 300 }, // Cache for 5 minutes
+      });
+
+      project = projectData;
     } catch (error) {
       notFound();
     }
 
-    const project = response?.data;
-
-    if (!project || project.uid === zeroUID || !response?.data) {
+    if (!project || project.uid === zeroUID) {
       notFound();
     }
 

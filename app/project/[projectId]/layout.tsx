@@ -7,7 +7,7 @@ import {
 } from "@tanstack/react-query";
 
 import { generateProjectOverviewMetadata } from "@/utilities/metadata/projectMetadata";
-import { getProjectData } from "@/utilities/queries/getProjectData";
+import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 import { Metadata } from "next";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 
@@ -23,7 +23,7 @@ export async function generateMetadata({
   const awaitedParams = await params;
   const { projectId } = awaitedParams;
 
-  const projectInfo = await getProjectData(projectId);
+  const projectInfo = await getProjectCachedData(projectId);
 
   return generateProjectOverviewMetadata(projectInfo, projectId);
 }
@@ -46,7 +46,7 @@ export default async function RootLayout(props: {
   await queryClient.prefetchQuery({
     queryKey: ["project", projectId],
     queryFn: async () => {
-      return await getProjectData(projectId);
+      return await getProjectCachedData(projectId);
     },
   });
 
@@ -55,6 +55,7 @@ export default async function RootLayout(props: {
       <div className="flex flex-col gap-0">
         <ProjectWrapper projectId={projectId} />
         <div className="px-4 sm:px-6 lg:px-12">{children}</div>
+        {/* <p>{projectId}</p> */}
       </div>
     </HydrationBoundary>
   );
