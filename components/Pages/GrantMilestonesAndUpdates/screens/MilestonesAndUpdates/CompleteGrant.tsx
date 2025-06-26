@@ -128,7 +128,7 @@ export const GrantCompletion: FC = () => {
             );
           }
           while (retries > 0) {
-            fetchedProject = await gapClient!.fetch
+            fetchedProject = await gapClient?.fetch
               .projectById(project?.uid as Hex)
               .catch(() => null);
             const grant = fetchedProject?.grants?.find(
