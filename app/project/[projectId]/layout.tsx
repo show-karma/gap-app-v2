@@ -55,7 +55,6 @@ export default async function RootLayout(props: {
       <div className="flex flex-col gap-0">
         <ProjectWrapper projectId={projectId} />
         <div className="px-4 sm:px-6 lg:px-12">{children}</div>
-        {/* <p>{projectId}</p> */}
       </div>
     </HydrationBoundary>
   );
