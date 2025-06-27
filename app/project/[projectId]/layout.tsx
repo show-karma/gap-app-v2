@@ -7,8 +7,9 @@ import {
 } from "@tanstack/react-query";
 
 import { generateProjectOverviewMetadata } from "@/utilities/metadata/projectMetadata";
-import { getProjectData } from "@/utilities/queries/getProjectData";
+import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 import { Metadata } from "next";
+import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 
 type Params = Promise<{
   projectId: string;
@@ -22,7 +23,7 @@ export async function generateMetadata({
   const awaitedParams = await params;
   const { projectId } = awaitedParams;
 
-  const projectInfo = await getProjectData(projectId);
+  const projectInfo = await getProjectCachedData(projectId);
 
   return generateProjectOverviewMetadata(projectInfo, projectId);
 }
@@ -38,17 +39,14 @@ export default async function RootLayout(props: {
 
   const queryClient = new QueryClient({
     defaultOptions: {
-      queries: {
-        staleTime: 5 * 60 * 1000, // 5 minutes
-        gcTime: 10 * 60 * 1000, // 10 minutes
-      },
+      queries: defaultQueryOptions,
     },
   });
 
   await queryClient.prefetchQuery({
     queryKey: ["project", projectId],
     queryFn: async () => {
-      return await getProjectData(projectId);
+      return await getProjectCachedData(projectId);
     },
   });
 

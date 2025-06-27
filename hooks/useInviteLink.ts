@@ -5,6 +5,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { queryClient } from "@/components/Utilities/WagmiProvider";
 import { keccak256, toHex } from "viem";
 import toast from "react-hot-toast";
+import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 
 interface InviteCode {
   id: string;
@@ -16,7 +17,7 @@ interface InviteCode {
 
 /**
  * React Query hook for managing project invite links
- * 
+ *
  * Features:
  * - Fetches current invite code for a project
  * - Generates new invite codes
@@ -29,7 +30,7 @@ export const useInviteLink = (projectIdOrSlug: string | undefined) => {
     queryKey: ["invite-code", projectIdOrSlug],
     queryFn: async () => {
       if (!projectIdOrSlug) return null;
-      
+
       try {
         const [data, error] = await fetchData(
           INDEXER.PROJECT.INVITATION.GET_LINKS(projectIdOrSlug)
@@ -43,18 +44,17 @@ export const useInviteLink = (projectIdOrSlug: string | undefined) => {
       }
     },
     enabled: !!projectIdOrSlug,
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    ...defaultQueryOptions,
   });
 
   // Mutation for generating new invite code
   const generateMutation = useMutation({
     mutationFn: async () => {
       if (!projectIdOrSlug) throw new Error("Project ID is required");
-      
+
       const messageToSign = new Date().getTime();
       const hexedMessage = keccak256(toHex(messageToSign));
-      
+
       const [data, error] = await fetchData(
         INDEXER.PROJECT.INVITATION.NEW_CODE(projectIdOrSlug),
         "POST",
@@ -62,12 +62,14 @@ export const useInviteLink = (projectIdOrSlug: string | undefined) => {
           hash: hexedMessage,
         }
       );
-      
+
       if (error) throw error;
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["invite-code", projectIdOrSlug] });
+      queryClient.invalidateQueries({
+        queryKey: ["invite-code", projectIdOrSlug],
+      });
     },
     onError: (error) => {
       errorManager("Failed to generate invite code", error, {
@@ -80,18 +82,20 @@ export const useInviteLink = (projectIdOrSlug: string | undefined) => {
   const revokeMutation = useMutation({
     mutationFn: async (inviteId: string) => {
       if (!projectIdOrSlug) throw new Error("Project ID is required");
-      
+
       const [response, error] = await fetchData(
         INDEXER.PROJECT.INVITATION.REVOKE_CODE(projectIdOrSlug, inviteId),
         "PUT"
       );
-      
+
       if (error) throw error;
       return response;
     },
     onSuccess: () => {
       toast.success("Invite code revoked successfully");
-      queryClient.invalidateQueries({ queryKey: ["invite-code", projectIdOrSlug] });
+      queryClient.invalidateQueries({
+        queryKey: ["invite-code", projectIdOrSlug],
+      });
     },
     onError: (error) => {
       errorManager("Failed to revoke invite code", error);
@@ -101,21 +105,21 @@ export const useInviteLink = (projectIdOrSlug: string | undefined) => {
   return {
     // Invite code data
     inviteCode: query.data,
-    
+
     // Loading states
     isLoading: query.isLoading,
     isGenerating: generateMutation.isPending,
     isRevoking: revokeMutation.isPending,
-    
+
     // Error states
     error: query.error,
     isError: query.isError,
-    
+
     // Actions
     generateCode: generateMutation.mutate,
     revokeCode: (inviteId: string) => revokeMutation.mutate(inviteId),
     refetch: query.refetch,
-    
+
     // Query state
     isSuccess: query.isSuccess,
   };
@@ -124,12 +128,17 @@ export const useInviteLink = (projectIdOrSlug: string | undefined) => {
 /**
  * Helper hook to build the invite URL
  */
-export const useInviteUrl = (project: { uid?: string; details?: { data: { slug?: string } } } | undefined, inviteCode: string | undefined) => {
+export const useInviteUrl = (
+  project: { uid?: string; details?: { data: { slug?: string } } } | undefined,
+  inviteCode: string | undefined
+) => {
   if (!project || !inviteCode) return null;
-  
-  const isDev = process.env.NEXT_PUBLIC_ENV === 'dev' || process.env.NODE_ENV === 'development';
-  const baseUrl = isDev ? 'gapstag.karmahq.xyz' : 'gap.karmahq.xyz';
+
+  const isDev =
+    process.env.NEXT_PUBLIC_ENV === "dev" ||
+    process.env.NODE_ENV === "development";
+  const baseUrl = isDev ? "gapstag.karmahq.xyz" : "gap.karmahq.xyz";
   const projectIdentifier = project.details?.data.slug || project.uid;
-  
+
   return `https://${baseUrl}/project/${projectIdentifier}/?invite-code=${inviteCode}`;
 };

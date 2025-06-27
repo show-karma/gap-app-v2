@@ -11,8 +11,7 @@ import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-index
 import { TrackTags } from "./TrackTags";
 import { ProfilePicture } from "./Utilities/ProfilePicture";
 import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useLinkStatus } from "next/link";
 import { Spinner } from "./Utilities/Spinner";
 
 interface GrantCardProps {
@@ -42,9 +41,24 @@ const updatesLength = (
 ) =>
   milestones.filter((milestone) => milestone.completed).length + updatesLength;
 
-export const GrantCard = ({ grant, index }: GrantCardProps) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+// Loading indicator component that uses useLinkStatus
+const LoadingIndicator = () => {
+  const { pending } = useLinkStatus();
+
+  if (!pending) return null;
+
+  return (
+    <div className="absolute inset-0 z-10 flex items-center justify-center bg-gradient-to-br from-blue-50/90 to-purple-50/90 dark:from-blue-950/90 dark:to-purple-950/90 rounded-2xl backdrop-blur-sm">
+      <div className="flex flex-col items-center gap-3">
+        <Spinner />
+      </div>
+    </div>
+  );
+};
+
+// Card content component that uses useLinkStatus for styling
+const GrantCardContent = ({ grant, index }: GrantCardProps) => {
+  const { pending } = useLinkStatus();
 
   const selectedTrackIds = grant.details?.data?.selectedTrackIds as
     | string[]
@@ -60,34 +74,12 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
   // Check if we have valid track IDs to display
   const hasTrackIds = selectedTrackIds && selectedTrackIds.length > 0;
 
-  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
-    setIsLoading(true);
-    const href = PAGES.PROJECT.OVERVIEW(
-      grant.project?.details?.data?.slug || grant.refUID || ""
-    );
-    router.push(href);
-  };
-
   return (
-    <Link
-      id="grant-card"
-      href={PAGES.PROJECT.OVERVIEW(
-        grant.project?.details?.data?.slug || grant.refUID || ""
-      )}
-      onClick={handleClick}
-      className="flex h-full w-full max-w-[320px] relative flex-col items-start justify-between gap-3 rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2 transition-all duration-300 ease-in-out hover:opacity-80"
-    >
-      {isLoading && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-gradient-to-br from-blue-50/90 to-purple-50/90 dark:from-blue-950/90 dark:to-purple-950/90 rounded-2xl backdrop-blur-sm">
-          <div className="flex flex-col items-center gap-3">
-            <Spinner />
-          </div>
-        </div>
-      )}
+    <div className="flex flex-col items-start justify-start">
+      <LoadingIndicator />
       <div
         className={`w-full flex flex-col gap-1 transition-all duration-300 ${
-          isLoading ? "scale-95 blur-sm opacity-50" : ""
+          pending ? "scale-95 blur-sm opacity-50" : ""
         }`}
       >
         <div
@@ -97,7 +89,7 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
           }}
         />
 
-        <div className="flex w-full flex-col px-3">
+        <div className="flex w-full flex-col px-3 items-start justify-start text-start">
           <div className="flex flex-row items-center justify-between mb-1">
             <div className="flex flex-row items-center gap-2">
               <div className="flex justify-center">
@@ -141,6 +133,10 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
                   0,
                   100
                 )}
+                allowElement={(element, index, parent) => {
+                  // Prevent rendering links to avoid nested <a> tags
+                  return element.tagName !== "a";
+                }}
               />
             </div>
           </div>
@@ -191,6 +187,22 @@ export const GrantCard = ({ grant, index }: GrantCardProps) => {
       </div>
 
       <div className="h-1" />
+    </div>
+  );
+};
+
+export const GrantCard = ({ grant, index }: GrantCardProps) => {
+  const href = PAGES.PROJECT.OVERVIEW(
+    grant.project?.details?.data?.slug || grant.refUID || ""
+  );
+
+  return (
+    <Link
+      href={href}
+      prefetch={false}
+      className="flex h-full w-full max-w-[320px] relative flex-col items-start justify-between gap-3 rounded-2xl border border-zinc-200 bg-white dark:bg-zinc-900 p-2 transition-all duration-300 ease-in-out hover:opacity-80"
+    >
+      <GrantCardContent grant={grant} index={index} />
     </Link>
   );
 };

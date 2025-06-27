@@ -16,7 +16,7 @@ export async function middleware(request: NextRequest) {
         community.slug === communityId ||
         community.uid.toLowerCase() === communityId.toLowerCase()
     );
-    if (!path.startsWith("/community/")) {
+    if (isChosenCommunity && !path.startsWith("/community/")) {
       if (isChosenCommunity) {
         const newPath = path.replace(/^\/([^\/]+)/, "/community/$1");
         return NextResponse.redirect(new URL(newPath, request.url));
@@ -51,6 +51,10 @@ export async function middleware(request: NextRequest) {
     }
     if (path.includes("/funding/create-grant")) {
       const newPath = path.replace("/funding/create-grant", "/funding/new");
+      return NextResponse.redirect(new URL(newPath, request.url));
+    }
+    if (path.includes("/roadmap") && !path.includes("/project/roadmap")) {
+      const newPath = path.replace("/roadmap", "/updates");
       return NextResponse.redirect(new URL(newPath, request.url));
     }
   }

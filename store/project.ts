@@ -15,10 +15,6 @@ interface ProjectStore {
   setIsProjectAdmin: (isProjectAdmin: boolean) => void;
   isProjectOwner: boolean;
   setIsProjectOwner: (isProjectOwner: boolean) => void;
-  isProjectOwnerLoading: boolean;
-  setIsProjectOwnerLoading: (loading: boolean) => void;
-  isProjectAdminLoading: boolean;
-  setIsProjectAdminLoading: (loading: boolean) => void;
   teamProfiles: ContributorProfile[] | undefined;
   setTeamProfiles: (profiles: ContributorProfile[] | undefined) => void;
 }
@@ -53,10 +49,4 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   setIsProjectAdmin: (isProjectAdmin: boolean) => set({ isProjectAdmin }),
   isProjectOwner: false,
   setIsProjectOwner: (isProjectOwner: boolean) => set({ isProjectOwner }),
-  isProjectAdminLoading: true,
-  setIsProjectAdminLoading: (loading: boolean) =>
-    set({ isProjectAdminLoading: loading }),
-  isProjectOwnerLoading: true,
-  setIsProjectOwnerLoading: (loading: boolean) =>
-    set({ isProjectOwnerLoading: loading }),
 }));
