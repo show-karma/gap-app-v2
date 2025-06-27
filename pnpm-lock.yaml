@@ -72,8 +72,8 @@ importers:
         specifier: ^9.31.0
         version: 9.31.0(@opentelemetry/context-async-hooks@1.30.1(@opentelemetry/api@1.9.0))(@opentelemetry/core@1.30.1(@opentelemetry/api@1.9.0))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.0))(next@15.3.3(@babel/core@7.27.4)(@opentelemetry/api@1.9.0)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(sass@1.89.2))(react@19.1.0)(webpack@5.99.9)
       '@show-karma/karma-gap-sdk':
-        specifier: 0.4.14
-        version: 0.4.14(@typechain/ethers-v6@0.5.1(ethers@6.11.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(typechain@8.3.2(typescript@5.1.3))(typescript@5.1.3))(bufferutil@4.0.9)(ts-node@10.9.2(@types/node@20.2.5)(typescript@5.1.3))(typechain@8.3.2(typescript@5.1.3))(typescript@5.1.3)(utf-8-validate@5.0.10)(zod@3.25.67)
+        specifier: 0.4.15
+        version: 0.4.15(@typechain/ethers-v6@0.5.1(ethers@6.11.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(typechain@8.3.2(typescript@5.1.3))(typescript@5.1.3))(bufferutil@4.0.9)(ts-node@10.9.2(@types/node@20.2.5)(typescript@5.1.3))(typechain@8.3.2(typescript@5.1.3))(typescript@5.1.3)(utf-8-validate@5.0.10)(zod@3.25.67)
       '@tailwindcss/typography':
         specifier: ^0.5.10
         version: 0.5.16(tailwindcss@3.4.17(ts-node@10.9.2(@types/node@20.2.5)(typescript@5.1.3)))
@@ -2721,8 +2721,8 @@ packages:
     peerDependencies:
       webpack: '>=4.40.0'
 
-  '@show-karma/karma-gap-sdk@0.4.14':
-    resolution: {integrity: sha512-O8ANFol0FLx+J8O4iC6vXiQDqjx3EAFBuK44SdmGM/obFVuiJ2/d4IS+2tX+dh86q5MU5oqSW66ilSXGPWlDJA==}
+  '@show-karma/karma-gap-sdk@0.4.15':
+    resolution: {integrity: sha512-+oJew9olkXPPSmwuhuHnxhA3MCnjlfd7IDf2xOdgOu2iPer9ZD75I9I3CNztdY3rLLe6mdKYsZNpgSfb528Pxw==}
 
   '@shuding/opentype.js@1.4.0-beta.0':
     resolution: {integrity: sha512-3NgmNyH3l/Hv6EvsWJbsvpcpUba6R8IREQ83nH83cyakCw7uM1arZKNfHwv1Wz6jgqrF/j4x5ELvR6PnK9nTcA==}
@@ -12572,7 +12572,7 @@ snapshots:
       - encoding
       - supports-color
 
-  '@show-karma/karma-gap-sdk@0.4.14(@typechain/ethers-v6@0.5.1(ethers@6.11.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(typechain@8.3.2(typescript@5.1.3))(typescript@5.1.3))(bufferutil@4.0.9)(ts-node@10.9.2(@types/node@20.2.5)(typescript@5.1.3))(typechain@8.3.2(typescript@5.1.3))(typescript@5.1.3)(utf-8-validate@5.0.10)(zod@3.25.67)':
+  '@show-karma/karma-gap-sdk@0.4.15(@typechain/ethers-v6@0.5.1(ethers@6.11.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(typechain@8.3.2(typescript@5.1.3))(typescript@5.1.3))(bufferutil@4.0.9)(ts-node@10.9.2(@types/node@20.2.5)(typescript@5.1.3))(typechain@8.3.2(typescript@5.1.3))(typescript@5.1.3)(utf-8-validate@5.0.10)(zod@3.25.67)':
     dependencies:
       '@allo-team/allo-v2-sdk': 1.1.3(@typechain/ethers-v6@0.5.1(ethers@6.11.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(typechain@8.3.2(typescript@5.1.3))(typescript@5.1.3))(bufferutil@4.0.9)(ethers@6.11.0(bufferutil@4.0.9)(utf-8-validate@5.0.10))(ts-node@10.9.2(@types/node@20.2.5)(typescript@5.1.3))(typechain@8.3.2(typescript@5.1.3))(typescript@5.1.3)(utf-8-validate@5.0.10)(zod@3.25.67)
       '@ethereum-attestation-service/eas-sdk': 1.4.2(bufferutil@4.0.9)(ts-node@10.9.2(@types/node@20.2.5)(typescript@5.1.3))(typescript@5.1.3)(utf-8-validate@5.0.10)
