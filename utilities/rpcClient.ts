@@ -8,6 +8,7 @@ import {
   sei,
   sepolia,
   lisk,
+  scroll,
 } from "viem/chains";
 import { envVars } from "./enviromentVars";
 import { getChainNameById } from "./network";
@@ -52,17 +53,24 @@ const liskClient = createPublicClient({
   transport: http(envVars.RPC.LISK),
 });
 
+const scrollClient = createPublicClient({
+  chain: scroll,
+  transport: http(envVars.RPC.SCROLL),
+});
+
 export const rpcClient = {
   //   prod networks
   optimism: optimismClient,
   sei: seiClient,
   arbitrum: arbitrumClient,
   celo: celoClient,
+  lisk: liskClient,
+  scroll: scrollClient,
   //   testnets
   optimismSepolia: optimismSepoliaClient,
   sepolia: sepoliaClient,
   baseSepolia: baseSepoliaClient,
-  lisk: liskClient,
+
 };
 
 export const getRPCClient = async (chainId: number) => {
