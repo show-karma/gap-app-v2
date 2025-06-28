@@ -83,8 +83,5 @@ export const useDynamicAA = () => {
     // Capabilities
     isAccountAbstractionSupported: isAccountAbstractionSupported(),
     capabilities: getWalletCapabilities(),
-
-    // Actions
-    sendTransaction,
   };
 };

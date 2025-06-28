@@ -1,3 +1,4 @@
+"use client";
 import { useCallback, useMemo } from "react";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useDynamicContext, useIsLoggedIn } from "@dynamic-labs/sdk-react-core";

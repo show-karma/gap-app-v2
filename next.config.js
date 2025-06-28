@@ -20,9 +20,36 @@ const nextConfig = {
     dirs: ["app", "components", "utilities", "hooks", "store", "types"],
   },
   experimental: {
-    optimizePackageImports: ["@dynamic-labs/sdk-react-core"],
+    optimizePackageImports: [
+      "@dynamic-labs/sdk-react-core",
+      "@tanstack/react-query",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-popover",
+      "@heroicons/react",
+      "@show-karma/karma-gap-sdk",
+    ],
+    // Enable webpack build cache for faster builds
+    webpackBuildWorker: true,
   },
   webpack: (config, { isServer, webpack }) => {
+    // Memory optimization settings
+    config.optimization = {
+      ...config.optimization,
+      // Split chunks to reduce memory pressure
+      splitChunks: {
+        ...config.optimization.splitChunks,
+        cacheGroups: {
+          ...config.optimization.splitChunks?.cacheGroups,
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: "vendors",
+            chunks: "all",
+            maxSize: 244000, // ~244KB chunks
+          },
+        },
+      },
+    };
+
     // Fix for browserslist and other Node.js modules
     if (!isServer) {
       config.resolve.fallback = {
@@ -90,14 +117,14 @@ const nextConfig = {
   },
 };
 
-module.exports = withBundleAnalyzer(removeImports(nextConfig));
-
-// Injected content via Sentry wizard below
-
 const { withSentryConfig } = require("@sentry/nextjs");
 
+// Apply plugins in order: removeImports -> bundleAnalyzer -> Sentry
+const configWithImports = removeImports(nextConfig);
+const configWithAnalyzer = withBundleAnalyzer(configWithImports);
+
 module.exports = withSentryConfig(
-  module.exports,
+  configWithAnalyzer,
   {
     // For all available options, see:
     // https://github.com/getsentry/sentry-webpack-plugin#options
