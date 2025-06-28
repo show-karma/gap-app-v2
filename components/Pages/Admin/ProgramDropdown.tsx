@@ -14,10 +14,11 @@ import { ChevronDown } from "@/components/Icons/ChevronDown";
 import pluralize from "pluralize";
 import Image from "next/image";
 import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
-import { useAccount } from "wagmi";
+
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useWallet } from "@/hooks/useWallet";
 
 const ProgramDropdown: FC<{
   selectedProgram: GrantProgram | null;
@@ -41,7 +42,7 @@ const ProgramDropdown: FC<{
 }) => {
   const [open, setOpen] = useState(false);
   const [adding, setAdding] = useState(false);
-  const { address: owner } = useAccount();
+  const { address: owner } = useWallet();
 
   return (
     <Popover.Root open={open} onOpenChange={setOpen}>

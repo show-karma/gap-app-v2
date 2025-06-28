@@ -1,5 +1,5 @@
 import { getWalletClient } from "@wagmi/core";
-import { config } from "./wagmi/config";
+import { dynamicConfig } from "./wagmi/dynamic-config";
 import { errorManager } from "@/components/Utilities/errorManager";
 
 /**
@@ -15,7 +15,7 @@ export const safeGetWalletClient = async (
   setLoadingState?: (state: boolean) => void
 ) => {
   try {
-    const walletClient = await getWalletClient(config, {
+    const walletClient = await getWalletClient(dynamicConfig, {
       chainId,
     });
 

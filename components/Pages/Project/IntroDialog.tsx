@@ -18,7 +18,8 @@ import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useContactInfo } from "@/hooks/useContactInfo";
-import { useAccount } from "wagmi";
+
+import { useWallet } from "@/hooks/useWallet";
 
 type IntroDialogProps = {};
 
@@ -42,7 +43,7 @@ const labelStyle =
 
 export const IntroDialog: FC<IntroDialogProps> = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const { address } = useAccount();
+  const { address } = useWallet();
 
   const { isIntroModalOpen: isOpen, setIsIntroModalOpen: setIsOpen } =
     useIntroModalStore();

@@ -8,14 +8,15 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { Dialog, Transition } from "@headlessui/react";
-import { CurrencyDollarIcon , CheckIcon } from "@heroicons/react/24/outline";
+import { CurrencyDollarIcon, CheckIcon } from "@heroicons/react/24/outline";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import type { FC, ReactNode } from "react";
 import { Fragment, useEffect, useState, useCallback } from "react";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
+
 import { isAddress } from "viem";
 import debounce from "lodash.debounce";
+import { useWallet } from "@/hooks/useWallet";
 
 interface SetPayoutAddressButtonProps {
   buttonClassName?: string;
@@ -39,7 +40,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
     (state) => state.isCommunityAdmin
   );
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
-  const { address } = useAccount();
+  const { address } = useWallet();
 
   const [isOpen, setIsOpen] = useState(false);
   const [payoutAddress, setPayoutAddress] = useState("");
@@ -77,7 +78,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
       // Reset form state when modal opens
       setError(null);
       setValidationError(null);
-      
+
       // Set default value from project
       if (project?.payoutAddress) {
         setPayoutAddress(project.payoutAddress);
@@ -120,10 +121,8 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
     }
 
     // Check if it starts with 0x
-    if (!address.startsWith('0x')) {
-      setValidationError(
-        "Ethereum address must start with '0x'"
-      );
+    if (!address.startsWith("0x")) {
+      setValidationError("Ethereum address must start with '0x'");
       setIsValidated(false);
       return false;
     }
@@ -140,9 +139,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
 
     // Use viem's isAddress for final validation
     if (!isAddress(address)) {
-      setValidationError(
-        "Please enter a valid Ethereum address"
-      );
+      setValidationError("Please enter a valid Ethereum address");
       setIsValidated(false);
       return false;
     }
@@ -170,11 +167,11 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
   const handleAddressChange = (value: string) => {
     setPayoutAddress(value);
     setError(null);
-    
+
     // Clear validation state when user starts typing
     setIsValidated(false);
     setValidationError(null);
-    
+
     // Trigger debounced validation
     debouncedValidate(value);
   };
@@ -201,11 +198,14 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
       if (data) {
         // Show success message from API response
         toast.success(data.message || MESSAGES.PROJECT.PAYOUT_ADDRESS.SUCCESS);
-        
+
         // Update project store with new payout address
-        const updatedProject = { ...project, payoutAddress: payoutAddress.trim() || null };
+        const updatedProject = {
+          ...project,
+          payoutAddress: payoutAddress.trim() || null,
+        };
         setProject(updatedProject);
-        
+
         // Close modal
         setIsOpen(false);
         if (buttonElement === null && onClose) {
@@ -215,7 +215,8 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
 
       if (error) {
         // Use the error message from the API, with fallbacks for different status codes
-        const errorMessage = error.message || getDefaultErrorMessage(error.status);
+        const errorMessage =
+          error.message || getDefaultErrorMessage(error.status);
         setError(errorMessage);
         throw new Error(errorMessage);
       }
@@ -223,7 +224,8 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
       // Only show errorManager for unexpected errors
       if (!error) {
         errorManager(
-          MESSAGES.PROJECT.PAYOUT_ADDRESS.ERROR || "Error setting payout address",
+          MESSAGES.PROJECT.PAYOUT_ADDRESS.ERROR ||
+            "Error setting payout address",
           err,
           {
             projectUID: project.uid,
@@ -254,15 +256,15 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
       if (data) {
         // Show success message from API response
         toast.success(data.message || "Payout address removed successfully");
-        
+
         // Update project store to remove payout address
         const updatedProject = { ...project, payoutAddress: null };
         setProject(updatedProject);
-        
+
         // Clear form
         setPayoutAddress("");
         setIsValidated(false);
-        
+
         // Close modal
         setIsOpen(false);
         if (buttonElement === null && onClose) {
@@ -272,7 +274,8 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
 
       if (error) {
         // Use the error message from the API, with fallbacks for different status codes
-        const errorMessage = error.message || getDefaultErrorMessage(error.status);
+        const errorMessage =
+          error.message || getDefaultErrorMessage(error.status);
         setError(errorMessage);
         throw new Error(errorMessage);
       }
@@ -313,8 +316,10 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
           className={buttonClassName}
           data-set-payout-button={dataAttr}
         >
-          <CurrencyDollarIcon  className={"mr-2 h-5 w-5"} aria-hidden="true" />
-          {project?.payoutAddress ? "Manage Payout Address" : "Set Payout Address"}
+          <CurrencyDollarIcon className={"mr-2 h-5 w-5"} aria-hidden="true" />
+          {project?.payoutAddress
+            ? "Manage Payout Address"
+            : "Set Payout Address"}
         </Button>
       )}
       <Transition appear show={isOpen} as={Fragment}>
@@ -348,18 +353,20 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                     className="text-gray-900 dark:text-zinc-100"
                   >
                     <h2 className="text-2xl font-bold leading-6">
-                      {project?.payoutAddress ? "Manage Payout Address" : "Set Payout Address"}
+                      {project?.payoutAddress
+                        ? "Manage Payout Address"
+                        : "Set Payout Address"}
                     </h2>
                     <p className="text-md text-gray-500 dark:text-gray-400 mt-2">
-                      {project?.payoutAddress 
+                      {project?.payoutAddress
                         ? "Update or remove the Ethereum address for receiving payouts for this project."
-                        : "Set an Ethereum address to receive payouts for this project."
-                      }
+                        : "Set an Ethereum address to receive payouts for this project."}
                     </p>
                     {project?.payoutAddress && (
                       <div className="mt-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                         <p className="text-sm text-blue-700 dark:text-blue-300">
-                          <strong>Current Address:</strong> {project.payoutAddress}
+                          <strong>Current Address:</strong>{" "}
+                          {project.payoutAddress}
                         </p>
                       </div>
                     )}
@@ -374,7 +381,9 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                           <input
                             type="text"
                             value={payoutAddress}
-                            onChange={(e) => handleAddressChange(e.target.value)}
+                            onChange={(e) =>
+                              handleAddressChange(e.target.value)
+                            }
                             className="text-sm rounded-md w-full text-gray-600 dark:text-gray-300 bg-transparent border-b border-gray-300 dark:border-gray-600 focus:outline-none focus:border-blue-500"
                             placeholder="0x1234567890abcdef1234567890abcdef12345678"
                           />
@@ -413,7 +422,11 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
                       }
                       className="bg-primary-500 text-white hover:bg-primary-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
                     >
-                      {isLoading ? "Saving..." : project?.payoutAddress ? "Update Payout Address" : "Set Payout Address"}
+                      {isLoading
+                        ? "Saving..."
+                        : project?.payoutAddress
+                        ? "Update Payout Address"
+                        : "Set Payout Address"}
                     </Button>
                     {project?.payoutAddress && (
                       <Button
@@ -443,4 +456,4 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
 };
 
 // Add display name
-SetPayoutAddressButton.displayName = "SetPayoutAddressButton"; 
+SetPayoutAddressButton.displayName = "SetPayoutAddressButton";

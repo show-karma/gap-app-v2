@@ -19,7 +19,7 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
+
 import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
 import { useState } from "react";
@@ -60,10 +60,9 @@ export const ProjectObjectiveCompletionForm = ({
 }: ProjectObjectiveCompletionFormProps) => {
   const project = useProjectStore((state) => state.project);
   const [isCompleting, setIsCompleting] = useState(false);
-  const { chain, address } = useAccount();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
-  const { switchChainAsync } = useWallet();
+  const { chain, address, switchChainAsync } = useWallet();
   const projectId = useParams().projectId as string;
   const {
     register,

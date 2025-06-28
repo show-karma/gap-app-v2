@@ -40,9 +40,10 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import pluralize from "pluralize";
-import { useAccount } from "wagmi";
+
 import { InformationBlock } from "./ProjectBodyTabs";
 import { useProjectInstance } from "@/hooks/useProjectInstance";
+import { useWallet } from "@/hooks/useWallet";
 
 const ContributorProfileDialog = dynamic(
   () =>
@@ -65,7 +66,7 @@ function ProjectPage() {
     project?.details?.data.slug || project?.uid || ""
   );
   const { teamProfiles } = useTeamProfiles(project);
-  const { address } = useAccount();
+  const { address } = useWallet();
   const { openModal } = useContributorProfileModalStore();
   const inviteCodeParam = useSearchParams().get("invite-code");
   const params = useParams();

@@ -26,7 +26,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as Tooltip from "@radix-ui/react-tooltip";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import {
   ExternalLink,
   type IProjectDetails,
@@ -47,13 +47,13 @@ import {
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { type Hex, isAddress, zeroHash } from "viem";
-import { useAccount } from "wagmi";
+
 import { z } from "zod";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { ExternalLink as ExternalLinkComponent } from "@/components/Utilities/ExternalLink";
 import { Skeleton } from "@/components/Utilities/Skeleton";
-import { useAuthStore } from "@/store/auth";
+
 import { useProjectEditModalStore } from "@/store/modals/projectEdit";
 import { useSimilarProjectsModalStore } from "@/store/modals/similarProjects";
 import { useStepper } from "@/store/modals/txStepper";
@@ -68,7 +68,7 @@ import { getProjectById } from "@/utilities/sdk";
 import { updateProject } from "@/utilities/sdk/projects/editProject";
 import { SOCIALS } from "@/utilities/socials";
 import { cn } from "@/utilities/tailwind";
-import { config } from "@/utilities/wagmi/config";
+import { dynamicConfig as config } from "@/utilities/wagmi/dynamic-config";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { getWalletClient } from "@wagmi/core";
 import debounce from "lodash.debounce";
@@ -228,12 +228,9 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [step, setStep] = useState(0);
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isConnected, address } = useAccount();
-  const { isAuth } = useAuthStore();
-  const { chain } = useAccount();
-  const { switchChainAsync } = useWallet();
+  const { switchChainAsync, isLoggedIn, address, chain } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
-  const { openConnectModal } = useConnectModal();
+  const { setShowAuthFlow } = useDynamicContext();
   const router = useRouter();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
@@ -383,11 +380,10 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const createProject = async (data: SchemaType) => {
     try {
       setIsLoading(true);
-      if (!isConnected || !isAuth) {
-        openConnectModal?.();
+      if (!isLoggedIn || !address) {
+        setShowAuthFlow?.(true);
         return;
       }
-      if (!address) return;
       if (!gap) return;
 
       const chainSelected = data.chainID;
@@ -642,8 +638,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
     let gapClient = gap;
     try {
       setIsLoading(true);
-      if (!isConnected || !isAuth) {
-        openConnectModal?.();
+      if (!isLoggedIn) {
+        setShowAuthFlow?.(true);
         return;
       }
       if (!address || !projectToUpdate) return;

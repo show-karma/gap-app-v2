@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useEffect } from "react";
 import Papa from "papaparse";
 import { isAddress } from "viem";
-import { useAccount, useWalletClient, useChainId } from "wagmi";
+import { useWalletClient, useChainId } from "wagmi";
 import { DisbursementReview } from "./DisbursementReview";
 import { DisbursementRecipient } from "../../types/disbursement";
 import { DisbursementStepper, DisbursementStep } from "./DisbursementStepper";
@@ -63,7 +63,7 @@ interface TransactionState {
 }
 
 export const DisbursementForm = () => {
-  const { address: userAddress, isConnected } = useAccount();
+  const { address: userAddress, isLoggedIn } = useWallet();
   const { data: walletClient } = useWalletClient();
   const walletChainId = useChainId();
   const { switchChainAsync, isPending: isSwitchingNetwork } = useWallet();
@@ -107,7 +107,7 @@ export const DisbursementForm = () => {
     setNetwork(newNetwork);
 
     // Auto-switch wallet network if connected and different from selected
-    if (isConnected && walletChainId !== newNetwork) {
+    if (isLoggedIn && walletChainId !== newNetwork) {
       try {
         await switchChainAsync({ chainId: newNetwork });
       } catch (error) {
@@ -185,7 +185,7 @@ export const DisbursementForm = () => {
     if (
       !safeAddress ||
       !userAddress ||
-      !isConnected ||
+      !isLoggedIn ||
       recipients.length === 0
     ) {
       return;
@@ -271,7 +271,7 @@ export const DisbursementForm = () => {
   }, [
     safeAddress,
     userAddress,
-    isConnected,
+    isLoggedIn,
     recipients,
     network,
     token,
@@ -319,14 +319,14 @@ export const DisbursementForm = () => {
 
   // Trigger pre-flight checks when relevant data changes
   useEffect(() => {
-    if (safeAddress && userAddress && isConnected && recipients.length > 0) {
+    if (safeAddress && userAddress && isLoggedIn && recipients.length > 0) {
       runPreflightChecks();
     }
   }, [
     runPreflightChecks,
     safeAddress,
     userAddress,
-    isConnected,
+    isLoggedIn,
     recipients,
     walletChainId,
   ]);
@@ -344,7 +344,7 @@ export const DisbursementForm = () => {
     recipients.length > 0 &&
     !hasErrors &&
     safeAddress &&
-    isConnected &&
+    isLoggedIn &&
     preflightChecks.isCorrectNetwork === true &&
     preflightChecks.isDeployed === true &&
     preflightChecks.isOwner === true &&
@@ -515,7 +515,7 @@ export const DisbursementForm = () => {
           )}
 
           {/* Wallet Connection Warning */}
-          {!isConnected && (
+          {!isLoggedIn && (
             <StatusAlert
               type="warning"
               title="🔗 Wallet Connection Required"
@@ -677,7 +677,7 @@ export const DisbursementForm = () => {
           <DisbursementReview recipients={recipients} />
 
           {/* Pre-flight Check Status */}
-          {safeAddress && isConnected && (
+          {safeAddress && isLoggedIn && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
               <div className="flex items-center mb-6">
                 <div className="bg-blue-100 rounded-lg p-2 mr-3">

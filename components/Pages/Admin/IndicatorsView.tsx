@@ -23,8 +23,8 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { useGroupedIndicators } from "@/hooks/useGroupedIndicators";
 import { ProgramCard } from "./ProgramCard";
 import { MESSAGES } from "@/utilities/messages";
-import { useAccount } from "wagmi";
 import { LoadingSpinner } from "@/components/Disbursement/components/LoadingSpinner";
+import { useWallet } from "@/hooks/useWallet";
 
 // Custom Dropdown Menu Component - copied from CategoryView.tsx
 const DropdownMenu = ({
@@ -110,7 +110,7 @@ export const IndicatorsView = ({
   onRefresh,
   communityId,
 }: IndicatorsViewProps) => {
-  const { address } = useAccount();
+  const { address } = useWallet();
   const [indicatorViewType, setIndicatorViewType] = useState<
     "all" | "automated" | "manual"
   >("all");
@@ -135,7 +135,10 @@ export const IndicatorsView = ({
 
   // Use the indicators hook instead of direct fetch
   const {
-    data: groupedIndicators = { communityAdminCreated: [], projectOwnerCreated: [] },
+    data: groupedIndicators = {
+      communityAdminCreated: [],
+      projectOwnerCreated: [],
+    },
     refetch: refetchIndicators,
     isLoading,
   } = useGroupedIndicators({
@@ -214,9 +217,11 @@ export const IndicatorsView = ({
 
   // Total indicators count
   const getTotalIndicatorsCount = () => {
-    return groupedIndicators.communityAdminCreated.length + 
-           groupedIndicators.projectOwnerCreated.length + 
-           newIndicators.length;
+    return (
+      groupedIndicators.communityAdminCreated.length +
+      groupedIndicators.projectOwnerCreated.length +
+      newIndicators.length
+    );
   };
 
   // Check if an indicator is autosynced
@@ -225,11 +230,15 @@ export const IndicatorsView = ({
   };
 
   // Filter indicators based on search and view type
-  const getFilteredIndicators = (indicators: ImpactIndicator[]): ImpactIndicator[] => {
+  const getFilteredIndicators = (
+    indicators: ImpactIndicator[]
+  ): ImpactIndicator[] => {
     let filteredIndicators = [...indicators];
 
     if (indicatorViewType === "automated") {
-      filteredIndicators = filteredIndicators.filter((ind) => isAutosyncedIndicator(ind));
+      filteredIndicators = filteredIndicators.filter((ind) =>
+        isAutosyncedIndicator(ind)
+      );
     } else if (indicatorViewType === "manual") {
       filteredIndicators = filteredIndicators.filter(
         (ind) => !isAutosyncedIndicator(ind)
@@ -252,11 +261,17 @@ export const IndicatorsView = ({
     );
   };
 
-  const filteredCommunityAdminIndicators = getFilteredIndicators(groupedIndicators.communityAdminCreated);
-  const filteredProjectOwnerIndicators = getFilteredIndicators(groupedIndicators.projectOwnerCreated);
+  const filteredCommunityAdminIndicators = getFilteredIndicators(
+    groupedIndicators.communityAdminCreated
+  );
+  const filteredProjectOwnerIndicators = getFilteredIndicators(
+    groupedIndicators.projectOwnerCreated
+  );
 
   const hasIndicators = getTotalIndicatorsCount() > 0;
-  const hasFilteredIndicators = filteredCommunityAdminIndicators.length > 0 || filteredProjectOwnerIndicators.length > 0;
+  const hasFilteredIndicators =
+    filteredCommunityAdminIndicators.length > 0 ||
+    filteredProjectOwnerIndicators.length > 0;
   const isFiltering = searchQuery || indicatorViewType !== "all";
 
   const renderIndicatorsList = (
@@ -357,7 +372,11 @@ export const IndicatorsView = ({
       </div>
 
       {isLoading ? (
-        <LoadingSpinner size="lg" color="blue" message="Loading indicators..." />
+        <LoadingSpinner
+          size="lg"
+          color="blue"
+          message="Loading indicators..."
+        />
       ) : (
         <>
           {hasIndicators && (
@@ -379,7 +398,9 @@ export const IndicatorsView = ({
                   <DropdownMenu
                     value={indicatorViewType}
                     onChange={(value: any) =>
-                      setIndicatorViewType(value as "all" | "automated" | "manual")
+                      setIndicatorViewType(
+                        value as "all" | "automated" | "manual"
+                      )
                     }
                     options={filterOptions}
                   />
@@ -425,13 +446,19 @@ export const IndicatorsView = ({
                   className="text-indigo-500"
                 />
               </div>
-              <h3 className="text-lg font-semibold mb-2">No indicators found</h3>
+              <h3 className="text-lg font-semibold mb-2">
+                No indicators found
+              </h3>
               <p className="text-gray-500 dark:text-gray-400 mb-4 max-w-lg">
                 {searchQuery ? (
-                  <>No indicators match your search term. Try a different search.</>
+                  <>
+                    No indicators match your search term. Try a different
+                    search.
+                  </>
                 ) : indicatorViewType !== "all" ? (
                   <>
-                    No {indicatorViewType} indicators found. Try a different filter.
+                    No {indicatorViewType} indicators found. Try a different
+                    filter.
                   </>
                 ) : (
                   <>No indicators match your current filters.</>
@@ -459,8 +486,15 @@ export const IndicatorsView = ({
 
           {hasFilteredIndicators && (
             <div>
-              {renderIndicatorsList(filteredCommunityAdminIndicators, "Community Admin Indicators")}
-              {renderIndicatorsList(filteredProjectOwnerIndicators, "Project Owner Indicators", false)}
+              {renderIndicatorsList(
+                filteredCommunityAdminIndicators,
+                "Community Admin Indicators"
+              )}
+              {renderIndicatorsList(
+                filteredProjectOwnerIndicators,
+                "Project Owner Indicators",
+                false
+              )}
             </div>
           )}
         </>

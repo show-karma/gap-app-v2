@@ -24,7 +24,7 @@ import {
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
+
 import { UpdateMilestone } from "./UpdateMilestone";
 import { MilestoneVerificationSection } from "@/components/Shared/MilestoneVerification";
 
@@ -46,8 +46,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const handleEditing = (value: boolean) => {
     setIsEditing(value);
   };
-  const { chain, address } = useAccount();
-  const { switchChainAsync } = useWallet();
+  const { chain, address, switchChainAsync } = useWallet();
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
   const { changeStepperStep, setIsStepper } = useStepper();

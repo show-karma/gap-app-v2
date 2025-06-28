@@ -16,10 +16,11 @@ import { useState } from "react";
 import { ProjectDescriptionDialog } from "./Dialog";
 import { ProjectContacts } from "./Contacts";
 import { AllProjectsLoadingTable } from "./Loading";
-import { useAuthStore } from "@/store/auth";
+
 import { PAGES } from "@/utilities/pages";
 import Link from "next/link";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { useWallet } from "@/hooks/useWallet";
 
 const getAllProjects = async (
   offset: number,
@@ -62,7 +63,7 @@ export const AllProjects = () => {
     undefined
   );
 
-  const { isAuth } = useAuthStore();
+  const { isLoggedIn } = useWallet();
   // const isLoading = true;
   const { data, isLoading } = useQuery({
     queryKey: ["all-projects", page, pageSize],
@@ -71,7 +72,7 @@ export const AllProjects = () => {
         setCurrentPageInfo(res.pageInfo);
         return res;
       }),
-    enabled: isAuth && isOwner,
+    enabled: isLoggedIn && isOwner,
   });
   const projects = data?.data || [];
 

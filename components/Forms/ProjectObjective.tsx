@@ -6,7 +6,7 @@ import { z } from "zod";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 import { Button } from "../Utilities/Button";
 import { errorManager } from "../Utilities/errorManager";
-import { useAccount } from "wagmi";
+
 import { useProjectStore } from "@/store";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
@@ -50,9 +50,8 @@ export const ProjectObjectiveForm = ({
   previousObjective,
   stateHandler,
 }: ProjectObjectiveFormProps) => {
-  const { address, chain } = useAccount();
   const { project } = useProjectStore();
-  const { switchChainAsync } = useWallet();
+  const { address, chain, switchChainAsync } = useWallet();
   const params = useParams();
   const projectId = params.projectId as string;
   const router = useRouter();

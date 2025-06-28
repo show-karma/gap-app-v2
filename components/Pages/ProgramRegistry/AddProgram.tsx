@@ -9,7 +9,7 @@ import { Twitter2Icon } from "@/components/Icons/Twitter2";
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useGap } from "@/hooks/useGap";
-import { useAuthStore } from "@/store/auth";
+
 import { useStepper } from "@/store/modals/txStepper";
 import { useRegistryStore } from "@/store/registry";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
@@ -25,11 +25,11 @@ import { PAGES } from "@/utilities/pages";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { cn } from "@/utilities/tailwind";
-import { config } from "@/utilities/wagmi/config";
+import { dynamicConfig as config } from "@/utilities/wagmi/dynamic-config";
 import { Popover } from "@headlessui/react";
 import { CalendarIcon, ChevronLeftIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { AlloBase } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/Allo";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
@@ -40,7 +40,7 @@ import { DayPicker } from "react-day-picker";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
+
 import { z } from "zod";
 import { registryHelper } from "./helper";
 import { GrantProgram } from "./ProgramList";
@@ -287,11 +287,9 @@ export default function AddProgram({
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const { address, isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
-  const { chain } = useAccount();
+  const { address, isLoggedIn, chain } = useWallet();
   const { switchChainAsync } = useWallet();
-  const { openConnectModal } = useConnectModal();
+  const { setShowAuthFlow } = useDynamicContext();
   const { changeStepperStep, setIsStepper } = useStepper();
 
   const { isRegistryAdmin } = useRegistryStore();
@@ -299,8 +297,8 @@ export default function AddProgram({
   const createProgram = async (data: CreateProgramType) => {
     setIsLoading(true);
     try {
-      if (!isConnected || !isAuth) {
-        openConnectModal?.();
+      if (!isLoggedIn) {
+        setShowAuthFlow?.(true);
         return;
       }
       const chainSelected = data.networkToCreate;
@@ -396,8 +394,8 @@ export default function AddProgram({
   const editProgram = async (data: CreateProgramType) => {
     setIsLoading(true);
     try {
-      if (!isConnected || !isAuth || !address) {
-        openConnectModal?.();
+      if (!isLoggedIn || !address) {
+        setShowAuthFlow?.(true);
         return;
       }
       const chainSelected = data.networkToCreate;

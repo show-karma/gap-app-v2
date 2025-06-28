@@ -1,10 +1,10 @@
 import fetchData from "@/utilities/fetchData";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { useQuery } from "@tanstack/react-query";
-import { useAccount } from "wagmi";
+import { useWallet } from "./useWallet";
 
 export const useStaff = () => {
-  const { address } = useAccount();
+  const { address } = useWallet();
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["staffAuthorization", address],

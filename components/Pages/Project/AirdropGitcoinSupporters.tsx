@@ -2,7 +2,7 @@
 /* eslint-disable @next/next/no-img-element */
 import React from "react";
 import { useState } from "react";
-import { useAccount, useChainId } from "wagmi";
+import { useChainId } from "wagmi";
 import EthereumAddressToENSName from "@/components/EthereumAddressToENSName";
 import { TransactionLink } from "@/components/Utilities/TransactionLink";
 import axios from "axios";
@@ -75,7 +75,7 @@ const PlatformFeeNote = ({
     functionName: "PLATFORM_FEE",
   });
 
-  const { address: walletAddress } = useAccount();
+  const { address: walletAddress } = useWallet();
 
   useEffect(() => {
     if (platformFee) {
@@ -114,7 +114,7 @@ function MintNFTs({
   projectDetails: ProjectApplicationData;
   donations: DonationData[];
 }) {
-  const { address } = useAccount();
+  const { address } = useWallet();
   const [fileUploading, setFileUploading] = useState(false);
   const [imageIPFSHash, setImageIPFSHash] = useState<string | null>(null);
   const [chainSelected, setChainSelected] = useState<number>(

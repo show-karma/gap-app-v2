@@ -1,13 +1,12 @@
 "use client";
 import { Spinner } from "@/components/Utilities/Spinner";
-import { useAuthStore } from "@/store/auth";
+
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useEffect, useState } from "react";
-import { useAccount } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Button } from "@/components/Utilities/Button";
@@ -20,6 +19,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import { cn } from "@/utilities/tailwind";
+import { useWallet } from "@/hooks/useWallet";
 
 interface AdminButtonProps {
   href: string;
@@ -82,8 +82,7 @@ export const CommunityAdminPage = ({
   communityId: string;
   community: ICommunityResponse;
 }) => {
-  const { address, isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { isLoggedIn, address } = useWallet();
 
   const signer = useSigner();
 

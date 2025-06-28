@@ -16,7 +16,8 @@ import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-index
 
 import { cn } from "@/utilities/tailwind";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { useAccount } from "wagmi";
+
+import { useWallet } from "@/hooks/useWallet";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -84,7 +85,7 @@ export const AddExternalId: FC<AddExternalIdDialogProps> = ({
   communityUID,
   refreshGrant,
 }) => {
-  const { address } = useAccount();
+  const { address } = useWallet();
   const dataToUpdate = {
     profile: "",
   };

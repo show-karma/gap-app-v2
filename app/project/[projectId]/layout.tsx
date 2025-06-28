@@ -1,15 +1,11 @@
 /* eslint-disable @next/next/no-img-element */
 import { ProjectWrapper } from "@/components/Pages/Project/ProjectWrapper";
-import {
-  dehydrate,
-  HydrationBoundary,
-  QueryClient,
-} from "@tanstack/react-query";
+import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 
 import { generateProjectOverviewMetadata } from "@/utilities/metadata/projectMetadata";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 import { Metadata } from "next";
-import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
+import { queryClient } from "@/utilities/queries/client";
 
 type Params = Promise<{
   projectId: string;
@@ -36,12 +32,6 @@ export default async function RootLayout(props: {
   const { projectId } = awaitedParams;
 
   const { children } = props;
-
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: defaultQueryOptions,
-    },
-  });
 
   await queryClient.prefetchQuery({
     queryKey: ["project", projectId],

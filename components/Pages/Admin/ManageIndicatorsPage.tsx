@@ -19,13 +19,13 @@ import {
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { useAccount } from "wagmi";
+
 import { Disclosure } from "@headlessui/react";
 
 import { IndicatorsHub } from "@/components/Pages/Admin/IndicatorsHub";
 import { ManageCategoriesOutputs } from "@/components/Pages/Admin/ManageCategoriesOutputs";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { useAuthStore } from "@/store/auth";
+
 import { Category, ImpactSegment } from "@/types/impactMeasurement";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
@@ -35,13 +35,13 @@ import Image from "next/image";
 import { pickColor } from "@/components/GrantCard";
 import { CategoryView } from "./CategoryView";
 import { IndicatorsView } from "./IndicatorsView";
+import { useWallet } from "@/hooks/useWallet";
 
 export const metadata = defaultMetadata;
 
 export default function ManageIndicatorsPage() {
   const router = useRouter();
-  const { address, isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { isLoggedIn, address } = useWallet();
   const params = useParams();
   const communityId = params.communityId as string;
   // Call API

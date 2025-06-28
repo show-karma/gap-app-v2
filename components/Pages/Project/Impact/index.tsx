@@ -23,7 +23,7 @@ import { useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { FC, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
+
 import { AddImpactScreen } from "./AddImpactScreen";
 import { EmptyImpactScreen } from "./EmptyImpactScreen";
 import { ImpactVerifications } from "./ImpactVerifications";
@@ -68,9 +68,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
 
   const grantScreen = searchParams?.get("tab");
 
-  const { address } = useAccount();
-  const { chain } = useAccount();
-  const { switchChainAsync } = useWallet();
+  const { address, chain, switchChainAsync } = useWallet();
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();

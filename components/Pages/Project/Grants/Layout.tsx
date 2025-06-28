@@ -18,13 +18,14 @@ import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-ind
 import Link from "next/link";
 import { useParams, usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useAccount } from "wagmi";
+
 import { GrantCompleteButton } from "../../GrantMilestonesAndUpdates/GrantCompleteButton";
 import { GrantContext } from "../../GrantMilestonesAndUpdates/GrantContext";
 import { GrantDelete } from "../../GrantMilestonesAndUpdates/GrantDelete";
 import { GrantLinkExternalAddressButton } from "../../GrantMilestonesAndUpdates/GrantLinkExternalAddressButton";
 import { EmptyGrantsSection } from "../../GrantMilestonesAndUpdates/screens/EmptyGrantsSection";
 import { ProjectGrantsLayoutLoading } from "../Loading/Grants/Layout";
+import { useWallet } from "@/hooks/useWallet";
 
 interface GrantsLayoutProps {
   children: React.ReactNode;
@@ -88,7 +89,7 @@ export const GrantsLayout = ({
   const { communities } = useCommunitiesStore();
   const isCommunityAdminOfSome = communities.length !== 0;
   const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
-  const { address } = useAccount();
+  const { address } = useWallet();
   const setIsCommunityAdmin = useCommunityAdminStore(
     (state) => state.setIsCommunityAdmin
   );

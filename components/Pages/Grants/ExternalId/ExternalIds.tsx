@@ -10,7 +10,8 @@ import toast from "react-hot-toast";
 import { AddExternalId } from "./AddExternalIdDialog";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MESSAGES } from "@/utilities/messages";
-import { useAccount } from "wagmi";
+
+import { useWallet } from "@/hooks/useWallet";
 
 export default function ExternalIds({
   projectUID,
@@ -24,7 +25,7 @@ export default function ExternalIds({
   refreshGrant: () => Promise<IGrantResponse | undefined>;
 }) {
   const [removingId, setRemovingId] = useState<string | null>(null);
-  const { address } = useAccount();
+  const { address } = useWallet();
 
   const handleRemove = async (id: string) => {
     setRemovingId(id);

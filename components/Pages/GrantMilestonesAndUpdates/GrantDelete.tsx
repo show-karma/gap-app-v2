@@ -20,7 +20,6 @@ import { useRouter } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { type FC, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
 
 interface GrantDeleteProps {
   grant: IGrantResponse;
@@ -28,9 +27,7 @@ interface GrantDeleteProps {
 
 export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
   const [isDeletingGrant, setIsDeletingGrant] = useState(false);
-  const { address } = useAccount();
-  const { chain } = useAccount();
-  const { switchChainAsync } = useWallet();
+  const { address, chain, switchChainAsync } = useWallet();
 
   const refreshProject = useProjectStore((state) => state.refreshProject);
 

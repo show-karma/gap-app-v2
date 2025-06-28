@@ -16,7 +16,8 @@ import {
 import { Indicator } from "@/utilities/queries/getIndicatorsByCommunity";
 import { ProgramCard } from "./ProgramCard";
 import { MESSAGES } from "@/utilities/messages";
-import { useAccount } from "wagmi";
+
+import { useWallet } from "@/hooks/useWallet";
 
 interface Program {
   programId: string;
@@ -117,7 +118,7 @@ export const IndicatorsHub = ({
   communitySlug,
   communityId,
 }: IndicatorsHubProps) => {
-  const { address } = useAccount();
+  const { address } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [editingIndicator, setEditingIndicator] =

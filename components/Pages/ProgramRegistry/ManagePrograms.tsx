@@ -7,7 +7,7 @@ import { GrantProgram } from "@/components/Pages/ProgramRegistry/ProgramList";
 import { registryHelper } from "@/components/Pages/ProgramRegistry/helper";
 import { Button } from "@/components/Utilities/Button";
 import Pagination from "@/components/Utilities/Pagination";
-import { useAuthStore } from "@/store/auth";
+
 import { useStepper } from "@/store/modals/txStepper";
 import { useRegistryStore } from "@/store/registry";
 import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
@@ -20,7 +20,7 @@ import {
   ChevronLeftIcon,
   MagnifyingGlassIcon,
 } from "@heroicons/react/24/solid";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { useQuery } from "@tanstack/react-query";
 import debounce from "lodash.debounce";
 import Link from "next/link";
@@ -28,11 +28,11 @@ import { useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import React, { Dispatch, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { LoadingProgramTable } from "./Loading/Programs";
 import { SearchDropdown } from "./SearchDropdown";
+import { useWallet } from "@/hooks/useWallet";
 
 export const ManagePrograms = () => {
   const searchParams = useSearchParams();
@@ -81,8 +81,7 @@ export const ManagePrograms = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [programToEdit, setProgramToEdit] = useState<GrantProgram | null>(null);
 
-  const { address, isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { address, isLoggedIn } = useWallet();
 
   const signer = useSigner();
 
@@ -97,10 +96,10 @@ export const ManagePrograms = () => {
     setIsPoolManagerLoading,
   } = useRegistryStore();
 
-  const isAllowed = address && (isRegistryAdmin || isPoolManager) && isAuth;
+  const isAllowed = address && (isRegistryAdmin || isPoolManager) && isLoggedIn;
 
   useEffect(() => {
-    if (!address || !isConnected) {
+    if (!address || !isLoggedIn) {
       setIsRegistryAdmin(false);
       setIsRegistryAdminLoading(false);
       setIsPoolManagerLoading(false);
@@ -318,7 +317,7 @@ export const ManagePrograms = () => {
     }
   };
 
-  const { openConnectModal } = useConnectModal();
+  const { setShowAuthFlow } = useDynamicContext();
 
   const onChangeGeneric = (
     value: string,
@@ -338,14 +337,14 @@ export const ManagePrograms = () => {
   };
 
   const NotAllowedCases = () => {
-    if (!address || !isAuth || !isConnected) {
+    if (!address || !isLoggedIn) {
       return (
         <div className="flex flex-col gap-2 justify-center items-center">
           <p>You need to login to access this page</p>
           <Button
             className="w-max"
             onClick={() => {
-              openConnectModal?.();
+              setShowAuthFlow?.(true);
             }}
           >
             Login

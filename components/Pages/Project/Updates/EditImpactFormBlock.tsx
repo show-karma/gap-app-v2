@@ -21,7 +21,7 @@ import { useEffect, useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
 import { Controller, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
+
 import { z } from "zod";
 
 const updateSchema = z.object({
@@ -50,9 +50,7 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({
   const [impact, setImpact] = useState("");
   const [work, setWork] = useState("");
 
-  const { address } = useAccount();
-  const { chain } = useAccount();
-  const { switchChainAsync } = useWallet();
+  const { address, chain, switchChainAsync } = useWallet();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();

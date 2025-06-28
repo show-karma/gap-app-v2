@@ -1,6 +1,5 @@
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
-import { queryClient } from "@/components/Utilities/WagmiProvider";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
@@ -17,9 +16,9 @@ import { ArrowUpIcon } from "@heroicons/react/24/solid";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { FC, Fragment, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useWallet } from "@/hooks/useWallet";
+import { queryClient } from "@/utilities/queries/client";
 
 interface PromoteMemberDialogProps {
   memberAddress: string;
@@ -31,11 +30,10 @@ export const PromoteMemberDialog: FC<PromoteMemberDialogProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [isPromoting, setIsPromoting] = useState(false);
   const { gap } = useGap();
-  const { address, chain } = useAccount();
+  const { address, chain, switchChainAsync } = useWallet();
   const { project } = useProjectStore();
   const { teamProfiles } = useTeamProfiles(project);
   const { changeStepperStep, setIsStepper } = useStepper();
-  const { switchChainAsync } = useWallet();
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
   const openModal = () => setIsOpen(true);

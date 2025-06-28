@@ -10,7 +10,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { MarkdownEditor } from "../Utilities/MarkdownEditor";
-import { useAccount } from "wagmi";
+
 import { Community, nullRef } from "@show-karma/karma-gap-sdk";
 import { Button } from "../Utilities/Button";
 import { MESSAGES } from "@/utilities/messages";
@@ -93,7 +93,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
     defaultValues: dataToUpdate,
   });
 
-  const { address, chain } = useAccount();
+  const { address, chain } = useWallet();
   const { switchChainAsync } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
 

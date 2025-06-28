@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useWallet } from "@/hooks/useWallet";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import fetchData from "@/utilities/fetchData";
@@ -13,7 +14,6 @@ import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-ind
 import type { FC, ReactNode } from "react";
 import { Fragment, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
 
 // GitHub icon SVG component
 const GitHubIcon: FC<{ className?: string }> = ({ className }) => (
@@ -53,7 +53,7 @@ export const LinkGithubRepoButton: FC<LinkGithubRepoButtonProps> = ({
     (state) => state.isCommunityAdmin
   );
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
-  const { address } = useAccount();
+  const { address } = useWallet();
 
   const [isOpen, setIsOpen] = useState(false);
   const [repos, setRepos] = useState<string[]>([]);

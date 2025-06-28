@@ -1,14 +1,15 @@
 import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useProjectStore, useOwnerStore } from "@/store";
-import { useAuthStore } from "@/store/auth";
+
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getRPCClient } from "@/utilities/rpcClient";
 import type { Project } from "@show-karma/karma-gap-sdk/core/class/entities/Project";
 import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useAccount } from "wagmi";
+
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { useProjectInstance } from "./useProjectInstance";
+import { useWallet } from "./useWallet";
 
 interface ProjectPermissionsResult {
   isProjectOwner: boolean;
@@ -16,8 +17,7 @@ interface ProjectPermissionsResult {
 }
 
 export const useProjectPermissions = () => {
-  const { address, isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { address, isLoggedIn } = useWallet();
   const { project } = useProjectStore();
   const projectId = project?.details?.data.slug || project?.uid;
   const { project: projectInstance } = useProjectInstance(projectId);
@@ -26,7 +26,7 @@ export const useProjectPermissions = () => {
 
   const checkPermissions = async (): Promise<ProjectPermissionsResult> => {
     // Early returns for invalid states
-    if (!projectInstance || !isAuth || !isConnected || !address) {
+    if (!projectInstance || !isLoggedIn || !address) {
       return { isProjectOwner: false, isProjectAdmin: false };
     }
 
@@ -57,10 +57,11 @@ export const useProjectPermissions = () => {
       address,
       projectId,
       project?.chainID,
-      isAuth,
+      isLoggedIn,
     ],
     queryFn: checkPermissions,
-    enabled: !!projectInstance && !!project?.chainID && !!isAuth && !!address,
+    enabled:
+      !!projectInstance && !!project?.chainID && !!isLoggedIn && !!address,
     ...defaultQueryOptions,
     gcTime: 1 * 60 * 1000, // 1 minutes
   });

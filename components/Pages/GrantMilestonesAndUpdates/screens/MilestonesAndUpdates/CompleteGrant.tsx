@@ -22,7 +22,7 @@ import type { FC } from "react";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { Hex } from "viem";
-import { useAccount } from "wagmi";
+
 import { useWallet } from "@/hooks/useWallet";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
@@ -35,8 +35,7 @@ export const GrantCompletion: FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const { chain, address } = useAccount();
-  const { switchChainAsync } = useWallet();
+  const { chain, address, switchChainAsync } = useWallet();
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
   const { changeStepperStep, setIsStepper } = useStepper();

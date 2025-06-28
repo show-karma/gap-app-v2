@@ -24,9 +24,10 @@ import { useQueryState } from "nuqs";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { GrantProgram } from "./ProgramList";
 import { shortAddress } from "@/utilities/shortAddress";
-import { useAccount } from "wagmi";
+
 import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/24/solid";
 import { useSearchParams } from "next/navigation";
+import { useWallet } from "@/hooks/useWallet";
 
 interface MyProgramListProps {
   grantPrograms: GrantProgram[];
@@ -46,7 +47,7 @@ export const MyProgramList: FC<MyProgramListProps> = ({
   isAllowed,
 }) => {
   const searchParams = useSearchParams();
-  const { address } = useAccount();
+  const { address } = useWallet();
 
   const [sorting, setSorting] = useState<SortingState>([]);
 

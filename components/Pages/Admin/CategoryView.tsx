@@ -25,7 +25,8 @@ import { INDEXER } from "@/utilities/indexer";
 import toast from "react-hot-toast";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MESSAGES } from "@/utilities/messages";
-import { useAccount } from "wagmi";
+
+import { useWallet } from "@/hooks/useWallet";
 
 interface CategoryViewProps {
   selectedCategory: Category;
@@ -115,7 +116,7 @@ export const CategoryView = ({
   onRefreshCategory,
   communityId,
 }: CategoryViewProps) => {
-  const { address } = useAccount();
+  const { address } = useWallet();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [initialModalType, setInitialModalType] = useState<
     "output" | "outcome"
@@ -128,16 +129,25 @@ export const CategoryView = ({
   );
 
   const {
-    data: groupedIndicators = { communityAdminCreated: [], projectOwnerCreated: [] },
+    data: groupedIndicators = {
+      communityAdminCreated: [],
+      projectOwnerCreated: [],
+    },
     isLoading: isLoadingIndicators,
   } = useGroupedIndicators({
     communityId: communityId,
   });
 
-  const impact_indicators = useMemo(() => [
-    ...groupedIndicators.communityAdminCreated,
-    ...groupedIndicators.projectOwnerCreated,
-  ], [groupedIndicators.communityAdminCreated, groupedIndicators.projectOwnerCreated]);
+  const impact_indicators = useMemo(
+    () => [
+      ...groupedIndicators.communityAdminCreated,
+      ...groupedIndicators.projectOwnerCreated,
+    ],
+    [
+      groupedIndicators.communityAdminCreated,
+      groupedIndicators.projectOwnerCreated,
+    ]
+  );
 
   // Count activities and outcomes for a category
   const getCategoryStats = (category: Category) => {

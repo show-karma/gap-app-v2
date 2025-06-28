@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAccount } from "wagmi";
+
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
@@ -28,8 +28,7 @@ import { useWallet } from "./useWallet";
 
 export const useMilestone = () => {
   const [isDeleting, setIsDeleting] = useState(false);
-  const { chain } = useAccount();
-  const { switchChainAsync } = useWallet();
+  const { chain, switchChainAsync } = useWallet();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
   const refreshProject = useProjectStore((state) => state.refreshProject);

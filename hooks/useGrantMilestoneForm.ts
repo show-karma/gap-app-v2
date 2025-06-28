@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAccount } from "wagmi";
+
 import { useOwnerStore, useProjectStore } from "@/store";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { Milestone } from "@show-karma/karma-gap-sdk";
@@ -37,9 +37,8 @@ export function useGrantMilestoneForm({
   onSuccess,
   destinationPath,
 }: UseGrantMilestoneFormProps = {}) {
-  const { address, chain } = useAccount();
   const { project, refreshProject } = useProjectStore();
-  const { switchChainAsync } = useWallet();
+  const { chain, address, switchChainAsync } = useWallet();
   const isOwner = useOwnerStore((state) => state.isOwner);
 
   const { gap } = useGap();

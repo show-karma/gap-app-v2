@@ -25,7 +25,6 @@ import { useQuery } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
 
 const ProjectObjectiveCompletion = dynamic(
   () =>
@@ -54,8 +53,7 @@ export const ObjectiveCardComplete = ({
 
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
-  const { chain, address } = useAccount();
-  const { switchChainAsync } = useWallet();
+  const { chain, address, switchChainAsync } = useWallet();
 
   const params = useParams();
   const projectId = params.projectId as string;

@@ -12,7 +12,7 @@ import { PlusIcon } from "@heroicons/react/24/solid";
 import { FC, Fragment, ReactNode, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { isAddress } from "viem";
-import { useAccount } from "wagmi";
+
 import { Button } from "../Utilities/Button";
 
 import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership";
@@ -47,12 +47,11 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
   const [validAddress, setValidAddress] = useState(true);
 
   const signer = useSigner();
-  const { chain, address } = useAccount();
+  const { chain, address, switchChainAsync } = useWallet();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const setIsProjectOwner = useProjectStore((state) => state.setIsProjectOwner);
-  const { switchChainAsync } = useWallet();
   const { changeStepperStep, setIsStepper } = useStepper();
 
   const transfer = async () => {

@@ -6,7 +6,7 @@ import { useCategories } from "@/hooks/useCategories";
 import { useCommunityDetails } from "@/hooks/useCommunityDetails";
 import { useGrants } from "@/hooks/useGrants";
 import { useGrantsTable } from "@/hooks/useGrantsTable";
-import { useAuthStore } from "@/store/auth";
+
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -19,10 +19,11 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
+
 import { CategoryCreationDialog } from "./CategoryCreationDialog";
 import { GrantsTable } from "./GrantsTable";
 import { ProgramFilter } from "./ProgramFilter";
+import { useWallet } from "@/hooks/useWallet";
 
 export const metadata = defaultMetadata;
 
@@ -33,8 +34,7 @@ export interface CategoriesOptions {
 
 export default function EditCategoriesPage() {
   const router = useRouter();
-  const { address, isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { isLoggedIn, address } = useWallet();
   const params = useParams();
   const communityId = params.communityId as string;
   const [selectedCategories, setSelectedCategories] = useState<

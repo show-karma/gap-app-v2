@@ -26,7 +26,6 @@ import dynamic from "next/dynamic";
 import { useParams, useRouter } from "next/navigation";
 import { Fragment, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
 
 const DeleteDialog = dynamic(() =>
   import("@/components/DeleteDialog").then((mod) => mod.DeleteDialog)
@@ -44,9 +43,7 @@ export const ObjectiveSimpleOptionsMenu = ({
   const params = useParams();
   const projectId = params.projectId as string;
   const [isDeleting, setIsDeleting] = useState(false);
-  const { address } = useAccount();
-  const { chain } = useAccount();
-  const { switchChainAsync } = useWallet();
+  const { address, chain, switchChainAsync } = useWallet();
   const router = useRouter();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();

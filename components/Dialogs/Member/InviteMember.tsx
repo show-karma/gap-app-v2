@@ -5,7 +5,6 @@ import { useProjectStore } from "@/store";
 import { Dialog, Transition } from "@headlessui/react";
 import * as Tooltip from "@radix-ui/react-tooltip";
 import { FC, Fragment, useEffect, useState } from "react";
-import { useAccount } from "wagmi";
 
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
@@ -35,7 +34,6 @@ export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
     isSuccess,
   } = useInviteLink(project?.uid);
 
-  const { address } = useAccount();
   const code = inviteCode?.hash;
   const inviteUrl = useInviteUrl(project, code);
   const openModal = () => {

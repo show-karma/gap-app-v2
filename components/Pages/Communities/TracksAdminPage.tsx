@@ -1,11 +1,11 @@
 "use client";
 import { useState, useEffect, Fragment } from "react";
-import { useAuthStore } from "@/store/auth";
+
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useAccount } from "wagmi";
+
 import { errorManager } from "@/components/Utilities/errorManager";
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
@@ -38,6 +38,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { PAGES } from "@/utilities/pages";
 import { ChevronLeftIcon } from "@heroicons/react/24/solid";
+import { useWallet } from "@/hooks/useWallet";
 
 export const TracksAdminPage = ({
   communityId,
@@ -46,8 +47,7 @@ export const TracksAdminPage = ({
   communityId: string;
   community: ICommunityResponse;
 }) => {
-  const { address, isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { isLoggedIn, address } = useWallet();
   const router = useRouter();
 
   const [selectedProgram, setSelectedProgram] = useState<string>("");

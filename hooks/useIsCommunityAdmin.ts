@@ -2,12 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
 import { useSigner } from "@/utilities/eas-wagmi-utils";
-import { useAccount } from "wagmi";
+
 import type { Hex } from "viem";
 import { useEffect, useState } from "react";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { useAuthStore } from "@/store/auth";
+
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
+import { useWallet } from "./useWallet";
 
 /**
  * Options for configuring the useIsCommunityAdmin hook
@@ -52,9 +53,8 @@ export const useIsCommunityAdmin = (
   options?: UseIsCommunityAdminOptions,
   community?: ICommunityResponse // Optional community object to avoid API calls
 ) => {
-  const { address: accountAddress } = useAccount();
   const signer = useSigner();
-  const { isAuth } = useAuthStore();
+  const { isLoggedIn, address: accountAddress } = useWallet();
   const [resolvedCommunity, setResolvedCommunity] =
     useState<ICommunityResponse | null>(null);
 
@@ -110,11 +110,11 @@ export const useIsCommunityAdmin = (
       resolvedCommunity?.uid,
       resolvedCommunity?.chainID,
       checkAddress,
-      !!isAuth,
+      !!isLoggedIn,
       signer,
     ],
     queryFn: async () => {
-      if (!resolvedCommunity || !checkAddress || !isAuth) {
+      if (!resolvedCommunity || !checkAddress || !isLoggedIn) {
         return false;
       }
 

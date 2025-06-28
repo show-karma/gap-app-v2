@@ -1,10 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { useCommunitiesStore } from "@/store/communities";
-import { useAuthStore } from "@/store/auth";
+
 import { useEffect } from "react";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useWallet } from "./useWallet";
 
 const fetchAdminCommunities = async (
   address: string
@@ -16,13 +17,13 @@ const fetchAdminCommunities = async (
 };
 
 export const useAdminCommunities = (address?: string) => {
-  const { isAuth } = useAuthStore();
+  const { isLoggedIn } = useWallet();
   const { setCommunities, setIsLoading } = useCommunitiesStore();
 
   const queryResult = useQuery<ICommunityResponse[], Error>({
     queryKey: ["admin-communities", address],
     queryFn: () => fetchAdminCommunities(address!),
-    enabled: !!address && isAuth,
+    enabled: !!address && isLoggedIn,
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: (failureCount, error) => {
       // Retry up to 2 times for network errors
@@ -40,10 +41,10 @@ export const useAdminCommunities = (address?: string) => {
   useEffect(() => {
     if (data) {
       setCommunities(data);
-    } else if (!address || !isAuth) {
+    } else if (!address || !isLoggedIn) {
       setCommunities([]);
     }
-  }, [data, address, isAuth, setCommunities]);
+  }, [data, address, isLoggedIn, setCommunities]);
 
   useEffect(() => {
     if (error) {

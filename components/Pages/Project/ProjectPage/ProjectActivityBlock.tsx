@@ -13,7 +13,8 @@ import { useMemo } from "react";
 import { PAGES } from "@/utilities/pages";
 import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
-import { useAccount } from "wagmi";
+
+import { useWallet } from "@/hooks/useWallet";
 
 export const ProjectActivityBlock = ({
   activity,
@@ -35,9 +36,10 @@ export const ProjectActivityBlock = ({
     (indicator) => indicator.name
   );
 
-  const { isConnected } = useAccount();
+  const { isLoggedIn } = useWallet();
+
   const isAuthorized =
-    isConnected && (isProjectOwner || isContractOwner || isCommunityAdmin);
+    isLoggedIn && (isProjectOwner || isContractOwner || isCommunityAdmin);
 
   const { data: impactAnswers = [], isLoading: isLoadingImpactAnswers } =
     useImpactAnswers({

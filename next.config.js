@@ -30,17 +30,25 @@ const nextConfig = {
         tls: false,
         path: false,
         os: false,
-        crypto: false,
-        stream: false,
+        crypto: require.resolve("crypto-browserify"),
+        stream: require.resolve("stream-browserify"),
         http: false,
         https: false,
         zlib: false,
         querystring: false,
         events: false,
         url: false,
-        buffer: false,
+        buffer: require.resolve("buffer"),
         util: false,
+        process: require.resolve("process/browser"),
       };
+
+      config.plugins.push(
+        new webpack.ProvidePlugin({
+          process: "process/browser",
+          Buffer: ["buffer", "Buffer"],
+        })
+      );
     }
 
     // Add external modules that should not be bundled
@@ -51,6 +59,11 @@ const nextConfig = {
       new webpack.IgnorePlugin({
         resourceRegExp: /^\.\/locale$/,
         contextRegExp: /moment$/,
+      })
+    );
+    config.plugins.push(
+      new webpack.IgnorePlugin({
+        resourceRegExp: /@react-native-async-storage\/async-storage/,
       })
     );
 

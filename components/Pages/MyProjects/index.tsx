@@ -5,7 +5,7 @@ import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import Pagination from "@/components/Utilities/Pagination";
 import { ProfilePicture } from "@/components/Utilities/ProfilePicture";
 import { useMixpanel } from "@/hooks/useMixpanel";
-import { useAuthStore } from "@/store/auth";
+
 import { useOnboarding } from "@/store/modals/onboarding";
 import formatCurrency from "@/utilities/formatCurrency";
 import { formatDate } from "@/utilities/formatDate";
@@ -19,8 +19,9 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import pluralize from "pluralize";
 import { useState } from "react";
-import { useAccount } from "wagmi";
+
 import { LoadingCard } from "./LoadingCard";
+import { useWallet } from "@/hooks/useWallet";
 
 const ProjectDialog = dynamic(
   () =>
@@ -49,7 +50,7 @@ const pickColor = (index: number) => {
 const OnboardingButton = () => {
   const { setIsOnboarding } = useOnboarding();
   const { mixpanel } = useMixpanel();
-  const { address } = useAccount();
+  const { address } = useWallet();
 
   return (
     <Button
@@ -74,8 +75,7 @@ const OnboardingButton = () => {
 };
 
 export default function MyProjects() {
-  const { isConnected, address } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { isLoggedIn, address } = useWallet();
   const { theme: currentTheme } = useTheme();
   const itemsPerPage = 12;
   const [page, setPage] = useState<number>(1);
@@ -100,7 +100,7 @@ export default function MyProjects() {
   return (
     <div className="px-4 sm:px-6 lg:px-12 py-5">
       <div className="mt-5 w-full gap-5">
-        {isConnected && isAuth ? (
+        {isLoggedIn ? (
           <div className="flex flex-col gap-4">
             {isLoading ? (
               <div className="flex flex-col gap-4 justify-start">

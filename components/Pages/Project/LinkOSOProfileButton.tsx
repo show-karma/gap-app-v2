@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/Utilities/Button";
 import { errorManager } from "@/components/Utilities/errorManager";
+import { useWallet } from "@/hooks/useWallet";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import fetchData from "@/utilities/fetchData";
@@ -18,7 +19,6 @@ import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-ind
 import type { FC, ReactNode } from "react";
 import { Fragment, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
 
 interface LinkOSOProfileButtonProps {
   buttonClassName?: string;
@@ -40,7 +40,7 @@ export const LinkOSOProfileButton: FC<LinkOSOProfileButtonProps> = ({
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );
-  const { address } = useAccount();
+  const { address } = useWallet();
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
 
   const [isOpen, setIsOpen] = useState(false);

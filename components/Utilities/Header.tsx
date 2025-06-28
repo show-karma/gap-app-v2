@@ -1,9 +1,9 @@
 "use client";
 /* eslint-disable @next/next/no-img-element */
-import { useAuth } from "@/hooks/useAuth";
+
 import { useAdminCommunities } from "@/hooks/useAdminCommunities";
 import { useContractOwner } from "@/hooks/useContractOwner";
-import { useAuthStore } from "@/store/auth";
+
 import { useCommunitiesStore } from "@/store/communities";
 import { useMobileStore } from "@/store/mobile";
 import { useOwnerStore } from "@/store/owner";
@@ -13,14 +13,14 @@ import { SOCIALS } from "@/utilities/socials";
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import { MoonIcon, SunIcon } from "@heroicons/react/24/solid";
 import * as Popover from "@radix-ui/react-popover";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import DynamicConnectButton from "./DynamicConnectButton";
 import { useTheme } from "next-themes";
 import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { useAccount } from "wagmi";
+
 import { OnboardingDialog } from "../Dialogs/OnboardingDialog";
 import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
 import { DiscordIcon, LogOutIcon, TelegramIcon, TwitterIcon } from "../Icons";
@@ -28,6 +28,8 @@ import { Searchbar } from "../Searchbar";
 import { Button } from "./Button";
 import { ExternalLink } from "./ExternalLink";
 import { ParagraphIcon } from "../Icons/Paragraph";
+import { useWallet } from "@/hooks/useWallet";
+import { shortAddress } from "@/utilities/shortAddress";
 
 const ProjectDialog = dynamic(
   () =>
@@ -42,8 +44,8 @@ const buttonStyle: HTMLButtonElement["className"] =
 
 export default function Header() {
   const { theme: currentTheme, setTheme: changeCurrentTheme } = useTheme();
-  const { isConnected, address, chain } = useAccount();
-  const { isAuth, isAuthenticating } = useAuthStore();
+  const { isLoggedIn, address, chain, logout } = useWallet();
+
   const { communities } = useCommunitiesStore();
 
   // Use React Query hooks for data fetching
@@ -76,27 +78,13 @@ export default function Header() {
     },
   ];
 
-  const [isReady, setIsReady] = useState(false);
-
-  useEffect(() => {
-    setIsReady(true);
-  }, []);
-
-  const { authenticate, disconnect, softDisconnect } = useAuth();
-
-  useEffect(() => {
-    if (isConnected && isReady && !isAuth && !isAuthenticating) {
-      authenticate();
-    }
-  }, [isConnected, isReady, isAuth, isAuthenticating]);
-
   const { isMobileMenuOpen, setIsMobileMenuOpen } = useMobileStore();
 
   const pathname = usePathname();
   const isFundingMap = pathname.includes("funding-map");
   const { isPoolManager, isRegistryAdmin } = useRegistryStore();
   const isRegistryAllowed =
-    address && (isRegistryAdmin || isPoolManager) && isAuth;
+    address && (isRegistryAdmin || isPoolManager) && isLoggedIn;
 
   return (
     <>
@@ -213,119 +201,98 @@ export default function Header() {
                             Docs
                           </button>
                         </ExternalLink>
-                        {isReady ? (
+
+                        {isFundingMap ? (
+                          isRegistryAllowed ? (
+                            <Link href={PAGES.REGISTRY.MANAGE_PROGRAMS}>
+                              <button className="rounded-md bg-white w-full dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
+                                Manage Programs
+                              </button>
+                            </Link>
+                          ) : null
+                        ) : (
                           <>
-                            {isFundingMap ? (
-                              isRegistryAllowed ? (
-                                <Link href={PAGES.REGISTRY.MANAGE_PROGRAMS}>
-                                  <button className="rounded-md bg-white w-full dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
-                                    Manage Programs
-                                  </button>
-                                </Link>
-                              ) : null
-                            ) : (
-                              <>
-                                {isConnected && isAuth && (
-                                  <Link href={PAGES.MY_PROJECTS}>
-                                    <button className="rounded-md bg-white w-full dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
-                                      My Projects
-                                    </button>
-                                  </Link>
-                                )}
-                                {isCommunityAdmin && isConnected && isAuth ? (
-                                  <Link href={PAGES.ADMIN.LIST}>
-                                    <button className="rounded-md w-full bg-white dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
-                                      Admin
-                                    </button>
-                                  </Link>
-                                ) : null}
-
-                                {isConnected && isAuth && <ProjectDialog />}
-                              </>
+                            {isLoggedIn && (
+                              <Link href={PAGES.MY_PROJECTS}>
+                                <button className="rounded-md bg-white w-full dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
+                                  My Projects
+                                </button>
+                              </Link>
                             )}
+                            {isCommunityAdmin && isLoggedIn ? (
+                              <Link href={PAGES.ADMIN.LIST}>
+                                <button className="rounded-md w-full bg-white dark:bg-black px-3 py-2 text-sm font-semibold text-gray-900 dark:text-zinc-100  hover:bg-gray-50 dark:hover:bg-primary-900 border border-gray-200 dark:border-zinc-900">
+                                  Admin
+                                </button>
+                              </Link>
+                            ) : null}
 
-                            <ConnectButton.Custom>
-                              {({
-                                account,
-                                chain,
-                                openAccountModal,
-                                openConnectModal,
-                                authenticationStatus,
-                                mounted,
-                              }) => {
-                                // Note: If your app doesn't use authentication, you
-                                // can remove all 'authenticationStatus' checks
-                                const ready =
-                                  mounted && authenticationStatus !== "loading";
-                                const connected =
-                                  ready &&
-                                  account &&
-                                  chain &&
-                                  (!authenticationStatus ||
-                                    authenticationStatus === "authenticated");
-
-                                return (
-                                  <div
-                                    {...(!ready && {
-                                      "aria-hidden": true,
-                                      style: {
-                                        opacity: 0,
-                                        pointerEvents: "none",
-                                        userSelect: "none",
-                                      },
-                                    })}
-                                  >
-                                    {(() => {
-                                      if (!connected) {
-                                        return (
-                                          <button
-                                            onClick={openConnectModal}
-                                            type="button"
-                                            className="rounded-md border max-lg:w-full max-lg:justify-center border-brand-blue dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-brand-blue  hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-                                          >
-                                            Login / Register
-                                          </button>
-                                        );
-                                      }
-
-                                      return (
-                                        <Popover.Root>
-                                          <Popover.Trigger asChild>
-                                            <div className="cursor-pointer flex w-full py-1 justify-center items-center flex-row gap-2 rounded-full bg-gray-500 text-sm font-semibold text-white  hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
-                                              {account.displayName}
-
-                                              <EthereumAddressToENSAvatar
-                                                address={account.address}
-                                                className="h-8 w-8 min-h-8 min-w-8 rounded-full"
-                                              />
-                                            </div>
-                                          </Popover.Trigger>
-                                          <Popover.Content
-                                            className="z-50 w-48 rounded-md bg-white p-1 shadow-lg dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"
-                                            sideOffset={5}
-                                            align="center"
-                                          >
-                                            <div className="py-1">
-                                              <button
-                                                onClick={async () => {
-                                                  disconnect();
-                                                }}
-                                                className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700"
-                                              >
-                                                <LogOutIcon className="mr-2 h-4 w-4" />
-                                                Logout
-                                              </button>
-                                            </div>
-                                          </Popover.Content>
-                                        </Popover.Root>
-                                      );
-                                    })()}
-                                  </div>
-                                );
-                              }}
-                            </ConnectButton.Custom>
+                            {isLoggedIn && <ProjectDialog />}
                           </>
-                        ) : null}
+                        )}
+
+                        <DynamicConnectButton variant="custom">
+                          {({ openConnectModal, mounted: ready }) => {
+                            return (
+                              <div
+                                {...(!ready && {
+                                  "aria-hidden": true,
+                                  style: {
+                                    opacity: 0,
+                                    pointerEvents: "none",
+                                    userSelect: "none",
+                                  },
+                                })}
+                              >
+                                {(() => {
+                                  if (!isLoggedIn) {
+                                    return (
+                                      <button
+                                        onClick={openConnectModal}
+                                        type="button"
+                                        className="rounded-md border max-lg:w-full max-lg:justify-center border-brand-blue dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-brand-blue  hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                                      >
+                                        Login / Register
+                                      </button>
+                                    );
+                                  }
+
+                                  return (
+                                    <Popover.Root>
+                                      <Popover.Trigger asChild>
+                                        <div className="cursor-pointer flex w-full py-1 justify-center items-center flex-row gap-2 rounded-full bg-gray-500 text-sm font-semibold text-white  hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
+                                          {shortAddress(address || "")}
+
+                                          <EthereumAddressToENSAvatar
+                                            address={address}
+                                            className="h-8 w-8 min-h-8 min-w-8 rounded-full"
+                                          />
+                                        </div>
+                                      </Popover.Trigger>
+                                      <Popover.Content
+                                        className="z-50 w-48 rounded-md bg-white p-1 shadow-lg dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"
+                                        sideOffset={5}
+                                        align="center"
+                                      >
+                                        <div className="py-1">
+                                          <button
+                                            onClick={async () => {
+                                              logout();
+                                            }}
+                                            className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                                          >
+                                            <LogOutIcon className="mr-2 h-4 w-4" />
+                                            Logout
+                                          </button>
+                                        </div>
+                                      </Popover.Content>
+                                    </Popover.Root>
+                                  );
+                                })()}
+                              </div>
+                            );
+                          }}
+                        </DynamicConnectButton>
                       </div>
                       <div className="w-full flex flex-col  border-t border-t-[#dcdfea] mt-4 pt-4  items-center justify-center">
                         <div className="flex h-[40px] flex-row items-center justify-center gap-2">
@@ -353,129 +320,102 @@ export default function Header() {
 
           <div className="hidden lg:flex lg:items-center lg:justify-end lg:gap-3 xl:gap-5 2xl:gap-6 py-3">
             {/* <div className="rounded-none h-10 w-[1px] bg-zinc-300 mx-2" /> */}
-            {isReady ? (
-              <>
-                <Link href={PAGES.REGISTRY.ROOT}>
-                  <button className={buttonStyle}>Get Funding</button>
-                </Link>
-                <ExternalLink href={"https://docs.gap.karmahq.xyz/"}>
-                  <button className={buttonStyle}>Docs</button>
-                </ExternalLink>
-                {isFundingMap ? (
-                  isRegistryAllowed ? (
-                    <Link href={PAGES.REGISTRY.MANAGE_PROGRAMS}>
-                      <button className={buttonStyle}>Manage Programs</button>
-                    </Link>
-                  ) : null
-                ) : (
-                  <>
-                    {isCommunityAdmin && isConnected && isAuth ? (
-                      <Link href={PAGES.ADMIN.LIST}>
-                        <button className={buttonStyle}>Admin</button>
-                      </Link>
-                    ) : null}
-                    {isConnected && isAuth && (
-                      <Link href={PAGES.MY_PROJECTS}>
-                        <button className={buttonStyle}>My Projects</button>
-                      </Link>
-                    )}
 
-                    {/* Rainbowkit custom connect button start */}
-                    {isConnected && isAuth && <ProjectDialog />}
-                  </>
+            <Link href={PAGES.REGISTRY.ROOT}>
+              <button className={buttonStyle}>Get Funding</button>
+            </Link>
+            <ExternalLink href={"https://docs.gap.karmahq.xyz/"}>
+              <button className={buttonStyle}>Docs</button>
+            </ExternalLink>
+            {isFundingMap ? (
+              isRegistryAllowed ? (
+                <Link href={PAGES.REGISTRY.MANAGE_PROGRAMS}>
+                  <button className={buttonStyle}>Manage Programs</button>
+                </Link>
+              ) : null
+            ) : (
+              <>
+                {isCommunityAdmin && isLoggedIn ? (
+                  <Link href={PAGES.ADMIN.LIST}>
+                    <button className={buttonStyle}>Admin</button>
+                  </Link>
+                ) : null}
+                {isLoggedIn && (
+                  <Link href={PAGES.MY_PROJECTS}>
+                    <button className={buttonStyle}>My Projects</button>
+                  </Link>
                 )}
 
-                <ConnectButton.Custom>
-                  {({
-                    account,
-                    chain,
-                    openAccountModal,
-                    openConnectModal,
-                    authenticationStatus,
-                    mounted,
-                  }) => {
-                    // Note: If your app doesn't use authentication, you
-                    // can remove all 'authenticationStatus' checks
-                    const ready = mounted && authenticationStatus !== "loading";
-                    const connected =
-                      ready &&
-                      account &&
-                      chain &&
-                      (!authenticationStatus ||
-                        authenticationStatus === "authenticated");
-
-                    return (
-                      <div
-                        {...(!ready && {
-                          "aria-hidden": true,
-                          style: {
-                            opacity: 0,
-                            pointerEvents: "none",
-                            userSelect: "none",
-                          },
-                        })}
-                      >
-                        {(() => {
-                          if (!connected || !isAuth) {
-                            return (
-                              <button
-                                onClick={() => {
-                                  if (
-                                    !isAuth &&
-                                    connected &&
-                                    !isAuthenticating
-                                  ) {
-                                    authenticate();
-                                    return;
-                                  }
-                                  openConnectModal?.();
-                                }}
-                                type="button"
-                                className="rounded-md border border-brand-blue dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-brand-blue hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
-                              >
-                                Login / Register
-                              </button>
-                            );
-                          }
-
-                          return (
-                            <Popover.Root>
-                              <Popover.Trigger asChild>
-                                <div className="flex cursor-pointer w-max items-center flex-row gap-2 rounded-full bg-gray-500 p-0 pl-3 text-sm font-semibold text-white hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
-                                  {account.displayName}
-
-                                  <EthereumAddressToENSAvatar
-                                    address={account.address}
-                                    className="h-10 w-10 rounded-full"
-                                  />
-                                </div>
-                              </Popover.Trigger>
-                              <Popover.Content
-                                className="z-50 w-48 rounded-md bg-white p-1 shadow-lg dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"
-                                sideOffset={5}
-                                align="end"
-                              >
-                                <div className="py-1">
-                                  <button
-                                    onClick={async () => {
-                                      disconnect();
-                                    }}
-                                    className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700"
-                                  >
-                                    <LogOutIcon className="mr-2 h-4 w-4" />
-                                    Logout
-                                  </button>
-                                </div>
-                              </Popover.Content>
-                            </Popover.Root>
-                          );
-                        })()}
-                      </div>
-                    );
-                  }}
-                </ConnectButton.Custom>
+                {/* Rainbowkit custom connect button start */}
+                {isLoggedIn && <ProjectDialog />}
               </>
-            ) : null}
+            )}
+
+            <DynamicConnectButton variant="custom">
+              {({ openConnectModal, mounted: ready }) => {
+                return (
+                  <div
+                    {...(!ready && {
+                      "aria-hidden": true,
+                      style: {
+                        opacity: 0,
+                        pointerEvents: "none",
+                        userSelect: "none",
+                      },
+                    })}
+                  >
+                    {(() => {
+                      if (!isLoggedIn) {
+                        return (
+                          <button
+                            onClick={() => {
+                              openConnectModal?.();
+                            }}
+                            type="button"
+                            className="rounded-md border border-brand-blue dark:bg-zinc-900 dark:text-blue-500 bg-white px-3 py-2 text-sm font-semibold text-brand-blue hover:bg-opacity-75 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600"
+                          >
+                            Login / Register
+                          </button>
+                        );
+                      }
+
+                      return (
+                        <Popover.Root>
+                          <Popover.Trigger asChild>
+                            <div className="flex cursor-pointer w-max items-center flex-row gap-2 rounded-full bg-gray-500 p-0 pl-3 text-sm font-semibold text-white hover:bg-gray-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary-600">
+                              {shortAddress(address || "")}
+
+                              <EthereumAddressToENSAvatar
+                                address={address}
+                                className="h-10 w-10 rounded-full"
+                              />
+                            </div>
+                          </Popover.Trigger>
+                          <Popover.Content
+                            className="z-50 w-48 rounded-md bg-white p-1 shadow-lg dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700"
+                            sideOffset={5}
+                            align="end"
+                          >
+                            <div className="py-1">
+                              <button
+                                onClick={async () => {
+                                  logout();
+                                }}
+                                className="flex w-full items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-zinc-700"
+                              >
+                                <LogOutIcon className="mr-2 h-4 w-4" />
+                                Logout
+                              </button>
+                            </div>
+                          </Popover.Content>
+                        </Popover.Root>
+                      );
+                    })()}
+                  </div>
+                );
+              }}
+            </DynamicConnectButton>
+
             {/* Rainbowkit custom connect button end */}
             {/* Color mode toggle start */}
             <button

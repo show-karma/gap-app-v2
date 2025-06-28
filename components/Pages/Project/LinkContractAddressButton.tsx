@@ -19,7 +19,8 @@ import { SearchDropdown } from "@/components/Pages/ProgramRegistry/SearchDropdow
 import toast from "react-hot-toast";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MESSAGES } from "@/utilities/messages";
-import { useAccount } from "wagmi";
+
+import { useWallet } from "@/hooks/useWallet";
 
 interface LinkContractAddressesButtonProps {
   buttonClassName?: string;
@@ -89,7 +90,7 @@ export const LinkContractAddressButton: FC<
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );
-  const { address } = useAccount();
+  const { address } = useWallet();
   const isAuthorized = isOwner || isProjectOwner || isCommunityAdmin;
 
   const [isOpen, setIsOpen] = useState(false);

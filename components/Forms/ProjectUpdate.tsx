@@ -20,7 +20,7 @@ import { useState, useEffect, useMemo } from "react";
 import type { SubmitHandler } from "react-hook-form";
 import { useForm, Controller, useFieldArray } from "react-hook-form";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
+
 import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
 import * as Tooltip from "@radix-ui/react-tooltip";
@@ -335,9 +335,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   afterSubmit,
   editId: propEditId,
 }) => {
-  const { address } = useAccount();
-  const { chain } = useAccount();
-  const { switchChainAsync } = useWallet();
+  const { address, chain, switchChainAsync } = useWallet();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();

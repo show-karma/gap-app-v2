@@ -1,7 +1,8 @@
 import { useState, useRef } from "react";
 import { envVars } from "@/utilities/enviromentVars";
-import { useAccount } from "wagmi";
+
 import { Project } from "./CommunityProjectEvaluatorPage";
+import { useWallet } from "@/hooks/useWallet";
 
 export interface Message {
   id: string;
@@ -37,7 +38,7 @@ export function useChat(options: UseChatOptions) {
   const [isLoading, setIsLoading] = useState(false);
   const [currentMessage, setCurrentMessage] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
-  const { address } = useAccount();
+  const { address } = useWallet();
   const sessionIdRef = useRef<string>(crypto.randomUUID());
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

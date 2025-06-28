@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useAccount } from "wagmi";
+
 import toast from "react-hot-toast";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useOwnerStore, useProjectStore } from "@/store";
@@ -14,7 +14,6 @@ import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
-import { queryClient } from "@/components/Utilities/WagmiProvider";
 import { useParams, useRouter } from "next/navigation";
 import {
   IGrantUpdate,
@@ -24,6 +23,7 @@ import {
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useWallet } from "./useWallet";
+import { queryClient } from "@/utilities/queries/client";
 
 type UpdateType =
   | IProjectUpdate
@@ -37,8 +37,7 @@ export const useUpdateActions = (update: UpdateType) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
-  const { chain } = useAccount();
-  const { switchChainAsync } = useWallet();
+  const { chain, switchChainAsync } = useWallet();
   const { project, isProjectOwner } = useProjectStore();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const isOwner = useOwnerStore((state) => state.isOwner);

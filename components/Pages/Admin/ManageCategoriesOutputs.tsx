@@ -22,7 +22,8 @@ import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
 import { z } from "zod";
 import { DeleteDialog } from "@/components/DeleteDialog";
-import { useAccount } from "wagmi";
+
+import { useWallet } from "@/hooks/useWallet";
 
 const OUTPUT_TYPES = ["output", "outcome"] as const;
 type OutputType = (typeof OUTPUT_TYPES)[number];
@@ -193,7 +194,7 @@ export const ManageCategoriesOutputs = ({
   community,
   refreshCategories,
 }: ManageCategoriesOutputsProps) => {
-  const { address } = useAccount();
+  const { address } = useWallet();
   const [isSavingOutput, setIsSavingOutput] = useState<string>("");
   const [isDeletingOutput, setIsDeletingOutput] = useState<string>("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");

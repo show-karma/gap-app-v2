@@ -16,7 +16,8 @@ import { generateRandomString } from "@/utilities/generateRandomString";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { useMutation } from "@tanstack/react-query";
-import { useAccount } from "wagmi";
+
+import { useWallet } from "@/hooks/useWallet";
 
 const labelStyle = "text-sm font-bold";
 const inputStyle =
@@ -142,7 +143,7 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
   addContact,
   removeContact,
 }) => {
-  const { address } = useAccount();
+  const { address } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);

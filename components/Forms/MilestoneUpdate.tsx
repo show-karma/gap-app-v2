@@ -27,7 +27,7 @@ import { useRouter } from "next/navigation";
 import { type FC, useState } from "react";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
+
 import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
@@ -80,8 +80,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   const selectedProject = useProjectStore((state) => state.project);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isSubmitLoading, setIsSubmitLoading] = useState(false);
-  const { chain, address } = useAccount();
-  const { switchChainAsync } = useWallet();
+  const { chain, address, switchChainAsync } = useWallet();
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(

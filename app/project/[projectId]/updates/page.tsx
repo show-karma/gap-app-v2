@@ -2,6 +2,7 @@ import { ProjectRoadmap } from "@/components/Pages/Project/Roadmap";
 import { envVars } from "@/utilities/enviromentVars";
 import { getAllMilestones } from "@/utilities/gapIndexerApi/getAllMilestones";
 import { defaultMetadata } from "@/utilities/meta";
+import { queryClient } from "@/utilities/queries/client";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 import {
@@ -72,12 +73,6 @@ export default async function RoadmapPage(props: {
 }) {
   const { projectId } = await props.params;
   const projectInfo = await getProjectCachedData(projectId);
-
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: defaultQueryOptions,
-    },
-  });
 
   await queryClient.prefetchQuery({
     queryKey: ["all-milestones", projectId],

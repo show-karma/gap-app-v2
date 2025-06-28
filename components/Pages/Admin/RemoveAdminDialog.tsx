@@ -10,7 +10,7 @@ import {
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAccount } from "wagmi";
+
 import { GAP } from "@show-karma/karma-gap-sdk";
 import { Button } from "../../Utilities/Button";
 import { MESSAGES } from "@/utilities/messages";
@@ -57,7 +57,6 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
   fetchAdmins,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const { address } = useAccount();
   function closeModal() {
     setIsOpen(false);
   }
@@ -75,8 +74,7 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
   });
 
   const [isLoading, setIsLoading] = useState(false);
-  const { chain } = useAccount();
-  const { switchChainAsync } = useWallet();
+  const { address, chain, switchChainAsync } = useWallet();
 
   const { changeStepperStep, setIsStepper } = useStepper();
 

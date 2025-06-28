@@ -20,11 +20,11 @@ import debounce from "lodash.debounce";
 import { useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import React, { Dispatch, useEffect, useState } from "react";
-import { useAccount } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { LoadingProgramTable } from "./Loading/Programs";
 import { ProgramHeader } from "./ProgramHeader";
+import { useWallet } from "@/hooks/useWallet";
 
 const statuses = ["Active", "Inactive"];
 
@@ -131,12 +131,11 @@ export const ProgramsExplorer = () => {
 
   const pageSize = 10;
 
-  const { address, isConnected } = useAccount();
+  const { address, isLoggedIn, chain } = useWallet();
 
-  const { chain } = useAccount();
   const { setIsRegistryAdmin, setIsPoolManager } = useRegistryStore();
   useEffect(() => {
-    if (!address || !isConnected) {
+    if (!address || !isLoggedIn) {
       setIsRegistryAdmin(false);
       return;
     }
@@ -157,7 +156,7 @@ export const ProgramsExplorer = () => {
       }
     };
     getMemberOf();
-  }, [address, isConnected, chain]);
+  }, [address, isLoggedIn, chain]);
 
   const { data, isLoading } = useQuery({
     queryKey: [

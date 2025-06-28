@@ -6,8 +6,7 @@ import { z } from "zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
-import { useAuthStore } from "@/store/auth";
-import { useAccount } from "wagmi";
+
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
@@ -61,12 +60,11 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
   function openModal() {
     setIsOpen(true);
   }
-  const { address, isConnected, chain } = useAccount();
+  const { address, chain, switchChainAsync } = useWallet();
 
   const hasVerifiedThis = grantUpdate?.verified?.find(
     (v) => v.attester?.toLowerCase() === address?.toLowerCase()
   );
-  const { switchChainAsync } = useWallet();
   const { gap } = useGap();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
@@ -173,11 +171,11 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
       setIsStepper(false);
     }
   };
-  const isAuthorized = useAuthStore((state) => state.isAuth);
+  const { isLoggedIn } = useWallet();
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const verifyPermission = () => {
-    if (!isAuthorized || !isConnected) return false;
+    if (!isLoggedIn) return false;
     return isContractOwner || !isProjectAdmin;
   };
   const ableToVerify = verifyPermission();

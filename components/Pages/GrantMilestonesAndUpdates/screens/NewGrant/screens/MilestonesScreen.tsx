@@ -6,8 +6,7 @@ import { PAGES } from "@/utilities/pages";
 import { useProjectStore } from "@/store";
 import { Milestone } from "../Milestone";
 import { PlusIcon } from "@heroicons/react/24/outline";
-import { useAuthStore } from "@/store/auth";
-import { useAccount } from "wagmi";
+
 import { useStepper } from "@/store/modals/txStepper";
 import toast from "react-hot-toast";
 import { errorManager } from "@/components/Utilities/errorManager";
@@ -50,8 +49,7 @@ export const MilestonesScreen: React.FC = () => {
   const selectedProject = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();
-  const { address, isConnected, connector, chain } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { address, isLoggedIn, chain } = useWallet();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
 
@@ -94,10 +92,10 @@ export const MilestonesScreen: React.FC = () => {
 
     try {
       let gapClient = gap;
-      if (!isConnected || !isAuth) return;
+      if (!isLoggedIn) return;
 
       // Check if we need to switch chains
-      const chainId = await connector?.getChainId();
+      const chainId = chain?.id;
       if (!checkNetworkIsValid(chainId) || chainId !== communityNetworkId) {
         await switchChainAsync?.({ chainId: communityNetworkId });
         gapClient = getGapClient(communityNetworkId);

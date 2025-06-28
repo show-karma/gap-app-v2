@@ -14,12 +14,13 @@ import { TrashIcon } from "@heroicons/react/24/outline";
 import { AreaChart, Card, Title } from "@tremor/react";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
+
 import { prepareChartData } from "../../Communities/Impact/ImpactCharts";
 import { GrantsOutputsLoading } from "../Loading/Grants/Outputs";
 import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
 import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { GroupedLinks } from "./GroupedLinks";
+import { useWallet } from "@/hooks/useWallet";
 
 // Helper function to handle comma-separated URLs
 const parseProofUrls = (proof: string): string[] => {
@@ -55,10 +56,10 @@ export const OutputsAndOutcomes = () => {
     (state) => state.isCommunityAdmin
   );
 
-  const { isConnected } = useAccount();
+  const { isLoggedIn } = useWallet();
 
   const isAuthorized =
-    isConnected && (isProjectOwner || isContractOwner || isCommunityAdmin);
+    isLoggedIn && (isProjectOwner || isContractOwner || isCommunityAdmin);
 
   const [forms, setForms] = useState<OutputForm[]>([]);
   const [selectedPoint, setSelectedPoint] = useState<{

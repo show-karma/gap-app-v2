@@ -6,16 +6,14 @@ import { z } from "zod";
 import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
-import { useAuthStore } from "@/store/auth";
 
-import { useAccount } from "wagmi";
 import { getWalletClient } from "@wagmi/core";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { MESSAGES } from "@/utilities/messages";
 import { getGapClient, useGap } from "@/hooks/useGap";
 
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { useStepper } from "@/store/modals/txStepper";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { Hex } from "viem";
@@ -66,15 +64,13 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
   function openModal() {
     setIsOpen(true);
   }
-  const { address, isConnected } = useAccount();
+  const { address, chain, switchChainAsync } = useWallet();
 
   const hasVerifiedThis = address
     ? impact?.verified?.find(
         (v) => v.attester?.toLowerCase() === address?.toLowerCase()
       )
     : null;
-  const { chain } = useAccount();
-  const { switchChainAsync } = useWallet();
   const { gap } = useGap();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
@@ -186,15 +182,15 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
       setIsStepper(false);
     }
   };
-  const isAuthorized = useAuthStore((state) => state.isAuth);
+  const { isLoggedIn } = useWallet();
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const verifyPermission = () => {
-    if (!isAuthorized || !isConnected) return false;
+    if (!isLoggedIn) return false;
     return isContractOwner || !isProjectAdmin;
   };
   const ableToVerify = verifyPermission();
-  const { openConnectModal } = useConnectModal();
+  const { setShowAuthFlow } = useDynamicContext();
 
   if (hasVerifiedThis || !ableToVerify) return null;
 
@@ -202,8 +198,8 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
     <>
       <Button
         onClick={() => {
-          if (!isAuthorized || !isConnected) {
-            openConnectModal?.();
+          if (!isLoggedIn) {
+            setShowAuthFlow?.(true);
           } else {
             openModal();
           }

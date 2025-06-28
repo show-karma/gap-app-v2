@@ -17,7 +17,7 @@ import { useState } from "react";
 import type { SubmitHandler } from "react-hook-form";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
+
 import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
@@ -79,9 +79,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
   const inputStyle = cn(inputStyleDefault, inputStyleProps);
   const { setGrant } = useGrantStore((state) => state);
 
-  const { address } = useAccount();
-  const { chain } = useAccount();
-  const { switchChainAsync } = useWallet();
+  const { address, chain, switchChainAsync } = useWallet();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [noProofCheckbox, setNoProofCheckbox] = useState(false);

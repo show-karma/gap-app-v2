@@ -6,7 +6,7 @@ import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { Skeleton } from "@/components/Utilities/Skeleton";
 import TablePagination from "@/components/Utilities/TablePagination";
 import { useOwnerStore } from "@/store";
-import { useAuthStore } from "@/store/auth";
+
 import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
@@ -26,11 +26,12 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { useEffect, useState } from "react";
-import { useAccount } from "wagmi";
+
 import { SearchDropdown } from "../ProgramRegistry/SearchDropdown";
 import { ArrowDownTrayIcon } from "@heroicons/react/24/outline";
 import { envVars } from "@/utilities/enviromentVars";
 import { downloadCommunityReport } from "@/utilities/downloadReports";
+import { useWallet } from "@/hooks/useWallet";
 
 interface Report {
   _id: {
@@ -112,14 +113,13 @@ export const ReportMilestonePage = ({
 }: ReportMilestonePageProps) => {
   const params = useParams();
   const communityId = params.communityId as string;
-  const { address, isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
+  const { isLoggedIn, address } = useWallet();
   const { isCommunityAdmin: isAdmin } = useIsCommunityAdmin(
     community?.uid,
     address
   );
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const isAuthorized = isConnected && isAuth && (isAdmin || isContractOwner);
+  const isAuthorized = isLoggedIn && (isAdmin || isContractOwner);
 
   const [currentPage, setCurrentPage] = useState(1);
   const [sortBy, setSortBy] = useState("totalMilestones");

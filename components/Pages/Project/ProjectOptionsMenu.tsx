@@ -32,7 +32,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Fragment, useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
+
 import { LinkContractAddressButton } from "./LinkContractAddressButton";
 import { LinkGithubRepoButton } from "./LinkGithubRepoButton";
 import { SetPayoutAddressButton } from "./SetPayoutAddressButton";
@@ -90,8 +90,7 @@ export const ProjectOptionsMenu = () => {
   const [showLinkDivviDialog, setShowLinkDivviDialog] = useState(false);
   const [showSetPayoutDialog, setShowSetPayoutDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const { address, chain } = useAccount();
-  const { switchChainAsync } = useWallet();
+  const { chain, address, switchChainAsync } = useWallet();
   const router = useRouter();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();

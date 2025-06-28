@@ -13,7 +13,7 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 import dynamic from "next/dynamic";
 import { FC, Fragment, useState } from "react";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
+
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useWallet } from "@/hooks/useWallet";
 
@@ -31,10 +31,9 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({
   const [isDeleting, setIsDeleting] = useState(false);
   let [isOpen, setIsOpen] = useState(false);
   const { gap } = useGap();
-  const { address, chain } = useAccount();
   const { project } = useProjectStore();
   const { changeStepperStep, setIsStepper } = useStepper();
-  const { switchChainAsync } = useWallet();
+  const { address, chain, switchChainAsync } = useWallet();
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
   const deleteMember = async () => {

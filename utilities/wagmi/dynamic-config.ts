@@ -10,12 +10,15 @@ import {
   lisk,
   scroll,
 } from "@wagmi/core/chains";
-
 import { appNetwork } from "../network";
 import { envVars } from "../enviromentVars";
+import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
 
-export const config = createConfig({
+// Create standard wagmi config for Dynamic
+// Dynamic manages wallet connections through its own system
+export const dynamicConfig = createConfig({
   chains: appNetwork,
+  multiInjectedProviderDiscovery: false, // Dynamic handles this
   transports: {
     [optimism.id]: http(envVars.RPC.OPTIMISM),
     [arbitrum.id]: http(envVars.RPC.ARBITRUM),
@@ -33,6 +36,5 @@ export const config = createConfig({
   }),
 });
 
-export function getWagmiConfig() {
-  return config;
-}
+// Export wallet connectors for Dynamic
+export const walletConnectors = [EthereumWalletConnectors];

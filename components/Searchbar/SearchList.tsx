@@ -13,15 +13,15 @@ import {
   ICommunityResponse,
   ISearchResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useAccount } from "wagmi";
-import { useAuthStore } from "@/store/auth";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+
+import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { useEffect, useState } from "react";
 import { useMobileStore } from "@/store/mobile";
 
 import EthereumAddressToENSAvatar from "../EthereumAddressToENSAvatar";
 import { groupSimilarCommunities } from "@/utilities/communityHelpers"; // You'll need to create this utility function
 import { useRouter } from "next/navigation";
+import { useWallet } from "@/hooks/useWallet";
 
 interface Props {
   data: ISearchResponse; // Will be modular in the future
@@ -40,9 +40,8 @@ export const SearchList: React.FC<Props> = ({
   onInteractionStart,
   onInteractionEnd,
 }) => {
-  const { isConnected } = useAccount();
-  const { isAuth } = useAuthStore();
-  const { openConnectModal } = useConnectModal();
+  const { isLoggedIn } = useWallet();
+  const { setShowAuthFlow } = useDynamicContext();
   const [shouldOpen, setShouldOpen] = useState(false);
   const router = useRouter();
 
@@ -61,10 +60,10 @@ export const SearchList: React.FC<Props> = ({
 
   const handleCreateProject = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!isConnected || !isAuth) {
+    if (!isLoggedIn) {
       closeSearchList();
       setIsMobileMenuOpen(false);
-      openConnectModal?.();
+      setShowAuthFlow?.(true);
       setShouldOpen(true);
       return;
     }
@@ -77,12 +76,12 @@ export const SearchList: React.FC<Props> = ({
   };
 
   useEffect(() => {
-    if (shouldOpen && isAuth && isConnected) {
+    if (shouldOpen && isLoggedIn && isLoggedIn) {
       const el = document?.getElementById("new-project-button");
       if (el) el.click();
       setShouldOpen(false);
     }
-  }, [isAuth, isConnected, shouldOpen]);
+  }, [isLoggedIn, isLoggedIn, shouldOpen]);
   const { isMobileMenuOpen, setIsMobileMenuOpen } = useMobileStore();
 
   const renderItem = (

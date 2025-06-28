@@ -17,7 +17,7 @@ import {
   IProjectResponse,
   ISearchResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useAccount } from "wagmi";
+
 import { MESSAGES } from "@/utilities/messages";
 import { z } from "zod";
 import { getGapClient, useGap } from "@/hooks/useGap";
@@ -180,7 +180,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   const [validAddress, setValidAddress] = useState(true);
 
   const { gap } = useGap();
-  const { address, chain } = useAccount();
+  const { address, chain, switchChainAsync } = useWallet();
   const router = useRouter();
   function closeModal() {
     setIsOpen(false);
@@ -193,7 +193,6 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const setIsProjectAdmin = useProjectStore((state) => state.setIsProjectAdmin);
-  const { switchChainAsync } = useWallet();
   const { changeStepperStep, setIsStepper } = useStepper();
 
   const createProjectPointer = async ({ ogProjectUID }: PointerType) => {

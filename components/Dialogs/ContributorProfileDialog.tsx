@@ -7,19 +7,17 @@ import { Button } from "@/components/Utilities/Button";
 import { useProjectStore } from "@/store";
 import { useContributorProfile } from "@/hooks/useContributorProfile";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { useAuthStore } from "@/store/auth";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { useStepper } from "@/store/modals/txStepper";
 import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { cn } from "@/utilities/tailwind";
-import { config } from "@/utilities/wagmi/config";
+import { dynamicConfig } from "@/utilities/wagmi/dynamic-config";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useConnectModal } from "@rainbow-me/rainbowkit";
+import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { ContributorProfile } from "@show-karma/karma-gap-sdk";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -75,7 +73,7 @@ export const ContributorProfileDialog: FC<
   ContributorProfileDialogProps
 > = () => {
   const project = useProjectStore((state) => state.project);
-  const { address, chain, isConnected } = useAccount();
+  const { address, chain } = useWallet();
   const { closeModal, isModalOpen: isOpen } = useContributorProfileModalStore();
 
   // Fetch contributor profile using React Query
@@ -106,13 +104,13 @@ export const ContributorProfileDialog: FC<
     reValidateMode: "onChange",
     mode: "onChange",
   });
-  const { openConnectModal } = useConnectModal();
+  const { setShowAuthFlow } = useDynamicContext();
   const [isLoading, setIsLoading] = useState(false);
   const { changeStepperStep, setIsStepper } = useStepper();
-  const { isAuth } = useAuthStore();
+  const { isLoggedIn } = useWallet();
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
-  const isAllowed = isConnected && isAuth;
+  const isAllowed = isLoggedIn;
 
   const onSubmit = async (data: SchemaType) => {
     let gapClient = gap;
@@ -413,7 +411,7 @@ export const ContributorProfileDialog: FC<
                     <Button
                       type="button"
                       className="rounded-md text-lg"
-                      onClick={openConnectModal}
+                      onClick={() => setShowAuthFlow?.(true)}
                     >
                       Login
                     </Button>

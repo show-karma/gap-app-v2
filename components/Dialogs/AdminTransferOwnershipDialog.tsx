@@ -12,7 +12,7 @@ import { isAddress } from "viem";
 import { z } from "zod";
 import { Button } from "../Utilities/Button";
 import { errorManager } from "../Utilities/errorManager";
-import { useAccount } from "wagmi";
+import { useWallet } from "@/hooks/useWallet";
 
 const schema = z.object({
   newOwner: z
@@ -37,7 +37,7 @@ export const AdminTransferOwnershipDialog: FC = () => {
 
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
-  const { address } = useAccount();
+  const { address } = useWallet();
 
   const {
     register,

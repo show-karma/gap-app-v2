@@ -9,7 +9,7 @@ import {
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useAccount } from "wagmi";
+
 import { GAP } from "@show-karma/karma-gap-sdk";
 import { Button } from "../../Utilities/Button";
 import { MESSAGES } from "@/utilities/messages";
@@ -97,8 +97,7 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
   });
 
   const [isLoading, setIsLoading] = useState(false);
-  const { chain } = useAccount();
-  const { switchChainAsync } = useWallet();
+  const { chain, switchChainAsync } = useWallet();
 
   const { changeStepperStep, setIsStepper } = useStepper();
 

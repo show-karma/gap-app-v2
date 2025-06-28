@@ -26,7 +26,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
+
 import { z } from "zod";
 import { MultiSelect } from "../../../components/Utilities/MultiSelect";
 import { useWallet } from "@/hooks/useWallet";
@@ -77,8 +77,7 @@ export const UnifiedMilestoneScreen = () => {
   const [selectedGrantIds, setSelectedGrantIds] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const grants: IGrantResponse[] = project?.grants || [];
-  const { address, chain } = useAccount();
-  const { switchChainAsync } = useWallet();
+  const { address, chain, switchChainAsync } = useWallet();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
   const { projectId } = useParams();

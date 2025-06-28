@@ -10,9 +10,9 @@ import { useQueryState } from "nuqs";
 import { ArrowDownIcon, ArrowUpIcon } from "@heroicons/react/24/solid";
 import { cn } from "@/utilities/tailwind";
 import { CheckIcon } from "@heroicons/react/20/solid";
-import { queryClient } from "@/components/Utilities/WagmiProvider";
 import { ExplorerSortByOptions, ExplorerSortOrder } from "@/types/explorer";
 import { getExplorerProjects } from "@/utilities/indexer/getExplorerProjects";
+import { queryClient } from "@/utilities/queries/client";
 
 const sortOptions: Record<ExplorerSortByOptions, string> = {
   createdAt: "Recently Added",

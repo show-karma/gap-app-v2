@@ -9,13 +9,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 import fetchData from "@/utilities/fetchData";
 import { useParams } from "next/navigation";
-import { useAuthStore } from "@/store/auth";
-import { useAuth } from "@/hooks/useAuth";
+
 import { INDEXER } from "@/utilities/indexer";
 
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MESSAGES } from "@/utilities/messages";
-import { useAccount } from "wagmi";
+
+import { useWallet } from "@/hooks/useWallet";
 
 type CategoryCreationDialogProps = {
   refreshCategories: () => Promise<void>;
@@ -34,7 +34,7 @@ export const CategoryCreationDialog: FC<CategoryCreationDialogProps> = ({
 }) => {
   let [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const { address } = useAccount();
+  const { address } = useWallet();
   const params = useParams();
   const communityId = params.communityId as string;
 
@@ -55,14 +55,13 @@ export const CategoryCreationDialog: FC<CategoryCreationDialogProps> = ({
     setIsOpen(true);
   }
 
-  const { isAuth } = useAuthStore();
-  const { authenticate } = useAuth();
+  const { isLoggedIn, openAuthFlow } = useWallet();
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
     try {
       setIsLoading(true);
-      if (!isAuth) {
-        await authenticate();
+      if (!isLoggedIn) {
+        await openAuthFlow();
       }
       const [request, error] = await fetchData(
         INDEXER.CATEGORIES.CREATE(communityId),

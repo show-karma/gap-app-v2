@@ -3,14 +3,13 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import "@/styles/globals.css";
 import "@/styles/index.scss";
 import "@/components/Utilities/DynamicStars/styles.css";
-import "@rainbow-me/rainbowkit/styles.css";
 import "rc-slider/assets/index.css";
 import "react-day-picker/dist/style.css";
 import "@uiw/react-markdown-preview/markdown.css";
 import Footer from "@/components/Utilities/Footer";
 import Header from "@/components/Utilities/Header";
 import { Toaster } from "react-hot-toast";
-import WagmiProvider from "@/components/Utilities/WagmiProvider";
+import DynamicProvider from "@/components/Utilities/DynamicProvider";
 import { StepperDialog } from "@/components/Dialogs/StepperDialog";
 import { ProgressBarWrapper } from "@/components/ProgressBarWrapper";
 import { ThemeProvider } from "next-themes";
@@ -46,7 +45,7 @@ export default async function RootLayout({
           enableSystem={true}
           disableTransitionOnChange
         >
-          <WagmiProvider cookie={cookie}>
+          <DynamicProvider cookie={cookie}>
             <Toaster />
             <StepperDialog />
             <ProgressBarWrapper />
@@ -61,7 +60,7 @@ export default async function RootLayout({
               </div>
               <Footer />
             </div>
-          </WagmiProvider>
+          </DynamicProvider>
           <SpeedInsights />
         </ThemeProvider>
       </body>

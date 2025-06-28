@@ -17,10 +17,11 @@ import {
 import { PencilIcon } from "@heroicons/react/24/outline";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
-import { useAccount } from "wagmi";
+
 import { type Hex } from "viem";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useProjectInstance } from "@/hooks/useProjectInstance";
+import { useWallet } from "@/hooks/useWallet";
 
 const iconsClassnames = {
   general:
@@ -37,7 +38,7 @@ export const MemberCard = ({ member }: { member: string }) => {
   const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isContractOwner = useOwnerStore((state) => state.isOwner);
-  const { address } = useAccount();
+  const { address } = useWallet();
   const isAuthorized = isProjectOwner || isContractOwner;
   const isAdminOrAbove = isProjectOwner || isContractOwner || isProjectAdmin;
   const { project: projectInstance } = useProjectInstance(

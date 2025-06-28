@@ -18,7 +18,7 @@ import {
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useEffect, useState, type FC } from "react";
 import toast from "react-hot-toast";
-import { useAccount } from "wagmi";
+
 import { VerifiedBadge } from "./VerifiedBadge";
 import { VerifyGrantUpdateDialog } from "./VerifyGrantUpdateDialog";
 
@@ -78,8 +78,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
   date,
   update,
 }) => {
-  const { chain, address } = useAccount();
-  const { switchChainAsync } = useWallet();
+  const { chain, address, switchChainAsync } = useWallet();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [isDeletingGrantUpdate, setIsDeletingGrantUpdate] = useState(false);
   const selectedProject = useProjectStore((state) => state.project);
