@@ -19,7 +19,9 @@ const nextConfig = {
   eslint: {
     dirs: ["app", "components", "utilities", "hooks", "store", "types"],
   },
-
+  experimental: {
+    optimizePackageImports: ["@dynamic-labs/sdk-react-core"],
+  },
   webpack: (config, { isServer, webpack }) => {
     // Fix for browserslist and other Node.js modules
     if (!isServer) {
