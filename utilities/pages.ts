@@ -24,6 +24,7 @@ export const PAGES = {
     MANAGE_INDICATORS: (community: string) =>
       `/community/${community}/admin/manage-indicators`,
     TRACKS: (community: string) => `/community/${community}/admin/tracks`,
+    FUNDING_PLATFORM: (community: string) => `/community/${community}/admin/funding-platform`,
     COMMUNITIES: `/admin/communities`,
     COMMUNITY_STATS: `/admin/communities/stats`,
     PROJECTS: `/admin/projects`,
