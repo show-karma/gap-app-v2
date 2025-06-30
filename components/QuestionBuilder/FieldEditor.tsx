@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -20,6 +20,11 @@ const fieldSchema = z.object({
     pattern: z.string().optional(),
     message: z.string().optional(),
   }).optional(),
+  // AI evaluation configuration
+  aiEvaluation: z.object({
+    triggerOnChange: z.boolean().optional(),
+    includeInEvaluation: z.boolean().optional(),
+  }).optional(),
 });
 
 type FieldFormData = z.infer<typeof fieldSchema>;
@@ -33,7 +38,7 @@ interface FieldEditorProps {
 }
 
 export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }: FieldEditorProps) {
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<FieldFormData>({
+  const { register, watch, setValue, formState: { errors } } = useForm<FieldFormData>({
     resolver: zodResolver(fieldSchema),
     defaultValues: {
       label: field.label,
@@ -41,48 +46,70 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
       required: field.required || false,
       description: field.description || '',
       options: field.options || [],
+      validation: field.validation || {},
+      aiEvaluation: {
+        triggerOnChange: field.aiEvaluation?.triggerOnChange || false,
+        includeInEvaluation: field.aiEvaluation?.includeInEvaluation ?? true,
+      },
     },
   });
 
+  const watchedOptions = watch('options') || [];
   const hasOptions = ['select', 'radio', 'checkbox'].includes(field.type);
-  const options = watch('options') || [];
-
-  const onSubmit = (data: FieldFormData) => {
-    onUpdate({
-      ...field,
-      ...data,
-      options: hasOptions ? data.options?.filter(Boolean) : undefined,
+  
+  // Watch all form values and auto-update the field
+  const watchedValues = watch();
+  
+  useEffect(() => {
+    const subscription = watch((data) => {
+      // Only update if data is valid (has required fields)
+      if (data.label && data.label.trim().length > 0) {
+        const updatedField: FormField = {
+          ...field,
+          label: data.label,
+          placeholder: data.placeholder || '',
+          required: data.required || false,
+          description: data.description || '',
+          options: hasOptions ? (data.options || []).filter((opt): opt is string => typeof opt === 'string' && opt.length > 0) : undefined,
+          validation: data.validation || {},
+          aiEvaluation: data.aiEvaluation || {},
+        };
+        onUpdate(updatedField);
+      }
     });
-  };
+    
+    return () => subscription.unsubscribe();
+  }, [watch, onUpdate, field, hasOptions]);
 
-  const addOption = () => {
-    const newOptions = [...options, ''];
-    setValue('options', newOptions);
-  };
+
 
   const updateOption = (index: number, value: string) => {
-    const newOptions = [...options];
+    const newOptions = [...watchedOptions];
     newOptions[index] = value;
     setValue('options', newOptions);
   };
 
+  const addOption = () => {
+    const newOptions = [...watchedOptions, ''];
+    setValue('options', newOptions);
+  };
+
   const removeOption = (index: number) => {
-    const newOptions = options.filter((_, i) => i !== index);
+    const newOptions = watchedOptions.filter((_, i) => i !== index);
     setValue('options', newOptions);
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 mb-4">
-      <div className="flex items-center justify-between mb-4">
-        <h4 className="text-lg font-medium text-gray-900 dark:text-white">
-          {field.type.charAt(0).toUpperCase() + field.type.slice(1)} Field
-        </h4>
-        
+    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6">
+      <div className="flex items-center justify-between mb-6">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+          Edit {field.type} Field
+        </h3>
         <div className="flex items-center space-x-2">
           {onMoveUp && (
             <button
               onClick={() => onMoveUp(field.id)}
-              className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              className="p-1 text-gray-400 hover:text-gray-600"
               title="Move up"
             >
               ↑
@@ -91,7 +118,7 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
           {onMoveDown && (
             <button
               onClick={() => onMoveDown(field.id)}
-              className="p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              className="p-1 text-gray-400 hover:text-gray-600"
               title="Move down"
             >
               ↓
@@ -107,9 +134,9 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
         </div>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Field Label *
           </label>
           <input
@@ -123,7 +150,7 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             Placeholder Text
           </label>
           <input
@@ -134,14 +161,14 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Description
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Description (Help Text)
           </label>
           <textarea
             {...register('description')}
             rows={2}
             className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 placeholder:text-gray-300 dark:bg-zinc-800 dark:border-zinc-700 dark:text-zinc-100 dark:placeholder-zinc-300"
-            placeholder="Enter field description"
+            placeholder="Optional description or help text"
           />
         </div>
 
@@ -156,13 +183,48 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
           </label>
         </div>
 
+        {/* AI Evaluation Configuration */}
+        <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
+          <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">
+            AI Evaluation Settings
+          </h4>
+          
+          <div className="space-y-3">
+            <div className="flex items-center">
+              <input
+                {...register('aiEvaluation.includeInEvaluation')}
+                type="checkbox"
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                Include this field in AI evaluation context
+              </label>
+            </div>
+            
+            <div className="flex items-center">
+              <input
+                {...register('aiEvaluation.triggerOnChange')}
+                type="checkbox"
+                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <label className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                Trigger real-time AI evaluation when this field changes
+              </label>
+            </div>
+          </div>
+          
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            Real-time evaluation provides instant feedback to applicants as they complete the form.
+          </p>
+        </div>
+
         {hasOptions && (
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Options
             </label>
             <div className="space-y-2">
-              {options.map((option, index) => (
+              {watchedOptions.map((option, index) => (
                 <div key={index} className="flex items-center space-x-2">
                   <input
                     value={option}
@@ -191,10 +253,7 @@ export function FieldEditor({ field, onUpdate, onDelete, onMoveUp, onMoveDown }:
           </div>
         )}
 
-        <Button type="submit" className="w-full">
-          Update Field
-        </Button>
-      </form>
+      </div>
     </div>
   );
 }

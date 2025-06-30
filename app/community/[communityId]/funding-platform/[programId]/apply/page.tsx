@@ -1,11 +1,12 @@
 "use client";
 import { useParams, useRouter } from "next/navigation";
 import { useProgramConfig } from "@/hooks/useFundingPlatform";
-import { ResponsiveApplicationForm } from "@/components/FundingPlatform";
+import ApplicationSubmissionWithAI from "@/components/FundingPlatform/ApplicationView/ApplicationSubmissionWithAI";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { Button } from "@/components/Utilities/Button";
 import { ArrowLeftIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 export default function FundingApplicationPage() {
   const router = useRouter();
@@ -38,6 +39,19 @@ export default function FundingApplicationPage() {
 
   const handleBackToCommunity = () => {
     router.push(`/community/${communityId}`);
+  };
+
+  const handleApplicationSubmit = async (applicationData: Record<string, any>) => {
+    try {
+      // Use the proper API service to submit application
+      const { fundingApplicationsAPI } = await import('@/services/fundingPlatformService');
+      const result = await fundingApplicationsAPI.submitApplication(programId, parsedChainId, applicationData);
+      handleSubmissionSuccess(result.id || result.referenceNumber || 'APP-' + Date.now());
+    } catch (error) {
+      console.error('Error submitting application:', error);
+      toast.error('Failed to submit application. Please try again.');
+      throw error; // Re-throw to let ApplicationSubmissionWithAI handle it
+    }
   };
 
   if (isLoadingConfig) {
@@ -192,13 +206,16 @@ export default function FundingApplicationPage() {
   }
 
   return (
-    <ResponsiveApplicationForm
-      programId={programId}
-      chainId={parsedChainId}
-      programTitle={config.formSchema?.title}
-      programDescription={config.formSchema?.description}
-      onSubmissionSuccess={handleSubmissionSuccess}
-      onCancel={handleCancel}
-    />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        <ApplicationSubmissionWithAI
+          programId={programId}
+          chainId={parsedChainId}
+          formSchema={config.formSchema}
+          onSubmit={handleApplicationSubmit}
+          onCancel={handleCancel}
+        />
+      </div>
+    </div>
   );
 } 

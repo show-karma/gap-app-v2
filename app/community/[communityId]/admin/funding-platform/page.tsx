@@ -146,7 +146,7 @@ export default function FundingPlatformAdminPage() {
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {programs.map((program: any) => (
             <div
-              key={program.id}
+              key={`${program.programId}_${program.chainID}`}
               className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
             >
               {/* Program Header */}
@@ -222,7 +222,7 @@ export default function FundingPlatformAdminPage() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex space-x-2">
+                <div className="flex space-x-2 mb-3">
                   <Link
                     href={`/community/${communityId}/admin/funding-platform/${program.programId}_${program.chainID}/question-builder`}
                     className="flex-1"
@@ -246,6 +246,24 @@ export default function FundingPlatformAdminPage() {
                     >
                       <EyeIcon className="w-4 h-4 mr-1" />
                       View Applications
+                    </Button>
+                  </Link>
+                </div>
+
+                {/* Apply Button */}
+                <div className="mb-3">
+                  <Link
+                    href={`/community/${communityId}/funding-platform/${program.programId}_${program.chainID}/apply`}
+                    className="w-full"
+                  >
+                    <Button
+                      variant="primary"
+                      className="w-full flex items-center justify-center text-sm bg-green-600 text-white hover:bg-green-700"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      Apply to Program
                     </Button>
                   </Link>
                 </div>

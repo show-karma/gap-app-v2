@@ -12,6 +12,11 @@ export interface FormField {
     message?: string;
   };
   description?: string;
+  // AI evaluation configuration
+  aiEvaluation?: {
+    triggerOnChange?: boolean; // Whether to trigger AI evaluation when this field changes
+    includeInEvaluation?: boolean; // Whether to include this field in AI evaluation context
+  };
 }
 
 export interface FormSchema {
@@ -22,6 +27,13 @@ export interface FormSchema {
   settings: {
     submitButtonText: string;
     confirmationMessage: string;
+  };
+  // AI configuration for the entire form
+  aiConfig?: {
+    systemPrompt?: string;
+    detailedPrompt?: string;
+    aiModel?: string;
+    enableRealTimeEvaluation?: boolean;
   };
 }
 

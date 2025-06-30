@@ -42,11 +42,20 @@ export interface IFundingApplication {
   applicationData: Record<string, any>;
   status: 'submitted' | 'under_review' | 'approved' | 'rejected';
   aiEvaluation?: {
-    rating: number;
-    reasoning: string;
-    strengths: string[];
-    weaknesses: string[];
-    recommendations: string[];
+    systemEvaluation?: {
+      rating: number;
+      reasoning: string;
+      strengths: string[];
+      weaknesses: string[];
+      recommendations: string[];
+    };
+    detailedEvaluation?: {
+      rating: number;
+      reasoning: string;
+      strengths: string[];
+      weaknesses: string[];
+      recommendations: string[];
+    };
   };
   submittedAt: Date;
   statusHistory: {

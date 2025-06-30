@@ -107,8 +107,8 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
           comparison = a.status.localeCompare(b.status);
           break;
         case 'rating':
-          const aRating = a.aiEvaluation?.rating || 0;
-          const bRating = b.aiEvaluation?.rating || 0;
+          const aRating = a.aiEvaluation?.systemEvaluation?.rating || a.aiEvaluation?.detailedEvaluation?.rating || 0;
+          const bRating = b.aiEvaluation?.systemEvaluation?.rating || b.aiEvaluation?.detailedEvaluation?.rating || 0;
           comparison = aRating - bRating;
           break;
       }
@@ -256,7 +256,7 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                       {application.referenceNumber}
                     </h3>
                     {getStatusBadge(application.status)}
-                    {getRatingBadge(application.aiEvaluation?.rating)}
+                    {getRatingBadge(application.aiEvaluation?.systemEvaluation?.rating || application.aiEvaluation?.detailedEvaluation?.rating)}
                   </div>
                   
                   <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -267,9 +267,9 @@ const ApplicationList: FC<IApplicationListComponentProps> = ({
                     Submitted: {formatDate(application.submittedAt)}
                   </p>
 
-                  {application.aiEvaluation?.reasoning && (
+                  {(application.aiEvaluation?.systemEvaluation?.reasoning || application.aiEvaluation?.detailedEvaluation?.reasoning) && (
                     <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                      AI Summary: {application.aiEvaluation.reasoning}
+                      AI Summary: {application.aiEvaluation?.systemEvaluation?.reasoning || application.aiEvaluation?.detailedEvaluation?.reasoning}
                     </p>
                   )}
                 </div>

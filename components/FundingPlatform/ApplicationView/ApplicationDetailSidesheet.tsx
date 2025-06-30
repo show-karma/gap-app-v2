@@ -118,74 +118,117 @@ const ApplicationDetailSidesheet: FC<ApplicationDetailSidesheetProps> = ({
       );
     }
 
-    const { rating, reasoning, strengths, weaknesses, recommendations } = application.aiEvaluation;
-    
+    // Handle dual evaluation format
+    const hasSystemEvaluation = application.aiEvaluation.systemEvaluation;
+    const hasDetailedEvaluation = application.aiEvaluation.detailedEvaluation;
+
     const getRatingColor = (rating: number) => {
       if (rating >= 8) return 'text-green-600 bg-green-50 border-green-200';
       if (rating >= 6) return 'text-yellow-600 bg-yellow-50 border-yellow-200';
       return 'text-red-600 bg-red-50 border-red-200';
     };
 
+    const renderEvaluationCard = (evaluation: any, title: string, description: string) => {
+      const { rating, reasoning, strengths, weaknesses, recommendations } = evaluation;
+      
+      return (
+        <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h4 className="font-medium text-gray-900 dark:text-white">{title}</h4>
+            <div className={cn('px-3 py-1 rounded-lg border text-sm font-medium', getRatingColor(rating))}>
+              {rating}/10
+            </div>
+          </div>
+          
+          <p className="text-xs text-gray-500 dark:text-gray-400">{description}</p>
+
+          {reasoning && (
+            <div>
+              <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-1">Summary</h5>
+              <p className="text-sm text-gray-700 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 rounded p-2">
+                {reasoning}
+              </p>
+            </div>
+          )}
+
+          {strengths && strengths.length > 0 && (
+            <div>
+              <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-1">Strengths</h5>
+              <ul className="space-y-1">
+                {strengths.map((strength: string, index: number) => (
+                  <li key={index} className="text-sm text-gray-700 dark:text-gray-300 flex items-start">
+                    <span className="text-green-500 mr-2">✓</span>
+                    {strength}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {weaknesses && weaknesses.length > 0 && (
+            <div>
+              <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-1">Areas for Improvement</h5>
+              <ul className="space-y-1">
+                {weaknesses.map((weakness: string, index: number) => (
+                  <li key={index} className="text-sm text-gray-700 dark:text-gray-300 flex items-start">
+                    <span className="text-red-500 mr-2">•</span>
+                    {weakness}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {recommendations && recommendations.length > 0 && (
+            <div>
+              <h5 className="text-sm font-medium text-gray-900 dark:text-white mb-1">Recommendations</h5>
+              <ul className="space-y-1">
+                {recommendations.map((recommendation: string, index: number) => (
+                  <li key={index} className="text-sm text-gray-700 dark:text-gray-300 flex items-start">
+                    <span className="text-blue-500 mr-2">→</span>
+                    {recommendation}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      );
+    };
+
     return (
       <div className="space-y-4">
-        {/* Rating */}
-        <div className={cn('p-4 rounded-lg border', getRatingColor(rating))}>
-          <div className="flex items-center justify-between">
-            <h4 className="font-medium">AI Evaluation Score</h4>
-            <span className="text-2xl font-bold">{rating}/10</span>
-          </div>
-        </div>
-
-        {/* Reasoning */}
-        {reasoning && (
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">Evaluation Summary</h4>
-            <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">{reasoning}</p>
+        {hasSystemEvaluation && renderEvaluationCard(
+          application.aiEvaluation.systemEvaluation,
+          'System Prompt Evaluation',
+          'Core evaluation based on program criteria'
+        )}
+        
+        {hasDetailedEvaluation && renderEvaluationCard(
+          application.aiEvaluation.detailedEvaluation,
+          'Detailed Evaluation',
+          'Comprehensive evaluation with additional criteria'
+        )}
+        
+        {hasSystemEvaluation && hasDetailedEvaluation && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+            <h5 className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
+              Evaluation Summary
+            </h5>
+            <p className="text-xs text-blue-700 dark:text-blue-300">
+              System Score: {application.aiEvaluation.systemEvaluation?.rating}/10 | 
+              Detailed Score: {application.aiEvaluation.detailedEvaluation?.rating}/10
+            </p>
           </div>
         )}
-
-        {/* Strengths */}
-        {strengths && strengths.length > 0 && (
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">Strengths</h4>
-            <ul className="space-y-1">
-              {strengths.map((strength, index) => (
-                <li key={index} className="text-sm text-gray-700 flex items-start">
-                  <span className="text-green-500 mr-2">✓</span>
-                  {strength}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Weaknesses */}
-        {weaknesses && weaknesses.length > 0 && (
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">Areas for Improvement</h4>
-            <ul className="space-y-1">
-              {weaknesses.map((weakness, index) => (
-                <li key={index} className="text-sm text-gray-700 flex items-start">
-                  <span className="text-red-500 mr-2">•</span>
-                  {weakness}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* Recommendations */}
-        {recommendations && recommendations.length > 0 && (
-          <div>
-            <h4 className="font-medium text-gray-900 mb-2">Recommendations</h4>
-            <ul className="space-y-1">
-              {recommendations.map((recommendation, index) => (
-                <li key={index} className="text-sm text-gray-700 flex items-start">
-                  <span className="text-blue-500 mr-2">→</span>
-                  {recommendation}
-                </li>
-              ))}
-            </ul>
+        
+        {!hasSystemEvaluation && !hasDetailedEvaluation && (
+          <div className="bg-gray-50 rounded-lg p-4 text-center">
+            <ClockIcon className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+            <p className="text-gray-500 text-sm">No AI evaluation available</p>
+            <p className="text-gray-400 text-xs mt-1">
+              The application may not have been evaluated yet or evaluation data is missing.
+            </p>
           </div>
         )}
       </div>
