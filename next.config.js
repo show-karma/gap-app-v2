@@ -1,6 +1,6 @@
-const withBundleAnalyzer = require("@next/bundle-analyzer")({
-  enabled: process.env.ANALYZE === "true",
-});
+// const withBundleAnalyzer = require("@next/bundle-analyzer")({
+//   enabled: process.env.ANALYZE === "true",
+// });
 
 const securityHeaders = [
   {
@@ -18,18 +18,6 @@ const nextConfig = {
   turbopack: {},
   eslint: {
     dirs: ["app", "components", "utilities", "hooks", "store", "types"],
-  },
-  experimental: {
-    optimizePackageImports: [
-      "@dynamic-labs/sdk-react-core",
-      "@tanstack/react-query",
-      "@radix-ui/react-dialog",
-      "@radix-ui/react-popover",
-      "@heroicons/react",
-      "@show-karma/karma-gap-sdk",
-    ],
-    // Enable webpack build cache for faster builds
-    webpackBuildWorker: true,
   },
   webpack: (config, { isServer, webpack }) => {
     // Memory optimization settings
@@ -119,12 +107,10 @@ const nextConfig = {
 
 const { withSentryConfig } = require("@sentry/nextjs");
 
-// Apply plugins in order: removeImports -> bundleAnalyzer -> Sentry
 const configWithImports = removeImports(nextConfig);
-const configWithAnalyzer = withBundleAnalyzer(configWithImports);
 
 module.exports = withSentryConfig(
-  configWithAnalyzer,
+  configWithImports,
   {
     // For all available options, see:
     // https://github.com/getsentry/sentry-webpack-plugin#options
@@ -165,3 +151,17 @@ module.exports = withSentryConfig(
     automaticVercelMonitors: true,
   }
 );
+
+module.exports = {
+  ...module.exports,
+  experimental: {
+    optimizePackageImports: [
+      "@dynamic-labs/sdk-react-core",
+      "@tanstack/react-query",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-popover",
+      "@heroicons/react",
+      "@show-karma/karma-gap-sdk",
+    ],
+  },
+};

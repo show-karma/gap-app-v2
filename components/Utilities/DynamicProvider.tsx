@@ -8,6 +8,7 @@ import { ZeroDevSmartWalletConnectors } from "@dynamic-labs/ethereum-aa";
 import { DynamicWagmiConnector } from "@dynamic-labs/wagmi-connector";
 import { envVars } from "@/utilities/enviromentVars";
 import { queryClient } from "@/utilities/queries/client";
+import { dynamicSettings } from "@/utilities/dynamic/settings";
 
 const DynamicProvider = ({
   children,
@@ -32,6 +33,7 @@ const DynamicProvider = ({
           EthereumWalletConnectors,
           ZeroDevSmartWalletConnectors,
         ],
+        ...dynamicSettings,
       }}
     >
       <WagmiProvider config={dynamicConfig} initialState={initialState}>
