@@ -1,6 +1,6 @@
-// const withBundleAnalyzer = require("@next/bundle-analyzer")({
-//   enabled: process.env.ANALYZE === "true",
-// });
+const withBundleAnalyzer = require("@next/bundle-analyzer")({
+  enabled: process.env.ANALYZE === "true",
+});
 
 const securityHeaders = [
   {
@@ -19,25 +19,8 @@ const nextConfig = {
   eslint: {
     dirs: ["app", "components", "utilities", "hooks", "store", "types"],
   },
-  webpack: (config, { isServer, webpack }) => {
-    // Memory optimization settings
-    config.optimization = {
-      ...config.optimization,
-      // Split chunks to reduce memory pressure
-      splitChunks: {
-        ...config.optimization.splitChunks,
-        cacheGroups: {
-          ...config.optimization.splitChunks?.cacheGroups,
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: "vendors",
-            chunks: "all",
-            maxSize: 244000, // ~244KB chunks
-          },
-        },
-      },
-    };
 
+  webpack: (config, { isServer, webpack }) => {
     // Fix for browserslist and other Node.js modules
     if (!isServer) {
       config.resolve.fallback = {
@@ -47,25 +30,17 @@ const nextConfig = {
         tls: false,
         path: false,
         os: false,
-        crypto: require.resolve("crypto-browserify"),
-        stream: require.resolve("stream-browserify"),
+        crypto: false,
+        stream: false,
         http: false,
         https: false,
         zlib: false,
         querystring: false,
         events: false,
         url: false,
-        buffer: require.resolve("buffer"),
+        buffer: false,
         util: false,
-        process: require.resolve("process/browser"),
       };
-
-      config.plugins.push(
-        new webpack.ProvidePlugin({
-          process: "process/browser",
-          Buffer: ["buffer", "Buffer"],
-        })
-      );
     }
 
     // Add external modules that should not be bundled
@@ -105,12 +80,14 @@ const nextConfig = {
   },
 };
 
+module.exports = withBundleAnalyzer(removeImports(nextConfig));
+
+// Injected content via Sentry wizard below
+
 const { withSentryConfig } = require("@sentry/nextjs");
 
-const configWithImports = removeImports(nextConfig);
-
 module.exports = withSentryConfig(
-  configWithImports,
+  module.exports,
   {
     // For all available options, see:
     // https://github.com/getsentry/sentry-webpack-plugin#options
