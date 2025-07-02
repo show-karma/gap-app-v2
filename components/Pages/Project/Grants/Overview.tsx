@@ -1,5 +1,4 @@
 "use client";
-import ExternalIds from "@/components/Pages/Grants/ExternalId/ExternalIds";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { useGrantStore } from "@/store/grant";
@@ -234,16 +233,6 @@ export const GrantOverview = () => {
           ) : null}
         </div>
       </div>
-      {isOwner && grant?.refUID ? (
-        <div className="mt-8">
-          <ExternalIds
-            projectUID={grant?.refUID as string}
-            communityUID={grant?.community.uid as string}
-            externalIds={(grant as any)?.external?.gitcoin}
-            refreshGrant={refreshGrant}
-          />
-        </div>
-      ) : null}
 
       {/* Grant Overview End */}
     </Suspense>
