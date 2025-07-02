@@ -37,7 +37,11 @@ export const NetworkDropdown: FC<NetworkDropdownProps> = ({
       </Popover.Trigger>
       <Popover.Content
         align="start"
-        className="mt-4 w-max z-10 bg-white border border-zinc-200 dark:border-zinc-700 rounded-md dark:text-white dark:bg-zinc-800  max-h-60 overflow-y-auto overflow-x-hidden py-2"
+        className="popover-content mt-4 w-max min-w-[240px] max-w-[320px] z-10 bg-white border border-zinc-200 dark:border-zinc-700 rounded-md dark:text-white dark:bg-zinc-800 max-h-80 overflow-y-auto overflow-x-hidden py-2"
+        style={{
+          scrollbarWidth: "thin",
+          scrollbarColor: "rgb(156 163 175) rgb(243 244 246)",
+        }}
       >
         <Command>
           <CommandGroup>
