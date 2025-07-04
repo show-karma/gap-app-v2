@@ -17,11 +17,6 @@ const ipfsClient = new IpfsStorage({
   token: envVars.IPFS_TOKEN,
 });
 
-const gelatoOpts = {
-  sponsorUrl: envVars.NEXT_PUBLIC_SPONSOR_URL || "/api/sponsored-txn",
-  useGasless: false,
-};
-
 const gapClients: Record<number, GAP> = {};
 
 export const getGapClient = (chainID: number): GAP => {
@@ -39,6 +34,9 @@ export const getGapClient = (chainID: number): GAP => {
           }
         : {}),
       remoteStorage: ipfsClient,
+      zeroDevOpts: {
+        enabled: true,
+      },
     });
     gapClients[chainID] = client;
     return client;

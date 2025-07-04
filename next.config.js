@@ -133,11 +133,12 @@ module.exports = {
   ...module.exports,
   experimental: {
     optimizePackageImports: [
+      "@dynamic-labs/ethereum",
+      "@dynamic-labs/ethereum-aa",
+      "@dynamic-labs/ethers-v6",
       "@dynamic-labs/sdk-react-core",
-      "@tanstack/react-query",
-      "@radix-ui/react-dialog",
-      "@radix-ui/react-popover",
-      "@heroicons/react",
+      "@dynamic-labs/wagmi-connector",
+      "wagmi",
       "@show-karma/karma-gap-sdk",
     ],
   },

@@ -17,7 +17,10 @@
       "Bash(find:*)",
       "Bash(npm run lint:*)",
       "Bash(npm run build:*)",
-      "Bash(gh pr edit:*)"
+      "Bash(gh pr edit:*)",
+      "WebFetch(domain:*)",
+      "Bash(npm run type-check:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": []
   }

@@ -23,7 +23,7 @@ import {
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useWallet } from "./useWallet";
-import { queryClient } from "@/utilities/queries/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 type UpdateType =
   | IProjectUpdate
@@ -44,6 +44,7 @@ export const useUpdateActions = (update: UpdateType) => {
   const isOnChainAuthorized = isProjectOwner || isOwner;
   const projectId = useParams().projectId as string;
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   // Function to refresh data after successful deletion
   const refreshDataAfterDeletion = async () => {

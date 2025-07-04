@@ -12,7 +12,7 @@ import { cn } from "@/utilities/tailwind";
 import { CheckIcon } from "@heroicons/react/20/solid";
 import { ExplorerSortByOptions, ExplorerSortOrder } from "@/types/explorer";
 import { getExplorerProjects } from "@/utilities/indexer/getExplorerProjects";
-import { queryClient } from "@/utilities/queries/client";
+import { getQueryClient } from "@/utilities/queries/client";
 
 const sortOptions: Record<ExplorerSortByOptions, string> = {
   createdAt: "Recently Added",
@@ -24,6 +24,8 @@ const sortOptions: Record<ExplorerSortByOptions, string> = {
 };
 
 export const NewProjectsPage = () => {
+  const queryClient = getQueryClient();
+
   const [selectedSort, changeSortQuery] = useQueryState("sortBy", {
     defaultValue: "updatedAt",
     serialize: (value) => value,

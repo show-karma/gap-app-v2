@@ -5,7 +5,7 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { generateProjectOverviewMetadata } from "@/utilities/metadata/projectMetadata";
 import { getProjectCachedData } from "@/utilities/queries/getProjectCachedData";
 import { Metadata } from "next";
-import { queryClient } from "@/utilities/queries/client";
+import { getQueryClient } from "@/utilities/queries/client";
 
 type Params = Promise<{
   projectId: string;
@@ -32,6 +32,8 @@ export default async function RootLayout(props: {
   const { projectId } = awaitedParams;
 
   const { children } = props;
+
+  const queryClient = getQueryClient();
 
   await queryClient.prefetchQuery({
     queryKey: ["project", projectId],

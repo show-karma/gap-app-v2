@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getAllMilestones } from "@/utilities/gapIndexerApi/getAllMilestones";
 import { UnifiedMilestone } from "@/types/roadmap";
 import { useProjectStore } from "@/store";
-import { queryClient } from "@/utilities/queries/client";
+import { getQueryClient } from "@/utilities/queries/client";
 
 const sortDescendly = (milestones: UnifiedMilestone[]) => {
   const sortedMilestones = milestones.sort((a, b) => {
@@ -22,6 +22,8 @@ export function useAllMilestones(projectId: string) {
   const project = useProjectStore((state) => state.project);
   const projectGrants = project?.grants || [];
   const queryKey = ["all-milestones", projectId];
+  const queryClient = getQueryClient();
+
   const {
     data: milestones,
     isLoading,

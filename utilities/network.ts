@@ -3,14 +3,14 @@ import {
   arbitrum,
   celo,
   optimism,
-  optimismSepolia,
   baseSepolia,
   sepolia,
   sei,
   lisk,
-  scroll
+  scroll,
 } from "viem/chains";
 import type { TNetwork } from "@show-karma/karma-gap-sdk";
+import { optimismSepolia } from "./wagmi/customNetworks";
 
 export const appNetwork: [Chain, ...Chain[]] =
   process.env.NEXT_PUBLIC_ENV === "production"

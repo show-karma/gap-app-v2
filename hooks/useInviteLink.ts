@@ -1,11 +1,10 @@
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { keccak256, toHex } from "viem";
 import toast from "react-hot-toast";
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
-import { queryClient } from "@/utilities/queries/client";
 
 interface InviteCode {
   id: string;
@@ -25,6 +24,8 @@ interface InviteCode {
  * - Automatic cache invalidation
  */
 export const useInviteLink = (projectIdOrSlug: string | undefined) => {
+  const queryClient = useQueryClient();
+  
   // Query for fetching current invite code
   const query = useQuery<InviteCode | null>({
     queryKey: ["invite-code", projectIdOrSlug],

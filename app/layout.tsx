@@ -27,6 +27,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const cookie = (await headers()).get("cookie") ?? "";
+
   return (
     <html lang="en" className="h-full" suppressHydrationWarning>
       {process.env.NEXT_PUBLIC_GA_TRACKING_ID &&

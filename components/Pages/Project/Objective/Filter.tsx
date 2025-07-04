@@ -9,7 +9,7 @@ import { useQueryState } from "nuqs";
 import { StatusOptions } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { useParams } from "next/navigation";
 import { useAllMilestones } from "@/hooks/useAllMilestones";
-import { queryClient } from "@/utilities/queries/client";
+import { getQueryClient } from "@/utilities/queries/client";
 
 const statuses: Record<StatusOptions, string> = {
   all: "All",
@@ -19,6 +19,7 @@ const statuses: Record<StatusOptions, string> = {
 
 export const ObjectiveFilter = () => {
   const projectId = useParams().projectId as string;
+  const queryClient = getQueryClient();
   const [selectedStatus, changeStatus] = useQueryState<StatusOptions>(
     "status",
     {

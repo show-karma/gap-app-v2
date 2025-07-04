@@ -18,7 +18,7 @@ import { FC, Fragment, useState } from "react";
 import toast from "react-hot-toast";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useWallet } from "@/hooks/useWallet";
-import { queryClient } from "@/utilities/queries/client";
+import { getQueryClient } from "@/utilities/queries/client";
 
 interface PromoteMemberDialogProps {
   memberAddress: string;
@@ -35,6 +35,8 @@ export const PromoteMemberDialog: FC<PromoteMemberDialogProps> = ({
   const { teamProfiles } = useTeamProfiles(project);
   const { changeStepperStep, setIsStepper } = useStepper();
   const refreshProject = useProjectStore((state) => state.refreshProject);
+
+  const queryClient = getQueryClient();
 
   const openModal = () => setIsOpen(true);
   const closeModal = () => setIsOpen(false);

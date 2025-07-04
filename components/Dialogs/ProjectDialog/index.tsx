@@ -228,7 +228,8 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [step, setStep] = useState(0);
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { switchChainAsync, isLoggedIn, address, chain } = useWallet();
+  const { switchChainAsync, isLoggedIn, address, chain, getSigner } =
+    useWallet();
   const [isLoading, setIsLoading] = useState(false);
   const { setShowAuthFlow } = useDynamicContext();
   const router = useRouter();
@@ -505,14 +506,15 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         );
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
-      );
+      // const { walletClient, error } = await safeGetWalletClient(
+      //   project.chainID
+      // );
 
-      if (error || !walletClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      const walletSigner = await walletClientToSigner(walletClient);
+      // if (error || !walletClient) {
+      //   throw new Error("Failed to connect to wallet", { cause: error });
+      // }
+      // const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
       closeModal();
       changeStepperStep("preparing");
       await project
