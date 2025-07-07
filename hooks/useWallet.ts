@@ -17,7 +17,18 @@ type SignerCache = {
   [key: string]: SignerOrProvider;
 };
 
-export const useWallet = () => {
+type UseWalletReturn = {
+  switchChainAsync: ({ chainId }: { chainId: number }) => Promise<void>;
+  isPending: boolean;
+  isLoggedIn: boolean;
+  logout: (() => Promise<void>) | undefined;
+  address: string | undefined;
+  chain: any;
+  openAuthFlow: () => Promise<void>;
+  getSigner: (chainId?: number) => Promise<SignerOrProvider>;
+};
+
+export const useWallet = (): UseWalletReturn => {
   const { handleLogOut, primaryWallet, setShowAuthFlow } = useDynamicContext();
   const { chain } = useAccount();
   const isLoggedIn = useIsLoggedIn();
