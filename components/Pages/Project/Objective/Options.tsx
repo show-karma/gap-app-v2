@@ -13,8 +13,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { getProjectById } from "@/utilities/sdk";
 import { cn } from "@/utilities/tailwind";
-import { config } from "@/utilities/wagmi/config";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+
 import { Menu, Transition } from "@headlessui/react";
 import { CheckCircleIcon, TrashIcon } from "@heroicons/react/24/outline";
 import { EllipsisVerticalIcon } from "@heroicons/react/24/solid";
@@ -95,14 +94,10 @@ export const ObjectiveOptionsMenu = ({
         gapClient = getGapClient(project.chainID);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        project.chainID as number
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(project.chainID);
       const fetchedProject = await getProjectById(projectId);
       if (!fetchedProject) return;
       const fetchedMilestones = await gapIndexerApi

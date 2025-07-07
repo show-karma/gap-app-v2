@@ -14,7 +14,7 @@ import { PAGES } from "@/utilities/pages";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { cn } from "@/utilities/tailwind";
-import { config } from "@/utilities/wagmi/config";
+
 import { PencilSquareIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -29,7 +29,7 @@ import toast from "react-hot-toast";
 
 import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { useWallet } from "@/hooks/useWallet";
@@ -134,14 +134,10 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         await switchChainAsync?.({ chainId: milestone.chainID });
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        milestone.chainID
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(milestone.chainID);
 
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
       if (!fetchedProject) return;
@@ -251,15 +247,10 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
         gapClient = getGapClient(milestone.chainID);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        milestone.chainID
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
-      if (!walletClient || !gapClient) return;
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(milestone.chainID);
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
       if (!fetchedProject) return;
       const grantInstance = fetchedProject.grants.find(

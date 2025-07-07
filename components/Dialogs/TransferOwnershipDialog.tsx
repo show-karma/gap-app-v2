@@ -16,7 +16,6 @@ import { Button } from "../Utilities/Button";
 
 import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership";
 import { sanitizeInput } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { errorManager } from "../Utilities/errorManager";
 import { useWallet } from "@/hooks/useWallet";
 
@@ -64,15 +63,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
         await switchChainAsync?.({ chainId: project.chainID });
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
-      );
-
-      if (error || !walletClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      if (!walletClient) return;
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(project.chainID);
       const fetchedProject = await getProjectById(project.uid);
       if (!fetchedProject) return;
       await fetchedProject

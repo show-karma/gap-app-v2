@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+
 import { useStepper } from "@/store/modals/txStepper";
 import { useProjectStore, useOwnerStore } from "@/store";
 import fetchData from "@/utilities/fetchData";
@@ -93,12 +93,7 @@ export const useMilestone = () => {
             throw new Error("Failed to get GAP client");
           }
 
-          const { walletClient, error } = await safeGetWalletClient(chainId);
-          if (error || !walletClient) {
-            throw new Error("Failed to connect to wallet", { cause: error });
-          }
-
-          const walletSigner = await getSigner();
+          const walletSigner = await getSigner(chainId);
           const fetchedProject = await getProjectById(
             project!.details?.data.slug || ""
           );
@@ -204,14 +199,11 @@ export const useMilestone = () => {
           gapClient = getGapClient(milestone.chainID);
         }
 
-        const { walletClient, error } = await safeGetWalletClient(
-          milestone.chainID
-        );
-        if (error || !walletClient || !gapClient) {
-          throw new Error("Failed to connect to wallet", { cause: error });
+        if (!gapClient) {
+          throw new Error("Failed to get gap client");
         }
 
-        const walletSigner = await getSigner();
+        const walletSigner = await getSigner(milestone.chainID);
         const fetchedProject = await gapClient.fetch.projectById(project?.uid);
 
         if (!fetchedProject) {
@@ -365,12 +357,6 @@ export const useMilestone = () => {
             throw new Error("Failed to get GAP client");
           }
 
-          const { walletClient, error } = await safeGetWalletClient(chainId);
-          if (error || !walletClient) {
-            throw new Error("Failed to connect to wallet", { cause: error });
-          }
-
-          const walletSigner = await getSigner();
           const fetchedProject = await getProjectById(
             project!.details?.data.slug || ""
           );
@@ -493,14 +479,10 @@ export const useMilestone = () => {
           gapClient = getGapClient(milestone.chainID);
         }
 
-        const { walletClient, error } = await safeGetWalletClient(
-          milestone.chainID
-        );
-        if (error || !walletClient || !gapClient) {
-          throw new Error("Failed to connect to wallet", { cause: error });
+        if (!gapClient) {
+          throw new Error("Failed to get gap client");
         }
 
-        const walletSigner = await getSigner();
         const fetchedProject = await gapClient.fetch.projectById(project?.uid);
 
         if (!fetchedProject) {
@@ -640,15 +622,11 @@ export const useMilestone = () => {
         await switchChainAsync?.({ chainId: milestone.chainID });
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        milestone.chainID
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
 
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(milestone.chainID);
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
 
       if (!fetchedProject) return;
@@ -796,12 +774,11 @@ export const useMilestone = () => {
           throw new Error("Failed to get GAP client");
         }
 
-        const { walletClient, error } = await safeGetWalletClient(chainId);
-        if (error || !walletClient) {
-          throw new Error("Failed to connect to wallet", { cause: error });
+        if (!gapClient) {
+          throw new Error("Failed to get gap client");
         }
 
-        const walletSigner = await getSigner();
+        const walletSigner = await getSigner(chainId);
         const fetchedProject = await getProjectById(
           project!.details?.data.slug || ""
         );
@@ -965,12 +942,7 @@ export const useMilestone = () => {
             throw new Error("Failed to get GAP client");
           }
 
-          const { walletClient, error } = await safeGetWalletClient(chainId);
-          if (error || !walletClient) {
-            throw new Error("Failed to connect to wallet", { cause: error });
-          }
-
-          const walletSigner = await getSigner();
+          const walletSigner = await getSigner(chainId);
           const fetchedProject = await getProjectById(
             project!.details?.data.slug || ""
           );
@@ -1085,14 +1057,11 @@ export const useMilestone = () => {
           gapClient = getGapClient(milestone.chainID);
         }
 
-        const { walletClient, error } = await safeGetWalletClient(
-          milestone.chainID
-        );
-        if (error || !walletClient || !gapClient) {
-          throw new Error("Failed to connect to wallet", { cause: error });
+        if (!gapClient) {
+          throw new Error("Failed to get gap client");
         }
 
-        const walletSigner = await getSigner();
+        const walletSigner = await getSigner(milestone.chainID);
 
         if (milestone.type === "grant") {
           // Grant milestone editing

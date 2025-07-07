@@ -24,13 +24,12 @@ import { PAGES } from "@/utilities/pages";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { cn } from "@/utilities/tailwind";
-import { Popover } from "@headlessui/react";
-import { CalendarIcon, ChevronLeftIcon } from "@heroicons/react/24/solid";
+import { ChevronLeftIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { AlloBase } from "@show-karma/karma-gap-sdk/core/class/GrantProgramRegistry/Allo";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -285,7 +284,8 @@ export default function AddProgram({
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const { address, isLoggedIn, chain, switchChainAsync, getSigner } = useWallet();
+  const { address, isLoggedIn, chain, switchChainAsync, getSigner } =
+    useWallet();
   const { setShowAuthFlow } = useDynamicContext();
   const { changeStepperStep, setIsStepper } = useStepper();
 
@@ -400,14 +400,7 @@ export default function AddProgram({
         await switchChainAsync?.({ chainId: chainSelected as number });
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        chainSelected as number
-      );
-
-      if (error || !walletClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(chainSelected);
 
       const metadata = sanitizeObject({
         title: data.name,

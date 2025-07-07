@@ -20,7 +20,6 @@ import { ContributorProfile } from "@show-karma/karma-gap-sdk";
 import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
@@ -119,15 +118,11 @@ export const ContributorProfileDialog: FC<
         await switchChainAsync?.({ chainId: project.chainID });
         gapClient = getGapClient(project.chainID);
       }
-
-      const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
-      const walletSigner = await getSigner();
+
+      const walletSigner = await getSigner(project.chainID);
       const contributorProfile = new ContributorProfile({
         data: {
           aboutMe: data.aboutMe,
@@ -138,7 +133,7 @@ export const ContributorProfileDialog: FC<
           farcaster: data.farcaster,
         },
         recipient: address as `0x${string}`,
-        schema: gapClient.findSchema("ContributorProfile"),
+        schema: gapClient?.findSchema("ContributorProfile"),
       });
       await contributorProfile
         .attest(walletSigner as any, changeStepperStep)

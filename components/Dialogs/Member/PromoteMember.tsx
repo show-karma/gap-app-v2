@@ -8,7 +8,6 @@ import { getProjectMemberRoles } from "@/utilities/getProjectMemberRoles";
 import { INDEXER } from "@/utilities/indexer";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { getProjectById } from "@/utilities/sdk";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { Dialog, Transition } from "@headlessui/react";
 import { ShieldCheckIcon } from "@heroicons/react/24/outline";
 import { ArrowUpIcon } from "@heroicons/react/24/solid";
@@ -52,15 +51,11 @@ export const PromoteMemberDialog: FC<PromoteMemberDialogProps> = ({
         gapClient = getGapClient(project.chainID);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
 
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(project.chainID);
       const fetchedProject = await getProjectById(project.uid);
       if (!fetchedProject) throw new Error("Project not found");
 

@@ -9,12 +9,12 @@ import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { getProjectById } from "@/utilities/sdk";
-import { config } from "@/utilities/wagmi/config";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useQuery } from "@tanstack/react-query";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+
 import { useParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import toast from "react-hot-toast";
@@ -89,14 +89,10 @@ export const ProjectObjectiveCompletionForm = ({
         gapClient = getGapClient(project.chainID);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(project.chainID);
       const fetchedProject = await getProjectById(projectId);
       if (!fetchedProject) return;
       const fetchedMilestones = await gapIndexerApi

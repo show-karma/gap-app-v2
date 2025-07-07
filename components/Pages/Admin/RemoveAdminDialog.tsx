@@ -14,7 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { GAP } from "@show-karma/karma-gap-sdk";
 import { Button } from "../../Utilities/Button";
 import { MESSAGES } from "@/utilities/messages";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+
 import { useStepper } from "@/store/modals/txStepper";
 import toast from "react-hot-toast";
 import fetchData from "@/utilities/fetchData";
@@ -82,68 +82,59 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
       await switchChainAsync?.({ chainId: chainid });
     }
 
-    const { walletClient, error } = await safeGetWalletClient(chainid);
-
-    if (error || !walletClient) {
-      throw new Error("Failed to connect to wallet", { cause: error });
-    }
-    if (!walletClient) return;
-    const walletSigner = await getSigner();
+    const walletSigner = await getSigner(chainid);
     try {
-      const communityResolver = (await GAP.getCommunityResolver(
-        walletSigner
-      )) as any;
+      const communityResolver = await GAP.getCommunityResolver(walletSigner);
       changeStepperStep("preparing");
-      const communityResponse = await communityResolver.delist(UUID, Admin);
+      const communityResponse = await communityResolver.write?.("delist", [
+        UUID,
+        Admin,
+      ]);
 
       changeStepperStep("pending");
-      const { hash } = communityResponse;
-      await communityResponse.wait().then(async () => {
-        if (hash) {
-          await fetchData(
-            INDEXER.ATTESTATION_LISTENER(hash, chainid),
-            "POST",
-            {}
+      if (communityResponse) {
+        await fetchData(
+          INDEXER.ATTESTATION_LISTENER(communityResponse, chainid),
+          "POST",
+          {}
+        );
+      }
+      changeStepperStep("indexing");
+      let retries = 1000;
+      let addressRemoved = false;
+      while (retries > 0) {
+        try {
+          const [response, error] = await fetchData(
+            INDEXER.COMMUNITY.ADMINS(UUID),
+            "GET",
+            {},
+            {},
+            {},
+            false
           );
-        }
-        changeStepperStep("indexing");
-        let retries = 1000;
-        let addressRemoved = false;
-        while (retries > 0) {
-          try {
-            const [response, error] = await fetchData(
-              INDEXER.COMMUNITY.ADMINS(UUID),
-              "GET",
-              {},
-              {},
-              {},
-              false
-            );
-            if (!response || error) {
-              throw new Error(`Error fetching admins for community ${UUID}`);
-            }
-
-            addressRemoved = !response.admins.some(
-              (admin: any) =>
-                admin.user.id.toLowerCase() === Admin.toLowerCase()
-            );
-
-            if (addressRemoved) {
-              await fetchAdmins();
-              changeStepperStep("indexed");
-              toast.success("Admin removed successfully!");
-              closeModal(); // Close the dialog upon successful submission
-              break;
-            }
-          } catch (error: any) {
-            console.log("Retrying...");
+          if (!response || error) {
+            throw new Error(`Error fetching admins for community ${UUID}`);
           }
 
-          retries -= 1;
-          // eslint-disable-next-line no-await-in-loop
-          await new Promise((resolve) => setTimeout(resolve, 1500));
+          addressRemoved = !response.admins.some(
+            (admin: any) => admin.user.id.toLowerCase() === Admin.toLowerCase()
+          );
+
+          if (addressRemoved) {
+            await fetchAdmins();
+            changeStepperStep("indexed");
+            toast.success("Admin removed successfully!");
+            closeModal(); // Close the dialog upon successful submission
+            break;
+          }
+        } catch (error: any) {
+          console.log("Retrying...");
         }
-      });
+
+        retries -= 1;
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      }
     } catch (error: any) {
       errorManager(`Error removing admin of ${UUID}`, error, {
         removingAdmin: Admin,

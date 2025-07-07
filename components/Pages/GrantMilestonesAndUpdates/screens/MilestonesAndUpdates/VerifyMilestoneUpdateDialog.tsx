@@ -7,7 +7,6 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { MESSAGES } from "@/utilities/messages";
 import { getGapClient, useGap } from "@/hooks/useGap";
@@ -78,14 +77,10 @@ export const VerifyMilestoneUpdateDialog: FC<
         gapClient = getGapClient(milestone.chainID);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        milestone.chainID
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(milestone.chainID);
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
       if (!fetchedProject) return;
       const grantInstance = fetchedProject.grants.find(

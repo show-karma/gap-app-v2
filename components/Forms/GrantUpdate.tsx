@@ -24,7 +24,7 @@ import { sanitizeObject } from "@/utilities/sanitize";
 import { useGrantStore } from "@/store/grant";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { useWallet } from "@/hooks/useWallet";
@@ -125,15 +125,10 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
         gapClient = getGapClient(grantToUpdate.chainID);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        grantToUpdate.chainID
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
-      if (!walletClient || !gapClient) return;
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(grantToUpdate.chainID);
 
       const sanitizedGrantUpdate = sanitizeObject({
         text: data.description,

@@ -17,7 +17,6 @@ import { MESSAGES } from "@/utilities/messages";
 import { appNetwork } from "@/utilities/network";
 import { cn } from "@/utilities/tailwind";
 import { getGapClient, useGap } from "@/hooks/useGap";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import toast from "react-hot-toast";
 import { useStepper } from "@/store/modals/txStepper";
 import fetchData from "@/utilities/fetchData";
@@ -122,13 +121,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
         data.slug = await gapClient.generateSlug(data.slug as string);
       }
 
-      // Replace direct getWalletClient call with safeGetWalletClient
-      const { walletClient, error } = await safeGetWalletClient(selectedChain);
-
-      if (error || !walletClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(selectedChain);
       const sanitizedData = sanitizeObject({
         name: data.name,
         description: description as string,

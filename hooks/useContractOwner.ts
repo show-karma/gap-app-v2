@@ -25,7 +25,7 @@ export const useContractOwner = (address?: string, chain?: Chain) => {
   const queryResult = useQuery<boolean, Error>({
     queryKey: ["contract-owner", address, chain?.id],
     queryFn: async () => {
-      const signer = await getSigner();
+      const signer = await getSigner(chain?.id);
       return fetchContractOwner(signer, chain!, address!);
     },
     enabled: !!address && !!chain && isLoggedIn,

@@ -9,10 +9,10 @@ import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { config } from "@/utilities/wagmi/config";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { IProjectUpdate, ProjectUpdate } from "@show-karma/karma-gap-sdk";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+
 import { useRouter, useSearchParams } from "next/navigation";
 import type { FC } from "react";
 import { useState, useEffect, useMemo } from "react";
@@ -630,13 +630,11 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         gapClient = getGapClient(chainId);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(chainId);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
 
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(chainId);
       const schema = gapClient.findSchema("ProjectUpdate");
 
       if (!schema) {

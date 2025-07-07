@@ -14,7 +14,7 @@ import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { FC } from "react";
@@ -57,14 +57,10 @@ export const GrantCompletion: FC = () => {
         gapClient = getGapClient(grantToComplete.chainID);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        grantToComplete.chainID
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(grantToComplete.chainID);
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
       if (!fetchedProject) return;
       const grantInstance = fetchedProject.grants.find(

@@ -8,7 +8,7 @@ import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObject
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useQuery } from "@tanstack/react-query";
@@ -68,15 +68,11 @@ export function useProjectMilestoneForm({
         recipient: (address as `0x${string}`) || "0x00",
       });
 
-      const { walletClient, error } = await safeGetWalletClient(
-        project?.chainID as number
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
 
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(project?.chainID);
       const sanitizedData = {
         title: sanitizeInput(data.title),
         text: sanitizeInput(data.text),
@@ -157,15 +153,11 @@ export function useProjectMilestoneForm({
         gapClient = getGapClient(project?.chainID as number);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        project?.chainID as number
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
 
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(project?.chainID);
       const sanitizedData = {
         title: sanitizeInput(data.title),
         text: sanitizeInput(data.text),

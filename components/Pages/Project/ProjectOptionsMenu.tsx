@@ -25,7 +25,6 @@ import {
 } from "@heroicons/react/24/outline";
 import { EllipsisVerticalIcon, PlusIcon } from "@heroicons/react/24/solid";
 
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -141,17 +140,7 @@ export const ProjectOptionsMenu = () => {
         await switchChainAsync?.({ chainId: project.chainID });
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        project.chainID,
-        true,
-        setIsDeleting
-      );
-
-      if (error || !walletClient) {
-        return;
-      }
-
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(project.chainID);
       const fetchedProject = await getProjectById(projectId);
       if (!fetchedProject) return;
       await deleteProject(

@@ -63,7 +63,6 @@ import debounce from "lodash.debounce";
 import { SimilarProjectsDialog } from "../SimilarProjectsDialog";
 import { ContactInfoSection } from "./ContactInfoSection";
 import { NetworkDropdown } from "./NetworkDropdown";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { DeckIcon } from "@/components/Icons/Deck";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
@@ -153,7 +152,8 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [step, setStep] = useState(0);
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isLoggedIn, address, chain, switchChainAsync, getSigner } = useWallet();
+  const { isLoggedIn, address, chain, switchChainAsync, getSigner } =
+    useWallet();
   const [isLoading, setIsLoading] = useState(false);
   const { setShowAuthFlow } = useDynamicContext();
   const router = useRouter();
@@ -431,16 +431,10 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
         );
       }
 
-      // Replace direct getWalletClient call with safeGetWalletClient
-
-      const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(chainSelected);
       closeModal();
       changeStepperStep("preparing");
       await project
@@ -535,16 +529,10 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
         gapClient = getGapClient(projectToUpdate.chainID);
       }
       const shouldRefresh = dataToUpdate.title === data.title;
-      // Replace direct getWalletClient call with safeGetWalletClient
-
-      const { walletClient, error } = await safeGetWalletClient(
-        projectToUpdate.chainID
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(projectToUpdate.chainID);
       const fetchedProject = await getProjectById(projectToUpdate.uid);
       if (!fetchedProject) return;
       changeStepperStep("preparing");

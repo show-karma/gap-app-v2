@@ -9,7 +9,7 @@ import { urlRegex } from "@/utilities/regexs/urlRegex";
 
 import { useGap, getGapClient } from "@/hooks/useGap";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+
 import { useStepper } from "@/store/modals/txStepper";
 import { useProjectStore } from "@/store";
 import toast from "react-hot-toast";

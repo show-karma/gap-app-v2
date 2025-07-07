@@ -10,7 +10,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ProjectImpact } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectImpact";
@@ -107,15 +107,11 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({
         gapClient = getGapClient(project.chainID);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
 
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(project.chainID);
 
       const fetchedProject = await gapClient.fetch.projectById(project.uid);
       if (!fetchedProject) return;

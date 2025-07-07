@@ -72,7 +72,6 @@ import debounce from "lodash.debounce";
 import { SimilarProjectsDialog } from "../SimilarProjectsDialog";
 import { ContactInfoSection } from "./ContactInfoSection";
 import { NetworkDropdown } from "./NetworkDropdown";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { DeckIcon } from "@/components/Icons/Deck";
@@ -503,7 +502,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         );
       }
 
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(chainSelected);
       closeModal();
       changeStepperStep("preparing");
       await project
@@ -640,7 +639,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         gapClient = getGapClient(projectToUpdate.chainID);
       }
       const shouldRefresh = dataToUpdate.title === data.title;
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(projectToUpdate.chainID);
       const fetchedProject = await getProjectById(projectToUpdate.uid);
       if (!fetchedProject) return;
       changeStepperStep("preparing");

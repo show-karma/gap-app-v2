@@ -24,6 +24,8 @@ const customNetworks = [
 export const dynamicSettings = {
   overrides: {
     evmNetworks: (primaryNetworks: any) =>
-      mergeNetworks(primaryNetworks, customNetworks),
+      envVars.isDev
+        ? primaryNetworks
+        : mergeNetworks(primaryNetworks, customNetworks),
   },
 };

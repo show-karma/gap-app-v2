@@ -13,7 +13,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { shortAddress } from "@/utilities/shortAddress";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { Dialog, Transition } from "@headlessui/react";
@@ -97,15 +97,11 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
         gapClient = getGapClient(project.chainID);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
-      );
-
-      if (error || !walletClient || !gapClient || !address) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
 
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(project.chainID);
       const endorsement = new ProjectEndorsement({
         data: sanitizeObject({
           comment,

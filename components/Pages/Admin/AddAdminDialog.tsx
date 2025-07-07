@@ -23,7 +23,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { sanitizeInput } from "@/utilities/sanitize";
 import { isAddress } from "viem";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+
 import { useWallet } from "@/hooks/useWallet";
 
 const inputStyle =
@@ -104,65 +104,58 @@ export const AddAdmin: FC<AddAdminDialogProps> = ({
       await switchChainAsync?.({ chainId: chainid });
     }
 
-    const { walletClient, error } = await safeGetWalletClient(chainid);
-
-    if (error || !walletClient) {
-      throw new Error("Failed to connect to wallet", { cause: error });
-    }
-    const walletSigner = await getSigner();
+    const walletSigner = await getSigner(chainid);
     try {
       const communityResolver = await GAP.getCommunityResolver(walletSigner);
       changeStepperStep("preparing");
       const address = sanitizeInput(data.address.toLowerCase());
-      const communityResponse = await communityResolver.enlist(UUID, address);
+      const communityResponse = await communityResolver.write?.("enlist", [
+        UUID,
+        address,
+      ]);
       changeStepperStep("pending");
-      const { hash } = communityResponse;
-      await communityResponse.wait().then(async () => {
-        if (hash) {
-          await fetchData(
-            INDEXER.ATTESTATION_LISTENER(hash, chainid),
-            "POST",
-            {}
+      await fetchData(
+        INDEXER.ATTESTATION_LISTENER(communityResponse, chainid),
+        "POST",
+        {}
+      );
+      changeStepperStep("indexing");
+      let retries = 1000;
+      let addressAdded = false;
+      while (retries > 0) {
+        try {
+          const [response, error] = await fetchData(
+            INDEXER.COMMUNITY.ADMINS(UUID),
+            "GET",
+            {},
+            {},
+            {},
+            false
           );
-        }
-        changeStepperStep("indexing");
-        let retries = 1000;
-        let addressAdded = false;
-        while (retries > 0) {
-          try {
-            const [response, error] = await fetchData(
-              INDEXER.COMMUNITY.ADMINS(UUID),
-              "GET",
-              {},
-              {},
-              {},
-              false
-            );
-            if (!response || error) {
-              throw new Error(`Error fetching admins for community ${UUID}`);
-            }
-
-            addressAdded = response.admins.some(
-              (admin: any) =>
-                admin.user.id.toLowerCase() === data.address.toLowerCase()
-            );
-
-            if (addressAdded) {
-              await fetchAdmins();
-              changeStepperStep("indexed");
-              toast.success("Admin added successfully!");
-              closeModal(); // Close the dialog upon successful submission
-              break;
-            }
-          } catch (error: any) {
-            console.log("Retrying...");
+          if (!response || error) {
+            throw new Error(`Error fetching admins for community ${UUID}`);
           }
 
-          retries -= 1;
-          // eslint-disable-next-line no-await-in-loop
-          await new Promise((resolve) => setTimeout(resolve, 1500));
+          addressAdded = response.admins.some(
+            (admin: any) =>
+              admin.user.id.toLowerCase() === data.address.toLowerCase()
+          );
+
+          if (addressAdded) {
+            await fetchAdmins();
+            changeStepperStep("indexed");
+            toast.success("Admin added successfully!");
+            closeModal(); // Close the dialog upon successful submission
+            break;
+          }
+        } catch (error: any) {
+          console.log("Retrying...");
         }
-      });
+
+        retries -= 1;
+        // eslint-disable-next-line no-await-in-loop
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      }
     } catch (error: any) {
       errorManager(
         `Error adding admin ${data.address} to community ${UUID}`,

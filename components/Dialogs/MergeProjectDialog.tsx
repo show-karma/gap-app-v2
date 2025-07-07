@@ -29,7 +29,6 @@ import { INDEXER } from "@/utilities/indexer";
 import { sanitizeInput } from "@/utilities/sanitize";
 import { useMergeModalStore } from "@/store/modals/merge";
 import EthereumAddressToENSName from "../EthereumAddressToENSName";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useWallet } from "@/hooks/useWallet";
 
 type MergeProjectProps = {
@@ -201,16 +200,11 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
         await switchChainAsync?.({ chainId: project.chainID });
         gapClient = getGapClient(project.chainID);
       }
-      // Replace direct getWalletClient call with safeGetWalletClient
 
-      const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(project.chainID);
 
       const projectPointer = new ProjectPointer({
         data: {

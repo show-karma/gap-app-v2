@@ -10,6 +10,8 @@ import {
 import { isZeroDevConnector } from "@dynamic-labs/ethereum-aa";
 import { getKernelClient } from "@show-karma/karma-gap-sdk/utils";
 import { rpcs } from "@/utilities/account-abstraction/rpcs";
+import { SignerOrProvider } from "@show-karma/karma-gap-sdk";
+import { appNetwork } from "@/utilities/network";
 
 export const useWallet = () => {
   const { handleLogOut, primaryWallet, setShowAuthFlow } = useDynamicContext();
@@ -35,36 +37,47 @@ export const useWallet = () => {
     setShowAuthFlow?.(true);
   }, [setShowAuthFlow]);
 
-  const getSigner = useCallback(async () => {
-    let client;
-    if (!primaryWallet) {
-      throw new Error("No primary wallet");
-    }
-    if (isEthereumWallet(primaryWallet)) {
-      client = await primaryWallet?.getWalletClient();
-    }
-    const connector = primaryWallet.connector as EthereumWalletConnector;
-    if (isZeroDevConnector(connector)) {
-      const rpcsFromChain = rpcs[chain?.id || 0];
-      if (!rpcsFromChain) {
-        throw new Error("No RPCs for chain");
+  const getSigner = useCallback(
+    async (chainId?: number): Promise<SignerOrProvider> => {
+      let client;
+      const selectedChain =
+        appNetwork.find((chain) => chain.id === chainId) ||
+        chain ||
+        appNetwork[0];
+      if (!primaryWallet) {
+        throw new Error("No primary wallet");
       }
-      client = await connector.getAccountAbstractionProvider();
+      if (isEthereumWallet(primaryWallet)) {
+        client = await primaryWallet?.getWalletClient(
+          selectedChain?.id.toString()
+        );
+      }
+      const connector = primaryWallet.connector as EthereumWalletConnector;
+      if (isZeroDevConnector(connector)) {
+        const rpcsFromChain = rpcs[selectedChain?.id || 0];
+        if (!rpcsFromChain) {
+          throw new Error("No RPCs for chain");
+        }
+        client = await connector.getAccountAbstractionProvider({
+          withSponsorship: true,
+        });
 
-      const signer = await getKernelClient({
-        account: client.account,
-        chain: client.chain,
-        bundlerURL: rpcsFromChain.bundler,
-        paymasterURL: rpcsFromChain.paymaster,
-      });
-      return signer;
-    }
-    if (!client) {
-      throw new Error("No client");
-    }
+        const signer = await getKernelClient({
+          account: client.account,
+          chain: selectedChain as any,
+          bundlerURL: rpcsFromChain.bundler,
+          paymasterURL: rpcsFromChain.paymaster,
+        });
+        return signer as any;
+      }
+      if (!client) {
+        throw new Error("No client");
+      }
 
-    return client;
-  }, [primaryWallet, chain]);
+      return client as SignerOrProvider;
+    },
+    [primaryWallet, chain]
+  );
 
   return useMemo(
     () => ({

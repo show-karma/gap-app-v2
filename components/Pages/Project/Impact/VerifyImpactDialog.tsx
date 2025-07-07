@@ -24,7 +24,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+
 import { useWallet } from "@/hooks/useWallet";
 
 type VerifyImpactDialogProps = {
@@ -92,22 +92,11 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
         gapClient = getGapClient(findImpact!.chainID);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        findImpact!.chainID
-      );
-
-      if (error) {
-        toast.error(error);
-        setIsLoading(false);
-        return;
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
 
-      if (!walletClient || !address || !gapClient) {
-        setIsLoading(false);
-        return;
-      }
-
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(findImpact!.chainID);
       await findImpact
         .verify(
           walletSigner,

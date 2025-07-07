@@ -13,7 +13,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { config } from "@/utilities/wagmi/config";
+
 import { Popover } from "@headlessui/react";
 import { CalendarIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -34,7 +34,7 @@ import { Hex } from "viem";
 
 import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+
 import { useWallet } from "@/hooks/useWallet";
 
 const milestoneSchema = z.object({
@@ -142,14 +142,10 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
         data: milestone,
       });
 
-      // Replace direct getWalletClient call with safeGetWalletClient
-
-      const { walletClient, error } = await safeGetWalletClient(chainID);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(chainID);
       await milestoneToAttest
         .attest(walletSigner as any, changeStepperStep)
         .then(async (res) => {

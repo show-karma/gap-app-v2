@@ -14,7 +14,7 @@ import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { Hex } from "viem";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MESSAGES } from "@/utilities/messages";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+
 import { useWallet } from "./useWallet";
 
 export interface GrantMilestoneFormData {
@@ -87,14 +87,11 @@ export function useGrantMilestoneForm({
           data: milestone,
         });
 
-        // Get wallet client safely
-        const { walletClient, error } = await safeGetWalletClient(chainID);
-
-        if (error || !walletClient || !gapClient) {
-          throw new Error("Failed to connect to wallet", { cause: error });
+        if (!gapClient) {
+          throw new Error("Failed to get gap client");
         }
 
-        const walletSigner = await getSigner();
+        const walletSigner = await getSigner(chainID);
 
         // Attest the milestone
         await milestoneToAttest

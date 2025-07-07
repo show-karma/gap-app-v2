@@ -5,7 +5,7 @@ import { getGapClient, useGap } from "./useGap";
 
 import { getProjectById } from "@/utilities/sdk";
 import { sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
@@ -54,7 +54,7 @@ export function useGrant() {
 
       if (chain?.id !== oldGrant.chainID) {
         await switchChainAsync?.({ chainId: oldGrant.chainID });
-        gapClient = getGapClient(communityNetworkId);
+        gapClient = getGapClient(oldGrant.chainID);
       }
       if (!gapClient) return;
 
@@ -81,17 +81,11 @@ export function useGrant() {
       });
 
       oldGrantInstance.details?.setValues(grantData);
-
-      const { walletClient, error } = await safeGetWalletClient(
-        oldGrant.chainID
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
-      if (!walletClient) return;
 
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(oldGrant.chainID);
       const oldProjectData = await gapIndexerApi
         .projectBySlug(oldGrant.refUID)
         .then((res) => res.data);

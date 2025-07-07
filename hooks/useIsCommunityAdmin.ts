@@ -114,7 +114,7 @@ export const useIsCommunityAdmin = (
       if (!resolvedCommunity || !checkAddress || !isLoggedIn) {
         return false;
       }
-      const signer = await getSigner();
+      const signer = await getSigner(resolvedCommunity?.chainID);
 
       return await isCommunityAdminOf(resolvedCommunity, checkAddress, signer);
     },

@@ -38,6 +38,10 @@ export const useProjectPermissions = () => {
         projectInstance?.isAdmin(rpcClient as any, address).catch(() => false),
       ]);
 
+      console.log("address", address);
+      console.log("isOwnerResult", isOwnerResult);
+      console.log("isAdminResult", isAdminResult);
+
       return {
         isProjectOwner: isOwnerResult,
         isProjectAdmin: isAdminResult,

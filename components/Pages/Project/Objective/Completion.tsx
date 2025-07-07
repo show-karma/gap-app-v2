@@ -14,7 +14,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { ReadMore } from "@/utilities/ReadMore";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { getProjectById } from "@/utilities/sdk";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
@@ -69,15 +69,10 @@ export const ObjectiveCardComplete = ({
         gapClient = getGapClient(objective.chainID);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        objective.chainID
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
-      if (!walletClient || !gapClient) return;
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(objective.chainID);
       const fetchedProject = await getProjectById(projectId);
       if (!fetchedProject) return;
       const fetchedMilestones = await gapIndexerApi

@@ -9,7 +9,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
 import { retryUntilConditionMet } from "@/utilities/retries";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+
 import { errorManager } from "@/components/Utilities/errorManager";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
@@ -89,12 +89,10 @@ export const useUpdateActions = (update: UpdateType) => {
         gapClient = getGapClient(update.chainID);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(update.chainID);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(update.chainID);
 
       let findUpdate: any = null;
       let deleteMessage = "";

@@ -21,7 +21,7 @@ import { useParams, useRouter } from "next/navigation";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { IProjectMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+
 import { useAllMilestones } from "@/hooks/useAllMilestones";
 import { PAGES } from "@/utilities/pages";
 import { useWallet } from "@/hooks/useWallet";
@@ -100,15 +100,10 @@ export const ProjectObjectiveForm = ({
           "0x0000000000000000000000000000000000000000") as `0x${string}`,
       });
 
-      const { walletClient, error } = await safeGetWalletClient(
-        project?.chainID as number
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
-      if (!walletClient) return;
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(project?.chainID);
       const sanitizedData = {
         title: sanitizeInput(data.title),
         text: sanitizeInput(data.text),
@@ -196,14 +191,10 @@ export const ProjectObjectiveForm = ({
         gapClient = getGapClient(project?.chainID as number);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        project?.chainID as number
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(project?.chainID);
       const sanitizedData = {
         title: sanitizeInput(data.title),
         text: sanitizeInput(data.text),

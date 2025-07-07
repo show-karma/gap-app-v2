@@ -13,7 +13,6 @@ import dynamic from "next/dynamic";
 import { FC, Fragment, useState } from "react";
 import toast from "react-hot-toast";
 
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useWallet } from "@/hooks/useWallet";
 
 const DeleteDialog = dynamic(() =>
@@ -45,16 +44,11 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({
         await switchChainAsync?.({ chainId: project.chainID });
         gapClient = getGapClient(project.chainID);
       }
-      // Replace direct getWalletClient call with safeGetWalletClient
 
-      const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(project.chainID);
       const fetchedProject = await getProjectById(project.uid);
       if (!fetchedProject) throw new Error("Project not found");
       const member = fetchedProject.members.find(

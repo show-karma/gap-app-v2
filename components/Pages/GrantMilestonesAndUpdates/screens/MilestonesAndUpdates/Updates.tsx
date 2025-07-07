@@ -21,7 +21,7 @@ import {
   IMilestoneCompleted,
   IMilestoneResponse,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+
 import toast from "react-hot-toast";
 
 import { UpdateMilestone } from "./UpdateMilestone";
@@ -62,19 +62,11 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
         gapClient = getGapClient(milestone.chainID);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        milestone.chainID
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
-      if (!walletClient || !gapClient) return;
-      const walletSigner = await getSigner();
-      // const instanceMilestone = new Milestone({
-      //   ...milestone,
-      //   schema: gapClient.findSchema("Milestone"),
-      // });
+      const walletSigner = await getSigner(milestone.chainID);
+
       const instanceProject = await gapClient.fetch.projectById(project?.uid);
       const findGrant = instanceProject?.grants.find(
         (item) => item.uid.toLowerCase() === milestone.refUID.toLowerCase()

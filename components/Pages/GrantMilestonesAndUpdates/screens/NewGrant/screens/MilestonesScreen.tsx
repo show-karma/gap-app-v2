@@ -24,7 +24,7 @@ import { getGapClient } from "@/hooks/useGap";
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
 import { MESSAGES } from "@/utilities/messages";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+
 import { CancelButton } from "./buttons/CancelButton";
 import { NextButton } from "./buttons/NextButton";
 import { useWallet } from "@/hooks/useWallet";
@@ -44,7 +44,8 @@ export const MilestonesScreen: React.FC = () => {
     setFlowType,
     communityNetworkId,
   } = useGrantFormStore();
-  const { switchChainAsync, address, isLoggedIn, chain, getSigner } = useWallet();
+  const { switchChainAsync, address, isLoggedIn, chain, getSigner } =
+    useWallet();
   const selectedProject = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();
@@ -178,16 +179,12 @@ export const MilestonesScreen: React.FC = () => {
             })
           : [];
 
-      // Get wallet client
-      const { walletClient, error } = await safeGetWalletClient(
-        communityNetworkId
-      );
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
 
       // Get wallet signer
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(communityNetworkId);
 
       // Attest grant
       setIsStepper(true);

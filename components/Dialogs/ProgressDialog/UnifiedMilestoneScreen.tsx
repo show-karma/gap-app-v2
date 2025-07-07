@@ -14,13 +14,11 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
 import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Milestone } from "@show-karma/karma-gap-sdk";
 import { GapContract } from "@show-karma/karma-gap-sdk/core/class/contract/GapContract";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { Transaction } from "ethers";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, SubmitHandler, useForm } from "react-hook-form";
@@ -133,15 +131,11 @@ export const UnifiedMilestoneScreen = () => {
         recipient: (address as `0x${string}`) || "0x00",
       });
 
-      const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
-      );
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
 
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(project.chainID);
       const sanitizedData = {
         title: sanitizeInput(data.title),
         text: sanitizeInput(data.description),
@@ -282,15 +276,11 @@ export const UnifiedMilestoneScreen = () => {
             data: milestone,
           });
 
-          const { walletClient, error } = await safeGetWalletClient(chainId);
-
-          if (error || !walletClient || !gapClient) {
-            throw new Error(`Failed to connect to wallet on ${chainName}`, {
-              cause: error,
-            });
+          if (!gapClient) {
+            throw new Error(`Failed to get gap client on ${chainName}`);
           }
 
-          const walletSigner = await getSigner();
+          const walletSigner = await getSigner(project.chainID);
 
           const result = await milestoneToAttest.attest(
             walletSigner as any,
@@ -338,15 +328,11 @@ export const UnifiedMilestoneScreen = () => {
             data: milestone,
           });
 
-          const { walletClient, error } = await safeGetWalletClient(chainId);
-
-          if (error || !walletClient || !gapClient) {
-            throw new Error(`Failed to connect to wallet on ${chainName}`, {
-              cause: error,
-            });
+          if (!gapClient) {
+            throw new Error(`Failed to get gap client on ${chainName}`);
           }
 
-          const walletSigner = await getSigner();
+          const walletSigner = await getSigner(project.chainID);
 
           // Instead of using indices, directly use grant UIDs
           const grantUIDs = chainGrants.map(
@@ -380,7 +366,7 @@ export const UnifiedMilestoneScreen = () => {
 
           // Handle indexer notification for each tx
           if (result.tx.length > 0) {
-            const txPromises = result.tx.map((tx: Transaction) =>
+            const txPromises = result.tx.map((tx: any) =>
               tx.hash
                 ? fetchData(
                     INDEXER.ATTESTATION_LISTENER(

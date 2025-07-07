@@ -34,7 +34,6 @@ import {
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 
 import { errorManager } from "../Utilities/errorManager";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useWallet } from "@/hooks/useWallet";
 
 // Create styles
@@ -670,18 +669,6 @@ export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
       if (!checkNetworkIsValid(chain?.id) || chain?.id !== project.chainID) {
         await switchChainAsync?.({ chainId: project.chainID });
       }
-
-      // Replace direct getWalletClient call with safeGetWalletClient
-
-      const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
-      );
-
-      if (error || !walletClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
-      }
-      if (!walletClient) return;
-      const walletSigner = await getSigner();
       const fetchedProject = await getProjectById(project.uid);
       if (!fetchedProject) return;
 

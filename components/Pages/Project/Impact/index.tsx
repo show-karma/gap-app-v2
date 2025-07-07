@@ -15,7 +15,7 @@ import { getProjectById } from "@/utilities/sdk";
 import { cn } from "@/utilities/tailwind";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { IProjectImpact } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+
 import { useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { FC, useEffect, useState } from "react";
@@ -82,22 +82,11 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
         gapClient = getGapClient(project.chainID);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(
-        project.chainID
-      );
-
-      if (error) {
-        toast.error(error);
-        setLoading({ ...loading, [impact.uid.toLowerCase()]: false });
-        return;
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
 
-      if (!walletClient) {
-        setLoading({ ...loading, [impact.uid.toLowerCase()]: false });
-        return;
-      }
-
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(project.chainID);
 
       const fetchedProject = await getProjectById(project.uid);
       const instanceImpact = fetchedProject?.impacts?.find(

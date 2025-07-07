@@ -13,8 +13,8 @@ export const isCommunityAdminOf = async (
     const resolver = await GAP.getCommunityResolver(signer, chainID).catch(
       () => null
     );
-    const response = await resolver?.isAdmin?.(uid as Hex, address);
-    return response;
+    const response = await resolver?.read?.("isAdmin", [uid as Hex, address]);
+    return (response as boolean) ?? false;
   } catch (error: any) {
     errorManager(
       `Error checking if user ${address} is community(${uid}) admin`,

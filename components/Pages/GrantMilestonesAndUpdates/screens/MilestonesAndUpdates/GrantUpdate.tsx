@@ -14,7 +14,7 @@ import {
   IGrantUpdate,
   IGrantUpdateStatus,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { safeGetWalletClient } from "@/utilities/wallet-helpers";
+
 import { useEffect, useState, type FC } from "react";
 import toast from "react-hot-toast";
 
@@ -96,13 +96,10 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
         gapClient = getGapClient(update.chainID);
       }
 
-      const { walletClient, error } = await safeGetWalletClient(update.chainID);
-
-      if (error || !walletClient || !gapClient) {
-        throw new Error("Failed to connect to wallet", { cause: error });
+      if (!gapClient) {
+        throw new Error("Failed to get gap client");
       }
-      if (!walletClient || !gapClient) return;
-      const walletSigner = await getSigner();
+      const walletSigner = await getSigner(update.chainID);
 
       const instanceProject = await gapClient.fetch.projectById(project?.uid);
       const grantInstance = instanceProject?.grants.find(

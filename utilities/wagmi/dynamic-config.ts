@@ -14,11 +14,9 @@ import { appNetwork } from "../network";
 import { envVars } from "../enviromentVars";
 import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
 
-// Create standard wagmi config for Dynamic
-// Dynamic manages wallet connections through its own system
 export const dynamicConfig = createConfig({
   chains: appNetwork,
-  multiInjectedProviderDiscovery: false, // Dynamic handles this
+  multiInjectedProviderDiscovery: false,
   transports: {
     [optimism.id]: http(envVars.RPC.OPTIMISM),
     [arbitrum.id]: http(envVars.RPC.ARBITRUM),
@@ -36,5 +34,4 @@ export const dynamicConfig = createConfig({
   }),
 });
 
-// Export wallet connectors for Dynamic
 export const walletConnectors = [EthereumWalletConnectors];
