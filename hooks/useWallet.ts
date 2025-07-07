@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useRef, useEffect } from "react";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { useDynamicContext, useIsLoggedIn } from "@dynamic-labs/sdk-react-core";
 import { useAccount, useSwitchChain } from "wagmi";
@@ -13,13 +13,22 @@ import { rpcs } from "@/utilities/account-abstraction/rpcs";
 import { SignerOrProvider } from "@show-karma/karma-gap-sdk";
 import { appNetwork } from "@/utilities/network";
 
+type SignerCache = {
+  [key: string]: SignerOrProvider;
+};
+
 export const useWallet = () => {
   const { handleLogOut, primaryWallet, setShowAuthFlow } = useDynamicContext();
   const { chain } = useAccount();
   const isLoggedIn = useIsLoggedIn();
+  const signerCacheRef = useRef<SignerCache>({});
 
   const { switchChainAsync: wagmiSwitchChainAsync, isPending: wagmiIsPending } =
     useSwitchChain();
+
+  useEffect(() => {
+    signerCacheRef.current = {};
+  }, [primaryWallet?.address]);
 
   const switchChainAsync = useCallback(
     async ({ chainId }: { chainId: number }) => {
@@ -39,14 +48,22 @@ export const useWallet = () => {
 
   const getSigner = useCallback(
     async (chainId?: number): Promise<SignerOrProvider> => {
-      let client;
       const selectedChain =
         appNetwork.find((chain) => chain.id === chainId) ||
         chain ||
         appNetwork[0];
+      
       if (!primaryWallet) {
         throw new Error("No primary wallet");
       }
+
+      const cacheKey = `${primaryWallet.address}-${selectedChain.id}`;
+      
+      if (signerCacheRef.current[cacheKey]) {
+        return signerCacheRef.current[cacheKey];
+      }
+
+      let client;
       if (isEthereumWallet(primaryWallet)) {
         client = await primaryWallet?.getWalletClient(
           selectedChain?.id.toString()
@@ -68,12 +85,14 @@ export const useWallet = () => {
           bundlerURL: rpcsFromChain.bundler,
           paymasterURL: rpcsFromChain.paymaster,
         });
+        signerCacheRef.current[cacheKey] = signer as any;
         return signer as any;
       }
       if (!client) {
         throw new Error("No client");
       }
 
+      signerCacheRef.current[cacheKey] = client as SignerOrProvider;
       return client as SignerOrProvider;
     },
     [primaryWallet, chain]
