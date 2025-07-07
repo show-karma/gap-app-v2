@@ -6,7 +6,6 @@ import { useWallet } from "@/hooks/useWallet";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
@@ -15,7 +14,6 @@ import { MESSAGES } from "@/utilities/messages";
 import { ReadMore } from "@/utilities/ReadMore";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { getProjectById } from "@/utilities/sdk";
-import { config } from "@/utilities/wagmi/config";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
@@ -53,7 +51,7 @@ export const ObjectiveCardComplete = ({
 
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
-  const { chain, address, switchChainAsync } = useWallet();
+  const { chain, address, switchChainAsync, getSigner } = useWallet();
 
   const params = useParams();
   const projectId = params.projectId as string;
@@ -79,7 +77,7 @@ export const ObjectiveCardComplete = ({
         throw new Error("Failed to connect to wallet", { cause: error });
       }
       if (!walletClient || !gapClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
       const fetchedProject = await getProjectById(projectId);
       if (!fetchedProject) return;
       const fetchedMilestones = await gapIndexerApi

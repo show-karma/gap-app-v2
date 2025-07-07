@@ -8,7 +8,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { MESSAGES } from "@/utilities/messages";
 import { getGapClient, useGap } from "@/hooks/useGap";
@@ -59,7 +58,7 @@ export const VerifyMilestoneUpdateDialog: FC<
   function openModal() {
     setIsOpen(true);
   }
-  const { address, switchChainAsync, chain } = useWallet();
+  const { address, switchChainAsync, chain, getSigner } = useWallet();
 
   const hasVerifiedThis = milestone?.verified?.find(
     (v) => v.attester?.toLowerCase() === address?.toLowerCase()
@@ -86,7 +85,7 @@ export const VerifyMilestoneUpdateDialog: FC<
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
       if (!fetchedProject) return;
       const grantInstance = fetchedProject.grants.find(

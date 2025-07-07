@@ -1,14 +1,8 @@
 "use client";
-import { Spinner } from "@/components/Utilities/Spinner";
-
-import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { useEffect, useState } from "react";
-
-import { errorManager } from "@/components/Utilities/errorManager";
 import { Button } from "@/components/Utilities/Button";
 import {
   ChevronRightIcon,
@@ -83,8 +77,6 @@ export const CommunityAdminPage = ({
   community: ICommunityResponse;
 }) => {
   const { isLoggedIn, address } = useWallet();
-
-  const signer = useSigner();
 
   // Check if user is admin of this community
   const { isCommunityAdmin: isAdmin, isLoading: loading } = useIsCommunityAdmin(

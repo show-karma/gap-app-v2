@@ -14,14 +14,12 @@ import { MarkdownEditor } from "../Utilities/MarkdownEditor";
 import { Community, nullRef } from "@show-karma/karma-gap-sdk";
 import { Button } from "../Utilities/Button";
 import { MESSAGES } from "@/utilities/messages";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { appNetwork } from "@/utilities/network";
 import { cn } from "@/utilities/tailwind";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import toast from "react-hot-toast";
 import { useStepper } from "@/store/modals/txStepper";
-import { config } from "@/utilities/wagmi/config";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -94,7 +92,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
   });
 
   const { address, chain } = useWallet();
-  const { switchChainAsync } = useWallet();
+  const { switchChainAsync, getSigner } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
 
   const { gap } = useGap();
@@ -130,7 +128,7 @@ export const CommunityDialog: FC<ProjectDialogProps> = ({
       if (error || !walletClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
       const sanitizedData = sanitizeObject({
         name: data.name,
         description: description as string,

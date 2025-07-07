@@ -5,7 +5,6 @@ import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
@@ -14,10 +13,8 @@ import { ReadMore } from "@/utilities/ReadMore";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { getProjectById } from "@/utilities/sdk";
 import { cn } from "@/utilities/tailwind";
-import { config } from "@/utilities/wagmi/config";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { IProjectImpact } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getWalletClient } from "@wagmi/core";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useSearchParams } from "next/navigation";
 import { useQueryState } from "nuqs";
@@ -68,7 +65,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
 
   const grantScreen = searchParams?.get("tab");
 
-  const { address, chain, switchChainAsync } = useWallet();
+  const { address, chain, switchChainAsync, getSigner } = useWallet();
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
@@ -100,7 +97,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
         return;
       }
 
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
 
       const fetchedProject = await getProjectById(project.uid);
       const instanceImpact = fetchedProject?.impacts?.find(

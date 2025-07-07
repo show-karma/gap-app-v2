@@ -12,10 +12,8 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useContributorProfileModalStore } from "@/store/modals/contributorProfile";
 import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { cn } from "@/utilities/tailwind";
-import { dynamicConfig } from "@/utilities/wagmi/dynamic-config";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { ContributorProfile } from "@show-karma/karma-gap-sdk";
@@ -73,7 +71,7 @@ export const ContributorProfileDialog: FC<
   ContributorProfileDialogProps
 > = () => {
   const project = useProjectStore((state) => state.project);
-  const { address, chain } = useWallet();
+  const { address, chain, getSigner } = useWallet();
   const { closeModal, isModalOpen: isOpen } = useContributorProfileModalStore();
 
   // Fetch contributor profile using React Query
@@ -129,7 +127,7 @@ export const ContributorProfileDialog: FC<
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
       const contributorProfile = new ContributorProfile({
         data: {
           aboutMe: data.aboutMe,

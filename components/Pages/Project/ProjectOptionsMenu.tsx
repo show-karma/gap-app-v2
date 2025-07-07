@@ -7,7 +7,6 @@ import { useMergeModalStore } from "@/store/modals/merge";
 import { useProjectEditModalStore } from "@/store/modals/projectEdit";
 import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership";
 import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { deleteProject, getProjectById } from "@/utilities/sdk";
@@ -90,7 +89,7 @@ export const ProjectOptionsMenu = () => {
   const [showLinkDivviDialog, setShowLinkDivviDialog] = useState(false);
   const [showSetPayoutDialog, setShowSetPayoutDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const { chain, address, switchChainAsync } = useWallet();
+  const { chain, address, switchChainAsync, getSigner } = useWallet();
   const router = useRouter();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
@@ -152,7 +151,7 @@ export const ProjectOptionsMenu = () => {
         return;
       }
 
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
       const fetchedProject = await getProjectById(projectId);
       if (!fetchedProject) return;
       await deleteProject(

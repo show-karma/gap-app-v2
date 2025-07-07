@@ -8,7 +8,6 @@ import { z } from "zod";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 
 import { useGap, getGapClient } from "@/hooks/useGap";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useStepper } from "@/store/modals/txStepper";

@@ -12,7 +12,6 @@ import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useProjectStore } from "@/store";
 import { useOwnerStore } from "@/store/owner";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { Dialog, Transition } from "@headlessui/react";
 import {
@@ -68,9 +67,7 @@ import { getProjectById } from "@/utilities/sdk";
 import { updateProject } from "@/utilities/sdk/projects/editProject";
 import { SOCIALS } from "@/utilities/socials";
 import { cn } from "@/utilities/tailwind";
-import { dynamicConfig as config } from "@/utilities/wagmi/dynamic-config";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { getWalletClient } from "@wagmi/core";
 import debounce from "lodash.debounce";
 import { SimilarProjectsDialog } from "../SimilarProjectsDialog";
 import { ContactInfoSection } from "./ContactInfoSection";
@@ -506,14 +503,6 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         );
       }
 
-      // const { walletClient, error } = await safeGetWalletClient(
-      //   project.chainID
-      // );
-
-      // if (error || !walletClient) {
-      //   throw new Error("Failed to connect to wallet", { cause: error });
-      // }
-      // const walletSigner = await walletClientToSigner(walletClient);
       const walletSigner = await getSigner();
       closeModal();
       changeStepperStep("preparing");
@@ -651,11 +640,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
         gapClient = getGapClient(projectToUpdate.chainID);
       }
       const shouldRefresh = dataToUpdate.title === data.title;
-      const walletClient = await getWalletClient(config, {
-        chainId: projectToUpdate.chainID,
-      });
-      if (!walletClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
       const fetchedProject = await getProjectById(projectToUpdate.uid);
       if (!fetchedProject) return;
       changeStepperStep("preparing");

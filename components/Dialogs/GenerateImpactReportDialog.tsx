@@ -14,10 +14,8 @@ import { Button } from "../Utilities/Button";
 
 import { useProjectStore } from "@/store";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { envVars } from "@/utilities/enviromentVars";
 import { getProjectById } from "@/utilities/sdk";
-import { config } from "@/utilities/wagmi/config";
 import {
   BlobProvider,
   Document,
@@ -648,7 +646,7 @@ type Props = {
 
 export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
   const project = useProjectStore((state) => state.project);
-  const { chain, switchChainAsync } = useWallet();
+  const { chain, switchChainAsync, getSigner } = useWallet();
   let [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -683,7 +681,7 @@ export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
       if (!walletClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
       const fetchedProject = await getProjectById(project.uid);
       if (!fetchedProject) return;
 

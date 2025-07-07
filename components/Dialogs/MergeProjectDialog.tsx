@@ -5,7 +5,6 @@ import { PlusIcon } from "@heroicons/react/24/solid";
 import { Button } from "../Utilities/Button";
 import toast from "react-hot-toast";
 import { useProjectStore } from "@/store";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 
 import { useStepper } from "@/store/modals/txStepper";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
@@ -180,7 +179,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   const [validAddress, setValidAddress] = useState(true);
 
   const { gap } = useGap();
-  const { address, chain, switchChainAsync } = useWallet();
+  const { address, chain, switchChainAsync, getSigner } = useWallet();
   const router = useRouter();
   function closeModal() {
     setIsOpen(false);
@@ -188,7 +187,6 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   function openModal() {
     setIsOpen(true);
   }
-  const signer = useSigner();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
@@ -212,7 +210,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
 
       const projectPointer = new ProjectPointer({
         data: {

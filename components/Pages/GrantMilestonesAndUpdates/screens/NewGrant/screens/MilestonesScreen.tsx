@@ -21,7 +21,6 @@ import {
 import { Hex } from "viem";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { getGapClient } from "@/hooks/useGap";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
 import { MESSAGES } from "@/utilities/messages";
@@ -45,11 +44,10 @@ export const MilestonesScreen: React.FC = () => {
     setFlowType,
     communityNetworkId,
   } = useGrantFormStore();
-  const { switchChainAsync } = useWallet();
+  const { switchChainAsync, address, isLoggedIn, chain, getSigner } = useWallet();
   const selectedProject = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();
-  const { address, isLoggedIn, chain } = useWallet();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
 
@@ -189,7 +187,7 @@ export const MilestonesScreen: React.FC = () => {
       }
 
       // Get wallet signer
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
 
       // Attest grant
       setIsStepper(true);

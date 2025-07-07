@@ -7,7 +7,6 @@ import { Skeleton } from "@/components/Utilities/Skeleton";
 import TablePagination from "@/components/Utilities/TablePagination";
 import { useOwnerStore } from "@/store";
 
-import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -158,8 +157,6 @@ export const ReportMilestonePage = ({
   const reports = data?.data;
 
   const totalItems: any = pageInfo?.totalItems || 0;
-
-  const signer = useSigner();
 
   const modelToUse = "gpt-4o-mini";
 

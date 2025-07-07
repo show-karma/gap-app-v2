@@ -7,7 +7,6 @@ import { useProjectStore } from "@/store";
 import { useGrantStore } from "@/store/grant";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -35,7 +34,7 @@ export const GrantCompletion: FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const { chain, address, switchChainAsync } = useWallet();
+  const { chain, address, switchChainAsync, getSigner } = useWallet();
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
   const { changeStepperStep, setIsStepper } = useStepper();
@@ -65,7 +64,7 @@ export const GrantCompletion: FC = () => {
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
       if (!fetchedProject) return;
       const grantInstance = fetchedProject.grants.find(

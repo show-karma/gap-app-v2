@@ -4,7 +4,6 @@ import { useOwnerStore } from "@/store/owner";
 import { useEffect } from "react";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getContractOwner } from "@/utilities/sdk/getContractOwner";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { Chain } from "viem";
 import { useWallet } from "./useWallet";
 
@@ -20,14 +19,16 @@ const fetchContractOwner = async (
 };
 
 export const useContractOwner = (address?: string, chain?: Chain) => {
-  const { isLoggedIn } = useWallet();
+  const { isLoggedIn, getSigner } = useWallet();
   const { setIsOwner, setIsOwnerLoading } = useOwnerStore();
-  const signer = useSigner();
 
   const queryResult = useQuery<boolean, Error>({
     queryKey: ["contract-owner", address, chain?.id],
-    queryFn: () => fetchContractOwner(signer, chain!, address!),
-    enabled: !!signer && !!address && !!chain && isLoggedIn,
+    queryFn: async () => {
+      const signer = await getSigner();
+      return fetchContractOwner(signer, chain!, address!);
+    },
+    enabled: !!address && !!chain && isLoggedIn,
     staleTime: 10 * 60 * 1000, // 10 minutes - contract owner changes rarely
     retry: (failureCount, error) => {
       // Retry up to 2 times for network errors
@@ -45,21 +46,20 @@ export const useContractOwner = (address?: string, chain?: Chain) => {
   useEffect(() => {
     if (typeof data === "boolean") {
       setIsOwner(data);
-    } else if (!signer || !address || !isLoggedIn) {
+    } else if (!address || !isLoggedIn) {
       setIsOwner(false);
     }
-  }, [data, signer, address, isLoggedIn, setIsOwner]);
+  }, [data, address, isLoggedIn, setIsOwner]);
 
   useEffect(() => {
     if (error) {
       errorManager(`Error fetching contract owner for ${address}`, error, {
-        signer,
         address,
         chain,
       });
       setIsOwner(false);
     }
-  }, [error, address, signer, chain, setIsOwner]);
+  }, [error, address, chain, setIsOwner]);
 
   return {
     ...queryResult,

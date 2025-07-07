@@ -2,7 +2,6 @@
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { getProjectById, isOwnershipTransfered } from "@/utilities/sdk";
@@ -46,8 +45,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [validAddress, setValidAddress] = useState(true);
 
-  const signer = useSigner();
-  const { chain, address, switchChainAsync } = useWallet();
+  const { chain, address, switchChainAsync, getSigner } = useWallet();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
@@ -74,7 +72,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
         throw new Error("Failed to connect to wallet", { cause: error });
       }
       if (!walletClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
       const fetchedProject = await getProjectById(project.uid);
       if (!fetchedProject) return;
       await fetchedProject
@@ -96,7 +94,7 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
           }
           while (retries > 0) {
             const isTransfered = await isOwnershipTransfered(
-              walletSigner || signer,
+              walletSigner,
               fetchedProject,
               newOwner as `0x${string}`
             );

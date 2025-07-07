@@ -20,7 +20,8 @@
       "Bash(gh pr edit:*)",
       "WebFetch(domain:*)",
       "Bash(npm run type-check:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(rg:*)"
     ],
     "deny": []
   }

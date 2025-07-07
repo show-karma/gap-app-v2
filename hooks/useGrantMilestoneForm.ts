@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { Milestone } from "@show-karma/karma-gap-sdk";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { useStepper } from "@/store/modals/txStepper";
 import { sanitizeObject } from "@/utilities/sanitize";
 import toast from "react-hot-toast";
@@ -38,7 +37,7 @@ export function useGrantMilestoneForm({
   destinationPath,
 }: UseGrantMilestoneFormProps = {}) {
   const { project, refreshProject } = useProjectStore();
-  const { chain, address, switchChainAsync } = useWallet();
+  const { chain, address, switchChainAsync, getSigner } = useWallet();
   const isOwner = useOwnerStore((state) => state.isOwner);
 
   const { gap } = useGap();
@@ -95,7 +94,7 @@ export function useGrantMilestoneForm({
           throw new Error("Failed to connect to wallet", { cause: error });
         }
 
-        const walletSigner = await walletClientToSigner(walletClient);
+        const walletSigner = await getSigner();
 
         // Attest the milestone
         await milestoneToAttest

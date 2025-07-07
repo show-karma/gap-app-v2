@@ -1,7 +1,6 @@
 "use client";
 import { useState, useEffect, Fragment } from "react";
 
-import { useSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { useIsCommunityAdmin } from "@/hooks/useIsCommunityAdmin";
 import type { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
@@ -57,8 +56,6 @@ export const TracksAdminPage = ({
   const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
   const [showEditModal, setShowEditModal] = useState<boolean>(false);
   const [showAssignModal, setShowAssignModal] = useState<boolean>(false);
-
-  const signer = useSigner();
 
   // Check if user is admin of this community
   const { isCommunityAdmin: isAdmin, isLoading: loading } = useIsCommunityAdmin(

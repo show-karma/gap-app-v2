@@ -13,7 +13,6 @@ import { useGap } from "@/hooks/useGap";
 import { useStepper } from "@/store/modals/txStepper";
 import { useRegistryStore } from "@/store/registry";
 import { chainImgDictionary } from "@/utilities/chainImgDictionary";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { envVars } from "@/utilities/enviromentVars";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
@@ -25,7 +24,6 @@ import { PAGES } from "@/utilities/pages";
 import { urlRegex } from "@/utilities/regexs/urlRegex";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { cn } from "@/utilities/tailwind";
-import { dynamicConfig as config } from "@/utilities/wagmi/dynamic-config";
 import { Popover } from "@headlessui/react";
 import { CalendarIcon, ChevronLeftIcon } from "@heroicons/react/24/solid";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -287,8 +285,7 @@ export default function AddProgram({
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const { address, isLoggedIn, chain } = useWallet();
-  const { switchChainAsync } = useWallet();
+  const { address, isLoggedIn, chain, switchChainAsync, getSigner } = useWallet();
   const { setShowAuthFlow } = useDynamicContext();
   const { changeStepperStep, setIsStepper } = useStepper();
 
@@ -410,7 +407,7 @@ export default function AddProgram({
       if (error || !walletClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
 
       const metadata = sanitizeObject({
         title: data.name,

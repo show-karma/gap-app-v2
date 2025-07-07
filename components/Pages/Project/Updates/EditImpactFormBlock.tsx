@@ -6,7 +6,6 @@ import { getGapClient, useGap } from "@/hooks/useGap";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -50,7 +49,7 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({
   const [impact, setImpact] = useState("");
   const [work, setWork] = useState("");
 
-  const { address, chain, switchChainAsync } = useWallet();
+  const { address, chain, switchChainAsync, getSigner } = useWallet();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();
@@ -116,7 +115,7 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({
         throw new Error("Failed to connect to wallet", { cause: error });
       }
 
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
 
       const fetchedProject = await gapClient.fetch.projectById(project.uid);
       if (!fetchedProject) return;

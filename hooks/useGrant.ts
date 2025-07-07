@@ -6,7 +6,6 @@ import { getGapClient, useGap } from "./useGap";
 import { getProjectById } from "@/utilities/sdk";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { INDEXER } from "@/utilities/indexer";
 import fetchData from "@/utilities/fetchData";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
@@ -23,7 +22,7 @@ import { useWallet } from "./useWallet";
 export function useGrant() {
   const [isLoading, setIsLoading] = useState(false);
   const { gap } = useGap();
-  const { chain, address, switchChainAsync } = useWallet();
+  const { chain, address, switchChainAsync, getSigner } = useWallet();
   const { changeStepperStep, setIsStepper } = useStepper();
   const selectedProject = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
@@ -92,7 +91,7 @@ export function useGrant() {
       }
       if (!walletClient) return;
 
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
       const oldProjectData = await gapIndexerApi
         .projectBySlug(oldGrant.refUID)
         .then((res) => res.data);

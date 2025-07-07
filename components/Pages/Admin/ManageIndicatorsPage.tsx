@@ -2,7 +2,6 @@
 import { Button } from "@/components/Utilities/Button";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { zeroUID } from "@/utilities/commons";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -62,7 +61,6 @@ export default function ManageIndicatorsPage() {
   const [community, setCommunity] = useState<ICommunityResponse | undefined>(
     undefined
   ); // Data returned from the API
-  const signer = useSigner();
 
   // Check if user is admin of this community
   const { isCommunityAdmin: isAdmin, isLoading: adminLoading } =

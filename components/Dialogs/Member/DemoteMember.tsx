@@ -3,7 +3,6 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { getProjectMemberRoles } from "@/utilities/getProjectMemberRoles";
 import { INDEXER } from "@/utilities/indexer";
@@ -34,7 +33,7 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({
   const { project } = useProjectStore();
   const { teamProfiles } = useTeamProfiles(project);
   const { changeStepperStep, setIsStepper } = useStepper();
-  const { address, chain, switchChainAsync } = useWallet();
+  const { address, chain, switchChainAsync, getSigner } = useWallet();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const queryClient = getQueryClient();
 
@@ -61,7 +60,7 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({
         throw new Error("Failed to connect to wallet", { cause: error });
       }
 
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
       const fetchedProject = await getProjectById(project.uid);
       if (!fetchedProject) throw new Error("Project not found");
 

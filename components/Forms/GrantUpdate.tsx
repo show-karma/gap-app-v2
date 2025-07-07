@@ -4,7 +4,6 @@ import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { PAGES } from "@/utilities/pages";
 import { cn } from "@/utilities/tailwind";
@@ -79,7 +78,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
   const inputStyle = cn(inputStyleDefault, inputStyleProps);
   const { setGrant } = useGrantStore((state) => state);
 
-  const { address, chain, switchChainAsync } = useWallet();
+  const { address, chain, switchChainAsync, getSigner } = useWallet();
   const project = useProjectStore((state) => state.project);
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [noProofCheckbox, setNoProofCheckbox] = useState(false);
@@ -134,7 +133,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
         throw new Error("Failed to connect to wallet", { cause: error });
       }
       if (!walletClient || !gapClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
 
       const sanitizedGrantUpdate = sanitizeObject({
         text: data.description,

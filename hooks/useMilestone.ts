@@ -2,7 +2,6 @@ import { useState } from "react";
 
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { useStepper } from "@/store/modals/txStepper";
 import { useProjectStore, useOwnerStore } from "@/store";
 import fetchData from "@/utilities/fetchData";
@@ -28,7 +27,7 @@ import { useWallet } from "./useWallet";
 
 export const useMilestone = () => {
   const [isDeleting, setIsDeleting] = useState(false);
-  const { chain, switchChainAsync } = useWallet();
+  const { chain, switchChainAsync, getSigner } = useWallet();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
   const refreshProject = useProjectStore((state) => state.refreshProject);
@@ -99,7 +98,7 @@ export const useMilestone = () => {
             throw new Error("Failed to connect to wallet", { cause: error });
           }
 
-          const walletSigner = await walletClientToSigner(walletClient);
+          const walletSigner = await getSigner();
           const fetchedProject = await getProjectById(
             project!.details?.data.slug || ""
           );
@@ -212,7 +211,7 @@ export const useMilestone = () => {
           throw new Error("Failed to connect to wallet", { cause: error });
         }
 
-        const walletSigner = await walletClientToSigner(walletClient);
+        const walletSigner = await getSigner();
         const fetchedProject = await gapClient.fetch.projectById(project?.uid);
 
         if (!fetchedProject) {
@@ -371,7 +370,7 @@ export const useMilestone = () => {
             throw new Error("Failed to connect to wallet", { cause: error });
           }
 
-          const walletSigner = await walletClientToSigner(walletClient);
+          const walletSigner = await getSigner();
           const fetchedProject = await getProjectById(
             project!.details?.data.slug || ""
           );
@@ -501,7 +500,7 @@ export const useMilestone = () => {
           throw new Error("Failed to connect to wallet", { cause: error });
         }
 
-        const walletSigner = await walletClientToSigner(walletClient);
+        const walletSigner = await getSigner();
         const fetchedProject = await gapClient.fetch.projectById(project?.uid);
 
         if (!fetchedProject) {
@@ -649,7 +648,7 @@ export const useMilestone = () => {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
 
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
       const fetchedProject = await gapClient.fetch.projectById(project?.uid);
 
       if (!fetchedProject) return;
@@ -802,7 +801,7 @@ export const useMilestone = () => {
           throw new Error("Failed to connect to wallet", { cause: error });
         }
 
-        const walletSigner = await walletClientToSigner(walletClient);
+        const walletSigner = await getSigner();
         const fetchedProject = await getProjectById(
           project!.details?.data.slug || ""
         );
@@ -971,7 +970,7 @@ export const useMilestone = () => {
             throw new Error("Failed to connect to wallet", { cause: error });
           }
 
-          const walletSigner = await walletClientToSigner(walletClient);
+          const walletSigner = await getSigner();
           const fetchedProject = await getProjectById(
             project!.details?.data.slug || ""
           );
@@ -1093,7 +1092,7 @@ export const useMilestone = () => {
           throw new Error("Failed to connect to wallet", { cause: error });
         }
 
-        const walletSigner = await walletClientToSigner(walletClient);
+        const walletSigner = await getSigner();
 
         if (milestone.type === "grant") {
           // Grant milestone editing

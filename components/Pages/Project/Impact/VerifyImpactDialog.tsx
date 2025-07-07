@@ -7,8 +7,6 @@ import { SubmitHandler, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import toast from "react-hot-toast";
 
-import { getWalletClient } from "@wagmi/core";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
 import { MESSAGES } from "@/utilities/messages";
 import { getGapClient, useGap } from "@/hooks/useGap";
@@ -17,7 +15,6 @@ import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { useStepper } from "@/store/modals/txStepper";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { Hex } from "viem";
-import { config } from "@/utilities/wagmi/config";
 import { getProjectById } from "@/utilities/sdk";
 import {
   IProjectImpact,
@@ -64,7 +61,7 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
   function openModal() {
     setIsOpen(true);
   }
-  const { address, chain, switchChainAsync } = useWallet();
+  const { address, chain, switchChainAsync, getSigner } = useWallet();
 
   const hasVerifiedThis = address
     ? impact?.verified?.find(
@@ -110,7 +107,7 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
         return;
       }
 
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
       await findImpact
         .verify(
           walletSigner,

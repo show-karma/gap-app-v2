@@ -3,11 +3,9 @@ import { getGapClient, useGap } from "@/hooks/useGap";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
-import { config } from "@/utilities/wagmi/config";
 import { TrashIcon } from "@heroicons/react/24/outline";
 import { IMilestoneResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
@@ -24,7 +22,7 @@ interface MilestoneDeleteProps {
 export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
   const [isDeletingMilestone, setIsDeletingMilestone] = useState(false);
 
-  const { chain, address, switchChainAsync } = useWallet();
+  const { chain, address, switchChainAsync, getSigner } = useWallet();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
@@ -52,7 +50,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
       if (!walletClient || !gapClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
       const instanceProject = await gapClient.fetch.projectById(project?.uid);
       const grantInstance = instanceProject?.grants.find(
         (item) => item.uid.toLowerCase() === milestone.refUID.toLowerCase()

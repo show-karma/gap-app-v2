@@ -12,7 +12,6 @@ import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useProjectStore } from "@/store";
 import { useOwnerStore } from "@/store/owner";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { MESSAGES } from "@/utilities/messages";
 import { Dialog, Transition } from "@headlessui/react";
 import { ExclamationTriangleIcon } from "@heroicons/react/24/outline";
@@ -154,8 +153,7 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const [step, setStep] = useState(0);
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const { isLoggedIn, address, chain } = useWallet();
-  const { switchChainAsync } = useWallet();
+  const { isLoggedIn, address, chain, switchChainAsync, getSigner } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
   const { setShowAuthFlow } = useDynamicContext();
   const router = useRouter();
@@ -442,7 +440,7 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
       closeModal();
       changeStepperStep("preparing");
       await project
@@ -546,7 +544,7 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
       const fetchedProject = await getProjectById(projectToUpdate.uid);
       if (!fetchedProject) return;
       changeStepperStep("preparing");

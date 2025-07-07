@@ -11,7 +11,6 @@ import Pagination from "@/components/Utilities/Pagination";
 import { useStepper } from "@/store/modals/txStepper";
 import { useRegistryStore } from "@/store/registry";
 import { isMemberOfProfile } from "@/utilities/allo/isMemberOf";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
@@ -82,8 +81,6 @@ export const ManagePrograms = () => {
   const [programToEdit, setProgramToEdit] = useState<GrantProgram | null>(null);
 
   const { address, isLoggedIn } = useWallet();
-
-  const signer = useSigner();
 
   const {
     setIsRegistryAdmin,

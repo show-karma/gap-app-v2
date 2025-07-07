@@ -11,7 +11,6 @@ import { useProjectStore } from "@/store";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { ProjectMilestone } from "@show-karma/karma-gap-sdk/core/class/entities/ProjectMilestone";
 
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { useStepper } from "@/store/modals/txStepper";
 import { sanitizeInput, sanitizeObject } from "@/utilities/sanitize";
 import toast from "react-hot-toast";
@@ -51,7 +50,7 @@ export const ProjectObjectiveForm = ({
   stateHandler,
 }: ProjectObjectiveFormProps) => {
   const { project } = useProjectStore();
-  const { address, chain, switchChainAsync } = useWallet();
+  const { address, chain, switchChainAsync, getSigner } = useWallet();
   const params = useParams();
   const projectId = params.projectId as string;
   const router = useRouter();
@@ -109,7 +108,7 @@ export const ProjectObjectiveForm = ({
         throw new Error("Failed to connect to wallet", { cause: error });
       }
       if (!walletClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
       const sanitizedData = {
         title: sanitizeInput(data.title),
         text: sanitizeInput(data.text),
@@ -204,7 +203,7 @@ export const ProjectObjectiveForm = ({
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
       const sanitizedData = {
         title: sanitizeInput(data.title),
         text: sanitizeInput(data.text),

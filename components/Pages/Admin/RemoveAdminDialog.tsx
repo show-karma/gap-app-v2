@@ -14,11 +14,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { GAP } from "@show-karma/karma-gap-sdk";
 import { Button } from "../../Utilities/Button";
 import { MESSAGES } from "@/utilities/messages";
-import { useSigner, walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import { safeGetWalletClient } from "@/utilities/wallet-helpers";
 import { useStepper } from "@/store/modals/txStepper";
 import toast from "react-hot-toast";
-import { config } from "@/utilities/wagmi/config";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 
@@ -74,7 +72,7 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
   });
 
   const [isLoading, setIsLoading] = useState(false);
-  const { address, chain, switchChainAsync } = useWallet();
+  const { address, chain, switchChainAsync, getSigner } = useWallet();
 
   const { changeStepperStep, setIsStepper } = useStepper();
 
@@ -90,7 +88,7 @@ export const RemoveAdmin: FC<RemoveAdminDialogProps> = ({
       throw new Error("Failed to connect to wallet", { cause: error });
     }
     if (!walletClient) return;
-    const walletSigner = await walletClientToSigner(walletClient);
+    const walletSigner = await getSigner();
     try {
       const communityResolver = (await GAP.getCommunityResolver(
         walletSigner

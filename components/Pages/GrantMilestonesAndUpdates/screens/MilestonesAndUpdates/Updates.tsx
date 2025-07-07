@@ -7,7 +7,6 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
@@ -46,7 +45,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
   const handleEditing = (value: boolean) => {
     setIsEditing(value);
   };
-  const { chain, address, switchChainAsync } = useWallet();
+  const { chain, address, switchChainAsync, getSigner } = useWallet();
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
   const { changeStepperStep, setIsStepper } = useStepper();
@@ -71,7 +70,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
       if (!walletClient || !gapClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
       // const instanceMilestone = new Milestone({
       //   ...milestone,
       //   schema: gapClient.findSchema("Milestone"),

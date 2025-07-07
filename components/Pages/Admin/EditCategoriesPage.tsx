@@ -7,7 +7,6 @@ import { useCommunityDetails } from "@/hooks/useCommunityDetails";
 import { useGrants } from "@/hooks/useGrants";
 import { useGrantsTable } from "@/hooks/useGrantsTable";
 
-import { useSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -41,7 +40,6 @@ export default function EditCategoriesPage() {
     Record<string, string[]>
   >({});
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const signer = useSigner();
 
   const {
     data: community,

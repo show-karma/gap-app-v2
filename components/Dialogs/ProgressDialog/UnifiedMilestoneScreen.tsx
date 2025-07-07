@@ -10,7 +10,6 @@ import { useProjectStore } from "@/store";
 import { useProgressModalStore } from "@/store/modals/progress";
 import { useStepper } from "@/store/modals/txStepper";
 import { chainNameDictionary } from "@/utilities/chainNameDictionary";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
@@ -77,7 +76,7 @@ export const UnifiedMilestoneScreen = () => {
   const [selectedGrantIds, setSelectedGrantIds] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const grants: IGrantResponse[] = project?.grants || [];
-  const { address, chain, switchChainAsync } = useWallet();
+  const { address, chain, switchChainAsync, getSigner } = useWallet();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
   const { projectId } = useParams();
@@ -142,7 +141,7 @@ export const UnifiedMilestoneScreen = () => {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
 
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
       const sanitizedData = {
         title: sanitizeInput(data.title),
         text: sanitizeInput(data.description),
@@ -291,7 +290,7 @@ export const UnifiedMilestoneScreen = () => {
             });
           }
 
-          const walletSigner = await walletClientToSigner(walletClient);
+          const walletSigner = await getSigner();
 
           const result = await milestoneToAttest.attest(
             walletSigner as any,
@@ -347,7 +346,7 @@ export const UnifiedMilestoneScreen = () => {
             });
           }
 
-          const walletSigner = await walletClientToSigner(walletClient);
+          const walletSigner = await getSigner();
 
           // Instead of using indices, directly use grant UIDs
           const grantUIDs = chainGrants.map(

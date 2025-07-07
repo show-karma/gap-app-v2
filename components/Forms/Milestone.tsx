@@ -7,7 +7,6 @@ import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { formatDate } from "@/utilities/formatDate";
 import { INDEXER } from "@/utilities/indexer";
@@ -89,7 +88,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   const isOwner = useOwnerStore((state) => state.isOwner);
   const [recipient, setRecipient] = useState("");
 
-  const { address, chain, switchChainAsync } = useWallet();
+  const { address, chain, switchChainAsync, getSigner } = useWallet();
   const {
     register,
     handleSubmit,
@@ -150,7 +149,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
       await milestoneToAttest
         .attest(walletSigner as any, changeStepperStep)
         .then(async (res) => {

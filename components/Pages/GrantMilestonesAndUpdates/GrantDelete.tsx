@@ -5,7 +5,6 @@ import { useWallet } from "@/hooks/useWallet";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -27,7 +26,7 @@ interface GrantDeleteProps {
 
 export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
   const [isDeletingGrant, setIsDeletingGrant] = useState(false);
-  const { address, chain, switchChainAsync } = useWallet();
+  const { address, chain, switchChainAsync, getSigner } = useWallet();
 
   const refreshProject = useProjectStore((state) => state.refreshProject);
 
@@ -56,7 +55,7 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
       if (!walletClient || !gapClient) return;
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
       const grantUID = grant.uid;
       const instanceProject = await gapClient.fetch.projectById(project?.uid);
       const grantInstance = instanceProject?.grants.find(

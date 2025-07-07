@@ -8,7 +8,6 @@ import { useContactInfo } from "@/hooks/useContactInfo";
 import { useProjectStore } from "@/store";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { PAGES } from "@/utilities/pages";
@@ -34,7 +33,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
     useEndorsementStore();
   const [comment, setComment] = useState<string>("");
   const project = useProjectStore((state) => state.project);
-  const { chain, address, switchChainAsync } = useWallet();
+  const { chain, address, switchChainAsync, getSigner } = useWallet();
   const { gap } = useGap();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();
@@ -106,7 +105,7 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
 
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
       const endorsement = new ProjectEndorsement({
         data: sanitizeObject({
           comment,

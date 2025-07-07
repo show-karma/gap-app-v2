@@ -2,7 +2,6 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks/useGap";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
@@ -34,7 +33,7 @@ export function useProjectMilestoneForm({
   onSuccess,
 }: UseProjectMilestoneFormProps = {}) {
   const { project } = useProjectStore();
-  const { chain, address, switchChainAsync } = useWallet();
+  const { chain, address, switchChainAsync, getSigner } = useWallet();
   const params = useParams();
   const projectId = params.projectId as string;
   const isEditing = !!previousMilestone;
@@ -77,7 +76,7 @@ export function useProjectMilestoneForm({
         throw new Error("Failed to connect to wallet", { cause: error });
       }
 
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
       const sanitizedData = {
         title: sanitizeInput(data.title),
         text: sanitizeInput(data.text),
@@ -166,7 +165,7 @@ export function useProjectMilestoneForm({
         throw new Error("Failed to connect to wallet", { cause: error });
       }
 
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
       const sanitizedData = {
         title: sanitizeInput(data.title),
         text: sanitizeInput(data.text),

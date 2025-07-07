@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { ICommunityResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { isCommunityAdminOf } from "@/utilities/sdk/communities/isCommunityAdmin";
-import { useSigner } from "@/utilities/eas-wagmi-utils";
 
 import type { Hex } from "viem";
 import { useEffect, useState } from "react";
@@ -53,8 +52,7 @@ export const useIsCommunityAdmin = (
   options?: UseIsCommunityAdminOptions,
   community?: ICommunityResponse // Optional community object to avoid API calls
 ) => {
-  const signer = useSigner();
-  const { isLoggedIn, address: accountAddress } = useWallet();
+  const { isLoggedIn, address: accountAddress, getSigner } = useWallet();
   const [resolvedCommunity, setResolvedCommunity] =
     useState<ICommunityResponse | null>(null);
 
@@ -111,12 +109,12 @@ export const useIsCommunityAdmin = (
       resolvedCommunity?.chainID,
       checkAddress,
       !!isLoggedIn,
-      signer,
     ],
     queryFn: async () => {
       if (!resolvedCommunity || !checkAddress || !isLoggedIn) {
         return false;
       }
+      const signer = await getSigner();
 
       return await isCommunityAdminOf(resolvedCommunity, checkAddress, signer);
     },

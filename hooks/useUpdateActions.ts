@@ -5,7 +5,6 @@ import { getGapClient, useGap } from "@/hooks/useGap";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
 import { checkNetworkIsValid } from "@/utilities/checkNetworkIsValid";
-import { walletClientToSigner } from "@/utilities/eas-wagmi-utils";
 import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { MESSAGES } from "@/utilities/messages";
@@ -37,7 +36,7 @@ export const useUpdateActions = (update: UpdateType) => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
-  const { chain, switchChainAsync } = useWallet();
+  const { chain, switchChainAsync, getSigner } = useWallet();
   const { project, isProjectOwner } = useProjectStore();
   const refreshProject = useProjectStore((state) => state.refreshProject);
   const isOwner = useOwnerStore((state) => state.isOwner);
@@ -95,7 +94,7 @@ export const useUpdateActions = (update: UpdateType) => {
       if (error || !walletClient || !gapClient) {
         throw new Error("Failed to connect to wallet", { cause: error });
       }
-      const walletSigner = await walletClientToSigner(walletClient);
+      const walletSigner = await getSigner();
 
       let findUpdate: any = null;
       let deleteMessage = "";
