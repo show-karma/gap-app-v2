@@ -21,7 +21,8 @@
       "WebFetch(domain:*)",
       "Bash(npm run type-check:*)",
       "Bash(npx tsc:*)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "WebFetch(domain:www.dynamic.xyz)"
     ],
     "deny": []
   }

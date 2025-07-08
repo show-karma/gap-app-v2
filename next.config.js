@@ -132,14 +132,6 @@ module.exports = withSentryConfig(
 module.exports = {
   ...module.exports,
   experimental: {
-    optimizePackageImports: [
-      "@dynamic-labs/ethereum",
-      "@dynamic-labs/ethereum-aa",
-      "@dynamic-labs/ethers-v6",
-      "@dynamic-labs/sdk-react-core",
-      "@dynamic-labs/wagmi-connector",
-      "wagmi",
-      "@show-karma/karma-gap-sdk",
-    ],
+    optimizePackageImports: ["@show-karma/karma-gap-sdk"],
   },
 };

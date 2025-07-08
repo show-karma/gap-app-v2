@@ -63,13 +63,13 @@ export const useWallet = (): UseWalletReturn => {
         appNetwork.find((chain) => chain.id === chainId) ||
         chain ||
         appNetwork[0];
-      
+
       if (!primaryWallet) {
         throw new Error("No primary wallet");
       }
 
       const cacheKey = `${primaryWallet.address}-${selectedChain.id}`;
-      
+
       if (signerCacheRef.current[cacheKey]) {
         return signerCacheRef.current[cacheKey];
       }

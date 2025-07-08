@@ -22,6 +22,7 @@ module.exports = {
     "./pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./components/**/*.{js,ts,jsx,tsx,mdx}",
     "./node_modules/@tremor/**/*.{js,ts,jsx,tsx}",
+    "./node_modules/@dynamic-labs/**/*.{js,ts,jsx,tsx}",
   ],
   container: {
     center: true,
