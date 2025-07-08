@@ -9,7 +9,6 @@ import "@uiw/react-markdown-preview/markdown.css";
 import Footer from "@/components/Utilities/Footer";
 import Header from "@/components/Utilities/Header";
 import { Toaster } from "react-hot-toast";
-import DynamicProvider from "@/components/Utilities/DynamicProvider";
 import { StepperDialog } from "@/components/Dialogs/StepperDialog";
 import { ProgressBarWrapper } from "@/components/ProgressBarWrapper";
 import { ThemeProvider } from "next-themes";
@@ -18,6 +17,7 @@ import { GoogleAnalytics } from "@next/third-parties/google";
 import { Suspense } from "react";
 import { headers } from "next/headers";
 import HotjarAnalytics from "@/components/Utilities/HotjarAnalytics";
+import DynamicProvider from "@/components/Utilities/DynamicProvider";
 
 export const metadata = defaultMetadata;
 

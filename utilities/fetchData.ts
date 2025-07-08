@@ -1,7 +1,7 @@
 import axios, { Method } from "axios";
 import { envVars } from "./enviromentVars";
 import { sanitizeObject } from "./sanitize";
-import { getCookiesFromStoredWallet } from "./getCookiesFromStoredWallet";
+import { getDynamicJwt } from "./auth/dynamicAuth";
 
 export default async function fetchData(
   endpoint: string,
@@ -14,7 +14,9 @@ export default async function fetchData(
   baseUrl: string = envVars.NEXT_PUBLIC_GAP_INDEXER_URL
 ) {
   try {
-    const { token, walletType } = getCookiesFromStoredWallet();
+    // Get Dynamic JWT auth token
+    const dynamicToken = await getDynamicJwt();
+    const authToken = dynamicToken || undefined;
 
     const sanitizedData = sanitizeObject(axiosData);
     const isIndexerUrl = baseUrl === envVars.NEXT_PUBLIC_GAP_INDEXER_URL;
@@ -35,7 +37,7 @@ export default async function fetchData(
 
     if (isIndexerUrl) {
       requestConfig.headers.Authorization = isAuthorized
-        ? token || undefined
+        ? authToken || undefined
         : undefined;
       requestConfig.timeout = 360000;
     }
