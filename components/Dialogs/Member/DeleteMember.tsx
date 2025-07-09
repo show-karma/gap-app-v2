@@ -94,6 +94,44 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({
             // eslint-disable-next-line no-await-in-loop, no-promise-executor-return
             await new Promise((resolve) => setTimeout(resolve, 1500));
           }
+        })
+        .catch(async (revokeError) => {
+          // Fallback: Try POST request if on-chain revoke fails
+          const toastLoading = toast.loading("Removing member...");
+          try {
+            await fetchData(
+              INDEXER.PROJECT.REVOKE_ATTESTATION(
+                member.uid as `0x${string}`,
+                member.chainID
+              ),
+              "POST",
+              {}
+            );
+            
+            // Check if member was removed
+            let retries = 1000;
+            while (retries > 0) {
+              const refreshedProject = await refreshProject();
+              const currentMember = refreshedProject?.members.find(
+                (item) =>
+                  item.recipient.toLowerCase() === memberAddress.toLowerCase()
+              );
+              if (!currentMember) {
+                toast.success("Member removed successfully", {
+                  id: toastLoading,
+                });
+                closeModal();
+                return;
+              }
+              retries -= 1;
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+            }
+            toast.dismiss(toastLoading);
+            throw new Error("Member removal timed out");
+          } catch (fallbackError) {
+            toast.dismiss(toastLoading);
+            throw revokeError; // Re-throw original error
+          }
         });
     } catch (error: any) {
       errorManager(
