@@ -3,6 +3,7 @@ import { getAllMilestones } from "@/utilities/gapIndexerApi/getAllMilestones";
 import { UnifiedMilestone } from "@/types/roadmap";
 import { useProjectStore } from "@/store";
 import { getQueryClient } from "@/utilities/queries/client";
+import { useProjectQuery } from "./useProjectQuery";
 
 const sortDescendly = (milestones: UnifiedMilestone[]) => {
   const sortedMilestones = milestones.sort((a, b) => {
@@ -19,7 +20,7 @@ const sortDescendly = (milestones: UnifiedMilestone[]) => {
 };
 
 export function useAllMilestones(projectId: string) {
-  const project = useProjectStore((state) => state.project);
+  const { data: project } = useProjectQuery();
   const projectGrants = project?.grants || [];
   const queryKey = ["all-milestones", projectId];
   const queryClient = getQueryClient();

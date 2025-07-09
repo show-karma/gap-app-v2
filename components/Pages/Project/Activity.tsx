@@ -6,9 +6,11 @@ import { ActivityList } from "@/components/Shared/ActivityList";
 import { UnifiedMilestone } from "@/types/roadmap";
 import { useAllMilestones } from "@/hooks/useAllMilestones";
 import { useParams } from "next/navigation";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 export const ProjectActivity = () => {
-  const { project, isProjectAdmin } = useProjectStore();
+  const { isProjectAdmin } = useProjectStore();
+  const { data: project } = useProjectQuery();
   const { projectId } = useParams();
   const { milestones = [] } = useAllMilestones(projectId as string);
   const [selectedTab, setSelectedTab] = useState(0);

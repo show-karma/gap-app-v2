@@ -28,6 +28,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 const updateSchema = z.object({
   title: z
@@ -79,8 +80,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
   const { setGrant } = useGrantStore((state) => state);
 
   const { address, chain, switchChainAsync, getSigner } = useWallet();
-  const project = useProjectStore((state) => state.project);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { data: project, refetch: refreshProject } = useProjectQuery();
   const [noProofCheckbox, setNoProofCheckbox] = useState(false);
 
   const {
@@ -161,7 +161,7 @@ export const GrantUpdateForm: FC<GrantUpdateFormProps> = ({
             await refreshProject()
               .then(async (fetchedProject) => {
                 const attestUID = grantUpdate.uid;
-                const updatedGrant = fetchedProject?.grants.find(
+                const updatedGrant = fetchedProject?.data?.grants.find(
                   (g) => g.uid === grantToUpdate.uid
                 );
 

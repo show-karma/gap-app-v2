@@ -13,6 +13,7 @@ import {
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { ProjectGrantsMilestonesListLoading } from "../../Project/Loading/Grants/MilestonesAndUpdate";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 const EmptyMilestone = ({
   grant,
@@ -21,7 +22,7 @@ const EmptyMilestone = ({
   grant?: IGrantResponse;
   project?: IProjectResponse;
 }) => {
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const { isProjectAdmin } = useProjectStore();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
@@ -130,10 +131,10 @@ const MilestonesList = dynamic(
 
 export default function MilestonesAndUpdates() {
   const { grant } = useGrantStore();
-  const project = useProjectStore((state) => state.project);
+  const { data: project } = useProjectQuery();
   const hasMilestonesOrUpdates =
     grant?.milestones?.length || grant?.updates?.length;
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const { isProjectAdmin } = useProjectStore();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin

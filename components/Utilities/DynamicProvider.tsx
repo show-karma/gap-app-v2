@@ -9,6 +9,11 @@ import { DynamicWagmiConnector } from "@dynamic-labs/wagmi-connector";
 import { envVars } from "@/utilities/enviromentVars";
 import { getQueryClient } from "@/utilities/queries/client";
 import { dynamicSettings } from "@/utilities/dynamic/settings";
+import { useMixpanel } from "@/hooks/useMixpanel";
+import { usePathname, useRouter } from "next/navigation";
+import { PAGES } from "@/utilities/pages";
+import { useOnboarding } from "@/store/modals/onboarding";
+import { useQueryState } from "nuqs";
 
 const DynamicProvider = ({
   children,
@@ -18,6 +23,11 @@ const DynamicProvider = ({
   children: React.ReactNode;
 }) => {
   const initialState = cookieToInitialState(dynamicConfig, cookie);
+  const router = useRouter();
+  const { mixpanel } = useMixpanel();
+  const pathname = usePathname();
+  const { setIsOnboarding } = useOnboarding?.();
+  const [inviteCode] = useQueryState("invite-code");
 
   if (!envVars.DYNAMIC_ENVIRONMENT_ID) {
     throw new Error(
@@ -36,6 +46,29 @@ const DynamicProvider = ({
             EthereumWalletConnectors,
             ZeroDevSmartWalletConnectors,
           ],
+          events: {
+            onAuthSuccess: (user) => {
+              const address = user?.primaryWallet?.address;
+              if (pathname === "/") {
+                router.push(PAGES.MY_PROJECTS);
+              }
+              if (!pathname.includes("funding-map")) {
+                if (!inviteCode) {
+                  setIsOnboarding?.(true);
+                }
+              }
+              if (address) {
+                mixpanel.reportEvent({
+                  event: "onboarding:popup",
+                  properties: { address },
+                });
+                mixpanel.reportEvent({
+                  event: "onboarding:navigation",
+                  properties: { address, id: "welcome" },
+                });
+              }
+            },
+          },
           ...dynamicSettings,
         }}
       >

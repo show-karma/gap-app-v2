@@ -29,6 +29,7 @@ import { Hex } from "viem";
 import { z } from "zod";
 import { DatePicker } from "@/components/Utilities/DatePicker";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 const updateSchema = z.object({
   startedAt: z.date({
@@ -53,8 +54,7 @@ export const AddImpactScreen: FC<AddImpactScreenProps> = () => {
   const [work, setWork] = useState("");
 
   const { address, chain, switchChainAsync, getSigner } = useWallet();
-  const project = useProjectStore((state) => state.project);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { data: project, refetch: refreshProject } = useProjectQuery();
   const [, changeTab] = useQueryState("tab");
   const {
     register,

@@ -23,6 +23,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { ArrowRightIcon } from "@heroicons/react/24/solid";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 type VerifyGrantUpdateDialogProps = {
   grantUpdate: IGrantUpdate;
@@ -64,8 +65,7 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
     (v) => v.attester?.toLowerCase() === address?.toLowerCase()
   );
   const { gap } = useGap();
-  const project = useProjectStore((state) => state.project);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { data: project, refetch: refreshProject } = useProjectQuery();
   const { changeStepperStep, setIsStepper } = useStepper();
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
@@ -118,7 +118,7 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {
-                const foundGrant = fetchedProject?.grants.find(
+                const foundGrant = fetchedProject?.data?.grants.find(
                   (g) => g.uid === grantUpdate.refUID
                 );
 
@@ -166,7 +166,7 @@ export const VerifyGrantUpdateDialog: FC<VerifyGrantUpdateDialogProps> = ({
     }
   };
   const { isLoggedIn } = useWallet();
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const { isProjectAdmin } = useProjectStore();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const verifyPermission = () => {
     if (!isLoggedIn) return false;

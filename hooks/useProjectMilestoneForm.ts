@@ -17,6 +17,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 
 import { useWallet } from "./useWallet";
+import { useProjectQuery } from "./useProjectQuery";
 
 export interface ProjectMilestoneFormData {
   title: string;
@@ -32,7 +33,7 @@ export function useProjectMilestoneForm({
   previousMilestone,
   onSuccess,
 }: UseProjectMilestoneFormProps = {}) {
-  const { project } = useProjectStore();
+  const { data: project } = useProjectQuery();
   const { chain, address, switchChainAsync, getSigner } = useWallet();
   const params = useParams();
   const projectId = params.projectId as string;

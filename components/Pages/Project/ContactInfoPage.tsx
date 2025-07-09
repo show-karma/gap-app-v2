@@ -4,12 +4,13 @@ import { ContactInfoSubscription } from "@/components/ContactInfoSubscription";
 import { Spinner } from "@/components/Utilities/Spinner";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 const ContactInfoPage = () => {
   const isOwnerLoading = useOwnerStore((state) => state.isOwnerLoading);
   const { isLoading: isPermissionLoading } = useProjectPermissions();
-  const project = useProjectStore((state) => state.project);
-  const isAuthorized = useProjectStore((state) => state.isProjectAdmin);
+  const { data: project } = useProjectQuery();
+  const { isProjectAdmin: isAuthorized } = useProjectStore();
 
   const projectId = project?.uid;
   const { data: contactsInfo, isLoading } = useContactInfo(

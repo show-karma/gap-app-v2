@@ -1,5 +1,6 @@
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
 import { useCopyToClipboard } from "@/hooks/useCopyToClipboard";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 import { useProjectStore } from "@/store";
 import { useEndorsementStore } from "@/store/modals/endorsement";
 import { useIntroModalStore } from "@/store/modals/intro";
@@ -10,7 +11,7 @@ import Image from "next/image";
 import { useParams } from "next/navigation";
 
 export function ProjectBlocks() {
-  const project = useProjectStore((state) => state.project);
+  const { data: project } = useProjectQuery();
   const { setIsEndorsementOpen } = useEndorsementStore();
   const [, copy] = useCopyToClipboard();
   const params = useParams();

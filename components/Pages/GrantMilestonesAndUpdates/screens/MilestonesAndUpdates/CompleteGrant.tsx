@@ -23,19 +23,19 @@ import toast from "react-hot-toast";
 import { Hex } from "viem";
 
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 
 export const GrantCompletion: FC = () => {
   const { grant } = useGrantStore();
-  const { project } = useProjectStore();
+  const { data: project, refetch: refreshProject } = useProjectQuery();
   const [description, setDescription] = useState("");
 
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
   const { chain, address, switchChainAsync, getSigner } = useWallet();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
 
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();

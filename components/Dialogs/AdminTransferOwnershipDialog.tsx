@@ -13,6 +13,7 @@ import { z } from "zod";
 import { Button } from "../Utilities/Button";
 import { errorManager } from "../Utilities/errorManager";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 const schema = z.object({
   newOwner: z
@@ -35,8 +36,7 @@ export const AdminTransferOwnershipDialog: FC = () => {
     closeAdminTransferOwnershipModal: closeModal,
   } = useAdminTransferOwnershipModalStore();
 
-  const project = useProjectStore((state) => state.project);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { data: project, refetch: refreshProject } = useProjectQuery();
   const { address } = useWallet();
 
   const {

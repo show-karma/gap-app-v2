@@ -23,6 +23,7 @@ import { FC, Fragment, useState } from "react";
 import { Hex } from "viem";
 
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 type EndorsementDialogProps = {};
 
@@ -32,10 +33,9 @@ export const EndorsementDialog: FC<EndorsementDialogProps> = () => {
   const { isEndorsementOpen: isOpen, setIsEndorsementOpen: setIsOpen } =
     useEndorsementStore();
   const [comment, setComment] = useState<string>("");
-  const project = useProjectStore((state) => state.project);
+  const { data: project, refetch: refreshProject } = useProjectQuery();
   const { chain, address, switchChainAsync, getSigner } = useWallet();
   const { gap } = useGap();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
   const router = useRouter();
   const { data: contactsInfo } = useContactInfo(project?.uid, true);
 

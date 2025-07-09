@@ -1,6 +1,7 @@
 import { DeleteDialog } from "@/components/DeleteDialog";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { getGapClient, useGap } from "@/hooks/useGap";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 import { useWallet } from "@/hooks/useWallet";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
@@ -28,11 +29,11 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
   const [isDeletingGrant, setIsDeletingGrant] = useState(false);
   const { address, chain, switchChainAsync, getSigner } = useWallet();
 
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { data: project, refetch: refreshProject } = useProjectQuery();
 
   const { changeStepperStep, setIsStepper } = useStepper();
 
-  const { project, isProjectOwner } = useProjectStore();
+  const { isProjectOwner } = useProjectStore();
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
   const { gap } = useGap();
@@ -63,13 +64,13 @@ export const GrantDelete: FC<GrantDeleteProps> = ({ grant }) => {
         await retryUntilConditionMet(
           async () => {
             const fetchedProject = await refreshProject();
-            const stillExist = fetchedProject?.grants.find(
+            const stillExist = fetchedProject?.data?.grants.find(
               (g) => g.uid?.toLowerCase() === grantUID?.toLowerCase()
             );
             if (!stillExist) {
               if (
-                fetchedProject?.grants &&
-                fetchedProject?.grants?.length > 0
+                fetchedProject?.data?.grants &&
+                fetchedProject?.data?.grants?.length > 0
               ) {
                 router.push(
                   PAGES.PROJECT.GRANTS(

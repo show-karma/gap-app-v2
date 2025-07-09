@@ -69,7 +69,6 @@ export const VerificationsDialog: FC<VerificationsDialogProps> = ({
   closeDialog,
   title,
 }) => {
-  const project = useProjectStore((state) => state.project);
   const grant = useGrant();
 
   const communityUid = useMemo(() => grant?.data.communityUID, [grant]);

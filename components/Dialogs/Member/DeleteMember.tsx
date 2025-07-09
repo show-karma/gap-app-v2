@@ -14,6 +14,7 @@ import { FC, Fragment, useState } from "react";
 import toast from "react-hot-toast";
 
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 const DeleteDialog = dynamic(() =>
   import("@/components/DeleteDialog").then((mod) => mod.DeleteDialog)
@@ -29,10 +30,9 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({
   const [isDeleting, setIsDeleting] = useState(false);
   let [isOpen, setIsOpen] = useState(false);
   const { gap } = useGap();
-  const { project } = useProjectStore();
+  const { data: project, refetch: refreshProject } = useProjectQuery();
   const { changeStepperStep, setIsStepper } = useStepper();
   const { address, chain, switchChainAsync, getSigner } = useWallet();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
 
   const deleteMember = async () => {
     // await deleteMemberFromProject(memberAddress);
@@ -70,7 +70,7 @@ export const DeleteMemberDialog: FC<DeleteMemberDialogProps> = ({
           }
           while (retries > 0) {
             await refreshProject().then(async (refreshedProject) => {
-              const currentMember = refreshedProject?.members.find(
+              const currentMember = refreshedProject?.data?.members.find(
                 (item) =>
                   item.recipient.toLowerCase() === memberAddress.toLowerCase()
               );

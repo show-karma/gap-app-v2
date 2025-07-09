@@ -86,7 +86,7 @@ export const LinkContractAddressButton: FC<
   onClose,
 }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const { isProjectOwner } = useProjectStore();
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );

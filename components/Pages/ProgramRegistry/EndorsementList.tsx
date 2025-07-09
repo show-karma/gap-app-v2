@@ -11,6 +11,7 @@ import { Button } from "@/components/Utilities/Button";
 import { MarkdownPreview } from "@/components/Utilities/MarkdownPreview";
 import { IProjectEndorsement } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import EthereumAddressToENSAvatar from "@/components/EthereumAddressToENSAvatar";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 interface EndorsementRowProps {
   endorsement: IProjectEndorsement;
@@ -59,7 +60,7 @@ const EndorsementRow: FC<EndorsementRowProps> = ({ endorsement }) => {
 };
 
 export const EndorsementList: FC = () => {
-  const project = useProjectStore((state) => state.project);
+  const { data: project } = useProjectQuery();
   const [handledEndorsements, setHandledEndorsements] = useState<
     IProjectEndorsement[]
   >([]);

@@ -18,6 +18,7 @@ import { useContactInfo } from "@/hooks/useContactInfo";
 import { useMutation } from "@tanstack/react-query";
 
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 const labelStyle = "text-sm font-bold";
 const inputStyle =
@@ -145,8 +146,7 @@ export const ContactInfoSection: FC<ContactInfoSectionProps> = ({
 }) => {
   const { address } = useWallet();
   const [isLoading, setIsLoading] = useState(false);
-  const project = useProjectStore((state) => state.project);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { data: project, refetch: refreshProject } = useProjectQuery();
   const dataToUpdate = {
     id: contactInfo?.id || "0",
     name: contactInfo?.name || "",

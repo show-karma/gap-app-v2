@@ -3,7 +3,6 @@ import { notFound, redirect } from "next/navigation";
 import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { cache } from "react";
 import { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
-import { envVars } from "@/utilities/enviromentVars";
 import { getProjectData } from "../api/project";
 
 export const getProjectCachedData = cache(
@@ -14,12 +13,8 @@ export const getProjectCachedData = cache(
     let project: IProjectResponse | undefined;
     try {
       const projectData = await getProjectData(projectId, {
-        // Enable Next.js caching
-        // cache: "force-cache", // Cache the response
-        // Alternative cache options you can use:
-        // cache: "no-store", // Never cache
         cache: "reload", // Always fetch fresh
-        next: { revalidate: 300 }, // Cache for 5 minutes
+        next: { revalidate: 60 }, // Cache for 5 minutes
       });
 
       project = projectData;

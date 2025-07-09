@@ -16,23 +16,21 @@ import { IntroDialog } from "./IntroDialog";
 import { useContactInfo } from "@/hooks/useContactInfo";
 import { ShareDialog } from "../GrantMilestonesAndUpdates/screens/MilestonesAndUpdates/ShareDialog";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
-import { useProject } from "@/hooks/useProject";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useProjectPermissions } from "@/hooks/useProjectPermissions";
 import { useProjectSocials } from "@/hooks/useProjectSocials";
 import { useProjectMembers } from "@/hooks/useProjectMembers";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 interface ProjectWrapperProps {
   projectId: string;
 }
 
 export const ProjectWrapper = ({ projectId }: ProjectWrapperProps) => {
-  const { isProjectAdmin } = useProjectStore();
-  const { isProjectOwner } = useProjectStore();
+  const { isProjectAdmin, isProjectOwner } = useProjectStore();
+  const { data: project } = useProjectQuery();
 
   const isOwner = useOwnerStore((state: any) => state.isOwner);
-
-  const { project } = useProject(projectId);
 
   // Start hook for permissions
   useProjectPermissions();

@@ -12,6 +12,7 @@ import { CancelButton } from "./buttons/CancelButton";
 import { NextButton } from "./buttons/NextButton";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { useGrant } from "@/hooks/useGrant";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 export const CommunitySelectionScreen: React.FC = () => {
   const {
@@ -22,7 +23,7 @@ export const CommunitySelectionScreen: React.FC = () => {
     communityNetworkId,
     setCommunityNetworkId,
   } = useGrantFormStore();
-  const selectedProject = useProjectStore((state) => state.project);
+  const { data: selectedProject } = useProjectQuery();
   const router = useRouter();
   const pathname = usePathname();
   const params = useParams();

@@ -15,9 +15,10 @@ import { PathIcon } from "@/components/Icons/PathIcon";
 import { StageIcon } from "@/components/Icons/StageIcon";
 import { TargetIcon } from "@/components/Icons/Target";
 import { ProjectBlocks } from "./ProjectBlocks";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 export const InformationBlock: FC = () => {
-  const { project } = useProjectStore();
+  const { data: project } = useProjectQuery();
   return (
     <div
       id="information-tab"

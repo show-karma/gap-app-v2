@@ -14,14 +14,15 @@ import {
   CheckIcon,
   ClipboardDocumentIcon,
 } from "@heroicons/react/24/outline";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 type InviteMemberDialogProps = {};
 
 export const InviteMemberDialog: FC<InviteMemberDialogProps> = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const project = useProjectStore((state) => state.project);
+  const { isProjectOwner } = useProjectStore();
+  const { data: project } = useProjectQuery();
   const [, copyToClipboard] = useCopyToClipboard();
 
   const {

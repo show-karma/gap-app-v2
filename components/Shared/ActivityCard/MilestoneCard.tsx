@@ -26,6 +26,7 @@ import { SHARE_TEXTS } from "@/utilities/share/text";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { useProjectStore } from "@/store";
 import { getQueryClient } from "@/utilities/queries/client";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 const ProjectObjectiveCompletion = dynamic(
   () =>
@@ -91,7 +92,7 @@ export const MilestoneCard: FC<MilestoneCardProps> = ({
     useMilestoneActions();
   const { multiGrantUndoCompletion } = useMilestone();
   const { title, description, completed, type } = milestone;
-  const { project } = useProjectStore();
+  const { data: project } = useProjectQuery();
   const { projectId } = useParams();
   const { refetch } = useAllMilestones(projectId as string);
   const queryClient = getQueryClient();

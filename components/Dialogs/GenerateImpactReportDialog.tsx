@@ -35,6 +35,7 @@ import {
 
 import { errorManager } from "../Utilities/errorManager";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 // Create styles
 const styles = StyleSheet.create({});
@@ -644,7 +645,7 @@ type Props = {
 };
 
 export const GenerateImpactReportDialog: FC<Props> = ({ grant }) => {
-  const project = useProjectStore((state) => state.project);
+  const { data: project } = useProjectQuery();
   const { chain, switchChainAsync, getSigner } = useWallet();
   let [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);

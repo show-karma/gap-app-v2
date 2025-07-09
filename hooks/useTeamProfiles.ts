@@ -6,7 +6,7 @@ import { useProjectStore } from "@/store";
 import { useEffect } from "react";
 
 export const useTeamProfiles = (project: IProjectResponse | undefined) => {
-  const setTeamProfiles = useProjectStore((state) => state.setTeamProfiles);
+  const { setTeamProfiles } = useProjectStore();
 
   const rawAddresses =
     project?.members?.map((member) => member.recipient) || [];

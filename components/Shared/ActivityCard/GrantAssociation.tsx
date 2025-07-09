@@ -7,6 +7,7 @@ import {
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { UnifiedMilestone } from "@/types/roadmap";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 // Shared UI component for rendering grant items
 interface GrantItemProps {
@@ -63,7 +64,7 @@ export const GrantAssociation = ({
   className = "",
 }: GrantAssociationProps) => {
   const containerClass = `flex flex-row w-max flex-wrap gap-2 ${className}`;
-  const { project } = useProjectStore();
+  const { data: project } = useProjectQuery();
 
   // Handle milestone data
   if (milestone) {

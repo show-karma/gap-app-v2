@@ -25,6 +25,7 @@ import { gapIndexerApi } from "@/utilities/gapIndexerApi";
 import { useAllMilestones } from "@/hooks/useAllMilestones";
 import { PAGES } from "@/utilities/pages";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 const objectiveSchema = z.object({
   title: z
@@ -49,7 +50,7 @@ export const ProjectObjectiveForm = ({
   previousObjective,
   stateHandler,
 }: ProjectObjectiveFormProps) => {
-  const { project } = useProjectStore();
+  const { data: project } = useProjectQuery();
   const { address, chain, switchChainAsync, getSigner } = useWallet();
   const params = useParams();
   const projectId = params.projectId as string;

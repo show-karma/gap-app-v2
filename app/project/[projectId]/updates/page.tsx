@@ -84,7 +84,7 @@ export default async function RoadmapPage(props: {
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
-      <ProjectRoadmap project={projectInfo} />
+      <ProjectRoadmap />
     </HydrationBoundary>
   );
 }

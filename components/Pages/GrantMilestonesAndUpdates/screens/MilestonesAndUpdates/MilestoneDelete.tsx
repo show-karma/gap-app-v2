@@ -15,6 +15,7 @@ import toast from "react-hot-toast";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { retryUntilConditionMet } from "@/utilities/retries";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 interface MilestoneDeleteProps {
   milestone: IMilestoneResponse;
 }
@@ -23,12 +24,10 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
   const [isDeletingMilestone, setIsDeletingMilestone] = useState(false);
 
   const { chain, address, switchChainAsync, getSigner } = useWallet();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { data: project, refetch: refreshProject } = useProjectQuery();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
-  const selectedProject = useProjectStore((state) => state.project);
-
-  const { project, isProjectOwner } = useProjectStore();
+  const { isProjectOwner } = useProjectStore();
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
 
@@ -60,7 +59,7 @@ export const MilestoneDelete: FC<MilestoneDeleteProps> = ({ milestone }) => {
         await retryUntilConditionMet(
           async () => {
             const fetchedProject = await refreshProject();
-            const grant = fetchedProject?.grants.find(
+            const grant = fetchedProject?.data?.grants.find(
               (g) => g.uid === milestone.refUID
             );
             const stillExists = grant?.milestones.find(

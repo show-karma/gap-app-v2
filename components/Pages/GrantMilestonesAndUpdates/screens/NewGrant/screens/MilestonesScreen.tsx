@@ -28,6 +28,7 @@ import { MESSAGES } from "@/utilities/messages";
 import { CancelButton } from "./buttons/CancelButton";
 import { NextButton } from "./buttons/NextButton";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 export const MilestonesScreen: React.FC = () => {
   const {
@@ -46,8 +47,7 @@ export const MilestonesScreen: React.FC = () => {
   } = useGrantFormStore();
   const { switchChainAsync, address, isLoggedIn, chain, getSigner } =
     useWallet();
-  const selectedProject = useProjectStore((state) => state.project);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { data: selectedProject, refetch: refreshProject } = useProjectQuery();
   const router = useRouter();
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();

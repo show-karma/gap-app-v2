@@ -16,6 +16,7 @@ import { Button } from "@/components/Utilities/Button";
 import { PAGES } from "@/utilities/pages";
 import { TypeSelectionScreen } from "./screens/TypeSelectionScreen";
 import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 export { SearchGrantProgram } from "./SearchGrantProgram";
 
 const DetailsScreen = dynamic(
@@ -67,7 +68,7 @@ export const NewGrant: FC<NewGrantProps> = ({ grantToEdit }) => {
     formData,
   } = useGrantFormStore();
 
-  const selectedProject = useProjectStore((state) => state.project);
+  const { data: selectedProject } = useProjectQuery();
   const { isProjectAdmin } = useProjectStore();
   const { isOwner } = useOwnerStore();
   const { isCommunityAdmin } = useCommunityAdminStore();

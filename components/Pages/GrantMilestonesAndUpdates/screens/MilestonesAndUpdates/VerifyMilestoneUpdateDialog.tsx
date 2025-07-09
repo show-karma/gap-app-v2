@@ -23,6 +23,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { sanitizeObject } from "@/utilities/sanitize";
 import { ArrowRightIcon } from "@heroicons/react/24/solid";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 type VerifyMilestoneUpdateDialogProps = {
   milestone: IMilestoneResponse;
@@ -63,9 +64,8 @@ export const VerifyMilestoneUpdateDialog: FC<
     (v) => v.attester?.toLowerCase() === address?.toLowerCase()
   );
   const { gap } = useGap();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { data: project, refetch: refreshProject } = useProjectQuery();
   const { changeStepperStep, setIsStepper } = useStepper();
-  const project = useProjectStore((state) => state.project);
 
   const onSubmit: SubmitHandler<SchemaType> = async (data) => {
     let gapClient = gap;
@@ -113,7 +113,7 @@ export const VerifyMilestoneUpdateDialog: FC<
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {
-                const foundGrant = fetchedProject?.grants.find(
+                const foundGrant = fetchedProject?.data?.grants.find(
                   (g) => g.uid === milestone.refUID
                 );
 
@@ -160,7 +160,7 @@ export const VerifyMilestoneUpdateDialog: FC<
     }
   };
   const { isLoggedIn } = useWallet();
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const { isProjectAdmin } = useProjectStore();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const verifyPermission = () => {
     if (!isLoggedIn) return false;

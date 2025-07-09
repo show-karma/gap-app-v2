@@ -18,6 +18,7 @@ import { useTransferOwnershipModalStore } from "@/store/modals/transferOwnership
 import { sanitizeInput } from "@/utilities/sanitize";
 import { errorManager } from "../Utilities/errorManager";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 type TransferOwnershipProps = {
   buttonElement?: {
@@ -45,10 +46,9 @@ export const TransferOwnershipDialog: FC<TransferOwnershipProps> = ({
   const [validAddress, setValidAddress] = useState(true);
 
   const { chain, address, switchChainAsync, getSigner } = useWallet();
-  const project = useProjectStore((state) => state.project);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const setIsProjectOwner = useProjectStore((state) => state.setIsProjectOwner);
+  const { data: project, refetch: refreshProject } = useProjectQuery();
+  const { isProjectAdmin } = useProjectStore();
+  const { setIsProjectOwner } = useProjectStore();
   const { changeStepperStep, setIsStepper } = useStepper();
 
   const transfer = async () => {

@@ -16,6 +16,7 @@ import Link from "next/link";
 import { DefaultLoading } from "@/components/Utilities/DefaultLoading";
 import { useGrantStore } from "@/store/grant";
 import dynamic from "next/dynamic";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 const MilestonesList = dynamic(
   () =>
@@ -34,15 +35,13 @@ export const EmptyMilestone = ({
   grant?: IGrantResponse;
   project?: IProjectResponse;
 }) => {
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const { isProjectAdmin } = useProjectStore();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );
 
   const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
-  // const router = useRouter();
-  // const project = useProjectStore((state) => state.project);
 
   if (!isAuthorized) {
     return (
@@ -135,11 +134,11 @@ const GrantCompletionCard = ({ completion }: GrantCompletionCardProps) => {
 
 export const MilestonesAndUpdates = () => {
   const { grant } = useGrantStore();
-  const project = useProjectStore((state) => state.project);
+  const { data: project } = useProjectQuery();
 
   const hasMilestonesOrUpdates =
     grant?.milestones?.length || grant?.updates?.length;
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const { isProjectAdmin } = useProjectStore();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin

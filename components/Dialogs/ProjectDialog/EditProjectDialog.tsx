@@ -70,6 +70,7 @@ import { projectSchema } from ".";
 import { VideoIcon } from "@/components/Icons/Video";
 import { UserCircleIcon } from "@heroicons/react/24/outline";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -149,7 +150,7 @@ export const EditProjectDialog: FC<ProjectDialogProps> = ({
     isProjectEditModalOpen: isOpen,
     setIsProjectEditModalOpen: setIsOpen,
   } = useProjectEditModalStore();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { refetch: refreshProject } = useProjectQuery();
   const [step, setStep] = useState(0);
   const isOwner = useOwnerStore((state) => state.isOwner);
   const { isLoggedIn, address, chain, switchChainAsync, getSigner } =

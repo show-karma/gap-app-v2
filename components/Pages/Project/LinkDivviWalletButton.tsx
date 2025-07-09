@@ -35,7 +35,7 @@ export const LinkDivviWalletButton: FC<LinkDivviWalletButtonProps> = ({
   onClose,
 }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const { isProjectOwner } = useProjectStore();
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );

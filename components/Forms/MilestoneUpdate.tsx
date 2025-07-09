@@ -33,6 +33,7 @@ import { errorManager } from "../Utilities/errorManager";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 interface MilestoneUpdateFormProps {
   milestone: IMilestoneResponse;
@@ -76,17 +77,16 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
   cancelEditing,
   afterSubmit,
 }) => {
-  const selectedProject = useProjectStore((state) => state.project);
   const [isUpdating, setIsUpdating] = useState(false);
   const [isSubmitLoading, setIsSubmitLoading] = useState(false);
   const { chain, address, switchChainAsync, getSigner } = useWallet();
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const { isProjectAdmin } = useProjectStore();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );
   const isAuthorized = isProjectAdmin || isContractOwner || isCommunityAdmin;
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { data: project, refetch: refreshProject } = useProjectQuery();
   const { openShareDialog, closeShareDialog } = useShareDialogStore();
   const [noProofCheckbox, setNoProofCheckbox] = useState(false);
   const router = useRouter();
@@ -121,7 +121,6 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
 
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
-  const project = useProjectStore((state) => state.project);
 
   const completeMilestone = async (
     milestone: IMilestoneResponse,
@@ -176,7 +175,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {
-                const foundGrant = fetchedProject?.grants.find(
+                const foundGrant = fetchedProject?.data?.grants.find(
                   (g) => g.uid === milestone.refUID
                 );
 
@@ -196,7 +195,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                   setIsUpdating(false);
                   router.push(
                     PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                      fetchedProject?.uid as string,
+                      fetchedProject?.data?.uid as string,
                       grantInstance.uid,
                       "milestones-and-updates"
                     )
@@ -288,7 +287,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {
-                const foundGrant = fetchedProject?.grants.find(
+                const foundGrant = fetchedProject?.data?.grants.find(
                   (g) => g.uid === milestone.refUID
                 );
 
@@ -305,7 +304,7 @@ export const MilestoneUpdateForm: FC<MilestoneUpdateFormProps> = ({
                   toast.success(MESSAGES.MILESTONES.UPDATE_COMPLETION.SUCCESS);
                   closeShareDialog();
                   PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                    fetchedProject?.uid as string,
+                    fetchedProject?.data?.uid as string,
                     grantInstance.uid,
                     "milestones-and-updates"
                   );

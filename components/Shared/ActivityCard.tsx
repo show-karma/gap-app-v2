@@ -39,7 +39,7 @@ export const ActivityCard: FC<ActivityCardProps> = ({
   isAuthorized = false,
 }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const { isProjectAdmin } = useProjectStore();
   const isAuthenticatedUser = isOwner || isProjectAdmin || isAuthorized;
 
   return (

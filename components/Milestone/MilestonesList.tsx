@@ -42,7 +42,7 @@ export const MilestonesList = ({
   totalItems,
 }: MilestonesListProps) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const { isProjectAdmin } = useProjectStore();
   const isAuthorized = isOwner || isProjectAdmin;
 
   const [status] = useQueryState<StatusOptions>("status", {

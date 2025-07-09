@@ -26,6 +26,7 @@ import { GrantLinkExternalAddressButton } from "../../GrantMilestonesAndUpdates/
 import { EmptyGrantsSection } from "../../GrantMilestonesAndUpdates/screens/EmptyGrantsSection";
 import { ProjectGrantsLayoutLoading } from "../Loading/Grants/Layout";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 interface GrantsLayoutProps {
   children: React.ReactNode;
@@ -79,9 +80,9 @@ export const GrantsLayout = ({
   const grantIdFromQueryParam = useParams().grantUid as string;
   const [currentTab, setCurrentTab] = useState("overview");
   const { grant, setGrant, loading, setLoading } = useGrantStore();
-  const { project: storedProject } = useProjectStore();
+
   const router = useRouter();
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const { isProjectAdmin } = useProjectStore();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
@@ -103,9 +104,9 @@ export const GrantsLayout = ({
     }
   );
 
-  const zustandProject = useProjectStore((state) => state.project);
+  const { data: storedProject } = useProjectQuery();
 
-  const project = storedProject || fetchedProject || zustandProject;
+  const project = storedProject || fetchedProject;
 
   useEffect(() => {
     if (!project || !screen) return;

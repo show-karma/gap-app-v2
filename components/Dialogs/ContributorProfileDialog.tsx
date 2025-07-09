@@ -24,6 +24,7 @@ import fetchData from "@/utilities/fetchData";
 import { INDEXER } from "@/utilities/indexer";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 type ContributorProfileDialogProps = {};
 
@@ -69,7 +70,7 @@ type SchemaType = z.infer<typeof profileSchema>;
 export const ContributorProfileDialog: FC<
   ContributorProfileDialogProps
 > = () => {
-  const project = useProjectStore((state) => state.project);
+  const { data: project, refetch: refreshProject } = useProjectQuery();
   const { address, chain, getSigner } = useWallet();
   const { closeModal, isModalOpen: isOpen } = useContributorProfileModalStore();
 
@@ -105,7 +106,6 @@ export const ContributorProfileDialog: FC<
   const [isLoading, setIsLoading] = useState(false);
   const { changeStepperStep, setIsStepper } = useStepper();
   const { isLoggedIn } = useWallet();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
 
   const isAllowed = isLoggedIn;
 
@@ -163,7 +163,7 @@ export const ContributorProfileDialog: FC<
             if (!isEditing) {
               await refreshProject().then(async (refreshedProject) => {
                 // Check if the member is already in the project
-                const hasMember = refreshedProject?.members.find(
+                const hasMember = refreshedProject?.data?.members.find(
                   (item) =>
                     item.recipient.toLowerCase() === address.toLowerCase()
                 );

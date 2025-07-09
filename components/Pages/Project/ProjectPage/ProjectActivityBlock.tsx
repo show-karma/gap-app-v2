@@ -15,13 +15,15 @@ import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 export const ProjectActivityBlock = ({
   activity,
 }: {
   activity: IProjectUpdate;
 }) => {
-  const { project, isProjectOwner } = useProjectStore();
+  const { isProjectOwner } = useProjectStore();
+  const { data: project } = useProjectQuery();
 
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(

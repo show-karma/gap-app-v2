@@ -11,9 +11,10 @@ import {
 import { useState } from "react";
 import { Dropdown } from "./Dropdown";
 import { NoGrant } from "./NoGrant";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 export const MilestoneUpdateScreen = () => {
-  const { project } = useProjectStore();
+  const { data: project } = useProjectQuery();
   const { closeProgressModal } = useProgressModalStore();
   const [selectedGrant, setSelectedGrant] = useState<
     IGrantResponse | undefined

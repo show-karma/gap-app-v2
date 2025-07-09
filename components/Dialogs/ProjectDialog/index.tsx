@@ -77,6 +77,7 @@ import { FarcasterIcon } from "@/components/Icons/Farcaster";
 import { DeckIcon } from "@/components/Icons/Deck";
 import { VideoIcon } from "@/components/Icons/Video";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 const inputStyle =
   "bg-gray-100 border border-gray-400 rounded-md p-2 dark:bg-zinc-900";
@@ -221,7 +222,7 @@ export const ProjectDialog: FC<ProjectDialogProps> = ({
   const [contacts, setContacts] = useState<Contact[]>(previousContacts || []);
   const { isProjectEditModalOpen } = useProjectEditModalStore();
   const [isOpen, setIsOpen] = useState(false);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { refetch: refreshProject } = useProjectQuery();
   const [step, setStep] = useState(0);
   const isOwner = useOwnerStore((state) => state.isOwner);
   const { switchChainAsync, isLoggedIn, address, chain, getSigner } =

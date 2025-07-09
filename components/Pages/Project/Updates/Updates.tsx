@@ -15,12 +15,13 @@ import { Button } from "@/components/Utilities/Button";
 import { useProgressModalStore } from "@/store/modals/progress";
 import { getProjectObjectives } from "@/utilities/gapIndexerApi/getProjectObjectives";
 import { useQuery } from "@tanstack/react-query";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 export const UpdatesPage: FC = () => {
-  const { project } = useProjectStore();
+  const { data: project } = useProjectQuery();
 
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const { isProjectAdmin } = useProjectStore();
   const isAuthorized = isOwner || isProjectAdmin;
 
   const [allUpdates, setAllUpdates] = useState<any[]>([]);

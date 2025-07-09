@@ -16,6 +16,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { MESSAGES } from "@/utilities/messages";
 
 import { useWallet } from "./useWallet";
+import { useProjectQuery } from "./useProjectQuery";
 
 export interface GrantMilestoneFormData {
   title: string;
@@ -36,7 +37,7 @@ export function useGrantMilestoneForm({
   onSuccess,
   destinationPath,
 }: UseGrantMilestoneFormProps = {}) {
-  const { project, refreshProject } = useProjectStore();
+  const { data: project, refetch: refreshProject } = useProjectQuery();
   const { chain, address, switchChainAsync, getSigner } = useWallet();
   const isOwner = useOwnerStore((state) => state.isOwner);
 
@@ -113,7 +114,7 @@ export function useGrantMilestoneForm({
             while (retries > 0) {
               await refreshProject()
                 .then(async (fetchedProject) => {
-                  const fetchedGrant = fetchedProject?.grants.find(
+                  const fetchedGrant = fetchedProject?.data?.grants.find(
                     (g) => g.uid === grantUID
                   );
 

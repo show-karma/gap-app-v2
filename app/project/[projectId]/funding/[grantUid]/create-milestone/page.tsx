@@ -6,6 +6,7 @@ import Link from "next/link";
 import { XMarkIcon } from "@heroicons/react/24/solid";
 import { PAGES } from "@/utilities/pages";
 import { useProjectStore } from "@/store";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 const MilestoneForm = dynamic(
   () => import("@/components/Forms/Milestone").then((mod) => mod.MilestoneForm),
@@ -15,8 +16,8 @@ const MilestoneForm = dynamic(
 );
 export default function Page() {
   const { grant } = useGrantStore();
-  const project = useProjectStore((state) => state.project);
-  
+  const { data: project } = useProjectQuery();
+
   if (!grant) {
     return null;
   }

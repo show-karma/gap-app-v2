@@ -22,6 +22,7 @@ import { type Hex } from "viem";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useProjectInstance } from "@/hooks/useProjectInstance";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 const iconsClassnames = {
   general:
@@ -29,14 +30,14 @@ const iconsClassnames = {
 };
 
 export const MemberCard = ({ member }: { member: string }) => {
-  const project = useProjectStore((state) => state.project);
+  const { data: project } = useProjectQuery();
   const { teamProfiles } = useTeamProfiles(project);
   const profile = teamProfiles?.find(
     (item) => item.recipient.toLowerCase() === member.toLowerCase()
   );
   const [, copy] = useCopyToClipboard();
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const { isProjectOwner } = useProjectStore();
+  const { isProjectAdmin } = useProjectStore();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const { address } = useWallet();
   const isAuthorized = isProjectOwner || isContractOwner;

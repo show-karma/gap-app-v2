@@ -23,7 +23,7 @@ export const GrantCompleteButton: FC<GrantCompleteProps> = ({
   text = "Mark as Complete",
 }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const { isProjectAdmin } = useProjectStore();
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );

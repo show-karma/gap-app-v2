@@ -26,6 +26,7 @@ import { INDEXER } from "@/utilities/indexer";
 import { sanitizeObject } from "@/utilities/sanitize";
 
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 type VerifyImpactDialogProps = {
   impact: IProjectImpact;
@@ -69,8 +70,7 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
       )
     : null;
   const { gap } = useGap();
-  const project = useProjectStore((state) => state.project);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { data: project, refetch: refreshProject } = useProjectQuery();
 
   const { changeStepperStep, setIsStepper } = useStepper();
 
@@ -169,7 +169,7 @@ export const VerifyImpactDialog: FC<VerifyImpactDialogProps> = ({
     }
   };
   const { isLoggedIn } = useWallet();
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const { isProjectAdmin } = useProjectStore();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const verifyPermission = () => {
     if (!isLoggedIn) return false;

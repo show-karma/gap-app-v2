@@ -19,6 +19,7 @@ import {
   IProjectUpdate,
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { ActivityType } from "./ActivityTypes";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 type UpdateType =
   | IProjectUpdate
@@ -38,7 +39,7 @@ export const UpdateCard: FC<UpdateCardProps> = ({
   index,
   isAuthorized,
 }) => {
-  const { project } = useProjectStore();
+  const { data: project } = useProjectQuery();
   const {
     isDeletingUpdate,
     isEditDialogOpen,

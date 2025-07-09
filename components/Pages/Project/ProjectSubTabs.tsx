@@ -7,9 +7,10 @@ import * as Tooltip from "@radix-ui/react-tooltip";
 import { useProjectStore } from "@/store";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 export const ProjectSubTabs = () => {
-  const project = useProjectStore((state) => state.project);
+  const { data: project } = useProjectQuery();
   const { setIsEndorsementOpen: setIsOpen } = useEndorsementStore();
   const { address, isLoggedIn } = useWallet();
   const { setShowAuthFlow } = useDynamicContext();

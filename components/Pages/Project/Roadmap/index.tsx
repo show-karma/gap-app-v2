@@ -20,28 +20,24 @@ import { Button } from "@/components/Utilities/Button";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { MESSAGES } from "@/utilities/messages";
 import { UnifiedMilestone } from "@/types/roadmap";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 interface ProjectRoadmapProps {
   project?: IProjectResponse;
 }
 
-export const ProjectRoadmap = ({
-  project: propProject,
-}: ProjectRoadmapProps) => {
+export const ProjectRoadmap = () => {
   const { projectId } = useParams();
   const searchParams = useSearchParams();
 
-  const zustandProject = useProjectStore((state) => state.project);
-
-  const project = propProject || zustandProject;
+  const { isProjectAdmin } = useProjectStore();
+  const { data: project } = useProjectQuery();
 
   const { milestones = [], isLoading } = useAllMilestones(projectId as string);
-
   const { setIsProgressModalOpen, setProgressModalScreen } =
     useProgressModalStore();
 
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isAuthorized = isOwner || isProjectAdmin;
 
   // Parse filters from URL

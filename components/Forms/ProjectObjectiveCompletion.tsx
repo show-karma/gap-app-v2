@@ -29,6 +29,7 @@ import { sanitizeInput } from "@/utilities/sanitize";
 import { useAllMilestones } from "@/hooks/useAllMilestones";
 import { PAGES } from "@/utilities/pages";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 const schema = z.object({
   description: z.string().optional(),
@@ -57,7 +58,7 @@ export const ProjectObjectiveCompletionForm = ({
   objectiveUID,
   handleCompleting,
 }: ProjectObjectiveCompletionFormProps) => {
-  const project = useProjectStore((state) => state.project);
+  const { data: project } = useProjectQuery();
   const [isCompleting, setIsCompleting] = useState(false);
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();

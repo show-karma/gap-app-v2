@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { ProjectUpdateForm } from "@/components/Forms/ProjectUpdate";
 import { useState, useEffect } from "react";
 import { XMarkIcon } from "@heroicons/react/24/solid";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 interface ProjectUpdateFormBlockProps {
   onClose?: () => void;
@@ -14,7 +15,7 @@ export const ProjectUpdateFormBlock = ({
   onClose,
   updateId,
 }: ProjectUpdateFormBlockProps) => {
-  const project = useProjectStore((state) => state.project);
+  const { data: project } = useProjectQuery();
   // Maintain state to force fresh render when updateId changes
   const [currentUpdateId, setCurrentUpdateId] = useState(updateId);
   const updateBeingEdited = updateId

@@ -44,6 +44,7 @@ import pluralize from "pluralize";
 import { InformationBlock } from "./ProjectBodyTabs";
 import { useProjectInstance } from "@/hooks/useProjectInstance";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 const ContributorProfileDialog = dynamic(
   () =>
@@ -56,9 +57,9 @@ const ContributorProfileDialog = dynamic(
 );
 
 function ProjectPage() {
-  const project = useProjectStore((state) => state.project);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const { data: project } = useProjectQuery();
+  const { isProjectOwner } = useProjectStore();
+  const { isProjectAdmin } = useProjectStore();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isProjectOwner || isContractOwner;
   const isAdminOrAbove = isProjectOwner || isContractOwner || isProjectAdmin;

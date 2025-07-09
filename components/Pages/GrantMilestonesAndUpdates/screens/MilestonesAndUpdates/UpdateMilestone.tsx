@@ -14,6 +14,7 @@ import { type FC, useState } from "react";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { ExternalLink } from "@/components/Utilities/ExternalLink";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 interface NotUpdatingCaseProps {
   milestone: IMilestoneResponse;
@@ -26,7 +27,7 @@ const NotUpdatingCase: FC<NotUpdatingCaseProps> = ({
   isAuthorized,
   setIsUpdating,
 }) => {
-  const project = useProjectStore((state) => state.project);
+  const { data: project } = useProjectQuery();
   const grant = project?.grants.find(
     (g) => g.uid.toLowerCase() === milestone.refUID.toLowerCase()
   );
@@ -80,7 +81,7 @@ export const UpdateMilestone: FC<UpdateMilestoneProps> = ({
   cancelEditing,
 }) => {
   const [isUpdating, setIsUpdating] = useState(false);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const { isProjectAdmin } = useProjectStore();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin

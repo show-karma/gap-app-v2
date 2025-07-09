@@ -20,6 +20,7 @@ import { errorManager } from "@/components/Utilities/errorManager";
 import { useContactInfo } from "@/hooks/useContactInfo";
 
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 type IntroDialogProps = {};
 
@@ -48,7 +49,7 @@ export const IntroDialog: FC<IntroDialogProps> = () => {
   const { isIntroModalOpen: isOpen, setIsIntroModalOpen: setIsOpen } =
     useIntroModalStore();
 
-  const project = useProjectStore((state) => state.project);
+  const { data: project } = useProjectQuery();
   const { data: contactsInfo } = useContactInfo(project?.uid);
 
   const {

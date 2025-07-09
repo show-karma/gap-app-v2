@@ -23,6 +23,7 @@ import {
 } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
 import { useWallet } from "./useWallet";
 import { useQueryClient } from "@tanstack/react-query";
+import { useProjectQuery } from "./useProjectQuery";
 
 type UpdateType =
   | IProjectUpdate
@@ -37,8 +38,8 @@ export const useUpdateActions = (update: UpdateType) => {
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
   const { chain, switchChainAsync, getSigner } = useWallet();
-  const { project, isProjectOwner } = useProjectStore();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { isProjectOwner } = useProjectStore();
+  const { data: project, refetch: refreshProject } = useProjectQuery();
   const isOwner = useOwnerStore((state) => state.isOwner);
   const isOnChainAuthorized = isProjectOwner || isOwner;
   const projectId = useParams().projectId as string;
@@ -161,7 +162,7 @@ export const useUpdateActions = (update: UpdateType) => {
       const checkIfAttestationExists = async (callbackFn?: () => void) => {
         await retryUntilConditionMet(
           async () => {
-            const fetchedProject = await refreshProject();
+            const fetchedProject = (await refreshProject()).data;
             let stillExists = false;
 
             switch (update.type) {

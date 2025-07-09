@@ -17,6 +17,7 @@ import toast from "react-hot-toast";
 import { isAddress } from "viem";
 import debounce from "lodash.debounce";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 interface SetPayoutAddressButtonProps {
   buttonClassName?: string;
@@ -34,8 +35,8 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
   onClose,
 }) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
-  const setProject = useProjectStore((state) => state.setProject);
+  const { isProjectOwner } = useProjectStore();
+  const { refetch: refreshProject } = useProjectQuery();
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );
@@ -199,12 +200,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
         // Show success message from API response
         toast.success(data.message || MESSAGES.PROJECT.PAYOUT_ADDRESS.SUCCESS);
 
-        // Update project store with new payout address
-        const updatedProject = {
-          ...project,
-          payoutAddress: payoutAddress.trim() || null,
-        };
-        setProject(updatedProject);
+        refreshProject();
 
         // Close modal
         setIsOpen(false);
@@ -257,9 +253,7 @@ export const SetPayoutAddressButton: FC<SetPayoutAddressButtonProps> = ({
         // Show success message from API response
         toast.success(data.message || "Payout address removed successfully");
 
-        // Update project store to remove payout address
-        const updatedProject = { ...project, payoutAddress: null };
-        setProject(updatedProject);
+        refreshProject();
 
         // Clear form
         setPayoutAddress("");

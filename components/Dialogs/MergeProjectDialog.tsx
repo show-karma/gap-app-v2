@@ -30,6 +30,7 @@ import { sanitizeInput } from "@/utilities/sanitize";
 import { useMergeModalStore } from "@/store/modals/merge";
 import EthereumAddressToENSName from "../EthereumAddressToENSName";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 type MergeProjectProps = {
   buttonElement?: {
@@ -44,7 +45,7 @@ function SearchProject({
 }: {
   setPrimaryProject: (value: IProjectResponse) => void;
 }) {
-  const { project: currentProject } = useProjectStore();
+  const { data: currentProject } = useProjectQuery();
   const [results, setResults] = useState<ISearchResponse>({
     communities: [],
     projects: [],
@@ -186,10 +187,9 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
   function openModal() {
     setIsOpen(true);
   }
-  const project = useProjectStore((state) => state.project);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
-  const setIsProjectAdmin = useProjectStore((state) => state.setIsProjectAdmin);
+  const { data: project, refetch: refreshProject } = useProjectQuery();
+  const { isProjectAdmin } = useProjectStore();
+  const { setIsProjectAdmin } = useProjectStore();
   const { changeStepperStep, setIsStepper } = useStepper();
 
   const createProjectPointer = async ({ ogProjectUID }: PointerType) => {
@@ -233,7 +233,7 @@ export const MergeProjectDialog: FC<MergeProjectProps> = ({
             await refreshProject()
               .then(async (fetchedProject) => {
                 const attestUID = projectPointer.uid;
-                const alreadyExists = fetchedProject?.pointers.find(
+                const alreadyExists = fetchedProject?.data?.pointers.find(
                   (g) => g.uid === attestUID
                 );
 

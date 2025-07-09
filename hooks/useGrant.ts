@@ -18,14 +18,14 @@ import { useRouter } from "next/navigation";
 import { PAGES } from "@/utilities/pages";
 import { useGrantFormStore } from "@/components/Pages/GrantMilestonesAndUpdates/screens/NewGrant/store";
 import { useWallet } from "./useWallet";
+import { useProjectQuery } from "./useProjectQuery";
 
 export function useGrant() {
   const [isLoading, setIsLoading] = useState(false);
   const { gap } = useGap();
   const { chain, address, switchChainAsync, getSigner } = useWallet();
   const { changeStepperStep, setIsStepper } = useStepper();
-  const selectedProject = useProjectStore((state) => state.project);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { data: selectedProject, refetch: refreshProject } = useProjectQuery();
   const router = useRouter();
   const {
     clearMilestonesForms,

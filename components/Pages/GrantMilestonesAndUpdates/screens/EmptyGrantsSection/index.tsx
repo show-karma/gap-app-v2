@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 import { useOwnerStore, useProjectStore } from "@/store";
 import { useCommunitiesStore } from "@/store/communities";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
@@ -8,9 +9,9 @@ import Link from "next/link";
 import type { FC } from "react";
 
 export const EmptyGrantsSection: FC = () => {
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const { isProjectAdmin } = useProjectStore();
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const project = useProjectStore((state) => state.project);
+  const { data: project } = useProjectQuery();
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );

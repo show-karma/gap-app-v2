@@ -30,6 +30,7 @@ import { TabTrigger } from "@/components/Utilities/Tabs";
 import { TabContent } from "@/components/Utilities/Tabs";
 import { OSOMetrics } from "./OSOMetrics";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 const headClasses =
   "text-black dark:text-white text-xs font-medium uppercase text-left px-6 py-3 font-body";
@@ -39,15 +40,14 @@ const cellClasses =
 interface ImpactComponentProps {}
 
 export const ImpactComponent: FC<ImpactComponentProps> = () => {
-  const project = useProjectStore((state) => state.project);
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const { data: project, refetch: refreshProject } = useProjectQuery();
+  const { isProjectOwner, isProjectAdmin } = useProjectStore();
 
   const [orderedImpacts, setOrderedImpacts] = useState<IProjectImpact[]>(
     project?.impacts || []
   );
 
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isAuthorized = isOwner || isProjectAdmin;
 
   useEffect(() => {
@@ -69,7 +69,6 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
   const isOnChainAuthorized = isProjectOwner || isOwner;
 
   const revokeImpact = async (impact: IProjectImpact) => {
@@ -98,7 +97,7 @@ export const ImpactComponent: FC<ImpactComponentProps> = () => {
         await retryUntilConditionMet(
           async () => {
             const fetchedProject = await refreshProject();
-            const stillExists = !!fetchedProject?.impacts?.find(
+            const stillExists = !!fetchedProject?.data?.impacts?.find(
               (imp) => imp.uid === impact.uid
             );
             return !stillExists;

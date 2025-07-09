@@ -10,9 +10,10 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { MemberCard } from "./MemberCard";
 import { useProjectInstance } from "@/hooks/useProjectInstance";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 export const Team = () => {
-  const project = useProjectStore((state) => state.project);
+  const { data: project } = useProjectQuery();
 
   //   check if it have some duplicated
   const members = project
@@ -24,7 +25,7 @@ export const Team = () => {
       )
     : [];
 
-  const isProjectOwner = useProjectStore((state) => state.isProjectOwner);
+  const { isProjectOwner } = useProjectStore();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isProjectOwner || isContractOwner;
   const { project: projectInstance } = useProjectInstance(

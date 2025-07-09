@@ -10,6 +10,7 @@ import type { IProjectResponse } from "@show-karma/karma-gap-sdk/core/class/karm
 import { defaultQueryOptions } from "@/utilities/queries/defaultOptions";
 import { useProjectInstance } from "./useProjectInstance";
 import { useWallet } from "./useWallet";
+import { useProjectQuery } from "./useProjectQuery";
 
 interface ProjectPermissionsResult {
   isProjectOwner: boolean;
@@ -18,7 +19,7 @@ interface ProjectPermissionsResult {
 
 export const useProjectPermissions = () => {
   const { address, isLoggedIn } = useWallet();
-  const { project } = useProjectStore();
+  const { data: project } = useProjectQuery();
   const projectId = project?.details?.data.slug || project?.uid;
   const { project: projectInstance } = useProjectInstance(projectId);
 
@@ -72,7 +73,7 @@ export const useProjectPermissions = () => {
       setIsProjectOwner(query.data.isProjectOwner);
       setIsProjectAdmin(query.data.isProjectAdmin);
     }
-  }, [query.data, setIsProjectOwner, setIsProjectAdmin]);
+  }, [query.data]);
 
   return {
     isProjectOwner: query.data?.isProjectOwner ?? false,

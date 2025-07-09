@@ -1,10 +1,10 @@
-import { useProjectStore } from "@/store";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 import { useProgressModalStore } from "@/store/modals/progress";
 import { PAGES } from "@/utilities/pages";
 import { useRouter } from "next/navigation";
 
 export const NoGrant = () => {
-  const { project } = useProjectStore();
+  const { data: project } = useProjectQuery();
   const router = useRouter();
   const { closeProgressModal } = useProgressModalStore();
 

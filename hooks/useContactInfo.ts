@@ -20,7 +20,7 @@ export const useContactInfo = (
   isAuthorized?: boolean
 ) => {
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const { isProjectAdmin } = useProjectStore();
   const isDefaultAuthorized = isOwner || isProjectAdmin;
   const { address } = useWallet();
   return useQuery({

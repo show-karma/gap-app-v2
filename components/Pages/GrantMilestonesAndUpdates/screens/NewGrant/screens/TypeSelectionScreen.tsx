@@ -7,6 +7,7 @@ import { useProjectStore } from "@/store";
 import Image from "next/image";
 import { NextButton } from "./buttons/NextButton";
 import { CancelButton } from "./buttons/CancelButton";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 interface TypeOption {
   icon: string;
@@ -18,7 +19,7 @@ interface TypeOption {
 export const TypeSelectionScreen: React.FC = () => {
   const { setCurrentStep, setFlowType, flowType, updateFormData } =
     useGrantFormStore();
-  const selectedProject = useProjectStore((state) => state.project);
+  const { data: selectedProject } = useProjectQuery();
   const router = useRouter();
 
   const options: TypeOption[] = [

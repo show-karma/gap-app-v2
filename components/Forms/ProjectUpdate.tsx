@@ -58,6 +58,7 @@ import { SHARE_TEXTS } from "@/utilities/share/text";
 import { useQuery } from "@tanstack/react-query";
 import { getIndicatorsByCommunity } from "@/utilities/queries/getIndicatorsByCommunity";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 interface GrantOption {
   title: string;
@@ -335,8 +336,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
   editId: propEditId,
 }) => {
   const { address, chain, switchChainAsync, getSigner } = useWallet();
-  const project = useProjectStore((state) => state.project);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { data: project, refetch: refreshProject } = useProjectQuery();
   const router = useRouter();
   const searchParams = useSearchParams();
   const editId = propEditId || searchParams.get("editId");
@@ -715,6 +715,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
         recipient,
         refUID: projectUid,
         schema,
+        chainID: chainId,
       };
 
       // If in edit mode, add the existing UID
@@ -741,7 +742,7 @@ export const ProjectUpdateForm: FC<ProjectUpdateFormProps> = ({
             await refreshProject()
               .then(async (fetchedProject) => {
                 const attestUID = projectUpdate.uid;
-                const alreadyExists = fetchedProject?.updates.find(
+                const alreadyExists = fetchedProject?.data?.updates.find(
                   (g) => g.uid === attestUID
                 );
 

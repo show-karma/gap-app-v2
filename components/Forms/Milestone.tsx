@@ -36,6 +36,7 @@ import { z } from "zod";
 import { errorManager } from "../Utilities/errorManager";
 
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 const milestoneSchema = z.object({
   title: z
@@ -102,11 +103,10 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
   });
   const [isLoading, setIsLoading] = useState(false);
   const { gap } = useGap();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { data: project, refetch: refreshProject } = useProjectQuery();
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );
-  const project = useProjectStore((state) => state.project);
   const projectUID = project?.uid;
 
   const { changeStepperStep, setIsStepper } = useStepper();
@@ -162,7 +162,7 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
           while (retries > 0) {
             await refreshProject()
               .then(async (fetchedProject) => {
-                const fetchedGrant = fetchedProject?.grants.find(
+                const fetchedGrant = fetchedProject?.data?.grants.find(
                   (g) => g.uid === uid
                 );
                 const milestoneExists = fetchedGrant?.milestones.find(
@@ -174,8 +174,8 @@ export const MilestoneForm: FC<MilestoneFormProps> = ({
                   toast.success(MESSAGES.MILESTONES.CREATE.SUCCESS);
                   router.push(
                     PAGES.PROJECT.SCREENS.SELECTED_SCREEN(
-                      (fetchedProject?.details?.data.slug ||
-                        fetchedProject?.uid) as string,
+                      (fetchedProject?.data?.details?.data.slug ||
+                        fetchedProject?.data?.uid) as string,
                       fetchedGrant?.uid as string,
                       "milestones-and-updates"
                     )

@@ -18,6 +18,7 @@ import toast from "react-hot-toast";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useWallet } from "@/hooks/useWallet";
 import { getQueryClient } from "@/utilities/queries/client";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 interface DemoteMemberDialogProps {
   memberAddress: string;
@@ -29,11 +30,10 @@ export const DemoteMemberDialog: FC<DemoteMemberDialogProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [isDemoting, setIsDemoting] = useState(false);
   const { gap } = useGap();
-  const { project } = useProjectStore();
+  const { data: project, refetch: refreshProject } = useProjectQuery();
   const { teamProfiles } = useTeamProfiles(project);
   const { changeStepperStep, setIsStepper } = useStepper();
   const { address, chain, switchChainAsync, getSigner } = useWallet();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
   const queryClient = getQueryClient();
 
   const openModal = () => setIsOpen(true);

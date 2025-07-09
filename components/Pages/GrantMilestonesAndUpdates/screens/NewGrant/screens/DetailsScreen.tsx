@@ -20,6 +20,7 @@ import { NextButton } from "./buttons/NextButton";
 import { CancelButton } from "./buttons/CancelButton";
 import { useCommunityAdminStore } from "@/store/communityAdmin";
 import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-indexer/api/types";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 const labelStyle = "text-sm font-bold text-black dark:text-zinc-100";
 const inputStyle =
@@ -76,8 +77,7 @@ export const DetailsScreen: React.FC = () => {
     setFormPriorities,
     communityNetworkId,
   } = useGrantFormStore();
-  const selectedProject = useProjectStore((state) => state.project);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { data: selectedProject } = useProjectQuery();
   const router = useRouter();
   const { gap } = useGap();
   const { updateGrant, isLoading: isUpdatingGrant } = useGrant();

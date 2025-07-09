@@ -3,6 +3,7 @@ import { DatePicker } from "@/components/Utilities/DatePicker";
 import { errorManager } from "@/components/Utilities/errorManager";
 import { MarkdownEditor } from "@/components/Utilities/MarkdownEditor";
 import { getGapClient, useGap } from "@/hooks/useGap";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 import { useWallet } from "@/hooks/useWallet";
 import { useProjectStore } from "@/store";
 import { useStepper } from "@/store/modals/txStepper";
@@ -50,8 +51,7 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({
   const [work, setWork] = useState("");
 
   const { address, chain, switchChainAsync, getSigner } = useWallet();
-  const project = useProjectStore((state) => state.project);
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { data: project, refetch: refreshProject } = useProjectQuery();
   const router = useRouter();
 
   // Find the impact to edit
@@ -165,7 +165,7 @@ const EditImpactFormBlock: FC<EditImpactFormBlockProps> = ({
             await refreshProject()
               .then(async (fetchedProject) => {
                 const attestUID = updatedImpact.uid;
-                const foundImpact = fetchedProject?.impacts?.find(
+                const foundImpact = fetchedProject?.data?.impacts?.find(
                   (imp) => imp.uid === attestUID
                 );
 

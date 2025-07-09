@@ -17,6 +17,7 @@ import toast from "react-hot-toast";
 import { useTeamProfiles } from "@/hooks/useTeamProfiles";
 import { useWallet } from "@/hooks/useWallet";
 import { getQueryClient } from "@/utilities/queries/client";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 interface PromoteMemberDialogProps {
   memberAddress: string;
@@ -29,10 +30,9 @@ export const PromoteMemberDialog: FC<PromoteMemberDialogProps> = ({
   const [isPromoting, setIsPromoting] = useState(false);
   const { gap } = useGap();
   const { address, chain, switchChainAsync, getSigner } = useWallet();
-  const { project } = useProjectStore();
+  const { data: project, refetch: refreshProject } = useProjectQuery();
   const { teamProfiles } = useTeamProfiles(project);
   const { changeStepperStep, setIsStepper } = useStepper();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
 
   const queryClient = getQueryClient();
 

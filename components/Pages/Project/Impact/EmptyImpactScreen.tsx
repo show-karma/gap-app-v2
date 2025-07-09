@@ -5,7 +5,7 @@ import { useQueryState } from "nuqs";
 import { FC } from "react";
 
 export const EmptyImpactScreen: FC = () => {
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const { isProjectAdmin } = useProjectStore();
   const isOwner = useOwnerStore((state) => state.isOwner);
 
   const isAuthorized = isProjectAdmin || isOwner;

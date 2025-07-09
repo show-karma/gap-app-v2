@@ -28,6 +28,7 @@ import { shareOnX } from "@/utilities/share/shareOnX";
 import { SHARE_TEXTS } from "@/utilities/share/text";
 import { ShareIcon } from "@heroicons/react/24/outline";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 interface UpdateTagProps {
   index: number;
@@ -78,12 +79,11 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
   update,
 }) => {
   const { chain, address, switchChainAsync, getSigner } = useWallet();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { data: project, refetch: refreshProject } = useProjectQuery();
   const [isDeletingGrantUpdate, setIsDeletingGrantUpdate] = useState(false);
-  const selectedProject = useProjectStore((state) => state.project);
   const { gap } = useGap();
   const { changeStepperStep, setIsStepper } = useStepper();
-  const { project, isProjectOwner } = useProjectStore();
+  const { isProjectOwner } = useProjectStore();
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
 
@@ -115,7 +115,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
         await retryUntilConditionMet(
           async () => {
             const fetchedProject = await refreshProject();
-            const grant = fetchedProject?.grants?.find(
+            const grant = fetchedProject?.data?.grants?.find(
               (item) => item.uid.toLowerCase() === update.refUID.toLowerCase()
             );
             const stillExists = grant?.updates?.find(
@@ -193,7 +193,7 @@ export const GrantUpdate: FC<GrantUpdateProps> = ({
     }
   };
 
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const { isProjectAdmin } = useProjectStore();
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );

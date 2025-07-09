@@ -19,6 +19,7 @@ import { autosyncedIndicators } from "@/components/Pages/Admin/IndicatorsHub";
 import { useImpactAnswers } from "@/hooks/useImpactAnswers";
 import { GroupedLinks } from "./GroupedLinks";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 type OutputForm = {
   id: string;
@@ -66,7 +67,8 @@ export const FilteredOutputsAndOutcomes = ({
   indicatorIds,
   indicatorNames,
 }: FilteredOutputsAndOutcomesProps) => {
-  const { project, isProjectOwner } = useProjectStore();
+  const { isProjectOwner } = useProjectStore();
+  const { data: project } = useProjectQuery();
 
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(

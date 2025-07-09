@@ -34,6 +34,7 @@ import { SHARE_TEXTS } from "@/utilities/share/text";
 import { useShareDialogStore } from "@/store/modals/shareDialog";
 import { shareOnX } from "@/utilities/share/shareOnX";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 interface UpdatesProps {
   milestone: IMilestoneResponse;
@@ -46,11 +47,11 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
     setIsEditing(value);
   };
   const { chain, address, switchChainAsync, getSigner } = useWallet();
-  const refreshProject = useProjectStore((state) => state.refreshProject);
+  const { data: project, refetch: refreshProject } = useProjectQuery();
 
   const { changeStepperStep, setIsStepper } = useStepper();
   const { gap } = useGap();
-  const { project, isProjectOwner } = useProjectStore();
+  const { isProjectOwner } = useProjectStore();
   const { isOwner: isContractOwner } = useOwnerStore();
   const isOnChainAuthorized = isProjectOwner || isContractOwner;
 
@@ -80,7 +81,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
         await retryUntilConditionMet(
           async () => {
             const fetchedProject = await refreshProject();
-            const foundGrant = fetchedProject?.grants.find(
+            const foundGrant = fetchedProject?.data?.grants.find(
               (g) => g.uid === milestone.refUID
             );
             const fetchedMilestone = foundGrant?.milestones.find(
@@ -156,7 +157,7 @@ export const Updates: FC<UpdatesProps> = ({ milestone }) => {
     }
   };
 
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const { isProjectAdmin } = useProjectStore();
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin
   );

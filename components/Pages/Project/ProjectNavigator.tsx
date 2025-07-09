@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ProjectOptionsMenu } from "./ProjectOptionsMenu";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 export const ProjectNavigator = ({
   hasContactInfo,
@@ -20,7 +21,7 @@ export const ProjectNavigator = ({
 }) => {
   const pathname = usePathname();
   const projectId = useParams().projectId as string;
-  const project = useProjectStore((state) => state.project);
+  const { data: project } = useProjectQuery();
   const publicTabs = [
     {
       name: "Project",
@@ -48,7 +49,7 @@ export const ProjectNavigator = ({
   const [tabs, setTabs] = useState<typeof publicTabs>(publicTabs);
 
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const { isProjectAdmin } = useProjectStore();
 
   const isAuthorized = isOwner || isProjectAdmin;
   useEffect(() => {

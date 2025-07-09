@@ -27,6 +27,7 @@ import toast from "react-hot-toast";
 import { z } from "zod";
 import { MultiSelect } from "../../../components/Utilities/MultiSelect";
 import { useWallet } from "@/hooks/useWallet";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 // Helper function to wait for a specified time
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -69,7 +70,7 @@ const milestoneSchema = z.object({
 type MilestoneFormData = z.infer<typeof milestoneSchema>;
 
 export const UnifiedMilestoneScreen = () => {
-  const { project, refreshProject } = useProjectStore();
+  const { data: project, refetch: refreshProject } = useProjectQuery();
   const { closeProgressModal } = useProgressModalStore();
   const [selectedGrantIds, setSelectedGrantIds] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);

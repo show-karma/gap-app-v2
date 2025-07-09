@@ -14,6 +14,7 @@ import React from "react";
 import { Spinner } from "../Utilities/Spinner";
 import { cn } from "@/utilities/tailwind";
 import { useGrantGenieModalStore } from "@/store/modals/genie";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 type Props = {};
 
 function GrantGenieRecommendations({ projectId }: { projectId: string }) {
@@ -90,8 +91,8 @@ export const GrantsGenieDialog: FC<Props> = () => {
     closeGrantGenieModal: closeModal,
     openGrantGenieModal: openModal,
   } = useGrantGenieModalStore();
-  const project = useProjectStore((state) => state.project);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const { data: project } = useProjectQuery();
+  const { isProjectAdmin } = useProjectStore();
   const [isLoading, setIsLoading] = useState(false);
 
   return (

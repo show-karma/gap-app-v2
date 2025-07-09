@@ -105,7 +105,7 @@ export const MilestoneDetails: FC<MilestoneDetailsProps> = ({
   milestone,
   index,
 }) => {
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const { isProjectAdmin } = useProjectStore();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isCommunityAdmin = useCommunityAdminStore(
     (state) => state.isCommunityAdmin

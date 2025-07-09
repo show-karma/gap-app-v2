@@ -14,6 +14,7 @@ import { TrashIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import { errorManager } from "./Utilities/errorManager";
 import { generateRandomString } from "@/utilities/generateRandomString";
 import { useContactInfo } from "@/hooks/useContactInfo";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 const labelStyle = "text-sm font-bold";
 const inputStyle =
@@ -117,17 +118,15 @@ interface ContactInfoSubscriptionProps {
 export const ContactInfoSubscription: FC<ContactInfoSubscriptionProps> = ({
   contactInfo,
 }) => {
-  const project = useProjectStore((state) => state.project);
+  const { isProjectAdmin } = useProjectStore();
+  const { data: project, refetch: refreshProject } = useProjectQuery();
   const projectId = project?.uid;
   const isOwner = useOwnerStore((state) => state.isOwner);
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
   const isAuthorized = isOwner || isProjectAdmin;
   const { data: existingContacts, refetch: refreshContactInfo } =
     useContactInfo(projectId, isAuthorized);
 
   const [isLoading, setIsLoading] = useState(false);
-
-  const refreshProject = useProjectStore((state) => state.refreshProject);
 
   const dataToUpdate = {
     id: contactInfo?.id || "0",

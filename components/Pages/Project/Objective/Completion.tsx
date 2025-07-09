@@ -43,7 +43,7 @@ export const ObjectiveCardComplete = ({
   isCompleting: boolean;
   handleCompleting: (isCompleting: boolean) => void;
 }) => {
-  const isProjectAdmin = useProjectStore((state) => state.isProjectAdmin);
+  const { isProjectAdmin } = useProjectStore();
   const isContractOwner = useOwnerStore((state) => state.isOwner);
   const isAuthorized = isProjectAdmin || isContractOwner;
   const { isProjectOwner } = useProjectStore();

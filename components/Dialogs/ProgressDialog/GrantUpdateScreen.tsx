@@ -6,9 +6,10 @@ import { IGrantResponse } from "@show-karma/karma-gap-sdk/core/class/karma-index
 import { useState } from "react";
 import { Dropdown } from "./Dropdown";
 import { NoGrant } from "./NoGrant";
+import { useProjectQuery } from "@/hooks/useProjectQuery";
 
 export const GrantUpdateScreen = () => {
-  const { project } = useProjectStore();
+  const { data: project } = useProjectQuery();
   const { closeProgressModal } = useProgressModalStore();
   const [selectedGrant, setSelectedGrant] = useState<
     IGrantResponse | undefined
